@@ -1,5 +1,5 @@
 {
-  "name":        "prixmalin",
+  "name":        "yombale",
   "version":     "1.0.0",
   "description": "Comparateur de prix Senegal 🇸🇳",
   "main":        "backend/app.js",
