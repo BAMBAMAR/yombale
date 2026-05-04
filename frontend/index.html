@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Comparez les prix au Senegal — Jumia, Expat-Dakar, Dakar-Deal">
+  <title>PrixMalin — Comparateur de prix Senegal</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1d4ed8">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <nav id="navbar">
+    <div class="logo" onclick="goHome()">PrixMalin 🇸🇳</div>
+    <div class="nav-center">
+      <button onclick="goHome()">Accueil</button>
+      <button onclick="loadPromos()">Promos</button>
+    </div>
+    <div class="nav-right">
+      <select id="city-sel" onchange="changeVille(this.value)">
+        <option value="Dakar">Dakar</option>
+        <option value="Thies">Thiès</option>
+        <option value="Saint-Louis">Saint-Louis</option>
+        <option value="Ziguinchor">Ziguinchor</option>
+        <option value="Kaolack">Kaolack</option>
+      </select>
+      <div class="nav-user" onclick="showAccount()">
+        <span id="nav-avatar">?</span>
+        <span id="nav-username">Connexion</span>
+      </div>
+    </div>
+  </nav>
+
+  <main id="app">
+    <div class="loader"><div class="spin"></div><p>Chargement...</p></div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/app.js"></scr' + 'ipt>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(() => console.log('SW OK'))
+        .catch(e  => console.warn('SW non disponible:', e.message));
+    }
+  </scr' + 'ipt>
+</body>
+</html>

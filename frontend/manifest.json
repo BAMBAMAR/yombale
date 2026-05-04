@@ -1,0 +1,19 @@
+{
+  "name":             "PrixMalin Senegal",
+  "short_name":       "PrixMalin",
+  "description":      "Comparez les prix au Senegal",
+  "start_url":        "/",
+  "display":          "standalone",
+  "background_color": "#f0f4ff",
+  "theme_color":      "#1d4ed8",
+  "lang":             "fr",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
+  ],
+  "shortcuts": [
+    { "name": "Rechercher",  "url": "/recherche" },
+    { "name": "Mes alertes", "url": "/alertes"   },
+    { "name": "Promos",      "url": "/promos"    }
+  ]
+}
