@@ -1,4 +1,4 @@
-// PrixMalin — JavaScript frontend principal
+// Yombale — JavaScript frontend
 var API   = '/api';
 var state = {
   user:  null,
@@ -6,56 +6,98 @@ var state = {
   token: localStorage.getItem('pm_token')
 };
 
-// Appel API avec JWT automatique
-async function apiFetch(endpoint, options) {
+function apiFetch(endpoint, options) {
   options = options || {};
   var headers = { 'Content-Type': 'application/json' };
   if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
-  var res  = await fetch(API + endpoint, Object.assign({}, options, { headers: headers }));
-  var data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Erreur serveur');
-  return data;
+  return fetch(API + endpoint, Object.assign({}, options, { headers: headers }))
+    .then(function(res) {
+      return res.json().then(function(data) {
+        if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+        return data;
+      });
+    });
 }
 
 function toast(msg, couleur) {
   var el = document.getElementById('toast');
-  el.textContent  = msg;
+  if (!el) return;
+  el.textContent = msg;
   el.style.background = couleur || '#10b981';
   el.classList.add('show');
   setTimeout(function() { el.classList.remove('show'); }, 3000);
 }
 
-function fcfa(n) { return Number(n).toLocaleString('fr-FR') + ' FCFA'; }
-function render(html) { document.getElementById('app').innerHTML = html; }
+function fcfa(n) { return Number(n || 0).toLocaleString('fr-FR') + ' FCFA'; }
+function render(html) {
+  var app = document.getElementById('app');
+  if (app) app.innerHTML = html;
+}
 
-async function chargerProduits(query, categorie) {
-  render('<div class="loader"><div class="spin"></div><p>Chargement...</p></div>');
-  try {
-    var p    = new URLSearchParams({ q: query || '', categorie: categorie || '', limit: 12 });
-    var data = await apiFetch('/produits?' + p.toString());
-    render(templateProduits(data.produits || []));
-  } catch (err) {
-    render('<div class="loader"><p>' + err.message + '</p></div>');
-  }
+// ── Chargement des produits ──────────────────────────────────
+function chargerProduits(query, categorie) {
+  render('<div class="loader"><div class="spin"></div><p>Chargement des offres...</p></div>');
+  var params = new URLSearchParams({
+    q:         query     || '',
+    categorie: categorie || '',
+    limit:     12
+  });
+  apiFetch('/produits?' + params.toString())
+    .then(function(data) {
+      var produits = data.produits || data || [];
+      if (!produits.length) {
+        render([
+          '<section class="hero">',
+            '<h1>Meilleur prix au <span>Sénégal</span></h1>',
+            '<p style="opacity:.85;margin-bottom:20px">Bu yombale bi ! 🇸🇳</p>',
+            '<div class="sbar">',
+              '<input type="text" id="search-input" placeholder="Samsung, TV, Nike...">',
+              '<button onclick="doSearch()">🔍</button>',
+            '</div>',
+          '</section>',
+          '<div style="text-align:center;padding:48px 20px;color:#64748b">',
+            '<div style="font-size:48px;margin-bottom:12px">🛒</div>',
+            '<h3 style="margin-bottom:8px">Aucun produit pour l\'instant</h3>',
+            '<p style="font-size:13px">Les produits seront ajoutés très bientôt.</p>',
+            '<p style="font-size:13px;color:#f97316;margin-top:8px;font-weight:600">Bu yombale bi ! 🇸🇳</p>',
+          '</div>'
+        ].join(''));
+        return;
+      }
+      render(templateProduits(produits));
+    })
+    .catch(function(err) {
+      render([
+        '<section class="hero">',
+          '<h1>Meilleur prix au <span>Sénégal</span></h1>',
+          '<div class="sbar">',
+            '<input type="text" id="search-input" placeholder="Samsung, TV, Nike...">',
+            '<button onclick="doSearch()">🔍</button>',
+          '</div>',
+        '</section>',
+        '<div style="text-align:center;padding:48px 20px;color:#64748b">',
+          '<div style="font-size:48px;margin-bottom:12px">⚙️</div>',
+          '<h3 style="margin-bottom:8px">Site en cours de configuration</h3>',
+          '<p style="font-size:13px">Revenez dans quelques minutes.</p>',
+          '<p style="font-size:11px;color:#94a3b8;margin-top:6px">' + err.message + '</p>',
+        '</div>'
+      ].join(''));
+    });
 }
 
 function templateProduits(produits) {
-  if (!produits.length) return '<div class="loader"><p>Aucun produit trouvé.</p></div>';
-
   var cartes = produits.map(function(p) {
     return [
       '<div class="pcard" onclick="ouvrirProduit(\'' + p.id + '\')">',
         '<div class="pimg">',
-          p.image_url
-            ? '<img src="' + p.image_url + '" alt="' + p.nom + '">'
-            : '<span style="font-size:48px">📦</span>',
+          '<span style="font-size:48px">📦</span>',
         '</div>',
         '<div class="pbody">',
-          '<div class="pname">'   + p.nom              + '</div>',
-          '<div class="pbrand">'  + (p.marque || '')   + '</div>',
-          '<div class="pprice">'  + fcfa(p.prix_min||0) + '</div>',
-          '<div class="poffers">' + (p.nb_offres||0)   + ' offre(s) · ' + state.ville + '</div>',
-          '<button class="btn-voir">Comparer les offres</button>',
+          '<div class="pname">' + p.nom + '</div>',
+          '<div class="pbrand">' + (p.marque || '') + '</div>',
+          '<div class="pprice">' + fcfa(p.prix_min) + '</div>',
+          '<div class="poffers">' + (p.nb_offres || 0) + ' offre(s) · ' + state.ville + '</div>',
+          '<button class="btn-voir">Comparer</button>',
         '</div>',
       '</div>'
     ].join('');
@@ -64,10 +106,10 @@ function templateProduits(produits) {
   return [
     '<section class="hero">',
       '<h1>Meilleur prix au <span>Sénégal</span></h1>',
-      '<p style="opacity:.85;margin-bottom:20px">Jumia · Expat-Dakar · Dakar-Deal · CoinAfrique</p>',
+      '<p style="opacity:.85;margin-bottom:20px">Bu yombale bi ! 🇸🇳</p>',
       '<div class="sbar">',
-        '<input type="text" id="search-input" placeholder="Samsung Galaxy, TV Hisense, Nike..." onkeydown="if(event.key===\'Enter\')doSearch()">',
-        '<button onclick="doSearch()">Rechercher</button>',
+        '<input type="text" id="search-input" placeholder="Samsung, TV Hisense, Nike..." onkeydown="if(event.key===\'Enter\')doSearch()">',
+        '<button onclick="doSearch()">🔍 Comparer</button>',
       '</div>',
     '</section>',
     '<section class="products">',
@@ -84,60 +126,34 @@ function doSearch() {
 async function ouvrirProduit(id) {
   render('<div class="loader"><div class="spin"></div><p>Chargement...</p></div>');
   try {
-    var res     = await Promise.all([apiFetch('/produits/' + id), apiFetch('/produits/' + id + '/offres')]);
-    var produit = res[0], offres = res[1];
+    var res     = await apiFetch('/produits/' + id);
+    var offres  = await apiFetch('/produits/' + id + '/offres');
 
-    var lignes = offres.map(function(o, i) {
+    var lignes = (offres || []).map(function(o, i) {
       return [
         '<div class="orow' + (i === 0 ? ' best' : '') + '">',
-          '<span>' + o.marchand_nom + '</span>',
+          '<span>' + (o.marchand_nom || o.marchand || 'Marchand') + '</span>',
           '<strong>' + fcfa(o.prix) + '</strong>',
-          '<a href="' + (o.url_achat || '#') + '" target="_blank" class="btn-go">Acheter</a>',
+          '<a href="' + (o.url_achat || '#') + '" target="_blank" class="btn-go">Voir</a>',
         '</div>'
       ].join('');
-    }).join('');
+    }).join('') || '<p style="color:#64748b;font-size:13px;padding:12px">Aucune offre disponible.</p>';
 
     render([
       '<div style="padding:24px 5%">',
         '<button onclick="goHome()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:16px">← Retour</button>',
-        '<h2 style="font-size:22px;font-weight:800;margin-bottom:6px">'  + produit.nom             + '</h2>',
-        '<p style="color:#94a3b8;margin-bottom:16px">'                   + (produit.marque || '')   + ' · ' + state.ville + '</p>',
+        '<h2 style="font-size:20px;font-weight:800;margin-bottom:4px">' + res.nom + '</h2>',
+        '<p style="color:#94a3b8;margin-bottom:16px">' + (res.marque || '') + ' · ' + state.ville + '</p>',
         '<div class="offres">' + lignes + '</div>',
-        '<button onclick="ouvrirAlerteModal(\'' + id + '\')" style="margin-top:12px;background:#fff;color:#1d4ed8;border:1.5px solid #1d4ed8;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer">',
-          '🔔 Créer une alerte prix',
-        '</button>',
       '</div>'
     ].join(''));
   } catch (err) {
-    render('<div class="loader"><p>Erreur : ' + err.message + '</p></div>');
+    render('<div style="padding:24px 5%"><button onclick="goHome()">← Retour</button><p style="margin-top:12px;color:#ef4444">' + err.message + '</p></div>');
   }
 }
 
-function goHome()      { chargerProduits(''); }
-function loadPromos()  { chargerProduits('promo solde'); }
-function changeVille(v){ state.ville = v; chargerProduits(''); }
-
-function showAccount() {
-  if (!state.user) {
-    toast('Connexion requise', '#f97316');
-    return;
-  }
-  toast('Bonjour ' + state.user.nom + ' !');
-}
-
-function ouvrirAlerteModal(produitId) {
-  var email = prompt('Votre email pour l\'alerte :');
-  var prix  = prompt('Prix cible en FCFA :');
-  if (!email || !prix) return;
-  apiFetch('/alertes', {
-    method: 'POST',
-    body:   JSON.stringify({ produit_id: produitId, prix_cible: parseInt(prix), email: email })
-  }).then(function() {
-    toast('✅ Alerte créée !');
-  }).catch(function(err) {
-    toast('Erreur : ' + err.message, '#ef4444');
-  });
-}
+function goHome()     { chargerProduits(''); }
+function changeVille(v) { state.ville = v; chargerProduits(''); }
 
 document.addEventListener('DOMContentLoaded', function() {
   var saved = localStorage.getItem('pm_user');
