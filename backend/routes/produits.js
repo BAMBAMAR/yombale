@@ -20,8 +20,8 @@ router.get('/', async (req, res) => {
                               OR p.marque ILIKE '%' || $1 || '%')
         AND ($2::text IS NULL OR c.slug = $2)
       GROUP BY p.id, c.nom
-      ORDER BY nb_offres DESC NULLS LAST
-      LIMIT $3 OFFSET $4`,
+ORDER BY p.nb_offres DESC NULLS LAST
+LIMIT $3 OFFSET $4`,
       [q || null, categorie || null, limit, offset]
     );
     res.json({ success: true, produits: rows, page: +page, limit: +limit });
