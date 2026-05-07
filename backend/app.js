@@ -8,7 +8,21 @@ require('dotenv').config();
 const app = express();
 
 // ── Middlewares globaux ───────────────────────────────────────
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:    ["'self'"],
+      scriptSrc:     ["'self'", "'unsafe-inline'"],
+      scriptSrcAttr: ["'unsafe-inline'"],
+      connectSrc:    ["'self'"],
+      styleSrc:      ["'self'", "'unsafe-inline'"],
+      imgSrc:        ["'self'", "data:"],
+      fontSrc:       ["'self'", "https:", "data:"],
+      objectSrc:     ["'none'"],
+      frameAncestors:["'self'"],
+    }
+  }
+}));
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
