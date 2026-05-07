@@ -19,7 +19,10 @@ self.addEventListener('fetch', event => {
   if (new URL(event.request.url).pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() =>
-        new Response(JSON.stringify({ error: 'Hors ligne' }), { headers: { 'Content-Type': 'application/json' } })
+        new Response(JSON.stringify({ error: 'Hors ligne' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        })
       )
     );
     return;

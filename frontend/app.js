@@ -10,12 +10,25 @@ function apiFetch(endpoint, options) {
   options = options || {};
   var headers = { 'Content-Type': 'application/json' };
   if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
-  return fetch(API + endpoint, Object.assign({}, options, { headers: headers }))
+
+  var controller = new AbortController();
+  var tid = setTimeout(function() { controller.abort(); }, 10000);
+
+  return fetch(API + endpoint, Object.assign({}, options, {
+    headers: headers,
+    signal: controller.signal
+  }))
     .then(function(res) {
+      clearTimeout(tid);
       return res.json().then(function(data) {
         if (!res.ok) throw new Error(data.error || 'Erreur serveur');
         return data;
       });
+    })
+    .catch(function(err) {
+      clearTimeout(tid);
+      if (err.name === 'AbortError') throw new Error('Délai dépassé — serveur trop lent');
+      throw err;
     });
 }
 
@@ -44,7 +57,9 @@ function chargerProduits(query, categorie) {
   });
   apiFetch('/produits?' + params.toString())
     .then(function(data) {
-      var produits = data.produits || data || [];
+      var produits = (data && Array.isArray(data.produits)) ? data.produits
+                   : Array.isArray(data) ? data
+                   : [];
       if (!produits.length) {
         render([
           '<section class="hero">',
@@ -154,6 +169,14 @@ async function ouvrirProduit(id) {
 
 function goHome()     { chargerProduits(''); }
 function changeVille(v) { state.ville = v; chargerProduits(''); }
+function loadPromos()   { chargerProduits('promo'); }
+function showAccount()  {
+  if (state.user) {
+    toast('Connecté en tant que ' + state.user.nom, '#6366f1');
+  } else {
+    toast('Connexion bientôt disponible 🔐', '#6366f1');
+  }
+}
 
 document.addEventListener('DOMContentLoaded', function() {
   var saved = localStorage.getItem('pm_user');
