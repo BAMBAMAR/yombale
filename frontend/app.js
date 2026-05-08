@@ -6,28 +6,63 @@ var state = {
   token: localStorage.getItem('pm_token')
 };
 
+// ── Diagnostic logger ────────────────────────────────────────
+var _log = [];
+function dbg(etape, detail) {
+  var ts   = new Date().toISOString().slice(11, 23);
+  var line = '[' + ts + '] ' + etape + (detail !== undefined ? ' → ' + JSON.stringify(detail) : '');
+  _log.push(line);
+  console.log('%c[PM]', 'color:#1d4ed8;font-weight:bold', etape, detail !== undefined ? detail : '');
+}
+function dbgErr(etape, err) {
+  var ts   = new Date().toISOString().slice(11, 23);
+  var line = '[' + ts + '] ❌ ' + etape + ' → ' + (err && err.message ? err.message : String(err));
+  _log.push(line);
+  console.error('%c[PM]', 'color:#ef4444;font-weight:bold', etape, err);
+}
+
+// Depuis la console du navigateur : copy(PM_LOGS())
+window.PM_LOGS = function() { return _log.join('\n'); };
+
+// ── apiFetch avec timeout + logs ─────────────────────────────
 function apiFetch(endpoint, options) {
   options = options || {};
   var headers = { 'Content-Type': 'application/json' };
   if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
 
+  var url        = API + endpoint;
   var controller = new AbortController();
-  var tid = setTimeout(function() { controller.abort(); }, 10000);
+  var tid        = setTimeout(function() {
+    dbgErr('apiFetch TIMEOUT', { url: url });
+    controller.abort();
+  }, 10000);
 
-  return fetch(API + endpoint, Object.assign({}, options, {
+  dbg('apiFetch START', url);
+
+  return fetch(url, Object.assign({}, options, {
     headers: headers,
-    signal: controller.signal
+    signal:  controller.signal
   }))
     .then(function(res) {
       clearTimeout(tid);
+      dbg('apiFetch RESPONSE', { url: url, status: res.status, ok: res.ok });
       return res.json().then(function(data) {
-        if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+        if (!res.ok) {
+          dbgErr('apiFetch HTTP ' + res.status, data);
+          throw new Error(data.error || 'Erreur serveur ' + res.status);
+        }
+        dbg('apiFetch OK', { url: url, keys: Object.keys(data) });
         return data;
       });
     })
     .catch(function(err) {
       clearTimeout(tid);
-      if (err.name === 'AbortError') throw new Error('Délai dépassé — serveur trop lent');
+      if (err.name === 'AbortError') {
+        var e = new Error('Délai dépassé (10 s) — serveur trop lent');
+        dbgErr('apiFetch ABORT', e);
+        throw e;
+      }
+      dbgErr('apiFetch CATCH', err);
       throw err;
     });
 }
@@ -47,20 +82,61 @@ function render(html) {
   if (app) app.innerHTML = html;
 }
 
+// ── Afficher / copier les logs ────────────────────────────────
+function afficherLogs() {
+  var txt = PM_LOGS();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt)
+      .then(function() { toast('Logs copiés dans le presse-papiers ✅', '#6366f1'); })
+      .catch(function() { _showLogsModal(txt); });
+  } else {
+    _showLogsModal(txt);
+  }
+}
+
+function _showLogsModal(txt) {
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;' +
+    'display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:12px;padding:20px;max-width:600px;width:100%;' +
+      'max-height:80vh;display:flex;flex-direction:column;gap:12px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center">' +
+        '<strong style="color:#1e293b">Logs de diagnostic PrixMalin</strong>' +
+        '<button onclick="this.closest(\'div[style*=position]\').remove()" ' +
+          'style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b">✕</button>' +
+      '</div>' +
+      '<textarea readonly style="font-family:monospace;font-size:11px;flex:1;min-height:300px;' +
+        'border:1px solid #e2e8f0;border-radius:6px;padding:10px;color:#334155;resize:vertical">' +
+        txt +
+      '</textarea>' +
+      '<button onclick="navigator.clipboard&&navigator.clipboard.writeText(this.previousElementSibling.value).then(function(){alert(\'Copié !\')})" ' +
+        'style="padding:8px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">' +
+        '📋 Copier</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+}
+
 // ── Chargement des produits ──────────────────────────────────
 function chargerProduits(query, categorie) {
+  dbg('chargerProduits CALL', { query: query, categorie: categorie });
   render('<div class="loader"><div class="spin"></div><p>Chargement des offres...</p></div>');
+
   var params = new URLSearchParams({
     q:         query     || '',
     categorie: categorie || '',
     limit:     12
   });
+
   apiFetch('/produits?' + params.toString())
     .then(function(data) {
       var produits = (data && Array.isArray(data.produits)) ? data.produits
                    : Array.isArray(data) ? data
                    : [];
+      dbg('chargerProduits DATA', { nb: produits.length, keys: Object.keys(data) });
+
       if (!produits.length) {
+        dbg('chargerProduits EMPTY');
         render([
           '<section class="hero">',
             '<h1>Meilleur prix au <span>Sénégal</span></h1>',
@@ -75,13 +151,20 @@ function chargerProduits(query, categorie) {
             '<h3 style="margin-bottom:8px">Aucun produit pour l\'instant</h3>',
             '<p style="font-size:13px">Les produits seront ajoutés très bientôt.</p>',
             '<p style="font-size:13px;color:#f97316;margin-top:8px;font-weight:600">Bu yombale bi ! 🇸🇳</p>',
+            '<button onclick="afficherLogs()" style="margin-top:24px;padding:8px 16px;',
+              'background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;',
+              'font-size:11px;color:#64748b;cursor:pointer">',
+              '🔍 Logs de diagnostic',
+            '</button>',
           '</div>'
         ].join(''));
         return;
       }
+      dbg('chargerProduits RENDER', produits.length + ' produits');
       render(templateProduits(produits));
     })
     .catch(function(err) {
+      dbgErr('chargerProduits ERROR', err);
       render([
         '<section class="hero">',
           '<h1>Meilleur prix au <span>Sénégal</span></h1>',
@@ -92,9 +175,23 @@ function chargerProduits(query, categorie) {
         '</section>',
         '<div style="text-align:center;padding:48px 20px;color:#64748b">',
           '<div style="font-size:48px;margin-bottom:12px">⚙️</div>',
-          '<h3 style="margin-bottom:8px">Site en cours de configuration</h3>',
-          '<p style="font-size:13px">Revenez dans quelques minutes.</p>',
-          '<p style="font-size:11px;color:#94a3b8;margin-top:6px">' + err.message + '</p>',
+          '<h3 style="margin-bottom:8px">Erreur de chargement</h3>',
+          '<p style="font-size:13px;color:#ef4444;font-weight:600;margin-bottom:12px">' + err.message + '</p>',
+          // Bloc logs visible directement dans la page
+          '<div style="margin:0 auto 16px;max-width:480px;padding:12px;background:#fef2f2;',
+            'border:1px solid #fecaca;border-radius:8px;text-align:left;',
+            'font-size:10px;font-family:monospace;color:#991b1b;white-space:pre-wrap;',
+            'max-height:200px;overflow-y:auto" id="debug-box">' + _log.join('\n') + '</div>',
+          '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">',
+            '<button onclick="goHome()" style="padding:8px 20px;background:#1d4ed8;color:#fff;',
+              'border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">',
+              '🔄 Réessayer',
+            '</button>',
+            '<button onclick="afficherLogs()" style="padding:8px 16px;background:#f1f5f9;',
+              'border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#64748b;cursor:pointer">',
+              '📋 Copier les logs',
+            '</button>',
+          '</div>',
         '</div>'
       ].join(''));
     });
@@ -123,7 +220,8 @@ function templateProduits(produits) {
       '<h1>Meilleur prix au <span>Sénégal</span></h1>',
       '<p style="opacity:.85;margin-bottom:20px">Bu yombale bi ! 🇸🇳</p>',
       '<div class="sbar">',
-        '<input type="text" id="search-input" placeholder="Samsung, TV Hisense, Nike..." onkeydown="if(event.key===\'Enter\')doSearch()">',
+        '<input type="text" id="search-input" placeholder="Samsung, TV Hisense, Nike..."',
+          ' onkeydown="if(event.key===\'Enter\')doSearch()">',
         '<button onclick="doSearch()">🔍 Comparer</button>',
       '</div>',
     '</section>',
@@ -139,10 +237,11 @@ function doSearch() {
 }
 
 async function ouvrirProduit(id) {
+  dbg('ouvrirProduit', id);
   render('<div class="loader"><div class="spin"></div><p>Chargement...</p></div>');
   try {
-    var res     = await apiFetch('/produits/' + id);
-    var offres  = await apiFetch('/produits/' + id + '/offres');
+    var res    = await apiFetch('/produits/' + id);
+    var offres = await apiFetch('/produits/' + id + '/offres');
 
     var lignes = (offres || []).map(function(o, i) {
       return [
@@ -156,18 +255,21 @@ async function ouvrirProduit(id) {
 
     render([
       '<div style="padding:24px 5%">',
-        '<button onclick="goHome()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:16px">← Retour</button>',
+        '<button onclick="goHome()" style="background:none;border:none;color:#1d4ed8;',
+          'font-size:14px;font-weight:600;cursor:pointer;margin-bottom:16px">← Retour</button>',
         '<h2 style="font-size:20px;font-weight:800;margin-bottom:4px">' + res.nom + '</h2>',
         '<p style="color:#94a3b8;margin-bottom:16px">' + (res.marque || '') + ' · ' + state.ville + '</p>',
         '<div class="offres">' + lignes + '</div>',
       '</div>'
     ].join(''));
   } catch (err) {
-    render('<div style="padding:24px 5%"><button onclick="goHome()">← Retour</button><p style="margin-top:12px;color:#ef4444">' + err.message + '</p></div>');
+    dbgErr('ouvrirProduit', err);
+    render('<div style="padding:24px 5%"><button onclick="goHome()">← Retour</button>' +
+      '<p style="margin-top:12px;color:#ef4444">' + err.message + '</p></div>');
   }
 }
 
-function goHome()     { chargerProduits(''); }
+function goHome()       { chargerProduits(''); }
 function changeVille(v) { state.ville = v; chargerProduits(''); }
 function loadPromos()   { chargerProduits('promo'); }
 function showAccount()  {
@@ -179,15 +281,8 @@ function showAccount()  {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  var saved = localStorage.getItem('pm_user');
-  if (saved) {
-    try {
-      state.user = JSON.parse(saved);
-      var av = document.getElementById('nav-avatar');
-      var un = document.getElementById('nav-username');
-      if (av) av.textContent = state.user.nom.substring(0, 2).toUpperCase();
-      if (un) un.textContent = state.user.nom;
-    } catch(e) {}
-  }
+  dbg('DOMContentLoaded');
+  dbg('navigator.onLine', navigator.onLine);
+  dbg('serviceWorker support', 'serviceWorker' in navigator);
   goHome();
 });
