@@ -102,7 +102,7 @@ function _showLogsModal(txt) {
     '<div style="background:#fff;border-radius:12px;padding:20px;max-width:600px;width:100%;' +
       'max-height:80vh;display:flex;flex-direction:column;gap:12px">' +
       '<div style="display:flex;justify-content:space-between;align-items:center">' +
-        '<strong style="color:#1e293b">Logs de diagnostic PrixMalin</strong>' +
+        '<strong style="color:#1e293b">Logs de diagnostic Yombale</strong>' +
         '<button onclick="this.closest(\'div[style*=position]\').remove()" ' +
           'style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b">✕</button>' +
       '</div>' +
