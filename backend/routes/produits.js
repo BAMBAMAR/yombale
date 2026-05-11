@@ -28,6 +28,25 @@ LIMIT $3 OFFSET $4`,
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/produits/:id — détail d'un produit
+router.get('/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT p.*, c.nom AS categorie_nom,
+             MIN(o.prix) AS prix_min,
+             COUNT(o.id) AS nb_offres
+      FROM produits p
+      LEFT JOIN categories c ON c.id        = p.categorie_id
+      LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true
+      WHERE p.id = $1
+      GROUP BY p.id, c.nom`,
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Produit introuvable' });
+    res.json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/produits/:id/offres — triées par prix croissant
 router.get('/:id/offres', async (req, res) => {
   try {
