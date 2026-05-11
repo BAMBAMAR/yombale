@@ -82,6 +82,45 @@ router.get('/:id/offres', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/produits/:id/similaires — produits similaires avec filtres marque/marchand/prix
+router.get('/:id/similaires', async (req, res) => {
+  try {
+    const { marque, marchand, prixMax, prixMin, limit = 8 } = req.query;
+
+    // Récupérer le produit source pour extraire mots-clés
+    const { rows: src } = await pool.query('SELECT nom, marque, categorie_id FROM produits WHERE id=$1', [req.params.id]);
+    if (!src.length) return res.status(404).json({ error: 'Produit introuvable' });
+
+    // Extraire le mot-clé principal (1er mot significatif du nom)
+    const motsCles = src[0].nom.split(/\s+/).filter(m => m.length > 3).slice(0, 2).join(' ');
+
+    const { rows } = await pool.query(`
+      SELECT DISTINCT p.*, c.nom AS categorie_nom,
+             MIN(o.prix) AS prix_min,
+             COUNT(DISTINCT o.id) AS nb_offres,
+             array_agg(DISTINCT m.nom) AS marchands
+      FROM produits p
+      LEFT JOIN categories c  ON c.id = p.categorie_id
+      LEFT JOIN offres o      ON o.produit_id = p.id AND o.stock = true
+      LEFT JOIN marchands m   ON m.id = o.marchand_id
+      WHERE p.id != $1
+        AND p.categorie_id = $2
+        AND ($3::text IS NULL OR p.nom ILIKE '%' || $3 || '%')
+        AND ($4::text IS NULL OR p.marque ILIKE $4)
+        AND ($5::text IS NULL OR m.nom ILIKE '%' || $5 || '%')
+        AND ($6::numeric IS NULL OR o.prix <= $6::numeric)
+        AND ($7::numeric IS NULL OR o.prix >= $7::numeric)
+      GROUP BY p.id, c.nom
+      ORDER BY MIN(o.prix) ASC NULLS LAST
+      LIMIT $8`,
+      [req.params.id, src[0].categorie_id, motsCles || null,
+       marque || null, marchand || null,
+       prixMax || null, prixMin || null, limit]
+    );
+    res.json({ produits: rows, source: src[0], motsCles });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/produits/:id/historique — 90 derniers jours
 router.get('/:id/historique', async (req, res) => {
   try {
