@@ -1,9 +1,13 @@
 // Yombale — JavaScript frontend
 var API   = '/api';
 var state = {
-  user:  null,
-  ville: 'Dakar',
-  token: localStorage.getItem('pm_token')
+  user:      null,
+  ville:     'Dakar',
+  token:     localStorage.getItem('pm_token'),
+  page:      1,
+  pageTotal: 1,
+  query:     '',
+  categorie: ''
 };
 
 // ── Diagnostic logger ────────────────────────────────────────
@@ -118,14 +122,37 @@ function _showLogsModal(txt) {
 }
 
 // ── Chargement des produits ──────────────────────────────────
-function chargerProduits(query, categorie) {
-  dbg('chargerProduits CALL', { query: query, categorie: categorie });
-  render('<div class="loader"><div class="spin"></div><p>Chargement des offres...</p></div>');
+function chargerProduits(query, categorie, page) {
+  page      = page      || 1;
+  query     = query     !== undefined ? query     : state.query;
+  categorie = categorie !== undefined ? categorie : state.categorie;
+
+  // Mise à jour état global
+  state.query     = query;
+  state.categorie = categorie;
+  state.page      = page;
+
+  dbg('chargerProduits CALL', { query: query, categorie: categorie, page: page });
+
+  if (page === 1) {
+    render('<div class="loader"><div class="spin"></div><p>Chargement des offres...</p></div>');
+  } else {
+    // Ajouter spinner sous les cartes existantes
+    var section = document.querySelector('.products');
+    if (section) {
+      var spinner = document.createElement('div');
+      spinner.id  = 'load-more-spinner';
+      spinner.className = 'loader';
+      spinner.innerHTML = '<div class="spin"></div><p>Chargement...</p>';
+      section.appendChild(spinner);
+    }
+  }
 
   var params = new URLSearchParams({
     q:         query     || '',
     categorie: categorie || '',
-    limit:     12
+    limit:     24,
+    page:      page
   });
 
   apiFetch('/produits?' + params.toString())
@@ -133,9 +160,11 @@ function chargerProduits(query, categorie) {
       var produits = (data && Array.isArray(data.produits)) ? data.produits
                    : Array.isArray(data) ? data
                    : [];
-      dbg('chargerProduits DATA', { nb: produits.length, keys: Object.keys(data) });
+      state.pageTotal = data.pages || 1;
 
-      if (!produits.length) {
+      dbg('chargerProduits DATA', { nb: produits.length, total: data.total, pages: data.pages, keys: Object.keys(data) });
+
+      if (!produits.length && page === 1) {
         dbg('chargerProduits EMPTY');
         render([
           '<section class="hero">',
@@ -160,60 +189,116 @@ function chargerProduits(query, categorie) {
         ].join(''));
         return;
       }
-      dbg('chargerProduits RENDER', produits.length + ' produits');
-      render(templateProduits(produits));
+
+      dbg('chargerProduits RENDER', produits.length + ' produits (page ' + page + '/' + state.pageTotal + ')');
+
+      if (page === 1) {
+        render(templateProduits(produits, data));
+      } else {
+        // Supprimer spinner
+        var sp = document.getElementById('load-more-spinner');
+        if (sp) sp.remove();
+        // Retirer l'ancien bouton "Charger plus"
+        var oldBtn = document.getElementById('btn-charger-plus');
+        if (oldBtn) oldBtn.remove();
+        // Ajouter les nouvelles cartes
+        var grid = document.querySelector('.pgrid');
+        if (grid) {
+          var tmp = document.createElement('div');
+          tmp.innerHTML = produits.map(carteHTML).join('');
+          while (tmp.firstChild) grid.appendChild(tmp.firstChild);
+        }
+        // Ré-afficher bouton si nécessaire
+        if (page < state.pageTotal) {
+          var section2 = document.querySelector('.products');
+          if (section2) section2.insertAdjacentHTML('beforeend', btnChargerPlus(data));
+        } else {
+          var section3 = document.querySelector('.products');
+          if (section3) section3.insertAdjacentHTML('beforeend',
+            '<p id="fin-liste" style="text-align:center;padding:16px 0;color:#94a3b8;font-size:13px">' +
+            '✅ Tous les ' + data.total + ' produits sont affichés</p>');
+        }
+      }
     })
     .catch(function(err) {
       dbgErr('chargerProduits ERROR', err);
-      render([
-        '<section class="hero">',
-          '<h1>Meilleur prix au <span>Sénégal</span></h1>',
-          '<div class="sbar">',
-            '<input type="text" id="search-input" placeholder="Samsung, TV, Nike...">',
-            '<button onclick="doSearch()">🔍</button>',
-          '</div>',
-        '</section>',
-        '<div style="text-align:center;padding:48px 20px;color:#64748b">',
-          '<div style="font-size:48px;margin-bottom:12px">⚙️</div>',
-          '<h3 style="margin-bottom:8px">Erreur de chargement</h3>',
-          '<p style="font-size:13px;color:#ef4444;font-weight:600;margin-bottom:12px">' + err.message + '</p>',
-          // Bloc logs visible directement dans la page
-          '<div style="margin:0 auto 16px;max-width:480px;padding:12px;background:#fef2f2;',
-            'border:1px solid #fecaca;border-radius:8px;text-align:left;',
-            'font-size:10px;font-family:monospace;color:#991b1b;white-space:pre-wrap;',
-            'max-height:200px;overflow-y:auto" id="debug-box">' + _log.join('\n') + '</div>',
-          '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">',
-            '<button onclick="goHome()" style="padding:8px 20px;background:#1d4ed8;color:#fff;',
-              'border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">',
-              '🔄 Réessayer',
-            '</button>',
-            '<button onclick="afficherLogs()" style="padding:8px 16px;background:#f1f5f9;',
-              'border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#64748b;cursor:pointer">',
-              '📋 Copier les logs',
-            '</button>',
-          '</div>',
-        '</div>'
-      ].join(''));
+      var sp = document.getElementById('load-more-spinner');
+      if (sp) sp.remove();
+      if (page === 1) {
+        render([
+          '<section class="hero">',
+            '<h1>Meilleur prix au <span>Sénégal</span></h1>',
+            '<div class="sbar">',
+              '<input type="text" id="search-input" placeholder="Samsung, TV, Nike...">',
+              '<button onclick="doSearch()">🔍</button>',
+            '</div>',
+          '</section>',
+          '<div style="text-align:center;padding:48px 20px;color:#64748b">',
+            '<div style="font-size:48px;margin-bottom:12px">⚙️</div>',
+            '<h3 style="margin-bottom:8px">Erreur de chargement</h3>',
+            '<p style="font-size:13px;color:#ef4444;font-weight:600;margin-bottom:12px">' + err.message + '</p>',
+            '<div style="margin:0 auto 16px;max-width:480px;padding:12px;background:#fef2f2;',
+              'border:1px solid #fecaca;border-radius:8px;text-align:left;',
+              'font-size:10px;font-family:monospace;color:#991b1b;white-space:pre-wrap;',
+              'max-height:200px;overflow-y:auto" id="debug-box">' + _log.join('\n') + '</div>',
+            '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">',
+              '<button onclick="goHome()" style="padding:8px 20px;background:#1d4ed8;color:#fff;',
+                'border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">',
+                '🔄 Réessayer',
+              '</button>',
+              '<button onclick="afficherLogs()" style="padding:8px 16px;background:#f1f5f9;',
+                'border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#64748b;cursor:pointer">',
+                '📋 Copier les logs',
+              '</button>',
+            '</div>',
+          '</div>'
+        ].join(''));
+      } else {
+        toast('Erreur lors du chargement de la page suivante', '#ef4444');
+      }
     });
 }
 
-function templateProduits(produits) {
-  var cartes = produits.map(function(p) {
-    return [
-      '<div class="pcard" onclick="ouvrirProduit(\'' + p.id + '\')">',
-        '<div class="pimg">',
-          '<span style="font-size:48px">📦</span>',
-        '</div>',
-        '<div class="pbody">',
-          '<div class="pname">' + p.nom + '</div>',
-          '<div class="pbrand">' + (p.marque || '') + '</div>',
-          '<div class="pprice">' + fcfa(p.prix_min) + '</div>',
-          '<div class="poffers">' + (p.nb_offres || 0) + ' offre(s) · ' + state.ville + '</div>',
-          '<button class="btn-voir">Comparer</button>',
-        '</div>',
-      '</div>'
-    ].join('');
-  }).join('');
+function carteHTML(p) {
+  return [
+    '<div class="pcard" onclick="ouvrirProduit(\'' + p.id + '\')">',
+      '<div class="pimg">',
+        p.image_url
+          ? '<img src="' + p.image_url + '" alt="' + p.nom + '" style="width:100%;height:100%;object-fit:contain">'
+          : '<span style="font-size:48px">📦</span>',
+      '</div>',
+      '<div class="pbody">',
+        '<div class="pname">' + p.nom + '</div>',
+        '<div class="pbrand">' + (p.marque || '') + '</div>',
+        '<div class="pprice">' + fcfa(p.prix_min) + '</div>',
+        '<div class="poffers">' + (p.nb_offres || 0) + ' offre(s) · ' + state.ville + '</div>',
+        '<button class="btn-voir">Comparer</button>',
+      '</div>',
+    '</div>'
+  ].join('');
+}
+
+function btnChargerPlus(data) {
+  var restant = data.total - (state.page * 24);
+  return '<div id="btn-charger-plus" style="text-align:center;padding:24px 0">' +
+    '<button onclick="chargerProduits(state.query, state.categorie, state.page + 1)" ' +
+      'style="padding:12px 32px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;' +
+      'font-size:14px;font-weight:700;cursor:pointer">' +
+      '⬇ Charger plus (' + Math.max(restant, 0) + ' restants)' +
+    '</button>' +
+    '<p style="font-size:12px;color:#94a3b8;margin-top:8px">' +
+      'Page ' + data.page + ' sur ' + data.pages +
+    '</p>' +
+  '</div>';
+}
+
+function templateProduits(produits, data) {
+  var cartes = produits.map(carteHTML).join('');
+  var plus   = (data && data.page < data.pages) ? btnChargerPlus(data) : (
+    data && data.total > 24
+      ? '<p style="text-align:center;padding:16px 0;color:#94a3b8;font-size:13px">✅ Tous les ' + data.total + ' produits sont affichés</p>'
+      : ''
+  );
 
   return [
     '<section class="hero">',
@@ -226,7 +311,9 @@ function templateProduits(produits) {
       '</div>',
     '</section>',
     '<section class="products">',
+      data ? '<p style="font-size:12px;color:#94a3b8;text-align:right;padding:0 5% 8px">' + data.total + ' produit(s) trouvé(s)</p>' : '',
       '<div class="pgrid">' + cartes + '</div>',
+      plus,
     '</section>'
   ].join('');
 }
@@ -269,9 +356,9 @@ async function ouvrirProduit(id) {
   }
 }
 
-function goHome()       { chargerProduits(''); }
-function changeVille(v) { state.ville = v; chargerProduits(''); }
-function loadPromos()   { chargerProduits('promo'); }
+function goHome()       { chargerProduits('', '', 1); }
+function changeVille(v) { state.ville = v; chargerProduits(state.query, state.categorie, 1); }
+function loadPromos()   { chargerProduits('promo', '', 1); }
 function showAccount()  {
   if (state.user) {
     toast('Connecté en tant que ' + state.user.nom, '#6366f1');
