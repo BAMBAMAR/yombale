@@ -1,3 +1,15 @@
+// Polyfill global File pour Node.js < 20 (requis par undici)
+if (typeof globalThis.File === 'undefined') {
+  const { Blob } = require('buffer');
+  globalThis.File = class File extends Blob {
+    constructor(fileBits, fileName, options = {}) {
+      super(fileBits, options);
+      this.name = fileName;
+      this.lastModified = options.lastModified ?? Date.now();
+    }
+  };
+}
+
 // backend/migrate.js
 // Crée toutes les tables au démarrage via Node.js (sans psql)
 const { Pool } = require('pg');
@@ -119,6 +131,9 @@ async function migrate() {
           SELECT 1 FROM pg_constraint
           WHERE conname = 'marchands_nom_unique' AND conrelid = 'marchands'::regclass
         ) THEN
+          -- Supprimer les doublons sur nom avant d'ajouter la contrainte unique
+          DELETE FROM marchands a USING marchands b
+          WHERE a.id > b.id AND a.nom = b.nom;
           ALTER TABLE marchands ADD CONSTRAINT marchands_nom_unique UNIQUE (nom);
         END IF;
       END $$;
