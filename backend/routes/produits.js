@@ -24,7 +24,19 @@ ORDER BY p.nb_offres DESC NULLS LAST
 LIMIT $3 OFFSET $4`,
       [q || null, categorie || null, limit, offset]
     );
-    res.json({ success: true, produits: rows, page: +page, limit: +limit });
+
+    const totalResult = await pool.query(`
+      SELECT COUNT(DISTINCT p.id) AS total
+      FROM produits p
+      LEFT JOIN categories c ON c.id = p.categorie_id
+      WHERE ($1::text IS NULL OR p.nom    ILIKE '%' || $1 || '%'
+                              OR p.marque ILIKE '%' || $1 || '%')
+        AND ($2::text IS NULL OR c.slug = $2)`,
+      [q || null, categorie || null]
+    );
+    const total = parseInt(totalResult.rows[0].total, 10);
+
+    res.json({ success: true, produits: rows, page: +page, limit: +limit, total, pages: Math.ceil(total / limit) });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
