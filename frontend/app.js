@@ -7,7 +7,9 @@ var state = {
   page:      1,
   pageTotal: 1,
   query:     '',
-  categorie: ''
+  categorie: '',
+  tri:       'pertinence',  // pertinence | prix_asc | prix_desc | nom_asc
+  prixMax:   ''
 };
 
 // ── Diagnostic logger ────────────────────────────────────────
@@ -152,7 +154,9 @@ function chargerProduits(query, categorie, page) {
     q:         query     || '',
     categorie: categorie || '',
     limit:     24,
-    page:      page
+    page:      page,
+    tri:       state.tri,
+    prixMax:   state.prixMax || ''
   });
 
   apiFetch('/produits?' + params.toString())
@@ -292,6 +296,96 @@ function btnChargerPlus(data) {
   '</div>';
 }
 
+function barFiltres(data) {
+  var categories = [
+    { slug: '',               label: 'Toutes' },
+    { slug: 'electronique',   label: '📱 Électronique' },
+    { slug: 'electromenager', label: '🏠 Électroménager' },
+    { slug: 'mode',           label: '👗 Mode' },
+    { slug: 'alimentation',   label: '🛒 Alimentation' },
+    { slug: 'informatique',   label: '💻 Informatique' },
+    { slug: 'sport',          label: '⚽ Sport' }
+  ];
+
+  var catOptions = categories.map(function(c) {
+    return '<option value="' + c.slug + '"' + (state.categorie === c.slug ? ' selected' : '') + '>' + c.label + '</option>';
+  }).join('');
+
+  var triOptions = [
+    { val: 'pertinence', label: '🎯 Pertinence' },
+    { val: 'prix_asc',   label: '⬆ Prix croissant' },
+    { val: 'prix_desc',  label: '⬇ Prix décroissant' },
+    { val: 'nom_asc',    label: '🔤 Nom A→Z' }
+  ].map(function(t) {
+    return '<option value="' + t.val + '"' + (state.tri === t.val ? ' selected' : '') + '>' + t.label + '</option>';
+  }).join('');
+
+  var selectStyle = 'padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;' +
+    'background:#fff;color:#334155;cursor:pointer;outline:none;min-width:0';
+
+  var activeFilters = [];
+  if (state.categorie) activeFilters.push(state.categorie);
+  if (state.prixMax)   activeFilters.push('max ' + fcfa(state.prixMax));
+
+  return [
+    '<div id="barre-filtres" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;',
+      'padding:12px 5%;background:#f8fafc;border-bottom:1px solid #e2e8f0">',
+
+      // Catégorie
+      '<select onchange="appliquerFiltre(\'categorie\',this.value)" style="' + selectStyle + '">',
+        catOptions,
+      '</select>',
+
+      // Tri
+      '<select onchange="appliquerFiltre(\'tri\',this.value)" style="' + selectStyle + '">',
+        triOptions,
+      '</select>',
+
+      // Prix max
+      '<div style="display:flex;align-items:center;gap:4px;border:1px solid #e2e8f0;',
+        'border-radius:8px;background:#fff;padding:4px 8px;min-width:0">',
+        '<span style="font-size:12px;color:#94a3b8;white-space:nowrap">Max</span>',
+        '<input type="number" id="input-prix-max" placeholder="ex: 50000" value="' + (state.prixMax || '') + '"',
+          ' min="0" step="1000"',
+          ' style="border:none;outline:none;width:90px;font-size:13px;color:#334155"',
+          ' onkeydown="if(event.key===\'Enter\')appliquerFiltre(\'prixMax\',this.value)">',
+        '<span style="font-size:11px;color:#94a3b8">FCFA</span>',
+      '</div>',
+
+      // Bouton appliquer prix
+      '<button onclick="appliquerFiltre(\'prixMax\',document.getElementById(\'input-prix-max\').value)" ',
+        'style="padding:7px 12px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;',
+        'font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Appliquer</button>',
+
+      // Reset si filtres actifs
+      activeFilters.length ? [
+        '<button onclick="reinitialiserFiltres()" ',
+          'style="padding:7px 12px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;',
+          'border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">',
+          '✕ Réinitialiser</button>'
+      ].join('') : '',
+
+      // Compteur
+      data ? '<span style="font-size:12px;color:#94a3b8;margin-left:auto">' + data.total + ' produit(s)</span>' : '',
+
+    '</div>'
+  ].join('');
+}
+
+function appliquerFiltre(cle, valeur) {
+  if (cle === 'categorie') state.categorie = valeur;
+  else if (cle === 'tri')  state.tri       = valeur;
+  else if (cle === 'prixMax') state.prixMax = valeur ? parseInt(valeur, 10) : '';
+  chargerProduits(state.query, state.categorie, 1);
+}
+
+function reinitialiserFiltres() {
+  state.categorie = '';
+  state.tri       = 'pertinence';
+  state.prixMax   = '';
+  chargerProduits(state.query, '', 1);
+}
+
 function templateProduits(produits, data) {
   var cartes = produits.map(carteHTML).join('');
   var plus   = (data && data.page < data.pages) ? btnChargerPlus(data) : (
@@ -310,8 +404,8 @@ function templateProduits(produits, data) {
         '<button onclick="doSearch()">🔍 Comparer</button>',
       '</div>',
     '</section>',
+    barFiltres(data),
     '<section class="products">',
-      data ? '<p style="font-size:12px;color:#94a3b8;text-align:right;padding:0 5% 8px">' + data.total + ' produit(s) trouvé(s)</p>' : '',
       '<div class="pgrid">' + cartes + '</div>',
       plus,
     '</section>'
