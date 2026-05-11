@@ -2,21 +2,22 @@ const router = require('express').Router();
 const { pool, queryWithCache } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 
-// GET /api/produits?q=Samsung&categorie=smartphones&limit=20&page=1
+// GET /api/produits — liste avec tri, filtres, pagination
 router.get('/', async (req, res) => {
   try {
-    const { q, categorie, limit = 20, page = 1, tri, prixMax } = req.query;
+    const { q, categorie, limit = 20, page = 1, tri, prixMax, prixMin } = req.query;
     const offset    = (page - 1) * limit;
-    const cacheKey  = `produits:${q}:${categorie}:${page}:${tri}:${prixMax}`;
+    const cacheKey  = `produits:${q}:${categorie}:${page}:${tri}:${prixMax}:${prixMin}`;
 
     const orderBy = tri === 'prix_asc'  ? 'MIN(o.prix) ASC NULLS LAST'
                   : tri === 'prix_desc' ? 'MIN(o.prix) DESC NULLS LAST'
                   : tri === 'nom_asc'   ? 'p.nom ASC'
-                  :                      'COUNT(o.id) DESC NULLS LAST'; // pertinence
+                  :                      'COUNT(o.id) DESC NULLS LAST';
 
     const rows = await queryWithCache(cacheKey, `
       SELECT p.*, c.nom AS categorie_nom,
              MIN(o.prix) AS prix_min,
+             MAX(o.prix) AS prix_max,
              COUNT(o.id) AS nb_offres
       FROM produits p
       LEFT JOIN categories c ON c.id        = p.categorie_id
@@ -25,10 +26,11 @@ router.get('/', async (req, res) => {
                               OR p.marque ILIKE '%' || $1 || '%')
         AND ($2::text IS NULL OR c.slug = $2)
         AND ($5::numeric IS NULL OR o.prix <= $5::numeric)
+        AND ($6::numeric IS NULL OR o.prix >= $6::numeric)
       GROUP BY p.id, c.nom
-      ORDER BY ` + orderBy + `
+      ORDER BY ${orderBy}
       LIMIT $3 OFFSET $4`,
-      [q || null, categorie || null, limit, offset, prixMax || null]
+      [q || null, categorie || null, limit, offset, prixMax || null, prixMin || null]
     );
 
     const totalResult = await pool.query(`
@@ -39,11 +41,11 @@ router.get('/', async (req, res) => {
       WHERE ($1::text IS NULL OR p.nom    ILIKE '%' || $1 || '%'
                               OR p.marque ILIKE '%' || $1 || '%')
         AND ($2::text IS NULL OR c.slug = $2)
-        AND ($3::numeric IS NULL OR o.prix <= $3::numeric)`,
-      [q || null, categorie || null, prixMax || null]
+        AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
+        AND ($4::numeric IS NULL OR o.prix >= $4::numeric)`,
+      [q || null, categorie || null, prixMax || null, prixMin || null]
     );
     const total = parseInt(totalResult.rows[0].total, 10);
-
     res.json({ success: true, produits: rows, page: +page, limit: +limit, total, pages: Math.ceil(total / limit) });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
