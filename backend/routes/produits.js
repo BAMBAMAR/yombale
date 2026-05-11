@@ -51,7 +51,7 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/offres', async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT o.*, m.nom AS marchand_nom, m.logo_url, m.site_url
+      SELECT o.*, m.nom AS marchand_nom, m.site_url
       FROM offres o
       JOIN marchands m ON m.id = o.marchand_id
       WHERE o.produit_id = $1 AND o.stock = true
