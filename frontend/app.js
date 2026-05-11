@@ -123,7 +123,29 @@ function _showLogsModal(txt) {
   document.body.appendChild(overlay);
 }
 
-// ── Chargement des produits ──────────────────────────────────
+// ── Retour à la liste en conservant la recherche ─────────────
+function retourListe() {
+  chargerProduits(state.query, state.categorie, state.page || 1);
+}
+
+// ── Détection intelligente budget dans la recherche ──────────
+// "écouteurs moins de 15000" → { q: 'écouteurs', prixMax: 15000 }
+// "nike plus de 5000"        → { q: 'nike', prixMin: 5000 }
+function parseSmartSearch(raw) {
+  var q = raw.trim();
+  var prixMax = null, prixMin = null;
+
+  var mMax = q.match(/(?:moins\s+de|max|maximum|jusqu(?:['']|\s+)(?:à|a)|<)\s*([0-9\s]+)/i);
+  var mMin = q.match(/(?:plus\s+de|min|minimum|au[-\s]dessus\s+de|>)\s*([0-9\s]+)/i);
+
+  if (mMax) { prixMax = parseInt(mMax[1].replace(/\s/g,''), 10); q = q.replace(mMax[0], '').trim(); }
+  if (mMin) { prixMin = parseInt(mMin[1].replace(/\s/g,''), 10); q = q.replace(mMin[0], '').trim(); }
+
+  // Nettoyer les connecteurs résiduels
+  q = q.replace(/\b(fcfa|cfa|f\b|pour|environ|autour|de|à|a)\b/gi, '').replace(/\s+/g, ' ').trim();
+
+  return { q: q, prixMax: prixMax, prixMin: prixMin };
+}
 function chargerProduits(query, categorie, page) {
   page      = page      || 1;
   query     = query     !== undefined ? query     : state.query;
@@ -413,77 +435,87 @@ function templateProduits(produits, data) {
 }
 
 function doSearch() {
-  var q = document.getElementById('search-input');
-  if (q) chargerProduits(q.value);
+  var input = document.getElementById('search-input');
+  if (!input) return;
+  var parsed = parseSmartSearch(input.value);
+  if (parsed.prixMax) state.prixMax = parsed.prixMax;
+  if (parsed.prixMin) state.prixMin = parsed.prixMin;
+  chargerProduits(parsed.q, state.categorie, 1);
 }
 
-async function ouvrirProduit(id) {
+async function ouvrirProduit(id, filtresSim) {
+  filtresSim = filtresSim || {};
   dbg('ouvrirProduit', id);
   render('<div class="loader"><div class="spin"></div><p>Chargement...</p></div>');
   try {
-    var res      = await apiFetch('/produits/' + id);
-    var offres   = await apiFetch('/produits/' + id + '/offres');
-    var histo    = await apiFetch('/produits/' + id + '/historique').catch(function() { return []; });
+    var res    = await apiFetch('/produits/' + id);
+    var offres = await apiFetch('/produits/' + id + '/offres');
+    var histo  = await apiFetch('/produits/' + id + '/historique').catch(function() { return []; });
 
-    var prixMin  = offres.length ? Math.min.apply(null, offres.map(function(o) { return o.prix; })) : 0;
+    // Construire URL similaires avec filtres
+    var simParams = new URLSearchParams({
+      limit:   8,
+      prixMax: filtresSim.prixMax || '',
+      prixMin: filtresSim.prixMin || '',
+      marque:  filtresSim.marque  || '',
+      marchand:filtresSim.marchand|| ''
+    });
+    var similaires = await apiFetch('/produits/' + id + '/similaires?' + simParams.toString())
+                           .catch(function() { return { produits: [] }; });
 
+    var prixMin = offres.length ? Math.min.apply(null, offres.map(function(o) { return o.prix; })) : 0;
+
+    // Extraire marques et marchands uniques pour les filtres
+    var marques   = [...new Set(offres.map(function(o) { return o.marchand_nom; }).filter(Boolean))];
+    var marchands = marques; // même données pour l'instant
+
+    // ─── Lignes d'offres ──────────────────────────────────
     var lignes = (offres || []).map(function(o, i) {
-      var isBest   = o.prix === prixMin && i === 0;
-      var economie = i > 0 ? (o.prix - prixMin) : 0;
+      var isBest = o.prix === prixMin;
+      var ecart  = isBest ? 0 : o.prix - prixMin;
       return [
         '<div class="orow' + (isBest ? ' best' : '') + '">',
-          '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">',
-            isBest ? '<span style="background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap">🏆 Meilleur prix</span>' : '',
-            '<a href="' + (o.site_url || '#') + '" target="_blank" ' +
+          '<div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">',
+            isBest ? '<span style="background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap">🏆 Meilleur</span>' : '',
+            '<a href="' + (o.site_url || '#') + '" target="_blank" rel="noopener" ' +
               'style="font-weight:600;color:#1e293b;text-decoration:none;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
               (o.marchand_nom || 'Marchand') +
             '</a>',
           '</div>',
-          '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0">',
+          '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0">',
             '<div style="text-align:right">',
-              '<strong style="font-size:16px;color:' + (isBest ? '#10b981' : '#1e293b') + '">' + fcfa(o.prix) + '</strong>',
-              economie > 0 ? '<div style="font-size:11px;color:#ef4444">+' + fcfa(economie) + '</div>' : '',
+              '<strong style="font-size:15px;color:' + (isBest ? '#10b981' : '#1e293b') + '">' + fcfa(o.prix) + '</strong>',
+              ecart > 0 ? '<div style="font-size:11px;color:#ef4444">+' + fcfa(ecart) + '</div>' : '',
             '</div>',
-            '<a href="' + (o.url_achat || '#') + '" target="_blank" class="btn-go" ' +
-              'onclick="event.stopPropagation()">Acheter →</a>',
+            '<a href="' + (o.url_achat || '#') + '" target="_blank" rel="noopener" class="btn-go" onclick="event.stopPropagation()">Acheter →</a>',
           '</div>',
         '</div>'
       ].join('');
     }).join('') || '<p style="color:#64748b;font-size:13px;padding:12px">Aucune offre disponible.</p>';
 
-    // Graphique historique SVG
+    // ─── Historique SVG ───────────────────────────────────
     var graphHTML = '';
     if (histo && histo.length > 1) {
-      var prix    = histo.map(function(h) { return parseFloat(h.prix_min); });
-      var dates   = histo.map(function(h) { return h.jour ? h.jour.slice(0, 10) : ''; });
-      var minP    = Math.min.apply(null, prix);
-      var maxP    = Math.max.apply(null, prix);
-      var W = 340, H = 100, padX = 8, padY = 10;
-      var rangeP  = maxP - minP || 1;
-      var points  = prix.map(function(v, i) {
+      var prix  = histo.map(function(h) { return parseFloat(h.prix_min); });
+      var dates = histo.map(function(h) { return h.jour ? h.jour.slice(0, 10) : ''; });
+      var minP  = Math.min.apply(null, prix), maxP = Math.max.apply(null, prix);
+      var W = 340, H = 90, padX = 8, padY = 10, rangeP = maxP - minP || 1;
+      var points = prix.map(function(v, i) {
         var x = padX + (i / (prix.length - 1)) * (W - padX * 2);
         var y = padY + (1 - (v - minP) / rangeP) * (H - padY * 2);
         return x.toFixed(1) + ',' + y.toFixed(1);
       });
-      var polyline = points.join(' ');
-      var lastDate = dates[dates.length - 1];
-      var firstDate = dates[0];
       graphHTML = [
         '<div style="margin-top:20px">',
-          '<h4 style="font-size:13px;font-weight:700;color:#475569;margin-bottom:8px">📈 Historique des prix (90 jours)</h4>',
-          '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px">',
+          '<h4 style="font-size:12px;font-weight:700;color:#475569;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">📈 Historique 90 jours</h4>',
+          '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px">',
             '<svg viewBox="0 0 ' + W + ' ' + (H + 20) + '" style="width:100%;display:block">',
-              // Ligne de fond
               '<line x1="' + padX + '" y1="' + (H - padY) + '" x2="' + (W - padX) + '" y2="' + (H - padY) + '" stroke="#e2e8f0" stroke-width="1"/>',
-              // Courbe
-              '<polyline points="' + polyline + '" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linejoin="round"/>',
-              // Points extrêmes
+              '<polyline points="' + points.join(' ') + '" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linejoin="round"/>',
               '<circle cx="' + points[0].split(',')[0] + '" cy="' + points[0].split(',')[1] + '" r="3" fill="#1d4ed8"/>',
               '<circle cx="' + points[points.length-1].split(',')[0] + '" cy="' + points[points.length-1].split(',')[1] + '" r="3" fill="#1d4ed8"/>',
-              // Labels dates
-              '<text x="' + padX + '" y="' + (H + 14) + '" font-size="9" fill="#94a3b8">' + firstDate + '</text>',
-              '<text x="' + (W - padX) + '" y="' + (H + 14) + '" font-size="9" fill="#94a3b8" text-anchor="end">' + lastDate + '</text>',
-              // Labels prix
+              '<text x="' + padX + '" y="' + (H + 14) + '" font-size="9" fill="#94a3b8">' + (dates[0] || '') + '</text>',
+              '<text x="' + (W - padX) + '" y="' + (H + 14) + '" font-size="9" fill="#94a3b8" text-anchor="end">' + (dates[dates.length-1] || '') + '</text>',
               '<text x="' + (W - padX + 2) + '" y="' + (padY + 4) + '" font-size="9" fill="#10b981">' + fcfa(maxP) + '</text>',
               '<text x="' + (W - padX + 2) + '" y="' + (H - padY) + '" font-size="9" fill="#ef4444">' + fcfa(minP) + '</text>',
             '</svg>',
@@ -492,44 +524,138 @@ async function ouvrirProduit(id) {
       ].join('');
     }
 
+    // ─── Filtres similaires ───────────────────────────────
+    var selectStyle = 'padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;background:#fff;color:#334155;cursor:pointer;outline:none';
+
+    var filtresHTML = [
+      '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:12px">',
+        '<p style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">🔎 Affiner la recherche de produits similaires</p>',
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">',
+
+          // Prix max
+          '<div style="display:flex;align-items:center;gap:4px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;padding:5px 8px">',
+            '<span style="font-size:11px;color:#94a3b8">Max</span>',
+            '<input type="number" id="sim-prix-max" placeholder="15000" value="' + (filtresSim.prixMax || '') + '"',
+              ' style="border:none;outline:none;width:70px;font-size:12px;color:#334155">',
+            '<span style="font-size:11px;color:#94a3b8">FCFA</span>',
+          '</div>',
+
+          // Prix min
+          '<div style="display:flex;align-items:center;gap:4px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;padding:5px 8px">',
+            '<span style="font-size:11px;color:#94a3b8">Min</span>',
+            '<input type="number" id="sim-prix-min" placeholder="5000" value="' + (filtresSim.prixMin || '') + '"',
+              ' style="border:none;outline:none;width:70px;font-size:12px;color:#334155">',
+            '<span style="font-size:11px;color:#94a3b8">FCFA</span>',
+          '</div>',
+
+          // Filtre marchand
+          '<select id="sim-marchand" style="' + selectStyle + '">',
+            '<option value="">Tous les sites</option>',
+            ['Jumia Senegal','Expat-Dakar','CoinAfrique'].map(function(m) {
+              return '<option value="' + m + '"' + (filtresSim.marchand === m ? ' selected' : '') + '>' + m + '</option>';
+            }).join(''),
+          '</select>',
+
+          '<button onclick="_appliquerSimFiltres(\'' + id + '\')" ',
+            'style="padding:6px 14px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">',
+            'Appliquer</button>',
+
+          filtresSim.prixMax || filtresSim.prixMin || filtresSim.marchand
+            ? '<button onclick="ouvrirProduit(\'' + id + '\')" style="padding:6px 10px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:11px;cursor:pointer">✕ Reset</button>'
+            : '',
+        '</div>',
+      '</div>'
+    ].join('');
+
+    // ─── Grille similaires ────────────────────────────────
+    var simHTML = '';
+    if (similaires.produits && similaires.produits.length) {
+      var simCartes = similaires.produits.map(function(p) {
+        return [
+          '<div onclick="ouvrirProduit(\'' + p.id + '\')" ',
+            'style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;cursor:pointer;',
+            'display:flex;flex-direction:column;gap:6px;transition:box-shadow .15s" ',
+            'onmouseover="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.1)\'" ',
+            'onmouseout="this.style.boxShadow=\'none\'">',
+            '<div style="width:100%;height:80px;background:#f8fafc;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:4px">',
+              p.image_url
+                ? '<img src="' + p.image_url + '" style="max-height:80px;object-fit:contain" loading="lazy">'
+                : '<span style="font-size:32px">📦</span>',
+            '</div>',
+            '<div style="font-size:12px;font-weight:600;color:#1e293b;line-height:1.3">' + p.nom + '</div>',
+            p.marque ? '<div style="font-size:11px;color:#94a3b8">' + p.marque + '</div>' : '',
+            p.prix_min ? '<div style="font-size:14px;font-weight:800;color:#10b981">' + fcfa(p.prix_min) + '</div>' : '<div style="font-size:12px;color:#cbd5e1">Prix N/D</div>',
+            '<div style="font-size:11px;color:#94a3b8">' + (p.nb_offres || 0) + ' offre(s)</div>',
+          '</div>'
+        ].join('');
+      }).join('');
+      simHTML = [
+        '<div style="margin-top:24px">',
+          '<h3 style="font-size:13px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">',
+            '🔄 Produits similaires (' + similaires.produits.length + ')',
+          '</h3>',
+          filtresHTML,
+          '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">',
+            simCartes,
+          '</div>',
+        '</div>'
+      ].join('');
+    } else {
+      simHTML = [
+        '<div style="margin-top:24px">',
+          '<h3 style="font-size:13px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">🔄 Produits similaires</h3>',
+          filtresHTML,
+          '<p style="color:#94a3b8;font-size:13px;text-align:center;padding:20px 0">Aucun produit similaire trouvé avec ces filtres.</p>',
+        '</div>'
+      ].join('');
+    }
+
     render([
-      '<div style="padding:24px 5%;max-width:700px;margin:0 auto">',
-        '<button onclick="goHome()" style="background:none;border:none;color:#1d4ed8;',
+      '<div style="padding:20px 5%;max-width:700px;margin:0 auto">',
+        '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;',
           'font-size:14px;font-weight:600;cursor:pointer;margin-bottom:20px;padding:0">← Retour</button>',
 
-        // En-tête produit
-        '<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:24px">',
-          '<div style="width:90px;height:90px;flex-shrink:0;background:#f1f5f9;border-radius:10px;',
+        // En-tête
+        '<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:20px">',
+          '<div style="width:80px;height:80px;flex-shrink:0;background:#f1f5f9;border-radius:10px;',
             'display:flex;align-items:center;justify-content:center;overflow:hidden">',
             res.image_url
-              ? '<img src="' + res.image_url + '" alt="' + res.nom + '" style="width:100%;height:100%;object-fit:contain">'
-              : '<span style="font-size:40px">📦</span>',
+              ? '<img src="' + res.image_url + '" style="width:100%;height:100%;object-fit:contain">'
+              : '<span style="font-size:36px">📦</span>',
           '</div>',
           '<div style="flex:1;min-width:0">',
-            '<h2 style="font-size:18px;font-weight:800;margin:0 0 4px;color:#1e293b">' + res.nom + '</h2>',
-            '<p style="color:#94a3b8;font-size:13px;margin:0 0 8px">' + (res.marque || '') + (res.categorie_nom ? ' · ' + res.categorie_nom : '') + '</p>',
+            '<h2 style="font-size:17px;font-weight:800;margin:0 0 4px;color:#1e293b">' + res.nom + '</h2>',
+            '<p style="color:#94a3b8;font-size:12px;margin:0 0 6px">' +
+              (res.marque || '') + (res.categorie_nom ? ' · ' + res.categorie_nom : '') +
+            '</p>',
             offres.length
-              ? '<div style="font-size:22px;font-weight:800;color:#10b981">' + fcfa(prixMin) +
-                  '<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:8px">dès</span></div>'
+              ? '<div style="font-size:20px;font-weight:800;color:#10b981">' + fcfa(prixMin) +
+                  '<span style="font-size:11px;color:#64748b;font-weight:400;margin-left:6px">dès</span></div>'
               : '',
-            '<div style="font-size:12px;color:#64748b;margin-top:2px">' + offres.length + ' offre(s) · ' + state.ville + '</div>',
+            '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + offres.length + ' offre(s) · ' + state.ville + '</div>',
           '</div>',
         '</div>',
 
-        // Offres
-        '<h3 style="font-size:14px;font-weight:700;color:#475569;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Comparer les prix</h3>',
+        '<h3 style="font-size:12px;font-weight:700;color:#475569;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Comparer les prix</h3>',
         '<div class="offres">' + lignes + '</div>',
-
-        // Graphique
         graphHTML,
+        simHTML,
       '</div>'
     ].join(''));
   } catch (err) {
     dbgErr('ouvrirProduit', err);
-    render('<div style="padding:24px 5%"><button onclick="goHome()" ' +
+    render('<div style="padding:24px 5%"><button onclick="retourListe()" ' +
       'style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer">← Retour</button>' +
       '<p style="margin-top:12px;color:#ef4444">' + err.message + '</p></div>');
   }
+}
+
+function _appliquerSimFiltres(id) {
+  ouvrirProduit(id, {
+    prixMax:  parseInt(document.getElementById('sim-prix-max').value || '0', 10) || null,
+    prixMin:  parseInt(document.getElementById('sim-prix-min').value || '0', 10) || null,
+    marchand: document.getElementById('sim-marchand').value || null
+  });
 }
 
 function goHome()       { chargerProduits('', '', 1); }
