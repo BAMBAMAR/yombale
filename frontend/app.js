@@ -327,31 +327,113 @@ async function ouvrirProduit(id) {
   dbg('ouvrirProduit', id);
   render('<div class="loader"><div class="spin"></div><p>Chargement...</p></div>');
   try {
-    var res    = await apiFetch('/produits/' + id);
-    var offres = await apiFetch('/produits/' + id + '/offres');
+    var res      = await apiFetch('/produits/' + id);
+    var offres   = await apiFetch('/produits/' + id + '/offres');
+    var histo    = await apiFetch('/produits/' + id + '/historique').catch(function() { return []; });
+
+    var prixMin  = offres.length ? Math.min.apply(null, offres.map(function(o) { return o.prix; })) : 0;
 
     var lignes = (offres || []).map(function(o, i) {
+      var isBest   = o.prix === prixMin && i === 0;
+      var economie = i > 0 ? (o.prix - prixMin) : 0;
       return [
-        '<div class="orow' + (i === 0 ? ' best' : '') + '">',
-          '<span>' + (o.marchand_nom || o.marchand || 'Marchand') + '</span>',
-          '<strong>' + fcfa(o.prix) + '</strong>',
-          '<a href="' + (o.url_achat || '#') + '" target="_blank" class="btn-go">Voir</a>',
+        '<div class="orow' + (isBest ? ' best' : '') + '">',
+          '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">',
+            isBest ? '<span style="background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap">🏆 Meilleur prix</span>' : '',
+            '<a href="' + (o.site_url || '#') + '" target="_blank" ' +
+              'style="font-weight:600;color:#1e293b;text-decoration:none;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+              (o.marchand_nom || 'Marchand') +
+            '</a>',
+          '</div>',
+          '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0">',
+            '<div style="text-align:right">',
+              '<strong style="font-size:16px;color:' + (isBest ? '#10b981' : '#1e293b') + '">' + fcfa(o.prix) + '</strong>',
+              economie > 0 ? '<div style="font-size:11px;color:#ef4444">+' + fcfa(economie) + '</div>' : '',
+            '</div>',
+            '<a href="' + (o.url_achat || '#') + '" target="_blank" class="btn-go" ' +
+              'onclick="event.stopPropagation()">Acheter →</a>',
+          '</div>',
         '</div>'
       ].join('');
     }).join('') || '<p style="color:#64748b;font-size:13px;padding:12px">Aucune offre disponible.</p>';
 
+    // Graphique historique SVG
+    var graphHTML = '';
+    if (histo && histo.length > 1) {
+      var prix    = histo.map(function(h) { return parseFloat(h.prix_min); });
+      var dates   = histo.map(function(h) { return h.jour ? h.jour.slice(0, 10) : ''; });
+      var minP    = Math.min.apply(null, prix);
+      var maxP    = Math.max.apply(null, prix);
+      var W = 340, H = 100, padX = 8, padY = 10;
+      var rangeP  = maxP - minP || 1;
+      var points  = prix.map(function(v, i) {
+        var x = padX + (i / (prix.length - 1)) * (W - padX * 2);
+        var y = padY + (1 - (v - minP) / rangeP) * (H - padY * 2);
+        return x.toFixed(1) + ',' + y.toFixed(1);
+      });
+      var polyline = points.join(' ');
+      var lastDate = dates[dates.length - 1];
+      var firstDate = dates[0];
+      graphHTML = [
+        '<div style="margin-top:20px">',
+          '<h4 style="font-size:13px;font-weight:700;color:#475569;margin-bottom:8px">📈 Historique des prix (90 jours)</h4>',
+          '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px">',
+            '<svg viewBox="0 0 ' + W + ' ' + (H + 20) + '" style="width:100%;display:block">',
+              // Ligne de fond
+              '<line x1="' + padX + '" y1="' + (H - padY) + '" x2="' + (W - padX) + '" y2="' + (H - padY) + '" stroke="#e2e8f0" stroke-width="1"/>',
+              // Courbe
+              '<polyline points="' + polyline + '" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linejoin="round"/>',
+              // Points extrêmes
+              '<circle cx="' + points[0].split(',')[0] + '" cy="' + points[0].split(',')[1] + '" r="3" fill="#1d4ed8"/>',
+              '<circle cx="' + points[points.length-1].split(',')[0] + '" cy="' + points[points.length-1].split(',')[1] + '" r="3" fill="#1d4ed8"/>',
+              // Labels dates
+              '<text x="' + padX + '" y="' + (H + 14) + '" font-size="9" fill="#94a3b8">' + firstDate + '</text>',
+              '<text x="' + (W - padX) + '" y="' + (H + 14) + '" font-size="9" fill="#94a3b8" text-anchor="end">' + lastDate + '</text>',
+              // Labels prix
+              '<text x="' + (W - padX + 2) + '" y="' + (padY + 4) + '" font-size="9" fill="#10b981">' + fcfa(maxP) + '</text>',
+              '<text x="' + (W - padX + 2) + '" y="' + (H - padY) + '" font-size="9" fill="#ef4444">' + fcfa(minP) + '</text>',
+            '</svg>',
+          '</div>',
+        '</div>'
+      ].join('');
+    }
+
     render([
-      '<div style="padding:24px 5%">',
+      '<div style="padding:24px 5%;max-width:700px;margin:0 auto">',
         '<button onclick="goHome()" style="background:none;border:none;color:#1d4ed8;',
-          'font-size:14px;font-weight:600;cursor:pointer;margin-bottom:16px">← Retour</button>',
-        '<h2 style="font-size:20px;font-weight:800;margin-bottom:4px">' + res.nom + '</h2>',
-        '<p style="color:#94a3b8;margin-bottom:16px">' + (res.marque || '') + ' · ' + state.ville + '</p>',
+          'font-size:14px;font-weight:600;cursor:pointer;margin-bottom:20px;padding:0">← Retour</button>',
+
+        // En-tête produit
+        '<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:24px">',
+          '<div style="width:90px;height:90px;flex-shrink:0;background:#f1f5f9;border-radius:10px;',
+            'display:flex;align-items:center;justify-content:center;overflow:hidden">',
+            res.image_url
+              ? '<img src="' + res.image_url + '" alt="' + res.nom + '" style="width:100%;height:100%;object-fit:contain">'
+              : '<span style="font-size:40px">📦</span>',
+          '</div>',
+          '<div style="flex:1;min-width:0">',
+            '<h2 style="font-size:18px;font-weight:800;margin:0 0 4px;color:#1e293b">' + res.nom + '</h2>',
+            '<p style="color:#94a3b8;font-size:13px;margin:0 0 8px">' + (res.marque || '') + (res.categorie_nom ? ' · ' + res.categorie_nom : '') + '</p>',
+            offres.length
+              ? '<div style="font-size:22px;font-weight:800;color:#10b981">' + fcfa(prixMin) +
+                  '<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:8px">dès</span></div>'
+              : '',
+            '<div style="font-size:12px;color:#64748b;margin-top:2px">' + offres.length + ' offre(s) · ' + state.ville + '</div>',
+          '</div>',
+        '</div>',
+
+        // Offres
+        '<h3 style="font-size:14px;font-weight:700;color:#475569;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Comparer les prix</h3>',
         '<div class="offres">' + lignes + '</div>',
+
+        // Graphique
+        graphHTML,
       '</div>'
     ].join(''));
   } catch (err) {
     dbgErr('ouvrirProduit', err);
-    render('<div style="padding:24px 5%"><button onclick="goHome()">← Retour</button>' +
+    render('<div style="padding:24px 5%"><button onclick="goHome()" ' +
+      'style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer">← Retour</button>' +
       '<p style="margin-top:12px;color:#ef4444">' + err.message + '</p></div>');
   }
 }
