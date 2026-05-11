@@ -85,9 +85,10 @@ async function scraperExpatDakar(categorie='telephones-portables-et-tablettes', 
     try{
       const html=await fetchPage(url), $=cheerio.load(html); let found=0;
       const essais=[
-        { c:'article.listing-item',    t:'.listing-title,.listing-title-link,h3 a', p:'.listing-price,[class*="price"]', l:'a.listing-title-link,a[href*="/telephones/"],a[href*="/annonce/"]', i:'img.listing-item-thumbnail,img[data-src],img.lazy' },
-        { c:'.classified-item,.item-listing', t:'.item-title,h3', p:'.item-price,.price', l:'a[href]', i:'img' },
-        { c:'article', t:'h3,h2,.title,[class*="title"]', p:'[class*="price"],[class*="prix"]', l:'a[href]', i:'img[src],img[data-src]' },
+        { c:'article.listing-item',         t:'.listing-title,.listing-title-link,h3 a,.listing-card__title', p:'.listing-price,.listing-card__price,[class*="price"]',  l:'a.listing-title-link,a[href*="/telephones/"],a[href*="/annonce/"],a[href*="/detail/"]', i:'img.listing-item-thumbnail,img[data-src],img.lazy,img[src]' },
+        { c:'.listing-card',                 t:'.listing-card__title,h3',                                      p:'.listing-card__price,[class*="price"],[class*="prix"]',   l:'a[href]', i:'img[data-src],img[src]' },
+        { c:'.classified-item,.item-listing',t:'.item-title,h3',                                               p:'.item-price,.price',                                     l:'a[href]', i:'img' },
+        { c:'article',                       t:'h3,h2,.title,[class*="title"],[class*="name"]',                p:'[class*="price"],[class*="prix"],[class*="amount"]',      l:'a[href]', i:'img[src],img[data-src]' },
       ];
       for(const s of essais){
         const items=$(s.c); if(!items.length) continue;
@@ -101,7 +102,11 @@ async function scraperExpatDakar(categorie='telephones-portables-et-tablettes', 
         });
         if(found>0){ console.log(`[EXPAT] Page ${page}: ${found} (sélecteur "${s.c}")`); break; }
       }
-      if(found===0){ console.warn(`[EXPAT] Page ${page}: 0 résultat — sélecteurs peut-être obsolètes`); break; }
+      if(found===0){
+        const snippet=$.html().replace(/\s+/g,' ').slice(0,600);
+        console.warn(`[EXPAT] Page ${page}: 0 résultat. Début HTML: ${snippet}`);
+        break;
+      }
     }catch(err){ console.error(`[EXPAT] Page ${page}:`,err.message); }
     await sleep(2000+Math.random()*1000);
   }
@@ -128,9 +133,14 @@ async function scraperJumia(categorie='telephones-tablettes', maxPages=3) {
     try{
       const html=await fetchPage(url), $=cheerio.load(html); let found=0;
       const essais=[
-        { c:'article.prd',  t:'p.name,h3.name,[class*="name"]', p:'div.prc,[class*="prc"],[class*="price"]', l:'a.core', i:'img.img,img[data-src]' },
-        { c:'.sku-list li', t:'.name,h3', p:'.price--current,.prc', l:'a', i:'img' },
-        { c:'article',      t:'p,h3,[class*="name"]', p:'[class*="price"],[class*="prc"]', l:'a[href*="/"]', i:'img' },
+        // Layout 2024-2026 principal
+        { c:'article.prd',           t:'p.name,h3.name,.name',              p:'div.prc,.prc,.price--current,.old-prc', l:'a.core,a[href]', i:'img.img,img[data-src],img[src]' },
+        // Variante -mango- Jumia 2025
+        { c:'article[class*="prd"]', t:'[class*="name"]',                   p:'[class*="prc"],[class*="price"]',       l:'a[href]',        i:'img' },
+        // Grille ul/li
+        { c:'ul.-pvs li',            t:'h3,.name,[class*="name"]',          p:'[class*="price"],[class*="prc"]',       l:'a[href]',        i:'img' },
+        // Dernier recours : tout article avec un prix détectable
+        { c:'article',               t:'p,h3,h2,[class*="name"],[class*="title"]', p:'[class*="price"],[class*="prc"],[class*="amount"]', l:'a[href*="/"]', i:'img' },
       ];
       for(const s of essais){
         const items=$(s.c); if(!items.length) continue;
@@ -145,7 +155,11 @@ async function scraperJumia(categorie='telephones-tablettes', maxPages=3) {
         });
         if(found>0){ console.log(`[JUMIA] Page ${page}: ${found} (sélecteur "${s.c}")`); break; }
       }
-      if(found===0){ console.warn(`[JUMIA] Page ${page}: 0 résultat`); break; }
+      if(found===0){
+        const snippet=$.html().replace(/\s+/g,' ').slice(0,600);
+        console.warn(`[JUMIA] Page ${page}: 0 résultat. Début HTML: ${snippet}`);
+        break;
+      }
     }catch(err){ console.error(`[JUMIA] Page ${page}:`,err.message); }
     await sleep(2500+Math.random()*1500);
   }
