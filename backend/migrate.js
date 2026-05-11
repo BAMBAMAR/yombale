@@ -110,6 +110,36 @@ async function migrate() {
         ('CoinAfrique',   'https://www.coinafrique.com', 'scraper'),
         ('SenMarket',     'https://www.senmarket.sn',    'feed')
       ON CONFLICT DO NOTHING;
+
+      -- Contrainte unique sur marchands.nom (nécessaire pour lookups du scraper)
+      -- Utilise DO $$ ... END $$ pour être idempotent (ne plante pas si elle existe déjà)
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conname = 'marchands_nom_unique' AND conrelid = 'marchands'::regclass
+        ) THEN
+          ALTER TABLE marchands ADD CONSTRAINT marchands_nom_unique UNIQUE (nom);
+        END IF;
+      END $$;
+
+      -- Contrainte unique sur alertes (utilisateur + produit) — déjà dans la migration initiale
+      -- mais on la recrée ici si elle manque (DB créée avant le fix)
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conname = 'alertes_user_produit_unique' AND conrelid = 'alertes'::regclass
+        ) THEN
+          ALTER TABLE alertes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+          -- Supprimer les doublons d'alertes avant la contrainte
+          DELETE FROM alertes a USING alertes b
+          WHERE a.utilisateur_id = b.utilisateur_id
+            AND a.produit_id = b.produit_id
+            AND a.created_at < b.created_at;
+          ALTER TABLE alertes ADD CONSTRAINT alertes_user_produit_unique UNIQUE (utilisateur_id, produit_id);
+        END IF;
+      END $$;
     `);
     console.log('✅ Migration terminée — tables créées');
   } catch (err) {
