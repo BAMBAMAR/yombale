@@ -5,9 +5,14 @@ const { verifierToken } = require('../middlewares/auth');
 // GET /api/produits?q=Samsung&categorie=smartphones&limit=20&page=1
 router.get('/', async (req, res) => {
   try {
-    const { q, categorie, limit = 20, page = 1 } = req.query;
+    const { q, categorie, limit = 20, page = 1, tri, prixMax } = req.query;
     const offset    = (page - 1) * limit;
-    const cacheKey  = `produits:${q}:${categorie}:${page}`;
+    const cacheKey  = `produits:${q}:${categorie}:${page}:${tri}:${prixMax}`;
+
+    const orderBy = tri === 'prix_asc'  ? 'MIN(o.prix) ASC NULLS LAST'
+                  : tri === 'prix_desc' ? 'MIN(o.prix) DESC NULLS LAST'
+                  : tri === 'nom_asc'   ? 'p.nom ASC'
+                  :                      'COUNT(o.id) DESC NULLS LAST'; // pertinence
 
     const rows = await queryWithCache(cacheKey, `
       SELECT p.*, c.nom AS categorie_nom,
@@ -19,20 +24,23 @@ router.get('/', async (req, res) => {
       WHERE ($1::text IS NULL OR p.nom    ILIKE '%' || $1 || '%'
                               OR p.marque ILIKE '%' || $1 || '%')
         AND ($2::text IS NULL OR c.slug = $2)
+        AND ($5::numeric IS NULL OR o.prix <= $5::numeric)
       GROUP BY p.id, c.nom
-ORDER BY p.nb_offres DESC NULLS LAST
-LIMIT $3 OFFSET $4`,
-      [q || null, categorie || null, limit, offset]
+      ORDER BY ` + orderBy + `
+      LIMIT $3 OFFSET $4`,
+      [q || null, categorie || null, limit, offset, prixMax || null]
     );
 
     const totalResult = await pool.query(`
       SELECT COUNT(DISTINCT p.id) AS total
       FROM produits p
       LEFT JOIN categories c ON c.id = p.categorie_id
+      LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true
       WHERE ($1::text IS NULL OR p.nom    ILIKE '%' || $1 || '%'
                               OR p.marque ILIKE '%' || $1 || '%')
-        AND ($2::text IS NULL OR c.slug = $2)`,
-      [q || null, categorie || null]
+        AND ($2::text IS NULL OR c.slug = $2)
+        AND ($3::numeric IS NULL OR o.prix <= $3::numeric)`,
+      [q || null, categorie || null, prixMax || null]
     );
     const total = parseInt(totalResult.rows[0].total, 10);
 
