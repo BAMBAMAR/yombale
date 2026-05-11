@@ -16,14 +16,29 @@ app.use(helmet({
       scriptSrcAttr: ["'unsafe-inline'"],
       connectSrc:    ["'self'"],
       styleSrc:      ["'self'", "'unsafe-inline'"],
-      imgSrc:        ["'self'", "data:"],
+      imgSrc:        ["'self'", "data:", "https:"],
       fontSrc:       ["'self'", "https:", "data:"],
       objectSrc:     ["'none'"],
       frameAncestors:["'self'"],
     }
   }
 }));
-app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
+
+const ALLOWED_ORIGINS = [
+  process.env.FRONTEND_URL,
+  process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null,
+  'http://localhost:3000',
+  'http://localhost:8080',
+].filter(Boolean);
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    callback(new Error('CORS non autorisé pour : ' + origin));
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 
@@ -36,11 +51,15 @@ app.use('/api/offres',    require('./routes/offres'));
 app.use('/api/paiement',  require('./routes/paiement'));
 app.use('/api/alertes',   require('./routes/alertes'));
 app.use('/api/auth',      require('./routes/auth'));
+app.use('/api/scraper',   require('./routes/scraper'));
 
 // ── Health check ──────────────────────────────────────────────
-app.get('/health', (req, res) =>
-  res.json({ status: 'ok', version: '1.0.0', ts: new Date() })
-);
+app.get('/health', async (req, res) => {
+  const { pool } = require('./models/db');
+  let db = 'ok';
+  try { await pool.query('SELECT 1'); } catch { db = 'erreur'; }
+  res.json({ status: 'ok', version: '1.1.0', db, ts: new Date() });
+});
 
 // ── Catch-all → SPA frontend ──────────────────────────────────
 app.get('*', (req, res) =>
@@ -54,5 +73,17 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Yombale → http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Yombale → http://localhost:${PORT}`);
+
+  // ── Démarrage du scraping automatique ────────────────────────
+  // Désactivé si SCRAPING_DISABLED=true (utile en dev pour ne pas surcharger les sites)
+  if (process.env.SCRAPING_DISABLED !== 'true') {
+    const { demarrerScraping } = require('./services/scraper');
+    demarrerScraping();
+  } else {
+    console.log('[SCRAPER] Désactivé (SCRAPING_DISABLED=true)');
+  }
+});
+
 module.exports = app;
