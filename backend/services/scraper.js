@@ -12,19 +12,43 @@ const UA = [
 const randUA = () => UA[Math.floor(Math.random() * UA.length)];
 
 const CATS = {
-  expat:       ['telephones-portables-et-tablettes', 'informatique', 'tv-video-photo'],
-  jumia:       ['telephones-tablettes', 'informatique', 'tv-audio-video'],
-  coinafrique: ['telephonie', 'informatique-et-multimedia', 'electronique'],
+  expat:       [
+    'telephones-portables-et-tablettes',
+    'informatique',
+    'tv-video-photo',
+    'electromenager',
+    'mode-et-beaute',
+    'jeux-et-jouets',
+  ],
+  jumia:       [
+    'telephones-tablettes',
+    'informatique',
+    'tv-audio-video',
+    'electromenager',
+    'mode-et-accessoires',
+    'gaming',
+  ],
+  coinafrique: [
+    'telephonie',
+    'informatique-et-multimedia',
+    'electronique',
+    'electromenager',
+    'mode-et-beaute',
+    'jeux-et-jouets',
+  ],
 };
 
 const MARQUES = ['Samsung','Apple','Xiaomi','Tecno','Infinix','Oppo','Vivo','Huawei','Nokia',
   'HP','Lenovo','Dell','Asus','Acer','LG','Sony','Hisense','Haier','TCL','Realme','OnePlus','Motorola'];
 
 const CAT_MOTS = [
-  { slug:'smartphones',  mots:['samsung','iphone','xiaomi','tecno','infinix','oppo','vivo','huawei','nokia','realme','tablette','smartphone','portable','ipad'] },
-  { slug:'informatique', mots:['laptop','ordinateur','macbook','lenovo','dell','hp',' pc ','clavier','souris','imprimante','disque dur','ssd'] },
-  { slug:'tv-electro',   mots:['tele','tele','tv ','led tv','ecran','refrigerateur','climatiseur','lave-linge','machine a laver','frigo'] },
-  { slug:'jeux',         mots:['playstation','ps4','ps5','xbox','nintendo','manette'] },
+  { slug:'smartphones',  mots:['samsung','iphone','xiaomi','tecno','infinix','oppo','vivo','huawei','nokia','realme','itel','tablette','smartphone','portable','ipad','téléphone','telephone'] },
+  { slug:'informatique', mots:['laptop','ordinateur','macbook','lenovo','dell','hp',' pc ','clavier','souris','imprimante','disque','ssd','moniteur','ecran pc','router','wifi'] },
+  { slug:'tv-electro',   mots:['télé','tele','tv ','led tv','écran tv','hisense','lg tv','samsung tv','refrigerateur','climatiseur','lave-linge','machine a laver','frigo','congélateur','ventilateur','fer a repasser'] },
+  { slug:'maison',       mots:['canapé','table','chaise','lit','matelas','armoire','cuisine','meuble','déco','lampe','rideau'] },
+  { slug:'mode',         mots:['robe','chaussure','sac','chemise','pantalon','vêtement','habit','sneaker','basket','montre','bijou','parfum','sac a main'] },
+  { slug:'auto-moto',    mots:['voiture','moto','vélo','auto','pneu','scooter','trottinette','pièce auto'] },
+  { slug:'jeux',         mots:['playstation','ps4','ps5','xbox','nintendo','manette','jeu video','gaming','casque gamer'] },
 ];
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -343,7 +367,7 @@ async function lancerScraping(sources=['expat','jumia','coinafrique']) {
 }
 
 function demarrerScraping() {
-  cron.schedule('0 */6 * * *', ()=>lancerScraping(['expat','coinafrique']).catch(console.error));
+  cron.schedule('0 */4 * * *', ()=>lancerScraping(['expat','jumia','coinafrique']).catch(console.error));
   cron.schedule('0 */4 * * *', ()=>lancerScraping(['jumia']).catch(console.error));
   // Premier scraping 30s après démarrage
   setTimeout(()=>lancerScraping().catch(console.error), 30_000);
