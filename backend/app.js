@@ -85,17 +85,37 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Yombale → http://localhost:${PORT}`);
 
-  // ── Démarrage du scraping automatique ────────────────────────
-  // Désactivé si SCRAPING_DISABLED=true (utile en dev pour ne pas surcharger les sites)
-  if (process.env.SCRAPING_DISABLED !== 'true') {
-    const { demarrerScraping } = require('./services/scraper');
-    demarrerScraping();
-  } else {
-    console.log('[SCRAPER] Désactivé (SCRAPING_DISABLED=true)');
+// ── Migration automatique au démarrage ───────────────────────────
+// BUG FIX : migrate.js n'était jamais appelé → DB vide → catégories manquantes
+async function demarrerApp() {
+  try {
+    console.log('[MIGRATE] Vérification des tables...');
+    // Inline les CREATE TABLE IF NOT EXISTS essentiels (idempotent)
+    const { pool: dbPool } = require('./models/db');
+    await dbPool.query(`
+      CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+      CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+    `);
+    // Appel du script migrate complet
+    require('./migrate-inline')();
+  } catch (err) {
+    console.warn('[MIGRATE] Avertissement:', err.message);
   }
-});
 
+  app.listen(PORT, () => {
+    console.log(`✅ Yombale → http://localhost:${PORT}`);
+
+    if (process.env.SCRAPING_DISABLED !== 'true') {
+      const { demarrerScraping } = require('./services/scraper');
+      demarrerScraping();
+    } else {
+      console.log('[SCRAPER] Désactivé (SCRAPING_DISABLED=true)');
+    }
+  });
+}
+
+demarrerApp().catch(console.error);
+
+// (app exporté pour les tests)
 module.exports = app;
