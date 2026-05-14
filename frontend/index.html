@@ -7,7 +7,7 @@
   <title>Yombale — Comparateur de prix Sénégal</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#1d4ed8">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css?v=3">
 </head>
 <body>
   <nav id="navbar">
@@ -37,12 +37,18 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="/app.js"></script>
+  <script src="/app.js?v=3"></script>
   <script>
+    // Désenregistrer l'ancien Service Worker pour forcer le rechargement des assets
     if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        regs.forEach(function(reg) {
+          reg.update(); // forcer vérification de mise à jour
+        });
+      });
       navigator.serviceWorker.register('/service-worker.js')
-        .then(() => console.log('SW OK'))
-        .catch(e  => console.warn('SW non disponible:', e.message));
+        .then(function() { console.log('SW OK'); })
+        .catch(function(e) { console.warn('SW:', e.message); });
     }
   </script>
 </body>
