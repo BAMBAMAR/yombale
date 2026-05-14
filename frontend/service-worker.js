@@ -1,75 +1,58 @@
-const CACHE  = 'yombale-v2';
-const ASSETS = ['/', '/index.html', '/style.css', '/app.js'];
+// Yombale Service Worker — VERSION 4
+// Changer CACHE_VERSION force le rechargement de tous les assets
+const CACHE_VERSION = 'yombale-v4';
+const STATIC_ASSETS = ['/style.css', '/manifest.json', '/icons/icon-192.png'];
 
-// ── Installation : mise en cache des assets statiques ─────────
-self.addEventListener('install', event => {
+// Installation — précache uniquement les assets statiques (pas app.js)
+self.addEventListener('install', function(event) {
   event.waitUntil(
-    caches.open(CACHE)
-      .then(c => c.addAll(ASSETS))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_VERSION).then(function(cache) {
+      return cache.addAll(STATIC_ASSETS);
+    })
+  );
+  self.skipWaiting();
+});
+
+// Activation — supprimer TOUS les anciens caches
+self.addEventListener('activate', function(event) {
+  event.waitUntil(
+    caches.keys().then(function(keys) {
+      return Promise.all(
+        keys
+          .filter(function(key) { return key !== CACHE_VERSION; })
+          .map(function(key) {
+            console.log('[SW] Suppression ancien cache:', key);
+            return caches.delete(key);
+          })
+      );
+    }).then(function() {
+      return self.clients.claim();
+    })
   );
 });
 
-// ── Activation : suppression des anciens caches ───────────────
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
-      ))
-      .then(() => self.clients.claim())
-  );
-});
+// Fetch — app.js et les API toujours depuis le réseau (network-first)
+self.addEventListener('fetch', function(event) {
+  var url = new URL(event.request.url);
 
-// ── Fetch : stratégie Network-First ──────────────────────────
-// Les appels API passent toujours par le réseau (jamais mis en cache).
-// Les assets statiques utilisent Network-First : on demande au réseau
-// en priorité et on ne tombe sur le cache qu'en cas d'échec réseau.
-self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-
-  // ── Requêtes API : réseau uniquement, jamais de cache ────────
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(event.request).catch(() =>
-        new Response(JSON.stringify({ error: 'Hors ligne — vérifiez votre connexion.' }), {
-          status: 503,
-          headers: { 'Content-Type': 'application/json' }
-        })
-      )
-    );
+  // API et app.js : toujours réseau, jamais cache
+  if (url.pathname.startsWith('/api/') || url.pathname === '/app.js' || url.pathname === '/') {
+    event.respondWith(fetch(event.request));
     return;
   }
 
-  // ── Assets statiques : Network-First ─────────────────────────
-  // 1. On tente le réseau.
-  // 2. Si ça marche, on met la réponse en cache puis on la retourne.
-  // 3. Si le réseau échoue (offline), on sert depuis le cache.
-  // 4. Si ni réseau ni cache, on retourne index.html (SPA fallback).
+  // Autres assets statiques : cache-first
   event.respondWith(
-    fetch(event.request)
-      .then(networkResponse => {
-        // Mettre à jour le cache avec la version fraîche
-        const clone = networkResponse.clone();
-        caches.open(CACHE).then(c => c.put(event.request, clone));
-        return networkResponse;
-      })
-      .catch(() =>
-        caches.match(event.request)
-          .then(cached => cached || caches.match('/index.html'))
-      )
-  );
-});
-
-// ── Notifications Push ────────────────────────────────────────
-self.addEventListener('push', event => {
-  if (!event.data) return;
-  const d = event.data.json();
-  event.waitUntil(
-    self.registration.showNotification(d.title || 'Yombale', {
-      body: d.body,
-      icon: '/icons/icon-192.png',
-      data: { url: d.url || '/' }
+    caches.match(event.request).then(function(cached) {
+      return cached || fetch(event.request).then(function(response) {
+        if (response.status === 200) {
+          var clone = response.clone();
+          caches.open(CACHE_VERSION).then(function(cache) {
+            cache.put(event.request, clone);
+          });
+        }
+        return response;
+      });
     })
   );
 });
