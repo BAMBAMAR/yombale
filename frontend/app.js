@@ -124,7 +124,7 @@ function chargerSuggestions(q, inp) {
           '<span style="font-size:18px">📦</span>' +
           '<div style="flex:1;min-width:0">' +
             '<div style="font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.nom + '</div>' +
-            (p.prix_min ? '<div style="font-size:12px;color:#10b981;font-weight:700">dès ' + fcfa(p.prix_min) + '</div>' : '') +
+            (p.prix_min ? '<div style="font-size:12px;color:#10b981;font-weight:700">' + fcfa(p.prix_min) + '</div>' : '') +
           '</div>' +
           (p.nb_offres ? '<span style="font-size:11px;color:#94a3b8;white-space:nowrap">' + p.nb_offres + ' offre(s)</span>' : '') +
         '</div>';
@@ -153,12 +153,13 @@ function selectSuggestion(id, nom) {
 // ═══════════════════════════════════════════════════════════════
 
 var CATEGORIES = [
-  { slug: 'telephonie',    label: 'Téléphones',    icon: '📱' },
-  { slug: 'informatique',  label: 'Informatique',  icon: '💻' },
-  { slug: 'electronique',  label: 'TV & Électro',  icon: '📺' },
-  { slug: 'mode',          label: 'Mode',          icon: '👗' },
-  { slug: 'alimentation',  label: 'Alimentation',  icon: '🛒' },
-  { slug: 'sport',         label: 'Sport',         icon: '⚽' },
+  { slug: 'smartphones',  label: 'Téléphones',    icon: '📱' },
+  { slug: 'informatique', label: 'Informatique',  icon: '💻' },
+  { slug: 'tv-electro',   label: 'TV & Électro',  icon: '📺' },
+  { slug: 'mode',         label: 'Mode',          icon: '👗' },
+  { slug: 'maison',       label: 'Maison',        icon: '🏠' },
+  { slug: 'auto-moto',    label: 'Auto & Moto',   icon: '🛵' },
+  { slug: 'jeux',         label: 'Jeux',          icon: '🎮' },
 ];
 
 var BUDGETS = [
@@ -313,7 +314,7 @@ function htmlDashboardComparaison(produits, data) {
                 '<div style="flex:1;background:#f1f5f9;border-radius:4px;height:6px;overflow:hidden">',
                   '<div style="width:' + pct + '%;height:100%;background:#1d4ed8;border-radius:4px"></div>',
                 '</div>',
-                '<span style="font-size:11px;color:#64748b;white-space:nowrap">' + items.length + ' · dès ' + fcfa(minM) + '</span>',
+                '<span style="font-size:11px;color:#64748b;white-space:nowrap">' + items.length + ' · ' + fcfa(minM) + '</span>',
               '</div>',
             ].join('');
           }).join('') +
@@ -499,7 +500,7 @@ function carteHTML(p) {
         '<div class="pname">' + p.nom + '</div>',
         p.marque ? '<div class="pbrand">' + p.marque + '</div>' : '',
         p.prix_min
-          ? '<div class="pprice">dès ' + fcfa(p.prix_min) + '</div>'
+          ? '<div class="pprice">' + fcfa(p.prix_min) + '</div>'
           : '<div style="font-size:12px;color:#cbd5e1;margin:4px 0">Prix N/D</div>',
         '<div class="poffers">' +
           (p.nb_offres > 0
@@ -537,7 +538,7 @@ function carteListeHTML(p) {
         '<div style="font-size:11px;color:#64748b;margin-top:2px">' + (p.nb_offres || 0) + ' offre(s)</div>',
       '</div>',
       '<div style="text-align:right;flex-shrink:0">',
-        p.prix_min ? '<div style="font-size:16px;font-weight:800;color:#10b981">dès ' + fcfa(p.prix_min) + '</div>' : '',
+        p.prix_min ? '<div style="font-size:16px;font-weight:800;color:#10b981">' + fcfa(p.prix_min) + '</div>' : '',
         economie >= 15 ? '<div style="font-size:11px;font-weight:700;color:#f97316;background:#fff7ed;padding:1px 6px;border-radius:8px;display:inline-block;margin-top:2px">-' + economie + '%</div>' : '',
         '<button class="btn-voir" style="margin-top:4px;font-size:11px;padding:4px 10px" onclick="event.stopPropagation();ouvrirProduit(\'' + p.id + '\')">Voir →</button>',
       '</div>',
@@ -633,36 +634,57 @@ async function ouvrirProduit(id, simFiltres) {
     var economie  = prixMaxO > prixMin ? fcfa(prixMaxO - prixMin) : null;
 
     render([
-      '<div style="padding:16px 5%;max-width:720px;margin:0 auto">',
+      // Page produit pleine largeur
+      '<div style="min-height:100vh;background:#f8fafc">',
 
-        // Navigation
-        '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;padding:0;margin-bottom:16px">← Retour</button>',
-
-        // En-tête produit
-        '<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:20px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px">',
-          '<div style="width:80px;height:80px;flex-shrink:0;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden">',
-            res.image_url ? '<img src="' + res.image_url + '" style="max-width:80px;max-height:80px;object-fit:contain">' : '<span style="font-size:36px">📦</span>',
-          '</div>',
-          '<div style="flex:1;min-width:0">',
-            '<h2 style="font-size:17px;font-weight:800;margin:0 0 3px;color:#1e293b;line-height:1.3">' + res.nom + '</h2>',
-            '<div style="font-size:12px;color:#94a3b8;margin-bottom:8px">' + (res.marque||'') + (res.categorie_nom?' · '+res.categorie_nom:'') + '</div>',
-            offres.length ? [
-              '<div style="font-size:22px;font-weight:800;color:#10b981">dès ' + fcfa(prixMin) + '</div>',
-              economie ? '<div style="font-size:12px;color:#f97316;font-weight:600;margin-top:2px">Économisez jusqu\'à ' + economie + ' vs le plus cher</div>' : '',
-              '<div style="font-size:12px;color:#94a3b8;margin-top:2px">' + offres.length + ' offre(s) · ' + state.ville + '</div>',
-            ].join('') : '<div style="font-size:13px;color:#94a3b8">Aucune offre</div>',
-          '</div>',
+        // Barre de navigation
+        '<div style="background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 5%;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100">',
+          '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0">',
+            '← Retour',
+          '</button>',
+          '<span style="color:#e2e8f0">|</span>',
+          '<span style="font-size:13px;color:#64748b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1">' + res.nom + '</span>',
         '</div>',
 
-        // Tableau comparaison prix
-        htmlTableauOffres(offres, prixMin),
+        '<div style="max-width:780px;margin:0 auto;padding:20px 5% 40px">',
 
-        // Historique
-        htmlHistorique(histo),
+          // Bloc image + infos — grand format
+          '<div style="background:#fff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:16px">',
 
-        // Produits similaires
-        htmlSimilaires(id, similaires, simFiltres),
+            // Image grande
+            '<div style="width:100%;height:220px;background:#f8fafc;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #f1f5f9">',
+              res.image_url
+                ? '<img src="' + res.image_url + '" style="max-height:200px;max-width:90%;object-fit:contain">'
+                : '<span style="font-size:72px">📦</span>',
+            '</div>',
 
+            // Infos produit
+            '<div style="padding:20px">',
+              res.categorie_nom ? '<span style="font-size:11px;font-weight:700;color:#1d4ed8;background:#eff6ff;padding:2px 8px;border-radius:8px;text-transform:uppercase;letter-spacing:.04em">' + res.categorie_nom + '</span>' : '',
+              '<h1 style="font-size:20px;font-weight:800;color:#1e293b;margin:10px 0 4px;line-height:1.3">' + res.nom + '</h1>',
+              res.marque ? '<div style="font-size:13px;color:#64748b;margin-bottom:16px">Par <strong>' + res.marque + '</strong></div>' : '<div style="margin-bottom:16px"></div>',
+
+              // Prix en évidence
+              offres.length ? [
+                '<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">',
+                  '<div style="font-size:32px;font-weight:900;color:#10b981">' + fcfa(prixMin) + '</div>',
+                  economie ? '<div style="font-size:12px;color:#f97316;font-weight:600;background:#fff7ed;padding:4px 10px;border-radius:8px">Économie jusqu\'à ' + economie + '</div>' : '',
+                '</div>',
+                '<div style="font-size:12px;color:#94a3b8;margin-top:4px">' + offres.length + ' offre(s) disponible(s) · ' + state.ville + '</div>',
+              ].join('') : '<div style="font-size:16px;color:#94a3b8;padding:8px 0">Aucune offre disponible</div>',
+            '</div>',
+          '</div>',
+
+          // Tableau comparaison prix
+          htmlTableauOffres(offres, prixMin),
+
+          // Historique
+          htmlHistorique(histo),
+
+          // Produits similaires
+          htmlSimilaires(id, similaires, simFiltres),
+
+        '</div>',
       '</div>',
     ].join(''));
   } catch(err) {
@@ -786,7 +808,7 @@ function htmlSimilaires(id, similaires, filtresSim) {
         '</div>',
         '<div style="font-size:12px;font-weight:600;color:#1e293b;line-height:1.3;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.nom + '</div>',
         p.marque ? '<div style="font-size:11px;color:#94a3b8;margin-bottom:4px">' + p.marque + '</div>' : '',
-        p.prix_min ? '<div style="font-size:13px;font-weight:800;color:#10b981">dès ' + fcfa(p.prix_min) + '</div>' : '<div style="font-size:11px;color:#cbd5e1">Prix N/D</div>',
+        p.prix_min ? '<div style="font-size:13px;font-weight:800;color:#10b981">' + fcfa(p.prix_min) + '</div>' : '<div style="font-size:11px;color:#cbd5e1">Prix N/D</div>',
         '<div style="font-size:10px;color:#94a3b8;margin-top:2px">' + (p.nb_offres||0) + ' offre(s)</div>',
       '</div>',
     ].join('');
