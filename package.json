@@ -4,8 +4,9 @@
   "description": "Comparateur de prix Senegal - Bu yombale bi !",
   "main": "backend/app.js",
   "scripts": {
-    "start": "node backend/app.js",
-    "dev":   "nodemon backend/app.js"
+    "start":   "node backend/app.js",
+    "dev":     "nodemon backend/app.js",
+    "migrate": "node backend/migrate.js"
   },
   "dependencies": {
     "express":            "^4.18.2",
