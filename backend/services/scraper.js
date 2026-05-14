@@ -57,6 +57,8 @@ function nettoyerTitre(t) { return (t||'').trim().replace(/\s+/g,' ').slice(0,25
 function extraireMarque(titre) { const t=titre.toLowerCase(); return MARQUES.find(m=>t.includes(m.toLowerCase()))||null; }
 
 let _catCache=null;
+// Forcer rechargement du cache (utile après migration au démarrage)
+function invaliderCatCache() { _catCache = null; }
 async function getCatId(titre) {
   if(!_catCache){ const {rows}=await pool.query('SELECT id,slug FROM categories'); _catCache=rows; }
   const t=(' '+titre+' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -340,6 +342,8 @@ async function diagnosticScraper(source, categorie) {
 // ══════════════════════════════════════════════════════
 async function lancerScraping(sources=['expat','jumia','coinafrique']) {
   const rapport={debut:new Date(),sources:{}};
+  // BUG FIX : invalider le cache catégories pour recharger depuis la DB
+  invaliderCatCache();
   console.log('\n[SCRAPER] ══════ DÉBUT ══════');
   const conf={
     expat:       {nom:'Expat-Dakar',  url:'https://www.expat-dakar.com',  cats:CATS.expat,       fn:scraperExpatDakar},
@@ -367,11 +371,11 @@ async function lancerScraping(sources=['expat','jumia','coinafrique']) {
 }
 
 function demarrerScraping() {
+  // BUG FIX : il y avait deux crons identiques — Jumia était scrappé deux fois par cycle
   cron.schedule('0 */4 * * *', ()=>lancerScraping(['expat','jumia','coinafrique']).catch(console.error));
-  cron.schedule('0 */4 * * *', ()=>lancerScraping(['jumia']).catch(console.error));
   // Premier scraping 30s après démarrage
   setTimeout(()=>lancerScraping().catch(console.error), 30_000);
-  console.log('[SCRAPER] ✅ Cron actif — Expat/Coin toutes les 6h, Jumia toutes les 4h, premier scraping dans 30s');
+  console.log('[SCRAPER] ✅ Cron actif — Expat + Jumia + CoinAfrique toutes les 4h, premier scraping dans 30s');
 }
 
-module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, demarrerScraping, diagnosticScraper };
+module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, demarrerScraping, diagnosticScraper, invaliderCatCache };
