@@ -2,52 +2,71 @@ const router = require('express').Router();
 const { pool, queryWithCache } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 
-// GET /api/produits — liste avec tri, filtres, pagination
+// GET /api/produits
 router.get('/', async (req, res) => {
   try {
     const { q, categorie, limit = 20, page = 1, tri, prixMax, prixMin } = req.query;
-    const offset    = (page - 1) * limit;
-    const cacheKey  = `produits:${q}:${categorie}:${page}:${tri}:${prixMax}:${prixMin}`;
+    const offset = (page - 1) * limit;
 
     const orderBy = tri === 'prix_asc'  ? 'MIN(o.prix) ASC NULLS LAST'
                   : tri === 'prix_desc' ? 'MIN(o.prix) DESC NULLS LAST'
                   : tri === 'nom_asc'   ? 'p.nom ASC'
                   :                      'COUNT(o.id) DESC NULLS LAST';
 
-    const rows = await queryWithCache(cacheKey, `
+    // Filtre catégorie : slug exact OU mots-clés dans le nom (pour produits sans categorie_id)
+    const catCondition = `
+      ($2::text IS NULL OR c.slug = $2 OR (
+        ($2 = 'smartphones'  AND LOWER(p.nom) LIKE ANY(ARRAY['%samsung%','%iphone%','%xiaomi%','%tecno%','%infinix%','%phone%','%portable%','%tablette%','%nokia%','%huawei%','%oppo%','%realme%','%itel%']))
+     OR ($2 = 'informatique' AND LOWER(p.nom) LIKE ANY(ARRAY['%laptop%','%ordinateur%','%macbook%','%lenovo%','%dell%','%hp %','%clavier%','%souris%','%imprimante%','%ssd%']))
+     OR ($2 = 'tv-electro'   AND LOWER(p.nom) LIKE ANY(ARRAY['%tv %','%tele%','%télé%','%led%','%hisense%','%refriger%','%climatiseur%','%lave-linge%','%frigo%']))
+     OR ($2 = 'mode'         AND LOWER(p.nom) LIKE ANY(ARRAY['%robe%','%chaussure%','%sneaker%','%basket%','%vêtement%','%habit%','%sac %','%montre%']))
+     OR ($2 = 'maison'       AND LOWER(p.nom) LIKE ANY(ARRAY['%canapé%','%table %','%chaise%','%lit %','%matelas%','%meuble%','%armoire%']))
+     OR ($2 = 'auto-moto'    AND LOWER(p.nom) LIKE ANY(ARRAY['%voiture%','%moto %','%vélo%','%auto %','%scooter%','%pneu%']))
+     OR ($2 = 'jeux'         AND LOWER(p.nom) LIKE ANY(ARRAY['%playstation%','%xbox%','%nintendo%','%gaming%','%ps4%','%ps5%']))
+      ))`;
+
+    const sql = `
       SELECT p.*, c.nom AS categorie_nom,
              MIN(o.prix) AS prix_min,
              MAX(o.prix) AS prix_max,
              COUNT(o.id) AS nb_offres
       FROM produits p
-      LEFT JOIN categories c ON c.id        = p.categorie_id
+      LEFT JOIN categories c ON c.id = p.categorie_id
       LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true
-      WHERE ($1::text IS NULL OR p.nom    ILIKE '%' || $1 || '%'
-                              OR p.marque ILIKE '%' || $1 || '%')
-        AND ($2::text IS NULL OR c.slug = $2)
-        AND ($5::numeric IS NULL OR o.prix <= $5::numeric)
-        AND ($6::numeric IS NULL OR o.prix >= $6::numeric)
+      WHERE ($1::text IS NULL OR p.nom ILIKE '%'||$1||'%' OR p.marque ILIKE '%'||$1||'%')
+        AND ${catCondition}
+        AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
+        AND ($4::numeric IS NULL OR o.prix >= $4::numeric)
       GROUP BY p.id, c.nom
       ORDER BY ${orderBy}
-      LIMIT $3 OFFSET $4`,
-      [q || null, categorie || null, limit, offset, prixMax || null, prixMin || null]
-    );
+      LIMIT $5 OFFSET $6`;
 
-    const totalResult = await pool.query(`
+    const params = [q||null, categorie||null, prixMax||null, prixMin||null, limit, offset];
+    const result = await pool.query(sql, params);
+
+    const countSql = `
       SELECT COUNT(DISTINCT p.id) AS total
       FROM produits p
       LEFT JOIN categories c ON c.id = p.categorie_id
       LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true
-      WHERE ($1::text IS NULL OR p.nom    ILIKE '%' || $1 || '%'
-                              OR p.marque ILIKE '%' || $1 || '%')
-        AND ($2::text IS NULL OR c.slug = $2)
+      WHERE ($1::text IS NULL OR p.nom ILIKE '%'||$1||'%' OR p.marque ILIKE '%'||$1||'%')
+        AND ${catCondition}
         AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
-        AND ($4::numeric IS NULL OR o.prix >= $4::numeric)`,
-      [q || null, categorie || null, prixMax || null, prixMin || null]
-    );
-    const total = parseInt(totalResult.rows[0].total, 10);
-    res.json({ success: true, produits: rows, page: +page, limit: +limit, total, pages: Math.ceil(total / limit) });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+        AND ($4::numeric IS NULL OR o.prix >= $4::numeric)`;
+
+    const countResult = await pool.query(countSql, [q||null, categorie||null, prixMax||null, prixMin||null]);
+    const total = parseInt(countResult.rows[0].total, 10);
+
+    res.json({
+      success: true,
+      produits: result.rows,
+      page: +page, limit: +limit,
+      total, pages: Math.ceil(total / limit) || 1
+    });
+  } catch (err) {
+    console.error('[GET /api/produits]', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // GET /api/produits/:id — détail d'un produit
