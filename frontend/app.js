@@ -221,22 +221,195 @@ function chargerProduits(query, categorie, page) {
     });
 }
 
-// ── Template liste ───────────────────────────────────────────────
+// ── Template liste — avec dashboard si résultats ────────────────
 function templateListe(produits, data) {
-  var isSearch = state.query || state.categorie || state.prixMax || state.prixMin;
+  var isSearch = !!(state.query || state.categorie || state.prixMax || state.prixMin);
   return [
     htmlHero(),
     htmlChipsBudget(),
+    isSearch && produits.length > 1 ? htmlDashboardComparaison(produits, data) : '',
     htmlBarre(data),
     '<section class="products">',
-      data.total > 0 ? '<p style="font-size:12px;color:#94a3b8;padding:4px 5% 10px">' + data.total + ' résultat(s)' + (state.query ? ' pour "' + state.query + '"' : '') + '</p>' : '',
-      state.vue === 'liste' ? '<div class="pliste">' + produits.map(carteListeHTML).join('') + '</div>'
-                            : '<div class="pgrid">'  + produits.map(carteHTML).join('')      + '</div>',
+      data.total > 0 ? '<p style="font-size:12px;color:#94a3b8;padding:4px 5% 10px">' +
+        data.total + ' résultat(s)' + (state.query ? ' pour "' + state.query + '"' : '') + '</p>' : '',
+      state.vue === 'liste'
+        ? '<div class="pliste">' + produits.map(carteListeHTML).join('') + '</div>'
+        : '<div class="pgrid">'  + produits.map(carteHTML).join('')      + '</div>',
       data.page < data.pages ? btnPlus(data) : (data.total > 24 ? '<p id="fin-liste" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">✅ Tous les ' + data.total + ' produits affichés</p>' : ''),
     '</section>',
     htmlRecents(),
   ].join('');
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  DASHBOARD DE COMPARAISON INTELLIGENT
+// ═══════════════════════════════════════════════════════════════
+function htmlDashboardComparaison(produits, data) {
+  // ── Calculs statistiques ──────────────────────────────────────
+  var avecPrix   = produits.filter(function(p) { return p.prix_min > 0; });
+  if (!avecPrix.length) return '';
+
+  var tousLesPrix  = avecPrix.map(function(p) { return +p.prix_min; });
+  var prixPlancher = Math.min.apply(null, tousLesPrix);
+  var prixPlafond  = Math.max.apply(null, tousLesPrix);
+  var prixMoyen    = Math.round(tousLesPrix.reduce(function(a,b){return a+b;},0) / tousLesPrix.length);
+
+  // Grouper par marque
+  var parMarque = {};
+  avecPrix.forEach(function(p) {
+    var m = (p.marque || 'Autre').split(' ')[0];
+    if (!parMarque[m]) parMarque[m] = [];
+    parMarque[m].push(p);
+  });
+  var marques = Object.keys(parMarque).sort(function(a,b) {
+    return parMarque[b].length - parMarque[a].length;
+  }).slice(0, 6);
+
+  // Grouper par marchand (via nb_offres — approximation)
+  var marchands = ['Jumia', 'Expat-Dakar', 'CoinAfrique'];
+
+  // Gammes de prix automatiques
+  var gammes = _calculerGammes(tousLesPrix, avecPrix);
+
+  // Meilleur rapport Q/P = plus d'offres pour le prix le plus bas
+  var meilleurQP = avecPrix.slice().sort(function(a,b) {
+    var scoreA = (a.nb_offres || 1) / (a.prix_min / prixMoyen);
+    var scoreB = (b.nb_offres || 1) / (b.prix_min / prixMoyen);
+    return scoreB - scoreA;
+  })[0];
+
+  return [
+    '<div id="dashboard" style="margin:0 5% 16px;background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden">',
+
+      // En-tête
+      '<div style="padding:14px 16px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff">',
+        '<div style="font-size:13px;font-weight:700">📊 Analyse de votre recherche' + (state.query ? ' : "' + state.query + '"' : '') + '</div>',
+        '<div style="font-size:11px;opacity:.8;margin-top:2px">' + data.total + ' produits · ' + avecPrix.length + ' avec prix · données en temps réel</div>',
+      '</div>',
+
+      // KPIs rapides
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #f1f5f9">',
+        _kpi('💰 Plus bas',   fcfa(prixPlancher), '#10b981', avecPrix.find(function(p){return +p.prix_min===prixPlancher;})),
+        _kpi('📈 Plus haut',  fcfa(prixPlafond),  '#ef4444', null),
+        _kpi('📊 Moyenne',    fcfa(prixMoyen),    '#6366f1', null),
+        _kpi('🏷 Produits',   data.total + ' refs','#f97316', null),
+      '</div>',
+
+      // Corps du dashboard
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid #f1f5f9">',
+
+        // Colonne gauche : par marque
+        '<div style="padding:14px;border-right:1px solid #f1f5f9">',
+          '<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">🏭 Par fabricant</div>',
+          marques.map(function(m) {
+            var items  = parMarque[m];
+            var minM   = Math.min.apply(null, items.map(function(p){return +p.prix_min;}));
+            var pct    = Math.round(items.length / avecPrix.length * 100);
+            return [
+              '<div onclick="filtrerCategoriePlus(\'' + m + '\')" ',
+                'style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;margin-bottom:4px" ',
+                'onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'transparent\'">',
+                '<span style="font-size:14px;font-weight:800;color:#1e293b;min-width:80px">' + m + '</span>',
+                '<div style="flex:1;background:#f1f5f9;border-radius:4px;height:6px;overflow:hidden">',
+                  '<div style="width:' + pct + '%;height:100%;background:#1d4ed8;border-radius:4px"></div>',
+                '</div>',
+                '<span style="font-size:11px;color:#64748b;white-space:nowrap">' + items.length + ' · dès ' + fcfa(minM) + '</span>',
+              '</div>',
+            ].join('');
+          }).join('') +
+          (marques.length === 0 ? '<p style="font-size:12px;color:#94a3b8">Données insuffisantes</p>' : ''),
+        '</div>',
+
+        // Colonne droite : gammes
+        '<div style="padding:14px">',
+          '<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">💡 Par gamme de prix</div>',
+          gammes.map(function(g) {
+            return [
+              '<div onclick="filtrerBudget(' + g.max + ',' + g.min + ')" ',
+                'style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;',
+                'border-radius:8px;cursor:pointer;border:1px solid #f1f5f9;margin-bottom:6px;background:#fff" ',
+                'onmouseover="this.style.borderColor=\'#1d4ed8\';this.style.background=\'#eff6ff\'" ',
+                'onmouseout="this.style.borderColor=\'#f1f5f9\';this.style.background=\'#fff\'">',
+                '<div>',
+                  '<div style="font-size:12px;font-weight:700;color:#1e293b">' + g.label + '</div>',
+                  '<div style="font-size:11px;color:#94a3b8">' + g.count + ' produit(s)</div>',
+                '</div>',
+                '<span style="font-size:11px;font-weight:600;color:#1d4ed8;white-space:nowrap">Voir →</span>',
+              '</div>',
+            ].join('');
+          }).join(''),
+        '</div>',
+
+      '</div>',
+
+      // Recommandations
+      '<div style="padding:12px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#f8fafc">',
+        '<span style="font-size:11px;font-weight:700;color:#475569;white-space:nowrap">Décide vite :</span>',
+
+        // Bouton meilleur prix
+        _recoBouton(
+          '🏆 Meilleur prix',
+          avecPrix.find(function(p){return +p.prix_min===prixPlancher;}),
+          '#10b981'
+        ),
+
+        // Bouton meilleur rapport Q/P
+        _recoBouton('⭐ Meilleur rapport Q/P', meilleurQP, '#6366f1'),
+
+        // Bouton milieu de gamme
+        _recoBouton(
+          '🎯 Milieu de gamme',
+          avecPrix.find(function(p){ var ecart=Math.abs(+p.prix_min-prixMoyen); return ecart < prixMoyen*0.15; }),
+          '#f97316'
+        ),
+      '</div>',
+
+    '</div>',
+  ].join('');
+}
+
+function _kpi(label, valeur, couleur, produit) {
+  return [
+    '<div style="padding:12px 8px;text-align:center;cursor:' + (produit?'pointer':'default') + '"' +
+      (produit ? ' onclick="ouvrirProduit(\'' + produit.id + '\')"' : '') + '>',
+      '<div style="font-size:11px;color:#94a3b8;margin-bottom:2px">' + label + '</div>',
+      '<div style="font-size:14px;font-weight:800;color:' + couleur + '">' + valeur + '</div>',
+    '</div>',
+  ].join('');
+}
+
+function _recoBouton(label, produit, couleur) {
+  if (!produit) return '';
+  return '<button onclick="ouvrirProduit(\'' + produit.id + '\')" ' +
+    'style="padding:7px 12px;background:' + couleur + '1a;color:' + couleur + ';border:1px solid ' + couleur + '4d;' +
+    'border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">' +
+    label + ' : ' + produit.nom.split(' ').slice(0,3).join(' ') + ' (' + fcfa(produit.prix_min) + ')' +
+  '</button>';
+}
+
+function _calculerGammes(prix, produits) {
+  var min = Math.min.apply(null, prix), max = Math.max.apply(null, prix);
+  var range = max - min;
+  if (range < 1000) return [{ label: 'Tous les prix', min: null, max: null, count: produits.length }];
+  var seuils = [min + range*0.25, min + range*0.6, max];
+  var labels = ['Entrée de gamme', 'Milieu de gamme', 'Haut de gamme'];
+  var prev = min - 1;
+  return seuils.map(function(s, i) {
+    var count = produits.filter(function(p){ return +p.prix_min > prev && +p.prix_min <= s; }).length;
+    var g = { label: labels[i], min: Math.round(prev), max: Math.round(s), count: count };
+    prev = s;
+    return g;
+  }).filter(function(g){ return g.count > 0; });
+}
+
+function filtrerCategoriePlus(marque) {
+  var inp = document.getElementById('search-input');
+  var q   = state.query ? state.query + ' ' + marque : marque;
+  if (inp) inp.value = q;
+  chargerProduits(q, state.categorie, 1);
+}
+
+
 
 // ── Hero + barre de recherche ────────────────────────────────────
 function htmlHero() {
