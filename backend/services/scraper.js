@@ -267,8 +267,8 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
              ORDER BY sim DESC LIMIT 3`,
             [nomNorm, motsCles[0].toLowerCase(), '%' + motsCles.slice(0,2).join('%').toLowerCase() + '%']
           );
-          // Seuil : similarité > 0.45 ou les 2 premiers mots-clés matchent
-          if(fuzzy.length > 0 && (fuzzy[0].sim > 0.45 || _motsClesCommuns(item.titre, fuzzy[0].nom) >= 2)){
+          // Seuil : similarité > 0.35 ou les 2 premiers mots-clés matchent
+          if(fuzzy.length > 0 && (fuzzy[0].sim > 0.35 || _motsClesCommuns(item.titre, fuzzy[0].nom) >= 2)){
             produitId = fuzzy[0].id; stats.mis_a_jour++;
           }
         }
