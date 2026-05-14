@@ -218,15 +218,38 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
   for(const item of items){
     try{
       let produitId;
-      const {rows:ex}=await pool.query(
-        `SELECT id FROM produits WHERE nom ILIKE $1 OR (ean IS NOT NULL AND ean!='' AND ean=$2) LIMIT 1`,
-        [item.titre, item.ean||'']
-      );
-      if(ex.length>0){
-        produitId=ex[0].id;
-        if(item.image_url) await pool.query('UPDATE produits SET image_url=$1 WHERE id=$2 AND image_url IS NULL',[item.image_url,produitId]);
-        stats.mis_a_jour++;
-      }else{
+
+      // 1. Correspondance exacte EAN (si dispo)
+      if(item.ean){
+        const {rows:byEan}=await pool.query('SELECT id FROM produits WHERE ean=$1 LIMIT 1',[item.ean]);
+        if(byEan.length>0){ produitId=byEan[0].id; stats.mis_a_jour++; }
+      }
+
+      // 2. Correspondance par similarité sur le nom normalisé
+      if(!produitId){
+        const nomNorm = normaliserTitre(item.titre);
+        // Extraire mots-clés discriminants (modèle, référence)
+        const motsCles = nomNorm.split(/\s+/).filter(m => m.length >= 3).slice(0, 4);
+        if(motsCles.length > 0){
+          const pattern = motsCles.join('%');
+          const {rows:fuzzy}=await pool.query(
+            `SELECT id, nom,
+                    similarity(LOWER(nom), $1) AS sim
+             FROM produits
+             WHERE LOWER(nom) LIKE '%' || $2 || '%'
+                OR LOWER(nom) ILIKE $3
+             ORDER BY sim DESC LIMIT 3`,
+            [nomNorm, motsCles[0].toLowerCase(), '%' + motsCles.slice(0,2).join('%').toLowerCase() + '%']
+          );
+          // Seuil : similarité > 0.45 ou les 2 premiers mots-clés matchent
+          if(fuzzy.length > 0 && (fuzzy[0].sim > 0.45 || _motsClesCommuns(item.titre, fuzzy[0].nom) >= 2)){
+            produitId = fuzzy[0].id; stats.mis_a_jour++;
+          }
+        }
+      }
+
+      // 3. Aucun match → nouveau produit
+      if(!produitId){
         const catId=await getCatId(item.titre);
         const {rows:n}=await pool.query(
           'INSERT INTO produits(nom,marque,categorie_id,ean,image_url) VALUES($1,$2,$3,$4,$5) RETURNING id',
@@ -234,20 +257,41 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         );
         produitId=n[0].id; stats.inseres++;
       }
+
+      if(item.image_url) await pool.query('UPDATE produits SET image_url=$1 WHERE id=$2 AND image_url IS NULL',[item.image_url,produitId]);
+
+      // Upsert offre
       const {rows:offre}=await pool.query(
-        `INSERT INTO offres(produit_id,marchand_id,prix,url_achat,scraped_at) VALUES($1,$2,$3,$4,NOW())
-         ON CONFLICT(produit_id,marchand_id) DO UPDATE SET prix=EXCLUDED.prix,url_achat=EXCLUDED.url_achat,scraped_at=NOW()
+        `INSERT INTO offres(produit_id,marchand_id,prix,url_achat,scraped_at,stock)
+         VALUES($1,$2,$3,$4,NOW(),true)
+         ON CONFLICT(produit_id,marchand_id)
+         DO UPDATE SET prix=EXCLUDED.prix, url_achat=EXCLUDED.url_achat,
+                       scraped_at=NOW(), stock=true
          RETURNING id`,
         [produitId,marchandId,item.prix,item.url]
       );
       if(offre.length>0) await pool.query('INSERT INTO historique_prix(offre_id,prix) VALUES($1,$2)',[offre[0].id,item.prix]);
       await pool.query(
-        'UPDATE produits SET prix_min=(SELECT MIN(o.prix) FROM offres o WHERE o.produit_id=$1 AND o.stock=true),nb_offres=(SELECT COUNT(o.id) FROM offres o WHERE o.produit_id=$1) WHERE id=$1',
+        'UPDATE produits SET prix_min=(SELECT MIN(o.prix) FROM offres o WHERE o.produit_id=$1 AND o.stock=true), nb_offres=(SELECT COUNT(o.id) FROM offres o WHERE o.produit_id=$1) WHERE id=$1',
         [produitId]
       );
     }catch(err){ console.error(`[DB] "${item.titre}":`,err.message); stats.erreurs++; }
   }
   return stats;
+}
+
+// Compte les mots-clés en commun entre deux titres (insensible à la casse)
+function _motsClesCommuns(a, b) {
+  const wordsA = new Set(a.toLowerCase().split(/\W+/).filter(w=>w.length>=3));
+  const wordsB = b.toLowerCase().split(/\W+/).filter(w=>w.length>=3);
+  return wordsB.filter(w=>wordsA.has(w)).length;
+}
+
+function normaliserTitre(s) {
+  return (s||'').toLowerCase()
+    .replace(/[''""()\[\]]/g,'')
+    .replace(/\b(neuf|occasion|reconditionné|garanti|livraison|offre|promo|bon état|état)\b/gi,'')
+    .replace(/\s+/g,' ').trim();
 }
 
 // ══════════════════════════════════════════════════════
