@@ -97,8 +97,8 @@ async function demarrerApp() {
       CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
       CREATE EXTENSION IF NOT EXISTS "pg_trgm";
     `);
-    // Appel du script migrate complet
-    require('./migrate-inline')();
+    // Appel du script migrate complet — AWAIT obligatoire
+    await require('./migrate-inline')();
   } catch (err) {
     console.warn('[MIGRATE] Avertissement:', err.message);
   }
