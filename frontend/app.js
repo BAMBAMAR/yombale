@@ -945,7 +945,7 @@ function filtrerCategorie(s)   { chargerProduits(state.query, s===state.categori
 function changerTri(v)         { state.tri = v; chargerProduits(state.query, state.categorie, 1); }
 function changerVue(v)         { state.vue = v; chargerProduits(state.query, state.categorie, state.page); }
 function filtrerBudget(max, min) { state.prixMax = max||''; state.prixMin = min||''; chargerProduits(state.query, state.categorie, 1); }
-function changerTri(v)         { state.tri = v; chargerProduits(state.query, state.categorie, 1); }
+// BUG FIX : changerTri était défini deux fois (doublon supprimé)
 function reinitialiserFiltres() { state.prixMax=''; state.prixMin=''; state.categorie=''; state.tri='pertinence'; chargerProduits('','',1); }
 
 function _appSimFiltres(id) {
