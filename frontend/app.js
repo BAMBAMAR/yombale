@@ -616,119 +616,127 @@ function renderErreur(err) {
 async function ouvrirProduit(id, simFiltres) {
   simFiltres = simFiltres || {};
   dbg('ouvrirProduit', id);
-  render('<div class="loader"><div class="spin"></div><p>Chargement...</p></div>');
+
+  var appEl = document.getElementById('app');
+  if (appEl) { appEl.style.cssText = 'max-width:none;padding:0;margin:0;width:100%;background:#f8fafc;min-height:100vh'; }
+
+  render('<div style="padding:60px 20px;text-align:center"><div class="spin" style="width:48px;height:48px;margin:0 auto 16px;border-width:4px"></div><p style="color:#64748b">Chargement...</p></div>');
+
   try {
-    var [res, offres, histo] = await Promise.all([
-      apiFetch('/produits/' + id),
-      apiFetch('/produits/' + id + '/offres'),
-      apiFetch('/produits/' + id + '/historique').catch(function() { return []; }),
-    ]);
+    var res    = await apiFetch('/produits/' + id);
+    var offres = await apiFetch('/produits/' + id + '/offres');
+    var histo  = await apiFetch('/produits/' + id + '/historique').catch(function() { return []; });
+    var simP   = new URLSearchParams({ limit:8, prixMax:simFiltres.prixMax||'', marchand:simFiltres.marchand||'' });
+    var simRes = await apiFetch('/produits/' + id + '/similaires?' + simP).catch(function() { return { produits:[] }; });
 
     ajouterRecent(res);
 
-    var simParams = new URLSearchParams({ limit:8, prixMax: simFiltres.prixMax||'', prixMin: simFiltres.prixMin||'', marchand: simFiltres.marchand||'' });
-    var similaires = await apiFetch('/produits/' + id + '/similaires?' + simParams).catch(function() { return { produits: [] }; });
+    var prixMin  = offres.length ? Math.min.apply(null, offres.map(function(o){ return +o.prix; })) : 0;
+    var prixMaxO = offres.length ? Math.max.apply(null, offres.map(function(o){ return +o.prix; })) : 0;
+    var economie = prixMaxO > prixMin ? fcfa(prixMaxO - prixMin) : null;
 
-    var prixMin   = offres.length ? Math.min.apply(null, offres.map(function(o){return o.prix;})) : 0;
-    var prixMaxO  = offres.length ? Math.max.apply(null, offres.map(function(o){return o.prix;})) : 0;
-    var economie  = prixMaxO > prixMin ? fcfa(prixMaxO - prixMin) : null;
+    var html = '<div style="background:#f8fafc;min-height:100vh">';
 
+    // ── Barre nav ──────────────────────────────────────────────
+    html += '<div style="position:sticky;top:58px;z-index:99;background:#fff;border-bottom:2px solid #e2e8f0;padding:0 5%;height:48px;display:flex;align-items:center;gap:12px">';
+    html += '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:700;cursor:pointer">← Retour</button>';
+    html += '<span style="color:#e2e8f0">|</span>';
+    html += '<span style="font-size:12px;color:#64748b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + res.nom + '</span>';
+    html += '</div>';
+
+    html += '<div style="max-width:800px;margin:0 auto;padding:24px 5% 60px">';
+
+    // ── En-tête produit ──────────────────────────────────────────
+    html += '<div style="background:#fff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">';
+
+    // Image
+    html += '<div style="width:100%;height:240px;background:linear-gradient(135deg,#eff6ff,#dbeafe);display:flex;align-items:center;justify-content:center">';
+    html += res.image_url ? '<img src="' + res.image_url + '" style="max-height:220px;max-width:85%;object-fit:contain">' : '<span style="font-size:80px">📦</span>';
+    html += '</div>';
+
+    // Infos
+    html += '<div style="padding:20px 24px 24px">';
+    if (res.categorie_nom) html += '<span style="font-size:11px;font-weight:700;color:#1d4ed8;background:#eff6ff;padding:3px 10px;border-radius:10px;text-transform:uppercase">' + res.categorie_nom + '</span>';
+    html += '<h1 style="font-size:22px;font-weight:800;color:#1e293b;margin:10px 0 6px;line-height:1.3">' + res.nom + '</h1>';
+    if (res.marque) html += '<p style="font-size:13px;color:#64748b;margin-bottom:16px">Par <strong>' + res.marque + '</strong></p>';
+
+    if (offres.length) {
+      html += '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">';
+      html += '<div style="font-size:34px;font-weight:900;color:#10b981">' + fcfa(prixMin) + '</div>';
+      if (economie) html += '<div style="background:#fff7ed;color:#f97316;font-size:13px;font-weight:700;padding:6px 14px;border-radius:10px;border:1px solid #fed7aa">Économie possible : ' + economie + '</div>';
+      html += '</div>';
+      html += '<p style="font-size:13px;color:#94a3b8;margin-top:8px">' + offres.length + ' marchand(s) · ' + state.ville + '</p>';
+    } else {
+      html += '<p style="color:#94a3b8;font-size:15px">Aucune offre disponible</p>';
+    }
+    html += '</div></div>';
+
+    // ── Tableau offres ───────────────────────────────────────────
+    html += '<div style="margin-bottom:20px">';
+    html += '<h2 style="font-size:13px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">📊 Comparer les prix</h2>';
+    html += '<div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)">';
+
+    if (offres.length) {
+      offres.forEach(function(o, i) {
+        var best  = +o.prix === prixMin;
+        var ecart = best ? 0 : +o.prix - prixMin;
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #f1f5f9;' + (best ? 'background:#f0fdf4;border-left:4px solid #10b981' : 'border-left:4px solid transparent') + '">';
+        html += '<div style="flex:1;min-width:0">';
+        if (best) html += '<span style="display:inline-block;background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-bottom:4px">🏆 Meilleur prix</span><br>';
+        html += '<a href="' + (o.site_url||'#') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:15px;font-weight:700;color:#1e293b;text-decoration:none">' + (o.marchand_nom||'Marchand') + '</a>';
+        if (ecart > 0) html += '<div style="font-size:11px;color:#ef4444;margin-top:2px">+' + fcfa(ecart) + ' vs meilleur prix</div>';
+        html += '</div>';
+        html += '<div style="font-size:20px;font-weight:800;color:' + (best ? '#10b981' : '#1e293b') + ';white-space:nowrap">' + fcfa(o.prix) + '</div>';
+        html += '<a href="' + (o.url_achat||'#') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-block;padding:10px 18px;background:' + (best?'#10b981':'#1d4ed8') + ';color:#fff;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0">Acheter →</a>';
+        html += '</div>';
+      });
+    } else {
+      html += '<div style="padding:24px;text-align:center;color:#94a3b8">Aucune offre disponible</div>';
+    }
+    html += '</div></div>';
+
+    // ── Historique ───────────────────────────────────────────────
+    html += htmlHistorique(histo);
+
+    // ── Similaires ───────────────────────────────────────────────
+    html += htmlSimilaires(id, simRes, simFiltres);
+
+    html += '</div></div>';
+    render(html);
+
+  } catch(err) {
+    dbgErr('ouvrirProduit', err);
+    var appEl2 = document.getElementById('app');
+    if (appEl2) appEl2.style.cssText = '';
     render([
-      // Page produit pleine largeur
-      '<div style="min-height:100vh;background:#f8fafc">',
-
-        // Barre de navigation
-        '<div style="background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 5%;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100">',
-          '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0">',
-            '← Retour',
-          '</button>',
-          '<span style="color:#e2e8f0">|</span>',
-          '<span style="font-size:13px;color:#64748b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1">' + res.nom + '</span>',
-        '</div>',
-
-        '<div style="max-width:780px;margin:0 auto;padding:20px 5% 40px">',
-
-          // Bloc image + infos — grand format
-          '<div style="background:#fff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:16px">',
-
-            // Image grande
-            '<div style="width:100%;height:220px;background:#f8fafc;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #f1f5f9">',
-              res.image_url
-                ? '<img src="' + res.image_url + '" style="max-height:200px;max-width:90%;object-fit:contain">'
-                : '<span style="font-size:72px">📦</span>',
-            '</div>',
-
-            // Infos produit
-            '<div style="padding:20px">',
-              res.categorie_nom ? '<span style="font-size:11px;font-weight:700;color:#1d4ed8;background:#eff6ff;padding:2px 8px;border-radius:8px;text-transform:uppercase;letter-spacing:.04em">' + res.categorie_nom + '</span>' : '',
-              '<h1 style="font-size:20px;font-weight:800;color:#1e293b;margin:10px 0 4px;line-height:1.3">' + res.nom + '</h1>',
-              res.marque ? '<div style="font-size:13px;color:#64748b;margin-bottom:16px">Par <strong>' + res.marque + '</strong></div>' : '<div style="margin-bottom:16px"></div>',
-
-              // Prix en évidence
-              offres.length ? [
-                '<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">',
-                  '<div style="font-size:32px;font-weight:900;color:#10b981">' + fcfa(prixMin) + '</div>',
-                  economie ? '<div style="font-size:12px;color:#f97316;font-weight:600;background:#fff7ed;padding:4px 10px;border-radius:8px">Économie jusqu\'à ' + economie + '</div>' : '',
-                '</div>',
-                '<div style="font-size:12px;color:#94a3b8;margin-top:4px">' + offres.length + ' offre(s) disponible(s) · ' + state.ville + '</div>',
-              ].join('') : '<div style="font-size:16px;color:#94a3b8;padding:8px 0">Aucune offre disponible</div>',
-            '</div>',
-          '</div>',
-
-          // Tableau comparaison prix
-          htmlTableauOffres(offres, prixMin),
-
-          // Historique
-          htmlHistorique(histo),
-
-          // Produits similaires
-          htmlSimilaires(id, similaires, simFiltres),
-
+      '<div style="padding:40px 5%;max-width:600px;margin:0 auto">',
+        '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:24px">← Retour</button>',
+        '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:24px;text-align:center">',
+          '<div style="font-size:48px;margin-bottom:12px">⚠️</div>',
+          '<h3 style="color:#b91c1c;margin-bottom:8px">Erreur de chargement</h3>',
+          '<p style="color:#ef4444;font-size:14px;font-weight:600">' + err.message + '</p>',
+          '<button onclick="ouvrirProduit(\'' + id + '\')" style="margin-top:16px;padding:10px 24px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🔄 Réessayer</button>',
         '</div>',
       '</div>',
     ].join(''));
-  } catch(err) {
-    dbgErr('ouvrirProduit', err);
-    render('<div style="padding:24px 5%">' +
-      '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer">← Retour</button>' +
-      '<p style="margin-top:12px;color:#ef4444">' + err.message + '</p></div>');
   }
 }
 
-// ── Tableau des offres ───────────────────────────────────────────
+// ── Tableau des offres (utilisé par comparaison côte à côte) ────
 function htmlTableauOffres(offres, prixMin) {
-  if (!offres.length) return '<div style="background:#f8fafc;border-radius:12px;padding:20px;text-align:center;color:#94a3b8;font-size:13px">Aucune offre disponible pour ce produit.</div>';
-
-  var lignes = offres.map(function(o, i) {
-    var isBest = o.prix === prixMin;
-    var ecart  = isBest ? 0 : o.prix - prixMin;
-    return [
-      '<div class="orow' + (isBest ? ' best' : '') + '" style="display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid #f1f5f9;' + (isBest ? 'background:#f0fdf4;border-left:3px solid #10b981' : '') + '">',
-        '<div style="flex:1;min-width:0;display:flex;align-items:center;gap:8px">',
-          isBest ? '<span style="background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0">🏆 Meilleur</span>' : '<span style="width:66px;flex-shrink:0"></span>',
-          '<a href="' + (o.site_url||'#') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" ' +
-            'style="font-weight:600;font-size:14px;color:#1e293b;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
-            (o.marchand_nom || 'Marchand') +
-          '</a>',
-        '</div>',
-        '<div style="text-align:right;flex-shrink:0">',
-          '<div style="font-size:16px;font-weight:800;color:' + (isBest ? '#10b981' : '#1e293b') + '">' + fcfa(o.prix) + '</div>',
-          ecart > 0 ? '<div style="font-size:11px;color:#ef4444">+' + fcfa(ecart) + '</div>' : '',
-        '</div>',
-        '<a href="' + (o.url_achat||'#') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" ' +
-          'style="flex-shrink:0;padding:8px 16px;background:' + (isBest ? '#10b981' : '#1d4ed8') + ';color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap">Acheter →</a>',
-      '</div>',
-    ].join('');
+  if (!offres || !offres.length) return '';
+  var lignes = offres.map(function(o) {
+    var best  = +o.prix === prixMin;
+    var ecart = best ? 0 : +o.prix - prixMin;
+    return '<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #f1f5f9;' + (best ? 'background:#f0fdf4;border-left:3px solid #10b981' : 'border-left:3px solid transparent') + '">' +
+      '<div style="flex:1">' + (best ? '<span style="background:#10b981;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:6px">🏆</span>' : '') +
+      '<span style="font-weight:600;font-size:13px;color:#1e293b">' + (o.marchand_nom||'Marchand') + '</span>' +
+      (ecart > 0 ? '<div style="font-size:11px;color:#ef4444">+' + fcfa(ecart) + '</div>' : '') + '</div>' +
+      '<span style="font-weight:800;font-size:15px;color:' + (best?'#10b981':'#1e293b') + '">' + fcfa(o.prix) + '</span>' +
+      '<a href="' + (o.url_achat||'#') + '" target="_blank" onclick="event.stopPropagation()" style="padding:7px 14px;background:' + (best?'#10b981':'#1d4ed8') + ';color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">→</a>' +
+    '</div>';
   }).join('');
-
-  return [
-    '<div style="margin-bottom:20px">',
-      '<h3 style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">📊 Comparaison des prix</h3>',
-      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">',
-        lignes,
-      '</div>',
-    '</div>',
-  ].join('');
+  return '<div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:20px">' + lignes + '</div>';
 }
 
 // ── Historique SVG ───────────────────────────────────────────────
@@ -918,7 +926,17 @@ function doSearch() {
 }
 
 function goHome()              { state.prixMax=''; state.prixMin=''; chargerProduits('','',1); }
-function retourListe()         { chargerProduits(state.query, state.categorie, state.page||1); }
+function retourListe() {
+  // Réinitialiser le conteneur
+  var appEl = document.getElementById('app');
+  if (appEl) {
+    appEl.style.maxWidth  = '';
+    appEl.style.padding   = '';
+    appEl.style.margin    = '';
+    appEl.style.width     = '';
+  }
+  chargerProduits(state.query, state.categorie, state.page||1);
+}
 function changeVille(v)        { state.ville = v; chargerProduits(state.query, state.categorie, 1); }
 function loadPromos()          { chargerProduits('promo','',1); }
 function filtrerCategorie(s)   { chargerProduits(state.query, s===state.categorie?'':s, 1); }
