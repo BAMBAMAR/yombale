@@ -698,9 +698,9 @@ async function ouvrirProduit(id, simFiltres) {
           '<div style="padding:32px 36px;display:flex;flex-direction:column;gap:16px">',
             // Badge catégorie
             res.categorie_nom
-              ? '<div><span style="font-size:11px;font-weight:700;color:#1d4ed8;background:#eff6ff;',
-                'padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em">',
-                res.categorie_nom, '</span></div>'
+              ? '<div><span style="font-size:11px;font-weight:700;color:#1d4ed8;background:#eff6ff;' +
+                'padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em">' +
+                res.categorie_nom + '</span></div>'
               : '',
 
             // Nom & marque
