@@ -38,6 +38,15 @@ router.get('/', async (req, res) => {
         AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
         AND ($4::numeric IS NULL OR o.prix >= $4::numeric)
       GROUP BY p.id, c.nom
+      HAVING COUNT(o.id) = 0
+          OR (
+            -- Exclure offres avec prix aberrant :
+            -- prix minimum réaliste = 500 FCFA (rien de légal ne se vend moins)
+            MIN(o.prix) >= 500
+            -- Exclure les cas où min << max avec ratio > 20 (division par 100 non corrigée)
+            -- En gardant uniquement les produits dont le prix semble cohérent
+            AND (MAX(o.prix) = 0 OR MIN(o.prix) * 20 >= MAX(o.prix) OR MIN(o.prix) >= 5000)
+          )
       ORDER BY ${orderBy}
       LIMIT $5 OFFSET $6`;
 
