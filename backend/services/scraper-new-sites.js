@@ -129,13 +129,12 @@ async function scraperWooStoreAPI(baseUrl, nom, maxPages = 8) {
 
       for (const p of data) {
         const titre = nettoyerTitre(p.name || '');
-        // FCFA (XOF) = 0 décimales — ne pas diviser par défaut
-        // Certains sites WC retournent currency_minor_unit=2 par erreur de config
+        // FCFA (XOF) = 0 décimales — l'API WC Store retourne price * 10^currency_minor_unit
+        // Règle : diviser seulement si currency_minor_unit est explicitement > 0
+        // Défaut = 0 (FCFA n'a pas de centimes)
         const rawUnit  = parseInt(p.prices?.currency_minor_unit ?? '0', 10);
         const prixRaw  = parseInt(p.prices?.price || p.prices?.sale_price || '0', 10);
-        // Si après division le prix semble trop bas (<500) mais le brut est valide → ignorer la division
-        const prixDiv  = rawUnit > 0 ? Math.round(prixRaw / Math.pow(10, rawUnit)) : prixRaw;
-        const prix     = (prixDiv < 500 && prixRaw >= 500) ? prixRaw : prixDiv;
+        const prix     = rawUnit > 0 ? Math.round(prixRaw / Math.pow(10, rawUnit)) : prixRaw;
         const img  = p.images?.[0]?.src || null;
         const url  = p.permalink || `${baseUrl}/?p=${p.id}`;
         if (titre.length > 3 && prix > 500) resultats.push({ titre, prix, url, image_url: img });
