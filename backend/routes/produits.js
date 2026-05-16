@@ -57,6 +57,18 @@ router.get('/', async (req, res) => {
     const countResult = await pool.query(countSql, [q||null, categorie||null, prixMax||null, prixMin||null]);
     const total = parseInt(countResult.rows[0].total, 10);
 
+    // Correction des prix_min aberrants sur les cartes produits
+    // Utilise le prix_max comme référence : si prix_min << prix_max, corriger
+    result.rows.forEach(p => {
+      const pMin = parseFloat(p.prix_min);
+      const pMax = parseFloat(p.prix_max);
+      if (pMin > 0 && pMax > 0) {
+        const ratio = pMax / pMin;
+        if (ratio >= 50 && ratio < 500)       p.prix_min = pMin * 100;
+        else if (ratio >= 500 && ratio < 5000) p.prix_min = pMin * 1000;
+      }
+    });
+
     res.json({
       success: true,
       produits: result.rows,
@@ -99,6 +111,38 @@ router.get('/:id/offres', async (req, res) => {
       ORDER BY o.prix ASC`,
       [req.params.id]
     );
+
+    // ── Correction des prix aberrants ──────────────────────────────
+    // Pour des produits identiques, un prix 10x inférieur à la médiane
+    // indique une division par 100 ou 1000 lors du scraping (bug XOF).
+    // On corrige à la volée sans toucher la base.
+    if (rows.length >= 2) {
+      const prices = rows.map(r => r.prix).filter(p => p > 0).sort((a, b) => a - b);
+      // Médiane robuste
+      const mid = Math.floor(prices.length / 2);
+      const mediane = prices.length % 2 !== 0
+        ? prices[mid]
+        : (prices[mid - 1] + prices[mid]) / 2;
+
+      rows.forEach(r => {
+        if (r.prix <= 0) return;
+        const ratio = mediane / r.prix;
+        // Si prix est ~100x trop petit → multiplier par 100
+        if (ratio >= 50 && ratio < 500) {
+          r.prix = r.prix * 100;
+          r._corrige = true;
+        }
+        // Si prix est ~1000x trop petit → multiplier par 1000
+        else if (ratio >= 500) {
+          r.prix = r.prix * 1000;
+          r._corrige = true;
+        }
+      });
+
+      // Retrier après correction
+      rows.sort((a, b) => a.prix - b.prix);
+    }
+
     res.json(rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
