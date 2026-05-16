@@ -129,10 +129,12 @@ async function scraperWooStoreAPI(baseUrl, nom, maxPages = 8) {
 
       for (const p of data) {
         const titre = nettoyerTitre(p.name || '');
-        // FCFA (XOF) = 0 décimales — l'API WC Store retourne price * 10^currency_minor_unit
-        // Règle : diviser seulement si currency_minor_unit est explicitement > 0
-        // Défaut = 0 (FCFA n'a pas de centimes)
-        const rawUnit  = parseInt(p.prices?.currency_minor_unit ?? '0', 10);
+        // FCFA (XOF) = 0 décimales en réalité — ne jamais diviser pour XOF
+        // Certains sites WC mal configurés renvoient currency_minor_unit=2 ou 3 pour XOF
+        // Solution : vérifier le code devise. Si XOF/FCFA → utiliser le prix brut directement
+        const currCode = (p.prices?.currency_code || '').toUpperCase();
+        const isFCFA   = currCode === 'XOF' || currCode === 'FCFA' || currCode === 'CFA' || currCode === '';
+        const rawUnit  = isFCFA ? 0 : parseInt(p.prices?.currency_minor_unit ?? '0', 10);
         const prixRaw  = parseInt(p.prices?.price || p.prices?.sale_price || '0', 10);
         const prix     = rawUnit > 0 ? Math.round(prixRaw / Math.pow(10, rawUnit)) : prixRaw;
         const img  = p.images?.[0]?.src || null;
