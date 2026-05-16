@@ -129,4 +129,51 @@ router.post('/run-new', adminOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ── GET /api/scraper/nettoyer-prix ───────────────────────────
+// Route TEMPORAIRE — exécuter UNE FOIS pour corriger les prix aberrants
+// Appeler : GET /api/scraper/nettoyer-prix?secret=TON_SECRET
+// Supprimer ensuite cette route
+router.get('/nettoyer-prix', adminOnly, async (req, res) => {
+  const { pool } = require('../models/db');
+  const rapport = { corriges_x100: 0, supprimes: 0, erreur: null };
+  try {
+    // 1. Récupérer la médiane par produit (sur les prix > 500)
+    const { rows: produits } = await pool.query(`
+      SELECT p.id,
+             PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY o.prix) AS mediane
+      FROM produits p
+      JOIN offres o ON o.produit_id = p.id
+      WHERE o.prix > 500
+      GROUP BY p.id
+      HAVING COUNT(o.id) >= 2
+    `);
+
+    // 2. Pour chaque produit, corriger les offres divisées par 100
+    for (const { id, mediane } of produits) {
+      if (!mediane || mediane < 1000) continue;
+      const { rowCount } = await pool.query(`
+        UPDATE offres
+        SET prix = prix * 100
+        WHERE produit_id = $1
+          AND prix > 0
+          AND prix * 50 < $2
+          AND prix * 100 BETWEEN $2 * 0.1 AND $2 * 10
+      `, [id, mediane]);
+      rapport.corriges_x100 += rowCount;
+    }
+
+    // 3. Supprimer les prix < 500 FCFA (irréparables)
+    const { rowCount: suppr } = await pool.query(
+      'DELETE FROM offres WHERE prix < 500 AND prix > 0'
+    );
+    rapport.supprimes = suppr;
+
+    console.log('[NETTOYAGE PRIX]', rapport);
+    res.json({ success: true, ...rapport, message: 'Supprimez cette route après utilisation !' });
+  } catch (err) {
+    rapport.erreur = err.message;
+    res.status(500).json({ success: false, ...rapport });
+  }
+});
+
 module.exports = router;
