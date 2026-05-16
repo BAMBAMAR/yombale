@@ -1,4 +1,4 @@
-// backend/services/scraper-new-sites.js v3
+// backend/services/scraper-new-sites.js v2
 // ═══════════════════════════════════════════════════════════════
 //  SCRAPER — 9 SITES SÉNÉGALAIS (non-Cloudflare, accessibles depuis Railway)
 //
@@ -14,11 +14,6 @@
 //  2. WooCommerce Store API  /wp-json/wc/store/v1/products  (JSON public)
 //  3. WooCommerce REST API   /wp-json/wc/v3/products        (parfois ouvert)
 //  4. HTML scraping adaptatif (WooCommerce + PrestaShop)
-//
-//  CORRECTIONS v3 :
-//  - FIX prix divisés par 100/1000 : détection FCFA élargie + garde-fou post-division
-//  - FIX autodécouverte : patterns supplémentaires + test de toutes les candidates
-//  - FIX HTML scraping : sélecteur bdi/span.amount pour WooCommerce récent
 // ═══════════════════════════════════════════════════════════════
 
 const axios   = require('axios');
@@ -41,63 +36,6 @@ function nettoyerPrix(t) {
 }
 function nettoyerTitre(t) {
   return (t || '').trim().replace(/\s+/g, ' ').replace(/[\u200B-\u200D\uFEFF]/g, '').slice(0, 255);
-}
-
-// ── CORRECTION : détection devise FCFA élargie ───────────────
-// XOF = code ISO officiel du FCFA (zone UEMOA, dont Sénégal)
-// XAF = FCFA zone CEMAC (parfois utilisé par erreur dans WooCommerce)
-// Certains sites laissent le champ vide ou utilisent des alias non standard
-const CODES_FCFA = new Set(['XOF', 'FCFA', 'CFA', 'XAF', 'SENEGAL', 'SEN', 'F CFA', '']);
-function isCurrencyFCFA(currencyCode) {
-  return CODES_FCFA.has((currencyCode || '').toUpperCase().trim());
-}
-
-// ── CORRECTION : calcul du prix avec garde-fou seuil réaliste ─
-// WooCommerce Store API renvoie les prix en "minor units" (centimes).
-// Pour XOF, il ne devrait PAS y avoir de décimales (currency_minor_unit=0).
-// Mais beaucoup de sites sénégalais laissent la config EUR/USD par défaut
-// (currency_minor_unit=2 ou 3), ce qui provoque des divisions parasites.
-//
-//   Cas réels observés (bug) :
-//   prixRaw=60000, minor_unit=2 → ÷100 = 600 FCFA   ← FAUX (doit être 60 000)
-//   prixRaw=80000, minor_unit=2 → ÷100 = 800 FCFA   ← FAUX (doit être 80 000)
-//   prixRaw=82000, minor_unit=2 → ÷100 = 820 FCFA   ← FAUX (doit être 82 000)
-//
-//   Cas de sites bien configurés (minor units réels) :
-//   prixRaw=6000000, minor_unit=2 → ÷100 = 60 000 FCFA ← CORRECT
-//   prixRaw=8500000, minor_unit=2 → ÷100 = 85 000 FCFA ← CORRECT
-//
-// Règle (G1) : si le résultat après division est < PRIX_MIN_FCFA,
-// le site stocke le prix d'affichage (pas des centimes) → conserver le brut.
-// G1 distingue les deux familles car :
-//   60000 ÷ 100 = 600 < 10000  → brut 60000 conservé ✓
-//   6000000 ÷ 100 = 60000 ≥ 10000 → division acceptée ✓
-
-// Seuil minimum FCFA réaliste pour les catégories scrapées
-// (smartphones, électroménager, informatique, TV…)
-const PRIX_MIN_FCFA = 10_000;
-
-function calculerPrixWoo(pricesObj) {
-  const currCode = (pricesObj?.currency_code || '').toUpperCase().trim();
-  const prixRaw  = parseInt(pricesObj?.price || pricesObj?.sale_price || '0', 10);
-  if (isNaN(prixRaw) || prixRaw <= 0) return 0;
-
-  // Devise FCFA connue → jamais de division (XOF n'a pas de décimales)
-  if (isCurrencyFCFA(currCode)) return prixRaw;
-
-  const rawUnit  = parseInt(pricesObj?.currency_minor_unit ?? '0', 10);
-  if (rawUnit <= 0) return prixRaw;
-
-  const diviseur   = Math.pow(10, rawUnit);
-  const prixDivise = Math.round(prixRaw / diviseur);
-
-  // G1 — résultat sous le seuil réaliste : le site stocke le prix d'affichage
-  if (prixDivise < PRIX_MIN_FCFA) {
-    console.warn(`[PRIX-G1] brut=${prixRaw} ÷ ${diviseur} = ${prixDivise} < ${PRIX_MIN_FCFA} FCFA → brut conservé`);
-    return prixRaw >= 500 ? prixRaw : 0;
-  }
-
-  return prixDivise;
 }
 
 function buildHeaders(referer = '') {
@@ -133,39 +71,30 @@ async function fetchJson(url, timeout = 15000) {
 }
 
 // ── AUTO-DÉCOUVERTE URLs shop depuis la homepage ─────────────
-// CORRECTION : patterns élargis + validation que l'URL répond avant de la retourner
+// Cherche les liens nav qui pointent vers /shop, /boutique, etc.
 async function decouvririURLsShop(baseUrl) {
   const candidates = new Set();
-
-  // Patterns de chemins courants sur les boutiques sénégalaises
   const SHOP_PATTERNS = [
-    /\/shop\/?$/i, /\/boutique\/?$/i, /\/produits?\/?$/i, /\/store\/?$/i,
+    /\/shop\/?$/i, /\/boutique\/?$/i, /\/produits\/?$/i, /\/store\/?$/i,
     /\/telephones?\/?$/i, /\/smartphones?\/?$/i, /\/electromenager\/?$/i,
     /\/informatique\/?$/i, /\/tv\/?$/i, /\/mode\/?$/i, /\/beaute\/?$/i,
-    /product-categor(y|ie)\//i, /categori/i, /\/catalog\/?$/i,
-    /\/nos-produits\/?$/i, /\/tous-les-produits\/?$/i,
+    /product-categor(y|ie)\//i, /categori/i,
   ];
-
-  // URLs fixes à toujours tenter (par ordre de probabilité sur WooCommerce SN)
-  const DEFAULTS = ['/shop/', '/boutique/', '/produits/', '/store/'];
-
   try {
-    const html = await fetchHtml(baseUrl, '', 12000);
+    const html = await fetchHtml(baseUrl, '', 10000);
     const $ = cheerio.load(html);
 
-    // 1. Liens de navigation principaux
-    $('nav a[href], .menu a[href], #menu a[href], header a[href], .nav-menu a[href]').each((_, el) => {
+    // 1. Liens de navigation
+    $('nav a[href], .menu a[href], #menu a[href], header a[href]').each((_, el) => {
       const href = $(el).attr('href') || '';
       const full = href.startsWith('http') ? href : `${baseUrl}${href.startsWith('/') ? '' : '/'}${href}`;
-      if (
-        full.includes(baseUrl.replace(/https?:\/\//, '')) &&
-        SHOP_PATTERNS.some(p => p.test(full))
-      ) {
+      if (full.includes(baseUrl.replace('https://', '').replace('http://', '')) &&
+          SHOP_PATTERNS.some(p => p.test(full))) {
         candidates.add(full.split('?')[0].replace(/\/$/, '') + '/');
       }
     });
 
-    // 2. Liens footer et body
+    // 2. Liens footer et liens généraux
     $('a[href]').each((_, el) => {
       const href = $(el).attr('href') || '';
       if (!href.startsWith('http') && SHOP_PATTERNS.some(p => p.test(href))) {
@@ -175,27 +104,17 @@ async function decouvririURLsShop(baseUrl) {
         }
       }
     });
+
+    // 3. Toujours tenter /shop/ par défaut
+    candidates.add(`${baseUrl}/shop/`);
+
   } catch (err) {
-    console.warn(`[DISCOVER] ${baseUrl} homepage inaccessible: ${err.message}`);
+    console.warn(`[DISCOVER] ${baseUrl}: ${err.message}`);
+    candidates.add(`${baseUrl}/shop/`);
   }
 
-  // Toujours ajouter les defaults
-  for (const d of DEFAULTS) candidates.add(`${baseUrl}${d}`);
-
-  // CORRECTION : tester chaque candidate et ne garder que celles qui répondent
-  const valides = [];
-  for (const url of [...candidates].slice(0, 10)) {
-    try {
-      await axios.head(url, { timeout: 5000, maxRedirects: 3, headers: { 'User-Agent': randUA() } });
-      valides.push(url);
-    } catch {
-      // URL inaccessible → ignorée silencieusement
-    }
-  }
-
-  // Si aucune URL valide, retourner quand même /shop/ pour tenter le HTML scraping
-  const result = valides.length > 0 ? valides.slice(0, 6) : [`${baseUrl}/shop/`];
-  console.log(`[DISCOVER] ${baseUrl} → ${result.length} URL(s) valide(s): ${result.join(' | ')}`);
+  const result = [...candidates].slice(0, 8);
+  console.log(`[DISCOVER] ${baseUrl} → ${result.length} URLs: ${result.join(' | ')}`);
   return result;
 }
 
@@ -210,11 +129,17 @@ async function scraperWooStoreAPI(baseUrl, nom, maxPages = 8) {
 
       for (const p of data) {
         const titre = nettoyerTitre(p.name || '');
-        // CORRECTION : utiliser calculerPrixWoo() à la place du bloc inline précédent
-        const prix  = calculerPrixWoo(p.prices);
-        const img   = p.images?.[0]?.src || null;
-        const lien  = p.permalink || `${baseUrl}/?p=${p.id}`;
-        if (titre.length > 3 && prix > 500) resultats.push({ titre, prix, url: lien, image_url: img });
+        // FCFA (XOF) = 0 décimales en réalité — ne jamais diviser pour XOF
+        // Certains sites WC mal configurés renvoient currency_minor_unit=2 ou 3 pour XOF
+        // Solution : vérifier le code devise. Si XOF/FCFA → utiliser le prix brut directement
+        const currCode = (p.prices?.currency_code || '').toUpperCase();
+        const isFCFA   = currCode === 'XOF' || currCode === 'FCFA' || currCode === 'CFA' || currCode === '';
+        const rawUnit  = isFCFA ? 0 : parseInt(p.prices?.currency_minor_unit ?? '0', 10);
+        const prixRaw  = parseInt(p.prices?.price || p.prices?.sale_price || '0', 10);
+        const prix     = rawUnit > 0 ? Math.round(prixRaw / Math.pow(10, rawUnit)) : prixRaw;
+        const img  = p.images?.[0]?.src || null;
+        const url  = p.permalink || `${baseUrl}/?p=${p.id}`;
+        if (titre.length > 3 && prix > 500) resultats.push({ titre, prix, url, image_url: img });
       }
       console.log(`[WC-STORE] ${nom} p${page}: ${data.length} (total: ${resultats.length})`);
       await sleep(1000 + Math.random() * 500);
@@ -242,11 +167,10 @@ async function scraperWooRESTAPI(baseUrl, nom, maxPages = 3) {
 
       for (const p of data) {
         const titre = nettoyerTitre(p.name || '');
-        // REST v3 renvoie le prix en string texte brut (ex: "150000"), pas en minor units
         const prix  = nettoyerPrix(p.price || p.regular_price || '0');
         const img   = p.images?.[0]?.src || null;
-        const lien  = p.permalink || `${baseUrl}/?p=${p.id}`;
-        if (titre.length > 3 && prix > 500) resultats.push({ titre, prix, url: lien, image_url: img });
+        const url   = p.permalink || `${baseUrl}/?p=${p.id}`;
+        if (titre.length > 3 && prix > 500) resultats.push({ titre, prix, url, image_url: img });
       }
       console.log(`[WC-REST] ${nom} p${page}: ${data.length}`);
       await sleep(1000);
@@ -259,41 +183,31 @@ async function scraperWooRESTAPI(baseUrl, nom, maxPages = 3) {
 }
 
 // ── STRATÉGIE C — HTML adaptatif ─────────────────────────────
-// CORRECTION : ajout du sélecteur bdi pour WooCommerce 8.x+ et du sélecteur
-// data-price (attribut HTML5 souvent plus fiable que le texte affiché)
 const SELECTEURS = [
-  // WooCommerce standard (v5–v8)
-  {
-    c: 'li.product,article.product,.product-item,.product-grid-item',
-    t: '.woocommerce-loop-product__title,h2.product-title,h3.product-title,.product-name,h3',
-    p: '.price bdi,.price .woocommerce-Price-amount,.price .amount,.woocommerce-Price-amount,bdi',
+  // WooCommerce standard
+  { c: 'li.product,article.product,.product-item,.product-grid-item',
+    t: '.woocommerce-loop-product__title,h2.product-title,h3.product-title,.product-name,.woocommerce-loop-product__title,h3',
+    p: '.price .woocommerce-Price-amount,.price .amount,.woocommerce-Price-amount,bdi',
     l: 'a.woocommerce-loop-product__link,a[href*="product"],a.product-link',
-    i: 'img.attachment-woocommerce_thumbnail,img.wp-post-image,.product-image img,img',
-  },
-  // Flatsome / thèmes enfants
-  {
-    c: '.product-small,.product-card,.box-product,.col-inner',
+    i: 'img.attachment-woocommerce_thumbnail,img.wp-post-image,.product-image img,img' },
+  // Flatsome / Flatsome child themes
+  { c: '.product-small,.product-card,.box-product,.col-inner',
     t: '.name,.product-title,h3,h4,.title',
-    p: '.price bdi,.price .amount,.price-wrapper .amount,span.amount',
+    p: '.price .amount,.price-wrapper .amount,span.amount',
     l: 'a[href*="product"],a.product-link,.box-image > a',
-    i: 'img.attachment-shop_catalog,img.featured-image,img',
-  },
+    i: 'img.attachment-shop_catalog,img.featured-image,img' },
   // PrestaShop
-  {
-    c: '.product-miniature,.thumbnail-container,article.product-miniature',
+  { c: '.product-miniature,.thumbnail-container,article.product-miniature',
     t: '.product-title a,h3.product-title,.product-name',
     p: '.price,.product-price,span[itemprop="price"],.current-price',
     l: 'a.product-thumbnail,a.product-title,h3.product-title a',
-    i: 'img.product-cover-img,img.thumbnail,img',
-  },
+    i: 'img.product-cover-img,img.thumbnail,img' },
   // Générique e-commerce
-  {
-    c: '[class*="product-card"],[class*="product-item"],[class*="item-product"]',
+  { c: '[class*="product-card"],[class*="product-item"],[class*="item-product"]',
     t: '[class*="product-name"],[class*="product-title"],h2,h3,h4',
-    p: '[class*="price"],[class*="prix"],[itemprop="price"],[data-price]',
+    p: '[class*="price"],[class*="prix"],[itemprop="price"]',
     l: 'a[href*="product"],a[href*="produit"],a[href]',
-    i: 'img[src*="product"],img[src*="catalog"],img',
-  },
+    i: 'img[src*="product"],img[src*="catalog"],img' },
 ];
 
 async function scraperHTML(baseUrl, nom, shopUrls, maxPages = 3) {
@@ -302,7 +216,7 @@ async function scraperHTML(baseUrl, nom, shopUrls, maxPages = 3) {
 
   for (const catUrl of shopUrls) {
     for (let page = 1; page <= maxPages; page++) {
-      const sep     = catUrl.includes('?') ? '&' : '?';
+      const sep  = catUrl.includes('?') ? '&' : '?';
       const pageUrl = page === 1 ? catUrl : `${catUrl}${sep}page=${page}`;
       try {
         const html = await fetchHtml(pageUrl, baseUrl);
@@ -315,19 +229,13 @@ async function scraperHTML(baseUrl, nom, shopUrls, maxPages = 3) {
 
           items.each((_, el) => {
             const titre = nettoyerTitre($(el).find(s.t).first().text());
-
-            // CORRECTION : tenter aussi l'attribut data-price et content (schema.org)
-            const prixTxt =
-              $(el).find(s.p).first().text() ||
-              $(el).find('[itemprop="price"]').attr('content') ||
-              $(el).find('[data-price]').attr('data-price') || '';
-            const prix = nettoyerPrix(prixTxt);
-
+            const prixTxt = $(el).find(s.p).first().text()
+              || $(el).find('[itemprop="price"]').attr('content') || '';
+            const prix  = nettoyerPrix(prixTxt);
             let href = $(el).find(s.l).first().attr('href') || $(el).closest('a').attr('href') || '';
             if (href && !href.startsWith('http')) href = `${baseUrl}${href.startsWith('/') ? '' : '/'}${href}`;
-
-            const imgEl  = $(el).find(s.i).first();
-            const img    = imgEl.attr('data-src') || imgEl.attr('src') || imgEl.attr('data-lazy') || null;
+            const imgEl = $(el).find(s.i).first();
+            const img = imgEl.attr('data-src') || imgEl.attr('src') || imgEl.attr('data-lazy') || null;
             const imgFull = img && !img.startsWith('http') ? `${baseUrl}${img}` : img;
 
             if (titre.length > 3 && prix > 500 && !vus.has(titre)) {
@@ -338,7 +246,7 @@ async function scraperHTML(baseUrl, nom, shopUrls, maxPages = 3) {
           });
 
           if (found > 0) {
-            console.log(`[HTML] ${nom} — ${catUrl.split('/').filter(Boolean).pop() || 'shop'} p${page}: ${found} (sél: ${s.c.slice(0, 30)})`);
+            console.log(`[HTML] ${nom} — ${catUrl.split('/').pop() || 'shop'} p${page}: ${found} (sél: ${s.c.slice(0,30)})`);
             break;
           }
         }
@@ -358,18 +266,18 @@ async function scraperHTML(baseUrl, nom, shopUrls, maxPages = 3) {
 
 // ── ORCHESTRATEUR PAR SITE ───────────────────────────────────
 async function scraperSite(config) {
-  const { nom, baseUrl } = config;
+  const { id, nom, baseUrl } = config;
   console.log(`\n${'═'.repeat(55)}`);
   console.log(`[NEW] ${nom}  (${baseUrl})`);
 
-  // 1. WooCommerce Store API (JSON — le plus fiable)
+  // 1. Tenter WooCommerce Store API (le plus efficace, JSON pur)
   let res = await scraperWooStoreAPI(baseUrl, nom, 8);
   if (res.length >= 5) {
     console.log(`[NEW] ${nom} ✅ WC-Store API → ${res.length} produits`);
     return res;
   }
 
-  // 2. WooCommerce REST API v3
+  // 2. Tenter WooCommerce REST API
   res = await scraperWooRESTAPI(baseUrl, nom, 3);
   if (res.length >= 5) {
     console.log(`[NEW] ${nom} ✅ WC-REST API → ${res.length} produits`);
@@ -392,15 +300,15 @@ async function scraperSite(config) {
 
 // ── CATALOGUE — 9 sites accessibles depuis Railway ───────────
 const SITES_CONFIG = [
-  { id: 'nova',                  nom: 'Nova Sénégal',             baseUrl: 'https://nova.sn' },
-  { id: 'kanje',                 nom: 'Kanje',                    baseUrl: 'https://kanje.sn' },
-  { id: 'electroniccorp',        nom: 'Electronic Corp SN',       baseUrl: 'https://electroniccorp.sn' },
-  { id: 'dakarmondialtelephone', nom: 'Dakar Mondial Téléphone',  baseUrl: 'https://dakarmondialtelephone.com' },
-  { id: 'dakarmarket',           nom: 'Dakar Market',             baseUrl: 'https://dakarmarket.sn' },
-  { id: 'kaynoo',                nom: 'Kaynoo',                   baseUrl: 'https://www.kaynoo.sn' },
-  { id: 'masterofficedeco',      nom: 'Master Office Déco',       baseUrl: 'https://masterofficedeco.sn' },
-  { id: 'afriqmarket',           nom: 'AfriQ Market',             baseUrl: 'https://shop.afriqmarket.com' },
-  { id: 'electroluxdakar',       nom: 'Electrolux Dakar',         baseUrl: 'https://electroluxdakar.com' },
+  { id: 'nova',                nom: 'Nova Sénégal',          baseUrl: 'https://nova.sn' },
+  { id: 'kanje',               nom: 'Kanje',                  baseUrl: 'https://kanje.sn' },
+  { id: 'electroniccorp',      nom: 'Electronic Corp SN',     baseUrl: 'https://electroniccorp.sn' },
+  { id: 'dakarmondialtelephone', nom: 'Dakar Mondial Téléphone', baseUrl: 'https://dakarmondialtelephone.com' },
+  { id: 'dakarmarket',         nom: 'Dakar Market',           baseUrl: 'https://dakarmarket.sn' },
+  { id: 'kaynoo',              nom: 'Kaynoo',                 baseUrl: 'https://www.kaynoo.sn' },
+  { id: 'masterofficedeco',    nom: 'Master Office Déco',     baseUrl: 'https://masterofficedeco.sn' },
+  { id: 'afriqmarket',         nom: 'AfriQ Market',           baseUrl: 'https://shop.afriqmarket.com' },
+  { id: 'electroluxdakar',     nom: 'Electrolux Dakar',       baseUrl: 'https://electroluxdakar.com' },
 ];
 
 // ── DIAGNOSTIC ───────────────────────────────────────────────
