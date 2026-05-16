@@ -52,34 +52,49 @@ function isCurrencyFCFA(currencyCode) {
   return CODES_FCFA.has((currencyCode || '').toUpperCase().trim());
 }
 
-// ── CORRECTION : calcul du prix avec garde-fou ───────────────
-// WooCommerce renvoie les prix en "minor units" (centimes).
+// ── CORRECTION : calcul du prix avec garde-fou seuil réaliste ─
+// WooCommerce Store API renvoie les prix en "minor units" (centimes).
 // Pour XOF, il ne devrait PAS y avoir de décimales (currency_minor_unit=0).
-// Mais certains sites laissent la config par défaut (=2 pour EUR/USD).
-// Résultat : 150 000 FCFA stocké comme 150000 → divisé par 100 → 1 500 FCFA (FAUX).
+// Mais beaucoup de sites sénégalais laissent la config EUR/USD par défaut
+// (currency_minor_unit=2 ou 3), ce qui provoque des divisions parasites.
 //
-// Stratégie de correction :
-//  1. Si la devise est FCFA → ne jamais diviser (rawUnit forcé à 0).
-//  2. Si la devise est inconnue ET que la division produit un prix < 500 → ne pas diviser.
+//   Cas réels observés (bug) :
+//   prixRaw=60000, minor_unit=2 → ÷100 = 600 FCFA   ← FAUX (doit être 60 000)
+//   prixRaw=80000, minor_unit=2 → ÷100 = 800 FCFA   ← FAUX (doit être 80 000)
+//   prixRaw=82000, minor_unit=2 → ÷100 = 820 FCFA   ← FAUX (doit être 82 000)
+//
+//   Cas de sites bien configurés (minor units réels) :
+//   prixRaw=6000000, minor_unit=2 → ÷100 = 60 000 FCFA ← CORRECT
+//   prixRaw=8500000, minor_unit=2 → ÷100 = 85 000 FCFA ← CORRECT
+//
+// Règle (G1) : si le résultat après division est < PRIX_MIN_FCFA,
+// le site stocke le prix d'affichage (pas des centimes) → conserver le brut.
+// G1 distingue les deux familles car :
+//   60000 ÷ 100 = 600 < 10000  → brut 60000 conservé ✓
+//   6000000 ÷ 100 = 60000 ≥ 10000 → division acceptée ✓
+
+// Seuil minimum FCFA réaliste pour les catégories scrapées
+// (smartphones, électroménager, informatique, TV…)
+const PRIX_MIN_FCFA = 10_000;
+
 function calculerPrixWoo(pricesObj) {
   const currCode = (pricesObj?.currency_code || '').toUpperCase().trim();
   const prixRaw  = parseInt(pricesObj?.price || pricesObj?.sale_price || '0', 10);
   if (isNaN(prixRaw) || prixRaw <= 0) return 0;
 
-  // Devise FCFA connue → pas de conversion
+  // Devise FCFA connue → jamais de division (XOF n'a pas de décimales)
   if (isCurrencyFCFA(currCode)) return prixRaw;
 
-  // Devise non-FCFA → appliquer les minor units
-  const rawUnit = parseInt(pricesObj?.currency_minor_unit ?? '0', 10);
+  const rawUnit  = parseInt(pricesObj?.currency_minor_unit ?? '0', 10);
   if (rawUnit <= 0) return prixRaw;
 
-  const prixDivise = Math.round(prixRaw / Math.pow(10, rawUnit));
+  const diviseur   = Math.pow(10, rawUnit);
+  const prixDivise = Math.round(prixRaw / diviseur);
 
-  // Garde-fou : si le résultat semble trop bas pour être du FCFA (< 500),
-  // mais que le brut est lui dans une plage raisonnable, ne pas diviser.
-  if (prixDivise < 500 && prixRaw >= 500) {
-    console.warn(`[PRIX] Garde-fou activé: brut=${prixRaw}, divisé=${prixDivise} (÷${Math.pow(10,rawUnit)}) → conservation du brut`);
-    return prixRaw;
+  // G1 — résultat sous le seuil réaliste : le site stocke le prix d'affichage
+  if (prixDivise < PRIX_MIN_FCFA) {
+    console.warn(`[PRIX-G1] brut=${prixRaw} ÷ ${diviseur} = ${prixDivise} < ${PRIX_MIN_FCFA} FCFA → brut conservé`);
+    return prixRaw >= 500 ? prixRaw : 0;
   }
 
   return prixDivise;
