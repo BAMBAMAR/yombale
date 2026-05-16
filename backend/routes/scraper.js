@@ -1,7 +1,7 @@
 // backend/routes/scraper.js — Route admin pour diagnostics et déclenchement manuel
 const router  = require('express').Router();
 const { pool } = require('../models/db');
-const { lancerScraping, diagnosticScraper } = require('../services/scraper');
+const { lancerScraping, lancerScrapingNouveauxSites, diagnosticScraper, diagnosticNouveauSite } = require('../services/scraper');
 
 // Middleware simple : protège par ADMIN_SECRET (variable d'env Railway)
 function adminOnly(req, res, next) {
@@ -81,6 +81,51 @@ router.post('/run/:source', adminOnly, async (req, res) => {
     const { source } = req.params;
     res.json({ message: `Scraping ${source} lancé en arrière-plan` });
     lancerScraping([source]).catch(console.error);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── GET /api/scraper/diagnostic-new/:siteId ──────────────────
+// Teste un nouveau site sans sauvegarder
+// Exemples: GET /api/scraper/diagnostic-new/nova
+//           GET /api/scraper/diagnostic-new/jiji
+router.get('/diagnostic-new/:siteId', adminOnly, async (req, res) => {
+  try {
+    const { siteId } = req.params;
+    console.log(`[DIAG-NEW] Test site: ${siteId}...`);
+    const resultat = await diagnosticNouveauSite(siteId);
+    res.json(resultat);
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// ── GET /api/scraper/sites ────────────────────────────────────
+// Liste tous les nouveaux sites configurés
+router.get('/sites', async (req, res) => {
+  const { SITES_CONFIG } = require('../services/scraper-new-sites');
+  res.json({
+    sites: SITES_CONFIG.map(s => ({
+      id: s.id,
+      nom: s.nom,
+      url: s.baseUrl,
+      strategies: s.strategies,
+      nb_categories: (s.categorieUrls || []).length,
+    })),
+    total: SITES_CONFIG.length,
+  });
+});
+
+// ── POST /api/scraper/run-new ─────────────────────────────────
+// Déclenche le scraping des nouveaux sites
+// Body optionnel: { "sites": ["nova", "kanje"] }
+router.post('/run-new', adminOnly, async (req, res) => {
+  try {
+    const siteIds = req.body?.sites || null;
+    const msg = siteIds ? `Sites: ${siteIds.join(', ')}` : 'Tous les 14 nouveaux sites';
+    console.log(`[SCRAPER] Déclenchement manuel nouveaux sites — ${msg}`);
+    res.json({
+      message: `Scraping nouveaux sites lancé en arrière-plan (${msg})`,
+      conseil: 'Consultez /api/scraper/status dans quelques minutes.',
+    });
+    lancerScrapingNouveauxSites(siteIds).catch(console.error);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
