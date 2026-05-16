@@ -370,12 +370,43 @@ async function lancerScraping(sources=['expat','jumia','coinafrique']) {
   return rapport;
 }
 
-function demarrerScraping() {
-  // BUG FIX : il y avait deux crons identiques — Jumia était scrappé deux fois par cycle
-  cron.schedule('0 */4 * * *', ()=>lancerScraping(['expat','jumia','coinafrique']).catch(console.error));
-  // Premier scraping 30s après démarrage
-  setTimeout(()=>lancerScraping().catch(console.error), 30_000);
-  console.log('[SCRAPER] ✅ Cron actif — Expat + Jumia + CoinAfrique toutes les 4h, premier scraping dans 30s');
+// ══════════════════════════════════════════════════════
+//  INTÉGRATION NOUVEAUX SITES
+// ══════════════════════════════════════════════════════
+const { scraperTousNouveauxSites, diagnosticNouveauSite } = require('./scraper-new-sites');
+
+async function lancerScrapingNouveauxSites(siteIds = null) {
+  invaliderCatCache();
+  const resultatsParSite = await scraperTousNouveauxSites(siteIds);
+  const stats = { inseres: 0, mis_a_jour: 0, erreurs: 0, scrapes: 0 };
+
+  for (const { nom, baseUrl, items } of Object.values(resultatsParSite)) {
+    if (!items.length) continue;
+    stats.scrapes += items.length;
+    try {
+      const r = await sauvegarderProduits(items, nom, baseUrl);
+      stats.inseres += r.inseres;
+      stats.mis_a_jour += r.mis_a_jour;
+      stats.erreurs += r.erreurs;
+      await pool.query('UPDATE marchands SET derniere_sync=NOW() WHERE nom=$1', [nom]);
+      console.log(`[NEW-SITES] ${nom}: ${items.length} scrapés → ${r.inseres} nouveaux, ${r.mis_a_jour} màj`);
+    } catch (err) {
+      console.error(`[NEW-SITES] ${nom} sauvegarde:`, err.message);
+    }
+  }
+  return stats;
 }
 
-module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, demarrerScraping, diagnosticScraper, invaliderCatCache };
+function demarrerScraping() {
+  // Cron historique : Expat + Jumia + CoinAfrique toutes les 4h
+  cron.schedule('0 */4 * * *', () => lancerScraping(['expat', 'jumia', 'coinafrique']).catch(console.error));
+  // Nouveaux sites : toutes les 6h (décalé de 2h pour ne pas surcharger)
+  cron.schedule('0 2,8,14,20 * * *', () => lancerScrapingNouveauxSites().catch(console.error));
+  // Premier scraping 30s après démarrage (CoinAfrique seul — rapide)
+  setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 30_000);
+  // Nouveaux sites 5 min après démarrage
+  setTimeout(() => lancerScrapingNouveauxSites().catch(console.error), 5 * 60_000);
+  console.log('[SCRAPER] ✅ Cron actif — Expat+Jumia+CoinAfrique/4h + 14 nouveaux sites/6h');
+}
+
+module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache };
