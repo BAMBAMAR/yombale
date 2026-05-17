@@ -156,42 +156,85 @@ router.get('/:id/offres', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// GET /api/produits/:id/similaires — produits similaires avec filtres marque/marchand/prix
+// GET /api/produits/:id/similaires — similaires intelligents : même marque > même catégorie
 router.get('/:id/similaires', async (req, res) => {
   try {
-    const { marque, marchand, prixMax, prixMin, limit = 8 } = req.query;
+    const { marchand, prixMax, prixMin, limit = 8 } = req.query;
 
-    // Récupérer le produit source pour extraire mots-clés
-    const { rows: src } = await pool.query('SELECT nom, marque, categorie_id FROM produits WHERE id=$1', [req.params.id]);
+    const { rows: src } = await pool.query(
+      'SELECT nom, marque, categorie_id FROM produits WHERE id=$1', [req.params.id]
+    );
     if (!src.length) return res.status(404).json({ error: 'Produit introuvable' });
 
-    // Extraire le mot-clé principal (1er mot significatif du nom)
-    const motsCles = src[0].nom.split(/\s+/).filter(m => m.length > 3).slice(0, 2).join(' ');
+    const { nom, marque, categorie_id } = src[0];
+    // Extraire mots-clés significatifs (>3 chars, sans mots parasites)
+    const stopWords = new Set(['avec','pour','plus','sans','noir','blanc','gris','bleu','rouge','vert','rose','gold','silver']);
+    const mots = nom.split(/[\s,\-\/]+/)
+      .filter(m => m.length > 3 && !stopWords.has(m.toLowerCase()))
+      .slice(0, 3);
 
-    const { rows } = await pool.query(`
-      SELECT DISTINCT p.*, c.nom AS categorie_nom,
-             MIN(o.prix) AS prix_min,
-             COUNT(DISTINCT o.id) AS nb_offres,
-             array_agg(DISTINCT m.nom) AS marchands
+    // Priorité 1 : même marque + mots-clés
+    const q1 = `
+      SELECT p.*, c.nom AS categorie_nom,
+             MIN(o.prix) AS prix_min, COUNT(DISTINCT o.id) AS nb_offres,
+             'meme_marque' AS similarite
       FROM produits p
-      LEFT JOIN categories c  ON c.id = p.categorie_id
-      LEFT JOIN offres o      ON o.produit_id = p.id AND o.stock = true
-      LEFT JOIN marchands m   ON m.id = o.marchand_id
+      LEFT JOIN categories c ON c.id = p.categorie_id
+      LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true
+      LEFT JOIN marchands m  ON m.id = o.marchand_id
       WHERE p.id != $1
-        AND p.categorie_id = $2
-        AND ($3::text IS NULL OR p.nom ILIKE '%' || $3 || '%')
-        AND ($4::text IS NULL OR p.marque ILIKE $4)
-        AND ($5::text IS NULL OR m.nom ILIKE '%' || $5 || '%')
-        AND ($6::numeric IS NULL OR o.prix <= $6::numeric)
-        AND ($7::numeric IS NULL OR o.prix >= $7::numeric)
+        AND p.marque ILIKE $2
+        AND p.categorie_id = $3
+        AND ($4::text IS NULL OR m.nom ILIKE '%'||$4||'%')
+        AND ($5::numeric IS NULL OR o.prix <= $5)
+        AND ($6::numeric IS NULL OR o.prix >= $6)
       GROUP BY p.id, c.nom
-      ORDER BY MIN(o.prix) ASC NULLS LAST
-      LIMIT $8`,
-      [req.params.id, src[0].categorie_id, motsCles || null,
-       marque || null, marchand || null,
-       prixMax || null, prixMin || null, limit]
-    );
-    res.json({ produits: rows, source: src[0], motsCles });
+      HAVING COUNT(o.id) = 0 OR MIN(o.prix) >= 500
+      ORDER BY
+        -- Score de similarité : compter les mots-clés communs dans le nom
+        (${mots.map((m,i) => `CASE WHEN p.nom ILIKE '%'||$${7+i}||'%' THEN 1 ELSE 0 END`).join('+')}) DESC,
+        MIN(o.prix) ASC NULLS LAST
+      LIMIT $${7+mots.length}`;
+
+    const params1 = [req.params.id, marque || '%', categorie_id,
+      marchand || null, prixMax || null, prixMin || null,
+      ...mots, Math.ceil(+limit)];
+
+    const { rows: r1 } = await pool.query(q1, params1);
+
+    // Priorité 2 : même catégorie + mots-clés (si pas assez de résultats)
+    let rows = r1;
+    if (r1.length < Math.ceil(+limit / 2)) {
+      const excludeIds = [req.params.id, ...r1.map(r => r.id)];
+      const q2 = `
+        SELECT p.*, c.nom AS categorie_nom,
+               MIN(o.prix) AS prix_min, COUNT(DISTINCT o.id) AS nb_offres,
+               'meme_categorie' AS similarite
+        FROM produits p
+        LEFT JOIN categories c ON c.id = p.categorie_id
+        LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true
+        LEFT JOIN marchands m  ON m.id = o.marchand_id
+        WHERE p.id != ALL($1::uuid[])
+          AND p.categorie_id = $2
+          AND ($3::text IS NULL OR m.nom ILIKE '%'||$3||'%')
+          AND ($4::numeric IS NULL OR o.prix <= $4)
+          AND ($5::numeric IS NULL OR o.prix >= $5)
+        GROUP BY p.id, c.nom
+        HAVING COUNT(o.id) = 0 OR MIN(o.prix) >= 500
+        ORDER BY
+          (${mots.map((m,i) => `CASE WHEN p.nom ILIKE '%'||$${6+i}||'%' THEN 1 ELSE 0 END`).join('+')}) DESC,
+          MIN(o.prix) ASC NULLS LAST
+        LIMIT $${6+mots.length}`;
+
+      const params2 = [excludeIds, categorie_id,
+        marchand || null, prixMax || null, prixMin || null,
+        ...mots, +limit - r1.length];
+
+      const { rows: r2 } = await pool.query(q2, params2);
+      rows = [...r1, ...r2];
+    }
+
+    res.json({ produits: rows, source: src[0], mots_cles: mots });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
