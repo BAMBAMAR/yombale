@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
     const fallback = categorieNorm ? (CAT_FALLBACK[categorieNorm] || []) : [];
     // Le fallback SQL est conditionnel : s'applique uniquement si $2 correspond à cette catégorie
     const fallbackSQL = fallback.length > 0
-      ? 'OR (' + fallback.map(m => `LOWER(unaccent(p.nom)) LIKE unaccent('%${m}%')`).join(' OR ') + ')'
+      ? 'OR (' + fallback.map(m => `LOWER(p.nom) LIKE '%${m}%'`).join(' OR ') + ')'
       : '';
 
     // $2 DOIT toujours être référencé pour que PostgreSQL connaisse son type
@@ -120,7 +120,23 @@ router.get('/:id/offres', async (req, res) => {
       SELECT o.*,
              m.nom AS marchand_nom, m.site_url,
              p.nom AS produit_nom, p.marque AS produit_marque,
-             COALESCE(o.titre_marchand, p.nom) AS titre_affiche
+             -- titre_marchand = nom scrappé chez ce marchand
+             -- Sinon extraire depuis l'URL (slug du dernier segment)
+             COALESCE(
+               o.titre_marchand,
+               NULLIF(TRIM(
+                 REPLACE(
+                   REPLACE(
+                     SPLIT_PART(
+                       SPLIT_PART(COALESCE(o.url_achat,''), '/', -1),
+                       '?', 1
+                     ),
+                     '-', ' '
+                   ),
+                 '/', ' ')
+               ), ''),
+               p.nom
+             ) AS titre_affiche
       FROM offres o
       JOIN marchands m ON m.id = o.marchand_id
       JOIN produits p  ON p.id = o.produit_id
