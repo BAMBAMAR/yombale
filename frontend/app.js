@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Yombale — Comparateur de prix Sénégal
-//  app.js VERSION 6 — 2026-05-14
+//  app.js VERSION 6-debug — 2026-05-14
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Yombale app.js VERSION 6 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Yombale app.js VERSION 6-debug chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 var API = '/api';
 
@@ -659,6 +659,18 @@ async function ouvrirProduit(id, simFiltres) {
     ajouterRecent(res);
 
     var offresArr = Array.isArray(offres) ? offres : [];
+    // ── DEBUG titre_affiche ──────────────────────────────────
+    if (offresArr.length) {
+      console.log('%c[OFFRES DEBUG]', 'color:#f97316;font-weight:bold', 
+        offresArr.map(function(o) { return { 
+          marchand: o.marchand_nom, 
+          titre_affiche: o.titre_affiche, 
+          produit_nom: o.produit_nom,
+          titre_marchand: o.titre_marchand,
+          url: o.url_achat ? o.url_achat.slice(0,60) : null
+        }; })
+      );
+    }
     var prixMin   = offresArr.length ? Math.min.apply(null, offresArr.map(function(o){ return +o.prix; })) : 0;
     var prixMaxO  = offresArr.length ? Math.max.apply(null, offresArr.map(function(o){ return +o.prix; })) : 0;
     var economie  = prixMaxO > prixMin ? prixMaxO - prixMin : 0;
