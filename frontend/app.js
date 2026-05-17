@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Yombale — Comparateur de prix Sénégal
-//  app.js VERSION 4 — 2026-05-14
+//  app.js VERSION 5 — 2026-05-14
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Yombale app.js VERSION 4 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Yombale app.js VERSION 5 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 var API = '/api';
 
@@ -241,6 +241,8 @@ function templateListe(produits, data) {
       data.page < data.pages ? btnPlus(data) : (data.total > 24 ? '<p id="fin-liste" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">✅ Tous les ' + data.total + ' produits affichés</p>' : ''),
     '</section>',
     htmlRecents(),
+    htmlMarchands(),
+    htmlFooter(),
   ].join('');
 }
 
@@ -419,16 +421,22 @@ function htmlHero() {
   return [
     '<section class="hero">',
       '<h1>Meilleur prix au <span>Sénégal</span></h1>',
-      '<p style="opacity:.8;margin-bottom:16px;font-size:14px">Comparez Jumia, Expat-Dakar, CoinAfrique en un clic</p>',
+      '<p>Comparez instantanément les prix chez les meilleurs marchands du Sénégal</p>',
       '<div class="sbar" style="position:relative">',
         '<input type="text" id="search-input" autocomplete="off"',
           ' value="' + (state.query || '') + '"',
-          ' placeholder="Ex: écouteurs moins de 15 000 FCFA..."',
+          ' placeholder="Ex: Samsung Galaxy A55, climatiseur 18000 BTU..."',
           ' onkeydown="if(event.key===\'Enter\'){fermerSuggestions();doSearch()}"',
           ' oninput="onSearchInput(this.value)">',
         '<button onclick="fermerSuggestions();doSearch()">🔍 Comparer</button>',
       '</div>',
       htmlCategories(),
+      '<div class="hero-stats">',
+        '<div class="hstat"><strong>9+</strong><span>Sites partenaires</span></div>',
+        '<div class="hstat"><strong>3 000+</strong><span>Produits indexés</span></div>',
+        '<div class="hstat"><strong>100%</strong><span>Gratuit</span></div>',
+        '<div class="hstat"><strong>Dakar</strong><span>& partout au Sénégal</span></div>',
+      '</div>',
     '</section>',
   ].join('');
 }
@@ -901,21 +909,76 @@ function _sectionResume(res, offresArr, prixMin, bestOffre) {
   ].join('');
 }
 
-// ── Tableau des offres (comparaison côte à côte) ─────────────────
+// ── Tableau des offres (comparaison côte à côte avec détails) ────
 function htmlTableauOffres(offresArr, prixMin) {
   if (!offresArr || !offresArr.length) return '';
-  var lignes = offresArr.map(function(o) {
+
+  // Icônes par marchand
+  var icons = {
+    'kanje': '🛍️', 'electronic corp': '📱', 'master office': '🖥️',
+    'electrolux': '❄️', 'soumari': '🏪', 'kaynoo': '🛒',
+    'dakar mondial': '📞', 'electroménager dakar': '🏠', 'coinafrique': '🌍',
+    'jumia': '🟠', 'expat': '🟡',
+  };
+  function getIcon(nom) {
+    var n = (nom||'').toLowerCase();
+    for (var k in icons) { if (n.indexOf(k) !== -1) return icons[k]; }
+    return '🏪';
+  }
+
+  var lignes = offresArr.map(function(o, i) {
     var best  = +o.prix === prixMin;
     var ecart = best ? 0 : +o.prix - prixMin;
-    return '<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #f1f5f9;' + (best ? 'background:#f0fdf4;border-left:3px solid #10b981' : 'border-left:3px solid transparent') + '">' +
-      '<div style="flex:1">' + (best ? '<span style="background:#10b981;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:6px">🏆</span>' : '') +
-      '<span style="font-weight:600;font-size:13px;color:#1e293b">' + (o.marchand_nom||'Marchand') + '</span>' +
-      (ecart > 0 ? '<div style="font-size:11px;color:#ef4444">+' + fcfa(ecart) + '</div>' : '') + '</div>' +
-      '<span style="font-weight:800;font-size:15px;color:' + (best?'#10b981':'#1e293b') + '">' + fcfa(o.prix) + '</span>' +
-      '<a href="' + (o.url_achat||'#') + '" target="_blank" onclick="event.stopPropagation()" style="padding:7px 14px;background:' + (best?'#10b981':'#1d4ed8') + ';color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">→</a>' +
-    '</div>';
+    var pct   = prixMin > 0 && !best ? Math.round(ecart / prixMin * 100) : 0;
+    var icon  = getIcon(o.marchand_nom);
+
+    return [
+      '<div style="border-bottom:1px solid #f1f5f9;' + (best ? 'background:#f0fdf4' : 'background:#fff') + '">',
+        // Ligne principale
+        '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px">',
+          // Rang
+          '<div style="width:24px;height:24px;border-radius:50%;background:' + (best ? '#10b981' : '#f1f5f9') + ';',
+            'color:' + (best ? '#fff' : '#64748b') + ';font-size:11px;font-weight:800;',
+            'display:flex;align-items:center;justify-content:center;flex-shrink:0">' + (i+1) + '</div>',
+          // Nom marchand
+          '<div style="flex:1;min-width:0">',
+            '<div style="display:flex;align-items:center;gap:5px">',
+              '<span style="font-size:15px">' + icon + '</span>',
+              '<span style="font-weight:700;font-size:13px;color:#1e293b">' + (o.marchand_nom||'Marchand') + '</span>',
+              best ? '<span style="background:#10b981;color:#fff;font-size:9px;font-weight:700;padding:1px 7px;border-radius:8px">MEILLEUR PRIX</span>' : '',
+            '</div>',
+            // Détails marchand
+            '<div style="font-size:11px;color:#94a3b8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">',
+              (o.site_url ? o.site_url.replace('https://','').replace('www.','').split('/')[0] : '') +
+              (o.scraped_at ? ' · Màj ' + new Date(o.scraped_at).toLocaleDateString('fr-FR') : ''),
+            '</div>',
+          '</div>',
+          // Prix + écart
+          '<div style="text-align:right;flex-shrink:0">',
+            '<div style="font-weight:800;font-size:16px;color:' + (best ? '#10b981' : '#1e293b') + ';font-family:Sora,sans-serif">' + fcfa(o.prix) + '</div>',
+            ecart > 0 ? '<div style="font-size:10px;color:#ef4444;font-weight:600">+' + fcfa(ecart) + ' (+' + pct + '%)</div>' : '<div style="font-size:10px;color:#10b981;font-weight:600">✓ le moins cher</div>',
+          '</div>',
+          // Bouton
+          '<a href="' + (o.url_achat||'#') + '" target="_blank" onclick="event.stopPropagation()" ',
+            'style="flex-shrink:0;padding:8px 16px;background:' + (best ? '#10b981' : '#1d4ed8') + ';',
+            'color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap">',
+            'Voir l\'offre →',
+          '</a>',
+        '</div>',
+      '</div>',
+    ].join('');
   }).join('');
-  return '<div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:20px">' + lignes + '</div>';
+
+  return [
+    '<div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:20px">',
+      // En-tête tableau
+      '<div style="padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">',
+        '<span style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em">📊 Comparaison des prix</span>',
+        '<span style="font-size:11px;color:#94a3b8">' + offresArr.length + ' marchand' + (offresArr.length>1?'s':'') + '</span>',
+      '</div>',
+      lignes,
+    '</div>',
+  ].join('');
 }
 
 // ── Historique SVG ───────────────────────────────────────────────
@@ -972,10 +1035,14 @@ function htmlSimilaires(id, similaires, filtresSim) {
     '</div>',
   ].join('');
 
+  // Titre adaptatif selon la qualité des résultats
+  var hasMarque = similaires.produits && similaires.produits.some(function(p){ return p.similarite === 'meme_marque'; });
+  var simTitre  = hasMarque ? '🏷️ Même marque, autres modèles' : '🔄 Produits de la même catégorie';
+
   if (!similaires.produits || !similaires.produits.length) {
     return [
       '<div>',
-        '<h3 style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">🔄 Produits similaires</h3>',
+        '<h3 style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">' + simTitre + '</h3>',
         filtresHTML,
         '<p style="color:#94a3b8;font-size:13px;text-align:center;padding:16px 0">Aucun produit similaire trouvé.</p>',
       '</div>',
@@ -1140,6 +1207,278 @@ function afficherLogs() {
   navigator.clipboard && navigator.clipboard.writeText(PM_LOGS())
     .then(function() { toast('Logs copiés ✅', '#6366f1'); })
     .catch(function() { alert(PM_LOGS()); });
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  MARCHANDS
+// ═══════════════════════════════════════════════════════════════
+var MARCHANDS_LIST = [
+  { nom: 'Kanje',                url: 'https://kanje.sn',                  flag: '🛍️' },
+  { nom: 'Electronic Corp SN',   url: 'https://electroniccorp.sn',         flag: '📱' },
+  { nom: 'Master Office Déco',   url: 'https://masterofficedeco.sn',       flag: '🖥️' },
+  { nom: 'Electrolux Dakar',     url: 'https://electroluxdakar.com',       flag: '❄️' },
+  { nom: 'Soumari',              url: 'https://www.soumari.com',           flag: '🏪' },
+  { nom: 'Kaynoo',               url: 'https://www.kaynoo.sn',            flag: '🛒' },
+  { nom: 'Dakar Mondial Tel.',   url: 'https://dakarmondialtelephone.com', flag: '📞' },
+  { nom: 'Electroménager Dakar', url: 'https://www.electromenager-dakar.com', flag: '🏠' },
+  { nom: 'CoinAfrique',          url: 'https://sn.coinafrique.com',        flag: '🌍' },
+];
+
+function htmlMarchands() {
+  return [
+    '<div class="marchands-section">',
+      '<h3>Nos partenaires marchands</h3>',
+      '<div class="marchands-grid">',
+        MARCHANDS_LIST.map(function(m) {
+          return '<a href="' + m.url + '" target="_blank" rel="noopener" class="marchand-chip">' +
+            '<span class="dot"></span>' + m.flag + ' ' + m.nom +
+          '</a>';
+        }).join(''),
+      '</div>',
+    '</div>',
+  ].join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FOOTER
+// ═══════════════════════════════════════════════════════════════
+function htmlFooter() {
+  return [
+    '<footer>',
+      '<div class="footer-top">',
+
+        // Colonne brand
+        '<div class="footer-brand">',
+          '<span class="logo">Yombale <span>🇸🇳</span></span>',
+          '<p>Le premier comparateur de prix dédié au marché sénégalais. Trouvez les meilleures offres sur l\'électronique, l\'électroménager, la mode et plus encore.</p>',
+          '<div class="socials">',
+            '<a class="social-btn" href="#" title="Facebook">f</a>',
+            '<a class="social-btn" href="#" title="Instagram">📷</a>',
+            '<a class="social-btn" href="#" title="WhatsApp">💬</a>',
+          '</div>',
+        '</div>',
+
+        // Liens utiles
+        '<div class="footer-col">',
+          '<h4>Explorer</h4>',
+          '<ul>',
+            '<li><a onclick="filtrerCategorie(\'smartphones\')" href="#">Téléphones & Tablettes</a></li>',
+            '<li><a onclick="filtrerCategorie(\'informatique\')" href="#">Informatique</a></li>',
+            '<li><a onclick="filtrerCategorie(\'tv-electro\')" href="#">TV & Électroménager</a></li>',
+            '<li><a onclick="filtrerCategorie(\'mode\')" href="#">Mode & Beauté</a></li>',
+            '<li><a onclick="loadPromos()" href="#">Promos du jour</a></li>',
+          '</ul>',
+        '</div>',
+
+        // Informations
+        '<div class="footer-col">',
+          '<h4>Informations</h4>',
+          '<ul>',
+            '<li><a href="#">Comment ça marche ?</a></li>',
+            '<li><a href="#">Signaler une erreur de prix</a></li>',
+            '<li><a href="#">Devenir partenaire</a></li>',
+            '<li><a href="#">Ajouter votre boutique</a></li>',
+            '<li><a href="#">Blog & Conseils</a></li>',
+          '</ul>',
+        '</div>',
+
+        // Contact
+        '<div class="footer-col">',
+          '<h4>Contact</h4>',
+          '<ul>',
+            '<li><a href="mailto:contact@yombale.sn">contact@yombale.sn</a></li>',
+            '<li><a href="tel:+221338001234">+221 33 800 12 34</a></li>',
+            '<li><a href="#">Dakar, Sénégal</a></li>',
+            '<li><a href="#">FAQ</a></li>',
+          '</ul>',
+        '</div>',
+
+      '</div>',
+
+      // Bandeau confiance
+      '<div class="footer-mid">',
+        '<p>Les prix affichés sont récupérés <strong>toutes les 6 heures</strong> directement depuis les sites marchands. Yombale n\'est pas vendeur et ne perçoit aucune commission sur les ventes.</p>',
+        '<div class="trust-badges">',
+          '<span class="tbadge">✅ Gratuit & indépendant</span>',
+          '<span class="tbadge">🔄 Mis à jour toutes les 6h</span>',
+          '<span class="tbadge">🇸🇳 100% Sénégal</span>',
+        '</div>',
+      '</div>',
+
+      // Copyright
+      '<div class="footer-bottom">',
+        '<p>© 2026 Yombale — Comparateur de prix Sénégal</p>',
+        '<nav>',
+          '<a href="#">Confidentialité</a>',
+          '<a href="#">CGU</a>',
+          '<a href="#">Cookies</a>',
+        '</nav>',
+      '</div>',
+
+    '</footer>',
+  ].join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MODAL CONNEXION / INSCRIPTION
+// ═══════════════════════════════════════════════════════════════
+var _modalTab = 'connexion'; // connexion | inscription
+
+function showAccount() {
+  if (state.user) {
+    toast('Bonjour ' + state.user.nom + ' 👋', '#1d4ed8');
+    return;
+  }
+  openLoginModal();
+}
+
+function openLoginModal() {
+  _modalTab = 'connexion';
+  var existing = document.getElementById('login-modal');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'login-modal';
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(e) { if (e.target === overlay) closeLoginModal(); };
+
+  overlay.innerHTML = renderLoginModal();
+  document.body.appendChild(overlay);
+  setTimeout(function() { var inp = document.getElementById('modal-email'); if (inp) inp.focus(); }, 100);
+}
+
+function closeLoginModal() {
+  var m = document.getElementById('login-modal');
+  if (m) m.remove();
+}
+
+function switchModalTab(tab) {
+  _modalTab = tab;
+  var body = document.getElementById('modal-form-body');
+  if (body) body.innerHTML = renderModalForm();
+  var tabs = document.querySelectorAll('.modal-tab');
+  tabs.forEach(function(t) {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+}
+
+function renderLoginModal() {
+  return [
+    '<div class="modal-box">',
+      '<div class="modal-header" style="position:relative">',
+        '<button class="modal-close" onclick="closeLoginModal()">✕</button>',
+        '<h2>Bienvenue sur Yombale</h2>',
+        '<p>Accédez à vos alertes prix et favoris</p>',
+      '</div>',
+      '<div class="modal-body">',
+
+        // Avantages
+        '<div class="login-benefits">',
+          '<div class="lbenefit">🔔 <div><strong>Alertes prix</strong> — Soyez notifié quand un prix baisse</div></div>',
+          '<div class="lbenefit">❤️ <div><strong>Favoris</strong> — Suivez vos produits préférés</div></div>',
+          '<div class="lbenefit">📊 <div><strong>Historique</strong> — Consultez l\'évolution des prix</div></div>',
+        '</div>',
+
+        // Onglets
+        '<div class="modal-tabs">',
+          '<button class="modal-tab active" data-tab="connexion" onclick="switchModalTab(\'connexion\')">Connexion</button>',
+          '<button class="modal-tab" data-tab="inscription" onclick="switchModalTab(\'inscription\')">Créer un compte</button>',
+        '</div>',
+
+        '<div id="modal-form-body">' + renderModalForm() + '</div>',
+
+      '</div>',
+      '<div class="modal-footer">',
+        '<p>En continuant, vous acceptez nos <a href="#" style="color:#2563eb">Conditions d\'utilisation</a></p>',
+      '</div>',
+    '</div>',
+  ].join('');
+}
+
+function renderModalForm() {
+  if (_modalTab === 'connexion') {
+    return [
+      '<div class="form-group">',
+        '<label>Email</label>',
+        '<input type="email" id="modal-email" placeholder="votre@email.com">',
+      '</div>',
+      '<div class="form-group">',
+        '<label>Mot de passe</label>',
+        '<input type="password" id="modal-password" placeholder="••••••••" onkeydown="if(event.key===\'Enter\')submitLogin()">',
+      '</div>',
+      '<button class="btn-primary" onclick="submitLogin()">Se connecter →</button>',
+      '<p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:12px"><a href="#" style="color:#2563eb">Mot de passe oublié ?</a></p>',
+    ].join('');
+  } else {
+    return [
+      '<div class="form-group">',
+        '<label>Prénom</label>',
+        '<input type="text" id="modal-nom" placeholder="Votre prénom">',
+      '</div>',
+      '<div class="form-group">',
+        '<label>Email</label>',
+        '<input type="email" id="modal-email" placeholder="votre@email.com">',
+      '</div>',
+      '<div class="form-group">',
+        '<label>Mot de passe</label>',
+        '<input type="password" id="modal-password" placeholder="Minimum 6 caractères" onkeydown="if(event.key===\'Enter\')submitInscription()">',
+      '</div>',
+      '<button class="btn-primary" onclick="submitInscription()">Créer mon compte →</button>',
+    ].join('');
+  }
+}
+
+function submitLogin() {
+  var email = (document.getElementById('modal-email') || {}).value || '';
+  var pass  = (document.getElementById('modal-password') || {}).value || '';
+  if (!email || !pass) { toast('Remplissez tous les champs', '#ef4444'); return; }
+
+  apiFetch('/auth/connexion', { method: 'POST', body: JSON.stringify({ email: email, mot_de_passe: pass }) })
+    .then(function(data) {
+      state.token = data.token;
+      state.user  = data.user;
+      localStorage.setItem('pm_token', data.token);
+      updateNavUser();
+      closeLoginModal();
+      toast('Bienvenue ' + data.user.nom + ' ! 👋', '#10b981');
+    })
+    .catch(function(err) {
+      toast('Email ou mot de passe incorrect', '#ef4444');
+    });
+}
+
+function submitInscription() {
+  var nom   = (document.getElementById('modal-nom') || {}).value || '';
+  var email = (document.getElementById('modal-email') || {}).value || '';
+  var pass  = (document.getElementById('modal-password') || {}).value || '';
+  if (!nom || !email || !pass) { toast('Remplissez tous les champs', '#ef4444'); return; }
+  if (pass.length < 6) { toast('Mot de passe trop court (6 min)', '#ef4444'); return; }
+
+  apiFetch('/auth/inscription', { method: 'POST', body: JSON.stringify({ nom: nom, email: email, mot_de_passe: pass }) })
+    .then(function(data) {
+      state.token = data.token;
+      state.user  = data.user;
+      localStorage.setItem('pm_token', data.token);
+      updateNavUser();
+      closeLoginModal();
+      toast('Compte créé ! Bienvenue ' + data.user.nom + ' 🎉', '#10b981');
+    })
+    .catch(function(err) {
+      toast(err.message || 'Email déjà utilisé', '#ef4444');
+    });
+}
+
+function updateNavUser() {
+  var avatarEl = document.getElementById('nav-avatar');
+  var usernameEl = document.getElementById('nav-username');
+  if (state.user && avatarEl && usernameEl) {
+    avatarEl.textContent = (state.user.nom || 'U').charAt(0).toUpperCase();
+    usernameEl.textContent = state.user.nom;
+  } else if (avatarEl && usernameEl) {
+    avatarEl.textContent = '?';
+    usernameEl.textContent = 'Connexion';
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

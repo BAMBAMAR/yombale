@@ -2,7 +2,7 @@
    Yombale — Design System v5
    Palette : Vert savane + Bleu nuit + Or sénégalais
    ════════════════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap');
+/* Fonts chargées via <link> dans index.html */
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
