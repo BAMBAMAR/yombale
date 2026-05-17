@@ -120,23 +120,7 @@ router.get('/:id/offres', async (req, res) => {
       SELECT o.*,
              m.nom AS marchand_nom, m.site_url,
              p.nom AS produit_nom, p.marque AS produit_marque,
-             -- titre_marchand = nom scrappé chez ce marchand
-             -- Sinon extraire depuis l'URL (slug du dernier segment)
-             COALESCE(
-               o.titre_marchand,
-               NULLIF(TRIM(
-                 REPLACE(
-                   REPLACE(
-                     SPLIT_PART(
-                       SPLIT_PART(COALESCE(o.url_achat,''), '/', -1),
-                       '?', 1
-                     ),
-                     '-', ' '
-                   ),
-                 '/', ' ')
-               ), ''),
-               p.nom
-             ) AS titre_affiche
+             o.titre_marchand
       FROM offres o
       JOIN marchands m ON m.id = o.marchand_id
       JOIN produits p  ON p.id = o.produit_id
@@ -144,6 +128,26 @@ router.get('/:id/offres', async (req, res) => {
       ORDER BY o.prix ASC`,
       [req.params.id]
     );
+
+    // Enrichir chaque offre avec titre_affiche extrait depuis l'URL
+    rows.forEach(r => {
+      if (r.titre_marchand) {
+        r.titre_affiche = r.titre_marchand;
+      } else if (r.url_achat && r.url_achat !== '#') {
+        try {
+          // Extraire le slug du dernier segment non-vide de l'URL
+          const segs = r.url_achat.replace(/\/+$/, '').split('/').filter(Boolean);
+          const slug = segs[segs.length - 1].split('?')[0];
+          if (slug && slug.length > 3 && !slug.startsWith('http')) {
+            r.titre_affiche = slug.replace(/-/g, ' ');
+          } else {
+            r.titre_affiche = r.produit_nom;
+          }
+        } catch { r.titre_affiche = r.produit_nom; }
+      } else {
+        r.titre_affiche = r.produit_nom;
+      }
+    });
 
     // ── Correction des prix aberrants ──────────────────────────────
     // Pour des produits identiques, un prix 10x inférieur à la médiane
