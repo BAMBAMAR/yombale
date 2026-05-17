@@ -948,10 +948,17 @@ function htmlTableauOffres(offresArr, prixMin) {
               best ? '<span style="background:#10b981;color:#fff;font-size:9px;font-weight:700;padding:1px 7px;border-radius:8px">MEILLEUR PRIX</span>' : '',
             '</div>',
             // Détails marchand
-            // Titre chez le marchand (peut différer du titre normalisé)
-            o.titre_affiche && o.titre_affiche !== o.produit_nom
-              ? '<div style="font-size:11px;color:#64748b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px" title="' + (o.titre_affiche||'') + '">' + (o.titre_affiche||'').slice(0,60) + (o.titre_affiche&&o.titre_affiche.length>60?'…':'') + '</div>'
-              : '',
+            // Titre exact du produit chez ce marchand (depuis slug URL ou titre normalisé)
+            (function() {
+              var t = o.titre_affiche || o.produit_nom || '';
+              // Capitaliser la première lettre de chaque mot
+              t = t.split(' ').map(function(w) {
+                return w.length > 1 ? w.charAt(0).toUpperCase() + w.slice(1) : w.toUpperCase();
+              }).join(' ');
+              return '<div style="font-size:11px;color:#475569;margin-top:3px;overflow:hidden;text-overflow:ellipsis;font-style:italic" title="' + t + '">' +
+                t.slice(0, 65) + (t.length > 65 ? '…' : '') +
+              '</div>';
+            })(),
             '<div style="font-size:11px;color:#94a3b8;margin-top:2px">',
               (o.site_url ? o.site_url.replace('https://','').replace('www.','').split('/')[0] : '') +
               (o.scraped_at ? ' · ' + new Date(o.scraped_at).toLocaleDateString('fr-FR') : ''),
@@ -973,12 +980,16 @@ function htmlTableauOffres(offresArr, prixMin) {
     ].join('');
   }).join('');
 
+  var nomProduit = offresArr[0] && offresArr[0].produit_nom ? offresArr[0].produit_nom : '';
   return [
     '<div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:20px">',
-      // En-tête tableau
-      '<div style="padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">',
-        '<span style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em">📊 Comparaison des prix</span>',
-        '<span style="font-size:11px;color:#94a3b8">' + offresArr.length + ' marchand' + (offresArr.length>1?'s':'') + '</span>',
+      // En-tête tableau avec nom du produit
+      '<div style="padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0">',
+        '<div style="display:flex;justify-content:space-between;align-items:center">',
+          '<span style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em">📊 Comparaison des prix</span>',
+          '<span style="font-size:11px;color:#94a3b8">' + offresArr.length + ' marchand' + (offresArr.length>1?'s':'') + '</span>',
+        '</div>',
+        nomProduit ? '<div style="font-size:12px;color:#475569;margin-top:4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📦 ' + nomProduit.slice(0,90) + '</div>' : '',
       '</div>',
       lignes,
     '</div>',
