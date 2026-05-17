@@ -14,26 +14,28 @@ router.get('/', async (req, res) => {
                   :                      'COUNT(o.id) DESC NULLS LAST';
 
     // Filtre catégorie : slug direct sur categorie_id OU fallback mots-clés nom
-    // (certains produits n'ont pas de categorie_id assigné lors du scraping)
+    // Normaliser : '' → null pour éviter la condition $2::text IS NULL fausse
+    const categorieNorm = categorie || null;
+
     const CAT_FALLBACK = {
       'smartphones':  ['samsung','iphone','xiaomi','tecno','infinix','oppo','huawei','nokia','realme','itel','tablette','smartphone','portable','redmi','galaxy'],
-      'informatique': ['laptop','ordinateur','macbook','lenovo','dell','imprimante','clavier','souris','disque','ssd','moniteur','routeur','wifi','pc ','asus','acer'],
-      'tv-electro':   ['télé','tele','tv ','led tv','hisense','lg tv','refriger','climatiseur','lave-linge','machine a laver','frigo','congelateur','ventilateur','fer a repasser','split','chauffe-eau','induction','micro-onde','four '],
-      'maison':       ['canape','table ','chaise','lit ','matelas','armoire','meuble','lampe','rideau','deco','coussin','vaisselle','batterie de cuisine'],
-      'mode':         ['robe','chaussure','sac ','chemise','pantalon','vetement','habit','sneaker','basket','montre','bijou','parfum','sac a main','jean','t-shirt'],
-      'auto-moto':    ['voiture','moto ','velo','auto ','pneu','scooter','trottinette','piece auto'],
-      'jeux':         ['playstation','ps4','ps5','xbox','nintendo','manette','jeu video','gaming','casque gamer'],
+      'informatique': ['laptop','ordinateur','macbook','lenovo','dell','imprimante','clavier','souris','disque dur','ssd','moniteur','routeur',' pc ','asus','acer'],
+      'tv-electro':   ['television','refriger','climatiseur','lave-linge','machine a laver','frigo','congelateur','ventilateur','fer a repasser','split ','chauffe-eau','micro-onde','four elec','induction','plaque de cuisson','air fryer','friteuse','enduro','finix','astech'],
+      'maison':       ['canape','chaise','matelas','armoire','meuble','fontaine','rayonnage','batterie de cuisine'],
+      'mode':         ['robe','chaussure','sac a main','chemise','pantalon','sneaker','basket','parfum','eau de toilette','eau de parfum','musc','jean homme','t-shirt'],
+      'auto-moto':    ['voiture','moto ','scooter','trottinette','piece auto','batterie voiture'],
+      'jeux':         ['playstation','ps4','ps5','xbox','nintendo','manette','jeu video','gaming'],
     };
-    const fallback = categorie ? (CAT_FALLBACK[categorie] || []) : [];
+    const fallback = categorieNorm ? (CAT_FALLBACK[categorieNorm] || []) : [];
+    // Le fallback SQL est conditionnel : s'applique uniquement si $2 correspond à cette catégorie
     const fallbackSQL = fallback.length > 0
-      ? 'OR (' + fallback.map(m => `LOWER(p.nom) LIKE '%${m}%'`).join(' OR ') + ')'
+      ? 'OR (' + fallback.map(m => `LOWER(unaccent(p.nom)) LIKE unaccent('%${m}%')`).join(' OR ') + ')'
       : '';
 
-    const catCondition = `
-      ($2::text IS NULL
-        OR p.categorie_id = (SELECT id FROM categories WHERE slug = $2 LIMIT 1)
-        ${fallbackSQL}
-      )`;
+    const catCondition = categorieNorm
+      ? `(p.categorie_id = (SELECT id FROM categories WHERE slug = $2 LIMIT 1)
+          ${fallbackSQL})`
+      : '(1=1)';
 
     const sql = `
       SELECT p.*, c.nom AS categorie_nom,
@@ -52,7 +54,7 @@ router.get('/', async (req, res) => {
       ORDER BY ${orderBy}
       LIMIT $5 OFFSET $6`;
 
-    const params = [q||null, categorie||null, prixMax||null, prixMin||null, limit, offset];
+    const params = [q||null, categorieNorm, prixMax||null, prixMin||null, limit, offset];
     const result = await pool.query(sql, params);
 
     const countSql = `
@@ -65,7 +67,7 @@ router.get('/', async (req, res) => {
         AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
         AND ($4::numeric IS NULL OR o.prix >= $4::numeric)`;
 
-    const countResult = await pool.query(countSql, [q||null, categorie||null, prixMax||null, prixMin||null]);
+    const countResult = await pool.query(countSql, [q||null, categorieNorm, prixMax||null, prixMin||null]);
     const total = parseInt(countResult.rows[0].total, 10);
 
     // Correction des prix_min aberrants sur les cartes produits
@@ -115,9 +117,13 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/offres', async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT o.*, m.nom AS marchand_nom, m.site_url
+      SELECT o.*,
+             m.nom AS marchand_nom, m.site_url,
+             p.nom AS produit_nom, p.marque AS produit_marque,
+             COALESCE(o.titre_marchand, p.nom) AS titre_affiche
       FROM offres o
       JOIN marchands m ON m.id = o.marchand_id
+      JOIN produits p  ON p.id = o.produit_id
       WHERE o.produit_id = $1 AND o.stock = true
       ORDER BY o.prix ASC`,
       [req.params.id]
