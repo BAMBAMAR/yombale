@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Yombale — Comparateur de prix Sénégal
-//  app.js VERSION 5 — 2026-05-14
+//  app.js VERSION 6 — 2026-05-14
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Yombale app.js VERSION 5 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Yombale app.js VERSION 6 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 var API = '/api';
 
