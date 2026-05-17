@@ -32,10 +32,10 @@ router.get('/', async (req, res) => {
       ? 'OR (' + fallback.map(m => `LOWER(unaccent(p.nom)) LIKE unaccent('%${m}%')`).join(' OR ') + ')'
       : '';
 
-    const catCondition = categorieNorm
-      ? `(p.categorie_id = (SELECT id FROM categories WHERE slug = $2 LIMIT 1)
-          ${fallbackSQL})`
-      : '(1=1)';
+    // $2 DOIT toujours être référencé pour que PostgreSQL connaisse son type
+    const catCondition = `($2::text IS NULL
+      OR p.categorie_id = (SELECT id FROM categories WHERE slug = $2 LIMIT 1)
+      ${fallbackSQL ? fallbackSQL : ''})`;
 
     const sql = `
       SELECT p.*, c.nom AS categorie_nom,
