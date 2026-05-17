@@ -42,13 +42,13 @@ const MARQUES = ['Samsung','Apple','Xiaomi','Tecno','Infinix','Oppo','Vivo','Hua
   'HP','Lenovo','Dell','Asus','Acer','LG','Sony','Hisense','Haier','TCL','Realme','OnePlus','Motorola'];
 
 const CAT_MOTS = [
-  { slug:'smartphones',  mots:['samsung','iphone','xiaomi','tecno','infinix','oppo','vivo','huawei','nokia','realme','itel','tablette','smartphone','portable','ipad','téléphone','telephone'] },
-  { slug:'informatique', mots:['laptop','ordinateur','macbook','lenovo','dell','hp',' pc ','clavier','souris','imprimante','disque','ssd','moniteur','ecran pc','router','wifi'] },
-  { slug:'tv-electro',   mots:['télé','tele','tv ','led tv','écran tv','hisense','lg tv','samsung tv','refrigerateur','climatiseur','lave-linge','machine a laver','frigo','congélateur','ventilateur','fer a repasser'] },
-  { slug:'maison',       mots:['canapé','table','chaise','lit','matelas','armoire','cuisine','meuble','déco','lampe','rideau'] },
-  { slug:'mode',         mots:['robe','chaussure','sac','chemise','pantalon','vêtement','habit','sneaker','basket','montre','bijou','parfum','sac a main'] },
-  { slug:'auto-moto',    mots:['voiture','moto','vélo','auto','pneu','scooter','trottinette','pièce auto'] },
-  { slug:'jeux',         mots:['playstation','ps4','ps5','xbox','nintendo','manette','jeu video','gaming','casque gamer'] },
+  { slug:'smartphones',  mots:['samsung galaxy','iphone','xiaomi','tecno','infinix','oppo','vivo','huawei','nokia','realme','itel','tablette','smartphone','portable','ipad','téléphone','telephone','redmi','google pixel','oneplus','motorola moto'] },
+  { slug:'informatique', mots:['laptop','ordinateur','macbook','lenovo','dell','hp ',' pc ','clavier','souris','imprimante','disque dur','ssd','moniteur','ecran pc','routeur','wifi','asus','acer','toshiba','epson','canon imprimante','brother'] },
+  { slug:'tv-electro',   mots:['télé','tele','tv ','led tv','écran tv','hisense','lg tv','samsung tv','refrigerateur','réfrigérateur','climatiseur','split ','lave-linge','machine a laver','frigo','congélateur','ventilateur','fer a repasser','chauffe-eau','micro-onde','four électrique','induction','plaque de cuisson','mixeur','blender','aspirateur','air fryer','friteuse','batterie de cuisine','enduro','finix','astech'] },
+  { slug:'maison',       mots:['canapé','table ','chaise','lit ','matelas','armoire','cuisine','meuble','déco','lampe','rideau','coussin','vaisselle','oreiller','drap','serviette','fontaine'] },
+  { slug:'mode',         mots:['robe','chaussure','sac ','chemise','pantalon','vêtement','habit','sneaker','basket','montre','bijou','parfum','sac a main','jean ','t-shirt','coffret','eau de toilette','eau de parfum','musc','cologne'] },
+  { slug:'auto-moto',    mots:['voiture','moto ','vélo','auto ','pneu','scooter','trottinette','pièce auto','batterie voiture'] },
+  { slug:'jeux',         mots:['playstation','ps4','ps5','xbox','nintendo','manette','jeu video','gaming','casque gamer','console','joystick'] },
 ];
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -322,15 +322,16 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
 
       if(item.image_url) await pool.query('UPDATE produits SET image_url=$1 WHERE id=$2 AND image_url IS NULL',[item.image_url,produitId]);
 
-      // Upsert offre
+      // Upsert offre avec titre du marchand
       const {rows:offre}=await pool.query(
-        `INSERT INTO offres(produit_id,marchand_id,prix,url_achat,scraped_at,stock)
-         VALUES($1,$2,$3,$4,NOW(),true)
+        `INSERT INTO offres(produit_id,marchand_id,prix,url_achat,titre_marchand,scraped_at,stock)
+         VALUES($1,$2,$3,$4,$5,NOW(),true)
          ON CONFLICT(produit_id,marchand_id)
          DO UPDATE SET prix=EXCLUDED.prix, url_achat=EXCLUDED.url_achat,
+                       titre_marchand=EXCLUDED.titre_marchand,
                        scraped_at=NOW(), stock=true
          RETURNING id`,
-        [produitId,marchandId,item.prix,item.url]
+        [produitId,marchandId,item.prix,item.url,item.titre]
       );
       if(offre.length>0) await pool.query('INSERT INTO historique_prix(offre_id,prix) VALUES($1,$2)',[offre[0].id,item.prix]);
       await pool.query(
