@@ -58,16 +58,19 @@ async function migrate() {
       );
 
       CREATE TABLE IF NOT EXISTS offres (
-        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        produit_id  UUID NOT NULL REFERENCES produits(id) ON DELETE CASCADE,
-        marchand_id UUID NOT NULL REFERENCES marchands(id),
-        prix        NUMERIC(12,2) NOT NULL,
-        devise      CHAR(3) DEFAULT 'XOF',
-        stock       BOOLEAN DEFAULT TRUE,
-        url_achat   TEXT,
-        scraped_at  TIMESTAMPTZ DEFAULT NOW(),
+        id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        produit_id       UUID NOT NULL REFERENCES produits(id) ON DELETE CASCADE,
+        marchand_id      UUID NOT NULL REFERENCES marchands(id),
+        prix             NUMERIC(12,2) NOT NULL,
+        devise           CHAR(3) DEFAULT 'XOF',
+        stock            BOOLEAN DEFAULT TRUE,
+        url_achat        TEXT,
+        titre_marchand   TEXT,
+        scraped_at       TIMESTAMPTZ DEFAULT NOW(),
         UNIQUE(produit_id, marchand_id)
       );
+      -- Ajouter titre_marchand si manquant (migration idempotente)
+      ALTER TABLE offres ADD COLUMN IF NOT EXISTS titre_marchand TEXT;
 
       CREATE TABLE IF NOT EXISTS historique_prix (
         id       BIGSERIAL PRIMARY KEY,
