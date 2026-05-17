@@ -948,9 +948,13 @@ function htmlTableauOffres(offresArr, prixMin) {
               best ? '<span style="background:#10b981;color:#fff;font-size:9px;font-weight:700;padding:1px 7px;border-radius:8px">MEILLEUR PRIX</span>' : '',
             '</div>',
             // Détails marchand
-            '<div style="font-size:11px;color:#94a3b8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">',
+            // Titre chez le marchand (peut différer du titre normalisé)
+            o.titre_affiche && o.titre_affiche !== o.produit_nom
+              ? '<div style="font-size:11px;color:#64748b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px" title="' + (o.titre_affiche||'') + '">' + (o.titre_affiche||'').slice(0,60) + (o.titre_affiche&&o.titre_affiche.length>60?'…':'') + '</div>'
+              : '',
+            '<div style="font-size:11px;color:#94a3b8;margin-top:2px">',
               (o.site_url ? o.site_url.replace('https://','').replace('www.','').split('/')[0] : '') +
-              (o.scraped_at ? ' · Màj ' + new Date(o.scraped_at).toLocaleDateString('fr-FR') : ''),
+              (o.scraped_at ? ' · ' + new Date(o.scraped_at).toLocaleDateString('fr-FR') : ''),
             '</div>',
           '</div>',
           // Prix + écart
