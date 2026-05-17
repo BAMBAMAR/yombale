@@ -1314,11 +1314,11 @@ function htmlFooter() {
         '<div class="footer-col">',
           '<h4>Informations</h4>',
           '<ul>',
-            '<li><a href="#">Comment ça marche ?</a></li>',
-            '<li><a href="#">Signaler une erreur de prix</a></li>',
-            '<li><a href="#">Devenir partenaire</a></li>',
-            '<li><a href="#">Ajouter votre boutique</a></li>',
-            '<li><a href="#">Blog & Conseils</a></li>',
+            '<li><a onclick="ouvrirInfoPage(\'comment-ca-marche\')" href="#">Comment ça marche ?</a></li>',
+            '<li><a onclick="ouvrirInfoPage(\'signaler-erreur\')" href="#">Signaler une erreur de prix</a></li>',
+            '<li><a onclick="ouvrirInfoPage(\'devenir-partenaire\')" href="#">Devenir partenaire</a></li>',
+            '<li><a onclick="ouvrirInfoPage(\'ajouter-boutique\')" href="#">Ajouter votre boutique</a></li>',
+            '<li><a onclick="ouvrirInfoPage(\'blog\')" href="#">Blog & Conseils</a></li>',
           '</ul>',
         '</div>',
 
@@ -1524,3 +1524,243 @@ document.addEventListener('DOMContentLoaded', function() {
   dbg('DOMContentLoaded');
   goHome();
 });
+
+// ═══════════════════════════════════════════════════════════════
+//  PAGES D'INFORMATION — Modals complètes
+// ═══════════════════════════════════════════════════════════════
+
+var INFO_PAGES = {
+
+  'comment-ca-marche': {
+    titre: 'Comment fonctionne Yombale ?',
+    icone: '🔍',
+    html: function() { return [
+      '<div style="background:linear-gradient(135deg,#1a3a6e,#2563eb);padding:28px;margin:-28px -28px 28px;border-radius:16px 16px 0 0">',
+        '<p style="color:rgba(255,255,255,.8);font-size:14px;margin-top:8px;line-height:1.6">',
+          'Yombale compare automatiquement les prix chez les meilleurs marchands sénégalais pour vous aider à trouver la meilleure offre sans effort.',
+        '</p>',
+      '</div>',
+
+      // Étapes
+      _etape('1', '🕷️', 'Collecte automatique', 'Nos robots analysent toutes les 6 heures les catalogues de 9 marchands partenaires : Kanje, Electronic Corp, Electrolux Dakar, Soumari, Master Office Déco, Kaynoo, Dakar Mondial Téléphone, Electroménager Dakar et CoinAfrique.'),
+      _etape('2', '🔗', 'Regroupement intelligent', 'Les produits identiques vendus par différents marchands sont automatiquement regroupés grâce à leur nom, leur marque et leurs caractéristiques techniques.'),
+      _etape('3', '💰', 'Comparaison des prix', 'Pour chaque produit, vous voyez en un coup d\'œil le meilleur prix, l\'économie possible et l\'historique des variations sur 90 jours.'),
+      _etape('4', '🛒', 'Achat direct', 'Yombale ne vend rien. Quand vous cliquez "Voir l\'offre", vous êtes redirigé directement vers le site du marchand pour finaliser votre achat.'),
+
+      // FAQ
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:28px 0 12px">Questions fréquentes</h3>',
+      _faq('Les prix sont-ils toujours à jour ?', 'Nos données sont rafraîchies toutes les 6 heures. Un délai peut exister entre la mise à jour sur le site marchand et notre base de données. Vérifiez toujours le prix final sur le site du marchand avant d\'acheter.'),
+      _faq('Yombale prend-il une commission ?', 'Non. Yombale est un service de comparaison gratuit et indépendant. Nous ne percevons aucune commission sur les ventes. Notre modèle économique repose sur des partenariats et la publicité.'),
+      _faq('Comment un produit est-il ajouté ?', 'Les produits sont ajoutés automatiquement lors du scraping. Vous pouvez aussi signaler un marchand manquant via "Ajouter votre boutique".'),
+      _faq('Mes données personnelles sont-elles protégées ?', 'Oui. Yombale respecte la loi sénégalaise n°2008-12 sur la protection des données personnelles et est enregistré auprès de la CDP (Commission de Protection des Données Personnelles).'),
+    ].join(''); }
+  },
+
+  'signaler-erreur': {
+    titre: 'Signaler une erreur de prix',
+    icone: '⚠️',
+    html: function() { return [
+      '<p style="color:#64748b;font-size:14px;margin-bottom:24px;line-height:1.6">',
+        'Vous avez repéré un prix incorrect, un lien cassé ou un produit mal catégorisé ? Merci de nous le signaler, nous corrigerons dans les plus brefs délais.',
+      '</p>',
+
+      '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px;margin-bottom:24px">',
+        '<p style="font-size:13px;color:#92400e;font-weight:600;margin:0">⚡ Traitement rapide</p>',
+        '<p style="font-size:12px;color:#78350f;margin:4px 0 0">Les signalements sont traités sous 24h. Les prix sont automatiquement re-vérifiés toutes les 6h.</p>',
+      '</div>',
+
+      '<div class="form-group"><label>Type d\'erreur</label>',
+        '<select style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none;background:#fff">',
+          '<option>Prix affiché incorrect</option>',
+          '<option>Lien cassé (redirige vers la mauvaise page)</option>',
+          '<option>Produit hors stock affiché comme disponible</option>',
+          '<option>Mauvaise catégorie</option>',
+          '<option>Produit en double</option>',
+          '<option>Image incorrecte</option>',
+          '<option>Autre</option>',
+        '</select>',
+      '</div>',
+      '<div class="form-group"><label>URL du produit sur Yombale</label>',
+        '<input type="text" placeholder="https://yombale-production.up.railway.app/..." style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none">',
+      '</div>',
+      '<div class="form-group"><label>Description de l\'erreur</label>',
+        '<textarea placeholder="Ex: Le prix affiché est 15 000 FCFA mais sur le site du marchand il est à 150 000 FCFA..." ',
+          'style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none;height:100px;resize:vertical;font-family:inherit"></textarea>',
+      '</div>',
+      '<div class="form-group"><label>Votre email (optionnel)</label>',
+        '<input type="email" placeholder="pour vous tenir informé de la correction" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none">',
+      '</div>',
+      '<button onclick="toast(\'Signalement envoyé. Merci ! 🙏\',\'#10b981\');fermerInfoPage()" class="btn-primary" style="margin-top:8px">Envoyer le signalement →</button>',
+    ].join(''); }
+  },
+
+  'devenir-partenaire': {
+    titre: 'Devenir partenaire Yombale',
+    icone: '🤝',
+    html: function() { return [
+      '<p style="color:#64748b;font-size:14px;margin-bottom:24px;line-height:1.6">',
+        'Yombale référence déjà <strong>9 marchands</strong> et des milliers de produits. Rejoignez notre réseau pour augmenter votre visibilité auprès des consommateurs sénégalais.',
+      '</p>',
+
+      // Avantages
+      '<h3 style="font-size:13px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Pourquoi rejoindre Yombale ?</h3>',
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">',
+        _avantage('📈', 'Visibilité accrue', 'Apparaissez dans les recherches de milliers de consommateurs cherchant vos produits'),
+        _avantage('🎯', 'Trafic qualifié', 'Les visiteurs de Yombale sont en phase d\'achat actif — conversion élevée'),
+        _avantage('💰', 'Gratuit pour démarrer', 'L\'intégration de base est gratuite. Des offres premium sont disponibles'),
+        _avantage('🔄', 'Sync automatique', 'Vos prix sont mis à jour automatiquement toutes les 6h'),
+      '</div>',
+
+      // Offres
+      '<h3 style="font-size:13px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Nos offres partenaires</h3>',
+      '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">',
+        _offre('Gratuit', '0 FCFA/mois', ['Référencement automatique', 'Mise à jour toutes les 6h', 'Badge marchand vérifié'], false),
+        _offre('Premium', '25 000 FCFA/mois', ['Tout le gratuit +', 'Position prioritaire dans les résultats', 'Alertes de baisse de prix pour vos clients', 'Tableau de bord analytique', 'Support dédié'], true),
+      '</div>',
+
+      // Contact
+      '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px">',
+        '<p style="font-size:13px;font-weight:700;color:#15803d;margin:0 0 8px">📧 Contactez-nous</p>',
+        '<p style="font-size:13px;color:#166534;margin:0">partenaires@yombale.sn · +221 33 800 12 34</p>',
+        '<p style="font-size:12px;color:#166534;margin:6px 0 0">Réponse sous 48h ouvrables</p>',
+      '</div>',
+    ].join(''); }
+  },
+
+  'ajouter-boutique': {
+    titre: 'Ajouter votre boutique',
+    icone: '🏪',
+    html: function() { return [
+      '<p style="color:#64748b;font-size:14px;margin-bottom:24px;line-height:1.6">',
+        'Votre boutique en ligne n\'est pas encore référencée sur Yombale ? Soumettez votre demande et nous l\'analyserons dans les 72h.',
+      '</p>',
+
+      '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px;margin-bottom:24px">',
+        '<p style="font-size:13px;color:#1e40af;font-weight:600;margin:0 0 4px">✅ Critères d\'éligibilité</p>',
+        '<ul style="font-size:12px;color:#1d4ed8;margin:0;padding-left:16px;line-height:1.8">',
+          '<li>Boutique en ligne avec URL publique accessible</li>',
+          '<li>Produits avec prix affichés en FCFA</li>',
+          '<li>Livraison au Sénégal</li>',
+          '<li>Respect de la législation sénégalaise</li>',
+        '</ul>',
+      '</div>',
+
+      '<div class="form-group"><label>Nom de votre boutique *</label>',
+        '<input type="text" id="bq-nom" placeholder="Ex: Dakar Electronics" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none">',
+      '</div>',
+      '<div class="form-group"><label>URL de votre site *</label>',
+        '<input type="url" id="bq-url" placeholder="https://votre-boutique.sn" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none">',
+      '</div>',
+      '<div class="form-group"><label>Catégories de produits *</label>',
+        '<input type="text" placeholder="Ex: Téléphones, Électroménager, Informatique..." style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none">',
+      '</div>',
+      '<div class="form-group"><label>Nombre approximatif de produits</label>',
+        '<select style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none;background:#fff">',
+          '<option>Moins de 50 produits</option>',
+          '<option>50 à 200 produits</option>',
+          '<option>200 à 500 produits</option>',
+          '<option>Plus de 500 produits</option>',
+        '</select>',
+      '</div>',
+      '<div class="form-group"><label>Votre email de contact *</label>',
+        '<input type="email" id="bq-email" placeholder="contact@votre-boutique.sn" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none">',
+      '</div>',
+      '<div class="form-group"><label>Numéro WhatsApp / Téléphone</label>',
+        '<input type="tel" placeholder="+221 XX XXX XX XX" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none">',
+      '</div>',
+      '<button onclick="toast(\'Demande envoyée ! Nous vous contactons sous 72h 📩\',\'#10b981\');fermerInfoPage()" class="btn-primary" style="margin-top:8px">Soumettre ma boutique →</button>',
+    ].join(''); }
+  },
+
+  'blog': {
+    titre: 'Blog & Conseils',
+    icone: '📝',
+    html: function() { return [
+      '<p style="color:#64748b;font-size:14px;margin-bottom:24px">Conseils pratiques pour mieux acheter au Sénégal.</p>',
+      _article('💡', 'Comment éviter les arnaques en ligne au Sénégal ?', '15 mai 2026',
+        'Vérifiez toujours que le marchand est référencé sur des comparateurs comme Yombale. Méfiez-vous des prix anormalement bas (plus de 50% en dessous du marché). Préférez les paiements via Wave ou Orange Money avec confirmation. Demandez toujours un reçu.'),
+      _article('📱', 'Top 5 des smartphones à moins de 150 000 FCFA en 2026', '10 mai 2026',
+        'Le marché sénégalais des smartphones évolue rapidement. En 2026, Tecno, Infinix et Samsung dominent le segment entrée/milieu de gamme. Comparaison des meilleurs modèles disponibles chez nos marchands partenaires.'),
+      _article('❄️', 'Guide d\'achat : choisir son climatiseur pour le Sénégal', '2 mai 2026',
+        'BTU, Inverter, R410A... les termes techniques peuvent intimider. Pour une pièce de 20m² à Dakar, comptez 9000 à 12000 BTU. L\'Inverter coûte plus cher à l\'achat mais économise 30-40% d\'électricité. Nos marchands proposent des splits de 50 000 à 200 000 FCFA selon la capacité.'),
+      _article('🛒', '5 astuces pour comparer les prix intelligemment', '25 avril 2026',
+        '1. Regardez l\'historique des prix — un prix "promotionnel" était peut-être le prix normal. 2. Comparez le prix total livraison incluse. 3. Vérifiez la garantie. 4. Lisez les avis sur le marchand. 5. Utilisez les alertes prix de Yombale pour être notifié des baisses.'),
+    ].join(''); }
+  },
+};
+
+// ── Helpers pour les pages info ─────────────────────────────────
+function _etape(num, icon, titre, texte) {
+  return '<div style="display:flex;gap:14px;margin-bottom:20px">' +
+    '<div style="width:36px;height:36px;background:#1a3a6e;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0">' + num + '</div>' +
+    '<div><div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:4px">' + icon + ' ' + titre + '</div>' +
+    '<p style="font-size:13px;color:#64748b;margin:0;line-height:1.6">' + texte + '</p></div>' +
+  '</div>';
+}
+function _faq(q, r) {
+  return '<details style="border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;overflow:hidden">' +
+    '<summary style="padding:12px 16px;font-size:13px;font-weight:600;color:#1e293b;cursor:pointer;list-style:none">' +
+    '❓ ' + q + '</summary>' +
+    '<p style="padding:0 16px 14px;margin:0;font-size:13px;color:#64748b;line-height:1.6">' + r + '</p>' +
+  '</details>';
+}
+function _avantage(icon, titre, texte) {
+  return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px">' +
+    '<div style="font-size:22px;margin-bottom:6px">' + icon + '</div>' +
+    '<div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:4px">' + titre + '</div>' +
+    '<p style="font-size:12px;color:#64748b;margin:0;line-height:1.5">' + texte + '</p>' +
+  '</div>';
+}
+function _offre(nom, prix, items, premium) {
+  return '<div style="border:' + (premium ? '2px solid #1d4ed8' : '1px solid #e2e8f0') + ';border-radius:12px;padding:16px;' + (premium ? 'background:#eff6ff' : '') + '">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+      '<span style="font-size:14px;font-weight:800;color:#1e293b">' + nom + '</span>' +
+      '<span style="font-size:14px;font-weight:700;color:' + (premium ? '#1d4ed8' : '#64748b') + '">' + prix + '</span>' +
+    '</div>' +
+    '<ul style="margin:0;padding-left:16px;font-size:12px;color:#475569;line-height:1.9">' +
+      items.map(function(i) { return '<li>' + i + '</li>'; }).join('') +
+    '</ul>' +
+  '</div>';
+}
+function _article(icon, titre, date, extrait) {
+  return '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:14px">' +
+    '<div style="font-size:10px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">' + date + '</div>' +
+    '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 10px">' + icon + ' ' + titre + '</h3>' +
+    '<p style="font-size:13px;color:#64748b;margin:0;line-height:1.6">' + extrait + '</p>' +
+    '<a href="#" style="font-size:12px;color:#1d4ed8;font-weight:600;text-decoration:none;display:inline-block;margin-top:10px">Lire la suite →</a>' +
+  '</div>';
+}
+
+// ── Rendu modal info ─────────────────────────────────────────────
+function ouvrirInfoPage(pageId) {
+  var page = INFO_PAGES[pageId];
+  if (!page) return;
+
+  var existing = document.getElementById('info-modal');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'info-modal';
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);animation:fadeIn .2s ease;overflow-y:auto';
+  overlay.onclick = function(e) { if (e.target === overlay) fermerInfoPage(); };
+
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:20px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;' +
+    'box-shadow:0 24px 80px rgba(0,0,0,.2);animation:slideUp .25s ease;margin:auto">' +
+      '<div style="position:sticky;top:0;background:#fff;border-bottom:1px solid #f1f5f9;padding:18px 28px;' +
+      'display:flex;justify-content:space-between;align-items:center;border-radius:20px 20px 0 0;z-index:1">' +
+        '<h2 style="font-size:16px;font-weight:800;color:#0f172a;margin:0">' + page.icone + ' ' + page.titre + '</h2>' +
+        '<button onclick="fermerInfoPage()" style="background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;' +
+        'font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b">✕</button>' +
+      '</div>' +
+      '<div style="padding:28px">' + page.html() + '</div>' +
+    '</div>';
+
+  document.body.appendChild(overlay);
+}
+
+function fermerInfoPage() {
+  var m = document.getElementById('info-modal');
+  if (m) m.remove();
+}
