@@ -13,17 +13,27 @@ router.get('/', async (req, res) => {
                   : tri === 'nom_asc'   ? 'p.nom ASC'
                   :                      'COUNT(o.id) DESC NULLS LAST';
 
-    // Filtre catégorie : slug exact OU mots-clés dans le nom (pour produits sans categorie_id)
+    // Filtre catégorie : slug direct sur categorie_id OU fallback mots-clés nom
+    // (certains produits n'ont pas de categorie_id assigné lors du scraping)
+    const CAT_FALLBACK = {
+      'smartphones':  ['samsung','iphone','xiaomi','tecno','infinix','oppo','huawei','nokia','realme','itel','tablette','smartphone','portable','redmi','galaxy'],
+      'informatique': ['laptop','ordinateur','macbook','lenovo','dell','imprimante','clavier','souris','disque','ssd','moniteur','routeur','wifi','pc ','asus','acer'],
+      'tv-electro':   ['télé','tele','tv ','led tv','hisense','lg tv','refriger','climatiseur','lave-linge','machine a laver','frigo','congelateur','ventilateur','fer a repasser','split','chauffe-eau','induction','micro-onde','four '],
+      'maison':       ['canape','table ','chaise','lit ','matelas','armoire','meuble','lampe','rideau','deco','coussin','vaisselle','batterie de cuisine'],
+      'mode':         ['robe','chaussure','sac ','chemise','pantalon','vetement','habit','sneaker','basket','montre','bijou','parfum','sac a main','jean','t-shirt'],
+      'auto-moto':    ['voiture','moto ','velo','auto ','pneu','scooter','trottinette','piece auto'],
+      'jeux':         ['playstation','ps4','ps5','xbox','nintendo','manette','jeu video','gaming','casque gamer'],
+    };
+    const fallback = categorie ? (CAT_FALLBACK[categorie] || []) : [];
+    const fallbackSQL = fallback.length > 0
+      ? 'OR (' + fallback.map(m => `LOWER(p.nom) LIKE '%${m}%'`).join(' OR ') + ')'
+      : '';
+
     const catCondition = `
-      ($2::text IS NULL OR c.slug = $2 OR (
-        ($2 = 'smartphones'  AND LOWER(p.nom) LIKE ANY(ARRAY['%samsung%','%iphone%','%xiaomi%','%tecno%','%infinix%','%phone%','%portable%','%tablette%','%nokia%','%huawei%','%oppo%','%realme%','%itel%']))
-     OR ($2 = 'informatique' AND LOWER(p.nom) LIKE ANY(ARRAY['%laptop%','%ordinateur%','%macbook%','%lenovo%','%dell%','%hp %','%clavier%','%souris%','%imprimante%','%ssd%']))
-     OR ($2 = 'tv-electro'   AND LOWER(p.nom) LIKE ANY(ARRAY['%tv %','%tele%','%télé%','%led%','%hisense%','%refriger%','%climatiseur%','%lave-linge%','%frigo%']))
-     OR ($2 = 'mode'         AND LOWER(p.nom) LIKE ANY(ARRAY['%robe%','%chaussure%','%sneaker%','%basket%','%vêtement%','%habit%','%sac %','%montre%']))
-     OR ($2 = 'maison'       AND LOWER(p.nom) LIKE ANY(ARRAY['%canapé%','%table %','%chaise%','%lit %','%matelas%','%meuble%','%armoire%']))
-     OR ($2 = 'auto-moto'    AND LOWER(p.nom) LIKE ANY(ARRAY['%voiture%','%moto %','%vélo%','%auto %','%scooter%','%pneu%']))
-     OR ($2 = 'jeux'         AND LOWER(p.nom) LIKE ANY(ARRAY['%playstation%','%xbox%','%nintendo%','%gaming%','%ps4%','%ps5%']))
-      ))`;
+      ($2::text IS NULL
+        OR p.categorie_id = (SELECT id FROM categories WHERE slug = $2 LIMIT 1)
+        ${fallbackSQL}
+      )`;
 
     const sql = `
       SELECT p.*, c.nom AS categorie_nom,
@@ -38,15 +48,7 @@ router.get('/', async (req, res) => {
         AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
         AND ($4::numeric IS NULL OR o.prix >= $4::numeric)
       GROUP BY p.id, c.nom
-      HAVING COUNT(o.id) = 0
-          OR (
-            -- Exclure offres avec prix aberrant :
-            -- prix minimum réaliste = 500 FCFA (rien de légal ne se vend moins)
-            MIN(o.prix) >= 500
-            -- Exclure les cas où min << max avec ratio > 20 (division par 100 non corrigée)
-            -- En gardant uniquement les produits dont le prix semble cohérent
-            AND (MAX(o.prix) = 0 OR MIN(o.prix) * 20 >= MAX(o.prix) OR MIN(o.prix) >= 5000)
-          )
+      HAVING COUNT(o.id) = 0 OR MIN(o.prix) >= 500
       ORDER BY ${orderBy}
       LIMIT $5 OFFSET $6`;
 
@@ -167,11 +169,25 @@ router.get('/:id/similaires', async (req, res) => {
     if (!src.length) return res.status(404).json({ error: 'Produit introuvable' });
 
     const { nom, marque, categorie_id } = src[0];
-    // Extraire mots-clés significatifs (>3 chars, sans mots parasites)
-    const stopWords = new Set(['avec','pour','plus','sans','noir','blanc','gris','bleu','rouge','vert','rose','gold','silver']);
+    // Extraire mots-clés + specs techniques (litres, BTU, watts, pouces, Go)
+    const stopWords = new Set(['avec','pour','plus','sans','noir','blanc','gris','bleu','rouge','vert','rose','gold','silver','neuf','neuve','original','offerte','pose']);
+
+    // Extraire les specs numériques du nom (50L, 9000BTU, 4K, 128Go, etc.)
+    const specsRegex = /(\d+)\s*(litres?|l|btu|watts?|w|pouces?|"|go|gb|tb|cv|mah|mp|kg|hz)/gi;
+    const specs = [];
+    let m;
+    const nomCopy = nom;
+    const reSpec = new RegExp(specsRegex.source, 'gi');
+    while ((m = reSpec.exec(nomCopy)) !== null) {
+      specs.push(m[0].replace(/\s/g,'').toLowerCase());
+    }
+
     const mots = nom.split(/[\s,\-\/]+/)
-      .filter(m => m.length > 3 && !stopWords.has(m.toLowerCase()))
+      .filter(m => m.length > 3 && !stopWords.has(m.toLowerCase()) && !/^\d+$/.test(m))
       .slice(0, 3);
+
+    // Combiner mots-clés + specs pour la recherche
+    const motsClesRecherche = [...new Set([...mots, ...specs])].slice(0, 5);
 
     // Priorité 1 : même marque + mots-clés
     const q1 = `
@@ -194,11 +210,11 @@ router.get('/:id/similaires', async (req, res) => {
         -- Score de similarité : compter les mots-clés communs dans le nom
         (${mots.map((m,i) => `CASE WHEN p.nom ILIKE '%'||$${7+i}||'%' THEN 1 ELSE 0 END`).join('+')}) DESC,
         MIN(o.prix) ASC NULLS LAST
-      LIMIT $${7+mots.length}`;
+      LIMIT $${7+motsClesRecherche.length}`;
 
     const params1 = [req.params.id, marque || '%', categorie_id,
       marchand || null, prixMax || null, prixMin || null,
-      ...mots, Math.ceil(+limit)];
+      ...motsClesRecherche, Math.ceil(+limit)];
 
     const { rows: r1 } = await pool.query(q1, params1);
 
@@ -222,19 +238,19 @@ router.get('/:id/similaires', async (req, res) => {
         GROUP BY p.id, c.nom
         HAVING COUNT(o.id) = 0 OR MIN(o.prix) >= 500
         ORDER BY
-          (${mots.map((m,i) => `CASE WHEN p.nom ILIKE '%'||$${6+i}||'%' THEN 1 ELSE 0 END`).join('+')}) DESC,
+          (${motsClesRecherche.map((m,i) => `CASE WHEN p.nom ILIKE '%'||$${6+i}||'%' THEN 1 ELSE 0 END`).join('+')}) DESC,
           MIN(o.prix) ASC NULLS LAST
-        LIMIT $${6+mots.length}`;
+        LIMIT $${6+motsClesRecherche.length}`;
 
       const params2 = [excludeIds, categorie_id,
         marchand || null, prixMax || null, prixMin || null,
-        ...mots, +limit - r1.length];
+        ...motsClesRecherche, +limit - r1.length];
 
       const { rows: r2 } = await pool.query(q2, params2);
       rows = [...r1, ...r2];
     }
 
-    res.json({ produits: rows, source: src[0], mots_cles: mots });
+    res.json({ produits: rows, source: src[0], mots_cles: motsClesRecherche, specs });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
