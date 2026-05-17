@@ -1,6 +1,6 @@
-// Yombale Service Worker — VERSION 4
+// Yombale Service Worker — VERSION 5
 // Changer CACHE_VERSION force le rechargement de tous les assets
-const CACHE_VERSION = 'yombale-v4';
+const CACHE_VERSION = 'yombale-v5';
 const STATIC_ASSETS = ['/style.css', '/manifest.json', '/icons/icon-192.png'];
 
 // Installation — précache uniquement les assets statiques (pas app.js)
@@ -34,6 +34,9 @@ self.addEventListener('activate', function(event) {
 // Fetch — app.js et les API toujours depuis le réseau (network-first)
 self.addEventListener('fetch', function(event) {
   var url = new URL(event.request.url);
+
+  // Ne pas intercepter les ressources externes (Google Fonts, CDN...)
+  if (url.origin !== location.origin) return;
 
   // API et app.js : toujours réseau, jamais cache
   if (url.pathname.startsWith('/api/') || url.pathname === '/app.js' || url.pathname === '/') {
