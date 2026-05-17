@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Yombale — Comparateur de prix Sénégal
-//  app.js VERSION 6-debug — 2026-05-14
+//  app.js VERSION 6 — 2026-05-14
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Yombale app.js VERSION 6-debug chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Yombale app.js VERSION 6 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 var API = '/api';
 
@@ -853,6 +853,18 @@ function _sectionOffres(offresArr, prixMin) {
           'style="font-size:15px;font-weight:700;color:#1e293b;text-decoration:none">',
             o.marchand_nom || 'Marchand',
           '</a>',
+          // Nom du produit chez ce marchand
+          (function() {
+            var t = o.titre_affiche || o.produit_nom || '';
+            if (!t) return '';
+            // Capitaliser
+            t = t.split(' ').map(function(w) {
+              return w.length > 1 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w.toUpperCase();
+            }).join(' ');
+            return '<div style="font-size:12px;color:#64748b;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + t + '">' +
+              t.slice(0, 60) + (t.length > 60 ? '…' : '') +
+            '</div>';
+          })(),
           ecart > 0 ? '<div style="font-size:11px;color:#f97316;margin-top:2px">+' + fcfa(ecart) + ' de plus que le moins cher</div>' : '',
         '</div>',
 
