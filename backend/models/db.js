@@ -1,4 +1,3 @@
-// backend/models/db.js — VERSION SANS REDIS
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -14,10 +13,4 @@ pool.connect()
   .then(c => { console.log('✅ PostgreSQL connecté'); c.release(); })
   .catch(e => console.error('❌ PostgreSQL:', e.message));
 
-// Sans Redis : requête directe PostgreSQL
-async function queryWithCache(cacheKey, sql, params) {
-  const result = await pool.query(sql, params);
-  return result.rows;
-}
-
-module.exports = { pool, queryWithCache };
+module.exports = { pool };
