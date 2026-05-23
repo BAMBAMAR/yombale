@@ -52,7 +52,19 @@ const CAT_MOTS = [
 ];
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-function nettoyerPrix(t) { if(!t) return 0; const n=parseInt((t+'').replace(/\s/g,'').replace(/[^0-9]/g,'')); return isNaN(n)||n<100?0:n; }
+function nettoyerPrix(t) {
+  if (!t) return 0;
+  let s = (t + '').trim();
+  // Supprimer la partie décimale AVANT de retirer les non-chiffres.
+  // Règle : séparateur (,/.) suivi de 1 ou 2 chiffres = décimale → supprimer.
+  //         séparateur suivi de 3 chiffres = séparateur de milliers → garder les chiffres.
+  // Ex :  "185 000,50 F" → "185 000 F" → 185000  ✓
+  //       "1 750,00"     → "1 750"     → 1750    ✓
+  //       "185.000 F"    → inchangé   → 185000  ✓  (3 chiffres, pas de suppression)
+  s = s.replace(/[,.](\d{1,2})(?=\D|$)/g, '');
+  const n = parseInt(s.replace(/[^0-9]/g, ''));
+  return isNaN(n) || n < 100 ? 0 : n;
+}
 function nettoyerTitre(t) { return (t||'').trim().replace(/\s+/g,' ').slice(0,255); }
 function extraireMarque(titre) { const t=titre.toLowerCase(); return MARQUES.find(m=>t.includes(m.toLowerCase()))||null; }
 
@@ -141,49 +153,140 @@ async function scraperExpatDakar(categorie='telephones-portables-et-tablettes', 
 
 // ══════════════════════════════════════════════════════
 //  SCRAPER 2 — Jumia Sénégal
-//  Layout observé mai 2025 :
-//  <article class="prd _fb col c-prd">
-//    <a class="core" href="/samsung-galaxy-a55...">
-//      <div class="info">
-//        <h3 class="name">Samsung Galaxy A55</h3>
-//        <div class="prc">185 000 F</div>
-//      </div>
-//    </a>
-//  </article>
+//
+//  Jumia tourne sur Next.js : les produits sont dans
+//  <script id="__NEXT_DATA__"> (JSON) et ne sont PAS
+//  dans le DOM statique — les sélecteurs CSS seuls échouent.
+//
+//  Stratégies par ordre de priorité :
+//   1. __NEXT_DATA__ (Next.js) — JSON complet embarqué
+//   2. JSON-LD  (<script type="application/ld+json">)
+//   3. data-gtm-* / attributs data du catalogue
+//   4. Sélecteurs CSS (fallback SSR / layout futur)
 // ══════════════════════════════════════════════════════
+
+// Extrait les produits depuis le JSON __NEXT_DATA__ de Jumia.
+// La structure peut varier entre versions Next.js — on explore récursivement.
+function _extraireProduitsNextData(obj, resultats, baseUrl, profondeur = 0) {
+  if (!obj || typeof obj !== 'object' || profondeur > 8) return;
+  // Tableau de produits identifié par la présence des clés typiques Jumia
+  if (Array.isArray(obj)) {
+    for (const item of obj) _extraireProduitsNextData(item, resultats, baseUrl, profondeur + 1);
+    return;
+  }
+  // Objet produit Jumia : possède "name" + un champ prix
+  const nom = obj.name || obj.title || obj.product_name;
+  const prixBrut = obj.price || obj.special_price || obj.prices?.current ||
+                   obj.prices?.original || obj.selling_price;
+  const url = obj.url || obj.product_url || obj.sku_url;
+  const img = obj.image || obj.thumbnail || obj.images?.[0];
+
+  if (nom && prixBrut) {
+    const prix = typeof prixBrut === 'number' ? Math.round(prixBrut) : nettoyerPrix(String(prixBrut));
+    const href = url ? (url.startsWith('http') ? url : `${baseUrl}${url}`) : baseUrl;
+    if (prix > 500 && nom.length > 3) {
+      resultats.push({ titre: nettoyerTitre(nom), prix, url: href, image_url: img || null });
+      return; // ne pas descendre dans les enfants d'un objet produit déjà traité
+    }
+  }
+  for (const val of Object.values(obj)) _extraireProduitsNextData(val, resultats, baseUrl, profondeur + 1);
+}
+
 async function scraperJumia(categorie='telephones-tablettes', maxPages=3) {
   const resultats=[], base=`https://www.jumia.sn/${categorie}/`;
   console.log(`\n[JUMIA] ${base}`);
+
   for(let page=1;page<=maxPages;page++){
     const url=page===1?base:`${base}?page=${page}#catalog-listing`;
+    let found=0;
     try{
-      const html=await fetchPage(url), $=cheerio.load(html); let found=0;
-      const essais=[
-        // Layout 2024-2026 principal
-        { c:'article.prd',           t:'p.name,h3.name,.name',              p:'div.prc,.prc,.price--current,.old-prc', l:'a.core,a[href]', i:'img.img,img[data-src],img[src]' },
-        // Variante -mango- Jumia 2025
-        { c:'article[class*="prd"]', t:'[class*="name"]',                   p:'[class*="prc"],[class*="price"]',       l:'a[href]',        i:'img' },
-        // Grille ul/li
-        { c:'ul.-pvs li',            t:'h3,.name,[class*="name"]',          p:'[class*="price"],[class*="prc"]',       l:'a[href]',        i:'img' },
-        // Dernier recours : tout article avec un prix détectable
-        { c:'article',               t:'p,h3,h2,[class*="name"],[class*="title"]', p:'[class*="price"],[class*="prc"],[class*="amount"]', l:'a[href*="/"]', i:'img' },
-      ];
-      for(const s of essais){
-        const items=$(s.c); if(!items.length) continue;
-        items.each((_,el)=>{
-          const titreEl=$(el).find(s.t).first();
-          const titre=nettoyerTitre(titreEl.text()||titreEl.attr('data-name'));
-          const prix=nettoyerPrix($(el).find(s.p).first().text());
-          let href=$(el).find(s.l).first().attr('href')||'';
-          if(href&&!href.startsWith('http')) href=`https://www.jumia.sn${href}`;
-          const img=$(el).find(s.i).first().attr('data-src')||$(el).find(s.i).first().attr('src')||null;
-          if(titre.length>3&&prix>500&&href){ resultats.push({titre,prix,url:href,image_url:img}); found++; }
-        });
-        if(found>0){ console.log(`[JUMIA] Page ${page}: ${found} (sélecteur "${s.c}")`); break; }
+      const html=await fetchPage(url);
+      const $=cheerio.load(html);
+
+      // ── Stratégie 1 : __NEXT_DATA__ ───────────────────────────
+      const nextRaw = $('#__NEXT_DATA__').html() || $('script#__NEXT_DATA__').html();
+      if (nextRaw) {
+        try {
+          const nextJson = JSON.parse(nextRaw);
+          const avant = resultats.length;
+          _extraireProduitsNextData(nextJson, resultats, 'https://www.jumia.sn');
+          found = resultats.length - avant;
+          if (found > 0) console.log(`[JUMIA] Page ${page}: ${found} via __NEXT_DATA__`);
+        } catch (e) { console.warn('[JUMIA] __NEXT_DATA__ parse error:', e.message); }
       }
+
+      // ── Stratégie 2 : JSON-LD ──────────────────────────────────
+      if (found === 0) {
+        $('script[type="application/ld+json"]').each((_, el) => {
+          try {
+            const ld = JSON.parse($(el).html() || '{}');
+            const items = ld['@type'] === 'ItemList' ? (ld.itemListElement || [])
+                        : ld['@type'] === 'Product'  ? [ld]
+                        : [];
+            for (const it of items) {
+              const prod = it.item || it;
+              const nom  = prod.name;
+              const prix = nettoyerPrix(String(prod.offers?.price || prod.offers?.lowPrice || ''));
+              const href = prod.url || prod.offers?.url || '';
+              const img  = prod.image || (Array.isArray(prod.image) ? prod.image[0] : null);
+              if (nom && prix > 500) {
+                resultats.push({ titre: nettoyerTitre(nom), prix, url: href, image_url: img || null });
+                found++;
+              }
+            }
+          } catch {}
+        });
+        if (found > 0) console.log(`[JUMIA] Page ${page}: ${found} via JSON-LD`);
+      }
+
+      // ── Stratégie 3 : attributs data-gtm / data-* ─────────────
+      if (found === 0) {
+        $('[data-gtm-product],[data-product],[data-item]').each((_, el) => {
+          try {
+            const raw = $(el).attr('data-gtm-product') || $(el).attr('data-product') || $(el).attr('data-item');
+            const obj = JSON.parse(raw || '{}');
+            const nom  = obj.name || obj.item_name;
+            const prix = nettoyerPrix(String(obj.price || obj.item_price || ''));
+            const href = $(el).find('a').first().attr('href') || '';
+            const img  = $(el).find('img').first().attr('data-src') || $(el).find('img').first().attr('src') || null;
+            if (nom && prix > 500) {
+              resultats.push({ titre: nettoyerTitre(nom), prix, url: href.startsWith('http') ? href : `https://www.jumia.sn${href}`, image_url: img });
+              found++;
+            }
+          } catch {}
+        });
+        if (found > 0) console.log(`[JUMIA] Page ${page}: ${found} via data-gtm-product`);
+      }
+
+      // ── Stratégie 4 : sélecteurs CSS (SSR / layout futur) ─────
+      if (found === 0) {
+        const essais=[
+          { c:'article.prd',           t:'p.name,h3.name,.name',              p:'div.prc,.prc,.price--current', l:'a.core,a[href]', i:'img.img,img[data-src],img[src]' },
+          { c:'article[class*="prd"]', t:'[class*="name"]',                   p:'[class*="prc"],[class*="price"]', l:'a[href]', i:'img' },
+          { c:'ul.-pvs li',            t:'h3,.name,[class*="name"]',          p:'[class*="price"],[class*="prc"]', l:'a[href]', i:'img' },
+          { c:'article',               t:'p,h3,h2,[class*="name"]',           p:'[class*="price"],[class*="prc"],[class*="amount"]', l:'a[href*="/"]', i:'img' },
+        ];
+        for(const s of essais){
+          const items=$(s.c); if(!items.length) continue;
+          items.each((_,el)=>{
+            const titreEl=$(el).find(s.t).first();
+            const titre=nettoyerTitre(titreEl.text()||titreEl.attr('data-name'));
+            const prix=nettoyerPrix($(el).find(s.p).first().text());
+            let href=$(el).find(s.l).first().attr('href')||'';
+            if(href&&!href.startsWith('http')) href=`https://www.jumia.sn${href}`;
+            const img=$(el).find(s.i).first().attr('data-src')||$(el).find(s.i).first().attr('src')||null;
+            if(titre.length>3&&prix>500&&href){ resultats.push({titre,prix,url:href,image_url:img}); found++; }
+          });
+          if(found>0){ console.log(`[JUMIA] Page ${page}: ${found} via CSS "${s.c}"`); break; }
+        }
+      }
+
       if(found===0){
-        const snippet=$.html().replace(/\s+/g,' ').slice(0,600);
-        console.warn(`[JUMIA] Page ${page}: 0 résultat. Début HTML: ${snippet}`);
+        // Log les 800 premiers chars pour faciliter le diagnostic
+        const snippet=$.html().replace(/\s+/g,' ').slice(0,800);
+        console.warn(`[JUMIA] Page ${page}: 0 résultat sur toutes les stratégies.`);
+        console.warn(`[JUMIA] HTML début: ${snippet}`);
+        console.warn(`[JUMIA] __NEXT_DATA__ présent: ${!!nextRaw}, taille: ${nextRaw?.length||0}`);
         break;
       }
     }catch(err){ console.error(`[JUMIA] Page ${page}:`,err.message); }
@@ -238,10 +341,12 @@ async function scraperCoinAfrique(categorie='telephonie', maxPages=2) {
 // ══════════════════════════════════════════════════════
 //  SAUVEGARDE EN BASE
 // ══════════════════════════════════════════════════════
-// ── Prix médian de référence par catégorie (calculé une fois) ────
-const _prixMedianCache = {};
+// ── Prix médian de référence par catégorie — TTL 1h ──────────────
+const _prixMedianCache = {}; // { categorieId: { valeur, expireAt } }
+const MEDIAN_TTL_MS = 60 * 60 * 1000;
 async function getPrixMedianCategorie(categorieId) {
-  if (_prixMedianCache[categorieId]) return _prixMedianCache[categorieId];
+  const cached = _prixMedianCache[categorieId];
+  if (cached && cached.expireAt > Date.now()) return cached.valeur;
   try {
     const { rows } = await pool.query(`
       SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY o.prix) AS mediane
@@ -250,7 +355,7 @@ async function getPrixMedianCategorie(categorieId) {
       WHERE p.categorie_id = $1 AND o.stock = true AND o.prix > 1000
     `, [categorieId]);
     const m = rows[0]?.mediane;
-    if (m && m > 0) _prixMedianCache[categorieId] = m;
+    if (m && m > 0) _prixMedianCache[categorieId] = { valeur: m, expireAt: Date.now() + MEDIAN_TTL_MS };
     return m || null;
   } catch { return null; }
 }
@@ -269,6 +374,8 @@ function corrigerPrixXOF(prix) {
 async function sauvegarderProduits(items, marchandNom, siteUrl) {
   const marchandId=await getMarchandId(marchandNom,siteUrl);
   const stats={inseres:0,mis_a_jour:0,erreurs:0,filtres:0};
+  const produitsModifies = new Set(); // pour le batch update final
+
   for(const item of items){
     try{
       // ── Pré-filtre prix aberrant ──────────────────────────────
@@ -293,7 +400,6 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         // Extraire mots-clés discriminants (modèle, référence)
         const motsCles = nomNorm.split(/\s+/).filter(m => m.length >= 3).slice(0, 4);
         if(motsCles.length > 0){
-          const pattern = motsCles.join('%');
           const {rows:fuzzy}=await pool.query(
             `SELECT id, nom,
                     similarity(LOWER(nom), $1) AS sim
@@ -334,12 +440,33 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         [produitId,marchandId,item.prix,item.url,item.titre]
       );
       if(offre.length>0) await pool.query('INSERT INTO historique_prix(offre_id,prix) VALUES($1,$2)',[offre[0].id,item.prix]);
-      await pool.query(
-        'UPDATE produits SET prix_min=(SELECT MIN(o.prix) FROM offres o WHERE o.produit_id=$1 AND o.stock=true), nb_offres=(SELECT COUNT(o.id) FROM offres o WHERE o.produit_id=$1) WHERE id=$1',
-        [produitId]
-      );
+
+      // Accumuler pour batch update final (évite N sous-requêtes imbriquées)
+      produitsModifies.add(produitId);
     }catch(err){ console.error(`[DB] "${item.titre}":`,err.message); stats.erreurs++; }
   }
+
+  // Batch update prix_min + nb_offres : 1 requête pour tous les produits modifiés
+  if(produitsModifies.size > 0){
+    const ids = [...produitsModifies];
+    await pool.query(`
+      UPDATE produits SET
+        prix_min = sub.prix_min,
+        nb_offres = sub.nb_offres
+      FROM (
+        SELECT p.id,
+          MIN(CASE WHEN o.stock THEN o.prix END) AS prix_min,
+          COUNT(o.id) AS nb_offres
+        FROM produits p
+        LEFT JOIN offres o ON o.produit_id = p.id
+        WHERE p.id = ANY($1::uuid[])
+        GROUP BY p.id
+      ) sub
+      WHERE produits.id = sub.id`,
+      [ids]
+    );
+  }
+
   return stats;
 }
 

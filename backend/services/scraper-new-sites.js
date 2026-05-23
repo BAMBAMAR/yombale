@@ -31,7 +31,11 @@ const sleep  = ms => new Promise(r => setTimeout(r, ms));
 
 function nettoyerPrix(t) {
   if (!t) return 0;
-  const n = parseInt((t + '').replace(/[\s\u00a0]/g, '').replace(/[^0-9]/g, ''));
+  let s = (t + '').replace(/[\s\u00a0]/g, '');
+  // Supprimer la partie d\u00e9cimale (virgule/point + 1-2 chiffres) avant le strip global
+  // "185000,50" \u2192 "185000" | "1750.00" \u2192 "1750" | "185.000" (milliers) \u2192 inchang\u00e9
+  s = s.replace(/[,.](\d{1,2})(?=\D|$)/g, '');
+  const n = parseInt(s.replace(/[^0-9]/g, ''));
   return isNaN(n) || n < 500 ? 0 : n;
 }
 function nettoyerTitre(t) {
