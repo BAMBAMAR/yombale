@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
+const { prixPlancher } = require('../services/scraper');
 
 // GET /api/produits
 router.get('/', async (req, res) => {
@@ -139,13 +140,10 @@ router.get('/:id/offres', async (req, res) => {
       }
     });
 
-    // ── Correction des prix aberrants ──────────────────────────────
-    // Pour des produits identiques, un prix 10x inférieur à la médiane
-    // indique une division par 100 ou 1000 lors du scraping (bug XOF).
-    // On corrige à la volée sans toucher la base.
+    // ── Correction des prix aberrants (division par 100/1000 lors du scraping) ──
     if (rows.length >= 2) {
+      // Cas normal : médiane inter-offres
       const prices = rows.map(r => r.prix).filter(p => p > 0).sort((a, b) => a - b);
-      // Médiane robuste
       const mid = Math.floor(prices.length / 2);
       const mediane = prices.length % 2 !== 0
         ? prices[mid]
@@ -154,20 +152,24 @@ router.get('/:id/offres', async (req, res) => {
       rows.forEach(r => {
         if (r.prix <= 0) return;
         const ratio = mediane / r.prix;
-        // Si prix est ~100x trop petit → multiplier par 100
-        if (ratio >= 50 && ratio < 500) {
-          r.prix = r.prix * 100;
-          r._corrige = true;
-        }
-        // Si prix est ~1000x trop petit → multiplier par 1000
-        else if (ratio >= 500) {
-          r.prix = r.prix * 1000;
-          r._corrige = true;
-        }
+        if (ratio >= 50 && ratio < 500) { r.prix = r.prix * 100;  r._corrige = true; }
+        else if (ratio >= 500)          { r.prix = r.prix * 1000; r._corrige = true; }
       });
-
-      // Retrier après correction
       rows.sort((a, b) => a.prix - b.prix);
+
+    } else if (rows.length === 1) {
+      // Offre unique : correction via plancher déduit du titre produit
+      // Ex : "TV Astech 98 pouces" → plancher 500 000 FCFA
+      //      prix stocké 17 325 → ×100 → 1 732 500 FCFA ✓
+      const r = rows[0];
+      const nom = r.produit_nom || '';
+      const plancher = prixPlancher(nom);
+      if (plancher && r.prix < plancher) {
+        const p100  = r.prix * 100;
+        const p1000 = r.prix * 1000;
+        if (p100 >= plancher && p100 <= plancher * 30)        { r.prix = p100;  r._corrige = true; }
+        else if (p1000 >= plancher && p1000 <= plancher * 30) { r.prix = p1000; r._corrige = true; }
+      }
     }
 
     res.json(rows);
