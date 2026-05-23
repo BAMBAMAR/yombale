@@ -360,15 +360,79 @@ async function getPrixMedianCategorie(categorieId) {
   } catch { return null; }
 }
 
-// ── Correction prix XOF (détection division par 100/1000) ────────
+// ── Prix plancher déduit du titre (taille écran, RAM, BTU…) ─────
+// Permet de détecter une division par 100/1000 même sur offre unique.
+// Ex: "TV 98 pouces" → plancher 400 000 FCFA → 17 325 FCFA → ×100 → 1 732 500 FCFA
+function prixPlancher(titre) {
+  const s = ' ' + (titre || '').toLowerCase() + ' ';
+
+  // Taille écran TV/PC (pouces ou ")
+  const ecran = s.match(/(\d+)\s*(?:pouces?|"|\binch)/);
+  if (ecran) {
+    const p = parseInt(ecran[1]);
+    if (p >= 85) return 500_000;
+    if (p >= 65) return 250_000;
+    if (p >= 55) return 150_000;
+    if (p >= 43) return  80_000;
+    if (p >= 32) return  40_000;
+    if (p >= 24) return  25_000;
+  }
+
+  // RAM smartphone/PC
+  const ram = s.match(/(\d+)\s*go\s+ram|ram\s*:?\s*(\d+)\s*go/);
+  if (ram) {
+    const r = parseInt(ram[1] || ram[2]);
+    if (r >= 12) return 150_000;
+    if (r >= 8)  return  80_000;
+    if (r >= 6)  return  50_000;
+  }
+
+  // Stockage seul (puissances de 2 ≥ 128 Go → produit moyen/haut de gamme)
+  const sto = s.match(/(\d+)\s*go(?!\s*ram)/);
+  if (sto) {
+    const st = parseInt(sto[1]);
+    if (st >= 512) return 200_000;
+    if (st >= 256) return 100_000;
+    if (st >= 128) return  50_000;
+  }
+
+  // BTU climatiseur
+  const btu = s.match(/(\d[\d\s]*)\s*btu/);
+  if (btu) {
+    const b = parseInt(btu[1].replace(/\s/g, ''));
+    if (b >= 18000) return 300_000;
+    if (b >= 12000) return 200_000;
+    if (b >=  9000) return 150_000;
+    if (b >=  5000) return  80_000;
+  }
+
+  return null; // pas de signal → pas de plancher
+}
+
+// ── Correction prix XOF (division par 100/1000) ───────────────────
 function corrigerPrixXOF(prix) {
-  // Les prix sénégalais réels :
-  // Électronique : 5 000 – 3 000 000 FCFA
-  // Mode : 1 000 – 500 000 FCFA
-  // Rien de légitime ne se vend < 500 FCFA
   if (prix <= 0) return null;
-  if (prix < 500) return null; // trop bas pour être réel → rejeter
-  return prix; // prix entre 500 et MAX est potentiellement valide
+  if (prix < 500) return null;
+  return prix;
+}
+
+// Applique la correction ×100 ou ×1000 si le prix est sous le plancher du titre.
+function corrigerPrixParPlancher(prix, titre) {
+  const plancher = prixPlancher(titre);
+  if (!plancher || prix >= plancher) return prix;
+  const p100  = prix * 100;
+  const p1000 = prix * 1000;
+  // ×100 : résultat dans [plancher … plancher×30]
+  if (p100 >= plancher && p100 <= plancher * 30) {
+    console.warn(`[PRIX×100] "${titre}" : ${prix} → ${p100} FCFA (plancher: ${plancher})`);
+    return p100;
+  }
+  // ×1000 : résultat dans [plancher … plancher×30]
+  if (p1000 >= plancher && p1000 <= plancher * 30) {
+    console.warn(`[PRIX×1000] "${titre}" : ${prix} → ${p1000} FCFA (plancher: ${plancher})`);
+    return p1000;
+  }
+  return prix; // aucun multiple ne convient → laisser passer
 }
 
 async function sauvegarderProduits(items, marchandNom, siteUrl) {
@@ -378,14 +442,16 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
 
   for(const item of items){
     try{
-      // ── Pré-filtre prix aberrant ──────────────────────────────
+      // ── Pré-filtre et correction prix ────────────────────────
       const prixVerifie = corrigerPrixXOF(item.prix);
       if (prixVerifie === null) {
         console.warn('[PRIX] Rejeté (trop bas) :', item.titre, '→', item.prix, 'FCFA');
         stats.filtres++;
         continue;
       }
-      item.prix = prixVerifie;
+      // Correction ×100/×1000 si le prix est sous le plancher du titre
+      // Ex : TV 98" à 17 325 FCFA → 1 732 500 FCFA
+      item.prix = corrigerPrixParPlancher(prixVerifie, item.titre);
       let produitId;
 
       // 1. Correspondance exacte EAN (si dispo)
@@ -573,4 +639,4 @@ function demarrerScraping() {
   console.log('[SCRAPER] ✅ Cron actif — CoinAfrique/30s + 9 nouveaux sites/90s + tous/4h-6h');
 }
 
-module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache };
+module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher };
