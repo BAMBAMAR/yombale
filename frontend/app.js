@@ -7,6 +7,12 @@ console.log('%c✅ Yombale app.js VERSION 6 chargé', 'color:#10b981;font-size:1
 
 var API = '/api';
 
+var _prefsDefaut = {
+  sections:   ['prix', 'specs', 'historique'], // sections visibles
+  poidsPrice: 3,   // poids prix dans le score (1=peu important … 5=très important)
+  marchand:   '',  // filtre offres sur ce marchand ('' = tous)
+  budgetMax:  '',  // budget max FCFA ('': pas de limite)
+};
 var state = {
   token:     localStorage.getItem('pm_token'),
   user:      null,
@@ -22,6 +28,9 @@ var state = {
   vue:       'grille',         // grille | liste
   comparer:  [],               // ids sélectionnés pour comparaison côte-à-côte
   recents:   JSON.parse(localStorage.getItem('yomb_recents') || '[]'),
+  comparePrefs: Object.assign({}, _prefsDefaut,
+    JSON.parse(localStorage.getItem('yomb_compare_prefs') || '{}')),
+  comparePrefsOpen: false,     // panneau paramètres ouvert ou non
 };
 
 // ── Logger ──────────────────────────────────────────────────────
@@ -1219,10 +1228,103 @@ function etoilesHTML(n) {
   for (var i=1;i<=5;i++) h += '<span style="color:'+(i<=n?'#f59e0b':'#e2e8f0')+';font-size:15px">★</span>';
   return h;
 }
-function calculerScore(prix, prixMinGlobal) {
-  if (!prix||!prixMinGlobal) return 3;
-  var r = prix/prixMinGlobal;
-  return r<=1.05?5 : r<=1.20?4 : r<=1.40?3 : r<=1.70?2 : 1;
+
+// Score pondéré : combine l'écart de prix (weight poidsPrice) et les specs (inverse)
+function calculerScore(prix, prixMinGlobal, nbSpecsBest, nbSpecsTotal) {
+  if (!prix || !prixMinGlobal) return 3;
+  var pp = state.comparePrefs.poidsPrice; // 1–5
+  var r  = prix / prixMinGlobal;
+  var scorePrix = r<=1.05?5 : r<=1.20?4 : r<=1.40?3 : r<=1.70?2 : 1;
+  // Score specs : proportion de critères où ce produit est le meilleur
+  var scoreSpecs = nbSpecsTotal > 0
+    ? Math.round(1 + (nbSpecsBest / nbSpecsTotal) * 4)
+    : scorePrix;
+  // Pondération : poidsPrice/5 pour prix, (5-poidsPrice)/5 pour specs
+  var w = pp / 5;
+  return Math.round(w * scorePrix + (1 - w) * scoreSpecs);
+}
+
+// ── Paramètres de comparaison ─────────────────────────────────────
+function sauvegarderPrefs() {
+  try { localStorage.setItem('yomb_compare_prefs', JSON.stringify(state.comparePrefs)); } catch(e) {}
+}
+
+function toggleSection(key) {
+  var idx = state.comparePrefs.sections.indexOf(key);
+  if (idx !== -1) state.comparePrefs.sections.splice(idx, 1);
+  else state.comparePrefs.sections.push(key);
+  sauvegarderPrefs();
+  ouvrirComparaison();
+}
+
+function setPoidsPrice(val) {
+  state.comparePrefs.poidsPrice = parseInt(val);
+  sauvegarderPrefs();
+  document.getElementById('poids-label') && (document.getElementById('poids-label').textContent = ['','Prix peu important','Prix secondaire','Équilibré','Prix important','Prix prioritaire'][state.comparePrefs.poidsPrice]);
+}
+
+function appliquerPrefs() {
+  var m = document.getElementById('pref-marchand');
+  var b = document.getElementById('pref-budget');
+  if (m) state.comparePrefs.marchand  = m.value.trim();
+  if (b) state.comparePrefs.budgetMax = b.value.trim();
+  sauvegarderPrefs();
+  ouvrirComparaison();
+}
+
+function reinitPrefs() {
+  state.comparePrefs = Object.assign({}, _prefsDefaut);
+  sauvegarderPrefs();
+  ouvrirComparaison();
+}
+
+function htmlParametres() {
+  var p = state.comparePrefs;
+  var sections = [
+    { key: 'prix',       label: '💰 Prix' },
+    { key: 'specs',      label: '📊 Caractéristiques' },
+    { key: 'historique', label: '📈 Historique des prix' },
+  ];
+  var poidsLabels = ['','Prix peu important','Prix secondaire','Équilibré','Prix important','Prix prioritaire'];
+  return '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+      '<span style="font-size:14px;font-weight:800;color:#1e293b">⚙ Paramètres de comparaison</span>' +
+      '<button onclick="state.comparePrefsOpen=false;ouvrirComparaison()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1">×</button>' +
+    '</div>' +
+    // Sections
+    '<div style="margin-bottom:14px">' +
+      '<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Sections à afficher</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        sections.map(function(s) {
+          var actif = p.sections.indexOf(s.key) !== -1;
+          return '<button onclick="toggleSection(\''+s.key+'\')" style="padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid '+(actif?'#1d4ed8':'#e2e8f0')+';background:'+(actif?'#eff6ff':'#f8fafc')+';color:'+(actif?'#1d4ed8':'#94a3b8')+'">'+s.label+'</button>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+    // Poids prix
+    '<div style="margin-bottom:14px">' +
+      '<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Importance du prix dans le score</div>' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<input type="range" min="1" max="5" value="'+p.poidsPrice+'" oninput="setPoidsPrice(this.value)" style="flex:1;accent-color:#1d4ed8">' +
+        '<span id="poids-label" style="font-size:12px;color:#475569;min-width:140px">'+poidsLabels[p.poidsPrice]+'</span>' +
+      '</div>' +
+    '</div>' +
+    // Filtres
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">' +
+      '<div style="flex:1;min-width:140px">' +
+        '<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Marchand préféré</div>' +
+        '<input id="pref-marchand" type="text" value="'+p.marchand+'" placeholder="ex: Jumia" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;box-sizing:border-box">' +
+      '</div>' +
+      '<div style="flex:1;min-width:140px">' +
+        '<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Budget max (FCFA)</div>' +
+        '<input id="pref-budget" type="number" value="'+p.budgetMax+'" placeholder="ex: 300000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;box-sizing:border-box">' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px">' +
+      '<button onclick="appliquerPrefs()" style="flex:1;padding:8px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Appliquer</button>' +
+      '<button onclick="reinitPrefs()" style="padding:8px 14px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;cursor:pointer">Réinitialiser</button>' +
+    '</div>' +
+  '</div>';
 }
 
 // ── Comparaison principale ────────────────────────────────────────
@@ -1239,11 +1341,24 @@ async function ouvrirComparaison() {
       ]).then(function(r){ return Object.assign(r[0], { offres: r[1], historique: r[2] }); });
     }));
 
+    var prefs = state.comparePrefs;
+
+    // Appliquer filtre marchand et budget max sur les offres
+    produits.forEach(function(p) {
+      p.offres = p.offres.filter(function(o) {
+        if (prefs.marchand && o.marchand_nom &&
+            o.marchand_nom.toLowerCase().indexOf(prefs.marchand.toLowerCase()) === -1) return false;
+        if (prefs.budgetMax && +o.prix > +prefs.budgetMax) return false;
+        return true;
+      });
+    });
+
     // Prix minimum par produit + global
     var prixMins = produits.map(function(p){
       return p.offres.length ? Math.min.apply(null, p.offres.map(function(o){ return +o.prix; })) : null;
     });
-    var prixMinGlobal = Math.min.apply(null, prixMins.filter(Boolean));
+    var prixMinGlobal = prixMins.filter(Boolean).length
+      ? Math.min.apply(null, prixMins.filter(Boolean)) : null;
 
     // Specs extraites et union des clés présentes
     var specsParProduit = produits.map(function(p){ return extraireSpecs(p.nom); });
@@ -1354,11 +1469,25 @@ async function ouvrirComparaison() {
       }).join('')+
     '</div>';
 
-    // ── Score qualité/prix ─────────────────────────────────────
+    // ── Score qualité/prix pondéré ────────────────────────────
+    // Compter pour chaque produit combien de specs il "gagne"
+    var nbSpecsBest = produits.map(function(_, pi) {
+      var best = 0;
+      toutesSpecs.forEach(function(key) {
+        var vals = specsParProduit.map(function(sp){ return sp[key]?sp[key].val:null; });
+        var plusGrandMieux = specsParProduit.some(function(sp){ return sp[key]&&sp[key].plus; });
+        if (!plusGrandMieux) return;
+        var maxV = Math.max.apply(null, vals.filter(function(v){return v!==null;}));
+        if (specsParProduit[pi][key] && specsParProduit[pi][key].val === maxV) best++;
+      });
+      return best;
+    });
     var ligneScore = '<div style="'+ROW+'">'+
       '<div style="'+LBL+'">Rapport Q/P</div>'+
       produits.map(function(p,i){
-        return '<div style="'+COL+'">'+etoilesHTML(calculerScore(prixMins[i],prixMinGlobal))+'</div>';
+        return '<div style="'+COL+'">'+
+          etoilesHTML(calculerScore(prixMins[i],prixMinGlobal,nbSpecsBest[i],toutesSpecs.length))+
+        '</div>';
       }).join('')+
     '</div>';
 
@@ -1375,33 +1504,48 @@ async function ouvrirComparaison() {
     '</div>';
 
     // ── Rendu ──────────────────────────────────────────────────
+    var hasPrix  = prefs.sections.indexOf('prix')       !== -1;
+    var hasSpecs = prefs.sections.indexOf('specs')      !== -1;
+    var hasHisto = prefs.sections.indexOf('historique') !== -1;
+
+    // Badge filtre actif (marchand ou budget)
+    var filtresActifs = [];
+    if (prefs.marchand)  filtresActifs.push('Marchand : ' + prefs.marchand);
+    if (prefs.budgetMax) filtresActifs.push('Budget ≤ ' + (+prefs.budgetMax).toLocaleString('fr-FR') + ' FCFA');
+
     render([
       '<div style="padding:16px 4%;max-width:920px;margin:0 auto">',
-        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">',
+        // Barre de titre
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">',
           '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;padding:0">← Retour</button>',
           '<h2 style="font-size:16px;font-weight:800;color:#1e293b;margin:0">⚖ Comparaison côte à côte</h2>',
-          '<button onclick="state.comparer=[];retourListe()" style="margin-left:auto;padding:6px 12px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer">✕ Vider</button>',
+          filtresActifs.length ? '<span style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-weight:600">'+filtresActifs.join(' · ')+'</span>' : '',
+          '<div style="margin-left:auto;display:flex;gap:8px">',
+            '<button onclick="state.comparePrefsOpen=!state.comparePrefsOpen;ouvrirComparaison()" style="padding:6px 12px;background:'+(state.comparePrefsOpen?'#1d4ed8':'#f1f5f9')+';color:'+(state.comparePrefsOpen?'#fff':'#64748b')+';border:1px solid '+(state.comparePrefsOpen?'#1d4ed8':'#e2e8f0')+';border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">⚙ Paramètres</button>',
+            '<button onclick="state.comparer=[];retourListe()" style="padding:6px 12px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer">✕ Vider</button>',
+          '</div>',
         '</div>',
+        // Panneau paramètres (conditionnel)
+        state.comparePrefsOpen ? htmlParametres() : '',
+        // Tableau comparaison
         '<div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.06)">',
           // En-tête produits
           '<div style="display:flex;border-bottom:2px solid #e2e8f0;background:#f8fafc">',
             '<div style="width:110px;flex-shrink:0;padding:12px"></div>',
             enTete,
           '</div>',
-          // Prix
-          '<div style="'+SECT+'">💰 Prix</div>',
-          lignesPrix,
-          // Specs (si au moins une extraite)
-          toutesSpecs.length
+          // Section Prix
+          hasPrix ? '<div style="'+SECT+'">💰 Prix</div>'+lignesPrix : '',
+          // Section Specs
+          hasSpecs && toutesSpecs.length
             ? '<div style="'+SECT+'">📊 Caractéristiques techniques</div>'+lignesSpecs
             : '',
-          // Historique
-          '<div style="'+SECT+'">📈 Historique des prix (90j)</div>',
-          ligneHisto,
-          // Score
+          // Section Historique
+          hasHisto ? '<div style="'+SECT+'">📈 Historique des prix (90j)</div>'+ligneHisto : '',
+          // Score Q/P
           '<div style="'+SECT+'">⭐ Rapport qualité / prix</div>',
           ligneScore,
-          // Acheter
+          // Boutons Acheter
           ligneBoutons,
         '</div>',
         '<p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:10px">Prix mis à jour toutes les 4h — vérifiez le prix final sur le site du marchand avant d\'acheter.</p>',
