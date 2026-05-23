@@ -1122,60 +1122,294 @@ function htmlSimilaires(id, similaires, filtresSim) {
 //  COMPARAISON CÔTE À CÔTE
 // ═══════════════════════════════════════════════════════════════
 
+// ── Extraction de specs depuis le nom du produit ─────────────────
+function extraireSpecs(nom) {
+  var s = ' ' + (nom || '') + ' ';
+  var specs = {};
+
+  // Format RAM/Stockage : "8Go/256Go" ou "8 Go / 256 Go"
+  var slash = s.match(/(\d+)\s*[Gg][Oo]\s*\/\s*(\d+)\s*[Gg][Oo]/i);
+  if (slash) {
+    specs['RAM']     = { val: parseInt(slash[1]), label: slash[1] + ' Go', plus: true };
+    specs['Stockage']= { val: parseInt(slash[2]), label: slash[2] + ' Go', plus: true };
+  }
+
+  // RAM explicite : "8Go RAM" | "RAM 8Go" | "8GB RAM"
+  if (!specs['RAM']) {
+    var ram = s.match(/(\d+)\s*[Gg][Oo]\s+[Rr][Aa][Mm]|[Rr][Aa][Mm]\s*:?\s*(\d+)\s*[Gg][Oo]/i);
+    if (ram) specs['RAM'] = { val: parseInt(ram[1]||ram[2]), label: (ram[1]||ram[2]) + ' Go', plus: true };
+  }
+
+  // Stockage seul (valeurs typiques puissances de 2)
+  if (!specs['Stockage']) {
+    var stRe = /(\d+)\s*[Gg][Oo](?!\s*[Rr][Aa][Mm])|(\d+)\s*[Gg][Bb](?!\s*[Rr][Aa][Mm])/gi;
+    var stVals = [], sm2;
+    while ((sm2 = stRe.exec(s)) !== null) {
+      var sv = parseInt(sm2[1]||sm2[2]);
+      if ([16,32,64,128,256,512,1024].indexOf(sv) !== -1) stVals.push(sv);
+    }
+    if (stVals.length) { var sb = Math.max.apply(null,stVals); specs['Stockage'] = { val: sb, label: sb + ' Go', plus: true }; }
+    var tb = s.match(/(\d+)\s*[Tt][Oo]|(\d+)\s*[Tt][Bb]/i);
+    if (tb) { var tv = parseInt(tb[1]||tb[2]); specs['Stockage'] = { val: tv*1024, label: tv + ' To', plus: true }; }
+  }
+
+  // Écran (pouces / " / inch)
+  var ecr = s.match(/(\d+(?:[.,]\d+)?)\s*(?:pouces?|"|\binch(?:es)?\b)/i);
+  if (ecr) { var ev = parseFloat(ecr[1].replace(',','.')); specs['Écran'] = { val: ev, label: ev + '"', plus: true }; }
+
+  // Résolution
+  if      (/\b8[Kk]\b/.test(s))              specs['Résolution'] = { val: 4, label: '8K',      plus: true };
+  else if (/\b4[Kk]\b/.test(s))              specs['Résolution'] = { val: 3, label: '4K',      plus: true };
+  else if (/\bFull\s*HD\b|\bFHD\b/i.test(s)) specs['Résolution'] = { val: 2, label: 'Full HD', plus: true };
+  else if (/\bHD\b/.test(s))                 specs['Résolution'] = { val: 1, label: 'HD',      plus: true };
+
+  // Batterie
+  var batt = s.match(/(\d+)\s*[Mm][Aa][Hh]/);
+  if (batt) specs['Batterie'] = { val: parseInt(batt[1]), label: batt[1] + ' mAh', plus: true };
+
+  // Caméra
+  var cam = s.match(/(\d+)\s*(?:[Mm][Pp]|[Mm][Éé]ga(?:pixels?)?)/i);
+  if (cam) specs['Caméra'] = { val: parseInt(cam[1]), label: cam[1] + ' MP', plus: true };
+
+  // BTU (climatiseurs)
+  var btu = s.match(/(\d[\d\s]*)\s*[Bb][Tt][Uu]/i);
+  if (btu) { var bv = parseInt(btu[1].replace(/\s/g,'')); specs['BTU'] = { val: bv, label: bv.toLocaleString('fr-FR'), plus: true }; }
+
+  // Puissance watts
+  var pw = s.match(/(\d+)\s*[Ww](?:atts?)?\b/);
+  if (pw) specs['Puissance'] = { val: parseInt(pw[1]), label: pw[1] + ' W', plus: true };
+
+  // Capacité litres (réfrigérateurs, lave-linge)
+  var vol = s.match(/(\d+)\s*[Ll](?:itres?)?\b/);
+  if (vol) specs['Capacité'] = { val: parseInt(vol[1]), label: vol[1] + ' L', plus: true };
+
+  // Réseau mobile
+  if      (/\b5[Gg]\b/.test(s)) specs['Réseau'] = { val: 2, label: '5G', plus: true };
+  else if (/\b4[Gg]\b/.test(s)) specs['Réseau'] = { val: 1, label: '4G', plus: true };
+
+  // Inverter
+  if (/\b[Ii]nverter\b/.test(s)) specs['Type'] = { val: 1, label: 'Inverter', plus: false };
+
+  return specs;
+}
+
+// ── Sparkline SVG 90j ────────────────────────────────────────────
+function sparklineHTML(historique) {
+  var prices = (historique||[]).map(function(h){ return parseFloat(h.prix_min)||0; }).filter(Boolean);
+  if (prices.length < 2) return '<div style="height:44px;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:10px">Pas de données</div>';
+  var mn = Math.min.apply(null,prices), mx = Math.max.apply(null,prices), rng = mx-mn||1;
+  var W=120, H=36, P=3;
+  var pts = prices.map(function(p,i){
+    return (P+(i/(prices.length-1))*(W-P*2)).toFixed(1)+','+(H-P-((p-mn)/rng)*(H-P*2)).toFixed(1);
+  }).join(' ');
+  var chg = Math.round((prices[prices.length-1]-prices[0])/prices[0]*100);
+  var color = chg <= 0 ? '#10b981' : '#f97316';
+  var lbl   = chg === 0 ? 'Stable' : (chg>0?'+'+chg+'%':chg+'%');
+  return '<div style="text-align:center">' +
+    '<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" style="display:block;margin:0 auto">' +
+      '<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</svg>' +
+    '<div style="font-size:10px;font-weight:700;color:'+color+'">'+lbl+' sur 90j</div>' +
+  '</div>';
+}
+
+// ── Étoiles qualité/prix ─────────────────────────────────────────
+function etoilesHTML(n) {
+  var h = '';
+  for (var i=1;i<=5;i++) h += '<span style="color:'+(i<=n?'#f59e0b':'#e2e8f0')+';font-size:15px">★</span>';
+  return h;
+}
+function calculerScore(prix, prixMinGlobal) {
+  if (!prix||!prixMinGlobal) return 3;
+  var r = prix/prixMinGlobal;
+  return r<=1.05?5 : r<=1.20?4 : r<=1.40?3 : r<=1.70?2 : 1;
+}
+
+// ── Comparaison principale ────────────────────────────────────────
 async function ouvrirComparaison() {
   if (state.comparer.length < 2) { toast('Sélectionne au moins 2 produits ⚖', '#f97316'); return; }
   render('<div class="loader"><div class="spin"></div><p>Préparation de la comparaison...</p></div>');
   try {
+    // Charger produit + offres + historique en parallèle pour chaque produit
     var produits = await Promise.all(state.comparer.map(function(id) {
       return Promise.all([
         apiFetch('/produits/' + id),
-        apiFetch('/produits/' + id + '/offres').catch(function() { return []; }),
-      ]).then(function(r) { return Object.assign(r[0], { offres: r[1] }); });
+        apiFetch('/produits/' + id + '/offres').catch(function(){ return []; }),
+        apiFetch('/produits/' + id + '/historique').catch(function(){ return []; }),
+      ]).then(function(r){ return Object.assign(r[0], { offres: r[1], historique: r[2] }); });
     }));
 
-    var colonnes = produits.map(function(p) {
-      var pMin = p.offres.length ? Math.min.apply(null, p.offres.map(function(o){return o.prix;})) : null;
-      var bestPrix = Math.min.apply(null, produits.map(function(pp) {
-        return pp.offres.length ? Math.min.apply(null, pp.offres.map(function(o){return o.prix;})) : Infinity;
-      }));
-      var isCheapest = pMin && pMin === bestPrix;
-      return [
-        '<div style="flex:1;min-width:160px;background:#fff;border:2px solid ' + (isCheapest ? '#10b981' : '#e2e8f0') + ';border-radius:12px;padding:14px;text-align:center">',
-          isCheapest ? '<div style="background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:8px">🏆 Moins cher</div>' : '',
-          '<div style="width:60px;height:60px;margin:0 auto 8px;background:#f8fafc;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden">',
-            p.image_url ? '<img src="' + p.image_url + '" style="max-width:60px;max-height:60px;object-fit:contain">' : '<span style="font-size:28px">📦</span>',
-          '</div>',
-          '<div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:4px;line-height:1.3">' + p.nom + '</div>',
-          p.marque ? '<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">' + p.marque + '</div>' : '<div style="margin-bottom:8px"></div>',
-          '<div style="font-size:20px;font-weight:800;color:' + (isCheapest ? '#10b981' : '#1e293b') + ';margin-bottom:4px">' + (pMin ? fcfa(pMin) : 'N/D') + '</div>',
-          '<div style="font-size:11px;color:#94a3b8;margin-bottom:12px">' + p.offres.length + ' offre(s)</div>',
-          p.offres.slice(0, 3).map(function(o) {
-            return '<div style="font-size:11px;padding:4px 6px;background:#f8fafc;border-radius:6px;margin-bottom:4px;display:flex;justify-content:space-between">' +
-              '<span style="color:#64748b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:80px">' + (o.marchand_nom||'') + '</span>' +
-              '<span style="font-weight:700;color:#1e293b">' + fcfa(o.prix) + '</span>' +
-            '</div>';
-          }).join(''),
-          '<a href="' + (p.offres[0] && p.offres[0].url_achat ? p.offres[0].url_achat : '#') + '" target="_blank" ' +
-            'style="display:block;margin-top:8px;padding:8px;background:' + (isCheapest?'#10b981':'#1d4ed8') + ';color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">Acheter →</a>',
-        '</div>',
-      ].join('');
+    // Prix minimum par produit + global
+    var prixMins = produits.map(function(p){
+      return p.offres.length ? Math.min.apply(null, p.offres.map(function(o){ return +o.prix; })) : null;
+    });
+    var prixMinGlobal = Math.min.apply(null, prixMins.filter(Boolean));
+
+    // Specs extraites et union des clés présentes
+    var specsParProduit = produits.map(function(p){ return extraireSpecs(p.nom); });
+    var toutesSpecs = [];
+    specsParProduit.forEach(function(sp){
+      Object.keys(sp).forEach(function(k){ if(toutesSpecs.indexOf(k)===-1) toutesSpecs.push(k); });
+    });
+
+    // Styles partagés
+    var COL  = 'flex:1;min-width:130px;padding:10px 8px;text-align:center;border-left:1px solid #f1f5f9;';
+    var LBL  = 'width:110px;flex-shrink:0;padding:10px 12px;font-size:12px;color:#64748b;font-weight:600;display:flex;align-items:center;';
+    var ROW  = 'display:flex;border-bottom:1px solid #f1f5f9;';
+    var SECT = 'display:flex;align-items:center;background:#f8fafc;padding:8px 12px;font-size:10px;font-weight:800;color:#475569;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid #e2e8f0;';
+
+    // ── En-tête ────────────────────────────────────────────────
+    var enTete = produits.map(function(p, i){
+      var cheapest = prixMins[i] && prixMins[i]===prixMinGlobal;
+      return '<div style="'+COL+'vertical-align:top">' +
+        (cheapest
+          ? '<div style="background:#10b981;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:6px">🏆 MOINS CHER</div>'
+          : '<div style="height:20px;margin-bottom:6px"></div>') +
+        '<div style="width:64px;height:64px;margin:0 auto 8px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #e2e8f0">' +
+          (p.image_url ? '<img src="'+p.image_url+'" style="max-width:60px;max-height:60px;object-fit:contain">' : '<span style="font-size:28px">📦</span>') +
+        '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:#1e293b;line-height:1.3;margin-bottom:3px">'+(p.nom.length>42?p.nom.slice(0,42)+'…':p.nom)+'</div>' +
+        (p.marque ? '<div style="font-size:11px;color:#94a3b8;margin-bottom:6px">'+p.marque+'</div>' : '<div style="margin-bottom:6px"></div>') +
+        '<button onclick="event.stopPropagation();state.comparer.splice('+i+',1);if(state.comparer.length>=2){ouvrirComparaison();}else{retourListe();}" style="background:none;border:1px solid #fca5a5;color:#ef4444;border-radius:6px;font-size:10px;padding:2px 8px;cursor:pointer">✕</button>' +
+      '</div>';
     }).join('');
 
+    // ── Lignes Prix ────────────────────────────────────────────
+    function cellule(contenu, highlight) {
+      return '<div style="'+COL+(highlight?'background:#f0fdf4':'')+'">'+contenu+'</div>';
+    }
+    var lignesPrix = [
+      // Meilleur prix
+      '<div style="'+ROW+'">'+
+        '<div style="'+LBL+'">Meilleur prix</div>'+
+        produits.map(function(p,i){
+          var pm=prixMins[i], best=pm&&pm===prixMinGlobal;
+          return cellule('<span style="font-size:16px;font-weight:800;color:'+(best?'#10b981':'#1e293b')+'">'+(pm?fcfa(pm):'–')+'</span>', best);
+        }).join('')+
+      '</div>',
+      // Marchand le moins cher
+      '<div style="'+ROW+'">'+
+        '<div style="'+LBL+'">Chez</div>'+
+        produits.map(function(p){
+          return '<div style="'+COL+'"><span style="font-size:11px;color:#475569">'+(p.offres[0]?p.offres[0].marchand_nom:'–')+'</span></div>';
+        }).join('')+
+      '</div>',
+      // Toutes les offres résumées
+      '<div style="'+ROW+'">'+
+        '<div style="'+LBL+'">Nb offres</div>'+
+        produits.map(function(p){
+          return '<div style="'+COL+'"><span style="font-size:12px;color:#64748b">'+p.offres.length+' marchand(s)</span></div>';
+        }).join('')+
+      '</div>',
+      // Écart vs le moins cher
+      '<div style="'+ROW+'">'+
+        '<div style="'+LBL+'">Écart</div>'+
+        produits.map(function(p,i){
+          var pm=prixMins[i];
+          if(!pm||pm===prixMinGlobal) return '<div style="'+COL+'"><span style="font-size:11px;font-weight:700;color:#10b981">Référence</span></div>';
+          var e=pm-prixMinGlobal, pct=Math.round(e/prixMinGlobal*100);
+          return '<div style="'+COL+'"><span style="font-size:11px;font-weight:700;color:#f97316">+'+fcfa(e)+' (+'+pct+'%)</span></div>';
+        }).join('')+
+      '</div>',
+      // Top 2 offres par produit
+      '<div style="'+ROW+'align-items:flex-start">'+
+        '<div style="'+LBL+'padding-top:12px">Top offres</div>'+
+        produits.map(function(p){
+          return '<div style="'+COL+'text-align:left;font-size:11px">'+
+            p.offres.slice(0,2).map(function(o,i){
+              return '<div style="display:flex;justify-content:space-between;padding:3px 0;'+(i?'border-top:1px solid #f1f5f9':'')+'">'+
+                '<span style="color:#64748b;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(o.marchand_nom||'')+'</span>'+
+                '<span style="font-weight:700;color:#1e293b;margin-left:4px">'+fcfa(o.prix)+'</span>'+
+              '</div>';
+            }).join('')+
+          '</div>';
+        }).join('')+
+      '</div>',
+    ].join('');
+
+    // ── Lignes Specs ───────────────────────────────────────────
+    var lignesSpecs = toutesSpecs.map(function(key){
+      var vals = specsParProduit.map(function(sp){ return sp[key]?sp[key].val:null; });
+      var plusGrandMieux = specsParProduit.some(function(sp){ return sp[key]&&sp[key].plus; });
+      var maxVal = plusGrandMieux ? Math.max.apply(null, vals.filter(function(v){return v!==null;})) : null;
+      return '<div style="'+ROW+'">'+
+        '<div style="'+LBL+'">'+key+'</div>'+
+        specsParProduit.map(function(sp){
+          var s = sp[key];
+          if(!s) return '<div style="'+COL+'"><span style="color:#cbd5e1">–</span></div>';
+          var best = plusGrandMieux && s.val===maxVal;
+          return '<div style="'+COL+(best?';background:#eff6ff':'')+'">'+
+            (best?'<div style="font-size:9px;font-weight:800;color:#1d4ed8;margin-bottom:2px">▲ MEILLEUR</div>':'')+
+            '<span style="font-size:13px;font-weight:'+(best?'800':'600')+';color:'+(best?'#1d4ed8':'#1e293b')+'">'+s.label+'</span>'+
+          '</div>';
+        }).join('')+
+      '</div>';
+    }).join('');
+
+    // ── Historique sparklines ──────────────────────────────────
+    var ligneHisto = '<div style="'+ROW+'align-items:center">'+
+      '<div style="'+LBL+'">Tendance 90j</div>'+
+      produits.map(function(p){
+        return '<div style="'+COL+'">'+sparklineHTML(p.historique)+'</div>';
+      }).join('')+
+    '</div>';
+
+    // ── Score qualité/prix ─────────────────────────────────────
+    var ligneScore = '<div style="'+ROW+'">'+
+      '<div style="'+LBL+'">Rapport Q/P</div>'+
+      produits.map(function(p,i){
+        return '<div style="'+COL+'">'+etoilesHTML(calculerScore(prixMins[i],prixMinGlobal))+'</div>';
+      }).join('')+
+    '</div>';
+
+    // ── Boutons Acheter ────────────────────────────────────────
+    var ligneBoutons = '<div style="'+ROW+'background:#f8fafc">'+
+      '<div style="'+LBL+'"></div>'+
+      produits.map(function(p,i){
+        var cheap = prixMins[i]&&prixMins[i]===prixMinGlobal;
+        var url = p.offres[0]&&p.offres[0].url_achat ? p.offres[0].url_achat : '#';
+        return '<div style="'+COL+'">'+
+          '<a href="'+url+'" target="_blank" style="display:block;padding:9px 4px;background:'+(cheap?'#10b981':'#1d4ed8')+';color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;text-align:center">Acheter →</a>'+
+        '</div>';
+      }).join('')+
+    '</div>';
+
+    // ── Rendu ──────────────────────────────────────────────────
     render([
-      '<div style="padding:16px 5%;max-width:800px;margin:0 auto">',
-        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">',
+      '<div style="padding:16px 4%;max-width:920px;margin:0 auto">',
+        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">',
           '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;padding:0">← Retour</button>',
-          '<h2 style="font-size:17px;font-weight:800;color:#1e293b;margin:0">⚖ Comparaison côte à côte</h2>',
+          '<h2 style="font-size:16px;font-weight:800;color:#1e293b;margin:0">⚖ Comparaison côte à côte</h2>',
           '<button onclick="state.comparer=[];retourListe()" style="margin-left:auto;padding:6px 12px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer">✕ Vider</button>',
         '</div>',
-        '<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px">',
-          colonnes,
+        '<div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.06)">',
+          // En-tête produits
+          '<div style="display:flex;border-bottom:2px solid #e2e8f0;background:#f8fafc">',
+            '<div style="width:110px;flex-shrink:0;padding:12px"></div>',
+            enTete,
+          '</div>',
+          // Prix
+          '<div style="'+SECT+'">💰 Prix</div>',
+          lignesPrix,
+          // Specs (si au moins une extraite)
+          toutesSpecs.length
+            ? '<div style="'+SECT+'">📊 Caractéristiques techniques</div>'+lignesSpecs
+            : '',
+          // Historique
+          '<div style="'+SECT+'">📈 Historique des prix (90j)</div>',
+          ligneHisto,
+          // Score
+          '<div style="'+SECT+'">⭐ Rapport qualité / prix</div>',
+          ligneScore,
+          // Acheter
+          ligneBoutons,
         '</div>',
+        '<p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:10px">Prix mis à jour toutes les 4h — vérifiez le prix final sur le site du marchand avant d\'acheter.</p>',
       '</div>',
     ].join(''));
   } catch(err) {
     dbgErr('ouvrirComparaison', err);
-    render('<div style="padding:24px 5%"><button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;cursor:pointer;font-weight:600">← Retour</button><p style="color:#ef4444;margin-top:12px">' + err.message + '</p></div>');
+    render('<div style="padding:24px 5%"><button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;cursor:pointer;font-weight:600">← Retour</button><p style="color:#ef4444;margin-top:12px">'+err.message+'</p></div>');
   }
 }
 
