@@ -48,18 +48,25 @@ module.exports = async function migrateInline() {
       );
 
       CREATE TABLE IF NOT EXISTS offres (
-        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        produit_id  UUID NOT NULL REFERENCES produits(id) ON DELETE CASCADE,
-        marchand_id UUID NOT NULL REFERENCES marchands(id),
-        prix        NUMERIC(12,2) NOT NULL,
-        devise      CHAR(3) DEFAULT 'XOF',
-        stock       BOOLEAN DEFAULT TRUE,
-        url_achat   TEXT,
-        scraped_at  TIMESTAMPTZ DEFAULT NOW(),
+        id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        produit_id      UUID NOT NULL REFERENCES produits(id) ON DELETE CASCADE,
+        marchand_id     UUID NOT NULL REFERENCES marchands(id),
+        prix            NUMERIC(12,2) NOT NULL,
+        devise          CHAR(3) DEFAULT 'XOF',
+        stock           BOOLEAN DEFAULT TRUE,
+        url_achat       TEXT,
+        titre_marchand  TEXT,
+        scraped_at      TIMESTAMPTZ DEFAULT NOW(),
         UNIQUE(produit_id, marchand_id)
       );
+      -- Colonne titre_marchand ajoutée post-création (idempotent pour DBs existantes)
+      DO $$ BEGIN
+        ALTER TABLE offres ADD COLUMN IF NOT EXISTS titre_marchand TEXT;
+      EXCEPTION WHEN others THEN NULL; END $$;
       CREATE INDEX IF NOT EXISTS idx_offres_produit ON offres(produit_id);
       CREATE INDEX IF NOT EXISTS idx_offres_prix    ON offres(prix);
+      -- Index composite : couvre les filtres stock=true + tri par prix (toutes les queries offres)
+      CREATE INDEX IF NOT EXISTS idx_offres_produit_stock_prix ON offres(produit_id, stock, prix);
 
       CREATE TABLE IF NOT EXISTS historique_prix (
         id       BIGSERIAL PRIMARY KEY,
