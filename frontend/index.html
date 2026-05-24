@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=6">
+  <link rel="stylesheet" href="/style.css?v=7">
 </head>
 <body>
   <nav id="navbar">
@@ -18,6 +18,8 @@
     <div class="nav-center">
       <button onclick="goHome()">Accueil</button>
       <button onclick="loadPromos()">Promos</button>
+      <button onclick="ouvrirGuideAchat()" id="nav-btn-guide">🏆 Meilleur choix</button>
+      <button id="nav-btn-comparer" onclick="ouvrirComparaisonNav()" style="display:none;background:#f97316;color:#fff;border-radius:8px;padding:6px 14px;border:none;font-weight:700;cursor:pointer">⚖ Comparer (<span id="nav-compare-count">0</span>)</button>
     </div>
     <div class="nav-right">
       <select id="city-sel" onchange="changeVille(this.value)">
@@ -40,7 +42,7 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="/app.js?v=6"></script>
+  <script src="/app.js?v=7"></script>
   <script>
     // Désenregistrer l'ancien Service Worker pour forcer le rechargement des assets
     if ('serviceWorker' in navigator) {

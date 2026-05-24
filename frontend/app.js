@@ -3,7 +3,7 @@
 //  app.js VERSION 6 — 2026-05-14
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Yombale app.js VERSION 6 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Yombale app.js VERSION 7 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 var API = '/api';
 
@@ -1561,8 +1561,8 @@ async function ouvrirComparaison() {
 function toggleComparer(id) {
   var idx = state.comparer.indexOf(id);
   if (idx !== -1) { state.comparer.splice(idx, 1); }
-  else { if (state.comparer.length >= 3) { toast('Maximum 3 produits à comparer', '#f97316'); return; } state.comparer.push(id); }
-  // Mise à jour barre + cartes sans rechargement
+  else { if (state.comparer.length >= 4) { toast('Maximum 4 produits à comparer', '#f97316'); return; } state.comparer.push(id); }
+  updateNavCompare();
   chargerProduits(state.query, state.categorie, state.page);
 }
 
@@ -1898,6 +1898,26 @@ function updateNavUser() {
   }
 }
 
+function updateNavCompare() {
+  var btn = document.getElementById('nav-btn-comparer');
+  var cnt = document.getElementById('nav-compare-count');
+  if (!btn) return;
+  if (state.comparer.length > 0) {
+    btn.style.display = 'inline-block';
+    if (cnt) cnt.textContent = state.comparer.length;
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+function ouvrirComparaisonNav() {
+  if (state.comparer.length < 2) {
+    toast('Sélectionne au moins 2 produits ⚖', '#f97316');
+    return;
+  }
+  ouvrirComparaison();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   dbg('DOMContentLoaded');
   goHome();
@@ -2141,4 +2161,328 @@ function ouvrirInfoPage(pageId) {
 function fermerInfoPage() {
   var m = document.getElementById('info-modal');
   if (m) m.remove();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  GUIDE D'ACHAT INTELLIGENT
+// ═══════════════════════════════════════════════════════════════
+
+var _guidePrefs = {
+  categorie:  '',
+  budgetMin:  '',
+  budgetMax:  '',
+  poidsPrix:  3,
+  poidsSpecs: 3,
+  poidsDispo: 2,
+  profilActif: '',
+};
+
+var GUIDE_PROFILS = [
+  { id: 'prix',    label: '💰 Meilleur prix',     desc: 'Priorité au prix le plus bas',         prefs: { poidsPrix:5, poidsSpecs:1, poidsDispo:2 } },
+  { id: 'rapport', label: '⭐ Rapport Q/P',        desc: 'Équilibre prix et caractéristiques',   prefs: { poidsPrix:3, poidsSpecs:4, poidsDispo:2 } },
+  { id: 'haut',    label: '🚀 Haut de gamme',      desc: 'Priorité aux meilleures specs',        prefs: { poidsPrix:1, poidsSpecs:5, poidsDispo:2 } },
+  { id: 'dispo',   label: '🏪 Bien distribué',     desc: 'Disponible chez plusieurs marchands',  prefs: { poidsPrix:2, poidsSpecs:3, poidsDispo:5 } },
+];
+
+var _POIDS_LABELS = ['', 'Peu important', 'Secondaire', 'Équilibré', 'Important', 'Prioritaire'];
+
+function ouvrirGuideAchat() {
+  var appEl = document.getElementById('app');
+  if (appEl) appEl.style.cssText = '';
+
+  render([
+    '<div style="max-width:740px;margin:0 auto;padding:24px 16px 80px">',
+
+      // Titre
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">',
+        '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;padding:0">← Retour</button>',
+        '<h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0">🏆 Guide d\'achat intelligent</h2>',
+      '</div>',
+      '<p style="color:#64748b;font-size:13px;margin:0 0 24px;padding-left:0">Définissez vos critères — Yombale calcule un score et classe les produits pour vous.</p>',
+
+      // ── Profils rapides ──
+      '<div style="margin-bottom:22px">',
+        '<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Profil d\'achat</div>',
+        '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">',
+          GUIDE_PROFILS.map(function(p) {
+            return [
+              '<button id="profil-btn-' + p.id + '" onclick="appliquerProfilGuide(\'' + p.id + '\')" ',
+                'style="padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;text-align:left;',
+                'background:#fff;cursor:pointer;transition:all .15s">',
+                '<div style="font-size:13px;font-weight:700;color:#1e293b">' + p.label + '</div>',
+                '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + p.desc + '</div>',
+              '</button>',
+            ].join('');
+          }).join(''),
+        '</div>',
+      '</div>',
+
+      // ── Paramètres ──
+      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px;margin-bottom:20px">',
+        '<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px">Paramètres personnalisés</div>',
+
+        // Catégorie
+        '<div style="margin-bottom:14px">',
+          '<label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:5px">Catégorie</label>',
+          '<select id="guide-cat" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;background:#fff;color:#1e293b">',
+            '<option value="">Toutes les catégories</option>',
+            CATEGORIES.map(function(c) {
+              return '<option value="' + c.slug + '"' + (_guidePrefs.categorie===c.slug?' selected':'') + '>' + c.icon + ' ' + c.label + '</option>';
+            }).join(''),
+          '</select>',
+        '</div>',
+
+        // Budget
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">',
+          '<div>',
+            '<label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:5px">Budget min (FCFA)</label>',
+            '<input id="guide-min" type="number" placeholder="ex: 5 000" value="' + (_guidePrefs.budgetMin||'') + '" ',
+              'style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">',
+          '</div>',
+          '<div>',
+            '<label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:5px">Budget max (FCFA)</label>',
+            '<input id="guide-max" type="number" placeholder="ex: 200 000" value="' + (_guidePrefs.budgetMax||'') + '" ',
+              'style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">',
+          '</div>',
+        '</div>',
+
+        // Sliders poids
+        _sliderGuide('guide-poids-prix',  '💰 Importance du prix',              _guidePrefs.poidsPrix),
+        _sliderGuide('guide-poids-specs', '📊 Importance des caractéristiques', _guidePrefs.poidsSpecs),
+        _sliderGuide('guide-poids-dispo', '🏪 Importance de la disponibilité',  _guidePrefs.poidsDispo),
+
+        // Bouton lancer
+        '<button onclick="lancerGuideAchat()" ',
+          'style="width:100%;padding:13px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);',
+          'color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px">',
+          '🔍 Trouver les meilleurs produits',
+        '</button>',
+      '</div>',
+
+      // Zone résultats
+      '<div id="guide-resultats"></div>',
+
+    '</div>',
+  ].join(''));
+}
+
+function _sliderGuide(id, label, val) {
+  return [
+    '<div style="margin-bottom:12px">',
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">',
+        '<label style="font-size:12px;font-weight:600;color:#334155">' + label + '</label>',
+        '<span id="' + id + '-lbl" style="font-size:11px;font-weight:700;color:#6366f1;min-width:110px;text-align:right">' + _POIDS_LABELS[val] + '</span>',
+      '</div>',
+      '<input type="range" min="1" max="5" value="' + val + '" id="' + id + '" ',
+        'oninput="document.getElementById(\'' + id + '-lbl\').textContent=' +
+          '[\'\',' + _POIDS_LABELS.slice(1).map(function(l){return '\''+l+'\'';}).join(',') + '][this.value-1]" ',
+        'style="width:100%;accent-color:#1d4ed8">',
+    '</div>',
+  ].join('');
+}
+
+function appliquerProfilGuide(profilId) {
+  var profil = GUIDE_PROFILS.find(function(p){ return p.id === profilId; });
+  if (!profil) return;
+  _guidePrefs.profilActif = profilId;
+
+  // Mettre à jour les sliders visuellement
+  var ids = { poidsPrix:'guide-poids-prix', poidsSpecs:'guide-poids-specs', poidsDispo:'guide-poids-dispo' };
+  Object.keys(ids).forEach(function(k) {
+    var el = document.getElementById(ids[k]);
+    var lb = document.getElementById(ids[k] + '-lbl');
+    if (el) { el.value = profil.prefs[k]; }
+    if (lb) { lb.textContent = _POIDS_LABELS[profil.prefs[k]]; }
+  });
+
+  // Surbrillance profil actif
+  GUIDE_PROFILS.forEach(function(p) {
+    var btn = document.getElementById('profil-btn-' + p.id);
+    if (!btn) return;
+    var actif = p.id === profilId;
+    btn.style.borderColor = actif ? '#1d4ed8' : '#e2e8f0';
+    btn.style.background  = actif ? '#eff6ff' : '#fff';
+  });
+}
+
+async function lancerGuideAchat() {
+  var cat       = (document.getElementById('guide-cat')        || {}).value || '';
+  var budgetMin = parseInt((document.getElementById('guide-min') || {}).value || '0') || null;
+  var budgetMax = parseInt((document.getElementById('guide-max') || {}).value || '0') || null;
+  var poidsPrix  = parseInt((document.getElementById('guide-poids-prix')  || {}).value || '3');
+  var poidsSpecs = parseInt((document.getElementById('guide-poids-specs') || {}).value || '3');
+  var poidsDispo = parseInt((document.getElementById('guide-poids-dispo') || {}).value || '2');
+
+  _guidePrefs = { categorie: cat, budgetMin: budgetMin||'', budgetMax: budgetMax||'',
+                  poidsPrix: poidsPrix, poidsSpecs: poidsSpecs, poidsDispo: poidsDispo,
+                  profilActif: _guidePrefs.profilActif };
+
+  var resEl = document.getElementById('guide-resultats');
+  if (resEl) resEl.innerHTML = '<div class="loader"><div class="spin"></div><p>Analyse en cours...</p></div>';
+
+  try {
+    var params = new URLSearchParams({
+      categorie: cat, limit: 48, page: 1,
+      prixMin: budgetMin || '', prixMax: budgetMax || '',
+      tri: 'pertinence',
+    });
+    var data    = await apiFetch('/produits?' + params.toString());
+    var produits = ((data && data.produits) || []).filter(function(p){ return +p.prix_min > 0; });
+
+    if (!produits.length) {
+      if (resEl) resEl.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:32px 0">Aucun produit trouvé avec ces critères.</p>';
+      return;
+    }
+
+    // ── Valeurs de référence ──────────────────────────────────
+    var prixMinRef    = Math.min.apply(null, produits.map(function(p){ return +p.prix_min; }));
+    var nbOffresMaxRef= Math.max.apply(null, produits.map(function(p){ return +(p.nb_offres)||0; })) || 1;
+
+    // Extraire les specs de chaque produit et calculer les maximums par critère
+    var specsListe = produits.map(function(p){ return extraireSpecs(p.nom); });
+    var specKeys   = [];
+    specsListe.forEach(function(s){
+      Object.keys(s).forEach(function(k){ if (specKeys.indexOf(k) === -1) specKeys.push(k); });
+    });
+    var specMaxes = {};
+    specKeys.forEach(function(k){
+      var vals = specsListe.map(function(s){ return s[k] ? s[k].val : null; }).filter(function(v){ return v !== null; });
+      specMaxes[k] = vals.length ? Math.max.apply(null, vals) : null;
+    });
+
+    // ── Scoring ───────────────────────────────────────────────
+    var totalPoids = poidsPrix + poidsSpecs + poidsDispo;
+    produits = produits.map(function(p, i) {
+      // Score prix : 1 = le moins cher, diminue avec l'écart
+      var sPrix  = prixMinRef / +p.prix_min;
+
+      // Score specs : proportion de critères où ce produit est dans le top 10%
+      var sp = specsListe[i];
+      var specWins = 0;
+      specKeys.forEach(function(k) {
+        if (!sp[k] || !specMaxes[k]) return;
+        if (sp[k].val >= specMaxes[k] * 0.9) specWins++;
+      });
+      var sSpecs = specKeys.length > 0 ? specWins / specKeys.length : 0.5;
+
+      // Score disponibilité : proportion du marchand le mieux distribué
+      var sDispo = (+(p.nb_offres)||0) / nbOffresMaxRef;
+
+      // Score final pondéré /10
+      var score = Math.round(
+        ((poidsPrix * sPrix + poidsSpecs * sSpecs + poidsDispo * sDispo) / totalPoids) * 100
+      ) / 10;
+
+      p._score  = score;
+      p._sPrix  = Math.round(sPrix  * 100);
+      p._sSpecs = Math.round(sSpecs * 100);
+      p._sDispo = Math.round(sDispo * 100);
+      return p;
+    });
+
+    // Trier par score décroissant
+    produits.sort(function(a, b){ return b._score - a._score; });
+    var top = produits.slice(0, 12);
+
+    // ── Libellé profil actif ──────────────────────────────────
+    var profilLabel = '';
+    if (_guidePrefs.profilActif) {
+      var pf = GUIDE_PROFILS.find(function(p){ return p.id === _guidePrefs.profilActif; });
+      if (pf) profilLabel = ' · Profil : ' + pf.label;
+    }
+
+    if (resEl) resEl.innerHTML = [
+      '<div>',
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">',
+          '<h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:0">🏆 Recommandations</h3>',
+          '<span style="font-size:12px;color:#94a3b8">' + data.total + ' produits analysés' + profilLabel + '</span>',
+        '</div>',
+
+        // Légende scores
+        '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">',
+          '<span style="font-size:11px;color:#64748b;font-weight:600">Critères :</span>',
+          poidsPrix  > 1 ? '<span style="font-size:11px;font-weight:700;color:#10b981">💰 Prix ×' + poidsPrix  + '</span>' : '',
+          poidsSpecs > 1 ? '<span style="font-size:11px;font-weight:700;color:#6366f1">📊 Specs ×' + poidsSpecs + '</span>' : '',
+          poidsDispo > 1 ? '<span style="font-size:11px;font-weight:700;color:#f97316">🏪 Dispo ×' + poidsDispo + '</span>' : '',
+        '</div>',
+
+        top.map(function(p, i) {
+          var medal      = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '<span style="font-size:13px;font-weight:700;color:#94a3b8">' + (i+1) + '</span>';
+          var scoreColor = p._score >= 7 ? '#10b981' : p._score >= 5 ? '#f97316' : '#ef4444';
+          var enCompare  = state.comparer.indexOf(p.id) !== -1;
+          return [
+            '<div style="background:#fff;border:1.5px solid ' + (i===0?'#10b981':'#e2e8f0') + ';',
+              'border-radius:12px;padding:14px;margin-bottom:10px;display:flex;gap:14px;align-items:center;',
+              'cursor:pointer;' + (i===0?'box-shadow:0 2px 14px rgba(16,185,129,.15)':'') + '" ',
+              'onclick="ouvrirProduit(\'' + p.id + '\')" ',
+              'onmouseover="this.style.borderColor=\'#1d4ed8\'" ',
+              'onmouseout="this.style.borderColor=\'' + (i===0?'#10b981':'#e2e8f0') + '\'">',
+
+              // Médaille + image
+              '<div style="flex-shrink:0;text-align:center;min-width:70px">',
+                '<div style="font-size:22px;margin-bottom:4px">' + medal + '</div>',
+                '<div style="width:60px;height:60px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;',
+                  'display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0 auto">',
+                  p.image_url
+                    ? '<img src="' + p.image_url + '" style="max-width:56px;max-height:56px;object-fit:contain" loading="lazy">'
+                    : '<span style="font-size:26px">📦</span>',
+                '</div>',
+              '</div>',
+
+              // Infos produit
+              '<div style="flex:1;min-width:0">',
+                i === 0 ? '<div style="font-size:10px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">✓ Meilleur choix selon vos critères</div>' : '',
+                '<div style="font-size:13px;font-weight:700;color:#1e293b;line-height:1.35;margin-bottom:3px;',
+                  'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.nom + '</div>',
+                p.marque ? '<div style="font-size:11px;color:#94a3b8;margin-bottom:6px">' + p.marque + '</div>' : '<div style="margin-bottom:6px"></div>',
+                // Barres de score
+                '<div style="display:flex;gap:10px;flex-wrap:wrap">',
+                  poidsPrix  > 1 ? _barreScore('Prix',  p._sPrix,  '#10b981') : '',
+                  poidsSpecs > 1 ? _barreScore('Specs', p._sSpecs, '#6366f1') : '',
+                  poidsDispo > 1 ? _barreScore('Dispo', p._sDispo, '#f97316') : '',
+                '</div>',
+              '</div>',
+
+              // Prix + score + boutons
+              '<div style="flex-shrink:0;text-align:right">',
+                '<div style="font-size:17px;font-weight:900;color:#15803d">' + fcfa(p.prix_min) + '</div>',
+                '<div style="font-size:22px;font-weight:800;color:' + scoreColor + ';line-height:1.1">' + p._score +
+                  '<span style="font-size:11px;font-weight:500;color:#94a3b8">/10</span></div>',
+                '<div style="font-size:10px;color:#94a3b8;margin-top:1px;margin-bottom:8px">' + (p.nb_offres||0) + ' offre(s)</div>',
+                '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\')" ',
+                  'style="padding:5px 10px;border-radius:6px;border:1px solid ' + (enCompare?'#1d4ed8':'#e2e8f0') + ';',
+                  'background:' + (enCompare?'#eff6ff':'#fff') + ';cursor:pointer;font-size:11px;font-weight:700;',
+                  'color:' + (enCompare?'#1d4ed8':'#475569') + ';white-space:nowrap">',
+                  enCompare ? '✓ Ajouté' : '⚖ Comparer',
+                '</button>',
+              '</div>',
+
+            '</div>',
+          ].join('');
+        }).join('') +
+
+        // Bouton comparer la sélection
+        state.comparer.length >= 2
+          ? '<div style="text-align:center;margin-top:16px">' +
+              '<button onclick="ouvrirComparaison()" style="padding:12px 32px;background:#f97316;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">⚖ Comparer les ' + state.comparer.length + ' produits sélectionnés →</button>' +
+            '</div>'
+          : '<p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:12px">Clique sur ⚖ Comparer pour ajouter des produits à la comparaison côte à côte.</p>',
+
+      '</div>',
+    ].join('');
+
+  } catch(err) {
+    dbgErr('lancerGuideAchat', err);
+    if (resEl) resEl.innerHTML = '<p style="color:#ef4444;padding:16px">' + err.message + '</p>';
+  }
+}
+
+function _barreScore(label, pct, couleur) {
+  return '<div style="display:flex;align-items:center;gap:4px">' +
+    '<span style="font-size:10px;color:#94a3b8;min-width:26px">' + label + '</span>' +
+    '<div style="width:44px;height:4px;background:#f1f5f9;border-radius:2px;overflow:hidden">' +
+      '<div style="width:' + pct + '%;height:100%;background:' + couleur + ';border-radius:2px"></div>' +
+    '</div>' +
+    '<span style="font-size:10px;font-weight:700;color:' + couleur + '">' + pct + '%</span>' +
+  '</div>';
 }
