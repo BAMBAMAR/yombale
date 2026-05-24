@@ -360,13 +360,12 @@ async function getPrixMedianCategorie(categorieId) {
   } catch { return null; }
 }
 
-// ── Prix plancher déduit du titre (taille écran, RAM, BTU…) ─────
+// ── Prix plancher déduit du titre (taille écran, RAM, BTU, audio…) ─
 // Permet de détecter une division par 100/1000 même sur offre unique.
-// Ex: "TV 98 pouces" → plancher 400 000 FCFA → 17 325 FCFA → ×100 → 1 732 500 FCFA
 function prixPlancher(titre) {
-  const s = ' ' + (titre || '').toLowerCase() + ' ';
+  const s = ' ' + (titre || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'') + ' ';
 
-  // Taille écran TV/PC (pouces ou ")
+  // ── Taille écran TV/PC/moniteur (pouces ou ") ──────────────────
   const ecran = s.match(/(\d+)\s*(?:pouces?|"|\binch)/);
   if (ecran) {
     const p = parseInt(ecran[1]);
@@ -376,18 +375,20 @@ function prixPlancher(titre) {
     if (p >= 43) return  80_000;
     if (p >= 32) return  40_000;
     if (p >= 24) return  25_000;
+    if (p >= 13) return  20_000; // laptop/tablette
   }
 
-  // RAM smartphone/PC
+  // ── RAM smartphone/PC ──────────────────────────────────────────
   const ram = s.match(/(\d+)\s*go\s+ram|ram\s*:?\s*(\d+)\s*go/);
   if (ram) {
     const r = parseInt(ram[1] || ram[2]);
     if (r >= 12) return 150_000;
     if (r >= 8)  return  80_000;
     if (r >= 6)  return  50_000;
+    if (r >= 4)  return  30_000;
   }
 
-  // Stockage seul (puissances de 2 ≥ 128 Go → produit moyen/haut de gamme)
+  // ── Stockage seul (≥ 128 Go) ───────────────────────────────────
   const sto = s.match(/(\d+)\s*go(?!\s*ram)/);
   if (sto) {
     const st = parseInt(sto[1]);
@@ -396,7 +397,7 @@ function prixPlancher(titre) {
     if (st >= 128) return  50_000;
   }
 
-  // BTU climatiseur
+  // ── BTU climatiseur ────────────────────────────────────────────
   const btu = s.match(/(\d[\d\s]*)\s*btu/);
   if (btu) {
     const b = parseInt(btu[1].replace(/\s/g, ''));
@@ -405,6 +406,68 @@ function prixPlancher(titre) {
     if (b >=  9000) return 150_000;
     if (b >=  5000) return  80_000;
   }
+
+  // ── Réfrigérateur / congélateur (litres) ──────────────────────
+  const vol = s.match(/(\d{2,3})\s*(?:litres?|l)\b/);
+  if (vol && /frigo|refrig|congelat/.test(s)) {
+    const v = parseInt(vol[1]);
+    if (v >= 400) return 400_000;
+    if (v >= 300) return 250_000;
+    if (v >= 200) return 150_000;
+    if (v >= 100) return  80_000;
+  }
+  if (/refriger|frigo\b/.test(s) && !/piece|spare/.test(s)) return 80_000;
+  if (/lave[- ]linge|machine.{0,6}laver/.test(s))           return 150_000;
+  if (/congelateur|congelat/.test(s))                        return 100_000;
+  if (/climatiseur|split |clim\b/.test(s))                   return 100_000;
+
+  // ── Audio — modèles haut de gamme (référence exacte) ──────────
+  if (/wh.?1000xm\d/.test(s))                               return 150_000; // Sony XM3/4/5
+  if (/wh.?ch\d{3}|wh.?xb\d{3}/.test(s))                   return  30_000; // Sony entrée gamme
+  if (/airpods?\s*pro|airpods?\s*max/.test(s))              return 100_000;
+  if (/airpods?\b/.test(s))                                  return  50_000;
+  if (/bose\s*(quietcomfort|qc\d|700|nc\d)/.test(s))        return 150_000;
+  if (/jbl\s*(charge\s*[4-9]|xtreme|boombox|partybox)/.test(s)) return 60_000;
+  if (/jbl\s*(flip\s*[4-9]|pulse\s*[4-9])/.test(s))        return  35_000;
+  if (/jbl\s*(go\s*[2-9]|clip\s*[3-9])/.test(s))           return  15_000;
+  if (/galaxy buds|galaxy watch/.test(s))                   return  60_000;
+  if (/apple watch\s*(ultra|pro|series\s*[7-9])/.test(s))  return 200_000;
+  if (/apple watch/.test(s))                                 return 100_000;
+  if (/sennheiser\s*(hd|momentum|pxc)/.test(s))             return  80_000;
+  if (/harman kardon/.test(s))                               return  80_000;
+  if (/beats\s*(studio|pro|solo|fit)/.test(s))              return  80_000;
+
+  // ── Audio — type de produit ────────────────────────────────────
+  if (/casque\s*(noise.cancell|anc|sans.fil|bluetooth|actif)/.test(s)) return 30_000;
+  if (/casque\s*(sony|bose|jbl|sennheiser|beats|anker)/.test(s))       return 50_000;
+  if (/casque audio|casque stereo|casque hifi/.test(s))                 return 12_000;
+  if (/casque\b/.test(s) && !/casque gaz|casque moto/.test(s))         return 10_000;
+  if (/ecouteur\s*(sans.fil|bluetooth|tws|anc)/.test(s))               return 15_000;
+  if (/ecouteur/.test(s))                                               return  8_000;
+  if (/enceinte\s*(bluetooth|portable|sans.fil)/.test(s))              return 15_000;
+  if (/enceinte\s*(hifi|home.cinema|barre.de.son)/.test(s))            return 50_000;
+
+  // ── Montre connectée ───────────────────────────────────────────
+  if (/smartwatch|montre connectee|montre intelligente/.test(s))        return 15_000;
+
+  // ── Laptop / ordinateur ────────────────────────────────────────
+  if (/macbook|chromebook/.test(s))                          return 200_000;
+  if (/laptop|ordinateur portable|pc portable/.test(s))      return 150_000;
+  if (/ordinateur de bureau|pc bureau|tour pc/.test(s))      return 100_000;
+  if (/imprimante laser/.test(s))                            return  80_000;
+  if (/imprimante/.test(s))                                  return  30_000;
+
+  // ── Tablette ───────────────────────────────────────────────────
+  if (/ipad\b/.test(s))                                      return 150_000;
+  if (/tablette\s*(android|samsung|huawei|lenovo)/.test(s))  return  60_000;
+
+  // ── Caméra / photo ─────────────────────────────────────────────
+  if (/reflex|mirrorless|appareil photo/.test(s))            return 150_000;
+  if (/camera\s*(ip|surveillance|360)/.test(s))              return  15_000;
+
+  // ── TV sans dimension précisée mais avec marque ───────────────
+  if (/(hisense|lg|samsung|tcl|sony|philips)\s*(tv|television|tele)/.test(s)) return 80_000;
+  if (/\b(tv|tele|television)\b/.test(s))                    return  50_000;
 
   return null; // pas de signal → pas de plancher
 }
