@@ -36,6 +36,9 @@ var state = {
   comparePrefsOpen: false,     // panneau paramètres ouvert ou non
 };
 
+// Cache léger des produits affichés (id → {nom, image_url}) — alimenté par carteHTML/guide
+var _productCache = {};
+
 // ── Logger ──────────────────────────────────────────────────────
 var _log = [];
 function dbg(e, d)    { var t = new Date().toISOString().slice(11,23); _log.push('['+t+'] '+e+(d!==undefined?' → '+JSON.stringify(d):'')); console.log('%c[Y]','color:#1d4ed8;font-weight:bold',e,d!==undefined?d:''); }
@@ -507,24 +510,33 @@ function htmlBarre(data) {
 }
 
 // ── Inférence de catégorie depuis le nom produit ─────────────────
-// Utilisé quand categorie_id est NULL en base, pour bloquer la comparaison incohérente
+// Priorités ordonnées : les plus spécifiques en premier
 function _inferCat(nom) {
   if (!nom) return '';
   var n = nom.toLowerCase();
-  if (/smartphone|iphone|samsung galaxy|xiaomi|tecno|infinix|oppo|huawei|nokia|realme|itel|redmi|téléphone portable|telephone/.test(n)) return 'smartphones';
-  if (/laptop|ordinateur|macbook|lenovo|dell|pc bureau|asus|acer|imprimante|clavier|souris|disque dur|ssd|moniteur|routeur|tablette/.test(n)) return 'informatique';
-  if (/television|tv \d|réfrigér|refriger|climatiseur|clim |split |lave.linge|congélateur|congelateur|ventilateur|four élec|micro.onde|chauffe.eau|air fryer|friteuse|induction|plaque de cuisson/.test(n)) return 'tv-electro';
-  if (/écouteur|ecouteur|casque audio|airpod|tws|enceinte bluetooth|speaker|hifi|sono|microphone/.test(n)) return 'audio';
-  if (/canapé|canape|chaise |matelas|armoire|meuble|fontaine/.test(n)) return 'maison';
-  if (/robe |chaussure|sac à main|sac a main|chemise |pantalon|sneaker|basket |parfum|eau de toilette|jean homme|t-shirt/.test(n)) return 'mode';
-  if (/voiture|moto |scooter|trottinette|pièce auto|batterie voiture/.test(n)) return 'auto-moto';
-  if (/playstation|xbox|nintendo|manette|jeu vidéo|gaming/.test(n)) return 'jeux';
-  if (/frigo|réfrigér|refriger/.test(n)) return 'tv-electro';
+  // Électroménager / TV (avant smartphones pour éviter "Samsung TV")
+  if (/television|tv \d|\btv\b.*\d+.*pouce|réfrigér|refriger|climatiseur|clim |split |lave[- ]linge|congéla|congelat|ventilateur|four (elec|à micro)|micro[- ]onde|chauffe[- ]eau|air fryer|friteuse|induction|plaque de cuisson/.test(n)) return 'tv-electro';
+  // Audio (avant smartphones pour éviter "écouteur bluetooth samsung")
+  if (/écouteur|ecouteur|casque (audio|bluetooth|sans fil)|airpod|\btws\b|enceinte (bluetooth|portable|sans fil)|\bspeaker\b|sono |sonos|hifi|home cinema|barre de son/.test(n)) return 'audio';
+  // Smartphones — marques + mots-clés phone
+  if (/\bgalaxy\b|iphone|xiaomi|tecno|infinix|oppo|realme|\bitel\b|redmi|smartphone|téléphone portable|telephone portable|4g.*gb|128gb|256gb/.test(n)) return 'smartphones';
+  if (/huawei (p|y|nova|mate)|nokia \d/.test(n)) return 'smartphones';
+  // Informatique
+  if (/laptop|ordinateur|macbook|lenovo|dell |\bpc \b|asus|acer|imprimante|clavier |souris (sans|usb)|disque dur|\bssd\b|moniteur|\brouteur\b|tablette (android|windows)/.test(n)) return 'informatique';
+  // Maison
+  if (/canapé|canape|\bchaise\b|matelas|armoire|\bmeuble\b|fontaine/.test(n)) return 'maison';
+  // Mode
+  if (/\brobe\b|\bchaussure|sac (à|a) main|chemise |\bpantalon\b|sneaker|\bbasket\b|parfum\b|eau de toilette|jean homme|t-shirt/.test(n)) return 'mode';
+  // Auto-moto
+  if (/voiture|moto |\bscooter\b|trottinette|pièce auto|piece auto/.test(n)) return 'auto-moto';
+  // Jeux
+  if (/playstation|\bps[45]\b|\bxbox\b|nintendo|manette jeu|jeu vidéo|gaming/.test(n)) return 'jeux';
   return '';
 }
 
 // ── Carte grille ─────────────────────────────────────────────────
 function carteHTML(p) {
+  _productCache[p.id] = { nom: p.nom, image_url: p.image_url };
   var enCompare = state.comparer.indexOf(p.id) !== -1;
   var enFavori  = state.favoris.indexOf(p.id) !== -1;
   var economie  = p.prix_max && p.prix_min && p.prix_max > p.prix_min
@@ -550,7 +562,7 @@ function carteHTML(p) {
         '</div>',
         '<div style="display:flex;gap:6px;margin-top:8px">',
           '<button class="btn-voir" style="flex:1">Comparer →</button>',
-          '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\',\'' + (p.categorie_id||_inferCat(p.nom||'')) + '\')" ' +
+          '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\')" ' +
             'title="' + (enCompare ? 'Retirer de la comparaison' : 'Ajouter à la comparaison') + '" ' +
             'style="padding:6px 8px;border-radius:6px;border:1px solid ' + (enCompare ? '#1d4ed8' : '#e2e8f0') + ';' +
             'background:' + (enCompare ? '#eff6ff' : '#fff') + ';cursor:pointer;font-size:14px">⚖</button>',
@@ -1587,30 +1599,33 @@ async function ouvrirComparaison() {
 }
 
 // ── Mode comparaison ─────────────────────────────────────────────
-function toggleComparer(id, catId) {
+var _NOMS_CAT = {
+  'smartphones':'smartphones', 'informatique':'informatique',
+  'tv-electro':'TV / Électroménager', 'audio':'audio / son',
+  'maison':'maison / meubles', 'mode':'mode / vêtements',
+  'auto-moto':'auto-moto', 'jeux':'jeux vidéo',
+};
+
+function toggleComparer(id) {
   var idx = state.comparer.indexOf(id);
   if (idx !== -1) {
     state.comparer.splice(idx, 1);
     if (!state.comparer.length) state.comparerCat = '';
   } else {
     if (state.comparer.length >= 4) { toast('Maximum 4 produits à comparer', '#f97316'); return; }
-    // Contrôle cohérence catégorie (catId_db OU inféré depuis le nom)
-    var effCat = catId || '';
+    // Catégorie inférée uniquement depuis le nom (cohérence garantie entre produits)
+    var meta   = _productCache[id] || {};
+    var effCat = _inferCat(meta.nom || '');
     if (effCat && state.comparerCat && state.comparerCat !== effCat) {
-      var _NOMS_CAT = {
-        'smartphones':'smartphones', 'informatique':'informatique',
-        'tv-electro':'TV / Électroménager', 'audio':'audio / son',
-        'maison':'maison / meubles', 'mode':'mode / vêtements',
-        'auto-moto':'auto-moto', 'jeux':'jeux vidéo',
-      };
       var nomCatActuelle = _NOMS_CAT[state.comparerCat] || state.comparerCat;
-      toast('⚠ Catégorie incompatible — tu compares déjà des produits de type "' + nomCatActuelle + '"', '#ef4444');
+      toast('⚠ Type incompatible — sélection en cours : "' + nomCatActuelle + '"', '#ef4444');
       return;
     }
     state.comparer.push(id);
     if (effCat && !state.comparerCat) state.comparerCat = effCat;
   }
   updateNavCompare();
+  updateCompareBar();
   if (state.currentPage === 'home') {
     chargerProduits(state.query, state.categorie, state.page);
   }
@@ -1620,6 +1635,7 @@ function viderComparaison() {
   state.comparer = [];
   state.comparerCat = '';
   updateNavCompare();
+  updateCompareBar();
   toast('Sélection vidée', '#64748b');
   if (state.currentPage === 'compare') retourListe();
 }
@@ -1981,6 +1997,36 @@ function updateNavCompare() {
   btn.style.display = show ? 'inline-block' : 'none';
   if (vid) vid.style.display = show ? 'inline-block' : 'none';
   if (cnt) cnt.textContent = state.comparer.length;
+  updateCompareBar();
+}
+
+function updateCompareBar() {
+  var bar    = document.getElementById('compare-bar');
+  var items  = document.getElementById('compare-bar-items');
+  var barBtn = document.getElementById('compare-bar-btn');
+  if (!bar) return;
+  if (!state.comparer.length) {
+    bar.style.display = 'none';
+    document.body.style.paddingBottom = '';
+    return;
+  }
+  bar.style.display = 'flex';
+  document.body.style.paddingBottom = '72px';
+  if (barBtn) barBtn.textContent = state.comparer.length >= 2 ? '⚖ Comparer (' + state.comparer.length + ')' : 'Ajouter 1 produit →';
+  if (items) {
+    items.innerHTML = state.comparer.map(function(id) {
+      var m   = _productCache[id] || {};
+      var nom = m.nom ? (m.nom.length > 28 ? m.nom.slice(0, 28) + '…' : m.nom) : '…';
+      return '<div style="display:inline-flex;align-items:center;gap:5px;background:#fff7ed;border:1px solid #fed7aa;' +
+        'border-radius:8px;padding:4px 8px 4px 6px;flex-shrink:0;max-width:200px">' +
+        (m.image_url
+          ? '<img src="' + m.image_url + '" style="width:22px;height:22px;object-fit:contain;flex-shrink:0">'
+          : '<span style="font-size:14px">📦</span>') +
+        '<span style="font-size:11px;font-weight:600;color:#1e293b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + nom + '</span>' +
+        '<button onclick="toggleComparer(\'' + id + '\')" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;line-height:1;padding:0 0 0 2px;flex-shrink:0">×</button>' +
+      '</div>';
+    }).join('');
+  }
 }
 
 function updateNavFavoris() {
@@ -2008,6 +2054,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (compareParam) {
     state.comparer = compareParam.split(',').filter(Boolean).slice(0, 4);
     updateNavCompare();
+    updateCompareBar();
   }
   goHome();
 });
@@ -2564,6 +2611,7 @@ function afficherGuideResultats(triPar) {
       // Grille résultats (2 colonnes sur desktop)
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:10px">',
         top.map(function(p, i) {
+          _productCache[p.id] = { nom: p.nom, image_url: p.image_url };
           var medal      = i===0?'🥇':i===1?'🥈':i===2?'🥉':'<span style="font-size:13px;font-weight:700;color:#94a3b8">'+(i+1)+'</span>';
           var scoreColor = p._score>=7?'#10b981':p._score>=5?'#f97316':'#ef4444';
           var enCompare  = state.comparer.indexOf(p.id) !== -1;
@@ -2601,7 +2649,7 @@ function afficherGuideResultats(triPar) {
                   poidsDispo > 1 ? _barreScore('Dispo', p._sDispo, '#f97316') : '',
                 '</div>',
                 '<div style="display:flex;gap:5px">',
-                  '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\',\'' + (p.categorie_id||_inferCat(p.nom||'')) + '\')" ',
+                  '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\')" ',
                     'style="padding:4px 9px;border-radius:6px;border:1px solid '+(enCompare?'#1d4ed8':'#e2e8f0')+';',
                     'background:'+(enCompare?'#eff6ff':'#fff')+';cursor:pointer;font-size:11px;font-weight:700;',
                     'color:'+(enCompare?'#1d4ed8':'#475569')+';white-space:nowrap">',
