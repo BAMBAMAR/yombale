@@ -513,24 +513,36 @@ function htmlBarre(data) {
 // Priorités ordonnées : les plus spécifiques en premier
 function _inferCat(nom) {
   if (!nom) return '';
-  var n = nom.toLowerCase();
-  // Électroménager / TV (avant smartphones pour éviter "Samsung TV")
-  if (/television|tv \d|\btv\b.*\d+.*pouce|réfrigér|refriger|climatiseur|clim |split |lave[- ]linge|congéla|congelat|ventilateur|four (elec|à micro)|micro[- ]onde|chauffe[- ]eau|air fryer|friteuse|induction|plaque de cuisson/.test(n)) return 'tv-electro';
-  // Audio (avant smartphones pour éviter "écouteur bluetooth samsung")
-  if (/écouteur|ecouteur|casque (audio|bluetooth|sans fil)|airpod|\btws\b|enceinte (bluetooth|portable|sans fil)|\bspeaker\b|sono |sonos|hifi|home cinema|barre de son/.test(n)) return 'audio';
-  // Smartphones — marques + mots-clés phone
-  if (/\bgalaxy\b|iphone|xiaomi|tecno|infinix|oppo|realme|\bitel\b|redmi|smartphone|téléphone portable|telephone portable|4g.*gb|128gb|256gb/.test(n)) return 'smartphones';
-  if (/huawei (p|y|nova|mate)|nokia \d/.test(n)) return 'smartphones';
-  // Informatique
-  if (/laptop|ordinateur|macbook|lenovo|dell |\bpc \b|asus|acer|imprimante|clavier |souris (sans|usb)|disque dur|\bssd\b|moniteur|\brouteur\b|tablette (android|windows)/.test(n)) return 'informatique';
-  // Maison
-  if (/canapé|canape|\bchaise\b|matelas|armoire|\bmeuble\b|fontaine/.test(n)) return 'maison';
-  // Mode
-  if (/\brobe\b|\bchaussure|sac (à|a) main|chemise |\bpantalon\b|sneaker|\bbasket\b|parfum\b|eau de toilette|jean homme|t-shirt/.test(n)) return 'mode';
-  // Auto-moto
-  if (/voiture|moto |\bscooter\b|trottinette|pièce auto|piece auto/.test(n)) return 'auto-moto';
-  // Jeux
-  if (/playstation|\bps[45]\b|\bxbox\b|nintendo|manette jeu|jeu vidéo|gaming/.test(n)) return 'jeux';
+  var n = nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+  // 1. Électroménager / TV — en premier (évite "Samsung TV" → smartphones)
+  if (/\bclimatiseur\b|\bclim\b|split\s+\d|split\s+inv|lave[- ]linge|machine.{0,6}laver|refrigerat|refriger|frigo\b|congelat|television|\btv\s+\d|\btv\b.{0,6}pouce|led\s+tv|ventilateur|four\s+(elec|micro|gaz)|micro[- ]?onde|chauffe[- ]?eau|air\s+fryer|friteuse|induction|plaque\s+de\s+cuisson/.test(n)) return 'tv-electro';
+
+  // 2. Audio — avant smartphones
+  if (/ecouteur|casque\s+(audio|bluetooth|sans[- ]fil|anc|noise)|airpods?|\btws\b|enceinte\s+(bluetooth|portable|sans[- ]fil|connectee)|\bspeaker\b|barre\s+de\s+son|\bsono\b|\bhifi\b|home\s+cinema/.test(n)) return 'audio';
+
+  // 3. Tablettes — AVANT smartphones pour intercepter "Galaxy Tab", "Samsung Tab"
+  if (/galaxy\s*tab|samsung\s*tab|\btablette\b|\bipad\b/i.test(n)) return 'informatique';
+
+  // 4. Smartphones — marques téléphonie + mots-clés
+  if (/\bgalaxy\b|iphone|xiaomi|tecno|infinix|oppo|realme|\bitel\b|redmi|smartphone|telephone\s+portable|4g.{0,8}gb|128gb|256gb/.test(n)) return 'smartphones';
+  if (/huawei\s+(p\d|y\d|nova|mate)|nokia\s+\d/.test(n)) return 'smartphones';
+
+  // 5. Informatique
+  if (/\blaptop\b|ordinateur|macbook|chromebook|lenovo|dell\s|\bpc\s|\basus\b|\bacer\b|imprimante|clavier\s+(sans|usb)|souris\s+(sans|usb)|disque\s+dur|\bssd\b|moniteur|routeur/.test(n)) return 'informatique';
+
+  // 6. Maison
+  if (/canape|\bchaise\b|matelas|\blit\s|\barmoire\b|\bmeuble\b|fontaine/.test(n)) return 'maison';
+
+  // 7. Mode
+  if (/\brobe\b|chaussure|sac\s+.{0,3}main|chemise\s|\bpantalon\b|sneaker|\bbasket\b|parfum\b|eau\s+de\s+toilette|jean\s+homme|t-shirt/.test(n)) return 'mode';
+
+  // 8. Auto-moto
+  if (/\bvoiture\b|moto\s|\bscooter\b|trottinette|piece\s+auto/.test(n)) return 'auto-moto';
+
+  // 9. Jeux
+  if (/playstation|\bps[45]\b|\bxbox\b|nintendo|manette\s+jeu|jeu\s+video|gaming/.test(n)) return 'jeux';
+
   return '';
 }
 
@@ -562,7 +574,7 @@ function carteHTML(p) {
         '</div>',
         '<div style="display:flex;gap:6px;margin-top:8px">',
           '<button class="btn-voir" style="flex:1">Comparer →</button>',
-          '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\')" ' +
+          '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\',\'' + _inferCat(p.nom||'') + '\')" ' +
             'title="' + (enCompare ? 'Retirer de la comparaison' : 'Ajouter à la comparaison') + '" ' +
             'style="padding:6px 8px;border-radius:6px;border:1px solid ' + (enCompare ? '#1d4ed8' : '#e2e8f0') + ';' +
             'background:' + (enCompare ? '#eff6ff' : '#fff') + ';cursor:pointer;font-size:14px">⚖</button>',
@@ -1606,16 +1618,15 @@ var _NOMS_CAT = {
   'auto-moto':'auto-moto', 'jeux':'jeux vidéo',
 };
 
-function toggleComparer(id) {
+function toggleComparer(id, catKeyFallback) {
   var idx = state.comparer.indexOf(id);
   if (idx !== -1) {
     state.comparer.splice(idx, 1);
     if (!state.comparer.length) state.comparerCat = '';
   } else {
     if (state.comparer.length >= 4) { toast('Maximum 4 produits à comparer', '#f97316'); return; }
-    // Catégorie inférée uniquement depuis le nom (cohérence garantie entre produits)
     var meta   = _productCache[id] || {};
-    var effCat = _inferCat(meta.nom || '');
+    var effCat = _inferCat(meta.nom || '') || catKeyFallback || '';
     if (effCat && state.comparerCat && state.comparerCat !== effCat) {
       var nomCatActuelle = _NOMS_CAT[state.comparerCat] || state.comparerCat;
       toast('⚠ Type incompatible — sélection en cours : "' + nomCatActuelle + '"', '#ef4444');
@@ -2649,7 +2660,7 @@ function afficherGuideResultats(triPar) {
                   poidsDispo > 1 ? _barreScore('Dispo', p._sDispo, '#f97316') : '',
                 '</div>',
                 '<div style="display:flex;gap:5px">',
-                  '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\')" ',
+                  '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\',\'' + _inferCat(p.nom||'') + '\')" ',
                     'style="padding:4px 9px;border-radius:6px;border:1px solid '+(enCompare?'#1d4ed8':'#e2e8f0')+';',
                     'background:'+(enCompare?'#eff6ff':'#fff')+';cursor:pointer;font-size:11px;font-weight:700;',
                     'color:'+(enCompare?'#1d4ed8':'#475569')+';white-space:nowrap">',
