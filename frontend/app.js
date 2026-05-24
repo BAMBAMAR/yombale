@@ -2168,6 +2168,7 @@ function fermerInfoPage() {
 // ═══════════════════════════════════════════════════════════════
 
 var _guidePrefs = {
+  q:          '',
   categorie:  '',
   budgetMin:  '',
   budgetMax:  '',
@@ -2220,6 +2221,15 @@ function ouvrirGuideAchat() {
       // ── Paramètres ──
       '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px;margin-bottom:20px">',
         '<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px">Paramètres personnalisés</div>',
+
+        // Recherche libre
+        '<div style="margin-bottom:14px">',
+          '<label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:5px">🔍 Que recherchez-vous ?</label>',
+          '<input id="guide-q" type="text" placeholder="ex: smartphone Samsung, TV 55 pouces, frigo 300L..." ',
+            'value="' + (_guidePrefs.q||'') + '" ',
+            'style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box" ',
+            'onkeydown="if(event.key===\'Enter\')lancerGuideAchat()">',
+        '</div>',
 
         // Catégorie
         '<div style="margin-bottom:14px">',
@@ -2306,6 +2316,7 @@ function appliquerProfilGuide(profilId) {
 }
 
 async function lancerGuideAchat() {
+  var q         = ((document.getElementById('guide-q')          || {}).value || '').trim();
   var cat       = (document.getElementById('guide-cat')        || {}).value || '';
   var budgetMin = parseInt((document.getElementById('guide-min') || {}).value || '0') || null;
   var budgetMax = parseInt((document.getElementById('guide-max') || {}).value || '0') || null;
@@ -2313,7 +2324,7 @@ async function lancerGuideAchat() {
   var poidsSpecs = parseInt((document.getElementById('guide-poids-specs') || {}).value || '3');
   var poidsDispo = parseInt((document.getElementById('guide-poids-dispo') || {}).value || '2');
 
-  _guidePrefs = { categorie: cat, budgetMin: budgetMin||'', budgetMax: budgetMax||'',
+  _guidePrefs = { q: q, categorie: cat, budgetMin: budgetMin||'', budgetMax: budgetMax||'',
                   poidsPrix: poidsPrix, poidsSpecs: poidsSpecs, poidsDispo: poidsDispo,
                   profilActif: _guidePrefs.profilActif };
 
@@ -2322,7 +2333,7 @@ async function lancerGuideAchat() {
 
   try {
     var params = new URLSearchParams({
-      categorie: cat, limit: 48, page: 1,
+      q: q || '', categorie: cat, limit: 48, page: 1,
       prixMin: budgetMin || '', prixMax: budgetMax || '',
       tri: 'pertinence',
     });
@@ -2462,11 +2473,11 @@ async function lancerGuideAchat() {
         }).join('') +
 
         // Bouton comparer la sélection
-        state.comparer.length >= 2
+        (state.comparer.length >= 2
           ? '<div style="text-align:center;margin-top:16px">' +
               '<button onclick="ouvrirComparaison()" style="padding:12px 32px;background:#f97316;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">⚖ Comparer les ' + state.comparer.length + ' produits sélectionnés →</button>' +
             '</div>'
-          : '<p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:12px">Clique sur ⚖ Comparer pour ajouter des produits à la comparaison côte à côte.</p>',
+          : '<p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:12px">Clique sur ⚖ Comparer pour ajouter des produits à la comparaison côte à côte.</p>'),
 
       '</div>',
     ].join('');
