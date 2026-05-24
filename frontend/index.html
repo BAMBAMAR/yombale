@@ -20,6 +20,8 @@
       <button onclick="loadPromos()">Promos</button>
       <button onclick="ouvrirGuideAchat()" id="nav-btn-guide">🏆 Meilleur choix</button>
       <button id="nav-btn-comparer" onclick="ouvrirComparaisonNav()" style="display:none;background:#f97316;color:#fff;border-radius:8px;padding:6px 14px;border:none;font-weight:700;cursor:pointer">⚖ Comparer (<span id="nav-compare-count">0</span>)</button>
+      <button id="nav-btn-vider" onclick="viderComparaison()" style="display:none;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer" title="Vider la sélection">✕ Vider</button>
+      <button onclick="afficherFavoris()" id="nav-btn-favoris" style="background:none;border:none;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;color:#64748b;cursor:pointer;display:none" title="Mes favoris">❤ <span id="nav-favoris-count">0</span></button>
     </div>
     <div class="nav-right">
       <select id="city-sel" onchange="changeVille(this.value)">
@@ -41,6 +43,26 @@
   </main>
 
   <div class="toast" id="toast"></div>
+
+  <!-- Barre de comparaison sticky (bas d'écran) -->
+  <div id="compare-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;
+    background:#fff;border-top:2.5px solid #f97316;box-shadow:0 -4px 24px rgba(0,0,0,.13);
+    padding:10px 5%;align-items:center;gap:12px;flex-wrap:wrap">
+    <span style="font-size:12px;font-weight:800;color:#f97316;white-space:nowrap;flex-shrink:0">⚖ Sélection</span>
+    <div id="compare-bar-items" style="flex:1;display:flex;gap:7px;overflow-x:auto;min-width:0;padding:2px 0"></div>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button id="compare-bar-btn" onclick="ouvrirComparaisonNav()"
+        style="padding:8px 18px;background:#f97316;color:#fff;border:none;border-radius:9px;
+               font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+        ⚖ Comparer (0)
+      </button>
+      <button onclick="viderComparaison()"
+        style="padding:8px 14px;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;
+               border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+        ✕ Vider
+      </button>
+    </div>
+  </div>
 
   <script src="/app.js?v=7"></script>
   <script>
