@@ -1408,8 +1408,8 @@ async function ouvrirComparaison() {
     });
 
     // Styles partagés
-    var COL  = 'flex:1;min-width:130px;padding:10px 8px;text-align:center;border-left:1px solid #f1f5f9;';
-    var LBL  = 'width:110px;flex-shrink:0;padding:10px 12px;font-size:12px;color:#64748b;font-weight:600;display:flex;align-items:center;';
+    var COL  = 'flex:1;min-width:150px;padding:12px 10px;text-align:center;border-left:1px solid #f1f5f9;';
+    var LBL  = 'width:130px;flex-shrink:0;padding:12px 14px;font-size:12px;color:#64748b;font-weight:600;display:flex;align-items:center;';
     var ROW  = 'display:flex;border-bottom:1px solid #f1f5f9;';
     var SECT = 'display:flex;align-items:center;background:#f8fafc;padding:8px 12px;font-size:10px;font-weight:800;color:#475569;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid #e2e8f0;';
 
@@ -1554,7 +1554,7 @@ async function ouvrirComparaison() {
     if (prefs.budgetMax) filtresActifs.push('Budget ≤ ' + (+prefs.budgetMax).toLocaleString('fr-FR') + ' FCFA');
 
     render([
-      '<div style="padding:16px 4%;max-width:920px;margin:0 auto">',
+      '<div style="padding:16px 5% 80px">',
         // Barre de titre
         '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">',
           '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;padding:0">← Retour</button>',
