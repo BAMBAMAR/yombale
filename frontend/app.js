@@ -506,6 +506,23 @@ function htmlBarre(data) {
   '</div>';
 }
 
+// ── Inférence de catégorie depuis le nom produit ─────────────────
+// Utilisé quand categorie_id est NULL en base, pour bloquer la comparaison incohérente
+function _inferCat(nom) {
+  if (!nom) return '';
+  var n = nom.toLowerCase();
+  if (/smartphone|iphone|samsung galaxy|xiaomi|tecno|infinix|oppo|huawei|nokia|realme|itel|redmi|téléphone portable|telephone/.test(n)) return 'smartphones';
+  if (/laptop|ordinateur|macbook|lenovo|dell|pc bureau|asus|acer|imprimante|clavier|souris|disque dur|ssd|moniteur|routeur|tablette/.test(n)) return 'informatique';
+  if (/television|tv \d|réfrigér|refriger|climatiseur|clim |split |lave.linge|congélateur|congelateur|ventilateur|four élec|micro.onde|chauffe.eau|air fryer|friteuse|induction|plaque de cuisson/.test(n)) return 'tv-electro';
+  if (/écouteur|ecouteur|casque audio|airpod|tws|enceinte bluetooth|speaker|hifi|sono|microphone/.test(n)) return 'audio';
+  if (/canapé|canape|chaise |matelas|armoire|meuble|fontaine/.test(n)) return 'maison';
+  if (/robe |chaussure|sac à main|sac a main|chemise |pantalon|sneaker|basket |parfum|eau de toilette|jean homme|t-shirt/.test(n)) return 'mode';
+  if (/voiture|moto |scooter|trottinette|pièce auto|batterie voiture/.test(n)) return 'auto-moto';
+  if (/playstation|xbox|nintendo|manette|jeu vidéo|gaming/.test(n)) return 'jeux';
+  if (/frigo|réfrigér|refriger/.test(n)) return 'tv-electro';
+  return '';
+}
+
 // ── Carte grille ─────────────────────────────────────────────────
 function carteHTML(p) {
   var enCompare = state.comparer.indexOf(p.id) !== -1;
@@ -533,7 +550,7 @@ function carteHTML(p) {
         '</div>',
         '<div style="display:flex;gap:6px;margin-top:8px">',
           '<button class="btn-voir" style="flex:1">Comparer →</button>',
-          '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\',\'' + (p.categorie_id||'') + '\')" ' +
+          '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\',\'' + (p.categorie_id||_inferCat(p.nom||'')) + '\')" ' +
             'title="' + (enCompare ? 'Retirer de la comparaison' : 'Ajouter à la comparaison') + '" ' +
             'style="padding:6px 8px;border-radius:6px;border:1px solid ' + (enCompare ? '#1d4ed8' : '#e2e8f0') + ';' +
             'background:' + (enCompare ? '#eff6ff' : '#fff') + ';cursor:pointer;font-size:14px">⚖</button>',
@@ -1577,13 +1594,21 @@ function toggleComparer(id, catId) {
     if (!state.comparer.length) state.comparerCat = '';
   } else {
     if (state.comparer.length >= 4) { toast('Maximum 4 produits à comparer', '#f97316'); return; }
-    // Contrôle cohérence catégorie
-    if (catId && state.comparerCat && state.comparerCat !== catId) {
-      toast('⚠ Comparez des produits similaires — un frigo avec un frigo, pas avec un téléphone', '#ef4444');
+    // Contrôle cohérence catégorie (catId_db OU inféré depuis le nom)
+    var effCat = catId || '';
+    if (effCat && state.comparerCat && state.comparerCat !== effCat) {
+      var _NOMS_CAT = {
+        'smartphones':'smartphones', 'informatique':'informatique',
+        'tv-electro':'TV / Électroménager', 'audio':'audio / son',
+        'maison':'maison / meubles', 'mode':'mode / vêtements',
+        'auto-moto':'auto-moto', 'jeux':'jeux vidéo',
+      };
+      var nomCatActuelle = _NOMS_CAT[state.comparerCat] || state.comparerCat;
+      toast('⚠ Catégorie incompatible — tu compares déjà des produits de type "' + nomCatActuelle + '"', '#ef4444');
       return;
     }
     state.comparer.push(id);
-    if (catId && !state.comparerCat) state.comparerCat = catId;
+    if (effCat && !state.comparerCat) state.comparerCat = effCat;
   }
   updateNavCompare();
   if (state.currentPage === 'home') {
@@ -2576,7 +2601,7 @@ function afficherGuideResultats(triPar) {
                   poidsDispo > 1 ? _barreScore('Dispo', p._sDispo, '#f97316') : '',
                 '</div>',
                 '<div style="display:flex;gap:5px">',
-                  '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\',\'' + (p.categorie_id||'') + '\')" ',
+                  '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\',\'' + (p.categorie_id||_inferCat(p.nom||'')) + '\')" ',
                     'style="padding:4px 9px;border-radius:6px;border:1px solid '+(enCompare?'#1d4ed8':'#e2e8f0')+';',
                     'background:'+(enCompare?'#eff6ff':'#fff')+';cursor:pointer;font-size:11px;font-weight:700;',
                     'color:'+(enCompare?'#1d4ed8':'#475569')+';white-space:nowrap">',
