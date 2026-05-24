@@ -62,14 +62,25 @@ router.get('/', async (req, res) => {
     const total = parseInt(result.rows[0]?.total_count || 0, 10);
 
     // Correction des prix_min aberrants sur les cartes produits
-    // Utilise le prix_max comme référence : si prix_min << prix_max, corriger
     result.rows.forEach(p => {
-      const pMin = parseFloat(p.prix_min);
+      let pMin = parseFloat(p.prix_min);
       const pMax = parseFloat(p.prix_max);
-      if (pMin > 0 && pMax > 0) {
+      if (pMin <= 0) return;
+
+      // 1. Correction ratio inter-offres (plusieurs offres avec écart ×50+)
+      if (pMax > 0) {
         const ratio = pMax / pMin;
-        if (ratio >= 50 && ratio < 500)       p.prix_min = pMin * 100;
-        else if (ratio >= 500 && ratio < 5000) p.prix_min = pMin * 1000;
+        if (ratio >= 50 && ratio < 500)       { p.prix_min = pMin * 100;  return; }
+        else if (ratio >= 500 && ratio < 5000) { p.prix_min = pMin * 1000; return; }
+      }
+
+      // 2. Correction plancher sur le nom produit (fonctionne même sur offre unique)
+      const plancher = prixPlancher(p.nom || '');
+      if (plancher && pMin < plancher) {
+        const p100  = pMin * 100;
+        const p1000 = pMin * 1000;
+        if      (p100  >= plancher && p100  <= plancher * 30) p.prix_min = p100;
+        else if (p1000 >= plancher && p1000 <= plancher * 30) p.prix_min = p1000;
       }
     });
 
