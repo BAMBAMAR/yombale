@@ -27,6 +27,9 @@ var state = {
   prixMin:   '',
   vue:       'grille',         // grille | liste
   comparer:  [],               // ids sélectionnés pour comparaison côte-à-côte
+  comparerCat: '',             // catégorie_id commune des produits en comparaison
+  favoris:   JSON.parse(localStorage.getItem('yomb_favoris') || '[]'),
+  currentPage: 'home',
   recents:   JSON.parse(localStorage.getItem('yomb_recents') || '[]'),
   comparePrefs: Object.assign({}, _prefsDefaut,
     JSON.parse(localStorage.getItem('yomb_compare_prefs') || '{}')),
@@ -187,6 +190,7 @@ function chargerProduits(query, categorie, page) {
   query     = query     !== undefined ? query     : state.query;
   categorie = categorie !== undefined ? categorie : state.categorie;
   state.query = query; state.categorie = categorie; state.page = page;
+  state.currentPage = 'home';
 
   dbg('chargerProduits', { q: query, cat: categorie, page: page });
 
@@ -505,6 +509,7 @@ function htmlBarre(data) {
 // ── Carte grille ─────────────────────────────────────────────────
 function carteHTML(p) {
   var enCompare = state.comparer.indexOf(p.id) !== -1;
+  var enFavori  = state.favoris.indexOf(p.id) !== -1;
   var economie  = p.prix_max && p.prix_min && p.prix_max > p.prix_min
                 ? Math.round((1 - p.prix_min / p.prix_max) * 100) : 0;
   return [
@@ -528,10 +533,15 @@ function carteHTML(p) {
         '</div>',
         '<div style="display:flex;gap:6px;margin-top:8px">',
           '<button class="btn-voir" style="flex:1">Comparer →</button>',
-          '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\')" ' +
-            'title="' + (enCompare ? 'Retirer' : 'Ajouter à la comparaison') + '" ' +
+          '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\',\'' + (p.categorie_id||'') + '\')" ' +
+            'title="' + (enCompare ? 'Retirer de la comparaison' : 'Ajouter à la comparaison') + '" ' +
             'style="padding:6px 8px;border-radius:6px;border:1px solid ' + (enCompare ? '#1d4ed8' : '#e2e8f0') + ';' +
             'background:' + (enCompare ? '#eff6ff' : '#fff') + ';cursor:pointer;font-size:14px">⚖</button>',
+          '<button onclick="event.stopPropagation();toggleFavori(\'' + p.id + '\')" ' +
+            'title="' + (enFavori ? 'Retirer des favoris' : 'Ajouter aux favoris') + '" ' +
+            'style="padding:6px 8px;border-radius:6px;border:1px solid ' + (enFavori ? '#ef4444' : '#e2e8f0') + ';' +
+            'background:' + (enFavori ? '#fef2f2' : '#fff') + ';cursor:pointer;font-size:14px">' +
+            (enFavori ? '❤' : '🤍') + '</button>',
         '</div>',
       '</div>',
     '</div>',
@@ -1330,6 +1340,7 @@ function htmlParametres() {
 // ── Comparaison principale ────────────────────────────────────────
 async function ouvrirComparaison() {
   if (state.comparer.length < 2) { toast('Sélectionne au moins 2 produits ⚖', '#f97316'); return; }
+  state.currentPage = 'compare';
   render('<div class="loader"><div class="spin"></div><p>Préparation de la comparaison...</p></div>');
   try {
     // Charger produit + offres + historique en parallèle pour chaque produit
@@ -1522,7 +1533,8 @@ async function ouvrirComparaison() {
           filtresActifs.length ? '<span style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-weight:600">'+filtresActifs.join(' · ')+'</span>' : '',
           '<div style="margin-left:auto;display:flex;gap:8px">',
             '<button onclick="state.comparePrefsOpen=!state.comparePrefsOpen;ouvrirComparaison()" style="padding:6px 12px;background:'+(state.comparePrefsOpen?'#1d4ed8':'#f1f5f9')+';color:'+(state.comparePrefsOpen?'#fff':'#64748b')+';border:1px solid '+(state.comparePrefsOpen?'#1d4ed8':'#e2e8f0')+';border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">⚙ Paramètres</button>',
-            '<button onclick="state.comparer=[];retourListe()" style="padding:6px 12px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer">✕ Vider</button>',
+            '<button onclick="partagerComparaison()" style="padding:6px 12px;background:#f0fdf4;color:#059669;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">📤 Partager</button>',
+            '<button onclick="viderComparaison()" style="padding:6px 12px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer">✕ Vider</button>',
           '</div>',
         '</div>',
         // Panneau paramètres (conditionnel)
@@ -1558,12 +1570,49 @@ async function ouvrirComparaison() {
 }
 
 // ── Mode comparaison ─────────────────────────────────────────────
-function toggleComparer(id) {
+function toggleComparer(id, catId) {
   var idx = state.comparer.indexOf(id);
-  if (idx !== -1) { state.comparer.splice(idx, 1); }
-  else { if (state.comparer.length >= 4) { toast('Maximum 4 produits à comparer', '#f97316'); return; } state.comparer.push(id); }
+  if (idx !== -1) {
+    state.comparer.splice(idx, 1);
+    if (!state.comparer.length) state.comparerCat = '';
+  } else {
+    if (state.comparer.length >= 4) { toast('Maximum 4 produits à comparer', '#f97316'); return; }
+    // Contrôle cohérence catégorie
+    if (catId && state.comparerCat && state.comparerCat !== catId) {
+      toast('⚠ Comparez des produits similaires — un frigo avec un frigo, pas avec un téléphone', '#ef4444');
+      return;
+    }
+    state.comparer.push(id);
+    if (catId && !state.comparerCat) state.comparerCat = catId;
+  }
   updateNavCompare();
-  chargerProduits(state.query, state.categorie, state.page);
+  if (state.currentPage === 'home') {
+    chargerProduits(state.query, state.categorie, state.page);
+  }
+}
+
+function viderComparaison() {
+  state.comparer = [];
+  state.comparerCat = '';
+  updateNavCompare();
+  toast('Sélection vidée', '#64748b');
+  if (state.currentPage === 'compare') retourListe();
+}
+
+function toggleFavori(id) {
+  var idx = state.favoris.indexOf(id);
+  if (idx !== -1) {
+    state.favoris.splice(idx, 1);
+    toast('Retiré des favoris', '#64748b');
+  } else {
+    state.favoris.push(id);
+    toast('Ajouté aux favoris ❤', '#ef4444');
+  }
+  localStorage.setItem('yomb_favoris', JSON.stringify(state.favoris));
+  updateNavFavoris();
+  if (state.currentPage === 'home') {
+    chargerProduits(state.query, state.categorie, state.page);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1900,14 +1949,21 @@ function updateNavUser() {
 
 function updateNavCompare() {
   var btn = document.getElementById('nav-btn-comparer');
+  var vid = document.getElementById('nav-btn-vider');
   var cnt = document.getElementById('nav-compare-count');
   if (!btn) return;
-  if (state.comparer.length > 0) {
-    btn.style.display = 'inline-block';
-    if (cnt) cnt.textContent = state.comparer.length;
-  } else {
-    btn.style.display = 'none';
-  }
+  var show = state.comparer.length > 0;
+  btn.style.display = show ? 'inline-block' : 'none';
+  if (vid) vid.style.display = show ? 'inline-block' : 'none';
+  if (cnt) cnt.textContent = state.comparer.length;
+}
+
+function updateNavFavoris() {
+  var btn = document.getElementById('nav-btn-favoris');
+  var cnt = document.getElementById('nav-favoris-count');
+  if (!btn) return;
+  btn.style.display = state.favoris.length > 0 ? 'inline-block' : 'none';
+  if (cnt) cnt.textContent = state.favoris.length;
 }
 
 function ouvrirComparaisonNav() {
@@ -1920,6 +1976,14 @@ function ouvrirComparaisonNav() {
 
 document.addEventListener('DOMContentLoaded', function() {
   dbg('DOMContentLoaded');
+  updateNavFavoris();
+  // Restaurer comparaison depuis URL (?compare=id1,id2,...)
+  var urlParams = new URLSearchParams(window.location.search);
+  var compareParam = urlParams.get('compare');
+  if (compareParam) {
+    state.comparer = compareParam.split(',').filter(Boolean).slice(0, 4);
+    updateNavCompare();
+  }
   goHome();
 });
 
@@ -2190,9 +2254,10 @@ var _POIDS_LABELS = ['', 'Peu important', 'Secondaire', 'Équilibré', 'Importan
 function ouvrirGuideAchat() {
   var appEl = document.getElementById('app');
   if (appEl) appEl.style.cssText = '';
+  state.currentPage = 'guide';
 
   render([
-    '<div style="max-width:740px;margin:0 auto;padding:24px 16px 80px">',
+    '<div style="padding:16px 5% 80px">',
 
       // Titre
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">',
@@ -2391,100 +2456,15 @@ async function lancerGuideAchat() {
       return p;
     });
 
-    // Trier par score décroissant
-    produits.sort(function(a, b){ return b._score - a._score; });
-    var top = produits.slice(0, 12);
-
-    // ── Libellé profil actif ──────────────────────────────────
-    var profilLabel = '';
-    if (_guidePrefs.profilActif) {
-      var pf = GUIDE_PROFILS.find(function(p){ return p.id === _guidePrefs.profilActif; });
-      if (pf) profilLabel = ' · Profil : ' + pf.label;
-    }
-
-    if (resEl) resEl.innerHTML = [
-      '<div>',
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">',
-          '<h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:0">🏆 Recommandations</h3>',
-          '<span style="font-size:12px;color:#94a3b8">' + data.total + ' produits analysés' + profilLabel + '</span>',
-        '</div>',
-
-        // Légende scores
-        '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">',
-          '<span style="font-size:11px;color:#64748b;font-weight:600">Critères :</span>',
-          poidsPrix  > 1 ? '<span style="font-size:11px;font-weight:700;color:#10b981">💰 Prix ×' + poidsPrix  + '</span>' : '',
-          poidsSpecs > 1 ? '<span style="font-size:11px;font-weight:700;color:#6366f1">📊 Specs ×' + poidsSpecs + '</span>' : '',
-          poidsDispo > 1 ? '<span style="font-size:11px;font-weight:700;color:#f97316">🏪 Dispo ×' + poidsDispo + '</span>' : '',
-        '</div>',
-
-        top.map(function(p, i) {
-          var medal      = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '<span style="font-size:13px;font-weight:700;color:#94a3b8">' + (i+1) + '</span>';
-          var scoreColor = p._score >= 7 ? '#10b981' : p._score >= 5 ? '#f97316' : '#ef4444';
-          var enCompare  = state.comparer.indexOf(p.id) !== -1;
-          return [
-            '<div style="background:#fff;border:1.5px solid ' + (i===0?'#10b981':'#e2e8f0') + ';',
-              'border-radius:12px;padding:14px;margin-bottom:10px;display:flex;gap:14px;align-items:center;',
-              'cursor:pointer;' + (i===0?'box-shadow:0 2px 14px rgba(16,185,129,.15)':'') + '" ',
-              'onclick="ouvrirProduit(\'' + p.id + '\')" ',
-              'onmouseover="this.style.borderColor=\'#1d4ed8\'" ',
-              'onmouseout="this.style.borderColor=\'' + (i===0?'#10b981':'#e2e8f0') + '\'">',
-
-              // Médaille + image
-              '<div style="flex-shrink:0;text-align:center;min-width:70px">',
-                '<div style="font-size:22px;margin-bottom:4px">' + medal + '</div>',
-                '<div style="width:60px;height:60px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;',
-                  'display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0 auto">',
-                  p.image_url
-                    ? '<img src="' + p.image_url + '" style="max-width:56px;max-height:56px;object-fit:contain" loading="lazy">'
-                    : '<span style="font-size:26px">📦</span>',
-                '</div>',
-              '</div>',
-
-              // Infos produit
-              '<div style="flex:1;min-width:0">',
-                i === 0 ? '<div style="font-size:10px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">✓ Meilleur choix selon vos critères</div>' : '',
-                '<div style="font-size:13px;font-weight:700;color:#1e293b;line-height:1.35;margin-bottom:3px;',
-                  'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.nom + '</div>',
-                p.marque ? '<div style="font-size:11px;color:#94a3b8;margin-bottom:6px">' + p.marque + '</div>' : '<div style="margin-bottom:6px"></div>',
-                // Barres de score
-                '<div style="display:flex;gap:10px;flex-wrap:wrap">',
-                  poidsPrix  > 1 ? _barreScore('Prix',  p._sPrix,  '#10b981') : '',
-                  poidsSpecs > 1 ? _barreScore('Specs', p._sSpecs, '#6366f1') : '',
-                  poidsDispo > 1 ? _barreScore('Dispo', p._sDispo, '#f97316') : '',
-                '</div>',
-              '</div>',
-
-              // Prix + score + boutons
-              '<div style="flex-shrink:0;text-align:right">',
-                '<div style="font-size:17px;font-weight:900;color:#15803d">' + fcfa(p.prix_min) + '</div>',
-                '<div style="font-size:22px;font-weight:800;color:' + scoreColor + ';line-height:1.1">' + p._score +
-                  '<span style="font-size:11px;font-weight:500;color:#94a3b8">/10</span></div>',
-                '<div style="font-size:10px;color:#94a3b8;margin-top:1px;margin-bottom:8px">' + (p.nb_offres||0) + ' offre(s)</div>',
-                '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\')" ',
-                  'style="padding:5px 10px;border-radius:6px;border:1px solid ' + (enCompare?'#1d4ed8':'#e2e8f0') + ';',
-                  'background:' + (enCompare?'#eff6ff':'#fff') + ';cursor:pointer;font-size:11px;font-weight:700;',
-                  'color:' + (enCompare?'#1d4ed8':'#475569') + ';white-space:nowrap">',
-                  enCompare ? '✓ Ajouté' : '⚖ Comparer',
-                '</button>',
-              '</div>',
-
-            '</div>',
-          ].join('');
-        }).join('') +
-
-        // Bouton comparer la sélection
-        (state.comparer.length >= 2
-          ? '<div style="text-align:center;margin-top:16px">' +
-              '<button onclick="ouvrirComparaison()" style="padding:12px 32px;background:#f97316;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">⚖ Comparer les ' + state.comparer.length + ' produits sélectionnés →</button>' +
-            '</div>'
-          : '<p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:12px">Clique sur ⚖ Comparer pour ajouter des produits à la comparaison côte à côte.</p>'),
-
-      '</div>',
-    ].join('');
+    // Stocker pour tri dynamique
+    _guideScored = produits;
+    _guideTotal  = data.total;
+    afficherGuideResultats('score');
 
   } catch(err) {
     dbgErr('lancerGuideAchat', err);
-    if (resEl) resEl.innerHTML = '<p style="color:#ef4444;padding:16px">' + err.message + '</p>';
+    var resEl2 = document.getElementById('guide-resultats');
+    if (resEl2) resEl2.innerHTML = '<p style="color:#ef4444;padding:16px">' + err.message + '</p>';
   }
 }
 
@@ -2496,4 +2476,181 @@ function _barreScore(label, pct, couleur) {
     '</div>' +
     '<span style="font-size:10px;font-weight:700;color:' + couleur + '">' + pct + '%</span>' +
   '</div>';
+}
+
+// ── Cache résultats guide ─────────────────────────────────────────
+var _guideScored = [];
+var _guideTotal  = 0;
+
+function afficherGuideResultats(triPar) {
+  var resEl = document.getElementById('guide-resultats');
+  if (!resEl || !_guideScored.length) return;
+  triPar = triPar || 'score';
+
+  var sorted = _guideScored.slice();
+  if      (triPar === 'prix')  sorted.sort(function(a,b){ return +a.prix_min - +b.prix_min; });
+  else if (triPar === 'specs') sorted.sort(function(a,b){ return b._sSpecs - a._sSpecs; });
+  else if (triPar === 'dispo') sorted.sort(function(a,b){ return +(b.nb_offres||0) - +(a.nb_offres||0); });
+  else                         sorted.sort(function(a,b){ return b._score - a._score; });
+
+  var top        = sorted.slice(0, 12);
+  var poidsPrix  = _guidePrefs.poidsPrix;
+  var poidsSpecs = _guidePrefs.poidsSpecs;
+  var poidsDispo = _guidePrefs.poidsDispo;
+
+  var profilLabel = '';
+  if (_guidePrefs.profilActif) {
+    var pf = GUIDE_PROFILS.find(function(p){ return p.id === _guidePrefs.profilActif; });
+    if (pf) profilLabel = ' · Profil : ' + pf.label;
+  }
+
+  var TRIS = [
+    { id:'score', label:'🏆 Score' },
+    { id:'prix',  label:'💰 Prix'  },
+    { id:'specs', label:'📊 Specs' },
+    { id:'dispo', label:'🏪 Dispo' },
+  ];
+
+  resEl.innerHTML = [
+    '<div>',
+      // En-tête + tri
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">',
+        '<h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:0">🏆 Recommandations</h3>',
+        '<span style="font-size:12px;color:#94a3b8">' + _guideTotal + ' produits analysés' + profilLabel + '</span>',
+        '<div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">',
+          TRIS.map(function(t) {
+            var act = t.id === triPar;
+            return '<button onclick="afficherGuideResultats(\'' + t.id + '\')" ' +
+              'style="padding:4px 10px;border-radius:16px;border:1px solid ' + (act?'#1d4ed8':'#e2e8f0') + ';' +
+              'background:' + (act?'#1d4ed8':'#fff') + ';color:' + (act?'#fff':'#64748b') + ';' +
+              'font-size:11px;font-weight:700;cursor:pointer">' + t.label + '</button>';
+          }).join(''),
+        '</div>',
+      '</div>',
+
+      // Critères actifs
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:8px 12px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">',
+        '<span style="font-size:11px;color:#64748b;font-weight:600">Pondération :</span>',
+        poidsPrix  > 1 ? '<span style="font-size:11px;font-weight:700;color:#10b981">💰 Prix ×' + poidsPrix  + '</span>' : '',
+        poidsSpecs > 1 ? '<span style="font-size:11px;font-weight:700;color:#6366f1">📊 Specs ×' + poidsSpecs + '</span>' : '',
+        poidsDispo > 1 ? '<span style="font-size:11px;font-weight:700;color:#f97316">🏪 Dispo ×' + poidsDispo + '</span>' : '',
+      '</div>',
+
+      // Grille résultats (2 colonnes sur desktop)
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:10px">',
+        top.map(function(p, i) {
+          var medal      = i===0?'🥇':i===1?'🥈':i===2?'🥉':'<span style="font-size:13px;font-weight:700;color:#94a3b8">'+(i+1)+'</span>';
+          var scoreColor = p._score>=7?'#10b981':p._score>=5?'#f97316':'#ef4444';
+          var enCompare  = state.comparer.indexOf(p.id) !== -1;
+          var enFavori   = state.favoris.indexOf(p.id) !== -1;
+          var border     = i===0?'#10b981':'#e2e8f0';
+          return [
+            '<div style="background:#fff;border:1.5px solid '+border+';border-radius:12px;padding:14px;',
+              'display:flex;gap:12px;align-items:flex-start;cursor:pointer;',
+              (i===0?'box-shadow:0 2px 14px rgba(16,185,129,.15)':'') + '" ',
+              'onclick="ouvrirProduit(\''+p.id+'\')" ',
+              'onmouseover="this.style.borderColor=\'#1d4ed8\'" ',
+              'onmouseout="this.style.borderColor=\''+border+'\'">',
+
+              // Médaille + image
+              '<div style="flex-shrink:0;text-align:center;width:72px">',
+                '<div style="font-size:20px;margin-bottom:3px">'+medal+'</div>',
+                '<div style="width:60px;height:60px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;',
+                  'display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0 auto">',
+                  (p.image_url?'<img src="'+p.image_url+'" style="max-width:56px;max-height:56px;object-fit:contain" loading="lazy">':'<span style="font-size:24px">📦</span>'),
+                '</div>',
+                // Score
+                '<div style="margin-top:4px;font-size:16px;font-weight:800;color:'+scoreColor+'">'+p._score+'<span style="font-size:9px;color:#94a3b8">/10</span></div>',
+              '</div>',
+
+              // Infos
+              '<div style="flex:1;min-width:0">',
+                i===0?'<div style="font-size:10px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">✓ Meilleur choix</div>':'',
+                '<div style="font-size:13px;font-weight:700;color:#1e293b;line-height:1.35;margin-bottom:2px;',
+                  'overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+p.nom+'</div>',
+                p.marque?'<div style="font-size:11px;color:#94a3b8;margin-bottom:4px">'+p.marque+'</div>':'',
+                '<div style="font-size:16px;font-weight:900;color:#15803d;margin-bottom:4px">'+fcfa(p.prix_min)+'</div>',
+                '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">',
+                  poidsPrix  > 1 ? _barreScore('Prix',  p._sPrix,  '#10b981') : '',
+                  poidsSpecs > 1 ? _barreScore('Specs', p._sSpecs, '#6366f1') : '',
+                  poidsDispo > 1 ? _barreScore('Dispo', p._sDispo, '#f97316') : '',
+                '</div>',
+                '<div style="display:flex;gap:5px">',
+                  '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\',\'' + (p.categorie_id||'') + '\')" ',
+                    'style="padding:4px 9px;border-radius:6px;border:1px solid '+(enCompare?'#1d4ed8':'#e2e8f0')+';',
+                    'background:'+(enCompare?'#eff6ff':'#fff')+';cursor:pointer;font-size:11px;font-weight:700;',
+                    'color:'+(enCompare?'#1d4ed8':'#475569')+';white-space:nowrap">',
+                    enCompare?'✓ Comparé':'⚖ Comparer',
+                  '</button>',
+                  '<button onclick="event.stopPropagation();toggleFavori(\''+p.id+'\')" ',
+                    'style="padding:4px 8px;border-radius:6px;border:1px solid '+(enFavori?'#ef4444':'#e2e8f0')+';',
+                    'background:'+(enFavori?'#fef2f2':'#fff')+';cursor:pointer;font-size:12px">',
+                    enFavori?'❤':'🤍',
+                  '</button>',
+                '</div>',
+              '</div>',
+            '</div>',
+          ].join('');
+        }).join(''),
+      '</div>',
+
+      // Bouton lancer comparaison si ≥ 2 produits sélectionnés
+      state.comparer.length >= 2
+        ? '<div style="text-align:center;margin-top:16px"><button onclick="ouvrirComparaison()" ' +
+            'style="padding:12px 32px;background:#f97316;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">⚖ Comparer les ' +
+            state.comparer.length + ' produits sélectionnés →</button></div>'
+        : '<p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:12px">Sélectionne ⚖ sur 2 produits pour les comparer côte à côte.</p>',
+
+    '</div>',
+  ].join('');
+}
+
+// ── Partager comparaison ──────────────────────────────────────────
+function partagerComparaison() {
+  if (!state.comparer.length) return;
+  var url = window.location.origin + window.location.pathname + '?compare=' + state.comparer.join(',');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      toast('Lien copié ! Partagez-le pour retrouver cette comparaison 📤', '#059669');
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); toast('Lien copié ! 📤', '#059669'); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+}
+
+// ── Favoris ──────────────────────────────────────────────────────
+async function afficherFavoris() {
+  if (!state.favoris.length) {
+    toast('Aucun favori — clique ❤ sur un produit pour le sauvegarder', '#64748b');
+    return;
+  }
+  state.currentPage = 'favoris';
+  render('<div class="loader"><div class="spin"></div><p>Chargement des favoris...</p></div>');
+  try {
+    var produits = await Promise.all(
+      state.favoris.map(function(id) { return apiFetch('/produits/' + id).catch(function(){ return null; }); })
+    );
+    produits = produits.filter(Boolean);
+    render([
+      '<div style="padding:24px 5% 80px">',
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">',
+          '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;padding:0">← Retour</button>',
+          '<h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0">❤ Mes favoris</h2>',
+          '<span style="font-size:13px;color:#94a3b8">' + produits.length + ' produit(s)</span>',
+          '<button onclick="state.favoris=[];localStorage.setItem(\'yomb_favoris\',\'[]\');updateNavFavoris();retourListe()" style="margin-left:auto;padding:6px 12px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer">✕ Tout effacer</button>',
+        '</div>',
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">',
+          produits.map(function(p) { return carteHTML(p); }).join(''),
+        '</div>',
+      '</div>',
+    ].join(''));
+  } catch(err) {
+    render('<div style="padding:24px 5%"><button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;cursor:pointer;font-weight:600">← Retour</button><p style="color:#ef4444;margin-top:12px">'+err.message+'</p></div>');
+  }
 }
