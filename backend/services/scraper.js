@@ -41,7 +41,18 @@ const CATS = {
 const MARQUES = ['Samsung','Apple','Xiaomi','Tecno','Infinix','Oppo','Vivo','Huawei','Nokia',
   'HP','Lenovo','Dell','Asus','Acer','LG','Sony','Hisense','Haier','TCL','Realme','OnePlus','Motorola'];
 
+// Mots trop communs pour discriminer deux produits : marques, familles de produits.
+// Exclus du matching par mots-clés pour éviter ex. "Galaxy Buds" ≈ "Galaxy A55".
+const MOTS_GENERIQUES = new Set([
+  'samsung','apple','xiaomi','tecno','infinix','oppo','vivo','huawei','nokia',
+  'realme','oneplus','motorola','itel','hp','lenovo','dell','asus','acer',
+  'lg','sony','hisense','haier','tcl','galaxy','redmi','iphone','ipad','macbook',
+]);
+
 const CAT_MOTS = [
+  // Accessoires audio/connectés : priorité haute pour ne pas être absorbés par "smartphones"
+  // Ex : "Samsung Galaxy Buds" contient "samsung galaxy" → serait classé smartphone sans ce garde-fou
+  { slug:'tv-electro',   mots:['écouteurs','ecouteur','casque audio','casque bluetooth','airpods','galaxy buds','galaxy watch','tws','enceinte bluetooth','enceinte portable','haut-parleur','soundbar','barre de son','montre connectée','montre connect','smartwatch','bracelet connect'] },
   { slug:'smartphones',  mots:['samsung galaxy','iphone','xiaomi','tecno','infinix','oppo','vivo','huawei','nokia','realme','itel','tablette','smartphone','portable','ipad','téléphone','telephone','redmi','google pixel','oneplus','motorola moto'] },
   { slug:'informatique', mots:['laptop','ordinateur','macbook','lenovo','dell','hp ',' pc ','clavier','souris','imprimante','disque dur','ssd','moniteur','ecran pc','routeur','wifi','asus','acer','toshiba','epson','canon imprimante','brother'] },
   { slug:'tv-electro',   mots:['télé','tele','tv ','led tv','écran tv','hisense','lg tv','samsung tv','refrigerateur','réfrigérateur','climatiseur','split ','lave-linge','machine a laver','frigo','congélateur','ventilateur','fer a repasser','chauffe-eau','micro-onde','four électrique','induction','plaque de cuisson','mixeur','blender','aspirateur','air fryer','friteuse','batterie de cuisine','enduro','finix','astech'] },
@@ -526,8 +537,8 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       // 2. Correspondance par similarité sur le nom normalisé
       if(!produitId){
         const nomNorm = normaliserTitre(item.titre);
-        // Extraire mots-clés discriminants (modèle, référence)
-        const motsCles = nomNorm.split(/\s+/).filter(m => m.length >= 3).slice(0, 4);
+        // Extraire mots-clés discriminants (modèle, référence) — exclure les marques génériques
+        const motsCles = nomNorm.split(/\s+/).filter(m => m.length >= 3 && !MOTS_GENERIQUES.has(m)).slice(0, 4);
         if(motsCles.length > 0){
           const {rows:fuzzy}=await pool.query(
             `SELECT id, nom,
@@ -538,8 +549,8 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
              ORDER BY sim DESC LIMIT 3`,
             [nomNorm, motsCles[0].toLowerCase(), '%' + motsCles.slice(0,2).join('%').toLowerCase() + '%']
           );
-          // Seuil : similarité > 0.35 ou les 2 premiers mots-clés matchent
-          if(fuzzy.length > 0 && (fuzzy[0].sim > 0.35 || _motsClesCommuns(item.titre, fuzzy[0].nom) >= 2)){
+          // Seuil 0.65 : "Galaxy Buds" vs "Galaxy A55" → ~0.61 → rejeté correctement
+          if(fuzzy.length > 0 && (fuzzy[0].sim > 0.65 || _motsClesCommuns(item.titre, fuzzy[0].nom) >= 2)){
             produitId = fuzzy[0].id; stats.mis_a_jour++;
           }
         }
@@ -599,11 +610,12 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
   return stats;
 }
 
-// Compte les mots-clés en commun entre deux titres (insensible à la casse)
+// Compte les mots-clés DISCRIMINANTS en commun — exclut les marques et familles génériques
+// pour éviter que "samsung" + "galaxy" suffisent à fusionner Galaxy Buds avec Galaxy A55.
 function _motsClesCommuns(a, b) {
-  const wordsA = new Set(a.toLowerCase().split(/\W+/).filter(w=>w.length>=3));
-  const wordsB = b.toLowerCase().split(/\W+/).filter(w=>w.length>=3);
-  return wordsB.filter(w=>wordsA.has(w)).length;
+  const wordsA = new Set(a.toLowerCase().split(/\W+/).filter(w => w.length >= 3 && !MOTS_GENERIQUES.has(w)));
+  const wordsB = b.toLowerCase().split(/\W+/).filter(w => w.length >= 3 && !MOTS_GENERIQUES.has(w));
+  return wordsB.filter(w => wordsA.has(w)).length;
 }
 
 function normaliserTitre(s) {
