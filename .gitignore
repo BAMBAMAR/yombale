@@ -1,0 +1,14 @@
+.env
+.env.local
+.env.production
+node_modules/
+npm-debug.log*
+dist/
+build/
+.DS_Store
+Thumbs.db
+.vscode/
+logs/
+*.log
+uploads/
+tmp/

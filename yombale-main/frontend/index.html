@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Comparez les prix au Sénégal — Jumia, Expat-Dakar, Dakar-Deal">
+  <title>Yombale — Comparateur de prix Sénégal</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1d4ed8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css?v=6">
+</head>
+<body>
+  <nav id="navbar">
+    <div class="logo" onclick="goHome()">Yombale 🇸🇳</div>
+    <div class="nav-center">
+      <button onclick="goHome()">Accueil</button>
+      <button onclick="loadPromos()">Promos</button>
+    </div>
+    <div class="nav-right">
+      <select id="city-sel" onchange="changeVille(this.value)">
+        <option value="Dakar">Dakar</option>
+        <option value="Thies">Thiès</option>
+        <option value="Saint-Louis">Saint-Louis</option>
+        <option value="Ziguinchor">Ziguinchor</option>
+        <option value="Kaolack">Kaolack</option>
+      </select>
+      <div class="nav-user" onclick="showAccount()">
+        <span id="nav-avatar">?</span>
+        <span id="nav-username">Connexion</span>
+      </div>
+    </div>
+  </nav>
+
+  <main id="app">
+    <div class="loader"><div class="spin"></div><p>Chargement...</p></div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/app.js?v=6"></script>
+  <script>
+    // Désenregistrer l'ancien Service Worker pour forcer le rechargement des assets
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        regs.forEach(function(reg) {
+          reg.update(); // forcer vérification de mise à jour
+        });
+      });
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(function() { console.log('SW OK'); })
+        .catch(function(e) { console.warn('SW:', e.message); });
+    }
+  </script>
+</body>
+</html>
