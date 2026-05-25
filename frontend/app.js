@@ -204,8 +204,10 @@ function chargerProduits(query, categorie, page) {
     if (s) { var sp = document.createElement('div'); sp.id = 'sp'; sp.className = 'loader'; sp.innerHTML = '<div class="spin"></div>'; s.appendChild(sp); }
   }
 
+  // En mode comparaison, filtrer automatiquement par catégorie compatible
+  var catFiltre = (state.comparer.length > 0 && state.comparerCat) ? state.comparerCat : (categorie || '');
   var params = new URLSearchParams({
-    q: query || '', categorie: categorie || '',
+    q: query || '', categorie: catFiltre,
     limit: 24, page: page,
     tri: state.tri, prixMax: state.prixMax || '', prixMin: state.prixMin || ''
   });
@@ -240,12 +242,28 @@ function chargerProduits(query, categorie, page) {
     });
 }
 
+// ── Bandeau filtrage comparaison ─────────────────────────────────
+function htmlBannerCompare() {
+  var nomCat = _NOMS_CAT[state.comparerCat] || state.comparerCat || '';
+  var premier = (_productCache[state.comparer[0]] || {}).nom || '';
+  var label = premier.length > 35 ? premier.slice(0, 35) + '…' : premier;
+  return '<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;' +
+    'padding:10px 16px;margin:0 5% 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+    '<span style="font-size:13px;color:#1d4ed8;font-weight:700">⚖ Comparaison active</span>' +
+    '<span style="font-size:12px;color:#475569;flex:1">Affichage limité aux <strong>' + nomCat +
+      '</strong> compatibles avec <em>' + label + '</em></span>' +
+    '<button onclick="viderComparaison()" style="padding:4px 10px;background:#fff;border:1px solid #bfdbfe;' +
+      'border-radius:6px;font-size:11px;font-weight:600;color:#ef4444;cursor:pointer">✕ Annuler</button>' +
+  '</div>';
+}
+
 // ── Template liste — avec dashboard si résultats ────────────────
 function templateListe(produits, data) {
   var isSearch = !!(state.query || state.categorie || state.prixMax || state.prixMin);
   return [
     htmlHero(),
     htmlChipsBudget(),
+    state.comparer.length > 0 ? htmlBannerCompare() : '',
     isSearch && produits.length > 1 ? htmlDashboardComparaison(produits, data) : '',
     htmlBarre(data),
     '<section class="products">',
@@ -1649,6 +1667,7 @@ function viderComparaison() {
   updateCompareBar();
   toast('Sélection vidée', '#64748b');
   if (state.currentPage === 'compare') retourListe();
+  else if (state.currentPage === 'home') chargerProduits(state.query, state.categorie, 1);
 }
 
 function toggleFavori(id) {
