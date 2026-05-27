@@ -6,7 +6,7 @@ const { prixPlancher } = require('../services/scraper');
 // GET /api/produits
 router.get('/', async (req, res) => {
   try {
-    const { q, categorie, limit = 20, page = 1, tri, prixMax, prixMin } = req.query;
+    const { q, categorie, sousType, limit = 20, page = 1, tri, prixMax, prixMin } = req.query;
     const offset = (page - 1) * limit;
 
     const orderBy = tri === 'prix_asc'  ? 'MIN(o.prix) ASC NULLS LAST'
@@ -14,8 +14,6 @@ router.get('/', async (req, res) => {
                   : tri === 'nom_asc'   ? 'p.nom ASC'
                   :                      'COUNT(o.id) DESC NULLS LAST';
 
-    // Filtre catégorie : slug direct sur categorie_id OU fallback mots-clés nom
-    // Normaliser : '' → null pour éviter la condition $2::text IS NULL fausse
     const categorieNorm = categorie || null;
 
     const CAT_FALLBACK = {
@@ -27,18 +25,32 @@ router.get('/', async (req, res) => {
       'auto-moto':    ['voiture','moto ','scooter','trottinette','piece auto','batterie voiture'],
       'jeux':         ['playstation','ps4','ps5','xbox','nintendo','manette','jeu video','gaming'],
     };
+
+    // Filtre sous-type : mots-clés précis au sein d'une catégorie (ex: 'tv' dans 'tv-electro')
+    const SOUS_TYPE_MOTS = {
+      'tv'      : ['television','televiseur','tv led','tv 4k','tv oled','tv qled','smart tv','android tv','led tv','ecran tv','astech tv','bruhm','skyworth','finix tv','enduro tv'],
+      'froid'   : ['refriger','frigo','congelat','vitrine refrig','armoire refrig'],
+      'clim'    : ['climatiseur','split ','split inv','pompe a chaleur'],
+      'audio'   : ['ecouteur','casque audio','casque bluetooth','enceinte bluetooth','enceinte portable','soundbar','barre de son','haut-parleur','airpod','tws'],
+      'electro' : ['micro-onde','four electrique','four elec','lave-linge','machine a laver','ventilateur','aspirateur','air fryer','friteuse','induction','plaque de cuisson','chauffe-eau','fer a repasser','cafetiere','bouilloire','grille-pain'],
+      'tablette': ['tablette','ipad','galaxy tab','samsung tab','lenovo tab','matepad','xiaomi pad'],
+    };
+
     const fallback = categorieNorm ? (CAT_FALLBACK[categorieNorm] || []) : [];
-    // Le fallback SQL est conditionnel : s'applique uniquement si $2 correspond à cette catégorie
     const fallbackSQL = fallback.length > 0
       ? 'OR (' + fallback.map(m => `LOWER(p.nom) LIKE '%${m}%'`).join(' OR ') + ')'
       : '';
 
-    // $2 DOIT toujours être référencé pour que PostgreSQL connaisse son type
     const catCondition = `($2::text IS NULL
       OR p.categorie_id = (SELECT id FROM categories WHERE slug = $2 LIMIT 1)
-      ${fallbackSQL ? fallbackSQL : ''})`;
+      ${fallbackSQL})`;
 
-    // COUNT(*) OVER() donne le total sans second aller-retour DB
+    // Filtre sous-type optionnel (7e paramètre)
+    const sousMots = sousType ? (SOUS_TYPE_MOTS[sousType] || []) : [];
+    const sousTypeCondition = sousMots.length > 0
+      ? 'AND (' + sousMots.map(m => `LOWER(p.nom) LIKE '%${m}%'`).join(' OR ') + ')'
+      : '';
+
     const sql = `
       SELECT p.*, c.nom AS categorie_nom,
              MIN(o.prix) AS prix_min,
@@ -52,6 +64,7 @@ router.get('/', async (req, res) => {
         AND ${catCondition}
         AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
         AND ($4::numeric IS NULL OR o.prix >= $4::numeric)
+        ${sousTypeCondition}
       GROUP BY p.id, c.nom
       HAVING COUNT(o.id) = 0 OR MIN(o.prix) >= 500
       ORDER BY ${orderBy}

@@ -204,11 +204,12 @@ function chargerProduits(query, categorie, page) {
     if (s) { var sp = document.createElement('div'); sp.id = 'sp'; sp.className = 'loader'; sp.innerHTML = '<div class="spin"></div>'; s.appendChild(sp); }
   }
 
-  // En mode comparaison, filtrer par catégorie compatible (mapper sous-type → slug DB)
+  // En mode comparaison, filtrer par catégorie + sous-type précis
   var catSousType = (state.comparer.length > 0 && state.comparerCat) ? state.comparerCat : '';
   var catFiltre   = catSousType ? (_CAT_DB_SLUG[catSousType] || catSousType) : (categorie || '');
   var params = new URLSearchParams({
     q: query || '', categorie: catFiltre,
+    sousType: catSousType || '',
     limit: 24, page: page,
     tri: state.tri, prixMax: state.prixMax || '', prixMin: state.prixMin || ''
   });
