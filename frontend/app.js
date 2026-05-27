@@ -204,8 +204,9 @@ function chargerProduits(query, categorie, page) {
     if (s) { var sp = document.createElement('div'); sp.id = 'sp'; sp.className = 'loader'; sp.innerHTML = '<div class="spin"></div>'; s.appendChild(sp); }
   }
 
-  // En mode comparaison, filtrer automatiquement par catégorie compatible
-  var catFiltre = (state.comparer.length > 0 && state.comparerCat) ? state.comparerCat : (categorie || '');
+  // En mode comparaison, filtrer par catégorie compatible (mapper sous-type → slug DB)
+  var catSousType = (state.comparer.length > 0 && state.comparerCat) ? state.comparerCat : '';
+  var catFiltre   = catSousType ? (_CAT_DB_SLUG[catSousType] || catSousType) : (categorie || '');
   var params = new URLSearchParams({
     q: query || '', categorie: catFiltre,
     limit: 24, page: page,
@@ -533,33 +534,42 @@ function _inferCat(nom) {
   if (!nom) return '';
   var n = nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
-  // 1. Électroménager / TV — en premier (évite "Samsung TV" → smartphones)
-  if (/\bclimatiseur\b|\bclim\b|split\s+\d|split\s+inv|lave[- ]linge|machine.{0,6}laver|refrigerat|refriger|frigo\b|congelat|television|\btv\s+\d|\btv\b.{0,6}pouce|led\s+tv|ventilateur|four\s+(elec|micro|gaz)|micro[- ]?onde|chauffe[- ]?eau|air\s+fryer|friteuse|induction|plaque\s+de\s+cuisson/.test(n)) return 'tv-electro';
+  // 1. Audio / wearables (avant smartphones — "Galaxy Buds/Watch" sinon → smartphones)
+  if (/ecouteur|airpod|galaxy.buds|freebuds|redmi.buds|nothing.ear|casque.(audio|bluetooth|sans.fil|anc|noise)|\btws\b|enceinte.(bluetooth|portable|sans.fil)|haut.parleur|soundbar|barre.de.son|montre.connect|smartwatch|bracelet.connect|galaxy.watch|galaxy.fit|redmi.watch|xiaomi.watch/.test(n)) return 'audio';
 
-  // 2. Audio — avant smartphones
-  if (/ecouteur|casque\s+(audio|bluetooth|sans[- ]fil|anc|noise)|airpods?|\btws\b|enceinte\s+(bluetooth|portable|sans[- ]fil|connectee)|\bspeaker\b|barre\s+de\s+son|\bsono\b|\bhifi\b|home\s+cinema/.test(n)) return 'audio';
+  // 2. Téléviseurs (avant smartphones — "Samsung TV" sinon → smartphones)
+  if (/television|televiseur|tv.4k|tv.led|tv.oled|tv.qled|smart.tv|android.tv|led.tv|\bpouces?.tv\b|hisense.tv|lg.tv|samsung.tv|tcl.tv|bruhm|skyworth|ecran.tv|astech.tv|finix.tv/.test(n)) return 'tv';
 
-  // 3. Tablettes — AVANT smartphones pour intercepter "Galaxy Tab", "Samsung Tab"
-  if (/galaxy\s*tab|samsung\s*tab|\btablette\b|\bipad\b/i.test(n)) return 'informatique';
+  // 3. Réfrigération
+  if (/refrigerat|frigo\b|congelat|armoire.refrig|vitrine.refrig/.test(n)) return 'froid';
 
-  // 4. Smartphones — marques téléphonie + mots-clés
-  if (/\bgalaxy\b|iphone|xiaomi|tecno|infinix|oppo|realme|\bitel\b|redmi|smartphone|telephone\s+portable|4g.{0,8}gb|128gb|256gb/.test(n)) return 'smartphones';
-  if (/huawei\s+(p\d|y\d|nova|mate)|nokia\s+\d/.test(n)) return 'smartphones';
+  // 4. Climatisation
+  if (/climatiseur|\bsplit\s|\bsplit.inv|pompe.a.chaleur/.test(n)) return 'clim';
 
-  // 5. Informatique
-  if (/\blaptop\b|ordinateur|macbook|chromebook|lenovo|dell\s|\bpc\s|\basus\b|\bacer\b|imprimante|clavier\s+(sans|usb)|souris\s+(sans|usb)|disque\s+dur|\bssd\b|moniteur|routeur/.test(n)) return 'informatique';
+  // 5. Électroménager (petit + gros sauf clim/froid)
+  if (/lave.linge|machine.{0,5}laver|seche.linge|lave.vaisselle|micro.onde|four.(electrique|gaz)|chauffe.eau|ventilateur|air.fryer|friteuse|induction|plaque.de.cuisson|mixeur|blender|aspirateur|fer.a.repasser|cafetiere|bouilloire|grille.pain/.test(n)) return 'electro';
 
-  // 6. Maison
-  if (/canape|\bchaise\b|matelas|\blit\s|\barmoire\b|\bmeuble\b|fontaine/.test(n)) return 'maison';
+  // 6. Tablettes (avant smartphones — "Galaxy Tab", "iPad")
+  if (/galaxy.tab|samsung.tab|\btablette\b|\bipad\b|lenovo.tab|matepad|xiaomi.pad/.test(n)) return 'tablette';
 
-  // 7. Mode
-  if (/\brobe\b|chaussure|sac\s+.{0,3}main|chemise\s|\bpantalon\b|sneaker|\bbasket\b|parfum\b|eau\s+de\s+toilette|jean\s+homme|t-shirt/.test(n)) return 'mode';
+  // 7. Smartphones
+  if (/iphone|tecno\s|infinix\s|oppo\s|realme\s|\bitel\s|vivo\s|redmi\s|samsung.galaxy.[asmzf]|xiaomi.(mi|poco)\s|huawei.[pyn]|nokia\s|oneplus\s|google.pixel|motorola.moto|smartphone|telephone.portable/.test(n)) return 'smartphones';
+  if (/\bgalaxy\b/.test(n) && !/tab|watch|buds|fit/.test(n)) return 'smartphones';
 
-  // 8. Auto-moto
-  if (/\bvoiture\b|moto\s|\bscooter\b|trottinette|piece\s+auto/.test(n)) return 'auto-moto';
+  // 8. Informatique
+  if (/\blaptop\b|ordinateur|macbook|chromebook|lenovo|dell\s|\bpc\s|\basus\b|\bacer\b|imprimante|disque.dur|\bssd\b|moniteur|routeur|clavier\s|souris\s/.test(n)) return 'informatique';
 
-  // 9. Jeux
-  if (/playstation|\bps[45]\b|\bxbox\b|nintendo|manette\s+jeu|jeu\s+video|gaming/.test(n)) return 'jeux';
+  // 9. Maison
+  if (/canape|\bchaise\b|matelas|\blit\s|\barmoire\b|\bmeuble\b|fontaine|table.basse|commode/.test(n)) return 'maison';
+
+  // 10. Mode
+  if (/\brobe\b|chaussure|sac.a.main|chemise\s|\bpantalon\b|sneaker|\bbasket\b|\bparfum\b|eau.de.toilette|jean.homme|t-shirt/.test(n)) return 'mode';
+
+  // 11. Auto-moto
+  if (/\bvoiture\b|\bmoto\s|\bscooter\b|trottinette|piece.auto|batterie.voiture/.test(n)) return 'auto-moto';
+
+  // 12. Jeux
+  if (/playstation|\bps[45]\b|\bxbox\b|nintendo|manette.jeu|jeu.video|\bgaming\b|casque.gamer/.test(n)) return 'jeux';
 
   return '';
 }
@@ -1630,10 +1640,34 @@ async function ouvrirComparaison() {
 
 // ── Mode comparaison ─────────────────────────────────────────────
 var _NOMS_CAT = {
-  'smartphones':'smartphones', 'informatique':'informatique',
-  'tv-electro':'TV / Électroménager', 'audio':'audio / son',
-  'maison':'maison / meubles', 'mode':'mode / vêtements',
-  'auto-moto':'auto-moto', 'jeux':'jeux vidéo',
+  'smartphones' : 'smartphones',
+  'tablette'    : 'tablettes',
+  'informatique': 'informatique',
+  'tv'          : 'téléviseurs',
+  'froid'       : 'réfrigération',
+  'clim'        : 'climatisation',
+  'audio'       : 'audio / hi-fi',
+  'electro'     : 'électroménager',
+  'maison'      : 'maison & déco',
+  'mode'        : 'mode',
+  'auto-moto'   : 'auto-moto',
+  'jeux'        : 'jeux vidéo',
+};
+
+// Mapping sous-type fin → slug DB (pour les appels API)
+var _CAT_DB_SLUG = {
+  'smartphones' : 'smartphones',
+  'tablette'    : 'informatique',
+  'informatique': 'informatique',
+  'tv'          : 'tv-electro',
+  'froid'       : 'tv-electro',
+  'clim'        : 'tv-electro',
+  'audio'       : 'tv-electro',
+  'electro'     : 'tv-electro',
+  'maison'      : 'maison',
+  'mode'        : 'mode',
+  'auto-moto'   : 'auto-moto',
+  'jeux'        : 'jeux',
 };
 
 function toggleComparer(id, catKeyFallback) {

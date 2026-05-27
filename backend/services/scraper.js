@@ -50,16 +50,76 @@ const MOTS_GENERIQUES = new Set([
 ]);
 
 const CAT_MOTS = [
-  // Accessoires audio/connectés : priorité haute pour ne pas être absorbés par "smartphones"
-  // Ex : "Samsung Galaxy Buds" contient "samsung galaxy" → serait classé smartphone sans ce garde-fou
-  { slug:'tv-electro',   mots:['écouteurs','ecouteur','casque audio','casque bluetooth','airpods','galaxy buds','galaxy watch','tws','enceinte bluetooth','enceinte portable','haut-parleur','soundbar','barre de son','montre connectée','montre connect','smartwatch','bracelet connect'] },
-  { slug:'smartphones',  mots:['samsung galaxy','iphone','xiaomi','tecno','infinix','oppo','vivo','huawei','nokia','realme','itel','tablette','smartphone','portable','ipad','téléphone','telephone','redmi','google pixel','oneplus','motorola moto'] },
-  { slug:'informatique', mots:['laptop','ordinateur','macbook','lenovo','dell','hp ',' pc ','clavier','souris','imprimante','disque dur','ssd','moniteur','ecran pc','routeur','wifi','asus','acer','toshiba','epson','canon imprimante','brother'] },
-  { slug:'tv-electro',   mots:['télé','tele','tv ','led tv','écran tv','hisense','lg tv','samsung tv','refrigerateur','réfrigérateur','climatiseur','split ','lave-linge','machine a laver','frigo','congélateur','ventilateur','fer a repasser','chauffe-eau','micro-onde','four électrique','induction','plaque de cuisson','mixeur','blender','aspirateur','air fryer','friteuse','batterie de cuisine','enduro','finix','astech'] },
-  { slug:'maison',       mots:['canapé','table ','chaise','lit ','matelas','armoire','cuisine','meuble','déco','lampe','rideau','coussin','vaisselle','oreiller','drap','serviette','fontaine'] },
-  { slug:'mode',         mots:['robe','chaussure','sac ','chemise','pantalon','vêtement','habit','sneaker','basket','montre','bijou','parfum','sac a main','jean ','t-shirt','coffret','eau de toilette','eau de parfum','musc','cologne'] },
-  { slug:'auto-moto',    mots:['voiture','moto ','vélo','auto ','pneu','scooter','trottinette','pièce auto','batterie voiture'] },
-  { slug:'jeux',         mots:['playstation','ps4','ps5','xbox','nintendo','manette','jeu video','gaming','casque gamer','console','joystick'] },
+  // ── Audio / Wearables (priorité max — avant smartphones pour "Galaxy Buds/Watch") ──
+  { slug:'tv-electro', mots:[
+    'ecouteur','écouteur','airpod','galaxy buds','freebuds','redmi buds','nothing ear',
+    'casque audio','casque bluetooth','casque sans fil','casque anc','casque noise',
+    ' tws ','enceinte bluetooth','enceinte portable','enceinte sans fil','haut-parleur','soundbar','barre de son',
+    'montre connect','smartwatch','bracelet connect','galaxy watch','galaxy fit','redmi watch','xiaomi watch',
+  ]},
+  // ── Téléviseurs ──
+  { slug:'tv-electro', mots:[
+    'television','téléviseur','tv 4k','tv led','tv oled','tv qled','smart tv','android tv',
+    'led tv','hisense tv','lg tv','samsung tv 4k','tcl tv','bruhm','skyworth','nobel tv',
+    'écran tv','ecran tv','astech tv','finix tv','enduro tv',
+  ]},
+  // ── Réfrigération ──
+  { slug:'tv-electro', mots:[
+    'refrigerat','réfrigérat','frigo','congelat','congélat','armoire refrig','vitrine refrig',
+  ]},
+  // ── Climatisation ──
+  { slug:'tv-electro', mots:[
+    'climatiseur','split ','split inv','reversible clim','pompe a chaleur',
+  ]},
+  // ── Gros électroménager ──
+  { slug:'tv-electro', mots:[
+    'lave-linge','lave linge','machine a laver','machine à laver','seche-linge','lave-vaisselle',
+  ]},
+  // ── Petit électroménager ──
+  { slug:'tv-electro', mots:[
+    'micro-onde','micro onde','four electrique','four électrique','chauffe-eau','chauffe eau',
+    'ventilateur','air fryer','friteuse','induction','plaque de cuisson',
+    'mixeur','blender','aspirateur','fer a repasser','cafetiere','bouilloire','grille-pain',
+    'batterie de cuisine','enduro','finix','astech',
+  ]},
+  // ── Tablettes (avant smartphones pour intercepter "Galaxy Tab", "iPad") ──
+  { slug:'informatique', mots:[
+    'tablette',' ipad','ipad ','galaxy tab','samsung tab','lenovo tab','huawei matepad','xiaomi pad',
+  ]},
+  // ── Smartphones ──
+  { slug:'smartphones', mots:[
+    'iphone','tecno ','infinix ','oppo ','realme ','itel ','vivo ','redmi note','redmi ',
+    'samsung galaxy a','samsung galaxy s','samsung galaxy m','samsung galaxy z','samsung galaxy f',
+    'xiaomi mi ','xiaomi poco','huawei p','huawei y','huawei nova',
+    'nokia ','oneplus ','google pixel','motorola moto',
+    'smartphone','telephone portable','téléphone portable',
+  ]},
+  // ── Informatique ──
+  { slug:'informatique', mots:[
+    'laptop','ordinateur portable','ordinateur de bureau','macbook','chromebook',
+    'lenovo ideapad','lenovo thinkpad','dell inspiron','dell latitude',
+    'hp pavilion','hp elitebook','hp probook',' pc portable',' pc bureau',
+    'clavier','souris ','imprimante','disque dur',' ssd ','moniteur','ecran pc',
+    'routeur','asus vivobook','asus zenbook','acer aspire','acer nitro','toshiba',
+  ]},
+  // ── Maison ──
+  { slug:'maison', mots:[
+    'canapé','canape','chaise','matelas','lit ','armoire','meuble','fontaine','table basse','commode',
+    'table a manger','lampe','rideau','coussin','vaisselle','drap',
+  ]},
+  // ── Mode ──
+  { slug:'mode', mots:[
+    'robe','chaussure','sac a main','sac à main','chemise','pantalon','vêtement','habit',
+    'sneaker','basket','parfum','eau de toilette','eau de parfum','musc','jean homme','t-shirt','coffret beaute',
+  ]},
+  // ── Auto-moto ──
+  { slug:'auto-moto', mots:[
+    'voiture','moto ','scooter','trottinette','pièce auto','piece auto','batterie voiture','pneu',
+  ]},
+  // ── Jeux vidéo ──
+  { slug:'jeux', mots:[
+    'playstation','ps4','ps5','xbox','nintendo','manette jeu','jeu video','gaming','casque gamer','console jeu','joystick',
+  ]},
 ];
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
