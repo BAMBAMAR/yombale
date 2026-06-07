@@ -774,4 +774,4 @@ function demarrerScraping() {
   console.log('[SCRAPER] ✅ Cron actif — CoinAfrique/30s + 9 nouveaux sites/90s + tous/4h-6h');
 }
 
-module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher };
+module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher };

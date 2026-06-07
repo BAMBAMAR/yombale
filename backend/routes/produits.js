@@ -1,7 +1,6 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
-const { prixPlancher } = require('../services/scraper');
 
 // GET /api/produits
 router.get('/', async (req, res) => {
@@ -74,29 +73,6 @@ router.get('/', async (req, res) => {
     const result = await pool.query(sql, params);
     const total = parseInt(result.rows[0]?.total_count || 0, 10);
 
-    // Correction des prix_min aberrants sur les cartes produits
-    result.rows.forEach(p => {
-      let pMin = parseFloat(p.prix_min);
-      const pMax = parseFloat(p.prix_max);
-      if (pMin <= 0) return;
-
-      // 1. Correction ratio inter-offres (plusieurs offres avec écart ×50+)
-      if (pMax > 0) {
-        const ratio = pMax / pMin;
-        if (ratio >= 50 && ratio < 500)       { p.prix_min = pMin * 100;  return; }
-        else if (ratio >= 500 && ratio < 5000) { p.prix_min = pMin * 1000; return; }
-      }
-
-      // 2. Correction plancher sur le nom produit (fonctionne même sur offre unique)
-      const plancher = prixPlancher(p.nom || '');
-      if (plancher && pMin < plancher) {
-        const p100  = pMin * 100;
-        const p1000 = pMin * 1000;
-        if      (p100  >= plancher && p100  <= plancher * 30) p.prix_min = p100;
-        else if (p1000 >= plancher && p1000 <= plancher * 30) p.prix_min = p1000;
-      }
-    });
-
     res.json({
       success: true,
       produits: result.rows,
@@ -163,38 +139,6 @@ router.get('/:id/offres', async (req, res) => {
         r.titre_affiche = r.produit_nom;
       }
     });
-
-    // ── Correction des prix aberrants (division par 100/1000 lors du scraping) ──
-    if (rows.length >= 2) {
-      // Cas normal : médiane inter-offres
-      const prices = rows.map(r => r.prix).filter(p => p > 0).sort((a, b) => a - b);
-      const mid = Math.floor(prices.length / 2);
-      const mediane = prices.length % 2 !== 0
-        ? prices[mid]
-        : (prices[mid - 1] + prices[mid]) / 2;
-
-      rows.forEach(r => {
-        if (r.prix <= 0) return;
-        const ratio = mediane / r.prix;
-        if (ratio >= 50 && ratio < 500) { r.prix = r.prix * 100;  r._corrige = true; }
-        else if (ratio >= 500)          { r.prix = r.prix * 1000; r._corrige = true; }
-      });
-      rows.sort((a, b) => a.prix - b.prix);
-
-    } else if (rows.length === 1) {
-      // Offre unique : correction via plancher déduit du titre produit
-      // Ex : "TV Astech 98 pouces" → plancher 500 000 FCFA
-      //      prix stocké 17 325 → ×100 → 1 732 500 FCFA ✓
-      const r = rows[0];
-      const nom = r.produit_nom || '';
-      const plancher = prixPlancher(nom);
-      if (plancher && r.prix < plancher) {
-        const p100  = r.prix * 100;
-        const p1000 = r.prix * 1000;
-        if (p100 >= plancher && p100 <= plancher * 30)        { r.prix = p100;  r._corrige = true; }
-        else if (p1000 >= plancher && p1000 <= plancher * 30) { r.prix = p1000; r._corrige = true; }
-      }
-    }
 
     res.json(rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
