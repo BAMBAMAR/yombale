@@ -436,10 +436,18 @@ async function getPrixMedianCategorie(categorieId) {
 function prixPlancher(titre) {
   const s = ' ' + (titre || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'') + ' ';
 
+  // ── Accessoires : pas de plancher d'appareil complet (sacoche/chargeur
+  // pour "ordinateur portable" ne coûte pas le prix d'un ordinateur) ──
+  if (/\b(chargeur|cable|câble|adaptateur|support|housse|etui|étui|coque|sacoche|protection ecran|film de protection|verre trempe|batterie externe|power\s*bank|powerbank)\b/.test(s)) {
+    return null;
+  }
+
   // ── Taille écran TV/PC/moniteur (pouces ou ") ──────────────────
-  const ecran = s.match(/(\d+)\s*(?:pouces?|"|\binch)/);
+  // Capture les valeurs décimales (ex: "6.78 pouces") pour ne pas lire
+  // "6.78"" comme "78 pouces"
+  const ecran = s.match(/(\d+(?:[.,]\d+)?)\s*(?:pouces?|"|\binch)/);
   if (ecran) {
-    const p = parseInt(ecran[1]);
+    const p = parseFloat(ecran[1].replace(',', '.'));
     if (p >= 85) return 500_000;
     if (p >= 65) return 250_000;
     if (p >= 55) return 150_000;
@@ -450,18 +458,28 @@ function prixPlancher(titre) {
   }
 
   // ── RAM smartphone/PC ──────────────────────────────────────────
-  const ram = s.match(/(\d+)\s*go\s+ram|ram\s*:?\s*(\d+)\s*go/);
+  // Motif ambigu "Xgo ram Ygo" (stockage et RAM de part et d'autre du mot
+  // "ram", ordre variable selon l'annonceur) : la RAM étant toujours ≤ au
+  // stockage, on retient le plus petit des deux nombres.
+  const ramDouble = s.match(/(\d+)\s*go\s+ram\s+(\d+)\s*go/);
+  const ram = ramDouble || s.match(/(\d+)\s*go\s+ram|ram\s*:?\s*(\d+)\s*go/);
   if (ram) {
-    const r = parseInt(ram[1] || ram[2]);
+    const r = ramDouble
+      ? Math.min(parseInt(ramDouble[1]), parseInt(ramDouble[2]))
+      : parseInt(ram[1] || ram[2]);
     if (r >= 12) return 150_000;
     if (r >= 8)  return  80_000;
     if (r >= 6)  return  50_000;
     if (r >= 4)  return  30_000;
   }
 
-  // ── Stockage seul (≥ 128 Go) ───────────────────────────────────
+  // ── Stockage seul (≥ 128 Go) — exclut cartes mémoire/clés USB/SSD et
+  // tablettes enfants/entrée de gamme : leur stockage annoncé est souvent
+  // gonflé (marketing/microSD) alors que l'appareil reste très bon marché ──
   const sto = s.match(/(\d+)\s*go(?!\s*ram)/);
-  if (sto) {
+  if (sto
+      && !/carte\s*(memoire|memory|sd|micro\s*sd)|cle\s*usb|disque dur|ssd|hdd/.test(s)
+      && !/tablette.{0,15}enfant|enfant.{0,15}tablette|oteeto/.test(s)) {
     const st = parseInt(sto[1]);
     if (st >= 512) return 200_000;
     if (st >= 256) return 100_000;

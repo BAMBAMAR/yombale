@@ -1,7 +1,7 @@
 // backend/routes/scraper.js — Route admin pour diagnostics et déclenchement manuel
 const router  = require('express').Router();
 const { pool } = require('../models/db');
-const { lancerScraping, lancerScrapingNouveauxSites, diagnosticScraper, diagnosticNouveauSite } = require('../services/scraper');
+const { lancerScraping, lancerScrapingNouveauxSites, diagnosticScraper, diagnosticNouveauSite, corrigerPrixParPlancher } = require('../services/scraper');
 
 // Middleware simple : protège par ADMIN_SECRET (variable d'env Railway)
 function adminOnly(req, res, next) {
@@ -126,6 +126,34 @@ router.post('/run-new', adminOnly, async (req, res) => {
       conseil: 'Consultez /api/scraper/status dans quelques minutes.',
     });
     lancerScrapingNouveauxSites(siteIds).catch(console.error);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── POST /api/scraper/corriger-prix ───────────────────────────
+// Répare en base les prix d'offres stockés avec des zéros manquants
+// (×100/×1000), via l'unique heuristique de plancher (corrigerPrixParPlancher).
+// Query: ?dry=1 pour prévisualiser sans modifier la base
+router.post('/corriger-prix', adminOnly, async (req, res) => {
+  try {
+    const dryRun = req.query.dry === '1';
+    const { rows } = await pool.query(`
+      SELECT o.id, o.prix, p.nom AS produit_nom
+      FROM offres o
+      JOIN produits p ON p.id = o.produit_id
+      WHERE o.prix > 0
+    `);
+
+    const corrections = [];
+    for (const r of rows) {
+      const prixActuel  = parseFloat(r.prix);
+      const prixCorrige = corrigerPrixParPlancher(prixActuel, r.produit_nom);
+      if (prixCorrige !== prixActuel) {
+        corrections.push({ id: r.id, produit: r.produit_nom, avant: prixActuel, apres: prixCorrige });
+        if (!dryRun) await pool.query('UPDATE offres SET prix = $1 WHERE id = $2', [prixCorrige, r.id]);
+      }
+    }
+
+    res.json({ dryRun, analysees: rows.length, corrigees: corrections.length, corrections });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
