@@ -66,6 +66,7 @@ app.use('/api/paiement',  require('./routes/paiement'));
 app.use('/api/alertes',   require('./routes/alertes'));
 app.use('/api/auth',      require('./routes/auth'));
 app.use('/api/scraper',   require('./routes/scraper'));
+app.use('/api/telecom',   require('./routes/telecom'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', async (req, res) => {

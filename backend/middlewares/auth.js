@@ -22,4 +22,13 @@ function tokenOptional(req, res, next) {
   next();
 }
 
-module.exports = { verifierToken, tokenOptional };
+// Protège par ADMIN_SECRET (variable d'env Railway) — header X-Admin-Secret ou ?secret=
+function adminSecretOnly(req, res, next) {
+  const secret = req.headers['x-admin-secret'] || req.query.secret;
+  if (process.env.ADMIN_SECRET && secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ error: 'Secret admin requis. Envoyez le header X-Admin-Secret.' });
+  }
+  next();
+}
+
+module.exports = { verifierToken, tokenOptional, adminSecretOnly };

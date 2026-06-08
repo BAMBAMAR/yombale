@@ -30,6 +30,10 @@ var state = {
   comparerCat: '',             // catégorie_id commune des produits en comparaison
   favoris:   JSON.parse(localStorage.getItem('yomb_favoris') || '[]'),
   currentPage: 'home',
+  telecomOperateur:  '',
+  telecomType:       '',
+  telecomTri:        '',
+  telecomOperateurs: null,
   recents:   JSON.parse(localStorage.getItem('yomb_recents') || '[]'),
   comparePrefs: Object.assign({}, _prefsDefaut,
     JSON.parse(localStorage.getItem('yomb_compare_prefs') || '{}')),
@@ -177,6 +181,7 @@ var CATEGORIES = [
   { slug: 'maison',       label: 'Maison',        icon: '🏠' },
   { slug: 'auto-moto',    label: 'Auto & Moto',   icon: '🛵' },
   { slug: 'jeux',         label: 'Jeux',          icon: '🎮' },
+  { slug: 'telecom',      label: 'Télécom & Forfaits', icon: '📶' },
 ];
 
 var BUDGETS = [
@@ -194,6 +199,8 @@ function chargerProduits(query, categorie, page) {
   categorie = categorie !== undefined ? categorie : state.categorie;
   state.query = query; state.categorie = categorie; state.page = page;
   state.currentPage = 'home';
+
+  if (categorie === 'telecom') { chargerForfaits(page); return; }
 
   dbg('chargerProduits', { q: query, cat: categorie, page: page });
 
@@ -643,6 +650,225 @@ function carteListeHTML(p) {
       '</div>',
     '</div>',
   ].join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  VERTICALE TÉLÉCOM & FORFAITS
+// ═══════════════════════════════════════════════════════════════
+
+function carteForfaitHTML(f) {
+  var dataLabel = f.data_mo
+    ? (f.data_mo >= 1000 ? (f.data_mo / 1000) + ' Go' : f.data_mo + ' Mo')
+    : '';
+  return [
+    '<div class="pcard telecom" onclick="ouvrirForfait(\'' + f.id + '\')">',
+      '<div class="pimg" style="background:linear-gradient(135deg,#fff7ed,#ffedd5)">',
+        f.image_url
+          ? '<img src="' + f.image_url + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:contain">'
+          : '<span style="font-size:40px">📶</span>',
+      '</div>',
+      '<div class="pbody">',
+        '<div style="font-size:11px;font-weight:700;color:#f97316;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">' + (f.operateur || '') + '</div>',
+        '<div class="pname">' + f.nom + '</div>',
+        '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0">',
+          dataLabel ? '<span style="font-size:11px;font-weight:600;color:#1d4ed8;background:#eff6ff;padding:2px 8px;border-radius:10px">📶 ' + dataLabel + '</span>' : '',
+          f.minutes ? '<span style="font-size:11px;font-weight:600;color:#10b981;background:#ecfdf5;padding:2px 8px;border-radius:10px">📞 ' + f.minutes + ' min</span>' : '',
+          f.sms ? '<span style="font-size:11px;font-weight:600;color:#7c3aed;background:#f5f3ff;padding:2px 8px;border-radius:10px">✉ ' + f.sms + ' SMS</span>' : '',
+        '</div>',
+        '<div class="pprice">' + fcfa(f.prix) + '</div>',
+        f.validite_jours ? '<div class="poffers">Validité ' + f.validite_jours + ' j</div>' : '<div class="poffers"></div>',
+        '<button class="btn-voir" style="margin-top:6px">Voir le forfait →</button>',
+      '</div>',
+    '</div>',
+  ].join('');
+}
+
+function htmlBarreTelecom() {
+  var sStyle = 'padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;outline:none';
+  return [
+    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 5%;border-bottom:1px solid #f1f5f9">',
+      '<select onchange="filtrerTelecomOperateur(this.value)" style="' + sStyle + '">',
+        '<option value="">Tous opérateurs</option>',
+        (state.telecomOperateurs || []).map(function(o) {
+          return '<option value="' + o + '"' + (state.telecomOperateur === o ? ' selected' : '') + '>' + o + '</option>';
+        }).join(''),
+      '</select>',
+      '<select onchange="filtrerTelecomType(this.value)" style="' + sStyle + '">',
+        [['', 'Tous types'], ['internet', 'Internet'], ['appel', 'Appel'], ['sms', 'SMS'], ['combo', 'Combo']].map(function(t) {
+          return '<option value="' + t[0] + '"' + (state.telecomType === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
+        }).join(''),
+      '</select>',
+      '<select onchange="changerTriTelecom(this.value)" style="' + sStyle + '">',
+        [['', '🎯 Pertinence'], ['prix_asc', '⬆ Prix ↑'], ['prix_desc', '⬇ Prix ↓'], ['data_desc', '📶 Plus de data']].map(function(t) {
+          return '<option value="' + t[0] + '"' + (state.telecomTri === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
+        }).join(''),
+      '</select>',
+    '</div>',
+  ].join('');
+}
+
+function btnPlusForfaits(data) {
+  var restant = Math.max(0, data.total - state.page * 24);
+  return '<div id="btn-plus" style="text-align:center;padding:20px">' +
+    '<button onclick="chargerForfaits(state.page+1)" ' +
+      'style="padding:12px 36px;background:#1d4ed8;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">' +
+      '⬇ Voir plus (' + restant + ' restants)' +
+    '</button>' +
+    '<p style="font-size:11px;color:#94a3b8;margin-top:6px">Page ' + data.page + '/' + data.pages + '</p>' +
+  '</div>';
+}
+
+function templateForfaits(forfaits, data) {
+  return [
+    htmlHero(),
+    htmlBarreTelecom(),
+    '<section class="products">',
+      data.total > 0 ? '<p style="font-size:12px;color:#94a3b8;padding:4px 5% 10px">' + data.total + ' forfait(s)</p>' : '',
+      '<div class="pgrid">' + forfaits.map(carteForfaitHTML).join('') + '</div>',
+      data.page < data.pages ? btnPlusForfaits(data) : (data.total > 24 ? '<p id="fin-liste" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">✅ Tous les ' + data.total + ' forfaits affichés</p>' : ''),
+    '</section>',
+    htmlFooter(),
+  ].join('');
+}
+
+function chargerForfaits(page) {
+  page = page || 1;
+  state.page = page;
+  state.currentPage = 'home';
+
+  dbg('chargerForfaits', { page: page });
+
+  if (page === 1) {
+    render('<div class="loader"><div class="spin"></div><p>Recherche en cours...</p></div>');
+  } else {
+    var s = document.querySelector('.products');
+    if (s) { var sp = document.createElement('div'); sp.id = 'sp'; sp.className = 'loader'; sp.innerHTML = '<div class="spin"></div>'; s.appendChild(sp); }
+  }
+
+  var params = new URLSearchParams({
+    operateur: state.telecomOperateur || '',
+    type:      state.telecomType      || '',
+    tri:       state.telecomTri       || '',
+    prixMax:   state.prixMax          || '',
+    prixMin:   state.prixMin          || '',
+    limit: 24, page: page
+  });
+
+  var pForfaits   = apiFetch('/telecom?' + params.toString());
+  var pOperateurs = state.telecomOperateurs
+    ? Promise.resolve(state.telecomOperateurs)
+    : apiFetch('/telecom/operateurs').catch(function() { return []; });
+
+  Promise.all([pForfaits, pOperateurs])
+    .then(function(results) {
+      var data     = results[0];
+      state.telecomOperateurs = Array.isArray(results[1]) ? results[1] : [];
+      var forfaits = (data && Array.isArray(data.forfaits)) ? data.forfaits : [];
+      state.pageTotal = data.pages || 1;
+      state.total     = data.total || 0;
+      dbg('chargerForfaits OK', { nb: forfaits.length, total: data.total });
+
+      if (!forfaits.length && page === 1) { renderVideTelecom(); return; }
+
+      if (page === 1) {
+        render(templateForfaits(forfaits, data));
+        setTimeout(function() { setupAutocomplete('search-input'); }, 50);
+      } else {
+        var sp2 = document.getElementById('sp'); if (sp2) sp2.remove();
+        var oldBtn = document.getElementById('btn-plus'); if (oldBtn) oldBtn.remove();
+        var finMsg = document.getElementById('fin-liste'); if (finMsg) finMsg.remove();
+        var grid = document.querySelector('.pgrid');
+        if (grid) { var tmp = document.createElement('div'); tmp.innerHTML = forfaits.map(carteForfaitHTML).join(''); while (tmp.firstChild) grid.appendChild(tmp.firstChild); }
+        var s2 = document.querySelector('.products');
+        if (s2) { s2.insertAdjacentHTML('beforeend', page < state.pageTotal ? btnPlusForfaits(data) : '<p id="fin-liste" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">✅ Tous les ' + data.total + ' forfaits affichés</p>'); }
+      }
+    })
+    .catch(function(err) {
+      dbgErr('chargerForfaits', err);
+      var sp3 = document.getElementById('sp'); if (sp3) sp3.remove();
+      if (page === 1) renderErreur(err); else toast('Erreur chargement page suivante', '#ef4444');
+    });
+}
+
+function renderVideTelecom() {
+  render([
+    htmlHero(),
+    '<div style="text-align:center;padding:48px 20px;color:#64748b">',
+      '<div style="font-size:52px;margin-bottom:12px">📶</div>',
+      '<h3 style="margin-bottom:8px">Aucun forfait trouvé</h3>',
+      '<p style="font-size:13px;margin-bottom:20px">Essayez de changer les filtres opérateur / type / budget.</p>',
+      '<button onclick="reinitialiserFiltresTelecom()" style="padding:10px 24px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Réinitialiser les filtres</button>',
+    '</div>',
+  ].join(''));
+  setTimeout(function() { setupAutocomplete('search-input'); }, 50);
+}
+
+async function ouvrirForfait(id) {
+  dbg('ouvrirForfait', id);
+  var appEl = document.getElementById('app');
+  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
+
+  render('<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px"><div class="spin" style="width:44px;height:44px;border-width:4px"></div><p style="color:#64748b;font-size:14px">Chargement du forfait...</p></div>');
+
+  try {
+    var f = await apiFetch('/telecom/' + id);
+    var dataLabel = f.data_mo
+      ? (f.data_mo >= 1000 ? (f.data_mo / 1000) + ' Go' : f.data_mo + ' Mo')
+      : '';
+
+    var navHtml = [
+      '<nav style="position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #e2e8f0;',
+               'box-shadow:0 1px 4px rgba(0,0,0,.08);padding:0 16px;height:52px;',
+               'display:flex;align-items:center;gap:10px">',
+        '<button onclick="retourListe()" style="display:flex;align-items:center;gap:6px;background:none;border:none;',
+                'color:#1d4ed8;font-size:14px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:8px">',
+          '← Retour',
+        '</button>',
+        '<div style="width:1px;height:20px;background:#e2e8f0"></div>',
+        '<span style="font-size:13px;font-weight:600;color:#334155;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">',
+          f.operateur + ' — ' + f.nom,
+        '</span>',
+      '</nav>',
+    ].join('');
+
+    var heroHtml = [
+      '<div style="background:#fff;border-bottom:1px solid #e2e8f0">',
+        '<div style="display:grid;grid-template-columns:minmax(200px,30%) 1fr;max-width:1000px;margin:0 auto">',
+          '<div style="background:linear-gradient(145deg,#fff7ed,#ffedd5);display:flex;align-items:center;justify-content:center;padding:32px;min-height:240px;border-right:1px solid #e2e8f0">',
+            f.image_url
+              ? '<img src="' + f.image_url + '" style="max-width:100%;max-height:200px;object-fit:contain">'
+              : '<div style="font-size:90px">📶</div>',
+          '</div>',
+          '<div style="padding:32px 36px;display:flex;flex-direction:column;gap:14px">',
+            '<div><span style="font-size:11px;font-weight:700;color:#f97316;background:#fff7ed;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em">' + f.operateur + '</span></div>',
+            '<h1 style="font-size:22px;font-weight:800;color:#1e293b;margin:0">' + f.nom + '</h1>',
+            '<div style="font-size:28px;font-weight:800;color:#f97316;font-family:\'Sora\',sans-serif">' + fcfa(f.prix) + '</div>',
+            '<div style="display:flex;flex-wrap:wrap;gap:8px">',
+              dataLabel ? '<span style="font-size:13px;font-weight:700;color:#1d4ed8;background:#eff6ff;padding:6px 14px;border-radius:10px">📶 ' + dataLabel + '</span>' : '',
+              f.minutes ? '<span style="font-size:13px;font-weight:700;color:#10b981;background:#ecfdf5;padding:6px 14px;border-radius:10px">📞 ' + f.minutes + ' min</span>' : '',
+              f.sms ? '<span style="font-size:13px;font-weight:700;color:#7c3aed;background:#f5f3ff;padding:6px 14px;border-radius:10px">✉ ' + f.sms + ' SMS</span>' : '',
+              f.validite_jours ? '<span style="font-size:13px;font-weight:700;color:#475569;background:#f1f5f9;padding:6px 14px;border-radius:10px">⏳ ' + f.validite_jours + ' jours</span>' : '',
+            '</div>',
+            f.description ? '<p style="font-size:13px;color:#64748b;line-height:1.6;margin:0">' + f.description + '</p>' : '',
+          '</div>',
+        '</div>',
+      '</div>',
+    ].join('');
+
+    render([navHtml, heroHtml, htmlFooter()].join(''));
+  } catch (err) {
+    dbgErr('ouvrirForfait', err);
+    renderErreur(err);
+  }
+}
+
+function filtrerTelecomOperateur(v) { state.telecomOperateur = v; chargerForfaits(1); }
+function filtrerTelecomType(v)      { state.telecomType = v; chargerForfaits(1); }
+function changerTriTelecom(v)       { state.telecomTri = v; chargerForfaits(1); }
+function reinitialiserFiltresTelecom() {
+  state.telecomOperateur = ''; state.telecomType = ''; state.telecomTri = '';
+  state.prixMax = ''; state.prixMin = '';
+  chargerForfaits(1);
 }
 
 // ── Récents ──────────────────────────────────────────────────────
@@ -1653,6 +1879,7 @@ var _NOMS_CAT = {
   'mode'        : 'mode',
   'auto-moto'   : 'auto-moto',
   'jeux'        : 'jeux vidéo',
+  'telecom'     : 'télécom & forfaits',
 };
 
 // Mapping sous-type fin → slug DB (pour les appels API)

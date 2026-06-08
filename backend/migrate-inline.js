@@ -106,6 +106,28 @@ module.exports = async function migrateInline() {
         created_at       TIMESTAMPTZ DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS forfaits_telecom (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        operateur      VARCHAR(50)  NOT NULL,
+        nom            VARCHAR(255) NOT NULL,
+        type           VARCHAR(20)  NOT NULL,
+        data_mo        INT,
+        minutes        INT,
+        sms            INT,
+        validite_jours INT,
+        prix           NUMERIC(12,2) NOT NULL,
+        devise         CHAR(3) DEFAULT 'XOF',
+        description    TEXT,
+        image_url      TEXT,
+        source         VARCHAR(20) DEFAULT 'manuel',
+        actif          BOOLEAN DEFAULT TRUE,
+        created_at     TIMESTAMPTZ DEFAULT NOW(),
+        updated_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_forfaits_operateur ON forfaits_telecom(operateur);
+      CREATE INDEX IF NOT EXISTS idx_forfaits_prix      ON forfaits_telecom(prix);
+
       INSERT INTO categories (nom, slug, icone) VALUES
         ('Telephones',   'smartphones', '📱'),
         ('Informatique', 'informatique','💻'),
@@ -114,7 +136,8 @@ module.exports = async function migrateInline() {
         ('Maison',       'maison',      '🏠'),
         ('Auto & Moto',  'auto-moto',   '🛵'),
         ('Beaute',       'beaute',      '💄'),
-        ('Jeux',         'jeux',        '🎮')
+        ('Jeux',         'jeux',        '🎮'),
+        ('Telecom & Forfaits', 'telecom', '📶')
       ON CONFLICT (slug) DO NOTHING;
     `);
 

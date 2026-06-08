@@ -229,6 +229,11 @@ nav {
 }
 .btn-voir:hover { background: var(--blue2); }
 
+/* ── CARTE FORFAIT TÉLÉCOM ──────────────────────────────────── */
+.pcard.telecom .pimg { background: linear-gradient(135deg, #fff7ed, #ffedd5); }
+.pcard.telecom:hover { border-color: #fed7aa; }
+.pcard.telecom .pprice { color: #f97316; }
+
 /* ── DÉTAIL OFFRES ──────────────────────────────────────────── */
 .offres { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
 .orow {

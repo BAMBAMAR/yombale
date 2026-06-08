@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Forfaits Télécom — Yombale</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f4f5f7; margin: 0; padding: 24px; color: #1a1a1a; }
+  h1 { font-size: 22px; margin: 0 0 16px; }
+  .panel { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
+  input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #d8dadf; border-radius: 6px; font-size: 14px; }
+  textarea { resize: vertical; min-height: 60px; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 18px; font-size: 14px; font-weight: 600; }
+  .btn-primary { background: #ff6600; color: #fff; margin-top: 16px; }
+  .btn-secondary { background: #e8e9ec; color: #333; margin-top: 16px; margin-left: 8px; }
+  .btn-danger { background: #e63946; color: #fff; }
+  .btn-edit { background: #2a6df5; color: #fff; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; }
+  th { color: #666; font-weight: 600; }
+  .msg { padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 14px; }
+  .msg.ok { background: #e6f7ee; color: #1e7e4f; }
+  .msg.err { background: #fde8e8; color: #c0392b; }
+  .actions button { margin-right: 6px; padding: 6px 12px; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>📶 Admin — Forfaits Télécom (ARTP)</h1>
+
+  <div id="msg"></div>
+
+  <div class="panel">
+    <h2 id="form-title" style="margin:0;font-size:16px;">Ajouter un forfait</h2>
+    <form id="form-forfait">
+      <input type="hidden" id="f-id">
+      <div class="row">
+        <div>
+          <label>Opérateur *</label>
+          <input id="f-operateur" required placeholder="Orange, Free, Expresso…">
+        </div>
+        <div>
+          <label>Nom du forfait *</label>
+          <input id="f-nom" required placeholder="Pass Internet 5 Go">
+        </div>
+        <div>
+          <label>Type *</label>
+          <select id="f-type" required>
+            <option value="internet">Internet</option>
+            <option value="appel">Appel</option>
+            <option value="sms">SMS</option>
+            <option value="combo">Combo</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Data (Mo)</label>
+          <input id="f-data" type="number" min="0" placeholder="5000">
+        </div>
+        <div>
+          <label>Minutes</label>
+          <input id="f-minutes" type="number" min="0" placeholder="60">
+        </div>
+        <div>
+          <label>SMS</label>
+          <input id="f-sms" type="number" min="0" placeholder="100">
+        </div>
+        <div>
+          <label>Validité (jours)</label>
+          <input id="f-validite" type="number" min="0" placeholder="30">
+        </div>
+        <div>
+          <label>Prix (FCFA) *</label>
+          <input id="f-prix" type="number" min="0" required placeholder="2000">
+        </div>
+      </div>
+      <label>Description</label>
+      <textarea id="f-description" placeholder="Détails, conditions, zone de couverture…"></textarea>
+      <label>Image / logo (URL)</label>
+      <input id="f-image" placeholder="https://…">
+
+      <button type="submit" class="btn-primary" id="btn-submit">Ajouter</button>
+      <button type="button" class="btn-secondary" id="btn-cancel" style="display:none;">Annuler</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin:0 0 12px;font-size:16px;">Forfaits existants</h2>
+    <table>
+      <thead>
+        <tr><th>Opérateur</th><th>Nom</th><th>Type</th><th>Data</th><th>Min/SMS</th><th>Validité</th><th>Prix</th><th>Source</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="liste-forfaits"></tbody>
+    </table>
+  </div>
+
+<script>
+const API = '/api/telecom';
+
+function adminSecret() {
+  let s = sessionStorage.getItem('admin_secret');
+  if (!s) {
+    s = prompt('Clé admin (X-Admin-Secret) :') || '';
+    sessionStorage.setItem('admin_secret', s);
+  }
+  return s;
+}
+
+async function api(path, opts = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (opts.method && opts.method !== 'GET') headers['X-Admin-Secret'] = adminSecret();
+  const res = await fetch(API + path, Object.assign({}, opts, { headers }));
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ('Erreur ' + res.status));
+  return data;
+}
+
+function showMsg(text, ok = true) {
+  const el = document.getElementById('msg');
+  el.innerHTML = `<div class="msg ${ok ? 'ok' : 'err'}">${text}</div>`;
+  setTimeout(() => { el.innerHTML = ''; }, 5000);
+}
+
+function fcfa(n) { return Number(n || 0).toLocaleString('fr-FR') + ' FCFA'; }
+
+const form = document.getElementById('form-forfait');
+const btnCancel = document.getElementById('btn-cancel');
+
+function resetForm() {
+  form.reset();
+  document.getElementById('f-id').value = '';
+  document.getElementById('form-title').textContent = 'Ajouter un forfait';
+  document.getElementById('btn-submit').textContent = 'Ajouter';
+  btnCancel.style.display = 'none';
+}
+
+function remplirForm(f) {
+  document.getElementById('f-id').value = f.id;
+  document.getElementById('f-operateur').value = f.operateur || '';
+  document.getElementById('f-nom').value = f.nom || '';
+  document.getElementById('f-type').value = f.type || 'internet';
+  document.getElementById('f-data').value = f.data_mo ?? '';
+  document.getElementById('f-minutes').value = f.minutes ?? '';
+  document.getElementById('f-sms').value = f.sms ?? '';
+  document.getElementById('f-validite').value = f.validite_jours ?? '';
+  document.getElementById('f-prix').value = f.prix ?? '';
+  document.getElementById('f-description').value = f.description || '';
+  document.getElementById('f-image').value = f.image_url || '';
+  document.getElementById('form-title').textContent = 'Modifier le forfait';
+  document.getElementById('btn-submit').textContent = 'Enregistrer';
+  btnCancel.style.display = 'inline-block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+btnCancel.addEventListener('click', resetForm);
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('f-id').value;
+  const payload = {
+    operateur: document.getElementById('f-operateur').value.trim(),
+    nom: document.getElementById('f-nom').value.trim(),
+    type: document.getElementById('f-type').value,
+    data_mo: document.getElementById('f-data').value || null,
+    minutes: document.getElementById('f-minutes').value || null,
+    sms: document.getElementById('f-sms').value || null,
+    validite_jours: document.getElementById('f-validite').value || null,
+    prix: document.getElementById('f-prix').value,
+    description: document.getElementById('f-description').value.trim() || null,
+    image_url: document.getElementById('f-image').value.trim() || null,
+  };
+  try {
+    if (id) {
+      await api('/' + id, { method: 'PUT', body: JSON.stringify(payload) });
+      showMsg('Forfait mis à jour avec succès.');
+    } else {
+      await api('', { method: 'POST', body: JSON.stringify(payload) });
+      showMsg('Forfait ajouté avec succès.');
+    }
+    resetForm();
+    chargerListe();
+  } catch (err) {
+    showMsg(err.message, false);
+  }
+});
+
+async function supprimer(id) {
+  if (!confirm('Désactiver ce forfait ?')) return;
+  try {
+    await api('/' + id, { method: 'DELETE' });
+    showMsg('Forfait désactivé.');
+    chargerListe();
+  } catch (err) {
+    showMsg(err.message, false);
+  }
+}
+
+async function chargerListe() {
+  const tbody = document.getElementById('liste-forfaits');
+  tbody.innerHTML = '<tr><td colspan="9">Chargement…</td></tr>';
+  try {
+    const data = await api('?limit=200');
+    if (!data.forfaits || !data.forfaits.length) {
+      tbody.innerHTML = '<tr><td colspan="9">Aucun forfait pour le moment.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.forfaits.map(f => `
+      <tr>
+        <td>${f.operateur}</td>
+        <td>${f.nom}</td>
+        <td>${f.type}</td>
+        <td>${f.data_mo ? (f.data_mo >= 1000 ? (f.data_mo/1000) + ' Go' : f.data_mo + ' Mo') : '—'}</td>
+        <td>${f.minutes ? f.minutes + ' min' : ''}${f.minutes && f.sms ? ' / ' : ''}${f.sms ? f.sms + ' sms' : (!f.minutes ? '—' : '')}</td>
+        <td>${f.validite_jours ? f.validite_jours + ' j' : '—'}</td>
+        <td>${fcfa(f.prix)}</td>
+        <td>${f.source}</td>
+        <td class="actions">
+          <button class="btn-edit" data-edit="${f.id}">Modifier</button>
+          <button class="btn-danger" data-del="${f.id}">Désactiver</button>
+        </td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('[data-edit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const f = data.forfaits.find(x => x.id === btn.dataset.edit);
+        if (f) remplirForm(f);
+      });
+    });
+    tbody.querySelectorAll('[data-del]').forEach(btn => {
+      btn.addEventListener('click', () => supprimer(btn.dataset.del));
+    });
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="9">Erreur : ${err.message}</td></tr>`;
+  }
+}
+
+chargerListe();
+</script>
+</body>
+</html>

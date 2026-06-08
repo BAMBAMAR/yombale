@@ -2,15 +2,7 @@
 const router  = require('express').Router();
 const { pool } = require('../models/db');
 const { lancerScraping, lancerScrapingNouveauxSites, diagnosticScraper, diagnosticNouveauSite, corrigerPrixParPlancher } = require('../services/scraper');
-
-// Middleware simple : protège par ADMIN_SECRET (variable d'env Railway)
-function adminOnly(req, res, next) {
-  const secret = req.headers['x-admin-secret'] || req.query.secret;
-  if (process.env.ADMIN_SECRET && secret !== process.env.ADMIN_SECRET) {
-    return res.status(401).json({ error: 'Secret admin requis. Envoyez le header X-Admin-Secret.' });
-  }
-  next();
-}
+const { adminSecretOnly: adminOnly } = require('../middlewares/auth');
 
 // ── GET /api/scraper/status ───────────────────────────────────
 // Statistiques globales : produits, offres, dernière sync par marchand
