@@ -127,6 +127,7 @@ module.exports = async function migrateInline() {
 
       CREATE INDEX IF NOT EXISTS idx_forfaits_operateur ON forfaits_telecom(operateur);
       CREATE INDEX IF NOT EXISTS idx_forfaits_prix      ON forfaits_telecom(prix);
+      CREATE UNIQUE INDEX IF NOT EXISTS uidx_forfaits_op_nom ON forfaits_telecom(operateur, nom);
 
       INSERT INTO categories (nom, slug, icone) VALUES
         ('Telephones',   'smartphones', '📱'),

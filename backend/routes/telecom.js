@@ -110,6 +110,19 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// POST /api/telecom/sync-artp — scraper ARTP en arrière-plan (admin)
+// ?dry=1 pour prévisualiser sans écrire en base
+router.post('/sync-artp', adminSecretOnly, async (req, res) => {
+  const dryRun = req.query.dry === '1';
+  res.json({
+    message: dryRun ? 'Scraping ARTP en dry-run (pas d\'écriture)…' : 'Scraping ARTP lancé en arrière-plan…',
+    conseil: 'Résultats dans les logs serveur. Consultez /api/telecom dans quelques instants.',
+    dryRun,
+  });
+  const { scraperARTP } = require('../services/scraper-artp');
+  scraperARTP({ dryRun }).catch(console.error);
+});
+
 // DELETE /api/telecom/:id — désactiver (admin) — pas de suppression physique
 router.delete('/:id', adminSecretOnly, async (req, res) => {
   try {
