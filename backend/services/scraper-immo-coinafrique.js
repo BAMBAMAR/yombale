@@ -21,12 +21,23 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-async function fetchPage(url) {
-  const res = await axios.get(url, {
-    headers: { 'User-Agent': UA, 'Accept-Language': 'fr-FR,fr;q=0.9' },
-    timeout: 20000,
-  });
-  return cheerio.load(res.data);
+async function fetchPage(url, retries = 2) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await axios.get(url, {
+        headers: { 'User-Agent': UA, 'Accept-Language': 'fr-FR,fr;q=0.9' },
+        timeout: 20000,
+      });
+      return cheerio.load(res.data);
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 502 || status === 503 || status === 504) {
+        if (i < retries) { await sleep(3000); continue; }
+        throw new Error(`HTTP ${status} — site indisponible`);
+      }
+      throw err;
+    }
+  }
 }
 
 function parsePrix(txt) {
@@ -124,6 +135,21 @@ async function upsertAnnonce(a) {
 
 async function scraperImmo({ dryRun = false } = {}) {
   const stats = { scrapes: 0, inseres: 0, erreurs: [], dryRun };
+
+  // Vérifier que le site répond avant de boucler
+  try {
+    await axios.get(`${BASE}/category/appartements-a-louer`, {
+      headers: { 'User-Agent': UA },
+      timeout: 10000,
+    });
+  } catch (err) {
+    const status = err.response?.status;
+    if (status === 502 || status === 503 || status === 504) {
+      console.warn(`[COIN-IMMO] Site indisponible (HTTP ${status}) — sync ignorée`);
+      stats.erreurs.push(`Site indisponible: HTTP ${status}`);
+      return stats;
+    }
+  }
 
   for (const sec of SECTIONS) {
     for (let pg = 1; pg <= 3; pg++) {
