@@ -28,6 +28,7 @@ router.get('/', async (req, res) => {
       SELECT *, COUNT(*) OVER() AS total_count
       FROM annonces_immo
       WHERE actif = true
+        AND (prix IS NULL OR prix >= 10000)
         AND ($1::text IS NULL OR transaction = $1)
         AND ($2::text IS NULL OR ville ILIKE $2)
         AND ($3::text IS NULL OR quartier ILIKE '%' || $3 || '%')

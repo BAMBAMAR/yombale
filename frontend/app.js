@@ -847,18 +847,19 @@ var _immoState = {
 };
 
 var TYPE_BIEN_LABELS = {
-  '':            'Tous types',
-  'appartement': 'Appartement',
-  'villa':       'Villa',
-  'maison':      'Maison',
-  'studio':      'Studio',
-  'chambre':     'Chambre',
-  'bureau':      'Bureau',
-  'terrain':     'Terrain',
+  '':                   'Tous types',
+  'appartement':        'Appartement',
+  'appartement_meuble': 'Appart. meublé',
+  'villa':              'Villa',
+  'maison':             'Maison',
+  'studio':             'Studio',
+  'chambre':            'Chambre',
+  'bureau':             'Bureau',
+  'terrain':            'Terrain',
 };
 
 function _immoIcon(type) {
-  var MAP = { appartement:'🏢', villa:'🏡', maison:'🏠', studio:'🛏', chambre:'🛏', bureau:'🏗', terrain:'🌿' };
+  var MAP = { appartement:'🏢', appartement_meuble:'🛋', villa:'🏡', maison:'🏠', studio:'🛏', chambre:'🛏', bureau:'🏗', terrain:'🌿' };
   return MAP[type] || '🏠';
 }
 

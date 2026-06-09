@@ -11,7 +11,7 @@ const DELAY = 1500;
 // URLs réelles vérifiées
 const SECTIONS = [
   { path: '/appartements-a-louer',            type_bien: 'appartement', transaction: 'location' },
-  { path: '/appartements-meubles',            type_bien: 'appartement', transaction: 'location' },
+  { path: '/appartements-meubles',            type_bien: 'appartement_meuble', transaction: 'location' },
   { path: '/maisons-a-louer',                 type_bien: 'maison',      transaction: 'location' },
   { path: '/chambres-a-louer',                type_bien: 'chambre',     transaction: 'location' },
   { path: '/proprietes-commerciales-a-louer', type_bien: 'bureau',      transaction: 'location' },
@@ -46,7 +46,8 @@ function parsePrix(txt) {
   if (!txt) return null;
   const clean = txt.replace(/[^0-9]/g, '');
   const v = parseInt(clean, 10);
-  return (v > 0 && v < 999_000_000) ? v : null;
+  // Minimum 10 000 FCFA — rejette les valeurs parasites (numéros de pièces, étages, etc.)
+  return (v >= 10_000 && v < 999_000_000) ? v : null;
 }
 
 function parseNbChambres(txt) {

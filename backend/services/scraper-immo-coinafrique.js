@@ -12,7 +12,7 @@ const DELAY = 3000; // CoinAfrique est lent — respecter un délai plus long
 // On détecte le type de transaction depuis l'URL du slug
 const SECTIONS = [
   { path: '/categorie/appartements',        type_bien: 'appartement' },
-  { path: '/categorie/appartements-meubles',type_bien: 'appartement' },
+  { path: '/categorie/appartements-meubles',type_bien: 'appartement_meuble' },
   { path: '/categorie/villas',              type_bien: 'villa'       },
   { path: '/categorie/chambres',            type_bien: 'chambre'     },
   { path: '/categorie/terrains',            type_bien: 'terrain'     },
@@ -103,7 +103,8 @@ async function scraperPage(url, type_bien_defaut) {
       // Prix : data-ad-price sur .card-fav ou .ad__card-price
       const prixRaw = $el.find('[data-ad-price]').attr('data-ad-price')
                    || $el.find('[class*="price"]').first().text();
-      const prix = prixRaw ? parseInt(String(prixRaw).replace(/[^0-9]/g,''), 10) || null : null;
+      const prixV = prixRaw ? parseInt(String(prixRaw).replace(/[^0-9]/g,''), 10) : 0;
+      const prix = (prixV >= 10_000 && prixV < 999_000_000) ? prixV : null;
 
       // Image : img.ad__card-img avec src direct
       const img = $el.find('img.ad__card-img, img').first();
