@@ -233,6 +233,11 @@ nav {
 .pcard.telecom .pimg { background: linear-gradient(135deg, #fff7ed, #ffedd5); }
 .pcard.telecom:hover { border-color: #fed7aa; }
 .pcard.telecom .pprice { color: #f97316; }
+.pcard.telecom.best-choice {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px #bbf7d0, 0 4px 16px rgba(16,185,129,.15);
+}
+.pcard.telecom.best-choice:hover { border-color: #059669; }
 
 /* ── DÉTAIL OFFRES ──────────────────────────────────────────── */
 .offres { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }

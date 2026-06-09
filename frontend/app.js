@@ -36,6 +36,8 @@ var state = {
   telecomOperateurs: null,
   comparerForfaits:  [],    // ids sélectionnés pour comparaison télécom
   forfaitCache:      {},    // id → objet forfait complet
+  telecomProfil:     'mixte', // profil d'usage : 'internet' | 'appel' | 'mixte'
+  telecomBestId:     null,   // id du forfait recommandé sur la page courante
   recents:   JSON.parse(localStorage.getItem('yomb_recents') || '[]'),
   comparePrefs: Object.assign({}, _prefsDefaut,
     JSON.parse(localStorage.getItem('yomb_compare_prefs') || '{}')),
@@ -658,14 +660,45 @@ function carteListeHTML(p) {
 //  VERTICALE TÉLÉCOM & FORFAITS
 // ═══════════════════════════════════════════════════════════════
 
-function carteForfaitHTML(f) {
+// ── Scoring forfaits ────────────────────────────────────────────
+function _scoreForfait(f, profil) {
+  // Toutes les métriques sont normalisées 0→1 dans la fonction appelante.
+  // Ici on retourne les composantes brutes pour normalisation.
+  var data    = f.data_mo   || 0;
+  var minutes = f.minutes   || 0;
+  var jours   = f.validite_jours || 1;
+  var prix    = f.prix      || 9999999;
+  // Efficacité : data par franc, minutes par franc
+  var effData = data    > 0 ? data    / prix : 0;
+  var effVoix = minutes > 0 ? minutes / prix : 0;
+  var effJour = jours / prix;
+  if (profil === 'internet') return effData * 0.65 + effJour * 0.20 + (1 / prix) * 0.15;
+  if (profil === 'appel')    return effVoix * 0.65 + effJour * 0.20 + (1 / prix) * 0.15;
+  // mixte
+  return effData * 0.35 + effVoix * 0.35 + effJour * 0.15 + (1 / prix) * 0.15;
+}
+
+function _meilleurForfaitId(forfaits, profil) {
+  if (!forfaits || !forfaits.length) return null;
+  var best = forfaits.reduce(function(a, b) {
+    return _scoreForfait(a, profil) >= _scoreForfait(b, profil) ? a : b;
+  });
+  return best.id;
+}
+
+function _dataLabel(data_mo) {
+  if (!data_mo) return '';
+  return data_mo >= 1000 ? (data_mo / 1000) + ' Go' : data_mo + ' Mo';
+}
+
+function carteForfaitHTML(f, bestId) {
   state.forfaitCache[f.id] = f;
-  var dataLabel = f.data_mo
-    ? (f.data_mo >= 1000 ? (f.data_mo / 1000) + ' Go' : f.data_mo + ' Mo')
-    : '';
-  var enCompare = state.comparerForfaits.indexOf(f.id) !== -1;
+  var dataLabel  = _dataLabel(f.data_mo);
+  var enCompare  = state.comparerForfaits.indexOf(f.id) !== -1;
+  var isBest     = bestId && f.id === bestId;
   return [
-    '<div class="pcard telecom" onclick="ouvrirForfait(\'' + f.id + '\')">',
+    '<div class="pcard telecom' + (isBest ? ' best-choice' : '') + '" onclick="ouvrirForfait(\'' + f.id + '\')">',
+      isBest ? '<div class="pbadge-eco" style="background:#10b981">🏆 Recommandé</div>' : '',
       '<div class="pimg" style="background:linear-gradient(135deg,#fff7ed,#ffedd5)">',
         f.image_url
           ? '<img src="' + f.image_url + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:contain">'
@@ -677,15 +710,15 @@ function carteForfaitHTML(f) {
         '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0">',
           dataLabel ? '<span style="font-size:11px;font-weight:600;color:#1d4ed8;background:#eff6ff;padding:2px 8px;border-radius:10px">📶 ' + dataLabel + '</span>' : '',
           f.minutes ? '<span style="font-size:11px;font-weight:600;color:#10b981;background:#ecfdf5;padding:2px 8px;border-radius:10px">📞 ' + f.minutes + ' min</span>' : '',
-          f.sms ? '<span style="font-size:11px;font-weight:600;color:#7c3aed;background:#f5f3ff;padding:2px 8px;border-radius:10px">✉ ' + f.sms + ' SMS</span>' : '',
+          f.sms     ? '<span style="font-size:11px;font-weight:600;color:#7c3aed;background:#f5f3ff;padding:2px 8px;border-radius:10px">✉ ' + f.sms + ' SMS</span>' : '',
         '</div>',
         '<div class="pprice">' + fcfa(f.prix) + '</div>',
-        f.validite_jours ? '<div class="poffers">Validité ' + f.validite_jours + ' j</div>' : '<div class="poffers"></div>',
+        f.validite_jours ? '<div class="poffers">Validité ' + f.validite_jours + ' j · ' + fcfa(Math.round(f.prix / f.validite_jours)) + '/jour</div>' : '<div class="poffers"></div>',
         '<div style="display:flex;gap:6px;margin-top:6px">',
           '<button class="btn-voir" style="flex:1" onclick="event.stopPropagation();ouvrirForfait(\'' + f.id + '\')">Voir →</button>',
           '<button onclick="event.stopPropagation();toggleComparerForfait(\'' + f.id + '\')" ' +
-            'title="' + (enCompare ? 'Retirer de la comparaison' : 'Comparer ce forfait') + '" ' +
-            'style="padding:6px 8px;border-radius:6px;border:1.5px solid ' + (enCompare ? '#f97316' : '#e2e8f0') + ';' +
+            'title="' + (enCompare ? 'Retirer' : 'Comparer') + '" ' +
+            'style="padding:6px 9px;border-radius:6px;border:1.5px solid ' + (enCompare ? '#f97316' : '#e2e8f0') + ';' +
             'background:' + (enCompare ? '#fff7ed' : '#fff') + ';cursor:pointer;font-size:14px">⚖</button>',
         '</div>',
       '</div>',
@@ -695,31 +728,54 @@ function carteForfaitHTML(f) {
 
 function htmlBarreTelecom() {
   var sStyle = 'padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;outline:none';
-  var nb = state.comparerForfaits.length;
+  var nb     = state.comparerForfaits.length;
+  var profil = state.telecomProfil || 'mixte';
+  function pTab(p, label) {
+    var act = p === profil;
+    return '<button onclick="changerProfilGrille(\'' + p + '\')" ' +
+      'style="padding:4px 10px;border-radius:14px;border:1px solid ' + (act ? '#10b981' : '#e2e8f0') + ';' +
+      'background:' + (act ? '#f0fdf4' : '#fff') + ';color:' + (act ? '#059669' : '#64748b') + ';' +
+      'font-size:11px;font-weight:' + (act ? '700' : '500') + ';cursor:pointer">' + label + '</button>';
+  }
   return [
-    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 5%;border-bottom:1px solid #f1f5f9">',
-      '<select onchange="filtrerTelecomOperateur(this.value)" style="' + sStyle + '">',
-        '<option value="">Tous opérateurs</option>',
-        (state.telecomOperateurs || []).map(function(o) {
-          return '<option value="' + o + '"' + (state.telecomOperateur === o ? ' selected' : '') + '>' + o + '</option>';
-        }).join(''),
-      '</select>',
-      '<select onchange="filtrerTelecomType(this.value)" style="' + sStyle + '">',
-        [['', 'Tous types'], ['internet', 'Internet'], ['appel', 'Appel'], ['sms', 'SMS'], ['combo', 'Combo']].map(function(t) {
-          return '<option value="' + t[0] + '"' + (state.telecomType === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
-        }).join(''),
-      '</select>',
-      '<select onchange="changerTriTelecom(this.value)" style="' + sStyle + '">',
-        [['', '🎯 Pertinence'], ['prix_asc', '⬆ Prix ↑'], ['prix_desc', '⬇ Prix ↓'], ['data_desc', '📶 Plus de data']].map(function(t) {
-          return '<option value="' + t[0] + '"' + (state.telecomTri === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
-        }).join(''),
-      '</select>',
-      nb > 0
-        ? '<button onclick="ouvrirComparaisonForfaits()" style="margin-left:auto;padding:6px 14px;background:#f97316;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">⚖ Comparer (' + nb + ')</button>' +
-          '<button onclick="viderComparaisonForfaits()" style="padding:6px 10px;border-radius:8px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;font-size:11px;font-weight:600;cursor:pointer">✕</button>'
-        : '<span style="margin-left:auto;font-size:11px;color:#94a3b8">Appuyez ⚖ sur une carte pour comparer</span>',
+    '<div style="display:flex;flex-direction:column;gap:6px;padding:8px 5%;border-bottom:1px solid #f1f5f9">',
+      // Ligne 1 : filtres
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">',
+        '<select onchange="filtrerTelecomOperateur(this.value)" style="' + sStyle + '">',
+          '<option value="">Tous opérateurs</option>',
+          (state.telecomOperateurs || []).map(function(o) {
+            return '<option value="' + o + '"' + (state.telecomOperateur === o ? ' selected' : '') + '>' + o + '</option>';
+          }).join(''),
+        '</select>',
+        '<select onchange="filtrerTelecomType(this.value)" style="' + sStyle + '">',
+          [['', 'Tous types'], ['internet', 'Internet'], ['appel', 'Appel'], ['sms', 'SMS'], ['combo', 'Combo']].map(function(t) {
+            return '<option value="' + t[0] + '"' + (state.telecomType === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
+          }).join(''),
+        '</select>',
+        '<select onchange="changerTriTelecom(this.value)" style="' + sStyle + '">',
+          [['', '🎯 Pertinence'], ['prix_asc', '⬆ Prix ↑'], ['prix_desc', '⬇ Prix ↓'], ['data_desc', '📶 Plus de data']].map(function(t) {
+            return '<option value="' + t[0] + '"' + (state.telecomTri === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
+          }).join(''),
+        '</select>',
+        nb > 0
+          ? '<button onclick="ouvrirComparaisonForfaits()" style="margin-left:auto;padding:6px 14px;background:#f97316;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">⚖ Comparer (' + nb + ')</button>' +
+            '<button onclick="viderComparaisonForfaits()" style="padding:6px 10px;border-radius:8px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;font-size:11px;font-weight:600;cursor:pointer">✕</button>'
+          : '<span style="margin-left:auto;font-size:11px;color:#94a3b8">⚖ sur une carte pour comparer</span>',
+      '</div>',
+      // Ligne 2 : profil usage (influence le badge Recommandé)
+      '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">',
+        '<span style="font-size:11px;color:#64748b;font-weight:500">🏆 Recommandé pour :</span>',
+        pTab('internet', '🌐 Internet'),
+        pTab('appel', '📞 Appels'),
+        pTab('mixte', '🔀 Mixte'),
+      '</div>',
     '</div>',
   ].join('');
+}
+
+function changerProfilGrille(profil) {
+  state.telecomProfil = profil;
+  chargerForfaits(1);
 }
 
 function toggleComparerForfait(id) {
@@ -740,81 +796,180 @@ function viderComparaisonForfaits() {
   chargerForfaits(state.page);
 }
 
+function changerProfilTelecom(profil) {
+  state.telecomProfil = profil;
+  // Mise à jour des onglets dans la modale si ouverte
+  ['internet', 'appel', 'mixte'].forEach(function(p) {
+    var btn = document.getElementById('profil-tab-' + p);
+    if (btn) {
+      btn.style.background  = p === profil ? '#f97316' : '#fff';
+      btn.style.color       = p === profil ? '#fff'    : '#64748b';
+      btn.style.borderColor = p === profil ? '#f97316' : '#e2e8f0';
+      btn.style.fontWeight  = p === profil ? '700'     : '500';
+    }
+  });
+  // Re-rendre le contenu de la modale avec le nouveau profil
+  _renderComparaisonContent();
+}
+
+function _barHtml(val, maxVal, couleur) {
+  var pct = (maxVal > 0 && val > 0) ? Math.round((val / maxVal) * 100) : 0;
+  return '<div style="height:6px;border-radius:3px;background:#e2e8f0;margin-top:3px;overflow:hidden">' +
+    '<div style="height:100%;width:' + pct + '%;background:' + couleur + ';border-radius:3px;transition:width .4s"></div>' +
+  '</div>';
+}
+
+function _renderComparaisonContent() {
+  var forfaits = state.comparerForfaits.map(function(id) { return state.forfaitCache[id]; }).filter(Boolean);
+  var profil   = state.telecomProfil || 'mixte';
+
+  // ── Scoring ───────────────────────────────────────────────────
+  var scores   = forfaits.map(function(f) { return _scoreForfait(f, profil); });
+  var scoreMax = Math.max.apply(null, scores);
+  var bestIdx  = scores.indexOf(scoreMax);
+  var bestId   = forfaits[bestIdx] ? forfaits[bestIdx].id : null;
+
+  // ── Métriques pour highlight ──────────────────────────────────
+  var prixMin    = Math.min.apply(null, forfaits.map(function(f){ return f.prix; }));
+  var dataMax    = Math.max.apply(null, forfaits.map(function(f){ return f.data_mo || 0; }));
+  var minutesMax = Math.max.apply(null, forfaits.map(function(f){ return f.minutes || 0; }));
+  var jouMax     = Math.max.apply(null, forfaits.map(function(f){ return f.validite_jours || 0; }));
+
+  function prixParGo(f)  { return (f.data_mo  && f.data_mo  > 0) ? Math.round(f.prix / (f.data_mo / 1000)) : null; }
+  function prixParMin(f) { return (f.minutes  && f.minutes  > 0) ? (f.prix / f.minutes).toFixed(1)         : null; }
+  function prixParJour(f){ return (f.validite_jours && f.validite_jours > 0) ? Math.round(f.prix / f.validite_jours) : null; }
+
+  var prixGoList  = forfaits.map(prixParGo).filter(function(v){ return v !== null; });
+  var prixGoMin   = prixGoList.length ? Math.min.apply(null, prixGoList)  : Infinity;
+  var prixMinList = forfaits.map(prixParMin).filter(function(v){ return v !== null; });
+  var prixMinMin  = prixMinList.length ? Math.min.apply(null, prixMinList.map(Number)) : Infinity;
+  var prixJList   = forfaits.map(prixParJour).filter(function(v){ return v !== null; });
+  var prixJMin    = prixJList.length ? Math.min.apply(null, prixJList) : Infinity;
+
+  // ── Colonnes ─────────────────────────────────────────────────
+  var cols = forfaits.map(function(f, idx) {
+    return {
+      f:     f,
+      score: scores[idx],
+      isBest: f.id === bestId,
+      pg:    prixParGo(f),
+      pm:    prixParMin(f),
+      pj:    prixParJour(f),
+      dataLabel: _dataLabel(f.data_mo),
+    };
+  });
+
+  // ── Onglets profil ───────────────────────────────────────────
+  function tabBtn(p, label) {
+    var act = p === profil;
+    return '<button id="profil-tab-' + p + '" onclick="changerProfilTelecom(\'' + p + '\')" ' +
+      'style="padding:6px 16px;border-radius:20px;border:1.5px solid ' + (act ? '#f97316' : '#e2e8f0') + ';' +
+      'background:' + (act ? '#f97316' : '#fff') + ';color:' + (act ? '#fff' : '#64748b') + ';' +
+      'font-weight:' + (act ? '700' : '500') + ';font-size:12px;cursor:pointer">' + label + '</button>';
+  }
+  var profilTabs = '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+    '<span style="font-size:12px;color:#64748b;font-weight:600">Mon profil :</span>' +
+    tabBtn('internet', '🌐 Internet') + tabBtn('appel', '📞 Appels') + tabBtn('mixte', '🔀 Mixte') +
+    '<span style="font-size:11px;color:#94a3b8;margin-left:4px">— influence le score Recommandé</span>' +
+  '</div>';
+
+  // ── Header colonnes ──────────────────────────────────────────
+  var thStyle      = 'padding:12px 10px;text-align:center;border-bottom:2px solid #e2e8f0;min-width:110px';
+  var thBestStyle  = 'padding:12px 10px;text-align:center;border-bottom:2px solid #10b981;min-width:110px;background:#f0fdf4';
+  var labelStyle   = 'font-weight:600;color:#475569;font-size:12px;white-space:nowrap;padding:10px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0;vertical-align:middle';
+
+  var headerRow = '<tr>' +
+    '<th style="' + labelStyle + '"></th>' +
+    cols.map(function(c) {
+      var th = c.isBest ? thBestStyle : thStyle;
+      return '<th style="' + th + '">' +
+        (c.isBest ? '<div style="font-size:10px;font-weight:700;color:#10b981;letter-spacing:.04em;margin-bottom:4px">🏆 MEILLEUR CHOIX</div>' : '') +
+        (c.f.image_url ? '<img src="' + c.f.image_url + '" style="height:28px;object-fit:contain;margin-bottom:4px"><br>' : '') +
+        '<span style="font-size:11px;font-weight:700;color:#f97316">' + c.f.operateur + '</span><br>' +
+        '<span style="font-size:12px;font-weight:600;color:#1e293b">' + c.f.nom + '</span>' +
+      '</th>';
+    }).join('') +
+  '</tr>';
+
+  // ── Ligne utilitaire ─────────────────────────────────────────
+  function row(label, fn) {
+    return '<tr><td style="' + labelStyle + '">' + label + '</td>' +
+      cols.map(function(c) {
+        var r = fn(c);
+        var bg = c.isBest ? 'background:#f0fdf4;' : '';
+        var hl = r.hl ? 'color:#10b981;font-weight:800;' : '';
+        return '<td style="text-align:center;padding:10px 10px;border-bottom:1px solid #e2e8f0;font-size:13px;' + bg + hl + '">' +
+          r.v + (r.bar || '') + '</td>';
+      }).join('') +
+    '</tr>';
+  }
+
+  var tableHtml = [
+    '<div style="overflow-x:auto">',
+    '<table style="width:100%;border-collapse:collapse">',
+      '<thead>' + headerRow + '</thead>',
+      '<tbody>',
+        row('💰 Prix', function(c) {
+          return { v: fcfa(c.f.prix), hl: c.f.prix === prixMin };
+        }),
+        row('📅 Prix / jour', function(c) {
+          var v = c.pj !== null ? fcfa(c.pj) + '/j' : '—';
+          return { v: v, hl: c.pj !== null && c.pj === prixJMin };
+        }),
+        row('📶 Data', function(c) {
+          var v = c.dataLabel || '—';
+          var bar = (dataMax > 0 && c.f.data_mo) ? _barHtml(c.f.data_mo, dataMax, '#3b82f6') : '';
+          return { v: v, hl: c.f.data_mo === dataMax && dataMax > 0, bar: bar };
+        }),
+        row('📞 Voix incluse', function(c) {
+          var v = c.f.minutes ? c.f.minutes + ' min' : '—';
+          var bar = (minutesMax > 0 && c.f.minutes) ? _barHtml(c.f.minutes, minutesMax, '#10b981') : '';
+          return { v: v, hl: c.f.minutes === minutesMax && minutesMax > 0, bar: bar };
+        }),
+        row('✉ SMS inclus', function(c) {
+          return { v: c.f.sms ? c.f.sms + ' SMS' : '—', hl: false };
+        }),
+        row('⏳ Validité', function(c) {
+          return { v: c.f.validite_jours ? c.f.validite_jours + ' j' : '—', hl: c.f.validite_jours === jouMax && jouMax > 0 };
+        }),
+        row('📊 Prix / Go', function(c) {
+          return { v: c.pg !== null ? fcfa(c.pg) + '/Go' : '—', hl: c.pg !== null && c.pg === prixGoMin };
+        }),
+        row('📊 Prix / min', function(c) {
+          return { v: c.pm !== null ? c.pm + ' F/min' : '—', hl: c.pm !== null && Number(c.pm) === prixMinMin };
+        }),
+      '</tbody>',
+    '</table>',
+    '</div>',
+  ].join('');
+
+  // ── Verdict adapté au profil ──────────────────────────────────
+  var winner = forfaits[bestIdx];
+  var profilLabel = profil === 'internet' ? '🌐 Internet' : profil === 'appel' ? '📞 Appels' : '🔀 Mixte';
+  var meilleurPrix = forfaits.reduce(function(a,b){ return a.prix < b.prix ? a : b; });
+  var meilleurData = dataMax > 0 ? forfaits.reduce(function(a,b){ return (a.data_mo||0) > (b.data_mo||0) ? a : b; }) : null;
+
+  var verdictLines = [
+    '<div style="padding:16px 20px;background:#f0fdf4;border-top:2px solid #bbf7d0">',
+      '<div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:10px">🏆 Verdict — profil ' + profilLabel + '</div>',
+      winner ? '<div style="font-size:13px;color:#166534;margin-bottom:6px">✅ <strong>Meilleur choix global :</strong> ' + winner.operateur + ' — ' + winner.nom + ' (' + fcfa(winner.prix) + ')</div>' : '',
+      '<div style="font-size:13px;color:#166534;margin-bottom:4px">💰 <strong>Moins cher :</strong> ' + meilleurPrix.operateur + ' — ' + meilleurPrix.nom + ' (' + fcfa(meilleurPrix.prix) + ')</div>',
+      meilleurData ? '<div style="font-size:13px;color:#166534;margin-bottom:4px">📶 <strong>Plus de data :</strong> ' + meilleurData.operateur + ' — ' + meilleurData.nom + ' (' + _dataLabel(meilleurData.data_mo) + ')</div>' : '',
+      (prixGoMin && prixGoMin !== Infinity) ? '<div style="font-size:13px;color:#166534">📊 <strong>Meilleur rapport data/prix :</strong> ' + fcfa(prixGoMin) + '/Go</div>' : '',
+    '</div>',
+  ].join('');
+
+  // ── Injection dans la modale ──────────────────────────────────
+  var conteneur = document.getElementById('cmp-content');
+  if (conteneur) {
+    conteneur.innerHTML = profilTabs + tableHtml + verdictLines;
+  }
+}
+
 function ouvrirComparaisonForfaits() {
   var forfaits = state.comparerForfaits.map(function(id) { return state.forfaitCache[id]; }).filter(Boolean);
   if (forfaits.length < 2) { toast('Sélectionnez au moins 2 forfaits à comparer', '#f97316'); return; }
 
-  // ── Calcul des métriques ──────────────────────────────────────
-  var prixMin    = Math.min.apply(null, forfaits.map(function(f){ return f.prix; }));
-  var dataMax    = Math.max.apply(null, forfaits.map(function(f){ return f.data_mo || 0; }));
-  var minutesMax = Math.max.apply(null, forfaits.map(function(f){ return f.minutes || 0; }));
-
-  function prixParGo(f) {
-    return (f.data_mo && f.data_mo > 0) ? Math.round(f.prix / (f.data_mo / 1000)) : null;
-  }
-  function prixParMin(f) {
-    return (f.minutes && f.minutes > 0) ? Math.round(f.prix / f.minutes) : null;
-  }
-  var prixGoMin  = Math.min.apply(null, forfaits.map(prixParGo).filter(function(v){ return v !== null; }));
-  var prixMinMin = Math.min.apply(null, forfaits.map(prixParMin).filter(function(v){ return v !== null; }));
-
-  function best(val, minVal) { return val === minVal ? ' style="color:#10b981;font-weight:800"' : ''; }
-  function bestMax(val, maxVal) { return val === maxVal ? ' style="color:#10b981;font-weight:800"' : ''; }
-
-  // ── Construction du tableau ───────────────────────────────────
-  var cols = forfaits.map(function(f) {
-    var pg = prixParGo(f);
-    var pm = prixParMin(f);
-    var dataLabel = f.data_mo ? (f.data_mo >= 1000 ? (f.data_mo/1000) + ' Go' : f.data_mo + ' Mo') : '—';
-    return {
-      f: f, pg: pg, pm: pm, dataLabel: dataLabel,
-    };
-  });
-
-  function row(label, fn) {
-    return '<tr><td style="font-weight:600;color:#475569;font-size:12px;white-space:nowrap;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0">' + label + '</td>' +
-      cols.map(function(c) {
-        var r = fn(c);
-        return '<td style="text-align:center;padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13px' + (r.hl ? ';color:#10b981;font-weight:800' : '') + '">' + r.v + '</td>';
-      }).join('') + '</tr>';
-  }
-
-  var tableHtml = [
-    '<table style="width:100%;border-collapse:collapse">',
-      // Header opérateurs
-      '<thead><tr>',
-        '<th style="padding:12px 16px;background:#f8fafc;border-bottom:2px solid #e2e8f0;text-align:left;font-size:12px;color:#64748b"></th>',
-        cols.map(function(c) {
-          return '<th style="padding:12px;background:#f8fafc;border-bottom:2px solid #e2e8f0;text-align:center">' +
-            (c.f.image_url ? '<img src="' + c.f.image_url + '" style="height:32px;object-fit:contain;margin-bottom:4px"><br>' : '') +
-            '<span style="font-size:11px;font-weight:700;color:#f97316">' + c.f.operateur + '</span><br>' +
-            '<span style="font-size:12px;font-weight:600;color:#1e293b">' + c.f.nom + '</span>' +
-          '</th>';
-        }).join('') +
-      '</tr></thead>',
-      '<tbody>',
-        row('💰 Prix', function(c) { return { v: fcfa(c.f.prix), hl: c.f.prix === prixMin }; }),
-        row('📶 Data', function(c) { return { v: c.dataLabel, hl: c.f.data_mo === dataMax && dataMax > 0 }; }),
-        row('📞 Voix incluse', function(c) { return { v: c.f.minutes ? c.f.minutes + ' min' : '—', hl: c.f.minutes === minutesMax && minutesMax > 0 }; }),
-        row('✉ SMS inclus', function(c) { return { v: c.f.sms ? c.f.sms + ' SMS' : '—', hl: false }; }),
-        row('⏳ Validité', function(c) { return { v: c.f.validite_jours ? c.f.validite_jours + ' jours' : '—', hl: false }; }),
-        row('📊 Prix / Go', function(c) { return { v: c.pg !== null ? fcfa(c.pg) + '/Go' : '—', hl: c.pg !== null && c.pg === prixGoMin }; }),
-        row('📊 Prix / min', function(c) { return { v: c.pm !== null ? c.pm + ' F/min' : '—', hl: c.pm !== null && c.pm === prixMinMin }; }),
-      '</tbody>',
-    '</table>',
-  ].join('');
-
-  // ── Verdict ───────────────────────────────────────────────────
-  var meilleurPrix = forfaits.reduce(function(a, b) { return a.prix < b.prix ? a : b; });
-  var meilleurData = (dataMax > 0) ? forfaits.reduce(function(a, b) { return (a.data_mo||0) > (b.data_mo||0) ? a : b; }) : null;
-  var verdict = '<div style="padding:16px 20px;background:#f0fdf4;border-top:2px solid #bbf7d0">' +
-    '<div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:8px">🏆 Verdict</div>' +
-    '<div style="font-size:13px;color:#166534">💰 Moins cher : <strong>' + meilleurPrix.operateur + ' — ' + meilleurPrix.nom + '</strong> (' + fcfa(meilleurPrix.prix) + ')</div>' +
-    (meilleurData ? '<div style="font-size:13px;color:#166534;margin-top:4px">📶 Plus de data : <strong>' + meilleurData.operateur + ' — ' + meilleurData.nom + '</strong> (' + (meilleurData.data_mo >= 1000 ? meilleurData.data_mo/1000+'Go' : meilleurData.data_mo+'Mo') + ')</div>' : '') +
-    (prixGoMin && prixGoMin !== Infinity ? '<div style="font-size:13px;color:#166534;margin-top:4px">📊 Meilleur rapport data/prix : <strong>' + cols.find(function(c){ return c.pg===prixGoMin; }).f.operateur + '</strong> (' + fcfa(prixGoMin) + '/Go)</div>' : '') +
-  '</div>';
-
-  // ── Modal ─────────────────────────────────────────────────────
   var modal = document.getElementById('modal-comparaison-forfaits');
   if (!modal) {
     modal = document.createElement('div');
@@ -822,19 +977,21 @@ function ouvrirComparaisonForfaits() {
     document.body.appendChild(modal);
   }
   modal.innerHTML = [
-    '<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto">',
+    '<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto">',
       '<div style="background:#fff;border-radius:14px;max-width:900px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden">',
-        '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#fff7ed;border-bottom:1px solid #fed7aa">',
-          '<span style="font-size:16px;font-weight:700;color:#1e293b">⚖ Comparaison forfaits télécom</span>',
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#fff7ed;border-bottom:1px solid #fed7aa">',
+          '<span style="font-size:15px;font-weight:700;color:#1e293b">⚖ Comparaison intelligente — forfaits télécom</span>',
           '<button onclick="fermerComparaisonForfaits()" style="padding:6px 12px;background:none;border:1px solid #e2e8f0;border-radius:8px;font-size:20px;cursor:pointer;color:#64748b">✕</button>',
         '</div>',
-        tableHtml,
-        verdict,
+        '<div style="padding:14px 20px 0;background:#fafafa;border-bottom:1px solid #e2e8f0" id="cmp-profil-bar"></div>',
+        '<div id="cmp-content" style="overflow:hidden"></div>',
       '</div>',
     '</div>',
   ].join('');
   modal.style.display = 'block';
   modal.onclick = function(e) { if (e.target === modal.firstChild) fermerComparaisonForfaits(); };
+
+  _renderComparaisonContent();
 }
 
 function fermerComparaisonForfaits() {
@@ -854,12 +1011,14 @@ function btnPlusForfaits(data) {
 }
 
 function templateForfaits(forfaits, data) {
+  var bestId = _meilleurForfaitId(forfaits, state.telecomProfil || 'mixte');
+  state.telecomBestId = bestId;
   return [
     htmlHero(),
     htmlBarreTelecom(),
     '<section class="products">',
       data.total > 0 ? '<p style="font-size:12px;color:#94a3b8;padding:4px 5% 10px">' + data.total + ' forfait(s)</p>' : '',
-      '<div class="pgrid">' + forfaits.map(carteForfaitHTML).join('') + '</div>',
+      '<div class="pgrid">' + forfaits.map(function(f){ return carteForfaitHTML(f, bestId); }).join('') + '</div>',
       data.page < data.pages ? btnPlusForfaits(data) : (data.total > 24 ? '<p id="fin-liste" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">✅ Tous les ' + data.total + ' forfaits affichés</p>' : ''),
     '</section>',
     htmlFooter(),
@@ -913,7 +1072,7 @@ function chargerForfaits(page) {
         var oldBtn = document.getElementById('btn-plus'); if (oldBtn) oldBtn.remove();
         var finMsg = document.getElementById('fin-liste'); if (finMsg) finMsg.remove();
         var grid = document.querySelector('.pgrid');
-        if (grid) { var tmp = document.createElement('div'); tmp.innerHTML = forfaits.map(carteForfaitHTML).join(''); while (tmp.firstChild) grid.appendChild(tmp.firstChild); }
+        if (grid) { var tmp = document.createElement('div'); tmp.innerHTML = forfaits.map(function(f){ return carteForfaitHTML(f, null); }).join(''); while (tmp.firstChild) grid.appendChild(tmp.firstChild); }
         var s2 = document.querySelector('.products');
         if (s2) { s2.insertAdjacentHTML('beforeend', page < state.pageTotal ? btnPlusForfaits(data) : '<p id="fin-liste" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">✅ Tous les ' + data.total + ' forfaits affichés</p>'); }
       }
