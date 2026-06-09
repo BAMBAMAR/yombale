@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Immobilier — Yombale</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f4f5f7; margin: 0; padding: 24px; color: #1a1a1a; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+  .panel { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .panel h2 { margin: 0 0 14px; font-size: 16px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
+  input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #d8dadf; border-radius: 6px; font-size: 14px; }
+  textarea { resize: vertical; min-height: 60px; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 18px; font-size: 14px; font-weight: 600; transition: opacity .15s; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-primary  { background: #059669; color: #fff; }
+  .btn-blue     { background: #2563eb; color: #fff; }
+  .btn-orange   { background: #f97316; color: #fff; }
+  .btn-fb       { background: #1877f2; color: #fff; }
+  .btn-danger   { background: #e63946; color: #fff; }
+  .btn-edit     { background: #2a6df5; color: #fff; }
+  .btn-secondary{ background: #e8e9ec; color: #333; }
+  .btn-sm       { padding: 5px 11px; font-size: 12px; }
+  .sync-row     { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+  .sync-row:last-child { border-bottom: none; }
+  .sync-info    { flex: 1; min-width: 200px; }
+  .sync-info strong { display: block; font-size: 14px; }
+  .sync-info span   { font-size: 12px; color: #64748b; }
+  .log { font-family: monospace; font-size: 12px; background: #1e293b; color: #e2e8f0; padding: 12px 14px; border-radius: 8px; max-height: 160px; overflow-y: auto; white-space: pre-wrap; margin-top: 10px; }
+  .msg { padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 14px; }
+  .msg.ok  { background: #e6f7ee; color: #1e7e4f; }
+  .msg.err { background: #fde8e8; color: #c0392b; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: #f8fafc; border-radius: 10px; padding: 14px; text-align: center; border: 1.5px solid #e2e8f0; }
+  .stat-card .val { font-size: 26px; font-weight: 800; color: #059669; }
+  .stat-card .lbl { font-size: 11px; color: #64748b; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; }
+  th { color: #666; font-weight: 600; background: #f8fafc; }
+  .actions button { margin-right: 6px; padding: 5px 10px; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 700; }
+  .badge-loc  { background: #d1fae5; color: #059669; }
+  .badge-vente{ background: #ede9fe; color: #7c3aed; }
+  .badge-fb   { background: #dbeafe; color: #1d4ed8; }
+  .badge-exp  { background: #fff7ed; color: #f97316; }
+  .badge-coin { background: #f0fdf4; color: #16a34a; }
+  .pager { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 16px 0; }
+  .pager button { padding: 6px 14px; background: #f1f5f9; color: #475569; }
+</style>
+</head>
+<body>
+
+<h1>🏡 Admin — Immobilier</h1>
+<p class="sub">Gestion des annonces immobilières — scraping et saisie manuelle</p>
+
+<div id="msg"></div>
+
+<!-- Stats -->
+<div class="stats-grid" id="stats-grid">
+  <div class="stat-card"><div class="val">…</div><div class="lbl">Total annonces</div></div>
+  <div class="stat-card"><div class="val">…</div><div class="lbl">Locations</div></div>
+  <div class="stat-card"><div class="val">…</div><div class="lbl">Ventes</div></div>
+  <div class="stat-card"><div class="val">…</div><div class="lbl">Sources actives</div></div>
+</div>
+
+<!-- Synchronisation scrapers -->
+<div class="panel">
+  <h2>⚡ Synchronisation des sources</h2>
+
+  <div class="sync-row">
+    <div style="font-size:28px">🌐</div>
+    <div class="sync-info">
+      <strong>Expat-Dakar</strong>
+      <span>expat-dakar.com — locations & ventes (appartements, villas, studios…)</span>
+    </div>
+    <button class="btn-orange" onclick="syncSource('expat-dakar', false, this)">▶ Lancer sync</button>
+    <button class="btn-secondary btn-sm" onclick="syncSource('expat-dakar', true, this)">🔍 Dry-run</button>
+  </div>
+
+  <div class="sync-row">
+    <div style="font-size:28px">🟢</div>
+    <div class="sync-info">
+      <strong>CoinAfrique</strong>
+      <span>sn.coinafrique.com — petites annonces immobilières</span>
+    </div>
+    <button class="btn-primary" onclick="syncSource('coinafrique', false, this)">▶ Lancer sync</button>
+    <button class="btn-secondary btn-sm" onclick="syncSource('coinafrique', true, this)">🔍 Dry-run</button>
+  </div>
+
+  <div class="sync-row">
+    <div style="font-size:28px">📘</div>
+    <div class="sync-info">
+      <strong>Facebook Groupes</strong>
+      <span>Groupes publics — nécessite FB_EMAIL + FB_PASSWORD dans les variables Railway</span>
+    </div>
+    <button class="btn-fb" onclick="syncSource('facebook', false, this)">▶ Lancer sync</button>
+    <button class="btn-secondary btn-sm" onclick="syncSource('facebook', true, this)">🔍 Dry-run</button>
+  </div>
+
+  <div id="sync-log" style="display:none">
+    <div class="log" id="sync-log-content"></div>
+  </div>
+</div>
+
+<!-- Ajout manuel -->
+<div class="panel">
+  <h2 id="form-title">➕ Ajouter une annonce</h2>
+  <form id="form-annonce">
+    <input type="hidden" id="a-id">
+    <div class="row">
+      <div>
+        <label>Transaction *</label>
+        <select id="a-transaction">
+          <option value="location">Location</option>
+          <option value="vente">Vente</option>
+        </select>
+      </div>
+      <div>
+        <label>Type de bien *</label>
+        <select id="a-type">
+          <option value="appartement">Appartement</option>
+          <option value="villa">Villa</option>
+          <option value="maison">Maison</option>
+          <option value="studio">Studio</option>
+          <option value="chambre">Chambre</option>
+          <option value="bureau">Bureau</option>
+          <option value="terrain">Terrain</option>
+        </select>
+      </div>
+      <div>
+        <label>Prix (FCFA)</label>
+        <input type="number" id="a-prix" placeholder="ex: 150000">
+      </div>
+    </div>
+    <div>
+      <label>Titre *</label>
+      <input type="text" id="a-titre" placeholder="ex: Appartement F3 meublé à Mermoz">
+    </div>
+    <div class="row">
+      <div>
+        <label>Ville</label>
+        <input type="text" id="a-ville" value="Dakar" placeholder="Dakar">
+      </div>
+      <div>
+        <label>Quartier</label>
+        <input type="text" id="a-quartier" placeholder="ex: Mermoz, Plateau…">
+      </div>
+      <div>
+        <label>Surface (m²)</label>
+        <input type="number" id="a-surface" placeholder="ex: 80">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Nb pièces</label>
+        <input type="number" id="a-pieces" placeholder="ex: 3">
+      </div>
+      <div>
+        <label>Nb chambres</label>
+        <input type="number" id="a-chambres" placeholder="ex: 2">
+      </div>
+      <div>
+        <label>URL source</label>
+        <input type="url" id="a-url" placeholder="https://...">
+      </div>
+    </div>
+    <div>
+      <label>Description</label>
+      <textarea id="a-desc" placeholder="Détails, contact, conditions…"></textarea>
+    </div>
+    <div>
+      <label>Photo URL (principale)</label>
+      <input type="url" id="a-photo" placeholder="https://...">
+    </div>
+    <button type="button" class="btn-primary" onclick="sauvegarderAnnonce()">💾 Enregistrer</button>
+    <button type="button" class="btn-secondary" onclick="reinitForm()" style="margin-left:8px">Annuler</button>
+  </form>
+</div>
+
+<!-- Liste des annonces -->
+<div class="panel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <h2 style="margin:0">📋 Annonces en base</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <select id="filtre-tx" onchange="chargerAnnonces(1)" style="padding:6px 8px;border:1px solid #d8dadf;border-radius:6px;font-size:13px">
+        <option value="">Tous</option>
+        <option value="location">Location</option>
+        <option value="vente">Vente</option>
+      </select>
+      <select id="filtre-type" onchange="chargerAnnonces(1)" style="padding:6px 8px;border:1px solid #d8dadf;border-radius:6px;font-size:13px">
+        <option value="">Tous types</option>
+        <option value="appartement">Appartement</option>
+        <option value="villa">Villa</option>
+        <option value="maison">Maison</option>
+        <option value="studio">Studio</option>
+        <option value="chambre">Chambre</option>
+        <option value="bureau">Bureau</option>
+        <option value="terrain">Terrain</option>
+      </select>
+      <button class="btn-secondary btn-sm" onclick="chargerAnnonces(1)">🔄 Actualiser</button>
+    </div>
+  </div>
+  <div id="table-wrap">Chargement…</div>
+  <div class="pager" id="pager" style="display:none"></div>
+</div>
+
+<script>
+// ── Auth ───────────────────────────────────────────────────────────────
+let SECRET = sessionStorage.getItem('immo_admin_secret') || '';
+if (!SECRET) {
+  SECRET = prompt('Secret admin :') || '';
+  if (SECRET) sessionStorage.setItem('immo_admin_secret', SECRET);
+}
+
+function headers() {
+  return { 'Content-Type': 'application/json', 'X-Admin-Secret': SECRET };
+}
+
+function showMsg(txt, ok) {
+  const el = document.getElementById('msg');
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
+  el.textContent = txt;
+  setTimeout(() => { el.textContent = ''; el.className = ''; }, 4000);
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────
+async function chargerStats() {
+  try {
+    const r = await fetch('/api/immo/stats', { headers: headers() });
+    const d = await r.json();
+    const g = document.getElementById('stats-grid');
+    g.innerHTML = [
+      stat(d.total        || 0, 'Total annonces'),
+      stat(d.locations    || 0, 'Locations'),
+      stat(d.ventes       || 0, 'Ventes'),
+      stat(d.sources      || 0, 'Sources actives'),
+    ].join('');
+  } catch(e) {}
+}
+function stat(val, lbl) {
+  return `<div class="stat-card"><div class="val">${val}</div><div class="lbl">${lbl}</div></div>`;
+}
+
+// ── Sync scrapers ─────────────────────────────────────────────────────
+async function syncSource(src, dry, btn) {
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ En cours…';
+  const log = document.getElementById('sync-log');
+  const logContent = document.getElementById('sync-log-content');
+  log.style.display = 'block';
+  logContent.textContent = `[${new Date().toLocaleTimeString()}] Lancement sync "${src}"${dry ? ' (dry-run)' : ''}…\n`;
+
+  try {
+    const url = `/api/immo/sync/${src}?secret=${SECRET}${dry ? '&dry=1' : ''}`;
+    const r = await fetch(url, { method: 'POST', headers: headers() });
+    const d = await r.json();
+    logContent.textContent += JSON.stringify(d, null, 2) + '\n';
+    logContent.textContent += `\n✅ Lancé en arrière-plan. Actualisez les stats dans 30–60s.`;
+    showMsg(`Sync "${src}" lancé — vérifiez les logs serveur Railway`, true);
+    setTimeout(chargerStats, 15000);
+    setTimeout(chargerStats, 45000);
+  } catch(e) {
+    logContent.textContent += '❌ Erreur : ' + e.message;
+    showMsg('Erreur : ' + e.message, false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
+    logContent.scrollTop = logContent.scrollHeight;
+  }
+}
+
+// ── Formulaire annonce ────────────────────────────────────────────────
+let _page = 1;
+
+function reinitForm() {
+  document.getElementById('a-id').value = '';
+  document.getElementById('form-annonce').reset();
+  document.getElementById('a-ville').value = 'Dakar';
+  document.getElementById('form-title').textContent = '➕ Ajouter une annonce';
+}
+
+async function sauvegarderAnnonce() {
+  const id    = document.getElementById('a-id').value;
+  const photo = document.getElementById('a-photo').value;
+  const body  = {
+    titre:       document.getElementById('a-titre').value,
+    transaction: document.getElementById('a-transaction').value,
+    type_bien:   document.getElementById('a-type').value,
+    prix:        parseFloat(document.getElementById('a-prix').value) || null,
+    ville:       document.getElementById('a-ville').value || 'Dakar',
+    quartier:    document.getElementById('a-quartier').value || null,
+    surface_m2:  parseInt(document.getElementById('a-surface').value) || null,
+    nb_pieces:   parseInt(document.getElementById('a-pieces').value)  || null,
+    nb_chambres: parseInt(document.getElementById('a-chambres').value)|| null,
+    url_source:  document.getElementById('a-url').value || null,
+    description: document.getElementById('a-desc').value || null,
+    photos:      photo ? [photo] : [],
+    source:      'manuel',
+  };
+  if (!body.titre) { showMsg('Titre requis', false); return; }
+
+  try {
+    const url    = id ? `/api/immo/${id}` : '/api/immo';
+    const method = id ? 'PUT' : 'POST';
+    const r = await fetch(url, { method, headers: headers(), body: JSON.stringify(body) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || r.status);
+    showMsg(id ? 'Annonce modifiée ✓' : 'Annonce créée ✓', true);
+    reinitForm();
+    chargerAnnonces(1);
+    chargerStats();
+  } catch(e) { showMsg('Erreur : ' + e.message, false); }
+}
+
+// ── Liste annonces ────────────────────────────────────────────────────
+async function chargerAnnonces(page) {
+  _page = page || 1;
+  const tx   = document.getElementById('filtre-tx')?.value   || '';
+  const type = document.getElementById('filtre-type')?.value || '';
+  const url  = `/api/immo?limit=20&page=${_page}` +
+               (tx   ? `&transaction=${tx}`   : '') +
+               (type ? `&type_bien=${type}`   : '');
+
+  try {
+    const r = await fetch(url, { headers: headers() });
+    const d = await r.json();
+    const rows = (d.annonces || []).map(a => `
+      <tr>
+        <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.titre}">${a.titre}</td>
+        <td><span class="badge badge-${a.transaction === 'vente' ? 'vente' : 'loc'}">${a.transaction}</span></td>
+        <td>${a.type_bien || '—'}</td>
+        <td>${a.ville || '—'}${a.quartier ? ' · ' + a.quartier.slice(0,20) : ''}</td>
+        <td>${a.prix ? new Intl.NumberFormat('fr-FR').format(a.prix) + ' F' : '—'}</td>
+        <td><span class="badge badge-${a.source?.startsWith('facebook') ? 'fb' : a.source === 'expat-dakar' ? 'exp' : 'coin'}">${a.source || '—'}</span></td>
+        <td class="actions">
+          <button class="btn-edit btn-sm" onclick='modifierAnnonce(${JSON.stringify(a)})'>Modifier</button>
+          <button class="btn-danger btn-sm" onclick="desactiverAnnonce('${a.id}')">Désact.</button>
+        </td>
+      </tr>`).join('');
+
+    document.getElementById('table-wrap').innerHTML = rows
+      ? `<table><thead><tr><th>Titre</th><th>Type</th><th>Bien</th><th>Lieu</th><th>Prix</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>`
+      : '<p style="color:#94a3b8;text-align:center;padding:20px">Aucune annonce</p>';
+
+    // Pagination
+    const pg = document.getElementById('pager');
+    if (d.pages > 1) {
+      pg.style.display = 'flex';
+      pg.innerHTML = (_page > 1 ? `<button onclick="chargerAnnonces(${_page-1})">← Préc.</button>` : '') +
+        `<span style="font-size:13px;color:#64748b">Page ${_page} / ${d.pages} (${d.total} annonces)</span>` +
+        (_page < d.pages ? `<button onclick="chargerAnnonces(${_page+1})">Suiv. →</button>` : '');
+    } else { pg.style.display = 'none'; }
+  } catch(e) {
+    document.getElementById('table-wrap').innerHTML = '<p style="color:#e63946">Erreur : ' + e.message + '</p>';
+  }
+}
+
+function modifierAnnonce(a) {
+  document.getElementById('a-id').value          = a.id;
+  document.getElementById('a-titre').value       = a.titre || '';
+  document.getElementById('a-transaction').value = a.transaction || 'location';
+  document.getElementById('a-type').value        = a.type_bien   || 'appartement';
+  document.getElementById('a-prix').value        = a.prix        || '';
+  document.getElementById('a-ville').value       = a.ville       || 'Dakar';
+  document.getElementById('a-quartier').value    = a.quartier    || '';
+  document.getElementById('a-surface').value     = a.surface_m2  || '';
+  document.getElementById('a-pieces').value      = a.nb_pieces   || '';
+  document.getElementById('a-chambres').value    = a.nb_chambres || '';
+  document.getElementById('a-url').value         = a.url_source  || '';
+  document.getElementById('a-desc').value        = a.description || '';
+  const ph = Array.isArray(a.photos) ? a.photos : (typeof a.photos === 'string' ? JSON.parse(a.photos || '[]') : []);
+  document.getElementById('a-photo').value       = ph[0]         || '';
+  document.getElementById('form-title').textContent = '✏️ Modifier l\'annonce';
+  window.scrollTo({ top: document.getElementById('form-annonce').getBoundingClientRect().top + window.scrollY - 20, behavior: 'smooth' });
+}
+
+async function desactiverAnnonce(id) {
+  if (!confirm('Désactiver cette annonce ?')) return;
+  try {
+    const r = await fetch(`/api/immo/${id}`, { method: 'DELETE', headers: headers() });
+    if (!r.ok) throw new Error((await r.json()).error);
+    showMsg('Annonce désactivée ✓', true);
+    chargerAnnonces(_page);
+    chargerStats();
+  } catch(e) { showMsg('Erreur : ' + e.message, false); }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+chargerStats();
+chargerAnnonces(1);
+</script>
+</body>
+</html>
