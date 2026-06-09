@@ -926,7 +926,7 @@ function htmlBarreImmo() {
       '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">',
         tBtn('🏠 Location', 'location'),
         tBtn('🔑 Vente', 'vente'),
-        '<button onclick="ouvrirWizardImmo()" style="padding:5px 14px;border-radius:16px;border:1.5px solid #2563eb;background:#eff6ff;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer">🔍 Trouver mon bien</button>',
+        '<button onclick="ouvrirWizardImmo()" style="padding:6px 16px;border-radius:16px;border:2px solid #2563eb;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.2;box-shadow:0 2px 8px rgba(37,99,235,.35)"><span>🔍 Trouver mon bien</span><span style="font-size:9px;font-weight:500;opacity:.85">Budget · Quartier · Type → Top 5</span></button>',
         cmpN >= 2 ? '<button onclick="_immoOuvrirComparaison()" style="padding:5px 14px;border-radius:16px;border:1.5px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer">⚖ Comparer ' + cmpN + ' biens</button>' : '',
         hasFilters ? '<button onclick="_immoResetFiltres()" style="padding:5px 12px;border-radius:16px;border:1.5px solid #fca5a5;background:#fff5f5;color:#e63946;font-size:11px;font-weight:600;cursor:pointer;margin-left:auto">✕ Réinitialiser</button>' : '',
       '</div>',
@@ -1076,7 +1076,7 @@ function fermerModal() {
 }
 
 // ── Wizard "Trouver mon bien" ────────────────────────────────────
-var _wzImmo = { budget: '', transaction: 'location', type_bien: '', ville: '', surfaceMin: '', nbChambres: '' };
+var _wzImmo = { budget: '', transaction: 'location', type_bien: '', ville: '', quartier: '', surfaceMin: '', nbChambres: '' };
 
 function ouvrirWizardImmo() {
   var s = 'width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box';
@@ -1098,11 +1098,15 @@ function ouvrirWizardImmo() {
         return '<option value="' + k + '"' + (w.type_bien === k ? ' selected' : '') + '>' + TYPE_BIEN_LABELS[k] + '</option>';
       }).join(''),
     '</select>',
-    '<label style="font-size:12px;font-weight:700;color:#64748b">Ville</label>',
-    '<select id="wzi-ville" style="' + s + '" onchange="_wzImmo.ville=this.value">',
-      '<option value="">Toutes</option>',
-      (_immoState.villes || []).map(function(v) { return '<option value="' + v.ville + '"' + (w.ville === v.ville ? ' selected' : '') + '>' + v.ville + '</option>'; }).join(''),
-    '</select>',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0">',
+      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Ville</label>',
+      '<select id="wzi-ville" style="' + s + '" onchange="_wzImmo.ville=this.value">',
+        '<option value="">Toutes</option>',
+        (_immoState.villes || []).map(function(v) { return '<option value="' + v.ville + '"' + (w.ville === v.ville ? ' selected' : '') + '>' + v.ville + '</option>'; }).join(''),
+      '</select></div>',
+      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Quartier <span style="font-weight:400;color:#94a3b8">(optionnel)</span></label>',
+      '<input id="wzi-quartier" type="text" placeholder="ex: Plateau, Almadies…" value="' + (w.quartier||'') + '" style="' + s + '" oninput="_wzImmo.quartier=this.value"></div>',
+    '</div>',
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">',
       '<div><label style="font-size:12px;font-weight:700;color:#64748b">Surface min (m²)</label>',
       '<input id="wzi-surface" type="number" placeholder="ex: 60" value="' + (w.surfaceMin||'') + '" style="' + s + '" oninput="_wzImmo.surfaceMin=this.value"></div>',
@@ -1125,6 +1129,7 @@ async function lancerRechercheWizardImmo() {
     transaction: w.transaction,
     type_bien:   w.type_bien  || '',
     ville:       w.ville      || '',
+    quartier:    w.quartier   || '',
     prixMax:     w.budget     || '',
     surfaceMin:  w.surfaceMin || '',
     nbPieces:    w.nbChambres || '',
@@ -1134,8 +1139,9 @@ async function lancerRechercheWizardImmo() {
   try {
     var data = await apiFetch('/immo?' + params.toString());
     var annonces = (data.annonces || []).filter(function(a) { return a.prix; });
+    var btnRetour = '<button onclick="ouvrirWizardImmo()" style="width:100%;padding:9px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px">← Modifier ma recherche</button>';
     if (!annonces.length) {
-      ouvrirModal('🔍 Résultats', '<p style="text-align:center;color:#64748b;padding:24px">Aucun bien trouvé avec ces critères.<br>Essayez d\'élargir votre budget ou vos filtres.</p>');
+      ouvrirModal('🔍 Résultats', btnRetour + '<p style="text-align:center;color:#64748b;padding:12px 0">Aucun bien trouvé avec ces critères.<br>Élargissez votre budget ou vos filtres.</p>');
       return;
     }
     // Score : 0→1 en fonction de l'adéquation budget (plus c'est proche du budget = mieux)
@@ -1150,7 +1156,7 @@ async function lancerRechercheWizardImmo() {
     annonces.sort(function(a, b) { return score(b) - score(a); });
     var top = annonces.slice(0, 5);
     var medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
-    var html = '<div style="display:flex;flex-direction:column;gap:10px">' +
+    var html = btnRetour + '<div style="display:flex;flex-direction:column;gap:10px">' +
       top.map(function(a, i) {
         var sc = Math.round(score(a) * 100);
         var prixM2 = (a.prix && a.surface_m2) ? fcfa(Math.round(a.prix / a.surface_m2)) + '/m²' : '';
