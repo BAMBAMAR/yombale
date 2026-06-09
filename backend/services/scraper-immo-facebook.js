@@ -113,16 +113,33 @@ async function scraperImmo({ dryRun = false } = {}) {
 
     // ── Connexion Facebook ──────────────────────────────────────
     console.log('[FB-IMMO] Connexion Facebook…');
-    await page.goto('https://www.facebook.com/login', { waitUntil: 'networkidle' });
-    await page.fill('#email', email);
-    await page.fill('#pass',  password);
-    await page.click('[name="login"]');
-    await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 });
+    await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded', timeout: 40000 });
 
-    if (page.url().includes('login')) {
-      throw new Error('Connexion Facebook échouée — vérifiez FB_EMAIL / FB_PASSWORD');
+    // Accepter les cookies si la popup apparaît
+    try {
+      await page.click('[data-testid="cookie-policy-manage-dialog-accept-button"], [aria-label*="cookie"], button:has-text("Autoriser"), button:has-text("Accept")', { timeout: 5000 });
+    } catch {}
+
+    // Sélecteurs robustes pour le formulaire de connexion
+    const emailSel = '#email, input[name="email"], input[type="email"], [data-testid="royal_email"], [autocomplete="username"]';
+    const passSel  = '#pass,  input[name="pass"],  input[type="password"], [data-testid="royal_pass"],  [autocomplete="current-password"]';
+    const loginSel = '[name="login"], button[type="submit"], [data-testid="royal_login_button"]';
+
+    await page.waitForSelector(emailSel, { timeout: 30000 });
+    await page.fill(emailSel, email);
+    await page.fill(passSel,  password);
+    await page.click(loginSel);
+
+    try {
+      await page.waitForURL(url => !url.includes('/login'), { timeout: 25000 });
+    } catch {
+      // Parfois Facebook redirige vers checkpoint ou autre — vérifier quand même
     }
-    console.log('[FB-IMMO] Connecté');
+
+    if (page.url().includes('/login') || page.url().includes('/checkpoint')) {
+      throw new Error('Connexion Facebook échouée — vérifiez FB_EMAIL / FB_PASSWORD ou checkpoint 2FA');
+    }
+    console.log('[FB-IMMO] Connecté :', page.url().split('?')[0]);
 
     // ── Parcours des groupes ────────────────────────────────────
     for (const groupe of GROUPES) {
