@@ -56,6 +56,26 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 
+// ── Protection page admin-telecom.html ───────────────────────
+// Doit être AVANT express.static pour intercepter la route
+app.get('/admin-telecom.html', (req, res, next) => {
+  const secret = req.headers['x-admin-secret'] || req.query.secret;
+  if (process.env.ADMIN_SECRET && secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).send(
+      '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Accès refusé</title>' +
+      '<style>body{font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#f4f5f7;margin:0;}' +
+      '.box{background:#fff;border-radius:10px;padding:32px 40px;box-shadow:0 2px 8px rgba(0,0,0,.1);text-align:center;}' +
+      'h2{color:#e63946;margin-top:0}input{padding:8px 12px;border:1px solid #d8dadf;border-radius:6px;font-size:14px;width:260px;margin-bottom:12px;}' +
+      'button{padding:10px 24px;background:#ff6600;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;}</style></head>' +
+      '<body><div class="box"><h2>🔒 Accès admin requis</h2>' +
+      '<p style="color:#64748b;margin-bottom:16px">Entrez le secret admin pour accéder à cette page.</p>' +
+      '<input type="password" id="s" placeholder="Secret admin" autofocus>' +
+      '<br><button onclick="location.href=\'/admin-telecom.html?secret=\'+document.getElementById(\'s\').value">Accéder →</button></div></body></html>'
+    );
+  }
+  next();
+});
+
 // ── Fichiers statiques frontend ───────────────────────────────
 app.use(express.static(path.join(__dirname, '../frontend')));
 
