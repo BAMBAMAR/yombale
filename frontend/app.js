@@ -854,12 +854,13 @@ var TYPE_BIEN_LABELS = {
   'maison':             'Maison',
   'studio':             'Studio',
   'chambre':            'Chambre',
+  'chambre_meuble':     'Chambre meublée',
   'bureau':             'Bureau',
   'terrain':            'Terrain',
 };
 
 function _immoIcon(type) {
-  var MAP = { appartement:'🏢', appartement_meuble:'🛋', villa:'🏡', maison:'🏠', studio:'🛏', chambre:'🛏', bureau:'🏗', terrain:'🌿' };
+  var MAP = { appartement:'🏢', appartement_meuble:'🛋', villa:'🏡', maison:'🏠', studio:'🛏', chambre:'🛏', chambre_meuble:'🛋', bureau:'🏗', terrain:'🌿' };
   return MAP[type] || '🏠';
 }
 

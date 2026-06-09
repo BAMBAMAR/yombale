@@ -54,14 +54,19 @@ function typeBienFromUrl(url, defaut) {
   const m = url.match(/\/annonce\/([^/]+)\//);
   if (!m) return defaut;
   const slug = m[1];
-  if (slug.includes('villa'))      return 'villa';
-  if (slug.includes('terrain'))    return 'terrain';
-  if (slug.includes('chambre'))    return 'chambre';
-  if (slug.includes('bureau'))     return 'bureau';
-  if (slug.includes('immeuble'))   return 'maison';
+  if (slug.includes('villa'))       return 'villa';
+  if (slug.includes('terrain'))     return 'terrain';
+  if (slug.includes('chambre'))     return 'chambre';
+  if (slug.includes('bureau'))      return 'bureau';
+  if (slug.includes('immeuble'))    return 'maison';
   if (slug.includes('appartement')) return 'appartement';
-  if (slug.includes('maison'))     return 'maison';
+  if (slug.includes('maison'))      return 'maison';
   return defaut;
+}
+
+function raffinerTypeBien(type_bien, titre) {
+  if (type_bien === 'chambre' && /meub/i.test(titre)) return 'chambre_meuble';
+  return type_bien;
 }
 
 function parseLocalisation(txt) {
@@ -121,7 +126,7 @@ async function scraperPage(url, type_bien_defaut) {
 
       // Transaction : depuis l'URL
       const transaction = transactionFromUrl(urlAnn);
-      const type_bien   = typeBienFromUrl(urlAnn, type_bien_defaut);
+      const type_bien   = raffinerTypeBien(typeBienFromUrl(urlAnn, type_bien_defaut), titre);
 
       annonces.push({
         titre: titre.trim(),

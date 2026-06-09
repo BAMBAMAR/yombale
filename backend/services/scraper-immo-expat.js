@@ -113,10 +113,11 @@ async function scraperPage(url, type_bien, transaction) {
       const ref_ext = refM ? 'expat-' + refM[1] : null;
 
       const loc     = parseLocalisation(locTxt);
+      const typeFinal = (type_bien === 'chambre' && /meub/i.test(titre)) ? 'chambre_meuble' : type_bien;
 
       annonces.push({
         titre,
-        type_bien,
+        type_bien: typeFinal,
         transaction,
         prix:        parsePrix(prixTxt),
         surface_m2:  parseSurfaceTitre(titre),
