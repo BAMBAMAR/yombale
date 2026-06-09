@@ -62,6 +62,38 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/immo/diagnostic — vérifier DB + réseau (admin)
+router.get('/diagnostic', adminSecretOnly, async (req, res) => {
+  const axios = require('axios');
+  const diag  = { db: {}, reseau: {} };
+
+  try {
+    const r = await pool.query(`
+      SELECT COUNT(*) AS total,
+             COUNT(*) FILTER (WHERE actif) AS actives,
+             MAX(created_at) AS derniere
+      FROM annonces_immo`);
+    diag.db = { ok: true, ...r.rows[0] };
+  } catch (err) {
+    diag.db = { ok: false, erreur: err.message };
+  }
+
+  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122';
+  try {
+    const t0 = Date.now();
+    const r  = await axios.get('https://www.expat-dakar.com/appartements-a-louer', {
+      headers: { 'User-Agent': UA }, timeout: 12000,
+    });
+    const cheerio = require('cheerio');
+    const $       = cheerio.load(r.data);
+    diag.reseau   = { ok: true, http: r.status, cartes: $('.listing-card').length, ms: Date.now() - t0 };
+  } catch (err) {
+    diag.reseau = { ok: false, http: err.response?.status, erreur: err.message };
+  }
+
+  res.json(diag);
+});
+
 // GET /api/immo/villes — villes distinctes (pour filtres)
 router.get('/villes', async (req, res) => {
   try {
@@ -182,45 +214,6 @@ router.delete('/:id', adminSecretOnly, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
     res.json({ success: true, id: rows[0].id });
   } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// GET /api/immo/diagnostic — vérifier DB + réseau (admin)
-router.get('/diagnostic', adminSecretOnly, async (req, res) => {
-  const axios = require('axios');
-  const diag  = { db: {}, reseau: {} };
-
-  // DB : table existe ? combien d'annonces ?
-  try {
-    const r = await pool.query(`
-      SELECT COUNT(*) AS total,
-             COUNT(*) FILTER (WHERE actif) AS actives,
-             MAX(created_at) AS derniere
-      FROM annonces_immo`);
-    diag.db = { ok: true, ...r.rows[0] };
-  } catch (err) {
-    diag.db = { ok: false, erreur: err.message };
-  }
-
-  // Réseau : peut-on joindre expat-dakar depuis ce serveur ?
-  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122';
-  try {
-    const t0 = Date.now();
-    const r  = await axios.get('https://www.expat-dakar.com/appartements-a-louer', {
-      headers: { 'User-Agent': UA }, timeout: 12000,
-    });
-    const cheerio = require('cheerio');
-    const $       = cheerio.load(r.data);
-    diag.reseau   = {
-      ok: true,
-      http: r.status,
-      cartes: $('.listing-card').length,
-      ms: Date.now() - t0,
-    };
-  } catch (err) {
-    diag.reseau = { ok: false, http: err.response?.status, erreur: err.message };
-  }
-
-  res.json(diag);
 });
 
 // POST /api/immo/sync/:source — déclencher scraping en arrière-plan (admin)
