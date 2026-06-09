@@ -239,6 +239,13 @@ nav {
 }
 .pcard.telecom.best-choice:hover { border-color: #059669; }
 
+/* Section recommandés — fond très léger derrière la grille */
+.pgrid-recommandes {
+  background: linear-gradient(180deg, #f0fdf4 0%, transparent 100%);
+  border-radius: 12px;
+  padding: 4px 0 8px;
+}
+
 /* ── DÉTAIL OFFRES ──────────────────────────────────────────── */
 .offres { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
 .orow {

@@ -37,7 +37,7 @@ var state = {
   comparerForfaits:  [],    // ids sélectionnés pour comparaison télécom
   forfaitCache:      {},    // id → objet forfait complet
   telecomProfil:     'mixte', // profil d'usage : 'internet' | 'appel' | 'mixte'
-  telecomBestId:     null,   // id du forfait recommandé sur la page courante
+  telecomRecommandes: {},    // {id: true} — meilleur de chaque opérateur (page courante)
   wizardForfait: { budget: '', profil: 'mixte', dataMin: '', minutesMin: '' },
   recents:   JSON.parse(localStorage.getItem('yomb_recents') || '[]'),
   comparePrefs: Object.assign({}, _prefsDefaut,
@@ -679,12 +679,18 @@ function _scoreForfait(f, profil) {
   return effData * 0.35 + effVoix * 0.35 + effJour * 0.15 + (1 / prix) * 0.15;
 }
 
-function _meilleurForfaitId(forfaits, profil) {
-  if (!forfaits || !forfaits.length) return null;
-  var best = forfaits.reduce(function(a, b) {
-    return _scoreForfait(a, profil) >= _scoreForfait(b, profil) ? a : b;
+// Retourne {id: true} — le meilleur forfait de chaque opérateur
+function _meilleursParOperateur(forfaits, profil) {
+  var map = {}; // operateur → { id, score }
+  forfaits.forEach(function(f) {
+    var s = _scoreForfait(f, profil);
+    if (!map[f.operateur] || s > map[f.operateur].score) {
+      map[f.operateur] = { id: f.id, score: s };
+    }
   });
-  return best.id;
+  var ids = {};
+  Object.keys(map).forEach(function(op) { ids[map[op].id] = true; });
+  return ids;
 }
 
 function _dataLabel(data_mo) {
@@ -692,14 +698,14 @@ function _dataLabel(data_mo) {
   return data_mo >= 1000 ? (data_mo / 1000) + ' Go' : data_mo + ' Mo';
 }
 
-function carteForfaitHTML(f, bestId) {
+function carteForfaitHTML(f) {
   state.forfaitCache[f.id] = f;
-  var dataLabel  = _dataLabel(f.data_mo);
-  var enCompare  = state.comparerForfaits.indexOf(f.id) !== -1;
-  var isBest     = bestId && f.id === bestId;
+  var dataLabel    = _dataLabel(f.data_mo);
+  var enCompare    = state.comparerForfaits.indexOf(f.id) !== -1;
+  var isRecommande = !!(state.telecomRecommandes && state.telecomRecommandes[f.id]);
   return [
-    '<div class="pcard telecom' + (isBest ? ' best-choice' : '') + '" onclick="ouvrirForfait(\'' + f.id + '\')">',
-      isBest ? '<div class="pbadge-eco" style="background:#10b981">🏆 Recommandé</div>' : '',
+    '<div class="pcard telecom' + (isRecommande ? ' best-choice' : '') + '" onclick="ouvrirForfait(\'' + f.id + '\')">',
+      isRecommande ? '<div class="pbadge-eco" style="background:#10b981">🏆 Recommandé</div>' : '',
       '<div class="pimg" style="background:linear-gradient(135deg,#fff7ed,#ffedd5)">',
         f.image_url
           ? '<img src="' + f.image_url + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:contain">'
@@ -1288,14 +1294,37 @@ function btnPlusForfaits(data) {
 }
 
 function templateForfaits(forfaits, data) {
-  var bestId = _meilleurForfaitId(forfaits, state.telecomProfil || 'mixte');
-  state.telecomBestId = bestId;
+  var profil = state.telecomProfil || 'mixte';
+  state.telecomRecommandes = _meilleursParOperateur(forfaits, profil);
+  var recommandes = forfaits.filter(function(f) { return state.telecomRecommandes[f.id]; });
+  var reste       = forfaits.filter(function(f) { return !state.telecomRecommandes[f.id]; });
+
+  var secRecommandes = recommandes.length ? [
+    '<div style="padding:10px 5% 6px;display:flex;align-items:center;gap:8px">',
+      '<span style="font-size:13px;font-weight:800;color:#059669">🏆 Recommandés</span>',
+      '<span style="font-size:11px;color:#94a3b8">— meilleur forfait de chaque opérateur</span>',
+    '</div>',
+    '<div class="pgrid pgrid-recommandes">' + recommandes.map(carteForfaitHTML).join('') + '</div>',
+  ].join('') : '';
+
+  var separateur = recommandes.length && reste.length ? [
+    '<div style="padding:10px 5% 6px;margin-top:8px;border-top:2px solid #f1f5f9;display:flex;align-items:center;gap:8px">',
+      '<span style="font-size:12px;font-weight:700;color:#64748b">Tous les forfaits</span>',
+      '<span style="font-size:11px;color:#94a3b8">(' + data.total + ' au total)</span>',
+    '</div>',
+  ].join('') : '';
+
+  var grillePrincipale = reste.length
+    ? '<div class="pgrid">' + reste.map(carteForfaitHTML).join('') + '</div>'
+    : (!recommandes.length ? '<div class="pgrid"></div>' : '');
+
   return [
     htmlHero(),
     htmlBarreTelecom(),
     '<section class="products">',
-      data.total > 0 ? '<p style="font-size:12px;color:#94a3b8;padding:4px 5% 10px">' + data.total + ' forfait(s)</p>' : '',
-      '<div class="pgrid">' + forfaits.map(function(f){ return carteForfaitHTML(f, bestId); }).join('') + '</div>',
+      secRecommandes,
+      separateur,
+      grillePrincipale,
       data.page < data.pages ? btnPlusForfaits(data) : (data.total > 24 ? '<p id="fin-liste" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">✅ Tous les ' + data.total + ' forfaits affichés</p>' : ''),
     '</section>',
     htmlFooter(),
@@ -1349,7 +1378,7 @@ function chargerForfaits(page) {
         var oldBtn = document.getElementById('btn-plus'); if (oldBtn) oldBtn.remove();
         var finMsg = document.getElementById('fin-liste'); if (finMsg) finMsg.remove();
         var grid = document.querySelector('.pgrid');
-        if (grid) { var tmp = document.createElement('div'); tmp.innerHTML = forfaits.map(function(f){ return carteForfaitHTML(f, null); }).join(''); while (tmp.firstChild) grid.appendChild(tmp.firstChild); }
+        if (grid) { var tmp = document.createElement('div'); tmp.innerHTML = forfaits.map(carteForfaitHTML).join(''); while (tmp.firstChild) grid.appendChild(tmp.firstChild); }
         var s2 = document.querySelector('.products');
         if (s2) { s2.insertAdjacentHTML('beforeend', page < state.pageTotal ? btnPlusForfaits(data) : '<p id="fin-liste" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">✅ Tous les ' + data.total + ' forfaits affichés</p>'); }
       }
