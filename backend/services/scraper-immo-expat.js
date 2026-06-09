@@ -24,10 +24,19 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// Si SCRAPER_PROXY_URL est défini (ex: ScraperAPI), l'utiliser pour contourner les blocages IP
+// ScraperAPI : http://api.scraperapi.com?api_key=VOTRE_CLE&url=<URL>
+function proxyUrl(url) {
+  const proxy = process.env.SCRAPER_PROXY_URL;
+  if (!proxy) return url;
+  return `${proxy}${encodeURIComponent(url)}`;
+}
+
 async function fetchPage(url) {
-  const res = await axios.get(url, {
+  const target = proxyUrl(url);
+  const res = await axios.get(target, {
     headers: { 'User-Agent': UA, 'Accept-Language': 'fr-FR,fr;q=0.9' },
-    timeout: 20000,
+    timeout: 30000,
     maxRedirects: 5,
   });
   return cheerio.load(res.data);
