@@ -82,7 +82,12 @@ function apiFetch(endpoint, options) {
 
 // ── Helpers ─────────────────────────────────────────────────────
 function fcfa(n) { return Number(n||0).toLocaleString('fr-FR') + ' FCFA'; }
-function render(html) { var a = document.getElementById('app'); if (a) a.innerHTML = html; }
+function render(html) {
+  var m = document.getElementById('modal-generique');
+  if (m) m.style.display = 'none';
+  var a = document.getElementById('app');
+  if (a) a.innerHTML = html;
+}
 function toast(msg, c) {
   var el = document.getElementById('toast');
   if (!el) return;
@@ -934,7 +939,7 @@ function htmlBarreImmo() {
           }).join(''),
         '</select>',
         '<input type="text" placeholder="🗺 Quartier" value="' + (im.quartier || '') + '" ' +
-          'oninput="_immoFiltreQuartier(this.value)" style="' + si + ';width:110px">',
+          'oninput="_immoFiltreQuartier(this.value)" onchange="_immoSearchFromInput()" style="' + si + ';width:110px">',
         '<select onchange="_immoFiltreType(this.value)" style="' + si + ';cursor:pointer">',
           Object.keys(TYPE_BIEN_LABELS).map(function(k) {
             return '<option value="' + k + '"' + (im.type_bien === k ? ' selected' : '') + '>' + TYPE_BIEN_LABELS[k] + '</option>';
@@ -946,13 +951,13 @@ function htmlBarreImmo() {
           }).join(''),
         '</select>',
         '<input type="number" placeholder="📐 Surface min m²" value="' + (im.surfaceMin || '') + '" ' +
-          'oninput="_immoSurfaceMin(this.value)" style="' + si + ';width:110px">',
+          'oninput="_immoSurfaceMin(this.value)" onchange="_immoSearchFromInput()" style="' + si + ';width:110px">',
         '<div style="display:flex;gap:4px;align-items:center;margin-left:auto">',
           '<input type="number" placeholder="Prix min" value="' + (im.prixMin || '') + '" ' +
-            'oninput="_immoPrixMin(this.value)" style="' + si + ';width:88px">',
+            'oninput="_immoPrixMin(this.value)" onchange="_immoSearchFromInput()" style="' + si + ';width:88px">',
           '<span style="font-size:11px;color:#94a3b8">–</span>',
           '<input type="number" placeholder="Prix max" value="' + (im.prixMax || '') + '" ' +
-            'oninput="_immoPrixMax(this.value)" style="' + si + ';width:88px">',
+            'oninput="_immoPrixMax(this.value)" onchange="_immoSearchFromInput()" style="' + si + ';width:88px">',
           '<select onchange="_immoFiltreTri(this.value)" style="' + si + ';cursor:pointer">',
             [['recent','🕐 Récent'],['prix_asc','⬆ Prix'],['prix_desc','⬇ Prix'],['surface_desc','📐 Surface']].map(function(t) {
               return '<option value="' + t[0] + '"' + (im.tri === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
@@ -965,22 +970,18 @@ function htmlBarreImmo() {
   ].join('');
 }
 
-// Debounce : attend que l'utilisateur ait fini de saisir avant de lancer la recherche
-var _immoTimer = null;
-function _immoDebounce(fn, ms) {
-  clearTimeout(_immoTimer);
-  _immoTimer = setTimeout(fn, ms || 600);
-}
-
 function _immoTransaction(v)   { _immoState.transaction = v;  chargerImmo(1); }
 function _immoFiltreVille(v)   { _immoState.ville = v;        chargerImmo(1); }
-function _immoFiltreQuartier(v){ _immoState.quartier = v;     _immoDebounce(function() { chargerImmo(1); }); }
 function _immoFiltreType(v)    { _immoState.type_bien = v;    chargerImmo(1); }
 function _immoFiltreTri(v)     { _immoState.tri = v;          chargerImmo(1); }
-function _immoPrixMin(v)       { _immoState.prixMin = v;      _immoDebounce(function() { chargerImmo(1); }); }
-function _immoPrixMax(v)       { _immoState.prixMax = v;      _immoDebounce(function() { chargerImmo(1); }); }
-function _immoSurfaceMin(v)    { _immoState.surfaceMin = v;   _immoDebounce(function() { chargerImmo(1); }); }
 function _immoNbPieces(v)      { _immoState.nbPieces = v;     chargerImmo(1); }
+// Inputs texte/nombre : oninput = mise à jour état seule (pas de recherche)
+//                        onchange = déclenchement recherche (blur ou Entrée)
+function _immoFiltreQuartier(v){ _immoState.quartier = v; }
+function _immoPrixMin(v)       { _immoState.prixMin = v; }
+function _immoPrixMax(v)       { _immoState.prixMax = v; }
+function _immoSurfaceMin(v)    { _immoState.surfaceMin = v; }
+function _immoSearchFromInput(){ chargerImmo(1); }
 function _immoResetFiltres()   {
   var im = _immoState;
   im.ville = ''; im.quartier = ''; im.type_bien = ''; im.prixMin = ''; im.prixMax = '';
@@ -1047,6 +1048,30 @@ function _immoOuvrirComparaison() {
     '</div>';
 
   ouvrirModal('⚖ Comparaison — ' + biens.length + ' biens', html);
+}
+
+// ── Modal générique (utilisée par wizard immo + comparaison) ────
+function ouvrirModal(titre, html) {
+  var m = document.getElementById('modal-generique');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'modal-generique';
+    document.body.appendChild(m);
+  }
+  m.innerHTML = '<div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto" onclick="if(event.target===this)fermerModal()">' +
+    '<div style="background:#fff;border-radius:16px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18)">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f1f5f9;position:sticky;top:0;background:#fff;z-index:1">' +
+        '<span style="font-size:16px;font-weight:800;color:#1e293b">' + titre + '</span>' +
+        '<button onclick="fermerModal()" style="border:none;background:none;font-size:20px;color:#94a3b8;cursor:pointer;padding:0 4px">✕</button>' +
+      '</div>' +
+      '<div style="padding:20px">' + html + '</div>' +
+    '</div>' +
+  '</div>';
+  m.style.display = 'block';
+}
+function fermerModal() {
+  var m = document.getElementById('modal-generique');
+  if (m) m.style.display = 'none';
 }
 
 // ── Wizard "Trouver mon bien" ────────────────────────────────────
@@ -1128,7 +1153,7 @@ async function lancerRechercheWizardImmo() {
       top.map(function(a, i) {
         var sc = Math.round(score(a) * 100);
         var prixM2 = (a.prix && a.surface_m2) ? fcfa(Math.round(a.prix / a.surface_m2)) + '/m²' : '';
-        return '<div style="border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center" onclick="fermerModal();ouvrirImmo(\'' + a.id + '\')" style="cursor:pointer">' +
+        return '<div style="border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center;cursor:pointer" onclick="fermerModal();ouvrirImmo(\'' + a.id + '\')">' +
           '<div style="font-size:28px">' + medals[i] + '</div>' +
           '<div style="flex:1;min-width:0">' +
             '<div style="font-size:13px;font-weight:700;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + a.titre + '</div>' +
