@@ -679,18 +679,53 @@ function _scoreForfait(f, profil) {
   return effData * 0.35 + effVoix * 0.35 + effJour * 0.15 + (1 / prix) * 0.15;
 }
 
-// Retourne {id: true} — le meilleur forfait de chaque opérateur
-function _meilleursParOperateur(forfaits, profil) {
-  var map = {}; // operateur → { id, score }
+// Classe un forfait dans son groupe de validité
+function _groupeValidite(f) {
+  var j = f.validite_jours || 0;
+  if (j <= 1)  return '1j';
+  if (j <= 10) return '7j';
+  if (j <= 31) return '30j';
+  return 'autre';
+}
+
+// Retourne { groupes: {1j:{label,icone,best[]}, 7j:{...}, 30j:{...}}, ids:{id:true} }
+// best[] = un forfait par opérateur, le mieux scoré dans ce groupe de validité
+function _meilleursParValidite(forfaits, profil) {
+  var DEF = {
+    '1j':  { label: '1 jour',    icone: '☀️', best: {}, ordre: 0 },
+    '7j':  { label: '1 semaine', icone: '📅', best: {}, ordre: 1 },
+    '30j': { label: '1 mois',    icone: '📆', best: {}, ordre: 2 },
+  };
+
   forfaits.forEach(function(f) {
+    var grp = _groupeValidite(f);
+    if (!DEF[grp]) return;
     var s = _scoreForfait(f, profil);
-    if (!map[f.operateur] || s > map[f.operateur].score) {
-      map[f.operateur] = { id: f.id, score: s };
+    var cur = DEF[grp].best[f.operateur];
+    if (!cur || s > cur.score) {
+      DEF[grp].best[f.operateur] = { f: f, score: s };
     }
   });
+
   var ids = {};
-  Object.keys(map).forEach(function(op) { ids[map[op].id] = true; });
-  return ids;
+  var groupes = {};
+  ['1j', '7j', '30j'].forEach(function(key) {
+    var g = DEF[key];
+    var liste = Object.keys(g.best).map(function(op) { return g.best[op].f; });
+    // Trier les cartes par opérateur pour cohérence visuelle
+    liste.sort(function(a, b) { return a.operateur.localeCompare(b.operateur); });
+    if (liste.length) {
+      groupes[key] = { label: g.label, icone: g.icone, best: liste };
+      liste.forEach(function(f) { ids[f.id] = true; });
+    }
+  });
+
+  return { groupes: groupes, ids: ids };
+}
+
+// Compat — conservé pour l'ancienne modale comparaison
+function _meilleursParOperateur(forfaits, profil) {
+  return _meilleursParValidite(forfaits, profil).ids;
 }
 
 function _dataLabel(data_mo) {
@@ -1295,37 +1330,48 @@ function btnPlusForfaits(data) {
 
 function templateForfaits(forfaits, data) {
   var profil = state.telecomProfil || 'mixte';
-  state.telecomRecommandes = _meilleursParOperateur(forfaits, profil);
-  var recommandes = forfaits.filter(function(f) { return state.telecomRecommandes[f.id]; });
-  var reste       = forfaits.filter(function(f) { return !state.telecomRecommandes[f.id]; });
+  var rec    = _meilleursParValidite(forfaits, profil);
+  state.telecomRecommandes = rec.ids;
+  var reste  = forfaits.filter(function(f) { return !rec.ids[f.id]; });
 
-  var secRecommandes = recommandes.length ? [
-    '<div style="padding:10px 5% 6px;display:flex;align-items:center;gap:8px">',
-      '<span style="font-size:13px;font-weight:800;color:#059669">🏆 Recommandés</span>',
-      '<span style="font-size:11px;color:#94a3b8">— meilleur forfait de chaque opérateur</span>',
+  // ── Section recommandés : une sous-section par groupe de validité ──
+  var CLE_ORDRE = ['1j', '7j', '30j'];
+  var secGroupes = CLE_ORDRE.filter(function(k) { return rec.groupes[k]; }).map(function(key) {
+    var g = rec.groupes[key];
+    return [
+      '<div style="padding:8px 5% 4px;display:flex;align-items:center;gap:8px">',
+        '<span style="font-size:14px">' + g.icone + '</span>',
+        '<span style="font-size:13px;font-weight:700;color:#1e293b">' + g.label + '</span>',
+        '<span style="font-size:11px;color:#94a3b8">— meilleur par opérateur</span>',
+      '</div>',
+      '<div class="pgrid pgrid-recommandes">' + g.best.map(carteForfaitHTML).join('') + '</div>',
+    ].join('');
+  }).join('');
+
+  var secRecommandes = secGroupes ? [
+    '<div style="padding:10px 5% 6px;display:flex;align-items:center;gap:10px;border-bottom:2px solid #f0fdf4">',
+      '<span style="font-size:15px;font-weight:800;color:#059669">🏆 Recommandés</span>',
+      '<span style="font-size:11px;color:#94a3b8">Profil ' + (profil === 'internet' ? '🌐 Internet' : profil === 'appel' ? '📞 Appels' : '🔀 Mixte') + '</span>',
     '</div>',
-    '<div class="pgrid pgrid-recommandes">' + recommandes.map(carteForfaitHTML).join('') + '</div>',
+    secGroupes,
   ].join('') : '';
 
-  var separateur = recommandes.length && reste.length ? [
-    '<div style="padding:10px 5% 6px;margin-top:8px;border-top:2px solid #f1f5f9;display:flex;align-items:center;gap:8px">',
-      '<span style="font-size:12px;font-weight:700;color:#64748b">Tous les forfaits</span>',
+  // ── Section tous les forfaits ──────────────────────────────────
+  var secTous = reste.length ? [
+    '<div style="padding:10px 5% 6px;margin-top:12px;border-top:2px solid #f1f5f9;display:flex;align-items:center;gap:8px">',
+      '<span style="font-size:13px;font-weight:700;color:#64748b">Tous les forfaits</span>',
       '<span style="font-size:11px;color:#94a3b8">(' + data.total + ' au total)</span>',
     '</div>',
+    '<div class="pgrid">' + reste.map(carteForfaitHTML).join('') + '</div>',
   ].join('') : '';
-
-  var grillePrincipale = reste.length
-    ? '<div class="pgrid">' + reste.map(carteForfaitHTML).join('') + '</div>'
-    : (!recommandes.length ? '<div class="pgrid"></div>' : '');
 
   return [
     htmlHero(),
     htmlBarreTelecom(),
     '<section class="products">',
       secRecommandes,
-      separateur,
-      grillePrincipale,
-      data.page < data.pages ? btnPlusForfaits(data) : (data.total > 24 ? '<p id="fin-liste" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">✅ Tous les ' + data.total + ' forfaits affichés</p>' : ''),
+      secTous,
+      !secRecommandes && !secTous ? '<div style="text-align:center;padding:40px;color:#94a3b8">Aucun forfait trouvé</div>' : '',
     '</section>',
     htmlFooter(),
   ].join('');
@@ -1345,13 +1391,15 @@ function chargerForfaits(page) {
     if (s) { var sp = document.createElement('div'); sp.id = 'sp'; sp.className = 'loader'; sp.innerHTML = '<div class="spin"></div>'; s.appendChild(sp); }
   }
 
+  // limit=200 : récupère tous les forfaits en une seule requête pour couvrir
+  // tous les opérateurs et calculer les recommandés par groupe de validité
   var params = new URLSearchParams({
     operateur: state.telecomOperateur || '',
     type:      state.telecomType      || '',
     tri:       state.telecomTri       || '',
     prixMax:   state.prixMax          || '',
     prixMin:   state.prixMin          || '',
-    limit: 24, page: page
+    limit: 200, page: 1
   });
 
   var pForfaits   = apiFetch('/telecom?' + params.toString());
@@ -1364,29 +1412,17 @@ function chargerForfaits(page) {
       var data     = results[0];
       state.telecomOperateurs = Array.isArray(results[1]) ? results[1] : [];
       var forfaits = (data && Array.isArray(data.forfaits)) ? data.forfaits : [];
-      state.pageTotal = data.pages || 1;
-      state.total     = data.total || 0;
+      state.total  = data.total || 0;
       dbg('chargerForfaits OK', { nb: forfaits.length, total: data.total });
 
-      if (!forfaits.length && page === 1) { renderVideTelecom(); return; }
+      if (!forfaits.length) { renderVideTelecom(); return; }
 
-      if (page === 1) {
-        render(templateForfaits(forfaits, data));
-        setTimeout(function() { setupAutocomplete('search-input'); }, 50);
-      } else {
-        var sp2 = document.getElementById('sp'); if (sp2) sp2.remove();
-        var oldBtn = document.getElementById('btn-plus'); if (oldBtn) oldBtn.remove();
-        var finMsg = document.getElementById('fin-liste'); if (finMsg) finMsg.remove();
-        var grid = document.querySelector('.pgrid');
-        if (grid) { var tmp = document.createElement('div'); tmp.innerHTML = forfaits.map(carteForfaitHTML).join(''); while (tmp.firstChild) grid.appendChild(tmp.firstChild); }
-        var s2 = document.querySelector('.products');
-        if (s2) { s2.insertAdjacentHTML('beforeend', page < state.pageTotal ? btnPlusForfaits(data) : '<p id="fin-liste" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">✅ Tous les ' + data.total + ' forfaits affichés</p>'); }
-      }
+      render(templateForfaits(forfaits, data));
+      setTimeout(function() { setupAutocomplete('search-input'); }, 50);
     })
     .catch(function(err) {
       dbgErr('chargerForfaits', err);
-      var sp3 = document.getElementById('sp'); if (sp3) sp3.remove();
-      if (page === 1) renderErreur(err); else toast('Erreur chargement page suivante', '#ef4444');
+      renderErreur(err);
     });
 }
 
