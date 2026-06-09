@@ -828,13 +828,17 @@ function changerProfilGrille(profil) {
 // ═══════════════════════════════════════════════════════════════
 
 var _immoState = {
-  transaction: 'location', // 'location' | 'vente'
+  transaction: 'location',
   ville: '',
+  quartier: '',
   type_bien: '',
   prixMin: '',
   prixMax: '',
+  surfaceMin: '',
+  nbPieces: '',
   tri: 'recent',
-  villes: null,             // cache liste villes
+  villes: null,
+  compare: [],   // annonces sélectionnées pour comparaison (max 3)
 };
 
 var TYPE_BIEN_LABELS = {
@@ -863,25 +867,25 @@ function _sourceBadge(source) {
 
 // ── Carte annonce immo ───────────────────────────────────────────
 function carteImmoHTML(a) {
-  var photo = (a.photos && a.photos.length) ? a.photos[0] : null;
-  var infos = [];
+  var photo   = (a.photos && a.photos.length) ? a.photos[0] : null;
+  var infos   = [];
   if (a.surface_m2)  infos.push('📐 ' + a.surface_m2 + ' m²');
-  if (a.nb_pieces)   infos.push('🚪 ' + a.nb_pieces + ' pièces');
+  if (a.nb_pieces)   infos.push('🚪 ' + a.nb_pieces + ' p.');
   if (a.nb_chambres) infos.push('🛏 ' + a.nb_chambres + ' ch.');
+  var inCmp   = _immoState.compare.some(function(x) { return x.id === a.id; });
+  var prixM2  = (a.prix && a.surface_m2) ? Math.round(a.prix / a.surface_m2) : null;
   return [
-    '<div class="pcard immo" onclick="ouvrirImmo(\'' + a.id + '\')">',
+    '<div class="pcard immo' + (inCmp ? ' immo-selected' : '') + '" onclick="ouvrirImmo(\'' + a.id + '\')">',
       '<div class="pimg" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);position:relative">',
         photo
-          ? '<img src="' + photo + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover">'
+          ? '<img src="' + photo + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
           : '<span style="font-size:40px">' + _immoIcon(a.type_bien) + '</span>',
         '<div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap">',
-          '<span style="font-size:10px;font-weight:700;color:#fff;background:' +
-            (a.transaction === 'vente' ? '#7c3aed' : '#059669') +
-            ';padding:2px 7px;border-radius:6px">' +
-            (a.transaction === 'vente' ? 'Vente' : 'Location') +
-          '</span>',
+          '<span style="font-size:10px;font-weight:700;color:#fff;background:' + (a.transaction === 'vente' ? '#7c3aed' : '#059669') + ';padding:2px 7px;border-radius:6px">' + (a.transaction === 'vente' ? 'Vente' : 'Location') + '</span>',
           '<span style="font-size:10px;font-weight:700;color:#1e293b;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:6px">' + (TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
         '</div>',
+        '<button onclick="event.stopPropagation();_immoToggleCompare(' + JSON.stringify(a).replace(/'/g,"\\'") + ')" ' +
+          'style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:2px solid ' + (inCmp ? '#059669' : 'rgba(255,255,255,.8)') + ';background:' + (inCmp ? '#059669' : 'rgba(255,255,255,.85)') + ';color:' + (inCmp ? '#fff' : '#475569') + ';font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700" title="Comparer">' + (inCmp ? '✓' : '+') + '</button>',
       '</div>',
       '<div class="pbody">',
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">',
@@ -889,11 +893,11 @@ function carteImmoHTML(a) {
           _sourceBadge(a.source),
         '</div>',
         '<div class="pname" style="font-size:13px">' + (a.titre || '') + '</div>',
-        infos.length ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:5px 0;font-size:11px;color:#475569">' + infos.join(' · ') + '</div>' : '',
+        infos.length ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:5px 0;font-size:11px;color:#475569">' + infos.join(' · ') + (prixM2 ? ' · <span style="color:#059669;font-weight:700">' + fcfa(prixM2) + '/m²</span>' : '') + '</div>' : '',
         a.prix
           ? '<div class="pprice" style="color:#059669">' + fcfa(a.prix) + (a.transaction === 'location' ? '<span style="font-size:11px;font-weight:400;color:#64748b">/mois</span>' : '') + '</div>'
           : '<div class="pprice" style="color:#94a3b8">Prix à négocier</div>',
-        '<button class="btn-voir" style="width:100%;margin-top:8px" onclick="event.stopPropagation();ouvrirImmo(\'' + a.id + '\')">Voir →</button>',
+        '<button class="btn-voir" style="width:100%;margin-top:8px" onclick="event.stopPropagation();ouvrirImmo(\'' + a.id + '\')">Voir détail →</button>',
       '</div>',
     '</div>',
   ].join('');
@@ -901,52 +905,238 @@ function carteImmoHTML(a) {
 
 // ── Barre de filtres immo ───────────────────────────────────────
 function htmlBarreImmo() {
-  var s = 'padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;outline:none';
+  var si = 'padding:5px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;background:#fff;outline:none';
   var im = _immoState;
-  function tBtn(tx, val) {
+  var cmpN = im.compare.length;
+  function tBtn(label, val) {
     var act = im.transaction === val;
-    return '<button onclick="_immoTransaction(\'' + val + '\')" style="padding:5px 14px;border-radius:16px;border:1.5px solid ' + (act ? '#059669' : '#e2e8f0') + ';background:' + (act ? '#f0fdf4' : '#fff') + ';color:' + (act ? '#059669' : '#64748b') + ';font-size:12px;font-weight:' + (act ? '700' : '500') + ';cursor:pointer">' + tx + '</button>';
+    return '<button onclick="_immoTransaction(\'' + val + '\')" style="padding:5px 16px;border-radius:16px;border:1.5px solid ' + (act ? '#059669' : '#e2e8f0') + ';background:' + (act ? '#f0fdf4' : '#fff') + ';color:' + (act ? '#059669' : '#64748b') + ';font-size:12px;font-weight:' + (act ? '700' : '500') + ';cursor:pointer">' + label + '</button>';
   }
+  var hasFilters = im.ville || im.quartier || im.type_bien || im.prixMin || im.prixMax || im.surfaceMin || im.nbPieces;
   return [
-    '<div style="display:flex;flex-direction:column;gap:6px;padding:8px 5%;border-bottom:1px solid #f1f5f9">',
+    '<div style="padding:8px 5%;border-bottom:1px solid #f1f5f9;display:flex;flex-direction:column;gap:8px">',
+
+      // Ligne 1 : transaction + wizard + reset
       '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">',
         tBtn('🏠 Location', 'location'),
         tBtn('🔑 Vente', 'vente'),
-        '<div style="width:1px;height:20px;background:#e2e8f0;margin:0 4px"></div>',
-        '<select onchange="_immoFiltreVille(this.value)" style="' + s + '">',
-          '<option value="">Toutes villes</option>',
+        '<button onclick="ouvrirWizardImmo()" style="padding:5px 14px;border-radius:16px;border:1.5px solid #2563eb;background:#eff6ff;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer">🔍 Trouver mon bien</button>',
+        cmpN >= 2 ? '<button onclick="_immoOuvrirComparaison()" style="padding:5px 14px;border-radius:16px;border:1.5px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer">⚖ Comparer ' + cmpN + ' biens</button>' : '',
+        hasFilters ? '<button onclick="_immoResetFiltres()" style="padding:5px 12px;border-radius:16px;border:1.5px solid #fca5a5;background:#fff5f5;color:#e63946;font-size:11px;font-weight:600;cursor:pointer;margin-left:auto">✕ Réinitialiser</button>' : '',
+      '</div>',
+
+      // Ligne 2 : filtres principaux
+      '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">',
+        '<select onchange="_immoFiltreVille(this.value)" style="' + si + ';cursor:pointer">',
+          '<option value="">📍 Toutes villes</option>',
           (im.villes || []).map(function(v) {
             return '<option value="' + v.ville + '"' + (im.ville === v.ville ? ' selected' : '') + '>' + v.ville + ' (' + v.nb + ')</option>';
           }).join(''),
         '</select>',
-        '<select onchange="_immoFiltreType(this.value)" style="' + s + '">',
+        '<input type="text" placeholder="🗺 Quartier" value="' + (im.quartier || '') + '" ' +
+          'oninput="_immoFiltreQuartier(this.value)" style="' + si + ';width:110px">',
+        '<select onchange="_immoFiltreType(this.value)" style="' + si + ';cursor:pointer">',
           Object.keys(TYPE_BIEN_LABELS).map(function(k) {
             return '<option value="' + k + '"' + (im.type_bien === k ? ' selected' : '') + '>' + TYPE_BIEN_LABELS[k] + '</option>';
           }).join(''),
         '</select>',
-        '<select onchange="_immoFiltreTri(this.value)" style="' + s + '">',
-          [['recent','🕐 Récent'],['prix_asc','⬆ Prix ↑'],['prix_desc','⬇ Prix ↓'],['surface_desc','📐 Surface ↓']].map(function(t) {
-            return '<option value="' + t[0] + '"' + (im.tri === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
+        '<select onchange="_immoNbPieces(this.value)" style="' + si + ';cursor:pointer">',
+          [['','Nb pièces'],['1','1 pièce+'],['2','2 pièces+'],['3','3 pièces+'],['4','4 pièces+'],['5','5 pièces+']].map(function(t) {
+            return '<option value="' + t[0] + '"' + (im.nbPieces === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
           }).join(''),
         '</select>',
+        '<input type="number" placeholder="📐 Surface min m²" value="' + (im.surfaceMin || '') + '" ' +
+          'oninput="_immoSurfaceMin(this.value)" style="' + si + ';width:110px">',
         '<div style="display:flex;gap:4px;align-items:center;margin-left:auto">',
           '<input type="number" placeholder="Prix min" value="' + (im.prixMin || '') + '" ' +
-            'oninput="_immoPrixMin(this.value)" style="width:90px;padding:5px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;outline:none">',
+            'oninput="_immoPrixMin(this.value)" style="' + si + ';width:88px">',
           '<span style="font-size:11px;color:#94a3b8">–</span>',
           '<input type="number" placeholder="Prix max" value="' + (im.prixMax || '') + '" ' +
-            'oninput="_immoPrixMax(this.value)" style="width:90px;padding:5px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;outline:none">',
+            'oninput="_immoPrixMax(this.value)" style="' + si + ';width:88px">',
+          '<select onchange="_immoFiltreTri(this.value)" style="' + si + ';cursor:pointer">',
+            [['recent','🕐 Récent'],['prix_asc','⬆ Prix'],['prix_desc','⬇ Prix'],['surface_desc','📐 Surface']].map(function(t) {
+              return '<option value="' + t[0] + '"' + (im.tri === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
+            }).join(''),
+          '</select>',
         '</div>',
       '</div>',
+
     '</div>',
   ].join('');
 }
 
-function _immoTransaction(v) { _immoState.transaction = v; chargerImmo(1); }
-function _immoFiltreVille(v) { _immoState.ville = v;        chargerImmo(1); }
-function _immoFiltreType(v)  { _immoState.type_bien = v;    chargerImmo(1); }
-function _immoFiltreTri(v)   { _immoState.tri = v;          chargerImmo(1); }
-function _immoPrixMin(v)     { _immoState.prixMin = v;      }
-function _immoPrixMax(v)     { _immoState.prixMax = v; chargerImmo(1); }
+function _immoTransaction(v)   { _immoState.transaction = v;  chargerImmo(1); }
+function _immoFiltreVille(v)   { _immoState.ville = v;        chargerImmo(1); }
+function _immoFiltreQuartier(v){ _immoState.quartier = v;     if (!v || v.length > 2) chargerImmo(1); }
+function _immoFiltreType(v)    { _immoState.type_bien = v;    chargerImmo(1); }
+function _immoFiltreTri(v)     { _immoState.tri = v;          chargerImmo(1); }
+function _immoPrixMin(v)       { _immoState.prixMin = v; }
+function _immoPrixMax(v)       { _immoState.prixMax = v;      chargerImmo(1); }
+function _immoSurfaceMin(v)    { _immoState.surfaceMin = v;   chargerImmo(1); }
+function _immoNbPieces(v)      { _immoState.nbPieces = v;     chargerImmo(1); }
+function _immoResetFiltres()   {
+  var im = _immoState;
+  im.ville = ''; im.quartier = ''; im.type_bien = ''; im.prixMin = ''; im.prixMax = '';
+  im.surfaceMin = ''; im.nbPieces = ''; im.tri = 'recent';
+  chargerImmo(1);
+}
+
+// ── Comparaison immo ─────────────────────────────────────────────
+function _immoToggleCompare(a) {
+  var im = _immoState;
+  var idx = im.compare.findIndex(function(x) { return x.id === a.id; });
+  if (idx !== -1) {
+    im.compare.splice(idx, 1);
+  } else {
+    if (im.compare.length >= 3) { toast('Maximum 3 biens à comparer', '#f97316'); return; }
+    im.compare.push(a);
+  }
+  chargerImmo(state.page);
+}
+
+function _immoOuvrirComparaison() {
+  var biens = _immoState.compare;
+  if (biens.length < 2) { toast('Sélectionnez au moins 2 biens', '#f97316'); return; }
+
+  var ROWS = [
+    ['🏷 Type',      function(a) { return TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '—'; }],
+    ['📍 Ville',     function(a) { return a.ville || '—'; }],
+    ['🗺 Quartier',  function(a) { return a.quartier || '—'; }],
+    ['💰 Prix',      function(a) { return a.prix ? fcfa(a.prix) : 'N/C'; }],
+    ['📐 Surface',   function(a) { return a.surface_m2 ? a.surface_m2 + ' m²' : '—'; }],
+    ['💵 Prix/m²',   function(a) { return (a.prix && a.surface_m2) ? fcfa(Math.round(a.prix / a.surface_m2)) : '—'; }],
+    ['🚪 Pièces',    function(a) { return a.nb_pieces || '—'; }],
+    ['🛏 Chambres',  function(a) { return a.nb_chambres || '—'; }],
+    ['🔁 Transaction',function(a){ return a.transaction === 'vente' ? 'Vente' : 'Location'; }],
+  ];
+
+  // Meilleur prix/m² → surligné en vert
+  var meilleurPrixM2Id = null;
+  var minPM2 = Infinity;
+  biens.forEach(function(a) {
+    if (a.prix && a.surface_m2) { var pm2 = a.prix / a.surface_m2; if (pm2 < minPM2) { minPM2 = pm2; meilleurPrixM2Id = a.id; } }
+  });
+
+  var cols = biens.map(function(a) { return '<th style="min-width:140px;padding:8px;text-align:center;font-size:12px">' + a.titre.slice(0,40) + (a.titre.length > 40 ? '…' : '') + '</th>'; }).join('');
+  var rows = ROWS.map(function(r) {
+    var label = r[0]; var fn = r[1];
+    var cells = biens.map(function(a) {
+      var val = fn(a);
+      var isBest = label === '💵 Prix/m²' && a.id === meilleurPrixM2Id;
+      return '<td style="padding:8px;text-align:center;font-size:13px;' + (isBest ? 'color:#059669;font-weight:700;background:#f0fdf4' : '') + '">' + val + (isBest ? ' 🏆' : '') + '</td>';
+    }).join('');
+    return '<tr><td style="padding:8px 12px;font-size:12px;font-weight:700;color:#64748b;white-space:nowrap">' + label + '</td>' + cells + '</tr>';
+  }).join('');
+
+  var html = '<div style="overflow-x:auto">' +
+    '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+      '<thead><tr style="background:#f8fafc"><th style="padding:8px;text-align:left;font-size:12px;color:#94a3b8">Critère</th>' + cols + '</tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table></div>' +
+    '<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">' +
+      biens.map(function(a) {
+        return '<a href="' + (a.url_source || '#') + '" target="_blank" rel="noopener" style="flex:1;min-width:120px;padding:10px;background:#059669;color:#fff;border-radius:10px;text-align:center;font-size:12px;font-weight:700;text-decoration:none">Voir →<br><span style="font-weight:400">' + (a.ville || '') + '</span></a>';
+      }).join('') +
+    '</div>';
+
+  ouvrirModal('⚖ Comparaison — ' + biens.length + ' biens', html);
+}
+
+// ── Wizard "Trouver mon bien" ────────────────────────────────────
+var _wzImmo = { budget: '', transaction: 'location', type_bien: '', ville: '', surfaceMin: '', nbChambres: '' };
+
+function ouvrirWizardImmo() {
+  var s = 'width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box';
+  var w = _wzImmo;
+  function tBtn(label, val, field) {
+    var act = w[field] === val;
+    return '<button onclick="_wzImmoField(\'' + field + '\',\'' + val + '\')" style="padding:7px 18px;border-radius:20px;border:1.5px solid ' + (act ? '#2563eb' : '#e2e8f0') + ';background:' + (act ? '#eff6ff' : '#fff') + ';color:' + (act ? '#2563eb' : '#64748b') + ';font-size:13px;font-weight:' + (act ? '700' : '500') + ';cursor:pointer">' + label + '</button>';
+  }
+  var html = [
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">',
+      tBtn('🏠 Location', 'location', 'transaction'),
+      tBtn('🔑 Vente',    'vente',    'transaction'),
+    '</div>',
+    '<label style="font-size:12px;font-weight:700;color:#64748b">Budget max (FCFA)</label>',
+    '<input id="wzi-budget" type="number" placeholder="ex: 300000" value="' + (w.budget||'') + '" style="' + s + '" oninput="_wzImmo.budget=this.value">',
+    '<label style="font-size:12px;font-weight:700;color:#64748b">Type de bien</label>',
+    '<select id="wzi-type" style="' + s + '" onchange="_wzImmo.type_bien=this.value">',
+      Object.keys(TYPE_BIEN_LABELS).map(function(k) {
+        return '<option value="' + k + '"' + (w.type_bien === k ? ' selected' : '') + '>' + TYPE_BIEN_LABELS[k] + '</option>';
+      }).join(''),
+    '</select>',
+    '<label style="font-size:12px;font-weight:700;color:#64748b">Ville</label>',
+    '<select id="wzi-ville" style="' + s + '" onchange="_wzImmo.ville=this.value">',
+      '<option value="">Toutes</option>',
+      (_immoState.villes || []).map(function(v) { return '<option value="' + v.ville + '"' + (w.ville === v.ville ? ' selected' : '') + '>' + v.ville + '</option>'; }).join(''),
+    '</select>',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">',
+      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Surface min (m²)</label>',
+      '<input id="wzi-surface" type="number" placeholder="ex: 60" value="' + (w.surfaceMin||'') + '" style="' + s + '" oninput="_wzImmo.surfaceMin=this.value"></div>',
+      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Chambres min</label>',
+      '<input id="wzi-ch" type="number" placeholder="ex: 2" value="' + (w.nbChambres||'') + '" style="' + s + '" oninput="_wzImmo.nbChambres=this.value"></div>',
+    '</div>',
+    '<button onclick="lancerRechercheWizardImmo()" style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;margin-top:4px">🔍 Trouver les meilleures annonces</button>',
+  ].join('');
+  ouvrirModal('🔍 Trouver mon bien', html);
+}
+
+function _wzImmoField(field, val) {
+  _wzImmo[field] = val;
+  ouvrirWizardImmo();
+}
+
+async function lancerRechercheWizardImmo() {
+  var w = _wzImmo;
+  var params = new URLSearchParams({
+    transaction: w.transaction,
+    type_bien:   w.type_bien  || '',
+    ville:       w.ville      || '',
+    prixMax:     w.budget     || '',
+    surfaceMin:  w.surfaceMin || '',
+    nbPieces:    w.nbChambres || '',
+    tri:         'prix_asc',
+    limit: 50, page: 1,
+  });
+  try {
+    var data = await apiFetch('/immo?' + params.toString());
+    var annonces = (data.annonces || []).filter(function(a) { return a.prix; });
+    if (!annonces.length) {
+      ouvrirModal('🔍 Résultats', '<p style="text-align:center;color:#64748b;padding:24px">Aucun bien trouvé avec ces critères.<br>Essayez d\'élargir votre budget ou vos filtres.</p>');
+      return;
+    }
+    // Score : 0→1 en fonction de l'adéquation budget (plus c'est proche du budget = mieux)
+    var budget = parseFloat(w.budget) || Infinity;
+    function score(a) {
+      var s = 0;
+      if (a.prix) s += 0.5 * (1 - Math.min(a.prix, budget) / Math.max(a.prix, budget));
+      if (a.surface_m2 && w.surfaceMin) s += 0.3 * Math.min(a.surface_m2 / parseFloat(w.surfaceMin), 1);
+      if (a.nb_chambres && w.nbChambres) s += 0.2 * Math.min(a.nb_chambres / parseFloat(w.nbChambres), 1);
+      return s;
+    }
+    annonces.sort(function(a, b) { return score(b) - score(a); });
+    var top = annonces.slice(0, 5);
+    var medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+    var html = '<div style="display:flex;flex-direction:column;gap:10px">' +
+      top.map(function(a, i) {
+        var sc = Math.round(score(a) * 100);
+        var prixM2 = (a.prix && a.surface_m2) ? fcfa(Math.round(a.prix / a.surface_m2)) + '/m²' : '';
+        return '<div style="border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center" onclick="fermerModal();ouvrirImmo(\'' + a.id + '\')" style="cursor:pointer">' +
+          '<div style="font-size:28px">' + medals[i] + '</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:13px;font-weight:700;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + a.titre + '</div>' +
+            '<div style="font-size:11px;color:#64748b">' + (a.quartier || a.ville || '') + (a.surface_m2 ? ' · ' + a.surface_m2 + ' m²' : '') + (prixM2 ? ' · ' + prixM2 : '') + '</div>' +
+            '<div style="margin-top:4px;background:#e2e8f0;border-radius:4px;height:5px"><div style="background:#2563eb;height:5px;border-radius:4px;width:' + sc + '%"></div></div>' +
+          '</div>' +
+          '<div style="text-align:right;flex-shrink:0"><div style="font-size:15px;font-weight:800;color:#059669">' + fcfa(a.prix) + '</div><div style="font-size:10px;color:#94a3b8">' + sc + '% match</div></div>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+    ouvrirModal('🎯 Top ' + top.length + ' résultats', html);
+  } catch(e) {
+    ouvrirModal('Erreur', '<p style="color:#e63946">' + e.message + '</p>');
+  }
+}
 
 // ── Template principal immo ──────────────────────────────────────
 function templateImmo(annonces, data) {
@@ -991,11 +1181,14 @@ function chargerImmo(page) {
 
   var params = new URLSearchParams({
     transaction: im.transaction,
-    ville:       im.ville     || '',
-    type_bien:   im.type_bien || '',
-    prixMin:     im.prixMin   || '',
-    prixMax:     im.prixMax   || '',
-    tri:         im.tri       || 'recent',
+    ville:       im.ville      || '',
+    quartier:    im.quartier   || '',
+    type_bien:   im.type_bien  || '',
+    prixMin:     im.prixMin    || '',
+    prixMax:     im.prixMax    || '',
+    surfaceMin:  im.surfaceMin || '',
+    nbPieces:    im.nbPieces   || '',
+    tri:         im.tri        || 'recent',
     limit: 24, page: page,
   });
 

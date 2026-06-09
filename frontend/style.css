@@ -244,6 +244,11 @@ nav {
 .pcard.immo .pimg img { width: 100%; height: 100%; object-fit: cover; }
 .pcard.immo:hover { border-color: #6ee7b7; }
 .pcard.immo .pprice { color: #059669; }
+.pcard.immo.immo-selected {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px #ede9fe, 0 4px 16px rgba(124,58,237,.12);
+}
+.pcard.immo.immo-selected:hover { border-color: #6d28d9; }
 
 /* Section recommandés — fond très léger derrière la grille */
 .pgrid-recommandes {
