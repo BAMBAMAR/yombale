@@ -187,6 +187,7 @@ var CATEGORIES = [
   { slug: 'auto-moto',    label: 'Auto & Moto',   icon: '🛵' },
   { slug: 'jeux',         label: 'Jeux',          icon: '🎮' },
   { slug: 'telecom',      label: 'Télécom & Forfaits', icon: '📶' },
+  { slug: 'immo',         label: 'Immobilier',         icon: '🏡' },
 ];
 
 var BUDGETS = [
@@ -206,6 +207,7 @@ function chargerProduits(query, categorie, page) {
   state.currentPage = 'home';
 
   if (categorie === 'telecom') { chargerForfaits(page); return; }
+  if (categorie === 'immo')   { chargerImmo(page);    return; }
 
   dbg('chargerProduits', { q: query, cat: categorie, page: page });
 
@@ -819,6 +821,281 @@ function htmlBarreTelecom() {
 function changerProfilGrille(profil) {
   state.telecomProfil = profil;
   chargerForfaits(1);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  VERTICALE IMMOBILIER
+// ═══════════════════════════════════════════════════════════════
+
+var _immoState = {
+  transaction: 'location', // 'location' | 'vente'
+  ville: '',
+  type_bien: '',
+  prixMin: '',
+  prixMax: '',
+  tri: 'recent',
+  villes: null,             // cache liste villes
+};
+
+var TYPE_BIEN_LABELS = {
+  '':            'Tous types',
+  'appartement': 'Appartement',
+  'villa':       'Villa',
+  'maison':      'Maison',
+  'studio':      'Studio',
+  'chambre':     'Chambre',
+  'bureau':      'Bureau',
+  'terrain':     'Terrain',
+};
+
+function _immoIcon(type) {
+  var MAP = { appartement:'🏢', villa:'🏡', maison:'🏠', studio:'🛏', chambre:'🛏', bureau:'🏗', terrain:'🌿' };
+  return MAP[type] || '🏠';
+}
+
+function _sourceBadge(source) {
+  if (!source) return '';
+  if (source.startsWith('facebook'))   return '<span style="font-size:10px;font-weight:700;color:#1877f2;background:#e7f0fd;padding:1px 6px;border-radius:6px">fb</span>';
+  if (source === 'expat-dakar')        return '<span style="font-size:10px;font-weight:700;color:#e65c00;background:#fff0e6;padding:1px 6px;border-radius:6px">expat</span>';
+  if (source === 'coinafrique')        return '<span style="font-size:10px;font-weight:700;color:#059669;background:#ecfdf5;padding:1px 6px;border-radius:6px">coin</span>';
+  return '<span style="font-size:10px;color:#64748b;background:#f1f5f9;padding:1px 6px;border-radius:6px">' + source + '</span>';
+}
+
+// ── Carte annonce immo ───────────────────────────────────────────
+function carteImmoHTML(a) {
+  var photo = (a.photos && a.photos.length) ? a.photos[0] : null;
+  var infos = [];
+  if (a.surface_m2)  infos.push('📐 ' + a.surface_m2 + ' m²');
+  if (a.nb_pieces)   infos.push('🚪 ' + a.nb_pieces + ' pièces');
+  if (a.nb_chambres) infos.push('🛏 ' + a.nb_chambres + ' ch.');
+  return [
+    '<div class="pcard immo" onclick="ouvrirImmo(\'' + a.id + '\')">',
+      '<div class="pimg" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);position:relative">',
+        photo
+          ? '<img src="' + photo + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover">'
+          : '<span style="font-size:40px">' + _immoIcon(a.type_bien) + '</span>',
+        '<div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap">',
+          '<span style="font-size:10px;font-weight:700;color:#fff;background:' +
+            (a.transaction === 'vente' ? '#7c3aed' : '#059669') +
+            ';padding:2px 7px;border-radius:6px">' +
+            (a.transaction === 'vente' ? 'Vente' : 'Location') +
+          '</span>',
+          '<span style="font-size:10px;font-weight:700;color:#1e293b;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:6px">' + (TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
+        '</div>',
+      '</div>',
+      '<div class="pbody">',
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">',
+          '<div style="font-size:11px;color:#64748b">' + (a.quartier || a.ville || '') + '</div>',
+          _sourceBadge(a.source),
+        '</div>',
+        '<div class="pname" style="font-size:13px">' + (a.titre || '') + '</div>',
+        infos.length ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:5px 0;font-size:11px;color:#475569">' + infos.join(' · ') + '</div>' : '',
+        a.prix
+          ? '<div class="pprice" style="color:#059669">' + fcfa(a.prix) + (a.transaction === 'location' ? '<span style="font-size:11px;font-weight:400;color:#64748b">/mois</span>' : '') + '</div>'
+          : '<div class="pprice" style="color:#94a3b8">Prix à négocier</div>',
+        '<button class="btn-voir" style="width:100%;margin-top:8px" onclick="event.stopPropagation();ouvrirImmo(\'' + a.id + '\')">Voir →</button>',
+      '</div>',
+    '</div>',
+  ].join('');
+}
+
+// ── Barre de filtres immo ───────────────────────────────────────
+function htmlBarreImmo() {
+  var s = 'padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;outline:none';
+  var im = _immoState;
+  function tBtn(tx, val) {
+    var act = im.transaction === val;
+    return '<button onclick="_immoTransaction(\'' + val + '\')" style="padding:5px 14px;border-radius:16px;border:1.5px solid ' + (act ? '#059669' : '#e2e8f0') + ';background:' + (act ? '#f0fdf4' : '#fff') + ';color:' + (act ? '#059669' : '#64748b') + ';font-size:12px;font-weight:' + (act ? '700' : '500') + ';cursor:pointer">' + tx + '</button>';
+  }
+  return [
+    '<div style="display:flex;flex-direction:column;gap:6px;padding:8px 5%;border-bottom:1px solid #f1f5f9">',
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">',
+        tBtn('🏠 Location', 'location'),
+        tBtn('🔑 Vente', 'vente'),
+        '<div style="width:1px;height:20px;background:#e2e8f0;margin:0 4px"></div>',
+        '<select onchange="_immoFiltreVille(this.value)" style="' + s + '">',
+          '<option value="">Toutes villes</option>',
+          (im.villes || []).map(function(v) {
+            return '<option value="' + v.ville + '"' + (im.ville === v.ville ? ' selected' : '') + '>' + v.ville + ' (' + v.nb + ')</option>';
+          }).join(''),
+        '</select>',
+        '<select onchange="_immoFiltreType(this.value)" style="' + s + '">',
+          Object.keys(TYPE_BIEN_LABELS).map(function(k) {
+            return '<option value="' + k + '"' + (im.type_bien === k ? ' selected' : '') + '>' + TYPE_BIEN_LABELS[k] + '</option>';
+          }).join(''),
+        '</select>',
+        '<select onchange="_immoFiltreTri(this.value)" style="' + s + '">',
+          [['recent','🕐 Récent'],['prix_asc','⬆ Prix ↑'],['prix_desc','⬇ Prix ↓'],['surface_desc','📐 Surface ↓']].map(function(t) {
+            return '<option value="' + t[0] + '"' + (im.tri === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
+          }).join(''),
+        '</select>',
+        '<div style="display:flex;gap:4px;align-items:center;margin-left:auto">',
+          '<input type="number" placeholder="Prix min" value="' + (im.prixMin || '') + '" ' +
+            'oninput="_immoPrixMin(this.value)" style="width:90px;padding:5px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;outline:none">',
+          '<span style="font-size:11px;color:#94a3b8">–</span>',
+          '<input type="number" placeholder="Prix max" value="' + (im.prixMax || '') + '" ' +
+            'oninput="_immoPrixMax(this.value)" style="width:90px;padding:5px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;outline:none">',
+        '</div>',
+      '</div>',
+    '</div>',
+  ].join('');
+}
+
+function _immoTransaction(v) { _immoState.transaction = v; chargerImmo(1); }
+function _immoFiltreVille(v) { _immoState.ville = v;        chargerImmo(1); }
+function _immoFiltreType(v)  { _immoState.type_bien = v;    chargerImmo(1); }
+function _immoFiltreTri(v)   { _immoState.tri = v;          chargerImmo(1); }
+function _immoPrixMin(v)     { _immoState.prixMin = v;      }
+function _immoPrixMax(v)     { _immoState.prixMax = v; chargerImmo(1); }
+
+// ── Template principal immo ──────────────────────────────────────
+function templateImmo(annonces, data) {
+  var nb = data.total || 0;
+  var labelTx = _immoState.transaction === 'vente' ? 'Vente' : 'Location';
+  return [
+    htmlHero(),
+    htmlBarreImmo(),
+    '<section class="products">',
+      nb > 0 ? '<p style="font-size:12px;color:#94a3b8;padding:4px 5% 10px">' + nb + ' annonce(s) — ' + labelTx + '</p>' : '',
+      annonces.length
+        ? '<div class="pgrid">' + annonces.map(carteImmoHTML).join('') + '</div>'
+        : '<div style="text-align:center;padding:48px 20px;color:#64748b"><div style="font-size:52px;margin-bottom:12px">🏡</div><h3>Aucune annonce trouvée</h3><p style="font-size:13px">Essayez de changer les filtres.</p></div>',
+      data.page < data.pages ? _btnPlusImmo(data) : (nb > 24 ? '<p id="fin-liste" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">✅ ' + nb + ' annonces affichées</p>' : ''),
+    '</section>',
+    htmlFooter(),
+  ].join('');
+}
+
+function _btnPlusImmo(data) {
+  var restant = Math.max(0, data.total - data.page * data.limit);
+  return '<div id="btn-plus-immo" style="text-align:center;padding:20px">' +
+    '<button onclick="chargerImmo(' + (data.page + 1) + ')" ' +
+      'style="padding:12px 36px;background:#059669;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">' +
+      '⬇ Voir plus (' + restant + ' annonces)' +
+    '</button>' +
+  '</div>';
+}
+
+// ── Chargement ───────────────────────────────────────────────────
+function chargerImmo(page) {
+  page = page || 1;
+  state.page = page;
+  state.currentPage = 'home';
+  var im = _immoState;
+
+  if (page === 1) render('<div class="loader"><div class="spin"></div><p>Chargement des annonces…</p></div>');
+  else {
+    var s = document.querySelector('.products');
+    if (s) { var sp = document.createElement('div'); sp.id = 'sp-immo'; sp.className = 'loader'; sp.innerHTML = '<div class="spin"></div>'; s.appendChild(sp); }
+  }
+
+  var params = new URLSearchParams({
+    transaction: im.transaction,
+    ville:       im.ville     || '',
+    type_bien:   im.type_bien || '',
+    prixMin:     im.prixMin   || '',
+    prixMax:     im.prixMax   || '',
+    tri:         im.tri       || 'recent',
+    limit: 24, page: page,
+  });
+
+  var pAnnonces = apiFetch('/immo?' + params.toString());
+  var pVilles   = im.villes
+    ? Promise.resolve(im.villes)
+    : apiFetch('/immo/villes').catch(function() { return []; });
+
+  Promise.all([pAnnonces, pVilles])
+    .then(function(res) {
+      var data     = res[0];
+      if (!im.villes) im.villes = Array.isArray(res[1]) ? res[1] : [];
+      var annonces = (data && Array.isArray(data.annonces)) ? data.annonces : [];
+
+      if (page === 1) {
+        render(templateImmo(annonces, data));
+        setTimeout(function() { setupAutocomplete('search-input'); }, 50);
+      } else {
+        var sp2 = document.getElementById('sp-immo'); if (sp2) sp2.remove();
+        var oldBtn = document.getElementById('btn-plus-immo'); if (oldBtn) oldBtn.remove();
+        var finMsg = document.getElementById('fin-liste'); if (finMsg) finMsg.remove();
+        var grid = document.querySelector('.pgrid');
+        if (grid) { var tmp = document.createElement('div'); tmp.innerHTML = annonces.map(carteImmoHTML).join(''); while (tmp.firstChild) grid.appendChild(tmp.firstChild); }
+        var s2 = document.querySelector('.products');
+        if (s2) s2.insertAdjacentHTML('beforeend', data.page < data.pages ? _btnPlusImmo(data) : '<p id="fin-liste" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">✅ ' + data.total + ' annonces affichées</p>');
+      }
+    })
+    .catch(function(err) {
+      dbgErr('chargerImmo', err);
+      if (page === 1) renderErreur(err);
+    });
+}
+
+// ── Détail annonce immo ──────────────────────────────────────────
+async function ouvrirImmo(id) {
+  try {
+    render('<div class="loader"><div class="spin"></div><p>Chargement…</p></div>');
+    var a = await apiFetch('/immo/' + id);
+    var photos = Array.isArray(a.photos) ? a.photos : (typeof a.photos === 'string' ? JSON.parse(a.photos) : []);
+    var infos = [
+      a.surface_m2  ? ['📐 Surface',    a.surface_m2 + ' m²'] : null,
+      a.nb_pieces   ? ['🚪 Pièces',     a.nb_pieces + ''] : null,
+      a.nb_chambres ? ['🛏 Chambres',   a.nb_chambres + ''] : null,
+      a.ville       ? ['📍 Ville',      a.ville] : null,
+      a.quartier    ? ['🗺 Quartier',   a.quartier] : null,
+      ['🏷 Type',   TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '—'],
+    ].filter(Boolean);
+
+    render([
+      htmlHero(),
+      '<div style="max-width:760px;margin:0 auto;padding:16px 5% 40px">',
+        '<button onclick="chargerImmo(1)" style="background:none;border:none;color:#059669;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:16px">← Retour</button>',
+
+        // Galerie photos
+        photos.length ? [
+          '<div style="border-radius:14px;overflow:hidden;margin-bottom:16px;background:#f1f5f9;max-height:320px">',
+            '<img src="' + photos[0] + '" style="width:100%;max-height:320px;object-fit:cover" onerror="this.style.display=\'none\'">',
+          '</div>',
+          photos.length > 1 ? '<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:16px">' +
+            photos.slice(1, 6).map(function(p) {
+              return '<img src="' + p + '" style="height:72px;width:100px;object-fit:cover;border-radius:8px;flex-shrink:0" onerror="this.style.display=\'none\'">';
+            }).join('') + '</div>' : '',
+        ].join('') : '<div style="height:180px;border-radius:14px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);display:flex;align-items:center;justify-content:center;font-size:64px;margin-bottom:16px">' + _immoIcon(a.type_bien) + '</div>',
+
+        // Titre + badges
+        '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;flex-wrap:wrap">',
+          '<span style="font-size:11px;font-weight:700;color:#fff;background:' + (a.transaction === 'vente' ? '#7c3aed' : '#059669') + ';padding:3px 9px;border-radius:8px">' + (a.transaction === 'vente' ? 'Vente' : 'Location') + '</span>',
+          '<span style="font-size:11px;font-weight:700;color:#1e293b;background:#f1f5f9;padding:3px 9px;border-radius:8px">' + (TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
+          _sourceBadge(a.source),
+        '</div>',
+        '<h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0 0 12px">' + a.titre + '</h2>',
+
+        // Prix
+        a.prix ? '<div style="font-size:26px;font-weight:900;color:#059669;margin-bottom:16px">' + fcfa(a.prix) + (a.transaction === 'location' ? '<span style="font-size:14px;font-weight:400;color:#64748b"> / mois</span>' : '') + '</div>' : '<div style="font-size:16px;color:#94a3b8;margin-bottom:16px">Prix à négocier</div>',
+
+        // Infos
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px">',
+          infos.map(function(row) {
+            return '<div style="background:#f8fafc;border-radius:10px;padding:10px 14px">' +
+              '<div style="font-size:11px;color:#94a3b8;margin-bottom:2px">' + row[0] + '</div>' +
+              '<div style="font-size:14px;font-weight:700;color:#1e293b">' + row[1] + '</div>' +
+            '</div>';
+          }).join(''),
+        '</div>',
+
+        // Description
+        a.description ? '<div style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:20px">' +
+          '<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px">📝 Description</div>' +
+          '<p style="font-size:13px;color:#334155;line-height:1.6;white-space:pre-line;margin:0">' + a.description + '</p>' +
+        '</div>' : '',
+
+        // CTA
+        a.url_source ? '<a href="' + a.url_source + '" target="_blank" rel="noopener" ' +
+          'style="display:block;text-align:center;padding:14px;background:#059669;color:#fff;border-radius:12px;font-size:15px;font-weight:800;text-decoration:none">Voir l\'annonce originale →</a>' : '',
+      '</div>',
+      htmlFooter(),
+    ].join(''));
+  } catch (err) {
+    renderErreur(err);
+  }
 }
 
 function toggleComparerForfait(id) {
@@ -2516,6 +2793,7 @@ var _NOMS_CAT = {
   'auto-moto'   : 'auto-moto',
   'jeux'        : 'jeux vidéo',
   'telecom'     : 'télécom & forfaits',
+  'immo'        : 'immobilier',
 };
 
 // Mapping sous-type fin → slug DB (pour les appels API)

@@ -87,6 +87,7 @@ app.use('/api/alertes',   require('./routes/alertes'));
 app.use('/api/auth',      require('./routes/auth'));
 app.use('/api/scraper',   require('./routes/scraper'));
 app.use('/api/telecom',   require('./routes/telecom'));
+app.use('/api/immo',      require('./routes/immo'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', async (req, res) => {

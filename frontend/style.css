@@ -239,6 +239,12 @@ nav {
 }
 .pcard.telecom.best-choice:hover { border-color: #059669; }
 
+/* ── CARTE IMMOBILIER ───────────────────────────────────────── */
+.pcard.immo .pimg { background: linear-gradient(135deg, #f0fdf4, #dcfce7); padding: 0; }
+.pcard.immo .pimg img { width: 100%; height: 100%; object-fit: cover; }
+.pcard.immo:hover { border-color: #6ee7b7; }
+.pcard.immo .pprice { color: #059669; }
+
 /* Section recommandés — fond très léger derrière la grille */
 .pgrid-recommandes {
   background: linear-gradient(180deg, #f0fdf4 0%, transparent 100%);

@@ -1,0 +1,209 @@
+// backend/routes/immo.js — Annonces immobilières (location / vente)
+// Verticale distincte : une annonce = un bien unique chez un propriétaire/agence,
+// pas un produit multi-marchands.
+const router = require('express').Router();
+const { pool } = require('../models/db');
+const { adminSecretOnly } = require('../middlewares/auth');
+
+const ORDER_MAP = {
+  prix_asc:     'prix ASC NULLS LAST',
+  prix_desc:    'prix DESC NULLS LAST',
+  recent:       'created_at DESC',
+  surface_desc: 'surface_m2 DESC NULLS LAST',
+};
+
+// GET /api/immo — liste / filtre paginé
+router.get('/', async (req, res) => {
+  try {
+    const {
+      ville, quartier, type_bien, transaction = 'location',
+      prixMin, prixMax, surfaceMin, nbPieces, source,
+      tri = 'recent', limit = 24, page = 1,
+    } = req.query;
+
+    const offset  = (page - 1) * limit;
+    const orderBy = ORDER_MAP[tri] || ORDER_MAP.recent;
+
+    const sql = `
+      SELECT *, COUNT(*) OVER() AS total_count
+      FROM annonces_immo
+      WHERE actif = true
+        AND ($1::text IS NULL OR transaction = $1)
+        AND ($2::text IS NULL OR ville ILIKE $2)
+        AND ($3::text IS NULL OR quartier ILIKE '%' || $3 || '%')
+        AND ($4::text IS NULL OR type_bien = $4)
+        AND ($5::numeric IS NULL OR prix >= $5::numeric)
+        AND ($6::numeric IS NULL OR prix <= $6::numeric)
+        AND ($7::int IS NULL OR surface_m2 >= $7::int)
+        AND ($8::int IS NULL OR nb_pieces >= $8::int)
+        AND ($9::text IS NULL OR source = $9)
+      ORDER BY ${orderBy}
+      LIMIT $10 OFFSET $11`;
+
+    const params = [
+      transaction || null, ville || null, quartier || null,
+      type_bien || null, prixMin || null, prixMax || null,
+      surfaceMin || null, nbPieces || null, source || null,
+      limit, offset,
+    ];
+
+    const result = await pool.query(sql, params);
+    const total  = parseInt(result.rows[0]?.total_count || 0, 10);
+
+    res.json({
+      success: true,
+      annonces: result.rows,
+      page: +page, limit: +limit,
+      total, pages: Math.ceil(total / limit) || 1,
+    });
+  } catch (err) {
+    console.error('[GET /api/immo]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/immo/villes — villes distinctes (pour filtres)
+router.get('/villes', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT ville, COUNT(*) AS nb
+       FROM annonces_immo WHERE actif = true AND ville IS NOT NULL
+       GROUP BY ville ORDER BY nb DESC`
+    );
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/immo/stats — stats rapides pour le dashboard
+router.get('/stats', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT
+        COUNT(*)                                               AS total,
+        COUNT(*) FILTER (WHERE transaction='location')        AS locations,
+        COUNT(*) FILTER (WHERE transaction='vente')           AS ventes,
+        COUNT(DISTINCT source)                                AS sources,
+        MIN(prix) FILTER (WHERE transaction='location')       AS prix_min_loc,
+        MAX(prix) FILTER (WHERE transaction='location')       AS prix_max_loc
+      FROM annonces_immo WHERE actif = true
+    `);
+    res.json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/immo/:id — détail
+router.get('/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM annonces_immo WHERE id = $1', [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
+    res.json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/immo — créer (admin ou scraper)
+router.post('/', adminSecretOnly, async (req, res) => {
+  try {
+    const {
+      titre, type_bien = 'appartement', transaction = 'location',
+      prix, surface_m2, nb_pieces, nb_chambres,
+      ville = 'Dakar', quartier, description, photos = [],
+      url_source, source = 'manuel', ref_externe,
+    } = req.body;
+
+    if (!titre) return res.status(400).json({ error: 'titre requis' });
+
+    const { rows } = await pool.query(`
+      INSERT INTO annonces_immo
+        (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
+         ville, quartier, description, photos, url_source, source, ref_externe)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+      ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
+      DO UPDATE SET
+        titre       = EXCLUDED.titre,
+        prix        = EXCLUDED.prix,
+        description = EXCLUDED.description,
+        photos      = EXCLUDED.photos,
+        actif       = true,
+        updated_at  = NOW()
+      RETURNING *`,
+      [titre, type_bien, transaction, prix || null, surface_m2 || null,
+       nb_pieces || null, nb_chambres || null, ville, quartier || null,
+       description || null, JSON.stringify(photos), url_source || null,
+       source, ref_externe || null]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/immo/:id — modifier (admin)
+router.put('/:id', adminSecretOnly, async (req, res) => {
+  try {
+    const {
+      titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
+      ville, quartier, description, photos, url_source, actif,
+    } = req.body;
+    const { rows } = await pool.query(`
+      UPDATE annonces_immo SET
+        titre       = COALESCE($1, titre),
+        type_bien   = COALESCE($2, type_bien),
+        transaction = COALESCE($3, transaction),
+        prix        = $4,
+        surface_m2  = $5,
+        nb_pieces   = $6,
+        nb_chambres = $7,
+        ville       = COALESCE($8, ville),
+        quartier    = $9,
+        description = $10,
+        photos      = COALESCE($11::jsonb, photos),
+        url_source  = $12,
+        actif       = COALESCE($13, actif),
+        updated_at  = NOW()
+      WHERE id = $14 RETURNING *`,
+      [titre || null, type_bien || null, transaction || null,
+       prix ?? null, surface_m2 ?? null, nb_pieces ?? null, nb_chambres ?? null,
+       ville || null, quartier ?? null, description ?? null,
+       photos ? JSON.stringify(photos) : null, url_source ?? null,
+       actif ?? null, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
+    res.json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// DELETE /api/immo/:id — désactiver (pas de suppression physique)
+router.delete('/:id', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE annonces_immo SET actif = false, updated_at = NOW() WHERE id = $1 RETURNING id`,
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
+    res.json({ success: true, id: rows[0].id });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/immo/sync/:source — déclencher scraping en arrière-plan (admin)
+// sources : expat-dakar | coinafrique | facebook
+router.post('/sync/:source', adminSecretOnly, async (req, res) => {
+  const src = req.params.source;
+  const dryRun = req.query.dry === '1';
+  const SCRAPERS = {
+    'expat-dakar':  '../services/scraper-immo-expat',
+    'coinafrique':  '../services/scraper-immo-coinafrique',
+    'facebook':     '../services/scraper-immo-facebook',
+  };
+  if (!SCRAPERS[src]) {
+    return res.status(400).json({ error: `Source inconnue : ${src}. Valeurs : ${Object.keys(SCRAPERS).join(', ')}` });
+  }
+  res.json({
+    message: `Scraping immo "${src}" lancé en arrière-plan${dryRun ? ' (dry-run)' : ''}…`,
+    conseil: 'Résultats dans les logs. Consultez /api/immo dans quelques instants.',
+    dryRun,
+  });
+  const { scraperImmo } = require(SCRAPERS[src]);
+  scraperImmo({ dryRun }).catch(console.error);
+});
+
+module.exports = router;

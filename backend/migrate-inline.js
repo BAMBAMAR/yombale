@@ -129,6 +129,35 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_forfaits_prix      ON forfaits_telecom(prix);
       CREATE UNIQUE INDEX IF NOT EXISTS uidx_forfaits_op_nom ON forfaits_telecom(operateur, nom);
 
+      CREATE TABLE IF NOT EXISTS annonces_immo (
+        id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        titre         VARCHAR(500)  NOT NULL,
+        type_bien     VARCHAR(50)   DEFAULT 'appartement',
+        transaction   VARCHAR(20)   DEFAULT 'location',
+        prix          NUMERIC(15,2),
+        surface_m2    INT,
+        nb_pieces     INT,
+        nb_chambres   INT,
+        ville         VARCHAR(100)  DEFAULT 'Dakar',
+        quartier      VARCHAR(200),
+        description   TEXT,
+        photos        JSONB         DEFAULT '[]',
+        url_source    TEXT,
+        source        VARCHAR(100)  DEFAULT 'manuel',
+        ref_externe   VARCHAR(300),
+        actif         BOOLEAN       DEFAULT TRUE,
+        created_at    TIMESTAMPTZ   DEFAULT NOW(),
+        updated_at    TIMESTAMPTZ   DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_immo_ville       ON annonces_immo(ville);
+      CREATE INDEX IF NOT EXISTS idx_immo_type        ON annonces_immo(type_bien);
+      CREATE INDEX IF NOT EXISTS idx_immo_prix        ON annonces_immo(prix);
+      CREATE INDEX IF NOT EXISTS idx_immo_transaction ON annonces_immo(transaction);
+      CREATE UNIQUE INDEX IF NOT EXISTS uidx_immo_source_ref
+        ON annonces_immo(source, ref_externe)
+        WHERE ref_externe IS NOT NULL;
+
       INSERT INTO categories (nom, slug, icone) VALUES
         ('Telephones',   'smartphones', '📱'),
         ('Informatique', 'informatique','💻'),
@@ -138,7 +167,8 @@ module.exports = async function migrateInline() {
         ('Auto & Moto',  'auto-moto',   '🛵'),
         ('Beaute',       'beaute',      '💄'),
         ('Jeux',         'jeux',        '🎮'),
-        ('Telecom & Forfaits', 'telecom', '📶')
+        ('Telecom & Forfaits', 'telecom', '📶'),
+        ('Immobilier',   'immo',        '🏡')
       ON CONFLICT (slug) DO NOTHING;
     `);
 
