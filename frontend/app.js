@@ -38,6 +38,7 @@ var state = {
   forfaitCache:      {},    // id → objet forfait complet
   telecomProfil:     'mixte', // profil d'usage : 'internet' | 'appel' | 'mixte'
   telecomBestId:     null,   // id du forfait recommandé sur la page courante
+  wizardForfait: { budget: '', profil: 'mixte', dataMin: '', minutesMin: '' },
   recents:   JSON.parse(localStorage.getItem('yomb_recents') || '[]'),
   comparePrefs: Object.assign({}, _prefsDefaut,
     JSON.parse(localStorage.getItem('yomb_compare_prefs') || '{}')),
@@ -757,10 +758,11 @@ function htmlBarreTelecom() {
             return '<option value="' + t[0] + '"' + (state.telecomTri === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
           }).join(''),
         '</select>',
+        '<button onclick="ouvrirWizardForfait()" style="margin-left:auto;padding:6px 14px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">🎯 Trouver mon forfait</button>',
         nb > 0
-          ? '<button onclick="ouvrirComparaisonForfaits()" style="margin-left:auto;padding:6px 14px;background:#f97316;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">⚖ Comparer (' + nb + ')</button>' +
+          ? '<button onclick="ouvrirComparaisonForfaits()" style="padding:6px 14px;background:#f97316;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">⚖ (' + nb + ')</button>' +
             '<button onclick="viderComparaisonForfaits()" style="padding:6px 10px;border-radius:8px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;font-size:11px;font-weight:600;cursor:pointer">✕</button>'
-          : '<span style="margin-left:auto;font-size:11px;color:#94a3b8">⚖ sur une carte pour comparer</span>',
+          : '',
       '</div>',
       // Ligne 2 : profil usage (influence le badge Recommandé)
       '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">',
@@ -997,6 +999,281 @@ function ouvrirComparaisonForfaits() {
 function fermerComparaisonForfaits() {
   var modal = document.getElementById('modal-comparaison-forfaits');
   if (modal) modal.style.display = 'none';
+}
+
+// ── Assistant "Trouver mon forfait" ───────────────────────────
+
+function ouvrirWizardForfait() {
+  var w = state.wizardForfait;
+  var modal = document.getElementById('modal-wizard-forfait');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-wizard-forfait';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = _wizardFormHtml(w);
+  modal.style.display = 'block';
+  modal.onclick = function(e) { if (e.target === modal.firstChild) fermerWizardForfait(); };
+}
+
+function fermerWizardForfait() {
+  var modal = document.getElementById('modal-wizard-forfait');
+  if (modal) modal.style.display = 'none';
+}
+
+function _wizardFormHtml(w) {
+  function pBtn(p, label, couleur) {
+    var act = (w.profil === p);
+    return '<button type="button" onclick="_wzProfil(\'' + p + '\')" id="wz-p-' + p + '" ' +
+      'style="flex:1;padding:14px 8px;border-radius:10px;border:2px solid ' + (act ? couleur : '#e2e8f0') + ';' +
+      'background:' + (act ? couleur : '#fff') + ';color:' + (act ? '#fff' : '#475569') + ';' +
+      'font-weight:' + (act ? '700' : '500') + ';font-size:13px;cursor:pointer;transition:all .15s">' + label + '</button>';
+  }
+  return [
+    '<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1001;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto">',
+      '<div style="background:#fff;border-radius:16px;max-width:480px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.28);overflow:hidden">',
+
+        // En-tête
+        '<div style="padding:20px 24px 16px;background:linear-gradient(135deg,#1e3a8a,#3b82f6)">',
+          '<div style="display:flex;align-items:center;justify-content:space-between">',
+            '<div>',
+              '<div style="font-size:18px;font-weight:800;color:#fff">🎯 Trouvez votre forfait idéal</div>',
+              '<div style="font-size:12px;color:#bfdbfe;margin-top:2px">Décrivez vos besoins, on s\'occupe du reste</div>',
+            '</div>',
+            '<button onclick="fermerWizardForfait()" style="background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:6px 10px;color:#fff;font-size:18px;cursor:pointer">✕</button>',
+          '</div>',
+        '</div>',
+
+        // Formulaire
+        '<div style="padding:24px" id="wz-form">',
+
+          // Budget
+          '<div style="margin-bottom:20px">',
+            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">💰 Votre budget maximum</label>',
+            '<div style="display:flex;align-items:center;gap:8px">',
+              '<input id="wz-budget" type="number" min="100" step="100" placeholder="ex: 3000" value="' + (w.budget || '') + '" ' +
+                'oninput="state.wizardForfait.budget=this.value" ' +
+                'style="flex:1;padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none" ' +
+                'onfocus="this.style.borderColor=\'#3b82f6\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+              '<span style="font-size:13px;font-weight:600;color:#64748b;white-space:nowrap">FCFA</span>',
+            '</div>',
+            '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">',
+              [1000,2000,3000,5000,10000].map(function(v) {
+                return '<button type="button" onclick="document.getElementById(\'wz-budget\').value=' + v + ';state.wizardForfait.budget=' + v + '" ' +
+                  'style="padding:4px 10px;border-radius:14px;border:1px solid #e2e8f0;background:#f8fafc;font-size:11px;color:#475569;cursor:pointer">' +
+                  v.toLocaleString() + ' F</button>';
+              }).join(''),
+            '</div>',
+          '</div>',
+
+          // Profil usage
+          '<div style="margin-bottom:20px">',
+            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">📱 Votre usage principal</label>',
+            '<div style="display:flex;gap:8px">',
+              pBtn('internet', '🌐 Internet', '#2563eb'),
+              pBtn('appel',    '📞 Appels',   '#10b981'),
+              pBtn('mixte',    '🔀 Mixte',    '#f97316'),
+            '</div>',
+          '</div>',
+
+          // Critères optionnels
+          '<div style="margin-bottom:20px">',
+            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">⚙️ Critères minimum <span style="font-weight:400;color:#94a3b8">(optionnel)</span></label>',
+            '<div style="display:flex;gap:10px;flex-wrap:wrap">',
+              '<div style="flex:1;min-width:140px">',
+                '<div style="font-size:11px;color:#64748b;margin-bottom:4px">📶 Data minimale (Mo)</div>',
+                '<input id="wz-data" type="number" min="0" step="100" placeholder="ex: 1000" value="' + (w.dataMin || '') + '" ' +
+                  'oninput="state.wizardForfait.dataMin=this.value" ' +
+                  'style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;outline:none" ' +
+                  'onfocus="this.style.borderColor=\'#3b82f6\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+              '</div>',
+              '<div style="flex:1;min-width:140px">',
+                '<div style="font-size:11px;color:#64748b;margin-bottom:4px">📞 Minutes minimales</div>',
+                '<input id="wz-min" type="number" min="0" step="10" placeholder="ex: 30" value="' + (w.minutesMin || '') + '" ' +
+                  'oninput="state.wizardForfait.minutesMin=this.value" ' +
+                  'style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;outline:none" ' +
+                  'onfocus="this.style.borderColor=\'#3b82f6\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+              '</div>',
+            '</div>',
+          '</div>',
+
+          // Bouton lancer
+          '<button onclick="lancerRechercheWizard()" ' +
+            'style="width:100%;padding:14px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:12px;' +
+            'font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.02em">',
+            '🔍 Trouver les meilleurs forfaits',
+          '</button>',
+        '</div>',
+
+        // Zone résultats (remplie dynamiquement)
+        '<div id="wz-results"></div>',
+      '</div>',
+    '</div>',
+  ].join('');
+}
+
+function _wzProfil(p) {
+  state.wizardForfait.profil = p;
+  var colors = { internet: '#2563eb', appel: '#10b981', mixte: '#f97316' };
+  ['internet', 'appel', 'mixte'].forEach(function(x) {
+    var btn = document.getElementById('wz-p-' + x);
+    if (!btn) return;
+    var act = x === p;
+    btn.style.background  = act ? colors[x] : '#fff';
+    btn.style.color       = act ? '#fff'     : '#475569';
+    btn.style.borderColor = act ? colors[x] : '#e2e8f0';
+    btn.style.fontWeight  = act ? '700'      : '500';
+  });
+}
+
+function lancerRechercheWizard() {
+  var w = state.wizardForfait;
+  var budget    = parseFloat(document.getElementById('wz-budget')?.value || w.budget || 0);
+  var dataMin   = parseInt(document.getElementById('wz-data')?.value   || w.dataMin   || 0, 10);
+  var minutesMin= parseInt(document.getElementById('wz-min')?.value    || w.minutesMin|| 0, 10);
+  var profil    = w.profil || 'mixte';
+
+  if (!budget || budget <= 0) {
+    document.getElementById('wz-budget').style.borderColor = '#ef4444';
+    document.getElementById('wz-budget').focus();
+    toast('Veuillez saisir votre budget maximum', '#ef4444');
+    return;
+  }
+
+  var zone = document.getElementById('wz-results');
+  zone.innerHTML = '<div style="padding:24px;text-align:center"><div class="spin" style="margin:0 auto 12px"></div><p style="color:#64748b;font-size:13px">Recherche en cours…</p></div>';
+
+  // Lancer scroll vers les résultats
+  zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  var params = new URLSearchParams({
+    prixMax: budget,
+    limit: 50, page: 1,
+  });
+  if (dataMin > 0)    params.set('dataMin', dataMin);
+  if (w.profil === 'appel') params.set('type', 'appel');
+  else if (w.profil === 'internet') params.set('type', 'internet');
+
+  apiFetch('/telecom?' + params.toString())
+    .then(function(data) {
+      var forfaits = (data && Array.isArray(data.forfaits)) ? data.forfaits : [];
+
+      // Filtrer minutes minimum côté client (pas de param API dédié)
+      if (minutesMin > 0) {
+        forfaits = forfaits.filter(function(f) { return (f.minutes || 0) >= minutesMin; });
+      }
+
+      if (!forfaits.length) {
+        zone.innerHTML = [
+          '<div style="padding:24px;text-align:center;border-top:1px solid #f1f5f9">',
+            '<div style="font-size:32px;margin-bottom:8px">😔</div>',
+            '<div style="font-size:14px;font-weight:700;color:#1e293b">Aucun forfait trouvé</div>',
+            '<div style="font-size:12px;color:#64748b;margin-top:4px">Essayez d\'augmenter le budget ou d\'assouplir les critères</div>',
+            '<button onclick="state.wizardForfait.dataMin=\'\';state.wizardForfait.minutesMin=\'\';ouvrirWizardForfait()" ' +
+              'style="margin-top:14px;padding:8px 20px;border-radius:8px;border:1.5px solid #3b82f6;color:#3b82f6;background:#fff;font-size:13px;font-weight:600;cursor:pointer">',
+              '← Modifier les critères',
+            '</button>',
+          '</div>',
+        ].join('');
+        return;
+      }
+
+      // Scorer et trier
+      forfaits.forEach(function(f) { state.forfaitCache[f.id] = f; });
+      var scored = forfaits.map(function(f) {
+        return { f: f, score: _scoreForfait(f, profil) };
+      });
+      scored.sort(function(a, b) { return b.score - a.score; });
+
+      // Normaliser scores 0→100
+      var scoreMax = scored[0].score || 1;
+      scored.forEach(function(s) { s.pct = Math.round((s.score / scoreMax) * 100); });
+
+      var top = scored.slice(0, 5);
+      var medals = ['🥇', '🥈', '🥉', '4e', '5e'];
+      var medalColors = ['#f59e0b', '#94a3b8', '#cd7c2e', '#64748b', '#64748b'];
+      var profilLabel = profil === 'internet' ? '🌐 Internet' : profil === 'appel' ? '📞 Appels' : '🔀 Mixte';
+
+      var html = [
+        '<div style="border-top:2px solid #e2e8f0">',
+          // Résumé résultats
+          '<div style="padding:14px 24px;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">',
+            '<span style="font-size:13px;font-weight:700;color:#1e293b">' +
+              'Top ' + top.length + ' forfaits — budget ' + fcfa(budget) + ' · profil ' + profilLabel + '</span>',
+            '<span style="font-size:11px;color:#64748b">' + forfaits.length + ' forfait(s) correspondent</span>',
+          '</div>',
+          // Cartes résultats
+          top.map(function(s, i) {
+            var f = s.f;
+            var dataLabel = _dataLabel(f.data_mo);
+            var pj = f.validite_jours ? Math.round(f.prix / f.validite_jours) : null;
+            return [
+              '<div style="padding:16px 24px;border-bottom:1px solid #f1f5f9;' + (i === 0 ? 'background:#fffbeb' : '') + '">',
+                // Rang + score bar
+                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">',
+                  '<span style="font-size:20px">' + medals[i] + '</span>',
+                  '<div style="flex:1">',
+                    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">',
+                      '<span style="font-size:11px;font-weight:700;color:' + medalColors[i] + '">' +
+                        (i === 0 ? 'Meilleur choix' : i === 1 ? '2e choix' : i === 2 ? '3e choix' : medals[i] + ' choix') + '</span>',
+                      '<span style="font-size:11px;font-weight:700;color:#475569">' + s.pct + ' pts</span>',
+                    '</div>',
+                    '<div style="height:6px;border-radius:3px;background:#e2e8f0;overflow:hidden">',
+                      '<div style="height:100%;width:' + s.pct + '%;background:' +
+                        (i === 0 ? 'linear-gradient(90deg,#f59e0b,#f97316)' : i === 1 ? '#94a3b8' : '#cbd5e1') +
+                        ';border-radius:3px"></div>',
+                    '</div>',
+                  '</div>',
+                '</div>',
+                // Détail forfait
+                '<div style="display:flex;align-items:flex-start;gap:12px">',
+                  f.image_url
+                    ? '<img src="' + f.image_url + '" style="width:36px;height:36px;object-fit:contain;flex-shrink:0">'
+                    : '<div style="width:36px;height:36px;border-radius:8px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📶</div>',
+                  '<div style="flex:1;min-width:0">',
+                    '<div style="font-size:11px;font-weight:700;color:#f97316;text-transform:uppercase">' + f.operateur + '</div>',
+                    '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:5px">' + f.nom + '</div>',
+                    '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">',
+                      dataLabel ? '<span style="font-size:11px;font-weight:600;color:#1d4ed8;background:#eff6ff;padding:2px 7px;border-radius:8px">📶 ' + dataLabel + '</span>' : '',
+                      f.minutes ? '<span style="font-size:11px;font-weight:600;color:#10b981;background:#ecfdf5;padding:2px 7px;border-radius:8px">📞 ' + f.minutes + ' min</span>' : '',
+                      f.sms     ? '<span style="font-size:11px;font-weight:600;color:#7c3aed;background:#f5f3ff;padding:2px 7px;border-radius:8px">✉ ' + f.sms + ' SMS</span>' : '',
+                      f.validite_jours ? '<span style="font-size:11px;color:#64748b;background:#f8fafc;padding:2px 7px;border-radius:8px;border:1px solid #e2e8f0">⏳ ' + f.validite_jours + ' j</span>' : '',
+                    '</div>',
+                    '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">',
+                      '<div>',
+                        '<span style="font-size:17px;font-weight:800;color:#f97316">' + fcfa(f.prix) + '</span>',
+                        pj ? '<span style="font-size:11px;color:#94a3b8;margin-left:6px">· ' + fcfa(pj) + '/jour</span>' : '',
+                      '</div>',
+                      '<div style="display:flex;gap:6px">',
+                        '<button onclick="fermerWizardForfait();ouvrirForfait(\'' + f.id + '\')" ' +
+                          'style="padding:6px 12px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">',
+                          'Voir →',
+                        '</button>',
+                        '<button onclick="fermerWizardForfait();toggleComparerForfait(\'' + f.id + '\')" ' +
+                          'style="padding:6px 10px;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;font-size:14px;cursor:pointer" title="Comparer">',
+                          '⚖',
+                        '</button>',
+                      '</div>',
+                    '</div>',
+                  '</div>',
+                '</div>',
+              '</div>',
+            ].join('');
+          }).join('') +
+          // Bouton modifier / voir tous
+          '<div style="padding:16px 24px;display:flex;gap:8px;flex-wrap:wrap">',
+            '<button onclick="ouvrirWizardForfait()" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #3b82f6;color:#3b82f6;background:#fff;font-size:13px;font-weight:600;cursor:pointer">← Modifier</button>',
+            '<button onclick="fermerWizardForfait()" style="flex:1;padding:10px;border-radius:10px;background:#f8fafc;border:1.5px solid #e2e8f0;color:#475569;font-size:13px;font-weight:600;cursor:pointer">Voir tous →</button>',
+          '</div>',
+        '</div>',
+      ].join('');
+
+      zone.innerHTML = html;
+      zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    })
+    .catch(function(err) {
+      zone.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;font-size:13px">Erreur : ' + err.message + '</div>';
+    });
 }
 
 function btnPlusForfaits(data) {
