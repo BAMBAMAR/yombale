@@ -34,6 +34,8 @@ var state = {
   telecomType:       '',
   telecomTri:        '',
   telecomOperateurs: null,
+  comparerForfaits:  [],    // ids sélectionnés pour comparaison télécom
+  forfaitCache:      {},    // id → objet forfait complet
   recents:   JSON.parse(localStorage.getItem('yomb_recents') || '[]'),
   comparePrefs: Object.assign({}, _prefsDefaut,
     JSON.parse(localStorage.getItem('yomb_compare_prefs') || '{}')),
@@ -657,9 +659,11 @@ function carteListeHTML(p) {
 // ═══════════════════════════════════════════════════════════════
 
 function carteForfaitHTML(f) {
+  state.forfaitCache[f.id] = f;
   var dataLabel = f.data_mo
     ? (f.data_mo >= 1000 ? (f.data_mo / 1000) + ' Go' : f.data_mo + ' Mo')
     : '';
+  var enCompare = state.comparerForfaits.indexOf(f.id) !== -1;
   return [
     '<div class="pcard telecom" onclick="ouvrirForfait(\'' + f.id + '\')">',
       '<div class="pimg" style="background:linear-gradient(135deg,#fff7ed,#ffedd5)">',
@@ -677,7 +681,13 @@ function carteForfaitHTML(f) {
         '</div>',
         '<div class="pprice">' + fcfa(f.prix) + '</div>',
         f.validite_jours ? '<div class="poffers">Validité ' + f.validite_jours + ' j</div>' : '<div class="poffers"></div>',
-        '<button class="btn-voir" style="margin-top:6px">Voir le forfait →</button>',
+        '<div style="display:flex;gap:6px;margin-top:6px">',
+          '<button class="btn-voir" style="flex:1" onclick="event.stopPropagation();ouvrirForfait(\'' + f.id + '\')">Voir →</button>',
+          '<button onclick="event.stopPropagation();toggleComparerForfait(\'' + f.id + '\')" ' +
+            'title="' + (enCompare ? 'Retirer de la comparaison' : 'Comparer ce forfait') + '" ' +
+            'style="padding:6px 8px;border-radius:6px;border:1.5px solid ' + (enCompare ? '#f97316' : '#e2e8f0') + ';' +
+            'background:' + (enCompare ? '#fff7ed' : '#fff') + ';cursor:pointer;font-size:14px">⚖</button>',
+        '</div>',
       '</div>',
     '</div>',
   ].join('');
@@ -685,6 +695,7 @@ function carteForfaitHTML(f) {
 
 function htmlBarreTelecom() {
   var sStyle = 'padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;outline:none';
+  var nb = state.comparerForfaits.length;
   return [
     '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 5%;border-bottom:1px solid #f1f5f9">',
       '<select onchange="filtrerTelecomOperateur(this.value)" style="' + sStyle + '">',
@@ -703,8 +714,132 @@ function htmlBarreTelecom() {
           return '<option value="' + t[0] + '"' + (state.telecomTri === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
         }).join(''),
       '</select>',
+      nb > 0
+        ? '<button onclick="ouvrirComparaisonForfaits()" style="margin-left:auto;padding:6px 14px;background:#f97316;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">⚖ Comparer (' + nb + ')</button>' +
+          '<button onclick="viderComparaisonForfaits()" style="padding:6px 10px;border-radius:8px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;font-size:11px;font-weight:600;cursor:pointer">✕</button>'
+        : '<span style="margin-left:auto;font-size:11px;color:#94a3b8">Appuyez ⚖ sur une carte pour comparer</span>',
     '</div>',
   ].join('');
+}
+
+function toggleComparerForfait(id) {
+  var idx = state.comparerForfaits.indexOf(id);
+  if (idx !== -1) {
+    state.comparerForfaits.splice(idx, 1);
+  } else {
+    if (state.comparerForfaits.length >= 4) {
+      toast('Maximum 4 forfaits à comparer', '#f97316'); return;
+    }
+    state.comparerForfaits.push(id);
+  }
+  chargerForfaits(state.page);
+}
+
+function viderComparaisonForfaits() {
+  state.comparerForfaits = [];
+  chargerForfaits(state.page);
+}
+
+function ouvrirComparaisonForfaits() {
+  var forfaits = state.comparerForfaits.map(function(id) { return state.forfaitCache[id]; }).filter(Boolean);
+  if (forfaits.length < 2) { toast('Sélectionnez au moins 2 forfaits à comparer', '#f97316'); return; }
+
+  // ── Calcul des métriques ──────────────────────────────────────
+  var prixMin    = Math.min.apply(null, forfaits.map(function(f){ return f.prix; }));
+  var dataMax    = Math.max.apply(null, forfaits.map(function(f){ return f.data_mo || 0; }));
+  var minutesMax = Math.max.apply(null, forfaits.map(function(f){ return f.minutes || 0; }));
+
+  function prixParGo(f) {
+    return (f.data_mo && f.data_mo > 0) ? Math.round(f.prix / (f.data_mo / 1000)) : null;
+  }
+  function prixParMin(f) {
+    return (f.minutes && f.minutes > 0) ? Math.round(f.prix / f.minutes) : null;
+  }
+  var prixGoMin  = Math.min.apply(null, forfaits.map(prixParGo).filter(function(v){ return v !== null; }));
+  var prixMinMin = Math.min.apply(null, forfaits.map(prixParMin).filter(function(v){ return v !== null; }));
+
+  function best(val, minVal) { return val === minVal ? ' style="color:#10b981;font-weight:800"' : ''; }
+  function bestMax(val, maxVal) { return val === maxVal ? ' style="color:#10b981;font-weight:800"' : ''; }
+
+  // ── Construction du tableau ───────────────────────────────────
+  var cols = forfaits.map(function(f) {
+    var pg = prixParGo(f);
+    var pm = prixParMin(f);
+    var dataLabel = f.data_mo ? (f.data_mo >= 1000 ? (f.data_mo/1000) + ' Go' : f.data_mo + ' Mo') : '—';
+    return {
+      f: f, pg: pg, pm: pm, dataLabel: dataLabel,
+    };
+  });
+
+  function row(label, fn) {
+    return '<tr><td style="font-weight:600;color:#475569;font-size:12px;white-space:nowrap;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0">' + label + '</td>' +
+      cols.map(function(c) {
+        var r = fn(c);
+        return '<td style="text-align:center;padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13px' + (r.hl ? ';color:#10b981;font-weight:800' : '') + '">' + r.v + '</td>';
+      }).join('') + '</tr>';
+  }
+
+  var tableHtml = [
+    '<table style="width:100%;border-collapse:collapse">',
+      // Header opérateurs
+      '<thead><tr>',
+        '<th style="padding:12px 16px;background:#f8fafc;border-bottom:2px solid #e2e8f0;text-align:left;font-size:12px;color:#64748b"></th>',
+        cols.map(function(c) {
+          return '<th style="padding:12px;background:#f8fafc;border-bottom:2px solid #e2e8f0;text-align:center">' +
+            (c.f.image_url ? '<img src="' + c.f.image_url + '" style="height:32px;object-fit:contain;margin-bottom:4px"><br>' : '') +
+            '<span style="font-size:11px;font-weight:700;color:#f97316">' + c.f.operateur + '</span><br>' +
+            '<span style="font-size:12px;font-weight:600;color:#1e293b">' + c.f.nom + '</span>' +
+          '</th>';
+        }).join('') +
+      '</tr></thead>',
+      '<tbody>',
+        row('💰 Prix', function(c) { return { v: fcfa(c.f.prix), hl: c.f.prix === prixMin }; }),
+        row('📶 Data', function(c) { return { v: c.dataLabel, hl: c.f.data_mo === dataMax && dataMax > 0 }; }),
+        row('📞 Voix incluse', function(c) { return { v: c.f.minutes ? c.f.minutes + ' min' : '—', hl: c.f.minutes === minutesMax && minutesMax > 0 }; }),
+        row('✉ SMS inclus', function(c) { return { v: c.f.sms ? c.f.sms + ' SMS' : '—', hl: false }; }),
+        row('⏳ Validité', function(c) { return { v: c.f.validite_jours ? c.f.validite_jours + ' jours' : '—', hl: false }; }),
+        row('📊 Prix / Go', function(c) { return { v: c.pg !== null ? fcfa(c.pg) + '/Go' : '—', hl: c.pg !== null && c.pg === prixGoMin }; }),
+        row('📊 Prix / min', function(c) { return { v: c.pm !== null ? c.pm + ' F/min' : '—', hl: c.pm !== null && c.pm === prixMinMin }; }),
+      '</tbody>',
+    '</table>',
+  ].join('');
+
+  // ── Verdict ───────────────────────────────────────────────────
+  var meilleurPrix = forfaits.reduce(function(a, b) { return a.prix < b.prix ? a : b; });
+  var meilleurData = (dataMax > 0) ? forfaits.reduce(function(a, b) { return (a.data_mo||0) > (b.data_mo||0) ? a : b; }) : null;
+  var verdict = '<div style="padding:16px 20px;background:#f0fdf4;border-top:2px solid #bbf7d0">' +
+    '<div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:8px">🏆 Verdict</div>' +
+    '<div style="font-size:13px;color:#166534">💰 Moins cher : <strong>' + meilleurPrix.operateur + ' — ' + meilleurPrix.nom + '</strong> (' + fcfa(meilleurPrix.prix) + ')</div>' +
+    (meilleurData ? '<div style="font-size:13px;color:#166534;margin-top:4px">📶 Plus de data : <strong>' + meilleurData.operateur + ' — ' + meilleurData.nom + '</strong> (' + (meilleurData.data_mo >= 1000 ? meilleurData.data_mo/1000+'Go' : meilleurData.data_mo+'Mo') + ')</div>' : '') +
+    (prixGoMin && prixGoMin !== Infinity ? '<div style="font-size:13px;color:#166534;margin-top:4px">📊 Meilleur rapport data/prix : <strong>' + cols.find(function(c){ return c.pg===prixGoMin; }).f.operateur + '</strong> (' + fcfa(prixGoMin) + '/Go)</div>' : '') +
+  '</div>';
+
+  // ── Modal ─────────────────────────────────────────────────────
+  var modal = document.getElementById('modal-comparaison-forfaits');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-comparaison-forfaits';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = [
+    '<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto">',
+      '<div style="background:#fff;border-radius:14px;max-width:900px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden">',
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#fff7ed;border-bottom:1px solid #fed7aa">',
+          '<span style="font-size:16px;font-weight:700;color:#1e293b">⚖ Comparaison forfaits télécom</span>',
+          '<button onclick="fermerComparaisonForfaits()" style="padding:6px 12px;background:none;border:1px solid #e2e8f0;border-radius:8px;font-size:20px;cursor:pointer;color:#64748b">✕</button>',
+        '</div>',
+        tableHtml,
+        verdict,
+      '</div>',
+    '</div>',
+  ].join('');
+  modal.style.display = 'block';
+  modal.onclick = function(e) { if (e.target === modal.firstChild) fermerComparaisonForfaits(); };
+}
+
+function fermerComparaisonForfaits() {
+  var modal = document.getElementById('modal-comparaison-forfaits');
+  if (modal) modal.style.display = 'none';
 }
 
 function btnPlusForfaits(data) {
