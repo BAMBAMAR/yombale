@@ -101,6 +101,10 @@
     <button class="btn-secondary btn-sm" onclick="syncSource('facebook', true, this)">🔍 Dry-run</button>
   </div>
 
+  <div style="padding-top:12px;border-top:1px solid #f1f5f9;margin-top:4px">
+    <button class="btn-blue btn-sm" onclick="lancerDiagnostic()">🔍 Diagnostic (DB + réseau)</button>
+  </div>
+
   <div id="sync-log" style="display:none">
     <div class="log" id="sync-log-content"></div>
   </div>
@@ -388,6 +392,26 @@ async function desactiverAnnonce(id) {
     chargerAnnonces(_page);
     chargerStats();
   } catch(e) { showMsg('Erreur : ' + e.message, false); }
+}
+
+// ── Diagnostic ───────────────────────────────────────────────────────
+async function lancerDiagnostic() {
+  const log = document.getElementById('sync-log');
+  const logContent = document.getElementById('sync-log-content');
+  log.style.display = 'block';
+  logContent.textContent = 'Diagnostic en cours…\n';
+  try {
+    const r = await fetch(`/api/immo/diagnostic?secret=${SECRET}`, { headers: headers() });
+    const d = await r.json();
+    logContent.textContent = JSON.stringify(d, null, 2);
+    if (d.db?.ok && d.reseau?.ok) {
+      logContent.textContent += '\n\n✅ DB et réseau OK — relancez le sync.';
+    } else if (!d.db?.ok) {
+      logContent.textContent += '\n\n❌ Problème DB : table annonces_immo manquante ou erreur connexion.';
+    } else if (!d.reseau?.ok) {
+      logContent.textContent += '\n\n❌ Réseau : le serveur Railway ne peut pas joindre expat-dakar.\n   Cause probable : IP bloquée ou restriction réseau Railway.';
+    }
+  } catch(e) { logContent.textContent += '\nErreur : ' + e.message; }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────
