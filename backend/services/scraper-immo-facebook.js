@@ -13,13 +13,17 @@ let playwright;
 try { playwright = require('playwright'); }
 catch { playwright = null; }
 
+const fs   = require('fs');
+const path = require('path');
 const { pool } = require('../models/db');
 
+// Session sauvegardée via `node scripts/fb-login-setup.js` (gère le 2FA manuellement une fois)
+const SESSION_FILE = path.join(__dirname, '../.fb-session.json');
+
 const GROUPES = [
-  { id: 'locationappartementdakar',  label: 'Location Appartement Dakar' },
-  { id: 'immobiliersenegal',         label: 'Immobilier Sénégal'         },
-  { id: 'locationdakar',             label: 'Location Dakar'             },
-  { id: 'immodakar',                 label: 'Immo Dakar'                 },
+  { id: '252740871421764',   label: 'Groupe immo 1' },
+  { id: '4675042465930136',  label: 'Groupe immo 2' },
+  { id: '1246400909421367',  label: 'Groupe immo 3' },
 ];
 
 const MOTS_IMMO = [
@@ -94,10 +98,11 @@ async function scraperImmo({ dryRun = false } = {}) {
     return { erreurs: ['playwright non installé'], inseres: 0 };
   }
 
+  const hasSession = fs.existsSync(SESSION_FILE);
   const email    = process.env.FB_EMAIL;
   const password = process.env.FB_PASSWORD;
-  if (!email || !password) {
-    console.error('[FB-IMMO] FB_EMAIL et FB_PASSWORD requis dans les variables d\'environnement');
+  if (!hasSession && (!email || !password)) {
+    console.error('[FB-IMMO] FB_EMAIL et FB_PASSWORD requis (ou lancez node scripts/fb-login-setup.js)');
     return { erreurs: ['FB_EMAIL/FB_PASSWORD manquants'], inseres: 0 };
   }
 
@@ -108,36 +113,43 @@ async function scraperImmo({ dryRun = false } = {}) {
     const ctx  = await browser.newContext({
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36',
       locale: 'fr-FR',
+      ...(hasSession ? { storageState: SESSION_FILE } : {}),
     });
     const page = await ctx.newPage();
 
-    // ── Connexion Facebook ──────────────────────────────────────
-    console.log('[FB-IMMO] Connexion Facebook…');
-    await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded', timeout: 40000 });
+    if (hasSession) {
+      // ── Session déjà connectée (cookies sauvegardés via fb-login-setup.js) ──
+      console.log('[FB-IMMO] Session existante — connexion sans formulaire');
+      await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded', timeout: 40000 });
+    } else {
+      // ── Connexion Facebook par formulaire (échouera si 2FA actif) ──────────
+      console.log('[FB-IMMO] Connexion Facebook…');
+      await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded', timeout: 40000 });
 
-    // Accepter les cookies si la popup apparaît
-    try {
-      await page.click('[data-testid="cookie-policy-manage-dialog-accept-button"], [aria-label*="cookie"], button:has-text("Autoriser"), button:has-text("Accept")', { timeout: 5000 });
-    } catch {}
+      try {
+        await page.click('[data-testid="cookie-policy-manage-dialog-accept-button"], [aria-label*="cookie"], button:has-text("Autoriser"), button:has-text("Accept")', { timeout: 5000 });
+      } catch {}
 
-    // Sélecteurs robustes pour le formulaire de connexion
-    const emailSel = '#email, input[name="email"], input[type="email"], [data-testid="royal_email"], [autocomplete="username"]';
-    const passSel  = '#pass,  input[name="pass"],  input[type="password"], [data-testid="royal_pass"],  [autocomplete="current-password"]';
-    const loginSel = '[name="login"], button[type="submit"], [data-testid="royal_login_button"]';
+      const emailSel = '#email, input[name="email"], input[type="email"], [data-testid="royal_email"], [autocomplete="username"]';
+      const passSel  = '#pass,  input[name="pass"],  input[type="password"], [data-testid="royal_pass"],  [autocomplete="current-password"]';
+      const loginSel = '[name="login"], [data-testid="royal_login_button"], [aria-label="Se connecter"], [aria-label="Log in"], button[type="submit"], input[type="submit"]';
 
-    await page.waitForSelector(emailSel, { timeout: 30000 });
-    await page.fill(emailSel, email);
-    await page.fill(passSel,  password);
-    await page.click(loginSel);
+      await page.waitForSelector(emailSel, { timeout: 30000 });
+      await page.fill(emailSel, email);
+      await page.fill(passSel,  password);
+      await page.click(loginSel);
 
-    try {
-      await page.waitForURL(url => !url.includes('/login'), { timeout: 25000 });
-    } catch {
-      // Parfois Facebook redirige vers checkpoint ou autre — vérifier quand même
+      try {
+        await page.waitForURL(url => !url.includes('/login'), { timeout: 25000 });
+      } catch {}
+
+      if (page.url().includes('/login') || page.url().includes('/checkpoint') || page.url().includes('two_step_verification')) {
+        throw new Error('Connexion Facebook échouée (2FA requis) — lancez : node scripts/fb-login-setup.js');
+      }
     }
 
-    if (page.url().includes('/login') || page.url().includes('/checkpoint')) {
-      throw new Error('Connexion Facebook échouée — vérifiez FB_EMAIL / FB_PASSWORD ou checkpoint 2FA');
+    if (page.url().includes('/login') || page.url().includes('two_step_verification')) {
+      throw new Error('Session Facebook expirée — relancez : node scripts/fb-login-setup.js');
     }
     console.log('[FB-IMMO] Connecté :', page.url().split('?')[0]);
 
