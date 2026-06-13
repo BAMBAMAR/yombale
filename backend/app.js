@@ -41,6 +41,7 @@ app.use(helmet({
 const ALLOWED_ORIGINS = [
   process.env.FRONTEND_URL,
   process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null,
+  process.env.RENDER_EXTERNAL_URL || null,
   'http://localhost:3000',
   'http://localhost:8080',
 ].filter(Boolean);

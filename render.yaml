@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: yombale-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx playwright install --with-deps chromium
+    startCommand: node backend/app.js
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: SCRAPING_DISABLED
+        value: "true"
