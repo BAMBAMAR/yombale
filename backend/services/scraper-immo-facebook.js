@@ -28,18 +28,29 @@ const GROUPES = [
 
 const MOTS_IMMO = [
   'loue', 'location', 'à louer', 'appartement', 'villa', 'studio',
-  'chambre', 'maison', 'bureau', 'f2', 'f3', 'f4', 'f5',
-  'fcfa', 'xof', 'mensuel', 'caution', 'bail',
+  'chambre', 'maison', 'bureau', 'terrain', 'duplex', 'immeuble',
+  'f2', 'f3', 'f4', 'f5', 't2', 't3', 't4', 't5',
+  'fcfa', 'xof', 'mensuel', 'caution', 'bail', 'titre foncier',
+  'dispo', 'disponible', 'libre', 'salon', 'douche', 'cuisine',
 ];
 
 const VILLES = ['Dakar', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor',
                 'Kaolack', 'Touba', 'Diourbel', 'Louga'];
 
 function parsePrixFB(texte) {
-  const m = texte.match(/(\d[\d\s.]*)\s*(?:fcfa|xof|f\b|fr\b)/i);
-  if (!m) return null;
-  const v = parseInt(m[1].replace(/[\s.]/g, ''), 10);
-  return (v > 10000 && v < 100_000_000) ? v : null;
+  // Format classique : "150 000 FCFA"
+  let m = texte.match(/(\d[\d\s.]*)\s*(?:fcfa|xof|f\b|fr\b)/i);
+  if (m) {
+    const v = parseInt(m[1].replace(/[\s.]/g, ''), 10);
+    if (v >= 10000 && v < 100_000_000) return v;
+  }
+  // Format raccourci : "35k", "35 k", "35.000k" → 35 000
+  m = texte.match(/(\d+(?:[.,]\d+)?)\s*k\b/i);
+  if (m) {
+    const v = Math.round(parseFloat(m[1].replace(',', '.')) * 1000);
+    if (v >= 10000 && v < 100_000_000) return v;
+  }
+  return null;
 }
 
 function parseLocFB(texte) {
@@ -161,8 +172,8 @@ async function scraperImmo({ dryRun = false } = {}) {
       try {
         await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
 
-        // Scroller pour charger plus de posts (3 fois)
-        for (let i = 0; i < 3; i++) {
+        // Scroller pour charger plus de posts (6 fois)
+        for (let i = 0; i < 6; i++) {
           await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
           await page.waitForTimeout(2500);
         }
