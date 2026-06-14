@@ -158,6 +158,7 @@ module.exports = async function migrateInline() {
       ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS sponsorisee BOOLEAN DEFAULT FALSE;
       ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS sponsorisee_jusqu_au TIMESTAMPTZ;
       ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS demande_sponsorisation BOOLEAN DEFAULT FALSE;
+      ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS supprimee BOOLEAN DEFAULT FALSE;
 
       CREATE INDEX IF NOT EXISTS idx_immo_utilisateur ON annonces_immo(utilisateur_id);
 

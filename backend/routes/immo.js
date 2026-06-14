@@ -39,6 +39,7 @@ router.get('/', async (req, res) => {
         AND ($7::int IS NULL OR surface_m2 >= $7::int)
         AND ($8::int IS NULL OR nb_pieces >= $8::int)
         AND ($9::text IS NULL OR source = $9)
+        AND supprimee = false
       ORDER BY (sponsorisee = true AND sponsorisee_jusqu_au > NOW()) DESC, ${orderBy}
       LIMIT $10 OFFSET $11`;
 
@@ -129,10 +130,52 @@ router.get('/stats', async (req, res) => {
 router.get('/mine', verifierToken, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT * FROM annonces_immo WHERE utilisateur_id = $1 ORDER BY created_at DESC`,
+      `SELECT * FROM annonces_immo WHERE utilisateur_id = $1 AND supprimee = false ORDER BY created_at DESC`,
       [req.user.userId]
     );
     res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/immo/mine/:id — modifier sa propre annonce
+router.put('/mine/:id', verifierToken, async (req, res) => {
+  try {
+    const {
+      titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
+      ville, quartier, description, contact_nom, contact_tel,
+    } = req.body;
+
+    if (!titre || !contact_tel) {
+      return res.status(400).json({ error: 'titre et contact_tel requis' });
+    }
+
+    const { rows } = await pool.query(`
+      UPDATE annonces_immo SET
+        titre=$1, type_bien=$2, transaction=$3, prix=$4, surface_m2=$5, nb_pieces=$6,
+        nb_chambres=$7, ville=$8, quartier=$9, description=$10, contact_nom=$11, contact_tel=$12,
+        updated_at=NOW()
+      WHERE id=$13 AND utilisateur_id=$14 AND supprimee=false
+      RETURNING id`,
+      [titre, type_bien || 'appartement', transaction || 'location', prix || null,
+       surface_m2 || null, nb_pieces || null, nb_chambres || null, ville || 'Dakar',
+       quartier || null, description || null, contact_nom || null, contact_tel,
+       req.params.id, req.user.userId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
+    res.json({ success: true, message: 'Annonce mise à jour.' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// DELETE /api/immo/mine/:id — supprimer sa propre annonce
+router.delete('/mine/:id', verifierToken, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE annonces_immo SET supprimee=true, actif=false, updated_at=NOW()
+       WHERE id=$1 AND utilisateur_id=$2 RETURNING id`,
+      [req.params.id, req.user.userId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
+    res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

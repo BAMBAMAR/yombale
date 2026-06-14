@@ -1182,7 +1182,7 @@ async function lancerRechercheWizardImmo() {
 }
 
 // ── Publier une annonce gratuite ─────────────────────────────────
-var _pubImmo = { titre:'', type_bien:'appartement', transaction:'location', prix:'', surface_m2:'', nb_pieces:'', nb_chambres:'', ville:'Dakar', quartier:'', description:'', contact_nom:'', contact_tel:'' };
+var _pubImmo = { titre:'', type_bien:'appartement', transaction:'location', prix:'', surface_m2:'', nb_pieces:'', nb_chambres:'', ville:'Dakar', quartier:'', description:'', contact_nom:'', contact_tel:'', editId:null };
 
 function ouvrirPublierAnnonce() {
   if (!state.user) {
@@ -1234,9 +1234,10 @@ function ouvrirPublierAnnonce() {
       '<div><label style="font-size:12px;font-weight:700;color:#64748b">Téléphone WhatsApp *</label>',
       '<input type="tel" placeholder="ex: 771234567" value="' + (p.contact_tel||'') + '" style="' + s + '" oninput="_pubImmo.contact_tel=this.value"></div>',
     '</div>',
-    '<button onclick="envoyerPublierAnnonce()" style="width:100%;padding:12px;background:#059669;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;margin-top:4px">📢 Publier mon annonce</button>',
+    '<button onclick="envoyerPublierAnnonce()" style="width:100%;padding:12px;background:#059669;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;margin-top:4px">' +
+      (p.editId ? '💾 Enregistrer les modifications' : '📢 Publier mon annonce') + '</button>',
   ].join('');
-  ouvrirModal('📢 Publier une annonce gratuite', html);
+  ouvrirModal(p.editId ? '✏️ Modifier mon annonce' : '📢 Publier une annonce gratuite', html);
 }
 
 function _pubImmoField(field, val) {
@@ -1251,13 +1252,37 @@ async function envoyerPublierAnnonce() {
     return;
   }
   try {
-    await apiFetch('/immo/public', { method: 'POST', body: JSON.stringify(p) });
-    fermerModal();
-    toast('Annonce envoyée ! Elle sera visible après validation.', '#059669');
-    _pubImmo = { titre:'', type_bien:'appartement', transaction:'location', prix:'', surface_m2:'', nb_pieces:'', nb_chambres:'', ville:'Dakar', quartier:'', description:'', contact_nom:'', contact_tel:'' };
+    if (p.editId) {
+      await apiFetch('/immo/mine/' + p.editId, { method: 'PUT', body: JSON.stringify(p) });
+      fermerModal();
+      toast('Annonce mise à jour ✓', '#059669');
+      afficherMesAnnonces();
+    } else {
+      await apiFetch('/immo/public', { method: 'POST', body: JSON.stringify(p) });
+      fermerModal();
+      toast('Annonce envoyée ! Elle sera visible après validation.', '#059669');
+    }
+    _pubImmo = { titre:'', type_bien:'appartement', transaction:'location', prix:'', surface_m2:'', nb_pieces:'', nb_chambres:'', ville:'Dakar', quartier:'', description:'', contact_nom:'', contact_tel:'', editId:null };
   } catch(e) {
-    toast(e.message || 'Erreur lors de la publication', '#e63946');
+    toast(e.message || 'Erreur', '#e63946');
   }
+}
+
+function modifierMonAnnonce(a) {
+  _pubImmo = {
+    titre: a.titre || '', type_bien: a.type_bien || 'appartement', transaction: a.transaction || 'location',
+    prix: a.prix || '', surface_m2: a.surface_m2 || '', nb_pieces: a.nb_pieces || '', nb_chambres: a.nb_chambres || '',
+    ville: a.ville || 'Dakar', quartier: a.quartier || '', description: a.description || '',
+    contact_nom: a.contact_nom || '', contact_tel: a.contact_tel || '', editId: a.id,
+  };
+  ouvrirPublierAnnonce();
+}
+
+function supprimerMonAnnonce(id) {
+  if (!confirm('Supprimer définitivement cette annonce ?')) return;
+  apiFetch('/immo/mine/' + id, { method: 'DELETE' })
+    .then(function() { toast('Annonce supprimée', '#10b981'); afficherMesAnnonces(); })
+    .catch(function(err) { toast(err.message || 'Erreur', '#ef4444'); });
 }
 
 // ── Publier une annonce depuis le menu compte ────────────────────
@@ -1300,7 +1325,11 @@ async function afficherMesAnnonces() {
             statut +
           '</div>' +
           '<div style="font-size:11px;color:#64748b;margin-top:4px">' + (a.quartier || a.ville || '') + (a.prix ? ' · ' + fcfa(a.prix) : '') + '</div>' +
-          (boostBtn ? '<div style="margin-top:8px">' + boostBtn + '</div>' : '') +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
+            (boostBtn || '') +
+            '<button class="btn-secondary" style="font-size:11px;padding:4px 10px;border-radius:8px" onclick="event.stopPropagation();modifierMonAnnonce(' + JSON.stringify(a).replace(/'/g,"\\'") + ')">✏️ Modifier</button>' +
+            '<button class="btn-secondary" style="font-size:11px;padding:4px 10px;border-radius:8px;color:#ef4444" onclick="event.stopPropagation();supprimerMonAnnonce(\'' + a.id + '\')">🗑 Supprimer</button>' +
+          '</div>' +
         '</div>';
       }).join('') +
     '</div>';
