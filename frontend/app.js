@@ -881,13 +881,15 @@ function carteImmoHTML(a) {
   if (a.nb_chambres) infos.push('🛏 ' + a.nb_chambres + ' ch.');
   var inCmp   = _immoState.compare.some(function(x) { return x.id === a.id; });
   var prixM2  = (a.prix && a.surface_m2) ? Math.round(a.prix / a.surface_m2) : null;
+  var sponso  = a.sponsorisee && (!a.sponsorisee_jusqu_au || new Date(a.sponsorisee_jusqu_au) > new Date());
   return [
-    '<div class="pcard immo' + (inCmp ? ' immo-selected' : '') + '" onclick="ouvrirImmo(\'' + a.id + '\')">',
+    '<div class="pcard immo' + (inCmp ? ' immo-selected' : '') + '" style="' + (sponso ? 'box-shadow:0 0 0 2px #f59e0b' : '') + '" onclick="ouvrirImmo(\'' + a.id + '\')">',
       '<div class="pimg" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);position:relative">',
         photo
           ? '<img src="' + photo + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
           : '<span style="font-size:40px">' + _immoIcon(a.type_bien) + '</span>',
         '<div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap">',
+          sponso ? '<span style="font-size:10px;font-weight:700;color:#fff;background:#f59e0b;padding:2px 7px;border-radius:6px">⭐ Sponsorisée</span>' : '',
           '<span style="font-size:10px;font-weight:700;color:#fff;background:' + (a.transaction === 'vente' ? '#7c3aed' : '#059669') + ';padding:2px 7px;border-radius:6px">' + (a.transaction === 'vente' ? 'Vente' : 'Location') + '</span>',
           '<span style="font-size:10px;font-weight:700;color:#1e293b;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:6px">' + (TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
         '</div>',
@@ -1282,6 +1284,15 @@ async function afficherMesAnnonces() {
         var statut = a.actif
           ? '<span style="font-size:10px;font-weight:700;color:#059669;background:#f0fdf4;padding:2px 8px;border-radius:8px">✓ Publiée</span>'
           : '<span style="font-size:10px;font-weight:700;color:#f97316;background:#fff7ed;padding:2px 8px;border-radius:8px">⏳ En attente</span>';
+        var sponso = a.sponsorisee && (!a.sponsorisee_jusqu_au || new Date(a.sponsorisee_jusqu_au) > new Date());
+        var boostBtn = '';
+        if (a.actif && sponso) {
+          boostBtn = '<span style="font-size:10px;font-weight:700;color:#f59e0b;background:#fffbeb;padding:2px 8px;border-radius:8px">⭐ Sponsorisée</span>';
+        } else if (a.actif && a.demande_sponsorisation) {
+          boostBtn = '<span style="font-size:10px;font-weight:700;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:8px">Demande envoyée</span>';
+        } else if (a.actif) {
+          boostBtn = '<button class="btn-secondary" style="font-size:11px;padding:4px 10px;border-radius:8px" onclick="event.stopPropagation();demanderSponsorisation(\'' + a.id + '\')">⭐ Mettre en avant</button>';
+        }
         return '<div style="border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;' + (a.actif ? 'cursor:pointer' : '') + '"' +
           (a.actif ? ' onclick="fermerModal();ouvrirImmo(\'' + a.id + '\')"' : '') + '>' +
           '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">' +
@@ -1289,6 +1300,7 @@ async function afficherMesAnnonces() {
             statut +
           '</div>' +
           '<div style="font-size:11px;color:#64748b;margin-top:4px">' + (a.quartier || a.ville || '') + (a.prix ? ' · ' + fcfa(a.prix) : '') + '</div>' +
+          (boostBtn ? '<div style="margin-top:8px">' + boostBtn + '</div>' : '') +
         '</div>';
       }).join('') +
     '</div>';
@@ -1296,6 +1308,16 @@ async function afficherMesAnnonces() {
   } catch(e) {
     ouvrirModal('Erreur', '<p style="color:#e63946">' + e.message + '</p>');
   }
+}
+
+function demanderSponsorisation(id) {
+  if (!confirm('Mettre en avant cette annonce ? Nous vous contacterons pour le paiement et l\'activation.')) return;
+  apiFetch('/immo/' + id + '/demande-sponsorisation', { method: 'POST' })
+    .then(function(data) {
+      toast(data.message || 'Demande envoyée', '#10b981');
+      afficherMesAnnonces();
+    })
+    .catch(function(err) { toast(err.message || 'Erreur', '#ef4444'); });
 }
 
 // ── Devenir partenaire ────────────────────────────────────────────

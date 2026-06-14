@@ -116,6 +116,12 @@
   <div id="pending-wrap">Chargement…</div>
 </div>
 
+<!-- Demandes de mise en avant -->
+<div class="panel">
+  <h2 style="margin:0 0 14px">⭐ Demandes de mise en avant</h2>
+  <div id="sponso-wrap">Chargement…</div>
+</div>
+
 <!-- Ajout manuel -->
 <div class="panel">
   <h2 id="form-title">➕ Ajouter une annonce</h2>
@@ -372,6 +378,54 @@ async function rejeterAnnonce(id) {
   } catch(e) { showMsg('Erreur : ' + e.message, false); }
 }
 
+// ── Demandes de mise en avant ──────────────────────────────────────────
+async function chargerDemandesSponsorisation() {
+  try {
+    const r = await fetch('/api/immo/admin/demandes-sponsorisation', { headers: headers() });
+    const d = await r.json();
+    if (!Array.isArray(d) || !d.length) {
+      document.getElementById('sponso-wrap').innerHTML = '<p style="color:#94a3b8;text-align:center;padding:10px">Aucune demande</p>';
+      return;
+    }
+    document.getElementById('sponso-wrap').innerHTML = `<table><thead><tr><th>Titre</th><th>Lieu</th><th>Contact</th><th>Statut</th><th>Actions</th></tr></thead><tbody>${d.map(a => {
+      const actif = a.sponsorisee && (!a.sponsorisee_jusqu_au || new Date(a.sponsorisee_jusqu_au) > new Date());
+      return `
+      <tr>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.titre}">${a.titre}</td>
+        <td>${a.ville || '—'}${a.quartier ? ' · ' + a.quartier.slice(0,20) : ''}</td>
+        <td>${a.contact_nom || ''} ${a.contact_tel || ''}</td>
+        <td>${actif ? `<span class="badge badge-loc">Active jusqu'au ${new Date(a.sponsorisee_jusqu_au).toLocaleDateString('fr-FR')}</span>` : '<span class="badge badge-exp">En attente</span>'}</td>
+        <td class="actions">
+          <button class="btn-primary btn-sm" onclick="activerSponsorisation('${a.id}')">✓ Activer 30j</button>
+          <button class="btn-secondary btn-sm" onclick="annulerDemandeSponsorisation('${a.id}')">Ignorer</button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+  } catch(e) {
+    document.getElementById('sponso-wrap').innerHTML = '<p style="color:#e63946">Erreur : ' + e.message + '</p>';
+  }
+}
+
+async function activerSponsorisation(id) {
+  const jusquAu = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const r = await fetch(`/api/immo/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify({
+      sponsorisee: true, sponsorisee_jusqu_au: jusquAu, demande_sponsorisation: false,
+    })});
+    if (!r.ok) throw new Error((await r.json()).error);
+    showMsg('Annonce mise en avant pour 30 jours ✓', true);
+    chargerDemandesSponsorisation();
+  } catch(e) { showMsg('Erreur : ' + e.message, false); }
+}
+
+async function annulerDemandeSponsorisation(id) {
+  try {
+    const r = await fetch(`/api/immo/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify({ demande_sponsorisation: false })});
+    if (!r.ok) throw new Error((await r.json()).error);
+    chargerDemandesSponsorisation();
+  } catch(e) { showMsg('Erreur : ' + e.message, false); }
+}
+
 // ── Liste annonces ────────────────────────────────────────────────────
 async function chargerAnnonces(page) {
   _page = page || 1;
@@ -469,6 +523,7 @@ async function lancerDiagnostic() {
 chargerStats();
 chargerAnnonces(1);
 chargerEnAttente();
+chargerDemandesSponsorisation();
 </script>
 </body>
 </html>

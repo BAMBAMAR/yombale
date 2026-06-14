@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
         AND ($7::int IS NULL OR surface_m2 >= $7::int)
         AND ($8::int IS NULL OR nb_pieces >= $8::int)
         AND ($9::text IS NULL OR source = $9)
-      ORDER BY ${orderBy}
+      ORDER BY (sponsorisee = true AND sponsorisee_jusqu_au > NOW()) DESC, ${orderBy}
       LIMIT $10 OFFSET $11`;
 
     const params = [
@@ -136,11 +136,44 @@ router.get('/mine', verifierToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// POST /api/immo/:id/demande-sponsorisation — demander la mise en avant (utilisateur, propriétaire)
+router.post('/:id/demande-sponsorisation', verifierToken, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE annonces_immo SET demande_sponsorisation = true, updated_at = NOW()
+       WHERE id = $1 AND utilisateur_id = $2 RETURNING id, titre, contact_tel`,
+      [req.params.id, req.user.userId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
+
+    const { envoyerEmail } = require('../services/email');
+    envoyerEmail({
+      to: process.env.ADMIN_EMAIL,
+      subject: `⭐ Demande de mise en avant — ${rows[0].titre}`,
+      html: `<p>Un utilisateur souhaite mettre en avant son annonce « ${rows[0].titre} ».</p>
+             <p>Contact : ${rows[0].contact_tel || '—'}</p>
+             <p>Validez/activez la mise en avant depuis l'admin Immobilier.</p>`,
+    }).catch(() => {});
+
+    res.json({ success: true, message: 'Demande envoyée. Nous vous contacterons pour le paiement et l\'activation.' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/immo/admin/en-attente — annonces utilisateurs à valider (admin)
 router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT * FROM annonces_immo WHERE actif = false AND source = 'utilisateur' ORDER BY created_at DESC`
+    );
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/immo/admin/demandes-sponsorisation — demandes de mise en avant (admin)
+router.get('/admin/demandes-sponsorisation', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM annonces_immo WHERE demande_sponsorisation = true ORDER BY updated_at DESC`
     );
     res.json(rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -234,6 +267,7 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
     const {
       titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
       ville, quartier, description, photos, url_source, actif,
+      sponsorisee, sponsorisee_jusqu_au, demande_sponsorisation,
     } = req.body;
     const { rows } = await pool.query(`
       UPDATE annonces_immo SET
@@ -250,13 +284,17 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
         photos      = COALESCE($11::jsonb, photos),
         url_source  = COALESCE($12, url_source),
         actif       = COALESCE($13, actif),
+        sponsorisee            = COALESCE($15, sponsorisee),
+        sponsorisee_jusqu_au   = COALESCE($16::timestamptz, sponsorisee_jusqu_au),
+        demande_sponsorisation = COALESCE($17, demande_sponsorisation),
         updated_at  = NOW()
       WHERE id = $14 RETURNING *`,
       [titre || null, type_bien || null, transaction || null,
        prix ?? null, surface_m2 ?? null, nb_pieces ?? null, nb_chambres ?? null,
        ville || null, quartier ?? null, description ?? null,
        photos ? JSON.stringify(photos) : null, url_source ?? null,
-       actif ?? null, req.params.id]
+       actif ?? null, req.params.id,
+       sponsorisee ?? null, sponsorisee_jusqu_au ?? null, demande_sponsorisation ?? null]
     );
     if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
     res.json(rows[0]);
