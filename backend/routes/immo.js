@@ -3,7 +3,7 @@
 // pas un produit multi-marchands.
 const router = require('express').Router();
 const { pool } = require('../models/db');
-const { adminSecretOnly, verifierToken, tokenOptional } = require('../middlewares/auth');
+const { adminSecretOnly, verifierToken } = require('../middlewares/auth');
 const { limiterPublication } = require('../middlewares/rateLimit');
 
 const ORDER_MAP = {
@@ -159,7 +159,7 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/immo/public — annonce gratuite déposée par un utilisateur
 // (en attente de validation par un admin : actif = false)
-router.post('/public', limiterPublication, tokenOptional, async (req, res) => {
+router.post('/public', limiterPublication, verifierToken, async (req, res) => {
   try {
     const {
       titre, type_bien = 'appartement', transaction = 'location',
@@ -180,7 +180,7 @@ router.post('/public', limiterPublication, tokenOptional, async (req, res) => {
       RETURNING id`,
       [titre, type_bien, transaction, prix || null, surface_m2 || null,
        nb_pieces || null, nb_chambres || null, ville, quartier || null,
-       description || null, contact_nom || null, contact_tel, req.user?.userId || null]
+       description || null, contact_nom || null, contact_tel, req.user.userId]
     );
     res.status(201).json({
       success: true,

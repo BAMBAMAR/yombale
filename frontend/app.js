@@ -1183,8 +1183,15 @@ async function lancerRechercheWizardImmo() {
 var _pubImmo = { titre:'', type_bien:'appartement', transaction:'location', prix:'', surface_m2:'', nb_pieces:'', nb_chambres:'', ville:'Dakar', quartier:'', description:'', contact_nom:'', contact_tel:'' };
 
 function ouvrirPublierAnnonce() {
+  if (!state.user) {
+    toast('Connectez-vous pour publier une annonce', '#f97316');
+    openLoginModal();
+    return;
+  }
   var s = 'width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box';
   var p = _pubImmo;
+  if (!p.contact_nom) p.contact_nom = state.user.nom || '';
+  if (!p.contact_tel) p.contact_tel = state.user.telephone || '';
   function tBtn(label, val, field) {
     var act = p[field] === val;
     return '<button onclick="_pubImmoField(\'' + field + '\',\'' + val + '\')" style="padding:7px 18px;border-radius:20px;border:1.5px solid ' + (act ? '#059669' : '#e2e8f0') + ';background:' + (act ? '#f0fdf4' : '#fff') + ';color:' + (act ? '#059669' : '#64748b') + ';font-size:13px;font-weight:' + (act ? '700' : '500') + ';cursor:pointer">' + label + '</button>';
