@@ -3,7 +3,7 @@ services:
     name: yombale-backend
     runtime: node
     plan: free
-    buildCommand: npm install && npx playwright install --with-deps chromium
+    buildCommand: npm install && npx playwright install chromium
     startCommand: node backend/app.js
     envVars:
       - key: NODE_VERSION
