@@ -3534,9 +3534,10 @@ function htmlFooter() {
       '<div class="footer-bottom">',
         '<p>© 2026 Yombale — Comparateur de prix Sénégal</p>',
         '<nav>',
-          '<a href="#">Confidentialité</a>',
-          '<a href="#">CGU</a>',
-          '<a href="#">Cookies</a>',
+          '<a href="#" onclick="event.preventDefault();ouvrirInfoPage(\'confidentialite\')">Confidentialité</a>',
+          '<a href="#" onclick="event.preventDefault();ouvrirInfoPage(\'cgu\')">CGU</a>',
+          '<a href="#" onclick="event.preventDefault();ouvrirInfoPage(\'confidentialite\')">Cookies</a>',
+          '<a href="#" onclick="event.preventDefault();ouvrirInfoPage(\'mentions-legales\')">Mentions légales</a>',
         '</nav>',
       '</div>',
 
@@ -4052,6 +4053,78 @@ var INFO_PAGES = {
         'BTU, Inverter, R410A... les termes techniques peuvent intimider. Pour une pièce de 20m² à Dakar, comptez 9000 à 12000 BTU. L\'Inverter coûte plus cher à l\'achat mais économise 30-40% d\'électricité. Nos marchands proposent des splits de 50 000 à 200 000 FCFA selon la capacité.'),
       _article('🛒', '5 astuces pour comparer les prix intelligemment', '25 avril 2026',
         '1. Regardez l\'historique des prix — un prix "promotionnel" était peut-être le prix normal. 2. Comparez le prix total livraison incluse. 3. Vérifiez la garantie. 4. Lisez les avis sur le marchand. 5. Utilisez les alertes prix de Yombale pour être notifié des baisses.'),
+    ].join(''); }
+  },
+
+  'mentions-legales': {
+    titre: 'Mentions légales',
+    icone: '📄',
+    html: function() { return [
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 8px">Éditeur du site</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Yombale est un service de comparaison de prix indépendant opérant au Sénégal. Contact : <a href="mailto:contact@yombale.sn">contact@yombale.sn</a>.</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Activité</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Yombale référence et compare des prix collectés automatiquement chez des marchands tiers. Yombale n\'est pas un vendeur, n\'effectue aucune transaction commerciale et ne perçoit aucune commission sur les ventes réalisées chez les marchands référencés.</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Hébergement</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Le site est hébergé par des prestataires d\'hébergement cloud (Render, Railway).</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Propriété intellectuelle</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Le contenu de Yombale (logo, design, textes) est protégé. Les images, descriptions et prix des produits restent la propriété de leurs marchands respectifs.</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Responsabilité</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Les prix affichés sont fournis à titre indicatif et peuvent différer du prix réel constaté chez le marchand. Yombale ne saurait être tenu responsable des écarts de prix, de la disponibilité des produits ou de tout litige avec un marchand tiers.</p>',
+    ].join(''); }
+  },
+
+  'confidentialite': {
+    titre: 'Politique de confidentialité',
+    icone: '🔒',
+    html: function() { return [
+      '<p style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:16px">Yombale respecte la loi sénégalaise n°2008-12 sur la protection des données personnelles et s\'engage à protéger vos informations.</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:16px 0 8px">Données collectées</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Lors de votre inscription, nous collectons : nom, email, téléphone (optionnel), ville. Lors de l\'utilisation du site : favoris, alertes de prix, annonces publiées.</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:16px 0 8px">Utilisation des données</h3>',
+      '<ul style="font-size:13px;color:#64748b;line-height:1.8;padding-left:18px;margin:0">',
+        '<li>Gérer votre compte et vos sessions (authentification)</li>',
+        '<li>Vous envoyer les emails de vérification, réinitialisation de mot de passe et alertes prix</li>',
+        '<li>Afficher vos annonces et favoris</li>',
+      '</ul>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:16px 0 8px">Partage des données</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Vos données ne sont jamais vendues. Elles peuvent être transmises à nos prestataires techniques (hébergement, envoi d\'emails via Resend) uniquement pour le fonctionnement du service.</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:16px 0 8px">Cookies</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Yombale utilise le stockage local du navigateur (localStorage) pour conserver votre session de connexion, vos favoris et vos préférences d\'affichage. Aucun cookie publicitaire tiers n\'est utilisé pour le moment.</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:16px 0 8px">Vos droits</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Vous pouvez demander l\'accès, la rectification ou la suppression de vos données personnelles en nous contactant à <a href="mailto:contact@yombale.sn">contact@yombale.sn</a>.</p>',
+    ].join(''); }
+  },
+
+  'cgu': {
+    titre: 'Conditions générales d\'utilisation',
+    icone: '📋',
+    html: function() { return [
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 8px">Objet</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Les présentes conditions régissent l\'utilisation du site Yombale, comparateur de prix et plateforme de petites annonces (immobilier, partenaires) au Sénégal.</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Compte utilisateur</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">La création d\'un compte est gratuite et nécessite une adresse email valide. Vous êtes responsable de la confidentialité de vos identifiants.</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Annonces publiées par les utilisateurs</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Les annonces immobilières et demandes de partenariat soumises par les utilisateurs sont gratuites mais soumises à validation par un modérateur avant publication. Yombale se réserve le droit de refuser ou supprimer toute annonce non conforme, frauduleuse ou trompeuse, sans préavis.</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Comparateur de prix</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Les prix affichés proviennent de sites marchands tiers et sont mis à jour régulièrement, sans garantie d\'exactitude en temps réel. Yombale n\'est pas partie aux transactions effectuées sur les sites des marchands.</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Comportement interdit</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Il est interdit de publier des annonces frauduleuses, du contenu illégal, ou d\'utiliser le site pour du spam ou du démarchage abusif.</p>',
+
+      '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Modification des CGU</h3>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Yombale peut modifier ces conditions à tout moment. Les utilisateurs seront informés des changements importants via le site.</p>',
     ].join(''); }
   },
 };

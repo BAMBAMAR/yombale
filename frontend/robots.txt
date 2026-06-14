@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /admin-immo.html
+Disallow: /admin-telecom.html
+Disallow: /admin-partenaires.html
+Disallow: /api/
+
+Sitemap: https://yombale.onrender.com/sitemap.xml

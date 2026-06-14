@@ -1,7 +1,7 @@
 {
-  "name":             "PrixMalin Senegal",
-  "short_name":       "PrixMalin",
-  "description":      "Comparez les prix au Senegal",
+  "name":             "Yombale",
+  "short_name":       "Yombale",
+  "description":      "Comparateur de prix au Senegal",
   "start_url":        "/",
   "display":          "standalone",
   "background_color": "#f0f4ff",
