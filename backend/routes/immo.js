@@ -4,6 +4,7 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
+const { limiterPublication } = require('../middlewares/rateLimit');
 
 const ORDER_MAP = {
   prix_asc:     'prix ASC NULLS LAST',
@@ -124,6 +125,16 @@ router.get('/stats', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/immo/admin/en-attente — annonces utilisateurs à valider (admin)
+router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM annonces_immo WHERE actif = false AND source = 'utilisateur' ORDER BY created_at DESC`
+    );
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/immo/:id — détail
 router.get('/:id', async (req, res) => {
   try {
@@ -133,6 +144,42 @@ router.get('/:id', async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
     res.json(rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/immo/public — annonce gratuite déposée par un utilisateur
+// (en attente de validation par un admin : actif = false)
+router.post('/public', limiterPublication, async (req, res) => {
+  try {
+    const {
+      titre, type_bien = 'appartement', transaction = 'location',
+      prix, surface_m2, nb_pieces, nb_chambres,
+      ville = 'Dakar', quartier, description,
+      contact_nom, contact_tel,
+    } = req.body;
+
+    if (!titre || !contact_tel) {
+      return res.status(400).json({ error: 'titre et contact_tel requis' });
+    }
+
+    const { rows } = await pool.query(`
+      INSERT INTO annonces_immo
+        (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
+         ville, quartier, description, source, actif, contact_nom, contact_tel)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'utilisateur',false,$11,$12)
+      RETURNING id`,
+      [titre, type_bien, transaction, prix || null, surface_m2 || null,
+       nb_pieces || null, nb_chambres || null, ville, quartier || null,
+       description || null, contact_nom || null, contact_tel]
+    );
+    res.status(201).json({
+      success: true,
+      id: rows[0].id,
+      message: 'Annonce envoyée — elle sera visible après validation.',
+    });
+  } catch (err) {
+    console.error('[POST /api/immo/public]', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // POST /api/immo — créer (admin ou scraper)
@@ -182,15 +229,15 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
         titre       = COALESCE($1, titre),
         type_bien   = COALESCE($2, type_bien),
         transaction = COALESCE($3, transaction),
-        prix        = $4,
-        surface_m2  = $5,
-        nb_pieces   = $6,
-        nb_chambres = $7,
+        prix        = COALESCE($4, prix),
+        surface_m2  = COALESCE($5, surface_m2),
+        nb_pieces   = COALESCE($6, nb_pieces),
+        nb_chambres = COALESCE($7, nb_chambres),
         ville       = COALESCE($8, ville),
-        quartier    = $9,
-        description = $10,
+        quartier    = COALESCE($9, quartier),
+        description = COALESCE($10, description),
         photos      = COALESCE($11::jsonb, photos),
-        url_source  = $12,
+        url_source  = COALESCE($12, url_source),
         actif       = COALESCE($13, actif),
         updated_at  = NOW()
       WHERE id = $14 RETURNING *`,

@@ -16,4 +16,9 @@ const limiterRecherche = rateLimit({
   message: { error: 'Trop de recherches — attendez 1 minute' }
 });
 
-module.exports = { limiterGeneral, limiterAuth, limiterRecherche };
+const limiterPublication = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 5,
+  message: { error: 'Trop d\'annonces publiées — réessayez dans 1 heure' }
+});
+
+module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication };

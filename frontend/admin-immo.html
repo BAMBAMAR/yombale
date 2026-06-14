@@ -110,6 +110,12 @@
   </div>
 </div>
 
+<!-- Annonces utilisateurs en attente -->
+<div class="panel">
+  <h2 style="margin:0 0 14px">⏳ Annonces utilisateurs en attente de validation</h2>
+  <div id="pending-wrap">Chargement…</div>
+</div>
+
 <!-- Ajout manuel -->
 <div class="panel">
   <h2 id="form-title">➕ Ajouter une annonce</h2>
@@ -321,6 +327,51 @@ async function sauvegarderAnnonce() {
   } catch(e) { showMsg('Erreur : ' + e.message, false); }
 }
 
+// ── Annonces en attente (utilisateurs) ─────────────────────────────────
+async function chargerEnAttente() {
+  try {
+    const r = await fetch('/api/immo/admin/en-attente', { headers: headers() });
+    const d = await r.json();
+    if (!Array.isArray(d) || !d.length) {
+      document.getElementById('pending-wrap').innerHTML = '<p style="color:#94a3b8;text-align:center;padding:10px">Aucune annonce en attente</p>';
+      return;
+    }
+    document.getElementById('pending-wrap').innerHTML = `<table><thead><tr><th>Titre</th><th>Type</th><th>Lieu</th><th>Prix</th><th>Contact</th><th>Actions</th></tr></thead><tbody>${d.map(a => `
+      <tr>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.titre}">${a.titre}</td>
+        <td>${a.type_bien || '—'}</td>
+        <td>${a.ville || '—'}${a.quartier ? ' · ' + a.quartier.slice(0,20) : ''}</td>
+        <td>${a.prix ? new Intl.NumberFormat('fr-FR').format(a.prix) + ' F' : '—'}</td>
+        <td>${a.contact_nom || ''} ${a.contact_tel || ''}</td>
+        <td class="actions">
+          <button class="btn-primary btn-sm" onclick="approuverAnnonce('${a.id}')">✓ Approuver</button>
+          <button class="btn-danger btn-sm" onclick="rejeterAnnonce('${a.id}')">✕ Rejeter</button>
+        </td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch(e) {
+    document.getElementById('pending-wrap').innerHTML = '<p style="color:#e63946">Erreur : ' + e.message + '</p>';
+  }
+}
+
+async function approuverAnnonce(id) {
+  try {
+    const r = await fetch(`/api/immo/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify({ actif: true }) });
+    if (!r.ok) throw new Error((await r.json()).error);
+    showMsg('Annonce approuvée ✓', true);
+    chargerEnAttente(); chargerAnnonces(_page); chargerStats();
+  } catch(e) { showMsg('Erreur : ' + e.message, false); }
+}
+
+async function rejeterAnnonce(id) {
+  if (!confirm('Rejeter (et supprimer) cette annonce ?')) return;
+  try {
+    const r = await fetch(`/api/immo/${id}`, { method: 'DELETE', headers: headers() });
+    if (!r.ok) throw new Error((await r.json()).error);
+    showMsg('Annonce rejetée ✓', true);
+    chargerEnAttente();
+  } catch(e) { showMsg('Erreur : ' + e.message, false); }
+}
+
 // ── Liste annonces ────────────────────────────────────────────────────
 async function chargerAnnonces(page) {
   _page = page || 1;
@@ -417,6 +468,7 @@ async function lancerDiagnostic() {
 // ── Init ──────────────────────────────────────────────────────────────
 chargerStats();
 chargerAnnonces(1);
+chargerEnAttente();
 </script>
 </body>
 </html>

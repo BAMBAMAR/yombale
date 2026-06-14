@@ -928,6 +928,7 @@ function htmlBarreImmo() {
         tBtn('🏠 Location', 'location'),
         tBtn('🔑 Vente', 'vente'),
         '<button onclick="ouvrirWizardImmo()" style="padding:6px 16px;border-radius:16px;border:2px solid #2563eb;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.2;box-shadow:0 2px 8px rgba(37,99,235,.35)"><span>🔍 Trouver mon bien</span><span style="font-size:9px;font-weight:500;opacity:.85">Budget · Quartier · Type → Top 5</span></button>',
+        '<button onclick="ouvrirPublierAnnonce()" style="padding:6px 16px;border-radius:16px;border:2px solid #059669;background:#fff;color:#059669;font-size:12px;font-weight:700;cursor:pointer">📢 Publier une annonce (gratuit)</button>',
         cmpN >= 2 ? '<button onclick="_immoOuvrirComparaison()" style="padding:5px 14px;border-radius:16px;border:1.5px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer">⚖ Comparer ' + cmpN + ' biens</button>' : '',
         hasFilters ? '<button onclick="_immoResetFiltres()" style="padding:5px 12px;border-radius:16px;border:1.5px solid #fca5a5;background:#fff5f5;color:#e63946;font-size:11px;font-weight:600;cursor:pointer;margin-left:auto">✕ Réinitialiser</button>' : '',
       '</div>',
@@ -1175,6 +1176,78 @@ async function lancerRechercheWizardImmo() {
     ouvrirModal('🎯 Top ' + top.length + ' résultats', html);
   } catch(e) {
     ouvrirModal('Erreur', '<p style="color:#e63946">' + e.message + '</p>');
+  }
+}
+
+// ── Publier une annonce gratuite ─────────────────────────────────
+var _pubImmo = { titre:'', type_bien:'appartement', transaction:'location', prix:'', surface_m2:'', nb_pieces:'', nb_chambres:'', ville:'Dakar', quartier:'', description:'', contact_nom:'', contact_tel:'' };
+
+function ouvrirPublierAnnonce() {
+  var s = 'width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box';
+  var p = _pubImmo;
+  function tBtn(label, val, field) {
+    var act = p[field] === val;
+    return '<button onclick="_pubImmoField(\'' + field + '\',\'' + val + '\')" style="padding:7px 18px;border-radius:20px;border:1.5px solid ' + (act ? '#059669' : '#e2e8f0') + ';background:' + (act ? '#f0fdf4' : '#fff') + ';color:' + (act ? '#059669' : '#64748b') + ';font-size:13px;font-weight:' + (act ? '700' : '500') + ';cursor:pointer">' + label + '</button>';
+  }
+  var html = [
+    '<p style="font-size:12px;color:#64748b;margin:0 0 12px">Votre annonce sera vérifiée avant publication.</p>',
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">',
+      tBtn('🏠 Location', 'location', 'transaction'),
+      tBtn('🔑 Vente',    'vente',    'transaction'),
+    '</div>',
+    '<label style="font-size:12px;font-weight:700;color:#64748b">Titre *</label>',
+    '<input type="text" placeholder="ex: Appartement F3 meublé à Sacré-Cœur" value="' + (p.titre||'') + '" style="' + s + '" oninput="_pubImmo.titre=this.value">',
+    '<label style="font-size:12px;font-weight:700;color:#64748b">Type de bien</label>',
+    '<select style="' + s + '" onchange="_pubImmo.type_bien=this.value">',
+      Object.keys(TYPE_BIEN_LABELS).map(function(k) {
+        return '<option value="' + k + '"' + (p.type_bien === k ? ' selected' : '') + '>' + TYPE_BIEN_LABELS[k] + '</option>';
+      }).join(''),
+    '</select>',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">',
+      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Ville</label>',
+      '<input type="text" value="' + (p.ville||'Dakar') + '" style="' + s + '" oninput="_pubImmo.ville=this.value"></div>',
+      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Quartier</label>',
+      '<input type="text" placeholder="ex: Sacré-Cœur" value="' + (p.quartier||'') + '" style="' + s + '" oninput="_pubImmo.quartier=this.value"></div>',
+    '</div>',
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">',
+      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Prix (FCFA)</label>',
+      '<input type="number" placeholder="ex: 150000" value="' + (p.prix||'') + '" style="' + s + '" oninput="_pubImmo.prix=this.value"></div>',
+      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Surface m²</label>',
+      '<input type="number" value="' + (p.surface_m2||'') + '" style="' + s + '" oninput="_pubImmo.surface_m2=this.value"></div>',
+      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Chambres</label>',
+      '<input type="number" value="' + (p.nb_chambres||'') + '" style="' + s + '" oninput="_pubImmo.nb_chambres=this.value"></div>',
+    '</div>',
+    '<label style="font-size:12px;font-weight:700;color:#64748b">Description</label>',
+    '<textarea rows="3" style="' + s + ';resize:vertical" oninput="_pubImmo.description=this.value">' + (p.description||'') + '</textarea>',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">',
+      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Votre nom</label>',
+      '<input type="text" value="' + (p.contact_nom||'') + '" style="' + s + '" oninput="_pubImmo.contact_nom=this.value"></div>',
+      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Téléphone WhatsApp *</label>',
+      '<input type="tel" placeholder="ex: 771234567" value="' + (p.contact_tel||'') + '" style="' + s + '" oninput="_pubImmo.contact_tel=this.value"></div>',
+    '</div>',
+    '<button onclick="envoyerPublierAnnonce()" style="width:100%;padding:12px;background:#059669;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;margin-top:4px">📢 Publier mon annonce</button>',
+  ].join('');
+  ouvrirModal('📢 Publier une annonce gratuite', html);
+}
+
+function _pubImmoField(field, val) {
+  _pubImmo[field] = val;
+  ouvrirPublierAnnonce();
+}
+
+async function envoyerPublierAnnonce() {
+  var p = _pubImmo;
+  if (!p.titre || !p.contact_tel) {
+    toast('Titre et téléphone sont obligatoires', '#e63946');
+    return;
+  }
+  try {
+    await apiFetch('/immo/public', { method: 'POST', body: JSON.stringify(p) });
+    fermerModal();
+    toast('Annonce envoyée ! Elle sera visible après validation.', '#059669');
+    _pubImmo = { titre:'', type_bien:'appartement', transaction:'location', prix:'', surface_m2:'', nb_pieces:'', nb_chambres:'', ville:'Dakar', quartier:'', description:'', contact_nom:'', contact_tel:'' };
+  } catch(e) {
+    toast(e.message || 'Erreur lors de la publication', '#e63946');
   }
 }
 
@@ -1432,6 +1505,8 @@ async function ouvrirImmo(id) {
         '</div>' : '',
 
         // CTA
+        a.contact_tel ? '<a href="https://wa.me/' + a.contact_tel.replace(/[^0-9]/g, '') + '" target="_blank" rel="noopener" ' +
+          'style="display:block;text-align:center;padding:14px;background:#25d366;color:#fff;border-radius:12px;font-size:15px;font-weight:800;text-decoration:none;margin-bottom:10px">💬 Contacter ' + (a.contact_nom ? a.contact_nom : 'le propriétaire') + ' (WhatsApp)</a>' : '',
         a.url_source ? '<a href="' + a.url_source + '" target="_blank" rel="noopener" ' +
           'style="display:block;text-align:center;padding:14px;background:#059669;color:#fff;border-radius:12px;font-size:15px;font-weight:800;text-decoration:none">Voir l\'annonce originale →</a>' : '',
       '</div>',
