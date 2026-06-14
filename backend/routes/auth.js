@@ -3,6 +3,9 @@ const bcrypt = require('bcryptjs');
 const jwt    = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
+const { envoyerEmail } = require('../services/email');
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:8080';
 
 router.post('/inscription',
   body('email').isEmail().normalizeEmail(),
@@ -22,9 +25,34 @@ router.post('/inscription',
       );
       const token = jwt.sign({ userId: rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
       res.status(201).json({ user: rows[0], token });
+
+      // Email de bienvenue + vérification (envoyé en arrière-plan, n'empêche pas l'inscription)
+      const verifToken = jwt.sign({ userId: rows[0].id, type: 'verify' }, process.env.JWT_SECRET, { expiresIn: '24h' });
+      const lien = `${FRONTEND_URL}/api/auth/verifier-email?token=${verifToken}`;
+      envoyerEmail({
+        to: email,
+        subject: 'Bienvenue sur Yombale 🇸🇳 — vérifiez votre email',
+        html: `<p>Bonjour ${nom},</p>
+               <p>Bienvenue sur Yombale, le comparateur de prix du Sénégal !</p>
+               <p><a href="${lien}">Cliquez ici pour vérifier votre adresse email</a> (lien valide 24h).</p>
+               <p>À bientôt sur Yombale 👋</p>`,
+      }).catch(() => {});
     } catch (err) { res.status(500).json({ error: err.message }); }
   }
 );
+
+// GET /api/auth/verifier-email?token=...
+router.get('/verifier-email', async (req, res) => {
+  try {
+    const { token } = req.query;
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    if (payload.type !== 'verify') throw new Error('Token invalide');
+    await pool.query('UPDATE utilisateurs SET email_verifie = true WHERE id = $1', [payload.userId]);
+    res.redirect(`${FRONTEND_URL}/?email_verifie=1`);
+  } catch (err) {
+    res.status(400).send('Lien de vérification invalide ou expiré.');
+  }
+});
 
 router.post('/connexion',
   body('email').isEmail(),

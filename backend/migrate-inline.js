@@ -87,6 +87,8 @@ module.exports = async function migrateInline() {
         created_at        TIMESTAMPTZ DEFAULT NOW()
       );
 
+      ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS email_verifie BOOLEAN DEFAULT FALSE;
+
       CREATE TABLE IF NOT EXISTS alertes (
         id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         utilisateur_id UUID REFERENCES utilisateurs(id) ON DELETE CASCADE,
