@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Partenaires — Yombale</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f4f5f7; margin: 0; padding: 24px; color: #1a1a1a; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+  .panel { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .panel h2 { margin: 0 0 14px; font-size: 16px; }
+  button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 18px; font-size: 14px; font-weight: 600; }
+  .btn-primary { background: #059669; color: #fff; }
+  .btn-danger  { background: #e63946; color: #fff; }
+  .btn-sm      { padding: 5px 11px; font-size: 12px; }
+  .msg { padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 14px; }
+  .msg.ok  { background: #e6f7ee; color: #1e7e4f; }
+  .msg.err { background: #fde8e8; color: #c0392b; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; }
+  th { color: #666; font-weight: 600; background: #f8fafc; }
+  .actions button { margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<h1>🤝 Admin — Demandes partenaires</h1>
+<p class="sub">Demandes "Devenir partenaire" en attente de validation</p>
+
+<div id="msg"></div>
+
+<div class="panel">
+  <h2>⏳ En attente</h2>
+  <div id="pending-wrap">Chargement…</div>
+</div>
+
+<script>
+let SECRET = sessionStorage.getItem('immo_admin_secret') || '';
+if (!SECRET) {
+  SECRET = prompt('Secret admin :') || '';
+  if (SECRET) sessionStorage.setItem('immo_admin_secret', SECRET);
+}
+
+function headers() {
+  return { 'Content-Type': 'application/json', 'X-Admin-Secret': SECRET };
+}
+
+function showMsg(txt, ok) {
+  const el = document.getElementById('msg');
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
+  el.textContent = txt;
+  setTimeout(() => { el.textContent = ''; el.className = ''; }, 4000);
+}
+
+async function chargerEnAttente() {
+  try {
+    const r = await fetch('/api/partenaires/admin/en-attente', { headers: headers() });
+    const d = await r.json();
+    if (!Array.isArray(d) || !d.length) {
+      document.getElementById('pending-wrap').innerHTML = '<p style="color:#94a3b8;text-align:center;padding:10px">Aucune demande en attente</p>';
+      return;
+    }
+    document.getElementById('pending-wrap').innerHTML = `<table><thead><tr><th>Entreprise</th><th>Secteur</th><th>Contact</th><th>Email</th><th>Description</th><th>Actions</th></tr></thead><tbody>${d.map(p => `
+      <tr>
+        <td>${p.nom_entreprise}</td>
+        <td>${p.secteur || '—'}</td>
+        <td>${p.contact_nom || ''} ${p.contact_tel || ''}</td>
+        <td>${p.email}</td>
+        <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.description || ''}">${p.description || '—'}</td>
+        <td class="actions">
+          <button class="btn-primary btn-sm" onclick="traiterDemande('${p.id}','approuve')">✓ Approuver</button>
+          <button class="btn-danger btn-sm" onclick="traiterDemande('${p.id}','rejete')">✕ Rejeter</button>
+        </td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch(e) {
+    document.getElementById('pending-wrap').innerHTML = '<p style="color:#e63946">Erreur : ' + e.message + '</p>';
+  }
+}
+
+async function traiterDemande(id, statut) {
+  try {
+    const r = await fetch(`/api/partenaires/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify({ statut }) });
+    if (!r.ok) throw new Error((await r.json()).error);
+    showMsg(statut === 'approuve' ? 'Demande approuvée ✓' : 'Demande rejetée ✓', true);
+    chargerEnAttente();
+  } catch(e) { showMsg('Erreur : ' + e.message, false); }
+}
+
+chargerEnAttente();
+</script>
+</body>
+</html>

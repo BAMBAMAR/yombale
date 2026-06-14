@@ -166,6 +166,22 @@ module.exports = async function migrateInline() {
         ON annonces_immo(source, ref_externe)
         WHERE ref_externe IS NOT NULL;
 
+      CREATE TABLE IF NOT EXISTS demandes_partenaires (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id UUID REFERENCES utilisateurs(id),
+        nom_entreprise VARCHAR(200) NOT NULL,
+        secteur        VARCHAR(100),
+        contact_nom    VARCHAR(150),
+        contact_tel    VARCHAR(30),
+        email          VARCHAR(255) NOT NULL,
+        description    TEXT,
+        statut         VARCHAR(20) DEFAULT 'en_attente',
+        created_at     TIMESTAMPTZ DEFAULT NOW(),
+        updated_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_partenaires_statut ON demandes_partenaires(statut);
+
       INSERT INTO categories (nom, slug, icone) VALUES
         ('Telephones',   'smartphones', '📱'),
         ('Informatique', 'informatique','💻'),

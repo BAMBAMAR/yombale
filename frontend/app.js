@@ -1298,6 +1298,48 @@ async function afficherMesAnnonces() {
   }
 }
 
+// ── Devenir partenaire ────────────────────────────────────────────
+var _partenaire = { nom_entreprise:'', secteur:'', contact_nom:'', contact_tel:'', email:'', description:'' };
+
+function ouvrirDevenirPartenaire() {
+  if (!state.user) {
+    toast('Connectez-vous pour devenir partenaire', '#f97316');
+    openLoginModal();
+    return;
+  }
+  var s = 'width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box';
+  var p = _partenaire;
+  if (!p.contact_nom) p.contact_nom = state.user.nom || '';
+  if (!p.email)       p.email       = state.user.email || '';
+  var html =
+    '<input style="' + s + '" placeholder="Nom de l\'entreprise / boutique *" value="' + p.nom_entreprise + '" oninput="_partenaireField(\'nom_entreprise\',this.value)">' +
+    '<input style="' + s + '" placeholder="Secteur (ex: électronique, mode, immobilier…)" value="' + p.secteur + '" oninput="_partenaireField(\'secteur\',this.value)">' +
+    '<input style="' + s + '" placeholder="Nom du contact" value="' + p.contact_nom + '" oninput="_partenaireField(\'contact_nom\',this.value)">' +
+    '<input style="' + s + '" placeholder="Téléphone" value="' + p.contact_tel + '" oninput="_partenaireField(\'contact_tel\',this.value)">' +
+    '<input style="' + s + '" placeholder="Email *" value="' + p.email + '" oninput="_partenaireField(\'email\',this.value)">' +
+    '<textarea style="' + s + ';min-height:80px;resize:vertical" placeholder="Description de votre activité" oninput="_partenaireField(\'description\',this.value)">' + p.description + '</textarea>' +
+    '<button onclick="envoyerDevenirPartenaire()" style="width:100%;padding:12px;background:#059669;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Envoyer ma demande</button>';
+  ouvrirModal('🤝 Devenir partenaire', html);
+}
+
+function _partenaireField(field, val) { _partenaire[field] = val; }
+
+async function envoyerDevenirPartenaire() {
+  var p = _partenaire;
+  if (!p.nom_entreprise || !p.email) {
+    toast('Nom de l\'entreprise et email sont obligatoires', '#e63946');
+    return;
+  }
+  try {
+    await apiFetch('/partenaires', { method: 'POST', body: JSON.stringify(p) });
+    fermerModal();
+    toast('Demande envoyée ! Nous vous contacterons bientôt.', '#059669');
+    _partenaire = { nom_entreprise:'', secteur:'', contact_nom:'', contact_tel:'', email:'', description:'' };
+  } catch(e) {
+    toast(e.message || 'Erreur lors de l\'envoi', '#e63946');
+  }
+}
+
 // ── Scoring & recommandations immo ──────────────────────────────
 // Score 0→∞ : meilleur rapport surface/prix + bonus complétude
 function _scoreImmo(a) {
@@ -3519,6 +3561,7 @@ function showAccount() {
     '<button style="' + itemStyle + '" onclick="fermerMenuCompte();afficherFavoris()">❤ Mes favoris</button>',
     '<button style="' + itemStyle + '" onclick="fermerMenuCompte();depuisMenuPublierAnnonce()">📢 Publier une annonce</button>',
     '<button style="' + itemStyle + '" onclick="fermerMenuCompte();afficherMesAnnonces()">📋 Mes annonces</button>',
+    '<button style="' + itemStyle + ';border-top:1px solid #f1f5f9" onclick="fermerMenuCompte();ouvrirDevenirPartenaire()">🤝 Devenir partenaire</button>',
     '<button style="' + itemStyle + ';color:#e63946;border-top:1px solid #f1f5f9" onclick="logout()">🚪 Déconnexion</button>',
   ].join('');
   menu.style.display = 'block';

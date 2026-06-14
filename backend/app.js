@@ -80,6 +80,7 @@ function adminPageGuard(req, res, next) {
 
 app.get('/admin-telecom.html', adminPageGuard);
 app.get('/admin-immo.html',    adminPageGuard);
+app.get('/admin-partenaires.html', adminPageGuard);
 
 
 // ── Fichiers statiques frontend ───────────────────────────────
@@ -94,6 +95,7 @@ app.use('/api/auth',      require('./routes/auth'));
 app.use('/api/scraper',   require('./routes/scraper'));
 app.use('/api/telecom',   require('./routes/telecom'));
 app.use('/api/immo',      require('./routes/immo'));
+app.use('/api/partenaires', require('./routes/partenaires'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', async (req, res) => {
