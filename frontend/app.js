@@ -3586,6 +3586,7 @@ function logout() {
   localStorage.removeItem('pm_token');
   localStorage.removeItem('pm_user');
   updateNavUser();
+  updateEmailBanner();
   fermerMenuCompte();
   toast('Déconnecté', '#64748b');
   if (state.currentPage === 'home') chargerProduits(state.query, state.categorie, 1);
@@ -3666,7 +3667,26 @@ function renderModalForm() {
         '<input type="password" id="modal-password" placeholder="••••••••" onkeydown="if(event.key===\'Enter\')submitLogin()">',
       '</div>',
       '<button class="btn-primary" onclick="submitLogin()">Se connecter →</button>',
-      '<p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:12px"><a href="#" style="color:#2563eb">Mot de passe oublié ?</a></p>',
+      '<p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:12px"><a href="#" style="color:#2563eb" onclick="event.preventDefault();switchModalTab(\'mdp-oublie\')">Mot de passe oublié ?</a></p>',
+    ].join('');
+  } else if (_modalTab === 'mdp-oublie') {
+    return [
+      '<p style="font-size:13px;color:#64748b;margin-bottom:10px">Entrez votre email, nous vous envoyons un lien de réinitialisation.</p>',
+      '<div class="form-group">',
+        '<label>Email</label>',
+        '<input type="email" id="modal-email" placeholder="votre@email.com" onkeydown="if(event.key===\'Enter\')submitMotDePasseOublie()">',
+      '</div>',
+      '<button class="btn-primary" onclick="submitMotDePasseOublie()">Envoyer le lien →</button>',
+      '<p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:12px"><a href="#" style="color:#2563eb" onclick="event.preventDefault();switchModalTab(\'connexion\')">← Retour à la connexion</a></p>',
+    ].join('');
+  } else if (_modalTab === 'reset') {
+    return [
+      '<p style="font-size:13px;color:#64748b;margin-bottom:10px">Choisissez votre nouveau mot de passe.</p>',
+      '<div class="form-group">',
+        '<label>Nouveau mot de passe</label>',
+        '<input type="password" id="modal-password" placeholder="Minimum 6 caractères" onkeydown="if(event.key===\'Enter\')submitReinitialiserMotDePasse()">',
+      '</div>',
+      '<button class="btn-primary" onclick="submitReinitialiserMotDePasse()">Réinitialiser →</button>',
     ].join('');
   } else {
     return [
@@ -3699,6 +3719,7 @@ function submitLogin() {
       localStorage.setItem('pm_token', data.token);
       localStorage.setItem('pm_user', JSON.stringify(data.user));
       updateNavUser();
+      updateEmailBanner();
       closeLoginModal();
       toast('Bienvenue ' + data.user.nom + ' ! 👋', '#10b981');
     })
@@ -3721,12 +3742,39 @@ function submitInscription() {
       localStorage.setItem('pm_token', data.token);
       localStorage.setItem('pm_user', JSON.stringify(data.user));
       updateNavUser();
+      updateEmailBanner();
       closeLoginModal();
       toast('Compte créé ! Bienvenue ' + data.user.nom + ' 🎉', '#10b981');
     })
     .catch(function(err) {
       toast(err.message || 'Email déjà utilisé', '#ef4444');
     });
+}
+
+var _resetToken = null;
+
+function submitMotDePasseOublie() {
+  var email = (document.getElementById('modal-email') || {}).value || '';
+  if (!email) { toast('Entrez votre email', '#ef4444'); return; }
+  apiFetch('/auth/mot-de-passe-oublie', { method: 'POST', body: JSON.stringify({ email: email }) })
+    .then(function(data) {
+      toast(data.message || 'Email envoyé si le compte existe', '#10b981');
+      closeLoginModal();
+    })
+    .catch(function(err) { toast(err.message || 'Erreur', '#ef4444'); });
+}
+
+function submitReinitialiserMotDePasse() {
+  var pass = (document.getElementById('modal-password') || {}).value || '';
+  if (pass.length < 6) { toast('Mot de passe trop court (6 min)', '#ef4444'); return; }
+  if (!_resetToken) { toast('Lien invalide ou expiré', '#ef4444'); return; }
+  apiFetch('/auth/reinitialiser-mot-de-passe', { method: 'POST', body: JSON.stringify({ token: _resetToken, mot_de_passe: pass }) })
+    .then(function(data) {
+      toast('Mot de passe mis à jour ! Connectez-vous.', '#10b981');
+      _resetToken = null;
+      switchModalTab('connexion');
+    })
+    .catch(function(err) { toast(err.message || 'Lien invalide ou expiré', '#ef4444'); });
 }
 
 function updateNavUser() {
@@ -3739,6 +3787,26 @@ function updateNavUser() {
     avatarEl.textContent = '?';
     usernameEl.textContent = 'Connexion';
   }
+}
+
+function updateEmailBanner() {
+  var el = document.getElementById('email-banner');
+  if (!el) return;
+  if (state.user && state.user.email_verifie === false) {
+    el.style.display = 'block';
+    el.style.cssText = 'display:block;background:#fff7ed;border-bottom:1px solid #fed7aa;color:#9a3412;font-size:13px;text-align:center;padding:8px 12px';
+    el.innerHTML = '✉️ Vérifiez votre adresse email pour profiter de toutes les fonctionnalités. ' +
+      '<a href="#" style="color:#c2410c;font-weight:700;text-decoration:underline" onclick="event.preventDefault();renvoyerEmailVerification()">Renvoyer l\'email</a>';
+  } else {
+    el.style.display = 'none';
+    el.innerHTML = '';
+  }
+}
+
+function renvoyerEmailVerification() {
+  apiFetch('/auth/renvoyer-verification', { method: 'POST' })
+    .then(function(data) { toast(data.message || 'Email envoyé', '#10b981'); })
+    .catch(function(err) { toast(err.message || 'Erreur', '#ef4444'); });
 }
 
 function updateNavCompare() {
@@ -3802,6 +3870,7 @@ document.addEventListener('DOMContentLoaded', function() {
   dbg('DOMContentLoaded');
   updateNavFavoris();
   updateNavUser();
+  updateEmailBanner();
   // Restaurer comparaison depuis URL (?compare=id1,id2,...)
   var urlParams = new URLSearchParams(window.location.search);
   var compareParam = urlParams.get('compare');
@@ -3809,6 +3878,16 @@ document.addEventListener('DOMContentLoaded', function() {
     state.comparer = compareParam.split(',').filter(Boolean).slice(0, 4);
     updateNavCompare();
     updateCompareBar();
+  }
+  var resetParam = urlParams.get('reset');
+  if (resetParam) {
+    _resetToken = resetParam;
+    openLoginModal();
+    switchModalTab('reset');
+  }
+  if (urlParams.get('email_verifie') === '1') {
+    toast('Email vérifié avec succès ✓', '#10b981');
+    if (state.user) { state.user.email_verifie = true; localStorage.setItem('pm_user', JSON.stringify(state.user)); }
   }
   goHome();
 });

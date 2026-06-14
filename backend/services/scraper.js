@@ -683,6 +683,22 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       WHERE produits.id = sub.id`,
       [ids]
     );
+
+    // Vérifier les alertes de prix déclenchées par cette mise à jour
+    const { rows: declenchees } = await pool.query(
+      `SELECT a.*, p.nom AS produit_nom, p.prix_min
+       FROM alertes a
+       JOIN produits p ON p.id = a.produit_id
+       WHERE a.active = true AND a.produit_id = ANY($1::uuid[])
+         AND p.prix_min IS NOT NULL AND p.prix_min <= a.prix_cible`,
+      [ids]
+    );
+    if (declenchees.length > 0) {
+      const { envoyerAlertePrix } = require('./notifications');
+      for (const alerte of declenchees) {
+        await envoyerAlertePrix(alerte, alerte.prix_min).catch(err => console.error('[ALERTE]', err.message));
+      }
+    }
   }
 
   return stats;

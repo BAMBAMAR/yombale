@@ -60,8 +60,9 @@ app.use(morgan('dev'));
 // ── Protection pages admin ────────────────────────────────────
 // Doit être AVANT express.static pour intercepter les routes
 function adminPageGuard(req, res, next) {
+  const { secretsMatch } = require('./middlewares/auth');
   const secret = req.headers['x-admin-secret'] || req.query.secret;
-  if (process.env.ADMIN_SECRET && secret !== process.env.ADMIN_SECRET) {
+  if (process.env.ADMIN_SECRET && !secretsMatch(secret, process.env.ADMIN_SECRET)) {
     const page = req.path.replace('/', '');
     return res.status(401).send(
       '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Accès refusé</title>' +

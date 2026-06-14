@@ -1,13 +1,20 @@
 // backend/services/notifications.js
-// VERSION SIMPLIFIEE — sans Africa's Talking ni SendGrid
-// Les SMS/emails seront ajoutés plus tard quand le serveur tournera
+const { envoyerEmail } = require('./email');
 
 async function envoyerAlertePrix(alerte, nouveauPrix) {
-  // Log en console pour l'instant
-  console.log(`[ALERTE] ${alerte.produit_nom} → ${nouveauPrix} FCFA pour ${alerte.email}`);
-
-  // Désactiver l'alerte après déclenchement
   const { pool } = require('../models/db');
+
+  if (alerte.email) {
+    await envoyerEmail({
+      to: alerte.email,
+      subject: `📉 Baisse de prix : ${alerte.produit_nom}`,
+      html: `<p>Bonne nouvelle !</p>
+             <p><b>${alerte.produit_nom}</b> est maintenant à <b>${new Intl.NumberFormat('fr-FR').format(nouveauPrix)} FCFA</b>
+             (votre prix cible : ${new Intl.NumberFormat('fr-FR').format(alerte.prix_cible)} FCFA).</p>
+             <p><a href="${process.env.FRONTEND_URL || 'http://localhost:8080'}/?produit=${alerte.produit_id}">Voir l'offre sur Yombale</a></p>`,
+    }).catch(err => console.error('[ALERTE] Erreur envoi email:', err.message));
+  }
+
   await pool.query('UPDATE alertes SET active=false WHERE id=$1', [alerte.id]);
 }
 

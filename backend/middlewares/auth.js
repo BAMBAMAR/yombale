@@ -1,4 +1,12 @@
-const jwt = require('jsonwebtoken');
+const jwt    = require('jsonwebtoken');
+const crypto = require('crypto');
+
+function secretsMatch(a, b) {
+  const bufA = Buffer.from(String(a || ''));
+  const bufB = Buffer.from(String(b || ''));
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
 
 function verifierToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -24,11 +32,11 @@ function tokenOptional(req, res, next) {
 
 // Protège par ADMIN_SECRET (variable d'env Railway) — header X-Admin-Secret ou ?secret=
 function adminSecretOnly(req, res, next) {
-  const secret = req.headers['x-admin-secret'] || req.query.secret;
-  if (process.env.ADMIN_SECRET && secret !== process.env.ADMIN_SECRET) {
+  const secret = req.headers['x-admin-secret'];
+  if (process.env.ADMIN_SECRET && !secretsMatch(secret, process.env.ADMIN_SECRET)) {
     return res.status(401).json({ error: 'Secret admin requis. Envoyez le header X-Admin-Secret.' });
   }
   next();
 }
 
-module.exports = { verifierToken, tokenOptional, adminSecretOnly };
+module.exports = { verifierToken, tokenOptional, adminSecretOnly, secretsMatch };
