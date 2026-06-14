@@ -152,6 +152,9 @@ module.exports = async function migrateInline() {
 
       ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS contact_nom VARCHAR(150);
       ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS contact_tel VARCHAR(30);
+      ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS utilisateur_id UUID;
+
+      CREATE INDEX IF NOT EXISTS idx_immo_utilisateur ON annonces_immo(utilisateur_id);
 
       CREATE INDEX IF NOT EXISTS idx_immo_ville       ON annonces_immo(ville);
       CREATE INDEX IF NOT EXISTS idx_immo_type        ON annonces_immo(type_bien);

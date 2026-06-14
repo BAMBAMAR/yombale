@@ -3,7 +3,7 @@
 // pas un produit multi-marchands.
 const router = require('express').Router();
 const { pool } = require('../models/db');
-const { adminSecretOnly } = require('../middlewares/auth');
+const { adminSecretOnly, verifierToken, tokenOptional } = require('../middlewares/auth');
 const { limiterPublication } = require('../middlewares/rateLimit');
 
 const ORDER_MAP = {
@@ -125,6 +125,17 @@ router.get('/stats', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/immo/mine — mes annonces publiées (utilisateur connecté)
+router.get('/mine', verifierToken, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM annonces_immo WHERE utilisateur_id = $1 ORDER BY created_at DESC`,
+      [req.user.userId]
+    );
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/immo/admin/en-attente — annonces utilisateurs à valider (admin)
 router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
   try {
@@ -148,7 +159,7 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/immo/public — annonce gratuite déposée par un utilisateur
 // (en attente de validation par un admin : actif = false)
-router.post('/public', limiterPublication, async (req, res) => {
+router.post('/public', limiterPublication, tokenOptional, async (req, res) => {
   try {
     const {
       titre, type_bien = 'appartement', transaction = 'location',
@@ -164,12 +175,12 @@ router.post('/public', limiterPublication, async (req, res) => {
     const { rows } = await pool.query(`
       INSERT INTO annonces_immo
         (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
-         ville, quartier, description, source, actif, contact_nom, contact_tel)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'utilisateur',false,$11,$12)
+         ville, quartier, description, source, actif, contact_nom, contact_tel, utilisateur_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'utilisateur',false,$11,$12,$13)
       RETURNING id`,
       [titre, type_bien, transaction, prix || null, surface_m2 || null,
        nb_pieces || null, nb_chambres || null, ville, quartier || null,
-       description || null, contact_nom || null, contact_tel]
+       description || null, contact_nom || null, contact_tel, req.user?.userId || null]
     );
     res.status(201).json({
       success: true,

@@ -1251,6 +1251,46 @@ async function envoyerPublierAnnonce() {
   }
 }
 
+// ── Publier une annonce depuis le menu compte ────────────────────
+function depuisMenuPublierAnnonce() {
+  if (state.user) {
+    _pubImmo.contact_nom = _pubImmo.contact_nom || state.user.nom || '';
+    _pubImmo.contact_tel = _pubImmo.contact_tel || state.user.telephone || '';
+  }
+  state.categorie = 'immo';
+  chargerImmo(1);
+  setTimeout(ouvrirPublierAnnonce, 300);
+}
+
+// ── Mes annonces (utilisateur connecté) ──────────────────────────
+async function afficherMesAnnonces() {
+  try {
+    var annonces = await apiFetch('/immo/mine');
+    if (!annonces.length) {
+      ouvrirModal('📋 Mes annonces', '<p style="text-align:center;color:#64748b;padding:12px 0">Vous n\'avez publié aucune annonce.</p>');
+      return;
+    }
+    var html = '<div style="display:flex;flex-direction:column;gap:10px">' +
+      annonces.map(function(a) {
+        var statut = a.actif
+          ? '<span style="font-size:10px;font-weight:700;color:#059669;background:#f0fdf4;padding:2px 8px;border-radius:8px">✓ Publiée</span>'
+          : '<span style="font-size:10px;font-weight:700;color:#f97316;background:#fff7ed;padding:2px 8px;border-radius:8px">⏳ En attente</span>';
+        return '<div style="border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;' + (a.actif ? 'cursor:pointer' : '') + '"' +
+          (a.actif ? ' onclick="fermerModal();ouvrirImmo(\'' + a.id + '\')"' : '') + '>' +
+          '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">' +
+            '<div style="font-size:13px;font-weight:700;color:#1e293b">' + a.titre + '</div>' +
+            statut +
+          '</div>' +
+          '<div style="font-size:11px;color:#64748b;margin-top:4px">' + (a.quartier || a.ville || '') + (a.prix ? ' · ' + fcfa(a.prix) : '') + '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+    ouvrirModal('📋 Mes annonces', html);
+  } catch(e) {
+    ouvrirModal('Erreur', '<p style="color:#e63946">' + e.message + '</p>');
+  }
+}
+
 // ── Scoring & recommandations immo ──────────────────────────────
 // Score 0→∞ : meilleur rapport surface/prix + bonus complétude
 function _scoreImmo(a) {
@@ -3470,6 +3510,8 @@ function showAccount() {
     '<div style="padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#94a3b8">Connecté en tant que</div>',
     '<div style="padding:0 14px 10px;font-size:13px;font-weight:700;color:#1e293b;border-bottom:1px solid #f1f5f9">' + state.user.nom + '</div>',
     '<button style="' + itemStyle + '" onclick="fermerMenuCompte();afficherFavoris()">❤ Mes favoris</button>',
+    '<button style="' + itemStyle + '" onclick="fermerMenuCompte();depuisMenuPublierAnnonce()">📢 Publier une annonce</button>',
+    '<button style="' + itemStyle + '" onclick="fermerMenuCompte();afficherMesAnnonces()">📋 Mes annonces</button>',
     '<button style="' + itemStyle + ';color:#e63946;border-top:1px solid #f1f5f9" onclick="logout()">🚪 Déconnexion</button>',
   ].join('');
   menu.style.display = 'block';
