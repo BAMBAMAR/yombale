@@ -24,16 +24,19 @@
       <button onclick="afficherFavoris()" id="nav-btn-favoris" style="background:none;border:none;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;color:#64748b;cursor:pointer;display:none" title="Mes favoris">❤ <span id="nav-favoris-count">0</span></button>
     </div>
     <div class="nav-right">
-      <select id="city-sel" onchange="changeVille(this.value)">
+      <select id="city-sel" onchange="changeVille(this.value)" title="Ville (filtre Immobilier)">
         <option value="Dakar">Dakar</option>
-        <option value="Thies">Thiès</option>
+        <option value="Thiès">Thiès</option>
         <option value="Saint-Louis">Saint-Louis</option>
         <option value="Ziguinchor">Ziguinchor</option>
         <option value="Kaolack">Kaolack</option>
       </select>
-      <div class="nav-user" onclick="showAccount()">
-        <span id="nav-avatar">?</span>
-        <span id="nav-username">Connexion</span>
+      <div style="position:relative">
+        <div class="nav-user" onclick="showAccount()">
+          <span id="nav-avatar">?</span>
+          <span id="nav-username">Connexion</span>
+        </div>
+        <div id="account-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:170px;z-index:500;overflow:hidden"></div>
       </div>
     </div>
   </nav>

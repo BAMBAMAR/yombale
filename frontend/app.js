@@ -15,7 +15,7 @@ var _prefsDefaut = {
 };
 var state = {
   token:     localStorage.getItem('pm_token'),
-  user:      null,
+  user:      JSON.parse(localStorage.getItem('pm_user') || 'null'),
   ville:     'Dakar',
   page:      1,
   pageTotal: 1,
@@ -3315,7 +3315,13 @@ function retourListe() {
   }
   chargerProduits(state.query, state.categorie, state.page||1);
 }
-function changeVille(v)        { state.ville = v; chargerProduits(state.query, state.categorie, 1); }
+function changeVille(v) {
+  state.ville = v;
+  if (state.categorie === 'immo') {
+    _immoState.ville = v;
+    chargerImmo(1);
+  }
+}
 function loadPromos()          { chargerProduits('promo','',1); }
 function filtrerCategorie(s)   { chargerProduits(state.query, s===state.categorie?'':s, 1); }
 function changerTri(v)         { state.tri = v; chargerProduits(state.query, state.categorie, 1); }
@@ -3331,9 +3337,6 @@ function _appSimFiltres(id) {
   });
 }
 
-function showAccount() {
-  toast(state.user ? 'Connecté : ' + state.user.nom : 'Connexion bientôt disponible 🔐', '#6366f1');
-}
 
 function afficherLogs() {
   navigator.clipboard && navigator.clipboard.writeText(PM_LOGS())
@@ -3458,11 +3461,42 @@ function htmlFooter() {
 var _modalTab = 'connexion'; // connexion | inscription
 
 function showAccount() {
-  if (state.user) {
-    toast('Bonjour ' + state.user.nom + ' 👋', '#1d4ed8');
-    return;
+  if (!state.user) { openLoginModal(); return; }
+  var menu = document.getElementById('account-menu');
+  if (!menu) return;
+  if (menu.style.display === 'block') { menu.style.display = 'none'; return; }
+  var itemStyle = 'display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:13px;font-weight:600;color:#334155;cursor:pointer';
+  menu.innerHTML = [
+    '<div style="padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#94a3b8">Connecté en tant que</div>',
+    '<div style="padding:0 14px 10px;font-size:13px;font-weight:700;color:#1e293b;border-bottom:1px solid #f1f5f9">' + state.user.nom + '</div>',
+    '<button style="' + itemStyle + '" onclick="fermerMenuCompte();afficherFavoris()">❤ Mes favoris</button>',
+    '<button style="' + itemStyle + ';color:#e63946;border-top:1px solid #f1f5f9" onclick="logout()">🚪 Déconnexion</button>',
+  ].join('');
+  menu.style.display = 'block';
+}
+
+function fermerMenuCompte() {
+  var menu = document.getElementById('account-menu');
+  if (menu) menu.style.display = 'none';
+}
+
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('account-menu');
+  if (!menu || menu.style.display !== 'block') return;
+  if (!e.target.closest('#account-menu') && !e.target.closest('.nav-user')) {
+    menu.style.display = 'none';
   }
-  openLoginModal();
+});
+
+function logout() {
+  state.token = null;
+  state.user  = null;
+  localStorage.removeItem('pm_token');
+  localStorage.removeItem('pm_user');
+  updateNavUser();
+  fermerMenuCompte();
+  toast('Déconnecté', '#64748b');
+  if (state.currentPage === 'home') chargerProduits(state.query, state.categorie, 1);
 }
 
 function openLoginModal() {
@@ -3571,6 +3605,7 @@ function submitLogin() {
       state.token = data.token;
       state.user  = data.user;
       localStorage.setItem('pm_token', data.token);
+      localStorage.setItem('pm_user', JSON.stringify(data.user));
       updateNavUser();
       closeLoginModal();
       toast('Bienvenue ' + data.user.nom + ' ! 👋', '#10b981');
@@ -3592,6 +3627,7 @@ function submitInscription() {
       state.token = data.token;
       state.user  = data.user;
       localStorage.setItem('pm_token', data.token);
+      localStorage.setItem('pm_user', JSON.stringify(data.user));
       updateNavUser();
       closeLoginModal();
       toast('Compte créé ! Bienvenue ' + data.user.nom + ' 🎉', '#10b981');
@@ -3673,6 +3709,7 @@ function ouvrirComparaisonNav() {
 document.addEventListener('DOMContentLoaded', function() {
   dbg('DOMContentLoaded');
   updateNavFavoris();
+  updateNavUser();
   // Restaurer comparaison depuis URL (?compare=id1,id2,...)
   var urlParams = new URLSearchParams(window.location.search);
   var compareParam = urlParams.get('compare');
