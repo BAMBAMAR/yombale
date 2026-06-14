@@ -101,11 +101,11 @@
 const API = '/api/telecom';
 
 function adminSecret() {
-  let s = sessionStorage.getItem('admin_secret');
+  let s = new URLSearchParams(location.search).get('secret') || sessionStorage.getItem('yombale_admin_secret');
   if (!s) {
     s = prompt('Clé admin (X-Admin-Secret) :') || '';
-    sessionStorage.setItem('admin_secret', s);
   }
+  if (s) sessionStorage.setItem('yombale_admin_secret', s);
   return s;
 }
 

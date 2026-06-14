@@ -81,6 +81,7 @@ function adminPageGuard(req, res, next) {
 app.get('/admin-telecom.html', adminPageGuard);
 app.get('/admin-immo.html',    adminPageGuard);
 app.get('/admin-partenaires.html', adminPageGuard);
+app.get('/admin.html', adminPageGuard);
 
 
 // ── Fichiers statiques frontend ───────────────────────────────

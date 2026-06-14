@@ -220,11 +220,11 @@
 
 <script>
 // ── Auth ───────────────────────────────────────────────────────────────
-let SECRET = sessionStorage.getItem('immo_admin_secret') || '';
+let SECRET = new URLSearchParams(location.search).get('secret') || sessionStorage.getItem('yombale_admin_secret') || '';
 if (!SECRET) {
   SECRET = prompt('Secret admin :') || '';
-  if (SECRET) sessionStorage.setItem('immo_admin_secret', SECRET);
 }
+if (SECRET) sessionStorage.setItem('yombale_admin_secret', SECRET);
 
 function headers() {
   return { 'Content-Type': 'application/json', 'X-Admin-Secret': SECRET };
