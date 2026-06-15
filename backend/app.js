@@ -41,6 +41,12 @@ app.use(helmet({
 
 const ALLOWED_ORIGINS = [
   process.env.FRONTEND_URL,
+  // Accepte aussi automatiquement la variante avec/sans "www" du domaine
+  process.env.FRONTEND_URL && process.env.FRONTEND_URL.includes('://www.')
+    ? process.env.FRONTEND_URL.replace('://www.', '://')
+    : process.env.FRONTEND_URL
+      ? process.env.FRONTEND_URL.replace('://', '://www.')
+      : null,
   process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null,
   process.env.RENDER_EXTERNAL_URL || null,
   'http://localhost:3000',
