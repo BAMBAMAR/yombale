@@ -20,6 +20,14 @@ require('dotenv').config();
 const app = express();
 app.set('trust proxy', 1);
 
+// ── Validation des variables d'env critiques ──────────────────
+const REQUIRED_ENV_VARS = ['DATABASE_URL', 'JWT_SECRET'];
+const missingEnvVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
+if (missingEnvVars.length) {
+  console.error(`❌ Variables d'environnement manquantes : ${missingEnvVars.join(', ')}`);
+  process.exit(1);
+}
+
 // ── Middlewares globaux ───────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
@@ -36,7 +44,9 @@ app.use(helmet({
       objectSrc:     ["'none'"],
       frameAncestors:["'self'"],
     }
-  }
+  },
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 }));
 
 const ALLOWED_ORIGINS = [

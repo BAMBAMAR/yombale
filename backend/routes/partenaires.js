@@ -1,19 +1,26 @@
 // backend/routes/partenaires.js — Demandes "Devenir partenaire"
 const router = require('express').Router();
+const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken } = require('../middlewares/auth');
 const { envoyerEmail } = require('../services/email');
+const { limiterEcriture } = require('../middlewares/rateLimit');
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 // POST /api/partenaires — déposer une demande (utilisateur connecté)
-router.post('/', verifierToken, async (req, res) => {
+router.post('/',
+  verifierToken,
+  limiterEcriture,
+  body('nom_entreprise').trim().notEmpty(),
+  body('email').isEmail().normalizeEmail(),
+  body('contact_tel').optional({ checkFalsy: true }).isString().trim(),
+  async (req, res) => {
   try {
-    const { nom_entreprise, secteur, contact_nom, contact_tel, email, description } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-    if (!nom_entreprise || !email) {
-      return res.status(400).json({ error: 'nom_entreprise et email requis' });
-    }
+    const { nom_entreprise, secteur, contact_nom, contact_tel, email, description } = req.body;
 
     const { rows } = await pool.query(`
       INSERT INTO demandes_partenaires

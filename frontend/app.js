@@ -524,7 +524,7 @@ function htmlChipsBudget() {
       '</button>';
     }).join('') +
     (state.prixMax || state.prixMin
-      ? '<button onclick="filtrerBudget(null,null)" style="padding:5px 10px;border-radius:16px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;font-size:12px;cursor:pointer">✕</button>'
+      ? '<button onclick="filtrerBudget(null,null)" aria-label="Effacer le filtre de budget" style="padding:5px 10px;border-radius:16px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;font-size:12px;cursor:pointer">✕</button>'
       : '') +
   '</div>';
 }
@@ -539,8 +539,8 @@ function htmlBarre(data) {
       }).join('') +
     '</select>' +
     '<div style="display:flex;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">' +
-      '<button onclick="changerVue(\'grille\')" title="Grille" style="padding:6px 10px;border:none;cursor:pointer;font-size:14px;background:' + (state.vue==='grille'?'#1d4ed8':'#fff') + ';color:' + (state.vue==='grille'?'#fff':'#64748b') + '">▦</button>' +
-      '<button onclick="changerVue(\'liste\')"  title="Liste"  style="padding:6px 10px;border:none;cursor:pointer;font-size:14px;background:' + (state.vue==='liste' ?'#1d4ed8':'#fff') + ';color:' + (state.vue==='liste' ?'#fff':'#64748b') + '">☰</button>' +
+      '<button onclick="changerVue(\'grille\')" title="Grille" aria-label="Vue en grille" style="padding:6px 10px;border:none;cursor:pointer;font-size:14px;background:' + (state.vue==='grille'?'#1d4ed8':'#fff') + ';color:' + (state.vue==='grille'?'#fff':'#64748b') + '">▦</button>' +
+      '<button onclick="changerVue(\'liste\')"  title="Liste"  aria-label="Vue en liste" style="padding:6px 10px;border:none;cursor:pointer;font-size:14px;background:' + (state.vue==='liste' ?'#1d4ed8':'#fff') + ';color:' + (state.vue==='liste' ?'#fff':'#64748b') + '">☰</button>' +
     '</div>' +
     (state.comparer.length > 0
       ? '<button onclick="ouvrirComparaison()" style="margin-left:auto;padding:6px 14px;background:#f97316;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">⚖ Comparer (' + state.comparer.length + ')</button>'
@@ -606,7 +606,7 @@ function carteHTML(p) {
       economie >= 15 ? '<div class="pbadge-eco">-' + economie + '%</div>' : '',
       '<div class="pimg">',
         p.image_url
-          ? '<img src="' + p.image_url + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:contain">'
+          ? '<img src="' + p.image_url + '" alt="' + (p.nom || '').replace(/"/g, '&quot;') + '" loading="lazy" style="width:100%;height:100%;object-fit:contain">'
           : '<span style="font-size:40px">📦</span>',
       '</div>',
       '<div class="pbody">',
@@ -624,10 +624,12 @@ function carteHTML(p) {
           '<button class="btn-voir" style="flex:1">Comparer →</button>',
           '<button onclick="event.stopPropagation();toggleComparer(\'' + p.id + '\',\'' + _inferCat(p.nom||'') + '\')" ' +
             'title="' + (enCompare ? 'Retirer de la comparaison' : 'Ajouter à la comparaison') + '" ' +
+            'aria-label="' + (enCompare ? 'Retirer de la comparaison' : 'Ajouter à la comparaison') + '" ' +
             'style="padding:6px 8px;border-radius:6px;border:1px solid ' + (enCompare ? '#1d4ed8' : '#e2e8f0') + ';' +
             'background:' + (enCompare ? '#eff6ff' : '#fff') + ';cursor:pointer;font-size:14px">⚖</button>',
           '<button onclick="event.stopPropagation();toggleFavori(\'' + p.id + '\')" ' +
             'title="' + (enFavori ? 'Retirer des favoris' : 'Ajouter aux favoris') + '" ' +
+            'aria-label="' + (enFavori ? 'Retirer des favoris' : 'Ajouter aux favoris') + '" ' +
             'style="padding:6px 8px;border-radius:6px;border:1px solid ' + (enFavori ? '#ef4444' : '#e2e8f0') + ';' +
             'background:' + (enFavori ? '#fef2f2' : '#fff') + ';cursor:pointer;font-size:14px">' +
             (enFavori ? '❤' : '🤍') + '</button>',
@@ -647,7 +649,7 @@ function carteListeHTML(p) {
       'onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'">',
       '<div style="width:60px;height:60px;flex-shrink:0;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden">',
         p.image_url
-          ? '<img src="' + p.image_url + '" loading="lazy" style="max-width:60px;max-height:60px;object-fit:contain">'
+          ? '<img src="' + p.image_url + '" alt="' + (p.nom || '').replace(/"/g, '&quot;') + '" loading="lazy" style="max-width:60px;max-height:60px;object-fit:contain">'
           : '<span style="font-size:28px">📦</span>',
       '</div>',
       '<div style="flex:1;min-width:0">',
@@ -750,7 +752,7 @@ function carteForfaitHTML(f) {
       isRecommande ? '<div class="pbadge-eco" style="background:#10b981">🏆 Recommandé</div>' : '',
       '<div class="pimg" style="background:linear-gradient(135deg,#fff7ed,#ffedd5)">',
         f.image_url
-          ? '<img src="' + f.image_url + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:contain">'
+          ? '<img src="' + f.image_url + '" alt="' + ((f.operateur || '') + ' ' + (f.nom || '')).replace(/"/g, '&quot;') + '" loading="lazy" style="width:100%;height:100%;object-fit:contain">'
           : '<span style="font-size:40px">📶</span>',
       '</div>',
       '<div class="pbody">',
@@ -766,7 +768,7 @@ function carteForfaitHTML(f) {
         '<div style="display:flex;gap:6px;margin-top:6px">',
           '<button class="btn-voir" style="flex:1" onclick="event.stopPropagation();ouvrirForfait(\'' + f.id + '\')">Voir →</button>',
           '<button onclick="event.stopPropagation();toggleComparerForfait(\'' + f.id + '\')" ' +
-            'title="' + (enCompare ? 'Retirer' : 'Comparer') + '" ' +
+            'title="' + (enCompare ? 'Retirer' : 'Comparer') + '" aria-label="' + (enCompare ? 'Retirer de la comparaison' : 'Ajouter à la comparaison') + '" ' +
             'style="padding:6px 9px;border-radius:6px;border:1.5px solid ' + (enCompare ? '#f97316' : '#e2e8f0') + ';' +
             'background:' + (enCompare ? '#fff7ed' : '#fff') + ';cursor:pointer;font-size:14px">⚖</button>',
         '</div>',
@@ -808,8 +810,8 @@ function htmlBarreTelecom() {
         '</select>',
         '<button onclick="ouvrirWizardForfait()" style="margin-left:auto;padding:6px 14px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">🎯 Trouver mon forfait</button>',
         nb > 0
-          ? '<button onclick="ouvrirComparaisonForfaits()" style="padding:6px 14px;background:#f97316;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">⚖ (' + nb + ')</button>' +
-            '<button onclick="viderComparaisonForfaits()" style="padding:6px 10px;border-radius:8px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;font-size:11px;font-weight:600;cursor:pointer">✕</button>'
+          ? '<button onclick="ouvrirComparaisonForfaits()" aria-label="Voir la comparaison (' + nb + ')" style="padding:6px 14px;background:#f97316;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">⚖ (' + nb + ')</button>' +
+            '<button onclick="viderComparaisonForfaits()" aria-label="Vider la comparaison" style="padding:6px 10px;border-radius:8px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;font-size:11px;font-weight:600;cursor:pointer">✕</button>'
           : '',
       '</div>',
       // Ligne 2 : profil usage (influence le badge Recommandé)
@@ -886,7 +888,7 @@ function carteImmoHTML(a) {
     '<div class="pcard immo' + (inCmp ? ' immo-selected' : '') + '" style="' + (sponso ? 'box-shadow:0 0 0 2px #f59e0b' : '') + '" onclick="ouvrirImmo(\'' + a.id + '\')">',
       '<div class="pimg" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);position:relative">',
         photo
-          ? '<img src="' + photo + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
+          ? '<img src="' + photo + '" alt="' + (a.titre || '').replace(/"/g, '&quot;') + '" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
           : '<span style="font-size:40px">' + _immoIcon(a.type_bien) + '</span>',
         '<div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap">',
           sponso ? '<span style="font-size:10px;font-weight:700;color:#fff;background:#f59e0b;padding:2px 7px;border-radius:6px">⭐ Sponsorisée</span>' : '',
@@ -1067,7 +1069,7 @@ function ouvrirModal(titre, html) {
     '<div style="background:#fff;border-radius:16px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18)">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f1f5f9;position:sticky;top:0;background:#fff;z-index:1">' +
         '<span style="font-size:16px;font-weight:800;color:#1e293b">' + titre + '</span>' +
-        '<button onclick="fermerModal()" style="border:none;background:none;font-size:20px;color:#94a3b8;cursor:pointer;padding:0 4px">✕</button>' +
+        '<button onclick="fermerModal()" aria-label="Fermer" style="border:none;background:none;font-size:20px;color:#94a3b8;cursor:pointer;padding:0 4px">✕</button>' +
       '</div>' +
       '<div style="padding:20px">' + html + '</div>' +
     '</div>' +
@@ -1495,7 +1497,7 @@ function carteImmoRecoHTML(a) {
       '<div class="pbadge-eco" style="background:#059669">🏆 Recommandé</div>',
       '<div class="pimg" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);position:relative">',
         photo
-          ? '<img src="' + photo + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
+          ? '<img src="' + photo + '" alt="' + (a.titre || '').replace(/"/g, '&quot;') + '" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
           : '<span style="font-size:40px">' + _immoIcon(a.type_bien) + '</span>',
         '<div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap">',
           '<span style="font-size:10px;font-weight:700;color:#fff;background:' + (a.transaction === 'vente' ? '#7c3aed' : '#059669') + ';padding:2px 7px;border-radius:6px">' + (a.transaction === 'vente' ? 'Vente' : 'Location') + '</span>',
@@ -1609,11 +1611,11 @@ async function ouvrirImmo(id) {
         // Galerie photos
         photos.length ? [
           '<div style="border-radius:14px;overflow:hidden;margin-bottom:16px;background:#f1f5f9;max-height:320px">',
-            '<img src="' + photos[0] + '" style="width:100%;max-height:320px;object-fit:cover" onerror="this.style.display=\'none\'">',
+            '<img src="' + photos[0] + '" alt="' + (a.titre || '').replace(/"/g, '&quot;') + '" style="width:100%;max-height:320px;object-fit:cover" onerror="this.style.display=\'none\'">',
           '</div>',
           photos.length > 1 ? '<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:16px">' +
             photos.slice(1, 6).map(function(p) {
-              return '<img src="' + p + '" style="height:72px;width:100px;object-fit:cover;border-radius:8px;flex-shrink:0" onerror="this.style.display=\'none\'">';
+              return '<img src="' + p + '" alt="' + (a.titre || '').replace(/"/g, '&quot;') + '" loading="lazy" style="height:72px;width:100px;object-fit:cover;border-radius:8px;flex-shrink:0" onerror="this.style.display=\'none\'">';
             }).join('') + '</div>' : '',
         ].join('') : '<div style="height:180px;border-radius:14px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);display:flex;align-items:center;justify-content:center;font-size:64px;margin-bottom:16px">' + _immoIcon(a.type_bien) + '</div>',
 
@@ -1763,7 +1765,7 @@ function _renderComparaisonContent() {
       var th = c.isBest ? thBestStyle : thStyle;
       return '<th style="' + th + '">' +
         (c.isBest ? '<div style="font-size:10px;font-weight:700;color:#10b981;letter-spacing:.04em;margin-bottom:4px">🏆 MEILLEUR CHOIX</div>' : '') +
-        (c.f.image_url ? '<img src="' + c.f.image_url + '" style="height:28px;object-fit:contain;margin-bottom:4px"><br>' : '') +
+        (c.f.image_url ? '<img src="' + c.f.image_url + '" alt="' + c.f.operateur + '" loading="lazy" style="height:28px;object-fit:contain;margin-bottom:4px"><br>' : '') +
         '<span style="font-size:11px;font-weight:700;color:#f97316">' + c.f.operateur + '</span><br>' +
         '<span style="font-size:12px;font-weight:600;color:#1e293b">' + c.f.nom + '</span>' +
       '</th>';
@@ -1860,7 +1862,7 @@ function ouvrirComparaisonForfaits() {
       '<div style="background:#fff;border-radius:14px;max-width:900px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden">',
         '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#fff7ed;border-bottom:1px solid #fed7aa">',
           '<span style="font-size:15px;font-weight:700;color:#1e293b">⚖ Comparaison intelligente — forfaits télécom</span>',
-          '<button onclick="fermerComparaisonForfaits()" style="padding:6px 12px;background:none;border:1px solid #e2e8f0;border-radius:8px;font-size:20px;cursor:pointer;color:#64748b">✕</button>',
+          '<button onclick="fermerComparaisonForfaits()" aria-label="Fermer" style="padding:6px 12px;background:none;border:1px solid #e2e8f0;border-radius:8px;font-size:20px;cursor:pointer;color:#64748b">✕</button>',
         '</div>',
         '<div style="padding:14px 20px 0;background:#fafafa;border-bottom:1px solid #e2e8f0" id="cmp-profil-bar"></div>',
         '<div id="cmp-content" style="overflow:hidden"></div>',
@@ -1917,7 +1919,7 @@ function _wizardFormHtml(w) {
               '<div style="font-size:18px;font-weight:800;color:#fff">🎯 Trouvez votre forfait idéal</div>',
               '<div style="font-size:12px;color:#bfdbfe;margin-top:2px">Décrivez vos besoins, on s\'occupe du reste</div>',
             '</div>',
-            '<button onclick="fermerWizardForfait()" style="background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:6px 10px;color:#fff;font-size:18px;cursor:pointer">✕</button>',
+            '<button onclick="fermerWizardForfait()" aria-label="Fermer" style="background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:6px 10px;color:#fff;font-size:18px;cursor:pointer">✕</button>',
           '</div>',
         '</div>',
 
@@ -2105,7 +2107,7 @@ function lancerRechercheWizard() {
                 // Détail forfait
                 '<div style="display:flex;align-items:flex-start;gap:12px">',
                   f.image_url
-                    ? '<img src="' + f.image_url + '" style="width:36px;height:36px;object-fit:contain;flex-shrink:0">'
+                    ? '<img src="' + f.image_url + '" alt="' + f.operateur + '" loading="lazy" style="width:36px;height:36px;object-fit:contain;flex-shrink:0">'
                     : '<div style="width:36px;height:36px;border-radius:8px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📶</div>',
                   '<div style="flex:1;min-width:0">',
                     '<div style="font-size:11px;font-weight:700;color:#f97316;text-transform:uppercase">' + f.operateur + '</div>',
@@ -2308,7 +2310,7 @@ async function ouvrirForfait(id) {
         '<div style="display:grid;grid-template-columns:minmax(200px,30%) 1fr;max-width:1000px;margin:0 auto">',
           '<div style="background:linear-gradient(145deg,#fff7ed,#ffedd5);display:flex;align-items:center;justify-content:center;padding:32px;min-height:240px;border-right:1px solid #e2e8f0">',
             f.image_url
-              ? '<img src="' + f.image_url + '" style="max-width:100%;max-height:200px;object-fit:contain">'
+              ? '<img src="' + f.image_url + '" alt="' + f.operateur + ' ' + (f.nom || '') + '" style="max-width:100%;max-height:200px;object-fit:contain">'
               : '<div style="font-size:90px">📶</div>',
           '</div>',
           '<div style="padding:32px 36px;display:flex;flex-direction:column;gap:14px">',
@@ -2497,7 +2499,7 @@ async function ouvrirProduit(id, simFiltres) {
                       'display:flex;align-items:center;justify-content:center;',
                       'padding:32px;min-height:320px;border-right:1px solid #e2e8f0">',
             res.image_url
-              ? '<img src="' + res.image_url + '" style="max-width:100%;max-height:280px;object-fit:contain;drop-shadow:0 8px 24px rgba(0,0,0,.12)">'
+              ? '<img src="' + res.image_url + '" alt="' + (res.nom || '').replace(/"/g, '&quot;') + '" style="max-width:100%;max-height:280px;object-fit:contain;drop-shadow:0 8px 24px rgba(0,0,0,.12)">'
               : '<div style="font-size:100px;filter:grayscale(.3)">📦</div>',
           '</div>',
 
@@ -3160,11 +3162,11 @@ async function ouvrirComparaison() {
           ? '<div style="background:#10b981;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:6px">🏆 MOINS CHER</div>'
           : '<div style="height:20px;margin-bottom:6px"></div>') +
         '<div style="width:64px;height:64px;margin:0 auto 8px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #e2e8f0">' +
-          (p.image_url ? '<img src="'+p.image_url+'" style="max-width:60px;max-height:60px;object-fit:contain">' : '<span style="font-size:28px">📦</span>') +
+          (p.image_url ? '<img src="'+p.image_url+'" alt="'+(p.nom||'').replace(/"/g,'&quot;')+'" loading="lazy" style="max-width:60px;max-height:60px;object-fit:contain">' : '<span style="font-size:28px">📦</span>') +
         '</div>' +
         '<div style="font-size:12px;font-weight:700;color:#1e293b;line-height:1.3;margin-bottom:3px">'+(p.nom.length>42?p.nom.slice(0,42)+'…':p.nom)+'</div>' +
         (p.marque ? '<div style="font-size:11px;color:#94a3b8;margin-bottom:6px">'+p.marque+'</div>' : '<div style="margin-bottom:6px"></div>') +
-        '<button onclick="event.stopPropagation();state.comparer.splice('+i+',1);if(state.comparer.length>=2){ouvrirComparaison();}else{retourListe();}" style="background:none;border:1px solid #fca5a5;color:#ef4444;border-radius:6px;font-size:10px;padding:2px 8px;cursor:pointer">✕</button>' +
+        '<button onclick="event.stopPropagation();state.comparer.splice('+i+',1);if(state.comparer.length>=2){ouvrirComparaison();}else{retourListe();}" aria-label="Retirer de la comparaison" style="background:none;border:1px solid #fca5a5;color:#ef4444;border-radius:6px;font-size:10px;padding:2px 8px;cursor:pointer">✕</button>' +
       '</div>';
     }).join('');
 
@@ -3481,7 +3483,7 @@ function _appSimFiltres(id) {
 function afficherLogs() {
   navigator.clipboard && navigator.clipboard.writeText(PM_LOGS())
     .then(function() { toast('Logs copiés ✅', '#6366f1'); })
-    .catch(function() { alert(PM_LOGS()); });
+    .catch(function() { console.log(PM_LOGS()); });
 }
 
 
@@ -3677,15 +3679,15 @@ function switchModalTab(tab) {
 function togglePasswordVisibility(id, btn) {
   var input = document.getElementById(id);
   if (!input) return;
-  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
-  else { input.type = 'password'; btn.textContent = '👁'; }
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; btn.setAttribute('aria-label', 'Masquer le mot de passe'); }
+  else { input.type = 'password'; btn.textContent = '👁'; btn.setAttribute('aria-label', 'Afficher le mot de passe'); }
 }
 
 function renderLoginModal() {
   return [
     '<div class="modal-box">',
       '<div class="modal-header" style="position:relative">',
-        '<button class="modal-close" onclick="closeLoginModal()">✕</button>',
+        '<button class="modal-close" onclick="closeLoginModal()" aria-label="Fermer">✕</button>',
         '<h2>Bienvenue sur Nopalou</h2>',
         '<p>Accédez à vos alertes prix et favoris</p>',
       '</div>',
@@ -3718,14 +3720,14 @@ function renderModalForm() {
   if (_modalTab === 'connexion') {
     return [
       '<div class="form-group">',
-        '<label>Email</label>',
+        '<label for="modal-email">Email</label>',
         '<input type="email" id="modal-email" placeholder="votre@email.com">',
       '</div>',
       '<div class="form-group">',
-        '<label>Mot de passe</label>',
+        '<label for="modal-password">Mot de passe</label>',
         '<div style="position:relative">',
           '<input type="password" id="modal-password" placeholder="••••••••" style="padding-right:36px" onkeydown="if(event.key===\'Enter\')submitLogin()">',
-          '<button type="button" onclick="togglePasswordVisibility(\'modal-password\', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
+          '<button type="button" onclick="togglePasswordVisibility(\'modal-password\', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
         '</div>',
       '</div>',
       '<button class="btn-primary" onclick="submitLogin()">Se connecter →</button>',
@@ -3735,7 +3737,7 @@ function renderModalForm() {
     return [
       '<p style="font-size:13px;color:#64748b;margin-bottom:10px">Entrez votre email, nous vous envoyons un lien de réinitialisation.</p>',
       '<div class="form-group">',
-        '<label>Email</label>',
+        '<label for="modal-email">Email</label>',
         '<input type="email" id="modal-email" placeholder="votre@email.com" onkeydown="if(event.key===\'Enter\')submitMotDePasseOublie()">',
       '</div>',
       '<button class="btn-primary" onclick="submitMotDePasseOublie()">Envoyer le lien →</button>',
@@ -3745,17 +3747,17 @@ function renderModalForm() {
     return [
       '<p style="font-size:13px;color:#64748b;margin-bottom:10px">Choisissez votre nouveau mot de passe.</p>',
       '<div class="form-group">',
-        '<label>Nouveau mot de passe</label>',
+        '<label for="modal-password">Nouveau mot de passe</label>',
         '<div style="position:relative">',
           '<input type="password" id="modal-password" placeholder="Minimum 6 caractères" style="padding-right:36px" onkeydown="if(event.key===\'Enter\')submitReinitialiserMotDePasse()">',
-          '<button type="button" onclick="togglePasswordVisibility(\'modal-password\', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
+          '<button type="button" onclick="togglePasswordVisibility(\'modal-password\', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
         '</div>',
       '</div>',
       '<div class="form-group">',
-        '<label>Confirmer le mot de passe</label>',
+        '<label for="modal-password-confirm">Confirmer le mot de passe</label>',
         '<div style="position:relative">',
           '<input type="password" id="modal-password-confirm" placeholder="Minimum 6 caractères" style="padding-right:36px" onkeydown="if(event.key===\'Enter\')submitReinitialiserMotDePasse()">',
-          '<button type="button" onclick="togglePasswordVisibility(\'modal-password-confirm\', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
+          '<button type="button" onclick="togglePasswordVisibility(\'modal-password-confirm\', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
         '</div>',
       '</div>',
       '<button class="btn-primary" onclick="submitReinitialiserMotDePasse()">Réinitialiser →</button>',
@@ -3763,25 +3765,25 @@ function renderModalForm() {
   } else {
     return [
       '<div class="form-group">',
-        '<label>Prénom</label>',
+        '<label for="modal-nom">Prénom</label>',
         '<input type="text" id="modal-nom" placeholder="Votre prénom">',
       '</div>',
       '<div class="form-group">',
-        '<label>Email</label>',
+        '<label for="modal-email">Email</label>',
         '<input type="email" id="modal-email" placeholder="votre@email.com">',
       '</div>',
       '<div class="form-group">',
-        '<label>Mot de passe</label>',
+        '<label for="modal-password">Mot de passe</label>',
         '<div style="position:relative">',
           '<input type="password" id="modal-password" placeholder="Minimum 6 caractères" style="padding-right:36px" onkeydown="if(event.key===\'Enter\')submitInscription()">',
-          '<button type="button" onclick="togglePasswordVisibility(\'modal-password\', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
+          '<button type="button" onclick="togglePasswordVisibility(\'modal-password\', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
         '</div>',
       '</div>',
       '<div class="form-group">',
-        '<label>Confirmer le mot de passe</label>',
+        '<label for="modal-password-confirm">Confirmer le mot de passe</label>',
         '<div style="position:relative">',
           '<input type="password" id="modal-password-confirm" placeholder="Minimum 6 caractères" style="padding-right:36px" onkeydown="if(event.key===\'Enter\')submitInscription()">',
-          '<button type="button" onclick="togglePasswordVisibility(\'modal-password-confirm\', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
+          '<button type="button" onclick="togglePasswordVisibility(\'modal-password-confirm\', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
         '</div>',
       '</div>',
       '<button class="btn-primary" onclick="submitInscription()">Créer mon compte →</button>',
@@ -3927,7 +3929,7 @@ function updateCompareBar() {
       return '<div style="display:inline-flex;align-items:center;gap:5px;background:#fff7ed;border:1px solid #fed7aa;' +
         'border-radius:8px;padding:4px 8px 4px 6px;flex-shrink:0;max-width:200px">' +
         (m.image_url
-          ? '<img src="' + m.image_url + '" style="width:22px;height:22px;object-fit:contain;flex-shrink:0">'
+          ? '<img src="' + m.image_url + '" alt="' + (m.nom || '').replace(/"/g, '&quot;') + '" loading="lazy" style="width:22px;height:22px;object-fit:contain;flex-shrink:0">'
           : '<span style="font-size:14px">📦</span>') +
         '<span style="font-size:11px;font-weight:600;color:#1e293b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + nom + '</span>' +
         '<button onclick="toggleComparer(\'' + id + '\')" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;line-height:1;padding:0 0 0 2px;flex-shrink:0">×</button>' +
@@ -3975,7 +3977,14 @@ document.addEventListener('DOMContentLoaded', function() {
     toast('Email vérifié avec succès ✓', '#10b981');
     if (state.user) { state.user.email_verifie = true; localStorage.setItem('pm_user', JSON.stringify(state.user)); }
   }
-  goHome();
+  // Ouvrir directement une catégorie depuis l'URL (?cat=immo, ?cat=telecom, ...)
+  var catParam = urlParams.get('cat');
+  if (catParam && CATEGORIES.some(function(c) { return c.slug === catParam; })) {
+    state.prixMax = ''; state.prixMin = '';
+    chargerProduits('', catParam, 1);
+  } else {
+    goHome();
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -4276,7 +4285,7 @@ function ouvrirInfoPage(pageId) {
       '<div style="position:sticky;top:0;background:#fff;border-bottom:1px solid #f1f5f9;padding:18px 28px;' +
       'display:flex;justify-content:space-between;align-items:center;border-radius:20px 20px 0 0;z-index:1">' +
         '<h2 style="font-size:16px;font-weight:800;color:#0f172a;margin:0">' + page.icone + ' ' + page.titre + '</h2>' +
-        '<button onclick="fermerInfoPage()" style="background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;' +
+        '<button onclick="fermerInfoPage()" aria-label="Fermer" style="background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;' +
         'font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b">✕</button>' +
       '</div>' +
       '<div style="padding:28px">' + page.html() + '</div>' +
@@ -4654,6 +4663,7 @@ function afficherGuideResultats(triPar) {
                     enCompare?'✓ Comparé':'⚖ Comparer',
                   '</button>',
                   '<button onclick="event.stopPropagation();toggleFavori(\''+p.id+'\')" ',
+                    'aria-label="'+(enFavori?'Retirer des favoris':'Ajouter aux favoris')+'" ',
                     'style="padding:4px 8px;border-radius:6px;border:1px solid '+(enFavori?'#ef4444':'#e2e8f0')+';',
                     'background:'+(enFavori?'#fef2f2':'#fff')+';cursor:pointer;font-size:12px">',
                     enFavori?'❤':'🤍',

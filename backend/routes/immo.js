@@ -2,9 +2,21 @@
 // Verticale distincte : une annonce = un bien unique chez un propriétaire/agence,
 // pas un produit multi-marchands.
 const router = require('express').Router();
+const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken } = require('../middlewares/auth');
 const { limiterPublication } = require('../middlewares/rateLimit');
+
+const validationAnnonce = [
+  body('titre').trim().notEmpty(),
+  body('contact_tel').trim().notEmpty(),
+  body('type_bien').optional({ checkFalsy: true }).isString(),
+  body('transaction').optional({ checkFalsy: true }).isIn(['location', 'vente']),
+  body('prix').optional({ checkFalsy: true }).isFloat({ gt: 0 }),
+  body('surface_m2').optional({ checkFalsy: true }).isFloat({ gt: 0 }),
+  body('nb_pieces').optional({ checkFalsy: true }).isInt({ gt: 0 }),
+  body('nb_chambres').optional({ checkFalsy: true }).isInt({ gt: 0 }),
+];
 
 const ORDER_MAP = {
   prix_asc:     'prix ASC NULLS LAST',
@@ -138,16 +150,15 @@ router.get('/mine', verifierToken, async (req, res) => {
 });
 
 // PUT /api/immo/mine/:id — modifier sa propre annonce
-router.put('/mine/:id', verifierToken, async (req, res) => {
+router.put('/mine/:id', verifierToken, validationAnnonce, async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
     const {
       titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
       ville, quartier, description, contact_nom, contact_tel,
     } = req.body;
-
-    if (!titre || !contact_tel) {
-      return res.status(400).json({ error: 'titre et contact_tel requis' });
-    }
 
     const { rows } = await pool.query(`
       UPDATE annonces_immo SET
@@ -235,18 +246,17 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/immo/public — annonce gratuite déposée par un utilisateur
 // (en attente de validation par un admin : actif = false)
-router.post('/public', limiterPublication, verifierToken, async (req, res) => {
+router.post('/public', limiterPublication, verifierToken, validationAnnonce, async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
     const {
       titre, type_bien = 'appartement', transaction = 'location',
       prix, surface_m2, nb_pieces, nb_chambres,
       ville = 'Dakar', quartier, description,
       contact_nom, contact_tel,
     } = req.body;
-
-    if (!titre || !contact_tel) {
-      return res.status(400).json({ error: 'titre et contact_tel requis' });
-    }
 
     const { rows } = await pool.query(`
       INSERT INTO annonces_immo

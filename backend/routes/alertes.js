@@ -1,6 +1,8 @@
 const router = require('express').Router();
+const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
+const { limiterEcriture } = require('../middlewares/rateLimit');
 
 router.get('/user/:userId', verifierToken, async (req, res) => {
   try {
@@ -12,8 +14,17 @@ router.get('/user/:userId', verifierToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.post('/', verifierToken, async (req, res) => {
+router.post('/',
+  verifierToken,
+  limiterEcriture,
+  body('produit_id').notEmpty(),
+  body('prix_cible').isFloat({ gt: 0 }),
+  body('email').isEmail().normalizeEmail(),
+  async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
     const { produit_id, prix_cible, email } = req.body;
     const { rows } = await pool.query(
       'INSERT INTO alertes (utilisateur_id,produit_id,prix_cible,email) VALUES ($1,$2,$3,$4) RETURNING *',

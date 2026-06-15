@@ -21,4 +21,9 @@ const limiterPublication = rateLimit({
   message: { error: 'Trop d\'annonces publiées — réessayez dans 1 heure' }
 });
 
-module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication };
+const limiterEcriture = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 15,
+  message: { error: 'Trop de requêtes — réessayez dans quelques minutes' }
+});
+
+module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture };
