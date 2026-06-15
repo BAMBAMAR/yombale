@@ -4422,6 +4422,13 @@ async function lancerGuideAchat() {
                   poidsPrix: poidsPrix, poidsSpecs: poidsSpecs, poidsDispo: poidsDispo,
                   profilActif: _guidePrefs.profilActif };
 
+  // Immobilier et Télécom ont leurs propres outils de recherche (specs/score différents)
+  if (cat === 'immo' || cat === 'telecom') {
+    toast(cat === 'immo' ? 'Redirection vers la recherche immobilière…' : 'Redirection vers les forfaits télécom…', '#2563eb');
+    chargerProduits(q, cat, 1);
+    return;
+  }
+
   var resEl = document.getElementById('guide-resultats');
   if (resEl) resEl.innerHTML = '<div class="loader"><div class="spin"></div><p>Analyse en cours...</p></div>';
 
