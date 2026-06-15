@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — Yombale</title>
+<title>Admin — Nopalou</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f4f5f7; margin: 0; padding: 0; color: #1a1a1a; height: 100vh; display: flex; flex-direction: column; }
@@ -18,7 +18,7 @@
 <body>
 
 <header>
-  <h1>⚙️ Administration Yombale</h1>
+  <h1>⚙️ Administration Nopalou</h1>
   <div class="tabs">
     <div class="tab active" data-page="admin-immo.html" onclick="ouvrirOnglet(this)">🏡 Immobilier</div>
     <div class="tab" data-page="admin-partenaires.html" onclick="ouvrirOnglet(this)">🤝 Partenaires</div>
@@ -29,11 +29,11 @@
 <iframe id="frame"></iframe>
 
 <script>
-let SECRET = new URLSearchParams(location.search).get('secret') || sessionStorage.getItem('yombale_admin_secret') || '';
+let SECRET = new URLSearchParams(location.search).get('secret') || sessionStorage.getItem('nopalou_admin_secret') || '';
 if (!SECRET) {
   SECRET = prompt('Secret admin :') || '';
 }
-if (SECRET) sessionStorage.setItem('yombale_admin_secret', SECRET);
+if (SECRET) sessionStorage.setItem('nopalou_admin_secret', SECRET);
 
 function ouvrirOnglet(el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));

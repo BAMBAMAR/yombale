@@ -6,4 +6,4 @@ Disallow: /admin-telecom.html
 Disallow: /admin-partenaires.html
 Disallow: /api/
 
-Sitemap: https://yombale.onrender.com/sitemap.xml
+Sitemap: https://nopalou.com/sitemap.xml

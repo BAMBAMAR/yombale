@@ -34,7 +34,7 @@ router.post('/', verifierToken, async (req, res) => {
       envoyerEmail({
         to: ADMIN_EMAIL,
         subject: `Nouvelle demande partenaire : ${nom_entreprise}`,
-        html: `<p>Nouvelle demande de partenariat reçue sur Yombale :</p>
+        html: `<p>Nouvelle demande de partenariat reçue sur Nopalou :</p>
                <ul>
                  <li><b>Entreprise :</b> ${nom_entreprise}</li>
                  <li><b>Secteur :</b> ${secteur || '-'}</li>
@@ -90,11 +90,11 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
     if (statut === 'approuve') {
       envoyerEmail({
         to: rows[0].email,
-        subject: 'Votre demande de partenariat Yombale est approuvée 🎉',
+        subject: 'Votre demande de partenariat Nopalou est approuvée 🎉',
         html: `<p>Bonjour ${rows[0].contact_nom || ''},</p>
                <p>Bonne nouvelle ! Votre demande de partenariat pour <b>${rows[0].nom_entreprise}</b> a été approuvée.</p>
                <p>Notre équipe va vous contacter prochainement pour la suite.</p>
-               <p>À bientôt sur Yombale 👋</p>`,
+               <p>À bientôt sur Nopalou 👋</p>`,
       }).catch(() => {});
     }
   } catch (err) {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — Forfaits Télécom — Yombale</title>
+<title>Admin — Forfaits Télécom — Nopalou</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f4f5f7; margin: 0; padding: 24px; color: #1a1a1a; }
@@ -101,11 +101,11 @@
 const API = '/api/telecom';
 
 function adminSecret() {
-  let s = new URLSearchParams(location.search).get('secret') || sessionStorage.getItem('yombale_admin_secret');
+  let s = new URLSearchParams(location.search).get('secret') || sessionStorage.getItem('nopalou_admin_secret');
   if (!s) {
     s = prompt('Clé admin (X-Admin-Secret) :') || '';
   }
-  if (s) sessionStorage.setItem('yombale_admin_secret', s);
+  if (s) sessionStorage.setItem('nopalou_admin_secret', s);
   return s;
 }
 

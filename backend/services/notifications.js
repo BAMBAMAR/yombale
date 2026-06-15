@@ -11,7 +11,7 @@ async function envoyerAlertePrix(alerte, nouveauPrix) {
       html: `<p>Bonne nouvelle !</p>
              <p><b>${alerte.produit_nom}</b> est maintenant à <b>${new Intl.NumberFormat('fr-FR').format(nouveauPrix)} FCFA</b>
              (votre prix cible : ${new Intl.NumberFormat('fr-FR').format(alerte.prix_cible)} FCFA).</p>
-             <p><a href="${process.env.FRONTEND_URL || 'http://localhost:8080'}/?produit=${alerte.produit_id}">Voir l'offre sur Yombale</a></p>`,
+             <p><a href="${process.env.FRONTEND_URL || 'http://localhost:8080'}/?produit=${alerte.produit_id}">Voir l'offre sur Nopalou</a></p>`,
     }).catch(err => console.error('[ALERTE] Erreur envoi email:', err.message));
   }
 

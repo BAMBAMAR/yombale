@@ -139,7 +139,7 @@ async function demarrerApp() {
   }
 
   app.listen(PORT, () => {
-    console.log(`✅ Yombale → http://localhost:${PORT}`);
+    console.log(`✅ Nopalou → http://localhost:${PORT}`);
 
     if (process.env.SCRAPING_DISABLED !== 'true') {
       const { demarrerScraping } = require('./services/scraper');

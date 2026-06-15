@@ -26,7 +26,7 @@ function apiFetch(path) {
       headers: {
         'Accept':  'application/json',
         'Referer': 'https://e-services.artp.sn/catalogues',
-        'User-Agent': 'Mozilla/5.0 (compatible; Yombale-Scraper/1.0)',
+        'User-Agent': 'Mozilla/5.0 (compatible; Nopalou-Scraper/1.0)',
       },
     }, (res) => {
       let body = '';

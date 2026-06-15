@@ -34,11 +34,11 @@ router.post('/inscription',
       const lien = `${FRONTEND_URL}/api/auth/verifier-email?token=${verifToken}`;
       envoyerEmail({
         to: email,
-        subject: 'Bienvenue sur Yombale 🇸🇳 — vérifiez votre email',
+        subject: 'Bienvenue sur Nopalou 🇸🇳 — vérifiez votre email',
         html: `<p>Bonjour ${nom},</p>
-               <p>Bienvenue sur Yombale, le comparateur de prix du Sénégal !</p>
+               <p>Bienvenue sur Nopalou, le comparateur de prix du Sénégal !</p>
                <p><a href="${lien}">Cliquez ici pour vérifier votre adresse email</a> (lien valide 24h).</p>
-               <p>À bientôt sur Yombale 👋</p>`,
+               <p>À bientôt sur Nopalou 👋</p>`,
       }).catch(() => {});
     } catch (err) { res.status(500).json({ error: err.message }); }
   }
@@ -90,7 +90,7 @@ router.post('/renvoyer-verification', limiterAuth, verifierToken, async (req, re
     const lien = `${FRONTEND_URL}/api/auth/verifier-email?token=${verifToken}`;
     await envoyerEmail({
       to: rows[0].email,
-      subject: 'Yombale — vérifiez votre email',
+      subject: 'Nopalou — vérifiez votre email',
       html: `<p>Bonjour ${rows[0].nom},</p>
              <p><a href="${lien}">Cliquez ici pour vérifier votre adresse email</a> (lien valide 24h).</p>`,
     });
@@ -112,7 +112,7 @@ router.post('/mot-de-passe-oublie', limiterAuth, body('email').isEmail(), async 
       const lien = `${FRONTEND_URL}/?reset=${resetToken}`;
       envoyerEmail({
         to: email,
-        subject: 'Yombale — réinitialisation de votre mot de passe',
+        subject: 'Nopalou — réinitialisation de votre mot de passe',
         html: `<p>Bonjour ${rows[0].nom},</p>
                <p>Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe (valide 1h) :</p>
                <p><a href="${lien}">Réinitialiser mon mot de passe</a></p>

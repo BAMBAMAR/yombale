@@ -2,13 +2,13 @@
 //
 // Variables d'env requises :
 //   RESEND_API_KEY — clé API Resend
-//   EMAIL_FROM     — adresse d'expédition (ex: "Yombale <onboarding@resend.dev>"
-//                     ou "Yombale <noreply@votredomaine.com>" une fois le domaine vérifié)
+//   EMAIL_FROM     — adresse d'expédition (ex: "Nopalou <onboarding@resend.dev>"
+//                     ou "Nopalou <noreply@votredomaine.com>" une fois le domaine vérifié)
 
 const axios = require('axios');
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM     = process.env.EMAIL_FROM || 'Yombale <onboarding@resend.dev>';
+const EMAIL_FROM     = process.env.EMAIL_FROM || 'Nopalou <onboarding@resend.dev>';
 
 async function envoyerEmail({ to, subject, html }) {
   if (!RESEND_API_KEY) {

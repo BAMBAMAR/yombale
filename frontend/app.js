@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
-//  Yombale — Comparateur de prix Sénégal
+//  Nopalou — Comparateur de prix Sénégal
 //  app.js VERSION 6 — 2026-05-14
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Yombale app.js VERSION 7 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 7 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 var API = '/api';
 
@@ -3525,7 +3525,7 @@ function htmlFooter() {
 
         // Colonne brand
         '<div class="footer-brand">',
-          '<span class="logo">Yombale <span>🇸🇳</span></span>',
+          '<span class="logo">Nopalou <span>🇸🇳</span></span>',
           '<p>Le premier comparateur de prix dédié au marché sénégalais. Trouvez les meilleures offres sur l\'électronique, l\'électroménager, la mode et plus encore.</p>',
           '<div class="socials">',
             '<a class="social-btn" href="#" title="Facebook">f</a>',
@@ -3562,7 +3562,7 @@ function htmlFooter() {
         '<div class="footer-col">',
           '<h4>Contact</h4>',
           '<ul>',
-            '<li><a href="mailto:contact@yombale.sn">contact@yombale.sn</a></li>',
+            '<li><a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a></li>',
             '<li><a href="tel:+221338001234">+221 33 800 12 34</a></li>',
             '<li><a href="#">Dakar, Sénégal</a></li>',
             '<li><a href="#">FAQ</a></li>',
@@ -3573,7 +3573,7 @@ function htmlFooter() {
 
       // Bandeau confiance
       '<div class="footer-mid">',
-        '<p>Les prix affichés sont récupérés <strong>toutes les 6 heures</strong> directement depuis les sites marchands. Yombale n\'est pas vendeur et ne perçoit aucune commission sur les ventes.</p>',
+        '<p>Les prix affichés sont récupérés <strong>toutes les 6 heures</strong> directement depuis les sites marchands. Nopalou n\'est pas vendeur et ne perçoit aucune commission sur les ventes.</p>',
         '<div class="trust-badges">',
           '<span class="tbadge">✅ Gratuit & indépendant</span>',
           '<span class="tbadge">🔄 Mis à jour toutes les 6h</span>',
@@ -3583,7 +3583,7 @@ function htmlFooter() {
 
       // Copyright
       '<div class="footer-bottom">',
-        '<p>© 2026 Yombale — Comparateur de prix Sénégal</p>',
+        '<p>© 2026 Nopalou — Comparateur de prix Sénégal</p>',
         '<nav>',
           '<a href="#" onclick="event.preventDefault();ouvrirInfoPage(\'confidentialite\')">Confidentialité</a>',
           '<a href="#" onclick="event.preventDefault();ouvrirInfoPage(\'cgu\')">CGU</a>',
@@ -3679,7 +3679,7 @@ function renderLoginModal() {
     '<div class="modal-box">',
       '<div class="modal-header" style="position:relative">',
         '<button class="modal-close" onclick="closeLoginModal()">✕</button>',
-        '<h2>Bienvenue sur Yombale</h2>',
+        '<h2>Bienvenue sur Nopalou</h2>',
         '<p>Accédez à vos alertes prix et favoris</p>',
       '</div>',
       '<div class="modal-body">',
@@ -3951,12 +3951,12 @@ document.addEventListener('DOMContentLoaded', function() {
 var INFO_PAGES = {
 
   'comment-ca-marche': {
-    titre: 'Comment fonctionne Yombale ?',
+    titre: 'Comment fonctionne Nopalou ?',
     icone: '🔍',
     html: function() { return [
       '<div style="background:linear-gradient(135deg,#1a3a6e,#2563eb);padding:28px;margin:-28px -28px 28px;border-radius:16px 16px 0 0">',
         '<p style="color:rgba(255,255,255,.8);font-size:14px;margin-top:8px;line-height:1.6">',
-          'Yombale compare automatiquement les prix chez les meilleurs marchands sénégalais pour vous aider à trouver la meilleure offre sans effort.',
+          'Nopalou compare automatiquement les prix chez les meilleurs marchands sénégalais pour vous aider à trouver la meilleure offre sans effort.',
         '</p>',
       '</div>',
 
@@ -3964,14 +3964,14 @@ var INFO_PAGES = {
       _etape('1', '🕷️', 'Collecte automatique', 'Nos robots analysent toutes les 6 heures les catalogues de 9 marchands partenaires : Kanje, Electronic Corp, Electrolux Dakar, Soumari, Master Office Déco, Kaynoo, Dakar Mondial Téléphone, Electroménager Dakar et CoinAfrique.'),
       _etape('2', '🔗', 'Regroupement intelligent', 'Les produits identiques vendus par différents marchands sont automatiquement regroupés grâce à leur nom, leur marque et leurs caractéristiques techniques.'),
       _etape('3', '💰', 'Comparaison des prix', 'Pour chaque produit, vous voyez en un coup d\'œil le meilleur prix, l\'économie possible et l\'historique des variations sur 90 jours.'),
-      _etape('4', '🛒', 'Achat direct', 'Yombale ne vend rien. Quand vous cliquez "Voir l\'offre", vous êtes redirigé directement vers le site du marchand pour finaliser votre achat.'),
+      _etape('4', '🛒', 'Achat direct', 'Nopalou ne vend rien. Quand vous cliquez "Voir l\'offre", vous êtes redirigé directement vers le site du marchand pour finaliser votre achat.'),
 
       // FAQ
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:28px 0 12px">Questions fréquentes</h3>',
       _faq('Les prix sont-ils toujours à jour ?', 'Nos données sont rafraîchies toutes les 6 heures. Un délai peut exister entre la mise à jour sur le site marchand et notre base de données. Vérifiez toujours le prix final sur le site du marchand avant d\'acheter.'),
-      _faq('Yombale prend-il une commission ?', 'Non. Yombale est un service de comparaison gratuit et indépendant. Nous ne percevons aucune commission sur les ventes. Notre modèle économique repose sur des partenariats et la publicité.'),
+      _faq('Nopalou prend-il une commission ?', 'Non. Nopalou est un service de comparaison gratuit et indépendant. Nous ne percevons aucune commission sur les ventes. Notre modèle économique repose sur des partenariats et la publicité.'),
       _faq('Comment un produit est-il ajouté ?', 'Les produits sont ajoutés automatiquement lors du scraping. Vous pouvez aussi signaler un marchand manquant via "Ajouter votre boutique".'),
-      _faq('Mes données personnelles sont-elles protégées ?', 'Oui. Yombale respecte la loi sénégalaise n°2008-12 sur la protection des données personnelles et est enregistré auprès de la CDP (Commission de Protection des Données Personnelles).'),
+      _faq('Mes données personnelles sont-elles protégées ?', 'Oui. Nopalou respecte la loi sénégalaise n°2008-12 sur la protection des données personnelles et est enregistré auprès de la CDP (Commission de Protection des Données Personnelles).'),
     ].join(''); }
   },
 
@@ -3999,8 +3999,8 @@ var INFO_PAGES = {
           '<option>Autre</option>',
         '</select>',
       '</div>',
-      '<div class="form-group"><label>URL du produit sur Yombale</label>',
-        '<input type="text" placeholder="https://yombale-production.up.railway.app/..." style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none">',
+      '<div class="form-group"><label>URL du produit sur Nopalou</label>',
+        '<input type="text" placeholder="https://nopalou.com/..." style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none">',
       '</div>',
       '<div class="form-group"><label>Description de l\'erreur</label>',
         '<textarea placeholder="Ex: Le prix affiché est 15 000 FCFA mais sur le site du marchand il est à 150 000 FCFA..." ',
@@ -4014,18 +4014,18 @@ var INFO_PAGES = {
   },
 
   'devenir-partenaire': {
-    titre: 'Devenir partenaire Yombale',
+    titre: 'Devenir partenaire Nopalou',
     icone: '🤝',
     html: function() { return [
       '<p style="color:#64748b;font-size:14px;margin-bottom:24px;line-height:1.6">',
-        'Yombale référence déjà <strong>9 marchands</strong> et des milliers de produits. Rejoignez notre réseau pour augmenter votre visibilité auprès des consommateurs sénégalais.',
+        'Nopalou référence déjà <strong>9 marchands</strong> et des milliers de produits. Rejoignez notre réseau pour augmenter votre visibilité auprès des consommateurs sénégalais.',
       '</p>',
 
       // Avantages
-      '<h3 style="font-size:13px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Pourquoi rejoindre Yombale ?</h3>',
+      '<h3 style="font-size:13px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Pourquoi rejoindre Nopalou ?</h3>',
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">',
         _avantage('📈', 'Visibilité accrue', 'Apparaissez dans les recherches de milliers de consommateurs cherchant vos produits'),
-        _avantage('🎯', 'Trafic qualifié', 'Les visiteurs de Yombale sont en phase d\'achat actif — conversion élevée'),
+        _avantage('🎯', 'Trafic qualifié', 'Les visiteurs de Nopalou sont en phase d\'achat actif — conversion élevée'),
         _avantage('💰', 'Gratuit pour démarrer', 'L\'intégration de base est gratuite. Des offres premium sont disponibles'),
         _avantage('🔄', 'Sync automatique', 'Vos prix sont mis à jour automatiquement toutes les 6h'),
       '</div>',
@@ -4040,7 +4040,7 @@ var INFO_PAGES = {
       // Contact
       '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px">',
         '<p style="font-size:13px;font-weight:700;color:#15803d;margin:0 0 8px">📧 Contactez-nous</p>',
-        '<p style="font-size:13px;color:#166534;margin:0">partenaires@yombale.sn · +221 33 800 12 34</p>',
+        '<p style="font-size:13px;color:#166534;margin:0">partenaires@nopalou.sn · +221 33 800 12 34</p>',
         '<p style="font-size:12px;color:#166534;margin:6px 0 0">Réponse sous 48h ouvrables</p>',
       '</div>',
     ].join(''); }
@@ -4051,7 +4051,7 @@ var INFO_PAGES = {
     icone: '🏪',
     html: function() { return [
       '<p style="color:#64748b;font-size:14px;margin-bottom:24px;line-height:1.6">',
-        'Votre boutique en ligne n\'est pas encore référencée sur Yombale ? Soumettez votre demande et nous l\'analyserons dans les 72h.',
+        'Votre boutique en ligne n\'est pas encore référencée sur Nopalou ? Soumettez votre demande et nous l\'analyserons dans les 72h.',
       '</p>',
 
       '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px;margin-bottom:24px">',
@@ -4097,13 +4097,13 @@ var INFO_PAGES = {
     html: function() { return [
       '<p style="color:#64748b;font-size:14px;margin-bottom:24px">Conseils pratiques pour mieux acheter au Sénégal.</p>',
       _article('💡', 'Comment éviter les arnaques en ligne au Sénégal ?', '15 mai 2026',
-        'Vérifiez toujours que le marchand est référencé sur des comparateurs comme Yombale. Méfiez-vous des prix anormalement bas (plus de 50% en dessous du marché). Préférez les paiements via Wave ou Orange Money avec confirmation. Demandez toujours un reçu.'),
+        'Vérifiez toujours que le marchand est référencé sur des comparateurs comme Nopalou. Méfiez-vous des prix anormalement bas (plus de 50% en dessous du marché). Préférez les paiements via Wave ou Orange Money avec confirmation. Demandez toujours un reçu.'),
       _article('📱', 'Top 5 des smartphones à moins de 150 000 FCFA en 2026', '10 mai 2026',
         'Le marché sénégalais des smartphones évolue rapidement. En 2026, Tecno, Infinix et Samsung dominent le segment entrée/milieu de gamme. Comparaison des meilleurs modèles disponibles chez nos marchands partenaires.'),
       _article('❄️', 'Guide d\'achat : choisir son climatiseur pour le Sénégal', '2 mai 2026',
         'BTU, Inverter, R410A... les termes techniques peuvent intimider. Pour une pièce de 20m² à Dakar, comptez 9000 à 12000 BTU. L\'Inverter coûte plus cher à l\'achat mais économise 30-40% d\'électricité. Nos marchands proposent des splits de 50 000 à 200 000 FCFA selon la capacité.'),
       _article('🛒', '5 astuces pour comparer les prix intelligemment', '25 avril 2026',
-        '1. Regardez l\'historique des prix — un prix "promotionnel" était peut-être le prix normal. 2. Comparez le prix total livraison incluse. 3. Vérifiez la garantie. 4. Lisez les avis sur le marchand. 5. Utilisez les alertes prix de Yombale pour être notifié des baisses.'),
+        '1. Regardez l\'historique des prix — un prix "promotionnel" était peut-être le prix normal. 2. Comparez le prix total livraison incluse. 3. Vérifiez la garantie. 4. Lisez les avis sur le marchand. 5. Utilisez les alertes prix de Nopalou pour être notifié des baisses.'),
     ].join(''); }
   },
 
@@ -4112,19 +4112,19 @@ var INFO_PAGES = {
     icone: '📄',
     html: function() { return [
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 8px">Éditeur du site</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Yombale est un service de comparaison de prix indépendant opérant au Sénégal. Contact : <a href="mailto:contact@yombale.sn">contact@yombale.sn</a>.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Nopalou est un service de comparaison de prix indépendant opérant au Sénégal. Contact : <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a>.</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Activité</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Yombale référence et compare des prix collectés automatiquement chez des marchands tiers. Yombale n\'est pas un vendeur, n\'effectue aucune transaction commerciale et ne perçoit aucune commission sur les ventes réalisées chez les marchands référencés.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Nopalou référence et compare des prix collectés automatiquement chez des marchands tiers. Nopalou n\'est pas un vendeur, n\'effectue aucune transaction commerciale et ne perçoit aucune commission sur les ventes réalisées chez les marchands référencés.</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Hébergement</h3>',
       '<p style="font-size:13px;color:#64748b;line-height:1.6">Le site est hébergé par des prestataires d\'hébergement cloud (Render, Railway).</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Propriété intellectuelle</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Le contenu de Yombale (logo, design, textes) est protégé. Les images, descriptions et prix des produits restent la propriété de leurs marchands respectifs.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Le contenu de Nopalou (logo, design, textes) est protégé. Les images, descriptions et prix des produits restent la propriété de leurs marchands respectifs.</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Responsabilité</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Les prix affichés sont fournis à titre indicatif et peuvent différer du prix réel constaté chez le marchand. Yombale ne saurait être tenu responsable des écarts de prix, de la disponibilité des produits ou de tout litige avec un marchand tiers.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Les prix affichés sont fournis à titre indicatif et peuvent différer du prix réel constaté chez le marchand. Nopalou ne saurait être tenu responsable des écarts de prix, de la disponibilité des produits ou de tout litige avec un marchand tiers.</p>',
     ].join(''); }
   },
 
@@ -4132,7 +4132,7 @@ var INFO_PAGES = {
     titre: 'Politique de confidentialité',
     icone: '🔒',
     html: function() { return [
-      '<p style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:16px">Yombale respecte la loi sénégalaise n°2008-12 sur la protection des données personnelles et s\'engage à protéger vos informations.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:16px">Nopalou respecte la loi sénégalaise n°2008-12 sur la protection des données personnelles et s\'engage à protéger vos informations.</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:16px 0 8px">Données collectées</h3>',
       '<p style="font-size:13px;color:#64748b;line-height:1.6">Lors de votre inscription, nous collectons : nom, email, téléphone (optionnel), ville. Lors de l\'utilisation du site : favoris, alertes de prix, annonces publiées.</p>',
@@ -4148,10 +4148,10 @@ var INFO_PAGES = {
       '<p style="font-size:13px;color:#64748b;line-height:1.6">Vos données ne sont jamais vendues. Elles peuvent être transmises à nos prestataires techniques (hébergement, envoi d\'emails via Resend) uniquement pour le fonctionnement du service.</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:16px 0 8px">Cookies</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Yombale utilise le stockage local du navigateur (localStorage) pour conserver votre session de connexion, vos favoris et vos préférences d\'affichage. Aucun cookie publicitaire tiers n\'est utilisé pour le moment.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Nopalou utilise le stockage local du navigateur (localStorage) pour conserver votre session de connexion, vos favoris et vos préférences d\'affichage. Aucun cookie publicitaire tiers n\'est utilisé pour le moment.</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:16px 0 8px">Vos droits</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Vous pouvez demander l\'accès, la rectification ou la suppression de vos données personnelles en nous contactant à <a href="mailto:contact@yombale.sn">contact@yombale.sn</a>.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Vous pouvez demander l\'accès, la rectification ou la suppression de vos données personnelles en nous contactant à <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a>.</p>',
     ].join(''); }
   },
 
@@ -4160,22 +4160,22 @@ var INFO_PAGES = {
     icone: '📋',
     html: function() { return [
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 8px">Objet</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Les présentes conditions régissent l\'utilisation du site Yombale, comparateur de prix et plateforme de petites annonces (immobilier, partenaires) au Sénégal.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Les présentes conditions régissent l\'utilisation du site Nopalou, comparateur de prix et plateforme de petites annonces (immobilier, partenaires) au Sénégal.</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Compte utilisateur</h3>',
       '<p style="font-size:13px;color:#64748b;line-height:1.6">La création d\'un compte est gratuite et nécessite une adresse email valide. Vous êtes responsable de la confidentialité de vos identifiants.</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Annonces publiées par les utilisateurs</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Les annonces immobilières et demandes de partenariat soumises par les utilisateurs sont gratuites mais soumises à validation par un modérateur avant publication. Yombale se réserve le droit de refuser ou supprimer toute annonce non conforme, frauduleuse ou trompeuse, sans préavis.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Les annonces immobilières et demandes de partenariat soumises par les utilisateurs sont gratuites mais soumises à validation par un modérateur avant publication. Nopalou se réserve le droit de refuser ou supprimer toute annonce non conforme, frauduleuse ou trompeuse, sans préavis.</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Comparateur de prix</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Les prix affichés proviennent de sites marchands tiers et sont mis à jour régulièrement, sans garantie d\'exactitude en temps réel. Yombale n\'est pas partie aux transactions effectuées sur les sites des marchands.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Les prix affichés proviennent de sites marchands tiers et sont mis à jour régulièrement, sans garantie d\'exactitude en temps réel. Nopalou n\'est pas partie aux transactions effectuées sur les sites des marchands.</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Comportement interdit</h3>',
       '<p style="font-size:13px;color:#64748b;line-height:1.6">Il est interdit de publier des annonces frauduleuses, du contenu illégal, ou d\'utiliser le site pour du spam ou du démarchage abusif.</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Modification des CGU</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Yombale peut modifier ces conditions à tout moment. Les utilisateurs seront informés des changements importants via le site.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Nopalou peut modifier ces conditions à tout moment. Les utilisateurs seront informés des changements importants via le site.</p>',
     ].join(''); }
   },
 };
@@ -4293,7 +4293,7 @@ function ouvrirGuideAchat() {
         '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;padding:0">← Retour</button>',
         '<h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0">🏆 Guide d\'achat intelligent</h2>',
       '</div>',
-      '<p style="color:#64748b;font-size:13px;margin:0 0 24px;padding-left:0">Définissez vos critères — Yombale calcule un score et classe les produits pour vous.</p>',
+      '<p style="color:#64748b;font-size:13px;margin:0 0 24px;padding-left:0">Définissez vos critères — Nopalou calcule un score et classe les produits pour vous.</p>',
 
       // ── Profils rapides ──
       '<div style="margin-bottom:22px">',
