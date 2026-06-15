@@ -3674,6 +3674,13 @@ function switchModalTab(tab) {
   });
 }
 
+function togglePasswordVisibility(id, btn) {
+  var input = document.getElementById(id);
+  if (!input) return;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁'; }
+}
+
 function renderLoginModal() {
   return [
     '<div class="modal-box">',
@@ -3716,7 +3723,10 @@ function renderModalForm() {
       '</div>',
       '<div class="form-group">',
         '<label>Mot de passe</label>',
-        '<input type="password" id="modal-password" placeholder="••••••••" onkeydown="if(event.key===\'Enter\')submitLogin()">',
+        '<div style="position:relative">',
+          '<input type="password" id="modal-password" placeholder="••••••••" style="padding-right:36px" onkeydown="if(event.key===\'Enter\')submitLogin()">',
+          '<button type="button" onclick="togglePasswordVisibility(\'modal-password\', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
+        '</div>',
       '</div>',
       '<button class="btn-primary" onclick="submitLogin()">Se connecter →</button>',
       '<p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:12px"><a href="#" style="color:#2563eb" onclick="event.preventDefault();switchModalTab(\'mdp-oublie\')">Mot de passe oublié ?</a></p>',
@@ -3736,7 +3746,17 @@ function renderModalForm() {
       '<p style="font-size:13px;color:#64748b;margin-bottom:10px">Choisissez votre nouveau mot de passe.</p>',
       '<div class="form-group">',
         '<label>Nouveau mot de passe</label>',
-        '<input type="password" id="modal-password" placeholder="Minimum 6 caractères" onkeydown="if(event.key===\'Enter\')submitReinitialiserMotDePasse()">',
+        '<div style="position:relative">',
+          '<input type="password" id="modal-password" placeholder="Minimum 6 caractères" style="padding-right:36px" onkeydown="if(event.key===\'Enter\')submitReinitialiserMotDePasse()">',
+          '<button type="button" onclick="togglePasswordVisibility(\'modal-password\', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
+        '</div>',
+      '</div>',
+      '<div class="form-group">',
+        '<label>Confirmer le mot de passe</label>',
+        '<div style="position:relative">',
+          '<input type="password" id="modal-password-confirm" placeholder="Minimum 6 caractères" style="padding-right:36px" onkeydown="if(event.key===\'Enter\')submitReinitialiserMotDePasse()">',
+          '<button type="button" onclick="togglePasswordVisibility(\'modal-password-confirm\', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
+        '</div>',
       '</div>',
       '<button class="btn-primary" onclick="submitReinitialiserMotDePasse()">Réinitialiser →</button>',
     ].join('');
@@ -3752,7 +3772,17 @@ function renderModalForm() {
       '</div>',
       '<div class="form-group">',
         '<label>Mot de passe</label>',
-        '<input type="password" id="modal-password" placeholder="Minimum 6 caractères" onkeydown="if(event.key===\'Enter\')submitInscription()">',
+        '<div style="position:relative">',
+          '<input type="password" id="modal-password" placeholder="Minimum 6 caractères" style="padding-right:36px" onkeydown="if(event.key===\'Enter\')submitInscription()">',
+          '<button type="button" onclick="togglePasswordVisibility(\'modal-password\', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
+        '</div>',
+      '</div>',
+      '<div class="form-group">',
+        '<label>Confirmer le mot de passe</label>',
+        '<div style="position:relative">',
+          '<input type="password" id="modal-password-confirm" placeholder="Minimum 6 caractères" style="padding-right:36px" onkeydown="if(event.key===\'Enter\')submitInscription()">',
+          '<button type="button" onclick="togglePasswordVisibility(\'modal-password-confirm\', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁</button>',
+        '</div>',
       '</div>',
       '<button class="btn-primary" onclick="submitInscription()">Créer mon compte →</button>',
     ].join('');
@@ -3784,8 +3814,10 @@ function submitInscription() {
   var nom   = (document.getElementById('modal-nom') || {}).value || '';
   var email = (document.getElementById('modal-email') || {}).value || '';
   var pass  = (document.getElementById('modal-password') || {}).value || '';
+  var passConfirm = (document.getElementById('modal-password-confirm') || {}).value || '';
   if (!nom || !email || !pass) { toast('Remplissez tous les champs', '#ef4444'); return; }
   if (pass.length < 6) { toast('Mot de passe trop court (6 min)', '#ef4444'); return; }
+  if (pass !== passConfirm) { toast('Les mots de passe ne correspondent pas', '#ef4444'); return; }
 
   apiFetch('/auth/inscription', { method: 'POST', body: JSON.stringify({ nom: nom, email: email, mot_de_passe: pass }) })
     .then(function(data) {
@@ -3818,7 +3850,9 @@ function submitMotDePasseOublie() {
 
 function submitReinitialiserMotDePasse() {
   var pass = (document.getElementById('modal-password') || {}).value || '';
+  var passConfirm = (document.getElementById('modal-password-confirm') || {}).value || '';
   if (pass.length < 6) { toast('Mot de passe trop court (6 min)', '#ef4444'); return; }
+  if (pass !== passConfirm) { toast('Les mots de passe ne correspondent pas', '#ef4444'); return; }
   if (!_resetToken) { toast('Lien invalide ou expiré', '#ef4444'); return; }
   apiFetch('/auth/reinitialiser-mot-de-passe', { method: 'POST', body: JSON.stringify({ token: _resetToken, mot_de_passe: pass }) })
     .then(function(data) {
