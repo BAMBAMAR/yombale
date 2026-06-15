@@ -88,6 +88,13 @@ nav {
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 700;
 }
+.nav-hamburger {
+  display: none;
+  background: none; border: none; font-size: 22px;
+  padding: 6px 10px; border-radius: 8px; cursor: pointer;
+  color: var(--text2);
+}
+.nav-hamburger:hover { background: var(--blue3); color: var(--blue2); }
 
 /* ── HERO ───────────────────────────────────────────────────── */
 .hero {
@@ -492,7 +499,18 @@ footer {
 @media (max-width: 600px) {
   .hero h1 { font-size: 27px; }
   nav { padding: 0 3%; height: 54px; }
-  .nav-center { display: none; }
+  .nav-hamburger { display: block; }
+  .nav-center {
+    display: none;
+    position: absolute; top: 54px; left: 0; right: 0;
+    flex-direction: column; gap: 2px;
+    background: #fff; padding: 8px 5% 12px;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    z-index: 199;
+  }
+  .nav-center.open { display: flex; }
+  .nav-center button { text-align: left; width: 100%; padding: 10px 14px; }
   .footer-top { grid-template-columns: 1fr; gap: 20px; padding: 28px 5%; }
   .pgrid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
   .results-grid { grid-template-columns: 1fr; }

@@ -3443,6 +3443,20 @@ function doSearch() {
 }
 
 function goHome()              { state.prixMax=''; state.prixMin=''; chargerProduits('','',1); }
+function toggleNavMenu() {
+  const nav = document.querySelector('.nav-center');
+  if (nav) nav.classList.toggle('open');
+}
+// Ferme le menu mobile après un clic sur un lien de navigation
+document.addEventListener('click', function(e) {
+  const nav = document.querySelector('.nav-center');
+  if (!nav || !nav.classList.contains('open')) return;
+  if (e.target.closest('.nav-center') && e.target.tagName === 'BUTTON' && !e.target.closest('#nav-btn-comparer, #nav-btn-vider')) {
+    nav.classList.remove('open');
+  } else if (!e.target.closest('.nav-center') && !e.target.closest('.nav-hamburger')) {
+    nav.classList.remove('open');
+  }
+});
 function retourListe() {
   // Réinitialiser le conteneur
   var appEl = document.getElementById('app');

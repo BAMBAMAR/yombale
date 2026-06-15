@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=7">
+  <link rel="stylesheet" href="/style.css?v=10">
 
   <script type="application/ld+json">
   {
@@ -56,6 +56,7 @@
       <button id="nav-btn-vider" onclick="viderComparaison()" style="display:none;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer" title="Vider la sélection">✕ Vider</button>
       <button onclick="afficherFavoris()" id="nav-btn-favoris" style="background:none;border:none;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;color:#64748b;cursor:pointer;display:none" title="Mes favoris">❤ <span id="nav-favoris-count">0</span></button>
     </div>
+    <button class="nav-hamburger" onclick="toggleNavMenu()" aria-label="Menu de navigation">☰</button>
     <div class="nav-right">
       <select id="city-sel" onchange="changeVille(this.value)" title="Ville (filtre Immobilier)">
         <option value="Dakar">Dakar</option>
@@ -102,7 +103,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=9" defer></script>
+  <script src="/app.js?v=10" defer></script>
   <script>
     // Désenregistrer l'ancien Service Worker pour forcer le rechargement des assets
     if ('serviceWorker' in navigator) {
