@@ -539,8 +539,8 @@ function htmlBarre(data) {
       }).join('') +
     '</select>' +
     '<div style="display:flex;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">' +
-      '<button onclick="changerVue(\'grille\')" title="Grille" aria-label="Vue en grille" style="padding:6px 10px;border:none;cursor:pointer;font-size:14px;background:' + (state.vue==='grille'?'#1d4ed8':'#fff') + ';color:' + (state.vue==='grille'?'#fff':'#64748b') + '">▦</button>' +
-      '<button onclick="changerVue(\'liste\')"  title="Liste"  aria-label="Vue en liste" style="padding:6px 10px;border:none;cursor:pointer;font-size:14px;background:' + (state.vue==='liste' ?'#1d4ed8':'#fff') + ';color:' + (state.vue==='liste' ?'#fff':'#64748b') + '">☰</button>' +
+      '<button onclick="changerVue(\'grille\')" title="Grille" aria-label="Vue en grille" class="vue-toggle-btn" style="padding:6px 10px;border:none;cursor:pointer;font-size:14px;background:' + (state.vue==='grille'?'#1d4ed8':'#fff') + ';color:' + (state.vue==='grille'?'#fff':'#64748b') + '">▦</button>' +
+      '<button onclick="changerVue(\'liste\')"  title="Liste"  aria-label="Vue en liste" class="vue-toggle-btn" style="padding:6px 10px;border:none;cursor:pointer;font-size:14px;background:' + (state.vue==='liste' ?'#1d4ed8':'#fff') + ';color:' + (state.vue==='liste' ?'#fff':'#64748b') + '">☰</button>' +
     '</div>' +
     (state.comparer.length > 0
       ? '<button onclick="ouvrirComparaison()" style="margin-left:auto;padding:6px 14px;background:#f97316;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">⚖ Comparer (' + state.comparer.length + ')</button>'
@@ -945,7 +945,7 @@ function htmlBarreImmo() {
             return '<option value="' + v.ville + '"' + (im.ville === v.ville ? ' selected' : '') + '>' + v.ville + ' (' + v.nb + ')</option>';
           }).join(''),
         '</select>',
-        '<input type="text" placeholder="🗺 Quartier" value="' + (im.quartier || '') + '" ' +
+        '<input type="text" placeholder="🗺 Quartier" value="' + (im.quartier || '') + '" class="immo-filter-input" ' +
           'oninput="_immoFiltreQuartier(this.value)" onchange="_immoSearchFromInput()" style="' + si + ';width:110px">',
         '<select onchange="_immoFiltreType(this.value)" style="' + si + ';cursor:pointer">',
           Object.keys(TYPE_BIEN_LABELS).map(function(k) {
@@ -957,13 +957,13 @@ function htmlBarreImmo() {
             return '<option value="' + t[0] + '"' + (im.nbPieces === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
           }).join(''),
         '</select>',
-        '<input type="number" placeholder="📐 Surface min m²" value="' + (im.surfaceMin || '') + '" ' +
+        '<input type="number" placeholder="📐 Surface min m²" value="' + (im.surfaceMin || '') + '" class="immo-filter-input" ' +
           'oninput="_immoSurfaceMin(this.value)" onchange="_immoSearchFromInput()" style="' + si + ';width:110px">',
         '<div style="display:flex;gap:4px;align-items:center;margin-left:auto">',
-          '<input type="number" placeholder="Prix min" value="' + (im.prixMin || '') + '" ' +
+          '<input type="number" placeholder="Prix min" value="' + (im.prixMin || '') + '" class="immo-filter-input" ' +
             'oninput="_immoPrixMin(this.value)" onchange="_immoSearchFromInput()" style="' + si + ';width:88px">',
           '<span style="font-size:11px;color:#94a3b8">–</span>',
-          '<input type="number" placeholder="Prix max" value="' + (im.prixMax || '') + '" ' +
+          '<input type="number" placeholder="Prix max" value="' + (im.prixMax || '') + '" class="immo-filter-input" ' +
             'oninput="_immoPrixMax(this.value)" onchange="_immoSearchFromInput()" style="' + si + ';width:88px">',
           '<select onchange="_immoFiltreTri(this.value)" style="' + si + ';cursor:pointer">',
             [['recent','🕐 Récent'],['prix_asc','⬆ Prix'],['prix_desc','⬇ Prix'],['surface_desc','📐 Surface']].map(function(t) {
@@ -1043,7 +1043,7 @@ function _immoOuvrirComparaison() {
     return '<tr><td style="padding:8px 12px;font-size:12px;font-weight:700;color:#64748b;white-space:nowrap">' + label + '</td>' + cells + '</tr>';
   }).join('');
 
-  var html = '<div style="overflow-x:auto">' +
+  var html = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">' +
     '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
       '<thead><tr style="background:#f8fafc"><th style="padding:8px;text-align:left;font-size:12px;color:#94a3b8">Critère</th>' + cols + '</tr></thead>' +
       '<tbody>' + rows + '</tbody>' +
@@ -1220,7 +1220,7 @@ function ouvrirPublierAnnonce() {
       '<div><label style="font-size:12px;font-weight:700;color:#64748b">Quartier</label>',
       '<input type="text" placeholder="ex: Sacré-Cœur" value="' + (p.quartier||'') + '" style="' + s + '" oninput="_pubImmo.quartier=this.value"></div>',
     '</div>',
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">',
+    '<div class="grid-3-cols" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">',
       '<div><label style="font-size:12px;font-weight:700;color:#64748b">Prix (FCFA)</label>',
       '<input type="number" placeholder="ex: 150000" value="' + (p.prix||'') + '" style="' + s + '" oninput="_pubImmo.prix=this.value"></div>',
       '<div><label style="font-size:12px;font-weight:700;color:#64748b">Surface m²</label>',
@@ -1786,7 +1786,7 @@ function _renderComparaisonContent() {
   }
 
   var tableHtml = [
-    '<div style="overflow-x:auto">',
+    '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">',
     '<table style="width:100%;border-collapse:collapse">',
       '<thead>' + headerRow + '</thead>',
       '<tbody>',
@@ -2307,13 +2307,13 @@ async function ouvrirForfait(id) {
 
     var heroHtml = [
       '<div style="background:#fff;border-bottom:1px solid #e2e8f0">',
-        '<div style="display:grid;grid-template-columns:minmax(200px,30%) 1fr;max-width:1000px;margin:0 auto">',
-          '<div style="background:linear-gradient(145deg,#fff7ed,#ffedd5);display:flex;align-items:center;justify-content:center;padding:32px;min-height:240px;border-right:1px solid #e2e8f0">',
+        '<div class="detail-hero-grid" style="grid-template-columns:minmax(200px,30%) 1fr;max-width:1000px">',
+          '<div class="detail-hero-side" style="background:linear-gradient(145deg,#fff7ed,#ffedd5);min-height:240px">',
             f.image_url
               ? '<img src="' + f.image_url + '" alt="' + f.operateur + ' ' + (f.nom || '') + '" style="max-width:100%;max-height:200px;object-fit:contain">'
               : '<div style="font-size:90px">📶</div>',
           '</div>',
-          '<div style="padding:32px 36px;display:flex;flex-direction:column;gap:14px">',
+          '<div class="detail-hero-info" style="display:flex;flex-direction:column;gap:14px">',
             '<div><span style="font-size:11px;font-weight:700;color:#f97316;background:#fff7ed;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em">' + f.operateur + '</span></div>',
             '<h1 style="font-size:22px;font-weight:800;color:#1e293b;margin:0">' + f.nom + '</h1>',
             '<div style="font-size:28px;font-weight:800;color:#f97316;font-family:\'Sora\',sans-serif">' + fcfa(f.prix) + '</div>',
@@ -2492,19 +2492,17 @@ async function ouvrirProduit(id, simFiltres) {
     // ── Hero : image (gauche) + infos+prix (droite) ───────────
     var heroHtml = [
       '<div style="background:#fff;border-bottom:1px solid #e2e8f0">',
-        '<div style="display:grid;grid-template-columns:minmax(280px,38%) 1fr;max-width:1200px;margin:0 auto">',
+        '<div class="detail-hero-grid" style="grid-template-columns:minmax(280px,38%) 1fr">',
 
           // Colonne image
-          '<div style="background:linear-gradient(145deg,#f8fafc,#eff6ff);',
-                      'display:flex;align-items:center;justify-content:center;',
-                      'padding:32px;min-height:320px;border-right:1px solid #e2e8f0">',
+          '<div class="detail-hero-side" style="background:linear-gradient(145deg,#f8fafc,#eff6ff);min-height:320px">',
             res.image_url
               ? '<img src="' + res.image_url + '" alt="' + (res.nom || '').replace(/"/g, '&quot;') + '" style="max-width:100%;max-height:280px;object-fit:contain;drop-shadow:0 8px 24px rgba(0,0,0,.12)">'
               : '<div style="font-size:100px;filter:grayscale(.3)">📦</div>',
           '</div>',
 
           // Colonne infos
-          '<div style="padding:32px 36px;display:flex;flex-direction:column;gap:16px">',
+          '<div class="detail-hero-info" style="display:flex;flex-direction:column;gap:16px">',
             // Badge catégorie
             res.categorie_nom
               ? '<div><span style="font-size:11px;font-weight:700;color:#1d4ed8;background:#eff6ff;' +
@@ -2566,8 +2564,7 @@ async function ouvrirProduit(id, simFiltres) {
 
     // ── Corps : offres + historique + similaires ──────────────
     var bodyHtml = [
-      '<div style="max-width:1200px;margin:0 auto;padding:28px 20px 80px;display:grid;',
-                  'grid-template-columns:1fr 340px;gap:24px;align-items:start">',
+      '<div class="detail-grid">',
 
         // Colonne gauche : offres + historique
         '<div style="display:flex;flex-direction:column;gap:20px">',
@@ -2579,7 +2576,7 @@ async function ouvrirProduit(id, simFiltres) {
         '</div>',
 
         // Colonne droite : résumé sticky
-        '<div style="position:sticky;top:64px">',
+        '<div class="detail-sidebar">',
           _sectionResume(res, offresArr, prixMin, bestOffre),
         '</div>',
 
@@ -3310,7 +3307,7 @@ async function ouvrirComparaison() {
         // Panneau paramètres (conditionnel)
         state.comparePrefsOpen ? htmlParametres() : '',
         // Tableau comparaison
-        '<div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.06)">',
+        '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.06)">',
           // En-tête produits
           '<div style="display:flex;border-bottom:2px solid #e2e8f0;background:#f8fafc">',
             '<div style="width:110px;flex-shrink:0;padding:12px"></div>',
@@ -4616,7 +4613,7 @@ function afficherGuideResultats(triPar) {
       '</div>',
 
       // Grille résultats (2 colonnes sur desktop)
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:10px">',
+      '<div class="results-grid">',
         top.map(function(p, i) {
           _productCache[p.id] = { nom: p.nom, image_url: p.image_url };
           var medal      = i===0?'🥇':i===1?'🥈':i===2?'🥉':'<span style="font-size:13px;font-weight:700;color:#94a3b8">'+(i+1)+'</span>';
@@ -4726,7 +4723,7 @@ async function afficherFavoris() {
           '<span style="font-size:13px;color:#94a3b8">' + produits.length + ' produit(s)</span>',
           '<button onclick="state.favoris=[];localStorage.setItem(\'yomb_favoris\',\'[]\');updateNavFavoris();retourListe()" style="margin-left:auto;padding:6px 12px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer">✕ Tout effacer</button>',
         '</div>',
-        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">',
+        '<div class="pgrid">',
           produits.map(function(p) { return carteHTML(p); }).join(''),
         '</div>',
       '</div>',

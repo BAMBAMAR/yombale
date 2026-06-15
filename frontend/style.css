@@ -192,6 +192,26 @@ nav {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 14px;
 }
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 10px;
+}
+
+/* ── LAYOUTS DÉTAIL (produit / forfait télécom / annonce immo) ───── */
+.detail-grid {
+  display: grid; grid-template-columns: 1fr 340px; gap: 24px;
+  align-items: start; max-width: 1200px; margin: 0 auto; padding: 28px 20px 80px;
+}
+.detail-sidebar { position: sticky; top: 64px; }
+.detail-hero-grid {
+  display: grid; max-width: 1200px; margin: 0 auto;
+}
+.detail-hero-side {
+  display: flex; align-items: center; justify-content: center;
+  padding: 32px; border-right: 1px solid var(--border);
+}
+.detail-hero-info { padding: 32px 36px; }
 
 /* ── CARTE PRODUIT ──────────────────────────────────────────── */
 .pcard {
@@ -463,6 +483,11 @@ footer {
   .footer-top { grid-template-columns: 1fr 1fr; gap: 24px; }
   .footer-mid { flex-direction: column; }
   .trust-badges { margin-left: 0; }
+  .detail-grid { grid-template-columns: 1fr; padding: 16px 16px 80px; }
+  .detail-sidebar { position: static; top: auto; }
+  .detail-hero-grid { grid-template-columns: 1fr !important; }
+  .detail-hero-side { border-right: none; border-bottom: 1px solid var(--border); padding: 20px; }
+  .detail-hero-info { padding: 16px 20px; }
 }
 @media (max-width: 600px) {
   .hero h1 { font-size: 27px; }
@@ -470,12 +495,22 @@ footer {
   .nav-center { display: none; }
   .footer-top { grid-template-columns: 1fr; gap: 20px; padding: 28px 5%; }
   .pgrid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .results-grid { grid-template-columns: 1fr; }
   .logo { font-size: 18px; }
+  .nav-right { gap: 6px; }
+  .nav-right select { padding: 8px 8px; min-height: 36px; }
+  #nav-avatar { width: 32px; height: 32px; }
 }
 @media (max-width: 480px) {
   .modal-overlay { padding: 0; align-items: flex-end; }
   .modal-box { max-width: 100%; max-height: 95vh; border-radius: 20px 20px 0 0; }
   .pgrid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
   .hero h1 { font-size: 22px; }
-  .form-group input { font-size: 13px; padding: 10px 12px; }
+  .form-group input { font-size: 16px; padding: 10px 12px; }
+  #compare-bar { padding: 8px 3% !important; gap: 8px !important; }
+  #compare-bar span { font-size: 11px !important; }
+  #compare-bar button { padding: 7px 12px !important; font-size: 12px !important; }
+  .immo-filter-input { width: 47% !important; flex: 1 1 45%; }
+  .grid-3-cols { grid-template-columns: 1fr 1fr !important; }
+  .vue-toggle-btn { padding: 8px 12px !important; }
 }
