@@ -516,8 +516,14 @@ footer {
   .results-grid { grid-template-columns: 1fr; }
   .logo { font-size: 18px; }
   .nav-right { gap: 6px; }
-  .nav-right select { padding: 8px 8px; min-height: 36px; }
+  .nav-right select { padding: 8px 8px; min-height: 36px; max-width: 90px; }
   #nav-avatar { width: 32px; height: 32px; }
+  #nav-username { display: none; }
+  .nav-user { padding: 4px; border-radius: 50%; }
+  /* Page comparaison : actions wrappent sur une ligne */
+  .compare-actions { margin-left: 0 !important; width: 100%; justify-content: flex-end; flex-wrap: wrap; gap: 6px !important; }
+  .compare-actions button { font-size: 11px !important; padding: 5px 8px !important; }
+  .compare-toolbar { row-gap: 6px; }
 }
 @media (max-width: 480px) {
   .modal-overlay { padding: 0; align-items: flex-end; }
@@ -531,4 +537,8 @@ footer {
   .immo-filter-input { width: 47% !important; flex: 1 1 45%; }
   .grid-3-cols { grid-template-columns: 1fr 1fr !important; }
   .vue-toggle-btn { padding: 8px 12px !important; }
+  /* Boutons ⚖/❤ sur les cartes produit */
+  .pcard .btn-voir { font-size: 11px; padding: 6px 4px; }
+  /* Tableau comparaison : LBL plus étroit */
+  .compare-lbl { width: 90px !important; min-width: 90px !important; font-size: 11px !important; }
 }
