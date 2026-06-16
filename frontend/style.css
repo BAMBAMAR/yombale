@@ -491,7 +491,7 @@ footer {
   .footer-mid { flex-direction: column; }
   .trust-badges { margin-left: 0; }
   .detail-grid { grid-template-columns: 1fr; padding: 16px 16px 80px; }
-  .detail-sidebar { position: static; top: auto; }
+  .detail-sidebar { position: static; top: auto; order: -1; }
   .detail-hero-grid { grid-template-columns: 1fr !important; }
   .detail-hero-side { border-right: none; border-bottom: 1px solid var(--border); padding: 20px; }
   .detail-hero-info { padding: 16px 20px; }
