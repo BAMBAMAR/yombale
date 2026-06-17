@@ -204,6 +204,18 @@ nav {
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 10px;
 }
+/* ── DASHBOARD COMPARAISON ──────────────────────────────────── */
+.dash-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid #f1f5f9;
+}
+.dash-body-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-bottom: 1px solid #f1f5f9;
+}
 
 /* ── LAYOUTS DÉTAIL (produit / forfait télécom / annonce immo) ───── */
 .detail-grid {
@@ -541,4 +553,8 @@ footer {
   .pcard .btn-voir { font-size: 11px; padding: 6px 4px; }
   /* Tableau comparaison : LBL plus étroit */
   .compare-lbl { width: 90px !important; min-width: 90px !important; font-size: 11px !important; }
+  /* Dashboard : 4 KPIs → 2×2 + corps → 1 col */
+  .dash-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .dash-body-grid { grid-template-columns: 1fr; }
+  .dash-body-grid > div:first-child { border-right: none; border-bottom: 1px solid #f1f5f9; }
 }

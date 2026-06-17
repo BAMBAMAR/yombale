@@ -348,7 +348,7 @@ function htmlDashboardComparaison(produits, data) {
       '</div>',
 
       // KPIs rapides
-      '<div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #f1f5f9">',
+      '<div class="dash-kpi-grid">',
         _kpi('💰 Plus bas',   fcfa(prixPlancher), '#10b981', avecPrix.find(function(p){return +p.prix_min===prixPlancher;})),
         _kpi('📈 Plus haut',  fcfa(prixPlafond),  '#ef4444', null),
         _kpi('📊 Moyenne',    fcfa(prixMoyen),    '#6366f1', null),
@@ -356,7 +356,7 @@ function htmlDashboardComparaison(produits, data) {
       '</div>',
 
       // Corps du dashboard
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid #f1f5f9">',
+      '<div class="dash-body-grid">',
 
         // Colonne gauche : par marque
         '<div style="padding:14px;border-right:1px solid #f1f5f9">',
@@ -896,7 +896,7 @@ function carteImmoHTML(a) {
           '<span style="font-size:10px;font-weight:700;color:#1e293b;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:6px">' + (TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
         '</div>',
         '<button onclick="event.stopPropagation();_immoToggleCompare(' + JSON.stringify(a).replace(/'/g,"\\'") + ')" ' +
-          'style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:2px solid ' + (inCmp ? '#059669' : 'rgba(255,255,255,.8)') + ';background:' + (inCmp ? '#059669' : 'rgba(255,255,255,.85)') + ';color:' + (inCmp ? '#fff' : '#475569') + ';font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700" title="Comparer">' + (inCmp ? '✓' : '+') + '</button>',
+          'style="position:absolute;top:6px;right:6px;width:36px;height:36px;border-radius:50%;border:2px solid ' + (inCmp ? '#059669' : 'rgba(255,255,255,.8)') + ';background:' + (inCmp ? '#059669' : 'rgba(255,255,255,.85)') + ';color:' + (inCmp ? '#fff' : '#475569') + ';font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700" title="Comparer">' + (inCmp ? '✓' : '+') + '</button>',
       '</div>',
       '<div class="pbody">',
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">',
@@ -931,7 +931,7 @@ function htmlBarreImmo() {
       '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">',
         tBtn('🏠 Location', 'location'),
         tBtn('🔑 Vente', 'vente'),
-        '<button onclick="ouvrirWizardImmo()" style="padding:6px 16px;border-radius:16px;border:2px solid #2563eb;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.2;box-shadow:0 2px 8px rgba(37,99,235,.35)"><span>🔍 Trouver mon bien</span><span style="font-size:9px;font-weight:500;opacity:.85">Budget · Quartier · Type → Top 5</span></button>',
+        '<button onclick="ouvrirWizardImmo()" style="padding:6px 16px;border-radius:16px;border:2px solid #2563eb;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.2;box-shadow:0 2px 8px rgba(37,99,235,.35)"><span>🔍 Trouver mon bien</span><span style="font-size:11px;font-weight:500;opacity:.85">Budget · Quartier · Type</span></button>',
         '<button onclick="ouvrirPublierAnnonce()" style="padding:6px 16px;border-radius:16px;border:2px solid #059669;background:#fff;color:#059669;font-size:12px;font-weight:700;cursor:pointer">📢 Publier une annonce (gratuit)</button>',
         cmpN >= 2 ? '<button onclick="_immoOuvrirComparaison()" style="padding:5px 14px;border-radius:16px;border:1.5px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer">⚖ Comparer ' + cmpN + ' biens</button>' : '',
         hasFilters ? '<button onclick="_immoResetFiltres()" style="padding:5px 12px;border-radius:16px;border:1.5px solid #fca5a5;background:#fff5f5;color:#e63946;font-size:11px;font-weight:600;cursor:pointer;margin-left:auto">✕ Réinitialiser</button>' : '',
@@ -2755,7 +2755,7 @@ function htmlTableauOffres(offresArr, prixMin) {
             '<div style="display:flex;align-items:center;gap:5px">',
               '<span style="font-size:15px">' + icon + '</span>',
               '<span style="font-weight:700;font-size:13px;color:#1e293b">' + (o.marchand_nom||'Marchand') + '</span>',
-              best ? '<span style="background:#10b981;color:#fff;font-size:9px;font-weight:700;padding:1px 7px;border-radius:8px">MEILLEUR PRIX</span>' : '',
+              best ? '<span style="background:#10b981;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px">MEILLEUR PRIX</span>' : '',
             '</div>',
             // Détails marchand
             // Titre exact du produit chez ce marchand (depuis slug URL ou titre normalisé)
@@ -2881,7 +2881,7 @@ function htmlSimilaires(id, similaires, filtresSim) {
       '<div onclick="ouvrirProduit(\'' + p.id + '\')" ',
         'style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px;cursor:pointer;position:relative" ',
         'onmouseover="this.style.borderColor=\'#1d4ed8\'" onmouseout="this.style.borderColor=\'#e2e8f0\'">',
-        economie >= 15 ? '<div style="position:absolute;top:6px;right:6px;background:#f97316;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px">-' + economie + '%</div>' : '',
+        economie >= 15 ? '<div style="position:absolute;top:6px;right:6px;background:#f97316;color:#fff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:8px">-' + economie + '%</div>' : '',
         '<div style="width:100%;height:70px;background:#f8fafc;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:8px">',
           p.image_url ? '<img src="' + p.image_url + '" style="max-height:70px;object-fit:contain" loading="lazy">' : '<span style="font-size:28px">📦</span>',
         '</div>',
@@ -3157,7 +3157,7 @@ async function ouvrirComparaison() {
       var cheapest = prixMins[i] && prixMins[i]===prixMinGlobal;
       return '<div style="'+COL+'vertical-align:top">' +
         (cheapest
-          ? '<div style="background:#10b981;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:6px">🏆 MOINS CHER</div>'
+          ? '<div style="background:#10b981;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px;display:inline-block;margin-bottom:6px">🏆 MOINS CHER</div>'
           : '<div style="height:20px;margin-bottom:6px"></div>') +
         '<div style="width:64px;height:64px;margin:0 auto 8px;background:#f8fafc;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #e2e8f0">' +
           (p.image_url ? '<img src="'+p.image_url+'" alt="'+(p.nom||'').replace(/"/g,'&quot;')+'" loading="lazy" style="max-width:60px;max-height:60px;object-fit:contain">' : '<span style="font-size:28px">📦</span>') +
@@ -3233,7 +3233,7 @@ async function ouvrirComparaison() {
           if(!s) return '<div style="'+COL+'"><span style="color:#cbd5e1">–</span></div>';
           var best = plusGrandMieux && s.val===maxVal;
           return '<div style="'+COL+(best?';background:#eff6ff':'')+'">'+
-            (best?'<div style="font-size:9px;font-weight:800;color:#1d4ed8;margin-bottom:2px">▲ MEILLEUR</div>':'')+
+            (best?'<div style="font-size:11px;font-weight:800;color:#1d4ed8;margin-bottom:2px">▲ MEILLEUR</div>':'')+
             '<span style="font-size:13px;font-weight:'+(best?'800':'600')+';color:'+(best?'#1d4ed8':'#1e293b')+'">'+s.label+'</span>'+
           '</div>';
         }).join('')+
