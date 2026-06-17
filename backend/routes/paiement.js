@@ -3,12 +3,14 @@ const axios  = require('axios');
 const crypto = require('crypto');
 const { pool } = require('../models/db');
 const notifs   = require('../services/notifications');
-const { limiterEcriture } = require('../middlewares/rateLimit');
+const { limiterEcriture, limiterAuth } = require('../middlewares/rateLimit');
+const { verifierToken } = require('../middlewares/auth');
 
 // POST /api/paiement/wave/initier
-router.post('/wave/initier', limiterEcriture, async (req, res) => {
+router.post('/wave/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
-    const { montant, produit_id, user_id } = req.body;
+    const user_id  = req.user.userId;
+    const { montant, produit_id } = req.body;
     const session = await axios.post(
       'https://api.wave.com/v1/checkout/sessions',
       {
@@ -45,7 +47,7 @@ router.post('/wave/webhook', async (req, res) => {
 });
 
 // POST /api/paiement/orange/initier
-router.post('/orange/initier', limiterEcriture, async (req, res) => {
+router.post('/orange/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
     const tokenRes = await axios.post(
       'https://api.orange.com/oauth/v3/token',

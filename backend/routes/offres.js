@@ -1,6 +1,7 @@
 // backend/routes/offres.js
 const router   = require('express').Router();
 const { pool } = require('../models/db');
+const { adminSecretOnly } = require('../middlewares/auth');
 
 // GET /api/offres
 router.get('/', async (req, res) => {
@@ -19,26 +20,29 @@ router.get('/', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST /api/offres/sync — réception données d'un scraper externe (webhook)
-router.post('/sync', async (req, res) => {
+// POST /api/offres/sync — réception données d'un scraper externe (admin seulement)
+router.post('/sync', adminSecretOnly, async (req, res) => {
   const { marchand_id, produits } = req.body;
   if (!marchand_id || !Array.isArray(produits)) {
     return res.status(400).json({ error: 'marchand_id et produits[] requis' });
   }
   let updated = 0;
   for (const p of produits) {
+    const prix = Number(p.prix);
+    if (!p.produit_id || isNaN(prix) || prix <= 0 || prix > 1e9) continue;
+    const url = p.url_achat && /^https?:\/\//i.test(p.url_achat) ? p.url_achat : null;
     try {
       await pool.query(
         `INSERT INTO offres (produit_id, marchand_id, prix, url_achat, scraped_at)
          VALUES ($1, $2, $3, $4, NOW())
          ON CONFLICT (produit_id, marchand_id)
          DO UPDATE SET prix=EXCLUDED.prix, scraped_at=NOW()`,
-        [p.produit_id, marchand_id, p.prix, p.url_achat]
+        [p.produit_id, marchand_id, prix, url]
       );
       await pool.query(
         `INSERT INTO historique_prix (offre_id, prix)
          SELECT id, $1 FROM offres WHERE produit_id=$2 AND marchand_id=$3`,
-        [p.prix, p.produit_id, marchand_id]
+        [prix, p.produit_id, marchand_id]
       );
       updated++;
     } catch (err) { console.error('[SYNC]', err.message); }

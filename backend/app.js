@@ -72,13 +72,13 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
-app.use(morgan('dev'));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // ── Protection pages admin ────────────────────────────────────
 // Doit être AVANT express.static pour intercepter les routes
 function adminPageGuard(req, res, next) {
   const { secretsMatch } = require('./middlewares/auth');
-  const secret = req.headers['x-admin-secret'] || req.query.secret;
+  const secret = req.headers['x-admin-secret'];
   if (process.env.ADMIN_SECRET && !secretsMatch(secret, process.env.ADMIN_SECRET)) {
     const page = req.path.replace('/', '');
     return res.status(401).send(
@@ -89,8 +89,11 @@ function adminPageGuard(req, res, next) {
       'button{padding:10px 24px;background:#ff6600;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;}</style></head>' +
       '<body><div class="box"><h2>🔒 Accès admin requis</h2>' +
       '<p style="color:#64748b;margin-bottom:16px">Entrez le secret admin pour accéder à cette page.</p>' +
-      '<input type="password" id="s" placeholder="Secret admin" autofocus>' +
-      '<br><button onclick="location.href=\'/' + page + '?secret=\'+document.getElementById(\'s\').value">Accéder →</button></div></body></html>'
+      '<input type="password" id="s" placeholder="Secret admin" autofocus onkeydown="if(event.key===\'Enter\')go()">' +
+      '<br><button onclick="go()">Accéder →</button>' +
+      '<p id="err" style="color:#e63946;font-size:13px;min-height:18px"></p>' +
+      '<script>async function go(){var s=document.getElementById("s").value;var r=await fetch("/'+page+'",{headers:{"x-admin-secret":s}});if(r.ok){sessionStorage.setItem("nopalou_admin_secret",s);location.href="/'+page+'";}else{document.getElementById("err").textContent="Secret invalide";}}<\/script>' +
+      '</div></body></html>'
     );
   }
   next();

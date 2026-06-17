@@ -1,9 +1,17 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 6 — 2026-05-14
+//  app.js VERSION 16 — 2026-06-17
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 7 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 16 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+
+function escapeHTML(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function safeUrl(url) {
+  try { var u = new URL(url); return /^https?:$/i.test(u.protocol) ? url : '#'; } catch { return '#'; }
+}
 
 var API = '/api';
 
@@ -610,8 +618,8 @@ function carteHTML(p) {
           : '<span style="font-size:40px">📦</span>',
       '</div>',
       '<div class="pbody">',
-        '<div class="pname">' + p.nom + '</div>',
-        p.marque ? '<div class="pbrand">' + p.marque + '</div>' : '',
+        '<div class="pname">' + escapeHTML(p.nom) + '</div>',
+        p.marque ? '<div class="pbrand">' + escapeHTML(p.marque) + '</div>' : '',
         p.prix_min
           ? '<div class="pprice">' + fcfa(p.prix_min) + '</div>'
           : '<div style="font-size:12px;color:#cbd5e1;margin:4px 0">Prix N/D</div>',
@@ -653,8 +661,8 @@ function carteListeHTML(p) {
           : '<span style="font-size:28px">📦</span>',
       '</div>',
       '<div style="flex:1;min-width:0">',
-        '<div style="font-size:14px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.nom + '</div>',
-        '<div style="font-size:12px;color:#94a3b8">' + (p.marque || '') + (p.categorie_nom ? ' · ' + p.categorie_nom : '') + '</div>',
+        '<div style="font-size:14px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHTML(p.nom) + '</div>',
+        '<div style="font-size:12px;color:#94a3b8">' + escapeHTML(p.marque || '') + (p.categorie_nom ? ' · ' + escapeHTML(p.categorie_nom) : '') + '</div>',
         '<div style="font-size:11px;color:#64748b;margin-top:2px">' + (p.nb_offres || 0) + ' offre(s)</div>',
       '</div>',
       '<div style="text-align:right;flex-shrink:0">',
@@ -756,8 +764,8 @@ function carteForfaitHTML(f) {
           : '<span style="font-size:40px">📶</span>',
       '</div>',
       '<div class="pbody">',
-        '<div style="font-size:11px;font-weight:700;color:#f97316;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">' + (f.operateur || '') + '</div>',
-        '<div class="pname">' + f.nom + '</div>',
+        '<div style="font-size:11px;font-weight:700;color:#f97316;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">' + escapeHTML(f.operateur || '') + '</div>',
+        '<div class="pname">' + escapeHTML(f.nom) + '</div>',
         '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0">',
           dataLabel ? '<span style="font-size:11px;font-weight:600;color:#1d4ed8;background:#eff6ff;padding:2px 8px;border-radius:10px">📶 ' + dataLabel + '</span>' : '',
           f.minutes ? '<span style="font-size:11px;font-weight:600;color:#10b981;background:#ecfdf5;padding:2px 8px;border-radius:10px">📞 ' + f.minutes + ' min</span>' : '',
@@ -876,6 +884,7 @@ function _sourceBadge(source) {
 
 // ── Carte annonce immo ───────────────────────────────────────────
 function carteImmoHTML(a) {
+  _immoCache[a.id] = a;
   var photo   = (a.photos && a.photos.length) ? a.photos[0] : null;
   var infos   = [];
   if (a.surface_m2)  infos.push('📐 ' + a.surface_m2 + ' m²');
@@ -895,15 +904,15 @@ function carteImmoHTML(a) {
           '<span style="font-size:10px;font-weight:700;color:#fff;background:' + (a.transaction === 'vente' ? '#7c3aed' : '#059669') + ';padding:2px 7px;border-radius:6px">' + (a.transaction === 'vente' ? 'Vente' : 'Location') + '</span>',
           '<span style="font-size:10px;font-weight:700;color:#1e293b;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:6px">' + (TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
         '</div>',
-        '<button onclick="event.stopPropagation();_immoToggleCompare(' + JSON.stringify(a).replace(/'/g,"\\'") + ')" ' +
+        '<button data-immo-id="' + escapeHTML(a.id) + '" onclick="event.stopPropagation();_immoToggleCompareById(this.dataset.immoId)" ' +
           'style="position:absolute;top:6px;right:6px;width:36px;height:36px;border-radius:50%;border:2px solid ' + (inCmp ? '#059669' : 'rgba(255,255,255,.8)') + ';background:' + (inCmp ? '#059669' : 'rgba(255,255,255,.85)') + ';color:' + (inCmp ? '#fff' : '#475569') + ';font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700" title="Comparer">' + (inCmp ? '✓' : '+') + '</button>',
       '</div>',
       '<div class="pbody">',
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">',
-          '<div style="font-size:11px;color:#64748b">' + (a.quartier || a.ville || '') + '</div>',
+          '<div style="font-size:11px;color:#64748b">' + escapeHTML(a.quartier || a.ville || '') + '</div>',
           _sourceBadge(a.source),
         '</div>',
-        '<div class="pname" style="font-size:13px">' + (a.titre || '') + '</div>',
+        '<div class="pname" style="font-size:13px">' + escapeHTML(a.titre || '') + '</div>',
         infos.length ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:5px 0;font-size:11px;color:#475569">' + infos.join(' · ') + (prixM2 ? ' · <span style="color:#059669;font-weight:700">' + fcfa(prixM2) + '/m²</span>' : '') + '</div>' : '',
         a.prix
           ? '<div class="pprice" style="color:#059669">' + fcfa(a.prix) + (a.transaction === 'location' ? '<span style="font-size:11px;font-weight:400;color:#64748b">/mois</span>' : '') + '</div>'
@@ -994,6 +1003,14 @@ function _immoResetFiltres()   {
   im.ville = ''; im.quartier = ''; im.type_bien = ''; im.prixMin = ''; im.prixMax = '';
   im.surfaceMin = ''; im.nbPieces = ''; im.tri = 'recent';
   chargerImmo(1);
+}
+
+// ── Cache annonces immo (pour éviter JSON.stringify dans onclick) ─
+var _immoCache = {};
+function _immoToggleCompareById(id) {
+  var a = _immoCache[id];
+  if (!a) return;
+  _immoToggleCompare(a);
 }
 
 // ── Comparaison immo ─────────────────────────────────────────────
@@ -1503,15 +1520,15 @@ function carteImmoRecoHTML(a) {
           '<span style="font-size:10px;font-weight:700;color:#fff;background:' + (a.transaction === 'vente' ? '#7c3aed' : '#059669') + ';padding:2px 7px;border-radius:6px">' + (a.transaction === 'vente' ? 'Vente' : 'Location') + '</span>',
           '<span style="font-size:10px;font-weight:700;color:#1e293b;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:6px">' + (TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
         '</div>',
-        '<button onclick="event.stopPropagation();_immoToggleCompare(' + JSON.stringify(a).replace(/'/g,"\\'") + ')" ' +
+        '<button data-immo-id="' + escapeHTML(a.id) + '" onclick="event.stopPropagation();_immoToggleCompareById(this.dataset.immoId)" ' +
           'style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:2px solid ' + (inCmp ? '#059669' : 'rgba(255,255,255,.8)') + ';background:' + (inCmp ? '#059669' : 'rgba(255,255,255,.85)') + ';color:' + (inCmp ? '#fff' : '#475569') + ';font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700">'+( inCmp?'✓':'+')+'</button>',
       '</div>',
       '<div class="pbody">',
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">',
-          '<div style="font-size:11px;color:#64748b">' + (a.quartier || a.ville || '') + '</div>',
+          '<div style="font-size:11px;color:#64748b">' + escapeHTML(a.quartier || a.ville || '') + '</div>',
           _sourceBadge(a.source),
         '</div>',
-        '<div class="pname" style="font-size:13px">' + (a.titre || '') + '</div>',
+        '<div class="pname" style="font-size:13px">' + escapeHTML(a.titre || '') + '</div>',
         infos.length ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:5px 0;font-size:11px;color:#475569">' + infos.join(' · ') + (prixM2 ? ' · <span style="color:#059669;font-weight:700">' + fcfa(prixM2) + '/m²</span>' : '') + '</div>' : '',
         a.prix
           ? '<div class="pprice" style="color:#059669">' + fcfa(a.prix) + (a.transaction === 'location' ? '<span style="font-size:11px;font-weight:400;color:#64748b">/mois</span>' : '') + '</div>'
@@ -1625,7 +1642,7 @@ async function ouvrirImmo(id) {
           '<span style="font-size:11px;font-weight:700;color:#1e293b;background:#f1f5f9;padding:3px 9px;border-radius:8px">' + (TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
           _sourceBadge(a.source),
         '</div>',
-        '<h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0 0 12px">' + a.titre + '</h2>',
+        '<h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0 0 12px">' + escapeHTML(a.titre) + '</h2>',
 
         // Prix
         a.prix ? '<div style="font-size:26px;font-weight:900;color:#059669;margin-bottom:16px">' + fcfa(a.prix) + (a.transaction === 'location' ? '<span style="font-size:14px;font-weight:400;color:#64748b"> / mois</span>' : '') + '</div>' : '<div style="font-size:16px;color:#94a3b8;margin-bottom:16px">Prix à négocier</div>',
@@ -1643,13 +1660,13 @@ async function ouvrirImmo(id) {
         // Description
         a.description ? '<div style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:20px">' +
           '<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px">📝 Description</div>' +
-          '<p style="font-size:13px;color:#334155;line-height:1.6;white-space:pre-line;margin:0">' + a.description + '</p>' +
+          '<p style="font-size:13px;color:#334155;line-height:1.6;white-space:pre-line;margin:0">' + escapeHTML(a.description) + '</p>' +
         '</div>' : '',
 
         // CTA
         a.contact_tel ? '<a href="https://wa.me/' + a.contact_tel.replace(/[^0-9]/g, '') + '" target="_blank" rel="noopener" ' +
-          'style="display:block;text-align:center;padding:14px;background:#25d366;color:#fff;border-radius:12px;font-size:15px;font-weight:800;text-decoration:none;margin-bottom:10px">💬 Contacter ' + (a.contact_nom ? a.contact_nom : 'le propriétaire') + ' (WhatsApp)</a>' : '',
-        a.url_source ? '<a href="' + a.url_source + '" target="_blank" rel="noopener" ' +
+          'style="display:block;text-align:center;padding:14px;background:#25d366;color:#fff;border-radius:12px;font-size:15px;font-weight:800;text-decoration:none;margin-bottom:10px">💬 Contacter ' + (a.contact_nom ? escapeHTML(a.contact_nom) : 'le propriétaire') + ' (WhatsApp)</a>' : '',
+        a.url_source ? '<a href="' + safeUrl(a.url_source) + '" target="_blank" rel="noopener" ' +
           'style="display:block;text-align:center;padding:14px;background:#059669;color:#fff;border-radius:12px;font-size:15px;font-weight:800;text-decoration:none">Voir l\'annonce originale →</a>' : '',
       '</div>',
       htmlFooter(),
@@ -2448,18 +2465,6 @@ async function ouvrirProduit(id, simFiltres) {
     ajouterRecent(res);
 
     var offresArr = Array.isArray(offres) ? offres : [];
-    // ── DEBUG titre_affiche ──────────────────────────────────
-    if (offresArr.length) {
-      console.log('%c[OFFRES DEBUG]', 'color:#f97316;font-weight:bold', 
-        offresArr.map(function(o) { return { 
-          marchand: o.marchand_nom, 
-          titre_affiche: o.titre_affiche, 
-          produit_nom: o.produit_nom,
-          titre_marchand: o.titre_marchand,
-          url: o.url_achat ? o.url_achat.slice(0,60) : null
-        }; })
-      );
-    }
     var prixMin   = offresArr.length ? Math.min.apply(null, offresArr.map(function(o){ return +o.prix; })) : 0;
     var prixMaxO  = offresArr.length ? Math.max.apply(null, offresArr.map(function(o){ return +o.prix; })) : 0;
     var economie  = prixMaxO > prixMin ? prixMaxO - prixMin : 0;
@@ -2478,10 +2483,10 @@ async function ouvrirProduit(id, simFiltres) {
         '</button>',
         '<div style="width:1px;height:20px;background:#e2e8f0"></div>',
         '<span style="font-size:13px;font-weight:600;color:#334155;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">',
-          res.nom,
+          escapeHTML(res.nom),
         '</span>',
         offresArr.length ? [
-          '<a href="' + (bestOffre && bestOffre.url_achat ? bestOffre.url_achat : '#') + '" target="_blank" rel="noopener"',
+          '<a href="' + (bestOffre && bestOffre.url_achat ? safeUrl(bestOffre.url_achat) : '#') + '" target="_blank" rel="noopener"',
           ' style="flex-shrink:0;padding:8px 16px;background:#10b981;color:#fff;border-radius:10px;',
           'font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap">',
           'Acheter ' + fcfa(prixMin) + ' →</a>',
@@ -2507,16 +2512,16 @@ async function ouvrirProduit(id, simFiltres) {
             res.categorie_nom
               ? '<div><span style="font-size:11px;font-weight:700;color:#1d4ed8;background:#eff6ff;' +
                 'padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em">' +
-                res.categorie_nom + '</span></div>'
+                escapeHTML(res.categorie_nom) + '</span></div>'
               : '',
 
             // Nom & marque
             '<div>',
               '<h1 style="font-size:24px;font-weight:800;color:#0f172a;line-height:1.3;margin:0 0 6px">',
-                res.nom,
+                escapeHTML(res.nom),
               '</h1>',
               res.marque
-                ? '<p style="font-size:13px;color:#64748b;margin:0">Marque : <strong style="color:#334155">' + res.marque + '</strong></p>'
+                ? '<p style="font-size:13px;color:#64748b;margin:0">Marque : <strong style="color:#334155">' + escapeHTML(res.marque) + '</strong></p>'
                 : '',
             '</div>',
 
@@ -2542,7 +2547,7 @@ async function ouvrirProduit(id, simFiltres) {
 
             // CTA bouton
             bestOffre ? [
-              '<a href="' + (bestOffre.url_achat||'#') + '" target="_blank" rel="noopener"',
+              '<a href="' + safeUrl(bestOffre.url_achat||'#') + '" target="_blank" rel="noopener"',
               ' style="display:block;text-align:center;padding:14px 24px;background:linear-gradient(135deg,#10b981,#059669);',
               'color:#fff;border-radius:12px;font-size:16px;font-weight:800;text-decoration:none;',
               'box-shadow:0 4px 12px rgba(16,185,129,.35);letter-spacing:.01em">',
@@ -2635,9 +2640,9 @@ function _sectionOffres(offresArr, prixMin) {
         '</div>',
         '<div style="flex:1;min-width:0">',
           best ? '<span style="display:inline-block;background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:4px">🏆 Meilleur prix</span><br>' : '',
-          '<a href="' + (o.site_url||'#') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" ',
+          '<a href="' + safeUrl(o.site_url||'#') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" ',
           'style="font-size:15px;font-weight:700;color:#1e293b;text-decoration:none">',
-            o.marchand_nom || 'Marchand',
+            escapeHTML(o.marchand_nom || 'Marchand'),
           '</a>',
           // Nom du produit chez ce marchand
           (function() {
@@ -2647,8 +2652,8 @@ function _sectionOffres(offresArr, prixMin) {
             t = t.split(' ').map(function(w) {
               return w.length > 1 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w.toUpperCase();
             }).join(' ');
-            return '<div style="font-size:12px;color:#64748b;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + t + '">' +
-              t.slice(0, 60) + (t.length > 60 ? '…' : '') +
+            return '<div style="font-size:12px;color:#64748b;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHTML(t) + '">' +
+              escapeHTML(t.slice(0, 60)) + (t.length > 60 ? '…' : '') +
             '</div>';
           })(),
           ecart > 0 ? '<div style="font-size:11px;color:#f97316;margin-top:2px">+' + fcfa(ecart) + ' de plus que le moins cher</div>' : '',
@@ -2659,7 +2664,7 @@ function _sectionOffres(offresArr, prixMin) {
           '<div style="font-size:22px;font-weight:900;color:' + (best ? '#15803d' : '#1e293b') + ';white-space:nowrap">',
             fcfa(o.prix),
           '</div>',
-          '<a href="' + (o.url_achat||'#') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" ',
+          '<a href="' + safeUrl(o.url_achat||'#') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" ',
           'style="display:inline-block;margin-top:6px;padding:8px 20px;',
           'background:' + (best ? '#10b981' : '#1d4ed8') + ';color:#fff;',
           'border-radius:10px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap">',
@@ -2709,10 +2714,10 @@ function _sectionResume(res, offresArr, prixMin, bestOffre) {
           '<span style="font-size:14px;font-weight:700;color:#334155">' + offresArr.length + '</span>',
         '</div>',
         bestOffre ? [
-          '<a href="' + (bestOffre.url_achat||'#') + '" target="_blank" rel="noopener"',
+          '<a href="' + safeUrl(bestOffre.url_achat||'#') + '" target="_blank" rel="noopener"',
           ' style="display:block;text-align:center;padding:13px;background:#10b981;color:#fff;',
           'border-radius:10px;font-size:14px;font-weight:800;text-decoration:none;margin-top:4px">',
-          '🛒 Meilleur prix chez ' + (bestOffre.marchand_nom||'ce marchand') + '</a>',
+          '🛒 Meilleur prix chez ' + escapeHTML(bestOffre.marchand_nom||'ce marchand') + '</a>',
         ].join('') : '',
       '</div>',
     '</div>',
@@ -2754,19 +2759,17 @@ function htmlTableauOffres(offresArr, prixMin) {
           '<div style="flex:1;min-width:0">',
             '<div style="display:flex;align-items:center;gap:5px">',
               '<span style="font-size:15px">' + icon + '</span>',
-              '<span style="font-weight:700;font-size:13px;color:#1e293b">' + (o.marchand_nom||'Marchand') + '</span>',
+              '<span style="font-weight:700;font-size:13px;color:#1e293b">' + escapeHTML(o.marchand_nom||'Marchand') + '</span>',
               best ? '<span style="background:#10b981;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px">MEILLEUR PRIX</span>' : '',
             '</div>',
-            // Détails marchand
-            // Titre exact du produit chez ce marchand (depuis slug URL ou titre normalisé)
+            // Titre exact du produit chez ce marchand
             (function() {
               var t = o.titre_affiche || o.produit_nom || '';
-              // Capitaliser la première lettre de chaque mot
               t = t.split(' ').map(function(w) {
                 return w.length > 1 ? w.charAt(0).toUpperCase() + w.slice(1) : w.toUpperCase();
               }).join(' ');
-              return '<div style="font-size:11px;color:#475569;margin-top:3px;overflow:hidden;text-overflow:ellipsis;font-style:italic" title="' + t + '">' +
-                t.slice(0, 65) + (t.length > 65 ? '…' : '') +
+              return '<div style="font-size:11px;color:#475569;margin-top:3px;overflow:hidden;text-overflow:ellipsis;font-style:italic" title="' + escapeHTML(t) + '">' +
+                escapeHTML(t.slice(0, 65)) + (t.length > 65 ? '…' : '') +
               '</div>';
             })(),
             '<div style="font-size:11px;color:#94a3b8;margin-top:2px">',
@@ -2780,7 +2783,7 @@ function htmlTableauOffres(offresArr, prixMin) {
             ecart > 0 ? '<div style="font-size:10px;color:#ef4444;font-weight:600">+' + fcfa(ecart) + ' (+' + pct + '%)</div>' : '<div style="font-size:10px;color:#10b981;font-weight:600">✓ le moins cher</div>',
           '</div>',
           // Bouton
-          '<a href="' + (o.url_achat||'#') + '" target="_blank" onclick="event.stopPropagation()" ',
+          '<a href="' + safeUrl(o.url_achat||'#') + '" target="_blank" onclick="event.stopPropagation()" ',
             'style="flex-shrink:0;padding:8px 16px;background:' + (best ? '#10b981' : '#1d4ed8') + ';',
             'color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap">',
             'Voir l\'offre →',
