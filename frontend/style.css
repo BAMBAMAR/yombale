@@ -543,6 +543,8 @@ footer {
   .modal-box { max-width: 100%; max-height: 95vh; border-radius: 20px 20px 0 0; }
   .pgrid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
   .hero h1 { font-size: 22px; }
+  .sbar input { padding: 13px 14px; font-size: 14px; }
+  .sbar button { padding: 0 14px; font-size: 13px; }
   .form-group input { font-size: 16px; padding: 10px 12px; }
   #compare-bar { padding: 8px 3% !important; gap: 8px !important; }
   #compare-bar span { font-size: 11px !important; }
