@@ -483,7 +483,7 @@ function htmlHero() {
           ' placeholder="Ex: Samsung Galaxy A55, climatiseur 18000 BTU..."',
           ' onkeydown="if(event.key===\'Enter\'){fermerSuggestions();doSearch()}"',
           ' oninput="onSearchInput(this.value)">',
-        '<button onclick="fermerSuggestions();doSearch()">🔍 Comparer</button>',
+        '<button onclick="fermerSuggestions();doSearch()">🔍<span class="sbar-txt"> Comparer</span></button>',
       '</div>',
       htmlCategories(),
       '<div class="hero-stats">',
