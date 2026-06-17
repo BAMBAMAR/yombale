@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 18 — 2026-06-17
+//  app.js VERSION 19 — 2026-06-17
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 18 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 19 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -1701,6 +1701,8 @@ function chargerImmo(page) {
   page = page || 1;
   state.page = page;
   state.currentPage = 'home';
+  var appEl = document.getElementById('app');
+  if (appEl) appEl.style.cssText = '';
   var im = _immoState;
 
   // ── Mode "Mes favoris" : charger les biens sauvegardés ──────────
@@ -1770,75 +1772,228 @@ function chargerImmo(page) {
     });
 }
 
-// ── Détail annonce immo ──────────────────────────────────────────
+// ── Détail annonce immo — layout fiche produit ───────────────────
 async function ouvrirImmo(id) {
+  var appEl = document.getElementById('app');
+  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
+
+  render('<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px"><div class="spin" style="width:44px;height:44px;border-width:4px"></div><p style="color:#64748b;font-size:14px">Chargement de l\'annonce…</p></div>');
+
   try {
-    render('<div class="loader"><div class="spin"></div><p>Chargement…</p></div>');
-    var a = await apiFetch('/immo/' + id);
+    var a      = await apiFetch('/immo/' + id);
     var photos = Array.isArray(a.photos) ? a.photos : (typeof a.photos === 'string' ? JSON.parse(a.photos) : []);
-    var infos = [
-      a.surface_m2  ? ['📐 Surface',    a.surface_m2 + ' m²'] : null,
-      a.nb_pieces   ? ['🚪 Pièces',     a.nb_pieces + ''] : null,
-      a.nb_chambres ? ['🛏 Chambres',   a.nb_chambres + ''] : null,
-      a.ville       ? ['📍 Ville',      a.ville] : null,
-      a.quartier    ? ['🗺 Quartier',   a.quartier] : null,
-      ['🏷 Type',   TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '—'],
+    _immoCache[a.id] = a;
+
+    var prixM2  = (a.prix && a.surface_m2) ? Math.round(a.prix / a.surface_m2) : null;
+    var inCmp   = _immoState.compare.some(function(x) { return x.id === a.id; });
+    var inFav   = _immoState.favoris.indexOf(a.id) !== -1;
+    var prenomContact = a.contact_nom ? escapeHTML(a.contact_nom.split(' ')[0]) : 'le propriétaire';
+
+    // ── Nav sticky ─────────────────────────────────────────────
+    var navHtml = [
+      '<nav style="position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #e2e8f0;',
+               'box-shadow:0 1px 4px rgba(0,0,0,.08);padding:0 16px;height:52px;',
+               'display:flex;align-items:center;gap:10px">',
+        '<button onclick="chargerImmo(1)" style="display:flex;align-items:center;gap:6px;background:none;border:none;',
+                'color:#059669;font-size:14px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:8px" ',
+                'onmouseover="this.style.background=\'#f0fdf4\'" onmouseout="this.style.background=\'none\'">',
+          '← Retour',
+        '</button>',
+        '<div style="width:1px;height:20px;background:#e2e8f0"></div>',
+        '<span style="font-size:13px;font-weight:600;color:#334155;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">',
+          escapeHTML(a.titre || ''),
+        '</span>',
+        a.contact_tel
+          ? '<a href="https://wa.me/' + a.contact_tel.replace(/[^0-9]/g, '') + '" target="_blank" rel="noopener" style="flex-shrink:0;padding:8px 16px;background:#25d366;color:#fff;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap">💬 Contacter</a>'
+          : (a.url_source ? '<a href="' + safeUrl(a.url_source) + '" target="_blank" rel="noopener" style="flex-shrink:0;padding:8px 16px;background:#059669;color:#fff;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap">Voir l\'annonce →</a>' : ''),
+      '</nav>',
+    ].join('');
+
+    // ── Hero : photo (gauche) + prix/CTA (droite) ──────────────
+    var heroHtml = [
+      '<div style="background:#fff;border-bottom:1px solid #e2e8f0">',
+        '<div class="detail-hero-grid" style="grid-template-columns:minmax(280px,42%) 1fr">',
+
+          // Photo principale
+          '<div class="detail-hero-side" style="background:linear-gradient(145deg,#f0fdf4,#dcfce7);min-height:300px;padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center">',
+            photos.length
+              ? '<img src="' + escapeHTML(photos[0]) + '" alt="' + escapeHTML((a.titre||'').replace(/"/g,'&quot;')) + '" loading="lazy" style="width:100%;height:100%;min-height:280px;object-fit:cover" onerror="this.style.display=\'none\'">'
+              : '<span style="font-size:80px">' + _immoIcon(a.type_bien) + '</span>',
+          '</div>',
+
+          // Infos droite
+          '<div class="detail-hero-info" style="display:flex;flex-direction:column;gap:16px">',
+            // Badges
+            '<div style="display:flex;gap:8px;flex-wrap:wrap">',
+              '<span style="font-size:11px;font-weight:700;color:#fff;background:' + (a.transaction === 'vente' ? '#7c3aed' : '#059669') + ';padding:4px 12px;border-radius:20px">' + (a.transaction === 'vente' ? '🔑 Vente' : '🏠 Location') + '</span>',
+              '<span style="font-size:11px;font-weight:700;color:#1e293b;background:#f1f5f9;padding:4px 12px;border-radius:20px">' + escapeHTML(TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
+              _sourceBadge(a.source),
+            '</div>',
+            // Titre
+            '<div>',
+              '<h1 style="font-size:22px;font-weight:800;color:#0f172a;line-height:1.3;margin:0 0 6px">' + escapeHTML(a.titre || '') + '</h1>',
+              '<p style="font-size:13px;color:#64748b;margin:0">📍 ' + escapeHTML((a.quartier ? a.quartier + ', ' : '') + (a.ville || '')) + '</p>',
+            '</div>',
+            // Bloc prix
+            a.prix ? [
+              '<div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:14px;padding:20px 24px">',
+                '<div style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">💰 Prix</div>',
+                '<div style="font-size:36px;font-weight:900;color:#15803d;line-height:1">' + fcfa(a.prix) + (a.transaction === 'location' ? '<span style="font-size:14px;font-weight:400;color:#64748b"> / mois</span>' : '') + '</div>',
+                prixM2 ? '<p style="margin:8px 0 0;font-size:12px;color:#16a34a">≈ ' + fcfa(prixM2) + ' / m²</p>' : '',
+              '</div>',
+            ].join('') : '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;color:#94a3b8;font-size:14px">Prix à négocier</div>',
+            // CTA principal
+            a.contact_tel ? [
+              '<a href="https://wa.me/' + a.contact_tel.replace(/[^0-9]/g, '') + '" target="_blank" rel="noopener"',
+              ' style="display:block;text-align:center;padding:14px 24px;background:linear-gradient(135deg,#25d366,#128c7e);',
+              'color:#fff;border-radius:12px;font-size:16px;font-weight:800;text-decoration:none;',
+              'box-shadow:0 4px 12px rgba(37,211,102,.35)">',
+              '💬 Contacter ' + prenomContact + ' (WhatsApp)',
+              '</a>',
+            ].join('') : (a.url_source ? [
+              '<a href="' + safeUrl(a.url_source) + '" target="_blank" rel="noopener"',
+              ' style="display:block;text-align:center;padding:14px 24px;background:linear-gradient(135deg,#059669,#047857);',
+              'color:#fff;border-radius:12px;font-size:16px;font-weight:800;text-decoration:none;',
+              'box-shadow:0 4px 12px rgba(5,150,105,.35)">',
+              'Voir l\'annonce originale →',
+              '</a>',
+            ].join('') : ''),
+            // Badges confiance
+            '<div style="display:flex;gap:10px;flex-wrap:wrap">',
+              _badge('📋', 'Annonce vérifiée'),
+              _badge('🔒', 'Contact sécurisé'),
+              a.surface_m2 ? _badge('📐', a.surface_m2 + ' m²') : '',
+            '</div>',
+          '</div>',
+        '</div>',
+      '</div>',
+    ].join('');
+
+    // ── Corps : infos + description + galerie / résumé sidebar ──
+    var caract = [
+      a.surface_m2  ? ['📐', 'Surface',      a.surface_m2 + ' m²']      : null,
+      prixM2        ? ['💵', 'Prix/m²',       fcfa(prixM2)]              : null,
+      a.nb_pieces   ? ['🚪', 'Pièces',        a.nb_pieces + '']          : null,
+      a.nb_chambres ? ['🛏', 'Chambres',      a.nb_chambres + '']        : null,
+      a.ville       ? ['📍', 'Ville',         a.ville]                   : null,
+      a.quartier    ? ['🗺', 'Quartier',      a.quartier]                : null,
+      ['🏷', 'Type de bien', TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '—'],
+      ['🔁', 'Transaction',  a.transaction === 'vente' ? 'Vente' : 'Location'],
     ].filter(Boolean);
 
-    render([
-      htmlHero(),
-      '<div style="max-width:760px;margin:0 auto;padding:16px 5% 40px">',
-        '<button onclick="chargerImmo(1)" style="background:none;border:none;color:#059669;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:16px">← Retour</button>',
+    var sectCaract = [
+      '<div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)">',
+        '<div style="padding:20px 20px 4px"><h2 style="font-size:14px;font-weight:800;color:#0f172a;margin:0 0 14px">📋 Informations sur ce bien</h2></div>',
+        caract.map(function(r) {
+          return '<div style="display:flex;align-items:center;gap:12px;padding:13px 20px;border-bottom:1px solid #f1f5f9">' +
+            '<span style="font-size:18px;width:28px;text-align:center;flex-shrink:0">' + r[0] + '</span>' +
+            '<span style="flex:1;font-size:13px;font-weight:600;color:#64748b">' + r[1] + '</span>' +
+            '<span style="font-size:14px;font-weight:700;color:#1e293b;text-align:right">' + escapeHTML(String(r[2])) + '</span>' +
+          '</div>';
+        }).join(''),
+      '</div>',
+    ].join('');
 
-        // Galerie photos
-        photos.length ? [
-          '<div style="border-radius:14px;overflow:hidden;margin-bottom:16px;background:#f1f5f9;max-height:320px">',
-            '<img src="' + photos[0] + '" alt="' + (a.titre || '').replace(/"/g, '&quot;') + '" style="width:100%;max-height:320px;object-fit:cover" onerror="this.style.display=\'none\'">',
-          '</div>',
-          photos.length > 1 ? '<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:16px">' +
-            photos.slice(1, 6).map(function(p) {
-              return '<img src="' + p + '" alt="' + (a.titre || '').replace(/"/g, '&quot;') + '" loading="lazy" style="height:72px;width:100px;object-fit:cover;border-radius:8px;flex-shrink:0" onerror="this.style.display=\'none\'">';
-            }).join('') + '</div>' : '',
-        ].join('') : '<div style="height:180px;border-radius:14px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);display:flex;align-items:center;justify-content:center;font-size:64px;margin-bottom:16px">' + _immoIcon(a.type_bien) + '</div>',
+    var sectDesc = a.description ? [
+      '<div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.04)">',
+        '<h2 style="font-size:14px;font-weight:800;color:#0f172a;margin:0 0 12px">📝 Description</h2>',
+        '<p style="font-size:13px;color:#334155;line-height:1.7;white-space:pre-line;margin:0">' + escapeHTML(a.description) + '</p>',
+      '</div>',
+    ].join('') : '';
 
-        // Titre + badges
-        '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;flex-wrap:wrap">',
-          '<span style="font-size:11px;font-weight:700;color:#fff;background:' + (a.transaction === 'vente' ? '#7c3aed' : '#059669') + ';padding:3px 9px;border-radius:8px">' + (a.transaction === 'vente' ? 'Vente' : 'Location') + '</span>',
-          '<span style="font-size:11px;font-weight:700;color:#1e293b;background:#f1f5f9;padding:3px 9px;border-radius:8px">' + (TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
-          _sourceBadge(a.source),
-        '</div>',
-        '<h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0 0 12px">' + escapeHTML(a.titre) + '</h2>',
-
-        // Prix
-        a.prix ? '<div style="font-size:26px;font-weight:900;color:#059669;margin-bottom:16px">' + fcfa(a.prix) + (a.transaction === 'location' ? '<span style="font-size:14px;font-weight:400;color:#64748b"> / mois</span>' : '') + '</div>' : '<div style="font-size:16px;color:#94a3b8;margin-bottom:16px">Prix à négocier</div>',
-
-        // Infos
-        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px">',
-          infos.map(function(row) {
-            return '<div style="background:#f8fafc;border-radius:10px;padding:10px 14px">' +
-              '<div style="font-size:11px;color:#94a3b8;margin-bottom:2px">' + row[0] + '</div>' +
-              '<div style="font-size:14px;font-weight:700;color:#1e293b">' + row[1] + '</div>' +
-            '</div>';
+    var sectPhotos = photos.length > 1 ? [
+      '<div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.04)">',
+        '<h2 style="font-size:14px;font-weight:800;color:#0f172a;margin:0 0 10px">📷 Photos (' + photos.length + ')</h2>',
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px">',
+          photos.map(function(p, i) {
+            return '<img src="' + escapeHTML(p) + '" alt="Photo ' + (i+1) + '" loading="lazy" style="width:100%;height:88px;object-fit:cover;border-radius:8px" onerror="this.style.display=\'none\'">';
           }).join(''),
         '</div>',
-
-        // Description
-        a.description ? '<div style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:20px">' +
-          '<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px">📝 Description</div>' +
-          '<p style="font-size:13px;color:#334155;line-height:1.6;white-space:pre-line;margin:0">' + escapeHTML(a.description) + '</p>' +
-        '</div>' : '',
-
-        // CTA
-        a.contact_tel ? '<a href="https://wa.me/' + a.contact_tel.replace(/[^0-9]/g, '') + '" target="_blank" rel="noopener" ' +
-          'style="display:block;text-align:center;padding:14px;background:#25d366;color:#fff;border-radius:12px;font-size:15px;font-weight:800;text-decoration:none;margin-bottom:10px">💬 Contacter ' + (a.contact_nom ? escapeHTML(a.contact_nom) : 'le propriétaire') + ' (WhatsApp)</a>' : '',
-        a.url_source ? '<a href="' + safeUrl(a.url_source) + '" target="_blank" rel="noopener" ' +
-          'style="display:block;text-align:center;padding:14px;background:#059669;color:#fff;border-radius:12px;font-size:15px;font-weight:800;text-decoration:none">Voir l\'annonce originale →</a>' : '',
       '</div>',
-      htmlFooter(),
-    ].join(''));
+    ].join('') : '';
+
+    // ── Sidebar Résumé (identique à _sectionResume produit) ────
+    var sidebarHtml = [
+      '<div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)">',
+        // Header coloré
+        '<div style="background:linear-gradient(135deg,' + (a.transaction === 'vente' ? '#7c3aed,#6d28d9' : '#059669,#047857') + ');padding:16px 20px;color:#fff">',
+          '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.8">Résumé</div>',
+          '<div style="font-size:16px;font-weight:800;margin-top:4px;line-height:1.3;overflow-wrap:break-word;word-break:break-word">' + escapeHTML(a.titre ? (a.titre.length > 60 ? a.titre.slice(0,60)+'…' : a.titre) : '') + '</div>',
+        '</div>',
+        '<div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">',
+          // Prix
+          a.prix ? '<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #f1f5f9"><span style="font-size:12px;color:#64748b">Prix</span><span style="font-size:20px;font-weight:900;color:#15803d">' + fcfa(a.prix) + (a.transaction === 'location' ? '<span style="font-size:11px;font-weight:400;color:#64748b">/mois</span>' : '') + '</span></div>' : '',
+          // Surface
+          a.surface_m2 ? '<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #f1f5f9"><span style="font-size:12px;color:#64748b">Surface</span><span style="font-size:15px;font-weight:700;color:#334155">' + a.surface_m2 + ' m²</span></div>' : '',
+          // Prix/m²
+          prixM2 ? '<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #f1f5f9"><span style="font-size:12px;color:#64748b">Prix / m²</span><span style="font-size:15px;font-weight:700;color:#334155">' + fcfa(prixM2) + '</span></div>' : '',
+          // Pièces / chambres
+          (a.nb_pieces || a.nb_chambres) ? '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:#64748b">Pièces / Chambres</span><span style="font-size:14px;font-weight:700;color:#334155">' + (a.nb_pieces || '?') + ' p. / ' + (a.nb_chambres || '?') + ' ch.</span></div>' : '',
+          // CTA WhatsApp
+          a.contact_tel ? '<a href="https://wa.me/' + a.contact_tel.replace(/[^0-9]/g, '') + '" target="_blank" rel="noopener" style="display:block;text-align:center;padding:13px;background:#25d366;color:#fff;border-radius:10px;font-size:14px;font-weight:800;text-decoration:none;margin-top:4px">💬 Contacter ' + prenomContact + '</a>' : '',
+          // CTA Source
+          a.url_source ? '<a href="' + safeUrl(a.url_source) + '" target="_blank" rel="noopener" style="display:block;text-align:center;padding:13px;background:#059669;color:#fff;border-radius:10px;font-size:14px;font-weight:800;text-decoration:none">Voir l\'annonce →</a>' : '',
+          // Boutons ⚖ + ❤
+          '<div style="display:flex;gap:8px;margin-top:4px">',
+            '<button data-immo-id="' + escapeHTML(String(a.id)) + '" onclick="_immoToggleCmpFiche(this.dataset.immoId)" ' +
+              'style="flex:1;padding:10px;border-radius:10px;border:1px solid ' + (inCmp ? '#7c3aed' : '#e2e8f0') + ';background:' + (inCmp ? '#f5f3ff' : '#fff') + ';cursor:pointer;font-size:13px;font-weight:700;color:' + (inCmp ? '#7c3aed' : '#64748b') + '">' +
+              (inCmp ? '⚖ Sélectionné ✓' : '⚖ Comparer') + '</button>',
+            '<button onclick="_immoToggleFavFiche(\'' + escapeHTML(String(a.id)) + '\')" ' +
+              'style="padding:10px 16px;border-radius:10px;border:1px solid ' + (inFav ? '#ef4444' : '#e2e8f0') + ';background:' + (inFav ? '#fef2f2' : '#fff') + ';cursor:pointer;font-size:16px">' +
+              (inFav ? '❤' : '🤍') + '</button>',
+          '</div>',
+        '</div>',
+      '</div>',
+    ].join('');
+
+    var bodyHtml = [
+      '<div class="detail-grid">',
+        '<div class="detail-main-col">',
+          sectCaract,
+          sectDesc,
+          sectPhotos,
+        '</div>',
+        '<div class="detail-sidebar">',
+          sidebarHtml,
+        '</div>',
+      '</div>',
+    ].join('');
+
+    render(navHtml + heroHtml + bodyHtml);
+
   } catch (err) {
+    var appEl2 = document.getElementById('app');
+    if (appEl2) appEl2.style.cssText = '';
     renderErreur(err);
   }
+}
+
+// ── Toggles depuis la fiche immo (sans quitter la page) ──────────
+function _immoToggleCmpFiche(id) {
+  var a = _immoCache[id];
+  if (!a) return;
+  var im = _immoState;
+  var idx = im.compare.findIndex(function(x) { return x.id === a.id; });
+  if (idx !== -1) {
+    im.compare.splice(idx, 1);
+  } else {
+    if (im.compare.length >= 3) { toast('Maximum 3 biens à comparer', '#f97316'); return; }
+    im.compare.push(a);
+  }
+  ouvrirImmo(id);
+}
+
+function _immoToggleFavFiche(id) {
+  var idx = _immoState.favoris.indexOf(id);
+  if (idx !== -1) {
+    _immoState.favoris.splice(idx, 1);
+    toast('Retiré des favoris', '#64748b');
+  } else {
+    _immoState.favoris.push(id);
+    toast('Ajouté aux favoris ❤', '#ef4444');
+  }
+  localStorage.setItem('nopalou_immo_favoris', JSON.stringify(_immoState.favoris));
+  ouvrirImmo(id);
 }
 
 function toggleComparerForfait(id) {
