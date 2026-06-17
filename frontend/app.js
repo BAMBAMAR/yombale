@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 17 — 2026-06-17
+//  app.js VERSION 18 — 2026-06-17
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 17 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 18 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -854,6 +854,8 @@ var _immoState = {
   tri: 'recent',
   villes: null,
   compare: [],   // annonces sélectionnées pour comparaison (max 3)
+  favoris: JSON.parse(localStorage.getItem('nopalou_immo_favoris') || '[]'),
+  voirFavoris: false,
 };
 
 var TYPE_BIEN_LABELS = {
@@ -891,6 +893,7 @@ function carteImmoHTML(a) {
   if (a.nb_pieces)   infos.push('🚪 ' + a.nb_pieces + ' p.');
   if (a.nb_chambres) infos.push('🛏 ' + a.nb_chambres + ' ch.');
   var inCmp   = _immoState.compare.some(function(x) { return x.id === a.id; });
+  var inFav   = _immoState.favoris.indexOf(a.id) !== -1;
   var prixM2  = (a.prix && a.surface_m2) ? Math.round(a.prix / a.surface_m2) : null;
   var sponso  = a.sponsorisee && (!a.sponsorisee_jusqu_au || new Date(a.sponsorisee_jusqu_au) > new Date());
   return [
@@ -904,8 +907,6 @@ function carteImmoHTML(a) {
           '<span style="font-size:10px;font-weight:700;color:#fff;background:' + (a.transaction === 'vente' ? '#7c3aed' : '#059669') + ';padding:2px 7px;border-radius:6px">' + (a.transaction === 'vente' ? 'Vente' : 'Location') + '</span>',
           '<span style="font-size:10px;font-weight:700;color:#1e293b;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:6px">' + (TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
         '</div>',
-        '<button data-immo-id="' + escapeHTML(a.id) + '" onclick="event.stopPropagation();_immoToggleCompareById(this.dataset.immoId)" ' +
-          'style="position:absolute;top:6px;right:6px;width:36px;height:36px;border-radius:50%;border:2px solid ' + (inCmp ? '#059669' : 'rgba(255,255,255,.8)') + ';background:' + (inCmp ? '#059669' : 'rgba(255,255,255,.85)') + ';color:' + (inCmp ? '#fff' : '#475569') + ';font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700" title="Comparer">' + (inCmp ? '✓' : '+') + '</button>',
       '</div>',
       '<div class="pbody">',
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">',
@@ -917,7 +918,19 @@ function carteImmoHTML(a) {
         a.prix
           ? '<div class="pprice" style="color:#059669">' + fcfa(a.prix) + (a.transaction === 'location' ? '<span style="font-size:11px;font-weight:400;color:#64748b">/mois</span>' : '') + '</div>'
           : '<div class="pprice" style="color:#94a3b8">Prix à négocier</div>',
-        '<button class="btn-voir" style="width:100%;margin-top:8px" onclick="event.stopPropagation();ouvrirImmo(\'' + a.id + '\')">Voir détail →</button>',
+        // Boutons identiques aux cartes produits
+        '<div style="display:flex;gap:6px;margin-top:8px">',
+          '<button class="btn-voir" style="flex:1" onclick="event.stopPropagation();ouvrirImmo(\'' + a.id + '\')">Voir →</button>',
+          '<button data-immo-id="' + escapeHTML(a.id) + '" onclick="event.stopPropagation();_immoToggleCompareById(this.dataset.immoId)" ' +
+            'title="' + (inCmp ? 'Retirer de la comparaison' : 'Ajouter à la comparaison') + '" ' +
+            'aria-label="' + (inCmp ? 'Retirer de la comparaison' : 'Ajouter à la comparaison') + '" ' +
+            'style="padding:6px 8px;border-radius:6px;border:1px solid ' + (inCmp ? '#7c3aed' : '#e2e8f0') + ';background:' + (inCmp ? '#f5f3ff' : '#fff') + ';cursor:pointer;font-size:14px">⚖</button>',
+          '<button onclick="event.stopPropagation();toggleFavoriImmo(\'' + a.id + '\')" ' +
+            'title="' + (inFav ? 'Retirer des favoris' : 'Ajouter aux favoris') + '" ' +
+            'aria-label="' + (inFav ? 'Retirer des favoris' : 'Ajouter aux favoris') + '" ' +
+            'style="padding:6px 8px;border-radius:6px;border:1px solid ' + (inFav ? '#ef4444' : '#e2e8f0') + ';background:' + (inFav ? '#fef2f2' : '#fff') + ';cursor:pointer;font-size:14px">' +
+            (inFav ? '❤' : '🤍') + '</button>',
+        '</div>',
       '</div>',
     '</div>',
   ].join('');
@@ -942,7 +955,12 @@ function htmlBarreImmo() {
         tBtn('🔑 Vente', 'vente'),
         '<button onclick="ouvrirWizardImmo()" style="padding:6px 16px;border-radius:16px;border:2px solid #2563eb;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.2;box-shadow:0 2px 8px rgba(37,99,235,.35)"><span>🔍 Trouver mon bien</span><span style="font-size:11px;font-weight:500;opacity:.85">Budget · Quartier · Type</span></button>',
         '<button onclick="ouvrirPublierAnnonce()" style="padding:6px 16px;border-radius:16px;border:2px solid #059669;background:#fff;color:#059669;font-size:12px;font-weight:700;cursor:pointer">📢 Publier une annonce (gratuit)</button>',
-        cmpN >= 2 ? '<button onclick="_immoOuvrirComparaison()" style="padding:5px 14px;border-radius:16px;border:1.5px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer">⚖ Comparer ' + cmpN + ' biens</button>' : '',
+        cmpN >= 1 ? '<button onclick="' + (cmpN >= 2 ? '_immoOuvrirComparaison()' : '') + '" ' +
+          'style="padding:5px 14px;border-radius:16px;border:1.5px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer' + (cmpN < 2 ? ';opacity:.6' : '') + '">' +
+          '⚖ ' + (cmpN >= 2 ? 'Comparer ' + cmpN + ' biens' : cmpN + ' sélectionné — ajoutez-en un autre') + '</button>' : '',
+        im.favoris.length > 0 ? '<button onclick="_immoToggleFavorisView()" ' +
+          'style="padding:5px 14px;border-radius:16px;border:1.5px solid ' + (im.voirFavoris ? '#ef4444' : '#fca5a5') + ';background:' + (im.voirFavoris ? '#fef2f2' : '#fff') + ';color:#ef4444;font-size:12px;font-weight:700;cursor:pointer">' +
+          (im.voirFavoris ? '❤ Mes favoris (' + im.favoris.length + ') ✕' : '❤ Mes favoris (' + im.favoris.length + ')') + '</button>' : '',
         hasFilters ? '<button onclick="_immoResetFiltres()" style="padding:5px 12px;border-radius:16px;border:1.5px solid #fca5a5;background:#fff5f5;color:#e63946;font-size:11px;font-weight:600;cursor:pointer;margin-left:auto">✕ Réinitialiser</button>' : '',
       '</div>',
 
@@ -1002,6 +1020,7 @@ function _immoResetFiltres()   {
   var im = _immoState;
   im.ville = ''; im.quartier = ''; im.type_bien = ''; im.prixMin = ''; im.prixMax = '';
   im.surfaceMin = ''; im.nbPieces = ''; im.tri = 'recent';
+  im.voirFavoris = false;
   chargerImmo(1);
 }
 
@@ -1683,6 +1702,24 @@ function chargerImmo(page) {
   state.page = page;
   state.currentPage = 'home';
   var im = _immoState;
+
+  // ── Mode "Mes favoris" : charger les biens sauvegardés ──────────
+  if (im.voirFavoris && page === 1) {
+    render('<div class="loader"><div class="spin"></div><p>Chargement des favoris…</p></div>');
+    if (!im.favoris.length) {
+      render(templateImmo([], { total: 0, annonces: [], page: 1, pages: 1 }));
+      return;
+    }
+    var missing = im.favoris.filter(function(id) { return !_immoCache[id]; });
+    Promise.all(missing.map(function(id) {
+      return apiFetch('/immo/' + id).catch(function() { return null; });
+    })).then(function(fetched) {
+      fetched.forEach(function(a) { if (a) _immoCache[a.id] = a; });
+      var all = im.favoris.map(function(id) { return _immoCache[id]; }).filter(Boolean);
+      render(templateImmo(all, { total: all.length, annonces: all, page: 1, pages: 1 }));
+    }).catch(function(err) { renderErreur(err); });
+    return;
+  }
 
   if (page === 1) render('<div class="loader"><div class="spin"></div><p>Chargement des annonces…</p></div>');
   else {
@@ -4127,6 +4164,32 @@ function viderFavoris() {
   localStorage.setItem('yomb_favoris', JSON.stringify(state.favoris));
   updateNavFavoris();
   if (state.currentPage === 'home') chargerProduits(state.query, state.categorie, state.page);
+}
+
+// ── Favoris immobilier ────────────────────────────────────────────
+function toggleFavoriImmo(id) {
+  var idx = _immoState.favoris.indexOf(id);
+  if (idx !== -1) {
+    _immoState.favoris.splice(idx, 1);
+    toast('Retiré des favoris', '#64748b');
+  } else {
+    _immoState.favoris.push(id);
+    toast('Ajouté aux favoris ❤', '#ef4444');
+  }
+  localStorage.setItem('nopalou_immo_favoris', JSON.stringify(_immoState.favoris));
+  chargerImmo();
+}
+
+function _immoToggleFavorisView() {
+  _immoState.voirFavoris = !_immoState.voirFavoris;
+  chargerImmo();
+}
+
+function _immoViderFavoris() {
+  _immoState.favoris = [];
+  _immoState.voirFavoris = false;
+  localStorage.setItem('nopalou_immo_favoris', JSON.stringify(_immoState.favoris));
+  chargerImmo();
 }
 
 function ouvrirComparaisonNav() {
