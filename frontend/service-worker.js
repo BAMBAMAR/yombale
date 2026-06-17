@@ -1,6 +1,6 @@
-// Nopalou Service Worker — VERSION 19
+// Nopalou Service Worker — VERSION 20
 // Changer CACHE_VERSION force le rechargement de tous les assets
-const CACHE_VERSION = 'nopalou-v19';
+const CACHE_VERSION = 'nopalou-v20';
 const STATIC_ASSETS = ['/style.css', '/manifest.json', '/icons/icon-192.png'];
 
 // Installation — précache uniquement les assets statiques (pas app.js)

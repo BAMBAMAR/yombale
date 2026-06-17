@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 19 — 2026-06-17
+//  app.js VERSION 20 — 2026-06-17
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 19 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 20 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -1784,6 +1784,19 @@ async function ouvrirImmo(id) {
     var photos = Array.isArray(a.photos) ? a.photos : (typeof a.photos === 'string' ? JSON.parse(a.photos) : []);
     _immoCache[a.id] = a;
 
+    // Charger les annonces similaires (même type + même ville + même transaction)
+    var simParams = new URLSearchParams({ type_bien: a.type_bien || '', ville: a.ville || '', transaction: a.transaction || 'location', tri: 'prix_asc', limit: 10, page: 1 });
+    var simRes  = await apiFetch('/immo?' + simParams.toString()).catch(function() { return { annonces: [] }; });
+    var simAll  = ((simRes && simRes.annonces) || []).filter(function(s) { return s.id !== a.id; }).slice(0, 8);
+    simAll.forEach(function(s) { _immoCache[s.id] = s; });
+
+    // Prix min/max des similaires (y compris l'annonce courante si elle a un prix)
+    var tousLesPrix = simAll.filter(function(s) { return s.prix; }).map(function(s) { return s.prix; });
+    if (a.prix) tousLesPrix.push(a.prix);
+    var simPrixMin = tousLesPrix.length ? Math.min.apply(null, tousLesPrix) : null;
+    var simPrixMax = tousLesPrix.length ? Math.max.apply(null, tousLesPrix) : null;
+    var bestSim = simPrixMin ? (simAll.find(function(s) { return s.prix === simPrixMin; }) || null) : null;
+
     var prixM2  = (a.prix && a.surface_m2) ? Math.round(a.prix / a.surface_m2) : null;
     var inCmp   = _immoState.compare.some(function(x) { return x.id === a.id; });
     var inFav   = _immoState.favoris.indexOf(a.id) !== -1;
@@ -1921,18 +1934,24 @@ async function ouvrirImmo(id) {
           '<div style="font-size:16px;font-weight:800;margin-top:4px;line-height:1.3;overflow-wrap:break-word;word-break:break-word">' + escapeHTML(a.titre ? (a.titre.length > 60 ? a.titre.slice(0,60)+'…' : a.titre) : '') + '</div>',
         '</div>',
         '<div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">',
-          // Prix
-          a.prix ? '<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #f1f5f9"><span style="font-size:12px;color:#64748b">Prix</span><span style="font-size:20px;font-weight:900;color:#15803d">' + fcfa(a.prix) + (a.transaction === 'location' ? '<span style="font-size:11px;font-weight:400;color:#64748b">/mois</span>' : '') + '</span></div>' : '',
+          // Prix min des similaires (= "prix le plus bas" comme fiche produit)
+          simPrixMin ? '<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #f1f5f9"><span style="font-size:12px;color:#64748b">Prix le plus bas</span><span style="font-size:20px;font-weight:900;color:#15803d">' + fcfa(simPrixMin) + '</span></div>' : '',
+          // Prix max des similaires
+          simPrixMax && simPrixMax !== simPrixMin ? '<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #f1f5f9"><span style="font-size:12px;color:#64748b">Prix le plus haut</span><span style="font-size:16px;font-weight:700;color:#64748b">' + fcfa(simPrixMax) + '</span></div>' : '',
+          // Nombre d'annonces similaires
+          simAll.length ? '<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #f1f5f9"><span style="font-size:12px;color:#64748b">Annonces similaires</span><span style="font-size:14px;font-weight:700;color:#334155">' + simAll.length + '</span></div>' : '',
           // Surface
           a.surface_m2 ? '<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #f1f5f9"><span style="font-size:12px;color:#64748b">Surface</span><span style="font-size:15px;font-weight:700;color:#334155">' + a.surface_m2 + ' m²</span></div>' : '',
           // Prix/m²
-          prixM2 ? '<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #f1f5f9"><span style="font-size:12px;color:#64748b">Prix / m²</span><span style="font-size:15px;font-weight:700;color:#334155">' + fcfa(prixM2) + '</span></div>' : '',
+          prixM2 ? '<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #f1f5f9"><span style="font-size:12px;color:#64748b">Prix / m²</span><span style="font-size:14px;font-weight:700;color:#334155">' + fcfa(prixM2) + '</span></div>' : '',
           // Pièces / chambres
           (a.nb_pieces || a.nb_chambres) ? '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:#64748b">Pièces / Chambres</span><span style="font-size:14px;font-weight:700;color:#334155">' + (a.nb_pieces || '?') + ' p. / ' + (a.nb_chambres || '?') + ' ch.</span></div>' : '',
           // CTA WhatsApp
           a.contact_tel ? '<a href="https://wa.me/' + a.contact_tel.replace(/[^0-9]/g, '') + '" target="_blank" rel="noopener" style="display:block;text-align:center;padding:13px;background:#25d366;color:#fff;border-radius:10px;font-size:14px;font-weight:800;text-decoration:none;margin-top:4px">💬 Contacter ' + prenomContact + '</a>' : '',
+          // Annonce la moins chère (si pas la courante)
+          bestSim && bestSim.id !== a.id ? '<button onclick="ouvrirImmo(\'' + escapeHTML(String(bestSim.id)) + '\')" style="display:block;width:100%;padding:13px;background:#10b981;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;text-align:center">🏆 Annonce la moins chère →</button>' : '',
           // CTA Source
-          a.url_source ? '<a href="' + safeUrl(a.url_source) + '" target="_blank" rel="noopener" style="display:block;text-align:center;padding:13px;background:#059669;color:#fff;border-radius:10px;font-size:14px;font-weight:800;text-decoration:none">Voir l\'annonce →</a>' : '',
+          a.url_source ? '<a href="' + safeUrl(a.url_source) + '" target="_blank" rel="noopener" style="display:block;text-align:center;padding:13px;background:#059669;color:#fff;border-radius:10px;font-size:14px;font-weight:800;text-decoration:none">Voir l\'annonce originale →</a>' : '',
           // Boutons ⚖ + ❤
           '<div style="display:flex;gap:8px;margin-top:4px">',
             '<button data-immo-id="' + escapeHTML(String(a.id)) + '" onclick="_immoToggleCmpFiche(this.dataset.immoId)" ' +
@@ -1946,9 +1965,12 @@ async function ouvrirImmo(id) {
       '</div>',
     ].join('');
 
+    var sectSim = _immoSectionSimilaires(simAll, a.id, simPrixMin);
+
     var bodyHtml = [
       '<div class="detail-grid">',
         '<div class="detail-main-col">',
+          sectSim,
           sectCaract,
           sectDesc,
           sectPhotos,
@@ -1994,6 +2016,66 @@ function _immoToggleFavFiche(id) {
   }
   localStorage.setItem('nopalou_immo_favoris', JSON.stringify(_immoState.favoris));
   ouvrirImmo(id);
+}
+
+// ── Section "Annonces similaires" (équivalent de _sectionOffres) ──
+function _immoSectionSimilaires(similaires, currentId, prixMin) {
+  var typeLabel = TYPE_BIEN_LABELS[(_immoCache[currentId] || {}).type_bien] || 'ce type';
+  var header = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">' +
+    '<h2 style="font-size:14px;font-weight:800;color:#0f172a;margin:0">📊 Annonces similaires</h2>' +
+    '<span style="font-size:12px;color:#94a3b8">' + similaires.length + ' annonce(s) — ' + escapeHTML(typeLabel) + '</span>' +
+  '</div>';
+
+  if (!similaires.length) {
+    return '<div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,.04)">' + header +
+      '<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">Aucune autre annonce similaire trouvée dans cette ville.</div></div>';
+  }
+
+  var lignes = similaires.map(function(s) {
+    var best  = s.prix && prixMin && s.prix === prixMin;
+    var ecart = (s.prix && prixMin && !best) ? s.prix - prixMin : 0;
+    var photo = s.photos && s.photos.length ? s.photos[0] : null;
+    return [
+      '<div style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid #f1f5f9;',
+           (best ? 'background:#f0fdf4;border-left:4px solid #10b981' : 'border-left:4px solid transparent') + '">',
+        // Photo / icône
+        '<div style="width:44px;height:44px;background:#f0fdf4;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0">',
+          photo
+            ? '<img src="' + escapeHTML(photo) + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover">'
+            : '<span style="font-size:22px">' + _immoIcon(s.type_bien) + '</span>',
+        '</div>',
+        // Infos
+        '<div style="flex:1;min-width:0">',
+          best ? '<span style="display:inline-block;background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:4px">🏆 Moins cher</span><br>' : '',
+          '<div style="font-size:14px;font-weight:700;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHTML((s.titre || '').slice(0, 55)) + '</div>',
+          '<div style="font-size:12px;color:#64748b;margin-top:2px">' +
+            escapeHTML(s.quartier || s.ville || '') +
+            (s.surface_m2 ? ' · ' + s.surface_m2 + ' m²' : '') +
+            (s.nb_pieces  ? ' · ' + s.nb_pieces + ' p.' : '') +
+          '</div>',
+          ecart > 0 ? '<div style="font-size:11px;color:#f97316;margin-top:2px">+' + fcfa(ecart) + ' de plus que le moins cher</div>' : '',
+        '</div>',
+        // Prix + bouton
+        '<div style="text-align:right;flex-shrink:0">',
+          '<div style="font-size:20px;font-weight:900;color:' + (best ? '#15803d' : '#1e293b') + ';white-space:nowrap">',
+            s.prix ? fcfa(s.prix) : '<span style="font-size:13px;color:#94a3b8">N/C</span>',
+          '</div>',
+          '<button onclick="ouvrirImmo(\'' + escapeHTML(String(s.id)) + '\')" ',
+            'style="display:inline-block;margin-top:6px;padding:7px 16px;background:' + (best ? '#10b981' : '#1d4ed8') + ';',
+            'color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">',
+            'Voir →',
+          '</button>',
+        '</div>',
+      '</div>',
+    ].join('');
+  }).join('');
+
+  return [
+    '<div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)">',
+      '<div style="padding:20px 20px 4px">', header, '</div>',
+      lignes,
+    '</div>',
+  ].join('');
 }
 
 function toggleComparerForfait(id) {
