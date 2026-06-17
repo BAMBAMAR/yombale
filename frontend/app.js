@@ -2567,7 +2567,7 @@ async function ouvrirProduit(id, simFiltres) {
       '<div class="detail-grid">',
 
         // Colonne gauche : offres + historique
-        '<div style="display:flex;flex-direction:column;gap:20px">',
+        '<div class="detail-main-col">',
           _sectionOffres(offresArr, prixMin),
           htmlHistorique(histo),
           '<div>',
@@ -2689,7 +2689,7 @@ function _sectionResume(res, offresArr, prixMin, bestOffre) {
         '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.8">',
           'Résumé',
         '</div>',
-        '<div style="font-size:18px;font-weight:800;margin-top:4px;line-height:1.3">',
+        '<div style="font-size:18px;font-weight:800;margin-top:4px;line-height:1.3;overflow-wrap:break-word;word-break:break-word">',
           res.nom,
         '</div>',
       '</div>',
@@ -2799,7 +2799,7 @@ function htmlTableauOffres(offresArr, prixMin) {
           '<span style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em">📊 Comparaison des prix</span>',
           '<span style="font-size:11px;color:#94a3b8">' + offresArr.length + ' marchand' + (offresArr.length>1?'s':'') + '</span>',
         '</div>',
-        nomProduit ? '<div style="font-size:12px;color:#475569;margin-top:4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📦 ' + nomProduit.slice(0,90) + '</div>' : '',
+        nomProduit ? '<div style="font-size:12px;color:#475569;margin-top:4px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">📦 ' + nomProduit.slice(0,90) + '</div>' : '',
       '</div>',
       lignes,
     '</div>',

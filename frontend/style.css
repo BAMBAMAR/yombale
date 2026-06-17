@@ -222,7 +222,8 @@ nav {
   display: grid; grid-template-columns: 1fr 340px; gap: 24px;
   align-items: start; max-width: 1200px; margin: 0 auto; padding: 28px 20px 80px;
 }
-.detail-sidebar { position: sticky; top: 64px; }
+.detail-main-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.detail-sidebar { position: sticky; top: 64px; min-width: 0; }
 .detail-hero-grid {
   display: grid; max-width: 1200px; margin: 0 auto;
 }
