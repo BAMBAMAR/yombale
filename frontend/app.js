@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 16 — 2026-06-17
+//  app.js VERSION 17 — 2026-06-17
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 16 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 17 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -1030,48 +1030,176 @@ function _immoOuvrirComparaison() {
   var biens = _immoState.compare;
   if (biens.length < 2) { toast('Sélectionnez au moins 2 biens', '#f97316'); return; }
 
-  var ROWS = [
-    ['🏷 Type',      function(a) { return TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '—'; }],
-    ['📍 Ville',     function(a) { return a.ville || '—'; }],
-    ['🗺 Quartier',  function(a) { return a.quartier || '—'; }],
-    ['💰 Prix',      function(a) { return a.prix ? fcfa(a.prix) : 'N/C'; }],
-    ['📐 Surface',   function(a) { return a.surface_m2 ? a.surface_m2 + ' m²' : '—'; }],
-    ['💵 Prix/m²',   function(a) { return (a.prix && a.surface_m2) ? fcfa(Math.round(a.prix / a.surface_m2)) : '—'; }],
-    ['🚪 Pièces',    function(a) { return a.nb_pieces || '—'; }],
-    ['🛏 Chambres',  function(a) { return a.nb_chambres || '—'; }],
-    ['🔁 Transaction',function(a){ return a.transaction === 'vente' ? 'Vente' : 'Location'; }],
-  ];
+  // Styles partagés (identiques à ouvrirComparaison produits)
+  var COL  = 'flex:1;min-width:150px;padding:10px 8px;text-align:center;border-left:1px solid #f1f5f9;';
+  var LBL  = 'width:110px;flex-shrink:0;padding:10px 12px;font-size:12px;color:#64748b;font-weight:600;display:flex;align-items:center;';
+  var ROW  = 'display:flex;border-bottom:1px solid #f1f5f9;';
+  var SECT = 'display:flex;align-items:center;background:#f8fafc;padding:8px 12px;font-size:10px;font-weight:800;color:#475569;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid #e2e8f0;';
 
-  // Meilleur prix/m² → surligné en vert
-  var meilleurPrixM2Id = null;
-  var minPM2 = Infinity;
-  biens.forEach(function(a) {
-    if (a.prix && a.surface_m2) { var pm2 = a.prix / a.surface_m2; if (pm2 < minPM2) { minPM2 = pm2; meilleurPrixM2Id = a.id; } }
-  });
+  // Calcul des valeurs extrêmes pour le highlighting
+  var prixVals    = biens.map(function(a) { return a.prix || null; });
+  var surfaceVals = biens.map(function(a) { return a.surface_m2 || null; });
+  var prixM2Vals  = biens.map(function(a) { return (a.prix && a.surface_m2) ? Math.round(a.prix / a.surface_m2) : null; });
+  var piecesVals  = biens.map(function(a) { return a.nb_pieces || 0; });
+  var chambresVals= biens.map(function(a) { return a.nb_chambres || 0; });
 
-  var cols = biens.map(function(a) { return '<th style="min-width:140px;padding:8px;text-align:center;font-size:12px">' + a.titre.slice(0,40) + (a.titre.length > 40 ? '…' : '') + '</th>'; }).join('');
-  var rows = ROWS.map(function(r) {
-    var label = r[0]; var fn = r[1];
-    var cells = biens.map(function(a) {
-      var val = fn(a);
-      var isBest = label === '💵 Prix/m²' && a.id === meilleurPrixM2Id;
-      return '<td style="padding:8px;text-align:center;font-size:13px;' + (isBest ? 'color:#059669;font-weight:700;background:#f0fdf4' : '') + '">' + val + (isBest ? ' 🏆' : '') + '</td>';
-    }).join('');
-    return '<tr><td style="padding:8px 12px;font-size:12px;font-weight:700;color:#64748b;white-space:nowrap">' + label + '</td>' + cells + '</tr>';
+  var prixMin    = Math.min.apply(null, prixVals.filter(Boolean));
+  var surfaceMax = Math.max.apply(null, surfaceVals.filter(Boolean));
+  var prixM2Min  = Math.min.apply(null, prixM2Vals.filter(Boolean));
+  var piecesMax  = Math.max.apply(null, piecesVals);
+  var chambresMax= Math.max.apply(null, chambresVals);
+
+  var nbPrixOk    = prixVals.filter(Boolean).length;
+  var nbSurfaceOk = surfaceVals.filter(Boolean).length;
+  var nbPrixM2Ok  = prixM2Vals.filter(Boolean).length;
+
+  // ── En-tête colonnes ─────────────────────────────────────────
+  var enTete = biens.map(function(a, i) {
+    var bestPrix = a.prix && a.prix === prixMin && nbPrixOk > 1;
+    var photo    = a.photos && a.photos.length ? a.photos[0] : null;
+    return '<div style="' + COL + 'vertical-align:top">' +
+      (bestPrix
+        ? '<div style="background:#059669;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px;display:inline-block;margin-bottom:6px">🏆 MOINS CHER</div>'
+        : '<div style="height:22px;margin-bottom:6px"></div>') +
+      '<div style="width:64px;height:64px;margin:0 auto 8px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #e2e8f0">' +
+        (photo
+          ? '<img src="' + escapeHTML(photo) + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover">'
+          : '<span style="font-size:30px">' + _immoIcon(a.type_bien) + '</span>') +
+      '</div>' +
+      '<div style="font-size:12px;font-weight:700;color:#1e293b;line-height:1.3;margin-bottom:3px">' + escapeHTML(a.titre ? (a.titre.length > 42 ? a.titre.slice(0, 42) + '…' : a.titre) : '—') + '</div>' +
+      '<div style="font-size:11px;color:#94a3b8;margin-bottom:6px">' + escapeHTML(a.ville || '') + (a.quartier ? ' · ' + escapeHTML(a.quartier) : '') + '</div>' +
+      '<button onclick="event.stopPropagation();_immoState.compare.splice(' + i + ',1);if(_immoState.compare.length>=2){_immoOuvrirComparaison();}else{chargerImmo();}" ' +
+        'aria-label="Retirer de la comparaison" ' +
+        'style="background:none;border:1px solid #fca5a5;color:#ef4444;border-radius:6px;font-size:10px;padding:2px 8px;cursor:pointer">✕</button>' +
+    '</div>';
   }).join('');
 
-  var html = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">' +
-    '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
-      '<thead><tr style="background:#f8fafc"><th style="padding:8px;text-align:left;font-size:12px;color:#94a3b8">Critère</th>' + cols + '</tr></thead>' +
-      '<tbody>' + rows + '</tbody>' +
-    '</table></div>' +
-    '<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">' +
-      biens.map(function(a) {
-        return '<a href="' + (a.url_source || '#') + '" target="_blank" rel="noopener" style="flex:1;min-width:120px;padding:10px;background:#059669;color:#fff;border-radius:10px;text-align:center;font-size:12px;font-weight:700;text-decoration:none">Voir →<br><span style="font-weight:400">' + (a.ville || '') + '</span></a>';
-      }).join('') +
-    '</div>';
+  // ── Helpers cellule/ligne ─────────────────────────────────────
+  function cel(contenu, bg) {
+    return '<div style="' + COL + (bg ? 'background:' + bg + ';' : '') + '">' + contenu + '</div>';
+  }
+  function row(labelTxt, cells) {
+    return '<div style="' + ROW + '"><div style="' + LBL + '">' + labelTxt + '</div>' + cells.join('') + '</div>';
+  }
+  function best_badge(color, texte) {
+    return '<div style="font-size:10px;font-weight:800;color:' + color + ';margin-bottom:2px">' + texte + '</div>';
+  }
 
-  ouvrirModal('⚖ Comparaison — ' + biens.length + ' biens', html);
+  // ── Section Infos ─────────────────────────────────────────────
+  var lignesInfos = [
+    row('🔁 Transaction', biens.map(function(a) {
+      var vente = a.transaction === 'vente';
+      return cel('<span style="font-size:13px;font-weight:700;color:' + (vente ? '#7c3aed' : '#059669') + '">' + (vente ? '🔑 Vente' : '🏠 Location') + '</span>');
+    })),
+    row('🏷 Type', biens.map(function(a) {
+      return cel('<span style="font-size:12px;font-weight:600;color:#1e293b">' + escapeHTML(TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '—') + '</span>');
+    })),
+    row('📍 Ville', biens.map(function(a) {
+      return cel('<span style="font-size:12px;color:#475569">' + escapeHTML(a.ville || '—') + '</span>');
+    })),
+    row('🗺 Quartier', biens.map(function(a) {
+      return cel('<span style="font-size:12px;color:#475569">' + escapeHTML(a.quartier || '—') + '</span>');
+    })),
+  ].join('');
+
+  // ── Section Prix & surface ────────────────────────────────────
+  var lignesPrix = [
+    // Prix
+    row('💰 Prix', biens.map(function(a) {
+      var best = a.prix && a.prix === prixMin && nbPrixOk > 1;
+      return cel(
+        (best ? best_badge('#059669', '▼ MOINS CHER') : '') +
+        '<span style="font-size:' + (best ? '16' : '14') + 'px;font-weight:800;color:' + (best ? '#059669' : '#1e293b') + '">' +
+          (a.prix ? fcfa(a.prix) : '<span style="color:#94a3b8;font-weight:400">N/C</span>') +
+        '</span>' +
+        (a.transaction === 'location' && a.prix ? '<span style="font-size:11px;font-weight:400;color:#64748b">/mois</span>' : ''),
+        best ? '#f0fdf4' : ''
+      );
+    })),
+    // Surface
+    row('📐 Surface', biens.map(function(a) {
+      var best = a.surface_m2 && a.surface_m2 === surfaceMax && nbSurfaceOk > 1;
+      return cel(
+        (best ? best_badge('#1d4ed8', '▲ PLUS GRAND') : '') +
+        '<span style="font-size:13px;font-weight:' + (best ? '800' : '600') + ';color:' + (best ? '#1d4ed8' : '#1e293b') + '">' +
+          (a.surface_m2 ? a.surface_m2 + ' m²' : '—') +
+        '</span>',
+        best ? '#eff6ff' : ''
+      );
+    })),
+    // Prix/m²
+    row('💵 Prix/m²', biens.map(function(a) {
+      var pm2  = (a.prix && a.surface_m2) ? Math.round(a.prix / a.surface_m2) : null;
+      var best = pm2 && pm2 === prixM2Min && nbPrixM2Ok > 1;
+      return cel(
+        (best ? best_badge('#059669', '🏆 MEILLEUR RAPPORT') : '') +
+        '<span style="font-size:13px;font-weight:' + (best ? '800' : '600') + ';color:' + (best ? '#059669' : '#1e293b') + '">' +
+          (pm2 ? fcfa(pm2) + '/m²' : '—') +
+        '</span>',
+        best ? '#f0fdf4' : ''
+      );
+    })),
+    // Pièces
+    row('🚪 Pièces', biens.map(function(a, i) {
+      var best = piecesVals[i] && piecesVals[i] === piecesMax && biens.some(function(b, j) { return j !== i && (piecesVals[j] || 0) !== piecesMax; });
+      return cel(
+        '<span style="font-size:13px;font-weight:' + (best ? '800' : '600') + ';color:' + (best ? '#1d4ed8' : '#1e293b') + '">' +
+          (a.nb_pieces || '—') +
+        '</span>',
+        best ? '#eff6ff' : ''
+      );
+    })),
+    // Chambres
+    row('🛏 Chambres', biens.map(function(a, i) {
+      var best = chambresVals[i] && chambresVals[i] === chambresMax && biens.some(function(b, j) { return j !== i && (chambresVals[j] || 0) !== chambresMax; });
+      return cel(
+        '<span style="font-size:13px;font-weight:' + (best ? '800' : '600') + ';color:' + (best ? '#1d4ed8' : '#1e293b') + '">' +
+          (a.nb_chambres || '—') +
+        '</span>',
+        best ? '#eff6ff' : ''
+      );
+    })),
+  ].join('');
+
+  // ── Boutons "Voir l'annonce" ──────────────────────────────────
+  var ligneBoutons = '<div style="' + ROW + 'background:#f8fafc">' +
+    '<div style="' + LBL + '"></div>' +
+    biens.map(function(a) {
+      var bestPrix = a.prix && a.prix === prixMin && nbPrixOk > 1;
+      return '<div style="' + COL + '">' +
+        '<button onclick="ouvrirImmo(\'' + escapeHTML(String(a.id)) + '\')" ' +
+          'style="width:100%;padding:9px 4px;background:' + (bestPrix ? '#059669' : '#1d4ed8') + ';color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Voir l\'annonce →</button>' +
+      '</div>';
+    }).join('') +
+  '</div>';
+
+  render([
+    '<div style="padding:16px 5% 80px">',
+      // Toolbar
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">',
+        '<button onclick="chargerImmo()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;padding:0">← Retour</button>',
+        '<h2 style="font-size:16px;font-weight:800;color:#1e293b;margin:0">⚖ Comparaison — ' + biens.length + ' biens</h2>',
+        '<button onclick="_immoState.compare=[];chargerImmo()" style="margin-left:auto;padding:6px 12px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer">✕ Vider</button>',
+      '</div>',
+      // Tableau
+      '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.06)">',
+        // En-tête
+        '<div style="display:flex;border-bottom:2px solid #e2e8f0;background:#f8fafc">',
+          '<div style="' + LBL + 'padding:12px"></div>',
+          enTete,
+        '</div>',
+        // Section Infos
+        '<div style="' + SECT + '">📋 Informations générales</div>',
+        lignesInfos,
+        // Section Prix
+        '<div style="' + SECT + '">💰 Prix &amp; surface</div>',
+        lignesPrix,
+        // Boutons
+        ligneBoutons,
+      '</div>',
+      '<p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:10px">Prix indicatifs — vérifiez les détails auprès du propriétaire ou de l\'agence.</p>',
+    '</div>',
+  ].join(''));
 }
 
 // ── Modal générique (utilisée par wizard immo + comparaison) ────
