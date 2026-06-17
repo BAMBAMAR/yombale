@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=11">
+  <link rel="stylesheet" href="/style.css?v=12">
 
   <script type="application/ld+json">
   {
@@ -83,6 +83,26 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- Barre favoris sticky (bas d'écran) -->
+  <div id="fav-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:299;
+    background:#fff;border-top:2.5px solid #ef4444;box-shadow:0 -4px 24px rgba(0,0,0,.10);
+    padding:10px 5%;align-items:center;gap:12px;flex-wrap:wrap">
+    <span style="font-size:12px;font-weight:800;color:#ef4444;white-space:nowrap;flex-shrink:0">❤ Favoris</span>
+    <div id="fav-bar-items" style="flex:1;display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;min-width:0;padding:2px 0"></div>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button onclick="afficherFavoris()"
+        style="padding:8px 18px;background:#ef4444;color:#fff;border:none;border-radius:9px;
+               font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+        ❤ Voir (<span id="fav-bar-count">0</span>)
+      </button>
+      <button onclick="viderFavoris()"
+        style="padding:8px 14px;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;
+               border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+        ✕
+      </button>
+    </div>
+  </div>
+
   <!-- Barre de comparaison sticky (bas d'écran) -->
   <div id="compare-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;
     background:#fff;border-top:2.5px solid #f97316;box-shadow:0 -4px 24px rgba(0,0,0,.13);
@@ -103,7 +123,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=11" defer></script>
+  <script src="/app.js?v=12" defer></script>
   <script>
     // Désenregistrer l'ancien Service Worker pour forcer le rechargement des assets
     if ('serviceWorker' in navigator) {

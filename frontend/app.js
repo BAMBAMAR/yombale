@@ -3921,41 +3921,80 @@ function updateNavCompare() {
   updateCompareBar();
 }
 
-function updateCompareBar() {
-  var bar    = document.getElementById('compare-bar');
-  var items  = document.getElementById('compare-bar-items');
-  var barBtn = document.getElementById('compare-bar-btn');
-  if (!bar) return;
-  if (!state.comparer.length) {
-    bar.style.display = 'none';
-    document.body.style.paddingBottom = '';
-    return;
+var BAR_H = 62; // hauteur estimée d'une barre sticky bas d'écran
+
+function refreshBottomBars() {
+  var cmpBar  = document.getElementById('compare-bar');
+  var favBar  = document.getElementById('fav-bar');
+  var cmpV    = state.comparer.length > 0;
+  var favV    = state.favoris.length  > 0;
+
+  // ── Barre favoris ────────────────────────────────────────────
+  if (favBar) {
+    favBar.style.display = favV ? 'flex' : 'none';
+    favBar.style.bottom  = '0';
+    var favCount = document.getElementById('fav-bar-count');
+    if (favCount) favCount.textContent = state.favoris.length;
+    var favItems = document.getElementById('fav-bar-items');
+    if (favItems && favV) {
+      favItems.innerHTML = state.favoris.map(function(id) {
+        var m   = _productCache[id] || {};
+        var nom = m.nom ? (m.nom.length > 22 ? m.nom.slice(0, 22) + '…' : m.nom) : '…';
+        return '<div style="display:inline-flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;' +
+          'border-radius:8px;padding:4px 8px 4px 6px;flex-shrink:0;max-width:160px">' +
+          (m.image_url
+            ? '<img src="' + m.image_url + '" alt="" loading="lazy" style="width:20px;height:20px;object-fit:contain;flex-shrink:0">'
+            : '<span style="font-size:13px">📦</span>') +
+          '<span style="font-size:11px;font-weight:600;color:#1e293b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + nom + '</span>' +
+          '<button onclick="toggleFavori(\'' + id + '\')" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;line-height:1;padding:0 0 0 2px;flex-shrink:0" aria-label="Retirer des favoris">×</button>' +
+        '</div>';
+      }).join('');
+    }
   }
-  bar.style.display = 'flex';
-  document.body.style.paddingBottom = '72px';
-  if (barBtn) barBtn.textContent = state.comparer.length >= 2 ? '⚖ Comparer (' + state.comparer.length + ')' : 'Ajouter 1 produit →';
-  if (items) {
-    items.innerHTML = state.comparer.map(function(id) {
-      var m   = _productCache[id] || {};
-      var nom = m.nom ? (m.nom.length > 28 ? m.nom.slice(0, 28) + '…' : m.nom) : '…';
-      return '<div style="display:inline-flex;align-items:center;gap:5px;background:#fff7ed;border:1px solid #fed7aa;' +
-        'border-radius:8px;padding:4px 8px 4px 6px;flex-shrink:0;max-width:200px">' +
-        (m.image_url
-          ? '<img src="' + m.image_url + '" alt="' + (m.nom || '').replace(/"/g, '&quot;') + '" loading="lazy" style="width:22px;height:22px;object-fit:contain;flex-shrink:0">'
-          : '<span style="font-size:14px">📦</span>') +
-        '<span style="font-size:11px;font-weight:600;color:#1e293b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + nom + '</span>' +
-        '<button onclick="toggleComparer(\'' + id + '\')" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;line-height:1;padding:0 0 0 2px;flex-shrink:0">×</button>' +
-      '</div>';
-    }).join('');
+
+  // ── Barre comparaison ─────────────────────────────────────────
+  if (cmpBar) {
+    cmpBar.style.display = cmpV ? 'flex' : 'none';
+    cmpBar.style.bottom  = (cmpV && favV) ? BAR_H + 'px' : '0';
+    var barBtn = document.getElementById('compare-bar-btn');
+    if (barBtn) barBtn.textContent = state.comparer.length >= 2 ? '⚖ Comparer (' + state.comparer.length + ')' : 'Ajouter 1 produit →';
+    var cmpItems = document.getElementById('compare-bar-items');
+    if (cmpItems && cmpV) {
+      cmpItems.innerHTML = state.comparer.map(function(id) {
+        var m   = _productCache[id] || {};
+        var nom = m.nom ? (m.nom.length > 28 ? m.nom.slice(0, 28) + '…' : m.nom) : '…';
+        return '<div style="display:inline-flex;align-items:center;gap:5px;background:#fff7ed;border:1px solid #fed7aa;' +
+          'border-radius:8px;padding:4px 8px 4px 6px;flex-shrink:0;max-width:200px">' +
+          (m.image_url
+            ? '<img src="' + m.image_url + '" alt="' + (m.nom || '').replace(/"/g, '&quot;') + '" loading="lazy" style="width:22px;height:22px;object-fit:contain;flex-shrink:0">'
+            : '<span style="font-size:14px">📦</span>') +
+          '<span style="font-size:11px;font-weight:600;color:#1e293b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + nom + '</span>' +
+          '<button onclick="toggleComparer(\'' + id + '\')" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;line-height:1;padding:0 0 0 2px;flex-shrink:0" aria-label="Retirer de la comparaison">×</button>' +
+        '</div>';
+      }).join('');
+    }
   }
+
+  // ── Padding body ──────────────────────────────────────────────
+  var total = (cmpV ? BAR_H : 0) + (favV ? BAR_H : 0);
+  document.body.style.paddingBottom = total > 0 ? total + 'px' : '';
 }
 
-function updateNavFavoris() {
+function updateCompareBar()  { refreshBottomBars(); }
+function updateNavFavoris()  {
+  // Met à jour le bouton nav (hamburger menu)
   var btn = document.getElementById('nav-btn-favoris');
   var cnt = document.getElementById('nav-favoris-count');
-  if (!btn) return;
-  btn.style.display = state.favoris.length > 0 ? 'inline-block' : 'none';
+  if (btn) { btn.style.display = state.favoris.length > 0 ? 'inline-block' : 'none'; }
   if (cnt) cnt.textContent = state.favoris.length;
+  refreshBottomBars();
+}
+
+function viderFavoris() {
+  state.favoris = [];
+  localStorage.setItem('yomb_favoris', JSON.stringify(state.favoris));
+  updateNavFavoris();
+  if (state.currentPage === 'home') chargerProduits(state.query, state.categorie, state.page);
 }
 
 function ouvrirComparaisonNav() {

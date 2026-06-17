@@ -547,6 +547,9 @@ footer {
   #compare-bar { padding: 8px 3% !important; gap: 8px !important; }
   #compare-bar span { font-size: 11px !important; }
   #compare-bar button { padding: 7px 12px !important; font-size: 12px !important; }
+  #fav-bar { padding: 8px 3% !important; gap: 8px !important; }
+  #fav-bar span { font-size: 11px !important; }
+  #fav-bar button { padding: 7px 12px !important; font-size: 12px !important; }
   .immo-filter-input { width: 47% !important; flex: 1 1 45%; }
   .grid-3-cols { grid-template-columns: 1fr 1fr !important; }
   .vue-toggle-btn { padding: 8px 12px !important; }
