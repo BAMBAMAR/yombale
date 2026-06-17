@@ -3955,7 +3955,7 @@ function refreshBottomBars() {
   // ── Barre comparaison ─────────────────────────────────────────
   if (cmpBar) {
     cmpBar.style.display = cmpV ? 'flex' : 'none';
-    cmpBar.style.bottom  = (cmpV && favV) ? BAR_H + 'px' : '0';
+    cmpBar.style.bottom  = (cmpV && favV && favBar) ? favBar.offsetHeight + 'px' : '0';
     var barBtn = document.getElementById('compare-bar-btn');
     if (barBtn) barBtn.textContent = state.comparer.length >= 2 ? '⚖ Comparer (' + state.comparer.length + ')' : 'Ajouter 1 produit →';
     var cmpItems = document.getElementById('compare-bar-items');
@@ -3975,8 +3975,9 @@ function refreshBottomBars() {
     }
   }
 
-  // ── Padding body ──────────────────────────────────────────────
-  var total = (cmpV ? BAR_H : 0) + (favV ? BAR_H : 0);
+  // ── Padding body (hauteur réelle des barres, pas valeur fixe) ──
+  var total = (favV && favBar ? favBar.offsetHeight : 0) +
+              (cmpV && cmpBar ? cmpBar.offsetHeight : 0);
   document.body.style.paddingBottom = total > 0 ? total + 'px' : '';
 }
 
