@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 21 — 2026-06-17
+//  app.js VERSION 22 — 2026-06-18
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 21 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 22 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -11,6 +11,17 @@ function escapeHTML(s) {
 }
 function safeUrl(url) {
   try { var u = new URL(url); return /^https?:$/i.test(u.protocol) ? url : '#'; } catch { return '#'; }
+}
+
+// ── Historique SPA (browser back/forward) ───────────────────────
+var _histPopstating = false;
+function _histPush(st) {
+  if (_histPopstating) return;
+  try { history.pushState(st, ''); } catch(e) {}
+}
+function _histReplace(st) {
+  if (_histPopstating) return;
+  try { history.replaceState(st, ''); } catch(e) {}
 }
 
 var API = '/api';
@@ -218,6 +229,7 @@ function chargerProduits(query, categorie, page) {
   categorie = categorie !== undefined ? categorie : state.categorie;
   state.query = query; state.categorie = categorie; state.page = page;
   state.currentPage = 'home';
+  _histReplace({ type: 'home', query: query, cat: categorie });
 
   if (categorie === 'telecom') { chargerForfaits(page); return; }
   if (categorie === 'immo')   { chargerImmo(page);    return; }
@@ -1048,6 +1060,7 @@ function _immoToggleCompare(a) {
 function _immoOuvrirComparaison() {
   var biens = _immoState.compare;
   if (biens.length < 2) { toast('Sélectionnez au moins 2 biens', '#f97316'); return; }
+  _histPush({ type: 'immo-compare' });
 
   // Styles partagés (identiques à ouvrirComparaison produits)
   var COL  = 'flex:1;min-width:150px;padding:10px 8px;text-align:center;border-left:1px solid #f1f5f9;';
@@ -1196,7 +1209,7 @@ function _immoOuvrirComparaison() {
     '<div style="padding:16px 5% 80px">',
       // Toolbar
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">',
-        '<button onclick="chargerImmo()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;padding:0">← Retour</button>',
+        '<button onclick="chargerImmo()" style="display:flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;white-space:nowrap;flex-shrink:0" onmouseover="this.style.background=\'#dbeafe\'" onmouseout="this.style.background=\'#eff6ff\'">← Retour</button>',
         '<h2 style="font-size:16px;font-weight:800;color:#1e293b;margin:0">⚖ Comparaison — ' + biens.length + ' biens</h2>',
         '<button onclick="_immoState.compare=[];chargerImmo()" style="margin-left:auto;padding:6px 12px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer">✕ Vider</button>',
       '</div>',
@@ -1774,6 +1787,7 @@ function chargerImmo(page) {
 
 // ── Détail annonce immo — layout fiche produit ───────────────────
 async function ouvrirImmo(id) {
+  _histPush({ type: 'immo-detail', id: id });
   var appEl = document.getElementById('app');
   if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
 
@@ -1813,9 +1827,10 @@ async function ouvrirImmo(id) {
       '<nav style="position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #e2e8f0;',
                'box-shadow:0 1px 4px rgba(0,0,0,.08);padding:0 16px;height:52px;',
                'display:flex;align-items:center;gap:10px">',
-        '<button onclick="chargerImmo(1)" style="display:flex;align-items:center;gap:6px;background:none;border:none;',
-                'color:#059669;font-size:14px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:8px" ',
-                'onmouseover="this.style.background=\'#f0fdf4\'" onmouseout="this.style.background=\'none\'">',
+        '<button onclick="chargerImmo(1)" style="display:flex;align-items:center;gap:6px;',
+                'background:#f0fdf4;border:1.5px solid #059669;color:#059669;',
+                'font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;white-space:nowrap;flex-shrink:0" ',
+                'onmouseover="this.style.background=\'#dcfce7\'" onmouseout="this.style.background=\'#f0fdf4\'">',
           '← Retour',
         '</button>',
         '<div style="width:1px;height:20px;background:#e2e8f0"></div>',
@@ -2713,8 +2728,10 @@ async function ouvrirForfait(id) {
       '<nav style="position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #e2e8f0;',
                'box-shadow:0 1px 4px rgba(0,0,0,.08);padding:0 16px;height:52px;',
                'display:flex;align-items:center;gap:10px">',
-        '<button onclick="retourListe()" style="display:flex;align-items:center;gap:6px;background:none;border:none;',
-                'color:#1d4ed8;font-size:14px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:8px">',
+        '<button onclick="retourListe()" style="display:flex;align-items:center;gap:6px;',
+                'background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;',
+                'font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;white-space:nowrap;flex-shrink:0" ',
+                'onmouseover="this.style.background=\'#dbeafe\'" onmouseout="this.style.background=\'#eff6ff\'">',
           '← Retour',
         '</button>',
         '<div style="width:1px;height:20px;background:#e2e8f0"></div>',
@@ -2845,6 +2862,7 @@ var MARCHAND_ICONS = {
 async function ouvrirProduit(id, simFiltres) {
   simFiltres = simFiltres || {};
   dbg('ouvrirProduit', id);
+  _histPush({ type: 'produit', id: id });
 
   // Pleine largeur — AUCUN max-width sur l'app
   var appEl = document.getElementById('app');
@@ -2877,10 +2895,11 @@ async function ouvrirProduit(id, simFiltres) {
       '<nav style="position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #e2e8f0;',
                'box-shadow:0 1px 4px rgba(0,0,0,.08);padding:0 16px;height:52px;',
                'display:flex;align-items:center;gap:10px">',
-        '<button onclick="retourListe()" style="display:flex;align-items:center;gap:6px;background:none;border:none;',
-                'color:#1d4ed8;font-size:14px;font-weight:700;cursor:pointer;padding:6px 10px;',
-                'border-radius:8px;transition:background .15s" ',
-                'onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'none\'">',
+        '<button onclick="retourListe()" style="display:flex;align-items:center;gap:6px;',
+                'background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;',
+                'font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;',
+                'border-radius:9px;white-space:nowrap;flex-shrink:0;transition:background .15s" ',
+                'onmouseover="this.style.background=\'#dbeafe\'" onmouseout="this.style.background=\'#eff6ff\'">',
           '← Retour',
         '</button>',
         '<div style="width:1px;height:20px;background:#e2e8f0"></div>',
@@ -2998,7 +3017,7 @@ async function ouvrirProduit(id, simFiltres) {
     if (appEl2) appEl2.style.cssText = '';
     render([
       '<div style="padding:60px 20px;max-width:560px;margin:0 auto;text-align:center">',
-        '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:24px;display:block">← Retour</button>',
+        '<button onclick="retourListe()" style="display:inline-flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:24px">← Retour</button>',
         '<div style="font-size:56px;margin-bottom:12px">⚠️</div>',
         '<h3 style="color:#b91c1c;font-size:18px;margin-bottom:8px">Erreur de chargement</h3>',
         '<p style="color:#64748b;font-size:14px;margin-bottom:24px">' + err.message + '</p>',
@@ -3512,6 +3531,7 @@ function htmlParametres() {
 // ── Comparaison principale ────────────────────────────────────────
 async function ouvrirComparaison() {
   if (state.comparer.length < 2) { toast('Sélectionne au moins 2 produits ⚖', '#f97316'); return; }
+  _histPush({ type: 'compare' });
   state.currentPage = 'compare';
   render('<div class="loader"><div class="spin"></div><p>Préparation de la comparaison...</p></div>');
   try {
@@ -3701,7 +3721,7 @@ async function ouvrirComparaison() {
       '<div style="padding:16px 5% 80px">',
         // Barre de titre
         '<div class="compare-toolbar" style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">',
-          '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;padding:0">← Retour</button>',
+          '<button onclick="retourListe()" style="display:flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;white-space:nowrap;flex-shrink:0" onmouseover="this.style.background=\'#dbeafe\'" onmouseout="this.style.background=\'#eff6ff\'">← Retour</button>',
           '<h2 style="font-size:16px;font-weight:800;color:#1e293b;margin:0">⚖ Comparaison</h2>',
           filtresActifs.length ? '<span style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-weight:600">'+filtresActifs.join(' · ')+'</span>' : '',
           '<div class="compare-actions" style="margin-left:auto;display:flex;gap:8px">',
@@ -3738,7 +3758,7 @@ async function ouvrirComparaison() {
     ].join(''));
   } catch(err) {
     dbgErr('ouvrirComparaison', err);
-    render('<div style="padding:24px 5%"><button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;cursor:pointer;font-weight:600">← Retour</button><p style="color:#ef4444;margin-top:12px">'+err.message+'</p></div>');
+    render('<div style="padding:24px 5%"><button onclick="retourListe()" style="display:inline-flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:16px">← Retour</button><p style="color:#ef4444;margin-top:12px">'+err.message+'</p></div>');
   }
 }
 
@@ -4437,8 +4457,22 @@ function ouvrirComparaisonNav() {
   ouvrirComparaison();
 }
 
+// Bouton retour du navigateur — restaurer la bonne vue SPA
+window.addEventListener('popstate', function(e) {
+  var st = e.state;
+  if (!st) { goHome(); return; }
+  _histPopstating = true;
+  if      (st.type === 'immo-detail')  { ouvrirImmo(st.id); }
+  else if (st.type === 'produit')      { ouvrirProduit(st.id); }
+  else if (st.type === 'immo-compare') { _immoOuvrirComparaison(); }
+  else if (st.type === 'compare')      { ouvrirComparaisonNav(); }
+  else                                 { chargerProduits(st.query || '', st.cat || '', 1); }
+  setTimeout(function() { _histPopstating = false; }, 0);
+});
+
 document.addEventListener('DOMContentLoaded', function() {
   dbg('DOMContentLoaded');
+  history.replaceState({ type: 'home', query: '', cat: '' }, '');
   updateNavFavoris();
   updateNavUser();
   updateEmailBanner();
@@ -4816,7 +4850,7 @@ function ouvrirGuideAchat() {
 
       // Titre
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">',
-        '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;padding:0">← Retour</button>',
+        '<button onclick="retourListe()" style="display:flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;white-space:nowrap;flex-shrink:0" onmouseover="this.style.background=\'#dbeafe\'" onmouseout="this.style.background=\'#eff6ff\'">← Retour</button>',
         '<h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0">🏆 Guide d\'achat intelligent</h2>',
       '</div>',
       '<p style="color:#64748b;font-size:13px;margin:0 0 24px;padding-left:0">Définissez vos critères — Nopalou calcule un score et classe les produits pour vous.</p>',
@@ -5204,7 +5238,7 @@ async function afficherFavoris() {
     render([
       '<div style="padding:24px 5% 80px">',
         '<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">',
-          '<button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;font-size:14px;font-weight:600;cursor:pointer;padding:0">← Retour</button>',
+          '<button onclick="retourListe()" style="display:flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;white-space:nowrap;flex-shrink:0" onmouseover="this.style.background=\'#dbeafe\'" onmouseout="this.style.background=\'#eff6ff\'">← Retour</button>',
           '<h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0">❤ Mes favoris</h2>',
           '<span style="font-size:13px;color:#94a3b8">' + produits.length + ' produit(s)</span>',
           '<button onclick="state.favoris=[];localStorage.setItem(\'yomb_favoris\',\'[]\');updateNavFavoris();retourListe()" style="margin-left:auto;padding:6px 12px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer">✕ Tout effacer</button>',
@@ -5215,6 +5249,6 @@ async function afficherFavoris() {
       '</div>',
     ].join(''));
   } catch(err) {
-    render('<div style="padding:24px 5%"><button onclick="retourListe()" style="background:none;border:none;color:#1d4ed8;cursor:pointer;font-weight:600">← Retour</button><p style="color:#ef4444;margin-top:12px">'+err.message+'</p></div>');
+    render('<div style="padding:24px 5%"><button onclick="retourListe()" style="display:inline-flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:16px">← Retour</button><p style="color:#ef4444;margin-top:12px">'+err.message+'</p></div>');
   }
 }
