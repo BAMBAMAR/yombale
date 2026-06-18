@@ -62,6 +62,21 @@ function parseSurfaceTitre(titre) {
   return m ? parseInt(m[1], 10) : null;
 }
 
+// Affine le type_bien en croisant catégorie source + mots-clés du titre.
+// Les annonceurs publient souvent studios/chambres sous "Appartements" sur expat-dakar.com.
+function raffinerTypeExpat(type_bien, titre) {
+  const t = (titre || '').toLowerCase();
+  // chambre → vérifier si meublée
+  if (type_bien === 'chambre') return /meub/i.test(t) ? 'chambre_meuble' : 'chambre';
+  // appartement ou appartement_meuble → détecter studio/chambre dans le titre
+  if (type_bien === 'appartement' || type_bien === 'appartement_meuble') {
+    if (/\bstudio\b/.test(t)) return 'studio';
+    if (/\bchambre[s]?\b/.test(t) && !/\bappart(?:ement)?\b/.test(t))
+      return /meub/i.test(t) ? 'chambre_meuble' : 'chambre';
+  }
+  return type_bien;
+}
+
 function parseLocalisation(txt) {
   if (!txt) return { ville: 'Dakar', quartier: null };
   const t = txt.trim();
@@ -113,7 +128,7 @@ async function scraperPage(url, type_bien, transaction) {
       const ref_ext = refM ? 'expat-' + refM[1] : null;
 
       const loc     = parseLocalisation(locTxt);
-      const typeFinal = (type_bien === 'chambre' && /meub/i.test(titre)) ? 'chambre_meuble' : type_bien;
+      const typeFinal = raffinerTypeExpat(type_bien, titre);
 
       annonces.push({
         titre,

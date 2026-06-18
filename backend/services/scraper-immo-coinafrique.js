@@ -56,6 +56,7 @@ function typeBienFromUrl(url, defaut) {
   const slug = m[1];
   if (slug.includes('villa'))       return 'villa';
   if (slug.includes('terrain'))     return 'terrain';
+  if (slug.includes('studio'))      return 'studio';
   if (slug.includes('chambre'))     return 'chambre';
   if (slug.includes('bureau'))      return 'bureau';
   if (slug.includes('immeuble'))    return 'maison';
@@ -64,8 +65,16 @@ function typeBienFromUrl(url, defaut) {
   return defaut;
 }
 
+// Affine le type_bien en croisant catégorie source + mots-clés du titre.
+// Les annonceurs publient souvent studios/chambres sous "Appartements" sur coinafrique.
 function raffinerTypeBien(type_bien, titre) {
-  if (type_bien === 'chambre' && /meub/i.test(titre)) return 'chambre_meuble';
+  const t = (titre || '').toLowerCase();
+  if (type_bien === 'chambre') return /meub/i.test(t) ? 'chambre_meuble' : 'chambre';
+  if (type_bien === 'appartement' || type_bien === 'appartement_meuble') {
+    if (/\bstudio\b/.test(t)) return 'studio';
+    if (/\bchambre[s]?\b/.test(t) && !/\bappart(?:ement)?\b/.test(t))
+      return /meub/i.test(t) ? 'chambre_meuble' : 'chambre';
+  }
   return type_bien;
 }
 
@@ -120,9 +129,11 @@ async function scraperPage(url, type_bien_defaut) {
                   || $el.find('.card-content p').first().text().trim();
       const loc    = parseLocalisation(locTxt);
 
-      // Référence externe : ID numérique en fin de slug
+      // Référence externe : ID numérique en fin de slug, ou hash URL en secours pour éviter les doublons
       const refM   = urlAnn.match(/-(\d{5,})\/?(?:\?|$)/);
-      const ref_ext = refM ? `coin-${refM[1]}` : null;
+      const ref_ext = refM
+        ? `coin-${refM[1]}`
+        : `coin-u-${Buffer.from(urlAnn).toString('base64').replace(/[^a-z0-9]/gi, '').slice(0, 16)}`;
 
       // Transaction : depuis l'URL
       const transaction = transactionFromUrl(urlAnn);

@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
         AND ($1::text IS NULL OR transaction = $1)
         AND ($2::text IS NULL OR ville ILIKE $2)
         AND ($3::text IS NULL OR quartier ILIKE '%' || $3 || '%')
-        AND ($4::text IS NULL OR type_bien = $4)
+        AND ($4::text IS NULL OR LOWER(type_bien) = LOWER($4))
         AND ($5::numeric IS NULL OR prix >= $5::numeric)
         AND ($6::numeric IS NULL OR prix <= $6::numeric)
         AND ($7::int IS NULL OR surface_m2 >= $7::int)
