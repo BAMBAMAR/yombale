@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 20 — 2026-06-17
+//  app.js VERSION 21 — 2026-06-17
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 20 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 21 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -1785,9 +1785,15 @@ async function ouvrirImmo(id) {
     _immoCache[a.id] = a;
 
     // Charger les annonces similaires (même type + même ville + même transaction)
-    var simParams = new URLSearchParams({ type_bien: a.type_bien || '', ville: a.ville || '', transaction: a.transaction || 'location', tri: 'prix_asc', limit: 10, page: 1 });
+    var simParams = new URLSearchParams({ type_bien: a.type_bien || '', ville: a.ville || '', transaction: a.transaction || 'location', tri: 'prix_asc', limit: 20, page: 1 });
     var simRes  = await apiFetch('/immo?' + simParams.toString()).catch(function() { return { annonces: [] }; });
-    var simAll  = ((simRes && simRes.annonces) || []).filter(function(s) { return s.id !== a.id; }).slice(0, 8);
+    // Filtre strict côté client : même type_bien ET prix cohérent (pas plus de 10x d'écart)
+    var simAll  = ((simRes && simRes.annonces) || []).filter(function(s) {
+      if (s.id === a.id) return false;
+      if (s.type_bien !== a.type_bien) return false;    // même catégorie exacte
+      if (a.prix && s.prix && (s.prix > a.prix * 10 || s.prix < a.prix / 10)) return false; // fourchette cohérente
+      return true;
+    }).slice(0, 8);
     simAll.forEach(function(s) { _immoCache[s.id] = s; });
 
     // Prix min/max des similaires (y compris l'annonce courante si elle a un prix)
@@ -1875,35 +1881,30 @@ async function ouvrirImmo(id) {
             '<div style="display:flex;gap:10px;flex-wrap:wrap">',
               _badge('📋', 'Annonce vérifiée'),
               _badge('🔒', 'Contact sécurisé'),
-              a.surface_m2 ? _badge('📐', a.surface_m2 + ' m²') : '',
+            '</div>',
+            // ── Informations sur ce bien (juste sous les badges) ─
+            '<div>',
+              '<div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">📋 Informations sur ce bien</div>',
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">',
+                [
+                  a.surface_m2  ? ['📐', 'Surface',   a.surface_m2 + ' m²'] : null,
+                  prixM2        ? ['💵', 'Prix/m²',    fcfa(prixM2)]         : null,
+                  a.nb_pieces   ? ['🚪', 'Pièces',     a.nb_pieces + '']     : null,
+                  a.nb_chambres ? ['🛏', 'Chambres',   a.nb_chambres + '']   : null,
+                  a.ville       ? ['📍', 'Ville',      a.ville]              : null,
+                  a.quartier    ? ['🗺', 'Quartier',   a.quartier]           : null,
+                  ['🏷', 'Type', TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '—'],
+                  ['🔁', 'Transaction', a.transaction === 'vente' ? 'Vente' : 'Location'],
+                ].filter(Boolean).map(function(r) {
+                  return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px">' +
+                    '<div style="font-size:10px;color:#94a3b8;font-weight:600">' + r[0] + ' ' + r[1] + '</div>' +
+                    '<div style="font-size:13px;font-weight:700;color:#1e293b;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHTML(String(r[2])) + '</div>' +
+                  '</div>';
+                }).join(''),
+              '</div>',
             '</div>',
           '</div>',
         '</div>',
-      '</div>',
-    ].join('');
-
-    // ── Corps : infos + description + galerie / résumé sidebar ──
-    var caract = [
-      a.surface_m2  ? ['📐', 'Surface',      a.surface_m2 + ' m²']      : null,
-      prixM2        ? ['💵', 'Prix/m²',       fcfa(prixM2)]              : null,
-      a.nb_pieces   ? ['🚪', 'Pièces',        a.nb_pieces + '']          : null,
-      a.nb_chambres ? ['🛏', 'Chambres',      a.nb_chambres + '']        : null,
-      a.ville       ? ['📍', 'Ville',         a.ville]                   : null,
-      a.quartier    ? ['🗺', 'Quartier',      a.quartier]                : null,
-      ['🏷', 'Type de bien', TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '—'],
-      ['🔁', 'Transaction',  a.transaction === 'vente' ? 'Vente' : 'Location'],
-    ].filter(Boolean);
-
-    var sectCaract = [
-      '<div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)">',
-        '<div style="padding:20px 20px 4px"><h2 style="font-size:14px;font-weight:800;color:#0f172a;margin:0 0 14px">📋 Informations sur ce bien</h2></div>',
-        caract.map(function(r) {
-          return '<div style="display:flex;align-items:center;gap:12px;padding:13px 20px;border-bottom:1px solid #f1f5f9">' +
-            '<span style="font-size:18px;width:28px;text-align:center;flex-shrink:0">' + r[0] + '</span>' +
-            '<span style="flex:1;font-size:13px;font-weight:600;color:#64748b">' + r[1] + '</span>' +
-            '<span style="font-size:14px;font-weight:700;color:#1e293b;text-align:right">' + escapeHTML(String(r[2])) + '</span>' +
-          '</div>';
-        }).join(''),
       '</div>',
     ].join('');
 
@@ -1971,7 +1972,6 @@ async function ouvrirImmo(id) {
       '<div class="detail-grid">',
         '<div class="detail-main-col">',
           sectSim,
-          sectCaract,
           sectDesc,
           sectPhotos,
         '</div>',
