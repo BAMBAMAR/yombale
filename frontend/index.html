@@ -51,7 +51,39 @@
     <div class="nav-center">
       <button onclick="goHome()">Accueil</button>
       <button onclick="loadPromos()">Promos</button>
-      <button onclick="ouvrirGuideAchat()" id="nav-btn-guide">🏆 Meilleur choix</button>
+      <div style="position:relative" id="nav-guides-wrap">
+        <button onclick="toggleNavGuides()" id="nav-btn-guides" aria-haspopup="true" aria-expanded="false"
+          style="display:flex;align-items:center;gap:5px;background:none;border:none;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;color:#475569;cursor:pointer;white-space:nowrap">
+          📚 Guides <span id="nav-guides-arrow" style="font-size:10px;display:inline-block;transition:transform .2s">▾</span>
+        </button>
+        <div id="nav-guides-dropdown" role="menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.14);min-width:252px;z-index:502;overflow:hidden;padding:6px 0">
+          <button onclick="ouvrirGuideAchat();closeNavGuides()" role="menuitem"
+            style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:11px 16px;font-size:13px;cursor:pointer;text-align:left"
+            onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+            <span style="font-size:20px;flex-shrink:0">🏆</span>
+            <div><div style="font-weight:700;color:#1e293b">Guide d'achat intelligent</div><div style="font-size:11px;color:#94a3b8">Classement personnalisé de produits</div></div>
+          </button>
+          <button onclick="ouvrirWizardForfait();closeNavGuides()" role="menuitem"
+            style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:11px 16px;font-size:13px;cursor:pointer;text-align:left"
+            onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+            <span style="font-size:20px;flex-shrink:0">🎯</span>
+            <div><div style="font-weight:700;color:#1e293b">Guide d'achat forfait</div><div style="font-size:11px;color:#94a3b8">Trouver le meilleur forfait télécom</div></div>
+          </button>
+          <button onclick="ouvrirWizardImmo();closeNavGuides()" role="menuitem"
+            style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:11px 16px;font-size:13px;cursor:pointer;text-align:left"
+            onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+            <span style="font-size:20px;flex-shrink:0">🏡</span>
+            <div><div style="font-weight:700;color:#1e293b">Guide immobilier</div><div style="font-size:11px;color:#94a3b8">Trouver mon logement idéal</div></div>
+          </button>
+          <div style="height:1px;background:#f1f5f9;margin:4px 8px"></div>
+          <button onclick="ouvrirGuideEmploi();closeNavGuides()" role="menuitem"
+            style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:11px 16px;font-size:13px;cursor:pointer;text-align:left"
+            onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+            <span style="font-size:20px;flex-shrink:0">📖</span>
+            <div><div style="font-weight:700;color:#1e293b">Guide d'emploi</div><div style="font-size:11px;color:#94a3b8">Comment utiliser Nopalou</div></div>
+          </button>
+        </div>
+      </div>
       <button id="nav-btn-comparer" onclick="ouvrirComparaisonNav()" style="display:none;background:#f97316;color:#fff;border-radius:8px;padding:6px 14px;border:none;font-weight:700;cursor:pointer">⚖ Comparer (<span id="nav-compare-count">0</span>)</button>
       <button id="nav-btn-vider" onclick="viderComparaison()" style="display:none;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer" title="Vider la sélection">✕ Vider</button>
       <button onclick="afficherFavoris()" id="nav-btn-favoris" style="background:none;border:none;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;color:#64748b;cursor:pointer;display:none" title="Mes favoris">❤ <span id="nav-favoris-count">0</span></button>
@@ -123,7 +155,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=22" defer></script>
+  <script src="/app.js?v=23" defer></script>
   <script>
     // Désenregistrer l'ancien Service Worker pour forcer le rechargement des assets
     if ('serviceWorker' in navigator) {

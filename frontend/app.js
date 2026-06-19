@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 22 — 2026-06-18
+//  app.js VERSION 23 — 2026-06-19
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 22 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 23 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -3873,11 +3873,32 @@ function toggleNavMenu() {
   const nav = document.querySelector('.nav-center');
   if (nav) nav.classList.toggle('open');
 }
-// Ferme le menu mobile après un clic sur un lien de navigation
+function toggleNavGuides() {
+  var dd    = document.getElementById('nav-guides-dropdown');
+  var arrow = document.getElementById('nav-guides-arrow');
+  var btn   = document.getElementById('nav-btn-guides');
+  if (!dd) return;
+  var open = dd.style.display !== 'none';
+  dd.style.display = open ? 'none' : 'block';
+  if (arrow) arrow.style.transform = open ? '' : 'rotate(180deg)';
+  if (btn)   btn.setAttribute('aria-expanded', String(!open));
+}
+function closeNavGuides() {
+  var dd    = document.getElementById('nav-guides-dropdown');
+  var arrow = document.getElementById('nav-guides-arrow');
+  var btn   = document.getElementById('nav-btn-guides');
+  if (dd)    dd.style.display = 'none';
+  if (arrow) arrow.style.transform = '';
+  if (btn)   btn.setAttribute('aria-expanded', 'false');
+}
+// Ferme le menu mobile et le dropdown Guides après un clic en dehors
 document.addEventListener('click', function(e) {
+  // Dropdown Guides
+  if (!e.target.closest('#nav-guides-wrap')) closeNavGuides();
+  // Menu hamburger
   const nav = document.querySelector('.nav-center');
   if (!nav || !nav.classList.contains('open')) return;
-  if (e.target.closest('.nav-center') && e.target.tagName === 'BUTTON' && !e.target.closest('#nav-btn-comparer, #nav-btn-vider')) {
+  if (e.target.closest('.nav-center') && e.target.tagName === 'BUTTON' && !e.target.closest('#nav-btn-comparer, #nav-btn-vider, #nav-guides-wrap')) {
     nav.classList.remove('open');
   } else if (!e.target.closest('.nav-center') && !e.target.closest('.nav-hamburger')) {
     nav.classList.remove('open');
@@ -5251,4 +5272,72 @@ async function afficherFavoris() {
   } catch(err) {
     render('<div style="padding:24px 5%"><button onclick="retourListe()" style="display:inline-flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:16px">← Retour</button><p style="color:#ef4444;margin-top:12px">'+err.message+'</p></div>');
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  GUIDE D'EMPLOI — Comment utiliser Nopalou
+// ═══════════════════════════════════════════════════════════════
+function ouvrirGuideEmploi() {
+  var CTX = 'padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;';
+  function cta(label, onclick, bg, col) {
+    return '<button onclick="fermerModal();(' + onclick + ')()" style="' + CTX + 'background:' + bg + ';color:' + col + ';border:1.5px solid ' + col + '">' + label + '</button>';
+  }
+  function ctaRaw(label, onclick, bg, col) {
+    return '<button onclick="fermerModal();' + onclick + '" style="' + CTX + 'background:' + bg + ';color:' + col + ';border:1.5px solid ' + col + '">' + label + '</button>';
+  }
+
+  function step(icon, titre, texte, boutons) {
+    return [
+      '<div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #f1f5f9">',
+        '<div style="font-size:26px;flex-shrink:0;width:36px;text-align:center;padding-top:2px">' + icon + '</div>',
+        '<div style="flex:1;min-width:0">',
+          '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:5px">' + titre + '</div>',
+          '<div style="font-size:13px;color:#64748b;line-height:1.65">' + texte + '</div>',
+          boutons ? '<div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:9px">' + boutons + '</div>' : '',
+        '</div>',
+      '</div>',
+    ].join('');
+  }
+
+  var html = [
+    step('🔍', 'Comparer les prix des produits',
+      'Tapez un produit dans la barre de recherche (ex&nbsp;: "Samsung Galaxy A55", "climatiseur 18000 BTU"). Nopalou compare les prix chez tous les marchands partenaires en temps réel et met en avant la meilleure offre.',
+      cta('Rechercher un produit →', 'goHome', '#eff6ff', '#1d4ed8')),
+
+    step('🏆', 'Guide d\'achat intelligent',
+      'Vous ne savez pas lequel choisir&nbsp;? Indiquez votre budget et vos priorités (prix, caractéristiques, disponibilité). Nopalou calcule un score personnalisé et classe les produits selon votre profil d\'achat.',
+      cta('Lancer le guide →', 'ouvrirGuideAchat', '#fff7ed', '#ea580c')),
+
+    step('🏡', 'Trouver un logement',
+      'Parcourez les annonces immobilières (appartements, villas, studios, chambres…). Filtrez par type de bien, ville, quartier et budget. Le Guide immobilier vous pose 3 questions et présente les annonces les plus compatibles.',
+      ctaRaw('Voir les annonces →', 'chargerProduits(\'\',\'immo\',1)', '#f0fdf4', '#059669') + ' ' +
+      ctaRaw('Guide immobilier →', 'chargerProduits(\'\',\'immo\',1);setTimeout(function(){ouvrirWizardImmo();},300)', '#f0fdf4', '#059669')),
+
+    step('📶', 'Choisir un forfait télécom',
+      'Comparez tous les forfaits mobiles Sonatel, Free, Expresso et Waw&nbsp;: data, appels, SMS, prix. Le Guide d\'achat forfait analyse votre usage (combien de data&nbsp;? appels locaux ou internationaux&nbsp;?) et vous recommande les meilleures offres.',
+      cta('Guide d\'achat forfait →', 'ouvrirWizardForfait', '#faf5ff', '#7c3aed')),
+
+    step('⚖', 'Comparer plusieurs éléments côte à côte',
+      'Cliquez ⚖ sur 2 à 4 produits ou annonces immo pour les ajouter à votre sélection. Un bandeau apparaît en bas de l\'écran. Cliquez "Comparer" pour voir un tableau détaillé avec les différences surlignées automatiquement.',
+      ''),
+
+    step('❤', 'Sauvegarder dans les favoris',
+      'Cliquez ❤ sur un produit ou une annonce pour le sauvegarder. Retrouvez tous vos favoris avec le bouton "❤ Mes favoris" qui apparaît dans la barre de navigation (sans inscription requise).',
+      ''),
+
+    step('🔔', 'Alertes prix',
+      'Sur la fiche d\'un produit, cliquez "Créer une alerte prix". Saisissez votre budget cible et votre email. Vous recevrez un email automatiquement dès que le prix passe sous votre seuil.',
+      ''),
+
+    step('📢', 'Publier une annonce immo',
+      'Vous louez ou vendez un bien&nbsp;? Cliquez "Publier une annonce (gratuit)" dans la section Immobilier. Votre annonce sera visible après validation par notre équipe.',
+      ctaRaw('Publier une annonce →', 'chargerProduits(\'\',\'immo\',1)', '#f0fdf4', '#059669')),
+
+    '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;border-radius:10px;padding:13px 16px;margin-top:6px">',
+      '<div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:4px">✅ Nopalou est gratuit et indépendant</div>',
+      '<div style="font-size:12px;color:#166534;line-height:1.6">Aucune commission sur les ventes. Les prix sont mis à jour toutes les 6 heures depuis les sites marchands. Nopalou ne vend rien — il compare pour vous.</div>',
+    '</div>',
+  ].join('');
+
+  ouvrirModal('📖 Guide d\'emploi — Comment utiliser Nopalou', html);
 }
