@@ -1322,7 +1322,7 @@ var _wzImmo = { budget: '', transaction: 'location', type_bien: '', ville: '', q
 function ouvrirWizardImmo() {
   state.currentPage = 'guide-immo';
   var appEl = document.getElementById('app');
-  if (appEl) appEl.style.cssText = '';
+  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
   var inp = 'width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:14px;outline:none;box-sizing:border-box';
   var w = _wzImmo;
 
@@ -2475,7 +2475,7 @@ function fermerComparaisonForfaits() {
 function ouvrirWizardForfait() {
   state.currentPage = 'guide-forfait';
   var appEl = document.getElementById('app');
-  if (appEl) appEl.style.cssText = '';
+  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
   var w = state.wizardForfait;
 
   function pBtn(p, label, couleur) {
@@ -5054,11 +5054,11 @@ var _POIDS_LABELS = ['', 'Peu important', 'Secondaire', 'Équilibré', 'Importan
 
 function ouvrirGuideAchat() {
   var appEl = document.getElementById('app');
-  if (appEl) appEl.style.cssText = '';
+  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
   state.currentPage = 'guide';
 
   render([
-    '<div style="max-width:680px;margin:0 auto;padding:16px 5% 80px">',
+    '<div style="max-width:960px;margin:0 auto;padding:16px 5% 80px">',
 
       // Retour
       '<button onclick="retourListe()" style="display:inline-flex;align-items:center;gap:6px;background:#fff7ed;border:1.5px solid #ea580c;color:#ea580c;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Retour</button>',
@@ -5474,7 +5474,7 @@ async function afficherFavoris() {
 function ouvrirGuideEmploi() {
   state.currentPage = 'guide-emploi';
   var appEl = document.getElementById('app');
-  if (appEl) appEl.style.cssText = '';
+  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
 
   function step(icon, titre, texte, boutons, couleur) {
     couleur = couleur || '#1d4ed8';
