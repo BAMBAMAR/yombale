@@ -13,10 +13,12 @@ function safeUrl(url) {
   try { var u = new URL(url); return /^https?:$/i.test(u.protocol) ? url : '#'; } catch { return '#'; }
 }
 
-function setMeta(title, desc) {
+function setMeta(title, desc, canonical) {
   document.title = title ? escapeHTML(title) + ' | Nopalou' : 'Nopalou — Comparateur de prix Sénégal';
   var m = document.querySelector('meta[name="description"]');
   if (m && desc) m.content = desc;
+  var c = document.querySelector('link[rel="canonical"]');
+  if (c) c.href = canonical || 'https://nopalou.com/';
 }
 
 function injecterSchemaProduct(produit, offres) {
@@ -66,6 +68,9 @@ function _urlToState(pathname, search) {
   if (pathname === '/immo' || pathname === '/immo/')        return { type: 'immo' };
   if (pathname === '/forfaits' || pathname === '/forfaits/') return { type: 'forfaits' };
   if (pathname === '/comparaison' || pathname === '/comparaison/') return { type: 'compare' };
+  if (pathname === '/mentions-legales')  return { type: 'info', page: 'mentions-legales' };
+  if (pathname === '/confidentialite')   return { type: 'info', page: 'confidentialite' };
+  if (pathname === '/cgu')               return { type: 'info', page: 'cgu' };
   return { type: 'home', query: params.get('q') || '', cat: params.get('cat') || '' };
 }
 
@@ -1974,7 +1979,7 @@ async function ouvrirImmo(id) {
     var inFav   = _immoState.favoris.indexOf(a.id) !== -1;
     var prenomContact = a.contact_nom ? escapeHTML(a.contact_nom.split(' ')[0]) : 'le propriétaire';
 
-    setMeta(a.titre, (a.titre || '') + (a.ville ? ' à ' + a.ville : '') + ' — Nopalou Immobilier Sénégal');
+    setMeta(a.titre, (a.titre || '') + (a.ville ? ' à ' + a.ville : '') + ' — Nopalou Immobilier Sénégal', 'https://nopalou.com/immo/' + id);
     var schemaImmo = document.getElementById('schema-product');
     if (schemaImmo) schemaImmo.remove();
 
@@ -3053,7 +3058,7 @@ async function ouvrirProduit(id, simFiltres) {
     var economie  = prixMaxO > prixMin ? prixMaxO - prixMin : 0;
     var bestOffre = _baseOffres.length ? _baseOffres.reduce(function(a,b){ return +a.prix < +b.prix ? a : b; }) : null;
 
-    setMeta(res.nom, 'Comparez les prix de ' + res.nom + ' chez tous les marchands au Sénégal');
+    setMeta(res.nom, 'Comparez les prix de ' + res.nom + ' chez tous les marchands au Sénégal', 'https://nopalou.com/produit/' + id);
     injecterSchemaProduct(res, offresArr);
 
     // ── Navbar sticky ─────────────────────────────────────────
@@ -4196,7 +4201,7 @@ function htmlFooter() {
           '<h4>Contact</h4>',
           '<ul>',
             '<li><a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a></li>',
-            '<li><a href="tel:+221338001234">+221 33 800 12 34</a></li>',
+            '<li><a href="tel:+221708717942">+221 70 871 79 42</a></li>',
             '<li><a href="#">Dakar, Sénégal</a></li>',
             '<li><a href="#">FAQ</a></li>',
           '</ul>',
@@ -4660,6 +4665,7 @@ window.addEventListener('popstate', function(e) {
   else if (st.type === 'immo')         { chargerImmo(1); }
   else if (st.type === 'forfaits')     { chargerForfaits(1); }
   else if (st.type === 'forfait')      { ouvrirForfait(st.id); }
+  else if (st.type === 'info')         { ouvrirInfoPage(st.page); }
   else if (st.type === 'immo-compare') { _immoOuvrirComparaison(); }
   else if (st.type === 'compare')      { ouvrirComparaisonNav(); }
   else                                 { chargerProduits(st.query || '', st.cat || '', 1); }
@@ -4700,6 +4706,9 @@ document.addEventListener('DOMContentLoaded', function() {
     chargerImmo(1);
   } else if (initState.type === 'forfaits') {
     chargerForfaits(1);
+  } else if (initState.type === 'info') {
+    goHome();
+    setTimeout(function() { ouvrirInfoPage(initState.page); }, 300);
   } else if (initState.type === 'compare') {
     if (state.comparer.length >= 2) ouvrirComparaisonNav(); else goHome();
   } else {
@@ -4812,7 +4821,7 @@ var INFO_PAGES = {
       // Contact
       '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px">',
         '<p style="font-size:13px;font-weight:700;color:#15803d;margin:0 0 8px">📧 Contactez-nous</p>',
-        '<p style="font-size:13px;color:#166534;margin:0">partenaires@nopalou.sn · +221 33 800 12 34</p>',
+        '<p style="font-size:13px;color:#166534;margin:0">partenaires@nopalou.sn · +221 70 871 79 42</p>',
         '<p style="font-size:12px;color:#166534;margin:6px 0 0">Réponse sous 48h ouvrables</p>',
       '</div>',
     ].join(''); }
@@ -4884,7 +4893,7 @@ var INFO_PAGES = {
     icone: '📄',
     html: function() { return [
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 8px">Éditeur du site</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Nopalou est un service de comparaison de prix indépendant opérant au Sénégal. Contact : <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a>.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Nopalou est un service de comparaison de prix indépendant opérant au Sénégal.<br>Email : <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a><br>Téléphone : <a href="tel:+221708717942">+221 70 871 79 42</a></p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Activité</h3>',
       '<p style="font-size:13px;color:#64748b;line-height:1.6">Nopalou référence et compare des prix collectés automatiquement chez des marchands tiers. Nopalou n\'est pas un vendeur, n\'effectue aucune transaction commerciale et ne perçoit aucune commission sur les ventes réalisées chez les marchands référencés.</p>',
@@ -4995,9 +5004,15 @@ function _article(icon, titre, date, extrait) {
 }
 
 // ── Rendu modal info ─────────────────────────────────────────────
+var _INFO_PAGE_URLS = { 'mentions-legales': '/mentions-legales', 'confidentialite': '/confidentialite', 'cgu': '/cgu' };
+
 function ouvrirInfoPage(pageId) {
   var page = INFO_PAGES[pageId];
   if (!page) return;
+  if (_INFO_PAGE_URLS[pageId]) {
+    _histPush({ type: 'info', page: pageId }, _INFO_PAGE_URLS[pageId]);
+    setMeta(page.titre, page.titre + ' — Nopalou', 'https://nopalou.com' + _INFO_PAGE_URLS[pageId]);
+  }
 
   var existing = document.getElementById('info-modal');
   if (existing) existing.remove();
