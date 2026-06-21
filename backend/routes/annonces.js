@@ -150,15 +150,18 @@ router.get('/mine', verifierToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-// ── GET /api/annonces/admin/en-attente (admin)
+// ── GET /api/annonces/admin/en-attente (admin) — toutes les annonces non supprimées
 router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
   try {
     const rows = await pool.query(
-      `SELECT a.*, u.nom AS auteur_nom, u.email AS auteur_email
+      `SELECT a.id, a.categorie_slug, a.titre, a.description, a.prix, a.ville, a.quartier,
+              a.contact_nom, a.contact_tel, a.photos, a.actif, a.payee, a.rejete,
+              a.created_at, a.updated_at,
+              u.nom AS auteur_nom, u.email AS auteur_email
        FROM annonces_classifiees a
        LEFT JOIN utilisateurs u ON u.id = a.utilisateur_id
-       WHERE a.supprimee=false AND (a.actif=false OR a.payee=false)
-       ORDER BY a.created_at DESC LIMIT 100`
+       WHERE a.supprimee=false
+       ORDER BY a.created_at DESC LIMIT 200`
     );
     res.json({ annonces: rows.rows });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
@@ -328,24 +331,26 @@ router.delete('/mine/:id', verifierToken, param('id').isUUID(), async (req, res)
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-// ── PUT /api/annonces/admin/:id — approuver / rejeter (admin)
+// ── PUT /api/annonces/admin/:id — approuver / rejeter / remettre (admin)
 router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
-    const { actif } = req.body;
-    const approuver = !!actif;
-    // Essai avec la colonne rejete (présente depuis la migration v37)
+    const { actif, rejete } = req.body;
+    const newActif  = !!actif;
+    // rejete explicitement fourni (true/false) ou déduit : si on approuve → false, si on rejette → true
+    const newRejete = rejete !== undefined ? !!rejete : !newActif;
+
     try {
       await pool.query(
         `UPDATE annonces_classifiees SET actif=$1, rejete=$2, updated_at=NOW() WHERE id=$3`,
-        [approuver, !approuver, req.params.id]
+        [newActif, newRejete, req.params.id]
       );
     } catch (e) {
-      // Fallback si la colonne rejete n'existe pas encore (migration en retard)
+      // Fallback si colonne rejete absente (migration pas encore exécutée)
       console.warn('[ADMIN] fallback sans rejete:', e.message);
       await pool.query(
         `UPDATE annonces_classifiees SET actif=$1, updated_at=NOW() WHERE id=$2`,
-        [approuver, req.params.id]
+        [newActif, req.params.id]
       );
     }
     res.json({ success: true });
