@@ -140,7 +140,7 @@ router.get('/mine', verifierToken, async (req, res) => {
   try {
     const rows = await pool.query(
       `SELECT id, categorie_slug, titre, prix, ville, actif, payee, supprimee,
-              photos, caracteristiques, created_at
+              rejete, photos, caracteristiques, created_at
        FROM annonces_classifiees
        WHERE utilisateur_id=$1 AND supprimee=false
        ORDER BY created_at DESC`,
@@ -302,7 +302,7 @@ router.put('/mine/:id', verifierToken, param('id').isUUID(), upload.array('photo
       `UPDATE annonces_classifiees
        SET titre=$1, description=$2, prix=$3, ville=$4, quartier=$5,
            contact_nom=$6, contact_tel=$7, photos=$8, caracteristiques=$9,
-           updated_at=NOW()
+           rejete=false, actif=false, updated_at=NOW()
        WHERE id=$10 AND utilisateur_id=$11 AND supprimee=false
        RETURNING id`,
       [titre, description, prix || null, ville, quartier, contact_nom, contact_tel,
@@ -333,9 +333,11 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { actif } = req.body;
+    const approuver = !!actif;
     await pool.query(
-      `UPDATE annonces_classifiees SET actif=$1, updated_at=NOW() WHERE id=$2`,
-      [!!actif, req.params.id]
+      `UPDATE annonces_classifiees
+       SET actif=$1, rejete=$2, updated_at=NOW() WHERE id=$3`,
+      [approuver, !approuver, req.params.id]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }

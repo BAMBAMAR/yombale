@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 35 — 2026-06-21
+//  app.js VERSION 37 — 2026-06-21
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 35 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 37 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -2139,25 +2139,121 @@ async function afficherMesAnnoncesClassifiees() {
     var html = '<div style="display:flex;flex-direction:column;gap:8px">' +
       annonces.map(function(a) {
         var badge = a.actif
-          ? '<span style="font-size:10px;font-weight:700;color:#059669;background:#f0fdf4;padding:2px 8px;border-radius:8px">✓ En ligne</span>'
-          : a.payee
-            ? '<span style="font-size:10px;font-weight:700;color:#f59e0b;background:#fffbeb;padding:2px 8px;border-radius:8px">⏳ Validation</span>'
-            : '<span style="font-size:10px;font-weight:700;color:#ef4444;background:#fef2f2;padding:2px 8px;border-radius:8px">💳 Paiement requis</span>';
-        var payBtn = (!a.actif && !a.payee)
-          ? '<button style="font-size:11px;padding:4px 10px;border-radius:8px;background:#1a7fe5;color:#fff;border:none;cursor:pointer;margin-top:7px" onclick="event.stopPropagation();fermerModal();_ouvrirModalPaiementAnnonce(1500,\'' + a.id + '\')">💳 Payer maintenant</button>'
-          : '';
-        return '<div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px">' +
+          ? '<span style="font-size:10px;font-weight:700;color:#059669;background:#f0fdf4;padding:2px 7px;border-radius:8px">✓ En ligne</span>'
+          : a.rejete
+            ? '<span style="font-size:10px;font-weight:700;color:#ef4444;background:#fef2f2;padding:2px 7px;border-radius:8px">❌ Rejetée</span>'
+            : a.payee
+              ? '<span style="font-size:10px;font-weight:700;color:#f59e0b;background:#fffbeb;padding:2px 7px;border-radius:8px">⏳ Validation</span>'
+              : '<span style="font-size:10px;font-weight:700;color:#6366f1;background:#eef2ff;padding:2px 7px;border-radius:8px">💳 Paiement</span>';
+        var actions = '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">';
+        if (!a.actif && !a.payee)
+          actions += '<button onclick="event.stopPropagation();fermerModal();_ouvrirModalPaiementAnnonce(1500,\'' + a.id + '\')" style="font-size:11px;padding:4px 10px;border-radius:7px;background:#1a7fe5;color:#fff;border:none;cursor:pointer">💳 Payer</button>';
+        actions += '<button onclick="event.stopPropagation();_editerMonAnnonce(\'' + a.id + '\')" style="font-size:11px;padding:4px 10px;border-radius:7px;background:#f1f5f9;color:#1a3a6e;border:1px solid #e2e8f0;cursor:pointer">✏️ Modifier</button>';
+        actions += '<button onclick="event.stopPropagation();_supprimerMonAnnonce(\'' + a.id + '\',\'' + escapeHTML(a.titre).replace(/'/g,"&#39;") + '\')" style="font-size:11px;padding:4px 10px;border-radius:7px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;cursor:pointer">🗑 Supprimer</button>';
+        actions += '</div>';
+        var borderColor = a.rejete ? '#fecaca' : '#e2e8f0';
+        return '<div style="border:1.5px solid ' + borderColor + ';border-radius:10px;padding:10px 12px;' + (a.rejete ? 'background:#fff8f8' : '') + '">' +
           '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">' +
-            '<div style="font-size:13px;font-weight:700;color:#1e293b">' + escapeHTML(a.titre) + '</div>' + badge +
+            '<div style="font-size:13px;font-weight:700;color:#1e293b;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHTML(a.titre) + '</div>' +
+            badge +
           '</div>' +
-          '<div style="font-size:11px;color:#64748b;margin-top:3px">' + (catLabels[a.categorie_slug] || a.categorie_slug) + (a.prix ? ' · ' + fcfa(a.prix) : '') + (a.ville ? ' · ' + a.ville : '') + '</div>' +
-          payBtn +
+          '<div style="font-size:11px;color:#64748b;margin-top:3px">' + escapeHTML(catLabels[a.categorie_slug] || a.categorie_slug) + (a.prix ? ' · ' + fcfa(a.prix) : '') + (a.ville ? ' · ' + escapeHTML(a.ville) : '') + '</div>' +
+          (a.rejete ? '<div style="font-size:11px;color:#ef4444;margin-top:4px">Modifiez et republiez pour repasser en validation.</div>' : '') +
+          actions +
         '</div>';
       }).join('') +
     '</div>' +
     '<button onclick="fermerModal();ouvrirPublierAnnonceGenerale(\'\')" style="width:100%;margin-top:12px;padding:10px;background:#f0f4ff;color:#1a3a6e;border:1.5px solid #bfdbfe;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">+ Nouvelle annonce</button>';
     ouvrirModal('📢 Mes annonces (' + annonces.length + ')', html);
   } catch(e) { ouvrirModal('Erreur', '<p style="color:#e63946">' + escapeHTML(e.message) + '</p>'); }
+}
+
+async function _supprimerMonAnnonce(id, titre) {
+  if (!confirm('Supprimer l\'annonce "' + titre + '" ?\nCette action est irréversible.')) return;
+  try {
+    await apiFetch('/annonces/mine/' + id, { method: 'DELETE' });
+    toast('Annonce supprimée', '#10b981');
+    afficherMesAnnoncesClassifiees();
+    if (state.currentPage === 'annonces') chargerAnnoncesClassifiees(_annState.cat, 1);
+  } catch(err) {
+    toast(err.message || 'Erreur suppression', '#ef4444');
+  }
+}
+
+async function _editerMonAnnonce(id) {
+  try {
+    var data = await apiFetch('/annonces/mine');
+    var a = (data.annonces || []).find(function(x){ return x.id === id; });
+    if (!a) { toast('Annonce introuvable', '#ef4444'); return; }
+
+    var cars = a.caracteristiques || {};
+    var s = 'width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box;background:#fff';
+    var html = [
+      (a.rejete ? '<div style="font-size:12px;color:#ef4444;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;margin-bottom:14px">❌ Cette annonce a été rejetée. Modifiez-la pour la remettre en validation.</div>' : ''),
+      '<input style="' + s + '" placeholder="Titre *" id="_edit-titre" value="' + escapeHTML(a.titre) + '">',
+      '<input style="' + s + '" type="number" placeholder="Prix (FCFA)" id="_edit-prix" value="' + (a.prix||'') + '">',
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">',
+        '<input style="' + s + 'margin-bottom:0" placeholder="Ville" id="_edit-ville" value="' + escapeHTML(a.ville||'') + '">',
+        '<input style="' + s + 'margin-bottom:0" placeholder="Quartier" id="_edit-quartier" value="' + escapeHTML(a.quartier||'') + '">',
+      '</div>',
+      '<textarea rows="3" style="' + s + ';resize:vertical" placeholder="Description…" id="_edit-desc">' + escapeHTML(a.description||'') + '</textarea>',
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">',
+        '<input style="' + s + 'margin-bottom:0" placeholder="Votre nom" id="_edit-nom" value="' + escapeHTML(a.contact_nom||'') + '">',
+        '<input style="' + s + 'margin-bottom:0" type="tel" placeholder="Téléphone *" id="_edit-tel" value="' + escapeHTML(a.contact_tel||'') + '">',
+      '</div>',
+      '<div style="margin-bottom:10px">',
+        '<label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:2px dashed #bfdbfe;border-radius:8px;cursor:pointer;background:#eff6ff">',
+          '<input type="file" accept="image/*" multiple id="_edit-photos" style="display:none">',
+          '<span style="font-size:18px">📷</span>',
+          '<span style="font-size:12px;color:#2563eb;font-weight:600">Changer les photos (optionnel)</span>',
+        '</label>',
+      '</div>',
+      '<button onclick="_sauvegarderEdition(\'' + id + '\')" style="width:100%;padding:12px;background:#059669;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer" id="_btn-save-edit">💾 Enregistrer</button>',
+    ].join('');
+    ouvrirModal('✏️ Modifier l\'annonce', html);
+  } catch(err) {
+    toast(err.message || 'Erreur', '#ef4444');
+  }
+}
+
+async function _sauvegarderEdition(id) {
+  var titre   = (document.getElementById('_edit-titre')   || {}).value || '';
+  var prix    = (document.getElementById('_edit-prix')    || {}).value || '';
+  var ville   = (document.getElementById('_edit-ville')   || {}).value || '';
+  var quartier= (document.getElementById('_edit-quartier')|| {}).value || '';
+  var desc    = (document.getElementById('_edit-desc')    || {}).value || '';
+  var nom     = (document.getElementById('_edit-nom')     || {}).value || '';
+  var tel     = (document.getElementById('_edit-tel')     || {}).value || '';
+  var photoInput = document.getElementById('_edit-photos');
+
+  if (!titre.trim()) { toast('Titre requis', '#ef4444'); return; }
+  if (!tel.trim())   { toast('Téléphone requis', '#ef4444'); return; }
+
+  var btn = document.getElementById('_btn-save-edit');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
+
+  try {
+    var fd = new FormData();
+    fd.append('titre',       titre.trim());
+    fd.append('prix',        prix);
+    fd.append('ville',       ville || 'Dakar');
+    fd.append('quartier',    quartier);
+    fd.append('description', desc.trim());
+    fd.append('contact_nom', nom);
+    fd.append('contact_tel', tel.trim());
+    fd.append('caracteristiques', '{}');
+    if (photoInput && photoInput.files.length) {
+      Array.from(photoInput.files).slice(0,5).forEach(function(f){ fd.append('photos', f); });
+    }
+    await apiFetchFormData('/annonces/mine/' + id, { method: 'PUT', body: fd });
+    fermerModal();
+    toast('✅ Annonce modifiée — repassée en validation', '#10b981');
+    afficherMesAnnoncesClassifiees();
+    if (state.currentPage === 'annonces') chargerAnnoncesClassifiees(_annState.cat, 1);
+  } catch(err) {
+    toast(err.message || 'Erreur', '#ef4444');
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer'; }
+  }
 }
 
 // ── Devenir partenaire ────────────────────────────────────────────
