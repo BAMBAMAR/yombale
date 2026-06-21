@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 26 — 2026-06-21
+//  app.js VERSION 31 — 2026-06-21
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 26 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 31 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -1327,105 +1327,96 @@ var _wzImmo = { budget: '', transaction: 'location', type_bien: '', ville: '', q
 function ouvrirWizardImmo() {
   state.currentPage = 'guide-immo';
   var appEl = document.getElementById('app');
-  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
-  var inp = 'width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:14px;outline:none;box-sizing:border-box';
+  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f5f7ff;min-height:100vh;box-sizing:border-box';
+  var inp = 'width:100%;padding:10px 12px;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:13px;background:rgba(255,255,255,.08);color:#e2e8f0;outline:none;box-sizing:border-box';
+  var selInp = 'width:100%;padding:10px 12px;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:13px;background:#0e2918;color:#e2e8f0;outline:none;box-sizing:border-box;cursor:pointer';
   var w = _wzImmo;
 
   function tBtn(label, val, field) {
     var act = w[field] === val;
-    return '<button onclick="_wzImmoField(\'' + field + '\',\'' + val + '\')" style="padding:10px 20px;border-radius:20px;border:2px solid ' + (act ? '#059669' : '#e2e8f0') + ';background:' + (act ? '#059669' : '#fff') + ';color:' + (act ? '#fff' : '#64748b') + ';font-size:13px;font-weight:' + (act ? '700' : '500') + ';cursor:pointer;transition:all .15s">' + label + '</button>';
+    return '<button onclick="_wzImmoField(\'' + field + '\',\'' + val + '\')" style="flex:1;padding:10px 14px;border-radius:8px;border:1.5px solid ' + (act ? '#10b981' : 'rgba(255,255,255,.18)') + ';background:' + (act ? '#059669' : 'rgba(255,255,255,.05)') + ';color:' + (act ? '#fff' : '#94a3b8') + ';font-size:13px;font-weight:' + (act ? '700' : '500') + ';cursor:pointer;transition:all .15s">' + label + '</button>';
   }
 
   render([
-    '<div style="max-width:900px;margin:0 auto;padding:16px 5% 80px">',
+    '<style>.g-wrap{display:flex;min-height:calc(100vh - 60px)}.g-left{width:360px;min-width:280px;flex-shrink:0;overflow-y:auto}.g-right{flex:1;overflow-y:auto}@media(max-width:820px){.g-wrap{flex-direction:column}.g-left{width:100%;min-width:0}}</style>',
 
-      // Retour
-      '<button onclick="chargerImmo(1)" style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1.5px solid #059669;color:#059669;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Retour aux annonces</button>',
-
-      // Hero
-      '<div style="background:linear-gradient(135deg,#064e3b,#059669,#34d399);border-radius:20px;padding:28px 24px;margin-bottom:24px;color:#fff">',
-        '<div style="font-size:36px;margin-bottom:10px">🏡</div>',
-        '<div style="font-size:22px;font-weight:800;margin-bottom:6px">Trouver mon logement idéal</div>',
-        '<div style="font-size:14px;opacity:.85;line-height:1.5">Décrivez votre projet — Nopalou sélectionne et classe les meilleures annonces.</div>',
+    '<div style="background:#fff;border-bottom:1.5px solid #e2e8f0;padding:12px 20px;display:flex;align-items:center;gap:12px">',
+      '<button onclick="chargerImmo(1)" style="display:inline-flex;align-items:center;gap:5px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;font-size:12px;font-weight:600;cursor:pointer;padding:6px 12px;border-radius:8px;flex-shrink:0">← Annonces</button>',
+      '<div>',
+        '<div style="font-size:15px;font-weight:800;color:#064e3b">🏡 Guide immobilier</div>',
+        '<div style="font-size:11px;color:#94a3b8;margin-top:1px">Trouvez votre logement idéal</div>',
       '</div>',
+    '</div>',
 
-      // Carte formulaire
-      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.04)">',
+    '<div class="g-wrap">',
 
-        '<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:20px">Votre projet</div>',
+      '<div class="g-left" style="background:#0f2d1e;padding:24px 20px 40px;display:flex;flex-direction:column">',
 
-        // Transaction
-        '<div style="margin-bottom:20px">',
-          '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px">Type de projet</label>',
-          '<div style="display:flex;gap:8px;flex-wrap:wrap">',
-            tBtn('🏠 Location', 'location', 'transaction'),
-            tBtn('🔑 Achat / Vente', 'vente', 'transaction'),
-          '</div>',
+        '<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#6dbf97;font-weight:700;margin-bottom:10px">Type de projet</div>',
+        '<div style="display:flex;gap:8px;margin-bottom:22px">',
+          tBtn('🏠 Location', 'location', 'transaction'),
+          tBtn('🔑 Achat / Vente', 'vente', 'transaction'),
         '</div>',
 
-        // Budget
-        '<div style="margin-bottom:20px">',
-          '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">💰 Budget maximum (FCFA)</label>',
-          '<input id="wzi-budget" type="number" placeholder="ex: 300 000" value="' + (w.budget||'') + '" ' +
-            'style="' + inp + '" oninput="_wzImmo.budget=this.value" ' +
-            'onfocus="this.style.borderColor=\'#059669\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+        '<div style="height:1px;background:rgba(255,255,255,.1);margin-bottom:20px"></div>',
+
+        '<div style="margin-bottom:14px">',
+          '<label style="font-size:10px;font-weight:700;color:#6dbf97;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">💰 Budget max (FCFA)</label>',
+          '<input id="wzi-budget" type="number" placeholder="ex: 300 000" value="' + (w.budget||'') + '" style="' + inp + '" oninput="_wzImmo.budget=this.value" onfocus="this.style.borderColor=\'rgba(255,255,255,.45)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.15)\'">',
         '</div>',
 
-        // Type de bien
-        '<div style="margin-bottom:20px">',
-          '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">🏘️ Type de bien</label>',
-          '<select id="wzi-type" style="' + inp + ';background:#fff;cursor:pointer" onchange="_wzImmo.type_bien=this.value" ' +
-            'onfocus="this.style.borderColor=\'#059669\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+        '<div style="margin-bottom:14px">',
+          '<label style="font-size:10px;font-weight:700;color:#6dbf97;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">🏘️ Type de bien</label>',
+          '<select id="wzi-type" style="' + selInp + '" onchange="_wzImmo.type_bien=this.value" onfocus="this.style.borderColor=\'rgba(255,255,255,.45)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.15)\'">',
             Object.keys(TYPE_BIEN_LABELS).map(function(k) {
               return '<option value="' + k + '"' + (w.type_bien === k ? ' selected' : '') + '>' + TYPE_BIEN_LABELS[k] + '</option>';
             }).join(''),
           '</select>',
         '</div>',
 
-        // Ville + Quartier
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">',
           '<div>',
-            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">📍 Ville</label>',
-            '<select id="wzi-ville" style="' + inp + ';background:#fff;cursor:pointer" onchange="_wzImmo.ville=this.value" ' +
-              'onfocus="this.style.borderColor=\'#059669\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+            '<label style="font-size:10px;font-weight:700;color:#6dbf97;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">📍 Ville</label>',
+            '<select id="wzi-ville" style="' + selInp + '" onchange="_wzImmo.ville=this.value" onfocus="this.style.borderColor=\'rgba(255,255,255,.45)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.15)\'">',
               '<option value="">Toutes</option>',
               (_immoState.villes || []).map(function(v) { return '<option value="' + v.ville + '"' + (w.ville === v.ville ? ' selected' : '') + '>' + v.ville + '</option>'; }).join(''),
             '</select>',
           '</div>',
           '<div>',
-            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">Quartier <span style="font-weight:400;font-size:11px;color:#94a3b8">optionnel</span></label>',
-            '<input id="wzi-quartier" type="text" placeholder="ex: Plateau, Almadies…" value="' + (w.quartier||'') + '" ' +
-              'style="' + inp + '" oninput="_wzImmo.quartier=this.value" ' +
-              'onfocus="this.style.borderColor=\'#059669\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+            '<label style="font-size:10px;font-weight:700;color:#6dbf97;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Quartier <span style="font-weight:400;opacity:.55">opt.</span></label>',
+            '<input id="wzi-quartier" type="text" placeholder="ex: Plateau…" value="' + (w.quartier||'') + '" style="' + inp + '" oninput="_wzImmo.quartier=this.value" onfocus="this.style.borderColor=\'rgba(255,255,255,.45)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.15)\'">',
           '</div>',
         '</div>',
 
-        // Surface + Chambres
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">',
           '<div>',
-            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">📐 Surface min (m²)</label>',
-            '<input id="wzi-surface" type="number" placeholder="ex: 60" value="' + (w.surfaceMin||'') + '" ' +
-              'style="' + inp + '" oninput="_wzImmo.surfaceMin=this.value" ' +
-              'onfocus="this.style.borderColor=\'#059669\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+            '<label style="font-size:10px;font-weight:700;color:#6dbf97;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">📐 Surface min (m²)</label>',
+            '<input id="wzi-surface" type="number" placeholder="ex: 60" value="' + (w.surfaceMin||'') + '" style="' + inp + '" oninput="_wzImmo.surfaceMin=this.value" onfocus="this.style.borderColor=\'rgba(255,255,255,.45)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.15)\'">',
           '</div>',
           '<div>',
-            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">🛏️ Chambres min</label>',
-            '<input id="wzi-ch" type="number" placeholder="ex: 2" value="' + (w.nbChambres||'') + '" ' +
-              'style="' + inp + '" oninput="_wzImmo.nbChambres=this.value" ' +
-              'onfocus="this.style.borderColor=\'#059669\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+            '<label style="font-size:10px;font-weight:700;color:#6dbf97;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">🛏️ Chambres min</label>',
+            '<input id="wzi-ch" type="number" placeholder="ex: 2" value="' + (w.nbChambres||'') + '" style="' + inp + '" oninput="_wzImmo.nbChambres=this.value" onfocus="this.style.borderColor=\'rgba(255,255,255,.45)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.15)\'">',
           '</div>',
         '</div>',
 
-        '<button onclick="lancerRechercheWizardImmo()" ' +
-          'style="width:100%;padding:15px;background:linear-gradient(135deg,#064e3b,#059669);color:#fff;border:none;border-radius:12px;' +
-          'font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(5,150,105,.35)">',
+        '<div style="flex:1;min-height:16px"></div>',
+
+        '<button onclick="lancerRechercheWizardImmo()" ',
+          'style="width:100%;padding:13px;background:#059669;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:16px">',
           '🔍 Trouver les meilleures annonces',
         '</button>',
 
       '</div>',
 
-      // Zone résultats
-      '<div id="wz-immo-results"></div>',
+      '<div class="g-right" style="background:#f5faf7;padding:28px 24px 80px">',
+        '<div id="wz-immo-results">',
+          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;text-align:center;padding:40px 20px">',
+            '<div style="font-size:52px;margin-bottom:16px;opacity:.2">🏡</div>',
+            '<div style="font-size:16px;font-weight:800;color:#064e3b;margin-bottom:8px">Décrivez votre projet</div>',
+            '<div style="font-size:13px;color:#94a3b8;max-width:300px;line-height:1.7">Renseignez vos critères à gauche, puis cliquez <strong style="color:#064e3b">Trouver</strong>.</div>',
+          '</div>',
+        '</div>',
+      '</div>',
 
     '</div>',
   ].join(''));
@@ -2480,96 +2471,93 @@ function fermerComparaisonForfaits() {
 function ouvrirWizardForfait() {
   state.currentPage = 'guide-forfait';
   var appEl = document.getElementById('app');
-  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
+  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f5f7ff;min-height:100vh;box-sizing:border-box';
   var w = state.wizardForfait;
+  var inp = 'width:100%;padding:10px 12px;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:13px;background:rgba(255,255,255,.08);color:#e2e8f0;outline:none;box-sizing:border-box';
 
   function pBtn(p, label, couleur) {
     var act = (w.profil === p);
+    var colors = { internet:'#2563eb', appel:'#10b981', mixte:'#f97316' };
+    var c = colors[p] || couleur;
     return '<button type="button" onclick="_wzProfil(\'' + p + '\')" id="wz-p-' + p + '" ' +
-      'style="flex:1;padding:13px 8px;border-radius:10px;border:2px solid ' + (act ? couleur : '#e2e8f0') + ';' +
-      'background:' + (act ? couleur : '#fff') + ';color:' + (act ? '#fff' : '#475569') + ';' +
+      'style="flex:1;padding:11px 8px;border-radius:9px;border:1.5px solid ' + (act ? c : 'rgba(255,255,255,.18)') + ';' +
+      'background:' + (act ? c : 'rgba(255,255,255,.05)') + ';color:' + (act ? '#fff' : '#94a3b8') + ';' +
       'font-weight:' + (act ? '700' : '500') + ';font-size:13px;cursor:pointer;transition:all .15s">' + label + '</button>';
   }
 
   render([
-    '<div style="max-width:900px;margin:0 auto;padding:16px 5% 80px">',
+    '<style>.g-wrap{display:flex;min-height:calc(100vh - 60px)}.g-left{width:360px;min-width:280px;flex-shrink:0;overflow-y:auto}.g-right{flex:1;overflow-y:auto}@media(max-width:820px){.g-wrap{flex-direction:column}.g-left{width:100%;min-width:0}}</style>',
 
-      // Retour
-      '<button onclick="chargerForfaits(1)" style="display:inline-flex;align-items:center;gap:6px;background:#f5f3ff;border:1.5px solid #7c3aed;color:#7c3aed;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Retour aux forfaits</button>',
-
-      // Hero
-      '<div style="background:linear-gradient(135deg,#4c1d95,#7c3aed,#a78bfa);border-radius:20px;padding:28px 24px;margin-bottom:24px;color:#fff">',
-        '<div style="font-size:36px;margin-bottom:10px">🎯</div>',
-        '<div style="font-size:22px;font-weight:800;margin-bottom:6px">Trouvez votre forfait idéal</div>',
-        '<div style="font-size:14px;opacity:.85;line-height:1.5">Décrivez votre usage — Nopalou calcule un score et classe les forfaits pour vous.</div>',
+    '<div style="background:#fff;border-bottom:1.5px solid #e2e8f0;padding:12px 20px;display:flex;align-items:center;gap:12px">',
+      '<button onclick="chargerForfaits(1)" style="display:inline-flex;align-items:center;gap:5px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;font-size:12px;font-weight:600;cursor:pointer;padding:6px 12px;border-radius:8px;flex-shrink:0">← Forfaits</button>',
+      '<div>',
+        '<div style="font-size:15px;font-weight:800;color:#4c1d95">🎯 Guide forfait télécom</div>',
+        '<div style="font-size:11px;color:#94a3b8;margin-top:1px">Scoring personnalisé selon votre usage</div>',
       '</div>',
+    '</div>',
 
-      // Carte formulaire
-      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.04)">',
+    '<div class="g-wrap">',
 
-        '<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:20px">Vos critères</div>',
+      '<div class="g-left" style="background:#1e1049;padding:24px 20px 40px;display:flex;flex-direction:column">',
 
-        // Budget
-        '<div style="margin-bottom:22px">',
-          '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">💰 Budget maximum / mois</label>',
-          '<div style="display:flex;align-items:center;gap:8px">',
-            '<input id="wz-budget" type="number" min="100" step="100" placeholder="ex: 3 000" value="' + (w.budget || '') + '" ' +
-              'oninput="state.wizardForfait.budget=this.value" ' +
-              'style="flex:1;padding:11px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:15px;outline:none" ' +
-              'onfocus="this.style.borderColor=\'#7c3aed\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
-            '<span style="font-size:13px;font-weight:600;color:#64748b;white-space:nowrap">FCFA</span>',
+        '<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#a78bfa;font-weight:700;margin-bottom:10px">💰 Budget mensuel max</div>',
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">',
+          '<input id="wz-budget" type="number" min="100" step="100" placeholder="ex: 3 000" value="' + (w.budget || '') + '" ',
+            'oninput="state.wizardForfait.budget=this.value" ',
+            'style="flex:1;padding:11px 14px;border:1.5px solid rgba(255,255,255,.15);border-radius:9px;font-size:15px;background:rgba(255,255,255,.08);color:#e2e8f0;outline:none" ',
+            'onfocus="this.style.borderColor=\'rgba(255,255,255,.45)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.15)\'">',
+          '<span style="font-size:12px;font-weight:600;color:#7c6aa0;white-space:nowrap">FCFA</span>',
+        '</div>',
+        '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:22px">',
+          [1000,2000,3000,5000,10000].map(function(v) {
+            return '<button type="button" onclick="document.getElementById(\'wz-budget\').value=' + v + ';state.wizardForfait.budget=' + v + '" ' +
+              'style="padding:4px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);font-size:11px;color:#a78bfa;cursor:pointer" ' +
+              'onmouseover="this.style.background=\'rgba(167,139,250,.2)\'" onmouseout="this.style.background=\'rgba(255,255,255,.07)\'">' +
+              v.toLocaleString() + ' F</button>';
+          }).join(''),
+        '</div>',
+
+        '<div style="height:1px;background:rgba(255,255,255,.1);margin-bottom:20px"></div>',
+
+        '<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#a78bfa;font-weight:700;margin-bottom:10px">📱 Usage principal</div>',
+        '<div style="display:flex;gap:6px;margin-bottom:22px">',
+          pBtn('internet', '🌐 Internet', '#2563eb'),
+          pBtn('appel',    '📞 Appels',   '#10b981'),
+          pBtn('mixte',    '🔀 Les deux', '#f97316'),
+        '</div>',
+
+        '<div style="height:1px;background:rgba(255,255,255,.1);margin-bottom:20px"></div>',
+
+        '<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#a78bfa;font-weight:700;margin-bottom:10px">⚙️ Minimums <span style="font-weight:400;opacity:.6;font-size:9px;letter-spacing:0;text-transform:none">(optionnel)</span></div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">',
+          '<div>',
+            '<div style="font-size:10px;font-weight:600;color:#7c6aa0;margin-bottom:5px">📶 Data min (Mo)</div>',
+            '<input id="wz-data" type="number" min="0" step="100" placeholder="ex: 1 000" value="' + (w.dataMin || '') + '" oninput="state.wizardForfait.dataMin=this.value" style="' + inp + '" onfocus="this.style.borderColor=\'rgba(255,255,255,.45)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.15)\'">',
           '</div>',
-          '<div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap">',
-            [1000,2000,3000,5000,10000].map(function(v) {
-              return '<button type="button" onclick="document.getElementById(\'wz-budget\').value=' + v + ';state.wizardForfait.budget=' + v + '" ' +
-                'style="padding:5px 12px;border-radius:16px;border:1px solid #e2e8f0;background:#f8fafc;font-size:12px;color:#475569;cursor:pointer;transition:background .1s" ' +
-                'onmouseover="this.style.background=\'#ede9fe\'" onmouseout="this.style.background=\'#f8fafc\'">' +
-                v.toLocaleString() + ' F</button>';
-            }).join(''),
+          '<div>',
+            '<div style="font-size:10px;font-weight:600;color:#7c6aa0;margin-bottom:5px">📞 Minutes min</div>',
+            '<input id="wz-min" type="number" min="0" step="10" placeholder="ex: 30" value="' + (w.minutesMin || '') + '" oninput="state.wizardForfait.minutesMin=this.value" style="' + inp + '" onfocus="this.style.borderColor=\'rgba(255,255,255,.45)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.15)\'">',
           '</div>',
         '</div>',
 
-        // Profil usage
-        '<div style="margin-bottom:22px">',
-          '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px">📱 Usage principal</label>',
-          '<div style="display:flex;gap:8px">',
-            pBtn('internet', '🌐 Internet', '#2563eb'),
-            pBtn('appel',    '📞 Appels',   '#10b981'),
-            pBtn('mixte',    '🔀 Les deux', '#f97316'),
-          '</div>',
-        '</div>',
+        '<div style="flex:1;min-height:16px"></div>',
 
-        // Critères optionnels
-        '<div style="margin-bottom:24px">',
-          '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px">⚙️ Minimums souhaités <span style="font-weight:400;font-size:12px;color:#94a3b8">(optionnel)</span></label>',
-          '<div style="display:flex;gap:10px;flex-wrap:wrap">',
-            '<div style="flex:1;min-width:140px">',
-              '<div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px">📶 Data minimale (Mo)</div>',
-              '<input id="wz-data" type="number" min="0" step="100" placeholder="ex: 1 000" value="' + (w.dataMin || '') + '" ' +
-                'oninput="state.wizardForfait.dataMin=this.value" ' +
-                'style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;outline:none" ' +
-                'onfocus="this.style.borderColor=\'#7c3aed\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
-            '</div>',
-            '<div style="flex:1;min-width:140px">',
-              '<div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px">📞 Minutes minimales</div>',
-              '<input id="wz-min" type="number" min="0" step="10" placeholder="ex: 30" value="' + (w.minutesMin || '') + '" ' +
-                'oninput="state.wizardForfait.minutesMin=this.value" ' +
-                'style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;outline:none" ' +
-                'onfocus="this.style.borderColor=\'#7c3aed\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
-            '</div>',
-          '</div>',
-        '</div>',
-
-        '<button onclick="lancerRechercheWizard()" ' +
-          'style="width:100%;padding:15px;background:linear-gradient(135deg,#4c1d95,#7c3aed);color:#fff;border:none;border-radius:12px;' +
-          'font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.02em;box-shadow:0 4px 14px rgba(124,58,237,.35)">',
+        '<button onclick="lancerRechercheWizard()" ',
+          'style="width:100%;padding:13px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:16px;letter-spacing:.01em">',
           '🔍 Trouver les meilleurs forfaits',
         '</button>',
 
       '</div>',
 
-      // Zone résultats (remplie dynamiquement)
-      '<div id="wz-results"></div>',
+      '<div class="g-right" style="background:#f8f5ff;padding:28px 24px 80px">',
+        '<div id="wz-results">',
+          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;text-align:center;padding:40px 20px">',
+            '<div style="font-size:52px;margin-bottom:16px;opacity:.2">🎯</div>',
+            '<div style="font-size:16px;font-weight:800;color:#4c1d95;margin-bottom:8px">Configurez votre usage</div>',
+            '<div style="font-size:13px;color:#94a3b8;max-width:300px;line-height:1.7">Indiquez votre budget et votre profil, puis cliquez <strong style="color:#4c1d95">Trouver</strong>.</div>',
+          '</div>',
+        '</div>',
+      '</div>',
 
     '</div>',
   ].join(''));
@@ -2586,9 +2574,9 @@ function _wzProfil(p) {
     var btn = document.getElementById('wz-p-' + x);
     if (!btn) return;
     var act = x === p;
-    btn.style.background  = act ? colors[x] : '#fff';
-    btn.style.color       = act ? '#fff'     : '#475569';
-    btn.style.borderColor = act ? colors[x] : '#e2e8f0';
+    btn.style.background  = act ? colors[x] : 'rgba(255,255,255,.05)';
+    btn.style.color       = act ? '#fff'     : '#94a3b8';
+    btn.style.borderColor = act ? colors[x] : 'rgba(255,255,255,.18)';
     btn.style.fontWeight  = act ? '700'      : '500';
   });
 }
@@ -5069,56 +5057,54 @@ var _POIDS_LABELS = ['', 'Peu important', 'Secondaire', 'Équilibré', 'Importan
 
 function ouvrirGuideAchat() {
   var appEl = document.getElementById('app');
-  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
+  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f5f7ff;min-height:100vh;box-sizing:border-box';
   state.currentPage = 'guide';
 
   render([
-    '<div style="max-width:900px;margin:0 auto;padding:16px 5% 80px">',
+    '<style>.g-wrap{display:flex;min-height:calc(100vh - 60px)}.g-left{width:360px;min-width:280px;flex-shrink:0;overflow-y:auto}.g-right{flex:1;overflow-y:auto}@media(max-width:820px){.g-wrap{flex-direction:column}.g-left{width:100%;min-width:0}}</style>',
 
-      // Retour
-      '<button onclick="retourListe()" style="display:inline-flex;align-items:center;gap:6px;background:#fff7ed;border:1.5px solid #ea580c;color:#ea580c;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Retour</button>',
-
-      // Hero
-      '<div style="background:linear-gradient(135deg,#7c2d12,#ea580c,#fb923c);border-radius:20px;padding:28px 24px;margin-bottom:24px;color:#fff">',
-        '<div style="font-size:36px;margin-bottom:10px">🏆</div>',
-        '<div style="font-size:22px;font-weight:800;margin-bottom:6px">Guide d\'achat intelligent</div>',
-        '<div style="font-size:14px;opacity:.85;line-height:1.5">Définissez vos critères — Nopalou calcule un score et classe les produits selon votre profil.</div>',
+    // Header bar
+    '<div style="background:#fff;border-bottom:1.5px solid #e2e8f0;padding:12px 20px;display:flex;align-items:center;gap:12px">',
+      '<button onclick="retourListe()" style="display:inline-flex;align-items:center;gap:5px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;font-size:12px;font-weight:600;cursor:pointer;padding:6px 12px;border-radius:8px;flex-shrink:0">← Retour</button>',
+      '<div>',
+        '<div style="font-size:15px;font-weight:800;color:#1a3a6e">🏆 Guide d\'achat intelligent</div>',
+        '<div style="font-size:11px;color:#94a3b8;margin-top:1px">Scoring personnalisé · 4 profils d\'achat</div>',
       '</div>',
+    '</div>',
 
-      // ── Profils rapides ──
-      '<div style="margin-bottom:22px">',
-        '<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Profil d\'achat</div>',
-        '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">',
+    '<div class="g-wrap">',
+
+      // ── LEFT: dark navy form panel
+      '<div class="g-left" style="background:#1a2f5e;padding:24px 20px 40px;display:flex;flex-direction:column">',
+
+        '<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7fa4d0;font-weight:700;margin-bottom:10px">Profil d\'achat</div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:22px">',
           GUIDE_PROFILS.map(function(p) {
+            var act = _guidePrefs.profilActif === p.id;
             return [
               '<button id="profil-btn-' + p.id + '" onclick="appliquerProfilGuide(\'' + p.id + '\')" ',
-                'style="padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;text-align:left;',
-                'background:#fff;cursor:pointer;transition:all .15s">',
-                '<div style="font-size:13px;font-weight:700;color:#1e293b">' + p.label + '</div>',
-                '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + p.desc + '</div>',
+                'style="padding:10px;border:1.5px solid ' + (act ? '#3b82f6' : 'rgba(255,255,255,.18)') + ';border-radius:9px;text-align:left;',
+                'background:' + (act ? '#2563eb' : 'rgba(255,255,255,.05)') + ';cursor:pointer;transition:all .15s">',
+                '<div style="font-size:12px;font-weight:700;color:' + (act ? '#fff' : '#cbd5e1') + '">' + p.label + '</div>',
+                '<div style="font-size:10px;color:' + (act ? 'rgba(255,255,255,.7)' : '#5b7a99') + ';margin-top:2px;line-height:1.3">' + p.desc + '</div>',
               '</button>',
             ].join('');
           }).join(''),
         '</div>',
-      '</div>',
 
-      // ── Paramètres ──
-      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px;margin-bottom:20px">',
-        '<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px">Paramètres personnalisés</div>',
+        '<div style="height:1px;background:rgba(255,255,255,.1);margin-bottom:20px"></div>',
 
-        // Recherche libre
         '<div style="margin-bottom:14px">',
-          '<label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:5px">🔍 Que recherchez-vous ?</label>',
-          '<input id="guide-q" type="text" placeholder="ex: smartphone Samsung, TV 55 pouces, frigo 300L..." ',
-            'value="' + (_guidePrefs.q||'') + '" ',
-            'style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box" ',
+          '<label style="font-size:10px;font-weight:700;color:#7fa4d0;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Que recherchez-vous ?</label>',
+          '<input id="guide-q" type="text" placeholder="ex: Samsung Galaxy A55, TV 55 pouces…" value="' + (_guidePrefs.q||'') + '" ',
+            'style="width:100%;padding:10px 12px;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:13px;background:rgba(255,255,255,.08);color:#e2e8f0;outline:none;box-sizing:border-box" ',
+            'onfocus="this.style.borderColor=\'rgba(255,255,255,.45)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.15)\'" ',
             'onkeydown="if(event.key===\'Enter\')lancerGuideAchat()">',
         '</div>',
 
-        // Catégorie
         '<div style="margin-bottom:14px">',
-          '<label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:5px">Catégorie</label>',
-          '<select id="guide-cat" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;background:#fff;color:#1e293b">',
+          '<label style="font-size:10px;font-weight:700;color:#7fa4d0;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Catégorie</label>',
+          '<select id="guide-cat" style="width:100%;padding:10px 12px;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:13px;background:#1e3566;color:#e2e8f0;outline:none;box-sizing:border-box;cursor:pointer">',
             '<option value="">Toutes les catégories</option>',
             CATEGORIES.map(function(c) {
               return '<option value="' + c.slug + '"' + (_guidePrefs.categorie===c.slug?' selected':'') + '>' + c.icon + ' ' + c.label + '</option>';
@@ -5126,51 +5112,63 @@ function ouvrirGuideAchat() {
           '</select>',
         '</div>',
 
-        // Budget
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">',
           '<div>',
-            '<label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:5px">Budget min (FCFA)</label>',
-            '<input id="guide-min" type="number" placeholder="ex: 5 000" value="' + (_guidePrefs.budgetMin||'') + '" ',
-              'style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">',
+            '<label style="font-size:10px;font-weight:700;color:#7fa4d0;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Budget min (FCFA)</label>',
+            '<input id="guide-min" type="number" placeholder="5 000" value="' + (_guidePrefs.budgetMin||'') + '" ',
+              'style="width:100%;padding:9px 10px;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:13px;background:rgba(255,255,255,.08);color:#e2e8f0;outline:none;box-sizing:border-box" ',
+              'onfocus="this.style.borderColor=\'rgba(255,255,255,.45)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.15)\'">',
           '</div>',
           '<div>',
-            '<label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:5px">Budget max (FCFA)</label>',
-            '<input id="guide-max" type="number" placeholder="ex: 200 000" value="' + (_guidePrefs.budgetMax||'') + '" ',
-              'style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">',
+            '<label style="font-size:10px;font-weight:700;color:#7fa4d0;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Budget max (FCFA)</label>',
+            '<input id="guide-max" type="number" placeholder="200 000" value="' + (_guidePrefs.budgetMax||'') + '" ',
+              'style="width:100%;padding:9px 10px;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:13px;background:rgba(255,255,255,.08);color:#e2e8f0;outline:none;box-sizing:border-box" ',
+              'onfocus="this.style.borderColor=\'rgba(255,255,255,.45)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.15)\'">',
           '</div>',
         '</div>',
 
-        // Sliders poids
-        _sliderGuide('guide-poids-prix',  '💰 Importance du prix',              _guidePrefs.poidsPrix),
-        _sliderGuide('guide-poids-specs', '📊 Importance des caractéristiques', _guidePrefs.poidsSpecs),
-        _sliderGuide('guide-poids-dispo', '🏪 Importance de la disponibilité',  _guidePrefs.poidsDispo),
+        _sliderGuide('guide-poids-prix',  '💰 Importance du prix',              _guidePrefs.poidsPrix,  true),
+        _sliderGuide('guide-poids-specs', '📊 Importance des caractéristiques', _guidePrefs.poidsSpecs, true),
+        _sliderGuide('guide-poids-dispo', '🏪 Importance de la disponibilité',  _guidePrefs.poidsDispo, true),
 
-        // Bouton lancer
+        '<div style="flex:1;min-height:16px"></div>',
+
         '<button onclick="lancerGuideAchat()" ',
-          'style="width:100%;padding:13px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);',
-          'color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px">',
+          'style="width:100%;padding:13px;background:#ea580c;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:16px;letter-spacing:.01em">',
           '🔍 Trouver les meilleurs produits',
         '</button>',
+
       '</div>',
 
-      // Zone résultats
-      '<div id="guide-resultats"></div>',
+      // ── RIGHT: results panel
+      '<div class="g-right" style="background:#f5f7ff;padding:28px 24px 80px">',
+        '<div id="guide-resultats">',
+          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;text-align:center;padding:40px 20px">',
+            '<div style="font-size:52px;margin-bottom:16px;opacity:.2">🏆</div>',
+            '<div style="font-size:16px;font-weight:800;color:#1a3a6e;margin-bottom:8px">Configurez vos critères</div>',
+            '<div style="font-size:13px;color:#94a3b8;max-width:300px;line-height:1.7">Choisissez un profil ou ajustez les paramètres, puis cliquez <strong style="color:#1a3a6e">Trouver</strong>.</div>',
+          '</div>',
+        '</div>',
+      '</div>',
 
     '</div>',
   ].join(''));
 }
 
-function _sliderGuide(id, label, val) {
+function _sliderGuide(id, label, val, dark) {
+  var lc = dark ? '#7fa4d0' : '#334155';
+  var vc = dark ? '#93c5fd' : '#6366f1';
+  var ac = dark ? '#60a5fa' : '#1d4ed8';
   return [
     '<div style="margin-bottom:12px">',
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">',
-        '<label style="font-size:12px;font-weight:600;color:#334155">' + label + '</label>',
-        '<span id="' + id + '-lbl" style="font-size:11px;font-weight:700;color:#6366f1;min-width:110px;text-align:right">' + _POIDS_LABELS[val] + '</span>',
+        '<label style="font-size:11px;font-weight:600;color:' + lc + '">' + label + '</label>',
+        '<span id="' + id + '-lbl" style="font-size:10px;font-weight:700;color:' + vc + ';min-width:90px;text-align:right">' + _POIDS_LABELS[val] + '</span>',
       '</div>',
       '<input type="range" min="1" max="5" value="' + val + '" id="' + id + '" ',
         'oninput="document.getElementById(\'' + id + '-lbl\').textContent=' +
           '[\'\',' + _POIDS_LABELS.slice(1).map(function(l){return '\''+l+'\'';}).join(',') + '][this.value-1]" ',
-        'style="width:100%;accent-color:#1d4ed8">',
+        'style="width:100%;accent-color:' + ac + '">',
     '</div>',
   ].join('');
 }
@@ -5189,13 +5187,16 @@ function appliquerProfilGuide(profilId) {
     if (lb) { lb.textContent = _POIDS_LABELS[profil.prefs[k]]; }
   });
 
-  // Surbrillance profil actif
+  // Surbrillance profil actif (dark panel style)
   GUIDE_PROFILS.forEach(function(p) {
     var btn = document.getElementById('profil-btn-' + p.id);
     if (!btn) return;
     var actif = p.id === profilId;
-    btn.style.borderColor = actif ? '#1d4ed8' : '#e2e8f0';
-    btn.style.background  = actif ? '#eff6ff' : '#fff';
+    btn.style.borderColor = actif ? '#3b82f6' : 'rgba(255,255,255,.18)';
+    btn.style.background  = actif ? '#2563eb' : 'rgba(255,255,255,.05)';
+    var els = btn.querySelectorAll('div');
+    if (els[0]) els[0].style.color = actif ? '#fff' : '#cbd5e1';
+    if (els[1]) els[1].style.color = actif ? 'rgba(255,255,255,.7)' : '#5b7a99';
   });
 }
 
@@ -5489,7 +5490,7 @@ async function afficherFavoris() {
 function ouvrirGuideEmploi() {
   state.currentPage = 'guide-emploi';
   var appEl = document.getElementById('app');
-  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
+  if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f5f7ff;min-height:100vh;box-sizing:border-box';
 
   function step(icon, titre, texte, boutons, couleur) {
     couleur = couleur || '#1d4ed8';
@@ -5513,16 +5514,14 @@ function ouvrirGuideEmploi() {
   }
 
   render([
-    '<div style="max-width:900px;margin:0 auto;padding:16px 5% 80px">',
+    '<div style="padding:20px 5% 80px;max-width:820px;margin:0 auto">',
 
-      // Retour
-      '<button onclick="goHome()" style="display:inline-flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Accueil</button>',
-
-      // Hero
-      '<div style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8,#60a5fa);border-radius:20px;padding:28px 24px;margin-bottom:28px;color:#fff">',
-        '<div style="font-size:36px;margin-bottom:10px">📖</div>',
-        '<div style="font-size:22px;font-weight:800;margin-bottom:6px">Comment utiliser Nopalou</div>',
-        '<div style="font-size:14px;opacity:.85;line-height:1.5">Tout ce que vous pouvez faire sur Nopalou en quelques étapes.</div>',
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">',
+        '<button onclick="goHome()" style="display:inline-flex;align-items:center;gap:5px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;font-size:12px;font-weight:600;cursor:pointer;padding:6px 12px;border-radius:8px;flex-shrink:0">← Accueil</button>',
+        '<div>',
+          '<div style="font-size:18px;font-weight:800;color:#1a3a6e">📖 Comment utiliser Nopalou</div>',
+          '<div style="font-size:12px;color:#94a3b8;margin-top:1px">Tout ce que vous pouvez faire, en quelques étapes.</div>',
+        '</div>',
       '</div>',
 
       // Steps
