@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 37 — 2026-06-21
+//  app.js VERSION 38 — 2026-06-21
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 37 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 38 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -5268,6 +5268,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (urlParams.get('email_verifie') === '1') {
     toast('Email vérifié avec succès ✓', '#10b981');
     if (state.user) { state.user.email_verifie = true; localStorage.setItem('pm_user', JSON.stringify(state.user)); }
+    updateEmailBanner();
   }
   // Router basé sur le chemin initial (accès direct par URL)
   if (initState.type === 'produit' && initState.id) {
