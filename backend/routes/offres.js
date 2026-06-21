@@ -2,6 +2,7 @@
 const router   = require('express').Router();
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
+const { corrigerPrixParPlancher } = require('../services/scraper');
 
 // GET /api/offres
 router.get('/', async (req, res) => {
@@ -28,10 +29,16 @@ router.post('/sync', adminSecretOnly, async (req, res) => {
   }
   let updated = 0;
   for (const p of produits) {
-    const prix = Number(p.prix);
-    if (!p.produit_id || isNaN(prix) || prix <= 0 || prix > 1e9) continue;
+    const prixBrut = Number(p.prix);
+    if (!p.produit_id || isNaN(prixBrut) || prixBrut <= 0 || prixBrut > 1e9) continue;
     const url = p.url_achat && /^https?:\/\//i.test(p.url_achat) ? p.url_achat : null;
     try {
+      // Récupérer le nom du produit pour la correction ×100/×1000
+      const prodRes = await pool.query('SELECT nom FROM produits WHERE id=$1', [p.produit_id]);
+      const nomProduit = prodRes.rows[0]?.nom || '';
+      const prix = corrigerPrixParPlancher(prixBrut, nomProduit);
+      if (!prix || prix <= 0 || prix > 1e9) continue;
+
       await pool.query(
         `INSERT INTO offres (produit_id, marchand_id, prix, url_achat, scraped_at)
          VALUES ($1, $2, $3, $4, NOW())
@@ -44,6 +51,7 @@ router.post('/sync', adminSecretOnly, async (req, res) => {
          SELECT id, $1 FROM offres WHERE produit_id=$2 AND marchand_id=$3`,
         [prix, p.produit_id, marchand_id]
       );
+
       updated++;
     } catch (err) { console.error('[SYNC]', err.message); }
   }

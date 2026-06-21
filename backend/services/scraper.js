@@ -445,7 +445,7 @@ function prixPlancher(titre) {
   // ── Taille écran TV/PC/moniteur (pouces ou ") ──────────────────
   // Capture les valeurs décimales (ex: "6.78 pouces") pour ne pas lire
   // "6.78"" comme "78 pouces"
-  const ecran = s.match(/(\d+(?:[.,]\d+)?)\s*(?:pouces?|"|\binch)/);
+  const ecran = s.match(/(\d+(?:[.,]\d+)?)\s*(?:pouces?|["″»]|\binch)/);
   if (ecran) {
     const p = parseFloat(ecran[1].replace(',', '.'));
     if (p >= 85) return 500_000;
@@ -455,6 +455,21 @@ function prixPlancher(titre) {
     if (p >= 32) return  40_000;
     if (p >= 24) return  25_000;
     if (p >= 13) return  20_000; // laptop/tablette
+  }
+
+  // ── Taille TV standalone (sans unité mais TV explicite) ───────
+  // Couvre "Televiseur Samsung 43 Smart" ou "TV Astech 98 Google TV"
+  // Liste blanche de tailles standard TV pour éviter les faux positifs
+  if (/televiseur|television/.test(s)) {
+    const tvSize = s.match(/\b(32|40|43|50|55|58|65|70|75|80|85|86|90|98|100|105)\b/);
+    if (tvSize) {
+      const p = parseInt(tvSize[1], 10);
+      if (p >= 85) return 500_000;
+      if (p >= 65) return 250_000;
+      if (p >= 55) return 150_000;
+      if (p >= 43) return  80_000;
+      if (p >= 32) return  40_000;
+    }
   }
 
   // ── RAM smartphone/PC ──────────────────────────────────────────
@@ -555,8 +570,8 @@ function prixPlancher(titre) {
   if (/camera\s*(ip|surveillance|360)/.test(s))              return  15_000;
 
   // ── TV sans dimension précisée mais avec marque ───────────────
-  if (/(hisense|lg|samsung|tcl|sony|philips)\s*(tv|television|tele)/.test(s)) return 80_000;
-  if (/\b(tv|tele|television)\b/.test(s))                    return  50_000;
+  if (/(hisense|lg|samsung|tcl|sony|philips)\s*(tv|television|tele|televiseur)/.test(s)) return 80_000;
+  if (/\b(tv|tele|television)\b|televiseur/.test(s))         return  50_000;
 
   return null; // pas de signal → pas de plancher
 }
@@ -568,23 +583,47 @@ function corrigerPrixXOF(prix) {
   return prix;
 }
 
-// Applique la correction ×100 ou ×1000 si le prix est sous le plancher du titre.
+// Applique la correction ×100/×1000 (prix trop bas) ou ÷100/÷1000 (prix trop haut).
 function corrigerPrixParPlancher(prix, titre) {
   const plancher = prixPlancher(titre);
-  if (!plancher || prix >= plancher) return prix;
-  const p100  = prix * 100;
-  const p1000 = prix * 1000;
-  // ×100 : résultat dans [plancher … plancher×30]
-  if (p100 >= plancher && p100 <= plancher * 30) {
-    console.warn(`[PRIX×100] "${titre}" : ${prix} → ${p100} FCFA (plancher: ${plancher})`);
-    return p100;
+  if (!plancher) return prix;
+
+  // ── Correction ascendante : prix trop bas ─────────────────────
+  if (prix < plancher) {
+    const p100  = prix * 100;
+    const p1000 = prix * 1000;
+    if (p100 >= plancher && p100 <= plancher * 30) {
+      console.warn(`[PRIX×100] "${titre}" : ${prix} → ${p100} FCFA (plancher: ${plancher})`);
+      return p100;
+    }
+    if (p1000 >= plancher && p1000 <= plancher * 30) {
+      console.warn(`[PRIX×1000] "${titre}" : ${prix} → ${p1000} FCFA (plancher: ${plancher})`);
+      return p1000;
+    }
   }
-  // ×1000 : résultat dans [plancher … plancher×30]
-  if (p1000 >= plancher && p1000 <= plancher * 30) {
-    console.warn(`[PRIX×1000] "${titre}" : ${prix} → ${p1000} FCFA (plancher: ${plancher})`);
-    return p1000;
+
+  // ── Correction descendante : prix trop haut (÷100 ou ÷1000) ──
+  // Seuil : prix > plancher × 100 (clairement aberrant vers le haut)
+  if (prix > plancher * 100) {
+    const d100  = Math.round(prix / 100);
+    const d1000 = Math.round(prix / 1000);
+    if (d100 >= plancher && d100 <= plancher * 30) {
+      console.warn(`[PRIX÷100] "${titre}" : ${prix} → ${d100} FCFA (plancher: ${plancher})`);
+      return d100;
+    }
+    if (d1000 >= plancher && d1000 <= plancher * 30) {
+      console.warn(`[PRIX÷1000] "${titre}" : ${prix} → ${d1000} FCFA (plancher: ${plancher})`);
+      return d1000;
+    }
   }
-  return prix; // aucun multiple ne convient → laisser passer
+
+  return prix; // aucune correction applicable
+}
+
+// Extrait la taille d'écran en pouces depuis un titre (ex: "43"" → 43, "98 pouces" → 98)
+function extrairePouce(titre) {
+  const m = (titre || '').match(/\b(\d{2,3})\s*(?:pouces?|"|\binch)/i);
+  return m ? parseInt(m[1], 10) : null;
 }
 
 async function sauvegarderProduits(items, marchandNom, siteUrl) {
@@ -629,7 +668,14 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
           );
           // Seuil 0.65 : "Galaxy Buds" vs "Galaxy A55" → ~0.61 → rejeté correctement
           if(fuzzy.length > 0 && (fuzzy[0].sim > 0.65 || _motsClesCommuns(item.titre, fuzzy[0].nom) >= 2)){
-            produitId = fuzzy[0].id; stats.mis_a_jour++;
+            // Bloquer les regroupements inter-tailles écran (ex: TV 43" vs TV 98")
+            const tailleSrc  = extrairePouce(item.titre);
+            const tailleDest = extrairePouce(fuzzy[0].nom);
+            if (tailleSrc && tailleDest && Math.abs(tailleSrc - tailleDest) > 10) {
+              // Tailles incompatibles → laisser créer un nouveau produit
+            } else {
+              produitId = fuzzy[0].id; stats.mis_a_jour++;
+            }
           }
         }
       }
@@ -645,6 +691,12 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       }
 
       if(item.image_url) await pool.query('UPDATE produits SET image_url=$1 WHERE id=$2 AND image_url IS NULL',[item.image_url,produitId]);
+      // Corriger la catégorie si elle est absente ou manifestement fausse
+      const catDetectee = await getCatId(item.titre);
+      if(catDetectee) await pool.query(
+        'UPDATE produits SET categorie_id=$1 WHERE id=$2 AND (categorie_id IS NULL OR categorie_id != $1)',
+        [catDetectee, produitId]
+      );
 
       // Upsert offre avec titre du marchand
       const {rows:offre}=await pool.query(
