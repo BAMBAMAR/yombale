@@ -1337,7 +1337,7 @@ function ouvrirWizardImmo() {
   }
 
   render([
-    '<div style="max-width:620px;margin:0 auto;padding:16px 5% 80px">',
+    '<div style="max-width:900px;margin:0 auto;padding:16px 5% 80px">',
 
       // Retour
       '<button onclick="chargerImmo(1)" style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1.5px solid #059669;color:#059669;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Retour aux annonces</button>',
@@ -2492,7 +2492,7 @@ function ouvrirWizardForfait() {
   }
 
   render([
-    '<div style="max-width:620px;margin:0 auto;padding:16px 5% 80px">',
+    '<div style="max-width:900px;margin:0 auto;padding:16px 5% 80px">',
 
       // Retour
       '<button onclick="chargerForfaits(1)" style="display:inline-flex;align-items:center;gap:6px;background:#f5f3ff;border:1.5px solid #7c3aed;color:#7c3aed;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Retour aux forfaits</button>',
@@ -5073,7 +5073,7 @@ function ouvrirGuideAchat() {
   state.currentPage = 'guide';
 
   render([
-    '<div style="max-width:960px;margin:0 auto;padding:16px 5% 80px">',
+    '<div style="max-width:900px;margin:0 auto;padding:16px 5% 80px">',
 
       // Retour
       '<button onclick="retourListe()" style="display:inline-flex;align-items:center;gap:6px;background:#fff7ed;border:1.5px solid #ea580c;color:#ea580c;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Retour</button>',
@@ -5513,7 +5513,7 @@ function ouvrirGuideEmploi() {
   }
 
   render([
-    '<div style="max-width:680px;margin:0 auto;padding:16px 5% 80px">',
+    '<div style="max-width:900px;margin:0 auto;padding:16px 5% 80px">',
 
       // Retour
       '<button onclick="goHome()" style="display:inline-flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Accueil</button>',
