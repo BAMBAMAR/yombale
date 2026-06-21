@@ -1,6 +1,6 @@
-// Nopalou Service Worker — VERSION 26
+// Nopalou Service Worker — VERSION 27
 // Changer CACHE_VERSION force le rechargement de tous les assets
-const CACHE_VERSION = 'nopalou-v26';
+const CACHE_VERSION = 'nopalou-v27';
 const STATIC_ASSETS = ['/style.css', '/manifest.json', '/icons/icon-192.png'];
 
 // Installation — précache uniquement les assets statiques (pas app.js)
@@ -38,8 +38,16 @@ self.addEventListener('fetch', function(event) {
   // Ne pas intercepter les ressources externes (Google Fonts, CDN...)
   if (url.origin !== location.origin) return;
 
-  // API et app.js : toujours réseau, jamais cache
-  if (url.pathname.startsWith('/api/') || url.pathname === '/app.js' || url.pathname === '/') {
+  // API, app.js et routes SPA : toujours réseau, jamais cache
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.pathname === '/app.js' ||
+    url.pathname === '/' ||
+    url.pathname.startsWith('/produit/') ||
+    url.pathname.startsWith('/immo') ||
+    url.pathname.startsWith('/forfait') ||
+    url.pathname.startsWith('/comparaison')
+  ) {
     event.respondWith(fetch(event.request));
     return;
   }

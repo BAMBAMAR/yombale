@@ -127,6 +127,9 @@ app.get('/health', async (req, res) => {
   res.json({ status: 'ok', version: '1.1.0', db, ts: new Date() });
 });
 
+// ── SSR pour les bots (Googlebot, Bingbot…) ──────────────────
+app.use(require('./middlewares/bot-ssr'));
+
 // ── Catch-all → SPA frontend ──────────────────────────────────
 app.get('*', (req, res) =>
   res.sendFile(path.join(__dirname, '../frontend/index.html'))

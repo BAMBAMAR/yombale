@@ -48,13 +48,33 @@ function injecterSchemaProduct(produit, offres) {
 
 // ── Historique SPA (browser back/forward) ───────────────────────
 var _histPopstating = false;
-function _histPush(st) {
+function _histPush(st, url) {
   if (_histPopstating) return;
-  try { history.pushState(st, ''); } catch(e) {}
+  try { history.pushState(st, '', url || null); } catch(e) {}
 }
-function _histReplace(st) {
+function _histReplace(st, url) {
   if (_histPopstating) return;
-  try { history.replaceState(st, ''); } catch(e) {}
+  try { history.replaceState(st, '', url || null); } catch(e) {}
+}
+
+// Convertit un pathname + search en état SPA
+function _urlToState(pathname, search) {
+  var params = new URLSearchParams(search || '');
+  var m;
+  if ((m = pathname.match(/^\/produit\/([^/?#]+)/))) return { type: 'produit', id: m[1] };
+  if ((m = pathname.match(/^\/immo\/([^/?#]+)/)))    return { type: 'immo-detail', id: m[1] };
+  if (pathname === '/immo' || pathname === '/immo/')        return { type: 'immo' };
+  if (pathname === '/forfaits' || pathname === '/forfaits/') return { type: 'forfaits' };
+  if (pathname === '/comparaison' || pathname === '/comparaison/') return { type: 'compare' };
+  return { type: 'home', query: params.get('q') || '', cat: params.get('cat') || '' };
+}
+
+// Construit l'URL de la page d'accueil avec filtres
+function _buildHomeUrl(q, cat) {
+  var p = [];
+  if (q)   p.push('q='   + encodeURIComponent(q));
+  if (cat) p.push('cat=' + encodeURIComponent(cat));
+  return p.length ? '/?' + p.join('&') : '/';
 }
 
 var API = '/api';
@@ -267,7 +287,7 @@ function chargerProduits(query, categorie, page) {
   categorie = categorie !== undefined ? categorie : state.categorie;
   state.query = query; state.categorie = categorie; state.page = page;
   state.currentPage = 'home';
-  _histReplace({ type: 'home', query: query, cat: categorie });
+  _histReplace({ type: 'home', query: query, cat: categorie }, _buildHomeUrl(query, categorie));
 
   if (categorie === 'telecom') { chargerForfaits(page); return; }
   if (categorie === 'immo')   { chargerImmo(page);    return; }
@@ -1098,7 +1118,7 @@ function _immoToggleCompare(a) {
 function _immoOuvrirComparaison() {
   var biens = _immoState.compare;
   if (biens.length < 2) { toast('Sélectionnez au moins 2 biens', '#f97316'); return; }
-  _histPush({ type: 'immo-compare' });
+  _histPush({ type: 'immo-compare' }, '/immo/comparaison');
 
   // Styles partagés (identiques à ouvrirComparaison produits)
   var COL  = 'flex:1;min-width:150px;padding:10px 8px;text-align:center;border-left:1px solid #f1f5f9;';
@@ -1845,6 +1865,7 @@ function chargerImmo(page) {
   page = page || 1;
   state.page = page;
   state.currentPage = 'home';
+  _histReplace({ type: 'immo' }, '/immo');
   var appEl = document.getElementById('app');
   if (appEl) appEl.style.cssText = '';
   var im = _immoState;
@@ -1918,7 +1939,7 @@ function chargerImmo(page) {
 
 // ── Détail annonce immo — layout fiche produit ───────────────────
 async function ouvrirImmo(id) {
-  _histPush({ type: 'immo-detail', id: id });
+  _histPush({ type: 'immo-detail', id: id }, '/immo/' + id);
   var appEl = document.getElementById('app');
   if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
 
@@ -2781,6 +2802,7 @@ function chargerForfaits(page) {
   page = page || 1;
   state.page = page;
   state.currentPage = 'home';
+  _histReplace({ type: 'forfaits' }, '/forfaits');
 
   dbg('chargerForfaits', { page: page });
 
@@ -2841,6 +2863,7 @@ function renderVideTelecom() {
 
 async function ouvrirForfait(id) {
   dbg('ouvrirForfait', id);
+  _histPush({ type: 'forfait', id: id }, '/forfait/' + id);
   var appEl = document.getElementById('app');
   if (appEl) appEl.style.cssText = 'width:100%;max-width:100%;padding:0;margin:0;background:#f1f5f9;min-height:100vh;box-sizing:border-box';
 
@@ -2990,7 +3013,7 @@ var MARCHAND_ICONS = {
 async function ouvrirProduit(id, simFiltres) {
   simFiltres = simFiltres || {};
   dbg('ouvrirProduit', id);
-  _histPush({ type: 'produit', id: id });
+  _histPush({ type: 'produit', id: id }, '/produit/' + id);
 
   // Pleine largeur — AUCUN max-width sur l'app
   var appEl = document.getElementById('app');
@@ -3681,7 +3704,7 @@ function htmlParametres() {
 // ── Comparaison principale ────────────────────────────────────────
 async function ouvrirComparaison() {
   if (state.comparer.length < 2) { toast('Sélectionne au moins 2 produits ⚖', '#f97316'); return; }
-  _histPush({ type: 'compare' });
+  _histPush({ type: 'compare' }, '/comparaison');
   state.currentPage = 'compare';
   render('<div class="loader"><div class="spin"></div><p>Préparation de la comparaison...</p></div>');
   try {
@@ -4630,11 +4653,13 @@ function ouvrirComparaisonNav() {
 
 // Bouton retour du navigateur — restaurer la bonne vue SPA
 window.addEventListener('popstate', function(e) {
-  var st = e.state;
-  if (!st) { goHome(); return; }
+  var st = e.state || _urlToState(location.pathname, location.search);
   _histPopstating = true;
   if      (st.type === 'immo-detail')  { ouvrirImmo(st.id); }
   else if (st.type === 'produit')      { ouvrirProduit(st.id); }
+  else if (st.type === 'immo')         { chargerImmo(1); }
+  else if (st.type === 'forfaits')     { chargerForfaits(1); }
+  else if (st.type === 'forfait')      { ouvrirForfait(st.id); }
   else if (st.type === 'immo-compare') { _immoOuvrirComparaison(); }
   else if (st.type === 'compare')      { ouvrirComparaisonNav(); }
   else                                 { chargerProduits(st.query || '', st.cat || '', 1); }
@@ -4643,7 +4668,8 @@ window.addEventListener('popstate', function(e) {
 
 document.addEventListener('DOMContentLoaded', function() {
   dbg('DOMContentLoaded');
-  history.replaceState({ type: 'home', query: '', cat: '' }, '');
+  var initState = _urlToState(location.pathname, location.search);
+  history.replaceState(initState, '', location.pathname + location.search);
   updateNavFavoris();
   updateNavUser();
   updateEmailBanner();
@@ -4665,13 +4691,28 @@ document.addEventListener('DOMContentLoaded', function() {
     toast('Email vérifié avec succès ✓', '#10b981');
     if (state.user) { state.user.email_verifie = true; localStorage.setItem('pm_user', JSON.stringify(state.user)); }
   }
-  // Ouvrir directement une catégorie depuis l'URL (?cat=immo, ?cat=telecom, ...)
-  var catParam = urlParams.get('cat');
-  if (catParam && CATEGORIES.some(function(c) { return c.slug === catParam; })) {
-    state.prixMax = ''; state.prixMin = '';
-    chargerProduits('', catParam, 1);
+  // Router basé sur le chemin initial (accès direct par URL)
+  if (initState.type === 'produit' && initState.id) {
+    ouvrirProduit(initState.id);
+  } else if (initState.type === 'immo-detail' && initState.id) {
+    ouvrirImmo(initState.id);
+  } else if (initState.type === 'immo') {
+    chargerImmo(1);
+  } else if (initState.type === 'forfaits') {
+    chargerForfaits(1);
+  } else if (initState.type === 'compare') {
+    if (state.comparer.length >= 2) ouvrirComparaisonNav(); else goHome();
   } else {
-    goHome();
+    // Page d'accueil — filtres depuis l'URL
+    var catParam = initState.cat;
+    if (catParam && CATEGORIES.some(function(c) { return c.slug === catParam; })) {
+      state.prixMax = ''; state.prixMin = '';
+      chargerProduits('', catParam, 1);
+    } else if (initState.query) {
+      chargerProduits(initState.query, '', 1);
+    } else {
+      goHome();
+    }
   }
 });
 
