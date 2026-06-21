@@ -254,7 +254,20 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Tables OK, catégories et marchands insérés');
   } catch (err) {
     console.error('[MIGRATE] ❌', err.message);
-  } finally {
-    await pool.end();
   }
+
+  // Colonnes ajoutées en cours de route — exécutées séparément pour garantir leur présence
+  // même si le bloc principal a partiellement échoué sur une autre instruction
+  const colonnesSupplementaires = [
+    `ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS caracteristiques JSONB DEFAULT '{}'`,
+    `ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS rejete BOOLEAN DEFAULT FALSE`,
+    `ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS supprimee BOOLEAN DEFAULT FALSE`,
+  ];
+  for (const sql of colonnesSupplementaires) {
+    try { await pool.query(sql); }
+    catch (e) { console.warn('[MIGRATE] colonne:', e.message); }
+  }
+  console.log('[MIGRATE] ✅ Colonnes supplémentaires vérifiées');
+
+  try { await pool.end(); } catch (_) {}
 };

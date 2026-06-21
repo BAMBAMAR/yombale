@@ -334,13 +334,25 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
   try {
     const { actif } = req.body;
     const approuver = !!actif;
-    await pool.query(
-      `UPDATE annonces_classifiees
-       SET actif=$1, rejete=$2, updated_at=NOW() WHERE id=$3`,
-      [approuver, !approuver, req.params.id]
-    );
+    // Essai avec la colonne rejete (présente depuis la migration v37)
+    try {
+      await pool.query(
+        `UPDATE annonces_classifiees SET actif=$1, rejete=$2, updated_at=NOW() WHERE id=$3`,
+        [approuver, !approuver, req.params.id]
+      );
+    } catch (e) {
+      // Fallback si la colonne rejete n'existe pas encore (migration en retard)
+      console.warn('[ADMIN] fallback sans rejete:', e.message);
+      await pool.query(
+        `UPDATE annonces_classifiees SET actif=$1, updated_at=NOW() WHERE id=$2`,
+        [approuver, req.params.id]
+      );
+    }
     res.json({ success: true });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+  } catch (err) {
+    console.error('[ADMIN PUT]', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 module.exports = router;
