@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 33 — 2026-06-21
+//  app.js VERSION 34 — 2026-06-21
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 33 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 34 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -68,6 +68,7 @@ function _urlToState(pathname, search) {
   if (pathname === '/immo' || pathname === '/immo/')        return { type: 'immo' };
   if (pathname === '/forfaits' || pathname === '/forfaits/') return { type: 'forfaits' };
   if (pathname === '/comparaison' || pathname === '/comparaison/') return { type: 'compare' };
+  if (pathname === '/annonces' || pathname === '/annonces/')      return { type: 'annonces', cat: params.get('cat') || '' };
   if (pathname === '/mentions-legales')  return { type: 'info', page: 'mentions-legales' };
   if (pathname === '/confidentialite')   return { type: 'info', page: 'confidentialite' };
   if (pathname === '/cgu')               return { type: 'info', page: 'cgu' };
@@ -594,9 +595,10 @@ function htmlHero() {
 }
 
 function htmlCategories() {
+  var annoncesActive = state.currentPage === 'annonces';
   return '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px">' +
     CATEGORIES.map(function(c) {
-      var active = state.categorie === c.slug;
+      var active = state.categorie === c.slug && !annoncesActive;
       return '<button onclick="filtrerCategorie(\'' + c.slug + '\')" ' +
         'style="padding:6px 14px;border-radius:20px;border:1px solid ' + (active ? '#1d4ed8' : '#e2e8f0') + ';' +
         'background:' + (active ? '#1d4ed8' : '#fff') + ';color:' + (active ? '#fff' : '#475569') + ';' +
@@ -604,6 +606,12 @@ function htmlCategories() {
         c.icon + ' ' + c.label +
       '</button>';
     }).join('') +
+    '<button onclick="chargerAnnoncesClassifiees(\'\',1)" ' +
+      'style="padding:6px 14px;border-radius:20px;border:1px solid ' + (annoncesActive ? '#ea580c' : '#fed7aa') + ';' +
+      'background:' + (annoncesActive ? '#ea580c' : '#fff7ed') + ';color:' + (annoncesActive ? '#fff' : '#ea580c') + ';' +
+      'font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">' +
+      '📢 Annonces' +
+    '</button>' +
   '</div>';
 }
 
@@ -1749,6 +1757,182 @@ var _CATS_CLASSIFIEES = [
   { slug:'jeux',         label:'🎮 Jeux' },
   { slug:'services',     label:'🔧 Services' },
 ];
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION PUBLIQUE — Petites annonces classifiées
+// ═══════════════════════════════════════════════════════════════
+var _annState = { cat:'', q:'', ville:'', page:1, total:0, pages:1 };
+
+function chargerAnnoncesClassifiees(catSlug, page) {
+  catSlug = catSlug !== undefined ? catSlug : _annState.cat;
+  page    = page    || 1;
+  _annState.cat  = catSlug;
+  _annState.page = page;
+  state.currentPage = 'annonces';
+  _histPush({ type:'annonces', cat:catSlug }, '/annonces' + (catSlug ? '?cat=' + encodeURIComponent(catSlug) : ''));
+  render('<div style="padding:60px 20px;text-align:center;color:#94a3b8"><div style="font-size:32px;margin-bottom:10px">⏳</div>Chargement…</div>');
+
+  var apiUrl = '/annonces?limit=24&page=' + page;
+  if (catSlug)         apiUrl += '&categorie=' + encodeURIComponent(catSlug);
+  if (_annState.q)     apiUrl += '&q='         + encodeURIComponent(_annState.q);
+  if (_annState.ville) apiUrl += '&ville='     + encodeURIComponent(_annState.ville);
+
+  apiFetch(apiUrl)
+    .then(function(data) {
+      _annState.total = data.total || 0;
+      _annState.pages = Math.ceil(_annState.total / 24) || 1;
+      render(_templateAnnonces(data.annonces || [], data));
+    })
+    .catch(function(err) {
+      render('<div style="padding:40px;text-align:center;color:#ef4444">' + escapeHTML(err.message) + '</div>');
+    });
+}
+
+function _carteAnnonceHTML(a) {
+  var photo = (a.photos && a.photos.length) ? a.photos[0] : null;
+  var cat   = _CATS_CLASSIFIEES.find(function(c){ return c.slug === a.categorie_slug; }) || { label: a.categorie_slug };
+  var cars  = a.caracteristiques || {};
+  var date  = new Date(a.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+  return '<div onclick="ouvrirDetailAnnonce(\'' + a.id + '\')" style="cursor:pointer;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;transition:box-shadow .15s" onmouseover="this.style.boxShadow=\'0 4px 14px rgba(0,0,0,.12)\'" onmouseout="this.style.boxShadow=\'0 1px 3px rgba(0,0,0,.08)\'">' +
+    '<div style="aspect-ratio:4/3;background:#f8fafc;overflow:hidden;position:relative">' +
+      (photo
+        ? '<img src="' + escapeHTML(photo) + '" alt="' + escapeHTML(a.titre) + '" loading="lazy" style="width:100%;height:100%;object-fit:cover">'
+        : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:40px">' + (cat.label ? cat.label.slice(0,2) : '📦') + '</div>') +
+      '<span style="position:absolute;top:7px;left:7px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px">' + escapeHTML(cat.label || a.categorie_slug) + '</span>' +
+    '</div>' +
+    '<div style="padding:10px 12px 12px">' +
+      '<div style="font-size:13px;font-weight:700;color:#1a1a1a;line-height:1.3;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHTML(a.titre) + '">' + escapeHTML(a.titre) + '</div>' +
+      (a.prix
+        ? '<div style="font-size:15px;font-weight:800;color:#ea580c;margin-bottom:4px">' + fcfa(a.prix) + '</div>'
+        : '<div style="font-size:12px;color:#94a3b8;margin-bottom:4px">Prix à négocier</div>') +
+      (cars.etat ? '<span style="display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:#f1f5f9;color:#475569;margin-bottom:5px">' + escapeHTML(cars.etat) + '</span>' : '') +
+      '<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#94a3b8">' +
+        '<span>📍 ' + escapeHTML(a.ville || 'Dakar') + '</span>' +
+        '<span>' + date + '</span>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function _templateAnnonces(annonces, data) {
+  var catChips = '<div style="display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:10px 5%;border-bottom:1px solid #e2e8f0;background:#fff;-webkit-overflow-scrolling:touch;scrollbar-width:none">' +
+    '<button onclick="_annState.q=\'\';_annState.ville=\'\';chargerAnnoncesClassifiees(\'\',1)" style="padding:5px 13px;border-radius:16px;border:1px solid ' + (!_annState.cat?'#1d4ed8':'#e2e8f0') + ';background:' + (!_annState.cat?'#1d4ed8':'#fff') + ';color:' + (!_annState.cat?'#fff':'#475569') + ';font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">Toutes</button>' +
+    _CATS_CLASSIFIEES.map(function(c) {
+      var active = _annState.cat === c.slug;
+      return '<button onclick="chargerAnnoncesClassifiees(\'' + c.slug + '\',1)" style="padding:5px 13px;border-radius:16px;border:1px solid ' + (active?'#1d4ed8':'#e2e8f0') + ';background:' + (active?'#1d4ed8':'#fff') + ';color:' + (active?'#fff':'#475569') + ';font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">' + escapeHTML(c.label) + '</button>';
+    }).join('') +
+  '</div>';
+
+  var searchBar = '<div style="padding:10px 5%;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;gap:8px">' +
+    '<input id="_ann-q" type="text" value="' + escapeHTML(_annState.q || '') + '" placeholder="Rechercher une annonce…" style="flex:1;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;background:#fff" onkeydown="if(event.key===\'Enter\'){_annState.q=this.value;chargerAnnoncesClassifiees(_annState.cat,1)}">' +
+    '<select onchange="_annState.ville=this.value;chargerAnnoncesClassifiees(_annState.cat,1)" style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;cursor:pointer">' +
+      '<option value="">Toutes villes</option>' +
+      ['Dakar','Thiès','Saint-Louis','Ziguinchor','Kaolack','Touba','Rufisque','Mbour'].map(function(v) {
+        return '<option value="' + v + '"' + (_annState.ville===v?' selected':'') + '>' + v + '</option>';
+      }).join('') +
+    '</select>' +
+    '<button onclick="_annState.q=document.getElementById(\'_ann-q\').value;chargerAnnoncesClassifiees(_annState.cat,1)" style="padding:8px 14px;background:#1a3a6e;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🔍</button>' +
+  '</div>';
+
+  var topBar = '<div style="padding:12px 5%;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">' +
+    '<div>' +
+      '<h2 style="margin:0;font-size:17px;color:#1a1a1a">📢 Petites annonces</h2>' +
+      '<p style="margin:3px 0 0;font-size:12px;color:#94a3b8">' + (_annState.total) + ' annonce' + (_annState.total > 1 ? 's' : '') + '</p>' +
+    '</div>' +
+    (state.user
+      ? '<button onclick="ouvrirPublierAnnonceGenerale(\'' + (_annState.cat||'') + '\')" style="padding:8px 14px;background:#ea580c;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">+ Publier</button>'
+      : '<button onclick="openLoginModal()" style="padding:8px 14px;background:#ea580c;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">+ Publier</button>') +
+  '</div>';
+
+  var content;
+  if (!annonces.length) {
+    content = '<div style="padding:60px 20px;text-align:center;color:#94a3b8">' +
+      '<div style="font-size:48px;margin-bottom:12px">📭</div>' +
+      '<div style="font-size:15px;font-weight:700;color:#475569;margin-bottom:6px">Aucune annonce pour l\'instant</div>' +
+      '<div style="font-size:13px;margin-bottom:16px">Soyez le premier à publier !</div>' +
+      (state.user
+        ? '<button onclick="ouvrirPublierAnnonceGenerale(\'' + (_annState.cat||'') + '\')" style="padding:10px 22px;background:#1a3a6e;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer">📢 Publier une annonce</button>'
+        : '') +
+    '</div>';
+  } else {
+    content = '<div style="padding:14px 5%">' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px">' +
+        annonces.map(_carteAnnonceHTML).join('') +
+      '</div>' +
+      (_annState.page < _annState.pages
+        ? '<div style="text-align:center;margin-top:22px"><button onclick="chargerAnnoncesClassifiees(_annState.cat,' + (_annState.page+1) + ')" style="padding:10px 28px;border:1.5px solid #1a3a6e;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;color:#1a3a6e;background:#fff">Voir plus d\'annonces</button></div>'
+        : '') +
+    '</div>';
+  }
+
+  return catChips + searchBar + topBar + content;
+}
+
+async function ouvrirDetailAnnonce(id) {
+  ouvrirModal('Annonce', '<div style="text-align:center;padding:30px;color:#94a3b8">Chargement…</div>');
+  try {
+    var a = await apiFetch('/annonces/' + id);
+    var cat   = _CATS_CLASSIFIEES.find(function(c){ return c.slug === a.categorie_slug; }) || { label: a.categorie_slug };
+    var photos = a.photos || [];
+    var cars   = a.caracteristiques || {};
+    var date   = new Date(a.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+    var tel    = (a.contact_tel || '').replace(/\s/g, '');
+    var waUrl  = 'https://wa.me/' + encodeURIComponent(tel) + '?text=' + encodeURIComponent('Bonjour, je vous contacte pour votre annonce : ' + a.titre);
+
+    var photoHtml = '';
+    if (photos.length) {
+      photoHtml = '<div style="margin-bottom:14px">' +
+        '<div style="aspect-ratio:16/9;background:#f1f5f9;border-radius:10px;overflow:hidden">' +
+          '<img id="_det-main-photo" src="' + escapeHTML(photos[0]) + '" style="width:100%;height:100%;object-fit:contain" alt="' + escapeHTML(a.titre) + '">' +
+        '</div>' +
+        (photos.length > 1
+          ? '<div style="display:flex;gap:6px;margin-top:6px;overflow-x:auto;padding-bottom:2px">' +
+              photos.map(function(p, i) {
+                return '<img src="' + escapeHTML(p) + '" onclick="document.getElementById(\'_det-main-photo\').src=\'' + escapeHTML(p) + '\';[].forEach.call(this.parentNode.querySelectorAll(\'img\'),function(x){x.style.border=\'2px solid #e2e8f0\'});this.style.border=\'2px solid #1d4ed8\'" loading="lazy" style="width:58px;height:58px;object-fit:cover;border-radius:7px;cursor:pointer;border:2px solid ' + (i===0?'#1d4ed8':'#e2e8f0') + ';flex-shrink:0" alt="">';
+              }).join('') +
+            '</div>'
+          : '') +
+      '</div>';
+    }
+
+    var carsKeys = Object.keys(cars).filter(function(k){ return cars[k]; });
+    var carsHtml = carsKeys.length
+      ? '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">' +
+          carsKeys.map(function(k) {
+            var lbl = k.replace(/_/g,' '); lbl = lbl.charAt(0).toUpperCase()+lbl.slice(1);
+            return '<div style="background:#f8fafc;border-radius:7px;padding:6px 10px">' +
+              '<div style="font-size:10px;color:#94a3b8;font-weight:600;text-transform:uppercase;margin-bottom:1px">' + escapeHTML(lbl) + '</div>' +
+              '<div style="font-size:13px;color:#1a1a1a;font-weight:600">' + escapeHTML(String(cars[k])) + '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>'
+      : '';
+
+    var html = [
+      photoHtml,
+      '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:#eff6ff;color:#1d4ed8">' + escapeHTML(cat.label || a.categorie_slug) + '</span>',
+      '<h3 style="margin:8px 0 4px;font-size:17px;line-height:1.3;color:#1a1a1a">' + escapeHTML(a.titre) + '</h3>',
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">',
+        (a.prix ? '<span style="font-size:20px;font-weight:800;color:#ea580c">' + fcfa(a.prix) + '</span>' : '<span style="font-size:13px;color:#94a3b8">Prix à négocier</span>'),
+        '<span style="font-size:11px;color:#94a3b8">📍 ' + escapeHTML(a.ville||'Dakar') + (a.quartier?', '+escapeHTML(a.quartier):'') + '</span>',
+        '<span style="font-size:11px;color:#94a3b8">' + date + '</span>',
+      '</div>',
+      carsHtml,
+      (a.description ? '<div style="font-size:13px;color:#475569;line-height:1.6;margin-bottom:14px;padding:12px;background:#f8fafc;border-radius:8px;white-space:pre-wrap">' + escapeHTML(a.description) + '</div>' : ''),
+      '<div style="border-top:1px solid #e2e8f0;padding-top:14px">',
+        '<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Vendeur</div>',
+        '<div style="font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:12px">' + escapeHTML(a.contact_nom || 'Particulier') + '</div>',
+        '<a href="' + escapeHTML(waUrl) + '" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;background:#25d366;color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;box-sizing:border-box;margin-bottom:8px">💬 Contacter sur WhatsApp</a>',
+        '<a href="tel:' + encodeURIComponent(tel) + '" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;background:#f8fafc;color:#1a3a6e;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;box-sizing:border-box">📞 ' + escapeHTML(a.contact_tel||'') + '</a>',
+      '</div>',
+    ].join('');
+
+    ouvrirModal(escapeHTML(a.titre), html);
+  } catch(err) {
+    fermerModal();
+    toast(err.message || 'Annonce introuvable', '#ef4444');
+  }
+}
 
 function _htmlChampsCategorie(slug) {
   var champs = _CHAMPS_CAT[slug] || [];
@@ -4953,6 +5137,7 @@ window.addEventListener('popstate', function(e) {
   else if (st.type === 'info')         { ouvrirInfoPage(st.page); }
   else if (st.type === 'immo-compare') { _immoOuvrirComparaison(); }
   else if (st.type === 'compare')      { ouvrirComparaisonNav(); }
+  else if (st.type === 'annonces')     { chargerAnnoncesClassifiees(st.cat || '', 1); }
   else                                 { chargerProduits(st.query || '', st.cat || '', 1); }
   setTimeout(function() { _histPopstating = false; }, 0);
 });
@@ -4996,6 +5181,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() { ouvrirInfoPage(initState.page); }, 300);
   } else if (initState.type === 'compare') {
     if (state.comparer.length >= 2) ouvrirComparaisonNav(); else goHome();
+  } else if (initState.type === 'annonces') {
+    chargerAnnoncesClassifiees(initState.cat || '', 1);
   } else {
     // Page d'accueil — filtres depuis l'URL
     var catParam = initState.cat;
