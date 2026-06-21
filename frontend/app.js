@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 34 — 2026-06-21
+//  app.js VERSION 35 — 2026-06-21
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 34 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 35 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -2079,7 +2079,13 @@ async function envoyerAnnonceGenerale() {
     if (!data.besoin_paiement) {
       _pubAnnonce = { categorie_slug:'', titre:'', description:'', prix:'', ville:'Dakar', quartier:'', contact_nom:(state.user||{}).nom||'', contact_tel:(state.user||{}).telephone||'', photos:[], caracteristiques:{} };
       fermerModal();
-      toast('✅ Annonce envoyée — en attente de validation', '#10b981');
+      if (data.auto_approuve) {
+        toast('✅ Annonce publiée et visible immédiatement !', '#10b981');
+        // Rafraîchir la section annonces si on y est
+        if (state.currentPage === 'annonces') chargerAnnoncesClassifiees(_annState.cat, 1);
+      } else {
+        toast('📋 Annonce envoyée — en attente de validation manuelle', '#f59e0b');
+      }
       return;
     }
     _annonceEnAttentePaiement = data.id;

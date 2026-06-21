@@ -66,6 +66,44 @@ function validerCaracteristiques(slug, car) {
   return manquants;
 }
 
+// Auto-modération légère — retourne { ok, raison }
+function autoModerer({ titre, description, contact_tel, prix }) {
+  // 1. Titre trop court
+  if (!titre || titre.trim().length < 8)
+    return { ok: false, raison: 'Titre trop court (< 8 caractères)' };
+
+  // 2. Titre entièrement en majuscules (souvent spam)
+  if (titre.trim() === titre.trim().toUpperCase() && titre.trim().length > 6)
+    return { ok: false, raison: 'Titre entièrement en majuscules' };
+
+  // 3. Téléphone invalide (doit contenir 7 à 15 chiffres)
+  const telClean = (contact_tel || '').replace(/[\s\-\+\.]/g, '');
+  if (!/^\d{7,15}$/.test(telClean))
+    return { ok: false, raison: 'Numéro de téléphone invalide' };
+
+  // 4. Prix hors limites raisonnables (si renseigné)
+  if (prix) {
+    const p = parseFloat(prix);
+    if (p < 100 || p > 500_000_000)
+      return { ok: false, raison: 'Prix hors limites (< 100 ou > 500 000 000 FCFA)' };
+  }
+
+  // 5. Mots/expressions interdits (escroqueries courantes)
+  const INTERDITS = [
+    'arnaque', 'escroquerie', 'western union', 'moneygram', 'money gram',
+    'avance requise', 'avance nécessaire', 'frais de transfert',
+    'gagner de l\'argent', 'revenus garantis', 'investissement garanti',
+    'cliquez ici', 'click here', 'http://', 'bit.ly', 't.me/',
+  ];
+  const texte = ((titre || '') + ' ' + (description || '')).toLowerCase();
+  for (const mot of INTERDITS) {
+    if (texte.includes(mot))
+      return { ok: false, raison: `Contenu suspect : "${mot}"` };
+  }
+
+  return { ok: true };
+}
+
 // ── GET /api/annonces — liste publique paginée
 router.get('/', async (req, res) => {
   try {
@@ -176,6 +214,19 @@ router.post('/', limiterPublication, verifierToken, upload.array('photos', 5), v
     const total      = await compterAnnoncesUtilisateur(userId);
     const estGratuit = total < QUOTA_GRATUIT;
 
+    // Auto-modération pour les annonces gratuites
+    let autoActif = false;
+    let raisonRejet = null;
+    if (estGratuit) {
+      const mod = autoModerer({ titre, description, contact_tel, prix });
+      if (mod.ok) {
+        autoActif = true;
+      } else {
+        raisonRejet = mod.raison;
+        console.log(`[AUTO-MOD] Annonce rejetée (${userId}): ${mod.raison}`);
+      }
+    }
+
     const r = await pool.query(
       `INSERT INTO annonces_classifiees
          (utilisateur_id, categorie_slug, titre, description, prix, ville, quartier,
@@ -191,11 +242,19 @@ router.post('/', limiterPublication, verifierToken, upload.array('photos', 5), v
     );
     const id = r.rows[0].id;
 
+    // Activer immédiatement si auto-modération OK
+    if (autoActif) {
+      await pool.query('UPDATE annonces_classifiees SET actif=true WHERE id=$1', [id]);
+    }
+
     if (estGratuit) {
       return res.status(201).json({
         success: true, id,
         besoin_paiement: false,
-        message: 'Annonce envoyée — elle sera visible après validation.'
+        auto_approuve: autoActif,
+        message: autoActif
+          ? 'Annonce publiée et visible immédiatement !'
+          : 'Annonce envoyée — en attente de validation manuelle.',
       });
     }
 
