@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Annonces classifiées — Nopalou</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f4f5f7; margin: 0; padding: 24px; color: #1a1a1a; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+  .panel { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .panel h2 { margin: 0 0 14px; font-size: 16px; }
+  input, select { padding: 8px 10px; border: 1px solid #d8dadf; border-radius: 6px; font-size: 14px; }
+  button { cursor: pointer; border: none; border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; transition: opacity .15s; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-green  { background: #059669; color: #fff; }
+  .btn-red    { background: #e63946; color: #fff; }
+  .btn-blue   { background: #2563eb; color: #fff; }
+  .btn-sm     { padding: 4px 10px; font-size: 12px; }
+  .msg { padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 14px; }
+  .msg.ok  { background: #e6f7ee; color: #1e7e4f; }
+  .msg.err { background: #fde8e8; color: #c0392b; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+  th { color: #666; font-weight: 600; background: #f8fafc; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 700; }
+  .badge-ok   { background: #d1fae5; color: #059669; }
+  .badge-wait { background: #fff7ed; color: #f59e0b; }
+  .badge-pay  { background: #fef2f2; color: #e63946; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: #f8fafc; border-radius: 10px; padding: 14px; text-align: center; border: 1.5px solid #e2e8f0; }
+  .stat-card .val { font-size: 26px; font-weight: 800; color: #1a3a6e; }
+  .stat-card .lbl { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+  .desc-cell { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #64748b; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>📢 Annonces classifiées</h1>
+<p class="sub">Modération des annonces utilisateurs multi-catégories</p>
+
+<div id="msg-zone"></div>
+
+<!-- Auth -->
+<div class="panel" id="auth-panel">
+  <h2>🔐 Authentification admin</h2>
+  <div style="display:flex;gap:10px;align-items:center">
+    <input type="password" id="secret-input" placeholder="Secret admin" style="max-width:280px" onkeydown="if(event.key==='Enter')charger()">
+    <button class="btn-blue" onclick="charger()">Charger</button>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" id="stats-zone" style="display:none">
+  <div class="stat-card"><div class="val" id="stat-total">—</div><div class="lbl">Total annonces</div></div>
+  <div class="stat-card"><div class="val" id="stat-attente">—</div><div class="lbl">En attente</div></div>
+  <div class="stat-card"><div class="val" id="stat-payees">—</div><div class="lbl">Payées non publiées</div></div>
+  <div class="stat-card"><div class="val" id="stat-gratuites">—</div><div class="lbl">Gratuites en attente</div></div>
+</div>
+
+<!-- Filtres + table -->
+<div class="panel" id="main-panel" style="display:none">
+  <h2>Annonces en attente de validation</h2>
+  <div class="filters">
+    <select id="filtre-cat" onchange="filtrerTable()">
+      <option value="">Toutes catégories</option>
+      <option value="smartphones">📱 Téléphones</option>
+      <option value="informatique">💻 Informatique</option>
+      <option value="tv-electro">📺 TV & Électro</option>
+      <option value="mode">👗 Mode</option>
+      <option value="maison">🏠 Maison</option>
+      <option value="auto-moto">🛵 Auto & Moto</option>
+      <option value="jeux">🎮 Jeux</option>
+      <option value="services">🔧 Services</option>
+    </select>
+    <select id="filtre-statut" onchange="filtrerTable()">
+      <option value="">Tous statuts</option>
+      <option value="gratuite">Gratuites (à valider)</option>
+      <option value="payee">Payées (à valider)</option>
+      <option value="non-payee">Non payées</option>
+    </select>
+    <button class="btn-blue btn-sm" onclick="charger()">↺ Actualiser</button>
+    <button class="btn-green btn-sm" onclick="approuverToutGratuit()">✅ Approuver toutes (gratuites)</button>
+  </div>
+
+  <div style="overflow-x:auto">
+    <table id="table-annonces">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Catégorie</th>
+          <th>Titre</th>
+          <th>Auteur</th>
+          <th>Prix</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px">Chargement…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+var SECRET = '';
+var _annonces = [];
+
+var CAT_LABELS = {
+  smartphones:'📱 Téléphones', informatique:'💻 Informatique',
+  'tv-electro':'📺 TV & Électro', mode:'👗 Mode', maison:'🏠 Maison',
+  'auto-moto':'🛵 Auto & Moto', jeux:'🎮 Jeux', services:'🔧 Services'
+};
+
+function e(s) { var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+function fcfa(n) { return n ? Number(n).toLocaleString('fr-FR') + ' FCFA' : '—'; }
+function msg(txt, ok) {
+  document.getElementById('msg-zone').innerHTML =
+    '<div class="msg ' + (ok ? 'ok' : 'err') + '">' + e(txt) + '</div>';
+  setTimeout(function(){ document.getElementById('msg-zone').innerHTML=''; }, 4000);
+}
+
+async function charger() {
+  SECRET = document.getElementById('secret-input').value.trim();
+  if (!SECRET) { msg('Secret requis', false); return; }
+  try {
+    var r = await fetch('/api/annonces/admin/en-attente', { headers: { 'x-admin-secret': SECRET } });
+    if (!r.ok) throw new Error('Accès refusé');
+    var data = await r.json();
+    _annonces = data.annonces || [];
+    document.getElementById('stats-zone').style.display = 'grid';
+    document.getElementById('main-panel').style.display = 'block';
+    mettreAJourStats();
+    rendreTable(_annonces);
+    msg('Chargé — ' + _annonces.length + ' annonce(s)', true);
+  } catch(err) { msg(err.message, false); }
+}
+
+function mettreAJourStats() {
+  var total     = _annonces.length;
+  var payees    = _annonces.filter(function(a){ return a.payee && !a.actif; }).length;
+  var gratuites = _annonces.filter(function(a){ return !a.payee && !a.actif; }).length;
+  var attente   = total;
+  document.getElementById('stat-total').textContent    = total;
+  document.getElementById('stat-attente').textContent  = attente;
+  document.getElementById('stat-payees').textContent   = payees;
+  document.getElementById('stat-gratuites').textContent = gratuites;
+}
+
+function filtrerTable() {
+  var cat    = document.getElementById('filtre-cat').value;
+  var statut = document.getElementById('filtre-statut').value;
+  var filtered = _annonces.filter(function(a) {
+    if (cat && a.categorie_slug !== cat) return false;
+    if (statut === 'gratuite' && (a.payee || a.actif)) return false;
+    if (statut === 'payee'    && (!a.payee || a.actif)) return false;
+    if (statut === 'non-payee' && a.payee) return false;
+    return true;
+  });
+  rendreTable(filtered);
+}
+
+function rendreTable(list) {
+  var tbody = document.getElementById('tbody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px">Aucune annonce à afficher</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(function(a) {
+    var date  = new Date(a.created_at).toLocaleDateString('fr-FR');
+    var badge = a.actif
+      ? '<span class="badge badge-ok">✓ En ligne</span>'
+      : a.payee
+        ? '<span class="badge badge-wait">💰 Payée</span>'
+        : '<span class="badge badge-pay">🆓 Gratuite</span>';
+    return '<tr id="row-' + a.id + '">' +
+      '<td style="white-space:nowrap;font-size:12px;color:#64748b">' + date + '</td>' +
+      '<td style="font-size:12px">' + e(CAT_LABELS[a.categorie_slug] || a.categorie_slug) + '</td>' +
+      '<td>' +
+        '<div style="font-weight:600;font-size:13px">' + e(a.titre) + '</div>' +
+        '<div class="desc-cell">' + e(a.description || '') + '</div>' +
+        '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + e(a.ville||'') + (a.quartier ? ', ' + e(a.quartier) : '') + '</div>' +
+      '</td>' +
+      '<td>' +
+        '<div style="font-size:12px;font-weight:600">' + e(a.auteur_nom || '—') + '</div>' +
+        '<div style="font-size:11px;color:#94a3b8">' + e(a.auteur_email || '') + '</div>' +
+        '<div style="font-size:11px;color:#475569">' + e(a.contact_tel || '') + '</div>' +
+      '</td>' +
+      '<td style="font-size:12px;white-space:nowrap">' + fcfa(a.prix) + '</td>' +
+      '<td>' + badge + '</td>' +
+      '<td class="actions">' +
+        (!a.actif
+          ? '<button class="btn-green btn-sm" onclick="approuver(\'' + a.id + '\')">✅ Approuver</button> '
+          : '<button class="btn-sm" style="background:#e2e8f0;color:#64748b" onclick="rejeter(\'' + a.id + '\')">Retirer</button> ') +
+        '<button class="btn-red btn-sm" onclick="rejeter(\'' + a.id + '\')">🗑 Rejeter</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+async function approuver(id) {
+  try {
+    var r = await fetch('/api/annonces/admin/' + id, {
+      method: 'PUT',
+      headers: { 'x-admin-secret': SECRET, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ actif: true })
+    });
+    if (!r.ok) throw new Error('Erreur');
+    _annonces = _annonces.map(function(a){ return a.id===id ? Object.assign({},a,{actif:true}) : a; });
+    rendreTable(_annonces);
+    mettreAJourStats();
+    msg('Annonce approuvée', true);
+  } catch(err) { msg(err.message, false); }
+}
+
+async function rejeter(id) {
+  if (!confirm('Rejeter / supprimer cette annonce ?')) return;
+  try {
+    var r = await fetch('/api/annonces/admin/' + id, {
+      method: 'PUT',
+      headers: { 'x-admin-secret': SECRET, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ actif: false })
+    });
+    if (!r.ok) throw new Error('Erreur');
+    _annonces = _annonces.filter(function(a){ return a.id !== id; });
+    rendreTable(_annonces);
+    mettreAJourStats();
+    msg('Annonce rejetée', true);
+  } catch(err) { msg(err.message, false); }
+}
+
+async function approuverToutGratuit() {
+  var gratuites = _annonces.filter(function(a){ return !a.payee && !a.actif; });
+  if (!gratuites.length) { msg('Aucune annonce gratuite en attente', true); return; }
+  if (!confirm('Approuver ' + gratuites.length + ' annonce(s) gratuite(s) ?')) return;
+  for (var i = 0; i < gratuites.length; i++) { await approuver(gratuites[i].id); }
+  msg('Toutes les annonces gratuites approuvées', true);
+}
+</script>
+</body>
+</html>

@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 31 — 2026-06-21
+//  app.js VERSION 32 — 2026-06-21
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 31 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 32 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -361,6 +361,19 @@ function htmlBannerCompare() {
   '</div>';
 }
 
+// ── Bannière "Publier une annonce" — catégories classifiées ────────
+function htmlBannierePublier() {
+  var SLUGS_OK = { smartphones:1, informatique:1, 'tv-electro':1, mode:1, maison:1, 'auto-moto':1, jeux:1 };
+  if (!state.categorie || !SLUGS_OK[state.categorie]) return '';
+  return '<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:11px 18px;margin:0 5% 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+    '<div style="flex:1;min-width:0">' +
+      '<span style="font-size:13px;font-weight:700;color:#1a3a6e">📢 Vous avez quelque chose à vendre ?</span>' +
+      '<span style="font-size:12px;color:#64748b;margin-left:8px">2 annonces gratuites offertes</span>' +
+    '</div>' +
+    '<button onclick="ouvrirPublierAnnonceGenerale(\'' + state.categorie + '\')" style="padding:7px 16px;background:#1a3a6e;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">Publier →</button>' +
+  '</div>';
+}
+
 // ── Template liste — avec dashboard si résultats ────────────────
 function templateListe(produits, data) {
   var isSearch = !!(state.query || state.categorie || state.prixMax || state.prixMin);
@@ -370,6 +383,7 @@ function templateListe(produits, data) {
     state.comparer.length > 0 ? htmlBannerCompare() : '',
     isSearch && produits.length > 1 ? htmlDashboardComparaison(produits, data) : '',
     htmlBarre(data),
+    htmlBannierePublier(),
     '<section class="products">',
       data.total > 0 ? '<p style="font-size:12px;color:#94a3b8;padding:4px 5% 10px">' +
         data.total + ' résultat(s)' + (state.query ? ' pour "' + state.query + '"' : '') + '</p>' : '',
@@ -1673,6 +1687,153 @@ function demanderSponsorisation(id) {
       afficherMesAnnonces();
     })
     .catch(function(err) { toast(err.message || 'Erreur', '#ef4444'); });
+}
+
+// ── Annonces classifiées multi-catégories ────────────────────────
+var _pubAnnonce = { categorie_slug:'', titre:'', description:'', prix:'', ville:'Dakar', quartier:'', contact_nom:'', contact_tel:'' };
+var _annonceEnAttentePaiement = null;
+
+var _CATS_CLASSIFIEES = [
+  { slug:'smartphones',  label:'📱 Téléphones' },
+  { slug:'informatique', label:'💻 Informatique' },
+  { slug:'tv-electro',   label:'📺 TV & Électro' },
+  { slug:'mode',         label:'👗 Mode' },
+  { slug:'maison',       label:'🏠 Maison' },
+  { slug:'auto-moto',    label:'🛵 Auto & Moto' },
+  { slug:'jeux',         label:'🎮 Jeux' },
+  { slug:'services',     label:'🔧 Services' },
+];
+
+function ouvrirPublierAnnonceGenerale(catSlug) {
+  if (!state.user) {
+    toast('Connectez-vous pour publier une annonce', '#f97316');
+    openLoginModal();
+    return;
+  }
+  _pubAnnonce.categorie_slug = catSlug || _pubAnnonce.categorie_slug || '';
+  if (!_pubAnnonce.contact_nom) _pubAnnonce.contact_nom = state.user.nom || '';
+  if (!_pubAnnonce.contact_tel) _pubAnnonce.contact_tel = state.user.telephone || '';
+  var s = 'width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box';
+  var html = [
+    '<div style="font-size:12px;color:#059669;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:9px 12px;margin-bottom:14px">',
+      '✅ <strong>2 premières annonces gratuites</strong> — à partir de la 3ème : 1 500 FCFA.',
+    '</div>',
+    '<select style="' + s + '" onchange="_pubAnnonce.categorie_slug=this.value">',
+      '<option value="">Choisir une catégorie *</option>',
+      _CATS_CLASSIFIEES.map(function(c) {
+        return '<option value="' + c.slug + '"' + (_pubAnnonce.categorie_slug === c.slug ? ' selected' : '') + '>' + c.label + '</option>';
+      }).join(''),
+    '</select>',
+    '<input style="' + s + '" placeholder="Titre de l\'annonce *" value="' + escapeHTML(_pubAnnonce.titre) + '" oninput="_pubAnnonce.titre=this.value">',
+    '<input style="' + s + '" type="number" placeholder="Prix (FCFA) — laisser vide si à négocier" value="' + (_pubAnnonce.prix||'') + '" oninput="_pubAnnonce.prix=this.value">',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">',
+      '<div><input style="' + s + '" placeholder="Ville" value="' + escapeHTML(_pubAnnonce.ville||'Dakar') + '" oninput="_pubAnnonce.ville=this.value"></div>',
+      '<div><input style="' + s + '" placeholder="Quartier (optionnel)" value="' + escapeHTML(_pubAnnonce.quartier||'') + '" oninput="_pubAnnonce.quartier=this.value"></div>',
+    '</div>',
+    '<textarea rows="3" style="' + s + ';resize:vertical" placeholder="Description, état, caractéristiques…" oninput="_pubAnnonce.description=this.value">' + escapeHTML(_pubAnnonce.description||'') + '</textarea>',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">',
+      '<div><input style="' + s + '" placeholder="Votre nom" value="' + escapeHTML(_pubAnnonce.contact_nom||'') + '" oninput="_pubAnnonce.contact_nom=this.value"></div>',
+      '<div><input style="' + s + '" type="tel" placeholder="WhatsApp / téléphone *" value="' + escapeHTML(_pubAnnonce.contact_tel||'') + '" oninput="_pubAnnonce.contact_tel=this.value"></div>',
+    '</div>',
+    '<button onclick="envoyerAnnonceGenerale()" style="width:100%;padding:12px;background:#1a3a6e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">📢 Publier mon annonce</button>',
+  ].join('');
+  ouvrirModal('📢 Publier une annonce', html);
+}
+
+async function envoyerAnnonceGenerale() {
+  var p = _pubAnnonce;
+  if (!p.categorie_slug)   { toast('Choisissez une catégorie', '#ef4444'); return; }
+  if (!p.titre.trim())     { toast('Saisissez un titre', '#ef4444'); return; }
+  if (!p.contact_tel.trim()) { toast('Saisissez votre téléphone', '#ef4444'); return; }
+  try {
+    var data = await apiFetch('/annonces', {
+      method: 'POST',
+      body: JSON.stringify({
+        categorie_slug: p.categorie_slug,
+        titre:       p.titre.trim(),
+        description: p.description.trim(),
+        prix:        p.prix ? parseFloat(p.prix) : null,
+        ville:       p.ville || 'Dakar',
+        quartier:    p.quartier || '',
+        contact_nom: p.contact_nom,
+        contact_tel: p.contact_tel.trim(),
+      }),
+    });
+    if (!data.besoin_paiement) {
+      _pubAnnonce = { categorie_slug:'', titre:'', description:'', prix:'', ville:'Dakar', quartier:'', contact_nom: (state.user||{}).nom||'', contact_tel: (state.user||{}).telephone||'' };
+      fermerModal();
+      toast('✅ Annonce envoyée — en attente de validation', '#10b981');
+      return;
+    }
+    _annonceEnAttentePaiement = data.id;
+    fermerModal();
+    _ouvrirModalPaiementAnnonce(data.montant, data.id);
+  } catch(err) {
+    toast(err.message || 'Erreur envoi annonce', '#ef4444');
+  }
+}
+
+function _ouvrirModalPaiementAnnonce(montant, annonceId) {
+  var html = [
+    '<div style="text-align:center;padding:8px 0 16px">',
+      '<div style="font-size:40px;margin-bottom:12px">💳</div>',
+      '<div style="font-size:16px;font-weight:800;color:#1a3a6e;margin-bottom:6px">Paiement requis</div>',
+      '<div style="font-size:13px;color:#64748b;margin-bottom:18px">Vous avez utilisé vos 2 annonces gratuites.<br>Publiez cette annonce pour <strong>' + fcfa(montant) + '</strong>.</div>',
+      '<button onclick="_payerAnnonceWave(\'' + annonceId + '\')" style="width:100%;padding:13px;background:#1a7fe5;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">🌊 Payer avec Wave</button>',
+      '<div style="font-size:11px;color:#94a3b8">Orange Money disponible prochainement</div>',
+    '</div>',
+  ].join('');
+  ouvrirModal('💳 Finaliser la publication', html);
+}
+
+async function _payerAnnonceWave(annonceId) {
+  try {
+    var data = await apiFetch('/paiement/annonce/initier', {
+      method: 'POST',
+      body: JSON.stringify({ annonce_id: annonceId }),
+    });
+    if (data.wave_url) { fermerModal(); window.location.href = data.wave_url; }
+  } catch(err) { toast(err.message || 'Erreur paiement', '#ef4444'); }
+}
+
+async function afficherMesAnnoncesClassifiees() {
+  try {
+    var data = await apiFetch('/annonces/mine');
+    var annonces = (data && data.annonces) || [];
+    if (!annonces.length) {
+      ouvrirModal('📢 Mes annonces', [
+        '<div style="text-align:center;padding:20px 0;color:#94a3b8">',
+          '<div style="font-size:36px;margin-bottom:10px">📭</div>',
+          '<div style="font-size:14px;margin-bottom:14px">Vous n\'avez publié aucune annonce.</div>',
+          '<button onclick="fermerModal();ouvrirPublierAnnonceGenerale(\'\')" style="padding:9px 20px;background:#1a3a6e;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">📢 Publier ma première annonce gratuite</button>',
+        '</div>',
+      ].join(''));
+      return;
+    }
+    var catLabels = {};
+    _CATS_CLASSIFIEES.forEach(function(c) { catLabels[c.slug] = c.label; });
+    var html = '<div style="display:flex;flex-direction:column;gap:8px">' +
+      annonces.map(function(a) {
+        var badge = a.actif
+          ? '<span style="font-size:10px;font-weight:700;color:#059669;background:#f0fdf4;padding:2px 8px;border-radius:8px">✓ En ligne</span>'
+          : a.payee
+            ? '<span style="font-size:10px;font-weight:700;color:#f59e0b;background:#fffbeb;padding:2px 8px;border-radius:8px">⏳ Validation</span>'
+            : '<span style="font-size:10px;font-weight:700;color:#ef4444;background:#fef2f2;padding:2px 8px;border-radius:8px">💳 Paiement requis</span>';
+        var payBtn = (!a.actif && !a.payee)
+          ? '<button style="font-size:11px;padding:4px 10px;border-radius:8px;background:#1a7fe5;color:#fff;border:none;cursor:pointer;margin-top:7px" onclick="event.stopPropagation();fermerModal();_ouvrirModalPaiementAnnonce(1500,\'' + a.id + '\')">💳 Payer maintenant</button>'
+          : '';
+        return '<div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px">' +
+          '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">' +
+            '<div style="font-size:13px;font-weight:700;color:#1e293b">' + escapeHTML(a.titre) + '</div>' + badge +
+          '</div>' +
+          '<div style="font-size:11px;color:#64748b;margin-top:3px">' + (catLabels[a.categorie_slug] || a.categorie_slug) + (a.prix ? ' · ' + fcfa(a.prix) : '') + (a.ville ? ' · ' + a.ville : '') + '</div>' +
+          payBtn +
+        '</div>';
+      }).join('') +
+    '</div>' +
+    '<button onclick="fermerModal();ouvrirPublierAnnonceGenerale(\'\')" style="width:100%;margin-top:12px;padding:10px;background:#f0f4ff;color:#1a3a6e;border:1.5px solid #bfdbfe;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">+ Nouvelle annonce</button>';
+    ouvrirModal('📢 Mes annonces (' + annonces.length + ')', html);
+  } catch(e) { ouvrirModal('Erreur', '<p style="color:#e63946">' + escapeHTML(e.message) + '</p>'); }
 }
 
 // ── Devenir partenaire ────────────────────────────────────────────
@@ -4237,8 +4398,10 @@ function showAccount() {
     '<div style="padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#94a3b8">Connecté en tant que</div>',
     '<div style="padding:0 14px 10px;font-size:13px;font-weight:700;color:#1e293b;border-bottom:1px solid #f1f5f9">' + state.user.nom + '</div>',
     '<button style="' + itemStyle + '" onclick="fermerMenuCompte();afficherFavoris()">❤ Mes favoris</button>',
-    '<button style="' + itemStyle + '" onclick="fermerMenuCompte();depuisMenuPublierAnnonce()">📢 Publier une annonce</button>',
-    '<button style="' + itemStyle + '" onclick="fermerMenuCompte();afficherMesAnnonces()">📋 Mes annonces</button>',
+    '<button style="' + itemStyle + '" onclick="fermerMenuCompte();ouvrirPublierAnnonceGenerale(\'\')">📢 Publier une annonce</button>',
+    '<button style="' + itemStyle + '" onclick="fermerMenuCompte();afficherMesAnnoncesClassifiees()">📢 Mes annonces classifiées</button>',
+    '<button style="' + itemStyle + '" onclick="fermerMenuCompte();depuisMenuPublierAnnonce()">🏠 Publier une annonce immo</button>',
+    '<button style="' + itemStyle + '" onclick="fermerMenuCompte();afficherMesAnnonces()">📋 Mes annonces immo</button>',
     '<button style="' + itemStyle + ';border-top:1px solid #f1f5f9" onclick="fermerMenuCompte();ouvrirDevenirPartenaire()">🤝 Devenir partenaire</button>',
     '<button style="' + itemStyle + ';color:#e63946;border-top:1px solid #f1f5f9" onclick="logout()">🚪 Déconnexion</button>',
   ].join('');

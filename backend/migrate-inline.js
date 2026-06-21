@@ -186,6 +186,28 @@ module.exports = async function migrateInline() {
 
       CREATE INDEX IF NOT EXISTS idx_partenaires_statut ON demandes_partenaires(statut);
 
+      CREATE TABLE IF NOT EXISTS annonces_classifiees (
+        id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id   UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        categorie_slug   VARCHAR(100) NOT NULL,
+        titre            VARCHAR(500) NOT NULL,
+        description      TEXT,
+        prix             NUMERIC(15,2),
+        ville            VARCHAR(100) DEFAULT 'Dakar',
+        quartier         VARCHAR(200),
+        photos           JSONB DEFAULT '[]',
+        contact_nom      VARCHAR(150),
+        contact_tel      VARCHAR(30) NOT NULL,
+        actif            BOOLEAN DEFAULT FALSE,
+        supprimee        BOOLEAN DEFAULT FALSE,
+        payee            BOOLEAN DEFAULT FALSE,
+        commande_ref     VARCHAR(100),
+        created_at       TIMESTAMPTZ DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_annonces_cat  ON annonces_classifiees(categorie_slug, actif, supprimee);
+      CREATE INDEX IF NOT EXISTS idx_annonces_user ON annonces_classifiees(utilisateur_id);
+
       INSERT INTO categories (nom, slug, icone) VALUES
         ('Telephones',   'smartphones', '📱'),
         ('Informatique', 'informatique','💻'),
