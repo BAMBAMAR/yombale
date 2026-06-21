@@ -1,17 +1,41 @@
 // backend/routes/annonces.js — Annonces classifiées multi-catégories
-const router = require('express').Router();
+const router  = require('express').Router();
+const multer  = require('multer');
 const { body, param, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken } = require('../middlewares/auth');
 const { limiterPublication, limiterEcriture } = require('../middlewares/rateLimit');
+const { uploadBuffer } = require('../services/cloudinary');
 
-const PRIX_ANNONCE  = 1500;   // FCFA par annonce payante (après quota gratuit)
-const QUOTA_GRATUIT = 2;      // nombre d'annonces gratuites par compte
+const PRIX_ANNONCE  = 1500;
+const QUOTA_GRATUIT = 2;
 
 const CATS_AUTORISEES = [
   'smartphones', 'informatique', 'tv-electro', 'mode',
   'maison', 'auto-moto', 'jeux', 'services',
 ];
+
+// Champs requis par catégorie (clés dans caracteristiques JSONB)
+const CHAMPS_REQUIS_CAT = {
+  smartphones: ['marque', 'etat'],
+  informatique: ['marque', 'etat'],
+  'tv-electro':  ['marque', 'etat'],
+  'auto-moto':   ['marque', 'modele', 'annee', 'etat'],
+  jeux:          ['plateforme', 'etat'],
+  mode:          ['taille', 'genre', 'etat'],
+  maison:        ['type_article', 'etat'],
+  services:      ['type_service'],
+};
+
+// Multer — mémoire (max 5 fichiers, 5 Mo chacun)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits:  { fileSize: 5 * 1024 * 1024, files: 5 },
+  fileFilter: function(req, file, cb) {
+    if (file.mimetype.startsWith('image/')) return cb(null, true);
+    cb(new Error('Seules les images sont acceptées'));
+  },
+});
 
 const validationCreation = [
   body('titre').trim().notEmpty().withMessage('Titre requis'),
@@ -24,15 +48,22 @@ const validationCreation = [
   body('contact_nom').optional({ checkFalsy: true }).isString(),
 ];
 
-// ── Compte total annonces utilisateur (immo + classifiées)
+// Compte total annonces utilisateur (immo + classifiées)
 async function compterAnnoncesUtilisateur(userId) {
   const r = await pool.query(`
     SELECT
-      (SELECT COUNT(*) FROM annonces_immo         WHERE utilisateur_id=$1 AND supprimee=FALSE) +
-      (SELECT COUNT(*) FROM annonces_classifiees  WHERE utilisateur_id=$1 AND supprimee=FALSE)
+      (SELECT COUNT(*) FROM annonces_immo        WHERE utilisateur_id=$1 AND supprimee=FALSE) +
+      (SELECT COUNT(*) FROM annonces_classifiees WHERE utilisateur_id=$1 AND supprimee=FALSE)
     AS total
   `, [userId]);
   return parseInt(r.rows[0].total || 0, 10);
+}
+
+// Valide les champs requis d'une catégorie dans caracteristiques
+function validerCaracteristiques(slug, car) {
+  const requis = CHAMPS_REQUIS_CAT[slug] || [];
+  const manquants = requis.filter(function(c) { return !car[c] || !String(car[c]).trim(); });
+  return manquants;
 }
 
 // ── GET /api/annonces — liste publique paginée
@@ -41,9 +72,8 @@ router.get('/', async (req, res) => {
     const { categorie, ville, q, limit = 20, page = 1 } = req.query;
     const offset = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit));
     const lim    = Math.min(50, parseInt(limit));
-
-    const conds = ['actif=true', 'supprimee=false'];
-    const vals  = [];
+    const conds  = ['actif=true', 'supprimee=false'];
+    const vals   = [];
 
     if (categorie) { vals.push(categorie); conds.push(`categorie_slug=$${vals.length}`); }
     if (ville)     { vals.push(ville);     conds.push(`ville ILIKE $${vals.length}`); }
@@ -56,7 +86,7 @@ router.get('/', async (req, res) => {
     const [rows, cnt] = await Promise.all([
       pool.query(
         `SELECT id, categorie_slug, titre, description, prix, ville, quartier,
-                contact_nom, contact_tel, photos, created_at
+                contact_nom, contact_tel, photos, caracteristiques, created_at
          FROM annonces_classifiees ${where}
          ORDER BY created_at DESC LIMIT $${vals.length+1} OFFSET $${vals.length+2}`,
         [...vals, lim, offset]
@@ -71,7 +101,8 @@ router.get('/', async (req, res) => {
 router.get('/mine', verifierToken, async (req, res) => {
   try {
     const rows = await pool.query(
-      `SELECT id, categorie_slug, titre, prix, ville, actif, payee, supprimee, created_at
+      `SELECT id, categorie_slug, titre, prix, ville, actif, payee, supprimee,
+              photos, caracteristiques, created_at
        FROM annonces_classifiees
        WHERE utilisateur_id=$1 AND supprimee=false
        ORDER BY created_at DESC`,
@@ -108,8 +139,8 @@ router.get('/:id', param('id').isUUID(), async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-// ── POST /api/annonces — créer annonce (auth, quota gratuit)
-router.post('/', limiterPublication, verifierToken, validationCreation, async (req, res) => {
+// ── POST /api/annonces — créer annonce (auth, multipart, photos, quota)
+router.post('/', limiterPublication, verifierToken, upload.array('photos', 5), validationCreation, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
@@ -118,18 +149,45 @@ router.post('/', limiterPublication, verifierToken, validationCreation, async (r
     const { categorie_slug, titre, description, prix, ville, quartier,
             contact_nom, contact_tel } = req.body;
 
-    const total     = await compterAnnoncesUtilisateur(userId);
+    // Caractéristiques spécifiques à la catégorie
+    let caracteristiques = {};
+    try { caracteristiques = JSON.parse(req.body.caracteristiques || '{}'); } catch {}
+
+    const manquants = validerCaracteristiques(categorie_slug, caracteristiques);
+    if (manquants.length) {
+      return res.status(400).json({
+        error: 'Champs obligatoires manquants pour cette catégorie : ' + manquants.join(', ')
+      });
+    }
+
+    // Upload des photos vers Cloudinary
+    const photoUrls = [];
+    if (req.files && req.files.length) {
+      for (const f of req.files) {
+        try {
+          const url = await uploadBuffer(f.buffer, 'annonces/' + categorie_slug);
+          photoUrls.push(url);
+        } catch (e) {
+          console.error('[CLOUDINARY] upload error:', e.message);
+        }
+      }
+    }
+
+    const total      = await compterAnnoncesUtilisateur(userId);
     const estGratuit = total < QUOTA_GRATUIT;
 
     const r = await pool.query(
       `INSERT INTO annonces_classifiees
          (utilisateur_id, categorie_slug, titre, description, prix, ville, quartier,
-          contact_nom, contact_tel, payee, actif)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,false)
+          contact_nom, contact_tel, photos, caracteristiques, payee, actif)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,false)
        RETURNING id`,
       [userId, categorie_slug, titre, description || null,
        prix || null, ville || 'Dakar', quartier || null,
-       contact_nom || null, contact_tel, estGratuit]
+       contact_nom || null, contact_tel,
+       JSON.stringify(photoUrls),
+       JSON.stringify(caracteristiques),
+       estGratuit]
     );
     const id = r.rows[0].id;
 
@@ -148,21 +206,48 @@ router.post('/', limiterPublication, verifierToken, validationCreation, async (r
       annonces_gratuites_utilisees: total,
       message: `Quota gratuit atteint (${QUOTA_GRATUIT} annonces). Paiement de ${PRIX_ANNONCE} FCFA requis.`
     });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+  } catch (err) {
+    console.error('[ANNONCES POST]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 // ── PUT /api/annonces/mine/:id — modifier la sienne
-router.put('/mine/:id', verifierToken, param('id').isUUID(), async (req, res) => {
+router.put('/mine/:id', verifierToken, param('id').isUUID(), upload.array('photos', 5), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { titre, description, prix, ville, quartier, contact_nom, contact_tel } = req.body;
+
+    let caracteristiques = {};
+    try { caracteristiques = JSON.parse(req.body.caracteristiques || '{}'); } catch {}
+
+    // Récup photos existantes si pas de nouvelles
+    const existing = await pool.query(
+      'SELECT photos, categorie_slug FROM annonces_classifiees WHERE id=$1 AND utilisateur_id=$2',
+      [req.params.id, req.user.userId]
+    );
+    if (!existing.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
+
+    let photoUrls = existing.rows[0].photos || [];
+    if (req.files && req.files.length) {
+      photoUrls = [];
+      for (const f of req.files) {
+        try {
+          const url = await uploadBuffer(f.buffer, 'annonces/' + existing.rows[0].categorie_slug);
+          photoUrls.push(url);
+        } catch {}
+      }
+    }
+
     const r = await pool.query(
       `UPDATE annonces_classifiees
        SET titre=$1, description=$2, prix=$3, ville=$4, quartier=$5,
-           contact_nom=$6, contact_tel=$7, updated_at=NOW()
-       WHERE id=$8 AND utilisateur_id=$9 AND supprimee=false
+           contact_nom=$6, contact_tel=$7, photos=$8, caracteristiques=$9,
+           updated_at=NOW()
+       WHERE id=$10 AND utilisateur_id=$11 AND supprimee=false
        RETURNING id`,
       [titre, description, prix || null, ville, quartier, contact_nom, contact_tel,
+       JSON.stringify(photoUrls), JSON.stringify(caracteristiques),
        req.params.id, req.user.userId]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });

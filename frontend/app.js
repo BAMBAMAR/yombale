@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 32 — 2026-06-21
+//  app.js VERSION 33 — 2026-06-21
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 32 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 33 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -1690,7 +1690,53 @@ function demanderSponsorisation(id) {
 }
 
 // ── Annonces classifiées multi-catégories ────────────────────────
-var _pubAnnonce = { categorie_slug:'', titre:'', description:'', prix:'', ville:'Dakar', quartier:'', contact_nom:'', contact_tel:'' };
+var _pubAnnonce = { categorie_slug:'', titre:'', description:'', prix:'', ville:'Dakar', quartier:'', contact_nom:'', contact_tel:'', photos:[], caracteristiques:{} };
+
+var _CHAMPS_CAT = {
+  smartphones: [
+    { nom:'marque',   label:'Marque',    requis:true,  type:'text',   ph:'Samsung, Apple, Tecno…' },
+    { nom:'modele',   label:'Modèle',    requis:false, type:'text',   ph:'Galaxy A54, iPhone 13…' },
+    { nom:'stockage', label:'Stockage',  requis:false, type:'select', opts:['16 Go','32 Go','64 Go','128 Go','256 Go','512 Go'] },
+    { nom:'etat',     label:'État',      requis:true,  type:'select', opts:['Neuf','Très bon état','Bon état','État correct'] },
+  ],
+  informatique: [
+    { nom:'marque',        label:'Marque',   requis:true,  type:'text',   ph:'HP, Dell, Lenovo…' },
+    { nom:'type_appareil', label:'Type',     requis:true,  type:'select', opts:['Laptop','PC Bureau','Tablette','Accessoire'] },
+    { nom:'ram',           label:'RAM',      requis:false, type:'select', opts:['2 Go','4 Go','8 Go','16 Go','32 Go'] },
+    { nom:'stockage',      label:'Stockage', requis:false, type:'select', opts:['128 Go','256 Go','512 Go','1 To','2 To'] },
+    { nom:'etat',          label:'État',     requis:true,  type:'select', opts:['Neuf','Très bon état','Bon état','État correct'] },
+  ],
+  'tv-electro': [
+    { nom:'marque',       label:'Marque',              requis:true,  type:'text',   ph:'Samsung, LG, Hisense…' },
+    { nom:'taille_ecran', label:'Taille écran (pouces)',requis:false, type:'number', ph:'43, 55, 65…' },
+    { nom:'etat',         label:'État',                requis:true,  type:'select', opts:['Neuf','Très bon état','Bon état','À réparer'] },
+  ],
+  'auto-moto': [
+    { nom:'marque',      label:'Marque',          requis:true,  type:'text',   ph:'Toyota, Peugeot, Yamaha…' },
+    { nom:'modele',      label:'Modèle',          requis:true,  type:'text',   ph:'Corolla, 206, FZ…' },
+    { nom:'annee',       label:'Année',           requis:true,  type:'number', ph:'2018' },
+    { nom:'kilometrage', label:'Kilométrage (km)',requis:false, type:'number', ph:'45000' },
+    { nom:'carburant',   label:'Carburant',       requis:false, type:'select', opts:['Essence','Diesel','Électrique','Hybride'] },
+    { nom:'etat',        label:'État',            requis:true,  type:'select', opts:['Neuf','Très bon état','Bon état','À réviser'] },
+  ],
+  jeux: [
+    { nom:'plateforme', label:'Plateforme', requis:true, type:'select', opts:['PS5','PS4','Xbox Series','Xbox One','Nintendo Switch','PC','Mobile'] },
+    { nom:'etat',       label:'État',       requis:true, type:'select', opts:['Neuf','Très bon état','Bon état'] },
+  ],
+  mode: [
+    { nom:'taille', label:'Taille', requis:true, type:'text',   ph:'S, M, L, XL, 42…' },
+    { nom:'genre',  label:'Genre',  requis:true, type:'select', opts:['Homme','Femme','Enfant','Unisexe'] },
+    { nom:'etat',   label:'État',   requis:true, type:'select', opts:['Neuf (avec étiquette)','Neuf (sans étiquette)','Très bon état','Bon état'] },
+  ],
+  maison: [
+    { nom:'type_article', label:'Type',  requis:true, type:'select', opts:['Meuble','Électroménager','Décoration','Cuisine','Jardin','Autre'] },
+    { nom:'etat',         label:'État',  requis:true, type:'select', opts:['Neuf','Très bon état','Bon état','À rénover'] },
+  ],
+  services: [
+    { nom:'type_service',  label:'Type de service',  requis:true,  type:'text',   ph:'Plomberie, Cours, Transport…' },
+    { nom:'disponibilite', label:'Disponibilité',    requis:false, type:'select', opts:['Immédiate','Sur rendez-vous','Week-end uniquement','En semaine'] },
+  ],
+};
 var _annonceEnAttentePaiement = null;
 
 var _CATS_CLASSIFIEES = [
@@ -1704,13 +1750,68 @@ var _CATS_CLASSIFIEES = [
   { slug:'services',     label:'🔧 Services' },
 ];
 
+function _htmlChampsCategorie(slug) {
+  var champs = _CHAMPS_CAT[slug] || [];
+  if (!champs.length) return '';
+  var si = 'width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box;background:#fff';
+  return '<div style="margin-bottom:10px;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">' +
+    '<div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Caractéristiques de la catégorie</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+    champs.map(function(c) {
+      var val = (_pubAnnonce.caracteristiques || {})[c.nom] || '';
+      var lbl = '<label style="font-size:11px;color:#475569;font-weight:600;display:block;margin-bottom:3px">' + escapeHTML(c.label) + (c.requis ? ' *' : '') + '</label>';
+      var inp;
+      if (c.type === 'select') {
+        inp = '<select style="' + si + '" onchange="_pubAnnonce.caracteristiques[\''+c.nom+'\']=this.value">' +
+          '<option value="">Choisir…</option>' +
+          (c.opts||[]).map(function(o){ return '<option value="'+escapeHTML(o)+'"'+(val===o?' selected':'')+'>'+escapeHTML(o)+'</option>'; }).join('') +
+          '</select>';
+      } else {
+        inp = '<input type="'+(c.type||'text')+'" style="'+si+'" placeholder="'+(c.ph||'')+'" value="'+escapeHTML(val)+'" oninput="_pubAnnonce.caracteristiques[\''+c.nom+'\']=this.value">';
+      }
+      return '<div>' + lbl + inp + '</div>';
+    }).join('') +
+    '</div></div>';
+}
+
+function _changerCatAnnonce(slug) {
+  _pubAnnonce.categorie_slug = slug;
+  _pubAnnonce.caracteristiques = {};
+  var el = document.getElementById('_ann-champs-cat');
+  if (el) el.innerHTML = _htmlChampsCategorie(slug);
+}
+
+function _handlePhotosAnnonce(input) {
+  var files = Array.from(input.files).slice(0, 5);
+  _pubAnnonce.photos = files;
+  _rendrePreviewPhotos();
+}
+
+function _rendrePreviewPhotos() {
+  var preview = document.getElementById('_ann-photos-preview');
+  if (!preview) return;
+  preview.innerHTML = _pubAnnonce.photos.map(function(f, i) {
+    return '<div style="position:relative;width:68px;height:68px;border-radius:7px;overflow:hidden;border:1.5px solid #bfdbfe;flex-shrink:0">' +
+      '<img src="'+URL.createObjectURL(f)+'" style="width:100%;height:100%;object-fit:cover" alt="">' +
+      '<button onclick="_supprimerPhotoAnnonce('+i+')" style="position:absolute;top:2px;right:2px;width:17px;height:17px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:none;font-size:11px;cursor:pointer;line-height:1;padding:0">×</button>' +
+    '</div>';
+  }).join('');
+}
+
+function _supprimerPhotoAnnonce(i) {
+  _pubAnnonce.photos.splice(i, 1);
+  _rendrePreviewPhotos();
+}
+
 function ouvrirPublierAnnonceGenerale(catSlug) {
   if (!state.user) {
     toast('Connectez-vous pour publier une annonce', '#f97316');
     openLoginModal();
     return;
   }
-  _pubAnnonce.categorie_slug = catSlug || _pubAnnonce.categorie_slug || '';
+  _pubAnnonce.categorie_slug   = catSlug || _pubAnnonce.categorie_slug || '';
+  _pubAnnonce.caracteristiques = {};
+  _pubAnnonce.photos           = [];
   if (!_pubAnnonce.contact_nom) _pubAnnonce.contact_nom = state.user.nom || '';
   if (!_pubAnnonce.contact_tel) _pubAnnonce.contact_tel = state.user.telephone || '';
   var s = 'width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box';
@@ -1718,49 +1819,81 @@ function ouvrirPublierAnnonceGenerale(catSlug) {
     '<div style="font-size:12px;color:#059669;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:9px 12px;margin-bottom:14px">',
       '✅ <strong>2 premières annonces gratuites</strong> — à partir de la 3ème : 1 500 FCFA.',
     '</div>',
-    '<select style="' + s + '" onchange="_pubAnnonce.categorie_slug=this.value">',
+    '<select style="' + s + '" onchange="_changerCatAnnonce(this.value)">',
       '<option value="">Choisir une catégorie *</option>',
       _CATS_CLASSIFIEES.map(function(c) {
         return '<option value="' + c.slug + '"' + (_pubAnnonce.categorie_slug === c.slug ? ' selected' : '') + '>' + c.label + '</option>';
       }).join(''),
     '</select>',
+    '<div id="_ann-champs-cat">' + _htmlChampsCategorie(_pubAnnonce.categorie_slug) + '</div>',
     '<input style="' + s + '" placeholder="Titre de l\'annonce *" value="' + escapeHTML(_pubAnnonce.titre) + '" oninput="_pubAnnonce.titre=this.value">',
     '<input style="' + s + '" type="number" placeholder="Prix (FCFA) — laisser vide si à négocier" value="' + (_pubAnnonce.prix||'') + '" oninput="_pubAnnonce.prix=this.value">',
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">',
-      '<div><input style="' + s + '" placeholder="Ville" value="' + escapeHTML(_pubAnnonce.ville||'Dakar') + '" oninput="_pubAnnonce.ville=this.value"></div>',
-      '<div><input style="' + s + '" placeholder="Quartier (optionnel)" value="' + escapeHTML(_pubAnnonce.quartier||'') + '" oninput="_pubAnnonce.quartier=this.value"></div>',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">',
+      '<input style="' + s + 'margin-bottom:0" placeholder="Ville" value="' + escapeHTML(_pubAnnonce.ville||'Dakar') + '" oninput="_pubAnnonce.ville=this.value">',
+      '<input style="' + s + 'margin-bottom:0" placeholder="Quartier (optionnel)" value="' + escapeHTML(_pubAnnonce.quartier||'') + '" oninput="_pubAnnonce.quartier=this.value">',
     '</div>',
-    '<textarea rows="3" style="' + s + ';resize:vertical" placeholder="Description, état, caractéristiques…" oninput="_pubAnnonce.description=this.value">' + escapeHTML(_pubAnnonce.description||'') + '</textarea>',
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">',
-      '<div><input style="' + s + '" placeholder="Votre nom" value="' + escapeHTML(_pubAnnonce.contact_nom||'') + '" oninput="_pubAnnonce.contact_nom=this.value"></div>',
-      '<div><input style="' + s + '" type="tel" placeholder="WhatsApp / téléphone *" value="' + escapeHTML(_pubAnnonce.contact_tel||'') + '" oninput="_pubAnnonce.contact_tel=this.value"></div>',
+    '<textarea rows="3" style="' + s + ';resize:vertical" placeholder="Description de l\'annonce…" oninput="_pubAnnonce.description=this.value">' + escapeHTML(_pubAnnonce.description||'') + '</textarea>',
+    // Photos
+    '<div style="margin-bottom:10px">',
+      '<label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px dashed #bfdbfe;border-radius:8px;cursor:pointer;background:#eff6ff">',
+        '<input type="file" accept="image/*" multiple id="_ann-photos-input" style="display:none" onchange="_handlePhotosAnnonce(this)">',
+        '<span style="font-size:20px">📷</span>',
+        '<div>',
+          '<div style="font-size:13px;font-weight:700;color:#1d4ed8">Ajouter des photos</div>',
+          '<div style="font-size:11px;color:#64748b">Max 5 photos — 5 Mo chacune</div>',
+        '</div>',
+      '</label>',
+      '<div id="_ann-photos-preview" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>',
     '</div>',
-    '<button onclick="envoyerAnnonceGenerale()" style="width:100%;padding:12px;background:#1a3a6e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">📢 Publier mon annonce</button>',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">',
+      '<input style="' + s + 'margin-bottom:0" placeholder="Votre nom" value="' + escapeHTML(_pubAnnonce.contact_nom||'') + '" oninput="_pubAnnonce.contact_nom=this.value">',
+      '<input style="' + s + 'margin-bottom:0" type="tel" placeholder="WhatsApp / téléphone *" value="' + escapeHTML(_pubAnnonce.contact_tel||'') + '" oninput="_pubAnnonce.contact_tel=this.value">',
+    '</div>',
+    '<button onclick="envoyerAnnonceGenerale()" id="_btn-publier-annonce" style="width:100%;padding:12px;background:#1a3a6e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">📢 Publier mon annonce</button>',
   ].join('');
   ouvrirModal('📢 Publier une annonce', html);
 }
 
+function apiFetchFormData(endpoint, options) {
+  options = options || {};
+  var headers = {};
+  if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+  var url = API + endpoint;
+  return fetch(url, Object.assign({}, options, { headers: headers }))
+    .then(function(res) {
+      return res.json().then(function(data) {
+        if (!res.ok) throw new Error(data.error || (data.errors && data.errors[0] && data.errors[0].msg) || 'Erreur ' + res.status);
+        return data;
+      });
+    });
+}
+
 async function envoyerAnnonceGenerale() {
   var p = _pubAnnonce;
-  if (!p.categorie_slug)   { toast('Choisissez une catégorie', '#ef4444'); return; }
-  if (!p.titre.trim())     { toast('Saisissez un titre', '#ef4444'); return; }
-  if (!p.contact_tel.trim()) { toast('Saisissez votre téléphone', '#ef4444'); return; }
+  if (!p.categorie_slug)     { toast('Choisissez une catégorie', '#ef4444'); return; }
+  if (!p.titre || !p.titre.trim()) { toast('Saisissez un titre', '#ef4444'); return; }
+  if (!p.contact_tel || !p.contact_tel.trim()) { toast('Saisissez votre téléphone', '#ef4444'); return; }
+
+  var btn = document.getElementById('_btn-publier-annonce');
+  if (btn) { btn.disabled = true; btn.textContent = 'Envoi en cours…'; }
+
   try {
-    var data = await apiFetch('/annonces', {
-      method: 'POST',
-      body: JSON.stringify({
-        categorie_slug: p.categorie_slug,
-        titre:       p.titre.trim(),
-        description: p.description.trim(),
-        prix:        p.prix ? parseFloat(p.prix) : null,
-        ville:       p.ville || 'Dakar',
-        quartier:    p.quartier || '',
-        contact_nom: p.contact_nom,
-        contact_tel: p.contact_tel.trim(),
-      }),
-    });
+    var fd = new FormData();
+    fd.append('categorie_slug',   p.categorie_slug);
+    fd.append('titre',            p.titre.trim());
+    fd.append('description',      (p.description || '').trim());
+    fd.append('prix',             p.prix ? String(parseFloat(p.prix)) : '');
+    fd.append('ville',            p.ville || 'Dakar');
+    fd.append('quartier',         p.quartier || '');
+    fd.append('contact_nom',      p.contact_nom || '');
+    fd.append('contact_tel',      p.contact_tel.trim());
+    fd.append('caracteristiques', JSON.stringify(p.caracteristiques || {}));
+    (p.photos || []).forEach(function(f) { fd.append('photos', f); });
+
+    var data = await apiFetchFormData('/annonces', { method: 'POST', body: fd });
+
     if (!data.besoin_paiement) {
-      _pubAnnonce = { categorie_slug:'', titre:'', description:'', prix:'', ville:'Dakar', quartier:'', contact_nom: (state.user||{}).nom||'', contact_tel: (state.user||{}).telephone||'' };
+      _pubAnnonce = { categorie_slug:'', titre:'', description:'', prix:'', ville:'Dakar', quartier:'', contact_nom:(state.user||{}).nom||'', contact_tel:(state.user||{}).telephone||'', photos:[], caracteristiques:{} };
       fermerModal();
       toast('✅ Annonce envoyée — en attente de validation', '#10b981');
       return;
@@ -1770,6 +1903,7 @@ async function envoyerAnnonceGenerale() {
     _ouvrirModalPaiementAnnonce(data.montant, data.id);
   } catch(err) {
     toast(err.message || 'Erreur envoi annonce', '#ef4444');
+    if (btn) { btn.disabled = false; btn.textContent = '📢 Publier mon annonce'; }
   }
 }
 
