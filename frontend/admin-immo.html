@@ -225,6 +225,8 @@
 </div>
 
 <script>
+function e(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
 // ── Auth ───────────────────────────────────────────────────────────────
 let SECRET = new URLSearchParams(location.search).get('secret') || sessionStorage.getItem('nopalou_admin_secret') || '';
 if (!SECRET) {
@@ -344,14 +346,14 @@ async function chargerEnAttente() {
     }
     document.getElementById('pending-wrap').innerHTML = `<table><thead><tr><th>Titre</th><th>Type</th><th>Lieu</th><th>Prix</th><th>Contact</th><th>Actions</th></tr></thead><tbody>${d.map(a => `
       <tr>
-        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.titre}">${a.titre}</td>
-        <td>${a.type_bien || '—'}</td>
-        <td>${a.ville || '—'}${a.quartier ? ' · ' + a.quartier.slice(0,20) : ''}</td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e(a.titre)}">${e(a.titre)}</td>
+        <td>${e(a.type_bien || '—')}</td>
+        <td>${e(a.ville || '—')}${a.quartier ? ' · ' + e(a.quartier.slice(0,20)) : ''}</td>
         <td>${a.prix ? new Intl.NumberFormat('fr-FR').format(a.prix) + ' F' : '—'}</td>
-        <td>${a.contact_nom || ''} ${a.contact_tel || ''}</td>
+        <td>${e(a.contact_nom || '')} ${e(a.contact_tel || '')}</td>
         <td class="actions">
-          <button class="btn-primary btn-sm" onclick="approuverAnnonce('${a.id}')">✓ Approuver</button>
-          <button class="btn-danger btn-sm" onclick="rejeterAnnonce('${a.id}')">✕ Rejeter</button>
+          <button class="btn-primary btn-sm" onclick="approuverAnnonce('${e(a.id)}')">✓ Approuver</button>
+          <button class="btn-danger btn-sm" onclick="rejeterAnnonce('${e(a.id)}')">✕ Rejeter</button>
         </td>
       </tr>`).join('')}</tbody></table>`;
   } catch(e) {
@@ -391,13 +393,13 @@ async function chargerDemandesSponsorisation() {
       const actif = a.sponsorisee && (!a.sponsorisee_jusqu_au || new Date(a.sponsorisee_jusqu_au) > new Date());
       return `
       <tr>
-        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.titre}">${a.titre}</td>
-        <td>${a.ville || '—'}${a.quartier ? ' · ' + a.quartier.slice(0,20) : ''}</td>
-        <td>${a.contact_nom || ''} ${a.contact_tel || ''}</td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e(a.titre)}">${e(a.titre)}</td>
+        <td>${e(a.ville || '—')}${a.quartier ? ' · ' + e(a.quartier.slice(0,20)) : ''}</td>
+        <td>${e(a.contact_nom || '')} ${e(a.contact_tel || '')}</td>
         <td>${actif ? `<span class="badge badge-loc">Active jusqu'au ${new Date(a.sponsorisee_jusqu_au).toLocaleDateString('fr-FR')}</span>` : '<span class="badge badge-exp">En attente</span>'}</td>
         <td class="actions">
-          <button class="btn-primary btn-sm" onclick="activerSponsorisation('${a.id}')">✓ Activer 30j</button>
-          <button class="btn-secondary btn-sm" onclick="annulerDemandeSponsorisation('${a.id}')">Ignorer</button>
+          <button class="btn-primary btn-sm" onclick="activerSponsorisation('${e(a.id)}')">✓ Activer 30j</button>
+          <button class="btn-secondary btn-sm" onclick="annulerDemandeSponsorisation('${e(a.id)}')">Ignorer</button>
         </td>
       </tr>`;
     }).join('')}</tbody></table>`;
@@ -440,15 +442,15 @@ async function chargerAnnonces(page) {
     const d = await r.json();
     const rows = (d.annonces || []).map(a => `
       <tr>
-        <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.titre}">${a.titre}</td>
-        <td><span class="badge badge-${a.transaction === 'vente' ? 'vente' : 'loc'}">${a.transaction}</span></td>
-        <td>${a.type_bien || '—'}</td>
-        <td>${a.ville || '—'}${a.quartier ? ' · ' + a.quartier.slice(0,20) : ''}</td>
+        <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e(a.titre)}">${e(a.titre)}</td>
+        <td><span class="badge badge-${a.transaction === 'vente' ? 'vente' : 'loc'}">${e(a.transaction)}</span></td>
+        <td>${e(a.type_bien || '—')}</td>
+        <td>${e(a.ville || '—')}${a.quartier ? ' · ' + e(a.quartier.slice(0,20)) : ''}</td>
         <td>${a.prix ? new Intl.NumberFormat('fr-FR').format(a.prix) + ' F' : '—'}</td>
-        <td><span class="badge badge-${a.source?.startsWith('facebook') ? 'fb' : a.source === 'expat-dakar' ? 'exp' : 'coin'}">${a.source || '—'}</span></td>
+        <td><span class="badge badge-${a.source?.startsWith('facebook') ? 'fb' : a.source === 'expat-dakar' ? 'exp' : 'coin'}">${e(a.source || '—')}</span></td>
         <td class="actions">
           <button class="btn-edit btn-sm" onclick='modifierAnnonce(${JSON.stringify(a)})'>Modifier</button>
-          <button class="btn-danger btn-sm" onclick="desactiverAnnonce('${a.id}')">Désact.</button>
+          <button class="btn-danger btn-sm" onclick="desactiverAnnonce('${e(a.id)}')">Désact.</button>
         </td>
       </tr>`).join('');
 

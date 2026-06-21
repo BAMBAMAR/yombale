@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 23 — 2026-06-19
+//  app.js VERSION 26 — 2026-06-21
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 23 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 26 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -11,6 +11,39 @@ function escapeHTML(s) {
 }
 function safeUrl(url) {
   try { var u = new URL(url); return /^https?:$/i.test(u.protocol) ? url : '#'; } catch { return '#'; }
+}
+
+function setMeta(title, desc) {
+  document.title = title ? escapeHTML(title) + ' | Nopalou' : 'Nopalou — Comparateur de prix Sénégal';
+  var m = document.querySelector('meta[name="description"]');
+  if (m && desc) m.content = desc;
+}
+
+function injecterSchemaProduct(produit, offres) {
+  var existing = document.getElementById('schema-product');
+  if (existing) existing.remove();
+  if (!produit || !produit.nom) return;
+  var script = document.createElement('script');
+  script.id   = 'schema-product';
+  script.type = 'application/ld+json';
+  script.text = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    'name': produit.nom,
+    'image': produit.image_url || '',
+    'brand': produit.marque ? { '@type': 'Brand', 'name': produit.marque } : undefined,
+    'offers': (offres || []).filter(function(o) { return !o._suspect; }).map(function(o) {
+      return {
+        '@type': 'Offer',
+        'price': o.prix,
+        'priceCurrency': 'XOF',
+        'availability': 'https://schema.org/InStock',
+        'url': safeUrl(o.url_achat || '#'),
+        'seller': { '@type': 'Organization', 'name': o.marchand_nom || '' }
+      };
+    })
+  });
+  document.head.appendChild(script);
 }
 
 // ── Historique SPA (browser back/forward) ───────────────────────
@@ -69,8 +102,8 @@ var _productCache = {};
 
 // ── Logger ──────────────────────────────────────────────────────
 var _log = [];
-function dbg(e, d)    { var t = new Date().toISOString().slice(11,23); _log.push('['+t+'] '+e+(d!==undefined?' → '+JSON.stringify(d):'')); console.log('%c[Y]','color:#1d4ed8;font-weight:bold',e,d!==undefined?d:''); }
-function dbgErr(e, r) { var t = new Date().toISOString().slice(11,23); _log.push('['+t+'] ❌ '+e+' → '+(r&&r.message?r.message:String(r))); console.error('%c[Y]','color:#ef4444;font-weight:bold',e,r); }
+function dbg(e, d)    { var t = new Date().toISOString().slice(11,23); _log.push('['+t+'] '+e+(d!==undefined?' → '+JSON.stringify(d):'')); if (window._DEBUG) console.log('%c[Y]','color:#1d4ed8;font-weight:bold',e,d!==undefined?d:''); }
+function dbgErr(e, r) { var t = new Date().toISOString().slice(11,23); _log.push('['+t+'] ❌ '+e+' → '+(r&&r.message?r.message:String(r))); if (window._DEBUG) console.error('%c[Y]','color:#ef4444;font-weight:bold',e,r); }
 window.PM_LOGS = function() { return _log.join('\n'); };
 
 // ── apiFetch ────────────────────────────────────────────────────
@@ -168,17 +201,22 @@ function chargerSuggestions(q, inp) {
       box.style.cssText = 'position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e2e8f0;' +
         'border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:999;overflow:hidden;margin-top:4px';
       box.innerHTML = produits.map(function(p) {
-        return '<div onclick="selectSuggestion(\'' + p.id + '\',\'' + p.nom.replace(/'/g, "\\'") + '\')" ' +
+        return '<div data-id="' + p.id + '" data-nom="' + escapeHTML(p.nom) + '" ' +
           'style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9" ' +
           'onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'">' +
           '<span style="font-size:18px">📦</span>' +
           '<div style="flex:1;min-width:0">' +
-            '<div style="font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.nom + '</div>' +
+            '<div style="font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHTML(p.nom) + '</div>' +
             (p.prix_min ? '<div style="font-size:12px;color:#10b981;font-weight:700">' + fcfa(p.prix_min) + '</div>' : '') +
           '</div>' +
           (p.nb_offres ? '<span style="font-size:11px;color:#94a3b8;white-space:nowrap">' + p.nb_offres + ' offre(s)</span>' : '') +
         '</div>';
       }).join('');
+      box.querySelectorAll('[data-id]').forEach(function(el) {
+        el.addEventListener('click', function() {
+          selectSuggestion(el.dataset.id, el.dataset.nom);
+        });
+      });
       var wrap = inp.closest('.sbar') || inp.parentElement;
       wrap.style.position = 'relative';
       fermerSuggestions();
@@ -912,12 +950,12 @@ function carteImmoHTML(a) {
     '<div class="pcard immo' + (inCmp ? ' immo-selected' : '') + '" style="' + (sponso ? 'box-shadow:0 0 0 2px #f59e0b' : '') + '" onclick="ouvrirImmo(\'' + a.id + '\')">',
       '<div class="pimg" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);position:relative">',
         photo
-          ? '<img src="' + photo + '" alt="' + (a.titre || '').replace(/"/g, '&quot;') + '" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
+          ? '<img src="' + safeUrl(photo) + '" alt="' + escapeHTML(a.titre || '') + '" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
           : '<span style="font-size:40px">' + _immoIcon(a.type_bien) + '</span>',
         '<div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap">',
           sponso ? '<span style="font-size:10px;font-weight:700;color:#fff;background:#f59e0b;padding:2px 7px;border-radius:6px">⭐ Sponsorisée</span>' : '',
           '<span style="font-size:10px;font-weight:700;color:#fff;background:' + (a.transaction === 'vente' ? '#7c3aed' : '#059669') + ';padding:2px 7px;border-radius:6px">' + (a.transaction === 'vente' ? 'Vente' : 'Location') + '</span>',
-          '<span style="font-size:10px;font-weight:700;color:#1e293b;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:6px">' + (TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
+          '<span style="font-size:10px;font-weight:700;color:#1e293b;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:6px">' + escapeHTML(TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
         '</div>',
       '</div>',
       '<div class="pbody">',
@@ -1262,43 +1300,110 @@ function fermerModal() {
 var _wzImmo = { budget: '', transaction: 'location', type_bien: '', ville: '', quartier: '', surfaceMin: '', nbChambres: '' };
 
 function ouvrirWizardImmo() {
-  var s = 'width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box';
+  state.currentPage = 'guide-immo';
+  var appEl = document.getElementById('app');
+  if (appEl) appEl.style.cssText = '';
+  var inp = 'width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:14px;outline:none;box-sizing:border-box';
   var w = _wzImmo;
+
   function tBtn(label, val, field) {
     var act = w[field] === val;
-    return '<button onclick="_wzImmoField(\'' + field + '\',\'' + val + '\')" style="padding:7px 18px;border-radius:20px;border:1.5px solid ' + (act ? '#2563eb' : '#e2e8f0') + ';background:' + (act ? '#eff6ff' : '#fff') + ';color:' + (act ? '#2563eb' : '#64748b') + ';font-size:13px;font-weight:' + (act ? '700' : '500') + ';cursor:pointer">' + label + '</button>';
+    return '<button onclick="_wzImmoField(\'' + field + '\',\'' + val + '\')" style="padding:10px 20px;border-radius:20px;border:2px solid ' + (act ? '#059669' : '#e2e8f0') + ';background:' + (act ? '#059669' : '#fff') + ';color:' + (act ? '#fff' : '#64748b') + ';font-size:13px;font-weight:' + (act ? '700' : '500') + ';cursor:pointer;transition:all .15s">' + label + '</button>';
   }
-  var html = [
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">',
-      tBtn('🏠 Location', 'location', 'transaction'),
-      tBtn('🔑 Vente',    'vente',    'transaction'),
+
+  render([
+    '<div style="max-width:620px;margin:0 auto;padding:16px 5% 80px">',
+
+      // Retour
+      '<button onclick="chargerImmo(1)" style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1.5px solid #059669;color:#059669;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Retour aux annonces</button>',
+
+      // Hero
+      '<div style="background:linear-gradient(135deg,#064e3b,#059669,#34d399);border-radius:20px;padding:28px 24px;margin-bottom:24px;color:#fff">',
+        '<div style="font-size:36px;margin-bottom:10px">🏡</div>',
+        '<div style="font-size:22px;font-weight:800;margin-bottom:6px">Trouver mon logement idéal</div>',
+        '<div style="font-size:14px;opacity:.85;line-height:1.5">Décrivez votre projet — Nopalou sélectionne et classe les meilleures annonces.</div>',
+      '</div>',
+
+      // Carte formulaire
+      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.04)">',
+
+        '<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:20px">Votre projet</div>',
+
+        // Transaction
+        '<div style="margin-bottom:20px">',
+          '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px">Type de projet</label>',
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">',
+            tBtn('🏠 Location', 'location', 'transaction'),
+            tBtn('🔑 Achat / Vente', 'vente', 'transaction'),
+          '</div>',
+        '</div>',
+
+        // Budget
+        '<div style="margin-bottom:20px">',
+          '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">💰 Budget maximum (FCFA)</label>',
+          '<input id="wzi-budget" type="number" placeholder="ex: 300 000" value="' + (w.budget||'') + '" ' +
+            'style="' + inp + '" oninput="_wzImmo.budget=this.value" ' +
+            'onfocus="this.style.borderColor=\'#059669\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+        '</div>',
+
+        // Type de bien
+        '<div style="margin-bottom:20px">',
+          '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">🏘️ Type de bien</label>',
+          '<select id="wzi-type" style="' + inp + ';background:#fff;cursor:pointer" onchange="_wzImmo.type_bien=this.value" ' +
+            'onfocus="this.style.borderColor=\'#059669\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+            Object.keys(TYPE_BIEN_LABELS).map(function(k) {
+              return '<option value="' + k + '"' + (w.type_bien === k ? ' selected' : '') + '>' + TYPE_BIEN_LABELS[k] + '</option>';
+            }).join(''),
+          '</select>',
+        '</div>',
+
+        // Ville + Quartier
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">',
+          '<div>',
+            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">📍 Ville</label>',
+            '<select id="wzi-ville" style="' + inp + ';background:#fff;cursor:pointer" onchange="_wzImmo.ville=this.value" ' +
+              'onfocus="this.style.borderColor=\'#059669\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+              '<option value="">Toutes</option>',
+              (_immoState.villes || []).map(function(v) { return '<option value="' + v.ville + '"' + (w.ville === v.ville ? ' selected' : '') + '>' + v.ville + '</option>'; }).join(''),
+            '</select>',
+          '</div>',
+          '<div>',
+            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">Quartier <span style="font-weight:400;font-size:11px;color:#94a3b8">optionnel</span></label>',
+            '<input id="wzi-quartier" type="text" placeholder="ex: Plateau, Almadies…" value="' + (w.quartier||'') + '" ' +
+              'style="' + inp + '" oninput="_wzImmo.quartier=this.value" ' +
+              'onfocus="this.style.borderColor=\'#059669\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+          '</div>',
+        '</div>',
+
+        // Surface + Chambres
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">',
+          '<div>',
+            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">📐 Surface min (m²)</label>',
+            '<input id="wzi-surface" type="number" placeholder="ex: 60" value="' + (w.surfaceMin||'') + '" ' +
+              'style="' + inp + '" oninput="_wzImmo.surfaceMin=this.value" ' +
+              'onfocus="this.style.borderColor=\'#059669\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+          '</div>',
+          '<div>',
+            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">🛏️ Chambres min</label>',
+            '<input id="wzi-ch" type="number" placeholder="ex: 2" value="' + (w.nbChambres||'') + '" ' +
+              'style="' + inp + '" oninput="_wzImmo.nbChambres=this.value" ' +
+              'onfocus="this.style.borderColor=\'#059669\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+          '</div>',
+        '</div>',
+
+        '<button onclick="lancerRechercheWizardImmo()" ' +
+          'style="width:100%;padding:15px;background:linear-gradient(135deg,#064e3b,#059669);color:#fff;border:none;border-radius:12px;' +
+          'font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(5,150,105,.35)">',
+          '🔍 Trouver les meilleures annonces',
+        '</button>',
+
+      '</div>',
+
+      // Zone résultats
+      '<div id="wz-immo-results"></div>',
+
     '</div>',
-    '<label style="font-size:12px;font-weight:700;color:#64748b">Budget max (FCFA)</label>',
-    '<input id="wzi-budget" type="number" placeholder="ex: 300000" value="' + (w.budget||'') + '" style="' + s + '" oninput="_wzImmo.budget=this.value">',
-    '<label style="font-size:12px;font-weight:700;color:#64748b">Type de bien</label>',
-    '<select id="wzi-type" style="' + s + '" onchange="_wzImmo.type_bien=this.value">',
-      Object.keys(TYPE_BIEN_LABELS).map(function(k) {
-        return '<option value="' + k + '"' + (w.type_bien === k ? ' selected' : '') + '>' + TYPE_BIEN_LABELS[k] + '</option>';
-      }).join(''),
-    '</select>',
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0">',
-      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Ville</label>',
-      '<select id="wzi-ville" style="' + s + '" onchange="_wzImmo.ville=this.value">',
-        '<option value="">Toutes</option>',
-        (_immoState.villes || []).map(function(v) { return '<option value="' + v.ville + '"' + (w.ville === v.ville ? ' selected' : '') + '>' + v.ville + '</option>'; }).join(''),
-      '</select></div>',
-      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Quartier <span style="font-weight:400;color:#94a3b8">(optionnel)</span></label>',
-      '<input id="wzi-quartier" type="text" placeholder="ex: Plateau, Almadies…" value="' + (w.quartier||'') + '" style="' + s + '" oninput="_wzImmo.quartier=this.value"></div>',
-    '</div>',
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">',
-      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Surface min (m²)</label>',
-      '<input id="wzi-surface" type="number" placeholder="ex: 60" value="' + (w.surfaceMin||'') + '" style="' + s + '" oninput="_wzImmo.surfaceMin=this.value"></div>',
-      '<div><label style="font-size:12px;font-weight:700;color:#64748b">Chambres min</label>',
-      '<input id="wzi-ch" type="number" placeholder="ex: 2" value="' + (w.nbChambres||'') + '" style="' + s + '" oninput="_wzImmo.nbChambres=this.value"></div>',
-    '</div>',
-    '<button onclick="lancerRechercheWizardImmo()" style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;margin-top:4px">🔍 Trouver les meilleures annonces</button>',
-  ].join('');
-  ouvrirModal('🔍 Trouver mon bien', html);
+  ].join(''));
 }
 
 function _wzImmoField(field, val) {
@@ -1319,15 +1424,25 @@ async function lancerRechercheWizardImmo() {
     tri:         'prix_asc',
     limit: 50, page: 1,
   });
+  var zone = document.getElementById('wz-immo-results');
+  if (zone) zone.innerHTML = '<div style="padding:24px;text-align:center"><div class="spin" style="margin:0 auto 12px"></div><p style="color:#64748b;font-size:13px">Recherche en cours…</p></div>';
+
   try {
     var data = await apiFetch('/immo?' + params.toString());
     var annonces = (data.annonces || []).filter(function(a) { return a.prix; });
-    var btnRetour = '<button onclick="ouvrirWizardImmo()" style="width:100%;padding:9px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px">← Modifier ma recherche</button>';
+
     if (!annonces.length) {
-      ouvrirModal('🔍 Résultats', btnRetour + '<p style="text-align:center;color:#64748b;padding:12px 0">Aucun bien trouvé avec ces critères.<br>Élargissez votre budget ou vos filtres.</p>');
+      if (zone) zone.innerHTML = [
+        '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:32px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)">',
+          '<div style="font-size:40px;margin-bottom:12px">😔</div>',
+          '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:6px">Aucun bien trouvé</div>',
+          '<div style="font-size:13px;color:#64748b;line-height:1.6">Élargissez votre budget ou assouplissez les filtres.</div>',
+        '</div>',
+      ].join('');
       return;
     }
-    // Score : 0→1 en fonction de l'adéquation budget (plus c'est proche du budget = mieux)
+
+    // Score : 0→1 en fonction de l'adéquation budget
     var budget = parseFloat(w.budget) || Infinity;
     function score(a) {
       var s = 0;
@@ -1339,24 +1454,40 @@ async function lancerRechercheWizardImmo() {
     annonces.sort(function(a, b) { return score(b) - score(a); });
     var top = annonces.slice(0, 5);
     var medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
-    var html = btnRetour + '<div style="display:flex;flex-direction:column;gap:10px">' +
-      top.map(function(a, i) {
-        var sc = Math.round(score(a) * 100);
-        var prixM2 = (a.prix && a.surface_m2) ? fcfa(Math.round(a.prix / a.surface_m2)) + '/m²' : '';
-        return '<div style="border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center;cursor:pointer" onclick="fermerModal();ouvrirImmo(\'' + a.id + '\')">' +
-          '<div style="font-size:28px">' + medals[i] + '</div>' +
-          '<div style="flex:1;min-width:0">' +
-            '<div style="font-size:13px;font-weight:700;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + a.titre + '</div>' +
-            '<div style="font-size:11px;color:#64748b">' + (a.quartier || a.ville || '') + (a.surface_m2 ? ' · ' + a.surface_m2 + ' m²' : '') + (prixM2 ? ' · ' + prixM2 : '') + '</div>' +
-            '<div style="margin-top:4px;background:#e2e8f0;border-radius:4px;height:5px"><div style="background:#2563eb;height:5px;border-radius:4px;width:' + sc + '%"></div></div>' +
-          '</div>' +
-          '<div style="text-align:right;flex-shrink:0"><div style="font-size:15px;font-weight:800;color:#059669">' + fcfa(a.prix) + '</div><div style="font-size:10px;color:#94a3b8">' + sc + '% match</div></div>' +
-        '</div>';
-      }).join('') +
-    '</div>';
-    ouvrirModal('🎯 Top ' + top.length + ' résultats', html);
+
+    if (zone) zone.innerHTML = [
+      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)">',
+        '<div style="padding:14px 20px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-bottom:1px solid #bbf7d0;display:flex;align-items:center;justify-content:space-between">',
+          '<div style="font-size:14px;font-weight:800;color:#064e3b">🎯 Top ' + top.length + ' résultats</div>',
+          '<div style="font-size:12px;color:#059669;font-weight:600">' + annonces.length + ' annonce(s) trouvée(s)</div>',
+        '</div>',
+        '<div style="display:flex;flex-direction:column;gap:0">',
+          top.map(function(a, i) {
+            var sc = Math.round(score(a) * 100);
+            var prixM2 = (a.prix && a.surface_m2) ? fcfa(Math.round(a.prix / a.surface_m2)) + '/m²' : '';
+            return [
+              '<div style="padding:14px 20px;' + (i < top.length - 1 ? 'border-bottom:1px solid #f1f5f9;' : '') + 'display:flex;gap:14px;align-items:center;cursor:pointer;transition:background .1s" ' +
+                'onclick="ouvrirImmo(\'' + a.id + '\')" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'">',
+                '<div style="font-size:26px;flex-shrink:0">' + medals[i] + '</div>',
+                '<div style="flex:1;min-width:0">',
+                  '<div style="font-size:13px;font-weight:700;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + a.titre + '</div>',
+                  '<div style="font-size:11px;color:#64748b;margin-top:2px">' + (a.quartier || a.ville || '') + (a.surface_m2 ? ' · ' + a.surface_m2 + ' m²' : '') + (prixM2 ? ' · ' + prixM2 : '') + '</div>',
+                  '<div style="margin-top:6px;background:#e2e8f0;border-radius:4px;height:4px"><div style="background:#059669;height:4px;border-radius:4px;width:' + sc + '%"></div></div>',
+                '</div>',
+                '<div style="text-align:right;flex-shrink:0">',
+                  '<div style="font-size:15px;font-weight:800;color:#059669">' + fcfa(a.prix) + '</div>',
+                  '<div style="font-size:10px;color:#94a3b8;margin-top:2px">' + sc + '% match</div>',
+                '</div>',
+              '</div>',
+            ].join('');
+          }).join(''),
+        '</div>',
+      '</div>',
+    ].join('');
+
+    if (zone) zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch(e) {
-    ouvrirModal('Erreur', '<p style="color:#e63946">' + e.message + '</p>');
+    if (zone) zone.innerHTML = '<div style="padding:20px;color:#ef4444;font-size:13px">' + e.message + '</div>';
   }
 }
 
@@ -1674,11 +1805,11 @@ function carteImmoRecoHTML(a) {
       '<div class="pbadge-eco" style="background:#059669">🏆 Recommandé</div>',
       '<div class="pimg" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);position:relative">',
         photo
-          ? '<img src="' + photo + '" alt="' + (a.titre || '').replace(/"/g, '&quot;') + '" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
+          ? '<img src="' + safeUrl(photo) + '" alt="' + escapeHTML(a.titre || '') + '" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
           : '<span style="font-size:40px">' + _immoIcon(a.type_bien) + '</span>',
         '<div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap">',
           '<span style="font-size:10px;font-weight:700;color:#fff;background:' + (a.transaction === 'vente' ? '#7c3aed' : '#059669') + ';padding:2px 7px;border-radius:6px">' + (a.transaction === 'vente' ? 'Vente' : 'Location') + '</span>',
-          '<span style="font-size:10px;font-weight:700;color:#1e293b;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:6px">' + (TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
+          '<span style="font-size:10px;font-weight:700;color:#1e293b;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:6px">' + escapeHTML(TYPE_BIEN_LABELS[a.type_bien] || a.type_bien || '') + '</span>',
         '</div>',
         '<button data-immo-id="' + escapeHTML(a.id) + '" onclick="event.stopPropagation();_immoToggleCompareById(this.dataset.immoId)" ' +
           'style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:2px solid ' + (inCmp ? '#059669' : 'rgba(255,255,255,.8)') + ';background:' + (inCmp ? '#059669' : 'rgba(255,255,255,.85)') + ';color:' + (inCmp ? '#fff' : '#475569') + ';font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700">'+( inCmp?'✓':'+')+'</button>',
@@ -1821,6 +1952,10 @@ async function ouvrirImmo(id) {
     var inCmp   = _immoState.compare.some(function(x) { return x.id === a.id; });
     var inFav   = _immoState.favoris.indexOf(a.id) !== -1;
     var prenomContact = a.contact_nom ? escapeHTML(a.contact_nom.split(' ')[0]) : 'le propriétaire';
+
+    setMeta(a.titre, (a.titre || '') + (a.ville ? ' à ' + a.ville : '') + ' — Nopalou Immobilier Sénégal');
+    var schemaImmo = document.getElementById('schema-product');
+    if (schemaImmo) schemaImmo.remove();
 
     // ── Nav sticky ─────────────────────────────────────────────
     var navHtml = [
@@ -2314,115 +2449,108 @@ function fermerComparaisonForfaits() {
   if (modal) modal.style.display = 'none';
 }
 
-// ── Assistant "Trouver mon forfait" ───────────────────────────
+// ── Guide "Trouver mon forfait" (page complète) ───────────────────────────
 
 function ouvrirWizardForfait() {
+  state.currentPage = 'guide-forfait';
+  var appEl = document.getElementById('app');
+  if (appEl) appEl.style.cssText = '';
   var w = state.wizardForfait;
-  var modal = document.getElementById('modal-wizard-forfait');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'modal-wizard-forfait';
-    document.body.appendChild(modal);
-  }
-  modal.innerHTML = _wizardFormHtml(w);
-  modal.style.display = 'block';
-  modal.onclick = function(e) { if (e.target === modal.firstChild) fermerWizardForfait(); };
-}
 
-function fermerWizardForfait() {
-  var modal = document.getElementById('modal-wizard-forfait');
-  if (modal) modal.style.display = 'none';
-}
-
-function _wizardFormHtml(w) {
   function pBtn(p, label, couleur) {
     var act = (w.profil === p);
     return '<button type="button" onclick="_wzProfil(\'' + p + '\')" id="wz-p-' + p + '" ' +
-      'style="flex:1;padding:14px 8px;border-radius:10px;border:2px solid ' + (act ? couleur : '#e2e8f0') + ';' +
+      'style="flex:1;padding:13px 8px;border-radius:10px;border:2px solid ' + (act ? couleur : '#e2e8f0') + ';' +
       'background:' + (act ? couleur : '#fff') + ';color:' + (act ? '#fff' : '#475569') + ';' +
       'font-weight:' + (act ? '700' : '500') + ';font-size:13px;cursor:pointer;transition:all .15s">' + label + '</button>';
   }
-  return [
-    '<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1001;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto">',
-      '<div style="background:#fff;border-radius:16px;max-width:480px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.28);overflow:hidden">',
 
-        // En-tête
-        '<div style="padding:20px 24px 16px;background:linear-gradient(135deg,#1e3a8a,#3b82f6)">',
-          '<div style="display:flex;align-items:center;justify-content:space-between">',
-            '<div>',
-              '<div style="font-size:18px;font-weight:800;color:#fff">🎯 Trouvez votre forfait idéal</div>',
-              '<div style="font-size:12px;color:#bfdbfe;margin-top:2px">Décrivez vos besoins, on s\'occupe du reste</div>',
-            '</div>',
-            '<button onclick="fermerWizardForfait()" aria-label="Fermer" style="background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:6px 10px;color:#fff;font-size:18px;cursor:pointer">✕</button>',
-          '</div>',
-        '</div>',
+  render([
+    '<div style="max-width:620px;margin:0 auto;padding:16px 5% 80px">',
 
-        // Formulaire
-        '<div style="padding:24px" id="wz-form">',
+      // Retour
+      '<button onclick="chargerForfaits(1)" style="display:inline-flex;align-items:center;gap:6px;background:#f5f3ff;border:1.5px solid #7c3aed;color:#7c3aed;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Retour aux forfaits</button>',
 
-          // Budget
-          '<div style="margin-bottom:20px">',
-            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">💰 Votre budget maximum</label>',
-            '<div style="display:flex;align-items:center;gap:8px">',
-              '<input id="wz-budget" type="number" min="100" step="100" placeholder="ex: 3000" value="' + (w.budget || '') + '" ' +
-                'oninput="state.wizardForfait.budget=this.value" ' +
-                'style="flex:1;padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none" ' +
-                'onfocus="this.style.borderColor=\'#3b82f6\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
-              '<span style="font-size:13px;font-weight:600;color:#64748b;white-space:nowrap">FCFA</span>',
-            '</div>',
-            '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">',
-              [1000,2000,3000,5000,10000].map(function(v) {
-                return '<button type="button" onclick="document.getElementById(\'wz-budget\').value=' + v + ';state.wizardForfait.budget=' + v + '" ' +
-                  'style="padding:4px 10px;border-radius:14px;border:1px solid #e2e8f0;background:#f8fafc;font-size:11px;color:#475569;cursor:pointer">' +
-                  v.toLocaleString() + ' F</button>';
-              }).join(''),
-            '</div>',
-          '</div>',
-
-          // Profil usage
-          '<div style="margin-bottom:20px">',
-            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">📱 Votre usage principal</label>',
-            '<div style="display:flex;gap:8px">',
-              pBtn('internet', '🌐 Internet', '#2563eb'),
-              pBtn('appel',    '📞 Appels',   '#10b981'),
-              pBtn('mixte',    '🔀 Mixte',    '#f97316'),
-            '</div>',
-          '</div>',
-
-          // Critères optionnels
-          '<div style="margin-bottom:20px">',
-            '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">⚙️ Critères minimum <span style="font-weight:400;color:#94a3b8">(optionnel)</span></label>',
-            '<div style="display:flex;gap:10px;flex-wrap:wrap">',
-              '<div style="flex:1;min-width:140px">',
-                '<div style="font-size:11px;color:#64748b;margin-bottom:4px">📶 Data minimale (Mo)</div>',
-                '<input id="wz-data" type="number" min="0" step="100" placeholder="ex: 1000" value="' + (w.dataMin || '') + '" ' +
-                  'oninput="state.wizardForfait.dataMin=this.value" ' +
-                  'style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;outline:none" ' +
-                  'onfocus="this.style.borderColor=\'#3b82f6\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
-              '</div>',
-              '<div style="flex:1;min-width:140px">',
-                '<div style="font-size:11px;color:#64748b;margin-bottom:4px">📞 Minutes minimales</div>',
-                '<input id="wz-min" type="number" min="0" step="10" placeholder="ex: 30" value="' + (w.minutesMin || '') + '" ' +
-                  'oninput="state.wizardForfait.minutesMin=this.value" ' +
-                  'style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;outline:none" ' +
-                  'onfocus="this.style.borderColor=\'#3b82f6\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
-              '</div>',
-            '</div>',
-          '</div>',
-
-          // Bouton lancer
-          '<button onclick="lancerRechercheWizard()" ' +
-            'style="width:100%;padding:14px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:12px;' +
-            'font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.02em">',
-            '🔍 Trouver les meilleurs forfaits',
-          '</button>',
-        '</div>',
-
-        // Zone résultats (remplie dynamiquement)
-        '<div id="wz-results"></div>',
+      // Hero
+      '<div style="background:linear-gradient(135deg,#4c1d95,#7c3aed,#a78bfa);border-radius:20px;padding:28px 24px;margin-bottom:24px;color:#fff">',
+        '<div style="font-size:36px;margin-bottom:10px">🎯</div>',
+        '<div style="font-size:22px;font-weight:800;margin-bottom:6px">Trouvez votre forfait idéal</div>',
+        '<div style="font-size:14px;opacity:.85;line-height:1.5">Décrivez votre usage — Nopalou calcule un score et classe les forfaits pour vous.</div>',
       '</div>',
+
+      // Carte formulaire
+      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.04)">',
+
+        '<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:20px">Vos critères</div>',
+
+        // Budget
+        '<div style="margin-bottom:22px">',
+          '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">💰 Budget maximum / mois</label>',
+          '<div style="display:flex;align-items:center;gap:8px">',
+            '<input id="wz-budget" type="number" min="100" step="100" placeholder="ex: 3 000" value="' + (w.budget || '') + '" ' +
+              'oninput="state.wizardForfait.budget=this.value" ' +
+              'style="flex:1;padding:11px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:15px;outline:none" ' +
+              'onfocus="this.style.borderColor=\'#7c3aed\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+            '<span style="font-size:13px;font-weight:600;color:#64748b;white-space:nowrap">FCFA</span>',
+          '</div>',
+          '<div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap">',
+            [1000,2000,3000,5000,10000].map(function(v) {
+              return '<button type="button" onclick="document.getElementById(\'wz-budget\').value=' + v + ';state.wizardForfait.budget=' + v + '" ' +
+                'style="padding:5px 12px;border-radius:16px;border:1px solid #e2e8f0;background:#f8fafc;font-size:12px;color:#475569;cursor:pointer;transition:background .1s" ' +
+                'onmouseover="this.style.background=\'#ede9fe\'" onmouseout="this.style.background=\'#f8fafc\'">' +
+                v.toLocaleString() + ' F</button>';
+            }).join(''),
+          '</div>',
+        '</div>',
+
+        // Profil usage
+        '<div style="margin-bottom:22px">',
+          '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px">📱 Usage principal</label>',
+          '<div style="display:flex;gap:8px">',
+            pBtn('internet', '🌐 Internet', '#2563eb'),
+            pBtn('appel',    '📞 Appels',   '#10b981'),
+            pBtn('mixte',    '🔀 Les deux', '#f97316'),
+          '</div>',
+        '</div>',
+
+        // Critères optionnels
+        '<div style="margin-bottom:24px">',
+          '<label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px">⚙️ Minimums souhaités <span style="font-weight:400;font-size:12px;color:#94a3b8">(optionnel)</span></label>',
+          '<div style="display:flex;gap:10px;flex-wrap:wrap">',
+            '<div style="flex:1;min-width:140px">',
+              '<div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px">📶 Data minimale (Mo)</div>',
+              '<input id="wz-data" type="number" min="0" step="100" placeholder="ex: 1 000" value="' + (w.dataMin || '') + '" ' +
+                'oninput="state.wizardForfait.dataMin=this.value" ' +
+                'style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;outline:none" ' +
+                'onfocus="this.style.borderColor=\'#7c3aed\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+            '</div>',
+            '<div style="flex:1;min-width:140px">',
+              '<div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px">📞 Minutes minimales</div>',
+              '<input id="wz-min" type="number" min="0" step="10" placeholder="ex: 30" value="' + (w.minutesMin || '') + '" ' +
+                'oninput="state.wizardForfait.minutesMin=this.value" ' +
+                'style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;outline:none" ' +
+                'onfocus="this.style.borderColor=\'#7c3aed\'" onblur="this.style.borderColor=\'#e2e8f0\'">',
+            '</div>',
+          '</div>',
+        '</div>',
+
+        '<button onclick="lancerRechercheWizard()" ' +
+          'style="width:100%;padding:15px;background:linear-gradient(135deg,#4c1d95,#7c3aed);color:#fff;border:none;border-radius:12px;' +
+          'font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.02em;box-shadow:0 4px 14px rgba(124,58,237,.35)">',
+          '🔍 Trouver les meilleurs forfaits',
+        '</button>',
+
+      '</div>',
+
+      // Zone résultats (remplie dynamiquement)
+      '<div id="wz-results"></div>',
+
     '</div>',
-  ].join('');
+  ].join(''));
+}
+
+function fermerWizardForfait() {
+  chargerForfaits(1);
 }
 
 function _wzProfil(p) {
@@ -2885,10 +3013,25 @@ async function ouvrirProduit(id, simFiltres) {
     ajouterRecent(res);
 
     var offresArr = Array.isArray(offres) ? offres : [];
-    var prixMin   = offresArr.length ? Math.min.apply(null, offresArr.map(function(o){ return +o.prix; })) : 0;
-    var prixMaxO  = offresArr.length ? Math.max.apply(null, offresArr.map(function(o){ return +o.prix; })) : 0;
+
+    // Détecter les prix outlier côté client (filet de sécurité)
+    if (offresArr.length >= 3) {
+      var _sorted = offresArr.map(function(o){ return +o.prix; }).slice().sort(function(a,b){ return a-b; });
+      var _med    = _sorted[Math.floor(_sorted.length / 2)];
+      offresArr.forEach(function(o) {
+        var ratio = +o.prix / _med;
+        if (ratio < 0.1 || ratio > 8) o._suspect = true;
+      });
+    }
+    var offresValides = offresArr.filter(function(o){ return !o._suspect; });
+    var _baseOffres   = offresValides.length ? offresValides : offresArr;
+    var prixMin   = _baseOffres.length ? Math.min.apply(null, _baseOffres.map(function(o){ return +o.prix; })) : 0;
+    var prixMaxO  = _baseOffres.length ? Math.max.apply(null, _baseOffres.map(function(o){ return +o.prix; })) : 0;
     var economie  = prixMaxO > prixMin ? prixMaxO - prixMin : 0;
-    var bestOffre = offresArr.length ? offresArr.reduce(function(a,b){ return +a.prix < +b.prix ? a : b; }) : null;
+    var bestOffre = _baseOffres.length ? _baseOffres.reduce(function(a,b){ return +a.prix < +b.prix ? a : b; }) : null;
+
+    setMeta(res.nom, 'Comparez les prix de ' + res.nom + ' chez tous les marchands au Sénégal');
+    injecterSchemaProduct(res, offresArr);
 
     // ── Navbar sticky ─────────────────────────────────────────
     var navHtml = [
@@ -3046,13 +3189,17 @@ function _sectionOffres(offresArr, prixMin) {
   }
 
   var lignes = offresArr.map(function(o) {
-    var best  = +o.prix === prixMin;
-    var ecart = best ? 0 : +o.prix - prixMin;
-    var icon  = MARCHAND_ICONS[o.marchand_nom] || '🏪';
+    var suspect = !!o._suspect;
+    var best    = !suspect && +o.prix === prixMin;
+    var ecart   = (best || suspect) ? 0 : +o.prix - prixMin;
+    var icon    = MARCHAND_ICONS[o.marchand_nom] || '🏪';
+    var bgStyle = suspect
+      ? 'background:#fef9c3;border-left:4px solid #eab308;opacity:0.82'
+      : (best ? 'background:#f0fdf4;border-left:4px solid #10b981' : 'border-left:4px solid transparent');
     return [
       '<div style="display:flex;align-items:center;gap:14px;padding:16px 20px;',
            'border-bottom:1px solid #f1f5f9;',
-           (best ? 'background:#f0fdf4;border-left:4px solid #10b981' : 'border-left:4px solid transparent') + '">',
+           bgStyle + '">',
 
         // Icône + nom marchand
         '<div style="width:44px;height:44px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;',
@@ -3060,7 +3207,9 @@ function _sectionOffres(offresArr, prixMin) {
           icon,
         '</div>',
         '<div style="flex:1;min-width:0">',
-          best ? '<span style="display:inline-block;background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:4px">🏆 Meilleur prix</span><br>' : '',
+          suspect
+            ? '<span style="display:inline-block;background:#eab308;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:4px">⚠ Prix suspect</span><br>'
+            : (best ? '<span style="display:inline-block;background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:4px">🏆 Meilleur prix</span><br>' : ''),
           '<a href="' + safeUrl(o.site_url||'#') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" ',
           'style="font-size:15px;font-weight:700;color:#1e293b;text-decoration:none">',
             escapeHTML(o.marchand_nom || 'Marchand'),
@@ -3077,17 +3226,18 @@ function _sectionOffres(offresArr, prixMin) {
               escapeHTML(t.slice(0, 60)) + (t.length > 60 ? '…' : '') +
             '</div>';
           })(),
-          ecart > 0 ? '<div style="font-size:11px;color:#f97316;margin-top:2px">+' + fcfa(ecart) + ' de plus que le moins cher</div>' : '',
+          (!suspect && ecart > 0) ? '<div style="font-size:11px;color:#f97316;margin-top:2px">+' + fcfa(ecart) + ' de plus que le moins cher</div>' : '',
+          suspect ? '<div style="font-size:11px;color:#92400e;margin-top:2px">Vérifiez le prix sur le site du vendeur</div>' : '',
         '</div>',
 
         // Prix + bouton
         '<div style="text-align:right;flex-shrink:0">',
-          '<div style="font-size:22px;font-weight:900;color:' + (best ? '#15803d' : '#1e293b') + ';white-space:nowrap">',
+          '<div style="font-size:22px;font-weight:900;color:' + (suspect ? '#92400e' : (best ? '#15803d' : '#1e293b')) + ';white-space:nowrap">',
             fcfa(o.prix),
           '</div>',
           '<a href="' + safeUrl(o.url_achat||'#') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" ',
           'style="display:inline-block;margin-top:6px;padding:8px 20px;',
-          'background:' + (best ? '#10b981' : '#1d4ed8') + ';color:#fff;',
+          'background:' + (suspect ? '#d97706' : (best ? '#10b981' : '#1d4ed8')) + ';color:#fff;',
           'border-radius:10px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap">',
             'Voir l\'offre →',
           '</a>',
@@ -3868,7 +4018,7 @@ function doSearch() {
   chargerProduits(parsed.q, state.categorie, 1);
 }
 
-function goHome()              { state.prixMax=''; state.prixMin=''; chargerProduits('','',1); }
+function goHome()              { state.prixMax=''; state.prixMin=''; setMeta('', ''); chargerProduits('','',1); }
 function toggleNavMenu() {
   const nav = document.querySelector('.nav-center');
   if (nav) nav.classList.toggle('open');
@@ -4867,14 +5017,17 @@ function ouvrirGuideAchat() {
   state.currentPage = 'guide';
 
   render([
-    '<div style="padding:16px 5% 80px">',
+    '<div style="max-width:680px;margin:0 auto;padding:16px 5% 80px">',
 
-      // Titre
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">',
-        '<button onclick="retourListe()" style="display:flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;white-space:nowrap;flex-shrink:0" onmouseover="this.style.background=\'#dbeafe\'" onmouseout="this.style.background=\'#eff6ff\'">← Retour</button>',
-        '<h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0">🏆 Guide d\'achat intelligent</h2>',
+      // Retour
+      '<button onclick="retourListe()" style="display:inline-flex;align-items:center;gap:6px;background:#fff7ed;border:1.5px solid #ea580c;color:#ea580c;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Retour</button>',
+
+      // Hero
+      '<div style="background:linear-gradient(135deg,#7c2d12,#ea580c,#fb923c);border-radius:20px;padding:28px 24px;margin-bottom:24px;color:#fff">',
+        '<div style="font-size:36px;margin-bottom:10px">🏆</div>',
+        '<div style="font-size:22px;font-weight:800;margin-bottom:6px">Guide d\'achat intelligent</div>',
+        '<div style="font-size:14px;opacity:.85;line-height:1.5">Définissez vos critères — Nopalou calcule un score et classe les produits selon votre profil.</div>',
       '</div>',
-      '<p style="color:#64748b;font-size:13px;margin:0 0 24px;padding-left:0">Définissez vos critères — Nopalou calcule un score et classe les produits pour vous.</p>',
 
       // ── Profils rapides ──
       '<div style="margin-bottom:22px">',
@@ -5278,66 +5431,88 @@ async function afficherFavoris() {
 //  GUIDE D'EMPLOI — Comment utiliser Nopalou
 // ═══════════════════════════════════════════════════════════════
 function ouvrirGuideEmploi() {
-  var CTX = 'padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;';
-  function cta(label, onclick, bg, col) {
-    return '<button onclick="fermerModal();(' + onclick + ')()" style="' + CTX + 'background:' + bg + ';color:' + col + ';border:1.5px solid ' + col + '">' + label + '</button>';
-  }
-  function ctaRaw(label, onclick, bg, col) {
-    return '<button onclick="fermerModal();' + onclick + '" style="' + CTX + 'background:' + bg + ';color:' + col + ';border:1.5px solid ' + col + '">' + label + '</button>';
-  }
+  state.currentPage = 'guide-emploi';
+  var appEl = document.getElementById('app');
+  if (appEl) appEl.style.cssText = '';
 
-  function step(icon, titre, texte, boutons) {
+  function step(icon, titre, texte, boutons, couleur) {
+    couleur = couleur || '#1d4ed8';
     return [
-      '<div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #f1f5f9">',
-        '<div style="font-size:26px;flex-shrink:0;width:36px;text-align:center;padding-top:2px">' + icon + '</div>',
+      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px 20px;display:flex;gap:16px;box-shadow:0 1px 4px rgba(0,0,0,.04)">',
+        '<div style="width:44px;height:44px;border-radius:12px;background:' + couleur + '18;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">' + icon + '</div>',
         '<div style="flex:1;min-width:0">',
-          '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:5px">' + titre + '</div>',
+          '<div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:5px">' + titre + '</div>',
           '<div style="font-size:13px;color:#64748b;line-height:1.65">' + texte + '</div>',
-          boutons ? '<div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:9px">' + boutons + '</div>' : '',
+          boutons ? '<div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:11px">' + boutons + '</div>' : '',
         '</div>',
       '</div>',
     ].join('');
   }
 
-  var html = [
-    step('🔍', 'Comparer les prix des produits',
-      'Tapez un produit dans la barre de recherche (ex&nbsp;: "Samsung Galaxy A55", "climatiseur 18000 BTU"). Nopalou compare les prix chez tous les marchands partenaires en temps réel et met en avant la meilleure offre.',
-      cta('Rechercher un produit →', 'goHome', '#eff6ff', '#1d4ed8')),
+  function cta(label, fn, bg, col) {
+    return '<button onclick="(' + fn + ')()" style="padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:' + bg + ';color:' + col + ';border:1.5px solid ' + col + '">' + label + '</button>';
+  }
+  function ctaRaw(label, code, bg, col) {
+    return '<button onclick="' + code + '" style="padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:' + bg + ';color:' + col + ';border:1.5px solid ' + col + '">' + label + '</button>';
+  }
 
-    step('🏆', 'Guide d\'achat intelligent',
-      'Vous ne savez pas lequel choisir&nbsp;? Indiquez votre budget et vos priorités (prix, caractéristiques, disponibilité). Nopalou calcule un score personnalisé et classe les produits selon votre profil d\'achat.',
-      cta('Lancer le guide →', 'ouvrirGuideAchat', '#fff7ed', '#ea580c')),
+  render([
+    '<div style="max-width:680px;margin:0 auto;padding:16px 5% 80px">',
 
-    step('🏡', 'Trouver un logement',
-      'Parcourez les annonces immobilières (appartements, villas, studios, chambres…). Filtrez par type de bien, ville, quartier et budget. Le Guide immobilier vous pose 3 questions et présente les annonces les plus compatibles.',
-      ctaRaw('Voir les annonces →', 'chargerProduits(\'\',\'immo\',1)', '#f0fdf4', '#059669') + ' ' +
-      ctaRaw('Guide immobilier →', 'chargerProduits(\'\',\'immo\',1);setTimeout(function(){ouvrirWizardImmo();},300)', '#f0fdf4', '#059669')),
+      // Retour
+      '<button onclick="goHome()" style="display:inline-flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #1d4ed8;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;padding:7px 14px;border-radius:9px;margin-bottom:20px">← Accueil</button>',
 
-    step('📶', 'Choisir un forfait télécom',
-      'Comparez tous les forfaits mobiles Sonatel, Free, Expresso et Waw&nbsp;: data, appels, SMS, prix. Le Guide d\'achat forfait analyse votre usage (combien de data&nbsp;? appels locaux ou internationaux&nbsp;?) et vous recommande les meilleures offres.',
-      cta('Guide d\'achat forfait →', 'ouvrirWizardForfait', '#faf5ff', '#7c3aed')),
+      // Hero
+      '<div style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8,#60a5fa);border-radius:20px;padding:28px 24px;margin-bottom:28px;color:#fff">',
+        '<div style="font-size:36px;margin-bottom:10px">📖</div>',
+        '<div style="font-size:22px;font-weight:800;margin-bottom:6px">Comment utiliser Nopalou</div>',
+        '<div style="font-size:14px;opacity:.85;line-height:1.5">Tout ce que vous pouvez faire sur Nopalou en quelques étapes.</div>',
+      '</div>',
 
-    step('⚖', 'Comparer plusieurs éléments côte à côte',
-      'Cliquez ⚖ sur 2 à 4 produits ou annonces immo pour les ajouter à votre sélection. Un bandeau apparaît en bas de l\'écran. Cliquez "Comparer" pour voir un tableau détaillé avec les différences surlignées automatiquement.',
-      ''),
+      // Steps
+      '<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">',
 
-    step('❤', 'Sauvegarder dans les favoris',
-      'Cliquez ❤ sur un produit ou une annonce pour le sauvegarder. Retrouvez tous vos favoris avec le bouton "❤ Mes favoris" qui apparaît dans la barre de navigation (sans inscription requise).',
-      ''),
+        step('🔍', 'Comparer les prix des produits',
+          'Tapez un produit dans la barre de recherche (ex&nbsp;: "Samsung Galaxy A55", "climatiseur 18000 BTU"). Nopalou compare les prix chez tous les marchands partenaires en temps réel et met en avant la meilleure offre.',
+          cta('Rechercher →', 'goHome', '#eff6ff', '#1d4ed8'), '#1d4ed8'),
 
-    step('🔔', 'Alertes prix',
-      'Sur la fiche d\'un produit, cliquez "Créer une alerte prix". Saisissez votre budget cible et votre email. Vous recevrez un email automatiquement dès que le prix passe sous votre seuil.',
-      ''),
+        step('🏆', 'Guide d\'achat intelligent',
+          'Vous ne savez pas lequel choisir&nbsp;? Indiquez votre budget et vos priorités. Nopalou calcule un score personnalisé et classe les produits selon votre profil d\'achat.',
+          cta('Lancer le guide →', 'ouvrirGuideAchat', '#fff7ed', '#ea580c'), '#ea580c'),
 
-    step('📢', 'Publier une annonce immo',
-      'Vous louez ou vendez un bien&nbsp;? Cliquez "Publier une annonce (gratuit)" dans la section Immobilier. Votre annonce sera visible après validation par notre équipe.',
-      ctaRaw('Publier une annonce →', 'chargerProduits(\'\',\'immo\',1)', '#f0fdf4', '#059669')),
+        step('🏡', 'Trouver un logement',
+          'Parcourez les annonces immobilières (appartements, villas, studios, chambres…). Filtrez par type, ville, quartier et budget. Le Guide immobilier présente les annonces les plus compatibles avec votre projet.',
+          ctaRaw('Voir les annonces →', 'chargerProduits(\'\',\'immo\',1)', '#f0fdf4', '#059669') + ' ' +
+          ctaRaw('Guide immobilier →', 'chargerProduits(\'\',\'immo\',1);setTimeout(function(){ouvrirWizardImmo();},300)', '#f0fdf4', '#059669'), '#059669'),
 
-    '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;border-radius:10px;padding:13px 16px;margin-top:6px">',
-      '<div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:4px">✅ Nopalou est gratuit et indépendant</div>',
-      '<div style="font-size:12px;color:#166534;line-height:1.6">Aucune commission sur les ventes. Les prix sont mis à jour toutes les 6 heures depuis les sites marchands. Nopalou ne vend rien — il compare pour vous.</div>',
+        step('📶', 'Choisir un forfait télécom',
+          'Comparez tous les forfaits mobiles Sonatel, Free, Expresso et Waw&nbsp;: data, appels, SMS, prix. Le Guide forfait analyse votre usage et vous recommande les meilleures offres.',
+          cta('Guide forfait →', 'ouvrirWizardForfait', '#faf5ff', '#7c3aed'), '#7c3aed'),
+
+        step('⚖️', 'Comparer côte à côte',
+          'Cliquez ⚖ sur 2 à 4 produits ou annonces pour les ajouter à votre sélection. Un bandeau apparaît en bas. Cliquez "Comparer" pour voir un tableau détaillé avec les différences surlignées.',
+          '', '#0891b2'),
+
+        step('❤️', 'Sauvegarder dans les favoris',
+          'Cliquez ❤ sur un produit ou une annonce pour le sauvegarder. Retrouvez tous vos favoris avec le bouton "❤ Mes favoris" dans la barre de navigation — sans inscription requise.',
+          '', '#ef4444'),
+
+        step('🔔', 'Alertes prix',
+          'Sur la fiche d\'un produit, cliquez "Créer une alerte prix". Saisissez votre budget cible et votre email. Vous serez notifié automatiquement dès que le prix passe sous votre seuil.',
+          '', '#f59e0b'),
+
+        step('📢', 'Publier une annonce immo',
+          'Vous louez ou vendez un bien&nbsp;? Cliquez "Publier une annonce (gratuit)" dans la section Immobilier. Votre annonce sera visible après validation par notre équipe.',
+          ctaRaw('Publier une annonce →', 'chargerProduits(\'\',\'immo\',1)', '#f0fdf4', '#059669'), '#059669'),
+
+      '</div>',
+
+      // Footer info
+      '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;border-radius:14px;padding:18px 20px">',
+        '<div style="font-size:14px;font-weight:800;color:#064e3b;margin-bottom:6px">✅ Nopalou est 100% gratuit et indépendant</div>',
+        '<div style="font-size:13px;color:#166534;line-height:1.65">Aucune commission sur les ventes. Les prix sont mis à jour depuis les sites marchands. Nopalou ne vend rien — il compare pour vous.</div>',
+      '</div>',
+
     '</div>',
-  ].join('');
-
-  ouvrirModal('📖 Guide d\'emploi — Comment utiliser Nopalou', html);
+  ].join(''));
 }

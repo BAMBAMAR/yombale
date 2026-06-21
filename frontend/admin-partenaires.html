@@ -37,6 +37,8 @@
 </div>
 
 <script>
+function e(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
 let SECRET = new URLSearchParams(location.search).get('secret') || sessionStorage.getItem('nopalou_admin_secret') || '';
 if (!SECRET) {
   SECRET = prompt('Secret admin :') || '';
@@ -64,14 +66,14 @@ async function chargerEnAttente() {
     }
     document.getElementById('pending-wrap').innerHTML = `<table><thead><tr><th>Entreprise</th><th>Secteur</th><th>Contact</th><th>Email</th><th>Description</th><th>Actions</th></tr></thead><tbody>${d.map(p => `
       <tr>
-        <td>${p.nom_entreprise}</td>
-        <td>${p.secteur || '—'}</td>
-        <td>${p.contact_nom || ''} ${p.contact_tel || ''}</td>
-        <td>${p.email}</td>
-        <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.description || ''}">${p.description || '—'}</td>
+        <td>${e(p.nom_entreprise)}</td>
+        <td>${e(p.secteur || '—')}</td>
+        <td>${e(p.contact_nom || '')} ${e(p.contact_tel || '')}</td>
+        <td>${e(p.email)}</td>
+        <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e(p.description || '')}">${e(p.description || '—')}</td>
         <td class="actions">
-          <button class="btn-primary btn-sm" onclick="traiterDemande('${p.id}','approuve')">✓ Approuver</button>
-          <button class="btn-danger btn-sm" onclick="traiterDemande('${p.id}','rejete')">✕ Rejeter</button>
+          <button class="btn-primary btn-sm" onclick="traiterDemande('${e(p.id)}','approuve')">✓ Approuver</button>
+          <button class="btn-danger btn-sm" onclick="traiterDemande('${e(p.id)}','rejete')">✕ Rejeter</button>
         </td>
       </tr>`).join('')}</tbody></table>`;
   } catch(e) {

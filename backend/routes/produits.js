@@ -1,6 +1,12 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
-const { verifierToken } = require('../middlewares/auth');
+const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function checkUUID(req, res, next) {
+  if (!UUID_RE.test(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
+  next();
+}
 
 // GET /api/produits
 router.get('/', async (req, res) => {
@@ -34,6 +40,13 @@ router.get('/', async (req, res) => {
       'electro' : ['micro-onde','four electrique','four elec','lave-linge','machine a laver','ventilateur','aspirateur','air fryer','friteuse','induction','plaque de cuisson','chauffe-eau','fer a repasser','cafetiere','bouilloire','grille-pain'],
       'tablette': ['tablette','ipad','galaxy tab','samsung tab','lenovo tab','matepad','xiaomi pad'],
     };
+
+    if (categorieNorm && !CAT_FALLBACK[categorieNorm]) {
+      return res.status(400).json({ error: 'Catégorie invalide' });
+    }
+    if (sousType && !SOUS_TYPE_MOTS[sousType]) {
+      return res.status(400).json({ error: 'Sous-type invalide' });
+    }
 
     const fallback = categorieNorm ? (CAT_FALLBACK[categorieNorm] || []) : [];
     const fallbackSQL = fallback.length > 0
@@ -86,7 +99,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/produits/:id — détail d'un produit
-router.get('/:id', async (req, res) => {
+router.get('/:id', checkUUID, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT p.*, c.nom AS categorie_nom,
@@ -105,7 +118,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // GET /api/produits/:id/offres — triées par prix croissant
-router.get('/:id/offres', async (req, res) => {
+router.get('/:id/offres', checkUUID, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT o.*,
@@ -119,6 +132,16 @@ router.get('/:id/offres', async (req, res) => {
       ORDER BY o.prix ASC`,
       [req.params.id]
     );
+
+    // Détecter les prix outlier (écart > 10× ou < 10% de la médiane)
+    if (rows.length >= 3) {
+      const sorted = rows.map(r => +r.prix).sort((a, b) => a - b);
+      const mediane = sorted[Math.floor(sorted.length / 2)];
+      rows.forEach(r => {
+        const ratio = +r.prix / mediane;
+        if (ratio < 0.1 || ratio > 8) r._suspect = true;
+      });
+    }
 
     // Enrichir chaque offre avec titre_affiche extrait depuis l'URL
     rows.forEach(r => {
@@ -145,7 +168,7 @@ router.get('/:id/offres', async (req, res) => {
 });
 
 // GET /api/produits/:id/similaires — similaires intelligents : même marque > même catégorie
-router.get('/:id/similaires', async (req, res) => {
+router.get('/:id/similaires', checkUUID, async (req, res) => {
   try {
     const { marchand, prixMax, prixMin, limit = 8 } = req.query;
 
@@ -241,7 +264,7 @@ router.get('/:id/similaires', async (req, res) => {
 });
 
 // GET /api/produits/:id/historique — 90 derniers jours
-router.get('/:id/historique', async (req, res) => {
+router.get('/:id/historique', checkUUID, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT DATE_TRUNC('day', h.date) AS jour,
@@ -258,7 +281,7 @@ router.get('/:id/historique', async (req, res) => {
 });
 
 // POST /api/produits — créer (admin)
-router.post('/', verifierToken, async (req, res) => {
+router.post('/', adminSecretOnly, async (req, res) => {
   try {
     const { nom, marque, categorie_id, ean, image_url } = req.body;
     const { rows } = await pool.query(

@@ -134,8 +134,9 @@ app.get('*', (req, res) =>
 
 // ── Gestion erreurs globale ───────────────────────────────────
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({ error: err.message || 'Erreur serveur' });
+  console.error('[ERROR]', req.method, req.path, err.stack);
+  const isDev = process.env.NODE_ENV !== 'production';
+  res.status(err.status || 500).json({ error: isDev ? (err.message || 'Erreur serveur') : 'Erreur serveur' });
 });
 
 const PORT = process.env.PORT || 3000;

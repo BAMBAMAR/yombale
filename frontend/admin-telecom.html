@@ -98,6 +98,8 @@
   </div>
 
 <script>
+function e(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
 const API = '/api/telecom';
 
 function adminSecret() {
@@ -209,17 +211,17 @@ async function chargerListe() {
     }
     tbody.innerHTML = data.forfaits.map(f => `
       <tr>
-        <td>${f.operateur}</td>
-        <td>${f.nom}</td>
-        <td>${f.type}</td>
+        <td>${e(f.operateur)}</td>
+        <td>${e(f.nom)}</td>
+        <td>${e(f.type)}</td>
         <td>${f.data_mo ? (f.data_mo >= 1000 ? (f.data_mo/1000) + ' Go' : f.data_mo + ' Mo') : '—'}</td>
         <td>${f.minutes ? f.minutes + ' min' : ''}${f.minutes && f.sms ? ' / ' : ''}${f.sms ? f.sms + ' sms' : (!f.minutes ? '—' : '')}</td>
         <td>${f.validite_jours ? f.validite_jours + ' j' : '—'}</td>
         <td>${fcfa(f.prix)}</td>
-        <td>${f.source}</td>
+        <td>${e(f.source)}</td>
         <td class="actions">
-          <button class="btn-edit" data-edit="${f.id}">Modifier</button>
-          <button class="btn-danger" data-del="${f.id}">Désactiver</button>
+          <button class="btn-edit" data-edit="${e(f.id)}">Modifier</button>
+          <button class="btn-danger" data-del="${e(f.id)}">Désactiver</button>
         </td>
       </tr>
     `).join('');

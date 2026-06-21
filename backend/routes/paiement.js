@@ -3,7 +3,7 @@ const axios  = require('axios');
 const crypto = require('crypto');
 const { pool } = require('../models/db');
 const notifs   = require('../services/notifications');
-const { limiterEcriture, limiterAuth } = require('../middlewares/rateLimit');
+const { limiterEcriture, limiterAuth, limiterGeneral } = require('../middlewares/rateLimit');
 const { verifierToken } = require('../middlewares/auth');
 
 // POST /api/paiement/wave/initier
@@ -27,7 +27,7 @@ router.post('/wave/initier', verifierToken, limiterEcriture, async (req, res) =>
 });
 
 // POST /api/paiement/wave/webhook — appelé automatiquement par Wave
-router.post('/wave/webhook', async (req, res) => {
+router.post('/wave/webhook', limiterGeneral, async (req, res) => {
   const sig      = req.headers['x-wave-signature'];
   const expected = crypto
     .createHmac('sha256', process.env.WAVE_WEBHOOK_SECRET)
