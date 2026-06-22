@@ -76,13 +76,16 @@ router.get('/', async (req, res) => {
     // Construire la condition texte selon le nombre de tokens
     function buildQCond(operator) {
       if (tokens.length <= 1) {
+        // Cas simple : ILIKE sur la query complète (comportement original)
         return "($1::text IS NULL OR p.nom ILIKE '%'||$1||'%' OR p.marque ILIKE '%'||$1||'%')";
       }
+      // Cas multi-tokens : chaque mot doit apparaître (AND) ou n'importe lequel (OR fallback)
+      // $1::text IS NULL est toujours référencé pour que PostgreSQL puisse typer $1
       const clauses = tokens.map((_, i) => {
         const pidx = 7 + i;
         return `(p.nom ILIKE $${pidx} OR p.marque ILIKE $${pidx})`;
       });
-      return '(' + clauses.join(' ' + operator + ' ') + ')';
+      return `($1::text IS NULL OR (${clauses.join(' ' + operator + ' ')}))`;
     }
 
     function buildSQL(qCond) {
