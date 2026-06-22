@@ -109,7 +109,8 @@ router.get('/', async (req, res) => {
         LIMIT $5 OFFSET $6`;
     }
 
-    const allParams = [...baseParams, ...tokenParams];
+    // Pour ≤1 token, buildQCond utilise $1–$6 seulement → ne pas ajouter tokenParams
+    const allParams = tokens.length > 1 ? [...baseParams, ...tokenParams] : baseParams;
 
     // Requête principale : tous les mots doivent apparaître (AND)
     let result = await pool.query(buildSQL(buildQCond('AND')), allParams);
