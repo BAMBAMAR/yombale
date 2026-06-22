@@ -258,6 +258,29 @@ module.exports = async function migrateInline() {
 
   // Colonnes ajoutées en cours de route — exécutées séparément pour garantir leur présence
   // même si le bloc principal a partiellement échoué sur une autre instruction
+  // Table boutiques — créée en bloc séparé pour éviter l'échec global
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS boutiques (
+        id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id   UUID REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        nom              VARCHAR(200) NOT NULL,
+        description      TEXT,
+        categorie        VARCHAR(100),
+        telephone        VARCHAR(30),
+        adresse          VARCHAR(300),
+        ville            VARCHAR(100) DEFAULT 'Dakar',
+        logo_url         TEXT,
+        actif            BOOLEAN DEFAULT TRUE,
+        created_at       TIMESTAMPTZ DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutiques_user ON boutiques(utilisateur_id);
+      CREATE INDEX IF NOT EXISTS idx_boutiques_actif ON boutiques(actif, ville);
+    `);
+    console.log('[MIGRATE] ✅ Table boutiques OK');
+  } catch (e) { console.warn('[MIGRATE] boutiques:', e.message); }
+
   const colonnesSupplementaires = [
     `ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS caracteristiques JSONB DEFAULT '{}'`,
     `ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS rejete BOOLEAN DEFAULT FALSE`,

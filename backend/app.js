@@ -120,6 +120,7 @@ app.use('/api/telecom',   require('./routes/telecom'));
 app.use('/api/immo',      require('./routes/immo'));
 app.use('/api/partenaires', require('./routes/partenaires'));
 app.use('/api/annonces',   require('./routes/annonces'));
+app.use('/api/boutiques',  require('./routes/boutiques'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', async (req, res) => {

@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 39 — 2026-06-22
+//  app.js VERSION 40 — 2026-06-22
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 39 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 40 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -130,7 +130,7 @@ var _productCache = {};
 var _log = [];
 function dbg(e, d)    { var t = new Date().toISOString().slice(11,23); _log.push('['+t+'] '+e+(d!==undefined?' → '+JSON.stringify(d):'')); if (window._DEBUG) console.log('%c[Y]','color:#1d4ed8;font-weight:bold',e,d!==undefined?d:''); }
 function dbgErr(e, r) { var t = new Date().toISOString().slice(11,23); _log.push('['+t+'] ❌ '+e+' → '+(r&&r.message?r.message:String(r))); if (window._DEBUG) console.error('%c[Y]','color:#ef4444;font-weight:bold',e,r); }
-window.PM_LOGS = function() { return _log.join('\n'); };
+function PM_LOGS() { return _log.join('\n'); }
 
 // ── apiFetch ────────────────────────────────────────────────────
 function apiFetch(endpoint, options) {
@@ -2323,6 +2323,144 @@ async function _sauvegarderEdition(id) {
     toast(err.message || 'Erreur', '#ef4444');
     if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer'; }
   }
+}
+
+// ── Boutiques utilisateur ─────────────────────────────────────────
+var _boutiqueCourante = { nom:'', description:'', categorie:'', telephone:'', adresse:'', ville:'Dakar' };
+
+var CATS_BOUTIQUE = [
+  { slug:'smartphones',  label:'Téléphones & Accessoires' },
+  { slug:'informatique', label:'Informatique' },
+  { slug:'tv-electro',   label:'TV & Électroménager' },
+  { slug:'mode',         label:'Mode & Vêtements' },
+  { slug:'maison',       label:'Maison & Décoration' },
+  { slug:'auto-moto',    label:'Auto & Moto' },
+  { slug:'alimentation', label:'Alimentation & Épicerie' },
+  { slug:'beaute',       label:'Beauté & Cosmétiques' },
+  { slug:'jeux',         label:'Jeux & Loisirs' },
+  { slug:'services',     label:'Services' },
+  { slug:'autre',        label:'Autre' },
+];
+
+async function afficherMaBoutique() {
+  if (!state.user) { toast('Connectez-vous pour gérer votre boutique', '#f97316'); openLoginModal(); return; }
+  try {
+    var data = await apiFetch('/boutiques/mine');
+    var boutiques = data.boutiques || [];
+    if (!boutiques.length) {
+      var html =
+        '<div style="text-align:center;padding:28px 0">' +
+          '<div style="font-size:48px;margin-bottom:12px">🏪</div>' +
+          '<p style="color:#64748b;font-size:14px;margin-bottom:18px">Vous n\'avez pas encore de boutique en ligne.<br>Créez la vôtre gratuitement !</p>' +
+          '<button onclick="fermerModal();ouvrirCreerBoutique(null)" style="padding:12px 28px;background:#1d4ed8;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">🏪 Créer ma boutique</button>' +
+        '</div>';
+      ouvrirModal('🏪 Ma boutique', html);
+      return;
+    }
+    var s = 'border-radius:12px;border:1px solid #e2e8f0;padding:14px 16px;margin-bottom:10px;background:#fff';
+    var html = boutiques.map(function(b) {
+      return '<div style="' + s + '">' +
+        (b.logo_url ? '<img src="' + escapeHTML(b.logo_url) + '" alt="logo" style="width:50px;height:50px;border-radius:8px;object-fit:cover;margin-bottom:8px">' : '') +
+        '<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px">' + escapeHTML(b.nom) + '</div>' +
+        (b.description ? '<div style="font-size:12px;color:#64748b;margin-bottom:6px">' + escapeHTML(b.description) + '</div>' : '') +
+        '<div style="font-size:12px;color:#94a3b8;margin-bottom:10px">' +
+          (b.categorie ? '📂 ' + escapeHTML(b.categorie) + ' &nbsp; ' : '') +
+          (b.ville ? '📍 ' + escapeHTML(b.ville) : '') +
+        '</div>' +
+        '<div style="display:flex;gap:8px">' +
+          '<button onclick="ouvrirCreerBoutique(\'' + b.id + '\')" style="padding:7px 14px;background:#f0f4ff;color:#1a3a6e;border:1.5px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✏️ Modifier</button>' +
+          '<button onclick="_supprimerBoutique(\'' + b.id + '\',\'' + escapeHTML(b.nom).replace(/'/g,'\\\'') + '\')" style="padding:7px 14px;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🗑 Supprimer</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') +
+    (boutiques.length < 3 ?
+      '<button onclick="fermerModal();ouvrirCreerBoutique(null)" style="width:100%;margin-top:4px;padding:11px;background:#f0f4ff;color:#1a3a6e;border:1.5px solid #bfdbfe;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">+ Ajouter une boutique</button>'
+      : '<p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:6px">Maximum 3 boutiques par compte</p>'
+    );
+    ouvrirModal('🏪 Mes boutiques (' + boutiques.length + ')', html);
+  } catch(e) { ouvrirModal('Erreur', '<p style="color:#e63946">' + escapeHTML(e.message) + '</p>'); }
+}
+
+async function ouvrirCreerBoutique(boutiqueId) {
+  var b = _boutiqueCourante;
+  var existante = null;
+  if (boutiqueId) {
+    try {
+      var data = await apiFetch('/boutiques/mine');
+      existante = (data.boutiques || []).find(function(x){ return x.id === boutiqueId; });
+      if (existante) {
+        b.nom = existante.nom || '';
+        b.description = existante.description || '';
+        b.categorie = existante.categorie || '';
+        b.telephone = existante.telephone || '';
+        b.adresse = existante.adresse || '';
+        b.ville = existante.ville || 'Dakar';
+      }
+    } catch {}
+  } else {
+    _boutiqueCourante = { nom:'', description:'', categorie:'', telephone:'', adresse:'', ville:'Dakar' };
+    b = _boutiqueCourante;
+  }
+
+  var s = 'width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box';
+  var catOptions = '<option value="">-- Catégorie --</option>' + CATS_BOUTIQUE.map(function(c) {
+    return '<option value="' + c.slug + '"' + (b.categorie === c.slug ? ' selected' : '') + '>' + c.label + '</option>';
+  }).join('');
+
+  var html =
+    '<input id="bout-nom" style="' + s + '" placeholder="Nom de la boutique *" value="' + escapeHTML(b.nom) + '" oninput="_boutiqueField(\'nom\',this.value)">' +
+    '<select id="bout-cat" style="' + s + ';background:#fff" onchange="_boutiqueField(\'categorie\',this.value)">' + catOptions + '</select>' +
+    '<input id="bout-tel" style="' + s + '" placeholder="Téléphone" value="' + escapeHTML(b.telephone) + '" oninput="_boutiqueField(\'telephone\',this.value)">' +
+    '<input id="bout-ville" style="' + s + '" placeholder="Ville" value="' + escapeHTML(b.ville) + '" oninput="_boutiqueField(\'ville\',this.value)">' +
+    '<input id="bout-adr" style="' + s + '" placeholder="Adresse (quartier, rue…)" value="' + escapeHTML(b.adresse) + '" oninput="_boutiqueField(\'adresse\',this.value)">' +
+    '<textarea id="bout-desc" style="' + s + ';min-height:80px;resize:vertical" placeholder="Description de votre boutique" oninput="_boutiqueField(\'description\',this.value)">' + escapeHTML(b.description) + '</textarea>' +
+    '<label style="font-size:12px;color:#64748b;margin-bottom:4px;display:block">Logo (optionnel)</label>' +
+    '<input id="bout-logo" type="file" accept="image/*" style="margin-bottom:12px;font-size:13px">' +
+    '<button id="bout-btn" onclick="_sauvegarderBoutique(\'' + (boutiqueId || '') + '\')" style="width:100%;padding:12px;background:#1d4ed8;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">' +
+      (boutiqueId ? '💾 Enregistrer les modifications' : '🏪 Créer ma boutique') +
+    '</button>';
+
+  ouvrirModal((boutiqueId ? '✏️ Modifier la boutique' : '🏪 Créer une boutique'), html);
+}
+
+function _boutiqueField(field, val) { _boutiqueCourante[field] = val; }
+
+async function _sauvegarderBoutique(boutiqueId) {
+  var b = _boutiqueCourante;
+  if (!b.nom || !b.nom.trim()) { toast('Le nom de la boutique est obligatoire', '#e63946'); return; }
+  var btn = document.getElementById('bout-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement…'; }
+  try {
+    var fd = new FormData();
+    fd.append('nom', b.nom.trim());
+    fd.append('description', b.description || '');
+    fd.append('categorie', b.categorie || '');
+    fd.append('telephone', b.telephone || '');
+    fd.append('adresse', b.adresse || '');
+    fd.append('ville', b.ville || 'Dakar');
+    var logoInput = document.getElementById('bout-logo');
+    if (logoInput && logoInput.files[0]) fd.append('logo', logoInput.files[0]);
+
+    var method = boutiqueId ? 'PUT' : 'POST';
+    var endpoint = boutiqueId ? '/boutiques/' + boutiqueId : '/boutiques';
+    await apiFetchFormData(endpoint, { method: method, body: fd });
+
+    fermerModal();
+    toast(boutiqueId ? '✅ Boutique modifiée !' : '✅ Boutique créée !', '#10b981');
+    _boutiqueCourante = { nom:'', description:'', categorie:'', telephone:'', adresse:'', ville:'Dakar' };
+  } catch(err) {
+    toast(err.message || 'Erreur', '#ef4444');
+    if (btn) { btn.disabled = false; btn.textContent = boutiqueId ? '💾 Enregistrer' : '🏪 Créer ma boutique'; }
+  }
+}
+
+async function _supprimerBoutique(id, nom) {
+  if (!confirm('Supprimer la boutique "' + nom + '" ?\nCette action est définitive.')) return;
+  try {
+    await apiFetch('/boutiques/' + id, { method: 'DELETE' });
+    toast('Boutique supprimée', '#10b981');
+    afficherMaBoutique();
+  } catch(err) { toast(err.message || 'Erreur', '#ef4444'); }
 }
 
 // ── Devenir partenaire ────────────────────────────────────────────
@@ -4893,6 +5031,7 @@ function showAccount() {
     '<button style="' + itemStyle + '" onclick="fermerMenuCompte();afficherMesAnnoncesClassifiees()">📢 Mes annonces classifiées</button>',
     '<button style="' + itemStyle + '" onclick="fermerMenuCompte();depuisMenuPublierAnnonce()">🏠 Publier une annonce immo</button>',
     '<button style="' + itemStyle + '" onclick="fermerMenuCompte();afficherMesAnnonces()">📋 Mes annonces immo</button>',
+    '<button style="' + itemStyle + '" onclick="fermerMenuCompte();afficherMaBoutique()">🏪 Ma boutique</button>',
     '<button style="' + itemStyle + ';border-top:1px solid #f1f5f9" onclick="fermerMenuCompte();ouvrirDevenirPartenaire()">🤝 Devenir partenaire</button>',
     '<button style="' + itemStyle + ';color:#e63946;border-top:1px solid #f1f5f9" onclick="logout()">🚪 Déconnexion</button>',
   ].join('');
