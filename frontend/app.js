@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 38 — 2026-06-21
+//  app.js VERSION 39 — 2026-06-22
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 38 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 39 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
@@ -185,6 +185,53 @@ function ajouterRecent(produit) {
 
 // ── Smart search parser ──────────────────────────────────────────
 // "écouteurs moins de 15000" → { q:'écouteurs', prixMax:15000 }
+// "telephone samsun"         → { q:'samsun', detectedCat:'smartphones' }
+
+var MOT_CAT = {
+  // smartphones
+  'telephone':'smartphones','téléphone':'smartphones','telephones':'smartphones','téléphones':'smartphones',
+  'smartphone':'smartphones','smartphones':'smartphones','portable':'smartphones','portables':'smartphones',
+  'phone':'smartphones','phones':'smartphones','gsm':'smartphones','mobile':'smartphones','mobiles':'smartphones',
+  // informatique
+  'ordinateur':'informatique','ordinateurs':'informatique','laptop':'informatique','laptops':'informatique',
+  'imprimante':'informatique','imprimantes':'informatique','tablette':'informatique','tablettes':'informatique',
+  'macbook':'informatique','pc':'informatique',
+  // tv-electro
+  'television':'tv-electro','télévision':'tv-electro','televisions':'tv-electro','télévisions':'tv-electro',
+  'tele':'tv-electro','télé':'tv-electro','tv':'tv-electro',
+  'frigo':'tv-electro','frigidaire':'tv-electro','réfrigérateur':'tv-electro','refrigerateur':'tv-electro',
+  'réfrigérateurs':'tv-electro','refrigerateurs':'tv-electro',
+  'climatiseur':'tv-electro','climatiseurs':'tv-electro','clim':'tv-electro',
+  'congélateur':'tv-electro','congelateur':'tv-electro','congélateurs':'tv-electro',
+  'lave-linge':'tv-electro','lavelinge':'tv-electro','electromenager':'tv-electro','électroménager':'tv-electro',
+  // auto-moto
+  'voiture':'auto-moto','voitures':'auto-moto','moto':'auto-moto','motos':'auto-moto',
+  'scooter':'auto-moto','scooters':'auto-moto','véhicule':'auto-moto','vehicule':'auto-moto',
+  'auto':'auto-moto','automobile':'auto-moto',
+  // mode
+  'chaussure':'mode','chaussures':'mode','robe':'mode','robes':'mode',
+  'vetement':'mode','vêtement':'mode','vêtements':'mode','vetements':'mode','sac':'mode','sacs':'mode',
+  // maison
+  'meuble':'maison','meubles':'maison','canapé':'maison','canape':'maison','matelas':'maison',
+  'matelas':'maison','armoire':'maison','armoires':'maison',
+  // jeux
+  'jeu':'jeux','jeux':'jeux','console':'jeux','consoles':'jeux','gaming':'jeux',
+};
+
+var SYNONYMES_Q = {
+  'télé':'television','tele':'television','tv':'television',
+  'frigo':'refriger','frigidaire':'refriger',
+  'clim':'climatiseur',
+  'ordi':'ordinateur','pc':'ordinateur',
+  'casque':'ecouteur',
+};
+
+function _normaliserMot(t) {
+  return t.toLowerCase()
+    .replace(/[éèêë]/g,'e').replace(/[àâä]/g,'a').replace(/[ùûü]/g,'u')
+    .replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/[ç]/g,'c');
+}
+
 function parseSearch(raw) {
   var q = (raw || '').trim();
   var prixMax = null, prixMin = null;
@@ -193,7 +240,26 @@ function parseSearch(raw) {
   if (mMax) { prixMax = parseInt(mMax[1].replace(/\s/g,''), 10); q = q.replace(mMax[0], '').trim(); }
   if (mMin) { prixMin = parseInt(mMin[1].replace(/\s/g,''), 10); q = q.replace(mMin[0], '').trim(); }
   q = q.replace(/\b(fcfa|cfa|f\b|pour|de|à|a|environ)\b/gi, '').replace(/\s+/g,' ').trim();
-  return { q: q, prixMax: prixMax, prixMin: prixMin };
+
+  // Détecter les mots-catégorie et les retirer de la query
+  var detectedCat = null;
+  var tokens = q.split(/\s+/);
+  var restTokens = tokens.filter(function(t) {
+    var tl = t.toLowerCase();
+    var tn = _normaliserMot(t);
+    var cat = MOT_CAT[tl] || MOT_CAT[tn];
+    if (cat) { detectedCat = detectedCat || cat; return false; }
+    return true;
+  });
+  // Normaliser les synonymes sur les tokens restants
+  var qPropre = restTokens.map(function(t) {
+    var tl = t.toLowerCase();
+    var tn = _normaliserMot(t);
+    return SYNONYMES_Q[tl] || SYNONYMES_Q[tn] || t;
+  }).join(' ').trim();
+  if (!qPropre) qPropre = q.trim(); // fallback si tout a été retiré (ex: "telephone" seul)
+
+  return { q: qPropre, prixMax: prixMax, prixMin: prixMin, detectedCat: detectedCat };
 }
 
 // ── Autocomplete ─────────────────────────────────────────────────
@@ -218,7 +284,10 @@ function setupAutocomplete(inputId) {
 }
 
 function chargerSuggestions(q, inp) {
-  apiFetch('/produits?q=' + encodeURIComponent(q) + '&limit=6')
+  var parsed = parseSearch(q);
+  var cat = state.categorie || parsed.detectedCat || '';
+  var url = '/produits?q=' + encodeURIComponent(parsed.q) + '&limit=6' + (cat ? '&categorie=' + encodeURIComponent(cat) : '');
+  apiFetch(url)
     .then(function(data) {
       var produits = (data && data.produits) || [];
       if (!produits.length) return;
@@ -4612,7 +4681,9 @@ function doSearch() {
   var parsed = parseSearch(inp.value);
   if (parsed.prixMax) state.prixMax = parsed.prixMax;
   if (parsed.prixMin) state.prixMin = parsed.prixMin;
-  chargerProduits(parsed.q, state.categorie, 1);
+  // Utiliser la catégorie auto-détectée si l'utilisateur n'en a pas sélectionné une via les chips
+  var cat = state.categorie || parsed.detectedCat || '';
+  chargerProduits(parsed.q, cat, 1);
 }
 
 function goHome()              { state.prixMax=''; state.prixMin=''; setMeta('', ''); chargerProduits('','',1); }

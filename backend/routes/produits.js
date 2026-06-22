@@ -57,35 +57,66 @@ router.get('/', async (req, res) => {
       OR p.categorie_id = (SELECT id FROM categories WHERE slug = $2 LIMIT 1)
       ${fallbackSQL})`;
 
-    // Filtre sous-type optionnel (7e paramètre)
     const sousMots = sousType ? (SOUS_TYPE_MOTS[sousType] || []) : [];
     const sousTypeCondition = sousMots.length > 0
       ? 'AND (' + sousMots.map(m => `LOWER(p.nom) LIKE '%${m}%'`).join(' OR ') + ')'
       : '';
 
-    const sql = `
-      SELECT p.*, c.nom AS categorie_nom,
-             MIN(o.prix) AS prix_min,
-             MAX(o.prix) AS prix_max,
-             COUNT(o.id) AS nb_offres,
-             COUNT(*) OVER() AS total_count
-      FROM produits p
-      LEFT JOIN categories c ON c.id = p.categorie_id
-      LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true
-      WHERE ($1::text IS NULL OR p.nom ILIKE '%'||$1||'%' OR p.marque ILIKE '%'||$1||'%')
-        AND ${catCondition}
-        AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
-        AND ($4::numeric IS NULL OR o.prix >= $4::numeric)
-        ${sousTypeCondition}
-      GROUP BY p.id, c.nom
-      HAVING COUNT(o.id) = 0 OR MIN(o.prix) >= 500
-      ORDER BY ${orderBy}
-      LIMIT $5 OFFSET $6`;
+    // Tokeniser q pour la recherche mot par mot
+    const qTrim = (q || '').trim().toLowerCase()
+      .replace(/[éèêë]/g,'e').replace(/[àâä]/g,'a').replace(/[ùûü]/g,'u')
+      .replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/[ç]/g,'c');
+    const tokens = qTrim
+      ? qTrim.split(/\s+/).map(t => t.replace(/[^a-z0-9\-]/g, '')).filter(t => t.length >= 2)
+      : [];
+    // Les token params viennent après les 6 params de base ($7, $8, ...)
+    const tokenParams = tokens.map(t => '%' + t + '%');
+    const baseParams  = [q||null, categorieNorm, prixMax||null, prixMin||null, limit, offset];
 
-    const params = [q||null, categorieNorm, prixMax||null, prixMin||null, limit, offset];
-    const result = await pool.query(sql, params);
+    // Construire la condition texte selon le nombre de tokens
+    function buildQCond(operator) {
+      if (tokens.length <= 1) {
+        return "($1::text IS NULL OR p.nom ILIKE '%'||$1||'%' OR p.marque ILIKE '%'||$1||'%')";
+      }
+      const clauses = tokens.map((_, i) => {
+        const pidx = 7 + i;
+        return `(p.nom ILIKE $${pidx} OR p.marque ILIKE $${pidx})`;
+      });
+      return '(' + clauses.join(' ' + operator + ' ') + ')';
+    }
+
+    function buildSQL(qCond) {
+      return `
+        SELECT p.*, c.nom AS categorie_nom,
+               MIN(o.prix) AS prix_min,
+               MAX(o.prix) AS prix_max,
+               COUNT(o.id) AS nb_offres,
+               COUNT(*) OVER() AS total_count
+        FROM produits p
+        LEFT JOIN categories c ON c.id = p.categorie_id
+        LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true
+        WHERE ${qCond}
+          AND ${catCondition}
+          AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
+          AND ($4::numeric IS NULL OR o.prix >= $4::numeric)
+          ${sousTypeCondition}
+        GROUP BY p.id, c.nom
+        HAVING COUNT(o.id) = 0 OR MIN(o.prix) >= 500
+        ORDER BY ${orderBy}
+        LIMIT $5 OFFSET $6`;
+    }
+
+    const allParams = [...baseParams, ...tokenParams];
+
+    // Requête principale : tous les mots doivent apparaître (AND)
+    let result = await pool.query(buildSQL(buildQCond('AND')), allParams);
+
+    // Fallback OR : si AND retourne rien et plusieurs tokens, chercher avec n'importe quel mot
+    if (result.rows.length === 0 && tokens.length > 1) {
+      result = await pool.query(buildSQL(buildQCond('OR')), allParams);
+    }
+
     const total = parseInt(result.rows[0]?.total_count || 0, 10);
-
     res.json({
       success: true,
       produits: result.rows,
