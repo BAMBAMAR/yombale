@@ -4001,7 +4001,7 @@ function _sectionOffres(offresArr, prixMin) {
       ? 'background:#fef9c3;border-left:4px solid #eab308;opacity:0.82'
       : (best ? 'background:#f0fdf4;border-left:4px solid #10b981' : 'border-left:4px solid transparent');
     return [
-      '<div style="display:flex;align-items:center;gap:14px;padding:16px 20px;',
+      '<div class="offre-row" style="display:flex;align-items:center;gap:14px;padding:16px 20px;',
            'border-bottom:1px solid #f1f5f9;',
            bgStyle + '">',
 
@@ -4035,7 +4035,7 @@ function _sectionOffres(offresArr, prixMin) {
         '</div>',
 
         // Prix + bouton
-        '<div style="text-align:right;flex-shrink:0">',
+        '<div class="offre-right" style="text-align:right;flex-shrink:0">',
           '<div style="font-size:22px;font-weight:900;color:' + (suspect ? '#92400e' : (best ? '#15803d' : '#1e293b')) + ';white-space:nowrap">',
             fcfa(o.prix),
           '</div>',

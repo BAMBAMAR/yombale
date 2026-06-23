@@ -539,6 +539,22 @@ footer {
   .compare-toolbar { row-gap: 6px; }
 }
 @media (max-width: 480px) {
+  /* ── Lignes offres fiche produit ──────────────────────────── */
+  .offre-row {
+    flex-wrap: wrap !important;
+    padding: 12px 14px !important;
+    gap: 8px !important;
+  }
+  .offre-right {
+    width: 100%;
+    display: flex !important;
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .offre-right a { margin-top: 0 !important; }
+
   .modal-overlay { padding: 0; align-items: flex-end; }
   .modal-box { max-width: 100%; max-height: 95vh; border-radius: 20px 20px 0 0; }
   .pgrid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
