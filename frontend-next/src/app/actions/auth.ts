@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation'
 import { createSession, deleteSession } from '@/lib/session'
 
-const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:3000'
+const API = process.env.BACKEND_URL ?? 'http://localhost:3000'
 
 // ── Connexion ────────────────────────────────────────────────────
 export async function login(prevState: AuthState, formData: FormData): Promise<AuthState> {

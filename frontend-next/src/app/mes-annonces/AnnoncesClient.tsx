@@ -1,4 +1,6 @@
 'use client'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { deleteAnnonce } from '@/app/actions/annonces'
 
 interface Annonce {
@@ -22,16 +24,24 @@ function statutBadge(a: Annonce) {
 }
 
 function fcfa(n: number | null) {
-  if (!n) return '—'
+  if (n == null) return '—'
   return new Intl.NumberFormat('fr-SN', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(n)
 }
 
 function AnnonceCard({ annonce }: { annonce: Annonce }) {
   const badge = statutBadge(annonce)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const router = useRouter()
 
   async function handleDelete() {
     if (!confirm('Supprimer cette annonce définitivement ?')) return
-    await deleteAnnonce(annonce.id)
+    setDeleteError(null)
+    const result = await deleteAnnonce(annonce.id)
+    if (result.error) {
+      setDeleteError(result.error)
+    } else {
+      router.refresh()
+    }
   }
 
   return (
@@ -74,6 +84,9 @@ function AnnonceCard({ annonce }: { annonce: Annonce }) {
         <p style={{ fontSize: '12px', color: 'var(--text3)', margin: '4px 0 8px' }}>
           {new Date(annonce.created_at).toLocaleDateString('fr-FR')}
         </p>
+        {deleteError && (
+          <p style={{ fontSize: '12px', color: 'var(--red)', margin: '0 0 6px' }}>{deleteError}</p>
+        )}
         <button
           onClick={handleDelete}
           style={{

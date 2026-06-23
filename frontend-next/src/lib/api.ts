@@ -1,4 +1,4 @@
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000';
 
 export async function apiFetch<T>(path: string): Promise<T> {
   const url = `${BACKEND}/api${path}`;

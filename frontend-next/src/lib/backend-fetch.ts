@@ -2,7 +2,7 @@ import 'server-only'
 import { SignJWT } from 'jose'
 import { verifySession } from './dal'
 
-const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:3000'
+const API = process.env.BACKEND_URL ?? 'http://localhost:3000'
 
 export interface ActionState {
   error?: string

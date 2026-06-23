@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import { createBoutique, updateBoutique, deleteBoutique } from './actions'
 import type { ActionState } from '@/lib/backend-fetch'
@@ -213,10 +214,18 @@ export default function BoutiqueClient({
   // mode: 'list' | 'create' | { editing: Boutique }
   type Mode = 'list' | 'create' | { editing: Boutique }
   const [mode, setMode] = useState<Mode>('list')
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const router = useRouter()
 
   async function handleDelete(id: string) {
     if (!confirm('Supprimer cette boutique définitivement ?')) return
-    await deleteBoutique(id)
+    setDeleteError(null)
+    const result = await deleteBoutique(id)
+    if (result.error) {
+      setDeleteError(result.error)
+    } else {
+      router.refresh()
+    }
   }
 
   if (mode === 'create' || (typeof mode === 'object' && 'editing' in mode)) {
@@ -248,6 +257,12 @@ export default function BoutiqueClient({
           </button>
         )}
       </div>
+
+      {deleteError && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '10px 14px', color: 'var(--red)', fontSize: '14px', marginBottom: '16px' }}>
+          {deleteError}
+        </div>
+      )}
 
       {boutiques.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text3)' }}>

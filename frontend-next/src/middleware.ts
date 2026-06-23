@@ -46,7 +46,7 @@ export async function middleware(req: NextRequest) {
     `style-src 'self' 'nonce-${nonce}'`,
     "img-src 'self' blob: data: https:",
     "font-src 'self'",
-    `connect-src 'self' ${process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:3000'}`,
+    `connect-src 'self' ${process.env.BACKEND_URL ?? 'http://localhost:3000'}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
