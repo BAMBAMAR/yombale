@@ -10,24 +10,31 @@
 }
 
 :root {
-  --blue:    #1a3a6e;
-  --blue2:   #2563eb;
-  --blue3:   #eff6ff;
-  --green:   #059669;
-  --green2:  #d1fae5;
-  --orange:  #ea580c;
-  --orange2: #fff7ed;
-  --gold:    #d97706;
-  --red:     #dc2626;
-  --bg:      #f5f7ff;
-  --card:    #ffffff;
-  --border:  #e2e8f0;
-  --text1:   #0f172a;
-  --text2:   #475569;
-  --text3:   #6b7280;
-  --radius:  14px;
-  --shadow:  0 2px 12px rgba(0,0,0,.07);
-  --shadow2: 0 8px 32px rgba(0,0,0,.12);
+  /* ── Palette Nopalou — chaude, Dakar, décisive ──────────────── */
+  --navy:    #1C2B4A;   /* marine sombre — logo, titres */
+  --accent:  #C75B00;   /* orange brûlé — CTA, hover, identité */
+  --price:   #0A5C36;   /* vert forêt — prix, économies */
+
+  --bg:      #F8F5F0;   /* sable chaud — fini le bleu Tailwind */
+  --card:    #FFFFFF;
+  --border:  #E8DDD2;   /* beige sable */
+  --text1:   #1A1612;   /* encre chaude */
+  --text2:   #6B5E52;   /* pierre chaude */
+  --text3:   #9C8E84;   /* gris chaud */
+  --radius:  8px;        /* 14→8px : plus décisif, moins "bulle SaaS" */
+  --shadow:  0 1px 4px rgba(26,22,18,.07);
+  --shadow2: 0 6px 24px rgba(26,22,18,.13);
+
+  /* ── Aliases pour compatibilité avec le code existant ────────── */
+  --blue:    #1C2B4A;   /* → navy */
+  --blue2:   #C75B00;   /* → accent (tous les boutons, liens) */
+  --blue3:   #FFF3E8;   /* → fond clair accent */
+  --green:   #0A5C36;   /* → price */
+  --green2:  #E6F4EC;   /* → fond clair prix */
+  --orange:  #C75B00;   /* → accent */
+  --orange2: #FFF3E8;   /* → fond clair accent */
+  --gold:    #D97706;
+  --red:     #B91C1C;
 }
 
 body {
@@ -68,7 +75,7 @@ a {
 }
 
 .card-produit:hover {
-  box-shadow: var(--shadow2);
+  box-shadow: var(--shadow2), inset 3px 0 0 var(--accent);
 }
 
 .card-produit .nom {
@@ -87,15 +94,17 @@ a {
 }
 
 .card-produit .prix {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--green);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--price);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 /* ── Navbar simple ─────────────────────────────────────────────── */
 .navbar {
   background: #fff;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--accent);
   padding: 0 5%;
   height: 62px;
   display: flex;
@@ -104,7 +113,6 @@ a {
   position: sticky;
   top: 0;
   z-index: 200;
-  box-shadow: 0 1px 8px rgba(0,0,0,.05);
 }
 
 .logo {
@@ -117,7 +125,11 @@ a {
 }
 
 .logo span {
-  color: var(--orange);
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
 }
 
 /* ── Page titre ────────────────────────────────────────────────── */
@@ -174,7 +186,8 @@ a {
 .fiche-hero .prix-min {
   font-size: 28px;
   font-weight: 800;
-  color: var(--green);
+  color: var(--price);
+  font-variant-numeric: tabular-nums;
 }
 
 .fiche-hero .prix-label {
@@ -252,7 +265,7 @@ a {
 }
 
 .card-immo:hover {
-  box-shadow: var(--shadow2);
+  box-shadow: var(--shadow2), inset 3px 0 0 var(--accent);
 }
 
 .card-immo .titre {
