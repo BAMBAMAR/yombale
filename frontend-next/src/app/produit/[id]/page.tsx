@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { apiFetch } from '@/lib/api';
 import { fcfa, escapeHtml } from '@/lib/format';
 
@@ -164,6 +165,18 @@ export default async function FicheProduitPage({
 
         {/* Hero */}
         <div className="fiche-hero">
+          {produit.image_url && (
+            <div style={{ position: 'relative', width: '100%', height: '280px', marginBottom: '20px', borderRadius: '10px', overflow: 'hidden', background: 'var(--bg)' }}>
+              <Image
+                src={produit.image_url}
+                alt={produit.nom}
+                fill
+                sizes="(max-width: 900px) 90vw, 860px"
+                style={{ objectFit: 'contain' }}
+                priority
+              />
+            </div>
+          )}
           {produit.marque && (
             <span className="marque-badge">{produit.marque}</span>
           )}

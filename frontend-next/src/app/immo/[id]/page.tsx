@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { apiFetch } from '@/lib/api';
 import { fcfa } from '@/lib/format';
 
@@ -98,6 +99,18 @@ export default async function FicheImmoPage({
 
       {/* Hero */}
       <div className="fiche-immo-hero">
+        {annonce.image_url && (
+          <div style={{ position: 'relative', width: '100%', height: '320px', marginBottom: '20px', borderRadius: '10px', overflow: 'hidden', background: 'var(--bg)' }}>
+            <Image
+              src={annonce.image_url}
+              alt={annonce.titre}
+              fill
+              sizes="(max-width: 860px) 90vw, 820px"
+              style={{ objectFit: 'cover' }}
+              priority
+            />
+          </div>
+        )}
         {annonce.type_bien && (
           <span
             className="type-badge"

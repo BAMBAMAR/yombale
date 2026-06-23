@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, Sora } from 'next/font/google';
 import './globals.css';
+import { getOptionalSession } from '@/lib/dal';
+import NavbarActions from './NavbarActions';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -31,11 +33,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getOptionalSession();
+
   return (
     <html lang="fr" className={`${inter.variable} ${sora.variable}`}>
       <body>
@@ -69,6 +73,37 @@ export default function RootLayout({
               Immobilier
             </a>
           </div>
+          {session ? (
+            <NavbarActions nom={session.nom ?? session.email ?? 'Mon compte'} />
+          ) : (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <a
+                href="/connexion"
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: 'var(--text2)',
+                }}
+              >
+                Connexion
+              </a>
+              <a
+                href="/inscription"
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: '#fff',
+                  background: 'var(--blue2)',
+                }}
+              >
+                S&apos;inscrire
+              </a>
+            </div>
+          )}
         </nav>
         <main>{children}</main>
       </body>
