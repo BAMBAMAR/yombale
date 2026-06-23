@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Nopalou — Comparateur de prix Sénégal
-//  app.js VERSION 40 — 2026-06-22
+//  app.js VERSION 46 — 2026-06-23
 //  Si vous voyez ceci dans la console, le bon fichier est chargé
 // ═══════════════════════════════════════════════════════════════
-console.log('%c✅ Nopalou app.js VERSION 40 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c✅ Nopalou app.js VERSION 46 chargé', 'color:#10b981;font-size:16px;font-weight:bold');
 
 function escapeHTML(s) {
   if (s == null) return '';
