@@ -197,7 +197,7 @@ export default async function FicheImmoPage({
                 fontWeight: 600,
               }}
             >
-              Voir l'annonce originale →
+              Voir l&apos;annonce originale →
             </a>
           </div>
         )}

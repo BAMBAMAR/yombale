@@ -258,7 +258,7 @@ export default async function FicheProduitPage({
                             fontWeight: 600,
                           }}
                         >
-                          Voir l'offre →
+                          Voir l&apos;offre →
                         </a>
                       )}
                     </td>
