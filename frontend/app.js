@@ -2445,9 +2445,9 @@ async function _sauvegarderBoutique(boutiqueId) {
     var endpoint = boutiqueId ? '/boutiques/' + boutiqueId : '/boutiques';
     await apiFetchFormData(endpoint, { method: method, body: fd });
 
-    fermerModal();
     toast(boutiqueId ? '✅ Boutique modifiée !' : '✅ Boutique créée !', '#10b981');
     _boutiqueCourante = { nom:'', description:'', categorie:'', telephone:'', adresse:'', ville:'Dakar' };
+    afficherMaBoutique();
   } catch(err) {
     toast(err.message || 'Erreur', '#ef4444');
     if (btn) { btn.disabled = false; btn.textContent = boutiqueId ? '💾 Enregistrer' : '🏪 Créer ma boutique'; }
