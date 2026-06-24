@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { backendFetch } from '@/lib/backend-fetch'
 import AnnoncesClient from './AnnoncesClient'
 
-export const metadata: Metadata = { title: 'Mes annonces' }
+export const metadata: Metadata = { title: 'Mes annonces — Nopalou' }
 
 interface Annonce {
   id: string
@@ -13,11 +13,15 @@ interface Annonce {
   actif: boolean
   payee: boolean
   rejete: boolean
-  photos: string[]
+  photos: string[] | null
   created_at: string
 }
 
-export default async function MesAnnoncesPage() {
+export default async function MesAnnoncesPage({
+  searchParams,
+}: {
+  searchParams: { created?: string }
+}) {
   let annonces: Annonce[] = []
   try {
     const res = await backendFetch('/api/annonces/mine')
@@ -29,5 +33,5 @@ export default async function MesAnnoncesPage() {
     // afficher liste vide si erreur réseau
   }
 
-  return <AnnoncesClient annonces={annonces} />
+  return <AnnoncesClient annonces={annonces} created={searchParams.created === '1'} />
 }

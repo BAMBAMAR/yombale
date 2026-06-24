@@ -1,6 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { deleteAnnonce } from '@/app/actions/annonces'
 
 interface Annonce {
@@ -12,122 +13,140 @@ interface Annonce {
   actif: boolean
   payee: boolean
   rejete: boolean
-  photos: string[]
+  photos: string[] | null
   created_at: string
 }
 
-function statutBadge(a: Annonce) {
-  if (a.rejete)                  return { label: 'Rejetée',        color: 'var(--red)',    bg: '#fef2f2' }
-  if (a.actif)                   return { label: 'Publiée',        color: 'var(--green)',  bg: 'var(--green2)' }
-  if (a.payee && !a.actif)       return { label: 'En modération',  color: 'var(--blue2)',  bg: 'var(--blue3)' }
-  return                                { label: 'En attente',     color: 'var(--orange)', bg: 'var(--orange2)' }
+const CAT_LABELS: Record<string, string> = {
+  smartphones: '📱 Téléphone',
+  informatique: '💻 Info',
+  'tv-electro': '📺 TV/Électro',
+  mode: '👗 Mode',
+  maison: '🏠 Maison',
+  'auto-moto': '🚗 Auto',
+  jeux: '🎮 Jeux',
+  services: '🛠 Services',
 }
 
 function fcfa(n: number | null) {
   if (n == null) return '—'
-  return new Intl.NumberFormat('fr-SN', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat('fr-FR').format(n) + ' FCFA'
+}
+
+function StatutBadge({ a }: { a: Annonce }) {
+  if (a.rejete)            return <span className="annonce-statut annonce-statut--rejete">Rejetée</span>
+  if (a.actif)             return <span className="annonce-statut annonce-statut--active">Publiée ✓</span>
+  if (a.payee && !a.actif) return <span className="annonce-statut annonce-statut--moderation">En modération</span>
+  return <span className="annonce-statut annonce-statut--attente">En attente</span>
 }
 
 function AnnonceCard({ annonce }: { annonce: Annonce }) {
-  const badge = statutBadge(annonce)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [deleteErr, setDeleteErr]  = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
-  async function handleDelete() {
+  function handleDelete() {
     if (!confirm('Supprimer cette annonce définitivement ?')) return
-    setDeleteError(null)
-    const result = await deleteAnnonce(annonce.id)
-    if (result.error) {
-      setDeleteError(result.error)
-    } else {
-      router.refresh()
-    }
+    setDeleteErr(null)
+    startTransition(async () => {
+      const res = await deleteAnnonce(annonce.id)
+      if (res.error) setDeleteErr(res.error)
+      else router.refresh()
+    })
   }
 
+  const needsPayment = !annonce.payee && !annonce.actif && !annonce.rejete
+  const photo = annonce.photos?.[0] ?? null
+
   return (
-    <div style={{
-      background: 'var(--card)',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius)',
-      padding: '16px',
-      boxShadow: 'var(--shadow)',
-      display: 'flex',
-      gap: '16px',
-      alignItems: 'flex-start',
-    }}>
-      {annonce.photos?.[0] ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={annonce.photos[0]}
-          alt={annonce.titre}
-          style={{ width: '72px', height: '72px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
-        />
-      ) : (
-        <div style={{ width: '72px', height: '72px', borderRadius: '8px', background: 'var(--bg)', flexShrink: 0 }} />
-      )}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-          <p style={{ fontFamily: 'Sora, sans-serif', fontWeight: 600, fontSize: '14px', margin: 0 }}>
-            {annonce.titre}
-          </p>
-          <span style={{
-            fontSize: '11px', fontWeight: 700, padding: '2px 8px',
-            borderRadius: '20px', whiteSpace: 'nowrap', flexShrink: 0,
-            color: badge.color, background: badge.bg,
-          }}>
-            {badge.label}
-          </span>
-        </div>
-        <p style={{ fontSize: '13px', color: 'var(--text3)', margin: '4px 0' }}>
-          {annonce.categorie_slug} · {annonce.ville ?? 'Dakar'} · {fcfa(annonce.prix)}
-        </p>
-        <p style={{ fontSize: '12px', color: 'var(--text3)', margin: '4px 0 8px' }}>
-          {new Date(annonce.created_at).toLocaleDateString('fr-FR')}
-        </p>
-        {deleteError && (
-          <p style={{ fontSize: '12px', color: 'var(--red)', margin: '0 0 6px' }}>{deleteError}</p>
+    <div className="annonce-card">
+      <div className="annonce-card-thumb">
+        {photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photo} alt={annonce.titre} loading="lazy" />
+        ) : (
+          <span className="annonce-thumb-placeholder">📷</span>
         )}
-        <button
-          onClick={handleDelete}
-          style={{
-            fontSize: '13px', color: 'var(--red)', background: 'none',
-            border: '1px solid #fecaca', borderRadius: '6px',
-            padding: '4px 12px', cursor: 'pointer',
-          }}
-        >
-          Supprimer
-        </button>
+      </div>
+
+      <div className="annonce-card-body">
+        <div className="annonce-card-top">
+          <div>
+            <span className="annonce-cat-label">
+              {CAT_LABELS[annonce.categorie_slug] ?? annonce.categorie_slug}
+            </span>
+            <h3 className="annonce-card-titre">{annonce.titre}</h3>
+            <p className="annonce-card-meta">
+              {annonce.ville ?? 'Dakar'}
+              {annonce.prix ? ` · ${fcfa(annonce.prix)}` : ''}
+              {' · '}
+              {new Date(annonce.created_at).toLocaleDateString('fr-FR')}
+            </p>
+          </div>
+          <StatutBadge a={annonce} />
+        </div>
+
+        {deleteErr && <p className="annonce-delete-err">{deleteErr}</p>}
+
+        <div className="annonce-card-actions">
+          {needsPayment && (
+            <Link href={`/payer-annonce/${annonce.id}`} className="annonce-action-btn annonce-action-btn--pay">
+              💳 Activer (1 500 FCFA)
+            </Link>
+          )}
+          <button
+            onClick={handleDelete}
+            disabled={isPending}
+            className="annonce-action-btn annonce-action-btn--delete"
+          >
+            {isPending ? '…' : 'Supprimer'}
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
-export default function AnnoncesClient({ annonces }: { annonces: Annonce[] }) {
+export default function AnnoncesClient({
+  annonces,
+  created,
+}: {
+  annonces: Annonce[]
+  created?: boolean
+}) {
   return (
-    <div style={{ maxWidth: '700px', margin: '40px auto', padding: '0 20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: '22px', margin: 0 }}>
-          Mes annonces
-        </h1>
-        <a
-          href="/annonces.html"
-          style={{
-            padding: '9px 18px', background: 'var(--blue2)', color: '#fff',
-            borderRadius: '8px', fontSize: '13px', fontWeight: 700, textDecoration: 'none',
-          }}
-        >
+    <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 760 }}>
+      {created && (
+        <div className="annonce-created-banner">
+          ✅ Annonce créée avec succès !
+        </div>
+      )}
+
+      <div className="mes-annonces-header">
+        <div>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--navy)', margin: '0 0 4px' }}>
+            Mes <span style={{ color: 'var(--accent)' }}>annonces</span>
+          </h1>
+          <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
+            {annonces.length} annonce{annonces.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <Link href="/deposer-annonce" className="annonce-new-btn">
           + Déposer une annonce
-        </a>
+        </Link>
       </div>
 
       {annonces.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text3)' }}>
-          <p style={{ fontSize: '32px', marginBottom: '12px' }}>📋</p>
-          <p style={{ fontSize: '15px' }}>Vous n&apos;avez pas encore d&apos;annonces.</p>
+        <div className="empty-state" style={{ marginTop: 32 }}>
+          <span style={{ fontSize: 48 }}>📋</span>
+          <p>Vous n&apos;avez pas encore d&apos;annonces.</p>
+          <Link href="/deposer-annonce" className="budget-pill active" style={{ marginTop: 8 }}>
+            Déposer ma première annonce
+          </Link>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {annonces.map((a) => <AnnonceCard key={a.id} annonce={a} />)}
+        <div className="annonces-list">
+          {annonces.map(a => <AnnonceCard key={a.id} annonce={a} />)}
         </div>
       )}
     </div>
