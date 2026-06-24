@@ -128,7 +128,8 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
     startTransition(async () => {
       const res = await creerAnnonce(fd)
       if (res.ok) {
-        router.push('/mes-annonces?created=1')
+        // Redirect to payment page — backend will show "already active" if free quota
+        router.push(res.id ? `/payer-annonce/${res.id}` : '/mes-annonces?created=1')
       } else {
         setError(res.error ?? 'Une erreur est survenue.')
       }

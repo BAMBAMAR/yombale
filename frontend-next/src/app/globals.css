@@ -2136,6 +2136,248 @@ a {
   .annonce-cats-grid { padding: 16px; }
 }
 
+/* ── Pages paiement ────────────────────────────────────────────── */
+.paiement-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.paiement-annonce-info {
+  padding: 16px 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.paiement-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text2);
+}
+
+.paiement-titre-annonce {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 4px 0 0;
+}
+
+.paiement-montant-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #F0FDF4 0%, #fff 100%);
+}
+
+.paiement-montant {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--price);
+  letter-spacing: -.01em;
+}
+
+.paiement-montant-desc {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 4px;
+}
+
+.paiement-error {
+  margin: 16px 20px 0;
+  padding: 10px 14px;
+  background: #FEF2F2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: var(--red);
+  font-size: 13px;
+}
+
+.paiement-methodes {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.paiement-methodes-titre {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  margin: 0 0 4px;
+}
+
+.paiement-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  border: 2px solid;
+  cursor: pointer;
+  transition: opacity .15s, transform .12s;
+  text-align: left;
+  width: 100%;
+}
+
+.paiement-btn:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+.paiement-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+.paiement-btn--wave {
+  background: #E8F9FF;
+  border-color: #00BCC9;
+  color: #00667A;
+}
+
+.paiement-btn--orange {
+  background: #FFF4E6;
+  border-color: #FF7900;
+  color: #7C3800;
+}
+
+.paiement-btn-logo { font-size: 28px; }
+
+.paiement-btn-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.paiement-btn-nom {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.paiement-btn-desc {
+  font-size: 12px;
+  opacity: .75;
+}
+
+.paiement-btn-arrow {
+  font-size: 18px;
+  font-weight: 700;
+  opacity: .5;
+}
+
+.paiement-garanties {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  font-size: 12px;
+  color: var(--text2);
+  flex-wrap: wrap;
+}
+
+/* Page succès/erreur */
+.paiement-succes-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 48px 32px;
+}
+
+.paiement-succes-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #F0FDF4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+}
+
+.paiement-succes-titre {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0;
+}
+
+.paiement-succes-desc {
+  font-size: 15px;
+  color: var(--text2);
+  max-width: 380px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.paiement-ref {
+  font-size: 12px;
+  color: var(--text3);
+  margin: 0;
+}
+
+.paiement-ref code {
+  background: var(--bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.paiement-succes-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.paiement-cta-btn {
+  padding: 12px 24px;
+  background: var(--navy);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity .15s;
+}
+
+.paiement-cta-btn:hover { opacity: .88; }
+
+.paiement-cta-btn--outline {
+  background: none;
+  border: 2px solid var(--navy);
+  color: var(--navy);
+}
+
+.paiement-succes-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.paiement-succes-mini h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .paiement-garanties { gap: 10px; flex-direction: column; align-items: center; }
+  .paiement-succes-page { padding: 32px 20px; }
+  .paiement-succes-actions { flex-direction: column; }
+  .paiement-cta-btn { text-align: center; }
+}
+
 /* ── Message d'erreur ──────────────────────────────────────────── */
 .erreur-page {
   text-align: center;
