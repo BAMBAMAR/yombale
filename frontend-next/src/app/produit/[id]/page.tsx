@@ -4,6 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { apiFetch } from '@/lib/api';
 import { fcfa, escapeHtml } from '@/lib/format';
+import { getOptionalSession } from '@/lib/dal';
+import AlertePrix from '@/app/AlertePrix';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -96,6 +98,8 @@ function buildJsonLd(produit: Produit, offres: Offre[]): string {
 export default async function FicheProduitPage({ params }: { params: { id: string } }) {
   let produit: Produit;
   let offres: Offre[] = [];
+
+  const session = await getOptionalSession();
 
   try {
     produit = await apiFetch<Produit>(`/produits/${params.id}`);
@@ -248,6 +252,17 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                 <a href={best.url_achat} target="_blank" rel="noopener noreferrer" className="sidebar-cta">
                   🛒 Meilleur prix chez {best.marchand_nom ?? '—'}
                 </a>
+              )}
+              {session ? (
+                <AlertePrix
+                  produitId={String(produit.id)}
+                  prixMin={prixMin}
+                  email={session.email ?? ''}
+                />
+              ) : (
+                <Link href="/connexion" className="alerte-trigger-login">
+                  🔔 Alertes prix (connexion requise)
+                </Link>
               )}
             </div>
           </aside>
