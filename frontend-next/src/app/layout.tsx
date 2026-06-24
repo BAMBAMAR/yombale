@@ -112,29 +112,58 @@ export default async function RootLayout({
 
         <footer className="site-footer">
           <div className="footer-inner">
+            {/* Colonne 1 — Brand */}
             <div className="footer-brand">
               <a href="/" className="footer-logo">Nopa<span>lou</span></a>
               <p className="footer-tagline">Comparateur de prix au Sénégal 🇸🇳</p>
-            </div>
-            <div className="footer-links">
-              <div className="footer-col">
-                <p className="footer-col-titre">Explorer</p>
-                <a href="/">Produits</a>
-                <a href="/immo">Immobilier</a>
-                <a href="/telecom">Télécom</a>
-                <a href="/favoris">Favoris</a>
+              <p className="footer-tagline" style={{ marginTop: '8px', fontSize: '12px' }}>
+                <a href="mailto:contact@nopalou.sn" style={{ color: 'rgba(255,255,255,.5)' }}>contact@nopalou.sn</a>
+              </p>
+              <div className="footer-social">
+                <a href="https://facebook.com/nopalou" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="footer-social-link">f</a>
+                <a href="https://twitter.com/nopalou_sn" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="footer-social-link">𝕏</a>
+                <a href="https://instagram.com/nopalou_sn" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="footer-social-link">▣</a>
               </div>
+            </div>
+
+            <div className="footer-links">
+              {/* Colonne 2 — Catégories */}
+              <div className="footer-col">
+                <p className="footer-col-titre">Catégories</p>
+                <a href="/?categorie=smartphones">Téléphones</a>
+                <a href="/?categorie=informatique">Informatique</a>
+                <a href="/?categorie=tv-electro">TV &amp; Électro</a>
+                <a href="/?categorie=mode">Mode</a>
+                <a href="/?categorie=maison">Maison</a>
+                <a href="/?categorie=auto-moto">Auto &amp; Moto</a>
+                <a href="/telecom">Télécom</a>
+                <a href="/immo">Immobilier</a>
+                <a href="/annonces">Annonces</a>
+              </div>
+
+              {/* Colonne 3 — Mon compte */}
               <div className="footer-col">
                 <p className="footer-col-titre">Mon compte</p>
                 <a href="/connexion">Connexion</a>
                 <a href="/inscription">Inscription</a>
                 <a href="/deposer-annonce">Déposer une annonce</a>
                 <a href="/mes-annonces">Mes annonces</a>
+                <a href="/favoris">Mes favoris</a>
+                <a href="/compte">Mon profil</a>
+              </div>
+
+              {/* Colonne 4 — Légal */}
+              <div className="footer-col">
+                <p className="footer-col-titre">Informations</p>
+                <a href="/mentions-legales">Mentions légales</a>
+                <a href="/confidentialite">Politique de confidentialité</a>
+                <a href="/cgu">CGU</a>
+                <a href="/boutiques">Boutiques partenaires</a>
               </div>
             </div>
           </div>
           <div className="footer-bottom">
-            <p>© {new Date().getFullYear()} Nopalou. Tous droits réservés.</p>
+            <p>© {new Date().getFullYear()} Nopalou — Dakar, Sénégal. Tous droits réservés.</p>
           </div>
         </footer>
       </body>
