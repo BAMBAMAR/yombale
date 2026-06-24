@@ -73,6 +73,18 @@ export default async function RootLayout({
             >
               Immobilier
             </a>
+            <a
+              href="/telecom"
+              style={{
+                padding: '7px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'var(--text2)',
+              }}
+            >
+              Télécom
+            </a>
           </div>
           {session ? (
             <NavbarActions nom={session.nom ?? session.email ?? 'Mon compte'} />

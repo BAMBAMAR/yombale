@@ -91,15 +91,24 @@ export default async function HomePage({
         </p>
         <SearchBar defaultValue={q} />
         <div className="hero-categs">
-          {CATEGORIES.map((c) => (
-            <Link
-              key={c.slug}
-              href={`/?categorie=${c.slug}${q ? `&q=${encodeURIComponent(q)}` : ''}`}
-              className={`categ-pill${categorie === c.slug ? ' active' : ''}`}
-            >
-              {c.emoji} {c.label}
-            </Link>
-          ))}
+          {CATEGORIES.map((c) => {
+            if (c.slug === 'telecom') {
+              return (
+                <Link key={c.slug} href="/telecom" className={`categ-pill${categorie === c.slug ? ' active' : ''}`}>
+                  {c.emoji} {c.label}
+                </Link>
+              )
+            }
+            return (
+              <Link
+                key={c.slug}
+                href={`/?categorie=${c.slug}${q ? `&q=${encodeURIComponent(q)}` : ''}`}
+                className={`categ-pill${categorie === c.slug ? ' active' : ''}`}
+              >
+                {c.emoji} {c.label}
+              </Link>
+            )
+          })}
           <Link href="/immo"           className="categ-pill">🏘 Immobilier</Link>
           <Link href="/annonces.html"  className="categ-pill">📢 Annonces</Link>
         </div>
