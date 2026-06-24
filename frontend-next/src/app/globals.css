@@ -151,53 +151,161 @@ a {
 
 /* ── Fiche produit ─────────────────────────────────────────────── */
 .fiche {
-  max-width: 900px;
-  margin: 32px auto;
-  padding: 0 5%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 5% 80px;
 }
 
+.breadcrumb {
+  font-size: 13px;
+  color: var(--text3);
+  margin-bottom: 20px;
+}
+
+.breadcrumb a { color: var(--text3); }
+.breadcrumb a:hover { color: var(--accent); }
+
+/* ── Layout 2 colonnes ────────────────────────────────────────── */
+.fiche-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.fiche-main { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Hero image + identité ────────────────────────────────────── */
 .fiche-hero {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 28px;
+  overflow: hidden;
   box-shadow: var(--shadow);
-  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: 260px 1fr;
 }
 
-.fiche-hero h1 {
-  font-size: 24px;
+.fiche-hero-img {
+  position: relative;
+  height: 260px;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+}
+
+.fiche-hero-info {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fiche-hero-info h1 {
+  font-size: 22px;
   font-weight: 800;
   color: var(--text1);
+  line-height: 1.3;
+}
+
+.categ-tag {
+  display: inline-block;
+  background: var(--blue3);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  align-self: flex-start;
+}
+
+/* ── Box meilleur prix ────────────────────────────────────────── */
+.prix-box {
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: var(--radius);
+  padding: 20px 24px;
+}
+
+.prix-box-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #166534;
+  letter-spacing: .06em;
   margin-bottom: 6px;
 }
 
-.fiche-hero .marque-badge {
-  display: inline-block;
-  background: var(--blue3);
-  color: var(--blue2);
+.prix-box-montant {
+  font-family: 'Sora', sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  color: #15803d;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.prix-box-eco {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.prix-box-nb {
+  font-size: 13px;
+  color: #166534;
+}
+
+/* ── CTA principal ────────────────────────────────────────────── */
+.cta-acheter {
+  display: block;
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #fff;
+  text-align: center;
+  padding: 16px 24px;
+  border-radius: var(--radius);
+  font-family: 'Sora', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(5,150,105,.3);
+  transition: opacity .15s;
+}
+
+.cta-acheter:hover { opacity: .9; }
+
+/* ── Trust badges ─────────────────────────────────────────────── */
+.trust-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.trust-badge {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 14px;
   font-size: 12px;
   font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 20px;
-  margin-bottom: 16px;
+  color: var(--text2);
 }
 
-.fiche-hero .prix-min {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--price);
-  font-variant-numeric: tabular-nums;
+/* ── Description ──────────────────────────────────────────────── */
+.fiche-desc {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.7;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
 }
 
-.fiche-hero .prix-label {
-  font-size: 13px;
-  color: var(--text3);
-  margin-top: 2px;
-}
-
-/* ── Tableau offres ────────────────────────────────────────────── */
-.tableau-offres {
+/* ── Section offres ───────────────────────────────────────────── */
+.offres-section {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -205,43 +313,225 @@ a {
   box-shadow: var(--shadow);
 }
 
-.tableau-offres h2 {
+.offres-titre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 16px 20px;
-  font-size: 16px;
-  font-weight: 700;
-  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+  font-weight: 800;
   color: var(--text1);
+  border-bottom: 1px solid var(--border);
 }
 
-.tableau-offres table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.tableau-offres th {
-  background: var(--bg);
-  padding: 10px 16px;
+.offres-titre span {
   font-size: 12px;
-  font-weight: 600;
-  color: var(--text2);
-  text-align: left;
-  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+  color: var(--text3);
 }
 
-.tableau-offres td {
-  padding: 12px 16px;
-  font-size: 14px;
-  border-bottom: 1px solid var(--border);
+.offres-list { display: flex; flex-direction: column; }
+
+.offre-row-fiche {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  border-left: 4px solid transparent;
+  transition: background .1s;
+}
+
+.offre-row-fiche:last-child { border-bottom: none; }
+
+.offre-row-fiche--best {
+  background: #f0fdf4;
+  border-left-color: #10b981;
+}
+
+.offre-row-fiche--suspect {
+  background: #fefce8;
+  border-left-color: #eab308;
+  opacity: .85;
+}
+
+.offre-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--bg);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.offre-info { flex: 1; min-width: 0; }
+
+.offre-badge-best {
+  display: inline-block;
+  background: #10b981;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-bottom: 4px;
+}
+
+.offre-badge-suspect {
+  display: inline-block;
+  background: #eab308;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-bottom: 4px;
+}
+
+.offre-marchand {
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text1);
 }
 
-.tableau-offres tr:last-child td {
-  border-bottom: none;
+.offre-marchand a { color: var(--text1); text-decoration: none; }
+.offre-marchand a:hover { color: var(--accent); }
+
+.offre-ref {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.tableau-offres .prix-offre {
+.offre-ecart {
+  font-size: 11px;
+  color: var(--accent);
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.offre-prix-col {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.offre-prix {
+  font-family: 'Sora', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--text1);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.offre-prix--best { color: #15803d; }
+
+.offre-btn {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 7px 16px;
+  background: var(--navy);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 700;
-  color: var(--green);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .15s;
+}
+
+.offre-btn:hover { background: #243860; }
+.offre-btn--best { background: #10b981; }
+.offre-btn--best:hover { background: #059669; }
+
+/* ── Sidebar résumé ───────────────────────────────────────────── */
+.fiche-sidebar { position: sticky; top: 80px; }
+
+.sidebar-card {
+  background: var(--navy);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow2);
+}
+
+.sidebar-titre {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: rgba(255,255,255,.6);
+  margin-bottom: 8px;
+}
+
+.sidebar-produit {
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.4;
+  margin-bottom: 16px;
+}
+
+.sidebar-ligne {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  font-size: 13px;
+  color: rgba(255,255,255,.7);
+}
+
+.sidebar-ligne strong {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.sidebar-best-label {
+  font-size: 12px;
+  color: rgba(255,255,255,.6);
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.sidebar-best-label strong { color: #fff; }
+
+.sidebar-cta {
+  display: block;
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #fff;
+  text-align: center;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  margin-top: 4px;
+  transition: opacity .15s;
+}
+
+.sidebar-cta:hover { opacity: .9; }
+
+/* ── Responsive fiche ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .fiche-grid { grid-template-columns: 1fr; }
+  .fiche-sidebar { position: static; order: -1; }
+  .fiche-hero { grid-template-columns: 1fr; }
+  .fiche-hero-img { height: 220px; border-right: none; border-bottom: 1px solid var(--border); }
+}
+
+@media (max-width: 480px) {
+  .offre-row-fiche { padding: 12px 14px; gap: 10px; flex-wrap: wrap; }
+  .offre-prix-col { width: 100%; display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; }
+  .offre-btn { margin-top: 0; }
+  .prix-box-montant { font-size: 28px; }
 }
 
 /* ── Annonces immo ─────────────────────────────────────────────── */
