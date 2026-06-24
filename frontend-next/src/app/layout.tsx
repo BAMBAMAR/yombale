@@ -86,6 +86,20 @@ export default async function RootLayout({
               Télécom
             </a>
           </div>
+          <a
+            href="/deposer-annonce"
+            style={{
+              padding: '7px 14px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: 'var(--accent)',
+              border: '1.5px solid var(--accent)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            + Déposer
+          </a>
           {session ? (
             <NavbarActions nom={session.nom ?? session.email ?? 'Mon compte'} />
           ) : (
