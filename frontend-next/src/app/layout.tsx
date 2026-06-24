@@ -3,6 +3,7 @@ import { Inter, Sora } from 'next/font/google';
 import './globals.css';
 import { getOptionalSession } from '@/lib/dal';
 import NavbarActions from './NavbarActions';
+import NavbarSearch from './NavbarSearch';
 import CompareBar from './CompareBar';
 
 const inter = Inter({
@@ -89,6 +90,7 @@ export default async function RootLayout({
             <a href="/immo" className="navbar-link">Immobilier</a>
             <a href="/telecom" className="navbar-link">Télécom</a>
           </div>
+          <NavbarSearch />
           <div className="navbar-actions">
             <a href="/deposer-annonce" className="navbar-deposer">
               + Déposer
