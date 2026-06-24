@@ -1,0 +1,40 @@
+{
+  "name": "Nopalou — Comparateur de prix Sénégal",
+  "short_name": "Nopalou",
+  "description": "Comparez les prix de milliers de produits au Sénégal. Économisez en trouvant les meilleures offres.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8F5F0",
+  "theme_color": "#C75B00",
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["shopping", "finance"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Déposer une annonce",
+      "short_name": "Déposer",
+      "url": "/deposer-annonce",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mes favoris",
+      "short_name": "Favoris",
+      "url": "/favoris",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    }
+  ]
+}
