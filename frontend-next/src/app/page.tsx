@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import SearchBar from './SearchBar'
+import CardActions from './CardActions'
 
 export const metadata: Metadata = {
   title: 'Nopalou — Comparateur de prix Sénégal',
@@ -35,6 +36,7 @@ interface Produit {
   marque: string | null
   categorie: string | null
   prix_min: number | null
+  prix_max: number | null
   nb_offres: number | null
   image_url: string | null
 }
@@ -164,6 +166,11 @@ export default async function HomePage({
               <Link key={p.id} href={`/produit/${p.id}`} style={{ display: 'contents' }}>
                 <article className="card-produit">
                   <div className="card-img">
+                    {p.prix_min && p.prix_max && p.prix_max > p.prix_min * 1.1 && (
+                      <span className="badge-promo">
+                        -{Math.round((1 - p.prix_min / p.prix_max) * 100)}%
+                      </span>
+                    )}
                     {p.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={p.image_url} alt={p.nom} loading="lazy" />
@@ -179,6 +186,7 @@ export default async function HomePage({
                       {p.nb_offres} offre{p.nb_offres > 1 ? 's' : ''}
                     </p>
                   )}
+                  <CardActions id={p.id} nom={p.nom} />
                 </article>
               </Link>
             ))}

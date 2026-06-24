@@ -3,6 +3,7 @@ import { Inter, Sora } from 'next/font/google';
 import './globals.css';
 import { getOptionalSession } from '@/lib/dal';
 import NavbarActions from './NavbarActions';
+import CompareBar from './CompareBar';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -106,6 +107,7 @@ export default async function RootLayout({
           )}
         </nav>
         <main>{children}</main>
+        <CompareBar />
       </body>
     </html>
   );
