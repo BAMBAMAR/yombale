@@ -535,6 +535,7 @@ a {
 }
 
 /* ── Annonces immo ─────────────────────────────────────────────── */
+/* Legacy classes kept for backward compat */
 .grid-immo {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -554,38 +555,229 @@ a {
   gap: 10px;
 }
 
-.card-immo:hover {
-  box-shadow: var(--shadow2), inset 3px 0 0 var(--accent);
+/* ── Page immo Sprint 5 ─────────────────────────────────────────── */
+.immo-header {
+  margin-bottom: 20px;
 }
 
-.card-immo .titre {
-  font-family: 'Sora', sans-serif;
-  font-size: 15px;
+.immo-titre-page {
+  font-size: 28px;
   font-weight: 700;
-  color: var(--text1);
-  line-height: 1.3;
+  color: var(--navy);
+  margin: 0 0 4px;
 }
 
-.card-immo .localisation {
+.immo-sous-titre {
+  font-size: 14px;
+  color: var(--text2);
+  margin: 0;
+}
+
+.immo-filtres {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.immo-filtres-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.immo-toggle {
+  display: flex;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.immo-toggle-btn {
+  padding: 7px 18px;
   font-size: 13px;
-  color: var(--text3);
+  font-weight: 600;
+  color: var(--text2);
+  text-decoration: none;
+  transition: background .15s, color .15s;
 }
 
-.card-immo .prix-immo {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--blue);
+.immo-toggle-btn.active {
+  background: var(--navy);
+  color: #fff;
 }
 
-.card-immo .type-badge {
-  display: inline-block;
-  background: var(--orange2);
-  color: var(--orange);
+.immo-toggle-btn:not(.active):hover {
+  background: var(--bg);
+}
+
+/* Grille */
+.immo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+/* Carte immo */
+.immo-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow .18s, transform .18s;
+}
+
+.immo-card:hover {
+  box-shadow: var(--shadow2), inset 3px 0 0 var(--accent);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.immo-card-img {
+  position: relative;
+  height: 180px;
+  background: var(--bg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.immo-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.immo-img-placeholder {
+  font-size: 48px;
+  opacity: .25;
+}
+
+.immo-transaction-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.immo-transaction-badge--vente {
+  background: var(--accent);
+}
+
+.immo-sponsored-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.immo-card-body {
+  padding: 14px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.immo-type-tag {
   font-size: 11px;
   font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 12px;
-  text-transform: uppercase;
+  color: var(--text2);
+  text-transform: capitalize;
+}
+
+.immo-titre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.35;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.immo-localisation {
+  font-size: 12px;
+  color: var(--text2);
+  margin: 0;
+}
+
+.immo-specs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.immo-spec {
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  color: var(--text2);
+  font-weight: 500;
+}
+
+.immo-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+.immo-prix {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--price);
+}
+
+.immo-prix-periode {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text2);
+  margin-left: 2px;
+}
+
+.immo-source {
+  font-size: 11px;
+  color: var(--text3);
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+@media (max-width: 600px) {
+  .immo-titre-page { font-size: 22px; }
+  .immo-filtres { padding: 12px 14px; }
+  .immo-grid { grid-template-columns: 1fr; }
+  .immo-card-img { height: 160px; }
 }
 
 /* ── Fiche immo ────────────────────────────────────────────────── */
