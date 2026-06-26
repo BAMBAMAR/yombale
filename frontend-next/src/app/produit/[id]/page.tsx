@@ -416,14 +416,33 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
         {prixMin && (() => {
           const catProduit = produit.categorie_nom ?? produit.categorie
 
-          // Similaires filtrés : même catégorie + fourchette prix 40%–200%
+          // Normalise un nom : minuscules sans accents, split en mots ≥4 chars
+          const GENERIQUES = new Set([
+            'smart','avec','pour','noir','gris','blanc','lite','plus','mini',
+            'ultra','pro','max','android','google','slim','full','dual','inch',
+            'pouces','serie','mode','type','sans','dans','vers','this','that',
+          ])
+          function motsCles(nom: string): string[] {
+            return nom.toLowerCase()
+              .normalize('NFD').replace(/[̀-ͯ]/g, '')
+              .replace(/[^a-z0-9]/g, ' ')
+              .split(/\s+/)
+              .filter(w => w.length >= 4 && !GENERIQUES.has(w))
+          }
+
+          const motsProduit = motsCles(produit.nom)
+
+          // Similaires filtrés : même catégorie + au moins 1 mot-clé commun + fourchette prix
           const proches = similaires.filter(p => {
             const catP = p.categorie_nom
             if (catProduit && catP && catP !== catProduit) return false
+            // Au moins un mot significatif en commun
+            const motsP = motsCles(p.nom)
+            if (!motsProduit.some(w => motsP.includes(w))) return false
             const px = p.prix_min ? parseFloat(p.prix_min) : null
             if (!px) return false
             const ratio = px / prixMin!
-            return ratio >= 0.4 && ratio <= 2.0
+            return ratio >= 0.35 && ratio <= 2.5
           }).slice(0, 7)
 
           // Ligne du produit courant (toujours incluse)
