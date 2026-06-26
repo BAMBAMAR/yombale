@@ -132,7 +132,7 @@ export default function AnnoncesClient({
           </p>
         </div>
         <Link href="/deposer-annonce" className="annonce-new-btn">
-          + Déposer une annonce
+          + Publier une annonce
         </Link>
       </div>
 
@@ -141,7 +141,7 @@ export default function AnnoncesClient({
           <span style={{ fontSize: 48 }}>📋</span>
           <p>Vous n&apos;avez pas encore d&apos;annonces.</p>
           <Link href="/deposer-annonce" className="budget-pill active" style={{ marginTop: 8 }}>
-            Déposer ma première annonce
+            Publier ma première annonce
           </Link>
         </div>
       ) : (

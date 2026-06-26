@@ -22,6 +22,7 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
           <a href="/admin" className="admin-nav-link">Dashboard</a>
           <a href="/admin/annonces" className="admin-nav-link">Annonces classifiées</a>
           <a href="/admin/immo" className="admin-nav-link">Immo à valider</a>
+          <a href="/admin/telecom" className="admin-nav-link">Forfaits télécom</a>
         </nav>
         <form action={adminLogout} className="admin-logout-form">
           <button type="submit" className="admin-logout-btn">Déconnexion</button>

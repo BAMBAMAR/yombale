@@ -184,7 +184,7 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
               ← Retour aux annonces
             </Link>
             <Link href="/deposer-annonce" className="annonce-contact-deposer">
-              + Déposer une annonce
+              + Publier une annonce
             </Link>
           </div>
         </aside>

@@ -8,22 +8,23 @@ import { fcfa } from '@/lib/format';
 // ── Types ────────────────────────────────────────────────────────
 
 interface AnnonceImmo {
-  id: number;
+  id: string;
   titre: string;
   prix: number | null;
   ville: string | null;
   quartier: string | null;
-  region: string | null;
   type_bien: string | null;
-  type_offre: string | null;
-  surface: number | null;
+  transaction: string | null;
+  surface_m2: number | null;
   nb_pieces: number | null;
   nb_chambres: number | null;
   description: string | null;
   url_source: string | null;
-  vendeur: string | null;
-  date_publication: string | null;
-  image_url: string | null;
+  contact_nom: string | null;
+  contact_tel: string | null;
+  created_at: string | null;
+  photos: string[] | null;
+  source: string | null;
 }
 
 // ── generateMetadata ─────────────────────────────────────────────
@@ -35,14 +36,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   try {
     const annonce = await apiFetch<AnnonceImmo>(`/immo/${params.id}`);
-    const localisation = [annonce.quartier, annonce.ville, annonce.region]
-      .filter(Boolean)
-      .join(', ');
+    const localisation = [annonce.quartier, annonce.ville].filter(Boolean).join(', ');
     const titre = `${annonce.titre}${localisation ? ` — ${localisation}` : ''} | Nopalou Immo`;
     const description =
       annonce.description
         ? annonce.description.slice(0, 155)
-        : `${annonce.type_bien ?? 'Bien'} à ${annonce.type_offre ?? 'louer/vendre'} à ${localisation || 'Sénégal'}. Prix : ${fcfa(annonce.prix)}.`;
+        : `${annonce.type_bien ?? 'Bien'} à ${annonce.transaction ?? 'louer/vendre'} à ${localisation || 'Sénégal'}. Prix : ${fcfa(annonce.prix)}.`;
+    const mainPhoto = Array.isArray(annonce.photos) ? annonce.photos[0] : null;
 
     return {
       title: titre,
@@ -51,7 +51,7 @@ export async function generateMetadata({
         title: titre,
         description,
         type: 'website',
-        ...(annonce.image_url ? { images: [{ url: annonce.image_url }] } : {}),
+        ...(mainPhoto ? { images: [{ url: mainPhoto }] } : {}),
       },
     };
   } catch {
@@ -76,9 +76,9 @@ export default async function FicheImmoPage({
     notFound();
   }
 
-  const localisation = [annonce.quartier, annonce.ville, annonce.region]
-    .filter(Boolean)
-    .join(', ');
+  const localisation = [annonce.quartier, annonce.ville].filter(Boolean).join(', ');
+  const photos = Array.isArray(annonce.photos) ? annonce.photos : [];
+  const mainPhoto = photos[0] ?? null;
 
   return (
     <div className="fiche-immo">
@@ -99,16 +99,28 @@ export default async function FicheImmoPage({
 
       {/* Hero */}
       <div className="fiche-immo-hero">
-        {annonce.image_url && (
-          <div style={{ position: 'relative', width: '100%', height: '320px', marginBottom: '20px', borderRadius: '10px', overflow: 'hidden', background: 'var(--bg)' }}>
+        {/* Photo principale */}
+        {mainPhoto && (
+          <div style={{ position: 'relative', width: '100%', height: '360px', marginBottom: '12px', borderRadius: '10px', overflow: 'hidden', background: 'var(--bg)' }}>
             <Image
-              src={annonce.image_url}
+              src={mainPhoto}
               alt={annonce.titre}
               fill
               sizes="(max-width: 860px) 90vw, 820px"
               style={{ objectFit: 'cover' }}
               priority
+              unoptimized
             />
+          </div>
+        )}
+        {/* Galerie miniatures */}
+        {photos.length > 1 && (
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 20, paddingBottom: 4 }}>
+            {photos.slice(1).map((url, i) => (
+              <div key={i} style={{ position: 'relative', flexShrink: 0, width: 100, height: 72, borderRadius: 6, overflow: 'hidden', background: 'var(--bg)' }}>
+                <Image src={url} alt={`Photo ${i + 2}`} fill sizes="100px" style={{ objectFit: 'cover' }} unoptimized />
+              </div>
+            ))}
           </div>
         )}
         {annonce.type_bien && (
@@ -117,7 +129,7 @@ export default async function FicheImmoPage({
             style={{ display: 'inline-block', marginBottom: '12px' }}
           >
             {annonce.type_bien}
-            {annonce.type_offre ? ` · ${annonce.type_offre}` : ''}
+            {annonce.transaction ? ` · ${annonce.transaction}` : ''}
           </span>
         )}
 
@@ -130,9 +142,9 @@ export default async function FicheImmoPage({
               Localisation : <strong>{localisation}</strong>
             </span>
           )}
-          {annonce.surface && (
+          {annonce.surface_m2 && (
             <span className="meta-chip">
-              Surface : <strong>{annonce.surface} m²</strong>
+              Surface : <strong>{annonce.surface_m2} m²</strong>
             </span>
           )}
           {annonce.nb_pieces && (
@@ -145,16 +157,16 @@ export default async function FicheImmoPage({
               Chambres : <strong>{annonce.nb_chambres}</strong>
             </span>
           )}
-          {annonce.vendeur && (
+          {annonce.contact_nom && (
             <span className="meta-chip">
-              Agence : <strong>{annonce.vendeur}</strong>
+              Contact : <strong>{annonce.contact_nom}</strong>
             </span>
           )}
-          {annonce.date_publication && (
+          {annonce.created_at && (
             <span className="meta-chip">
               Publié le :{' '}
               <strong>
-                {new Date(annonce.date_publication).toLocaleDateString('fr-FR')}
+                {new Date(annonce.created_at).toLocaleDateString('fr-FR')}
               </strong>
             </span>
           )}
@@ -171,13 +183,30 @@ export default async function FicheImmoPage({
         >
           {fcfa(annonce.prix)}
         </p>
-        {annonce.type_offre?.toLowerCase().includes('locat') && (
+        {annonce.transaction?.toLowerCase().includes('locat') && (
           <p style={{ fontSize: '13px', color: 'var(--text3)' }}>par mois</p>
         )}
 
         {/* Description */}
         {annonce.description && (
           <p className="description">{annonce.description}</p>
+        )}
+
+        {/* Contact */}
+        {annonce.contact_tel && (
+          <div style={{ background: 'var(--navy)', color: '#fff', borderRadius: 10, padding: '16px 20px', marginTop: 20 }}>
+            {annonce.contact_nom && <p style={{ fontWeight: 700, marginBottom: 8 }}>{annonce.contact_nom}</p>}
+            <a href={`tel:${annonce.contact_tel}`} style={{ color: '#fff', fontWeight: 600, fontSize: 16 }}>
+              📞 {annonce.contact_tel}
+            </a>
+            <a
+              href={`https://wa.me/${annonce.contact_tel.replace(/\D/g, '')}?text=Bonjour, je suis intéressé par votre annonce : ${annonce.titre}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{ display: 'block', marginTop: 8, color: '#25d366', fontWeight: 600 }}
+            >
+              💬 WhatsApp
+            </a>
+          </div>
         )}
 
         {/* Lien source */}

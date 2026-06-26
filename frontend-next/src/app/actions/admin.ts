@@ -26,6 +26,7 @@ export async function adminLogin(formData: FormData): Promise<{ error?: string }
   const jar = await cookies()
   jar.set(COOKIE, secret, {
     httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/admin',
     maxAge: 60 * 60 * 8,

@@ -4,7 +4,8 @@ import './globals.css';
 import { getOptionalSession } from '@/lib/dal';
 import NavbarActions from './NavbarActions';
 import NavbarSearch from './NavbarSearch';
-import CompareBar from './CompareBar';
+import NavbarGuides from './NavbarGuides'
+import BottomBars from './BottomBars';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -82,18 +83,19 @@ export default async function RootLayout({
       </head>
       <body>
         <nav className="navbar">
-          <a href="/" className="logo">
-            Nopa<span>lou</span>
-          </a>
+          <a href="/" className="logo"><img src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} /><span className="logo-name" data-suffix="lou">Nopa</span></a>
           <div className="navbar-links">
             <a href="/" className="navbar-link">Produits</a>
             <a href="/immo" className="navbar-link">Immobilier</a>
             <a href="/telecom" className="navbar-link">Télécom</a>
+            <a href="/annonces" className="navbar-link">Annonces</a>
+            <a href="/boutiques" className="navbar-link">Boutiques</a>
+            <NavbarGuides />
           </div>
           <NavbarSearch />
           <div className="navbar-actions">
             <a href="/deposer-annonce" className="navbar-deposer">
-              + Déposer
+              + Publier
             </a>
             {session ? (
               <NavbarActions nom={session.nom ?? session.email ?? 'Mon compte'} />
@@ -108,25 +110,26 @@ export default async function RootLayout({
 
         <main>{children}</main>
 
-        <CompareBar />
+        <BottomBars />
 
         <footer className="site-footer">
           <div className="footer-inner">
             {/* Colonne 1 — Brand */}
             <div className="footer-brand">
-              <a href="/" className="footer-logo">Nopa<span>lou</span></a>
-              <p className="footer-tagline">Comparateur de prix au Sénégal 🇸🇳</p>
-              <p className="footer-tagline" style={{ marginTop: '8px', fontSize: '12px' }}>
-                <a href="mailto:contact@nopalou.sn" style={{ color: 'rgba(255,255,255,.5)' }}>contact@nopalou.sn</a>
-              </p>
+              <a href="/" className="footer-logo">
+                <img src="/icons/logo-mark.svg" alt="" width={28} height={28} style={{ borderRadius: 7, flexShrink: 0 }} />
+                <span className="footer-logo-name" data-suffix="lou">Nopa</span>
+              </a>
+              <p className="footer-tagline">Le premier comparateur de prix dédié au marché sénégalais — produits, immobilier, forfaits télécom.</p>
               <div className="footer-social">
                 <a href="https://facebook.com/nopalou" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="footer-social-link">f</a>
                 <a href="https://twitter.com/nopalou_sn" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="footer-social-link">𝕏</a>
                 <a href="https://instagram.com/nopalou_sn" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="footer-social-link">▣</a>
+                <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="footer-social-link">💬</a>
               </div>
             </div>
 
-            <div className="footer-links">
+            <div className="footer-links" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
               {/* Colonne 2 — Catégories */}
               <div className="footer-col">
                 <p className="footer-col-titre">Catégories</p>
@@ -146,22 +149,41 @@ export default async function RootLayout({
                 <p className="footer-col-titre">Mon compte</p>
                 <a href="/connexion">Connexion</a>
                 <a href="/inscription">Inscription</a>
-                <a href="/deposer-annonce">Déposer une annonce</a>
+                <a href="/deposer-annonce">Publier une annonce</a>
+                <a href="/deposer-immo">Publier un bien immo</a>
                 <a href="/mes-annonces">Mes annonces</a>
                 <a href="/favoris">Mes favoris</a>
-                <a href="/compte">Mon profil</a>
+                <a href="/boutique">Ma boutique</a>
               </div>
 
-              {/* Colonne 4 — Légal */}
+              {/* Colonne 4 — Informations */}
               <div className="footer-col">
                 <p className="footer-col-titre">Informations</p>
-                <a href="/mentions-legales">Mentions légales</a>
-                <a href="/confidentialite">Politique de confidentialité</a>
-                <a href="/cgu">CGU</a>
+                <a href="/guide-achat">Comment ça marche ?</a>
                 <a href="/boutiques">Boutiques partenaires</a>
+                <a href="/mentions-legales">Mentions légales</a>
+                <a href="/confidentialite">Confidentialité</a>
+                <a href="/cgu">CGU</a>
+              </div>
+
+              {/* Colonne 5 — Contact */}
+              <div className="footer-col">
+                <p className="footer-col-titre">Contact</p>
+                <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a>
+                <a href="tel:+221708717942">+221 70 871 79 42</a>
+                <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,.35)', marginTop: 4 }}>Dakar, Sénégal</span>
               </div>
             </div>
           </div>
+
+          {/* Bandeau confiance */}
+          <div className="footer-trust">
+            <div className="footer-trust-item">✅ <strong>Gratuit</strong> &amp; indépendant</div>
+            <div className="footer-trust-item">🔄 Prix mis à jour <strong>toutes les 6h</strong></div>
+            <div className="footer-trust-item">🇸🇳 <strong>100% Sénégal</strong></div>
+          </div>
+
           <div className="footer-bottom">
             <p>© {new Date().getFullYear()} Nopalou — Dakar, Sénégal. Tous droits réservés.</p>
           </div>

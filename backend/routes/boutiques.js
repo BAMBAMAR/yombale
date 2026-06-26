@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-// ── GET /api/boutiques/mine — mes boutiques (auth)
+// ── GET /api/boutiques/mine — mes boutiques (auth) — DOIT être avant /:id
 router.get('/mine', verifierToken, async (req, res) => {
   try {
     const rows = await pool.query(
@@ -54,6 +54,21 @@ router.get('/mine', verifierToken, async (req, res) => {
       [req.user.userId]
     );
     res.json({ boutiques: rows.rows });
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+// ── GET /api/boutiques/:id — fiche publique d'une boutique (APRÈS /mine)
+router.get('/:id', param('id').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const r = await pool.query(
+      `SELECT id, nom, description, categorie, telephone, adresse, ville, logo_url,
+              utilisateur_id, created_at
+       FROM boutiques WHERE id=$1 AND actif=true`,
+      [req.params.id]
+    );
+    if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    res.json(r.rows[0]);
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 

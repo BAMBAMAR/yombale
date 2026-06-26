@@ -36,7 +36,7 @@ export default function PaiementSuccesPage({
                 Voir mes annonces
               </Link>
               <Link href="/deposer-annonce" className="paiement-cta-btn paiement-cta-btn--outline">
-                Déposer une autre annonce
+                Publier une autre annonce
               </Link>
             </>
           ) : (

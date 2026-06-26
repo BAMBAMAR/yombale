@@ -109,7 +109,7 @@ router.post('/mot-de-passe-oublie', limiterAuth, body('email').isEmail(), async 
 
     if (rows.length) {
       const resetToken = jwt.sign({ userId: rows[0].id, type: 'reset' }, process.env.JWT_SECRET, { expiresIn: '1h' });
-      const lien = `${FRONTEND_URL}/?reset=${resetToken}`;
+      const lien = `${FRONTEND_URL}/mot-de-passe-oublie?token=${resetToken}`;
       envoyerEmail({
         to: email,
         subject: 'Nopalou — réinitialisation de votre mot de passe',

@@ -98,7 +98,7 @@ export default async function AnnoncesPage({
           </p>
         </div>
         <Link href="/deposer-annonce" className="annonces-cta-btn">
-          + Déposer une annonce
+          + Publier une annonce
         </Link>
       </div>
 

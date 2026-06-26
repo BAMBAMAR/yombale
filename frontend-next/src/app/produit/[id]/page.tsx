@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import { fcfa, escapeHtml } from '@/lib/format';
 import { getOptionalSession } from '@/lib/dal';
 import AlertePrix from '@/app/AlertePrix';
+import TrackRecent from './TrackRecent';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -32,6 +33,22 @@ interface Offre {
   _suspect?: boolean;
 }
 
+interface HistoriquePoint {
+  jour: string;
+  prix_min: string;
+  prix_max: string;
+}
+
+interface ProduitSimilaire {
+  id: string;
+  nom: string;
+  image_url: string | null;
+  prix_min: string | null;
+  nb_offres: string | null;
+  categorie_nom: string | null;
+  similarite: string | null;
+}
+
 const MARCHAND_ICONS: Record<string, string> = {
   'Jumia':       '🛒',
   'Expat-Dakar': '📦',
@@ -44,6 +61,99 @@ const MARCHAND_ICONS: Record<string, string> = {
 function icon(nom: string | null) {
   if (!nom) return '🏪'
   return MARCHAND_ICONS[nom] ?? '🏪'
+}
+
+// ── Composant Graphique Historique (SVG pur, server-rendered) ──────
+
+function HistoriqueChart({ data }: { data: HistoriquePoint[] }) {
+  if (data.length < 2) return null;
+
+  const W = 600, H = 160, PAD = { t: 16, r: 16, b: 32, l: 64 };
+  const pts = data.map(d => ({
+    jour: d.jour,
+    min: parseFloat(d.prix_min),
+    max: parseFloat(d.prix_max),
+  })).filter(p => p.min > 0);
+
+  if (pts.length < 2) return null;
+
+  const allPrix = pts.flatMap(p => [p.min, p.max]);
+  const yMin = Math.min(...allPrix);
+  const yMax = Math.max(...allPrix);
+  const yRange = yMax - yMin || 1;
+
+  const xScale = (i: number) => PAD.l + (i / (pts.length - 1)) * (W - PAD.l - PAD.r);
+  const yScale = (v: number) => PAD.t + (1 - (v - yMin) / yRange) * (H - PAD.t - PAD.b);
+
+  const minLine = pts.map((p, i) => `${xScale(i)},${yScale(p.min)}`).join(' ');
+  const areaPath = [
+    ...pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${xScale(i)},${yScale(p.min)}`),
+    ...pts.map((p, i) => `${i === 0 ? 'L' : 'L'}${xScale(pts.length - 1 - i)},${yScale(pts[pts.length - 1 - i].min)}`).reverse(),
+    'Z',
+  ].join(' ');
+
+  const labelsX: { x: number; label: string }[] = [];
+  const step = Math.max(1, Math.floor(pts.length / 4));
+  for (let i = 0; i < pts.length; i += step) {
+    const d = new Date(pts[i].jour);
+    labelsX.push({ x: xScale(i), label: `${d.getDate()}/${d.getMonth() + 1}` });
+  }
+
+  const labelsY = [yMin, yMin + yRange / 2, yMax].map(v => ({
+    y: yScale(v),
+    label: fcfa(Math.round(v)),
+  }));
+
+  const currentMin = pts[pts.length - 1].min;
+  const startMin = pts[0].min;
+  const variation = startMin > 0 ? ((currentMin - startMin) / startMin) * 100 : 0;
+
+  return (
+    <div className="historique-section">
+      <div className="historique-header">
+        <h2 className="offres-titre">📈 Historique des prix <span>{pts.length} jours</span></h2>
+        <span className={`historique-variation ${variation <= 0 ? 'historique-variation--good' : 'historique-variation--bad'}`}>
+          {variation <= 0 ? '↓' : '↑'} {Math.abs(variation).toFixed(1)}%
+        </span>
+      </div>
+      <div className="historique-stats-row">
+        <div className="historique-stat">
+          <span>Prix actuel</span>
+          <strong>{fcfa(currentMin)}</strong>
+        </div>
+        <div className="historique-stat">
+          <span>Plus bas ({pts.length}j)</span>
+          <strong className="historique-stat--green">{fcfa(Math.min(...pts.map(p => p.min)))}</strong>
+        </div>
+        <div className="historique-stat">
+          <span>Plus haut ({pts.length}j)</span>
+          <strong>{fcfa(Math.max(...pts.map(p => p.min)))}</strong>
+        </div>
+      </div>
+      <div className="historique-chart-wrap">
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="historique-svg">
+          {/* Grille horizontale */}
+          {labelsY.map((l, i) => (
+            <line key={i} x1={PAD.l} y1={l.y} x2={W - PAD.r} y2={l.y} stroke="#E8DDD2" strokeWidth="1" strokeDasharray="4 4" />
+          ))}
+          {/* Zone sous la courbe */}
+          <path d={areaPath} fill="rgba(10,92,54,0.08)" />
+          {/* Ligne prix min */}
+          <polyline points={minLine} fill="none" stroke="#0A5C36" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          {/* Labels Y */}
+          {labelsY.map((l, i) => (
+            <text key={i} x={PAD.l - 6} y={l.y + 4} textAnchor="end" fontSize="10" fill="#9C8E84">{l.label}</text>
+          ))}
+          {/* Labels X */}
+          {labelsX.map((l, i) => (
+            <text key={i} x={l.x} y={H - 4} textAnchor="middle" fontSize="10" fill="#9C8E84">{l.label}</text>
+          ))}
+          {/* Point actuel */}
+          <circle cx={xScale(pts.length - 1)} cy={yScale(currentMin)} r="4" fill="#0A5C36" />
+        </svg>
+      </div>
+    </div>
+  );
 }
 
 // ── generateMetadata ───────────────────────────────────────────────
@@ -98,6 +208,8 @@ function buildJsonLd(produit: Produit, offres: Offre[]): string {
 export default async function FicheProduitPage({ params }: { params: { id: string } }) {
   let produit: Produit;
   let offres: Offre[] = [];
+  let historique: HistoriquePoint[] = [];
+  let similaires: ProduitSimilaire[] = [];
 
   const session = await getOptionalSession();
 
@@ -107,10 +219,17 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
     notFound();
   }
 
-  try {
-    const raw = await apiFetch<Offre[] | { offres?: Offre[]; data?: Offre[] }>(`/produits/${params.id}/offres`);
-    offres = Array.isArray(raw) ? raw : (raw.offres ?? raw.data ?? []);
-  } catch { /* offres optionnelles */ }
+  await Promise.all([
+    apiFetch<Offre[] | { offres?: Offre[]; data?: Offre[] }>(`/produits/${params.id}/offres`)
+      .then(raw => { offres = Array.isArray(raw) ? raw : (raw.offres ?? raw.data ?? []); })
+      .catch(() => {}),
+    apiFetch<HistoriquePoint[]>(`/produits/${params.id}/historique`)
+      .then(raw => { historique = Array.isArray(raw) ? raw : []; })
+      .catch(() => {}),
+    apiFetch<{ produits: ProduitSimilaire[] }>(`/produits/${params.id}/similaires`)
+      .then(raw => { similaires = raw?.produits ?? []; })
+      .catch(() => {}),
+  ]);
 
   const valides  = offres.filter(o => !o._suspect && o.prix != null)
   const prixMin  = valides.length ? Math.min(...valides.map(o => o.prix!)) : null
@@ -120,6 +239,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
 
   return (
     <>
+      <TrackRecent id={produit.id} nom={produit.nom} prix_min={prixMin} image_url={produit.image_url} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: buildJsonLd(produit, offres) }} />
 
       <div className="fiche">
@@ -224,6 +344,10 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                 </div>
               </div>
             )}
+
+            {/* Historique des prix */}
+            <HistoriqueChart data={historique} />
+
           </div>
 
           {/* ── Sidebar résumé ──────────────────────────────────── */}
@@ -267,6 +391,35 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
             </div>
           </aside>
         </div>
+
+        {/* ── Produits similaires ────────────────────────────────── */}
+        {similaires.length > 0 && (
+          <section className="similaires-section">
+            <h2 className="similaires-titre">Vous aimerez aussi</h2>
+            <div className="similaires-grid">
+              {similaires.slice(0, 6).map(p => (
+                <Link key={p.id} href={`/produit/${p.id}`} className="similaire-card">
+                  <div className="similaire-img-wrap">
+                    {p.image_url ? (
+                      <Image src={p.image_url} alt={p.nom} fill sizes="180px" style={{ objectFit: 'contain' }} />
+                    ) : (
+                      <span className="similaire-placeholder">📦</span>
+                    )}
+                  </div>
+                  <div className="similaire-info">
+                    <p className="similaire-nom">{p.nom}</p>
+                    {p.prix_min && (
+                      <p className="similaire-prix">{fcfa(parseFloat(p.prix_min))}</p>
+                    )}
+                    {p.nb_offres && (
+                      <p className="similaire-offres">{p.nb_offres} offre{parseInt(p.nb_offres) > 1 ? 's' : ''}</p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </>
   );

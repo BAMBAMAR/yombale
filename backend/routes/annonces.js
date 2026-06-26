@@ -107,14 +107,15 @@ function autoModerer({ titre, description, contact_tel, prix }) {
 // ── GET /api/annonces — liste publique paginée
 router.get('/', async (req, res) => {
   try {
-    const { categorie, ville, q, limit = 20, page = 1 } = req.query;
+    const { categorie, ville, q, utilisateur_id, limit = 20, page = 1 } = req.query;
     const offset = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit));
     const lim    = Math.min(50, parseInt(limit));
     const conds  = ['actif=true', 'supprimee=false'];
     const vals   = [];
 
-    if (categorie) { vals.push(categorie); conds.push(`categorie_slug=$${vals.length}`); }
-    if (ville)     { vals.push(ville);     conds.push(`ville ILIKE $${vals.length}`); }
+    if (categorie)      { vals.push(categorie);       conds.push(`categorie_slug=$${vals.length}`); }
+    if (ville)          { vals.push(ville);            conds.push(`ville ILIKE $${vals.length}`); }
+    if (utilisateur_id) { vals.push(utilisateur_id);   conds.push(`utilisateur_id=$${vals.length}`); }
     if (q) {
       vals.push(`%${q}%`);
       conds.push(`(titre ILIKE $${vals.length} OR description ILIKE $${vals.length})`);

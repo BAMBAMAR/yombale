@@ -5,7 +5,7 @@ import Link from 'next/link'
 import FormulaireAnnonce from './FormulaireAnnonce'
 
 export const metadata: Metadata = {
-  title: 'Déposer une annonce — Nopalou',
+  title: 'Publier une annonce — Nopalou',
   description: 'Publiez votre annonce gratuitement sur Nopalou : téléphones, informatique, mode, auto, services et plus au Sénégal.',
 }
 
@@ -20,7 +20,7 @@ export default async function DeposerAnnoncePage() {
     <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 720 }}>
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--navy)', margin: '0 0 6px' }}>
-          Déposer une <span style={{ color: 'var(--accent)' }}>annonce</span>
+          Publier une <span style={{ color: 'var(--accent)' }}>annonce</span>
         </h1>
         <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
           Publiez gratuitement sur Nopalou — les 2 premières annonces sont publiées instantanément.

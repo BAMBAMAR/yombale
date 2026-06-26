@@ -5,9 +5,12 @@ services:
     plan: free
     buildCommand: npm install
     startCommand: node backend/app.js
+    healthCheckPath: /health
     envVars:
       - key: NODE_VERSION
         value: 18
+      - key: NODE_ENV
+        value: "production"
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
@@ -29,6 +32,12 @@ services:
       - key: FB_EMAIL
         sync: false
       - key: FB_PASSWORD
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
         sync: false
       - key: WAVE_API_KEY
         sync: false

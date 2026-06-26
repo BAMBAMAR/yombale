@@ -10,6 +10,10 @@ const axios = require('axios');
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM     = process.env.EMAIL_FROM || 'Nopalou <onboarding@resend.dev>';
 
+if (process.env.NODE_ENV === 'production' && (!process.env.EMAIL_FROM || process.env.EMAIL_FROM.includes('resend.dev'))) {
+  console.error('[EMAIL] ⚠️  EMAIL_FROM non configuré ou utilise le domaine sandbox Resend — les emails partiront depuis onboarding@resend.dev. Configurez EMAIL_FROM avec votre domaine vérifié.');
+}
+
 async function envoyerEmail({ to, subject, html }) {
   if (!RESEND_API_KEY) {
     console.warn('[EMAIL] RESEND_API_KEY non configurée — email non envoyé:', subject, '→', to);

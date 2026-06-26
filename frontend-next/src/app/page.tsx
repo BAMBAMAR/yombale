@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
-import { fcfa } from '@/lib/format'
 import SearchBar from './SearchBar'
-import CardActions from './CardActions'
+import ProduitsListe from './ProduitsListe'
+import RecentlyViewed from './RecentlyViewed'
 
 export const metadata: Metadata = {
   title: 'Nopalou — Comparateur de prix Sénégal',
@@ -157,6 +157,9 @@ export default async function HomePage({
         )}
       </div>
 
+      {/* ── Récemment consultés ──────────────────────────────────── */}
+      <RecentlyViewed />
+
       {/* ── Grille produits ──────────────────────────────────────── */}
       {erreur ? (
         <div className="erreur-page">
@@ -164,43 +167,13 @@ export default async function HomePage({
           <p>{erreur}</p>
         </div>
       ) : (
-        <>
-          {total > 0 && (
-            <p className="resultats-count">
-              {total.toLocaleString('fr-SN')} résultat{total > 1 ? 's' : ''}
-            </p>
-          )}
-          <div className="grid-produits">
-            {produits.map((p) => (
-              <Link key={p.id} href={`/produit/${p.id}`} style={{ display: 'contents' }}>
-                <article className="card-produit">
-                  <div className="card-img">
-                    {p.prix_min && p.prix_max && p.prix_max > p.prix_min * 1.1 && (
-                      <span className="badge-promo">
-                        -{Math.round((1 - p.prix_min / p.prix_max) * 100)}%
-                      </span>
-                    )}
-                    {p.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.image_url} alt={p.nom} loading="lazy" />
-                    ) : (
-                      <span className="card-img-placeholder">📦</span>
-                    )}
-                  </div>
-                  {p.marque && <p className="marque">{p.marque}</p>}
-                  <p className="nom">{p.nom}</p>
-                  <p className="prix">{fcfa(p.prix_min)}</p>
-                  {p.nb_offres != null && p.nb_offres > 0 && (
-                    <p style={{ fontSize: '12px', color: 'var(--text3)' }}>
-                      {p.nb_offres} offre{p.nb_offres > 1 ? 's' : ''}
-                    </p>
-                  )}
-                  <CardActions id={p.id} nom={p.nom} />
-                </article>
-              </Link>
-            ))}
-          </div>
-        </>
+        <ProduitsListe
+          initialProduits={produits}
+          total={total}
+          q={q}
+          categorie={categorie}
+          prixMax={prixMax}
+        />
       )}
     </>
   )

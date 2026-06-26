@@ -12,7 +12,7 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
   if (!email || !password) return { error: 'Email et mot de passe requis' }
 
   try {
-    const res = await fetch(`${API}/api/auth/login`, {
+    const res = await fetch(`${API}/api/auth/connexion`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, mot_de_passe: password }),
@@ -42,7 +42,7 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
   if (password.length < 8) return { error: 'Le mot de passe doit faire au moins 8 caractères' }
 
   try {
-    const res = await fetch(`${API}/api/auth/register`, {
+    const res = await fetch(`${API}/api/auth/inscription`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nom, email, mot_de_passe: password }),

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import { createBoutique, updateBoutique, deleteBoutique } from './actions'
@@ -52,15 +52,21 @@ function SubmitButton({ label }: { label: string }) {
 function BoutiqueForm({
   boutique,
   onCancel,
+  onSuccess,
 }: {
   boutique?: Boutique
   onCancel: () => void
+  onSuccess: () => void
 }) {
   const action = boutique
     ? updateBoutique.bind(null, boutique.id)
     : createBoutique
 
   const [state, formAction] = useFormState<ActionState, FormData>(action, {})
+
+  useEffect(() => {
+    if (state.success) onSuccess()
+  }, [state.success])
 
   const inputStyle = {
     padding: '10px 14px', border: '1px solid var(--border)',
@@ -217,6 +223,8 @@ export default function BoutiqueClient({
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const router = useRouter()
 
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+
   async function handleDelete(id: string) {
     if (!confirm('Supprimer cette boutique définitivement ?')) return
     setDeleteError(null)
@@ -224,8 +232,16 @@ export default function BoutiqueClient({
     if (result.error) {
       setDeleteError(result.error)
     } else {
+      setSuccessMsg('Boutique supprimée.')
       router.refresh()
     }
+  }
+
+  function handleSuccess() {
+    const isEdit = typeof mode === 'object' && 'editing' in mode
+    setSuccessMsg(isEdit ? '✅ Boutique modifiée !' : '✅ Boutique créée !')
+    setMode('list')
+    router.refresh()
   }
 
   if (mode === 'create' || (typeof mode === 'object' && 'editing' in mode)) {
@@ -234,6 +250,7 @@ export default function BoutiqueClient({
         <BoutiqueForm
           boutique={typeof mode === 'object' ? mode.editing : undefined}
           onCancel={() => setMode('list')}
+          onSuccess={handleSuccess}
         />
       </div>
     )
@@ -258,6 +275,11 @@ export default function BoutiqueClient({
         )}
       </div>
 
+      {successMsg && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '10px 14px', color: 'var(--green)', fontSize: '14px', marginBottom: '16px', fontWeight: 600 }}>
+          {successMsg}
+        </div>
+      )}
       {deleteError && (
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '10px 14px', color: 'var(--red)', fontSize: '14px', marginBottom: '16px' }}>
           {deleteError}

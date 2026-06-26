@@ -5,7 +5,9 @@ const key = new TextEncoder().encode(process.env.SESSION_SECRET)
 const COOKIE_NAME = 'nopalou_session'
 
 // Routes qui nécessitent une session valide
-const PROTECTED_ROUTES = ['/compte', '/mes-annonces', '/mes-annonces-immo', '/boutique', '/favoris']
+// Matches exactes — pas de startsWith pour éviter de bloquer /boutiques (public) avec /boutique
+const PROTECTED_ROUTES = ['/compte', '/mes-annonces', '/mes-annonces-immo', '/deposer-immo']
+const PROTECTED_EXACT = ['/boutique']
 // Routes accessibles uniquement si NON connecté
 const AUTH_ROUTES = ['/connexion', '/inscription']
 
@@ -26,7 +28,8 @@ export async function middleware(req: NextRequest) {
   const token = req.cookies.get(COOKIE_NAME)?.value
   const session = token ? await verifyToken(token) : null
 
-  const isProtected = PROTECTED_ROUTES.some(r => pathname.startsWith(r))
+  const isProtected = PROTECTED_ROUTES.some(r => pathname.startsWith(r)) ||
+                     PROTECTED_EXACT.some(r => pathname === r)
   const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r))
 
   if (isProtected && !session) {
@@ -43,7 +46,7 @@ export async function middleware(req: NextRequest) {
   const csp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
-    `style-src 'self' 'nonce-${nonce}'`,
+    `style-src 'self' 'unsafe-inline'`,
     "img-src 'self' blob: data: https:",
     "font-src 'self'",
     `connect-src 'self' ${process.env.BACKEND_URL ?? 'http://localhost:3000'}`,

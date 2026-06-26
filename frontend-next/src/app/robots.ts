@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/compte/', '/mes-annonces', '/payer-annonce/', '/paiement/'],
+        disallow: ['/compte/', '/mes-annonces', '/payer-annonce/', '/paiement/', '/admin/'],
       },
     ],
     sitemap: `${base}/sitemap.xml`,

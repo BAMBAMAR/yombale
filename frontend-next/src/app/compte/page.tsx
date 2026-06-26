@@ -5,11 +5,13 @@ import { verifySession } from '@/lib/dal'
 export const metadata: Metadata = { title: 'Mon compte — Nopalou' }
 
 const MENU = [
-  { href: '/mes-annonces',  label: 'Mes annonces',  emoji: '📋', desc: 'Gérer vos annonces publiées',   actif: true  },
-  { href: '/boutique',      label: 'Ma boutique',   emoji: '🏪', desc: 'Votre vitrine commerçante',     actif: true  },
-  { href: '/favoris',       label: 'Mes favoris',   emoji: '♥',  desc: 'Produits sauvegardés',         actif: true  },
-  { href: '/deposer-annonce', label: 'Déposer',     emoji: '➕',  desc: 'Publier une nouvelle annonce', actif: true  },
-  { href: '/compte/profil', label: 'Mon profil',    emoji: '✏️', desc: 'Modifier mes informations',    actif: true  },
+  { href: '/mes-annonces',       label: 'Mes annonces',      emoji: '📋', desc: 'Gérer vos annonces classifiées',   actif: true },
+  { href: '/mes-annonces-immo',  label: 'Mes biens immo',    emoji: '🏠', desc: 'Gérer vos annonces immobilières',  actif: true },
+  { href: '/boutique',           label: 'Ma boutique',       emoji: '🏪', desc: 'Votre vitrine commerçante',        actif: true },
+  { href: '/favoris',            label: 'Mes favoris',       emoji: '♥',  desc: 'Produits sauvegardés',            actif: true },
+  { href: '/deposer-annonce',    label: 'Publier une annonce',emoji: '➕', desc: 'Publier une annonce classifiée',  actif: true },
+  { href: '/deposer-immo',       label: 'Publier un bien',   emoji: '🏡', desc: 'Publier une annonce immobilière', actif: true },
+  { href: '/compte/profil',      label: 'Mon profil',        emoji: '✏️', desc: 'Modifier mes informations',       actif: true },
 ]
 
 export default async function ComptePage() {

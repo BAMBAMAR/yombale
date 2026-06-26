@@ -10,11 +10,12 @@ if (typeof globalThis.File === 'undefined') {
   };
 }
 
-const express = require('express');
-const cors    = require('cors');
-const helmet  = require('helmet');
-const morgan  = require('morgan');
-const path    = require('path');
+const express     = require('express');
+const cors        = require('cors');
+const helmet      = require('helmet');
+const morgan      = require('morgan');
+const compression = require('compression');
+const path        = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -59,8 +60,7 @@ const ALLOWED_ORIGINS = [
       : null,
   process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null,
   process.env.RENDER_EXTERNAL_URL || null,
-  'http://localhost:3000',
-  'http://localhost:8080',
+  ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000', 'http://localhost:8080'] : []),
 ].filter(Boolean);
 
 app.use(cors({
@@ -71,6 +71,7 @@ app.use(cors({
   },
   credentials: true,
 }));
+app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
@@ -164,7 +165,7 @@ async function demarrerApp() {
     console.warn('[MIGRATE] Avertissement:', err.message);
   }
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`✅ Nopalou → http://localhost:${PORT}`);
 
     if (process.env.SCRAPING_DISABLED !== 'true') {
@@ -173,6 +174,12 @@ async function demarrerApp() {
     } else {
       console.log('[SCRAPER] Désactivé (SCRAPING_DISABLED=true)');
     }
+  });
+
+  const { pool: dbPool2 } = require('./models/db');
+  process.on('SIGTERM', () => {
+    console.log('[SIGTERM] Arrêt gracieux…');
+    server.close(() => dbPool2.end(() => process.exit(0)));
   });
 }
 
