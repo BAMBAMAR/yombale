@@ -282,15 +282,19 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               </div>
             </div>
 
-            {/* Box meilleur prix */}
+            {/* Box prix */}
             {prixMin && (
               <div className="prix-box">
-                <p className="prix-box-label">🏆 MEILLEUR PRIX TROUVÉ</p>
+                <p className="prix-box-label">💰 PRIX LE PLUS BAS TROUVÉ</p>
                 <p className="prix-box-montant">{fcfa(prixMin)}</p>
-                {economie && (
-                  <p className="prix-box-eco">🔥 Économie possible : {fcfa(economie)}</p>
+                {valides.length > 1 && economie && (
+                  <p className="prix-box-eco">🔥 Écart entre marchands : {fcfa(economie)}</p>
                 )}
-                <p className="prix-box-nb">{valides.length} marchand{valides.length > 1 ? 's' : ''} comparé{valides.length > 1 ? 's' : ''}</p>
+                <p className="prix-box-nb">
+                  {valides.length > 1
+                    ? `${valides.length} marchands comparés`
+                    : '1 marchand référencé'}
+                </p>
               </div>
             )}
 
@@ -409,88 +413,117 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
         </div>
 
         {/* ── Comparaison produits similaires ───────────────────── */}
-        {similaires.length > 0 && prixMin && (() => {
+        {prixMin && (() => {
           const catProduit = produit.categorie_nom ?? produit.categorie
-          const proches = similaires
-            .filter(p => {
-              // Même catégorie obligatoire (évite TV/smartphone dans congélateur)
-              const catP = p.categorie_nom
-              if (catProduit && catP && catP !== catProduit) return false
-              const px = p.prix_min ? parseFloat(p.prix_min) : null
-              if (!px || !prixMin) return false
-              // Fourchette de prix raisonnable : 40% – 200% du prix courant
-              const ratio = px / prixMin
-              return ratio >= 0.4 && ratio <= 2.0
-            })
-            .slice(0, 8)
-          if (proches.length === 0) return null
+
+          // Similaires filtrés : même catégorie + fourchette prix 40%–200%
+          const proches = similaires.filter(p => {
+            const catP = p.categorie_nom
+            if (catProduit && catP && catP !== catProduit) return false
+            const px = p.prix_min ? parseFloat(p.prix_min) : null
+            if (!px) return false
+            const ratio = px / prixMin!
+            return ratio >= 0.4 && ratio <= 2.0
+          }).slice(0, 7)
+
+          // Ligne du produit courant (toujours incluse)
+          const lignes = [
+            {
+              id: String(produit.id),
+              nom: produit.nom,
+              image_url: produit.image_url,
+              px: prixMin,
+              nb: valides.length,
+              courant: true,
+            },
+            ...proches.map(p => ({
+              id: p.id,
+              nom: p.nom,
+              image_url: p.image_url,
+              px: p.prix_min ? parseFloat(p.prix_min) : null,
+              nb: p.nb_offres ? parseInt(p.nb_offres) : 0,
+              courant: false,
+            })),
+          ].sort((a, b) => (a.px ?? 999999) - (b.px ?? 999999))
+
+          // Meilleur prix du marché parmi tous les produits comparés
+          const meilleuxPrix = lignes[0]?.px ?? prixMin
+          const courantEstMeilleur = meilleuxPrix === prixMin
+
+          if (lignes.length <= 1) return null
+
           return (
             <section className="similaires-section">
-              <h2 className="similaires-titre">📊 Comparer les prix similaires</h2>
+              <h2 className="similaires-titre">📊 Comparer les prix du marché</h2>
               <p className="similaires-sous-titre">
-                Produits de la même catégorie avec des prix proches — triés par écart de prix
+                {courantEstMeilleur
+                  ? '✅ Ce produit a le meilleur prix de sa catégorie parmi les références comparées.'
+                  : `💡 Un produit similaire est disponible à partir de ${fcfa(meilleuxPrix!)} — voir ci-dessous.`}
               </p>
               <table className="similaires-table">
                 <thead>
                   <tr>
                     <th>Produit</th>
-                    <th>Meilleur prix</th>
+                    <th>Prix le plus bas</th>
                     <th>Offres</th>
-                    <th>Écart</th>
+                    <th>vs ce produit</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {proches
-                    .sort((a, b) => {
-                      const pa = a.prix_min ? Math.abs(parseFloat(a.prix_min) - prixMin!) : 999999
-                      const pb = b.prix_min ? Math.abs(parseFloat(b.prix_min) - prixMin!) : 999999
-                      return pa - pb
-                    })
-                    .map(p => {
-                      const px = p.prix_min ? parseFloat(p.prix_min) : null
-                      const ecartPct = px && prixMin ? Math.round((px - prixMin) / prixMin * 100) : null
-                      const ecartClass = ecartPct === null ? 'simil-ecart--egale'
-                        : ecartPct < -2 ? 'simil-ecart--moins'
-                        : ecartPct > 2  ? 'simil-ecart--plus'
-                        : 'simil-ecart--egale'
-                      return (
-                        <tr key={p.id} className="simil-row">
-                          <td>
-                            <div className="simil-produit-cell">
-                              <div className="simil-img-wrap">
-                                {p.image_url
-                                  ? <Image src={p.image_url} alt={p.nom} fill sizes="44px" style={{ objectFit: 'contain' }} />
-                                  : <span>📦</span>
-                                }
-                              </div>
-                              <span className="simil-nom">{p.nom}</span>
+                  {lignes.map((l, idx) => {
+                    const ecartPct = (!l.courant && l.px && prixMin)
+                      ? Math.round((l.px - prixMin) / prixMin * 100)
+                      : null
+                    const isBest = idx === 0
+                    return (
+                      <tr key={l.id} className={`simil-row${l.courant ? ' simil-row--courant' : ''}`}>
+                        <td>
+                          <div className="simil-produit-cell">
+                            <div className="simil-img-wrap">
+                              {l.image_url
+                                ? <Image src={l.image_url} alt={l.nom} fill sizes="44px" style={{ objectFit: 'contain' }} />
+                                : <span>📦</span>
+                              }
                             </div>
-                          </td>
-                          <td>
-                            <span className="simil-prix-val">{px ? fcfa(px) : '—'}</span>
-                          </td>
-                          <td>
-                            <span className="simil-offres-val">
-                              {p.nb_offres ? `${p.nb_offres} offre${parseInt(p.nb_offres) > 1 ? 's' : ''}` : '—'}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`simil-ecart ${ecartClass}`}>
+                            <div>
+                              <span className="simil-nom">{l.nom}</span>
+                              {l.courant && <span className="simil-courant-badge">Ce produit</span>}
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`simil-prix-val${isBest ? ' simil-prix-val--best' : ''}`}>
+                            {l.px ? fcfa(l.px) : '—'}
+                            {isBest && <span className="simil-best-ico"> 🏆</span>}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="simil-offres-val">
+                            {l.nb > 0 ? `${l.nb} offre${l.nb > 1 ? 's' : ''}` : '—'}
+                          </span>
+                        </td>
+                        <td>
+                          {l.courant ? (
+                            <span className="simil-ecart simil-ecart--egale">référence</span>
+                          ) : (
+                            <span className={`simil-ecart ${ecartPct !== null && ecartPct < -2 ? 'simil-ecart--moins' : ecartPct !== null && ecartPct > 2 ? 'simil-ecart--plus' : 'simil-ecart--egale'}`}>
                               {ecartPct === null ? '—'
-                                : ecartPct > 2  ? `+${ecartPct}%`
-                                : ecartPct < -2 ? `${ecartPct}%`
+                                : ecartPct < -2 ? `${ecartPct}% moins cher`
+                                : ecartPct > 2  ? `+${ecartPct}% plus cher`
                                 : '≈ même prix'}
                             </span>
-                          </td>
-                          <td>
-                            <Link href={`/produit/${p.id}`} className="simil-voir-btn">
-                              Voir →
-                            </Link>
-                          </td>
-                        </tr>
-                      )
-                    })}
+                          )}
+                        </td>
+                        <td>
+                          {l.courant
+                            ? <span className="simil-courant-lbl">Vous êtes ici</span>
+                            : <Link href={`/produit/${l.id}`} className="simil-voir-btn">Voir →</Link>
+                          }
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </section>
