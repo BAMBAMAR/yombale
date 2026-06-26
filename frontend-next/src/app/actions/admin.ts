@@ -11,17 +11,17 @@ function adminHeaders(secret: string): HeadersInit {
 }
 
 // ── Login ──────────────────────────────────────────────────────────
-export async function adminLogin(formData: FormData): Promise<{ error?: string }> {
+export async function adminLogin(formData: FormData): Promise<void> {
   const secret = (formData.get('secret') as string ?? '').trim()
-  if (!secret) return { error: 'Secret requis' }
+  if (!secret) redirect('/admin/login?error=secret_requis')
 
   const r = await fetch(`${BACKEND}/api/annonces/admin/en-attente`, {
     headers: { 'X-Admin-Secret': secret },
     cache: 'no-store',
   })
 
-  if (r.status === 401 || r.status === 403) return { error: 'Secret incorrect' }
-  if (!r.ok) return { error: 'Erreur serveur — réessayez' }
+  if (r.status === 401 || r.status === 403) redirect('/admin/login?error=secret_incorrect')
+  if (!r.ok) redirect('/admin/login?error=erreur_serveur')
 
   const jar = await cookies()
   jar.set(COOKIE, secret, {
