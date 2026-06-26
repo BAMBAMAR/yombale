@@ -172,7 +172,7 @@ export default async function ComparaisonPage({
                 <td className="comp-td-label">{spec.label}</td>
                 {items.map(({ produit }) => (
                   <td key={produit.id} className="comp-td">
-                    {(produit as Record<string, string | null>)[spec.key] ?? '—'}
+                    {(produit as unknown as Record<string, string | null>)[spec.key] ?? '—'}
                   </td>
                 ))}
               </tr>
