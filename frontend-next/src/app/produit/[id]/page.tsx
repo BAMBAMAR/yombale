@@ -231,7 +231,16 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
       .catch(() => {}),
   ]);
 
-  const valides  = offres.filter(o => !o._suspect && o.prix != null)
+  // Filtre 1 : exclure les offres marquées suspectes par le backend
+  const sansSupects = offres.filter(o => !o._suspect && o.prix != null && o.prix > 0)
+  // Filtre 2 : exclure les outliers par rapport à la médiane (fourchette 0.4× – 2.0×)
+  const sorted    = [...sansSupects].sort((a, b) => a.prix! - b.prix!)
+  const mediane   = sorted.length ? sorted[Math.floor(sorted.length / 2)].prix! : 0
+  const valides   = mediane > 0
+    ? sansSupects.filter(o => o.prix! >= mediane * 0.4 && o.prix! <= mediane * 2.0)
+    : sansSupects
+  const nbExclues = offres.length - valides.length
+
   const prixMin  = valides.length ? Math.min(...valides.map(o => o.prix!)) : null
   const prixMax  = valides.length ? Math.max(...valides.map(o => o.prix!)) : null
   const best     = valides.find(o => o.prix === prixMin)
@@ -305,14 +314,21 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
             )}
 
             {/* Liste des offres */}
-            {offres.length > 0 && (
+            {valides.length > 0 && (
               <div className="offres-section">
-                <h2 className="offres-titre">📊 Comparer les prix <span>{offres.length} offre{offres.length > 1 ? 's' : ''}</span></h2>
+                <h2 className="offres-titre">
+                  📊 Comparer les prix <span>{valides.length} offre{valides.length > 1 ? 's' : ''}</span>
+                  {nbExclues > 0 && (
+                    <span className="offres-exclues" title="Prix trop éloignés de la fourchette principale, probablement d'autres modèles">
+                      · {nbExclues} hors fourchette
+                    </span>
+                  )}
+                </h2>
                 <div className="offres-list">
-                  {offres.map((o) => {
-                    const isBest   = !o._suspect && o.prix === prixMin
-                    const ecart    = (!isBest && !o._suspect && o.prix && prixMin) ? o.prix - prixMin : 0
-                    const bgClass  = o._suspect ? 'offre-row--suspect' : isBest ? 'offre-row--best' : ''
+                  {valides.map((o) => {
+                    const isBest   = o.prix === prixMin
+                    const ecart    = (!isBest && o.prix && prixMin) ? o.prix - prixMin : 0
+                    const bgClass  = isBest ? 'offre-row--best' : ''
                     return (
                       <div key={o.id} className={`offre-row-fiche ${bgClass}`}>
                         <div className="offre-icon">{icon(o.marchand_nom)}</div>
