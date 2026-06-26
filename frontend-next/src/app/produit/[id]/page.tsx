@@ -410,10 +410,15 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
 
         {/* ── Comparaison produits similaires ───────────────────── */}
         {similaires.length > 0 && prixMin && (() => {
+          const catProduit = produit.categorie_nom ?? produit.categorie
           const proches = similaires
             .filter(p => {
+              // Même catégorie obligatoire (évite TV/smartphone dans congélateur)
+              const catP = p.categorie_nom
+              if (catProduit && catP && catP !== catProduit) return false
               const px = p.prix_min ? parseFloat(p.prix_min) : null
               if (!px || !prixMin) return false
+              // Fourchette de prix raisonnable : 40% – 200% du prix courant
               const ratio = px / prixMin
               return ratio >= 0.4 && ratio <= 2.0
             })
