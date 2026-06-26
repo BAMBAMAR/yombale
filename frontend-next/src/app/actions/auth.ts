@@ -25,7 +25,8 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
       nom: data.user.nom,
       email: data.user.email,
     })
-  } catch {
+  } catch (e) {
+    console.error('[LOGIN]', e instanceof Error ? e.message : e)
     return { error: 'Erreur de connexion au serveur' }
   }
 
@@ -55,7 +56,8 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
       nom: data.user.nom,
       email: data.user.email,
     })
-  } catch {
+  } catch (e) {
+    console.error('[SIGNUP]', e instanceof Error ? e.message : e)
     return { error: 'Erreur de connexion au serveur' }
   }
 
