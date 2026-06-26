@@ -392,34 +392,89 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
           </aside>
         </div>
 
-        {/* ── Produits similaires ────────────────────────────────── */}
-        {similaires.length > 0 && (
-          <section className="similaires-section">
-            <h2 className="similaires-titre">Vous aimerez aussi</h2>
-            <div className="similaires-grid">
-              {similaires.slice(0, 6).map(p => (
-                <Link key={p.id} href={`/produit/${p.id}`} className="similaire-card">
-                  <div className="similaire-img-wrap">
-                    {p.image_url ? (
-                      <Image src={p.image_url} alt={p.nom} fill sizes="180px" style={{ objectFit: 'contain' }} />
-                    ) : (
-                      <span className="similaire-placeholder">📦</span>
-                    )}
-                  </div>
-                  <div className="similaire-info">
-                    <p className="similaire-nom">{p.nom}</p>
-                    {p.prix_min && (
-                      <p className="similaire-prix">{fcfa(parseFloat(p.prix_min))}</p>
-                    )}
-                    {p.nb_offres && (
-                      <p className="similaire-offres">{p.nb_offres} offre{parseInt(p.nb_offres) > 1 ? 's' : ''}</p>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* ── Comparaison produits similaires ───────────────────── */}
+        {similaires.length > 0 && prixMin && (() => {
+          const proches = similaires
+            .filter(p => {
+              const px = p.prix_min ? parseFloat(p.prix_min) : null
+              if (!px || !prixMin) return false
+              const ratio = px / prixMin
+              return ratio >= 0.4 && ratio <= 2.0
+            })
+            .slice(0, 8)
+          if (proches.length === 0) return null
+          return (
+            <section className="similaires-section">
+              <h2 className="similaires-titre">📊 Comparer les prix similaires</h2>
+              <p className="similaires-sous-titre">
+                Produits de la même catégorie avec des prix proches — triés par écart de prix
+              </p>
+              <table className="similaires-table">
+                <thead>
+                  <tr>
+                    <th>Produit</th>
+                    <th>Meilleur prix</th>
+                    <th>Offres</th>
+                    <th>Écart</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {proches
+                    .sort((a, b) => {
+                      const pa = a.prix_min ? Math.abs(parseFloat(a.prix_min) - prixMin!) : 999999
+                      const pb = b.prix_min ? Math.abs(parseFloat(b.prix_min) - prixMin!) : 999999
+                      return pa - pb
+                    })
+                    .map(p => {
+                      const px = p.prix_min ? parseFloat(p.prix_min) : null
+                      const ecartPct = px && prixMin ? Math.round((px - prixMin) / prixMin * 100) : null
+                      const ecartClass = ecartPct === null ? 'simil-ecart--egale'
+                        : ecartPct < -2 ? 'simil-ecart--moins'
+                        : ecartPct > 2  ? 'simil-ecart--plus'
+                        : 'simil-ecart--egale'
+                      return (
+                        <tr key={p.id} className="simil-row">
+                          <td>
+                            <div className="simil-produit-cell">
+                              <div className="simil-img-wrap">
+                                {p.image_url
+                                  ? <Image src={p.image_url} alt={p.nom} fill sizes="44px" style={{ objectFit: 'contain' }} />
+                                  : <span>📦</span>
+                                }
+                              </div>
+                              <span className="simil-nom">{p.nom}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="simil-prix-val">{px ? fcfa(px) : '—'}</span>
+                          </td>
+                          <td>
+                            <span className="simil-offres-val">
+                              {p.nb_offres ? `${p.nb_offres} offre${parseInt(p.nb_offres) > 1 ? 's' : ''}` : '—'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`simil-ecart ${ecartClass}`}>
+                              {ecartPct === null ? '—'
+                                : ecartPct > 2  ? `+${ecartPct}%`
+                                : ecartPct < -2 ? `${ecartPct}%`
+                                : '≈ même prix'}
+                            </span>
+                          </td>
+                          <td>
+                            <Link href={`/produit/${p.id}`} className="simil-voir-btn">
+                              Voir →
+                            </Link>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                </tbody>
+              </table>
+            </section>
+          )
+        })()}
       </div>
     </>
   );
