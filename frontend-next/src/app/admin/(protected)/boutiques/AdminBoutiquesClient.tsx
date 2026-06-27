@@ -1,7 +1,7 @@
 'use client'
 
 import { useTransition } from 'react'
-import { modererBoutique } from '@/app/actions/admin'
+import { modererBoutique, activerSponsoringBoutique } from '@/app/actions/admin'
 
 interface Boutique {
   id: string
@@ -13,6 +13,8 @@ interface Boutique {
   ville: string | null
   logo_url: string | null
   actif: boolean
+  sponsorise: boolean
+  sponsor_jusqu_au: string | null
   created_at: string
   proprietaire_nom: string | null
   proprietaire_email: string | null
@@ -22,12 +24,26 @@ function formatDate(s: string) {
   return new Date(s).toLocaleDateString('fr-SN', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+function isSponsorActif(b: Boutique) {
+  if (!b.sponsorise) return false
+  if (!b.sponsor_jusqu_au) return true
+  return new Date(b.sponsor_jusqu_au) > new Date()
+}
+
 function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () => void }) {
   const [pending, startTransition] = useTransition()
+  const sponsorActif = isSponsorActif(boutique)
 
-  function handleToggle() {
+  function handleToggleActif() {
     startTransition(async () => {
       await modererBoutique(boutique.id, !boutique.actif)
+      onAction()
+    })
+  }
+
+  function handleToggleSponsor() {
+    startTransition(async () => {
+      await activerSponsoringBoutique(boutique.id, !sponsorActif)
       onAction()
     })
   }
@@ -47,7 +63,14 @@ function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () 
       <div className="admin-annonce-info">
         <p className="admin-annonce-titre">
           {boutique.nom}
-          {boutique.categorie && <span style={{ fontWeight: 400, color: 'var(--text2)', marginLeft: 6, fontSize: 12 }}>· {boutique.categorie}</span>}
+          {sponsorActif && (
+            <span style={{ marginLeft: 8, fontSize: 11, background: '#D97706', color: '#fff', padding: '2px 7px', borderRadius: 4, fontWeight: 700 }}>
+              ⭐ SPONSOR
+            </span>
+          )}
+          {boutique.categorie && (
+            <span style={{ fontWeight: 400, color: 'var(--text2)', marginLeft: 6, fontSize: 12 }}>· {boutique.categorie}</span>
+          )}
         </p>
         <p className="admin-annonce-meta">
           {[boutique.adresse, boutique.ville].filter(Boolean).join(', ') || 'Dakar'}
@@ -56,35 +79,54 @@ function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () 
         <p className="admin-annonce-meta">
           {boutique.proprietaire_nom || '—'} · {boutique.proprietaire_email || '—'}
         </p>
-        <p className="admin-annonce-date">{formatDate(boutique.created_at)}</p>
-        {boutique.description && (
-          <p className="admin-annonce-desc" style={{ marginTop: 4, fontSize: 12, color: 'var(--text2)' }}>
-            {boutique.description.slice(0, 120)}{boutique.description.length > 120 ? '…' : ''}
-          </p>
-        )}
+        <p className="admin-annonce-date">
+          Créée le {formatDate(boutique.created_at)}
+          {sponsorActif && boutique.sponsor_jusqu_au && (
+            <> · <span style={{ color: '#D97706', fontWeight: 600 }}>Sponsor jusqu'au {formatDate(boutique.sponsor_jusqu_au)}</span></>
+          )}
+        </p>
       </div>
       <div className="admin-annonce-statut-col">
         <span className={`admin-annonce-statut admin-annonce-statut--${boutique.actif ? 'active' : 'attente'}`}>
           {boutique.actif ? 'Active' : 'Désactivée'}
         </span>
+        {sponsorActif && (
+          <span style={{ display: 'block', fontSize: 11, color: '#D97706', fontWeight: 600, marginTop: 4 }}>⭐ Sponsorisée</span>
+        )}
       </div>
-      <div className="admin-annonce-actions">
-        <a
-          href={`/boutiques/${boutique.id}`}
-          target="_blank"
-          rel="noreferrer"
-          className="admin-btn"
-          style={{ background: 'var(--bg)', color: 'var(--navy)', border: '1.5px solid var(--border)', textDecoration: 'none', fontSize: 12 }}
-        >
-          Voir ↗
-        </a>
+      <div className="admin-annonce-actions" style={{ gap: 6, flexDirection: 'column', alignItems: 'stretch' }}>
         <button
-          onClick={handleToggle}
+          onClick={handleToggleSponsor}
           disabled={pending}
-          className={`admin-btn ${boutique.actif ? 'admin-btn--rejeter' : 'admin-btn--approuver'}`}
+          className="admin-btn"
+          style={{
+            background: sponsorActif ? '#fff8e1' : '#D97706',
+            color: sponsorActif ? '#92400e' : '#fff',
+            border: sponsorActif ? '1.5px solid #fcd34d' : 'none',
+            fontSize: 12,
+          }}
         >
-          {pending ? '…' : boutique.actif ? 'Désactiver' : 'Réactiver'}
+          {pending ? '…' : sponsorActif ? '✕ Retirer sponsor' : '⭐ Sponsoriser 30j'}
         </button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <a
+            href={`/boutiques/${boutique.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="admin-btn"
+            style={{ background: 'var(--bg)', color: 'var(--navy)', border: '1.5px solid var(--border)', textDecoration: 'none', fontSize: 11, flex: 1, textAlign: 'center' }}
+          >
+            Voir ↗
+          </a>
+          <button
+            onClick={handleToggleActif}
+            disabled={pending}
+            className={`admin-btn ${boutique.actif ? 'admin-btn--rejeter' : 'admin-btn--approuver'}`}
+            style={{ fontSize: 11, flex: 1 }}
+          >
+            {pending ? '…' : boutique.actif ? 'Désactiver' : 'Réactiver'}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -97,8 +139,8 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
     startTransition(() => { window.location.reload() })
   }
 
-  const actives    = boutiques.filter(b => b.actif)
-  const inactives  = boutiques.filter(b => !b.actif)
+  const sponsorisees = boutiques.filter(b => isSponsorActif(b))
+  const autres       = boutiques.filter(b => !isSponsorActif(b))
 
   if (boutiques.length === 0) {
     return <p className="admin-empty">Aucune boutique enregistrée.</p>
@@ -106,26 +148,30 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
 
   return (
     <div className="admin-annonces-sections">
-      {inactives.length > 0 && (
+      {sponsorisees.length > 0 && (
         <section className="admin-annonces-section" style={{ marginBottom: 32 }}>
-          <h2 className="admin-section-titre admin-section-titre--orange">
-            Désactivées
-            <span className="admin-section-count">{inactives.length}</span>
+          <h2 className="admin-section-titre" style={{ color: '#D97706' }}>
+            ⭐ Boutiques sponsorisées
+            <span className="admin-section-count">{sponsorisees.length}</span>
           </h2>
+          <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 12 }}>
+            Ces boutiques apparaissent en premier dans la liste publique.
+          </p>
           <div className="admin-annonces-list">
-            {inactives.map(b => (
+            {sponsorisees.map(b => (
               <BoutiqueRow key={b.id} boutique={b} onAction={refresh} />
             ))}
           </div>
         </section>
       )}
+
       <section className="admin-annonces-section">
         <h2 className="admin-section-titre">
-          Boutiques actives
-          <span className="admin-section-count">{actives.length}</span>
+          Autres boutiques
+          <span className="admin-section-count">{autres.length}</span>
         </h2>
         <div className="admin-annonces-list">
-          {actives.map(b => (
+          {autres.map(b => (
             <BoutiqueRow key={b.id} boutique={b} onAction={refresh} />
           ))}
         </div>

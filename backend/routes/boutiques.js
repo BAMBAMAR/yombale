@@ -34,14 +34,21 @@ router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-// ── PUT /api/boutiques/admin/:id — activer/désactiver (admin)
+// ── PUT /api/boutiques/admin/:id — activer/désactiver/sponsoriser (admin)
 router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
-    const { actif } = req.body;
+    const { actif, sponsorise, sponsor_jusqu_au } = req.body;
+    // Build dynamic SET clause
+    const sets = ['updated_at=NOW()'];
+    const vals = [];
+    if (actif !== undefined) { vals.push(Boolean(actif)); sets.push(`actif=$${vals.length}`); }
+    if (sponsorise !== undefined) { vals.push(Boolean(sponsorise)); sets.push(`sponsorise=$${vals.length}`); }
+    if (sponsor_jusqu_au !== undefined) { vals.push(sponsor_jusqu_au); sets.push(`sponsor_jusqu_au=$${vals.length}`); }
+    vals.push(req.params.id);
     const { rows } = await pool.query(
-      `UPDATE boutiques SET actif=$1, updated_at=NOW() WHERE id=$2 RETURNING id`,
-      [Boolean(actif), req.params.id]
+      `UPDATE boutiques SET ${sets.join(', ')} WHERE id=$${vals.length} RETURNING id`,
+      vals
     );
     if (!rows.length) return res.status(404).json({ error: 'Boutique introuvable' });
     res.json({ success: true });
@@ -63,9 +70,12 @@ router.get('/', async (req, res) => {
     const where = 'WHERE ' + conds.join(' AND ');
     const [rows, cnt] = await Promise.all([
       pool.query(
-        `SELECT id, nom, description, categorie, telephone, adresse, ville, logo_url, created_at
+        `SELECT id, nom, description, categorie, telephone, adresse, ville, logo_url,
+                sponsorise, sponsor_jusqu_au, created_at
          FROM boutiques ${where}
-         ORDER BY created_at DESC LIMIT $${vals.length+1} OFFSET $${vals.length+2}`,
+         ORDER BY (sponsorise = true AND (sponsor_jusqu_au IS NULL OR sponsor_jusqu_au > NOW())) DESC,
+                  created_at DESC
+         LIMIT $${vals.length+1} OFFSET $${vals.length+2}`,
         [...vals, lim, offset]
       ),
       pool.query(`SELECT COUNT(*) FROM boutiques ${where}`, vals),

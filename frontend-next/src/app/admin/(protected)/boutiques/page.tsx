@@ -16,6 +16,8 @@ interface Boutique {
   ville: string | null
   logo_url: string | null
   actif: boolean
+  sponsorise: boolean
+  sponsor_jusqu_au: string | null
   created_at: string
   proprietaire_nom: string | null
   proprietaire_email: string | null

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 
 interface Produit {
@@ -24,7 +26,7 @@ interface Annonce {
 
 async function rechercherProduits(q: string): Promise<Produit[]> {
   try {
-    const r = await fetch(`${BACKEND}/api/produits?q=${encodeURIComponent(q)}&limit=12`, { next: { revalidate: 60 } })
+    const r = await fetch(`${BACKEND}/api/produits?q=${encodeURIComponent(q)}&limit=12`, { cache: 'no-store' })
     if (!r.ok) return []
     const data = await r.json()
     return data.produits ?? []
@@ -33,7 +35,7 @@ async function rechercherProduits(q: string): Promise<Produit[]> {
 
 async function rechercherAnnonces(q: string): Promise<Annonce[]> {
   try {
-    const r = await fetch(`${BACKEND}/api/annonces?q=${encodeURIComponent(q)}&limit=12`, { next: { revalidate: 60 } })
+    const r = await fetch(`${BACKEND}/api/annonces?q=${encodeURIComponent(q)}&limit=12`, { cache: 'no-store' })
     if (!r.ok) return []
     const data = await r.json()
     return data.annonces ?? []
@@ -136,7 +138,7 @@ export default async function RecherchePage({ searchParams }: { searchParams: Pr
                 {annonces.map(a => {
                   const photo = Array.isArray(a.photos) ? a.photos[0] : null
                   return (
-                    <div key={a.id} className="recherche-card">
+                    <Link href={`/annonces/${a.id}`} key={a.id} className="recherche-card">
                       {photo ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={photo} alt={a.titre} className="recherche-card-img" />
@@ -150,7 +152,7 @@ export default async function RecherchePage({ searchParams }: { searchParams: Pr
                           <p className="recherche-card-prix">{formatPrix(a.prix)}</p>
                         )}
                       </div>
-                    </div>
+                    </Link>
                   )
                 })}
               </div>

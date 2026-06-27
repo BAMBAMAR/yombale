@@ -24,7 +24,7 @@ export default function SearchBar({ defaultValue = '' }: { defaultValue?: string
         autoComplete="off"
       />
       <button type="submit" className="hero-search-btn">
-        🔍 Comparer
+        🔍 Rechercher
       </button>
     </form>
   )

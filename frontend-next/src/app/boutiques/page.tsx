@@ -17,6 +17,8 @@ interface Boutique {
   adresse: string | null
   ville: string
   logo_url: string | null
+  sponsorise: boolean
+  sponsor_jusqu_au: string | null
   created_at: string
 }
 
@@ -96,24 +98,30 @@ export default async function BoutiquesPage({
         </div>
       ) : (
         <div className="boutiques-grid">
-          {boutiques.map(b => (
-            <Link href={`/boutiques/${b.id}`} key={b.id} className="boutique-card">
-              <div className="boutique-card-logo">
-                {b.logo_url
-                  ? <img src={b.logo_url} alt={b.nom} loading="lazy" />
-                  : <span>{CAT_ICONS[b.categorie ?? ''] ?? '🏪'}</span>
-                }
-              </div>
-              <div className="boutique-card-body">
-                <h3 className="boutique-card-nom">{b.nom}</h3>
-                {b.description && <p className="boutique-card-desc">{b.description.slice(0, 80)}{b.description.length > 80 ? '…' : ''}</p>}
-                <div className="boutique-card-meta">
-                  {b.ville && <span>📍 {b.ville}</span>}
-                  {b.categorie && <span>{CAT_ICONS[b.categorie] ?? ''} {b.categorie}</span>}
+          {boutiques.map(b => {
+            const sponsorActif = b.sponsorise && (!b.sponsor_jusqu_au || new Date(b.sponsor_jusqu_au) > new Date())
+            return (
+              <Link href={`/boutiques/${b.id}`} key={b.id} className={`boutique-card${sponsorActif ? ' boutique-card--sponsor' : ''}`}>
+                {sponsorActif && (
+                  <div className="boutique-sponsor-badge">⭐ Partenaire</div>
+                )}
+                <div className="boutique-card-logo">
+                  {b.logo_url
+                    ? <img src={b.logo_url} alt={b.nom} loading="lazy" />
+                    : <span>{CAT_ICONS[b.categorie ?? ''] ?? '🏪'}</span>
+                  }
                 </div>
-              </div>
-            </Link>
-          ))}
+                <div className="boutique-card-body">
+                  <h3 className="boutique-card-nom">{b.nom}</h3>
+                  {b.description && <p className="boutique-card-desc">{b.description.slice(0, 80)}{b.description.length > 80 ? '…' : ''}</p>}
+                  <div className="boutique-card-meta">
+                    {b.ville && <span>📍 {b.ville}</span>}
+                    {b.categorie && <span>{CAT_ICONS[b.categorie] ?? ''} {b.categorie}</span>}
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
         </div>
       )}
 

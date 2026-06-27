@@ -115,7 +115,7 @@ export default async function HomePage({
             )
           })}
           <Link href="/immo"           className="categ-pill">🏘 Immobilier</Link>
-          <Link href="/annonces.html"  className="categ-pill">📢 Annonces</Link>
+          <Link href="/annonces"  className="categ-pill">📢 Annonces</Link>
         </div>
       </section>
 

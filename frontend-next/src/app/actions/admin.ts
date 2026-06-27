@@ -128,6 +128,30 @@ export async function modererBoutique(
   return {}
 }
 
+// ── Sponsoriser boutique ─────────────────────────────────────────────
+export async function activerSponsoringBoutique(
+  id: string,
+  activer: boolean
+): Promise<{ error?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  const body = activer
+    ? { sponsorise: true, sponsor_jusqu_au: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString() }
+    : { sponsorise: false, sponsor_jusqu_au: null }
+
+  const r = await fetch(`${BACKEND}/api/boutiques/admin/${id}`, {
+    method: 'PUT',
+    headers: adminHeaders(secret),
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  })
+
+  if (!r.ok) return { error: 'Erreur lors du sponsoring' }
+  return {}
+}
+
 // ── Modérer annonce immo ────────────────────────────────────────────
 export async function modererImmo(
   id: number,
