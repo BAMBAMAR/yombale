@@ -16,6 +16,7 @@ const validationAnnonce = [
   body('surface_m2').optional({ checkFalsy: true }).isFloat({ gt: 0 }),
   body('nb_pieces').optional({ checkFalsy: true }).isInt({ gt: 0 }),
   body('nb_chambres').optional({ checkFalsy: true }).isInt({ gt: 0 }),
+  body('meuble').optional().isBoolean(),
 ];
 
 const ORDER_MAP = {
@@ -30,7 +31,7 @@ router.get('/', async (req, res) => {
   try {
     const {
       ville, quartier, type_bien, transaction = 'location',
-      prixMin, prixMax, surfaceMin, nbPieces, source,
+      prixMin, prixMax, surfaceMin, nbPieces, nbChambres, meuble, source,
       tri = 'recent', limit = 24, page = 1,
     } = req.query;
 
@@ -50,16 +51,19 @@ router.get('/', async (req, res) => {
         AND ($6::numeric IS NULL OR prix <= $6::numeric)
         AND ($7::int IS NULL OR surface_m2 >= $7::int)
         AND ($8::int IS NULL OR nb_pieces >= $8::int)
-        AND ($9::text IS NULL OR source = $9)
+        AND ($9::int IS NULL OR nb_chambres >= $9::int)
+        AND ($10::boolean IS NULL OR meuble = $10::boolean)
+        AND ($11::text IS NULL OR source = $11)
         AND supprimee = false
       ORDER BY (sponsorisee = true AND sponsorisee_jusqu_au > NOW()) DESC, ${orderBy}
-      LIMIT $10 OFFSET $11`;
+      LIMIT $12 OFFSET $13`;
 
     const params = [
       transaction || null, ville || null, quartier || null,
       type_bien || null, prixMin || null, prixMax || null,
-      surfaceMin || null, nbPieces || null, source || null,
-      limit, offset,
+      surfaceMin || null, nbPieces || null, nbChambres || null,
+      meuble === 'true' ? true : meuble === 'false' ? false : null,
+      source || null, limit, offset,
     ];
 
     const result = await pool.query(sql, params);
@@ -253,20 +257,20 @@ router.post('/public', limiterPublication, verifierToken, validationAnnonce, asy
 
     const {
       titre, type_bien = 'appartement', transaction = 'location',
-      prix, surface_m2, nb_pieces, nb_chambres,
+      prix, surface_m2, nb_pieces, nb_chambres, meuble,
       ville = 'Dakar', quartier, description,
       contact_nom, contact_tel,
     } = req.body;
 
     const { rows } = await pool.query(`
       INSERT INTO annonces_immo
-        (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
+        (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres, meuble,
          ville, quartier, description, source, actif, contact_nom, contact_tel, utilisateur_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'utilisateur',false,$11,$12,$13)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'utilisateur',false,$12,$13,$14)
       RETURNING id`,
       [titre, type_bien, transaction, prix || null, surface_m2 || null,
-       nb_pieces || null, nb_chambres || null, ville, quartier || null,
-       description || null, contact_nom || null, contact_tel, req.user.userId]
+       nb_pieces || null, nb_chambres || null, meuble === true || meuble === 'true' ? true : false,
+       ville, quartier || null, description || null, contact_nom || null, contact_tel, req.user.userId]
     );
     res.status(201).json({
       success: true,
@@ -284,7 +288,7 @@ router.post('/', adminSecretOnly, async (req, res) => {
   try {
     const {
       titre, type_bien = 'appartement', transaction = 'location',
-      prix, surface_m2, nb_pieces, nb_chambres,
+      prix, surface_m2, nb_pieces, nb_chambres, meuble,
       ville = 'Dakar', quartier, description, photos = [],
       url_source, source = 'manuel', ref_externe,
     } = req.body;
@@ -293,9 +297,9 @@ router.post('/', adminSecretOnly, async (req, res) => {
 
     const { rows } = await pool.query(`
       INSERT INTO annonces_immo
-        (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
+        (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres, meuble,
          ville, quartier, description, photos, url_source, source, ref_externe)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
       ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
       DO UPDATE SET
         titre       = EXCLUDED.titre,
@@ -306,8 +310,8 @@ router.post('/', adminSecretOnly, async (req, res) => {
         updated_at  = NOW()
       RETURNING *`,
       [titre, type_bien, transaction, prix || null, surface_m2 || null,
-       nb_pieces || null, nb_chambres || null, ville, quartier || null,
-       description || null, JSON.stringify(photos), url_source || null,
+       nb_pieces || null, nb_chambres || null, meuble === true || meuble === 'true' ? true : false,
+       ville, quartier || null, description || null, JSON.stringify(photos), url_source || null,
        source, ref_externe || null]
     );
     res.status(201).json(rows[0]);

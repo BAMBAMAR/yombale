@@ -24,6 +24,7 @@ interface AnnonceImmo {
   surface_m2: number | null
   nb_pieces: number | null
   nb_chambres: number | null
+  meuble: boolean | null
   photos: string[] | null
   description: string | null
   source: string | null
@@ -77,6 +78,13 @@ const SURFACE_MIN = [
 ]
 
 const NB_PIECES = [
+  { label: '1+', val: '1' },
+  { label: '2+', val: '2' },
+  { label: '3+', val: '3' },
+  { label: '4+', val: '4' },
+]
+
+const NB_CHAMBRES = [
   { label: '1+', val: '1' },
   { label: '2+', val: '2' },
   { label: '3+', val: '3' },
@@ -142,6 +150,9 @@ function ImmoCard({ a }: { a: AnnonceImmo }) {
           {a.nb_chambres && (
             <span className="immo-spec">{a.nb_chambres} ch.</span>
           )}
+          {a.meuble && (
+            <span className="immo-spec">Meublé</span>
+          )}
         </div>
 
         <div className="immo-card-footer">
@@ -170,6 +181,8 @@ export default async function ImmoPage({
     quartier?: string
     surfaceMin?: string
     nbPieces?: string
+    nbChambres?: string
+    meuble?: string
     page?: string
   }
 }) {
@@ -181,19 +194,23 @@ export default async function ImmoPage({
   const quartier    = searchParams.quartier    ?? ''
   const surfaceMin  = searchParams.surfaceMin  ?? ''
   const nbPieces    = searchParams.nbPieces    ?? ''
+  const nbChambres  = searchParams.nbChambres  ?? ''
+  const meuble      = searchParams.meuble      ?? ''
   const page        = searchParams.page        ?? '1'
 
   const qs = new URLSearchParams()
   qs.set('limit', '24')
   qs.set('page', page)
   qs.set('transaction', transaction)
-  if (type_bien)  qs.set('type_bien', type_bien)
-  if (tri)        qs.set('tri', tri)
-  if (prixMax)    qs.set('prixMax', prixMax)
-  if (ville)      qs.set('ville', ville)
-  if (quartier)   qs.set('quartier', quartier)
-  if (surfaceMin) qs.set('surfaceMin', surfaceMin)
-  if (nbPieces)   qs.set('nbPieces', nbPieces)
+  if (type_bien)   qs.set('type_bien', type_bien)
+  if (tri)         qs.set('tri', tri)
+  if (prixMax)     qs.set('prixMax', prixMax)
+  if (ville)       qs.set('ville', ville)
+  if (quartier)    qs.set('quartier', quartier)
+  if (surfaceMin)  qs.set('surfaceMin', surfaceMin)
+  if (nbPieces)    qs.set('nbPieces', nbPieces)
+  if (nbChambres)  qs.set('nbChambres', nbChambres)
+  if (meuble)      qs.set('meuble', meuble)
 
   let data: ImmoResponse = { annonces: [], total: 0, page: 1, pages: 1 }
 
@@ -216,6 +233,8 @@ export default async function ImmoPage({
     if (quartier)   p.set('quartier', quartier)
     if (surfaceMin) p.set('surfaceMin', surfaceMin)
     if (nbPieces)   p.set('nbPieces', nbPieces)
+    if (nbChambres) p.set('nbChambres', nbChambres)
+    if (meuble)     p.set('meuble', meuble)
     Object.entries(params).forEach(([k, v]) => (v ? p.set(k, v) : p.delete(k)))
     return `/immo?${p.toString()}`
   }
@@ -342,6 +361,33 @@ export default async function ImmoPage({
               </Link>
             ))}
             {nbPieces && <Link href={buildLink({ nbPieces: '', page: '1' })} className="budget-pill budget-pill--reset">✕ Pièces</Link>}
+          </div>
+        </div>
+
+        {/* Nb chambres */}
+        <div className="immo-filtres-row">
+          <span className="filtres-label">Chambres</span>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {NB_CHAMBRES.map(n => (
+              <Link key={n.val} href={buildLink({ nbChambres: nbChambres === n.val ? '' : n.val, page: '1' })} className={`budget-pill${nbChambres === n.val ? ' active' : ''}`}>
+                {n.label}
+              </Link>
+            ))}
+            {nbChambres && <Link href={buildLink({ nbChambres: '', page: '1' })} className="budget-pill budget-pill--reset">✕ Chambres</Link>}
+          </div>
+        </div>
+
+        {/* Meublé */}
+        <div className="immo-filtres-row">
+          <span className="filtres-label">Meublé</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Link
+              href={buildLink({ meuble: meuble === 'true' ? '' : 'true', page: '1' })}
+              className={`budget-pill${meuble === 'true' ? ' active' : ''}`}
+            >
+              ✅ Meublé
+            </Link>
+            {meuble && <Link href={buildLink({ meuble: '', page: '1' })} className="budget-pill budget-pill--reset">✕ Meublé</Link>}
           </div>
         </div>
 

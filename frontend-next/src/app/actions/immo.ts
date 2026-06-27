@@ -57,6 +57,7 @@ export async function deposerAnnonceImmo(formData: FormData): Promise<ImmoResult
       surface_m2:  formData.get('surface_m2') || null,
       nb_pieces:   formData.get('nb_pieces') || null,
       nb_chambres: formData.get('nb_chambres') || null,
+      meuble:      formData.get('meuble') === 'on',
       ville:       formData.get('ville'),
       quartier:    formData.get('quartier') || null,
       description: formData.get('description') || null,

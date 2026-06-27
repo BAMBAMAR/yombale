@@ -174,6 +174,20 @@ export default function FormulaireImmo() {
         </div>
       </div>
 
+      {/* Meublé */}
+      <div className="form-field" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <input
+          id="meuble"
+          name="meuble"
+          type="checkbox"
+          value="on"
+          style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--accent)' }}
+        />
+        <label htmlFor="meuble" className="form-label" style={{ margin: 0, cursor: 'pointer' }}>
+          Bien meublé / avec mobilier
+        </label>
+      </div>
+
       {/* Description */}
       <div className="form-field">
         <label className="form-label" htmlFor="description">Description</label>
