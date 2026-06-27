@@ -6336,6 +6336,24 @@ a {
 .admin-badge--voix    { background: #dcfce7; color: #15803d; }
 .admin-badge--mixte   { background: #fef9c3; color: #92400e; }
 .admin-badge--sms     { background: #f3e8ff; color: #7e22ce; }
+.admin-badge--green   { background: #dcfce7; color: #15803d; }
+.admin-badge--blue    { background: #dbeafe; color: #1d4ed8; }
+
+.admin-nav-sep { height: 1px; background: rgba(255,255,255,.12); margin: 10px 0; }
+
+.admin-btn-small {
+  font-size: 12px; padding: 3px 10px; border-radius: 5px;
+  background: #f0f4ff; color: #3b5bdb; border: 1px solid #c5d0fa;
+  text-decoration: none; white-space: nowrap;
+}
+.admin-btn-small:hover { background: #3b5bdb; color: #fff; }
+
+.admin-section { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; }
+
+.admin-seo-chips { display: flex; flex-direction: column; gap: 10px; }
+.admin-seo-chip { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
+.admin-seo-chip-label { font-weight: 600; color: #111827; }
+.admin-seo-chip-page  { color: #6b7280; }
 
 .admin-btn-edit {
   font-size: 12px;

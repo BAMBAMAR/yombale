@@ -28,7 +28,7 @@ export async function adminLogin(formData: FormData): Promise<void> {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    path: '/admin',
+    path: '/',
     maxAge: 60 * 60 * 8,
   })
 
@@ -38,7 +38,8 @@ export async function adminLogin(formData: FormData): Promise<void> {
 // ── Logout ─────────────────────────────────────────────────────────
 export async function adminLogout(): Promise<void> {
   const jar = await cookies()
-  jar.delete(COOKIE)
+  jar.set(COOKIE, '', { maxAge: 0, httpOnly: true, path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
+  jar.set(COOKIE, '', { maxAge: 0, httpOnly: true, path: '/admin', sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
   redirect('/admin/login')
 }
 

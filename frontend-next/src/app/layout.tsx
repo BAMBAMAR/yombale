@@ -82,6 +82,7 @@ export default async function RootLayout({
       <head>
         <meta name="theme-color" content="#C75B00" />
         <meta name="color-scheme" content="light" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSON_LD) }}

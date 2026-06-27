@@ -38,6 +38,9 @@ self.addEventListener('fetch', function(event) {
   // Ne pas intercepter les ressources externes (Google Fonts, CDN...)
   if (url.origin !== location.origin) return;
 
+  // Ne pas intercepter les requêtes non-GET (POST, PUT, DELETE...) — non cachables
+  if (event.request.method !== 'GET') return;
+
   // API, app.js et routes SPA : toujours réseau, jamais cache
   if (
     url.pathname.startsWith('/api/') ||
@@ -46,7 +49,8 @@ self.addEventListener('fetch', function(event) {
     url.pathname.startsWith('/produit/') ||
     url.pathname.startsWith('/immo') ||
     url.pathname.startsWith('/forfait') ||
-    url.pathname.startsWith('/comparaison')
+    url.pathname.startsWith('/comparaison') ||
+    url.pathname.startsWith('/deposer-')
   ) {
     event.respondWith(fetch(event.request));
     return;
