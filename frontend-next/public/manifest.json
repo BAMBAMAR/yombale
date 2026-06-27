@@ -1,6 +1,7 @@
 {
   "name": "Nopalou — Comparateur de prix Sénégal",
   "short_name": "Nopalou",
+  "version": "2",
   "description": "Comparez les prix de milliers de produits au Sénégal. Économisez en trouvant les meilleures offres.",
   "start_url": "/",
   "display": "standalone",
