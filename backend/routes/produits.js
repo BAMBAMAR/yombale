@@ -63,12 +63,33 @@ router.get('/', async (req, res) => {
       : '';
 
     // Tokeniser q pour la recherche mot par mot
+    const ALIASES = {
+      'techno': 'tecno', 'técno': 'tecno', 'teknos': 'tecno',
+      'samsumg': 'samsung', 'samung': 'samsung', 'samsunh': 'samsung',
+      'iphonne': 'iphone', 'iphones': 'iphone',
+      'xiaomie': 'xiaomi', 'xiomi': 'xiaomi',
+      'realmee': 'realme', 'realmi': 'realme',
+      'huawai': 'huawei', 'huawey': 'huawei',
+      'infenix': 'infinix', 'infinex': 'infinix',
+      'playstation': 'playstation', 'plastation': 'playstation',
+      'coque': 'coque', 'colle': 'coque',
+    };
     const qTrim = (q || '').trim().toLowerCase()
       .replace(/[éèêë]/g,'e').replace(/[àâä]/g,'a').replace(/[ùûü]/g,'u')
       .replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/[ç]/g,'c');
-    const tokens = qTrim
+    const rawTokens = qTrim
       ? qTrim.split(/\s+/).map(t => t.replace(/[^a-z0-9\-]/g, '')).filter(t => t.length >= 2)
       : [];
+    // Appliquer les alias et diviser les tokens lettre-chiffre (ex: "iphone14" → "iphone","14")
+    const expandedSet = new Set();
+    for (const t of rawTokens) {
+      const aliased = ALIASES[t] || t;
+      expandedSet.add(aliased);
+      // Scinder aux frontières lettre↔chiffre : "iphone14" → ["iphone","14"]
+      const parts = aliased.split(/(?<=[a-z])(?=\d)|(?<=\d)(?=[a-z])/).filter(p => p.length >= 2);
+      if (parts.length > 1) parts.forEach(p => expandedSet.add(p));
+    }
+    const tokens = [...expandedSet];
     // Les token params viennent après les 6 params de base ($7, $8, ...)
     const tokenParams = tokens.map(t => '%' + t + '%');
     const baseParams  = [q||null, categorieNorm, prixMax||null, prixMin||null, limit, offset];

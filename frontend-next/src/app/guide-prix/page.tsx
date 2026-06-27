@@ -30,12 +30,16 @@ interface Detail {
 }
 
 const CATEGORIES = [
-  { slug: 'smartphones',  label: 'Téléphones',  icon: '📱' },
-  { slug: 'informatique', label: 'Informatique', icon: '💻' },
-  { slug: 'tv-electro',   label: 'TV & Électro', icon: '📺' },
-  { slug: 'mode',         label: 'Mode',         icon: '👗' },
-  { slug: 'maison',       label: 'Maison',        icon: '🏠' },
-  { slug: 'auto-moto',    label: 'Auto & Moto',   icon: '🛵' },
+  { slug: 'smartphones',  label: 'Téléphones',     icon: '📱' },
+  { slug: 'informatique', label: 'Informatique',    icon: '💻' },
+  { slug: 'tv-electro',   label: 'TV & Électro',   icon: '📺' },
+  { slug: 'mode',         label: 'Mode',            icon: '👗' },
+  { slug: 'maison',       label: 'Maison',          icon: '🏠' },
+  { slug: 'auto-moto',    label: 'Auto & Moto',     icon: '🛵' },
+  { slug: 'jeux',         label: 'Jeux & Gaming',   icon: '🎮' },
+  { slug: 'sport',        label: 'Sport & Fitness', icon: '⚽' },
+  { slug: 'sante-beaute', label: 'Santé & Beauté',  icon: '💊' },
+  { slug: 'alimentation', label: 'Alimentation',    icon: '🛒' },
 ]
 
 export default function GuidePrixPage() {
