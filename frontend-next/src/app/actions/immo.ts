@@ -12,6 +12,32 @@ export interface ImmoResult {
   errors?: Array<{ msg: string }>
 }
 
+export async function deleteAnnonceImmo(id: string): Promise<{ error?: string }> {
+  const session = await getOptionalSession()
+  if (!session) return { error: 'Connexion requise' }
+
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+    const token = await new SignJWT({ userId: session.userId, email: session.email })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setExpirationTime('2m')
+      .sign(secret)
+
+    const res = await fetch(`${BACKEND}/api/immo/mine/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      return { error: body.error ?? `Erreur ${res.status}` }
+    }
+    return {}
+  } catch (err) {
+    console.error('[deleteAnnonceImmo]', err)
+    return { error: 'Erreur réseau — réessayez.' }
+  }
+}
+
 export async function deposerAnnonceImmo(formData: FormData): Promise<ImmoResult> {
   const session = await getOptionalSession()
   if (!session) return { ok: false, error: 'Connexion requise' }

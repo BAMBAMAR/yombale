@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { backendFetch } from '@/lib/backend-fetch'
 import { fcfa } from '@/lib/format'
+import DeleteImmoButton from './DeleteImmoButton'
 
 export const metadata: Metadata = {
   title: 'Mes annonces immo — Nopalou',
@@ -119,6 +120,19 @@ export default async function MesAnnoncesImmoPage({
                     <span style={{ fontSize: 11, color: 'var(--text3)' }}>
                       {new Date(a.created_at).toLocaleDateString('fr-FR')}
                     </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                    <Link
+                      href={`/deposer-immo?edit=${a.id}`}
+                      style={{
+                        padding: '5px 12px', background: 'var(--bg)',
+                        border: '1px solid var(--border)', borderRadius: 6,
+                        fontSize: 12, color: 'var(--text1)', textDecoration: 'none',
+                      }}
+                    >
+                      ✏️ Modifier
+                    </Link>
+                    <DeleteImmoButton id={a.id} />
                   </div>
                 </div>
               </div>
