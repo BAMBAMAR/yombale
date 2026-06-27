@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 
@@ -57,14 +58,17 @@ function extraireSpecs(nom: string): Record<string, number> {
 }
 
 export default function GuideAchatPage() {
-  const [q, setQ]               = useState('')
-  const [cat, setCat]           = useState('')
-  const [budgetMin, setBudgetMin] = useState('')
-  const [budgetMax, setBudgetMax] = useState('')
-  const [poidsPrix, setPoidsPrix]   = useState(3)
-  const [poidsSpecs, setPoidsSpecs] = useState(3)
-  const [poidsDispo, setPoidsDispo] = useState(2)
-  const [profilActif, setProfilActif] = useState<string | null>(null)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const [q, setQ]               = useState(searchParams.get('q') ?? '')
+  const [cat, setCat]           = useState(searchParams.get('cat') ?? '')
+  const [budgetMin, setBudgetMin] = useState(searchParams.get('bMin') ?? '')
+  const [budgetMax, setBudgetMax] = useState(searchParams.get('bMax') ?? '')
+  const [poidsPrix, setPoidsPrix]   = useState(Number(searchParams.get('pp')) || 3)
+  const [poidsSpecs, setPoidsSpecs] = useState(Number(searchParams.get('ps')) || 3)
+  const [poidsDispo, setPoidsDispo] = useState(Number(searchParams.get('pd')) || 2)
+  const [profilActif, setProfilActif] = useState<string | null>(searchParams.get('profil'))
   const [results, setResults]   = useState<Produit[]>([])
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
@@ -81,6 +85,18 @@ export default function GuideAchatPage() {
   }
 
   const lancer = useCallback(async () => {
+    // Sync state to URL so browser Back restores filters
+    const urlParams = new URLSearchParams()
+    if (q)         urlParams.set('q', q)
+    if (cat)       urlParams.set('cat', cat)
+    if (budgetMin) urlParams.set('bMin', budgetMin)
+    if (budgetMax) urlParams.set('bMax', budgetMax)
+    if (profilActif) urlParams.set('profil', profilActif)
+    urlParams.set('pp', String(poidsPrix))
+    urlParams.set('ps', String(poidsSpecs))
+    urlParams.set('pd', String(poidsDispo))
+    router.push(`/guide-achat?${urlParams.toString()}`, { scroll: false })
+
     setLoading(true); setError('')
     try {
       const params = new URLSearchParams({
@@ -123,13 +139,23 @@ export default function GuideAchatPage() {
     } finally {
       setLoading(false)
     }
-  }, [q, cat, budgetMin, budgetMax, poidsPrix, poidsSpecs, poidsDispo])
+  }, [q, cat, budgetMin, budgetMax, poidsPrix, poidsSpecs, poidsDispo, profilActif, router])
+
+  // Auto-lance la recherche si des params sont dans l'URL (navigation retour)
+  useEffect(() => {
+    if (searchParams.get('q') || searchParams.get('cat') || searchParams.get('bMax')) {
+      lancer()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const sorted = [...results].sort((a, b) => {
     if (triPar === 'prix')  return +a.prix_min - +b.prix_min
     if (triPar === 'dispo') return (b._sDispo ?? 0) - (a._sDispo ?? 0)
     return (b._score ?? 0) - (a._score ?? 0)
   })
+
+  const topProduit = sorted[0] ?? null
 
   return (
     <div className="guide-page">
@@ -294,6 +320,20 @@ export default function GuideAchatPage() {
                   </Link>
                 ))}
               </div>
+
+              {/* CTA bas — meilleur produit */}
+              {topProduit && (
+                <div className="guide-cta-bas">
+                  <div className="guide-cta-bas-info">
+                    <span className="guide-cta-bas-label">🥇 Meilleur score</span>
+                    <span className="guide-cta-bas-nom">{topProduit.nom}</span>
+                    <span className="guide-cta-bas-prix">{fcfa(topProduit.prix_min)}</span>
+                  </div>
+                  <Link href={`/produit/${topProduit.id}`} className="guide-cta-bas-btn">
+                    Voir la fiche →
+                  </Link>
+                </div>
+              )}
             </>
           )}
         </div>
