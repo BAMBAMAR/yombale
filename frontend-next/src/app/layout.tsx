@@ -132,12 +132,12 @@ export default async function RootLayout({
               {/* Colonne 2 — Catégories */}
               <div className="footer-col">
                 <p className="footer-col-titre">Catégories</p>
-                <a href="/?categorie=smartphones">Téléphones</a>
-                <a href="/?categorie=informatique">Informatique</a>
-                <a href="/?categorie=tv-electro">TV &amp; Électro</a>
-                <a href="/?categorie=mode">Mode</a>
-                <a href="/?categorie=maison">Maison</a>
-                <a href="/?categorie=auto-moto">Auto &amp; Moto</a>
+                <a href="/categorie/smartphones">Téléphones</a>
+                <a href="/categorie/informatique">Informatique</a>
+                <a href="/categorie/tv-electro">TV &amp; Électro</a>
+                <a href="/categorie/mode">Mode</a>
+                <a href="/categorie/maison">Maison</a>
+                <a href="/categorie/auto-moto">Auto &amp; Moto</a>
                 <a href="/telecom">Télécom</a>
                 <a href="/immo">Immobilier</a>
                 <a href="/annonces">Annonces</a>

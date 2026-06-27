@@ -102,7 +102,7 @@ export default async function HomePage({
             return (
               <Link
                 key={c.slug}
-                href={`/?categorie=${c.slug}${q ? `&q=${encodeURIComponent(q)}` : ''}`}
+                href={`/categorie/${c.slug}`}
                 className={`categ-pill${categorie === c.slug ? ' active' : ''}`}
               >
                 {c.emoji} {c.label}

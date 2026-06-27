@@ -165,10 +165,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   try {
     const p = await apiFetch<Produit>(`/produits/${params.id}`);
-    const titre = `${p.nom}${p.marque ? ` — ${p.marque}` : ''} | Prix au Sénégal`;
+    const titre = `${p.nom}${p.marque ? ` ${p.marque}` : ''} — Prix Sénégal | Nopalou`;
+    const prixStr = p.prix_min ? ` à partir de ${fcfa(p.prix_min)}` : ''
     const description = p.description
       ? p.description.slice(0, 155)
-      : `Comparez le prix de ${p.nom} chez tous les vendeurs au Sénégal. Prix à partir de ${fcfa(p.prix_min)}.`;
+      : `Comparez le prix de ${p.nom} chez tous les vendeurs au Sénégal${prixStr}. Meilleure offre à Dakar et partout au Sénégal.`;
     return {
       title: titre,
       description,

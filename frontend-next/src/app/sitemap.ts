@@ -2,15 +2,27 @@ import type { MetadataRoute } from 'next'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.sn'
 
+const CATEGORY_SLUGS = [
+  'smartphones', 'informatique', 'tv-electro', 'mode',
+  'maison', 'auto-moto', 'jeux', 'beaute',
+]
+
 const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${BASE}/`,              changeFrequency: 'daily',   priority: 1.0 },
   { url: `${BASE}/immo`,          changeFrequency: 'hourly',  priority: 0.9 },
   { url: `${BASE}/telecom`,       changeFrequency: 'weekly',  priority: 0.8 },
+  { url: `${BASE}/annonces`,      changeFrequency: 'daily',   priority: 0.8 },
+  ...CATEGORY_SLUGS.map(slug => ({
+    url: `${BASE}/categorie/${slug}`,
+    changeFrequency: 'daily' as const,
+    priority: 0.85,
+  })),
   { url: `${BASE}/favoris`,       changeFrequency: 'monthly', priority: 0.4 },
   { url: `${BASE}/comparaison`,   changeFrequency: 'monthly', priority: 0.4 },
   { url: `${BASE}/connexion`,     changeFrequency: 'monthly', priority: 0.3 },
   { url: `${BASE}/inscription`,   changeFrequency: 'monthly', priority: 0.3 },
   { url: `${BASE}/deposer-annonce`, changeFrequency: 'monthly', priority: 0.5 },
+  { url: `${BASE}/deposer-immo`,  changeFrequency: 'monthly', priority: 0.5 },
 ]
 
 interface Produit { id: string; updated_at?: string }
