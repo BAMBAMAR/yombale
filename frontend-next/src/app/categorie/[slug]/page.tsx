@@ -1,9 +1,12 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import CardActions from '@/app/CardActions'
+
+export const dynamic = 'force-dynamic'
+
+const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 
 // ── Données SEO par catégorie ────────────────────────────────────────
 
@@ -134,12 +137,6 @@ export async function generateMetadata({
   }
 }
 
-// ── generateStaticParams — pre-génère les routes au build ────────────
-
-export function generateStaticParams() {
-  return Object.keys(CATEGORIES).map(slug => ({ slug }))
-}
-
 // ── Page ─────────────────────────────────────────────────────────────
 
 export default async function CategoriePage({
@@ -165,10 +162,13 @@ export default async function CategoriePage({
   let pages = 1
 
   try {
-    const data = await apiFetch<ApiResponse>(`/produits?${qs}`)
-    produits = data.produits ?? data.data ?? []
-    total    = data.total ?? produits.length
-    pages    = Math.ceil(total / 24) || 1
+    const res  = await fetch(`${BACKEND}/api/produits?${qs}`, { cache: 'no-store' })
+    if (res.ok) {
+      const data: ApiResponse = await res.json()
+      produits = data.produits ?? data.data ?? []
+      total    = data.total ?? produits.length
+      pages    = Math.ceil(total / 24) || 1
+    }
   } catch {
     // empty state
   }
@@ -298,30 +298,28 @@ export default async function CategoriePage({
             </Link>
           </div>
         ) : (
-          <div className="produits-grid">
+          <div className="grid-produits">
             {produits.map(p => (
-              <Link key={p.id} href={`/produit/${p.id}`} className="produit-card" style={{ position: 'relative' }}>
-                <CardActions id={p.id} nom={p.nom} type="produit" />
-                <div className="produit-img-wrap">
-                  {p.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.image_url} alt={p.nom} loading="lazy" />
-                  ) : (
-                    <span className="produit-img-placeholder">{cat.emoji}</span>
-                  )}
-                </div>
-                <div className="produit-card-body">
-                  <p className="produit-nom">{p.nom}</p>
-                  {p.marque && <p className="produit-marque">{p.marque}</p>}
-                  <div className="produit-prix-row">
-                    <span className="produit-prix">
-                      {p.prix_min ? fcfa(p.prix_min) : 'Prix sur demande'}
-                    </span>
-                    {p.nb_offres && p.nb_offres > 1 && (
-                      <span className="produit-offres">{p.nb_offres} offres</span>
+              <Link key={p.id} href={`/produit/${p.id}`} style={{ display: 'contents' }}>
+                <article className="card-produit">
+                  <div className="card-img">
+                    {p.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.image_url} alt={p.nom} loading="lazy" />
+                    ) : (
+                      <span className="card-img-placeholder">{cat.emoji}</span>
                     )}
                   </div>
-                </div>
+                  {p.marque && <p className="marque">{p.marque}</p>}
+                  <p className="nom">{p.nom}</p>
+                  <p className="prix">{p.prix_min ? fcfa(p.prix_min) : 'Prix sur demande'}</p>
+                  {p.nb_offres != null && p.nb_offres > 1 && (
+                    <p style={{ fontSize: '12px', color: 'var(--text3)' }}>
+                      {p.nb_offres} offres
+                    </p>
+                  )}
+                  <CardActions id={p.id} nom={p.nom} />
+                </article>
               </Link>
             ))}
           </div>
