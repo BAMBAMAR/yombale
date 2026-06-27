@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { apiFetch } from '@/lib/api'
 import SearchBar from './SearchBar'
+
+export const dynamic = 'force-dynamic'
+
+const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 import ProduitsListe from './ProduitsListe'
 import RecentlyViewed from './RecentlyViewed'
 
@@ -72,7 +75,9 @@ export default async function HomePage({
     if (categorie) params.set('categorie', categorie)
     if (prixMax)   params.set('prixMax',   prixMax)
 
-    const data = await apiFetch<ApiResponse | Produit[]>(`/produits?${params}`)
+    const r = await fetch(`${BACKEND}/api/produits?${params}`, { cache: 'no-store' })
+    if (!r.ok) throw new Error(`API produits → ${r.status}`)
+    const data: ApiResponse | Produit[] = await r.json()
     if (Array.isArray(data)) {
       produits = data
       total    = data.length
