@@ -4,6 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { apiFetch } from '@/lib/api';
 import { fcfa } from '@/lib/format';
+import { getOptionalSession } from '@/lib/dal';
+import SponsoringImmoBtn from './SponsoringImmoBtn';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -25,6 +27,9 @@ interface AnnonceImmo {
   created_at: string | null;
   photos: string[] | null;
   source: string | null;
+  utilisateur_id: string | null;
+  sponsorisee: boolean | null;
+  sponsorisee_jusqu_au: string | null;
 }
 
 // ── generateMetadata ─────────────────────────────────────────────
@@ -69,6 +74,7 @@ export default async function FicheImmoPage({
   params: { id: string };
 }) {
   let annonce: AnnonceImmo;
+  const session = await getOptionalSession();
 
   try {
     annonce = await apiFetch<AnnonceImmo>(`/immo/${params.id}`);
@@ -79,6 +85,10 @@ export default async function FicheImmoPage({
   const localisation = [annonce.quartier, annonce.ville].filter(Boolean).join(', ');
   const photos = Array.isArray(annonce.photos) ? annonce.photos : [];
   const mainPhoto = photos[0] ?? null;
+  const isOwner = session && annonce.utilisateur_id && session.userId === annonce.utilisateur_id;
+  const isSponsorise = annonce.sponsorisee && annonce.sponsorisee_jusqu_au
+    ? new Date(annonce.sponsorisee_jusqu_au) > new Date()
+    : false;
 
   return (
     <div className="fiche-immo">
@@ -229,6 +239,20 @@ export default async function FicheImmoPage({
               Voir l&apos;annonce originale →
             </a>
           </div>
+        )}
+
+        {/* Sponsoring — propriétaire uniquement */}
+        {isOwner && (
+          isSponsorise ? (
+            <div style={{ marginTop: 20, padding: '14px 18px', background: '#FEF9C3', border: '1px solid #FDE047', borderRadius: 10 }}>
+              <p style={{ fontWeight: 700, color: '#854D0E' }}>
+                ⭐ Mise en avant active jusqu&apos;au{' '}
+                {new Date(annonce.sponsorisee_jusqu_au!).toLocaleDateString('fr-FR')}
+              </p>
+            </div>
+          ) : (
+            <SponsoringImmoBtn immoId={annonce.id} />
+          )
         )}
       </div>
     </div>

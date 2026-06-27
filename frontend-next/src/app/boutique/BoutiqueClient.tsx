@@ -1,8 +1,9 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import { createBoutique, updateBoutique, deleteBoutique } from './actions'
+import { initierWaveBoutiqueSponsoring } from '@/app/actions/paiement'
 import type { ActionState } from '@/lib/backend-fetch'
 
 const CATEGORIES = [
@@ -29,6 +30,8 @@ interface Boutique {
   ville: string
   logo_url: string | null
   actif: boolean
+  sponsorise: boolean | null
+  sponsor_jusqu_au: string | null
   created_at: string
 }
 
@@ -149,10 +152,12 @@ function BoutiqueCard({
   boutique,
   onEdit,
   onDelete,
+  onSponsoring,
 }: {
   boutique: Boutique
   onEdit: () => void
   onDelete: () => void
+  onSponsoring: () => void
 }) {
   return (
     <div style={{
@@ -177,13 +182,20 @@ function BoutiqueCard({
           <p style={{ fontFamily: 'Sora, sans-serif', fontWeight: 700, fontSize: '15px', margin: 0 }}>
             {boutique.nom}
           </p>
-          <span style={{
-            fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
-            color: boutique.actif ? 'var(--green)' : 'var(--text3)',
-            background: boutique.actif ? 'var(--green2)' : '#f1f5f9',
-          }}>
-            {boutique.actif ? 'Active' : 'Inactive'}
-          </span>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {boutique.sponsorise && boutique.sponsor_jusqu_au && new Date(boutique.sponsor_jusqu_au) > new Date() && (
+              <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px', color: '#92400E', background: '#FEF3C7' }}>
+                ⭐ En avant
+              </span>
+            )}
+            <span style={{
+              fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
+              color: boutique.actif ? 'var(--green)' : 'var(--text3)',
+              background: boutique.actif ? 'var(--green2)' : '#f1f5f9',
+            }}>
+              {boutique.actif ? 'Active' : 'Inactive'}
+            </span>
+          </div>
         </div>
         {boutique.description && (
           <p style={{ fontSize: '13px', color: 'var(--text2)', margin: '4px 0' }}>{boutique.description}</p>
@@ -191,12 +203,18 @@ function BoutiqueCard({
         <p style={{ fontSize: '12px', color: 'var(--text3)', margin: '4px 0 12px' }}>
           {[boutique.categorie, boutique.ville, boutique.telephone].filter(Boolean).join(' · ')}
         </p>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
             onClick={onEdit}
             style={{ fontSize: '13px', color: 'var(--blue2)', background: 'var(--blue3)', border: 'none', borderRadius: '6px', padding: '5px 14px', cursor: 'pointer', fontWeight: 600 }}
           >
             Modifier
+          </button>
+          <button
+            onClick={onSponsoring}
+            style={{ fontSize: '13px', color: '#92400E', background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: '6px', padding: '5px 14px', cursor: 'pointer', fontWeight: 600 }}
+          >
+            ⭐ Mettre en avant
           </button>
           <button
             onClick={onDelete}
@@ -223,7 +241,21 @@ export default function BoutiqueClient({
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const router = useRouter()
 
-  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg]     = useState<string | null>(null)
+  const [sponsorError, setSponsorError] = useState<string | null>(null)
+  const [, startSponsoring]             = useTransition()
+
+  async function handleSponsoring(boutiqueId: string) {
+    setSponsorError(null)
+    startSponsoring(async () => {
+      const res = await initierWaveBoutiqueSponsoring(boutiqueId)
+      if (res.ok && res.url) {
+        window.location.href = res.url
+      } else {
+        setSponsorError(res.error ?? 'Impossible d\'initialiser le paiement.')
+      }
+    })
+  }
 
   async function handleDelete(id: string) {
     if (!confirm('Supprimer cette boutique définitivement ?')) return
@@ -285,6 +317,11 @@ export default function BoutiqueClient({
           {deleteError}
         </div>
       )}
+      {sponsorError && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '10px 14px', color: 'var(--red)', fontSize: '14px', marginBottom: '16px' }}>
+          ❌ {sponsorError}
+        </div>
+      )}
 
       {boutiques.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text3)' }}>
@@ -305,6 +342,7 @@ export default function BoutiqueClient({
               boutique={b}
               onEdit={() => setMode({ editing: b })}
               onDelete={() => handleDelete(b.id)}
+              onSponsoring={() => handleSponsoring(b.id)}
             />
           ))}
         </div>

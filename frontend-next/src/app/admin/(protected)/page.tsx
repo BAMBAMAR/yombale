@@ -105,6 +105,9 @@ export default async function AdminDashboard() {
             Boutiques
             {stats.boutiquesTotal > 0 && <span className="admin-badge">{stats.boutiquesTotal}</span>}
           </a>
+          <a href="/admin/revenus" className="admin-action-btn">
+            💰 Revenus &amp; Transactions
+          </a>
         </div>
       </div>
     </div>

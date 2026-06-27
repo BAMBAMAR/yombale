@@ -56,3 +56,41 @@ export async function initierOrangeAnnonce(annonce_id: string): Promise<Paiement
     return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }
   }
 }
+
+export async function initierWaveImmoSponsoring(immo_id: string): Promise<PaiementResult> {
+  const session = await getOptionalSession()
+  if (!session) return { ok: false, error: 'Connexion requise' }
+
+  try {
+    const token = await getAuthToken(session)
+    const res = await fetch(`${BACKEND}/api/paiement/immo-sponsoring/initier`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ immo_id }),
+    })
+    const body = await res.json()
+    if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }
+    return { ok: true, url: body.wave_url }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }
+  }
+}
+
+export async function initierWaveBoutiqueSponsoring(boutique_id: string): Promise<PaiementResult> {
+  const session = await getOptionalSession()
+  if (!session) return { ok: false, error: 'Connexion requise' }
+
+  try {
+    const token = await getAuthToken(session)
+    const res = await fetch(`${BACKEND}/api/paiement/boutique-sponsoring/initier`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ boutique_id }),
+    })
+    const body = await res.json()
+    if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }
+    return { ok: true, url: body.wave_url }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }
+  }
+}
