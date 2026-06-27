@@ -48,8 +48,7 @@ export const metadata: Metadata = {
     title: 'Nopalou',
   },
   icons: {
-    icon: '/icons/icon-192.svg',
-    apple: '/icons/icon-192.svg',
+    shortcut: '/icons/icon-192.svg',
   },
 };
 
