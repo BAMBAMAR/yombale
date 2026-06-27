@@ -178,6 +178,7 @@ export default async function HomePage({
         </div>
       ) : (
         <ProduitsListe
+          key={`${q}-${categorie}-${prixMax}`}
           initialProduits={produits}
           total={total}
           q={q}

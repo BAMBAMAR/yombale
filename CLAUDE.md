@@ -59,18 +59,57 @@ npm run migrate               # Apply schema (idempotent — runs automatically 
 - `render.yaml` defines a single "yombale-backend" web service on Render (Node 18). `SCRAPING_DISABLED=true` is set by default on Render to avoid scraping on the free tier.
 - No Redis dependency in the current codebase (listed in `.env.example` but no Redis client is imported).
 
+### Next.js fetch helpers (server-side only)
+Two helpers cover the two call patterns from Server Components and Server Actions:
+
+- **`lib/api.ts` → `apiFetch<T>(path)`** — public read-only calls. Uses `BACKEND_URL` (server-side), caches 5 min (`next: { revalidate: 300 }`). No auth header.
+- **`lib/backendFetch.ts` → `backendAuthFetch(path, init?)`** — authenticated calls. Reads the session via `getOptionalSession()`, mints a short-lived (2-min) HS256 JWT signed with `JWT_SECRET`, then attaches it as `Authorization: Bearer`. No Next.js cache.
+
+`JWT_SECRET` **must be identical** in both `backend/.env` and `frontend-next/.env.local` — `backendAuthFetch` signs tokens that the Express `verifierToken` middleware verifies.
+
+### Rate limiting (`backend/middlewares/rateLimit.js`)
+Five limiters imported per-route: `limiterGeneral` (100/15 min), `limiterAuth` (10/15 min), `limiterRecherche` (60/min), `limiterPublication` (5/hour), `limiterEcriture` (15/15 min).
+
+### Bot SSR (`backend/middlewares/bot-ssr.js`)
+Intercepts Googlebot / Bingbot requests and returns server-rendered HTML for the legacy SPA — mounted after all API routes in `app.js`.
+
+### Protected routes (Next.js middleware)
+`PROTECTED_ROUTES` (`startsWith`): `/compte`, `/mes-annonces`, `/mes-annonces-immo`, `/deposer-immo`, `/deposer-annonce`
+`PROTECTED_EXACT`: `/boutique`
+Unauthenticated users are redirected to `/connexion`; authenticated users hitting `/connexion` or `/inscription` are redirected to `/compte`.
+
+### Admin (Next.js)
+`frontend-next/src/app/admin/` has two route groups:
+- `(auth)/login` — public admin login page
+- `(protected)/` — layout applies its own session guard; contains `annonces`, `immo`, `telecom`, `seo`, `compte` pages
+
 ## Key Environment Variables
 
-| Variable | Used by | Purpose |
-|---|---|---|
-| `DATABASE_URL` | Backend | PostgreSQL connection (required) |
-| `JWT_SECRET` | Backend | Signs JWT tokens for API auth (required) |
-| `SESSION_SECRET` | Next.js | Signs session cookies (required for Next.js) |
-| `NEXT_PUBLIC_BACKEND_URL` | Next.js | Backend URL for API rewrites and server fetches |
-| `ADMIN_SECRET` | Backend | Guards `/admin*.html` pages and `/api/*/admin` routes |
-| `SCRAPING_DISABLED` | Backend | Set to `true` to skip scraper startup |
-| `CLOUDINARY_*` | Backend | Image uploads (boutiques, annonces) |
+### Backend (`.env`)
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection (required) |
+| `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
+| `ADMIN_SECRET` | Guards `/admin*.html` pages and `/api/*/admin` routes |
+| `FRONTEND_URL` | Allowed CORS origin (with/without `www` auto-accepted) |
+| `BACKEND_URL` | Used in email links and redirects |
+| `SCRAPING_DISABLED` | Set `true` to skip scraper startup (default on Render) |
+| `CLOUDINARY_*` | Image uploads for boutiques and annonces |
+| `RESEND_API_KEY` / `EMAIL_FROM` | Transactional emails via Resend |
+| `WAVE_API_KEY` / `WAVE_WEBHOOK_SECRET` | Wave Senegal payment |
+| `FB_EMAIL` / `FB_PASSWORD` | Facebook immo scraper credentials |
+
+### Next.js (`frontend-next/.env.local`)
+| Variable | Purpose |
+|---|---|
+| `SESSION_SECRET` | Signs `nopalou_session` cookie (HS256 via `jose`) |
+| `JWT_SECRET` | Must match backend — used by `backendAuthFetch` to mint tokens |
+| `BACKEND_URL` | Server-side URL for Server Actions and `apiFetch` |
+| `NEXT_PUBLIC_BACKEND_URL` | Client-side URL (exposed to browser) |
+| `NEXT_PUBLIC_SITE_URL` | Canonical URL for `metadataBase` in `layout.tsx` |
+
+Generate secrets: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
 
 ## Admin Pages
 
-The HTML admin pages (`/admin.html`, `/admin-immo.html`, etc.) in `frontend/` are protected by `adminPageGuard` middleware in `app.js`. They require the `X-Admin-Secret` header matching `ADMIN_SECRET`. API admin routes use `adminSecretOnly` middleware.
+The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, `/admin-partenaires.html`, `/admin-annonces.html`) in `frontend/` are protected by `adminPageGuard` middleware in `app.js`. They require the `X-Admin-Secret` header matching `ADMIN_SECRET`. API admin routes use `adminSecretOnly` middleware.

@@ -942,13 +942,14 @@ a {
   background: var(--accent);
   color: #fff;
   border: none;
-  padding: 0 28px;
-  font-size: 15px;
-  font-weight: 700;
+  padding: 0;
+  width: 56px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  white-space: nowrap;
   transition: background .15s;
-  font-family: 'Sora', sans-serif;
 }
 
 .hero-search-btn:hover { background: #a84d00; }
@@ -1814,7 +1815,7 @@ a {
   .hero-home h1 { font-size: 26px; }
   .hero-sub { font-size: 13px; margin-bottom: 20px; }
   .hero-search-input { padding: 13px 14px; font-size: 13px; }
-  .hero-search-btn { padding: 0 18px; font-size: 13px; }
+  .hero-search-btn { width: 48px; }
   .stats-strip { flex-wrap: wrap; }
   .stat-item {
     flex: 1 1 50%;
