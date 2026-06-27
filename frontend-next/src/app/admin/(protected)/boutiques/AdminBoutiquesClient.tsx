@@ -82,7 +82,7 @@ function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () 
         <p className="admin-annonce-date">
           Créée le {formatDate(boutique.created_at)}
           {sponsorActif && boutique.sponsor_jusqu_au && (
-            <> · <span style={{ color: '#D97706', fontWeight: 600 }}>Sponsor jusqu'au {formatDate(boutique.sponsor_jusqu_au)}</span></>
+            <> · <span style={{ color: '#D97706', fontWeight: 600 }}>Sponsor jusqu&apos;au {formatDate(boutique.sponsor_jusqu_au)}</span></>
           )}
         </p>
       </div>
