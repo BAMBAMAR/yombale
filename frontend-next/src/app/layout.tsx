@@ -54,13 +54,20 @@ export const metadata: Metadata = {
 
 const ORG_JSON_LD = {
   '@context': 'https://schema.org',
-  '@type': 'Organization',
+  '@type': 'WebSite',
   name: 'Nopalou',
   url: 'https://nopalou.sn',
   logo: 'https://nopalou.sn/icons/icon-512.svg',
-  description: 'Comparateur de prix en ligne au Sénégal — produits, immobilier, forfaits télécom.',
-  areaServed: 'SN',
+  description: 'Comparateur de prix N°1 au Sénégal — trouvez le prix le moins cher à Dakar pour téléphones, TV, électroménager, informatique.',
   inLanguage: 'fr',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: 'https://nopalou.sn/?q={search_term_string}',
+    },
+    'query-input': 'required name=search_term_string',
+  },
 }
 
 export default async function RootLayout({

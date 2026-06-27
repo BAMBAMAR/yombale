@@ -6,9 +6,14 @@ import ProduitsListe from './ProduitsListe'
 import RecentlyViewed from './RecentlyViewed'
 
 export const metadata: Metadata = {
-  title: 'Nopalou — Comparateur de prix Sénégal',
+  title: 'Nopalou — Comparateur de prix au Sénégal · Dakar',
   description:
-    'Comparez les prix de milliers de produits au Sénégal. Économisez en trouvant les meilleures offres du marché sénégalais.',
+    'Nopalou est le comparateur de prix N°1 au Sénégal. Trouvez le prix le moins cher pour vos achats à Dakar : téléphones, TV, électroménager, informatique. Gratuit et mis à jour toutes les 6h.',
+  keywords: [
+    'comparateur de prix Sénégal', 'comparateur prix Dakar', 'prix moins cher Sénégal',
+    'meilleur prix Dakar', 'comparer prix Sénégal', 'achat pas cher Dakar',
+    'prix téléphone Sénégal', 'prix TV Dakar', 'Nopalou',
+  ],
 }
 
 const CATEGORIES = [
@@ -85,9 +90,9 @@ export default async function HomePage({
     <>
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="hero-home">
-        <h1>Meilleur prix au <span>Sénégal</span></h1>
+        <h1>Comparateur de prix au <span>Sénégal</span></h1>
         <p className="hero-sub">
-          Comparez instantanément les prix chez les meilleurs marchands du Sénégal
+          Trouvez le prix le moins cher à Dakar et dans tout le Sénégal — téléphones, TV, électroménager et plus
         </p>
         <SearchBar defaultValue={q} />
         <div className="hero-categs">
@@ -174,6 +179,39 @@ export default async function HomePage({
           categorie={categorie}
           prixMax={prixMax}
         />
+      )}
+
+      {/* ── Bloc SEO ─────────────────────────────────────────────── */}
+      {!hasFiltre && (
+        <section style={{
+          maxWidth: 820, margin: '48px auto 24px',
+          padding: '28px 32px',
+          background: 'var(--card)', border: '1px solid var(--border)',
+          borderRadius: 12,
+        }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--navy)', marginBottom: 12 }}>
+            Le comparateur de prix N°1 au Sénégal
+          </h2>
+          <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8, marginBottom: 12 }}>
+            <strong>Nopalou</strong> est le premier comparateur de prix dédié au marché sénégalais.
+            Vous cherchez le <strong>prix le moins cher</strong> pour un téléphone, une télévision, un réfrigérateur ou un ordinateur ?
+            Nopalou compare en temps réel les prix de milliers de produits chez tous les grands marchands en ligne au Sénégal.
+          </p>
+          <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8, marginBottom: 12 }}>
+            Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis, Ziguinchor ou Kaolack — trouvez le meilleur prix avant d&apos;acheter.
+            Nos prix sont mis à jour automatiquement toutes les 6 heures depuis Jumia, Expat-Dakar, CoinAfrique et d&apos;autres marchands.
+          </p>
+          <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8 }}>
+            Comparer les prix au Sénégal n&apos;a jamais été aussi simple : recherchez votre produit, voyez toutes les offres côte à côte, et choisissez le vendeur le moins cher. <strong>Gratuit, sans inscription, sans pub intrusive.</strong>
+          </p>
+          <div style={{ display: 'flex', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
+            {CATEGORIES.filter(c => c.slug !== 'telecom').map(c => (
+              <Link key={c.slug} href={`/categorie/${c.slug}`} style={{ fontSize: 13, color: 'var(--accent)', textDecoration: 'underline' }}>
+                {c.label} au Sénégal
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
     </>
   )
