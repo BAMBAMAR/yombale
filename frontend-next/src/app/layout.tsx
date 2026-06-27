@@ -159,7 +159,7 @@ export default async function RootLayout({
               {/* Colonne 4 — Informations */}
               <div className="footer-col">
                 <p className="footer-col-titre">Informations</p>
-                <a href="/guide-achat">Comment ça marche ?</a>
+                <a href="/guide-emploi">Comment ça marche ?</a>
                 <a href="/boutiques">Boutiques partenaires</a>
                 <a href="/mentions-legales">Mentions légales</a>
                 <a href="/confidentialite">Confidentialité</a>
