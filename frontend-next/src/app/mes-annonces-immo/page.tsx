@@ -122,16 +122,6 @@ export default async function MesAnnoncesImmoPage({
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                    <Link
-                      href={`/deposer-immo?edit=${a.id}`}
-                      style={{
-                        padding: '5px 12px', background: 'var(--bg)',
-                        border: '1px solid var(--border)', borderRadius: 6,
-                        fontSize: 12, color: 'var(--text1)', textDecoration: 'none',
-                      }}
-                    >
-                      ✏️ Modifier
-                    </Link>
                     <DeleteImmoButton id={a.id} />
                   </div>
                 </div>
