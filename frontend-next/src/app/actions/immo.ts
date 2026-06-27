@@ -42,8 +42,13 @@ export async function deposerAnnonceImmo(formData: FormData): Promise<ImmoResult
   const session = await getOptionalSession()
   if (!session) return { ok: false, error: 'Connexion requise' }
 
+  if (!process.env.JWT_SECRET) {
+    console.error('[deposerAnnonceImmo] JWT_SECRET non défini — configurer dans Render Environment')
+    return { ok: false, error: 'Configuration serveur manquante — contactez l\'administrateur' }
+  }
+
   try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET)
     const token = await new SignJWT({ userId: session.userId, email: session.email })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('5m')

@@ -1,691 +1,491 @@
-# 📋 PLAN DE TEST NOPALOU — Format Squash TM
-> Version 1.0 — Juin 2026 | Référence : legacy `frontend/` vs Next.js `frontend-next/`
-> Testeur : _________________ | Date test : _________________
+# CAHIER DE TEST — NOPALOU
+> Version 2.0 — Juin 2026
+> URL de test : https://nopalou.com
+> Testeur : _________________ | Date : _________________
 
 ---
 
-## LÉGENDE STATUTS
+## LÉGENDE
+
 | Statut | Signification |
 |--------|--------------|
-| ✅ PASS | Fonctionnel et conforme au legacy |
+| ✅ PASS | Fonctionne correctement |
 | ❌ FAIL | Bug ou comportement incorrect |
-| 🔴 MANQUANT | Feature absente du Next.js |
 | ⚠️ PARTIEL | Présent mais incomplet |
-| ⏭ SKIP | Non applicable / hors périmètre |
+| ⏭ SKIP | Non testé / hors périmètre |
 
 ---
 
-## CAMPAGNE 1 — NAVIGATION & LAYOUT GLOBAL
-> URL de base : http://localhost:3001
+## CAMPAGNE 1 — NAVIGATION ET LAYOUT
 
-### TC-NAV-001 — Logo et accueil
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Ouvrir http://localhost:3001 | Page d'accueil chargée | |
-| 2 | Cliquer sur le logo "Nopalou" | Retour à l'accueil (/) | |
-| 3 | Vérifier la couleur du logo | "Nopa" en navy #1C2B4A, "lou" en orange #C75B00 | |
+### TC-NAV-001 — Chargement de la page d'accueil
+**Précondition :** Aucune
+
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir https://nopalou.com | Page d'accueil chargée en < 5s | | |
+| 2 | Vérifier le titre de l'onglet | Contient "Nopalou" | | |
+| 3 | Vérifier la navbar | Logo + liens Produits / Immo / Télécom / Annonces / Boutiques visible | | |
+| 4 | Vérifier le H1 | Contient "Sénégal" | | |
+| 5 | Faire défiler jusqu'au footer | Footer visible avec liens légaux | | |
 
 ### TC-NAV-002 — Liens navbar principaux
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Cliquer "Produits" dans la navbar | Redirige vers / | |
-| 2 | Cliquer "Immobilier" | Redirige vers /immo | |
-| 3 | Cliquer "Télécom" | Redirige vers /telecom | |
+**Précondition :** Être sur la page d'accueil
 
-### TC-NAV-003 — Barre de recherche navbar
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Cliquer l'icône loupe dans la navbar | Input de recherche s'ouvre | |
-| 2 | Taper "samsung" et appuyer Entrée | Redirige vers /recherche?q=samsung | |
-| 3 | Cliquer ailleurs sans taper | Input se referme | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Cliquer "Immobilier" | Navigation vers /immo | | |
+| 2 | Cliquer "Télécom" | Navigation vers /telecom | | |
+| 3 | Cliquer "Annonces" | Navigation vers /annonces | | |
+| 4 | Cliquer "Boutiques" | Navigation vers /boutiques | | |
+| 5 | Cliquer logo Nopalou | Retour à l'accueil | | |
 
-### TC-NAV-004 — Boutons d'action navbar (visiteur)
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier les boutons sans être connecté | "+ Déposer" + "Connexion" + "S'inscrire" visibles | |
-| 2 | Cliquer "+ Déposer" sans session | Redirige vers /connexion (redirect) | |
-| 3 | Cliquer "Connexion" | Redirige vers /connexion | |
-| 4 | Cliquer "S'inscrire" | Redirige vers /inscription | |
+### TC-NAV-003 — Bouton "+ Publier"
+**Précondition :** Non connecté
 
-### TC-NAV-005 — Navbar connecté
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Se connecter avec un compte | Navbar affiche nom utilisateur au lieu de Connexion/S'inscrire | |
-| 2 | Cliquer sur le nom/avatar | Dropdown avec "Mon compte" et "Déconnexion" | |
-| 3 | Cliquer "Déconnexion" | Session supprimée, retour état visiteur | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Cliquer "+ Publier" dans la navbar | Redirection vers /connexion?redirect=/deposer-annonce | | |
+| 2 | Se connecter | Redirection vers /deposer-annonce | | |
 
-### TC-NAV-006 — ⚠️ Guides dropdown (LEGACY FEATURE)
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Chercher un dropdown "Guides" dans la navbar | Devrait exister avec 3 liens : Guide d'achat / Guide forfait / Guide immo | 🔴 MANQUANT |
+### TC-NAV-004 — Responsivité mobile
+**Précondition :** Réduire la fenêtre à 390px (iPhone)
 
-### TC-NAV-007 — Footer colonnes
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Scroller jusqu'au footer | Footer visible avec fond navy | |
-| 2 | Vérifier colonne "Catégories" | 9 liens : Téléphones, Informatique, TV & Électro, Mode, Maison, Auto & Moto, Télécom, Immobilier, Annonces | |
-| 3 | Vérifier colonne "Mon compte" | 6 liens : Connexion, Inscription, Déposer, Mes annonces, Favoris, Profil | |
-| 4 | Vérifier colonne "Informations" | 4 liens : Mentions légales, Confidentialité, CGU, Boutiques | |
-| 5 | Vérifier icônes réseaux sociaux | f / 𝕏 / ▣ cliquables | |
-| 6 | Vérifier copyright | "© 2026 Nopalou — Dakar, Sénégal" | |
-
-### TC-NAV-008 — Compare Bar sticky
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Ajouter un produit à la comparaison (⚖) | Barre bleue apparaît en bas de l'écran | |
-| 2 | Ajouter un 2e produit | Barre affiche 2 items | |
-| 3 | Cliquer "Comparer" | Redirige vers /comparaison?ids=... | |
-| 4 | Cliquer ✕ | Barre disparaît, comparaison vidée | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Vérifier l'accueil en mobile | Mise en page adaptée, pas de débordement horizontal | | |
+| 2 | Vérifier la navbar mobile | Menu burger ou barre de navigation adaptée | | |
+| 3 | Vérifier /immo en mobile | Page lisible, filtres accessibles | | |
 
 ---
 
-## CAMPAGNE 2 — PAGE D'ACCUEIL PRODUITS
-> URL : http://localhost:3001
+## CAMPAGNE 2 — RECHERCHE ET PRODUITS
 
-### TC-HOME-001 — Hero section
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier le titre hero | "Meilleur prix au Sénégal" ou équivalent | |
-| 2 | Vérifier la barre de recherche centrale | Input visible avec placeholder | |
-| 3 | Vérifier les stats strip | 4 indicateurs : sites partenaires / produits / gratuit / zones | |
+### TC-PROD-001 — Barre de recherche
+**Précondition :** Être sur la page d'accueil
 
-### TC-HOME-002 — Filtres catégories
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier les pills de catégories | Au moins 8 catégories visibles | |
-| 2 | Cliquer "Téléphones" | Filtre actif, grille mise à jour | |
-| 3 | Cliquer "Immobilier" | Redirige vers /immo | |
-| 4 | Cliquer "Annonces" | Redirige vers /annonces | |
-| 5 | Cliquer "Télécom & Forfaits" | Redirige vers /telecom | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Taper "Samsung" dans la barre de recherche | Suggestions ou résultats apparaissent | | |
+| 2 | Appuyer sur Entrée | Résultats filtrés affichés (URL contient q=Samsung) | | |
+| 3 | Vérifier les résultats | Produits Samsung listés avec prix | | |
+| 4 | Effacer la recherche | Tous les produits réapparaissent | | |
 
-### TC-HOME-003 — Filtres budget
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Cliquer "< 5 000 FCFA" | Produits filtrés prixMax=5000 | |
-| 2 | Cliquer "5k – 15k" | Filtre prixMin=5000&prixMax=15000 | |
-| 3 | Cliquer un budget actif | Filtre retiré, tous les produits | |
+### TC-PROD-002 — Filtres produits
+**Précondition :** Être sur la page d'accueil
 
-### TC-HOME-004 — Recherche produits
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Taper "Samsung Galaxy" dans la recherche | Produits Samsung affichés | |
-| 2 | Taper "iphone" (minuscule) | Produits iPhone affichés (insensible à la casse) | |
-| 3 | Taper une requête sans résultat | Message "Aucun produit trouvé" | |
-| 4 | Effacer la recherche | Tous les produits affichés | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Filtrer par prix min (ex: 50000) | Produits < 50 000 FCFA exclus | | |
+| 2 | Filtrer par prix max (ex: 200000) | Produits > 200 000 FCFA exclus | | |
+| 3 | Changer le tri | Produits triés selon le critère choisi | | |
 
-### TC-HOME-005 — Grille produits
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier l'affichage des cartes | Image + nom + marque + prix + nb offres | |
-| 2 | Vérifier le badge économie | Badge "-X%" si écart prix min/max | |
-| 3 | Cliquer sur une carte produit | Redirige vers /produit/[id] | |
-| 4 | Vérifier les boutons ⚖ et ❤ | Présents sur chaque carte | |
+### TC-PROD-003 — Fiche produit
+**Précondition :** Des produits sont affichés
 
-### TC-HOME-006 — ⚠️ Tri produits
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Chercher un sélecteur de tri | Devrait avoir : Pertinence / Prix ↑ / Prix ↓ / A→Z | ⚠️ PARTIEL |
-| 2 | Tri Prix croissant | Produits réordonnés prix le plus bas en premier | |
-| 3 | Tri Prix décroissant | Produits réordonnés prix le plus haut en premier | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Cliquer sur un produit | Navigation vers /produit/{id} | | |
+| 2 | Vérifier le titre de la page | Contient le nom du produit | | |
+| 3 | Vérifier les prix | Tableau comparatif des prix par boutique visible | | |
+| 4 | Vérifier le bouton "Acheter" | Ouvre le site marchand | | |
+| 5 | Tester le bouton favoris (♡) | Produit ajouté aux favoris (icône change) | | |
 
-### TC-HOME-007 — ⚠️ Vue liste / grille
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Chercher un bouton switch vue | Bouton Grille / Liste | 🔴 MANQUANT |
-| 2 | Cliquer "Vue liste" | Cartes en mode horizontal compact | 🔴 MANQUANT |
+### TC-PROD-004 — Pages catégories SEO
+**Précondition :** Aucune
 
-### TC-HOME-008 — Pagination / chargement
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Scroller jusqu'en bas de la grille | Pagination ou bouton "Charger plus" | |
-| 2 | Cliquer page suivante | Produits suivants chargés | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /categorie/smartphones | Page chargée avec H1 sur smartphones | | |
+| 2 | Ouvrir /categorie/informatique | Page chargée | | |
+| 3 | Ouvrir /categorie/tv-electro | Page chargée | | |
+| 4 | Ouvrir /categorie/mode | Page chargée | | |
+| 5 | Ouvrir /categorie/maison | Page chargée | | |
+| 6 | Ouvrir /categorie/auto-moto | Page chargée | | |
+| 7 | Cliquer sur un produit depuis une catégorie | Navigation vers la fiche produit | | |
 
-### TC-HOME-009 — ⚠️ Dashboard analyse (après recherche)
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Chercher "écouteurs" | Dashboard KPIs : prix min/max/moy + nb produits | 🔴 MANQUANT |
-| 2 | Vérifier histogrammes marques | Graphique barres par marque avec prix min | 🔴 MANQUANT |
-| 3 | Vérifier recommandations rapides | "Meilleur prix" / "Meilleur rapport Q/P" / "Milieu gamme" | 🔴 MANQUANT |
+### TC-PROD-005 — Comparateur
+**Précondition :** Des produits sont affichés
+
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Cocher 2 produits à comparer | Barre de comparaison apparaît en bas | | |
+| 2 | Cocher 3 produits | 3 produits dans la barre | | |
+| 3 | Cliquer "Comparer" | Page /comparaison avec tableau comparatif | | |
+| 4 | Cliquer "Supprimer" sur un produit | Produit retiré de la comparaison | | |
 
 ---
 
-## CAMPAGNE 3 — FICHE PRODUIT
-> URL : http://localhost:3001/produit/[id]
+## CAMPAGNE 3 — IMMOBILIER
 
-### TC-PRODUIT-001 — Affichage général
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Cliquer sur un produit depuis l'accueil | Page fiche produit chargée | |
-| 2 | Vérifier breadcrumb | Accueil › Catégorie › Nom produit | |
-| 3 | Vérifier image produit | Image affichée (ou placeholder) | |
-| 4 | Vérifier prix minimum | Box verte avec prix min + nb marchands | |
-| 5 | Vérifier trust badges | 🔒 Sécurisé / 🚚 Livraison / ✅ Prix vérifiés | |
+### TC-IMMO-001 — Liste des annonces immo
+**Précondition :** Aucune
 
-### TC-PRODUIT-002 — Section offres
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier la liste des offres | Au moins 1 offre avec marchand + prix + lien | |
-| 2 | Vérifier badge "Meilleur prix" | 🏆 sur l'offre la moins chère | |
-| 3 | Cliquer "Voir l'offre" | Lien externe vers le marchand | |
-| 4 | Vérifier badge "Prix suspect" | ⚠️ si prix aberrant détecté | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /immo | Page chargée avec annonces immo | | |
+| 2 | Vérifier le H1 | Présent et visible | | |
+| 3 | Vérifier les cartes d'annonces | Titre, prix, ville, type bien visible | | |
 
-### TC-PRODUIT-003 — ⚠️ Historique des prix
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Chercher un onglet ou section "Historique" | Graphique/tableau 90 derniers jours | 🔴 MANQUANT |
-| 2 | Vérifier courbe de prix | Points par date avec prix | 🔴 MANQUANT |
+### TC-IMMO-002 — Filtres immobiliers
+**Précondition :** Être sur /immo
 
-### TC-PRODUIT-004 — ⚠️ Produits similaires
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Scroller jusqu'en bas de la fiche | Section "Produits similaires" ou "Vous aimerez aussi" | 🔴 MANQUANT |
-| 2 | Vérifier 4-6 produits recommandés | Même marque ou même catégorie / gamme de prix | 🔴 MANQUANT |
-
-### TC-PRODUIT-005 — Favoris
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Cliquer ❤ sur la fiche produit | Produit ajouté aux favoris, bouton change d'état | |
-| 2 | Aller sur /favoris | Produit présent dans la liste | |
-| 3 | Cliquer "Retirer" sur /favoris | Produit supprimé de la liste | |
-
-### TC-PRODUIT-006 — Alerte prix
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier la sidebar droite | Bouton "🔔 Créer alerte prix" présent | |
-| 2 | Cliquer le bouton | Formulaire avec prix cible (pré-rempli 90% prix min) | |
-| 3 | Connecté : soumettre l'alerte | Message succès + alerte créée | |
-| 4 | Non connecté : cliquer | Redirection vers /connexion | |
-
-### TC-PRODUIT-007 — Ajout comparaison depuis fiche
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Cliquer ⚖ sur la fiche | Produit ajouté, Compare Bar apparaît | |
-| 2 | Ajouter 3 produits | Max 3, alerte si dépassé | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Filtrer par type "Location" | Seules les locations affichées | | |
+| 2 | Filtrer par ville "Dakar" | Seules les annonces à Dakar | | |
+| 3 | Filtrer par prix max | Annonces filtrées par budget | | |
+| 4 | Filtrer par nb chambres (ex: 2) | Annonces avec ≥ 2 chambres | | |
+| 5 | Filtrer "Meublé" | Seules les annonces meublées | | |
+| 6 | Réinitialiser les filtres | Toutes les annonces réapparaissent | | |
 
 ---
 
-## CAMPAGNE 4 — COMPARAISON PRODUITS
-> URL : http://localhost:3001/comparaison?ids=...
+## CAMPAGNE 4 — TÉLÉCOM
 
-### TC-COMP-001 — Accès page comparaison
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Sélectionner 2 produits avec ⚖ | Compare Bar visible | |
-| 2 | Cliquer "Comparer" | Page /comparaison avec table | |
-| 3 | Accéder sans ids dans l'URL | Message "Sélectionnez 2 produits minimum" | |
+### TC-TEL-001 — Page télécom
+**Précondition :** Aucune
 
-### TC-COMP-002 — Table de comparaison
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier en-têtes | Images + noms des produits | |
-| 2 | Vérifier ligne "Prix le plus bas" | Colonne du moins cher surlignée en vert | |
-| 3 | Vérifier "Nombre d'offres" | Compte des marchands par produit | |
-| 4 | Vérifier "Top 3 offres" | Mini-cartes avec marchand + prix | |
-| 5 | Vérifier CTA "Voir la fiche" | Lien vers /produit/[id] par colonne | |
-
-### TC-COMP-003 — Comparaison 3 produits
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Comparer 3 produits | Table à 3 colonnes | |
-| 2 | Vérifier "Meilleur prix" | Badge sur le moins cher | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /telecom | Page chargée avec forfaits | | |
+| 2 | Vérifier les opérateurs | Orange, Free, Expresso visibles | | |
+| 3 | Filtrer par opérateur | Forfaits filtrés | | |
+| 4 | Filtrer par type (Data/Voix) | Forfaits filtrés | | |
+| 5 | Comparer 2 forfaits | Comparaison affichée | | |
 
 ---
 
-## CAMPAGNE 5 — FAVORIS
-> URL : http://localhost:3001/favoris
+## CAMPAGNE 5 — ANNONCES CLASSIFIÉES
 
-### TC-FAV-001 — Page favoris vide
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder à /favoris sans favoris | Message "Vous n'avez pas encore de favoris" + lien browse | |
+### TC-ANN-001 — Liste des annonces
+**Précondition :** Aucune
 
-### TC-FAV-002 — Favoris avec produits
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Ajouter 3 produits en favori | Accéder à /favoris | |
-| 2 | Vérifier affichage | Grille avec image + nom + prix + boutons | |
-| 3 | Cliquer "Voir les offres" | Redirige vers /produit/[id] | |
-| 4 | Cliquer "Retirer" | Produit supprimé de la liste et du localStorage | |
-| 5 | Recharger la page | Favoris persistants (localStorage) | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /annonces | Page chargée avec annonces | | |
+| 2 | Vérifier les cartes | Titre, prix, ville, photo visible | | |
+| 3 | Filtrer par catégorie | Annonces filtrées | | |
+| 4 | Rechercher un terme | Annonces correspondantes affichées | | |
+| 5 | Cliquer sur une annonce | Détail de l'annonce visible | | |
 
 ---
 
-## CAMPAGNE 6 — IMMOBILIER
-> URL : http://localhost:3001/immo
+## CAMPAGNE 6 — AUTHENTIFICATION
 
-### TC-IMMO-001 — Filtres page immo
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier toggle Location/Vente | Deux options cliquables | |
-| 2 | Cliquer "Vente" | Annonces de vente chargées, gammes de prix changent | |
-| 3 | Filtrer par type de bien "Appartement" | Seulement les appartements | |
-| 4 | Filtrer budget "<100 000 FCFA" (location) | Annonces dans la tranche | |
-| 5 | Trier par "Prix ↑" | Annonces du moins cher au plus cher | |
-| 6 | Trier par "Surface ↓" | Annonces les plus grandes d'abord | |
+### TC-AUTH-001 — Inscription
+**Précondition :** Email non utilisé sur le site
 
-### TC-IMMO-002 — Grille annonces immo
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier une carte immo | Image + titre + localisation + surface + prix | |
-| 2 | Vérifier badge transaction | "Location" en bleu ou "Vente" en vert | |
-| 3 | Vérifier badge "Sponsorisée" | Badge doré si sponsorisée | |
-| 4 | Cliquer sur une carte | Redirige vers /immo/[id] | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /inscription | Formulaire d'inscription visible | | |
+| 2 | Remplir nom, email, mot de passe | Champs renseignés | | |
+| 3 | Soumettre le formulaire | Redirection vers /compte ou /connexion | | |
+| 4 | Tester avec email déjà utilisé | Message d'erreur "email déjà utilisé" | | |
+| 5 | Tester avec mot de passe trop court | Message d'erreur validation | | |
 
-### TC-IMMO-003 — Fiche annonce immo
-> URL : http://localhost:3001/immo/[id]
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier hero image | Image pleine largeur | |
-| 2 | Vérifier breadcrumb | Accueil › Immobilier › Titre | |
-| 3 | Vérifier caractéristiques | Type bien · surface · pièces · chambres | |
-| 4 | Vérifier prix affiché | Montant + /mois si location | |
-| 5 | Vérifier description | Texte complet de l'annonce | |
-| 6 | Vérifier contact | Nom + téléphone vendeur | |
-| 7 | Lien "Voir l'annonce originale" | Lien externe si source scrapée | |
+### TC-AUTH-002 — Connexion
+**Précondition :** Avoir un compte existant
 
-### TC-IMMO-004 — ⚠️ Wizard immobilier
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Chercher un bouton "Trouver mon logement" ou wizard | Wizard budget + type + quartier → résultats | 🔴 MANQUANT |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /connexion | Formulaire visible | | |
+| 2 | Entrer email + mot de passe corrects | Redirection vers page d'accueil ou /compte | | |
+| 3 | Vérifier la navbar après connexion | Nom de l'utilisateur visible | | |
+| 4 | Tester avec mauvais mot de passe | Message d'erreur "identifiants incorrects" | | |
+| 5 | Tester avec email inexistant | Message d'erreur | | |
 
-### TC-IMMO-005 — ⚠️ Annonces similaires immo
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Scroller en bas de /immo/[id] | Section "Annonces similaires dans le quartier" | 🔴 MANQUANT |
+### TC-AUTH-003 — Pages protégées sans connexion
+**Précondition :** Ne pas être connecté
 
----
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Accéder à /compte | Redirection vers /connexion | | |
+| 2 | Accéder à /mes-annonces | Redirection vers /connexion | | |
+| 3 | Accéder à /deposer-annonce | Redirection vers /connexion | | |
+| 4 | Accéder à /deposer-immo | Redirection vers /connexion | | |
+| 5 | Accéder à /boutique | Redirection vers /connexion | | |
 
-## CAMPAGNE 7 — TÉLÉCOM & FORFAITS
-> URL : http://localhost:3001/telecom
+### TC-AUTH-004 — Déconnexion
+**Précondition :** Être connecté
 
-### TC-TEL-001 — Filtres télécom
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier badges opérateurs | Tous / Orange / Free / Expresso / Wave | |
-| 2 | Cliquer "Orange" | Seulement les forfaits Orange | |
-| 3 | Filtrer par type "Internet" | Seulement les forfaits data | |
-| 4 | Tri "Plus de data ↓" | Forfaits avec le plus de data d'abord | |
-
-### TC-TEL-002 — Cartes forfaits
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier une carte forfait | Badge opérateur coloré + data/min/sms/validité + prix | |
-| 2 | Vérifier formatage data | "X Go" si ≥ 1024 Mo, sinon "X Mo" | |
-| 3 | Cliquer "Voir l'offre" | Lien externe ou détail | |
-
-### TC-TEL-003 — ⚠️ Scoring et badge Recommandé
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Chercher un badge "🏆 Recommandé" | Badge sur le meilleur forfait par profil et validité | 🔴 MANQUANT |
-| 2 | Chercher onglets profil | Internet / Appels / Mixte → reorder forfaits | 🔴 MANQUANT |
-| 3 | Groupage par validité | Groupe 1j / 7j / 30j avec recommandé par groupe | 🔴 MANQUANT |
-
-### TC-TEL-004 — ⚠️ Wizard "Trouver mon forfait"
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Chercher bouton "🎯 Trouver mon forfait" | Bouton dans les filtres | 🔴 MANQUANT |
-| 2 | Saisir budget max 3 000 FCFA | Formulaire budget | 🔴 MANQUANT |
-| 3 | Choisir usage "Internet" | Forfaits data filtrés et scorés | 🔴 MANQUANT |
-| 4 | Voir résultats | Liste scorée par critères | 🔴 MANQUANT |
-
-### TC-TEL-005 — ⚠️ Comparaison forfaits
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Sélectionner 2-3 forfaits | Bouton ⚖ sur chaque carte | 🔴 MANQUANT |
-| 2 | Ouvrir comparaison forfaits | Table : prix/jour, data%, min%, prix/Go, prix/min | 🔴 MANQUANT |
-| 3 | Vérifier verdict par profil | "Meilleur choix", "Moins cher", "Plus de data" | 🔴 MANQUANT |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Cliquer sur le bouton de déconnexion | Session supprimée, retour à l'accueil | | |
+| 2 | Accéder à /compte après déconnexion | Redirection vers /connexion | | |
 
 ---
 
-## CAMPAGNE 8 — ANNONCES CLASSIFIÉES
-> URL : http://localhost:3001/annonces
+## CAMPAGNE 7 — PUBLICATION D'ANNONCE ⚠️ (BUG SIGNALÉ)
 
-### TC-ANN-001 — Page listing annonces
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder à /annonces | Page avec titre + grille d'annonces | |
-| 2 | Vérifier le compte total | "X annonces" affiché | |
-| 3 | Vérifier le bouton "Déposer une annonce" | Bouton orange en haut à droite | |
+### TC-PUB-001 — Publier une annonce classifiée
+**Précondition :** Être connecté avec un compte valide
 
-### TC-ANN-002 — Filtres catégories annonces
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Cliquer "Téléphones" | Filtre actif, annonces smartphones | |
-| 2 | Cliquer "Mode" | Annonces vêtements/chaussures | |
-| 3 | Cliquer "Toutes" | Toutes les annonces | |
-| 4 | Vérifier pill actif | Fond orange sur la catégorie sélectionnée | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Cliquer "+ Publier" ou aller sur /deposer-annonce | Formulaire étape 1 visible (choix catégorie) | | |
+| 2 | Choisir "Téléphone" | Passage à l'étape 2 | | |
+| 3 | Remplir : Titre "iPhone 13 test" | Champ renseigné | | |
+| 4 | Remplir : Prix 250000 | Champ renseigné | | |
+| 5 | Remplir : Marque "Apple" | Champ renseigné | | |
+| 6 | Sélectionner État "Bon état" | Sélectionné | | |
+| 7 | Sélectionner Ville "Dakar" | Sélectionné | | |
+| 8 | Remplir : Téléphone "77 123 45 67" | Champ renseigné | | |
+| 9 | Cliquer "Continuer → Photos" | Passage à l'étape 3 | | |
+| 10 | Cliquer "🚀 Publier l'annonce" sans photo | **Redirection vers /payer-annonce/{id} ou /mes-annonces** | | **⚠️ BUG SIGNALÉ : erreur à cette étape** |
+| 11 | Si erreur, noter le message exact | Message d'erreur visible | | |
 
-### TC-ANN-003 — Cartes annonces
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier une carte | Image (ou emoji placeholder) + titre + prix + ville + date | |
-| 2 | Vérifier badge catégorie | Overlay en bas à gauche de l'image | |
-| 3 | "Prix à négocier" si pas de prix | Affiché en vert | |
-| 4 | Cliquer la carte | Redirige vers /annonces/[id] | |
+### TC-PUB-002 — Publier une annonce immo
+**Précondition :** Être connecté avec un compte valide
 
-### TC-ANN-004 — Pagination annonces
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Si > 24 annonces | Boutons Précédent / Page X / Y / Suivant | |
-| 2 | Cliquer "Suivant" | Page 2 chargée, URL ?page=2 | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Aller sur /deposer-immo | Formulaire visible | | |
+| 2 | Remplir : Titre "Appartement F3 Plateau" | Champ renseigné | | |
+| 3 | Sélectionner Type "Appartement" | Sélectionné | | |
+| 4 | Sélectionner Transaction "Location" | Sélectionné | | |
+| 5 | Remplir : Prix 200000 | Champ renseigné | | |
+| 6 | Remplir : Surface 80 | Champ renseigné | | |
+| 7 | Sélectionner Ville "Dakar" | Sélectionné | | |
+| 8 | Remplir : Téléphone "77 123 45 67" | Champ renseigné | | |
+| 9 | Cliquer "Publier" | **Redirection vers /mes-annonces-immo** | | **⚠️ À tester** |
+| 10 | Si erreur, noter le message exact | Message d'erreur visible | | |
 
-### TC-ANN-005 — Détail annonce
-> URL : http://localhost:3001/annonces/[id]
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Cliquer sur une annonce | Page /annonces/[id] chargée | |
-| 2 | Vérifier breadcrumb | Accueil › Annonces › Catégorie › Titre | |
-| 3 | Vérifier galerie photos | Photo principale + miniatures si > 1 | |
-| 4 | Vérifier badge catégorie | Pill orange avec le nom de catégorie | |
-| 5 | Vérifier titre et localisation | Titre H1 + ville + quartier + date | |
-| 6 | Vérifier prix | Box verte avec montant ou "Prix à négocier" | |
-| 7 | Vérifier description | Texte complet | |
-| 8 | Vérifier caractéristiques | Tableau marque/état/etc. si disponibles | |
-| 9 | Vérifier sidebar contact | Card navy avec nom vendeur + tel + WhatsApp | |
-| 10 | Cliquer numéro téléphone | Lance l'appel (tel:) | |
-| 11 | Cliquer "WhatsApp" | Ouvre WhatsApp avec message pré-rempli | |
-| 12 | Vérifier avertissement | "Ne payez jamais à l'avance" visible | |
+### TC-PUB-003 — Diagnostic erreur de publication
+**Précondition :** TC-PUB-001 ou TC-PUB-002 échoue
 
-### TC-ANN-006 — Dépôt annonce
-> URL : http://localhost:3001/deposer-annonce
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder sans session | Redirige vers /connexion | |
-| 2 | Se connecter puis accéder | Formulaire 3 étapes visible | |
-| 3 | Étape 1 : choisir "Téléphones" | Passe à l'étape 2 avec champs marque/état | |
-| 4 | Étape 2 : remplir titre + prix + ville | Champs validés | |
-| 5 | Étape 3 : ajouter une photo | Preview de la photo | |
-| 6 | Soumettre | Annonce créée (si quota ok : active, sinon paiement) | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir les DevTools (F12) → onglet Console | Pas d'erreur réseau rouge | | |
+| 2 | Onglet Network → chercher la requête POST | Vérifier le code de statut HTTP | | |
+| 3 | Si statut 401 | JWT_SECRET manquant dans Render → voir section "Résolution" | | |
+| 4 | Si statut 500 | Erreur serveur → vérifier les logs Render backend | | |
+| 5 | Si "Failed to fetch" | BACKEND_URL manquant dans Render → voir section "Résolution" | | |
+| 6 | Si statut 400 | Champ manquant ou invalide dans le formulaire | | |
 
 ---
 
-## CAMPAGNE 9 — PAIEMENT
-> URL : http://localhost:3001/payer-annonce/[id]
+## CAMPAGNE 8 — MON COMPTE
 
-### TC-PAY-001 — Page paiement annonce
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Avoir une annonce non payée dans /mes-annonces | Bouton "💳 Activer" | |
-| 2 | Cliquer "Activer" | Page /payer-annonce/[id] | |
-| 3 | Vérifier montant | 1 500 FCFA affiché | |
-| 4 | Vérifier options | Wave (cyan) + Orange Money (orange) | |
-| 5 | Cliquer "Wave" | Redirection vers checkout Wave | |
-| 6 | Revenir après paiement | Page succès /paiement/succes | |
+### TC-CPT-001 — Page compte
+**Précondition :** Être connecté
 
-### TC-PAY-002 — Pages retour paiement
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder /paiement/succes | ✅ "Paiement confirmé" + référence | |
-| 2 | Accéder /paiement/erreur | ❌ "Paiement annulé" + aucun débit | |
-| 3 | Liens CTA succès | "Voir mes annonces" + "Déposer une autre" | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /compte | Page avec infos utilisateur | | |
+| 2 | Vérifier affichage nom + email | Données correctes | | |
 
----
+### TC-CPT-002 — Mes annonces classifiées
+**Précondition :** Être connecté, avoir au moins une annonce
 
-## CAMPAGNE 10 — AUTHENTIFICATION
-> URLs : /connexion · /inscription
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /mes-annonces | Liste des annonces publiées | | |
+| 2 | Vérifier statut de chaque annonce | Actif / En attente / Rejeté visible | | |
+| 3 | Cliquer "Supprimer" sur une annonce | Confirmation demandée | | |
+| 4 | Confirmer la suppression | Annonce supprimée, liste mise à jour | | |
 
-### TC-AUTH-001 — Connexion
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder à /connexion | Formulaire email + mot de passe | |
-| 2 | Saisir mauvais identifiants | Message d'erreur "Email ou mot de passe incorrect" | |
-| 3 | Saisir bons identifiants | Redirection vers / (ou page précédente) + session créée | |
-| 4 | Accéder /connexion déjà connecté | Redirige vers /compte | |
+### TC-CPT-003 — Mes annonces immo
+**Précondition :** Être connecté, avoir au moins une annonce immo
 
-### TC-AUTH-002 — Inscription
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder à /inscription | Formulaire nom + email + mot de passe | |
-| 2 | Email déjà utilisé | Message "Email déjà utilisé" | |
-| 3 | Mot de passe < 6 caractères | Validation erreur | |
-| 4 | Inscription réussie | Compte créé + session + redirection | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /mes-annonces-immo | Liste des annonces immo | | |
+| 2 | Cliquer "Supprimer" | Confirmation + suppression | | |
+
+### TC-CPT-004 — Favoris
+**Précondition :** Avoir ajouté des produits en favoris
+
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /favoris | Liste des produits favoris | | |
+| 2 | Retirer un favori | Produit retiré | | |
+| 3 | Fermer et rouvrir le navigateur | Favoris conservés (localStorage) | | |
 
 ---
 
-## CAMPAGNE 11 — COMPTE UTILISATEUR
-> URL : http://localhost:3001/compte
+## CAMPAGNE 9 — BOUTIQUES
 
-### TC-COMPTE-001 — Dashboard compte
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder /compte sans session | Redirige vers /connexion | |
-| 2 | Accéder /compte connecté | Avatar + "Bonjour, {nom}" + grille 5 cartes | |
-| 3 | Vérifier les 5 cartes | Mes annonces / Ma boutique / Favoris / Déposer / Mon profil | |
+### TC-BOUT-001 — Liste boutiques
+**Précondition :** Aucune
 
-### TC-COMPTE-002 — Mon profil
-> URL : http://localhost:3001/compte/profil
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Cliquer "Mon profil" | Page profil avec nom + email (lecture seule) | |
-| 2 | Cliquer "Réinitialiser mon mot de passe" | Email de reset envoyé | |
-| 3 | Cliquer "Se déconnecter" | Session supprimée + redirection | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /boutiques | Liste des boutiques partenaires | | |
+| 2 | Cliquer sur une boutique | Page boutique avec ses produits | | |
 
-### TC-COMPTE-003 — Mes annonces
-> URL : http://localhost:3001/mes-annonces
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder sans annonce | Message vide + bouton "Déposer" | |
-| 2 | Annonce active | Badge vert "Active" | |
-| 3 | Annonce en attente | Badge orange "En attente" | |
-| 4 | Annonce rejetée | Badge rouge "Rejetée" | |
-| 5 | Annonce non payée | Badge + bouton "💳 Activer (1 500 FCFA)" | |
-| 6 | Cliquer "Supprimer" | Confirmation + suppression | |
+### TC-BOUT-002 — Ma boutique
+**Précondition :** Être connecté
 
-### TC-COMPTE-004 — Ma boutique
-> URL : http://localhost:3001/boutique
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder sans boutique | Placeholder "Créez votre boutique" | |
-| 2 | Créer une boutique | Formulaire : nom + description + catégorie + tel + ville | |
-| 3 | Max 3 boutiques | Bouton "+" désactivé après 3 | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /boutique | Page de ma boutique | | |
+| 2 | Vérifier les infos | Nom, description, produits | | |
 
 ---
 
-## CAMPAGNE 12 — GUIDES D'ACHAT ⚠️
-> ENTIÈREMENT MANQUANT DANS NEXT.JS
+## CAMPAGNE 10 — GUIDES
 
 ### TC-GUIDE-001 — Guide d'achat intelligent
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder aux guides depuis la navbar | Dropdown "Guides" avec 3-4 options | 🔴 MANQUANT |
-| 2 | Cliquer "Guide d'achat" | Wizard : type de produit → budget → usage → recommandations | 🔴 MANQUANT |
+**Précondition :** Aucune
 
-### TC-GUIDE-002 — Guide forfait télécom
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Cliquer "Guide forfait" dans navbar ou page télécom | Wizard : budget max + usage + minimums → résultats scorés | 🔴 MANQUANT |
-| 2 | Renseigner budget 5 000 FCFA + usage Internet | Forfaits data filtrés et classés | 🔴 MANQUANT |
-| 3 | Changer le profil (Appels) | Résultats recalculés | 🔴 MANQUANT |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /guide-achat | Page guide visible | | |
+| 2 | Définir un budget max 200000 | Champ renseigné | | |
+| 3 | Sélectionner catégorie "Smartphones" | Catégorie sélectionnée | | |
+| 4 | Cliquer "Lancer la recherche" | Résultats triés par score | | |
+| 5 | Naviguer vers un produit puis revenir | Les filtres sont conservés dans l'URL | | |
+| 6 | Vérifier la barre CTA en bas | Meilleur produit affiché avec bouton "Voir la fiche" | | |
 
-### TC-GUIDE-003 — Guide immobilier
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Cliquer "Guide immobilier" | Wizard : ville + type + budget + surface → annonces filtrées | 🔴 MANQUANT |
+### TC-GUIDE-002 — Guide immo
+**Précondition :** Aucune
 
----
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /guide-immo | Page guide immo visible | | |
+| 2 | Filtrer par budget et ville | Résultats filtrés | | |
 
-## CAMPAGNE 13 — RECHERCHE GLOBALE
-> URL : http://localhost:3001/recherche?q=...
+### TC-GUIDE-003 — Guide forfaits télécom
+**Précondition :** Aucune
 
-### TC-SEARCH-001 — Page recherche
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder /recherche?q=samsung | Résultats groupés Produits + Annonces | |
-| 2 | Vérifier section Produits | Grid cards avec image + nom + prix | |
-| 3 | Vérifier section Annonces | Grid cards avec image + titre + ville | |
-| 4 | Recherche sans résultat | "Aucun résultat pour X" | |
-| 5 | /recherche sans ?q | "Tapez un mot-clé" | |
-| 6 | Cliquer un produit | Redirige vers /produit/[id] | |
-
-### TC-SEARCH-002 — ⚠️ Autocomplete
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Taper 2 caractères dans la barre de recherche | Suggestions dropdown apparaissent | 🔴 MANQUANT |
-| 2 | Cliquer une suggestion | Recherche lancée avec ce terme | 🔴 MANQUANT |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /guide-forfait | Page guide télécom visible | | |
+| 2 | Filtrer par usage (data/voix) | Forfaits adaptés affichés | | |
 
 ---
 
-## CAMPAGNE 14 — ADMINISTRATION
-> URL : http://localhost:3001/admin
+## CAMPAGNE 11 — ADMINISTRATION
 
-### TC-ADMIN-001 — Connexion admin
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder /admin | Redirige vers /admin/login | |
-| 2 | Saisir mauvais secret | Message "Secret incorrect" | |
-| 3 | Saisir bon secret (ADMIN_SECRET du .env) | Redirige vers /admin (dashboard) | |
-| 4 | Cookie expiré après 8h | Redirige vers /admin/login | |
+### TC-ADMIN-001 — Accès admin
+**Précondition :** Connaître le secret admin (ADMIN_SECRET)
 
-### TC-ADMIN-002 — Dashboard stats
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier les 6 KPI cards | Produits / Annonces total / Actives / En attente / Rejetées / Immo | |
-| 2 | Badge "Modérer" avec count | Badge orange si annonces en attente > 0 | |
-| 3 | Navigation sidebar | Dashboard / Annonces classifiées / Immo à valider | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /admin | Redirection vers /admin/login | | |
+| 2 | Entrer le bon secret | Redirection vers /admin (dashboard) | | |
+| 3 | Entrer un mauvais secret | Message d'erreur, rester sur /admin/login | | |
+| 4 | Cliquer "Dashboard" | Rester connecté (pas de déconnexion) | | |
+| 5 | Cliquer "Déconnexion" | Redirection vers /admin/login | | |
+| 6 | Accéder à /admin après déconnexion | Redirection vers /admin/login | | |
 
-### TC-ADMIN-003 — Modération annonces
-> URL : http://localhost:3001/admin/annonces
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier sections | En attente / Actives / Rejetées | |
-| 2 | Cliquer "Approuver" | Annonce passe en active (refresh) | |
-| 3 | Cliquer "Désactiver" | Annonce désactivée | |
-| 4 | Cliquer "Réactiver" sur rejetée | Annonce réactivée | |
+### TC-ADMIN-002 — Modération annonces
+**Précondition :** Être connecté en admin, avoir des annonces en attente
 
-### TC-ADMIN-004 — Modération immo
-> URL : http://localhost:3001/admin/immo
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Vérifier liste annonces immo utilisateurs | Annonces source='utilisateur' actif=false | |
-| 2 | Cliquer "Valider" | Annonce activée et visible sur /immo | |
-| 3 | Cliquer "Désactiver" | Annonce cachée | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /admin/annonces | Liste des annonces avec statut | | |
+| 2 | Cliquer "Approuver" sur une annonce | Annonce approuvée, statut mis à jour | | |
+| 3 | Cliquer "Rejeter" sur une annonce | Annonce rejetée | | |
 
-### TC-ADMIN-005 — ⚠️ Gestion télécom
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Chercher onglet "Télécom" dans sidebar admin | CRUD forfaits | 🔴 MANQUANT |
+### TC-ADMIN-003 — Validation immo
+**Précondition :** Être connecté en admin, avoir des annonces immo en attente
 
-### TC-ADMIN-006 — ⚠️ Gestion partenaires
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Chercher onglet "Partenaires" dans sidebar admin | Approuver/rejeter demandes | 🔴 MANQUANT |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /admin/immo | Liste des annonces immo en attente | | |
+| 2 | Valider une annonce | Annonce publiée | | |
+| 3 | Rejeter une annonce | Annonce rejetée | | |
+
+### TC-ADMIN-004 — Section SEO
+**Précondition :** Être connecté en admin
+
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /admin/seo | Page SEO avec stats et pages indexées | | |
+| 2 | Cliquer "Sitemap XML" | Sitemap ouvert dans un nouvel onglet | | |
+| 3 | Cliquer "Google Search Console" | Lien externe ouvert | | |
 
 ---
 
-## CAMPAGNE 15 — PAGES LÉGALES & CONTENU STATIQUE
+## CAMPAGNE 12 — PWA ET PERFORMANCES
 
-### TC-LEGAL-001 — Pages légales
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder /mentions-legales | Page avec sections éditeur + hébergement + responsabilité | |
-| 2 | Accéder /confidentialite | Page avec données collectées + droits utilisateur | |
-| 3 | Accéder /cgu | Page avec conditions annonces + paiement + comportements | |
-| 4 | Liens depuis le footer | Tous les 3 liens fonctionnels | |
+### TC-PWA-001 — Manifest et icônes
+**Précondition :** Aucune
 
-### TC-LEGAL-002 — ⚠️ Page Contact
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder /contact | Formulaire de contact ou email | 🔴 MANQUANT |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /manifest.json | JSON valide avec name, icons, start_url | | |
+| 2 | Vérifier /icons/icon-192.svg | Image accessible | | |
+| 3 | Sur Chrome mobile → "Ajouter à l'écran d'accueil" | Option disponible | | |
 
-### TC-LEGAL-003 — ⚠️ Page À propos
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder /a-propos | Présentation de Nopalou | 🔴 MANQUANT |
+### TC-PWA-002 — SEO technique
+**Précondition :** Aucune
 
----
-
-## CAMPAGNE 16 — SEO & PERFORMANCE
-
-### TC-SEO-001 — Métadonnées
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | View Source de / | `<title>Nopalou — Comparateur de prix Sénégal</title>` | |
-| 2 | View Source /produit/[id] | `<title>` contient nom du produit | |
-| 3 | Vérifier meta description | Présente sur toutes les pages principales | |
-| 4 | Vérifier og:image | Image Open Graph définie | |
-
-### TC-SEO-002 — Robots et sitemap
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder /robots.txt | Disallow: /compte/, /mes-annonces, etc. + lien sitemap | |
-| 2 | Accéder /sitemap.xml | Liste des URLs statiques + produits + immo | |
-
-### TC-SEO-003 — PWA Manifest
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder /manifest.json | JSON valide avec name, icons, theme_color #C75B00 | |
-| 2 | Vérifier installabilité | Chrome DevTools → Application → Manifest | |
-
-### TC-SEO-004 — Performance loading
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Accéder /immo pendant chargement | Skeleton animé shimmer visible | |
-| 2 | Accéder /telecom pendant chargement | Skeleton visible | |
-| 3 | Simuler erreur réseau | Page error.tsx avec "Réessayer" | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /sitemap.xml | XML valide avec toutes les URLs | | |
+| 2 | Ouvrir /robots.txt | Fichier avec Sitemap et Allow/Disallow | | |
+| 3 | Tester https://nopalou.com sur PageSpeed | Score ≥ 70 mobile, ≥ 85 desktop | | |
 
 ---
 
-## CAMPAGNE 17 — RESPONSIVE MOBILE
-> Tester à 375px (iPhone SE) et 768px (tablet)
+## CAMPAGNE 13 — PAGES LÉGALES
 
-### TC-MOBILE-001 — Navbar mobile
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Réduire à 375px | Liens navbar cachés, boutons action compacts | |
-| 2 | Vérifier barre de recherche | Bouton loupe visible et fonctionnel | |
-| 3 | Vérifier "+ Déposer" | Toujours visible et cliquable | |
+### TC-LEGAL-001 — Pages légales accessibles
+**Précondition :** Aucune
 
-### TC-MOBILE-002 — Grille produits mobile
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Grille à 375px | 2 colonnes minimum | |
-| 2 | Grille à 768px | 3 colonnes | |
-
-### TC-MOBILE-003 — Annonce détail mobile
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Fiche annonce à 375px | Layout 1 colonne (sidebar dessous) | |
-| 2 | Boutons contact visibles | Tel + WhatsApp accessibles sans scroll excessif | |
-
-### TC-MOBILE-004 — Footer mobile
-| # | Étape | Résultat attendu | Statut |
-|---|-------|-----------------|--------|
-| 1 | Footer à 375px | Colonnes empilées verticalement | |
+| # | Étape | Résultat attendu | Statut | Remarque |
+|---|-------|-----------------|--------|----------|
+| 1 | Ouvrir /mentions-legales | Page chargée avec contenu | | |
+| 2 | Ouvrir /confidentialite | Page chargée avec contenu | | |
+| 3 | Ouvrir /cgu | Page chargée avec contenu | | |
+| 4 | Vérifier les liens dans le footer | Tous pointent vers les bonnes pages | | |
 
 ---
 
-## RÉCAPITULATIF EXÉCUTIF
+## RÉSOLUTION BUG — PUBLICATION
 
-### Comptage statuts (à remplir après tests)
-| Statut | Nombre | % |
-|--------|--------|---|
-| ✅ PASS | | |
-| ❌ FAIL | | |
-| 🔴 MANQUANT | 21 | |
-| ⚠️ PARTIEL | 4 | |
-| **TOTAL cas de test** | **~120** | |
+Si TC-PUB-001 échoue avec "Erreur 401" ou "Erreur réseau" :
 
-### Features MANQUANTES identifiées (21)
-| ID | Feature manquante | Sprint prévu |
-|----|------------------|-------------|
-| TC-NAV-006 | Dropdown Guides (navbar) | Sprint 15/16 |
-| TC-HOME-007 | Switch vue liste/grille | Sprint 16 |
-| TC-HOME-009 | Dashboard analyse recherche (KPIs + histogrammes) | Backlog |
-| TC-PRODUIT-003 | Historique des prix (graphique 90j) | Sprint 14 |
-| TC-PRODUIT-004 | Produits similaires | Sprint 14 |
-| TC-IMMO-004 | Wizard immobilier | Backlog |
-| TC-IMMO-005 | Annonces similaires sur fiche immo | Sprint 14 |
-| TC-TEL-003 | Scoring + badge Recommandé + profils | Sprint 15 |
-| TC-TEL-004 | Wizard "Trouver mon forfait" | Sprint 15 |
-| TC-TEL-005 | Comparaison forfaits télécom | Sprint 15 |
-| TC-GUIDE-001 | Guide d'achat intelligent | Sprint 15/16 |
-| TC-GUIDE-002 | Guide forfait télécom | Sprint 15 |
-| TC-GUIDE-003 | Guide immobilier | Backlog |
-| TC-SEARCH-002 | Autocomplete suggestions | Sprint 16 |
-| TC-ADMIN-005 | Admin gestion télécom | Sprint 16 |
-| TC-ADMIN-006 | Admin gestion partenaires | Sprint 16 |
-| TC-LEGAL-002 | Page Contact | Sprint 16 |
-| TC-LEGAL-003 | Page À propos | Sprint 16 |
-| TC-HOME-006 | Tri produits UI complet | Sprint 16 |
-| TC-IMMO-001 | Filtres immo (villes API) | Sprint 14 |
-| TC-TEL-003b | Groupage forfaits par validité | Sprint 15 |
+### Étape 1 — Vérifier les variables d'environnement sur Render
+
+1. Se connecter sur https://dashboard.render.com
+2. Ouvrir le service **nopalou-frontend**
+3. Aller dans **Environment**
+4. Vérifier que ces variables sont définies :
+
+| Variable | Valeur attendue |
+|----------|----------------|
+| `BACKEND_URL` | URL du backend Render (ex: https://yombale-backend.onrender.com) |
+| `JWT_SECRET` | **Même valeur exacte** que `JWT_SECRET` du service yombale-backend |
+| `SESSION_SECRET` | Chaîne aléatoire ≥ 32 caractères |
+| `NEXT_PUBLIC_BACKEND_URL` | Même URL que BACKEND_URL |
+
+### Étape 2 — Redéployer après modification
+
+Après avoir ajouté les variables → Render redéploie automatiquement (~3 min).
+
+### Étape 3 — Vérifier dans la console navigateur
+
+Ouvrir DevTools (F12) → Network → soumettre le formulaire → chercher la requête POST vers `/api/annonces` → vérifier le code retour :
+- **401** → JWT_SECRET incorrect ou manquant
+- **0 / Failed** → BACKEND_URL incorrect ou manquant
+- **400** → Champ obligatoire manquant (téléphone, titre, catégorie)
+- **200/201** → Publication réussie
+
+---
+
+## RÉCAPITULATIF CAMPAGNES
+
+| Campagne | Nb TC | Statut global |
+|----------|-------|--------------|
+| 1 — Navigation | 4 | |
+| 2 — Produits | 5 | |
+| 3 — Immobilier | 2 | |
+| 4 — Télécom | 1 | |
+| 5 — Annonces | 1 | |
+| 6 — Authentification | 4 | |
+| 7 — **Publication** ⚠️ | 3 | |
+| 8 — Mon compte | 4 | |
+| 9 — Boutiques | 2 | |
+| 10 — Guides | 3 | |
+| 11 — Administration | 4 | |
+| 12 — PWA & Perfs | 2 | |
+| 13 — Pages légales | 1 | |
+| **TOTAL** | **36** | |
+
+---
+
+*Généré le 27 juin 2026 — Nopalou v2*
