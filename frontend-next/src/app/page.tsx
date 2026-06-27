@@ -112,14 +112,14 @@ export default async function HomePage({
             return (
               <Link
                 key={c.slug}
-                href={`/categorie/${c.slug}`}
+                href={categorie === c.slug ? '/' : `/?categorie=${c.slug}`}
                 className={`categ-pill${categorie === c.slug ? ' active' : ''}`}
               >
                 {c.emoji} {c.label}
               </Link>
             )
           })}
-          <Link href="/immo"           className="categ-pill">🏘 Immobilier</Link>
+          <Link href="/immo"      className="categ-pill">🏘 Immobilier</Link>
           <Link href="/annonces"  className="categ-pill">📢 Annonces</Link>
         </div>
       </section>
