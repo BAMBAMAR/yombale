@@ -13,7 +13,7 @@ export default function CguPage() {
 
       <section className="legal-section">
         <h2>1. Objet</h2>
-        <p>Les présentes CGU régissent l&apos;utilisation du site Nopalou, comparateur de prix en ligne opérant au Sénégal, accessible à l&apos;adresse <strong>nopalou.sn</strong>.</p>
+        <p>Les présentes CGU régissent l&apos;utilisation du site Nopalou, comparateur de prix en ligne opérant au Sénégal, accessible à l&apos;adresse <strong>nopalou.com</strong>.</p>
       </section>
 
       <section className="legal-section">
@@ -42,7 +42,7 @@ export default function CguPage() {
       <section className="legal-section">
         <h2>5. Paiements</h2>
         <p>Les paiements sont traités par <strong>Wave</strong> et <strong>Orange Money</strong>. Nopalou ne stocke aucune donnée bancaire. Les transactions sont sécurisées par les prestataires de paiement.</p>
-        <p>En cas de problème de paiement, contactez <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a> avec votre référence de transaction.</p>
+        <p>En cas de problème de paiement, contactez <a href="mailto:contact@nopalou.com">contact@nopalou.com</a> avec votre référence de transaction.</p>
       </section>
 
       <section className="legal-section">
@@ -67,7 +67,7 @@ export default function CguPage() {
 
       <section className="legal-section">
         <h2>9. Contact</h2>
-        <p>Pour toute question relative aux présentes CGU : <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a></p>
+        <p>Pour toute question relative aux présentes CGU : <a href="mailto:contact@nopalou.com">contact@nopalou.com</a></p>
       </section>
     </div>
   )

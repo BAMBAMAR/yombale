@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.sn'
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 const CATEGORY_SLUGS = [
   'smartphones', 'informatique', 'tv-electro', 'mode',

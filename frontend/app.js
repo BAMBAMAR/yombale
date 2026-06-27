@@ -4978,7 +4978,7 @@ function htmlFooter() {
         '<div class="footer-col">',
           '<h4>Contact</h4>',
           '<ul>',
-            '<li><a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a></li>',
+            '<li><a href="mailto:contact@nopalou.com">contact@nopalou.com</a></li>',
             '<li><a href="tel:+221708717942">+221 70 871 79 42</a></li>',
             '<li><a href="#">Dakar, Sénégal</a></li>',
             '<li><a href="#">FAQ</a></li>',
@@ -5606,7 +5606,7 @@ var INFO_PAGES = {
       // Contact
       '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px">',
         '<p style="font-size:13px;font-weight:700;color:#15803d;margin:0 0 8px">📧 Contactez-nous</p>',
-        '<p style="font-size:13px;color:#166534;margin:0">partenaires@nopalou.sn · +221 70 871 79 42</p>',
+        '<p style="font-size:13px;color:#166534;margin:0">partenaires@nopalou.com · +221 70 871 79 42</p>',
         '<p style="font-size:12px;color:#166534;margin:6px 0 0">Réponse sous 48h ouvrables</p>',
       '</div>',
     ].join(''); }
@@ -5678,7 +5678,7 @@ var INFO_PAGES = {
     icone: '📄',
     html: function() { return [
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 8px">Éditeur du site</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Nopalou est un service de comparaison de prix indépendant opérant au Sénégal.<br>Email : <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a><br>Téléphone : <a href="tel:+221708717942">+221 70 871 79 42</a></p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Nopalou est un service de comparaison de prix indépendant opérant au Sénégal.<br>Email : <a href="mailto:contact@nopalou.com">contact@nopalou.com</a><br>Téléphone : <a href="tel:+221708717942">+221 70 871 79 42</a></p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:20px 0 8px">Activité</h3>',
       '<p style="font-size:13px;color:#64748b;line-height:1.6">Nopalou référence et compare des prix collectés automatiquement chez des marchands tiers. Nopalou n\'est pas un vendeur, n\'effectue aucune transaction commerciale et ne perçoit aucune commission sur les ventes réalisées chez les marchands référencés.</p>',
@@ -5717,7 +5717,7 @@ var INFO_PAGES = {
       '<p style="font-size:13px;color:#64748b;line-height:1.6">Nopalou utilise le stockage local du navigateur (localStorage) pour conserver votre session de connexion, vos favoris et vos préférences d\'affichage. Aucun cookie publicitaire tiers n\'est utilisé pour le moment.</p>',
 
       '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:16px 0 8px">Vos droits</h3>',
-      '<p style="font-size:13px;color:#64748b;line-height:1.6">Vous pouvez demander l\'accès, la rectification ou la suppression de vos données personnelles en nous contactant à <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a>.</p>',
+      '<p style="font-size:13px;color:#64748b;line-height:1.6">Vous pouvez demander l\'accès, la rectification ou la suppression de vos données personnelles en nous contactant à <a href="mailto:contact@nopalou.com">contact@nopalou.com</a>.</p>',
     ].join(''); }
   },
 

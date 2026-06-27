@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   description:
     'Comparez les prix de milliers de produits, annonces immo et forfaits télécom au Sénégal. Trouvez les meilleures offres à Dakar.',
   keywords: ['comparateur prix', 'Sénégal', 'Dakar', 'achat en ligne', 'immobilier', 'forfait télécom', 'Nopalou'],
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.sn'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'),
   openGraph: {
     siteName: 'Nopalou',
     locale: 'fr_SN',
@@ -56,15 +56,15 @@ const ORG_JSON_LD = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: 'Nopalou',
-  url: 'https://nopalou.sn',
-  logo: 'https://nopalou.sn/icons/icon-512.svg',
+  url: 'https://nopalou.com',
+  logo: 'https://nopalou.com/icons/icon-512.svg',
   description: 'Comparateur de prix N°1 au Sénégal — trouvez le prix le moins cher à Dakar pour téléphones, TV, électroménager, informatique.',
   inLanguage: 'fr',
   potentialAction: {
     '@type': 'SearchAction',
     target: {
       '@type': 'EntryPoint',
-      urlTemplate: 'https://nopalou.sn/?q={search_term_string}',
+      urlTemplate: 'https://nopalou.com/?q={search_term_string}',
     },
     'query-input': 'required name=search_term_string',
   },
@@ -175,7 +175,7 @@ export default async function RootLayout({
               {/* Colonne 5 — Contact */}
               <div className="footer-col">
                 <p className="footer-col-titre">Contact</p>
-                <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a>
+                <a href="mailto:contact@nopalou.com">contact@nopalou.com</a>
                 <a href="tel:+221708717942">+221 70 871 79 42</a>
                 <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>
                 <span style={{ fontSize: 12, color: 'rgba(255,255,255,.35)', marginTop: 4 }}>Dakar, Sénégal</span>

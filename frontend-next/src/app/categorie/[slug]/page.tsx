@@ -90,7 +90,7 @@ const CATEGORIES: Record<string, {
   },
 }
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.sn'
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 interface Produit {
   id: string

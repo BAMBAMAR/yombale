@@ -36,7 +36,7 @@ export default function ConfidentialitePage() {
 
       <section className="legal-section">
         <h2>Conservation des données</h2>
-        <p>Vos données sont conservées tant que votre compte est actif. Vous pouvez demander la suppression de votre compte en contactant <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a>.</p>
+        <p>Vos données sont conservées tant que votre compte est actif. Vous pouvez demander la suppression de votre compte en contactant <a href="mailto:contact@nopalou.com">contact@nopalou.com</a>.</p>
       </section>
 
       <section className="legal-section">
@@ -51,7 +51,7 @@ export default function ConfidentialitePage() {
 
       <section className="legal-section">
         <h2>Vos droits</h2>
-        <p>Conformément à la loi sénégalaise sur la protection des données personnelles (loi n°2008-12), vous disposez d&apos;un droit d&apos;accès, de rectification et de suppression de vos données. Pour exercer ces droits, contactez-nous à <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a>.</p>
+        <p>Conformément à la loi sénégalaise sur la protection des données personnelles (loi n°2008-12), vous disposez d&apos;un droit d&apos;accès, de rectification et de suppression de vos données. Pour exercer ces droits, contactez-nous à <a href="mailto:contact@nopalou.com">contact@nopalou.com</a>.</p>
       </section>
 
       <section className="legal-section">

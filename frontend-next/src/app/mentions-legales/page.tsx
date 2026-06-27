@@ -14,7 +14,7 @@ export default function MentionsLegalesPage() {
       <section className="legal-section">
         <h2>Éditeur du site</h2>
         <p><strong>Nopalou</strong> est un comparateur de prix en ligne opérant au Sénégal.</p>
-        <p>Email : <a href="mailto:contact@nopalou.sn">contact@nopalou.sn</a></p>
+        <p>Email : <a href="mailto:contact@nopalou.com">contact@nopalou.com</a></p>
         <p>Siège social : Dakar, Sénégal</p>
       </section>
 
