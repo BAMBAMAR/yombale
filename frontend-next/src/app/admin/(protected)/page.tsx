@@ -59,7 +59,8 @@ async function fetchStats(secret: string) {
 
 export default async function AdminDashboard() {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)!.value
+  const secret = jar.get(COOKIE)?.value ?? ''
+  if (!secret) return null
   const stats  = await fetchStats(secret)
 
   const cards: StatCard[] = [

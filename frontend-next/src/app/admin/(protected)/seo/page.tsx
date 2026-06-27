@@ -47,7 +47,8 @@ const PAGES_INDEXEES = [
 
 export default async function AdminSeoPage() {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)!.value
+  const secret = jar.get(COOKIE)?.value ?? ''
+  if (!secret) return null
   const stats  = await fetchSeoStats(secret)
 
   const totalPages = PAGES_INDEXEES.length + stats.produits + Math.min(stats.immo, 200) + Math.min(stats.annonces, 200)
