@@ -1,11 +1,12 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { modererAnnonce } from '@/app/actions/admin'
 
 interface Annonce {
   id: string
   titre: string
+  description: string | null
   categorie_slug: string
   prix: number | null
   ville: string | null
@@ -36,6 +37,7 @@ function StatutBadge({ annonce }: { annonce: Annonce }) {
 
 function AnnonceRow({ annonce, onAction }: { annonce: Annonce; onAction: () => void }) {
   const [pending, startTransition] = useTransition()
+  const [expanded, setExpanded] = useState(false)
 
   function handleAction(action: 'approuver' | 'rejeter') {
     startTransition(async () => {
@@ -44,7 +46,8 @@ function AnnonceRow({ annonce, onAction }: { annonce: Annonce; onAction: () => v
     })
   }
 
-  const photo = Array.isArray(annonce.photos) ? annonce.photos[0] : null
+  const allPhotos = Array.isArray(annonce.photos) ? annonce.photos : []
+  const photo = allPhotos[0] ?? null
 
   return (
     <div className={`admin-annonce-row${pending ? ' admin-annonce-row--loading' : ''}`}>
@@ -64,6 +67,32 @@ function AnnonceRow({ annonce, onAction }: { annonce: Annonce; onAction: () => v
           {annonce.auteur_nom || '—'} · {annonce.auteur_email || '—'} · {annonce.contact_tel}
         </p>
         <p className="admin-annonce-date">{formatDate(annonce.created_at)}</p>
+        <button
+          type="button"
+          className="admin-annonce-voir-btn"
+          onClick={() => setExpanded(e => !e)}
+        >
+          {expanded ? '▲ Masquer détails' : '▼ Voir détails'}
+        </button>
+        {expanded && (
+          <div className="admin-annonce-details">
+            {annonce.description ? (
+              <p className="admin-annonce-desc">{annonce.description}</p>
+            ) : (
+              <p className="admin-annonce-no-detail">Aucune description.</p>
+            )}
+            {allPhotos.length > 0 && (
+              <div className="admin-annonce-photos">
+                {allPhotos.map((src, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <a key={i} href={src} target="_blank" rel="noreferrer">
+                    <img src={src} alt={`Photo ${i + 1}`} className="admin-annonce-photo-thumb" />
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="admin-annonce-statut-col">
         <StatutBadge annonce={annonce} />
@@ -71,13 +100,22 @@ function AnnonceRow({ annonce, onAction }: { annonce: Annonce; onAction: () => v
       </div>
       <div className="admin-annonce-actions">
         {!annonce.actif && !annonce.rejete && (
-          <button
-            onClick={() => handleAction('approuver')}
-            disabled={pending}
-            className="admin-btn admin-btn--approuver"
-          >
-            Approuver
-          </button>
+          <>
+            <button
+              onClick={() => handleAction('approuver')}
+              disabled={pending}
+              className="admin-btn admin-btn--approuver"
+            >
+              Approuver
+            </button>
+            <button
+              onClick={() => handleAction('rejeter')}
+              disabled={pending}
+              className="admin-btn admin-btn--rejeter"
+            >
+              Rejeter
+            </button>
+          </>
         )}
         {annonce.actif && (
           <button

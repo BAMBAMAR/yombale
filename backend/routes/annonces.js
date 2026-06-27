@@ -140,7 +140,8 @@ router.get('/', async (req, res) => {
 router.get('/mine', verifierToken, async (req, res) => {
   try {
     const rows = await pool.query(
-      `SELECT id, categorie_slug, titre, prix, ville, actif, payee, supprimee,
+      `SELECT id, categorie_slug, titre, description, prix, ville, quartier,
+              contact_nom, contact_tel, actif, payee, supprimee,
               rejete, photos, caracteristiques, created_at
        FROM annonces_classifiees
        WHERE utilisateur_id=$1 AND supprimee=false

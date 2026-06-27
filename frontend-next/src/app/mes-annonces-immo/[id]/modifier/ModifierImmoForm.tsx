@@ -1,0 +1,193 @@
+'use client'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { updateAnnonceImmo } from '@/app/actions/immo'
+
+interface AnnonceImmo {
+  id: string
+  titre: string
+  type_bien: string | null
+  transaction: string | null
+  prix: number | null
+  surface_m2: number | null
+  nb_pieces: number | null
+  nb_chambres: number | null
+  meuble: boolean
+  ville: string | null
+  quartier: string | null
+  description: string | null
+  contact_nom: string | null
+  contact_tel: string | null
+}
+
+const TYPES_BIEN = [
+  { value: 'appartement', label: 'Appartement' },
+  { value: 'villa',       label: 'Villa' },
+  { value: 'maison',      label: 'Maison' },
+  { value: 'studio',      label: 'Studio' },
+  { value: 'terrain',     label: 'Terrain' },
+  { value: 'bureau',      label: 'Bureau / Commerce' },
+]
+
+const TRANSACTIONS = [
+  { value: 'location', label: 'Location' },
+  { value: 'vente',    label: 'Vente' },
+]
+
+const VILLES = ['Dakar', 'Thiès', 'Ziguinchor', 'Saint-Louis', 'Kaolack', 'Rufisque', 'Pikine', 'Touba', 'Autre']
+
+export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) {
+  const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<string[]>([])
+  const [isPending, startTransition] = useTransition()
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+    setFieldErrors([])
+    const fd = new FormData(e.currentTarget)
+
+    startTransition(async () => {
+      const res = await updateAnnonceImmo(annonce.id, fd)
+      if (res.ok) {
+        router.push('/mes-annonces-immo?updated=1')
+      } else {
+        setError(res.error ?? 'Une erreur est survenue.')
+        if (res.errors) {
+          setFieldErrors(res.errors.map(e => e.msg))
+        }
+      }
+    })
+  }
+
+  return (
+    <form className="annonce-form" onSubmit={handleSubmit}>
+      <div className="modifier-annonce-warning">
+        ⚠️ Toute modification soumettra votre annonce à une nouvelle validation admin.
+      </div>
+
+      <div className="form-field">
+        <label className="form-label">Titre <span className="required">*</span></label>
+        <input
+          name="titre"
+          type="text"
+          className="form-input"
+          defaultValue={annonce.titre}
+          required
+          minLength={5}
+          maxLength={150}
+          placeholder="ex: Appartement F3 meublé à Almadies"
+        />
+      </div>
+
+      <div className="form-row">
+        <div className="form-field">
+          <label className="form-label">Type de bien <span className="required">*</span></label>
+          <select name="type_bien" className="form-input" defaultValue={annonce.type_bien ?? 'appartement'} required>
+            {TYPES_BIEN.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+        <div className="form-field">
+          <label className="form-label">Transaction <span className="required">*</span></label>
+          <select name="transaction" className="form-input" defaultValue={annonce.transaction ?? 'location'} required>
+            {TRANSACTIONS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div className="form-field">
+        <label className="form-label">Prix (FCFA)</label>
+        <input
+          name="prix"
+          type="number"
+          min="0"
+          className="form-input"
+          defaultValue={annonce.prix ?? ''}
+          placeholder="Laisser vide si prix à négocier"
+        />
+      </div>
+
+      <div className="form-section-title">Caractéristiques</div>
+      <div className="form-row">
+        <div className="form-field">
+          <label className="form-label">Surface (m²)</label>
+          <input name="surface_m2" type="number" min="1" className="form-input" defaultValue={annonce.surface_m2 ?? ''} placeholder="ex: 85" />
+        </div>
+        <div className="form-field">
+          <label className="form-label">Nb pièces</label>
+          <input name="nb_pieces" type="number" min="1" max="20" className="form-input" defaultValue={annonce.nb_pieces ?? ''} placeholder="ex: 3" />
+        </div>
+        <div className="form-field">
+          <label className="form-label">Nb chambres</label>
+          <input name="nb_chambres" type="number" min="0" max="20" className="form-input" defaultValue={annonce.nb_chambres ?? ''} placeholder="ex: 2" />
+        </div>
+      </div>
+
+      <div className="form-field" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, display: 'flex' }}>
+        <input
+          name="meuble"
+          id="meuble"
+          type="checkbox"
+          defaultChecked={annonce.meuble}
+          style={{ width: 18, height: 18, accentColor: 'var(--accent)', cursor: 'pointer' }}
+        />
+        <label htmlFor="meuble" className="form-label" style={{ marginBottom: 0, cursor: 'pointer' }}>Meublé</label>
+      </div>
+
+      <div className="form-section-title">Localisation</div>
+      <div className="form-row">
+        <div className="form-field">
+          <label className="form-label">Ville <span className="required">*</span></label>
+          <select name="ville" className="form-input" defaultValue={annonce.ville ?? 'Dakar'} required>
+            {VILLES.map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+        <div className="form-field">
+          <label className="form-label">Quartier</label>
+          <input name="quartier" type="text" className="form-input" defaultValue={annonce.quartier ?? ''} placeholder="ex: Almadies, Plateau…" />
+        </div>
+      </div>
+
+      <div className="form-field">
+        <label className="form-label">Description</label>
+        <textarea
+          name="description"
+          className="form-input form-textarea"
+          rows={4}
+          defaultValue={annonce.description ?? ''}
+          placeholder="Décrivez le bien, les équipements, l'environnement…"
+          maxLength={3000}
+        />
+      </div>
+
+      <div className="form-section-title">Contact</div>
+      <div className="form-row">
+        <div className="form-field">
+          <label className="form-label">Nom / Prénom</label>
+          <input name="contact_nom" type="text" className="form-input" defaultValue={annonce.contact_nom ?? ''} placeholder="Votre nom" maxLength={80} />
+        </div>
+        <div className="form-field">
+          <label className="form-label">Téléphone <span className="required">*</span></label>
+          <input name="contact_tel" type="tel" className="form-input" defaultValue={annonce.contact_tel ?? ''} placeholder="ex: 77 123 45 67" required />
+        </div>
+      </div>
+
+      {fieldErrors.length > 0 && (
+        <ul className="annonce-error" style={{ marginTop: 12 }}>
+          {fieldErrors.map((msg, i) => <li key={i}>{msg}</li>)}
+        </ul>
+      )}
+      {error && <p className="annonce-error" style={{ marginTop: 12 }}>{error}</p>}
+
+      <div className="annonce-submit-row" style={{ marginTop: 24 }}>
+        <a href="/mes-annonces-immo" className="annonce-action-btn annonce-action-btn--delete" style={{ textDecoration: 'none', lineHeight: '1' }}>
+          Annuler
+        </a>
+        <button type="submit" className="annonce-submit-btn" disabled={isPending}>
+          {isPending ? 'Enregistrement…' : '💾 Enregistrer les modifications'}
+        </button>
+      </div>
+    </form>
+  )
+}

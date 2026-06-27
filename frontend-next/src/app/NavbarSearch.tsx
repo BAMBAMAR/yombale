@@ -35,6 +35,7 @@ export default function NavbarSearch() {
         type={open ? 'submit' : 'button'}
         className="navbar-search-btn"
         aria-label="Ouvrir la recherche"
+        onMouseDown={e => { if (open) e.preventDefault() }}
         onClick={() => !open && setOpen(true)}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

@@ -2,7 +2,7 @@
 const router = require('express').Router();
 const { body, param, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
-const { verifierToken } = require('../middlewares/auth');
+const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
 const { limiterPublication } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
 const multer = require('multer');
@@ -18,6 +18,35 @@ const upload = multer({
 
 const CATS = ['smartphones','informatique','tv-electro','mode','maison','auto-moto','jeux','services','alimentation','beaute','autre'];
 const MAX_BOUTIQUES = 3;
+
+// ── GET /api/boutiques/admin/toutes — toutes les boutiques (admin)
+router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
+              b.logo_url, b.actif, b.created_at,
+              u.nom AS proprietaire_nom, u.email AS proprietaire_email
+       FROM boutiques b
+       LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+       ORDER BY b.created_at DESC LIMIT 200`
+    );
+    res.json({ boutiques: rows });
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+// ── PUT /api/boutiques/admin/:id — activer/désactiver (admin)
+router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const { actif } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE boutiques SET actif=$1, updated_at=NOW() WHERE id=$2 RETURNING id`,
+      [Boolean(actif), req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Boutique introuvable' });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
 
 // ── GET /api/boutiques — liste publique paginée
 router.get('/', async (req, res) => {

@@ -67,6 +67,67 @@ export async function modererAnnonce(
   return {}
 }
 
+// ── Modérer partenaire ─────────────────────────────────────────────
+export async function modererPartenaire(
+  id: string,
+  statut: 'approuve' | 'rejete'
+): Promise<{ error?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  const r = await fetch(`${BACKEND}/api/partenaires/${id}`, {
+    method: 'PUT',
+    headers: adminHeaders(secret),
+    body: JSON.stringify({ statut }),
+    cache: 'no-store',
+  })
+
+  if (!r.ok) return { error: 'Erreur lors de la modération' }
+  return {}
+}
+
+// ── Activer sponsoring immo ─────────────────────────────────────────
+export async function activerSponsoring(
+  id: string | number
+): Promise<{ error?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  const sponsorisee_jusqu_au = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString()
+
+  const r = await fetch(`${BACKEND}/api/immo/${id}`, {
+    method: 'PUT',
+    headers: adminHeaders(secret),
+    body: JSON.stringify({ sponsorisee: true, sponsorisee_jusqu_au }),
+    cache: 'no-store',
+  })
+
+  if (!r.ok) return { error: 'Erreur lors de l\'activation du sponsoring' }
+  return {}
+}
+
+// ── Modérer boutique (activer/désactiver) ───────────────────────────
+export async function modererBoutique(
+  id: string,
+  actif: boolean
+): Promise<{ error?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  const r = await fetch(`${BACKEND}/api/boutiques/admin/${id}`, {
+    method: 'PUT',
+    headers: adminHeaders(secret),
+    body: JSON.stringify({ actif }),
+    cache: 'no-store',
+  })
+
+  if (!r.ok) return { error: 'Erreur lors de la modération' }
+  return {}
+}
+
 // ── Modérer annonce immo ────────────────────────────────────────────
 export async function modererImmo(
   id: number,

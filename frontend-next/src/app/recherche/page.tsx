@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 
 interface Produit {
   id: string

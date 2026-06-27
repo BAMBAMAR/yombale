@@ -5,6 +5,7 @@ import { getOptionalSession } from '@/lib/dal';
 import NavbarActions from './NavbarActions';
 import NavbarSearch from './NavbarSearch';
 import NavbarGuides from './NavbarGuides'
+import MobileNav from './MobileNav'
 import BottomBars from './BottomBars';
 
 const inter = Inter({
@@ -113,6 +114,10 @@ export default async function RootLayout({
               </>
             )}
           </div>
+          <MobileNav
+            isLoggedIn={!!session}
+            nom={session?.nom ?? session?.email ?? undefined}
+          />
         </nav>
 
         <main>{children}</main>

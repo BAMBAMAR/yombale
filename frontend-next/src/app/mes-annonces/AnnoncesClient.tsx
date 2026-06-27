@@ -14,6 +14,8 @@ interface Annonce {
   payee: boolean
   rejete: boolean
   photos: string[] | null
+  description?: string | null
+  caracteristiques?: Record<string, string> | null
   created_at: string
 }
 
@@ -94,6 +96,9 @@ function AnnonceCard({ annonce }: { annonce: Annonce }) {
               💳 Activer (1 500 FCFA)
             </Link>
           )}
+          <Link href={`/mes-annonces/${annonce.id}/modifier`} className="annonce-action-btn annonce-action-btn--edit">
+            Modifier
+          </Link>
           <button
             onClick={handleDelete}
             disabled={isPending}
@@ -110,15 +115,22 @@ function AnnonceCard({ annonce }: { annonce: Annonce }) {
 export default function AnnoncesClient({
   annonces,
   created,
+  updated,
 }: {
   annonces: Annonce[]
   created?: boolean
+  updated?: boolean
 }) {
   return (
     <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 760 }}>
       {created && (
         <div className="annonce-created-banner">
           ✅ Annonce créée avec succès !
+        </div>
+      )}
+      {updated && (
+        <div className="annonce-created-banner">
+          ✅ Annonce mise à jour — en cours de modération.
         </div>
       )}
 

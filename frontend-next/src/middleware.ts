@@ -6,7 +6,7 @@ const COOKIE_NAME = 'nopalou_session'
 
 // Routes qui nécessitent une session valide
 // Matches exactes — pas de startsWith pour éviter de bloquer /boutiques (public) avec /boutique
-const PROTECTED_ROUTES = ['/compte', '/mes-annonces', '/mes-annonces-immo', '/deposer-immo']
+const PROTECTED_ROUTES = ['/compte', '/mes-annonces', '/mes-annonces-immo', '/deposer-immo', '/deposer-annonce']
 const PROTECTED_EXACT = ['/boutique']
 // Routes accessibles uniquement si NON connecté
 const AUTH_ROUTES = ['/connexion', '/inscription']

@@ -32,8 +32,9 @@ const TYPE_ICONS: Record<string, string> = {
 export default async function MesAnnoncesImmoPage({
   searchParams,
 }: {
-  searchParams: { created?: string }
+  searchParams: Promise<{ created?: string; updated?: string }>
 }) {
+  const params = await searchParams
   let annonces: AnnonceImmo[] = []
   let fetchError = false
 
@@ -51,7 +52,8 @@ export default async function MesAnnoncesImmoPage({
     fetchError = true
   }
 
-  const justCreated = searchParams.created === '1'
+  const justCreated = params.created === '1'
+  const justUpdated = params.updated === '1'
 
   return (
     <div className="page-container" style={{ paddingTop: '2rem' }}>
@@ -70,6 +72,12 @@ export default async function MesAnnoncesImmoPage({
       {justCreated && (
         <div style={{ background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 8, padding: '12px 16px', marginBottom: 24, fontSize: 14, color: '#065F46' }}>
           ✅ Votre annonce a été soumise — elle sera visible après validation (sous 24h).
+        </div>
+      )}
+
+      {justUpdated && (
+        <div style={{ background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 8, padding: '12px 16px', marginBottom: 24, fontSize: 14, color: '#065F46' }}>
+          ✅ Annonce mise à jour — en cours de revalidation.
         </div>
       )}
 
@@ -122,6 +130,13 @@ export default async function MesAnnoncesImmoPage({
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                    <Link
+                      href={`/mes-annonces-immo/${a.id}/modifier`}
+                      className="annonce-action-btn annonce-action-btn--edit"
+                      style={{ fontSize: 12, padding: '5px 12px' }}
+                    >
+                      Modifier
+                    </Link>
                     <DeleteImmoButton id={a.id} />
                   </div>
                 </div>

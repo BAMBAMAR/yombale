@@ -20,8 +20,9 @@ interface Annonce {
 export default async function MesAnnoncesPage({
   searchParams,
 }: {
-  searchParams: { created?: string }
+  searchParams: Promise<{ created?: string; updated?: string }>
 }) {
+  const params = await searchParams
   let annonces: Annonce[] = []
   try {
     const res = await backendFetch('/api/annonces/mine')
@@ -33,5 +34,11 @@ export default async function MesAnnoncesPage({
     // afficher liste vide si erreur réseau
   }
 
-  return <AnnoncesClient annonces={annonces} created={searchParams.created === '1'} />
+  return (
+    <AnnoncesClient
+      annonces={annonces}
+      created={params.created === '1'}
+      updated={params.updated === '1'}
+    />
+  )
 }
