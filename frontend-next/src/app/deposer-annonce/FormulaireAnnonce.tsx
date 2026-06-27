@@ -98,6 +98,8 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const fileRef = useRef<HTMLInputElement>(null)
+  // Conserve les champs de l'étape 2 (perdus quand le formulaire est démonté)
+  const step2Data = useRef<Record<string, string>>({})
 
   function handleCarChange(k: string, v: string) {
     setCar(prev => ({ ...prev, [k]: v }))
@@ -121,6 +123,8 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
     const fd = new FormData(e.currentTarget)
     fd.set('categorie_slug', slug)
     fd.set('caracteristiques', JSON.stringify(car))
+    // Réinjecter les champs de l'étape 2 (titre, prix, ville, contact_tel…)
+    Object.entries(step2Data.current).forEach(([k, v]) => { if (!fd.has(k) || !fd.get(k)) fd.set(k, v) })
     // Replace photos in FormData
     fd.delete('photos')
     photos.forEach(f => fd.append('photos', f))
@@ -171,7 +175,15 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
           <span className="annonce-step-num">2 / 3</span>
           <h2 className="annonce-step-titre">{cat.emoji} {cat.label} — Détails</h2>
         </div>
-        <form className="annonce-form" onSubmit={e => { e.preventDefault(); setStep(3) }}>
+        <form className="annonce-form" onSubmit={e => {
+          e.preventDefault()
+          // Sauvegarder tous les champs de l'étape 2 avant de changer d'étape
+          const fd = new FormData(e.currentTarget)
+          const saved: Record<string, string> = {}
+          fd.forEach((v, k) => { if (typeof v === 'string') saved[k] = v })
+          step2Data.current = saved
+          setStep(3)
+        }}>
           {/* Titre */}
           <div className="form-field">
             <label className="form-label">Titre de l&apos;annonce <span className="required">*</span></label>
