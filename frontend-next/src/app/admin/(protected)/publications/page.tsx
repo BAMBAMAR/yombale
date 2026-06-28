@@ -1,10 +1,16 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import {
-  getFbPosts, creerFbPost, modifierFbPost, supprimerFbPost,
-  publierFbPostMaintenant, genererFbPost,
-} from '@/app/actions/facebook-posts'
+
+async function api(path: string, opts: RequestInit = {}) {
+  const res = await fetch(`/api/admin/fb/${path}`, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...((opts.headers as Record<string,string>) || {}) },
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Erreur')
+  return data
+}
 
 interface FbPost {
   id: string
@@ -41,7 +47,7 @@ export default function PublicationsPage() {
 
   async function load() {
     setLoading(true)
-    try { setPosts(await getFbPosts()) } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
+    try { setPosts(await api('')) } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     setLoading(false)
   }
 
@@ -56,7 +62,7 @@ export default function PublicationsPage() {
     setErr(''); setOk('')
     startTransition(async () => {
       try {
-        const data = await genererFbPost(type)
+        const data = await api(`generer/${type}`)
         setForm(f => ({
           ...f,
           message: data.message || '',
@@ -92,8 +98,8 @@ export default function PublicationsPage() {
           publier_instagram: form.publier_instagram,
           date_publication: form.date_publication || null,
         }
-        if (editId) { await modifierFbPost(editId, body); setOk('Post mis à jour') }
-        else { await creerFbPost(body); setOk('Brouillon créé') }
+        if (editId) { await api(`${editId}`, { method: 'PATCH', body: JSON.stringify(body) }); setOk('Post mis à jour') }
+        else { await api('', { method: 'POST', body: JSON.stringify(body) }); setOk('Brouillon créé') }
         resetForm(); load()
       } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     })
@@ -102,7 +108,7 @@ export default function PublicationsPage() {
   function approuver(id: string) {
     startTransition(async () => {
       try {
-        await modifierFbPost(id, { statut: 'approuve' })
+        await api(`${id}`, { method: 'PATCH', body: JSON.stringify({ statut: 'approuve' }) })
         setOk('Post approuvé — sera publié à la date prévue'); load()
       } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     })
@@ -110,7 +116,7 @@ export default function PublicationsPage() {
 
   function remettreEnBrouillon(id: string) {
     startTransition(async () => {
-      try { await modifierFbPost(id, { statut: 'brouillon' }); load() }
+      try { await api(`${id}`, { method: 'PATCH', body: JSON.stringify({ statut: 'brouillon' }) }); load() }
       catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     })
   }
@@ -119,7 +125,7 @@ export default function PublicationsPage() {
     if (!confirm('Publier immédiatement sur Facebook (et Instagram si activé) ?')) return
     startTransition(async () => {
       try {
-        const res = await publierFbPostMaintenant(id)
+        const res = await api(`${id}/publier`, { method: 'POST' })
         setOk(`Publié ! FB: ${res.fb_id || '—'} ${res.ig_id ? '· IG: ' + res.ig_id : ''}`); load()
       } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     })
@@ -128,7 +134,7 @@ export default function PublicationsPage() {
   function supprimer(id: string) {
     if (!confirm('Supprimer ce post ?')) return
     startTransition(async () => {
-      try { await supprimerFbPost(id); load() }
+      try { await api(`${id}`, { method: 'DELETE' }); load() }
       catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     })
   }
