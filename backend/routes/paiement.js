@@ -77,6 +77,17 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
         );
       }
     }
+    // Sponsoring produit : ref = prod_userId_produitId
+    if (ref && ref.startsWith('prod_')) {
+      const produitId = ref.split('_')[2];
+      if (produitId) {
+        const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        await pool.query(
+          "UPDATE produits SET sponsorise=true, sponsor_jusqu_au=$1 WHERE id=$2",
+          [until, produitId]
+        );
+      }
+    }
     if (data.customer_phone)
       await notifs.confirmationCommande(data.customer_phone, ref);
   }
@@ -135,6 +146,32 @@ router.post('/immo-sponsoring/initier', verifierToken, limiterEcriture, async (r
         amount:           PRIX_SPONSORING,
         currency:         'XOF',
         success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${immo_id}&type=immo-sponsoring`,
+        error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+        client_reference: clientRef,
+      },
+      { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
+    );
+    res.json({ wave_url: session.data.wave_launch_url, session_id: session.data.id });
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+// POST /api/paiement/produit-sponsoring/initier — mise en avant produit 30j (Wave)
+router.post('/produit-sponsoring/initier', verifierToken, limiterEcriture, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { produit_id } = req.body;
+    if (!produit_id) return res.status(400).json({ error: 'produit_id requis' });
+
+    const r = await pool.query('SELECT id FROM produits WHERE id=$1', [produit_id]);
+    if (!r.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+
+    const clientRef = `prod_${userId}_${produit_id}`;
+    const session = await axios.post(
+      'https://api.wave.com/v1/checkout/sessions',
+      {
+        amount:           PRIX_SPONSORING,
+        currency:         'XOF',
+        success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${produit_id}&type=produit-sponsoring`,
         error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
         client_reference: clientRef,
       },
@@ -238,6 +275,17 @@ router.post('/orange/webhook', limiterGeneral, async (req, res) => {
         );
       }
     }
+    // Sponsoring produit
+    if (order_id?.startsWith('prod_')) {
+      const produitId = order_id.split('_')[2];
+      if (produitId) {
+        const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        await pool.query(
+          "UPDATE produits SET sponsorise=true, sponsor_jusqu_au=$1 WHERE id=$2",
+          [until, produitId]
+        );
+      }
+    }
     res.sendStatus(200);
   } catch (err) {
     console.error('[Orange webhook]', err.message);
@@ -259,7 +307,8 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
         COALESCE(SUM(montant)  FILTER (WHERE created_at >= NOW() - INTERVAL '7 days'), 0)  AS revenus_semaine,
         COUNT(*)               FILTER (WHERE reference LIKE 'ann_%')       AS annonces_payees,
         COUNT(*)               FILTER (WHERE reference LIKE 'immo_%')      AS sponsorings_immo,
-        COUNT(*)               FILTER (WHERE reference LIKE 'bout_%')      AS sponsorings_boutiques
+        COUNT(*)               FILTER (WHERE reference LIKE 'bout_%')      AS sponsorings_boutiques,
+        COUNT(*)               FILTER (WHERE reference LIKE 'prod_%')      AS sponsorings_produits
       FROM commandes WHERE statut = 'payee'
     `);
 

@@ -22,18 +22,70 @@
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; }
   th { color: #666; font-weight: 600; background: #f8fafc; }
   .actions button { margin-right: 6px; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:700; }
+  .badge.actif { background:#d1fae5; color:#065f46; }
+  .badge.expire { background:#fee2e2; color:#991b1b; }
+  .badge.inactif { background:#f1f5f9; color:#64748b; }
+  .search-row { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .search-row input { flex:1; min-width:200px; padding:8px 12px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; }
+  .search-row select { padding:8px 12px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:100; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:#fff; border-radius:12px; padding:24px; width:420px; max-width:95vw; box-shadow:0 8px 30px rgba(0,0,0,.15); }
+  .modal h3 { margin:0 0 16px; font-size:16px; }
+  .form-group { margin-bottom:14px; }
+  .form-group label { display:block; font-size:12px; color:#64748b; margin-bottom:4px; font-weight:600; }
+  .form-group input, .form-group select { width:100%; padding:8px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; }
+  .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+  .btn-secondary { background:#f1f5f9; color:#1a1a1a; }
 </style>
 </head>
 <body>
 
-<h1>🤝 Admin — Demandes partenaires</h1>
-<p class="sub">Demandes "Devenir partenaire" en attente de validation</p>
+<h1>🤝 Admin — Partenaires & Sponsoring</h1>
+<p class="sub">Demandes partenariat + gestion des produits sponsorisés</p>
 
 <div id="msg"></div>
 
 <div class="panel">
-  <h2>⏳ En attente</h2>
+  <h2>⏳ Demandes partenariat en attente</h2>
   <div id="pending-wrap">Chargement…</div>
+</div>
+
+<div class="panel">
+  <h2>⭐ Produits sponsorisés</h2>
+  <div class="search-row">
+    <input type="text" id="q-produit" placeholder="Rechercher un produit par nom ou marque…" oninput="rechercherProduits()">
+    <select id="filtre-actif" onchange="rechercherProduits()">
+      <option value="">Tous les produits</option>
+      <option value="1">Actifs seulement</option>
+    </select>
+    <button class="btn-primary" onclick="rechercherProduits()">Rechercher</button>
+  </div>
+  <div id="produits-wrap">Entrez un nom ou cliquez Rechercher pour afficher les produits.</div>
+</div>
+
+<!-- Modal configuration sponsoring -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-titre">Configurer le sponsoring</h3>
+    <p id="modal-produit-nom" style="font-size:13px;color:#64748b;margin:0 0 16px"></p>
+    <div class="form-group">
+      <label>Statut</label>
+      <select id="modal-statut">
+        <option value="1">✅ Sponsorisé (actif)</option>
+        <option value="0">❌ Désactiver</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Date d'expiration (laisser vide = sans limite)</label>
+      <input type="datetime-local" id="modal-date">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="fermerModal()">Annuler</button>
+      <button class="btn-primary" onclick="sauvegarderSponsoring()">Enregistrer</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -90,7 +142,110 @@ async function traiterDemande(id, statut) {
   } catch(e) { showMsg('Erreur : ' + e.message, false); }
 }
 
+// ── Produits sponsorisés ──────────────────────────────────────────
+let searchTimer = null;
+function rechercherProduits() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(_doSearch, 300);
+}
+
+async function _doSearch() {
+  const q = document.getElementById('q-produit').value.trim();
+  const actifs = document.getElementById('filtre-actif').value;
+  const wrap = document.getElementById('produits-wrap');
+  wrap.textContent = 'Chargement…';
+  try {
+    const qs = new URLSearchParams();
+    if (q) qs.set('q', q);
+    if (actifs) qs.set('actifs_seulement', actifs);
+    const r = await fetch(`/api/produits/admin/sponsorises?${qs}`, { headers: headers() });
+    if (!r.ok) throw new Error((await r.json()).error || 'Erreur');
+    const data = await r.json();
+    if (!data.length) {
+      wrap.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:12px">Aucun produit trouvé</p>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr>
+        <th>Image</th><th>Produit</th><th>Catégorie</th><th>Prix min</th><th>Offres</th><th>Sponsoring</th><th>Expiration</th><th>Action</th>
+      </tr></thead>
+      <tbody>${data.map(p => {
+        const now = new Date();
+        const exp = p.sponsor_jusqu_au ? new Date(p.sponsor_jusqu_au) : null;
+        const actif = p.sponsorise && (!exp || exp > now);
+        const badge = p.sponsorise
+          ? (actif ? '<span class="badge actif">Actif</span>' : '<span class="badge expire">Expiré</span>')
+          : '<span class="badge inactif">Inactif</span>';
+        const expTxt = exp ? exp.toLocaleDateString('fr-FR') + ' ' + exp.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}) : '—';
+        const img = p.image_url
+          ? `<img src="${e(p.image_url)}" style="width:40px;height:40px;object-fit:cover;border-radius:4px">`
+          : '<div style="width:40px;height:40px;background:#f1f5f9;border-radius:4px"></div>';
+        return `<tr>
+          <td>${img}</td>
+          <td><b>${e(p.nom)}</b><br><span style="font-size:11px;color:#64748b">${e(p.marque || '—')}</span></td>
+          <td>${e(p.categorie_nom || '—')}</td>
+          <td>${p.prix_min ? Number(p.prix_min).toLocaleString('fr-FR') + ' FCFA' : '—'}</td>
+          <td>${p.nb_offres}</td>
+          <td>${badge}</td>
+          <td style="font-size:12px">${expTxt}</td>
+          <td><button class="btn-primary btn-sm" onclick="ouvrirModal('${e(p.id)}','${e(p.nom + (p.marque ? ' — ' + p.marque : ''))}',${p.sponsorise ? 1 : 0},'${p.sponsor_jusqu_au || ''}')">Configurer</button></td>
+        </tr>`;
+      }).join('')}
+      </tbody></table>`;
+  } catch(err) {
+    wrap.innerHTML = `<p style="color:#e63946">Erreur : ${e(err.message)}</p>`;
+  }
+}
+
+// ── Modal ─────────────────────────────────────────────────────────
+let _currentProduitId = null;
+function ouvrirModal(id, nom, sponsorise, jusqu_au) {
+  _currentProduitId = id;
+  document.getElementById('modal-produit-nom').textContent = nom;
+  document.getElementById('modal-statut').value = sponsorise ? '1' : '0';
+  if (jusqu_au) {
+    // Convertir en format datetime-local (YYYY-MM-DDTHH:MM)
+    const d = new Date(jusqu_au);
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+    document.getElementById('modal-date').value = local;
+  } else {
+    document.getElementById('modal-date').value = '';
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function fermerModal() {
+  _currentProduitId = null;
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+async function sauvegarderSponsoring() {
+  if (!_currentProduitId) return;
+  const sponsorise = document.getElementById('modal-statut').value === '1';
+  const dateVal = document.getElementById('modal-date').value;
+  const sponsor_jusqu_au = dateVal ? new Date(dateVal).toISOString() : null;
+  try {
+    const r = await fetch(`/api/produits/admin/${_currentProduitId}/sponsoring`, {
+      method: 'PUT',
+      headers: headers(),
+      body: JSON.stringify({ sponsorise, sponsor_jusqu_au })
+    });
+    if (!r.ok) throw new Error((await r.json()).error || 'Erreur');
+    showMsg('Sponsoring mis à jour ✓', true);
+    fermerModal();
+    _doSearch();
+  } catch(err) { showMsg('Erreur : ' + err.message, false); }
+}
+
+// Fermer la modal en cliquant sur l'overlay
+document.getElementById('modal-overlay').addEventListener('click', function(ev) {
+  if (ev.target === this) fermerModal();
+});
+
 chargerEnAttente();
+// Charger les produits sponsorisés actifs au démarrage
+document.getElementById('filtre-actif').value = '1';
+_doSearch();
 </script>
 </body>
 </html>

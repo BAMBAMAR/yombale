@@ -126,7 +126,7 @@ router.get('/', async (req, res) => {
           ${sousTypeCondition}
         GROUP BY p.id, c.nom
         HAVING COUNT(o.id) = 0 OR MIN(o.prix) >= 500
-        ORDER BY ${orderBy}
+        ORDER BY (p.sponsorise = true AND (p.sponsor_jusqu_au IS NULL OR p.sponsor_jusqu_au > NOW())) DESC, ${orderBy}
         LIMIT $5 OFFSET $6`;
     }
 
@@ -152,6 +152,44 @@ router.get('/', async (req, res) => {
     console.error('[GET /api/produits]', err.message);
     res.status(500).json({ error: err.message });
   }
+});
+
+// GET /api/produits/admin/sponsorises — tous les produits avec statut sponsoring (admin)
+router.get('/admin/sponsorises', adminSecretOnly, async (req, res) => {
+  try {
+    const { q, actifs_seulement } = req.query;
+    const whereExtra = actifs_seulement === '1'
+      ? "AND p.sponsorise = true AND (p.sponsor_jusqu_au IS NULL OR p.sponsor_jusqu_au > NOW())"
+      : '';
+    const { rows } = await pool.query(`
+      SELECT p.id, p.nom, p.marque, p.image_url, p.sponsorise, p.sponsor_jusqu_au,
+             c.nom AS categorie_nom, COUNT(o.id) AS nb_offres, MIN(o.prix) AS prix_min
+      FROM produits p
+      LEFT JOIN categories c ON c.id = p.categorie_id
+      LEFT JOIN offres o ON o.produit_id = p.id AND o.stock = true
+      WHERE ($1::text IS NULL OR p.nom ILIKE '%'||$1||'%' OR p.marque ILIKE '%'||$1||'%')
+        ${whereExtra}
+      GROUP BY p.id, c.nom
+      ORDER BY (p.sponsorise = true AND (p.sponsor_jusqu_au IS NULL OR p.sponsor_jusqu_au > NOW())) DESC, p.nom ASC
+      LIMIT 100
+    `, [q || null]);
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/produits/admin/:id/sponsoring — activer/désactiver/configurer sponsoring (admin)
+router.put('/admin/:id/sponsoring', adminSecretOnly, async (req, res) => {
+  try {
+    if (!UUID_RE.test(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
+    const { sponsorise, sponsor_jusqu_au } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE produits SET sponsorise=$1, sponsor_jusqu_au=$2::timestamptz
+       WHERE id=$3 RETURNING id, nom, marque, sponsorise, sponsor_jusqu_au`,
+      [Boolean(sponsorise), sponsor_jusqu_au || null, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Produit introuvable' });
+    res.json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // GET /api/produits/:id — détail d'un produit

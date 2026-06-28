@@ -288,6 +288,8 @@ module.exports = async function migrateInline() {
     `ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS meuble BOOLEAN DEFAULT FALSE`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS sponsorise BOOLEAN DEFAULT FALSE`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS sponsor_jusqu_au TIMESTAMPTZ`,
+    `ALTER TABLE produits ADD COLUMN IF NOT EXISTS sponsorise BOOLEAN DEFAULT FALSE`,
+    `ALTER TABLE produits ADD COLUMN IF NOT EXISTS sponsor_jusqu_au TIMESTAMPTZ`,
   ];
   for (const sql of colonnesSupplementaires) {
     try { await pool.query(sql); }
