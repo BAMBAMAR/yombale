@@ -51,76 +51,84 @@ function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () 
   }
 
   return (
-    <div className={`admin-annonce-row${pending ? ' admin-annonce-row--loading' : ''}`}>
-      <div className="admin-annonce-thumb">
-        {boutique.logo_url ? (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 14,
+      background: '#fff', border: '1px solid var(--border)',
+      borderLeft: boutique.plan_actif === 'business' ? '4px solid #1e3a5f'
+                : boutique.plan_actif === 'pro'      ? '4px solid #C75B00'
+                : sponsorActif                        ? '4px solid #D97706'
+                : '4px solid var(--border)',
+      borderRadius: 10, padding: '12px 16px',
+      opacity: pending ? 0.5 : 1,
+      transition: 'opacity .2s',
+    }}>
+      {/* Logo */}
+      <div style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 8, overflow: 'hidden', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {boutique.logo_url
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={boutique.logo_url} alt="" className="admin-annonce-img" style={{ objectFit: 'contain' }} />
-        ) : (
-          <div className="admin-annonce-img admin-annonce-img--vide" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
-            🏪
-          </div>
-        )}
+          ? <img src={boutique.logo_url} alt="" style={{ width: 52, height: 52, objectFit: 'cover' }} />
+          : <span style={{ fontSize: 22 }}>🏪</span>
+        }
       </div>
-      <div className="admin-annonce-info">
-        <p className="admin-annonce-titre">
-          {boutique.nom}
+
+      {/* Infos */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
+          <span style={{ fontWeight: 700, fontSize: 14 }}>{boutique.nom}</span>
           {boutique.plan_actif === 'business' && (
-            <span style={{ marginLeft: 8, fontSize: 11, background: '#1e3a5f', color: '#fff', padding: '2px 7px', borderRadius: 4, fontWeight: 700 }}>
-              💼 BUSINESS
-            </span>
+            <span style={{ fontSize: 10, background: '#1e3a5f', color: '#fff', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>💼 BUSINESS</span>
           )}
           {boutique.plan_actif === 'pro' && (
-            <span style={{ marginLeft: 8, fontSize: 11, background: '#C75B00', color: '#fff', padding: '2px 7px', borderRadius: 4, fontWeight: 700 }}>
-              ⭐ PRO
-            </span>
+            <span style={{ fontSize: 10, background: '#C75B00', color: '#fff', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>⭐ PRO</span>
           )}
           {sponsorActif && (
-            <span style={{ marginLeft: 8, fontSize: 11, background: '#D97706', color: '#fff', padding: '2px 7px', borderRadius: 4, fontWeight: 700 }}>
-              ⭐ SPONSOR
+            <span style={{ fontSize: 10, background: '#D97706', color: '#fff', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>SPONSOR</span>
+          )}
+          <span style={{ fontSize: 11, color: 'var(--text3)' }}>{boutique.categorie ?? ''}</span>
+        </div>
+
+        <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 1 }}>
+          👤 {boutique.proprietaire_nom || '—'} · {boutique.proprietaire_email || '—'}
+          {boutique.telephone ? ` · ${boutique.telephone}` : ''}
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text3)' }}>
+          📍 {[boutique.adresse, boutique.ville].filter(Boolean).join(', ') || 'Dakar'}
+          {' · '}Créée le {formatDate(boutique.created_at)}
+          {boutique.plan_actif && boutique.plan_fin && (
+            <span style={{ color: boutique.plan_actif === 'business' ? '#1e3a5f' : '#C75B00', fontWeight: 600 }}>
+              {' · '}Plan jusqu&apos;au {formatDate(boutique.plan_fin)}
             </span>
           )}
-          {boutique.categorie && (
-            <span style={{ fontWeight: 400, color: 'var(--text2)', marginLeft: 6, fontSize: 12 }}>· {boutique.categorie}</span>
-          )}
-        </p>
-        <p className="admin-annonce-meta">
-          {[boutique.adresse, boutique.ville].filter(Boolean).join(', ') || 'Dakar'}
-          {boutique.telephone ? ` · ${boutique.telephone}` : ''}
-        </p>
-        <p className="admin-annonce-meta">
-          {boutique.proprietaire_nom || '—'} · {boutique.proprietaire_email || '—'}
-        </p>
-        <p className="admin-annonce-date">
-          Créée le {formatDate(boutique.created_at)}
-          {boutique.plan_actif && boutique.plan_fin && (
-            <> · <span style={{ color: boutique.plan_actif === 'business' ? '#1e3a5f' : '#C75B00', fontWeight: 600 }}>
-              Plan {boutique.plan_actif} jusqu&apos;au {formatDate(boutique.plan_fin)}
-            </span></>
-          )}
           {sponsorActif && boutique.sponsor_jusqu_au && (
-            <> · <span style={{ color: '#D97706', fontWeight: 600 }}>Sponsor jusqu&apos;au {formatDate(boutique.sponsor_jusqu_au)}</span></>
+            <span style={{ color: '#D97706', fontWeight: 600 }}>
+              {' · '}Sponsor jusqu&apos;au {formatDate(boutique.sponsor_jusqu_au)}
+            </span>
           )}
-        </p>
+        </div>
       </div>
-      <div className="admin-annonce-statut-col">
-        <span className={`admin-annonce-statut admin-annonce-statut--${boutique.actif ? 'active' : 'attente'}`}>
-          {boutique.actif ? 'Active' : 'Désactivée'}
+
+      {/* Statut */}
+      <div style={{ flexShrink: 0 }}>
+        <span style={{
+          fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 20,
+          background: boutique.actif ? '#dcfce7' : '#f1f5f9',
+          color: boutique.actif ? '#16a34a' : '#94a3b8',
+        }}>
+          {boutique.actif ? 'Active' : 'Inactive'}
         </span>
-        {sponsorActif && (
-          <span style={{ display: 'block', fontSize: 11, color: '#D97706', fontWeight: 600, marginTop: 4 }}>⭐ Sponsorisée</span>
-        )}
       </div>
-      <div className="admin-annonce-actions" style={{ gap: 6, flexDirection: 'column', alignItems: 'stretch' }}>
+
+      {/* Actions */}
+      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 130 }}>
         <button
           onClick={handleToggleSponsor}
           disabled={pending}
           className="admin-btn"
           style={{
-            background: sponsorActif ? '#fff8e1' : '#D97706',
+            background: sponsorActif ? '#fffbeb' : '#D97706',
             color: sponsorActif ? '#92400e' : '#fff',
-            border: sponsorActif ? '1.5px solid #fcd34d' : 'none',
-            fontSize: 12,
+            border: sponsorActif ? '1px solid #fcd34d' : 'none',
+            fontSize: 11, padding: '5px 10px',
           }}
         >
           {pending ? '…' : sponsorActif ? '✕ Retirer sponsor' : '⭐ Sponsoriser 30j'}
@@ -128,10 +136,9 @@ function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () 
         <div style={{ display: 'flex', gap: 6 }}>
           <a
             href={`/boutiques/${boutique.id}`}
-            target="_blank"
-            rel="noreferrer"
+            target="_blank" rel="noreferrer"
             className="admin-btn"
-            style={{ background: 'var(--bg)', color: 'var(--navy)', border: '1.5px solid var(--border)', textDecoration: 'none', fontSize: 11, flex: 1, textAlign: 'center' }}
+            style={{ fontSize: 11, flex: 1, textAlign: 'center', textDecoration: 'none', background: '#f8fafc', color: 'var(--navy)', border: '1px solid var(--border)' }}
           >
             Voir ↗
           </a>
@@ -141,7 +148,7 @@ function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () 
             className={`admin-btn ${boutique.actif ? 'admin-btn--rejeter' : 'admin-btn--approuver'}`}
             style={{ fontSize: 11, flex: 1 }}
           >
-            {pending ? '…' : boutique.actif ? 'Désactiver' : 'Réactiver'}
+            {pending ? '…' : boutique.actif ? 'Désact.' : 'Réact.'}
           </button>
         </div>
       </div>
