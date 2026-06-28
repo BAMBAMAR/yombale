@@ -64,14 +64,14 @@ export async function GET() {
             fontSize: 60, fontWeight: 900, color: '#fff',
             textAlign: 'center', margin: '0 0 24px', lineHeight: 1.15,
           }}>
-            Économisez<br />jusqu'à 40%
+            Économisez<br />jusqu&apos;à 40%
           </p>
 
           <p style={{
             fontSize: 30, color: '#CBD5E1',
             textAlign: 'center', margin: 0, lineHeight: 1.5,
           }}>
-            En comparant les prix avant<br />d'acheter à Dakar
+            En comparant les prix avant<br />d&apos;acheter à Dakar
           </p>
 
           {/* Stats */}

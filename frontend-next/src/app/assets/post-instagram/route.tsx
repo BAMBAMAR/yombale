@@ -67,7 +67,7 @@ export async function GET() {
             fontSize: 44, fontWeight: 900, color: '#fff',
             textAlign: 'center', margin: '0 0 16px', lineHeight: 1.2,
           }}>
-            Comparez les prix avant<br />d'acheter à Dakar
+            Comparez les prix avant<br />d&apos;acheter à Dakar
           </p>
 
           <p style={{

@@ -125,7 +125,7 @@ export default function CommunicationPage() {
       </h1>
       <p style={{ color: '#64748B', marginBottom: 40, fontSize: 14 }}>
         Visuels et textes pour vos pages réseaux sociaux.
-        Clic droit sur un visuel → <strong>Enregistrer l'image</strong> pour le télécharger.
+        Clic droit sur un visuel → <strong>Enregistrer l&apos;image</strong> pour le télécharger.
       </p>
 
       {/* Visuels */}
