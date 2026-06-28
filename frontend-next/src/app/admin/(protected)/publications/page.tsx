@@ -65,6 +65,24 @@ export default function PublicationsPage() {
     setEditId(null); setErr(''); setOk('')
   }
 
+  function generer(type: string) {
+    setErr(''); setOk('')
+    startTransition(async () => {
+      try {
+        const data = await apiFetch(`/generer/${type}`)
+        setForm(f => ({
+          ...f,
+          message: data.message || '',
+          image_url: data.image_url || '',
+          lien: data.lien || '',
+        }))
+        setEditId(null)
+        setOk(`Post "${type}" généré — modifiez si besoin puis créez le brouillon`)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur génération') }
+    })
+  }
+
   function startEdit(p: FbPost) {
     setEditId(p.id)
     setForm({
@@ -155,6 +173,30 @@ export default function PublicationsPage() {
       <p style={{ color: '#64748B', fontSize: 13, marginBottom: 28 }}>
         Rédigez des posts, ajoutez une image, approuvez puis publiez manuellement ou à une date programmée.
       </p>
+
+      {/* Générateurs automatiques */}
+      <div style={{ ...s.card, background: '#F8FAFC', marginBottom: 20 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#1C2B4A', marginBottom: 12 }}>
+          ⚡ Générer automatiquement depuis la base de données
+        </p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+          <button style={{ ...s.btn, background: '#FEF3C7', color: '#92400E' }} onClick={() => generer('bon-plan')} disabled={isPending}>
+            🔥 Bon plan du jour
+          </button>
+          <button style={{ ...s.btn, background: '#EFF6FF', color: '#1D4ED8' }} onClick={() => generer('comparatif')} disabled={isPending}>
+            📊 Comparatif prix
+          </button>
+          <button style={{ ...s.btn, background: '#F0FDF4', color: '#166534' }} onClick={() => generer('immo')} disabled={isPending}>
+            🏠 Annonce immo
+          </button>
+          <button style={{ ...s.btn, background: '#FDF4FF', color: '#7E22CE' }} onClick={() => generer('conseil')} disabled={isPending}>
+            💡 Conseil achat
+          </button>
+        </div>
+        <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 8, marginBottom: 0 }}>
+          Le contenu est pré-rempli avec de vraies données — modifiez avant de sauvegarder.
+        </p>
+      </div>
 
       {/* Formulaire */}
       <div style={{ ...s.card, borderColor: editId ? '#C75B00' : '#E2E8F0' }}>

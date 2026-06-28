@@ -8,6 +8,106 @@ const qs    = require('querystring');
 
 router.use(adminSecretOnly);
 
+// GET /api/facebook-posts/generer/:type — génère un brouillon depuis la DB
+router.get('/generer/:type', async (req, res) => {
+  const { type } = req.params;
+  try {
+    let result = null;
+
+    if (type === 'bon-plan') {
+      // Produit avec la plus grosse baisse de prix récente
+      const { rows } = await pool.query(`
+        SELECT p.nom, p.marque, p.image_url, p.id as produit_id,
+               MIN(o.prix) as prix_min,
+               MAX(o.prix) as prix_max,
+               m.nom as marchand
+        FROM produits p
+        JOIN offres o ON o.produit_id = p.id
+        JOIN marchands m ON m.id = o.marchand_id
+        WHERE o.disponible = true AND o.prix > 0 AND p.image_url IS NOT NULL
+        GROUP BY p.id, p.nom, p.marque, p.image_url, m.nom
+        HAVING MAX(o.prix) - MIN(o.prix) > 5000
+        ORDER BY (MAX(o.prix) - MIN(o.prix)) DESC
+        LIMIT 1
+      `);
+      if (rows.length) {
+        const p = rows[0];
+        const eco = Math.round(p.prix_max - p.prix_min);
+        const nom = [p.marque, p.nom].filter(Boolean).join(' ');
+        result = {
+          message: `🔥 BON PLAN DU JOUR !\n\n📱 ${nom}\n💰 À partir de ${Number(p.prix_min).toLocaleString('fr-FR')} FCFA chez ${p.marchand}\n\nÉconomisez jusqu'à ${eco.toLocaleString('fr-FR')} FCFA en comparant avant d'acheter !\n\n👉 Comparez tous les prix sur nopalou.com\n\n#Nopalou #BonPlan #Dakar #Sénégal #PrixMoinsCher`,
+          image_url: p.image_url,
+          lien: `https://nopalou.com/produit/${p.produit_id}`,
+        };
+      }
+    }
+
+    else if (type === 'immo') {
+      const { rows } = await pool.query(`
+        SELECT id, titre, prix, ville, quartier, type_bien, transaction, photos
+        FROM annonces_immo
+        WHERE actif = true AND supprimee = false AND photos IS NOT NULL AND array_length(photos, 1) > 0
+        ORDER BY created_at DESC LIMIT 5
+      `);
+      if (rows.length) {
+        const a = rows[Math.floor(Math.random() * rows.length)];
+        const loc = [a.quartier, a.ville].filter(Boolean).join(', ') || 'Dakar';
+        const type = a.transaction === 'vente' ? 'À VENDRE' : 'À LOUER';
+        const prix = a.prix ? `${Number(a.prix).toLocaleString('fr-FR')} FCFA${a.transaction !== 'vente' ? '/mois' : ''}` : 'Prix à négocier';
+        result = {
+          message: `🏠 ${type} — ${a.type_bien || 'Bien immobilier'}\n\n📍 ${loc}\n💰 ${prix}\n\n${a.titre}\n\nDes centaines d'annonces immo disponibles sur Nopalou — villas, appartements, terrains à Dakar et partout au Sénégal.\n\n👉 nopalou.com/immo\n\n#Immobilier #Dakar #Sénégal #${a.transaction === 'vente' ? 'Vente' : 'Location'} #Nopalou`,
+          image_url: a.photos?.[0] || null,
+          lien: `https://nopalou.com/immo/${a.id}`,
+        };
+      }
+    }
+
+    else if (type === 'comparatif') {
+      const { rows } = await pool.query(`
+        SELECT p.nom, p.marque, p.image_url, p.id as produit_id,
+               COUNT(DISTINCT o.marchand_id) as nb_marchands,
+               MIN(o.prix) as prix_min, MAX(o.prix) as prix_max
+        FROM produits p
+        JOIN offres o ON o.produit_id = p.id
+        WHERE o.disponible = true AND o.prix > 0 AND p.image_url IS NOT NULL
+        GROUP BY p.id, p.nom, p.marque, p.image_url
+        HAVING COUNT(DISTINCT o.marchand_id) >= 2 AND MAX(o.prix) - MIN(o.prix) > 3000
+        ORDER BY COUNT(DISTINCT o.marchand_id) DESC, (MAX(o.prix) - MIN(o.prix)) DESC
+        LIMIT 1
+      `);
+      if (rows.length) {
+        const p = rows[0];
+        const eco = Math.round(p.prix_max - p.prix_min);
+        const nom = [p.marque, p.nom].filter(Boolean).join(' ');
+        result = {
+          message: `📊 COMPARER C'EST ÉCONOMISER !\n\n${nom} est vendu à des prix très différents selon le marchand au Sénégal.\n\n💸 Jusqu'à ${eco.toLocaleString('fr-FR')} FCFA de différence entre les marchands !\n\nNopalou compare ${p.nb_marchands} marchands en temps réel pour vous trouver le meilleur prix.\n\n👉 Voir tous les prix sur nopalou.com\n\n#Nopalou #Comparateur #${(p.marque || 'Tech').replace(/\s/g,'')} #Dakar #Sénégal #PrixMoinsCher`,
+          image_url: p.image_url,
+          lien: `https://nopalou.com/produit/${p.produit_id}`,
+        };
+      }
+    }
+
+    else if (type === 'conseil') {
+      const conseils = [
+        {
+          message: `💡 CONSEIL ACHAT #1\n\nAvant d'acheter un téléphone en ligne au Sénégal :\n\n✅ Comparez les prix sur plusieurs sites\n✅ Vérifiez la garantie (locale ou importée)\n✅ Lisez les avis des acheteurs\n✅ Privilégiez les vendeurs vérifiés\n✅ Gardez votre reçu de paiement\n\nNopalou compare automatiquement les prix chez tous les marchands en ligne.\n\n👉 nopalou.com\n\n#ConseilAchat #Smartphone #Dakar #Sénégal #Nopalou`,
+          image_url: null, lien: 'https://nopalou.com',
+        },
+        {
+          message: `💡 LE SAVIEZ-VOUS ?\n\nAu Sénégal, le même produit peut coûter jusqu'à 40% moins cher selon le site où vous l'achetez.\n\nNopalou indexe en temps réel :\n📦 +3 000 produits\n🏪 9 sites partenaires\n🔄 Mis à jour toutes les 6h\n\nComparez avant d'acheter — c'est gratuit !\n\n👉 nopalou.com\n\n#Nopalou #BonPlan #Dakar #Sénégal #Shopping #PrixMoinsCher`,
+          image_url: null, lien: 'https://nopalou.com',
+        },
+      ];
+      result = conseils[Math.floor(Math.random() * conseils.length)];
+    }
+
+    if (!result) return res.status(404).json({ error: 'Aucun contenu trouvé pour ce type' });
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/facebook-posts
 router.get('/', async (req, res) => {
   try {
