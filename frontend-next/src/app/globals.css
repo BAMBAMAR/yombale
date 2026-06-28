@@ -5075,10 +5075,11 @@ a {
 }
 
 /* Annonces moderation list */
+/* ── Admin Annonces ─────────────────────────────────────────── */
 .admin-annonces-sections {
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 48px;
 }
 
 .admin-annonces-section { /* no extra styles needed */ }
@@ -5086,74 +5087,107 @@ a {
 .admin-annonces-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  margin-top: 16px;
 }
 
+/* Card principale */
 .admin-annonce-row {
-  display: grid;
-  grid-template-columns: 72px 1fr auto auto;
-  gap: 16px;
-  align-items: center;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 16px;
-  transition: opacity .2s;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  transition: opacity .2s, box-shadow .15s;
+}
+.admin-annonce-row:hover {
+  box-shadow: 0 3px 10px rgba(0,0,0,.1);
 }
 
+/* Accentuation de la bordure selon le statut */
+.admin-annonce-row--attente { border-left: 4px solid #f59e0b; }
+.admin-annonce-row--active  { border-left: 4px solid #22c55e; }
+.admin-annonce-row--rejete  { border-left: 4px solid #ef4444; }
+
 .admin-annonce-row--loading {
-  opacity: .5;
+  opacity: .45;
   pointer-events: none;
 }
 
-.admin-annonce-thumb { flex-shrink: 0; }
+/* Contenu haut : photo + info + badges + actions */
+.admin-annonce-body {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  gap: 0;
+  align-items: stretch;
+}
+
+/* Photo */
+.admin-annonce-thumb {
+  flex-shrink: 0;
+  position: relative;
+}
 
 .admin-annonce-img {
-  width: 72px;
-  height: 56px;
+  width: 120px;
+  height: 100%;
+  min-height: 100px;
   object-fit: cover;
-  border-radius: 6px;
   display: block;
 }
 
 .admin-annonce-img--vide {
+  width: 120px;
+  min-height: 100px;
   background: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.admin-annonce-img--vide::after {
+  content: '📷';
+  font-size: 24px;
+  opacity: .35;
 }
 
+/* Info centrale */
 .admin-annonce-info {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
 }
 
-.admin-annonce-titre {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text1);
-  margin: 0 0 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.admin-annonce-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.admin-annonce-meta {
-  font-size: 11px;
-  color: var(--text2);
+.admin-annonce-titre {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text1);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.admin-annonce-date {
-  font-size: 11px;
-  color: var(--text3);
-  margin: 4px 0 0;
+.admin-annonce-prix {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--price, #16a34a);
+  white-space: nowrap;
 }
 
-.admin-annonce-statut-col {
+.admin-annonce-badges {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 2px 0;
 }
 
 .admin-annonce-statut {
@@ -5169,72 +5203,141 @@ a {
 .admin-annonce-statut--rejete  { background: #fee2e2; color: #991b1b; }
 
 .admin-annonce-payee {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--price);
-  background: #dcfce7;
+  font-size: 11px;
+  font-weight: 700;
+  color: #065f46;
+  background: #a7f3d0;
   border-radius: 20px;
-  padding: 2px 8px;
+  padding: 3px 10px;
 }
 
-.admin-annonce-actions {
+.admin-annonce-meta {
+  font-size: 12px;
+  color: var(--text2);
+  margin: 0;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-annonce-meta-sep { color: var(--border); }
+
+.admin-annonce-date {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+/* Colonne d'actions à droite */
+.admin-annonce-actions-col {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border-left: 1px solid var(--border);
+  background: #fafafa;
+  min-width: 130px;
 }
 
-.admin-annonce-voir-btn {
-  background: none;
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 9px 16px;
+  transition: filter .15s, transform .1s;
+  white-space: nowrap;
+  width: 100%;
+}
+.admin-btn:hover:not(:disabled) { filter: brightness(1.07); transform: translateY(-1px); }
+.admin-btn:active:not(:disabled) { transform: translateY(0); }
+.admin-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.admin-btn--approuver {
+  background: #16a34a;
+  color: #fff;
+}
+
+.admin-btn--rejeter {
+  background: #ef4444;
+  color: #fff;
+}
+
+.admin-btn--desactiver {
+  background: #f59e0b;
+  color: #fff;
+}
+
+.admin-btn--reactiver {
+  background: #3b82f6;
+  color: #fff;
+}
+
+/* Voir détails toggle */
+.admin-annonce-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
   color: var(--primary, #2563eb);
   cursor: pointer;
-  font-size: 0.73rem;
-  padding: 2px 0;
-  margin-top: 4px;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-top: 1px solid var(--border);
+  width: 100%;
+  text-align: left;
+  transition: background .15s;
 }
+.admin-annonce-toggle:hover { background: #f0f4ff; }
 
+/* Zone dépliée */
 .admin-annonce-details {
-  margin-top: 8px;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid var(--border, #e5e7eb);
+  padding: 14px 16px 16px;
+  background: #f8fafc;
+  border-top: 1px solid var(--border);
 }
 
 .admin-annonce-desc {
-  font-size: 0.82rem;
-  color: #555;
+  font-size: 13px;
+  color: #444;
   white-space: pre-wrap;
-  margin: 0 0 8px;
+  margin: 0 0 12px;
+  line-height: 1.5;
 }
 
 .admin-annonce-no-detail {
-  font-size: 0.78rem;
-  color: #999;
+  font-size: 12px;
+  color: #aaa;
   font-style: italic;
-  margin: 0;
+  margin: 0 0 12px;
 }
 
 .admin-annonce-photos {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-top: 6px;
 }
 
 .admin-annonce-photo-thumb {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid var(--border, #e5e7eb);
-  transition: opacity 0.15s;
+  border-radius: 6px;
+  border: 2px solid var(--border, #e5e7eb);
+  transition: opacity 0.15s, border-color .15s;
 }
 
 .admin-annonce-photo-thumb:hover {
   opacity: 0.85;
+  border-color: var(--primary, #2563eb);
 }
 
 /* ── Mobile Navigation ──────────────────────────────────────── */
@@ -6588,8 +6691,10 @@ a {
   .admin-nav { flex-direction: row; flex: none; }
   .admin-logout-form { padding: 0; border: none; margin: 0; }
   .admin-content { padding: 20px 16px; }
-  .admin-annonce-row { grid-template-columns: 60px 1fr; }
-  .admin-annonce-statut-col, .admin-annonce-actions { grid-column: 2; }
+  .admin-annonce-body { grid-template-columns: 90px 1fr; }
+  .admin-annonce-actions-col { border-left: none; border-top: 1px solid var(--border); grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; }
+  .admin-annonce-img { width: 90px; min-height: 80px; }
+  .admin-annonce-img--vide { width: 90px; }
 }
 
 /* ── Admin Télécom — table + modal ─────────────────────────────── */

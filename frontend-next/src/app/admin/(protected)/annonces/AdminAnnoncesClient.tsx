@@ -25,13 +25,19 @@ function formatDate(s: string) {
 }
 
 function formatPrix(p: number | null) {
-  if (!p) return '—'
+  if (!p) return null
   return new Intl.NumberFormat('fr-SN').format(p) + ' FCFA'
 }
 
+function statutClass(annonce: Annonce) {
+  if (annonce.rejete) return 'admin-annonce-row--rejete'
+  if (annonce.actif)  return 'admin-annonce-row--active'
+  return 'admin-annonce-row--attente'
+}
+
 function StatutBadge({ annonce }: { annonce: Annonce }) {
-  if (annonce.rejete)  return <span className="admin-annonce-statut admin-annonce-statut--rejete">Rejetée</span>
-  if (annonce.actif)   return <span className="admin-annonce-statut admin-annonce-statut--active">Active</span>
+  if (annonce.rejete) return <span className="admin-annonce-statut admin-annonce-statut--rejete">Rejetée</span>
+  if (annonce.actif)  return <span className="admin-annonce-statut admin-annonce-statut--active">Active</span>
   return <span className="admin-annonce-statut admin-annonce-statut--attente">En attente</span>
 }
 
@@ -48,94 +54,119 @@ function AnnonceRow({ annonce, onAction }: { annonce: Annonce; onAction: () => v
 
   const allPhotos = Array.isArray(annonce.photos) ? annonce.photos : []
   const photo = allPhotos[0] ?? null
+  const prix = formatPrix(annonce.prix)
 
   return (
-    <div className={`admin-annonce-row${pending ? ' admin-annonce-row--loading' : ''}`}>
-      <div className="admin-annonce-thumb">
-        {photo
-          // eslint-disable-next-line @next/next/no-img-element
-          ? <img src={photo} alt="" className="admin-annonce-img" />
-          : <div className="admin-annonce-img admin-annonce-img--vide" />
-        }
-      </div>
-      <div className="admin-annonce-info">
-        <p className="admin-annonce-titre">{annonce.titre}</p>
-        <p className="admin-annonce-meta">
-          {annonce.categorie_slug} · {annonce.ville || 'Dakar'} · {formatPrix(annonce.prix)}
-        </p>
-        <p className="admin-annonce-meta">
-          {annonce.auteur_nom || '—'} · {annonce.auteur_email || '—'} · {annonce.contact_tel}
-        </p>
-        <p className="admin-annonce-date">{formatDate(annonce.created_at)}</p>
-        <button
-          type="button"
-          className="admin-annonce-voir-btn"
-          onClick={() => setExpanded(e => !e)}
-        >
-          {expanded ? '▲ Masquer détails' : '▼ Voir détails'}
-        </button>
-        {expanded && (
-          <div className="admin-annonce-details">
-            {annonce.description ? (
-              <p className="admin-annonce-desc">{annonce.description}</p>
-            ) : (
-              <p className="admin-annonce-no-detail">Aucune description.</p>
-            )}
-            {allPhotos.length > 0 && (
-              <div className="admin-annonce-photos">
-                {allPhotos.map((src, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <a key={i} href={src} target="_blank" rel="noreferrer">
-                    <img src={src} alt={`Photo ${i + 1}`} className="admin-annonce-photo-thumb" />
-                  </a>
-                ))}
-              </div>
-            )}
+    <div className={`admin-annonce-row ${statutClass(annonce)}${pending ? ' admin-annonce-row--loading' : ''}`}>
+      {/* Corps principal */}
+      <div className="admin-annonce-body">
+        {/* Photo */}
+        <div className="admin-annonce-thumb">
+          {photo
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={photo} alt="" className="admin-annonce-img" />
+            : <div className="admin-annonce-img--vide" />
+          }
+        </div>
+
+        {/* Infos */}
+        <div className="admin-annonce-info">
+          <div className="admin-annonce-header-row">
+            <p className="admin-annonce-titre">{annonce.titre}</p>
+            {prix && <span className="admin-annonce-prix">{prix}</span>}
           </div>
-        )}
-      </div>
-      <div className="admin-annonce-statut-col">
-        <StatutBadge annonce={annonce} />
-        {annonce.payee && <span className="admin-annonce-payee">Payée</span>}
-      </div>
-      <div className="admin-annonce-actions">
-        {!annonce.actif && !annonce.rejete && (
-          <>
-            <button
-              onClick={() => handleAction('approuver')}
-              disabled={pending}
-              className="admin-btn admin-btn--approuver"
-            >
-              Approuver
-            </button>
+
+          <div className="admin-annonce-badges">
+            <StatutBadge annonce={annonce} />
+            {annonce.payee && <span className="admin-annonce-payee">Payée</span>}
+          </div>
+
+          <div className="admin-annonce-meta">
+            <span>{annonce.categorie_slug}</span>
+            <span className="admin-annonce-meta-sep">·</span>
+            <span>{annonce.ville || 'Dakar'}</span>
+          </div>
+
+          <div className="admin-annonce-meta">
+            <span>{annonce.auteur_nom || '—'}</span>
+            <span className="admin-annonce-meta-sep">·</span>
+            <span>{annonce.auteur_email || '—'}</span>
+            <span className="admin-annonce-meta-sep">·</span>
+            <span>{annonce.contact_tel}</span>
+          </div>
+
+          <p className="admin-annonce-date">{formatDate(annonce.created_at)}</p>
+        </div>
+
+        {/* Actions */}
+        <div className="admin-annonce-actions-col">
+          {!annonce.actif && !annonce.rejete && (
+            <>
+              <button
+                onClick={() => handleAction('approuver')}
+                disabled={pending}
+                className="admin-btn admin-btn--approuver"
+              >
+                ✓ Approuver
+              </button>
+              <button
+                onClick={() => handleAction('rejeter')}
+                disabled={pending}
+                className="admin-btn admin-btn--rejeter"
+              >
+                ✕ Rejeter
+              </button>
+            </>
+          )}
+          {annonce.actif && (
             <button
               onClick={() => handleAction('rejeter')}
               disabled={pending}
-              className="admin-btn admin-btn--rejeter"
+              className="admin-btn admin-btn--desactiver"
             >
-              Rejeter
+              ⏸ Désactiver
             </button>
-          </>
-        )}
-        {annonce.actif && (
-          <button
-            onClick={() => handleAction('rejeter')}
-            disabled={pending}
-            className="admin-btn admin-btn--rejeter"
-          >
-            Désactiver
-          </button>
-        )}
-        {!annonce.actif && annonce.rejete && (
-          <button
-            onClick={() => handleAction('approuver')}
-            disabled={pending}
-            className="admin-btn admin-btn--approuver"
-          >
-            Réactiver
-          </button>
-        )}
+          )}
+          {!annonce.actif && annonce.rejete && (
+            <button
+              onClick={() => handleAction('approuver')}
+              disabled={pending}
+              className="admin-btn admin-btn--reactiver"
+            >
+              ↩ Réactiver
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Toggle détails */}
+      <button
+        type="button"
+        className="admin-annonce-toggle"
+        onClick={() => setExpanded(e => !e)}
+      >
+        {expanded ? '▲ Masquer les détails' : '▼ Voir détails & photos'}
+      </button>
+
+      {/* Détails dépliés */}
+      {expanded && (
+        <div className="admin-annonce-details">
+          {annonce.description
+            ? <p className="admin-annonce-desc">{annonce.description}</p>
+            : <p className="admin-annonce-no-detail">Aucune description.</p>
+          }
+          {allPhotos.length > 0 && (
+            <div className="admin-annonce-photos">
+              {allPhotos.map((src, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <a key={i} href={src} target="_blank" rel="noreferrer">
+                  <img src={src} alt={`Photo ${i + 1}`} className="admin-annonce-photo-thumb" />
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -145,7 +176,6 @@ export default function AdminAnnoncesClient({
 }: {
   annonces: Annonce[]
 }) {
-  // Local state mirrors the list; after actions we reload to get fresh data
   const [, startTransition] = useTransition()
 
   function refresh() {
