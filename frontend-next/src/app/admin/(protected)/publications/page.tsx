@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect, useTransition, useCallback } from 'react'
 
 async function api(path: string, opts: RequestInit = {}) {
   const res = await fetch(`/admin-proxy/fb/${path}`, {
@@ -27,6 +27,15 @@ interface FbPost {
   created_at: string
 }
 
+interface TokenStatus {
+  status: 'ok' | 'expired' | 'missing' | 'error'
+  message?: string
+  name?: string
+  expires_at?: string | null
+  is_page_token?: boolean
+  type?: string
+}
+
 const STATUT_LABEL: Record<string, { label: string; color: string }> = {
   brouillon: { label: 'Brouillon',  color: '#94A3B8' },
   approuve:  { label: 'Approuvé',   color: '#F59E0B' },
@@ -34,24 +43,127 @@ const STATUT_LABEL: Record<string, { label: string; color: string }> = {
   erreur:    { label: 'Erreur',     color: '#EF4444' },
 }
 
+function TokenBanner({ onRenew }: { onRenew: () => void }) {
+  const [ts, setTs]       = useState<TokenStatus | null>(null)
+  const [loading, setL]   = useState(true)
+
+  useEffect(() => {
+    api('token-status').then(setTs).catch(() => setTs({ status: 'error', message: 'Impossible de vérifier' })).finally(() => setL(false))
+  }, [])
+
+  if (loading) return null
+
+  const expired  = ts?.status === 'expired' || ts?.status === 'missing'
+  const bg       = expired ? '#FEF2F2' : ts?.status === 'ok' ? '#F0FDF4' : '#FFFBEB'
+  const border   = expired ? '#FECACA' : ts?.status === 'ok' ? '#BBF7D0' : '#FDE68A'
+  const color    = expired ? '#DC2626' : ts?.status === 'ok' ? '#166534' : '#92400E'
+  const icon     = expired ? '❌' : ts?.status === 'ok' ? '✅' : '⚠️'
+
+  let label = ''
+  if (ts?.status === 'missing') label = 'Aucun token Facebook configuré'
+  else if (ts?.status === 'expired') label = `Token expiré — ${ts.message?.split('on ')[1]?.split('.')[0] || 'session terminée'}`
+  else if (ts?.status === 'ok') {
+    const exp = ts.expires_at ? new Date(ts.expires_at) : null
+    const days = exp ? Math.ceil((exp.getTime() - Date.now()) / 86400000) : null
+    label = `Token actif${ts.name ? ` · ${ts.name}` : ''}${days !== null ? ` · expire dans ${days}j` : ' · pas d\'expiration'}`
+  } else label = ts?.message || 'Statut inconnu'
+
+  return (
+    <div style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <span style={{ fontSize: 13, color, fontWeight: 600 }}>{icon} {label}</span>
+      <button
+        onClick={onRenew}
+        style={{ padding: '6px 14px', background: expired ? '#DC2626' : '#1877F2', color: '#fff', border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+      >
+        {expired ? '🔑 Renouveler le token' : '🔑 Changer le token'}
+      </button>
+    </div>
+  )
+}
+
+function TokenModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [token, setToken]   = useState('')
+  const [status, setStatus] = useState<'idle'|'loading'|'ok'|'err'>('idle')
+  const [msg, setMsg]       = useState('')
+
+  async function save() {
+    if (!token.trim()) return
+    setStatus('loading'); setMsg('')
+    try {
+      const res = await api('token', { method: 'POST', body: JSON.stringify({ token: token.trim() }) })
+      setStatus('ok'); setMsg(`Token enregistré · Page : ${res.name}`)
+      setTimeout(() => { onSaved(); onClose() }, 1500)
+    } catch (e: unknown) {
+      setStatus('err'); setMsg(e instanceof Error ? e.message : 'Erreur')
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: '#fff', borderRadius: 14, padding: 28, maxWidth: 560, width: '100%' }}>
+        <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 8 }}>🔑 Renouveler le token Facebook</h2>
+        <p style={{ fontSize: 13, color: '#64748B', marginBottom: 20 }}>
+          Le token de Page Facebook est valable ~60 jours. Pour le renouveler :
+        </p>
+
+        <ol style={{ fontSize: 13, color: '#1C2B4A', lineHeight: 2, paddingLeft: 20, marginBottom: 20 }}>
+          <li>Aller sur <strong>developers.facebook.com/tools/explorer</strong></li>
+          <li>Sélectionner l&apos;app <strong>Nopalou</strong> → <strong>Obtenir un token d&apos;accès de Page</strong></li>
+          <li>Cocher : <code>pages_manage_posts</code>, <code>pages_read_engagement</code>, <code>instagram_basic</code>, <code>instagram_content_publish</code></li>
+          <li>Copier le token généré</li>
+          <li>Coller ci-dessous — le token sera vérifié puis enregistré</li>
+        </ol>
+
+        <textarea
+          value={token}
+          onChange={e => setToken(e.target.value)}
+          placeholder="EAAxxxxx... (token de page Facebook)"
+          style={{ width: '100%', padding: '10px 12px', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 13, minHeight: 80, resize: 'vertical', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'monospace' }}
+        />
+
+        {msg && (
+          <p style={{ fontSize: 13, color: status === 'ok' ? '#10B981' : '#EF4444', marginBottom: 12 }}>
+            {status === 'ok' ? '✅' : '❌'} {msg}
+          </p>
+        )}
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ padding: '8px 18px', background: '#F1F5F9', color: '#64748B', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+            Annuler
+          </button>
+          <button
+            onClick={save}
+            disabled={status === 'loading' || !token.trim()}
+            style={{ padding: '8px 18px', background: '#1877F2', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}
+          >
+            {status === 'loading' ? 'Vérification...' : 'Enregistrer le token'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function PublicationsPage() {
-  const [posts, setPosts] = useState<FbPost[]>([])
+  const [posts, setPosts]     = useState<FbPost[]>([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({
+  const [form, setForm]       = useState({
     message: '', lien: '', image_url: '', publier_instagram: false, date_publication: '',
   })
-  const [editId, setEditId] = useState<string | null>(null)
-  const [err, setErr] = useState('')
-  const [ok, setOk]   = useState('')
+  const [editId, setEditId]   = useState<string | null>(null)
+  const [err, setErr]         = useState('')
+  const [ok, setOk]           = useState('')
   const [isPending, startTransition] = useTransition()
+  const [showTokenModal, setShowTokenModal] = useState(false)
+  const [tokenKey, setTokenKey] = useState(0)
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     try { setPosts(await api('')) } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     setLoading(false)
-  }
+  }, [])
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [load])
 
   function resetForm() {
     setForm({ message: '', lien: '', image_url: '', publier_instagram: false, date_publication: '' })
@@ -153,9 +265,19 @@ export default function PublicationsPage() {
       <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1C2B4A', marginBottom: 4 }}>
         📘 Publications Facebook · Instagram
       </h1>
-      <p style={{ color: '#64748B', fontSize: 13, marginBottom: 28 }}>
+      <p style={{ color: '#64748B', fontSize: 13, marginBottom: 20 }}>
         Rédigez des posts, ajoutez une image, approuvez puis publiez manuellement ou à une date programmée.
       </p>
+
+      {/* Statut token */}
+      <TokenBanner key={tokenKey} onRenew={() => setShowTokenModal(true)} />
+
+      {showTokenModal && (
+        <TokenModal
+          onClose={() => setShowTokenModal(false)}
+          onSaved={() => setTokenKey(k => k + 1)}
+        />
+      )}
 
       {/* Générateurs automatiques */}
       <div style={{ ...s.card, background: '#F8FAFC', marginBottom: 20 }}>
@@ -284,7 +406,6 @@ export default function PublicationsPage() {
               </span>
             </div>
 
-            {/* Aperçu image */}
             {p.image_url && (
               <img src={p.image_url} alt="aperçu" style={{ width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 8, marginBottom: 10 }} />
             )}

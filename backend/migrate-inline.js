@@ -325,5 +325,17 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table facebook_posts OK');
   } catch (e) { console.warn('[MIGRATE] facebook_posts:', e.message); }
 
+  // Table settings (clé-valeur pour stocker tokens et config dynamique)
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key        VARCHAR(100) PRIMARY KEY,
+        value      TEXT,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    console.log('[MIGRATE] ✅ Table settings OK');
+  } catch (e) { console.warn('[MIGRATE] settings:', e.message); }
+
   try { await pool.end(); } catch (_) {}
 };

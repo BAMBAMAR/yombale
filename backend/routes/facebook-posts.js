@@ -8,6 +8,69 @@ const qs    = require('querystring');
 
 router.use(adminSecretOnly);
 
+// ── Helpers token ────────────────────────────────────────────────────────────
+
+async function getToken() {
+  try {
+    const { rows } = await pool.query(`SELECT value FROM settings WHERE key='fb_page_access_token'`);
+    if (rows.length && rows[0].value) return rows[0].value;
+  } catch (_) {}
+  return process.env.FB_PAGE_ACCESS_TOKEN || null;
+}
+
+async function setToken(token) {
+  await pool.query(
+    `INSERT INTO settings (key, value, updated_at) VALUES ('fb_page_access_token', $1, NOW())
+     ON CONFLICT (key) DO UPDATE SET value=$1, updated_at=NOW()`,
+    [token]
+  );
+}
+
+// GET /api/facebook-posts/token-status
+router.get('/token-status', async (req, res) => {
+  const token = await getToken();
+  if (!token) return res.json({ status: 'missing', message: 'Aucun token configuré' });
+  try {
+    const r    = await fetch(`https://graph.facebook.com/v19.0/me?fields=name,id&access_token=${token}`);
+    const data = await r.json();
+    if (data.error) {
+      return res.json({ status: 'expired', message: data.error.message });
+    }
+    // Récupère la date d'expiration via debug_token
+    const appToken = `${process.env.FB_APP_ID}|${process.env.FB_APP_SECRET}`;
+    const dbg  = await fetch(`https://graph.facebook.com/v19.0/debug_token?input_token=${token}&access_token=${appToken}`);
+    const dbgD = await dbg.json();
+    const exp  = dbgD.data?.expires_at;
+    const type = dbgD.data?.type;
+    return res.json({
+      status: 'ok',
+      name: data.name,
+      id: data.id,
+      type,
+      expires_at: exp ? new Date(exp * 1000).toISOString() : null,
+      is_page_token: type === 'PAGE',
+    });
+  } catch (e) {
+    return res.json({ status: 'error', message: e.message });
+  }
+});
+
+// POST /api/facebook-posts/token — mettre à jour le token FB
+router.post('/token', async (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'token requis' });
+  try {
+    // Vérifie d'abord que le token est valide
+    const r    = await fetch(`https://graph.facebook.com/v19.0/me?fields=name,id&access_token=${token}`);
+    const data = await r.json();
+    if (data.error) return res.status(400).json({ error: `Token invalide : ${data.error.message}` });
+    await setToken(token);
+    res.json({ ok: true, name: data.name, id: data.id });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/facebook-posts/generer/:type — génère un brouillon depuis la DB
 router.get('/generer/:type', async (req, res) => {
   const { type } = req.params;
@@ -215,10 +278,10 @@ async function publierPost(post) {
   return results;
 }
 
-function publierFacebook(post) {
-  return new Promise((resolve) => {
+async function publierFacebook(post) {
+  return new Promise(async (resolve) => {
     const pageId = process.env.FB_PAGE_ID;
-    const token  = process.env.FB_PAGE_ACCESS_TOKEN;
+    const token  = await getToken();
     if (!pageId || !token) return resolve({ error: { message: 'FB_PAGE_ID / FB_PAGE_ACCESS_TOKEN non configurés' } });
 
     // Post avec photo → /photos, sinon → /feed
@@ -252,7 +315,7 @@ function publierFacebook(post) {
 
 async function publierInstagram(post) {
   const igId = process.env.IG_USER_ID;
-  const token = process.env.FB_PAGE_ACCESS_TOKEN;
+  const token = await getToken();
   if (!igId || !token) return { error: { message: 'IG_USER_ID non configuré' } };
   if (!post.image_url) return { error: { message: 'Une image est requise pour Instagram' } };
 
