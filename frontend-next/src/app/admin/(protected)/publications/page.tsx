@@ -200,6 +200,7 @@ export default function PublicationsPage() {
   const [isPending, startTransition] = useTransition()
   const [showTokenModal, setShowTokenModal] = useState(false)
   const [tokenKey, setTokenKey] = useState(0)
+  const [showPublies, setShowPublies] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -424,13 +425,21 @@ export default function PublicationsPage() {
       </div>
 
       {/* Liste */}
-      <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1C2B4A', marginBottom: 12 }}>
-        Tous les posts ({posts.length})
-      </h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1C2B4A', margin: 0 }}>
+          {showPublies ? `Tous les posts (${posts.length})` : `En cours (${posts.filter(p => p.statut !== 'publie').length})`}
+        </h2>
+        <button
+          onClick={() => setShowPublies(v => !v)}
+          style={{ fontSize: 12, padding: '5px 12px', background: '#F1F5F9', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: 7, cursor: 'pointer', fontWeight: 600 }}
+        >
+          {showPublies ? '🙈 Masquer les publiés' : `📂 Voir publiés (${posts.filter(p => p.statut === 'publie').length})`}
+        </button>
+      </div>
 
       {loading && <p style={{ color: '#94A3B8' }}>Chargement...</p>}
 
-      {posts.map(p => {
+      {posts.filter(p => showPublies || p.statut !== 'publie').map(p => {
         const st = STATUT_LABEL[p.statut] || { label: p.statut, color: '#94A3B8' }
         return (
           <div key={p.id} style={s.card}>
