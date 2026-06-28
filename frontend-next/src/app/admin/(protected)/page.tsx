@@ -108,6 +108,9 @@ export default async function AdminDashboard() {
           <a href="/admin/revenus" className="admin-action-btn">
             💰 Revenus &amp; Transactions
           </a>
+          <a href="/admin/communication" className="admin-action-btn">
+            🎨 Kit communication
+          </a>
         </div>
       </div>
     </div>
