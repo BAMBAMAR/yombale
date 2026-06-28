@@ -362,21 +362,38 @@ async function publierInstagram(post) {
   });
   if (!container.id) return container;
 
-  // Étape 2 : publier le container
+  // Étape 2 : attendre que le container soit prêt (max 30s)
+  const ready = await waitForIgContainer(container.id, token);
+  if (!ready) return { error: { message: 'Instagram n\'a pas pu traiter l\'image dans le délai imparti (vérifiez que l\'URL est publique et en HTTPS)' } };
+
+  // Étape 3 : publier le container
   return igApiCall('POST', `/${igId}/media_publish`, {
     creation_id: container.id,
     access_token: token,
   });
 }
 
+async function waitForIgContainer(containerId, token, maxAttempts = 10) {
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    const status = await igApiCall('GET', `/${containerId}?fields=status_code,status`, { access_token: token });
+    if (status.status_code === 'FINISHED') return true;
+    if (status.status_code === 'ERROR' || status.status_code === 'EXPIRED') return false;
+  }
+  return false;
+}
+
 function igApiCall(method, path, params) {
   return new Promise((resolve) => {
-    const body = Buffer.from(qs.stringify(params), 'utf8');
+    const isGet = method === 'GET';
+    const queryString = qs.stringify(params);
+    const fullPath = isGet ? `/v19.0${path}&${queryString}` : `/v19.0${path}`;
+    const body = isGet ? null : Buffer.from(queryString, 'utf8');
     const opts = {
       hostname: 'graph.facebook.com',
-      path: `/v19.0${path}`,
+      path: fullPath,
       method,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': body.length },
+      headers: isGet ? {} : { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': body.length },
     };
     const req = https.request(opts, (r) => {
       let d = '';
@@ -384,7 +401,7 @@ function igApiCall(method, path, params) {
       r.on('end', () => resolve(JSON.parse(d)));
     });
     req.on('error', e => resolve({ error: { message: e.message } }));
-    req.write(body);
+    if (body) req.write(body);
     req.end();
   });
 }
