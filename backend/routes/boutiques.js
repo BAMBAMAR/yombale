@@ -123,6 +123,13 @@ router.get('/:id', param('id').isUUID(), async (req, res) => {
       [req.params.id]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    // Tracker la vue (async, ne bloque pas la réponse)
+    pool.query(
+      `INSERT INTO analytics_events (type, boutique_id) VALUES ('vue_boutique',$1)`,
+      [req.params.id]
+    ).catch(() => {});
+
     res.json(r.rows[0]);
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });

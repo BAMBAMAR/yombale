@@ -124,6 +124,8 @@ app.use('/api/annonces',        require('./routes/annonces'));
 app.use('/api/boutiques',       require('./routes/boutiques'));
 app.use('/api/facebook-posts',  require('./routes/facebook-posts'));
 app.use('/api/abonnements',     require('./routes/abonnements'));
+app.use('/api/click',           require('./routes/click'));
+app.use('/api/analytics',       require('./routes/analytics'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', async (req, res) => {

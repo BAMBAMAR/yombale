@@ -337,6 +337,40 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table settings OK');
   } catch (e) { console.warn('[MIGRATE] settings:', e.message); }
 
+  // Table clics_affiliation — tracking des clics vers marchands externes
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS clics_affiliation (
+        id          BIGSERIAL PRIMARY KEY,
+        offre_id    UUID REFERENCES offres(id) ON DELETE SET NULL,
+        produit_id  UUID REFERENCES produits(id) ON DELETE SET NULL,
+        marchand_id UUID REFERENCES marchands(id) ON DELETE SET NULL,
+        url_cible   TEXT NOT NULL,
+        user_agent  TEXT,
+        created_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_clics_offre    ON clics_affiliation(offre_id);
+      CREATE INDEX IF NOT EXISTS idx_clics_marchand ON clics_affiliation(marchand_id);
+      CREATE INDEX IF NOT EXISTS idx_clics_date     ON clics_affiliation(created_at);
+    `);
+    console.log('[MIGRATE] ✅ Table clics_affiliation OK');
+  } catch (e) { console.warn('[MIGRATE] clics_affiliation:', e.message); }
+
+  // Table analytics_events — tracking vues/clics boutiques et annonces
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS analytics_events (
+        id          BIGSERIAL PRIMARY KEY,
+        type        VARCHAR(50) NOT NULL,
+        boutique_id UUID REFERENCES boutiques(id) ON DELETE CASCADE,
+        annonce_id  UUID,
+        created_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_analytics_boutique ON analytics_events(boutique_id, type, created_at);
+    `);
+    console.log('[MIGRATE] ✅ Table analytics_events OK');
+  } catch (e) { console.warn('[MIGRATE] analytics_events:', e.message); }
+
   // Table abonnements (plans Pro/Business pour les boutiques)
   try {
     await pool.query(`

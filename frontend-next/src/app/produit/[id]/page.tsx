@@ -302,7 +302,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
 
             {/* CTA principal */}
             {best?.url_achat && (
-              <a href={best.url_achat} target="_blank" rel="noopener noreferrer" className="cta-acheter">
+              <a href={`/api/click/${best.id}`} target="_blank" rel="noopener noreferrer" className="cta-acheter">
                 🛒 Acheter au meilleur prix →
               </a>
             )}
@@ -355,7 +355,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                         <div className="offre-prix-col">
                           <p className={`offre-prix${isBest ? ' offre-prix--best' : ''}`}>{fcfa(o.prix)}</p>
                           {o.url_achat && (
-                            <a href={o.url_achat} target="_blank" rel="noopener noreferrer" className={`offre-btn${isBest ? ' offre-btn--best' : ''}`}>
+                            <a href={`/api/click/${o.id}`} target="_blank" rel="noopener noreferrer" className={`offre-btn${isBest ? ' offre-btn--best' : ''}`}>
                               Voir l&apos;offre →
                             </a>
                           )}
@@ -395,7 +395,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                 </div>
               )}
               {best?.url_achat && (
-                <a href={best.url_achat} target="_blank" rel="noopener noreferrer" className="sidebar-cta">
+                <a href={`/api/click/${best.id}`} target="_blank" rel="noopener noreferrer" className="sidebar-cta">
                   🛒 Meilleur prix chez {best.marchand_nom ?? '—'}
                 </a>
               )}
