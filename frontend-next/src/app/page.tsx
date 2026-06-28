@@ -195,7 +195,7 @@ export default async function HomePage({
             <div className="home-how-step">
               <div className="home-how-icon">🔍</div>
               <h3>Cherchez votre produit</h3>
-              <p>Tapez le nom d'un produit, d'une marque ou d'une catégorie dans la barre de recherche.</p>
+              <p>Tapez le nom d&apos;un produit, d&apos;une marque ou d&apos;une catégorie dans la barre de recherche.</p>
             </div>
             <div className="home-how-step">
               <div className="home-how-icon">📊</div>
@@ -205,7 +205,7 @@ export default async function HomePage({
             <div className="home-how-step">
               <div className="home-how-icon">💰</div>
               <h3>Économisez</h3>
-              <p>Choisissez le marchand le moins cher et économisez jusqu'à 40% sur vos achats.</p>
+              <p>Choisissez le marchand le moins cher et économisez jusqu&apos;à 40% sur vos achats.</p>
             </div>
           </div>
         </section>
@@ -222,7 +222,7 @@ export default async function HomePage({
             <div className="home-proof-sep" />
             <div className="home-proof-item">
               <span className="home-proof-num">40%</span>
-              <span className="home-proof-lbl">D'économies en moyenne</span>
+              <span className="home-proof-lbl">D&apos;économies en moyenne</span>
             </div>
             <div className="home-proof-sep" />
             <div className="home-proof-item">
@@ -244,7 +244,7 @@ export default async function HomePage({
           <div className="home-cta-annonce-inner">
             <div className="home-cta-annonce-text">
               <h2>Vendez vos articles facilement</h2>
-              <p>Publiez une annonce gratuitement et touchez des milliers d'acheteurs au Sénégal.</p>
+              <p>Publiez une annonce gratuitement et touchez des milliers d&apos;acheteurs au Sénégal.</p>
             </div>
             <div className="home-cta-annonce-btns">
               <Link href="/deposer-annonce" className="home-cta-btn home-cta-btn--primary">
