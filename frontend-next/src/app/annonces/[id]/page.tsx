@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import AnnonceGallery from './AnnonceGallery'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
@@ -86,29 +87,7 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
         {/* Colonne gauche — contenu */}
         <div className="annonce-detail-main">
           {/* Galerie photos */}
-          {photos.length > 0 ? (
-            <div className="annonce-detail-gallery">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={photos[0]}
-                alt={annonce.titre}
-                className="annonce-detail-photo-main"
-              />
-              {photos.length > 1 && (
-                <div className="annonce-detail-thumbs">
-                  {photos.slice(1, 5).map((p, i) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img key={i} src={p} alt={`Photo ${i + 2}`} className="annonce-detail-thumb" />
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="annonce-detail-no-photo">
-              <span>📦</span>
-              <p>Pas de photo</p>
-            </div>
-          )}
+          <AnnonceGallery photos={photos} titre={annonce.titre} />
 
           {/* Titre + meta */}
           <div className="annonce-detail-header">
