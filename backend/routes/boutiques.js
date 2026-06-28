@@ -24,11 +24,20 @@ router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
-              b.logo_url, b.actif, b.created_at,
-              u.nom AS proprietaire_nom, u.email AS proprietaire_email
+              b.logo_url, b.actif, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
+              u.nom AS proprietaire_nom, u.email AS proprietaire_email,
+              a.plan AS plan_actif, a.fin AS plan_fin
        FROM boutiques b
        LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
-       ORDER BY b.created_at DESC LIMIT 200`
+       LEFT JOIN LATERAL (
+         SELECT plan, fin FROM abonnements
+         WHERE utilisateur_id = b.utilisateur_id AND statut='actif' AND fin > NOW()
+         ORDER BY fin DESC LIMIT 1
+       ) a ON true
+       ORDER BY
+         CASE a.plan WHEN 'business' THEN 0 WHEN 'pro' THEN 1 ELSE 2 END ASC,
+         b.created_at DESC
+       LIMIT 200`
     );
     res.json({ boutiques: rows });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }

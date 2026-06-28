@@ -15,6 +15,8 @@ interface Boutique {
   actif: boolean
   sponsorise: boolean
   sponsor_jusqu_au: string | null
+  plan_actif: 'pro' | 'business' | null
+  plan_fin: string | null
   created_at: string
   proprietaire_nom: string | null
   proprietaire_email: string | null
@@ -63,6 +65,16 @@ function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () 
       <div className="admin-annonce-info">
         <p className="admin-annonce-titre">
           {boutique.nom}
+          {boutique.plan_actif === 'business' && (
+            <span style={{ marginLeft: 8, fontSize: 11, background: '#1e3a5f', color: '#fff', padding: '2px 7px', borderRadius: 4, fontWeight: 700 }}>
+              💼 BUSINESS
+            </span>
+          )}
+          {boutique.plan_actif === 'pro' && (
+            <span style={{ marginLeft: 8, fontSize: 11, background: '#C75B00', color: '#fff', padding: '2px 7px', borderRadius: 4, fontWeight: 700 }}>
+              ⭐ PRO
+            </span>
+          )}
           {sponsorActif && (
             <span style={{ marginLeft: 8, fontSize: 11, background: '#D97706', color: '#fff', padding: '2px 7px', borderRadius: 4, fontWeight: 700 }}>
               ⭐ SPONSOR
@@ -81,6 +93,11 @@ function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () 
         </p>
         <p className="admin-annonce-date">
           Créée le {formatDate(boutique.created_at)}
+          {boutique.plan_actif && boutique.plan_fin && (
+            <> · <span style={{ color: boutique.plan_actif === 'business' ? '#1e3a5f' : '#C75B00', fontWeight: 600 }}>
+              Plan {boutique.plan_actif} jusqu&apos;au {formatDate(boutique.plan_fin)}
+            </span></>
+          )}
           {sponsorActif && boutique.sponsor_jusqu_au && (
             <> · <span style={{ color: '#D97706', fontWeight: 600 }}>Sponsor jusqu&apos;au {formatDate(boutique.sponsor_jusqu_au)}</span></>
           )}
@@ -139,8 +156,9 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
     startTransition(() => { window.location.reload() })
   }
 
-  const sponsorisees = boutiques.filter(b => isSponsorActif(b))
-  const autres       = boutiques.filter(b => !isSponsorActif(b))
+  const abonnees   = boutiques.filter(b => b.plan_actif)
+  const sponsorisees = boutiques.filter(b => !b.plan_actif && isSponsorActif(b))
+  const autres       = boutiques.filter(b => !b.plan_actif && !isSponsorActif(b))
 
   if (boutiques.length === 0) {
     return <p className="admin-empty">Aucune boutique enregistrée.</p>
@@ -148,15 +166,29 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
 
   return (
     <div className="admin-annonces-sections">
+      {abonnees.length > 0 && (
+        <section className="admin-annonces-section" style={{ marginBottom: 32 }}>
+          <h2 className="admin-section-titre" style={{ color: '#C75B00' }}>
+            ⭐ Abonnés Pro / Business
+            <span className="admin-section-count">{abonnees.length}</span>
+          </h2>
+          <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 12 }}>
+            Boutiques avec abonnement actif — priorité maximale dans le listing.
+          </p>
+          <div className="admin-annonces-list">
+            {abonnees.map(b => (
+              <BoutiqueRow key={b.id} boutique={b} onAction={refresh} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {sponsorisees.length > 0 && (
         <section className="admin-annonces-section" style={{ marginBottom: 32 }}>
           <h2 className="admin-section-titre" style={{ color: '#D97706' }}>
             ⭐ Boutiques sponsorisées
             <span className="admin-section-count">{sponsorisees.length}</span>
           </h2>
-          <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 12 }}>
-            Ces boutiques apparaissent en premier dans la liste publique.
-          </p>
           <div className="admin-annonces-list">
             {sponsorisees.map(b => (
               <BoutiqueRow key={b.id} boutique={b} onAction={refresh} />
