@@ -3,6 +3,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { deleteAnnonce } from '@/app/actions/annonces'
+import { cloudinaryHQ } from '@/lib/cloudinary'
 
 interface Annonce {
   id: string
@@ -65,7 +66,7 @@ function AnnonceCard({ annonce }: { annonce: Annonce }) {
       <div className="annonce-card-thumb">
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo} alt={annonce.titre} loading="lazy" />
+          <img src={cloudinaryHQ(photo, { width: 400 })} alt={annonce.titre} loading="lazy" />
         ) : (
           <span className="annonce-thumb-placeholder">📷</span>
         )}

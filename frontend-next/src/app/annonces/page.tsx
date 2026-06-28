@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { cloudinaryHQ } from '@/lib/cloudinary'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
@@ -136,7 +137,7 @@ export default async function AnnoncesPage({
                 <div className="annonce-pub-img-wrap">
                   {photo
                     // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={photo} alt={a.titre} className="annonce-pub-img" />
+                    ? <img src={cloudinaryHQ(photo, { width: 400 })} alt={a.titre} className="annonce-pub-img" />
                     : <div className="annonce-pub-img annonce-pub-img--vide">
                         <span>{CATEGORIES.find(c => c.slug === a.categorie_slug)?.emoji ?? '📦'}</span>
                       </div>

@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import { fcfa } from '@/lib/format';
 import { getOptionalSession } from '@/lib/dal';
 import SponsoringImmoBtn from './SponsoringImmoBtn';
+import { cloudinaryHQ } from '@/lib/cloudinary';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -112,14 +113,12 @@ export default async function FicheImmoPage({
         {/* Photo principale */}
         {mainPhoto && (
           <div style={{ position: 'relative', width: '100%', height: '360px', marginBottom: '12px', borderRadius: '10px', overflow: 'hidden', background: 'var(--bg)' }}>
-            <Image
-              src={mainPhoto}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cloudinaryHQ(mainPhoto, { width: 900 })}
               alt={annonce.titre}
-              fill
-              sizes="(max-width: 860px) 90vw, 820px"
-              style={{ objectFit: 'cover' }}
-              priority
-              unoptimized
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              loading="eager"
             />
           </div>
         )}
@@ -127,8 +126,9 @@ export default async function FicheImmoPage({
         {photos.length > 1 && (
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 20, paddingBottom: 4 }}>
             {photos.slice(1).map((url, i) => (
-              <div key={i} style={{ position: 'relative', flexShrink: 0, width: 100, height: 72, borderRadius: 6, overflow: 'hidden', background: 'var(--bg)' }}>
-                <Image src={url} alt={`Photo ${i + 2}`} fill sizes="100px" style={{ objectFit: 'cover' }} unoptimized />
+              <div key={i} style={{ flexShrink: 0, width: 100, height: 72, borderRadius: 6, overflow: 'hidden', background: 'var(--bg)' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={cloudinaryHQ(url, { width: 200 })} alt={`Photo ${i + 2}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
               </div>
             ))}
           </div>

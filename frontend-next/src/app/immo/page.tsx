@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import ImmoClientWrapper from './ImmoClientWrapper'
+import { cloudinaryHQ } from '@/lib/cloudinary'
 import ImmoQuartierInput from './ImmoQuartierInput'
 import CardActions from '@/app/CardActions'
 
@@ -121,7 +122,7 @@ function ImmoCard({ a }: { a: AnnonceImmo }) {
       <div className="immo-card-img">
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={img} alt={a.titre} loading="lazy" />
+          <img src={cloudinaryHQ(img, { width: 480 })} alt={a.titre} loading="lazy" />
         ) : (
           <span className="immo-img-placeholder">{typeIcon}</span>
         )}

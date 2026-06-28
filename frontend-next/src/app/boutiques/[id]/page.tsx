@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import { notFound } from 'next/navigation'
+import { cloudinaryHQ } from '@/lib/cloudinary'
 
 interface Boutique {
   id: string
@@ -119,7 +120,7 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
                 <Link href={`/annonces/${a.id}`} key={a.id} className="boutique-annonce-card">
                   <div className="boutique-annonce-img">
                     {img
-                      ? <img src={img} alt={a.titre} loading="lazy" />
+                      ? <img src={cloudinaryHQ(img, { width: 400 })} alt={a.titre} loading="lazy" />
                       : <span>{CAT_ICONS[a.categorie_slug] ?? '📦'}</span>
                     }
                   </div>
