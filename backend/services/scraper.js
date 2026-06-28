@@ -862,22 +862,18 @@ async function publierPostsApprouves() {
     );
     if (!rows.length) { console.log('[SOCIAL] Aucun post approuvé à publier'); return; }
 
-    const { publierSurFacebook } = require('../routes/facebook-posts');
+    const { publierPost } = require('../routes/facebook-posts');
     for (const post of rows) {
-      const result = await publierSurFacebook(post.message);
-      if (result.id) {
-        await pool.query(
-          `UPDATE facebook_posts SET statut='publie', post_fb_id=$1, date_publie=NOW(), updated_at=NOW() WHERE id=$2`,
-          [result.id, post.id]
-        );
-        console.log(`[SOCIAL] ✅ Post publié : ${result.id}`);
-      } else {
-        await pool.query(
-          `UPDATE facebook_posts SET statut='erreur', erreur=$1, updated_at=NOW() WHERE id=$2`,
-          [result.error?.message || 'Erreur inconnue', post.id]
-        );
-        console.error('[SOCIAL] ❌ Erreur publication:', result.error?.message);
-      }
+      const results = await publierPost(post);
+      await pool.query(
+        `UPDATE facebook_posts
+         SET statut = CASE WHEN $1 IS NOT NULL THEN 'publie' ELSE 'erreur' END,
+             post_fb_id=$1, post_ig_id=$2, date_publie=NOW(), erreur=$3, updated_at=NOW()
+         WHERE id=$4`,
+        [results.fb_id || null, results.ig_id || null, results.erreur || null, post.id]
+      );
+      if (results.fb_id) console.log(`[SOCIAL] ✅ Post publié FB:${results.fb_id} IG:${results.ig_id || '-'}`);
+      else console.error('[SOCIAL] ❌', results.erreur);
     }
   } catch (err) {
     console.error('[SOCIAL] Erreur cron publication:', err.message);
