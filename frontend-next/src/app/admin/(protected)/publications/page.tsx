@@ -1,6 +1,10 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
+import {
+  getFbPosts, creerFbPost, modifierFbPost, supprimerFbPost,
+  publierFbPostMaintenant, genererFbPost,
+} from '@/app/actions/facebook-posts'
 
 interface FbPost {
   id: string
@@ -15,23 +19,6 @@ interface FbPost {
   post_ig_id: string | null
   erreur: string | null
   created_at: string
-}
-
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
-
-function adminSecret() {
-  if (typeof window !== 'undefined') return sessionStorage.getItem('nopalou_admin_secret') || ''
-  return ''
-}
-
-async function apiFetch(path: string, opts: RequestInit = {}) {
-  const res = await fetch(`${BACKEND}/api/facebook-posts${path}`, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminSecret(), ...((opts.headers as Record<string, string>) || {}) },
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Erreur')
-  return data
 }
 
 const STATUT_LABEL: Record<string, { label: string; color: string }> = {
@@ -54,7 +41,7 @@ export default function PublicationsPage() {
 
   async function load() {
     setLoading(true)
-    try { setPosts(await apiFetch('')) } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
+    try { setPosts(await getFbPosts()) } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     setLoading(false)
   }
 
@@ -69,7 +56,7 @@ export default function PublicationsPage() {
     setErr(''); setOk('')
     startTransition(async () => {
       try {
-        const data = await apiFetch(`/generer/${type}`)
+        const data = await genererFbPost(type)
         setForm(f => ({
           ...f,
           message: data.message || '',
@@ -100,19 +87,13 @@ export default function PublicationsPage() {
     startTransition(async () => {
       try {
         const body = {
-          message: form.message,
-          lien: form.lien || null,
+          message: form.message, lien: form.lien || null,
           image_url: form.image_url || null,
           publier_instagram: form.publier_instagram,
           date_publication: form.date_publication || null,
         }
-        if (editId) {
-          await apiFetch(`/${editId}`, { method: 'PATCH', body: JSON.stringify(body) })
-          setOk('Post mis à jour')
-        } else {
-          await apiFetch('', { method: 'POST', body: JSON.stringify(body) })
-          setOk('Brouillon créé')
-        }
+        if (editId) { await modifierFbPost(editId, body); setOk('Post mis à jour') }
+        else { await creerFbPost(body); setOk('Brouillon créé') }
         resetForm(); load()
       } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     })
@@ -121,19 +102,16 @@ export default function PublicationsPage() {
   function approuver(id: string) {
     startTransition(async () => {
       try {
-        await apiFetch(`/${id}`, { method: 'PATCH', body: JSON.stringify({ statut: 'approuve' }) })
-        setOk('Post approuvé — sera publié à la date prévue')
-        load()
+        await modifierFbPost(id, { statut: 'approuve' })
+        setOk('Post approuvé — sera publié à la date prévue'); load()
       } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     })
   }
 
   function remettreEnBrouillon(id: string) {
     startTransition(async () => {
-      try {
-        await apiFetch(`/${id}`, { method: 'PATCH', body: JSON.stringify({ statut: 'brouillon' }) })
-        load()
-      } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
+      try { await modifierFbPost(id, { statut: 'brouillon' }); load() }
+      catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     })
   }
 
@@ -141,9 +119,8 @@ export default function PublicationsPage() {
     if (!confirm('Publier immédiatement sur Facebook (et Instagram si activé) ?')) return
     startTransition(async () => {
       try {
-        const res = await apiFetch(`/${id}/publier`, { method: 'POST' })
-        setOk(`Publié ! FB: ${res.fb_id || '—'} ${res.ig_id ? '· IG: ' + res.ig_id : ''}`)
-        load()
+        const res = await publierFbPostMaintenant(id)
+        setOk(`Publié ! FB: ${res.fb_id || '—'} ${res.ig_id ? '· IG: ' + res.ig_id : ''}`); load()
       } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     })
   }
@@ -151,7 +128,7 @@ export default function PublicationsPage() {
   function supprimer(id: string) {
     if (!confirm('Supprimer ce post ?')) return
     startTransition(async () => {
-      try { await apiFetch(`/${id}`, { method: 'DELETE' }); load() }
+      try { await supprimerFbPost(id); load() }
       catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
     })
   }
