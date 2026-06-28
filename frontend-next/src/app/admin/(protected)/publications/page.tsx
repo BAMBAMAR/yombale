@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition } from 'react'
 
 async function api(path: string, opts: RequestInit = {}) {
-  const res = await fetch(`/api/admin/fb/${path}`, {
+  const res = await fetch(`/admin-proxy/fb/${path}`, {
     ...opts,
     headers: { 'Content-Type': 'application/json', ...((opts.headers as Record<string,string>) || {}) },
   })

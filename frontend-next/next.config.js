@@ -14,8 +14,7 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        // Exclure /api/admin/* — ces routes sont gérées par Next.js lui-même
-        source: '/api/((?!admin/).*)',
+        source: '/api/:path*',
         destination: `${process.env.BACKEND_URL || 'http://localhost:3000'}/api/:path*`,
       },
     ]
