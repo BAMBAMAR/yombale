@@ -25,6 +25,9 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
           <a href="/admin/telecom" className="admin-nav-link">📱 Forfaits télécom</a>
           <a href="/admin/partenaires" className="admin-nav-link">🤝 Partenaires</a>
           <a href="/admin/boutiques" className="admin-nav-link">🏪 Boutiques</a>
+          <a href="/admin/abonnements" className="admin-nav-link">⭐ Abonnements</a>
+          <a href="/admin/revenus" className="admin-nav-link">💰 Revenus</a>
+          <a href="/admin/affiliation" className="admin-nav-link">🖱 Affiliation</a>
           <div className="admin-nav-sep" />
           <a href="/admin/publications" className="admin-nav-link">📘 Publications Facebook</a>
           <a href="/admin/communication" className="admin-nav-link">🎨 Kit communication</a>
