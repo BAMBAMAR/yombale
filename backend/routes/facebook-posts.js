@@ -124,7 +124,7 @@ router.get('/generer/:type', async (req, res) => {
         JOIN marchands m ON m.id = o.marchand_id
         WHERE o.stock = true AND o.prix > 0 AND p.image_url IS NOT NULL
         GROUP BY p.id, p.nom, p.marque, p.image_url, m.nom
-        HAVING MAX(o.prix) - MIN(o.prix) > 5000
+        HAVING MAX(o.prix) - MIN(o.prix) > 1000
         ORDER BY (MAX(o.prix) - MIN(o.prix)) DESC
         LIMIT 10
       `);
@@ -144,7 +144,7 @@ router.get('/generer/:type', async (req, res) => {
       const { rows } = await pool.query(`
         SELECT id, titre, prix, ville, quartier, type_bien, transaction, photos
         FROM annonces_immo
-        WHERE actif = true AND supprimee = false AND photos IS NOT NULL AND array_length(photos, 1) > 0
+        WHERE actif = true AND supprimee = false AND photos IS NOT NULL AND jsonb_array_length(photos) > 0
         ORDER BY created_at DESC LIMIT 5
       `);
       if (rows.length) {
