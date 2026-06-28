@@ -2,6 +2,7 @@
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
+import Link from 'next/link'
 import { createBoutique, updateBoutique, deleteBoutique } from './actions'
 import { initierWaveBoutiqueSponsoring } from '@/app/actions/paiement'
 import type { ActionState } from '@/lib/backend-fetch'
@@ -322,6 +323,21 @@ export default function BoutiqueClient({
           ❌ {sponsorError}
         </div>
       )}
+
+      {/* Bannière abonnement */}
+      <Link href="/boutique/abonnement" style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        background: 'linear-gradient(135deg, #fff8f0, #fff3e0)',
+        border: '1px solid #f59e0b', borderRadius: 12,
+        padding: '14px 18px', marginBottom: 20, textDecoration: 'none',
+      }}>
+        <span style={{ fontSize: 28 }}>⭐</span>
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: '#92400e' }}>Passer en Boutique Pro</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#b45309' }}>Placement prioritaire · Analytics · 5 annonces incluses — 15 000 FCFA/mois</p>
+        </div>
+        <span style={{ color: '#C75B00', fontWeight: 700, fontSize: 13 }}>Voir →</span>
+      </Link>
 
       {boutiques.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text3)' }}>

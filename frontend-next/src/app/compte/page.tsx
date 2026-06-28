@@ -8,6 +8,7 @@ const MENU = [
   { href: '/mes-annonces',       label: 'Mes annonces',      emoji: '📋', desc: 'Gérer vos annonces classifiées',   actif: true },
   { href: '/mes-annonces-immo',  label: 'Mes biens immo',    emoji: '🏠', desc: 'Gérer vos annonces immobilières',  actif: true },
   { href: '/boutique',           label: 'Ma boutique',       emoji: '🏪', desc: 'Votre vitrine commerçante',        actif: true },
+  { href: '/boutique/abonnement', label: 'Abonnement Pro',   emoji: '⭐', desc: 'Boostez votre visibilité',         actif: true },
   { href: '/favoris',            label: 'Mes favoris',       emoji: '♥',  desc: 'Produits sauvegardés',            actif: true },
   { href: '/deposer-annonce',    label: 'Publier une annonce',emoji: '➕', desc: 'Publier une annonce classifiée',  actif: true },
   { href: '/deposer-immo',       label: 'Publier un bien',   emoji: '🏡', desc: 'Publier une annonce immobilière', actif: true },
