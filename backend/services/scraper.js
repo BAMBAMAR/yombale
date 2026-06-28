@@ -849,14 +849,38 @@ async function lancerScrapingNouveauxSites(siteIds = null) {
 }
 
 // ── Publication réseaux sociaux ────────────────────────────────────
-async function posterBonsPlans() {
-  if (!process.env.FB_PAGE_ID && !process.env.IG_USER_ID) return; // skip si pas configuré
+// Publie les posts Facebook approuvés dont la date est passée
+async function publierPostsApprouves() {
+  if (!process.env.FB_PAGE_ID || !process.env.FB_PAGE_ACCESS_TOKEN) return;
   try {
-    const script = require('path').join(__dirname, '../../scripts/post-bons-plans.js');
-    require('child_process').fork(script, [], { env: process.env });
-    console.log('[SOCIAL] Post bons plans lancé');
+    const { rows } = await pool.query(
+      `SELECT * FROM facebook_posts
+       WHERE statut = 'approuve'
+         AND (date_publication IS NULL OR date_publication <= NOW())
+       ORDER BY date_publication ASC NULLS LAST
+       LIMIT 5`
+    );
+    if (!rows.length) { console.log('[SOCIAL] Aucun post approuvé à publier'); return; }
+
+    const { publierSurFacebook } = require('../routes/facebook-posts');
+    for (const post of rows) {
+      const result = await publierSurFacebook(post.message);
+      if (result.id) {
+        await pool.query(
+          `UPDATE facebook_posts SET statut='publie', post_fb_id=$1, date_publie=NOW(), updated_at=NOW() WHERE id=$2`,
+          [result.id, post.id]
+        );
+        console.log(`[SOCIAL] ✅ Post publié : ${result.id}`);
+      } else {
+        await pool.query(
+          `UPDATE facebook_posts SET statut='erreur', erreur=$1, updated_at=NOW() WHERE id=$2`,
+          [result.error?.message || 'Erreur inconnue', post.id]
+        );
+        console.error('[SOCIAL] ❌ Erreur publication:', result.error?.message);
+      }
+    }
   } catch (err) {
-    console.error('[SOCIAL] Erreur lancement post:', err.message);
+    console.error('[SOCIAL] Erreur cron publication:', err.message);
   }
 }
 
@@ -864,8 +888,8 @@ function demarrerScraping() {
   // Toutes les 12h pour limiter la consommation mémoire (plan gratuit Railway)
   cron.schedule('0 */12 * * *', () => lancerScraping(['expat', 'jumia', 'coinafrique']).catch(console.error));
   cron.schedule('0 6,18 * * *', () => lancerScrapingNouveauxSites().catch(console.error));
-  // Publication réseaux sociaux chaque matin à 8h (heure UTC = 9h Dakar)
-  cron.schedule('0 8 * * *', () => posterBonsPlans().catch(console.error));
+  // Publication réseaux sociaux — vérifie toutes les heures les posts approuvés
+  cron.schedule('0 * * * *', () => publierPostsApprouves().catch(console.error));
   // Premier scraping 10 min après démarrage (laisser l'app se stabiliser)
   setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 10 * 60 * 1000);
   setTimeout(() => lancerScrapingNouveauxSites().catch(console.error), 15 * 60 * 1000);

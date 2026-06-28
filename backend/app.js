@@ -120,8 +120,9 @@ app.use('/api/scraper',   require('./routes/scraper'));
 app.use('/api/telecom',   require('./routes/telecom'));
 app.use('/api/immo',      require('./routes/immo'));
 app.use('/api/partenaires', require('./routes/partenaires'));
-app.use('/api/annonces',   require('./routes/annonces'));
-app.use('/api/boutiques',  require('./routes/boutiques'));
+app.use('/api/annonces',        require('./routes/annonces'));
+app.use('/api/boutiques',       require('./routes/boutiques'));
+app.use('/api/facebook-posts',  require('./routes/facebook-posts'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', async (req, res) => {

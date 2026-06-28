@@ -26,6 +26,8 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
           <a href="/admin/partenaires" className="admin-nav-link">🤝 Partenaires</a>
           <a href="/admin/boutiques" className="admin-nav-link">🏪 Boutiques</a>
           <div className="admin-nav-sep" />
+          <a href="/admin/publications" className="admin-nav-link">📘 Publications Facebook</a>
+          <a href="/admin/communication" className="admin-nav-link">🎨 Kit communication</a>
           <a href="/admin/seo" className="admin-nav-link">🔍 SEO</a>
           <a href="/admin/compte" className="admin-nav-link">👤 Mon compte</a>
         </nav>

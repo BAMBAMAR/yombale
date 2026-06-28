@@ -1,0 +1,299 @@
+'use client'
+
+import { useState, useEffect, useTransition } from 'react'
+
+interface FbPost {
+  id: string
+  message: string
+  lien: string | null
+  statut: 'brouillon' | 'approuve' | 'publie' | 'erreur'
+  date_publication: string | null
+  date_publie: string | null
+  post_fb_id: string | null
+  erreur: string | null
+  created_at: string
+}
+
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+
+function adminSecret() {
+  if (typeof window !== 'undefined') return sessionStorage.getItem('nopalou_admin_secret') || ''
+  return ''
+}
+
+async function apiFetch(path: string, opts: RequestInit = {}) {
+  const res = await fetch(`${BACKEND}/api/facebook-posts${path}`, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminSecret(), ...((opts.headers as Record<string, string>) || {}) },
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Erreur')
+  return data
+}
+
+const STATUT_LABEL: Record<string, { label: string; color: string }> = {
+  brouillon: { label: 'Brouillon', color: '#94A3B8' },
+  approuve:  { label: 'Approuvé',  color: '#F59E0B' },
+  publie:    { label: 'Publié',    color: '#10B981' },
+  erreur:    { label: 'Erreur',    color: '#EF4444' },
+}
+
+export default function PublicationsPage() {
+  const [posts, setPosts] = useState<FbPost[]>([])
+  const [loading, setLoading] = useState(true)
+  const [form, setForm] = useState({ message: '', lien: '', date_publication: '' })
+  const [editId, setEditId] = useState<string | null>(null)
+  const [err, setErr] = useState('')
+  const [ok, setOk] = useState('')
+  const [isPending, startTransition] = useTransition()
+
+  async function load() {
+    setLoading(true)
+    try { setPosts(await apiFetch('')) } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  function resetForm() {
+    setForm({ message: '', lien: '', date_publication: '' })
+    setEditId(null)
+    setErr('')
+    setOk('')
+  }
+
+  function startEdit(p: FbPost) {
+    setEditId(p.id)
+    setForm({
+      message: p.message,
+      lien: p.lien || '',
+      date_publication: p.date_publication ? p.date_publication.slice(0, 16) : '',
+    })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function submit() {
+    setErr(''); setOk('')
+    startTransition(async () => {
+      try {
+        const body = {
+          message: form.message,
+          lien: form.lien || null,
+          date_publication: form.date_publication || null,
+        }
+        if (editId) {
+          await apiFetch(`/${editId}`, { method: 'PATCH', body: JSON.stringify(body) })
+          setOk('Post mis à jour')
+        } else {
+          await apiFetch('', { method: 'POST', body: JSON.stringify(body) })
+          setOk('Brouillon créé')
+        }
+        resetForm()
+        load()
+      } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
+    })
+  }
+
+  function approuver(id: string) {
+    startTransition(async () => {
+      try {
+        await apiFetch(`/${id}`, { method: 'PATCH', body: JSON.stringify({ statut: 'approuve' }) })
+        setOk('Post approuvé — sera publié à la date prévue')
+        load()
+      } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
+    })
+  }
+
+  function remettreEnBrouillon(id: string) {
+    startTransition(async () => {
+      try {
+        await apiFetch(`/${id}`, { method: 'PATCH', body: JSON.stringify({ statut: 'brouillon' }) })
+        load()
+      } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
+    })
+  }
+
+  function publierMaintenant(id: string) {
+    if (!confirm('Publier immédiatement sur Facebook ?')) return
+    startTransition(async () => {
+      try {
+        await apiFetch(`/${id}/publier`, { method: 'POST' })
+        setOk('Publié sur Facebook !')
+        load()
+      } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
+    })
+  }
+
+  function supprimer(id: string) {
+    if (!confirm('Supprimer ce post ?')) return
+    startTransition(async () => {
+      try {
+        await apiFetch(`/${id}`, { method: 'DELETE' })
+        load()
+      } catch (e: unknown) { setErr(e instanceof Error ? e.message : 'Erreur') }
+    })
+  }
+
+  const s: Record<string, React.CSSProperties> = {
+    page:    { maxWidth: 860, margin: '0 auto', padding: '32px 20px', fontFamily: 'system-ui, sans-serif' },
+    card:    { background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 20, marginBottom: 12 },
+    label:   { fontSize: 12, fontWeight: 700, color: '#64748B', display: 'block', marginBottom: 4 },
+    input:   { width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: 7, fontSize: 14, boxSizing: 'border-box' as const, marginBottom: 12 },
+    textarea:{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: 7, fontSize: 14, boxSizing: 'border-box' as const, marginBottom: 12, minHeight: 120, resize: 'vertical' as const },
+    btn:     { padding: '8px 16px', borderRadius: 7, border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer' },
+  }
+
+  return (
+    <div style={s.page}>
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1C2B4A', marginBottom: 4 }}>
+        📘 Publications Facebook
+      </h1>
+      <p style={{ color: '#64748B', fontSize: 13, marginBottom: 28 }}>
+        Rédigez des posts, approuvez-les, puis publiez manuellement ou programmez la publication automatique.
+      </p>
+
+      {/* Formulaire création / édition */}
+      <div style={{ ...s.card, borderColor: editId ? '#C75B00' : '#E2E8F0' }}>
+        <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1C2B4A', marginBottom: 16 }}>
+          {editId ? '✏️ Modifier le post' : '➕ Nouveau post'}
+        </h2>
+
+        <label style={s.label}>Message *</label>
+        <textarea
+          style={s.textarea}
+          value={form.message}
+          onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+          placeholder="Rédigez votre post Facebook ici..."
+        />
+
+        <label style={s.label}>Lien (optionnel)</label>
+        <input
+          style={s.input}
+          value={form.lien}
+          onChange={e => setForm(f => ({ ...f, lien: e.target.value }))}
+          placeholder="https://nopalou.com/..."
+        />
+
+        <label style={s.label}>Date de publication programmée (optionnel)</label>
+        <input
+          type="datetime-local"
+          style={s.input}
+          value={form.date_publication}
+          onChange={e => setForm(f => ({ ...f, date_publication: e.target.value }))}
+        />
+
+        {err && <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 8 }}>{err}</p>}
+        {ok  && <p style={{ color: '#10B981', fontSize: 13, marginBottom: 8 }}>{ok}</p>}
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            style={{ ...s.btn, background: '#C75B00', color: '#fff' }}
+            onClick={submit}
+            disabled={isPending || !form.message.trim()}
+          >
+            {isPending ? '...' : editId ? 'Enregistrer' : 'Créer le brouillon'}
+          </button>
+          {editId && (
+            <button style={{ ...s.btn, background: '#F1F5F9', color: '#64748B' }} onClick={resetForm}>
+              Annuler
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Liste des posts */}
+      <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1C2B4A', marginBottom: 12 }}>
+        Tous les posts ({posts.length})
+      </h2>
+
+      {loading && <p style={{ color: '#94A3B8' }}>Chargement...</p>}
+
+      {posts.map(p => {
+        const st = STATUT_LABEL[p.statut] || { label: p.statut, color: '#94A3B8' }
+        return (
+          <div key={p.id} style={s.card}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+              <span style={{
+                fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 20,
+                background: st.color + '20', color: st.color, letterSpacing: 0.5,
+              }}>
+                {st.label}
+              </span>
+              <span style={{ fontSize: 11, color: '#94A3B8' }}>
+                {new Date(p.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </span>
+            </div>
+
+            <pre style={{
+              fontSize: 13, color: '#1C2B4A', whiteSpace: 'pre-wrap', background: '#F8FAFC',
+              border: '1px solid #E2E8F0', borderRadius: 8, padding: '12px', margin: '0 0 10px',
+              fontFamily: 'system-ui, sans-serif', lineHeight: 1.6,
+            }}>
+              {p.message}
+            </pre>
+
+            {p.date_publication && (
+              <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 8px' }}>
+                📅 Programmé : {new Date(p.date_publication).toLocaleString('fr-FR')}
+              </p>
+            )}
+            {p.date_publie && (
+              <p style={{ fontSize: 12, color: '#10B981', margin: '0 0 8px' }}>
+                ✅ Publié le {new Date(p.date_publie).toLocaleString('fr-FR')}
+                {p.post_fb_id && <> — ID : {p.post_fb_id}</>}
+              </p>
+            )}
+            {p.erreur && (
+              <p style={{ fontSize: 12, color: '#EF4444', margin: '0 0 8px' }}>❌ {p.erreur}</p>
+            )}
+
+            {p.statut !== 'publie' && (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
+                {p.statut === 'brouillon' && (
+                  <>
+                    <button style={{ ...s.btn, background: '#EFF6FF', color: '#1D4ED8' }} onClick={() => startEdit(p)}>
+                      ✏️ Modifier
+                    </button>
+                    <button style={{ ...s.btn, background: '#FEF3C7', color: '#92400E' }} onClick={() => approuver(p.id)}>
+                      ✅ Approuver
+                    </button>
+                  </>
+                )}
+                {p.statut === 'approuve' && (
+                  <>
+                    <button style={{ ...s.btn, background: '#1877F2', color: '#fff' }} onClick={() => publierMaintenant(p.id)}>
+                      📘 Publier maintenant
+                    </button>
+                    <button style={{ ...s.btn, background: '#F1F5F9', color: '#64748B' }} onClick={() => remettreEnBrouillon(p.id)}>
+                      ↩️ Remettre en brouillon
+                    </button>
+                  </>
+                )}
+                {p.statut === 'erreur' && (
+                  <>
+                    <button style={{ ...s.btn, background: '#1877F2', color: '#fff' }} onClick={() => publierMaintenant(p.id)}>
+                      🔄 Réessayer
+                    </button>
+                    <button style={{ ...s.btn, background: '#F1F5F9', color: '#64748B' }} onClick={() => remettreEnBrouillon(p.id)}>
+                      ↩️ Remettre en brouillon
+                    </button>
+                  </>
+                )}
+                <button style={{ ...s.btn, background: '#FEF2F2', color: '#DC2626' }} onClick={() => supprimer(p.id)}>
+                  🗑 Supprimer
+                </button>
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      {!loading && posts.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#94A3B8' }}>
+          <p style={{ fontSize: 36 }}>📝</p>
+          <p>Aucun post pour l&apos;instant. Créez votre premier brouillon.</p>
+        </div>
+      )}
+    </div>
+  )
+}

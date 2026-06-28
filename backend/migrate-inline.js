@@ -297,5 +297,25 @@ module.exports = async function migrateInline() {
   }
   console.log('[MIGRATE] ✅ Colonnes supplémentaires vérifiées');
 
+  // Table publications Facebook (brouillons → approuvés → publiés)
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS facebook_posts (
+        id                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        message               TEXT NOT NULL,
+        lien                  VARCHAR(500),
+        statut                VARCHAR(20) DEFAULT 'brouillon',
+        date_publication      TIMESTAMPTZ,
+        date_publie           TIMESTAMPTZ,
+        post_fb_id            VARCHAR(100),
+        erreur                TEXT,
+        created_at            TIMESTAMPTZ DEFAULT NOW(),
+        updated_at            TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_fb_posts_statut ON facebook_posts(statut, date_publication);
+    `);
+    console.log('[MIGRATE] ✅ Table facebook_posts OK');
+  } catch (e) { console.warn('[MIGRATE] facebook_posts:', e.message); }
+
   try { await pool.end(); } catch (_) {}
 };
