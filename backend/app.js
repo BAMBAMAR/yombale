@@ -123,6 +123,7 @@ app.use('/api/partenaires', require('./routes/partenaires'));
 app.use('/api/annonces',        require('./routes/annonces'));
 app.use('/api/boutiques',       require('./routes/boutiques'));
 app.use('/api/facebook-posts',  require('./routes/facebook-posts'));
+app.use('/api/abonnements',     require('./routes/abonnements'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', async (req, res) => {

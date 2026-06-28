@@ -70,11 +70,20 @@ router.get('/', async (req, res) => {
     const where = 'WHERE ' + conds.join(' AND ');
     const [rows, cnt] = await Promise.all([
       pool.query(
-        `SELECT id, nom, description, categorie, telephone, adresse, ville, logo_url,
-                sponsorise, sponsor_jusqu_au, created_at
-         FROM boutiques ${where}
-         ORDER BY (sponsorise = true AND (sponsor_jusqu_au IS NULL OR sponsor_jusqu_au > NOW())) DESC,
-                  created_at DESC
+        `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
+                b.logo_url, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
+                a.plan AS plan_actif
+         FROM boutiques b
+         LEFT JOIN LATERAL (
+           SELECT plan FROM abonnements
+           WHERE utilisateur_id = b.utilisateur_id AND statut='actif' AND fin > NOW()
+           ORDER BY fin DESC LIMIT 1
+         ) a ON true
+         ${where}
+         ORDER BY
+           CASE a.plan WHEN 'business' THEN 0 WHEN 'pro' THEN 1 ELSE 2 END ASC,
+           (b.sponsorise = true AND (b.sponsor_jusqu_au IS NULL OR b.sponsor_jusqu_au > NOW())) DESC,
+           b.created_at DESC
          LIMIT $${vals.length+1} OFFSET $${vals.length+2}`,
         [...vals, lim, offset]
       ),
@@ -101,9 +110,16 @@ router.get('/:id', param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const r = await pool.query(
-      `SELECT id, nom, description, categorie, telephone, adresse, ville, logo_url,
-              utilisateur_id, created_at
-       FROM boutiques WHERE id=$1 AND actif=true`,
+      `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
+              b.logo_url, b.utilisateur_id, b.created_at,
+              a.plan AS plan_actif
+       FROM boutiques b
+       LEFT JOIN LATERAL (
+         SELECT plan FROM abonnements
+         WHERE utilisateur_id = b.utilisateur_id AND statut='actif' AND fin > NOW()
+         ORDER BY fin DESC LIMIT 1
+       ) a ON true
+       WHERE b.id=$1 AND b.actif=true`,
       [req.params.id]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });

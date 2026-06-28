@@ -19,6 +19,7 @@ interface Boutique {
   logo_url: string | null
   sponsorise: boolean
   sponsor_jusqu_au: string | null
+  plan_actif: 'pro' | 'business' | null
   created_at: string
 }
 
@@ -100,9 +101,17 @@ export default async function BoutiquesPage({
         <div className="boutiques-grid">
           {boutiques.map(b => {
             const sponsorActif = b.sponsorise && (!b.sponsor_jusqu_au || new Date(b.sponsor_jusqu_au) > new Date())
+            const estPro      = b.plan_actif === 'pro'
+            const estBusiness = b.plan_actif === 'business'
             return (
-              <Link href={`/boutiques/${b.id}`} key={b.id} className={`boutique-card${sponsorActif ? ' boutique-card--sponsor' : ''}`}>
-                {sponsorActif && (
+              <Link href={`/boutiques/${b.id}`} key={b.id} className={`boutique-card${(sponsorActif || estPro || estBusiness) ? ' boutique-card--sponsor' : ''}`}>
+                {estBusiness && (
+                  <div className="boutique-sponsor-badge" style={{ background: '#1e3a5f' }}>💼 Business</div>
+                )}
+                {estPro && !estBusiness && (
+                  <div className="boutique-sponsor-badge">⭐ Vendeur Pro</div>
+                )}
+                {sponsorActif && !estPro && !estBusiness && (
                   <div className="boutique-sponsor-badge">⭐ Partenaire</div>
                 )}
                 <div className="boutique-card-logo">

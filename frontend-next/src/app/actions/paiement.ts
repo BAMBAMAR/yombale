@@ -95,6 +95,25 @@ export async function initierWaveProduitSponsoring(produit_id: string): Promise<
   }
 }
 
+export async function initierWaveAbonnement(plan: 'pro' | 'business'): Promise<PaiementResult> {
+  const session = await getOptionalSession()
+  if (!session) return { ok: false, error: 'Connexion requise' }
+
+  try {
+    const token = await getAuthToken(session)
+    const res = await fetch(`${BACKEND}/api/abonnements/initier`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ plan }),
+    })
+    const body = await res.json()
+    if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }
+    return { ok: true, url: body.wave_url }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }
+  }
+}
+
 export async function initierWaveBoutiqueSponsoring(boutique_id: string): Promise<PaiementResult> {
   const session = await getOptionalSession()
   if (!session) return { ok: false, error: 'Connexion requise' }

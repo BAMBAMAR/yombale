@@ -88,6 +88,22 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
         );
       }
     }
+    // Abonnement Boutique Pro/Business : ref = abmt_userId_plan
+    if (ref && ref.startsWith('abmt_')) {
+      const parts = ref.split('_');
+      const userId = parts[1];
+      const plan   = parts[2];
+      const PRIX   = { pro: 15000, business: 35000 };
+      if (userId && plan && PRIX[plan]) {
+        const fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        await pool.query(
+          `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
+           VALUES ($1,$2,'actif',$3,$4,$5)
+           ON CONFLICT DO NOTHING`,
+          [userId, plan, PRIX[plan], fin, ref]
+        );
+      }
+    }
     if (data.customer_phone)
       await notifs.confirmationCommande(data.customer_phone, ref);
   }
@@ -283,6 +299,22 @@ router.post('/orange/webhook', limiterGeneral, async (req, res) => {
         await pool.query(
           "UPDATE produits SET sponsorise=true, sponsor_jusqu_au=$1 WHERE id=$2",
           [until, produitId]
+        );
+      }
+    }
+    // Abonnement Pro/Business (Orange)
+    if (order_id?.startsWith('abmt_')) {
+      const parts  = order_id.split('_');
+      const userId = parts[1];
+      const plan   = parts[2];
+      const PRIX   = { pro: 15000, business: 35000 };
+      if (userId && plan && PRIX[plan]) {
+        const fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        await pool.query(
+          `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
+           VALUES ($1,$2,'actif',$3,$4,$5)
+           ON CONFLICT DO NOTHING`,
+          [userId, plan, PRIX[plan], fin, order_id]
         );
       }
     }

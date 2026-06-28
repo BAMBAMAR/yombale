@@ -337,5 +337,25 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table settings OK');
   } catch (e) { console.warn('[MIGRATE] settings:', e.message); }
 
+  // Table abonnements (plans Pro/Business pour les boutiques)
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS abonnements (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        plan           VARCHAR(20) NOT NULL CHECK (plan IN ('pro', 'business')),
+        statut         VARCHAR(20) DEFAULT 'actif' CHECK (statut IN ('actif', 'expire', 'annule')),
+        prix_mensuel   NUMERIC(10,2) NOT NULL,
+        debut          TIMESTAMPTZ DEFAULT NOW(),
+        fin            TIMESTAMPTZ NOT NULL,
+        commande_ref   VARCHAR(100),
+        created_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_abonnements_user   ON abonnements(utilisateur_id, statut);
+      CREATE INDEX IF NOT EXISTS idx_abonnements_fin    ON abonnements(fin) WHERE statut = 'actif';
+    `);
+    console.log('[MIGRATE] ✅ Table abonnements OK');
+  } catch (e) { console.warn('[MIGRATE] abonnements:', e.message); }
+
   try { await pool.end(); } catch (_) {}
 };
