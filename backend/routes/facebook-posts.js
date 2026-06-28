@@ -114,7 +114,6 @@ router.get('/generer/:type', async (req, res) => {
     let result = null;
 
     if (type === 'bon-plan') {
-      // Produit avec la plus grosse baisse de prix récente
       const { rows } = await pool.query(`
         SELECT p.nom, p.marque, p.image_url, p.id as produit_id,
                MIN(o.prix) as prix_min,
@@ -127,10 +126,10 @@ router.get('/generer/:type', async (req, res) => {
         GROUP BY p.id, p.nom, p.marque, p.image_url, m.nom
         HAVING MAX(o.prix) - MIN(o.prix) > 5000
         ORDER BY (MAX(o.prix) - MIN(o.prix)) DESC
-        LIMIT 1
+        LIMIT 10
       `);
       if (rows.length) {
-        const p = rows[0];
+        const p = rows[Math.floor(Math.random() * rows.length)];
         const eco = Math.round(p.prix_max - p.prix_min);
         const nom = [p.marque, p.nom].filter(Boolean).join(' ');
         result = {
@@ -172,10 +171,10 @@ router.get('/generer/:type', async (req, res) => {
         GROUP BY p.id, p.nom, p.marque, p.image_url
         HAVING COUNT(DISTINCT o.marchand_id) >= 2 AND MAX(o.prix) - MIN(o.prix) > 3000
         ORDER BY COUNT(DISTINCT o.marchand_id) DESC, (MAX(o.prix) - MIN(o.prix)) DESC
-        LIMIT 1
+        LIMIT 10
       `);
       if (rows.length) {
-        const p = rows[0];
+        const p = rows[Math.floor(Math.random() * rows.length)];
         const eco = Math.round(p.prix_max - p.prix_min);
         const nom = [p.marque, p.nom].filter(Boolean).join(' ');
         result = {

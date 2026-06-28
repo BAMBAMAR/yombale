@@ -388,10 +388,11 @@ export default function PublicationsPage() {
           onChange={e => setForm(f => ({ ...f, date_publication: e.target.value }))}
         />
 
-        <label style={{ ...s.label, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 16 }}>
+        <label style={{ ...s.label, display: 'flex', alignItems: 'center', gap: 10, cursor: form.image_url ? 'pointer' : 'not-allowed', marginBottom: 4, opacity: form.image_url ? 1 : 0.5 }}>
           <input
             type="checkbox"
             checked={form.publier_instagram}
+            disabled={!form.image_url}
             onChange={e => setForm(f => ({ ...f, publier_instagram: e.target.checked }))}
             style={{ width: 16, height: 16, accentColor: '#E4405F' }}
           />
@@ -399,6 +400,9 @@ export default function PublicationsPage() {
             📸 Publier aussi sur Instagram <span style={{ color: '#94A3B8', fontWeight: 400 }}>(image requise)</span>
           </span>
         </label>
+        {form.publier_instagram && !form.image_url && (
+          <p style={{ fontSize: 12, color: '#EF4444', marginBottom: 12 }}>⚠️ Ajoutez une URL d&apos;image pour publier sur Instagram</p>
+        )}
 
         {err && <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 8 }}>{err}</p>}
         {ok  && <p style={{ color: '#10B981', fontSize: 13, marginBottom: 8 }}>{ok}</p>}
