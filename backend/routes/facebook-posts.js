@@ -24,7 +24,7 @@ router.get('/generer/:type', async (req, res) => {
         FROM produits p
         JOIN offres o ON o.produit_id = p.id
         JOIN marchands m ON m.id = o.marchand_id
-        WHERE o.disponible = true AND o.prix > 0 AND p.image_url IS NOT NULL
+        WHERE o.stock = true AND o.prix > 0 AND p.image_url IS NOT NULL
         GROUP BY p.id, p.nom, p.marque, p.image_url, m.nom
         HAVING MAX(o.prix) - MIN(o.prix) > 5000
         ORDER BY (MAX(o.prix) - MIN(o.prix)) DESC
@@ -69,7 +69,7 @@ router.get('/generer/:type', async (req, res) => {
                MIN(o.prix) as prix_min, MAX(o.prix) as prix_max
         FROM produits p
         JOIN offres o ON o.produit_id = p.id
-        WHERE o.disponible = true AND o.prix > 0 AND p.image_url IS NOT NULL
+        WHERE o.stock = true AND o.prix > 0 AND p.image_url IS NOT NULL
         GROUP BY p.id, p.nom, p.marque, p.image_url
         HAVING COUNT(DISTINCT o.marchand_id) >= 2 AND MAX(o.prix) - MIN(o.prix) > 3000
         ORDER BY COUNT(DISTINCT o.marchand_id) DESC, (MAX(o.prix) - MIN(o.prix)) DESC
