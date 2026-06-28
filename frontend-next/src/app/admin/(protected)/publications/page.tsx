@@ -82,6 +82,7 @@ function TokenBanner({ onRenew }: { onRenew: () => void }) {
 }
 
 function TokenModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [mode, setMode]     = useState<'exchange'|'direct'>('exchange')
   const [token, setToken]   = useState('')
   const [status, setStatus] = useState<'idle'|'loading'|'ok'|'err'>('idle')
   const [msg, setMsg]       = useState('')
@@ -90,9 +91,14 @@ function TokenModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     if (!token.trim()) return
     setStatus('loading'); setMsg('')
     try {
-      const res = await api('token', { method: 'POST', body: JSON.stringify({ token: token.trim() }) })
-      setStatus('ok'); setMsg(`Token enregistré · Page : ${res.name}`)
-      setTimeout(() => { onSaved(); onClose() }, 1500)
+      const endpoint = mode === 'exchange' ? 'token-exchange' : 'token'
+      const body     = mode === 'exchange' ? { user_token: token.trim() } : { token: token.trim() }
+      const res = await api(endpoint, { method: 'POST', body: JSON.stringify(body) })
+      const label = mode === 'exchange'
+        ? `Token permanent enregistré · Page : ${res.name}`
+        : `Token enregistré · Page : ${res.name}`
+      setStatus('ok'); setMsg(label)
+      setTimeout(() => { onSaved(); onClose() }, 1800)
     } catch (e: unknown) {
       setStatus('err'); setMsg(e instanceof Error ? e.message : 'Erreur')
     }
@@ -100,26 +106,64 @@ function TokenModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: '#fff', borderRadius: 14, padding: 28, maxWidth: 560, width: '100%' }}>
-        <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 8 }}>🔑 Renouveler le token Facebook</h2>
-        <p style={{ fontSize: 13, color: '#64748B', marginBottom: 20 }}>
-          Le token de Page Facebook est valable ~60 jours. Pour le renouveler :
-        </p>
+      <div style={{ background: '#fff', borderRadius: 14, padding: 28, maxWidth: 580, width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+        <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>🔑 Renouveler le token Facebook</h2>
 
-        <ol style={{ fontSize: 13, color: '#1C2B4A', lineHeight: 2, paddingLeft: 20, marginBottom: 20 }}>
-          <li>Aller sur <strong>developers.facebook.com/tools/explorer</strong></li>
-          <li>Sélectionner l&apos;app <strong>Nopalou</strong> → <strong>Obtenir un token d&apos;accès de Page</strong></li>
-          <li>Cocher : <code>pages_manage_posts</code>, <code>pages_read_engagement</code>, <code>instagram_basic</code>, <code>instagram_content_publish</code></li>
-          <li>Copier le token généré</li>
-          <li>Coller ci-dessous — le token sera vérifié puis enregistré</li>
-        </ol>
+        {/* Sélecteur de mode */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+          <button
+            onClick={() => { setMode('exchange'); setToken(''); setMsg(''); setStatus('idle') }}
+            style={{ flex: 1, padding: '10px 12px', border: `2px solid ${mode === 'exchange' ? '#1877F2' : '#E2E8F0'}`, borderRadius: 8, background: mode === 'exchange' ? '#EFF6FF' : '#F8FAFC', color: mode === 'exchange' ? '#1D4ED8' : '#64748B', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          >
+            ♾️ Token permanent (recommandé)
+          </button>
+          <button
+            onClick={() => { setMode('direct'); setToken(''); setMsg(''); setStatus('idle') }}
+            style={{ flex: 1, padding: '10px 12px', border: `2px solid ${mode === 'direct' ? '#1877F2' : '#E2E8F0'}`, borderRadius: 8, background: mode === 'direct' ? '#EFF6FF' : '#F8FAFC', color: mode === 'direct' ? '#1D4ED8' : '#64748B', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          >
+            📋 Token de page direct (~60j)
+          </button>
+        </div>
 
-        <textarea
-          value={token}
-          onChange={e => setToken(e.target.value)}
-          placeholder="EAAxxxxx... (token de page Facebook)"
-          style={{ width: '100%', padding: '10px 12px', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 13, minHeight: 80, resize: 'vertical', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'monospace' }}
-        />
+        {mode === 'exchange' ? (
+          <>
+            <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#166534' }}>
+              ✅ Cette méthode génère un token qui <strong>n&apos;expire jamais</strong> — plus besoin de renouveler régulièrement.
+            </div>
+            <ol style={{ fontSize: 13, color: '#1C2B4A', lineHeight: 2.2, paddingLeft: 20, marginBottom: 16 }}>
+              <li>Aller sur <strong>developers.facebook.com/tools/explorer</strong></li>
+              <li>Sélectionner l&apos;app <strong>Nopalou</strong></li>
+              <li>Cliquer <strong>Générer un token d&apos;accès</strong> (token <em>utilisateur</em>, pas de page)</li>
+              <li>Cocher : <code>pages_manage_posts</code>, <code>pages_read_engagement</code>, <code>instagram_basic</code>, <code>instagram_content_publish</code></li>
+              <li>Copier le token <strong>utilisateur</strong> généré</li>
+              <li>Coller ci-dessous — le serveur l&apos;échange automatiquement en token de page permanent</li>
+            </ol>
+            <textarea
+              value={token}
+              onChange={e => setToken(e.target.value)}
+              placeholder="EAAxxxxx... (token utilisateur Facebook — le serveur fait l'échange)"
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 13, minHeight: 80, resize: 'vertical', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'monospace' }}
+            />
+          </>
+        ) : (
+          <>
+            <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#92400E' }}>
+              ⚠️ Ce token expire dans ~60 jours. Préférez la méthode <strong>Token permanent</strong> pour éviter ce problème.
+            </div>
+            <ol style={{ fontSize: 13, color: '#1C2B4A', lineHeight: 2.2, paddingLeft: 20, marginBottom: 16 }}>
+              <li>Aller sur <strong>developers.facebook.com/tools/explorer</strong></li>
+              <li>Sélectionner l&apos;app <strong>Nopalou</strong> → <strong>Obtenir un token d&apos;accès de Page</strong></li>
+              <li>Cocher : <code>pages_manage_posts</code>, <code>pages_read_engagement</code></li>
+              <li>Copier le token de Page généré et coller ci-dessous</li>
+            </ol>
+            <textarea
+              value={token}
+              onChange={e => setToken(e.target.value)}
+              placeholder="EAAxxxxx... (token de page Facebook)"
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 13, minHeight: 80, resize: 'vertical', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'monospace' }}
+            />
+          </>
+        )}
 
         {msg && (
           <p style={{ fontSize: 13, color: status === 'ok' ? '#10B981' : '#EF4444', marginBottom: 12 }}>
@@ -136,7 +180,7 @@ function TokenModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
             disabled={status === 'loading' || !token.trim()}
             style={{ padding: '8px 18px', background: '#1877F2', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}
           >
-            {status === 'loading' ? 'Vérification...' : 'Enregistrer le token'}
+            {status === 'loading' ? (mode === 'exchange' ? 'Échange en cours...' : 'Vérification...') : (mode === 'exchange' ? 'Échanger et enregistrer' : 'Enregistrer le token')}
           </button>
         </div>
       </div>

@@ -55,17 +55,53 @@ router.get('/token-status', async (req, res) => {
   }
 });
 
-// POST /api/facebook-posts/token — mettre à jour le token FB
+// POST /api/facebook-posts/token — mettre à jour le token FB (page token direct)
 router.post('/token', async (req, res) => {
   const { token } = req.body;
   if (!token) return res.status(400).json({ error: 'token requis' });
   try {
-    // Vérifie d'abord que le token est valide
     const r    = await fetch(`https://graph.facebook.com/v19.0/me?fields=name,id&access_token=${token}`);
     const data = await r.json();
     if (data.error) return res.status(400).json({ error: `Token invalide : ${data.error.message}` });
     await setToken(token);
     res.json({ ok: true, name: data.name, id: data.id });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/facebook-posts/token-exchange — échange un user token court en page token permanent
+// 1. Échange user_token court → long-lived user token (60j)
+// 2. Récupère le page token depuis ce long-lived token → ne expire jamais
+router.post('/token-exchange', async (req, res) => {
+  const { user_token } = req.body;
+  if (!user_token) return res.status(400).json({ error: 'user_token requis' });
+
+  const appId     = process.env.FB_APP_ID;
+  const appSecret = process.env.FB_APP_SECRET;
+  const pageId    = process.env.FB_PAGE_ID;
+  if (!appId || !appSecret) return res.status(500).json({ error: 'FB_APP_ID / FB_APP_SECRET non configurés côté serveur' });
+  if (!pageId)              return res.status(500).json({ error: 'FB_PAGE_ID non configuré côté serveur' });
+
+  try {
+    // Étape 1 : long-lived user token
+    const llRes  = await fetch(
+      `https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${encodeURIComponent(user_token)}`
+    );
+    const llData = await llRes.json();
+    if (llData.error) return res.status(400).json({ error: `Échange échoué : ${llData.error.message}` });
+    const longLivedToken = llData.access_token;
+
+    // Étape 2 : page access token (ne expire pas)
+    const pgRes  = await fetch(
+      `https://graph.facebook.com/v19.0/${pageId}?fields=access_token,name&access_token=${longLivedToken}`
+    );
+    const pgData = await pgRes.json();
+    if (pgData.error) return res.status(400).json({ error: `Récupération page token échouée : ${pgData.error.message}` });
+    if (!pgData.access_token) return res.status(400).json({ error: 'Aucun page token retourné — vérifiez que vous avez les droits pages_manage_posts sur cette page' });
+
+    await setToken(pgData.access_token);
+    res.json({ ok: true, name: pgData.name, permanent: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
