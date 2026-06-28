@@ -7,6 +7,7 @@ import { fcfa, escapeHtml } from '@/lib/format';
 import { getOptionalSession } from '@/lib/dal';
 import AlertePrix from '@/app/AlertePrix';
 import TrackRecent from './TrackRecent';
+import SponsoringProduitBtn from './SponsoringProduitBtn';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -408,6 +409,9 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                 <Link href="/connexion" className="alerte-trigger-login">
                   🔔 Alertes prix (connexion requise)
                 </Link>
+              )}
+              {session && (
+                <SponsoringProduitBtn produitId={String(produit.id)} />
               )}
             </div>
           </aside>

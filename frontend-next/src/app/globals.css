@@ -3255,6 +3255,39 @@ a {
 
 .alerte-trigger-login:hover { border-color: var(--accent); color: var(--accent); }
 
+.sponsoring-produit-wrap {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.sponsoring-produit-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.sponsoring-produit-btn:disabled { opacity: .6; cursor: not-allowed; }
+.sponsoring-produit-btn:hover:not(:disabled) { opacity: .9; }
+.sponsoring-produit-info {
+  font-size: 11px;
+  color: var(--text3);
+  text-align: center;
+  margin: 6px 0 0;
+}
+.sponsoring-produit-error {
+  font-size: 12px;
+  color: #e63946;
+  margin: 6px 0 0;
+  text-align: center;
+}
+
 .alerte-box {
   margin-top: 16px;
   border: 1.5px solid var(--accent);
