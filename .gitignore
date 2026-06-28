@@ -14,3 +14,18 @@ uploads/
 tmp/
 .fb-session.json
 backend/.fb-session.json
+
+# Dumps SQL (données sensibles)
+*.sql
+
+# Screenshots et images temporaires
+*.png
+*.jpg
+*.jpeg
+
+# Résultats de tests
+test-results/
+
+# Build Next.js
+frontend-next/.next/
+frontend-next/tsconfig.tsbuildinfo
