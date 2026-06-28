@@ -1051,6 +1051,153 @@ a {
   text-align: center;
 }
 
+/* ── Comment ça marche ─────────────────────────────────────────── */
+.home-how {
+  max-width: var(--max-w);
+  margin: 56px auto 0;
+  padding: 0 var(--px);
+  text-align: center;
+}
+
+.home-section-titre {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0 0 32px;
+}
+
+.home-how-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.home-how-step {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 24px;
+  transition: box-shadow .2s;
+}
+.home-how-step:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+
+.home-how-icon {
+  font-size: 40px;
+  margin-bottom: 16px;
+}
+
+.home-how-step h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 8px;
+}
+
+.home-how-step p {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ── Social proof ──────────────────────────────────────────────── */
+.home-proof {
+  max-width: var(--max-w);
+  margin: 40px auto 0;
+  padding: 0 var(--px);
+}
+
+.home-proof-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: var(--navy);
+  border-radius: 16px;
+  padding: 32px 40px;
+}
+
+.home-proof-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.home-proof-num {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--accent);
+  font-family: 'Sora', sans-serif;
+}
+
+.home-proof-lbl {
+  font-size: 12px;
+  color: rgba(255,255,255,.6);
+  margin-top: 4px;
+  text-align: center;
+}
+
+.home-proof-sep {
+  width: 1px;
+  height: 48px;
+  background: rgba(255,255,255,.12);
+  flex-shrink: 0;
+}
+
+/* ── CTA Annonce ───────────────────────────────────────────────── */
+.home-cta-annonce {
+  max-width: var(--max-w);
+  margin: 40px auto 0;
+  padding: 0 var(--px);
+}
+
+.home-cta-annonce-inner {
+  background: linear-gradient(135deg, #fff7f0, #fff);
+  border: 1.5px solid var(--accent);
+  border-radius: 16px;
+  padding: 32px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.home-cta-annonce-text h2 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0 0 6px;
+}
+
+.home-cta-annonce-text p {
+  font-size: 14px;
+  color: var(--text2);
+  margin: 0;
+}
+
+.home-cta-annonce-btns {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.home-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity .15s;
+}
+.home-cta-btn:hover { opacity: .85; }
+.home-cta-btn--primary  { background: var(--accent); color: #fff; }
+.home-cta-btn--secondary { background: var(--navy); color: #fff; }
+
 /* ── Filtres budget ────────────────────────────────────────────── */
 .filtres-bar {
   display: flex;
@@ -1860,6 +2007,14 @@ a {
   }
   .stat-item:nth-child(odd) { border-right: 1px solid rgba(255,255,255,.1); }
   .stat-item:nth-last-child(-n+2) { border-bottom: none; }
+
+  .home-how-grid { grid-template-columns: 1fr; gap: 16px; }
+  .home-proof-grid { flex-wrap: wrap; gap: 20px; padding: 24px 20px; }
+  .home-proof-sep { display: none; }
+  .home-proof-item { flex: 1 1 40%; }
+  .home-cta-annonce-inner { flex-direction: column; align-items: flex-start; padding: 24px; }
+  .home-cta-annonce-btns { width: 100%; }
+  .home-cta-btn { flex: 1; justify-content: center; }
 }
 
 /* ── Telecom page ──────────────────────────────────────────────── */

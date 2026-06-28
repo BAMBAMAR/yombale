@@ -187,6 +187,77 @@ export default async function HomePage({
         />
       )}
 
+      {/* ── Comment ça marche ───────────────────────────────────── */}
+      {!hasFiltre && (
+        <section className="home-how">
+          <h2 className="home-section-titre">Comment ça marche ?</h2>
+          <div className="home-how-grid">
+            <div className="home-how-step">
+              <div className="home-how-icon">🔍</div>
+              <h3>Cherchez votre produit</h3>
+              <p>Tapez le nom d'un produit, d'une marque ou d'une catégorie dans la barre de recherche.</p>
+            </div>
+            <div className="home-how-step">
+              <div className="home-how-icon">📊</div>
+              <h3>Comparez les prix</h3>
+              <p>Nopalou compare automatiquement les prix chez Jumia, Expat-Dakar, CoinAfrique et plus.</p>
+            </div>
+            <div className="home-how-step">
+              <div className="home-how-icon">💰</div>
+              <h3>Économisez</h3>
+              <p>Choisissez le marchand le moins cher et économisez jusqu'à 40% sur vos achats.</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Social proof ────────────────────────────────────────── */}
+      {!hasFiltre && (
+        <section className="home-proof">
+          <div className="home-proof-grid">
+            <div className="home-proof-item">
+              <span className="home-proof-num">50 000+</span>
+              <span className="home-proof-lbl">Comparaisons effectuées</span>
+            </div>
+            <div className="home-proof-sep" />
+            <div className="home-proof-item">
+              <span className="home-proof-num">40%</span>
+              <span className="home-proof-lbl">D'économies en moyenne</span>
+            </div>
+            <div className="home-proof-sep" />
+            <div className="home-proof-item">
+              <span className="home-proof-num">6h</span>
+              <span className="home-proof-lbl">Mise à jour des prix</span>
+            </div>
+            <div className="home-proof-sep" />
+            <div className="home-proof-item">
+              <span className="home-proof-num">Dakar</span>
+              <span className="home-proof-lbl">& tout le Sénégal</span>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── CTA Annonce ─────────────────────────────────────────── */}
+      {!hasFiltre && (
+        <section className="home-cta-annonce">
+          <div className="home-cta-annonce-inner">
+            <div className="home-cta-annonce-text">
+              <h2>Vendez vos articles facilement</h2>
+              <p>Publiez une annonce gratuitement et touchez des milliers d'acheteurs au Sénégal.</p>
+            </div>
+            <div className="home-cta-annonce-btns">
+              <Link href="/deposer-annonce" className="home-cta-btn home-cta-btn--primary">
+                + Publier une annonce
+              </Link>
+              <Link href="/deposer-immo" className="home-cta-btn home-cta-btn--secondary">
+                🏠 Publier un bien immo
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Bloc SEO ─────────────────────────────────────────────── */}
       {!hasFiltre && (
         <section style={{
