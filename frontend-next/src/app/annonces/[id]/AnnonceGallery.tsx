@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { cloudinaryHQ } from '@/lib/cloudinary'
 
 interface Props {
   photos: string[]
@@ -27,7 +28,7 @@ export default function AnnonceGallery({ photos, titre }: Props) {
       <div className="annonce-gallery-main-wrap">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={photos[current]}
+          src={cloudinaryHQ(photos[current], { width: 900 })}
           alt={`${titre} — photo ${current + 1}`}
           className="annonce-detail-photo-main"
         />
@@ -60,7 +61,7 @@ export default function AnnonceGallery({ photos, titre }: Props) {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={i}
-              src={p}
+              src={cloudinaryHQ(p, { width: 160 })}
               alt={`Photo ${i + 1}`}
               className={`annonce-detail-thumb${i === current ? ' annonce-detail-thumb-active' : ''}`}
               onClick={() => setCurrent(i)}
