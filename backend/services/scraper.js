@@ -848,14 +848,29 @@ async function lancerScrapingNouveauxSites(siteIds = null) {
   return stats;
 }
 
+// ── Publication réseaux sociaux ────────────────────────────────────
+async function posterBonsPlans() {
+  if (!process.env.FB_PAGE_ID && !process.env.IG_USER_ID) return; // skip si pas configuré
+  try {
+    const script = require('path').join(__dirname, '../../scripts/post-bons-plans.js');
+    require('child_process').fork(script, [], { env: process.env });
+    console.log('[SOCIAL] Post bons plans lancé');
+  } catch (err) {
+    console.error('[SOCIAL] Erreur lancement post:', err.message);
+  }
+}
+
 function demarrerScraping() {
   // Toutes les 12h pour limiter la consommation mémoire (plan gratuit Railway)
   cron.schedule('0 */12 * * *', () => lancerScraping(['expat', 'jumia', 'coinafrique']).catch(console.error));
   cron.schedule('0 6,18 * * *', () => lancerScrapingNouveauxSites().catch(console.error));
+  // Publication réseaux sociaux chaque matin à 8h (heure UTC = 9h Dakar)
+  cron.schedule('0 8 * * *', () => posterBonsPlans().catch(console.error));
   // Premier scraping 10 min après démarrage (laisser l'app se stabiliser)
   setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 10 * 60 * 1000);
   setTimeout(() => lancerScrapingNouveauxSites().catch(console.error), 15 * 60 * 1000);
   console.log('[SCRAPER] ✅ Cron actif — premier scraping dans 10 min, puis toutes les 12h');
+  console.log('[SOCIAL]  ✅ Cron actif — publication bons plans chaque jour à 8h UTC');
 }
 
 module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher };
