@@ -211,6 +211,12 @@ function BoutiqueCard({
           >
             Modifier
           </button>
+          <Link
+            href="/boutique/analytics"
+            style={{ fontSize: '13px', color: '#16a34a', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '6px', padding: '5px 14px', fontWeight: 600, textDecoration: 'none' }}
+          >
+            📊 Analytics
+          </Link>
           <button
             onClick={onSponsoring}
             style={{ fontSize: '13px', color: '#92400E', background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: '6px', padding: '5px 14px', cursor: 'pointer', fontWeight: 600 }}
