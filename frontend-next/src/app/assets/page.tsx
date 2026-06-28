@@ -51,7 +51,7 @@ const TEXTES = [
   {
     reseau: 'Instagram',
     emoji: '📸',
-    nom: '@nopalou.sn',
+    nom: '@nopalou',
     categorie: 'Compte professionnel · Shopping & Retail',
     bio: '🛒 Comparateur de prix N°1 au Sénégal\n📱 Téléphones · TV · Électro · Immo\n💰 Économisez jusqu\'à 40% à Dakar\n👇 Comparez sur nopalou.com',
     site: 'https://nopalou.com',
@@ -60,7 +60,7 @@ const TEXTES = [
   {
     reseau: 'TikTok',
     emoji: '🎵',
-    nom: '@nopalou.sn',
+    nom: '@nopalou',
     categorie: 'Compte professionnel',
     bio: '🛒 Comparateur prix Sénégal\n💰 Meilleurs prix à Dakar\n📲 nopalou.com',
     site: 'https://nopalou.com',
