@@ -2,6 +2,15 @@
 import { revalidatePath } from 'next/cache'
 import { backendFetch, type ActionState } from '@/lib/backend-fetch'
 
+function extractError(data: Record<string, unknown>, fallback: string): string {
+  if (data.error && typeof data.error === 'string') return data.error
+  if (Array.isArray(data.errors) && data.errors.length > 0) {
+    const first = data.errors[0]
+    return typeof first?.msg === 'string' ? first.msg : fallback
+  }
+  return fallback
+}
+
 export async function createBoutique(
   prevState: ActionState,
   formData: FormData
@@ -10,7 +19,7 @@ export async function createBoutique(
     const res = await backendFetch('/api/boutiques', { method: 'POST', body: formData })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
-      return { error: data.error ?? 'Impossible de créer la boutique' }
+      return { error: extractError(data, 'Impossible de créer la boutique') }
     }
     revalidatePath('/boutique')
     return { success: true }
@@ -28,7 +37,7 @@ export async function updateBoutique(
     const res = await backendFetch(`/api/boutiques/${id}`, { method: 'PUT', body: formData })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
-      return { error: data.error ?? 'Impossible de modifier la boutique' }
+      return { error: extractError(data, 'Impossible de modifier la boutique') }
     }
     revalidatePath('/boutique')
     return { success: true }

@@ -121,88 +121,85 @@ function BoutiqueForm({ boutique, onCancel, onSuccess }: {
         {tabBtn('medias', '🖼 Médias')}
       </div>
 
-      {tab === 'infos' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Onglet Infos — toujours dans le DOM, caché si inactif */}
+      <div style={{ display: tab === 'infos' ? 'flex' : 'none', flexDirection: 'column', gap: 12 }}>
+        <div>
+          <label style={labelStyle}>Nom de la boutique *</label>
+          <input name="nom" required maxLength={200} defaultValue={boutique?.nom} style={inputStyle} placeholder="Ex: Tech Dakar" />
+        </div>
+        <div>
+          <label style={labelStyle}>Description</label>
+          <textarea name="description" rows={3} defaultValue={boutique?.description ?? ''} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Décrivez votre boutique…" />
+        </div>
+        <div>
+          <label style={labelStyle}>Catégorie</label>
+          <select name="categorie" defaultValue={boutique?.categorie ?? ''} style={inputStyle}>
+            <option value="">— Sélectionner —</option>
+            {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
-            <label style={labelStyle}>Nom de la boutique *</label>
-            <input name="nom" required maxLength={200} defaultValue={boutique?.nom} style={inputStyle} placeholder="Ex: Tech Dakar" />
+            <label style={labelStyle}>Adresse</label>
+            <input name="adresse" defaultValue={boutique?.adresse ?? ''} style={inputStyle} placeholder="Ex: Av. Cheikh Anta Diop" />
           </div>
           <div>
-            <label style={labelStyle}>Description</label>
-            <textarea name="description" rows={3} defaultValue={boutique?.description ?? ''} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Décrivez votre boutique…" />
-          </div>
-          <div>
-            <label style={labelStyle}>Catégorie</label>
-            <select name="categorie" defaultValue={boutique?.categorie ?? ''} style={inputStyle}>
-              <option value="">— Sélectionner —</option>
-              {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={labelStyle}>Adresse</label>
-              <input name="adresse" defaultValue={boutique?.adresse ?? ''} style={inputStyle} placeholder="Ex: Av. Cheikh Anta Diop" />
-            </div>
-            <div>
-              <label style={labelStyle}>Ville</label>
-              <input name="ville" defaultValue={boutique?.ville ?? 'Dakar'} style={inputStyle} placeholder="Dakar" />
-            </div>
+            <label style={labelStyle}>Ville</label>
+            <input name="ville" defaultValue={boutique?.ville ?? 'Dakar'} style={inputStyle} placeholder="Dakar" />
           </div>
         </div>
-      )}
+      </div>
 
-      {tab === 'contact' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <label style={labelStyle}>Téléphone</label>
-            <input name="telephone" type="tel" defaultValue={boutique?.telephone ?? ''} style={inputStyle} placeholder="77 000 00 00" />
-          </div>
-          <div>
-            <label style={labelStyle}>WhatsApp (si différent du tél.)</label>
-            <input name="whatsapp" type="tel" defaultValue={boutique?.whatsapp ?? ''} style={inputStyle} placeholder="77 000 00 00" />
-            <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>Les visiteurs pourront vous contacter directement sur WhatsApp.</p>
-          </div>
-          <div>
-            <label style={labelStyle}>Site web</label>
-            <input name="site_web" type="url" defaultValue={boutique?.site_web ?? ''} style={inputStyle} placeholder="https://votresite.com" />
-          </div>
-          <div>
-            <label style={labelStyle}>Page Facebook</label>
-            <input name="facebook" type="url" defaultValue={boutique?.facebook ?? ''} style={inputStyle} placeholder="https://facebook.com/votreboutique" />
-          </div>
-          <div>
-            <label style={labelStyle}>Instagram</label>
-            <input name="instagram" type="url" defaultValue={boutique?.instagram ?? ''} style={inputStyle} placeholder="https://instagram.com/votreboutique" />
-          </div>
+      {/* Onglet Contact — toujours dans le DOM */}
+      <div style={{ display: tab === 'contact' ? 'flex' : 'none', flexDirection: 'column', gap: 12 }}>
+        <div>
+          <label style={labelStyle}>Téléphone</label>
+          <input name="telephone" type="tel" defaultValue={boutique?.telephone ?? ''} style={inputStyle} placeholder="77 000 00 00" />
         </div>
-      )}
+        <div>
+          <label style={labelStyle}>WhatsApp (si différent du tél.)</label>
+          <input name="whatsapp" type="tel" defaultValue={boutique?.whatsapp ?? ''} style={inputStyle} placeholder="77 000 00 00" />
+          <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>Les visiteurs pourront vous contacter directement sur WhatsApp.</p>
+        </div>
+        <div>
+          <label style={labelStyle}>Site web</label>
+          <input name="site_web" type="url" defaultValue={boutique?.site_web ?? ''} style={inputStyle} placeholder="https://votresite.com" />
+        </div>
+        <div>
+          <label style={labelStyle}>Page Facebook</label>
+          <input name="facebook" type="url" defaultValue={boutique?.facebook ?? ''} style={inputStyle} placeholder="https://facebook.com/votreboutique" />
+        </div>
+        <div>
+          <label style={labelStyle}>Instagram</label>
+          <input name="instagram" type="url" defaultValue={boutique?.instagram ?? ''} style={inputStyle} placeholder="https://instagram.com/votreboutique" />
+        </div>
+      </div>
 
-      {tab === 'medias' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <label style={labelStyle}>Logo (max 5 Mo)</label>
-            <input name="logo" type="file" accept="image/*" style={{ fontSize: 14 }} />
-            {boutique?.logo_url && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={boutique.logo_url} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb' }} />
-                <span style={{ fontSize: 12, color: '#6b7280' }}>Logo actuel — remplacé si nouveau fichier sélectionné</span>
-              </div>
-            )}
-          </div>
-          <div>
-            <label style={labelStyle}>Photo de couverture (bannière, max 5 Mo)</label>
-            <input name="cover" type="file" accept="image/*" style={{ fontSize: 14 }} />
-            {boutique?.cover_url && (
-              <div style={{ marginTop: 8, borderRadius: 8, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={boutique.cover_url} alt="" style={{ width: '100%', height: 80, objectFit: 'cover' }} />
-                <p style={{ fontSize: 12, color: '#6b7280', padding: '4px 8px', margin: 0 }}>Cover actuelle — remplacée si nouveau fichier sélectionné</p>
-              </div>
-            )}
-          </div>
+      {/* Onglet Médias — toujours dans le DOM */}
+      <div style={{ display: tab === 'medias' ? 'flex' : 'none', flexDirection: 'column', gap: 12 }}>
+        <div>
+          <label style={labelStyle}>Logo (max 5 Mo)</label>
+          <input name="logo" type="file" accept="image/*" style={{ fontSize: 14 }} />
+          {boutique?.logo_url && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={boutique.logo_url} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb' }} />
+              <span style={{ fontSize: 12, color: '#6b7280' }}>Logo actuel — remplacé si nouveau fichier sélectionné</span>
+            </div>
+          )}
         </div>
-      )}
+        <div>
+          <label style={labelStyle}>Photo de couverture (bannière, max 5 Mo)</label>
+          <input name="cover" type="file" accept="image/*" style={{ fontSize: 14 }} />
+          {boutique?.cover_url && (
+            <div style={{ marginTop: 8, borderRadius: 8, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={boutique.cover_url} alt="" style={{ width: '100%', height: 80, objectFit: 'cover' }} />
+              <p style={{ fontSize: 12, color: '#6b7280', padding: '4px 8px', margin: 0 }}>Cover actuelle — remplacée si nouveau fichier sélectionné</p>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div style={{ display: 'flex', gap: 12 }}>
         <SubmitButton label={boutique ? 'Enregistrer' : 'Créer la boutique'} />
