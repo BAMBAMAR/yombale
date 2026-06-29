@@ -130,8 +130,8 @@ export default function AbonnementClient({ planActif }: Props) {
                 disabled={isPending || !!planActif}
                 style={{
                   width: '100%', padding: '12px 0', borderRadius: 10, border: 'none',
-                  background: estActif ? '#e2e8f0' : plan.couleur,
-                  color: estActif ? '#64748b' : '#fff',
+                  background: planActif ? '#e2e8f0' : plan.couleur,
+                  color: planActif ? '#64748b' : '#fff',
                   fontWeight: 700, fontSize: 15, cursor: (isPending || !!planActif) ? 'default' : 'pointer',
                 }}
               >
