@@ -6,7 +6,13 @@ const TOKEN    = process.env.WHATSAPP_API_TOKEN;
 const BASE_URL = () => `https://graph.facebook.com/v18.0/${PHONE_ID}/messages`;
 
 function normalisePhone(phone) {
-  return String(phone).replace(/[^\d]/g, '');
+  // Supprimer tout sauf les chiffres
+  let num = String(phone).replace(/[^\d]/g, '');
+  // 00221XXXXXXXXX → 221XXXXXXXXX
+  if (num.startsWith('00221')) num = num.slice(2);
+  // 9 chiffres = numéro sénégalais sans indicatif → ajouter 221
+  if (num.length === 9) num = '221' + num;
+  return num;
 }
 
 async function sendWhatsAppText(phone, message) {
