@@ -17,7 +17,8 @@ function verifyHmac(req, res, next) {
     .update(req.rawBody || '')
     .digest('hex');
 
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+  if (sig.length !== expected.length ||
+      !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
     return res.status(403).json({ error: 'Signature invalide' });
   }
   next();
@@ -55,7 +56,7 @@ router.post('/webhook', verifyHmac, (req, res) => {
 });
 
 // ── POST /api/whatsapp/send — envoi manuel (bouton frontend) ─────────────────
-const { verifierToken, tokenOptional } = require('../middlewares/auth');
+const { tokenOptional } = require('../middlewares/auth');
 
 router.post('/send', tokenOptional, async (req, res) => {
   try {
