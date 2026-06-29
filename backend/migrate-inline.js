@@ -391,5 +391,45 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table abonnements OK');
   } catch (e) { console.warn('[MIGRATE] abonnements:', e.message); }
 
+  // Colonnes boutique avancées (pro/business features)
+  const colonnesBoutiqueAvancees = [
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(30)`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS cover_url TEXT`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS site_web TEXT`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS facebook TEXT`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS instagram TEXT`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS horaires JSONB DEFAULT '{}'`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS slug VARCHAR(100)`,
+  ];
+  for (const sql of colonnesBoutiqueAvancees) {
+    try { await pool.query(sql); }
+    catch (e) { console.warn('[MIGRATE] boutique avancee:', e.message); }
+  }
+  try {
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS uidx_boutiques_slug ON boutiques(slug) WHERE slug IS NOT NULL`);
+  } catch (e) { console.warn('[MIGRATE] boutique slug index:', e.message); }
+  console.log('[MIGRATE] ✅ Colonnes boutiques avancées OK');
+
+  // Table catalogue produits boutique
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS boutique_produits (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        nom          VARCHAR(300) NOT NULL,
+        description  TEXT,
+        prix         NUMERIC(12,2),
+        prix_barre   NUMERIC(12,2),
+        images       TEXT[] DEFAULT '{}',
+        en_stock     BOOLEAN DEFAULT TRUE,
+        ordre        INT DEFAULT 0,
+        created_at   TIMESTAMPTZ DEFAULT NOW(),
+        updated_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_bp_boutique ON boutique_produits(boutique_id, ordre);
+    `);
+    console.log('[MIGRATE] ✅ Table boutique_produits OK');
+  } catch (e) { console.warn('[MIGRATE] boutique_produits:', e.message); }
+
   try { await pool.end(); } catch (_) {}
 };

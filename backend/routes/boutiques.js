@@ -3,6 +3,7 @@ const router = require('express').Router();
 const { body, param, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
+const { checkAbonnement, requireAbonnement } = require('../middlewares/checkAbonnement');
 const { limiterPublication } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
 const multer = require('multer');
@@ -18,6 +19,7 @@ const upload = multer({
 
 const CATS = ['smartphones','informatique','tv-electro','mode','maison','auto-moto','jeux','services','alimentation','beaute','autre'];
 const MAX_BOUTIQUES = 3;
+const QUOTA_PRODUITS = { pro: 50, business: Infinity };
 
 // ── GET /api/boutiques/admin/toutes — toutes les boutiques (admin)
 router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
@@ -106,7 +108,9 @@ router.get('/', async (req, res) => {
 router.get('/mine', verifierToken, async (req, res) => {
   try {
     const rows = await pool.query(
-      `SELECT id, nom, description, categorie, telephone, adresse, ville, logo_url, actif, created_at
+      `SELECT id, nom, description, categorie, telephone, whatsapp, adresse, ville,
+              logo_url, cover_url, site_web, facebook, instagram,
+              actif, sponsorise, sponsor_jusqu_au, created_at
        FROM boutiques WHERE utilisateur_id=$1 ORDER BY created_at DESC`,
       [req.user.userId]
     );
@@ -120,7 +124,8 @@ router.get('/:id', param('id').isUUID(), async (req, res) => {
   try {
     const r = await pool.query(
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
-              b.logo_url, b.utilisateur_id, b.created_at,
+              b.logo_url, b.cover_url, b.whatsapp, b.site_web, b.facebook, b.instagram,
+              b.horaires, b.slug, b.utilisateur_id, b.created_at,
               a.plan AS plan_actif
        FROM boutiques b
        LEFT JOIN LATERAL (
@@ -143,8 +148,106 @@ router.get('/:id', param('id').isUUID(), async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
+// ── GET /api/boutiques/:id/produits — catalogue public
+router.get('/:id/produits', param('id').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const { rows } = await pool.query(
+      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre
+       FROM boutique_produits p
+       JOIN boutiques b ON b.id = p.boutique_id
+       WHERE p.boutique_id=$1 AND b.actif=true
+       ORDER BY p.ordre ASC, p.created_at DESC`,
+      [req.params.id]
+    );
+    res.json({ produits: rows });
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+// ── POST /api/boutiques/:id/produits — ajouter produit (Pro/Business)
+router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnement, requireAbonnement, upload.single('image'), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const { id } = req.params;
+    // Vérifier la propriété
+    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
+    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+
+    // Quota
+    const plan = req.abonnement.plan;
+    const quota = QUOTA_PRODUITS[plan] ?? 50;
+    if (quota !== Infinity) {
+      const cnt = await pool.query('SELECT COUNT(*) FROM boutique_produits WHERE boutique_id=$1', [id]);
+      if (parseInt(cnt.rows[0].count) >= quota) {
+        return res.status(400).json({ error: `Quota atteint (${quota} produits max pour le plan ${plan})` });
+      }
+    }
+
+    const { nom, description, prix, prix_barre, en_stock } = req.body;
+    if (!nom?.trim()) return res.status(400).json({ error: 'Nom requis' });
+
+    let images = [];
+    if (req.file) {
+      try { images = [await uploadBuffer(req.file.buffer, 'boutique_produits')]; } catch {}
+    }
+
+    const r = await pool.query(
+      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, images, en_stock)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [id, nom.trim(), description||null, prix||null, prix_barre||null,
+       images, en_stock !== 'false']
+    );
+    res.status(201).json({ success: true, produit: r.rows[0] });
+  } catch (err) {
+    console.error('[BOUTIQUES PRODUIT POST]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── PUT /api/boutiques/:id/produits/:prodId — modifier produit
+router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('prodId').isUUID(), upload.single('image'), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const { id, prodId } = req.params;
+    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
+    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+
+    const existing = await pool.query('SELECT * FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
+    if (!existing.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+
+    const { nom, description, prix, prix_barre, en_stock } = req.body;
+    let images = existing.rows[0].images;
+    if (req.file) {
+      try { images = [await uploadBuffer(req.file.buffer, 'boutique_produits')]; } catch {}
+    }
+
+    const r = await pool.query(
+      `UPDATE boutique_produits SET nom=$1, description=$2, prix=$3, prix_barre=$4,
+       images=$5, en_stock=$6, updated_at=NOW()
+       WHERE id=$7 AND boutique_id=$8 RETURNING *`,
+      [nom||existing.rows[0].nom, description||null, prix||null, prix_barre||null,
+       images, en_stock !== 'false', prodId, id]
+    );
+    res.json({ success: true, produit: r.rows[0] });
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+// ── DELETE /api/boutiques/:id/produits/:prodId — supprimer produit
+router.delete('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('prodId').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const { id, prodId } = req.params;
+    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
+    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+
+    const r = await pool.query('DELETE FROM boutique_produits WHERE id=$1 AND boutique_id=$2 RETURNING id', [prodId, id]);
+    if (!r.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
 // ── POST /api/boutiques — créer boutique (auth)
-router.post('/', limiterPublication, verifierToken, upload.single('logo'), [
+router.post('/', limiterPublication, verifierToken, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'cover', maxCount: 1 }]), [
   body('nom').trim().notEmpty().withMessage('Nom de boutique requis').isLength({ max: 200 }),
   body('telephone').optional({ checkFalsy: true }).isString(),
   body('ville').optional({ checkFalsy: true }).isString(),
@@ -161,18 +264,24 @@ router.post('/', limiterPublication, verifierToken, upload.single('logo'), [
       return res.status(400).json({ error: `Limite de ${MAX_BOUTIQUES} boutiques par compte atteinte.` });
     }
 
-    const { nom, description, categorie, telephone, adresse, ville } = req.body;
+    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram } = req.body;
 
     let logo_url = null;
-    if (req.file) {
-      try { logo_url = await uploadBuffer(req.file.buffer, 'boutiques'); } catch {}
+    if (req.files?.logo?.[0]) {
+      try { logo_url = await uploadBuffer(req.files.logo[0].buffer, 'boutiques'); } catch {}
+    }
+    let cover_url = null;
+    if (req.files?.cover?.[0]) {
+      try { cover_url = await uploadBuffer(req.files.cover[0].buffer, 'boutiques_cover'); } catch {}
     }
 
     const r = await pool.query(
-      `INSERT INTO boutiques (utilisateur_id, nom, description, categorie, telephone, adresse, ville, logo_url)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+      `INSERT INTO boutiques (utilisateur_id, nom, description, categorie, telephone, adresse, ville,
+       logo_url, cover_url, whatsapp, site_web, facebook, instagram)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
       [userId, nom.trim(), description||null, categorie||null, telephone||null,
-       adresse||null, ville||'Dakar', logo_url]
+       adresse||null, ville||'Dakar', logo_url, cover_url||null,
+       whatsapp||null, site_web||null, facebook||null, instagram||null]
     );
     res.status(201).json({ success: true, id: r.rows[0].id });
   } catch (err) {
@@ -182,7 +291,7 @@ router.post('/', limiterPublication, verifierToken, upload.single('logo'), [
 });
 
 // ── PUT /api/boutiques/:id — modifier la sienne
-router.put('/:id', verifierToken, param('id').isUUID(), upload.single('logo'), async (req, res) => {
+router.put('/:id', verifierToken, param('id').isUUID(), upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'cover', maxCount: 1 }]), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const existing = await pool.query(
@@ -191,18 +300,31 @@ router.put('/:id', verifierToken, param('id').isUUID(), upload.single('logo'), a
     );
     if (!existing.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
 
-    const { nom, description, categorie, telephone, adresse, ville } = req.body;
+    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, horaires } = req.body;
+
     let logo_url = existing.rows[0].logo_url;
-    if (req.file) {
-      try { logo_url = await uploadBuffer(req.file.buffer, 'boutiques'); } catch {}
+    if (req.files?.logo?.[0]) {
+      try { logo_url = await uploadBuffer(req.files.logo[0].buffer, 'boutiques'); } catch {}
+    }
+    let cover_url = existing.rows[0].cover_url;
+    if (req.files?.cover?.[0]) {
+      try { cover_url = await uploadBuffer(req.files.cover[0].buffer, 'boutiques_cover'); } catch {}
+    }
+
+    let horairesJson = existing.rows[0].horaires;
+    if (horaires) {
+      try { horairesJson = typeof horaires === 'string' ? JSON.parse(horaires) : horaires; } catch {}
     }
 
     await pool.query(
       `UPDATE boutiques SET nom=$1, description=$2, categorie=$3, telephone=$4, adresse=$5,
-       ville=$6, logo_url=$7, updated_at=NOW() WHERE id=$8 AND utilisateur_id=$9`,
+       ville=$6, logo_url=$7, cover_url=$8, whatsapp=$9, site_web=$10, facebook=$11,
+       instagram=$12, horaires=$13, updated_at=NOW()
+       WHERE id=$14 AND utilisateur_id=$15`,
       [nom||existing.rows[0].nom, description||null, categorie||null,
-       telephone||null, adresse||null, ville||'Dakar', logo_url,
-       req.params.id, req.user.userId]
+       telephone||null, adresse||null, ville||'Dakar', logo_url, cover_url||null,
+       whatsapp||null, site_web||null, facebook||null, instagram||null,
+       horairesJson, req.params.id, req.user.userId]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }

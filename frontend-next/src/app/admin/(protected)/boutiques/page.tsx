@@ -21,6 +21,8 @@ interface Boutique {
   created_at: string
   proprietaire_nom: string | null
   proprietaire_email: string | null
+  plan_actif: 'pro' | 'business' | null
+  plan_fin: string | null
 }
 
 export default async function AdminBoutiquesPage() {

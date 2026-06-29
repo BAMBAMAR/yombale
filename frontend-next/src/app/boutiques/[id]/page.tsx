@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
-import { fcfa } from '@/lib/format'
 import { notFound } from 'next/navigation'
 import { cloudinaryHQ } from '@/lib/cloudinary'
+import BoutiqueDetailClient, { type Produit, type Annonce } from './BoutiqueDetailClient'
 
 interface Boutique {
   id: string
@@ -11,21 +11,17 @@ interface Boutique {
   description: string | null
   categorie: string | null
   telephone: string | null
+  whatsapp: string | null
   adresse: string | null
   ville: string
   logo_url: string | null
+  cover_url: string | null
+  site_web: string | null
+  facebook: string | null
+  instagram: string | null
+  horaires: Record<string, string> | null
   utilisateur_id: string
-  created_at: string
-}
-
-interface Annonce {
-  id: string
-  titre: string
-  prix: number | null
-  ville: string | null
-  quartier: string | null
-  categorie_slug: string
-  photos: string[]
+  plan_actif: 'pro' | 'business' | null
   created_at: string
 }
 
@@ -38,7 +34,11 @@ const CAT_ICONS: Record<string, string> = {
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   try {
     const b = await apiFetch<Boutique>(`/boutiques/${params.id}`)
-    return { title: `${b.nom} — Nopalou`, description: b.description ?? `Boutique de ${b.ville} sur Nopalou` }
+    return {
+      title: `${b.nom} — Boutique sur Nopalou`,
+      description: b.description ?? `Boutique de ${b.ville} sur Nopalou`,
+      openGraph: b.logo_url ? { images: [b.logo_url] } : undefined,
+    }
   } catch {
     return { title: 'Boutique — Nopalou' }
   }
@@ -47,6 +47,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 export default async function BoutiqueDetailPage({ params }: { params: { id: string } }) {
   let boutique: Boutique
   let annonces: Annonce[] = []
+  let produits: Produit[] = []
 
   try {
     boutique = await apiFetch<Boutique>(`/boutiques/${params.id}`)
@@ -54,90 +55,160 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
     notFound()
   }
 
-  try {
-    const data = await apiFetch<{ annonces: Annonce[] }>(
-      `/annonces?utilisateur_id=${boutique!.utilisateur_id}&limit=24`
-    )
-    annonces = data.annonces ?? []
-  } catch {}
-
   const b = boutique!
 
+  // Fetch produits + annonces en parallèle
+  await Promise.all([
+    apiFetch<{ produits: Produit[] }>(`/boutiques/${params.id}/produits`)
+      .then(d => { produits = d.produits ?? [] })
+      .catch(() => {}),
+    apiFetch<{ annonces: Annonce[] }>(`/annonces?utilisateur_id=${b.utilisateur_id}&limit=24`)
+      .then(d => { annonces = d.annonces ?? [] })
+      .catch(() => {}),
+  ])
+
+  const contactNumber = b.whatsapp || b.telephone
+  const whatsappUrl = contactNumber
+    ? `https://wa.me/${contactNumber.replace(/\D/g, '')}`
+    : null
+
   return (
-    <div className="page-container" style={{ paddingTop: '2rem' }}>
-      {/* Fiche boutique */}
-      <div className="boutique-fiche">
-        <div className="boutique-fiche-logo">
-          {b.logo_url
-            ? <img src={b.logo_url} alt={b.nom} />
-            : <span>{CAT_ICONS[b.categorie ?? ''] ?? '🏪'}</span>
-          }
-        </div>
-        <div className="boutique-fiche-info">
-          <h1 className="boutique-fiche-nom">{b.nom}</h1>
-          {b.description && <p className="boutique-fiche-desc">{b.description}</p>}
-          <div className="boutique-fiche-meta">
-            {b.ville    && <span>📍 {[b.adresse, b.ville].filter(Boolean).join(', ')}</span>}
-            {b.categorie && <span>{CAT_ICONS[b.categorie] ?? ''} {b.categorie}</span>}
-            {b.telephone && (
-              <a href={`tel:${b.telephone}`} className="boutique-fiche-tel">
-                📞 {b.telephone}
-              </a>
-            )}
+    <div className="page-container" style={{ paddingTop: 0, paddingBottom: '3rem' }}>
+
+      {/* Cover photo */}
+      <div style={{
+        width: '100%', height: 200, background: 'linear-gradient(135deg, #1e3a5f, #2563eb)',
+        position: 'relative', overflow: 'hidden', marginBottom: 0,
+      }}>
+        {b.cover_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={cloudinaryHQ(b.cover_url, { width: 1200 })}
+            alt=""
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        )}
+        {/* Gradient overlay */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,.5) 100%)',
+        }} />
+      </div>
+
+      {/* Header boutique */}
+      <div style={{
+        background: '#fff', borderBottom: '1px solid #e5e7eb',
+        padding: '0 20px 20px', marginBottom: 24,
+      }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', marginTop: -36 }}>
+            {/* Logo */}
+            <div style={{
+              width: 80, height: 80, borderRadius: 12, overflow: 'hidden', flexShrink: 0,
+              border: '3px solid #fff', background: '#f8fafc',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,.15)',
+            }}>
+              {b.logo_url
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={b.logo_url} alt={b.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span style={{ fontSize: 36 }}>{CAT_ICONS[b.categorie ?? ''] ?? '🏪'}</span>
+              }
+            </div>
+
+            <div style={{ flex: 1, paddingBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 22, fontWeight: 800, margin: 0 }}>
+                  {b.nom}
+                </h1>
+                {b.plan_actif === 'business' && (
+                  <span style={{ fontSize: 11, background: '#1e3a5f', color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
+                    💼 Business
+                  </span>
+                )}
+                {b.plan_actif === 'pro' && (
+                  <span style={{ fontSize: 11, background: '#C75B00', color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
+                    ⭐ Vendeur Pro
+                  </span>
+                )}
+              </div>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>
+                {[b.categorie, b.adresse, b.ville].filter(Boolean).join(' · ')}
+              </p>
+            </div>
           </div>
-          {b.telephone && (
-            <div className="boutique-fiche-actions">
-              <a href={`tel:${b.telephone}`} className="boutique-contact-btn">📞 Appeler</a>
+
+          {/* Boutons d'action */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
+            {whatsappUrl && (
               <a
-                href={`https://wa.me/${b.telephone.replace(/\D/g, '')}`}
+                href={whatsappUrl}
                 target="_blank" rel="noopener noreferrer"
-                className="boutique-whatsapp-btn"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: '#25d366', color: '#fff', padding: '9px 18px',
+                  borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14,
+                }}
               >
                 💬 WhatsApp
               </a>
-            </div>
-          )}
+            )}
+            {b.telephone && (
+              <a
+                href={`tel:${b.telephone}`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: '#f0f9ff', color: '#1d4ed8', border: '1px solid #bfdbfe',
+                  padding: '9px 18px', borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14,
+                }}
+              >
+                📞 {b.telephone}
+              </a>
+            )}
+            {b.site_web && (
+              <a
+                href={b.site_web}
+                target="_blank" rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: '#f8fafc', color: '#374151', border: '1px solid #e5e7eb',
+                  padding: '9px 18px', borderRadius: 10, textDecoration: 'none', fontWeight: 600, fontSize: 14,
+                }}
+              >
+                🌐 Site web
+              </a>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Annonces du vendeur */}
-      <div className="boutique-annonces-section">
-        <h2 className="boutique-annonces-titre">
-          Annonces de cette boutique
-          {annonces.length > 0 && <span className="telecom-groupe-count">{annonces.length}</span>}
-        </h2>
+      {/* Contenu avec onglets */}
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 20px' }}>
+        <BoutiqueDetailClient
+          boutique={{
+            id: b.id,
+            nom: b.nom,
+            telephone: b.telephone,
+            whatsapp: b.whatsapp,
+            facebook: b.facebook,
+            instagram: b.instagram,
+            site_web: b.site_web,
+            horaires: b.horaires,
+            adresse: b.adresse,
+            ville: b.ville,
+            categorie: b.categorie,
+            description: b.description,
+            plan_actif: b.plan_actif,
+          }}
+          produits={produits}
+          annonces={annonces}
+        />
 
-        {annonces.length === 0 ? (
-          <div className="empty-state" style={{ padding: '32px 0' }}>
-            <span style={{ fontSize: 36 }}>📭</span>
-            <p>Aucune annonce pour l&apos;instant.</p>
-          </div>
-        ) : (
-          <div className="boutique-annonces-grid">
-            {annonces.map(a => {
-              const img = a.photos?.[0] ?? null
-              return (
-                <Link href={`/annonces/${a.id}`} key={a.id} className="boutique-annonce-card">
-                  <div className="boutique-annonce-img">
-                    {img
-                      ? <img src={cloudinaryHQ(img, { width: 400 })} alt={a.titre} loading="lazy" />
-                      : <span>{CAT_ICONS[a.categorie_slug] ?? '📦'}</span>
-                    }
-                  </div>
-                  <div className="boutique-annonce-body">
-                    <p className="boutique-annonce-titre">{a.titre}</p>
-                    <p className="boutique-annonce-prix">{a.prix ? fcfa(a.prix) : 'Prix à négocier'}</p>
-                    {a.ville && <p className="boutique-annonce-ville">📍 {[a.quartier, a.ville].filter(Boolean).join(', ')}</p>}
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      <div style={{ marginTop: 24 }}>
-        <Link href="/boutiques" className="budget-pill">← Toutes les boutiques</Link>
+        <div style={{ marginTop: 32 }}>
+          <Link href="/boutiques" style={{ color: '#6b7280', textDecoration: 'none', fontSize: 14 }}>
+            ← Toutes les boutiques
+          </Link>
+        </div>
       </div>
     </div>
   )
