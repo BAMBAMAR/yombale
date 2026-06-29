@@ -258,6 +258,100 @@ export default async function HomePage({
         </section>
       )}
 
+      {/* ── Tarifs Boutique Pro / Business ──────────────────────── */}
+      {!hasFiltre && (
+        <section style={{ maxWidth: 900, margin: '48px auto 0', padding: '0 16px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy)', margin: '0 0 8px' }}>
+              Ouvrez votre boutique en ligne
+            </h2>
+            <p style={{ color: '#64748b', fontSize: 15, margin: 0 }}>
+              Vendez directement sur Nopalou — catalogue produits, analytics, placement prioritaire.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+            {/* Plan Pro */}
+            <div style={{
+              border: '2px solid #C75B00', borderRadius: 16, padding: '28px 24px',
+              background: '#fff', position: 'relative',
+            }}>
+              <span style={{
+                position: 'absolute', top: -12, left: 20,
+                background: '#C75B00', color: '#fff',
+                fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20, letterSpacing: '.04em',
+              }}>BOUTIQUE PRO</span>
+              <p style={{ fontSize: 30, fontWeight: 800, margin: '8px 0 2px', color: '#C75B00' }}>
+                15 000 <span style={{ fontSize: 14, fontWeight: 400, color: '#64748b' }}>FCFA/mois</span>
+              </p>
+              <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>Paiement via Wave</p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {[
+                  'Catalogue produits avec photos',
+                  'Placement prioritaire dans /boutiques',
+                  'Badge "Vendeur Pro" sur vos annonces',
+                  '5 annonces classées incluses/mois',
+                  'Analytics : vues & clics',
+                ].map(a => (
+                  <li key={a} style={{ fontSize: 13, display: 'flex', gap: 8 }}>
+                    <span style={{ color: '#C75B00', fontWeight: 700 }}>✓</span>{a}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/boutique/abonnement" style={{
+                display: 'block', textAlign: 'center',
+                background: '#C75B00', color: '#fff',
+                padding: '11px 0', borderRadius: 10,
+                fontWeight: 700, fontSize: 14, textDecoration: 'none',
+              }}>
+                Démarrer en Pro
+              </Link>
+            </div>
+
+            {/* Plan Business */}
+            <div style={{
+              border: '2px solid #1e3a5f', borderRadius: 16, padding: '28px 24px',
+              background: '#f8fafc', position: 'relative',
+            }}>
+              <span style={{
+                position: 'absolute', top: -12, left: 20,
+                background: '#1e3a5f', color: '#fff',
+                fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20, letterSpacing: '.04em',
+              }}>BOUTIQUE BUSINESS</span>
+              <p style={{ fontSize: 30, fontWeight: 800, margin: '8px 0 2px', color: '#1e3a5f' }}>
+                35 000 <span style={{ fontSize: 14, fontWeight: 400, color: '#64748b' }}>FCFA/mois</span>
+              </p>
+              <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>Paiement via Wave</p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {[
+                  'Tout ce qui est inclus dans Pro',
+                  'URL dédiée /boutiques/[votre-nom]',
+                  '15 annonces classées incluses/mois',
+                  'Bannière dans 1 page catégorie',
+                  'Support prioritaire WhatsApp',
+                ].map(a => (
+                  <li key={a} style={{ fontSize: 13, display: 'flex', gap: 8 }}>
+                    <span style={{ color: '#1e3a5f', fontWeight: 700 }}>✓</span>{a}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/boutique/abonnement" style={{
+                display: 'block', textAlign: 'center',
+                background: '#1e3a5f', color: '#fff',
+                padding: '11px 0', borderRadius: 10,
+                fontWeight: 700, fontSize: 14, textDecoration: 'none',
+              }}>
+                Démarrer en Business
+              </Link>
+            </div>
+          </div>
+
+          <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', marginTop: 16 }}>
+            Pas de débit automatique · Renouvellement manuel · Paiement sécurisé Wave
+          </p>
+        </section>
+      )}
+
       {/* ── Bloc SEO ─────────────────────────────────────────────── */}
       {!hasFiltre && (
         <section style={{
