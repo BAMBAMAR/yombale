@@ -12,6 +12,8 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024, files: 2 },
   fileFilter: (req, file, cb) => {
+    // Les inputs fichier vides (aucun fichier sélectionné) arrivent avec filename="" — on les ignore
+    if (!file.originalname) return cb(null, false);
     if (file.mimetype.startsWith('image/')) return cb(null, true);
     cb(new Error('Seules les images sont acceptées'));
   },
@@ -416,7 +418,10 @@ router.put('/:id', verifierToken, param('id').isUUID(), upload.fields([{ name: '
       );
     } catch (_) { /* colonnes pas encore migrées — ignoré */ }
     res.json({ success: true, slug: newSlug });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+  } catch (err) {
+    console.error('[BOUTIQUES PUT]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 // ── DELETE /api/boutiques/:id — supprimer la sienne
