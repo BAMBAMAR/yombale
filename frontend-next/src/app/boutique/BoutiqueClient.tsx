@@ -328,8 +328,10 @@ function BoutiqueForm({ boutique, onCancel, onSuccess }: {
             defaultValue={boutique?.slug ?? ''}
             style={{ ...inputStyle, border: 'none', borderRadius: 0, flex: 1 }}
             placeholder="mon-nom-de-boutique"
-            pattern="[a-z0-9\-]+"
             maxLength={80}
+            onChange={e => {
+              e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')
+            }}
           />
         </div>
         <p style={{ fontSize: 11, color: '#9ca3af', margin: '4px 0 0' }}>
