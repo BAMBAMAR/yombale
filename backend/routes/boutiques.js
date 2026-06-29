@@ -7,6 +7,7 @@ const { checkAbonnement, requireAbonnement } = require('../middlewares/checkAbon
 const { limiterPublication } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
 const multer = require('multer');
+const { syncProduit, deleteProduit } = require('../services/whatsapp-catalog');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -252,6 +253,9 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
        images, en_stock !== 'false', categorie||null, caracJson]
     );
     res.status(201).json({ success: true, produit: r.rows[0] });
+    // Sync catalogue Meta (async, non-bloquant)
+    const boutique = await pool.query('SELECT slug FROM boutiques WHERE id=$1', [id]);
+    syncProduit({ ...r.rows[0], boutique_slug: boutique.rows[0]?.slug }).catch(() => {});
   } catch (err) {
     console.error('[BOUTIQUES PRODUIT POST]', err);
     res.status(500).json({ error: 'Erreur serveur' });
@@ -289,6 +293,8 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
        caracJson, prodId, id]
     );
     res.json({ success: true, produit: r.rows[0] });
+    const bout = await pool.query('SELECT slug FROM boutiques WHERE id=$1', [id]);
+    syncProduit({ ...r.rows[0], boutique_slug: bout.rows[0]?.slug }).catch(() => {});
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
@@ -302,6 +308,7 @@ router.delete('/:id/produits/:prodId', verifierToken, param('id').isUUID(), para
 
     const r = await pool.query('DELETE FROM boutique_produits WHERE id=$1 AND boutique_id=$2 RETURNING id', [prodId, id]);
     if (!r.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+    deleteProduit(prodId).catch(() => {});
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
