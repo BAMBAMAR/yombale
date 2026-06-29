@@ -71,7 +71,7 @@ export default async function FicheProduitPage(
 
   const waContact = p.boutique_whatsapp || p.boutique_telephone
   const waUrl = waContact
-    ? `https://wa.me/${waContact.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé par : ${p.nom} (vu sur Nopalou)`)}`
+    ? `https://wa.me/${waContact.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par :\n\n*${p.nom}*${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${params.id}/produits/${params.produitId}`)}`
     : null
   const telUrl = p.boutique_telephone ? `tel:${p.boutique_telephone}` : null
 

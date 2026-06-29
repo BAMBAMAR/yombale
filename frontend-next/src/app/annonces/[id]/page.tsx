@@ -146,7 +146,7 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
               📞 {annonce.contact_tel}
             </a>
             <a
-              href={`https://wa.me/${annonce.contact_tel.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par votre annonce : "${annonce.titre}"`)}`}
+              href={`https://wa.me/${annonce.contact_tel.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par votre annonce :\n\n*${annonce.titre}*${annonce.prix ? ` — ${formatPrix(annonce.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/annonces/${annonce.id}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="annonce-contact-whatsapp"

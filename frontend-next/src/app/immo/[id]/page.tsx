@@ -210,7 +210,7 @@ export default async function FicheImmoPage({
               📞 {annonce.contact_tel}
             </a>
             <a
-              href={`https://wa.me/${annonce.contact_tel.replace(/\D/g, '')}?text=Bonjour, je suis intéressé par votre annonce : ${annonce.titre}`}
+              href={`https://wa.me/${annonce.contact_tel.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par :\n\n*${annonce.titre}*${annonce.prix ? ` — ${fcfa(annonce.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/immo/${annonce.id}`)}`}
               target="_blank" rel="noopener noreferrer"
               style={{ display: 'block', marginTop: 8, color: '#25d366', fontWeight: 600 }}
             >

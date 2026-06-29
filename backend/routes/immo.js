@@ -6,6 +6,7 @@ const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken } = require('../middlewares/auth');
 const { limiterPublication } = require('../middlewares/rateLimit');
+const { notifierModerationImmo } = require('../services/notifications');
 
 const validationAnnonce = [
   body('titre').trim().notEmpty(),
@@ -364,6 +365,9 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
        rejete ?? null, motif_rejet ?? null]
     );
     if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
+    if (actif === true || rejete === true) {
+      notifierModerationImmo(rows[0]).catch(() => {});
+    }
     res.json(rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
