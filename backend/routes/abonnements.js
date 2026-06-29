@@ -134,4 +134,21 @@ router.put('/admin/:id/annuler', adminSecretOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// PUT /api/abonnements/admin/:id/prolonger — prolonger un abonnement (admin)
+router.put('/admin/:id/prolonger', adminSecretOnly, async (req, res) => {
+  try {
+    const jours = Math.max(1, Math.min(365, parseInt(req.body.jours) || 30));
+    const { rows } = await pool.query(
+      `UPDATE abonnements
+       SET fin = GREATEST(fin, NOW()) + ($2 || ' days')::INTERVAL,
+           statut = 'actif'
+       WHERE id=$1
+       RETURNING id, plan, statut, fin`,
+      [req.params.id, jours]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Abonnement introuvable' });
+    res.json({ abonnement: rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 module.exports = router;

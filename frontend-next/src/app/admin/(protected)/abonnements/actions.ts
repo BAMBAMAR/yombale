@@ -7,6 +7,42 @@ const COOKIE  = 'nopalou_admin'
 
 export interface ActionState { error?: string; success?: boolean; info?: string }
 
+async function adminHeaders() {
+  const jar = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) throw new Error('Non authentifié')
+  return { 'X-Admin-Secret': secret, 'Content-Type': 'application/json' }
+}
+
+export async function annulerAbonnement(id: string): Promise<ActionState> {
+  try {
+    const headers = await adminHeaders()
+    const res = await fetch(`${BACKEND}/api/abonnements/admin/${id}/annuler`, { method: 'PUT', headers })
+    const data = await res.json()
+    if (!res.ok) return { error: data.error ?? `Erreur ${res.status}` }
+    revalidatePath('/admin/abonnements')
+    return { success: true, info: 'Abonnement annulé.' }
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : 'Erreur' }
+  }
+}
+
+export async function prolongerAbonnement(id: string, jours: number): Promise<ActionState> {
+  try {
+    const headers = await adminHeaders()
+    const res = await fetch(`${BACKEND}/api/abonnements/admin/${id}/prolonger`, {
+      method: 'PUT', headers, body: JSON.stringify({ jours }),
+    })
+    const data = await res.json()
+    if (!res.ok) return { error: data.error ?? `Erreur ${res.status}` }
+    revalidatePath('/admin/abonnements')
+    const fin = new Date(data.abonnement.fin).toLocaleDateString('fr-FR')
+    return { success: true, info: `Prolongé — nouvelle échéance : ${fin}` }
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : 'Erreur' }
+  }
+}
+
 export async function activerPlanTest(
   prevState: ActionState,
   formData: FormData
@@ -31,10 +67,7 @@ export async function activerPlanTest(
     const data = await res.json()
     if (!res.ok) return { error: data.error ?? `Erreur ${res.status}` }
     revalidatePath('/admin/abonnements')
-    return {
-      success: true,
-      info: `Plan ${plan.toUpperCase()} activé pour ${email} (${jours} jours)`,
-    }
+    return { success: true, info: `Plan ${plan.toUpperCase()} activé pour ${email} (${jours} jours)` }
   } catch {
     return { error: 'Erreur de connexion au backend' }
   }

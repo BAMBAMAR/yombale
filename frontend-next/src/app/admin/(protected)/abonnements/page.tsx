@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import ActiverPlanClient from './ActiverPlanClient'
+import AbonnementRowActions from './AbonnementRowActions'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 const COOKIE  = 'nopalou_admin'
@@ -90,14 +91,14 @@ export default async function AdminAbonnementsPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
           <thead>
             <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-              {['Utilisateur', 'Plan', 'Statut', 'Prix', 'Début', 'Fin', 'Réf. paiement'].map(h => (
+              {['Utilisateur', 'Plan', 'Statut', 'Prix', 'Début', 'Fin', 'Réf. paiement', 'Actions'].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {abonnements.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: '#94a3b8' }}>Aucun abonnement pour le moment</td></tr>
+              <tr><td colSpan={8} style={{ padding: 32, textAlign: 'center', color: '#94a3b8' }}>Aucun abonnement pour le moment</td></tr>
             )}
             {abonnements.map((a, i) => (
               <tr key={a.id} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
@@ -113,7 +114,8 @@ export default async function AdminAbonnementsPage() {
                 <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>{fcfa(a.prix_mensuel)}</td>
                 <td style={{ padding: '10px 14px', whiteSpace: 'nowrap', color: '#64748b' }}>{dateF(a.debut)}</td>
                 <td style={{ padding: '10px 14px', whiteSpace: 'nowrap', color: a.statut === 'actif' ? '#16a34a' : '#94a3b8', fontWeight: a.statut === 'actif' ? 600 : 400 }}>{dateF(a.fin)}</td>
-                <td style={{ padding: '10px 14px', color: '#94a3b8', fontSize: 12, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.commande_ref ?? '—'}</td>
+                <td style={{ padding: '10px 14px', color: '#94a3b8', fontSize: 12, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.commande_ref ?? '—'}</td>
+                <AbonnementRowActions id={a.id} statut={a.statut} plan={a.plan} />
               </tr>
             ))}
           </tbody>
