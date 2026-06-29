@@ -12,10 +12,8 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024, files: 2 },
   fileFilter: (req, file, cb) => {
-    // Les inputs fichier vides (aucun fichier sélectionné) arrivent avec filename="" — on les ignore
-    if (!file.originalname) return cb(null, false);
     if (file.mimetype.startsWith('image/')) return cb(null, true);
-    cb(new Error('Seules les images sont acceptées'));
+    cb(null, false); // ignorer silencieusement les fichiers non-image (inputs vides, octet-stream…)
   },
 });
 
