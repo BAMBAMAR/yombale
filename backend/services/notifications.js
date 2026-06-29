@@ -1,6 +1,6 @@
 // backend/services/notifications.js
 const { envoyerEmail }    = require('./email');
-const { sendWhatsAppText } = require('./whatsapp');
+const { sendWhatsAppText, sendWhatsAppCarousel, sendWhatsAppTemplate } = require('./whatsapp');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 
@@ -42,12 +42,33 @@ async function confirmationCommande(telephone, reference) {
 
 async function notifierModerationImmo(annonce) {
   if (!annonce.contact_tel) return;
-  const msg = annonce.actif
-    ? `✅ *Annonce validée — Nopalou*\n\nVotre annonce *"${annonce.titre}"* est maintenant en ligne !\n\n👉 ${SITE}/immo/${annonce.id}`
-    : annonce.rejete
-      ? `❌ *Annonce refusée — Nopalou*\n\nVotre annonce *"${annonce.titre}"* n'a pas pu être publiée.\n\n📝 Motif : ${annonce.motif_rejet || 'Non précisé'}\n\nVous pouvez la corriger et la soumettre à nouveau sur Nopalou.`
-      : null;
-  if (msg) await sendWhatsAppText(annonce.contact_tel, msg).catch(() => {});
+  const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+
+  if (annonce.rejete) {
+    const msg = `❌ *Annonce refusée — Nopalou*\n\nVotre annonce *"${annonce.titre}"* n'a pas pu être publiée.\n\n📝 Motif : ${annonce.motif_rejet || 'Non précisé'}\n\nVous pouvez la corriger et la soumettre à nouveau sur Nopalou.`;
+    return sendWhatsAppText(annonce.contact_tel, msg).catch(() => {});
+  }
+
+  if (annonce.actif) {
+    const card = {
+      imageUrl: annonce.photos?.[0] || null,
+      title:    annonce.titre,
+      detail:   annonce.prix
+        ? new Intl.NumberFormat('fr-FR').format(annonce.prix) + ' FCFA'
+        : 'Prix non précisé',
+      pageUrl: `${SITE}/immo/${annonce.id}`,
+    };
+    if (card.imageUrl) {
+      return sendWhatsAppCarousel(annonce.contact_tel, 'nopalou_carousel_immo', [card]).catch(() => {});
+    }
+    return sendWhatsAppTemplate(annonce.contact_tel, 'nopalou_fiche_texte', [
+      { type: 'body', parameters: [
+        { type: 'text', text: card.title },
+        { type: 'text', text: card.detail },
+        { type: 'text', text: card.pageUrl },
+      ]},
+    ]).catch(() => {});
+  }
 }
 
 module.exports = { envoyerAlertePrix, confirmationCommande, notifierModerationImmo };

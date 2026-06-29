@@ -6,6 +6,7 @@ const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken } = require('../middlewares/auth');
 const { limiterPublication, limiterEcriture } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
+const { sendWhatsAppCarousel, sendWhatsAppTemplate } = require('../services/whatsapp');
 
 const PRIX_ANNONCE  = 1500;
 const QUOTA_GRATUIT = 2;
@@ -356,6 +357,35 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
       );
     }
     res.json({ success: true });
+
+    // Notification WhatsApp au déposant si approbation (fire-and-forget)
+    if (newActif) {
+      setImmediate(async () => {
+        try {
+          const ann = await pool.query('SELECT * FROM annonces_classifiees WHERE id=$1', [req.params.id]);
+          const a = ann.rows[0];
+          if (!a?.contact_tel) return;
+          const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+          const card = {
+            imageUrl: a.photos?.[0] || null,
+            title:    a.titre,
+            detail:   a.prix ? new Intl.NumberFormat('fr-FR').format(a.prix) + ' FCFA' : 'Prix non précisé',
+            pageUrl:  `${SITE}/annonces/${a.id}`,
+          };
+          if (card.imageUrl) {
+            await sendWhatsAppCarousel(a.contact_tel, 'nopalou_carousel_annonce', [card]);
+          } else {
+            await sendWhatsAppTemplate(a.contact_tel, 'nopalou_fiche_texte', [
+              { type: 'body', parameters: [
+                { type: 'text', text: card.title },
+                { type: 'text', text: card.detail },
+                { type: 'text', text: card.pageUrl },
+              ]},
+            ]);
+          }
+        } catch {}
+      });
+    }
   } catch (err) {
     console.error('[ADMIN PUT]', err.message);
     res.status(500).json({ error: 'Erreur serveur' });
