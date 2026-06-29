@@ -95,12 +95,15 @@ const NB_CHAMBRES = [
 const VILLES_SN = ['Dakar', 'Pikine', 'Guédiawaye', 'Rufisque', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor', 'Kaolack', 'Touba']
 
 const TYPE_ICONS: Record<string, string> = {
-  appartement: '🏢',
-  villa:       '🏡',
-  maison:      '🏠',
-  studio:      '🛏',
-  terrain:     '🌿',
-  bureau:      '🏢',
+  appartement:        '🏢',
+  appartement_meuble: '🏢',
+  villa:              '🏡',
+  maison:             '🏠',
+  studio:             '🛏',
+  chambre:            '🛏',
+  chambre_meuble:     '🛏',
+  terrain:            '🌿',
+  bureau:             '🏢',
 }
 
 const SOURCE_LABELS: Record<string, string> = {

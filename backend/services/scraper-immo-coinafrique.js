@@ -78,6 +78,19 @@ function raffinerTypeBien(type_bien, titre) {
   return type_bien;
 }
 
+// Extrait le nombre de pièces depuis le titre
+// ex: "Appartement F3", "2 pièces", "T4", "studio" → 1
+function extractNbPieces(titre) {
+  if (!titre) return null;
+  const t = titre.toLowerCase();
+  if (/\bstudio\b/.test(t)) return 1;
+  let m = t.match(/\b[ft](\d)\b/);
+  if (m) return parseInt(m[1], 10);
+  m = t.match(/(\d+)\s*pi[eè]ce/);
+  if (m) return parseInt(m[1], 10);
+  return null;
+}
+
 function parseLocalisation(txt) {
   if (!txt) return { ville: 'Dakar', quartier: null };
   const VILLES = ['Dakar', 'Thiès', 'Saint-Louis', 'Ziguinchor', 'Kaolack',
@@ -139,17 +152,20 @@ async function scraperPage(url, type_bien_defaut) {
       const transaction = transactionFromUrl(urlAnn);
       const type_bien   = raffinerTypeBien(typeBienFromUrl(urlAnn, type_bien_defaut), titre);
 
+      const titreTrim = titre.trim();
       annonces.push({
-        titre: titre.trim(),
+        titre:       titreTrim,
         type_bien,
         transaction,
-        prix: prix && prix > 0 && prix < 999_000_000 ? prix : null,
+        prix:        prix && prix > 0 && prix < 999_000_000 ? prix : null,
         ville:       loc.ville,
         quartier:    loc.quartier,
         photos:      (photo && !photo.includes('placeholder')) ? [photo] : [],
         url_source:  urlAnn,
         source:      'coinafrique',
         ref_externe: ref_ext,
+        meuble:      type_bien.includes('meuble'),
+        nb_pieces:   extractNbPieces(titreTrim),
       });
     });
   } catch (err) {
@@ -162,20 +178,23 @@ async function upsertAnnonce(a) {
   await pool.query(`
     INSERT INTO annonces_immo
       (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
-       ville, quartier, description, photos, url_source, source, ref_externe)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14)
+       ville, quartier, description, photos, url_source, source, ref_externe, meuble)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15)
     ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
     DO UPDATE SET
       titre      = EXCLUDED.titre,
       prix       = COALESCE(EXCLUDED.prix, annonces_immo.prix),
       photos     = CASE WHEN jsonb_array_length(EXCLUDED.photos) > 0
                         THEN EXCLUDED.photos ELSE annonces_immo.photos END,
+      meuble     = EXCLUDED.meuble,
+      nb_pieces  = COALESCE(EXCLUDED.nb_pieces, annonces_immo.nb_pieces),
       actif      = true,
       updated_at = NOW()
   `, [
     a.titre, a.type_bien, a.transaction, a.prix || null, null,
-    null, null, a.ville, a.quartier || null, null,
+    a.nb_pieces || null, null, a.ville, a.quartier || null, null,
     JSON.stringify(a.photos || []), a.url_source, a.source, a.ref_externe,
+    a.meuble || false,
   ]);
 }
 

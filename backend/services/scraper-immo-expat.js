@@ -62,6 +62,17 @@ function parseSurfaceTitre(titre) {
   return m ? parseInt(m[1], 10) : null;
 }
 
+function extractNbPieces(titre) {
+  if (!titre) return null;
+  const t = titre.toLowerCase();
+  if (/\bstudio\b/.test(t)) return 1;
+  let m = t.match(/\b[ft](\d)\b/);
+  if (m) return parseInt(m[1], 10);
+  m = t.match(/(\d+)\s*pi[eè]ce/);
+  if (m) return parseInt(m[1], 10);
+  return null;
+}
+
 // Affine le type_bien en croisant catégorie source + mots-clés du titre.
 // Les annonceurs publient souvent studios/chambres sous "Appartements" sur expat-dakar.com.
 function raffinerTypeExpat(type_bien, titre) {
@@ -136,6 +147,7 @@ async function scraperPage(url, type_bien, transaction) {
         transaction,
         prix:        parsePrix(prixTxt),
         surface_m2:  parseSurfaceTitre(titre),
+        nb_pieces:   extractNbPieces(titre),
         nb_chambres: nbCh,
         ville:       loc.ville,
         quartier:    loc.quartier,
@@ -143,6 +155,7 @@ async function scraperPage(url, type_bien, transaction) {
         url_source:  urlAnn,
         source:      'expat-dakar',
         ref_externe: ref_ext,
+        meuble:      typeFinal.includes('meuble'),
       });
     });
   } catch (err) {
@@ -155,20 +168,23 @@ async function upsertAnnonce(a) {
   await pool.query(`
     INSERT INTO annonces_immo
       (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
-       ville, quartier, description, photos, url_source, source, ref_externe)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14)
+       ville, quartier, description, photos, url_source, source, ref_externe, meuble)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15)
     ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
     DO UPDATE SET
       titre      = EXCLUDED.titre,
       prix       = COALESCE(EXCLUDED.prix, annonces_immo.prix),
       photos     = CASE WHEN jsonb_array_length(EXCLUDED.photos) > 0
                         THEN EXCLUDED.photos ELSE annonces_immo.photos END,
+      meuble     = EXCLUDED.meuble,
+      nb_pieces  = COALESCE(EXCLUDED.nb_pieces, annonces_immo.nb_pieces),
       actif      = true,
       updated_at = NOW()
   `, [
     a.titre, a.type_bien, a.transaction, a.prix || null, a.surface_m2 || null,
-    null, a.nb_chambres || null, a.ville, a.quartier || null, null,
+    a.nb_pieces || null, a.nb_chambres || null, a.ville, a.quartier || null, null,
     JSON.stringify(a.photos || []), a.url_source, a.source, a.ref_externe,
+    a.meuble || false,
   ]);
 }
 

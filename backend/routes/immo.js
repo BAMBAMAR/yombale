@@ -46,13 +46,19 @@ router.get('/', async (req, res) => {
         AND ($1::text IS NULL OR transaction = $1)
         AND ($2::text IS NULL OR ville ILIKE $2)
         AND ($3::text IS NULL OR quartier ILIKE '%' || $3 || '%')
-        AND ($4::text IS NULL OR LOWER(type_bien) = LOWER($4))
+        AND ($4::text IS NULL OR (
+              LOWER(type_bien) = LOWER($4)
+              OR LOWER(type_bien) = LOWER($4) || '_meuble'
+            ))
         AND ($5::numeric IS NULL OR prix >= $5::numeric)
         AND ($6::numeric IS NULL OR prix <= $6::numeric)
         AND ($7::int IS NULL OR surface_m2 >= $7::int)
         AND ($8::int IS NULL OR nb_pieces >= $8::int)
         AND ($9::int IS NULL OR nb_chambres >= $9::int)
-        AND ($10::boolean IS NULL OR meuble = $10::boolean)
+        AND ($10::boolean IS NULL OR (
+              ($10::boolean = true  AND (meuble = true  OR type_bien ILIKE '%meuble%'))
+              OR ($10::boolean = false AND meuble = false AND type_bien NOT ILIKE '%meuble%')
+            ))
         AND ($11::text IS NULL OR source = $11)
         AND supprimee = false
       ORDER BY (sponsorisee = true AND sponsorisee_jusqu_au > NOW()) DESC, ${orderBy}
