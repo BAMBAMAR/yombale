@@ -99,15 +99,17 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
       <div style={{
         background: '#fff', borderBottom: '1px solid #e5e7eb',
         padding: '0 20px 20px', marginBottom: 24,
+        position: 'relative', zIndex: 5,
       }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', marginTop: -36 }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', marginTop: -44 }}>
             {/* Logo */}
             <div style={{
-              width: 80, height: 80, borderRadius: 12, overflow: 'hidden', flexShrink: 0,
-              border: '3px solid #fff', background: '#f8fafc',
+              width: 88, height: 88, borderRadius: 14, overflow: 'hidden', flexShrink: 0,
+              border: '4px solid #fff', background: '#f8fafc',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(0,0,0,.15)',
+              boxShadow: '0 4px 16px rgba(0,0,0,.18)',
+              position: 'relative', zIndex: 10,
             }}>
               {b.logo_url
                 // eslint-disable-next-line @next/next/no-img-element
