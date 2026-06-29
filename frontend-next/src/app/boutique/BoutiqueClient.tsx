@@ -36,6 +36,7 @@ interface Boutique {
   site_web: string | null
   facebook: string | null
   instagram: string | null
+  slug: string | null
   actif: boolean
   sponsorise: boolean | null
   sponsor_jusqu_au: string | null
@@ -312,6 +313,28 @@ function BoutiqueForm({ boutique, onCancel, onSuccess }: {
           <label style={labelStyle}>Instagram</label>
           <input name="instagram" type="url" defaultValue={boutique?.instagram ?? ''} style={inputStyle} placeholder="https://instagram.com/…" />
         </div>
+      </div>
+
+      <SectionTitle>🔗 Lien personnalisé</SectionTitle>
+
+      <div>
+        <label style={labelStyle}>URL de votre boutique</label>
+        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
+          <span style={{ padding: '10px 12px', background: '#f3f4f6', borderRight: '1px solid #d1d5db', fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            nopalou.com/boutiques/
+          </span>
+          <input
+            name="slug"
+            defaultValue={boutique?.slug ?? ''}
+            style={{ ...inputStyle, border: 'none', borderRadius: 0, flex: 1 }}
+            placeholder="mon-nom-de-boutique"
+            pattern="[a-z0-9-]+"
+            maxLength={80}
+          />
+        </div>
+        <p style={{ fontSize: 11, color: '#9ca3af', margin: '4px 0 0' }}>
+          Lettres minuscules, chiffres et tirets uniquement. Laissez vide pour générer automatiquement depuis le nom.
+        </p>
       </div>
 
       <SectionTitle>🖼 Photos</SectionTitle>
@@ -747,7 +770,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onM
           }}>
             📊 Analytics
           </Link>
-          <a href={`/boutiques/${boutique.id}`} target="_blank" rel="noreferrer" style={{
+          <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer" style={{
             fontSize: 13, color: '#374151', background: '#f8fafc', border: '1px solid #e5e7eb',
             borderRadius: 6, padding: '6px 14px', fontWeight: 600, textDecoration: 'none',
           }}>

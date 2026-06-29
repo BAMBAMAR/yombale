@@ -18,6 +18,7 @@ interface Boutique {
   site_web: string | null
   facebook: string | null
   instagram: string | null
+  slug: string | null
   actif: boolean
   sponsorise: boolean | null
   sponsor_jusqu_au: string | null

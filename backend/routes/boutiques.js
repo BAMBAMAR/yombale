@@ -21,6 +21,32 @@ const CATS = ['smartphones','informatique','tv-electro','mode','maison','auto-mo
 const MAX_BOUTIQUES = 3;
 const QUOTA_PRODUITS = { pro: 50, business: Infinity };
 
+// ── Slug helpers ──────────────────────────────────────────────────────────────
+function slugify(str) {
+  return str
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // enlever accents
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
+    .slice(0, 80);
+}
+
+async function uniqueSlug(base, excludeId = null) {
+  let slug = base;
+  let n = 2;
+  while (true) {
+    const cond = excludeId
+      ? 'SELECT id FROM boutiques WHERE slug=$1 AND id!=$2'
+      : 'SELECT id FROM boutiques WHERE slug=$1';
+    const params = excludeId ? [slug, excludeId] : [slug];
+    const r = await pool.query(cond, params);
+    if (!r.rows[0]) return slug;
+    slug = `${base}-${n++}`;
+  }
+}
+
 // ── GET /api/boutiques/admin/toutes — toutes les boutiques (admin)
 router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
   try {
@@ -109,7 +135,7 @@ router.get('/mine', verifierToken, async (req, res) => {
   try {
     const rows = await pool.query(
       `SELECT id, nom, description, categorie, telephone, whatsapp, adresse, ville,
-              logo_url, cover_url, site_web, facebook, instagram,
+              logo_url, cover_url, site_web, facebook, instagram, slug,
               actif, sponsorise, sponsor_jusqu_au, created_at
        FROM boutiques WHERE utilisateur_id=$1 ORDER BY created_at DESC`,
       [req.user.userId]
@@ -118,10 +144,14 @@ router.get('/mine', verifierToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-// ── GET /api/boutiques/:id — fiche publique d'une boutique (APRÈS /mine)
-router.get('/:id', param('id').isUUID(), async (req, res) => {
-  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+// ── GET /api/boutiques/:idOrSlug — fiche publique (UUID ou slug)
+router.get('/:id', async (req, res) => {
   try {
+    const param = req.params.id;
+    // Cherche par UUID d'abord, puis par slug
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(param);
+    const condition = isUUID ? 'b.id=$1' : 'b.slug=$1';
+
     const r = await pool.query(
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
               b.logo_url, b.cover_url, b.whatsapp, b.site_web, b.facebook, b.instagram,
@@ -133,15 +163,14 @@ router.get('/:id', param('id').isUUID(), async (req, res) => {
          WHERE utilisateur_id = b.utilisateur_id AND statut='actif' AND fin > NOW()
          ORDER BY fin DESC LIMIT 1
        ) a ON true
-       WHERE b.id=$1 AND b.actif=true`,
-      [req.params.id]
+       WHERE ${condition} AND b.actif=true`,
+      [param]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
 
-    // Tracker la vue (async, ne bloque pas la réponse)
     pool.query(
       `INSERT INTO analytics_events (type, boutique_id) VALUES ('vue_boutique',$1)`,
-      [req.params.id]
+      [r.rows[0].id]
     ).catch(() => {});
 
     res.json(r.rows[0]);
@@ -295,7 +324,7 @@ router.post('/', limiterPublication, verifierToken, upload.fields([{ name: 'logo
       return res.status(400).json({ error: `Limite de ${MAX_BOUTIQUES} boutiques par compte atteinte.` });
     }
 
-    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram } = req.body;
+    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, slug: slugInput } = req.body;
 
     let logo_url = null;
     if (req.files?.logo?.[0]) {
@@ -305,6 +334,10 @@ router.post('/', limiterPublication, verifierToken, upload.fields([{ name: 'logo
     if (req.files?.cover?.[0]) {
       try { cover_url = await uploadBuffer(req.files.cover[0].buffer, 'boutiques_cover'); } catch {}
     }
+
+    // Générer le slug
+    const slugBase = slugInput?.trim() ? slugify(slugInput.trim()) : slugify(nom.trim());
+    const slug = await uniqueSlug(slugBase);
 
     // INSERT avec colonnes de base (toujours présentes)
     const r = await pool.query(
@@ -318,9 +351,9 @@ router.post('/', limiterPublication, verifierToken, upload.fields([{ name: 'logo
     // UPDATE des colonnes avancées (ajoutées par migration — best-effort)
     try {
       await pool.query(
-        `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4, instagram=$5
-         WHERE id=$6`,
-        [cover_url||null, whatsapp||null, site_web||null, facebook||null, instagram||null, newId]
+        `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4, instagram=$5, slug=$6
+         WHERE id=$7`,
+        [cover_url||null, whatsapp||null, site_web||null, facebook||null, instagram||null, slug, newId]
       );
     } catch (_) { /* colonnes pas encore migrées — ignoré */ }
 
@@ -341,7 +374,7 @@ router.put('/:id', verifierToken, param('id').isUUID(), upload.fields([{ name: '
     );
     if (!existing.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
 
-    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, horaires } = req.body;
+    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, horaires, slug: slugInput } = req.body;
 
     let logo_url = existing.rows[0].logo_url;
     if (req.files?.logo?.[0]) {
@@ -366,16 +399,23 @@ router.put('/:id', verifierToken, param('id').isUUID(), upload.fields([{ name: '
        telephone||null, adresse||null, ville||'Dakar', logo_url,
        req.params.id, req.user.userId]
     );
+    // Slug : garder l'existant si aucun input, sinon re-générer
+    let newSlug = existing.rows[0].slug;
+    if (slugInput?.trim()) {
+      const slugBase = slugify(slugInput.trim());
+      newSlug = await uniqueSlug(slugBase, req.params.id);
+    }
+
     // UPDATE colonnes avancées (best-effort après migration)
     try {
       await pool.query(
         `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4,
-         instagram=$5, horaires=$6 WHERE id=$7`,
+         instagram=$5, horaires=$6, slug=$7 WHERE id=$8`,
         [cover_url||null, whatsapp||null, site_web||null, facebook||null,
-         instagram||null, horairesJson, req.params.id]
+         instagram||null, horairesJson, newSlug, req.params.id]
       );
     } catch (_) { /* colonnes pas encore migrées — ignoré */ }
-    res.json({ success: true });
+    res.json({ success: true, slug: newSlug });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 

@@ -431,6 +431,11 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table boutique_produits OK');
   } catch (e) { console.warn('[MIGRATE] boutique_produits:', e.message); }
 
+  // Index unique sur slug boutique
+  try {
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS boutiques_slug_unique ON boutiques(slug) WHERE slug IS NOT NULL`);
+  } catch (e) { console.warn('[MIGRATE] boutiques_slug_idx:', e.message); }
+
   // Colonnes enrichissement produits (caractéristiques par catégorie)
   for (const sql of [
     `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS categorie VARCHAR(50)`,
