@@ -1466,17 +1466,98 @@ git commit -m "fix: migration — colonne produit_nom dans alertes pour alertes 
 
 ## Récapitulatif des prérequis Meta (hors code)
 
-Ces étapes sont à faire dans Meta Business Manager **avant le déploiement en production** :
+Guide pas-à-pas pour tout configurer côté Meta **avant le déploiement en production**. Compter **3 à 7 jours ouvrés** au total (vérification d'entreprise + approbation des templates sont les étapes les plus lentes — à démarrer en premier, en parallèle du développement).
 
-1. **WhatsApp Business Account (WABA)** actif et vérifié
-2. **Numéro de téléphone dédié** enregistré (pas le numéro personnel)
-3. **Catalogue Meta Commerce** créé et lié au WABA → noter le `catalog_id`
-4. **Templates à soumettre** (4 templates, approbation ~24h) :
-   - `nopalou_carousel_annonce` — type CAROUSEL — variables : titre `{{1}}`, prix `{{2}}`, bouton URL suffixe `{{3}}`
-   - `nopalou_carousel_immo` — même structure
-   - `nopalou_carousel_telecom` — même structure
-   - `nopalou_fiche_texte` — type TEXT — variables : titre `{{1}}`, détail `{{2}}`, URL `{{3}}`
-5. **Webhook configuré** dans Meta Developer Console :
-   - URL : `https://ton-backend.onrender.com/api/whatsapp/webhook`
-   - Verify Token : valeur de `WHATSAPP_VERIFY_TOKEN`
-   - Champs souscrits : `messages`
+### 1. Meta Business Manager + vérification d'entreprise
+
+1. Aller sur **business.facebook.com** → créer (ou utiliser) un Business Manager pour Nopalou.
+2. **Paramètres de l'entreprise → Informations sur l'entreprise** : renseigner le nom légal, l'adresse, le site web (`nopalou.com`).
+3. **Sécurité de l'entreprise → Vérification de l'entreprise** : lancer la vérification. Documents généralement demandés :
+   - Registre du commerce sénégalais (NINEA / RCCM) ou équivalent.
+   - Justificatif de domaine (un email `@nopalou.com` ou un enregistrement DNS TXT).
+   - Une facture/document officiel récent au nom de l'entreprise.
+4. **Délai réel** : 1 à 5 jours ouvrés. C'est le goulot d'étranglement principal — **à lancer en tout premier**, avant même de toucher au code.
+5. Sans vérification complète, l'API reste limitée (quota de messages très bas, certaines fonctionnalités catalogue bloquées).
+
+### 2. WhatsApp Business Account (WABA) + app Meta for Developers
+
+1. Aller sur **developers.facebook.com** → My Apps → **Create App** → type "Business".
+2. Dans l'app, ajouter le produit **WhatsApp**.
+3. Lors du setup, Meta crée automatiquement un WABA test avec un numéro de test temporaire — utile pour les premiers tests (Step 7 du Task 7 : webhook simulé) mais **pas à utiliser en prod**.
+4. Lier l'app au Business Manager créé à l'étape 1 (**App Settings → Basic → Business Account**).
+5. Noter dans `.env` : `WHATSAPP_BUSINESS_ACCOUNT_ID` (visible dans **WhatsApp → Configuration de l'API** ou via l'API Graph `GET /me/businesses`).
+6. **App Secret** (`WHATSAPP_APP_SECRET`) : **App Settings → Basic → App Secret** (cliquer "Show", nécessite le mot de passe Facebook).
+
+### 3. Numéro de téléphone dédié
+
+1. **WhatsApp → Configuration de l'API → Ajouter un numéro de téléphone**.
+2. ⚠️ Le numéro **ne doit jamais avoir été utilisé sur l'app WhatsApp grand public ou WhatsApp Business app** sur ce téléphone — sinon le rattachement échoue. Utiliser une ligne neuve ou désactivée de WhatsApp au préalable (Réglages → Compte → Supprimer le compte sur l'app mobile).
+3. Vérification par SMS ou appel vocal (le SMS échoue parfois sur certains opérateurs sénégalais — préférer l'appel vocal si besoin).
+4. Une fois validé, Meta affiche le **Phone Number ID** → `WHATSAPP_PHONE_NUMBER_ID` dans `.env`.
+5. **Nom affiché ("Display Name")** : soumis à validation Meta séparée (24-48h), doit correspondre au nom de marque ("Nopalou") — un nom trop générique ou non conforme est rejeté.
+6. Générer un **token d'accès permanent** : **WhatsApp → Configuration de l'API → token système** (via Business Settings → System Users → créer un system user avec le rôle "Admin", lui assigner l'app, générer un token avec les permissions `whatsapp_business_messaging` + `whatsapp_business_management`, **sans date d'expiration**). C'est `WHATSAPP_API_TOKEN`. Le token temporaire (24h) affiché par défaut dans le tableau de bord développeur **ne doit pas être utilisé en prod**.
+
+### 4. Catalogue Meta Commerce
+
+1. Sur **business.facebook.com → Catalogue Manager → Créer un catalogue** → type "E-commerce".
+2. Lier le catalogue au Business Manager Nopalou, puis **WhatsApp Manager → Catalogue → connecter ce catalogue au WABA**.
+3. Noter l'ID du catalogue (visible dans l'URL ou via Catalogue Manager → Paramètres) → `WHATSAPP_CATALOG_ID` dans `.env`.
+4. Une fois connecté, lancer une synchronisation initiale des produits boutique existants (le code de la Task 3 ne synchronise qu'à la création/modification/suppression — pour les produits déjà en base, exécuter manuellement une boucle `syncProduit()` une fois, ou attendre la prochaine modification de chaque fiche).
+5. Vérifier dans **Catalogue Manager → Articles** que les produits apparaissent avec statut "Actif" (un statut "Rejeté" indique souvent une image invalide ou un prix manquant — vérifier le payload envoyé par `whatsapp-catalog.js`).
+
+### 5. Templates de message (4 à soumettre, ~24h d'approbation chacun)
+
+**Où** : WhatsApp Manager → **Gestionnaire de modèles de messages** → Créer un modèle.
+
+| Nom exact | Catégorie Meta | Type | Contenu |
+|---|---|---|---|
+| `nopalou_carousel_annonce` | Marketing | Carousel | En-tête image + corps `{{1}}` titre, `{{2}}` prix + bouton URL dynamique se terminant par `{{3}}` |
+| `nopalou_carousel_immo` | Marketing | Carousel | Même structure |
+| `nopalou_carousel_telecom` | Marketing | Carousel | Même structure |
+| `nopalou_fiche_texte` | Utility | Texte | Corps avec `{{1}}` titre, `{{2}}` détail, `{{3}}` URL |
+
+Points d'attention pour l'approbation :
+- **Langue** : créer en **Français (fr)** — le code appelle `language: { code: 'fr' }` dans `whatsapp.js`. Un mismatch de code langue fait échouer l'envoi silencieusement (erreur Meta "template not found").
+- Catégorie **Marketing** vs **Utility** : un mauvais choix de catégorie est la cause n°1 de rejet. Les carousels promotionnels (annonces/immo/télécom) sont "Marketing" ; une confirmation pure de fiche existante peut passer en "Utility" mais Meta requalifie parfois automatiquement — accepter la catégorie suggérée par Meta si elle diffère.
+- Les **boutons URL dynamiques** doivent utiliser un préfixe statique (`https://nopalou.com/annonces/`) + suffixe variable `{{3}}` — ne pas mettre l'URL complète en variable.
+- Le carousel nécessite un exemple concret (image + texte de test) pour la soumission — utiliser une vraie annonce existante.
+- **Marketing templates** sont soumis aux préférences d'opt-in du destinataire depuis 2024-2025 (Meta peut limiter la délivrabilité si le destinataire n'a pas explicitement interagi récemment) — un rejet ou une limitation de portée n'est pas forcément un bug côté Nopalou.
+- En cas de rejet, Meta donne un motif dans **Gestionnaire de modèles → cliquer sur le template rejeté** — corriger et resoumettre (ça repart pour ~24h).
+
+### 6. Webhook (Meta Developer Console)
+
+1. **App Dashboard → WhatsApp → Configuration → Webhook → Modifier**.
+2. **URL de rappel** : `https://<ton-domaine-render>.onrender.com/api/whatsapp/webhook`
+3. **Jeton de vérification** : doit être **identique** à la valeur de `WHATSAPP_VERIFY_TOKEN` dans `backend/.env` sur Render — sinon le handshake `GET /webhook` répond 403 et Meta refuse d'enregistrer le webhook.
+4. Cliquer **Vérifier et enregistrer** — Meta envoie immédiatement le `GET` de handshake ; vérifier les logs Render pour confirmer `[WHATSAPP] Webhook vérifié ✓`.
+5. **Champs de webhook à souscrire** (case à cocher) : au minimum `messages`. Cocher aussi `message_template_status_update` si on veut être notifié des approbations/rejets de templates par webhook plutôt qu'en allant vérifier manuellement.
+6. ⚠️ Le service Render gratuit/petit plan peut se mettre en veille (cold start) — si le webhook met plus de 20s à répondre lors d'un cold start, Meta considère l'appel en échec et peut désactiver temporairement le webhook après plusieurs échecs consécutifs. Vérifier que `SCRAPING_DISABLED=true` (déjà fait) et envisager un plan payant Render ou un ping de keep-alive si le trafic WhatsApp doit être fiable.
+
+### 7. Variables d'environnement finales à renseigner sur Render
+
+Une fois les 6 étapes ci-dessus complètes, reporter les valeurs collectées dans les variables d'environnement du service `yombale-backend` sur Render (Dashboard → Environment) :
+
+```
+WHATSAPP_PHONE_NUMBER_ID=        # étape 3
+WHATSAPP_API_TOKEN=              # étape 3 (token système permanent, pas le token 24h)
+WHATSAPP_APP_SECRET=             # étape 2
+WHATSAPP_VERIFY_TOKEN=           # choisi librement, doit matcher l'étape 6
+WHATSAPP_CATALOG_ID=             # étape 4
+WHATSAPP_BUSINESS_ACCOUNT_ID=    # étape 2
+```
+
+### 8. Checklist finale avant bascule en production
+
+- [ ] Vérification d'entreprise Meta complète (pas juste "en cours")
+- [ ] Numéro dédié actif, Display Name approuvé
+- [ ] Token système permanent généré (pas le token 24h du dashboard)
+- [ ] Catalogue créé, lié, et au moins quelques produits visibles en statut "Actif"
+- [ ] Les 4 templates ont le statut **"Approuvé"** (pas "En attente d'examen")
+- [ ] Webhook enregistré sans erreur, `messages` souscrit
+- [ ] Test réel : envoyer "bonjour" depuis un téléphone personnel vers le numéro Nopalou → recevoir le menu interactif
+- [ ] Test réel : parcourir le flow recherche → alerte prix → vérifier l'insertion en base (`SELECT * FROM alertes WHERE telephone IS NOT NULL`)
+- [ ] Test réel : valider une annonce via l'admin → vérifier réception du carousel (ou fallback texte si pas de photo) sur le téléphone du déposant
+
+### Coûts à anticiper
+
+Depuis juillet 2023, Meta facture **par conversation** (fenêtre 24h), pas par message, avec des tarifs différents Marketing / Utility / Service / Authentication, variables par pays. Les 1 000 premières conversations "service" par mois sont gratuites. Vérifier les tarifs courants pour le Sénégal dans **WhatsApp Manager → Présentation des paiements** avant d'estimer le coût à l'échelle (carousels de validation admin = conversations "Marketing" potentiellement coûteuses si le volume d'annonces est élevé).
