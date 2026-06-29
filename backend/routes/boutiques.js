@@ -10,7 +10,7 @@ const multer = require('multer');
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  limits: { fileSize: 5 * 1024 * 1024, files: 2 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) return cb(null, true);
     cb(new Error('Seules les images sont acceptées'));
@@ -275,15 +275,25 @@ router.post('/', limiterPublication, verifierToken, upload.fields([{ name: 'logo
       try { cover_url = await uploadBuffer(req.files.cover[0].buffer, 'boutiques_cover'); } catch {}
     }
 
+    // INSERT avec colonnes de base (toujours présentes)
     const r = await pool.query(
-      `INSERT INTO boutiques (utilisateur_id, nom, description, categorie, telephone, adresse, ville,
-       logo_url, cover_url, whatsapp, site_web, facebook, instagram)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+      `INSERT INTO boutiques (utilisateur_id, nom, description, categorie, telephone, adresse, ville, logo_url)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
       [userId, nom.trim(), description||null, categorie||null, telephone||null,
-       adresse||null, ville||'Dakar', logo_url, cover_url||null,
-       whatsapp||null, site_web||null, facebook||null, instagram||null]
+       adresse||null, ville||'Dakar', logo_url]
     );
-    res.status(201).json({ success: true, id: r.rows[0].id });
+    const newId = r.rows[0].id;
+
+    // UPDATE des colonnes avancées (ajoutées par migration — best-effort)
+    try {
+      await pool.query(
+        `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4, instagram=$5
+         WHERE id=$6`,
+        [cover_url||null, whatsapp||null, site_web||null, facebook||null, instagram||null, newId]
+      );
+    } catch (_) { /* colonnes pas encore migrées — ignoré */ }
+
+    res.status(201).json({ success: true, id: newId });
   } catch (err) {
     console.error('[BOUTIQUES POST]', err);
     res.status(500).json({ error: 'Erreur serveur' });
@@ -316,16 +326,24 @@ router.put('/:id', verifierToken, param('id').isUUID(), upload.fields([{ name: '
       try { horairesJson = typeof horaires === 'string' ? JSON.parse(horaires) : horaires; } catch {}
     }
 
+    // UPDATE colonnes de base (toujours présentes)
     await pool.query(
       `UPDATE boutiques SET nom=$1, description=$2, categorie=$3, telephone=$4, adresse=$5,
-       ville=$6, logo_url=$7, cover_url=$8, whatsapp=$9, site_web=$10, facebook=$11,
-       instagram=$12, horaires=$13, updated_at=NOW()
-       WHERE id=$14 AND utilisateur_id=$15`,
+       ville=$6, logo_url=$7, updated_at=NOW()
+       WHERE id=$8 AND utilisateur_id=$9`,
       [nom||existing.rows[0].nom, description||null, categorie||null,
-       telephone||null, adresse||null, ville||'Dakar', logo_url, cover_url||null,
-       whatsapp||null, site_web||null, facebook||null, instagram||null,
-       horairesJson, req.params.id, req.user.userId]
+       telephone||null, adresse||null, ville||'Dakar', logo_url,
+       req.params.id, req.user.userId]
     );
+    // UPDATE colonnes avancées (best-effort après migration)
+    try {
+      await pool.query(
+        `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4,
+         instagram=$5, horaires=$6 WHERE id=$7`,
+        [cover_url||null, whatsapp||null, site_web||null, facebook||null,
+         instagram||null, horairesJson, req.params.id]
+      );
+    } catch (_) { /* colonnes pas encore migrées — ignoré */ }
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
