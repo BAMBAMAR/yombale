@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import AnnonceGallery from './AnnonceGallery'
+import { getOptionalSession } from '@/lib/dal'
+import BoutonWhatsApp from '@/components/BoutonWhatsApp'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
@@ -63,6 +65,7 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
   const { id } = await params
   const annonce = await fetchAnnonce(id)
   if (!annonce) notFound()
+  const session = await getOptionalSession()
 
   const photos = Array.isArray(annonce.photos) ? annonce.photos : []
   const car = annonce.caracteristiques ?? {}
@@ -153,6 +156,7 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
             >
               WhatsApp
             </a>
+            <BoutonWhatsApp type="annonce" id={annonce.id} isConnecte={!!session} />
             <p className="annonce-contact-warn">
               ⚠️ Ne payez jamais à l&apos;avance sans avoir vu le produit.
             </p>

@@ -5,6 +5,8 @@ import { apiFetch } from '@/lib/api'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import { fcfa } from '@/lib/format'
 import GalerieClient from './GalerieClient'
+import { getOptionalSession } from '@/lib/dal'
+import BoutonWhatsApp from '@/components/BoutonWhatsApp'
 
 interface ProduitDetail {
   id: string
@@ -57,6 +59,7 @@ export default async function FicheProduitPage(
   { params }: { params: { id: string; produitId: string } }
 ) {
   let produit: ProduitDetail
+  const session = await getOptionalSession()
 
   try {
     const data = await apiFetch<{ produit: ProduitDetail }>(
@@ -219,6 +222,7 @@ export default async function FicheProduitPage(
                 💬 Commander via WhatsApp
               </a>
             )}
+            <BoutonWhatsApp type="produit" id={p.id} isConnecte={!!session} />
             {telUrl && (
               <a
                 href={telUrl}

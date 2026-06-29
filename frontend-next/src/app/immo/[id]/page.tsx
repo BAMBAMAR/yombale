@@ -7,6 +7,7 @@ import { fcfa } from '@/lib/format';
 import { getOptionalSession } from '@/lib/dal';
 import SponsoringImmoBtn from './SponsoringImmoBtn';
 import { cloudinaryHQ } from '@/lib/cloudinary';
+import BoutonWhatsApp from '@/components/BoutonWhatsApp';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -216,6 +217,7 @@ export default async function FicheImmoPage({
             >
               💬 WhatsApp
             </a>
+            <BoutonWhatsApp type="immo" id={annonce.id} isConnecte={!!session} />
           </div>
         )}
 
