@@ -52,7 +52,11 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
       { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
     );
     res.json({ wave_url: session.data.wave_launch_url, session_id: session.data.id, plan, label, prix });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+  } catch (err) {
+    const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Erreur Wave';
+    console.error('[ABONNEMENTS INITIER]', msg);
+    res.status(500).json({ error: `Impossible d'initier le paiement : ${msg}` });
+  }
 });
 
 // GET /api/abonnements/admin — liste tous les abonnements (admin)
@@ -85,6 +89,37 @@ router.get('/admin/stats', adminSecretOnly, async (req, res) => {
     `);
     res.json(rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/abonnements/admin/activer — activer un plan directement (test/admin)
+router.post('/admin/activer', adminSecretOnly, async (req, res) => {
+  try {
+    const { email, plan, jours = 30 } = req.body;
+    if (!PLANS[plan]) return res.status(400).json({ error: 'Plan invalide (pro ou business)' });
+    if (!email) return res.status(400).json({ error: 'Email requis' });
+
+    const user = await pool.query('SELECT id FROM utilisateurs WHERE email=$1', [email]);
+    if (!user.rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+    const userId = user.rows[0].id;
+    const fin = new Date(Date.now() + Number(jours) * 24 * 60 * 60 * 1000).toISOString();
+
+    // Annuler l'abonnement actif existant s'il y en a un
+    await pool.query(
+      `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
+      [userId]
+    );
+
+    const { rows } = await pool.query(
+      `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
+       VALUES ($1,$2,'actif',$3,$4,'admin_test') RETURNING id, plan, fin`,
+      [userId, plan, PLANS[plan].prix, fin]
+    );
+    res.json({ success: true, abonnement: rows[0] });
+  } catch (err) {
+    console.error('[ABONNEMENTS ADMIN ACTIVER]', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // PUT /api/abonnements/admin/:id/annuler — annuler un abonnement (admin)

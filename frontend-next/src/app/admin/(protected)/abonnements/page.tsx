@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import ActiverPlanClient from './ActiverPlanClient'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 const COOKIE  = 'nopalou_admin'
@@ -61,6 +62,8 @@ export default async function AdminAbonnementsPage() {
   return (
     <div style={{ padding: 24 }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>Abonnements</h1>
+
+      <ActiverPlanClient />
 
       {/* Stats */}
       {stats && (
