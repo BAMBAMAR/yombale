@@ -223,6 +223,21 @@ module.exports = async function migrateInline() {
         ('Telecom & Forfaits', 'telecom', '📶'),
         ('Immobilier',   'immo',        '🏡')
       ON CONFLICT (slug) DO NOTHING;
+
+      CREATE TABLE IF NOT EXISTS whatsapp_sessions (
+        phone       TEXT PRIMARY KEY,
+        state       TEXT NOT NULL DEFAULT 'IDLE',
+        context     JSONB NOT NULL DEFAULT '{}',
+        updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS whatsapp_processed_messages (
+        message_id   TEXT PRIMARY KEY,
+        processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_wpm_processed_at
+        ON whatsapp_processed_messages(processed_at);
     `);
 
     // Contrainte unique sur marchands.nom — nécessaire pour getMarchandId()

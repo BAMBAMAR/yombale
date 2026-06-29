@@ -72,7 +72,10 @@ app.use(cors({
   credentials: true,
 }));
 app.use(compression());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, _res, buf) => { req.rawBody = buf; },
+}));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // ── Protection pages admin ────────────────────────────────────
@@ -126,6 +129,7 @@ app.use('/api/facebook-posts',  require('./routes/facebook-posts'));
 app.use('/api/abonnements',     require('./routes/abonnements'));
 app.use('/api/click',           require('./routes/click'));
 app.use('/api/analytics',       require('./routes/analytics'));
+app.use('/api/whatsapp',        require('./routes/whatsapp'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', async (req, res) => {
