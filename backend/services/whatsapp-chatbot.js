@@ -82,7 +82,7 @@ async function searchContent(query) {
     )
     UNION ALL
     (
-      SELECT 'annonce', id::text, titre, prix, (photos->>0), NULL, NULL
+      SELECT 'annonce', id::text, titre, prix, (photos->>0), NULL::text, NULL::text
       FROM annonces_classifiees
       WHERE actif=true AND supprimee=false
         AND to_tsvector('french', titre || ' ' || COALESCE(description,''))
@@ -91,7 +91,7 @@ async function searchContent(query) {
     )
     UNION ALL
     (
-      SELECT 'immo', id::text, titre, prix, (photos->>0), NULL, ville
+      SELECT 'immo', id::text, titre, prix, (photos->>0), NULL::text, ville
       FROM annonces_immo
       WHERE actif=true
         AND to_tsvector('french', titre || ' ' || COALESCE(description,''))
