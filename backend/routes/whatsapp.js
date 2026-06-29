@@ -46,8 +46,9 @@ router.post('/webhook', verifyHmac, (req, res) => {
 
   if (entry.messages) {
     const msg = entry.messages[0];
-    // TODO Task 8 : handleIncoming(msg)
-    console.log('[WHATSAPP] Message entrant de', msg.from, ':', msg.type);
+    require('../services/whatsapp-chatbot').handleIncoming(msg).catch(err =>
+      console.error('[WHATSAPP CHATBOT]', err.message)
+    );
   }
 
   if (entry.statuses) {
