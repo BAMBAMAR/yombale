@@ -240,6 +240,16 @@ module.exports = async function migrateInline() {
         ON whatsapp_processed_messages(processed_at);
     `);
 
+    // Colonnes pour les alertes créées via le chatbot WhatsApp (sans compte utilisateur ni produit_id)
+    await pool.query(`
+      DO $$ BEGIN
+        ALTER TABLE alertes ADD COLUMN IF NOT EXISTS telephone TEXT;
+      EXCEPTION WHEN others THEN NULL; END $$;
+      DO $$ BEGIN
+        ALTER TABLE alertes ADD COLUMN IF NOT EXISTS produit_nom TEXT;
+      EXCEPTION WHEN others THEN NULL; END $$;
+    `);
+
     // Contrainte unique sur marchands.nom — nécessaire pour getMarchandId()
     await pool.query(`
       DO $$
