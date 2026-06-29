@@ -155,16 +155,26 @@ export async function activerSponsoringBoutique(
 // ── Modérer annonce immo ────────────────────────────────────────────
 export async function modererImmo(
   id: number,
-  actif: boolean
+  actif: boolean,
+  motif_rejet?: string
 ): Promise<{ error?: string }> {
   const jar    = await cookies()
   const secret = jar.get(COOKIE)?.value
   if (!secret) return { error: 'Non authentifié' }
 
+  const body: Record<string, unknown> = { actif }
+  if (!actif && motif_rejet !== undefined) {
+    body.rejete      = true
+    body.motif_rejet = motif_rejet
+  } else if (actif) {
+    body.rejete      = false
+    body.motif_rejet = null
+  }
+
   const r = await fetch(`${BACKEND}/api/immo/${id}`, {
     method: 'PUT',
     headers: adminHeaders(secret),
-    body: JSON.stringify({ actif }),
+    body: JSON.stringify(body),
     cache: 'no-store',
   })
 

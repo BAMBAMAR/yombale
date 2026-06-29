@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import React, { useTransition } from 'react'
 import { modererImmo, activerSponsoring } from '@/app/actions/admin'
 
 interface AnnonceImmo {
@@ -33,10 +33,27 @@ function formatDate(s: string) {
 
 function ImmoRow({ annonce, onAction }: { annonce: AnnonceImmo; onAction: () => void }) {
   const [pending, startTransition] = useTransition()
+  const [showRejet, setShowRejet] = React.useState(false)
+  const [motif, setMotif] = React.useState('')
 
-  function handleAction(actif: boolean) {
+  function handleValider() {
     startTransition(async () => {
-      await modererImmo(annonce.id, actif)
+      await modererImmo(annonce.id, true)
+      onAction()
+    })
+  }
+
+  function handleRejeter() {
+    if (!motif.trim()) return
+    startTransition(async () => {
+      await modererImmo(annonce.id, false, motif.trim())
+      onAction()
+    })
+  }
+
+  function handleDesactiver() {
+    startTransition(async () => {
+      await modererImmo(annonce.id, false)
       onAction()
     })
   }
@@ -61,6 +78,38 @@ function ImmoRow({ annonce, onAction }: { annonce: AnnonceImmo; onAction: () => 
           {formatPrix(annonce.prix)} · {annonce.contact_tel} · source: {annonce.source}
         </p>
         <p className="admin-annonce-date">{formatDate(annonce.created_at)}</p>
+
+        {showRejet && (
+          <div style={{ marginTop: 8 }}>
+            <textarea
+              value={motif}
+              onChange={e => setMotif(e.target.value)}
+              placeholder="Motif de rejet (obligatoire)…"
+              rows={2}
+              style={{
+                width: '100%', padding: '6px 10px', borderRadius: 6,
+                border: '1px solid #fca5a5', fontSize: 13, resize: 'vertical',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+              <button
+                onClick={handleRejeter}
+                disabled={pending || !motif.trim()}
+                className="admin-btn admin-btn--rejeter"
+              >
+                {pending ? '…' : 'Confirmer le rejet'}
+              </button>
+              <button
+                onClick={() => { setShowRejet(false); setMotif('') }}
+                disabled={pending}
+                className="admin-btn"
+                style={{ background: '#f1f5f9', color: '#374151' }}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <div className="admin-annonce-statut-col">
         <span className={`admin-annonce-statut admin-annonce-statut--${annonce.actif ? 'active' : 'attente'}`}>
@@ -68,18 +117,27 @@ function ImmoRow({ annonce, onAction }: { annonce: AnnonceImmo; onAction: () => 
         </span>
       </div>
       <div className="admin-annonce-actions">
-        {!annonce.actif && (
-          <button
-            onClick={() => handleAction(true)}
-            disabled={pending}
-            className="admin-btn admin-btn--approuver"
-          >
-            Valider
-          </button>
+        {!annonce.actif && !showRejet && (
+          <>
+            <button
+              onClick={handleValider}
+              disabled={pending}
+              className="admin-btn admin-btn--approuver"
+            >
+              Valider
+            </button>
+            <button
+              onClick={() => setShowRejet(true)}
+              disabled={pending}
+              className="admin-btn admin-btn--rejeter"
+            >
+              Rejeter
+            </button>
+          </>
         )}
         {annonce.actif && (
           <button
-            onClick={() => handleAction(false)}
+            onClick={handleDesactiver}
             disabled={pending}
             className="admin-btn admin-btn--rejeter"
           >

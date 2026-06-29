@@ -331,6 +331,7 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
       titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
       ville, quartier, description, photos, url_source, actif,
       sponsorisee, sponsorisee_jusqu_au, demande_sponsorisation,
+      rejete, motif_rejet,
     } = req.body;
     const { rows } = await pool.query(`
       UPDATE annonces_immo SET
@@ -350,6 +351,8 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
         sponsorisee            = COALESCE($15, sponsorisee),
         sponsorisee_jusqu_au   = COALESCE($16::timestamptz, sponsorisee_jusqu_au),
         demande_sponsorisation = COALESCE($17, demande_sponsorisation),
+        rejete      = COALESCE($18, rejete),
+        motif_rejet = COALESCE($19, motif_rejet),
         updated_at  = NOW()
       WHERE id = $14 RETURNING *`,
       [titre || null, type_bien || null, transaction || null,
@@ -357,7 +360,8 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
        ville || null, quartier ?? null, description ?? null,
        photos ? JSON.stringify(photos) : null, url_source ?? null,
        actif ?? null, req.params.id,
-       sponsorisee ?? null, sponsorisee_jusqu_au ?? null, demande_sponsorisation ?? null]
+       sponsorisee ?? null, sponsorisee_jusqu_au ?? null, demande_sponsorisation ?? null,
+       rejete ?? null, motif_rejet ?? null]
     );
     if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
     res.json(rows[0]);
