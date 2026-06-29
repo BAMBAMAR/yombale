@@ -153,7 +153,7 @@ router.get('/:id/produits', param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { rows } = await pool.query(
-      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre
+      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
        WHERE p.boutique_id=$1 AND b.actif=true
@@ -183,7 +183,7 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
       }
     }
 
-    const { nom, description, prix, prix_barre, en_stock } = req.body;
+    const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques } = req.body;
     if (!nom?.trim()) return res.status(400).json({ error: 'Nom requis' });
 
     let images = [];
@@ -191,11 +191,16 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
       try { images = [await uploadBuffer(req.file.buffer, 'boutique_produits')]; } catch {}
     }
 
+    let caracJson = {};
+    if (caracteristiques) {
+      try { caracJson = typeof caracteristiques === 'string' ? JSON.parse(caracteristiques) : caracteristiques; } catch {}
+    }
+
     const r = await pool.query(
-      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, images, en_stock)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, images, en_stock, categorie, caracteristiques)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
       [id, nom.trim(), description||null, prix||null, prix_barre||null,
-       images, en_stock !== 'false']
+       images, en_stock !== 'false', categorie||null, caracJson]
     );
     res.status(201).json({ success: true, produit: r.rows[0] });
   } catch (err) {
@@ -215,18 +220,24 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     const existing = await pool.query('SELECT * FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
     if (!existing.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
 
-    const { nom, description, prix, prix_barre, en_stock } = req.body;
+    const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques } = req.body;
     let images = existing.rows[0].images;
     if (req.file) {
       try { images = [await uploadBuffer(req.file.buffer, 'boutique_produits')]; } catch {}
     }
 
+    let caracJson = existing.rows[0].caracteristiques ?? {};
+    if (caracteristiques) {
+      try { caracJson = typeof caracteristiques === 'string' ? JSON.parse(caracteristiques) : caracteristiques; } catch {}
+    }
+
     const r = await pool.query(
       `UPDATE boutique_produits SET nom=$1, description=$2, prix=$3, prix_barre=$4,
-       images=$5, en_stock=$6, updated_at=NOW()
-       WHERE id=$7 AND boutique_id=$8 RETURNING *`,
+       images=$5, en_stock=$6, categorie=$7, caracteristiques=$8, updated_at=NOW()
+       WHERE id=$9 AND boutique_id=$10 RETURNING *`,
       [nom||existing.rows[0].nom, description||null, prix||null, prix_barre||null,
-       images, en_stock !== 'false', prodId, id]
+       images, en_stock !== 'false', categorie||existing.rows[0].categorie||null,
+       caracJson, prodId, id]
     );
     res.json({ success: true, produit: r.rows[0] });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }

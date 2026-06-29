@@ -50,6 +50,155 @@ interface Produit {
   prix_barre: number | null
   images: string[]
   en_stock: boolean
+  categorie: string | null
+  caracteristiques: Record<string, string> | null
+}
+
+// ── Caractéristiques par catégorie ────────────────────────────────────────────
+
+const ETATS_PRODUIT = ['Neuf', 'Bon état', 'Occasion', 'Pour pièces']
+const GENRES_MODE   = ['Homme', 'Femme', 'Enfant', 'Unisexe']
+const PLATEFORMES   = ['PS4', 'PS5', 'Xbox One', 'Xbox Series', 'Nintendo Switch', 'PC', 'Mobile']
+const POUR_QUI      = ['Homme', 'Femme', 'Mixte']
+
+function CaracField({ label, name, value, onChange, placeholder, required: req = false }: {
+  label: string; name: string; value: string; onChange: (k: string, v: string) => void
+  placeholder?: string; required?: boolean
+}) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}{req && <span style={{ color: '#dc2626' }}> *</span>}</label>
+      <input
+        type="text" value={value} onChange={e => onChange(name, e.target.value)}
+        style={inputStyle} placeholder={placeholder} required={req}
+      />
+    </div>
+  )
+}
+
+function CaracSelect({ label, name, value, onChange, options, required: req = false }: {
+  label: string; name: string; value: string; onChange: (k: string, v: string) => void
+  options: string[]; required?: boolean
+}) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}{req && <span style={{ color: '#dc2626' }}> *</span>}</label>
+      <select value={value} onChange={e => onChange(name, e.target.value)} style={inputStyle} required={req}>
+        <option value="">Choisir…</option>
+        {options.map(o => <option key={o} value={o.toLowerCase()}>{o}</option>)}
+      </select>
+    </div>
+  )
+}
+
+function CaracteristiquesFields({ slug, values, onChange }: {
+  slug: string; values: Record<string, string>; onChange: (k: string, v: string) => void
+}) {
+  const f = (k: string) => values[k] ?? ''
+
+  if (slug === 'smartphones') return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <CaracField    label="Marque"   name="marque"   value={f('marque')}   onChange={onChange} placeholder="Samsung, Apple…" required />
+      <CaracField    label="Modèle"   name="modele"   value={f('modele')}   onChange={onChange} placeholder="iPhone 14 Pro…" />
+      <CaracField    label="Stockage" name="stockage" value={f('stockage')} onChange={onChange} placeholder="128 Go, 256 Go…" />
+      <CaracField    label="RAM"      name="ram"      value={f('ram')}      onChange={onChange} placeholder="8 Go…" />
+      <CaracField    label="Couleur"  name="couleur"  value={f('couleur')}  onChange={onChange} placeholder="Noir, Bleu…" />
+      <CaracSelect   label="État"     name="etat"     value={f('etat')}     onChange={onChange} options={ETATS_PRODUIT} required />
+    </div>
+  )
+
+  if (slug === 'informatique') return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <CaracField  label="Marque"     name="marque"     value={f('marque')}     onChange={onChange} placeholder="Dell, Lenovo, HP…" required />
+      <CaracField  label="Modèle"     name="modele"     value={f('modele')}     onChange={onChange} placeholder="XPS 15…" />
+      <CaracField  label="Processeur" name="processeur" value={f('processeur')} onChange={onChange} placeholder="Intel i7, AMD Ryzen…" />
+      <CaracField  label="RAM"        name="ram"        value={f('ram')}        onChange={onChange} placeholder="16 Go…" />
+      <CaracField  label="Stockage"   name="stockage"   value={f('stockage')}   onChange={onChange} placeholder="512 Go SSD…" />
+      <CaracSelect label="État"       name="etat"       value={f('etat')}       onChange={onChange} options={ETATS_PRODUIT} required />
+    </div>
+  )
+
+  if (slug === 'tv-electro') return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <CaracField  label="Marque"       name="marque"       value={f('marque')}       onChange={onChange} placeholder="Samsung, LG…" required />
+      <CaracField  label="Modèle"       name="modele"       value={f('modele')}       onChange={onChange} placeholder="55QN90B…" />
+      <CaracField  label="Type"         name="type_article" value={f('type_article')} onChange={onChange} placeholder="TV, Frigo, Clim…" />
+      <CaracField  label="Taille/Capa." name="taille"       value={f('taille')}       onChange={onChange} placeholder="55 pouces, 300 L…" />
+      <CaracSelect label="État"         name="etat"         value={f('etat')}         onChange={onChange} options={ETATS_PRODUIT} required />
+    </div>
+  )
+
+  if (slug === 'auto-moto') return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <CaracField  label="Marque"      name="marque"      value={f('marque')}      onChange={onChange} placeholder="Toyota, Yamaha…" required />
+      <CaracField  label="Modèle"      name="modele"      value={f('modele')}      onChange={onChange} placeholder="Corolla, R1…" required />
+      <div>
+        <label style={labelStyle}>Année <span style={{ color: '#dc2626' }}>*</span></label>
+        <input type="number" min={1970} max={2026} value={f('annee')} onChange={e => onChange('annee', e.target.value)}
+          style={inputStyle} placeholder="2020" required />
+      </div>
+      <CaracField  label="Kilométrage" name="kilometrage" value={f('kilometrage')} onChange={onChange} placeholder="45 000 km" />
+      <CaracField  label="Carburant"   name="carburant"   value={f('carburant')}   onChange={onChange} placeholder="Essence, Diesel, Hybride…" />
+      <CaracSelect label="État"        name="etat"        value={f('etat')}        onChange={onChange} options={ETATS_PRODUIT} required />
+    </div>
+  )
+
+  if (slug === 'mode') return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <CaracField  label="Marque"  name="marque"  value={f('marque')}  onChange={onChange} placeholder="Zara, Nike…" />
+      <CaracField  label="Taille"  name="taille"  value={f('taille')}  onChange={onChange} placeholder="M, 42, XL…" required />
+      <CaracSelect label="Genre"   name="genre"   value={f('genre')}   onChange={onChange} options={GENRES_MODE} />
+      <CaracField  label="Matière" name="matiere" value={f('matiere')} onChange={onChange} placeholder="Coton, Lin, Cuir…" />
+      <CaracSelect label="État"    name="etat"    value={f('etat')}    onChange={onChange} options={ETATS_PRODUIT} required />
+    </div>
+  )
+
+  if (slug === 'maison') return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <CaracField  label="Type d'article" name="type_article" value={f('type_article')} onChange={onChange} placeholder="Canapé, Lit, Table…" required />
+      <CaracField  label="Marque"         name="marque"       value={f('marque')}       onChange={onChange} placeholder="IKEA, Broyhill…" />
+      <CaracField  label="Matière"        name="matiere"      value={f('matiere')}      onChange={onChange} placeholder="Bois, Métal, Tissu…" />
+      <CaracField  label="Dimensions"     name="dimensions"   value={f('dimensions')}   onChange={onChange} placeholder="120×80×75 cm" />
+      <CaracSelect label="État"           name="etat"         value={f('etat')}         onChange={onChange} options={ETATS_PRODUIT} required />
+    </div>
+  )
+
+  if (slug === 'jeux') return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <CaracSelect label="Plateforme" name="plateforme" value={f('plateforme')} onChange={onChange} options={PLATEFORMES} required />
+      <CaracField  label="Éditeur"    name="editeur"    value={f('editeur')}    onChange={onChange} placeholder="EA, Ubisoft…" />
+      <CaracSelect label="État"       name="etat"       value={f('etat')}       onChange={onChange} options={ETATS_PRODUIT} required />
+    </div>
+  )
+
+  if (slug === 'alimentation') return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <CaracField label="Poids / Quantité"   name="poids_quantite"  value={f('poids_quantite')}  onChange={onChange} placeholder="500g, 1L, 12 unités…" />
+      <CaracField label="Conditionnement"    name="conditionnement" value={f('conditionnement')} onChange={onChange} placeholder="Sachet, Boîte, Vrac…" />
+      <CaracField label="Date de péremption" name="date_peremption" value={f('date_peremption')} onChange={onChange} placeholder="12/2025" />
+      <CaracField label="Origine / Marque"   name="marque"          value={f('marque')}          onChange={onChange} placeholder="Dakar Produits…" />
+    </div>
+  )
+
+  if (slug === 'beaute') return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <CaracField  label="Marque"       name="marque"       value={f('marque')}       onChange={onChange} placeholder="L'Oréal, Nivea…" />
+      <CaracField  label="Type"         name="type_produit" value={f('type_produit')} onChange={onChange} placeholder="Crème, Parfum, Shampoing…" required />
+      <CaracSelect label="Pour qui"     name="pour_qui"     value={f('pour_qui')}     onChange={onChange} options={POUR_QUI} />
+      <CaracField  label="Contenance"   name="contenance"   value={f('contenance')}   onChange={onChange} placeholder="200 ml, 50 g…" />
+    </div>
+  )
+
+  if (slug === 'services') return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <CaracField label="Type de service"    name="type_service"     value={f('type_service')}     onChange={onChange} placeholder="Plomberie, Cours, Transport…" required />
+      <CaracField label="Zone d'intervention" name="zone_intervention" value={f('zone_intervention')} onChange={onChange} placeholder="Dakar, Plateau…" />
+      <CaracField label="Durée / Fréquence"  name="duree"            value={f('duree')}            onChange={onChange} placeholder="1h, par séance…" />
+      <CaracField label="Disponibilité"      name="disponibilite"    value={f('disponibilite')}    onChange={onChange} placeholder="Lun-Ven 8h-18h…" />
+    </div>
+  )
+
+  return null
 }
 
 // ── Helpers de style ──────────────────────────────────────────────────────────
@@ -206,8 +355,23 @@ function BoutiqueForm({ boutique, onCancel, onSuccess }: {
 
 // ── Formulaire produit ────────────────────────────────────────────────────────
 
-function ProduitForm({ boutiqueId, produit, onCancel, onSuccess }: {
+const PRODUIT_CATEGORIES = [
+  { value: 'smartphones',  label: '📱 Téléphone / Smartphone' },
+  { value: 'informatique', label: '💻 Informatique' },
+  { value: 'tv-electro',   label: '📺 TV & Électroménager' },
+  { value: 'mode',         label: '👗 Mode & Vêtements' },
+  { value: 'maison',       label: '🏠 Maison & Décoration' },
+  { value: 'auto-moto',    label: '🚗 Auto & Moto' },
+  { value: 'jeux',         label: '🎮 Jeux & Consoles' },
+  { value: 'alimentation', label: '🍚 Alimentation' },
+  { value: 'beaute',       label: '💄 Beauté & Soins' },
+  { value: 'services',     label: '🛠 Services' },
+  { value: 'autre',        label: '📦 Autre' },
+]
+
+function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: {
   boutiqueId: string
+  boutiqueCat?: string | null
   produit?: Produit
   onCancel: () => void
   onSuccess: () => void
@@ -217,11 +381,21 @@ function ProduitForm({ boutiqueId, produit, onCancel, onSuccess }: {
     : createProduit.bind(null, boutiqueId)
   const [state, formAction] = useFormState<ActionState, FormData>(action, {})
   const [enStock, setEnStock] = useState(produit?.en_stock !== false)
+  const [cat, setCat] = useState(produit?.categorie ?? boutiqueCat ?? '')
+  const [carac, setCarac] = useState<Record<string, string>>(
+    produit?.caracteristiques ?? {}
+  )
 
   useEffect(() => { if (state.success) onSuccess() }, [state.success])
 
+  function handleCarac(k: string, v: string) {
+    setCarac(prev => ({ ...prev, [k]: v }))
+  }
+
+  const hasCaracFields = cat && cat !== 'autre'
+
   return (
-    <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <h3 style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, margin: 0 }}>
         {produit ? 'Modifier le produit' : 'Ajouter un produit'}
       </h3>
@@ -232,26 +406,60 @@ function ProduitForm({ boutiqueId, produit, onCancel, onSuccess }: {
         </div>
       )}
 
+      {/* Champs cachés pour caractéristiques + catégorie */}
+      <input type="hidden" name="categorie" value={cat} />
+      <input type="hidden" name="caracteristiques" value={JSON.stringify(carac)} />
+
+      {/* Catégorie */}
       <div>
-        <label style={labelStyle}>Nom du produit *</label>
-        <input name="nom" required maxLength={300} defaultValue={produit?.nom} style={inputStyle} placeholder="Ex: iPhone 14 Pro 256Go" />
+        <label style={labelStyle}>Catégorie du produit</label>
+        <select
+          value={cat}
+          onChange={e => { setCat(e.target.value); setCarac({}) }}
+          style={inputStyle}
+        >
+          <option value="">— Sélectionner une catégorie —</option>
+          {PRODUIT_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+        </select>
       </div>
+
+      {/* Nom */}
+      <div>
+        <label style={labelStyle}>Nom du produit <span style={{ color: '#dc2626' }}>*</span></label>
+        <input name="nom" required maxLength={300} defaultValue={produit?.nom} style={inputStyle} placeholder="Ex: iPhone 14 Pro 256 Go" />
+      </div>
+
+      {/* Caractéristiques dynamiques par catégorie */}
+      {hasCaracFields && (
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '14px 16px' }}>
+          <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            Caractéristiques
+          </p>
+          <CaracteristiquesFields slug={cat} values={carac} onChange={handleCarac} />
+        </div>
+      )}
+
+      {/* Description */}
       <div>
         <label style={labelStyle}>Description</label>
-        <textarea name="description" rows={2} defaultValue={produit?.description ?? ''} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Détails, état, caractéristiques…" />
+        <textarea name="description" rows={3} defaultValue={produit?.description ?? ''} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Détails supplémentaires, accessoires inclus, garantie…" />
       </div>
+
+      {/* Prix */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div>
           <label style={labelStyle}>Prix (FCFA)</label>
-          <input name="prix" type="number" min={0} defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 350000" />
+          <input name="prix" type="number" min={0} defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 350 000" />
         </div>
         <div>
-          <label style={labelStyle}>Prix barré (ancien prix)</label>
-          <input name="prix_barre" type="number" min={0} defaultValue={produit?.prix_barre ?? ''} style={inputStyle} placeholder="Ex: 400000" />
+          <label style={labelStyle}>Prix barré <span style={{ fontSize: 11, color: '#9ca3af' }}>(ancien prix)</span></label>
+          <input name="prix_barre" type="number" min={0} defaultValue={produit?.prix_barre ?? ''} style={inputStyle} placeholder="Ex: 400 000" />
         </div>
       </div>
+
+      {/* Photo */}
       <div>
-        <label style={labelStyle}>Photo du produit (max 5 Mo)</label>
+        <label style={labelStyle}>Photo du produit <span style={{ fontSize: 11, color: '#9ca3af' }}>(max 5 Mo)</span></label>
         <input name="image" type="file" accept="image/*" style={{ fontSize: 14 }} />
         {produit?.images?.[0] && (
           <div style={{ marginTop: 8 }}>
@@ -260,6 +468,8 @@ function ProduitForm({ boutiqueId, produit, onCancel, onSuccess }: {
           </div>
         )}
       </div>
+
+      {/* En stock toggle */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <input type="hidden" name="en_stock" value={enStock ? 'true' : 'false'} />
         <button type="button" onClick={() => setEnStock(!enStock)} style={{
@@ -276,6 +486,7 @@ function ProduitForm({ boutiqueId, produit, onCancel, onSuccess }: {
           {enStock ? '✅ En stock' : '❌ Rupture de stock'}
         </span>
       </div>
+
       <div style={{ display: 'flex', gap: 12 }}>
         <SubmitButton label={produit ? 'Enregistrer' : 'Ajouter le produit'} />
         <button type="button" onClick={onCancel} style={{
@@ -341,6 +552,7 @@ function CatalogueProduits({ boutique, planActif }: { boutique: Boutique; planAc
       <div style={{ maxWidth: 560 }}>
         <ProduitForm
           boutiqueId={boutique.id}
+          boutiqueCat={boutique.categorie}
           produit={typeof mode === 'object' ? mode.editing : undefined}
           onCancel={() => setMode('list')}
           onSuccess={() => {

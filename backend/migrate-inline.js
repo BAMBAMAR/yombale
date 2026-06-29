@@ -431,5 +431,13 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table boutique_produits OK');
   } catch (e) { console.warn('[MIGRATE] boutique_produits:', e.message); }
 
+  // Colonnes enrichissement produits (caractéristiques par catégorie)
+  for (const sql of [
+    `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS categorie VARCHAR(50)`,
+    `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS caracteristiques JSONB DEFAULT '{}'`,
+  ]) {
+    try { await pool.query(sql); } catch (e) { console.warn('[MIGRATE] bp_colonnes:', e.message); }
+  }
+
   try { await pool.end(); } catch (_) {}
 };

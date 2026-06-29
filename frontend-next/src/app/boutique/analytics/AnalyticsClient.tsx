@@ -17,8 +17,6 @@ interface Historique {
   clics_tel: string
 }
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || ''
-
 export default function AnalyticsClient({ boutiques }: { boutiques: { id: string; nom: string }[] }) {
   const [boutiqueId, setBoutiqueId] = useState(boutiques[0]?.id ?? '')
   const [stats, setStats]           = useState<Stats | null>(null)
@@ -30,10 +28,10 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
     if (!boutiqueId) return
     setLoading(true)
     setErreur(null)
-    fetch(`${BACKEND}/api/analytics/boutique/${boutiqueId}`, { credentials: 'include' })
-      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    fetch(`/api/boutique/analytics/${boutiqueId}`)
+      .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error || r.status)))
       .then(data => { setStats(data.stats); setHistorique(data.historique ?? []) })
-      .catch(() => setErreur('Impossible de charger les statistiques. Abonnement Pro requis.'))
+      .catch((msg) => setErreur(typeof msg === 'string' ? msg : 'Impossible de charger les statistiques.'))
       .finally(() => setLoading(false))
   }, [boutiqueId])
 
