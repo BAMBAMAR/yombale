@@ -367,8 +367,19 @@ router.post('/', limiterPublication, verifierToken, upload.fields([{ name: 'logo
 });
 
 // ── PUT /api/boutiques/:id — modifier la sienne
-router.put('/:id', verifierToken, param('id').isUUID(), upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'cover', maxCount: 1 }]), async (req, res) => {
+function multerBoutiqueFields(req, res, next) {
+  upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'cover', maxCount: 1 }])(req, res, (err) => {
+    if (err) {
+      console.error('[BOUTIQUES PUT MULTER]', err.code, err.message);
+      return res.status(400).json({ error: err.message || 'Erreur upload' });
+    }
+    next();
+  });
+}
+
+router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  console.log('[BOUTIQUES PUT] body keys:', Object.keys(req.body || {}), '| files:', Object.keys(req.files || {}));
   try {
     const existing = await pool.query(
       'SELECT * FROM boutiques WHERE id=$1 AND utilisateur_id=$2',
