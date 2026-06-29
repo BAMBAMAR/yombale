@@ -164,6 +164,26 @@ router.get('/:id/produits', param('id').isUUID(), async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
+// ── GET /api/boutiques/:id/produits/:prodId — fiche produit publique
+router.get('/:id/produits/:prodId', param('id').isUUID(), param('prodId').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const { rows } = await pool.query(
+      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock,
+              p.categorie, p.caracteristiques, p.ordre, p.created_at,
+              b.nom AS boutique_nom, b.telephone AS boutique_telephone,
+              b.whatsapp AS boutique_whatsapp, b.ville AS boutique_ville,
+              b.logo_url AS boutique_logo, b.actif AS boutique_actif
+       FROM boutique_produits p
+       JOIN boutiques b ON b.id = p.boutique_id
+       WHERE p.id=$1 AND p.boutique_id=$2 AND b.actif=true`,
+      [req.params.prodId, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+    res.json({ produit: rows[0] });
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
 // ── POST /api/boutiques/:id/produits — ajouter produit (Pro/Business)
 router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnement, requireAbonnement, upload.single('image'), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
