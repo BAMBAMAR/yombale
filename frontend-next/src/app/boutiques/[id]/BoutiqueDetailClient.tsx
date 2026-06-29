@@ -214,72 +214,176 @@ export default function BoutiqueDetailClient({
 
       {/* Onglet Infos */}
       {tab === 'infos' && (
-        <div style={{ maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* À propos */}
           {boutique.description && (
-            <div style={{ background: '#f8fafc', borderRadius: 10, padding: 16 }}>
-              <p style={{ fontWeight: 700, margin: '0 0 6px', fontSize: 13, color: '#374151' }}>À propos</p>
-              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: '#4b5563' }}>{boutique.description}</p>
+            <div style={{
+              background: 'linear-gradient(135deg, #fff8f0, #fff3e6)',
+              border: '1px solid #fed7aa', borderRadius: 14, padding: '20px 24px',
+            }}>
+              <p style={{ fontWeight: 800, margin: '0 0 10px', fontSize: 14, color: '#92400e', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                ✦ À propos
+              </p>
+              <p style={{ margin: 0, fontSize: 15, lineHeight: 1.8, color: '#374151' }}>{boutique.description}</p>
             </div>
           )}
 
-          <div style={{ background: '#f8fafc', borderRadius: 10, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p style={{ fontWeight: 700, margin: '0 0 4px', fontSize: 13, color: '#374151' }}>Contact & localisation</p>
-            {boutique.adresse && (
-              <div style={{ fontSize: 14, color: '#4b5563', display: 'flex', gap: 8 }}>
-                <span>📍</span>
-                <span>{[boutique.adresse, boutique.ville].filter(Boolean).join(', ')}</span>
-              </div>
-            )}
-            {boutique.telephone && (
-              <a href={`tel:${boutique.telephone}`} style={{ fontSize: 14, color: '#1d4ed8', display: 'flex', gap: 8, textDecoration: 'none' }}>
-                <span>📞</span><span>{boutique.telephone}</span>
-              </a>
-            )}
-            {boutique.whatsapp && (
-              <a href={`https://wa.me/${boutique.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: 14, color: '#16a34a', display: 'flex', gap: 8, textDecoration: 'none' }}>
-                <span>💬</span><span>WhatsApp : {boutique.whatsapp}</span>
-              </a>
-            )}
-            {boutique.site_web && (
-              <a href={boutique.site_web} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: 14, color: '#1d4ed8', display: 'flex', gap: 8, textDecoration: 'none' }}>
-                <span>🌐</span><span>{boutique.site_web.replace(/^https?:\/\//, '')}</span>
-              </a>
-            )}
+          {/* Grille contact + réseaux */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+            {/* Contact */}
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <p style={{ fontWeight: 800, margin: 0, fontSize: 14, color: '#1e293b' }}>📞 Contact</p>
+
+              {boutique.adresse && (
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 18, flexShrink: 0 }}>📍</span>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#374151' }}>{boutique.adresse}</p>
+                    <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>{boutique.ville}</p>
+                  </div>
+                </div>
+              )}
+
+              {boutique.telephone && (
+                <a href={`tel:${boutique.telephone}`} style={{ textDecoration: 'none' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: '#eff6ff', borderRadius: 10, padding: '10px 14px',
+                  }}>
+                    <span style={{ fontSize: 18 }}>📞</span>
+                    <div>
+                      <p style={{ margin: 0, fontSize: 11, color: '#60a5fa', fontWeight: 700 }}>TÉLÉPHONE</p>
+                      <p style={{ margin: 0, fontSize: 14, color: '#1d4ed8', fontWeight: 700 }}>{boutique.telephone}</p>
+                    </div>
+                  </div>
+                </a>
+              )}
+
+              {boutique.whatsapp && (
+                <a href={`https://wa.me/${boutique.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: '#f0fdf4', borderRadius: 10, padding: '10px 14px',
+                  }}>
+                    <span style={{ fontSize: 18 }}>💬</span>
+                    <div>
+                      <p style={{ margin: 0, fontSize: 11, color: '#4ade80', fontWeight: 700 }}>WHATSAPP</p>
+                      <p style={{ margin: 0, fontSize: 14, color: '#16a34a', fontWeight: 700 }}>{boutique.whatsapp}</p>
+                    </div>
+                  </div>
+                </a>
+              )}
+
+              {boutique.site_web && (
+                <a href={boutique.site_web} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: '#f8fafc', borderRadius: 10, padding: '10px 14px',
+                    border: '1px solid #e2e8f0',
+                  }}>
+                    <span style={{ fontSize: 18 }}>🌐</span>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ margin: 0, fontSize: 11, color: '#94a3b8', fontWeight: 700 }}>SITE WEB</p>
+                      <p style={{ margin: 0, fontSize: 13, color: '#374151', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {boutique.site_web.replace(/^https?:\/\//, '')}
+                      </p>
+                    </div>
+                  </div>
+                </a>
+              )}
+            </div>
+
+            {/* Réseaux sociaux + Horaires */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {(boutique.facebook || boutique.instagram) && (
+                <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '20px 22px' }}>
+                  <p style={{ fontWeight: 800, margin: '0 0 14px', fontSize: 14, color: '#1e293b' }}>🌍 Réseaux sociaux</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {boutique.facebook && (
+                      <a href={boutique.facebook} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          background: '#1877f2', borderRadius: 10, padding: '12px 16px',
+                        }}>
+                          <span style={{ fontSize: 20 }}>📘</span>
+                          <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>Suivre sur Facebook</span>
+                          <span style={{ color: 'rgba(255,255,255,.7)', marginLeft: 'auto', fontSize: 16 }}>↗</span>
+                        </div>
+                      </a>
+                    )}
+                    {boutique.instagram && (
+                      <a href={boutique.instagram} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+                          borderRadius: 10, padding: '12px 16px',
+                        }}>
+                          <span style={{ fontSize: 20 }}>📸</span>
+                          <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>Suivre sur Instagram</span>
+                          <span style={{ color: 'rgba(255,255,255,.7)', marginLeft: 'auto', fontSize: 16 }}>↗</span>
+                        </div>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {boutique.horaires && Object.keys(boutique.horaires).length > 0 && (
+                <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '20px 22px', flex: 1 }}>
+                  <p style={{ fontWeight: 800, margin: '0 0 14px', fontSize: 14, color: '#1e293b' }}>🕐 Horaires</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {horairesKeys.map((key, i) => {
+                      const val = boutique.horaires?.[key]
+                      if (!val) return null
+                      return (
+                        <div key={key} style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          padding: '6px 10px', borderRadius: 8,
+                          background: '#f8fafc',
+                        }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{JOURS[i]}</span>
+                          <span style={{ fontSize: 13, color: '#16a34a', fontWeight: 700 }}>{val}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {(boutique.facebook || boutique.instagram) && (
-            <div style={{ background: '#f8fafc', borderRadius: 10, padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ fontWeight: 700, margin: '0 0 4px', fontSize: 13, color: '#374151' }}>Réseaux sociaux</p>
-              {boutique.facebook && (
-                <a href={boutique.facebook} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 14, color: '#1877f2', display: 'flex', gap: 8, textDecoration: 'none' }}>
-                  <span>📘</span><span>Facebook</span>
+          {/* Boutons d'action principaux */}
+          {(boutique.whatsapp || boutique.telephone) && (
+            <div style={{ display: 'grid', gridTemplateColumns: boutique.whatsapp && boutique.telephone ? '1fr 1fr' : '1fr', gap: 12 }}>
+              {boutique.whatsapp && (
+                <a
+                  href={`https://wa.me/${boutique.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, j'ai trouvé votre boutique sur Nopalou !`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                    background: '#25d366', color: '#fff', padding: '14px 20px',
+                    borderRadius: 12, textDecoration: 'none', fontWeight: 800, fontSize: 15,
+                    boxShadow: '0 4px 14px rgba(37,211,102,.25)',
+                  }}
+                >
+                  💬 Écrire sur WhatsApp
                 </a>
               )}
-              {boutique.instagram && (
-                <a href={boutique.instagram} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 14, color: '#e1306c', display: 'flex', gap: 8, textDecoration: 'none' }}>
-                  <span>📸</span><span>Instagram</span>
+              {boutique.telephone && (
+                <a
+                  href={`tel:${boutique.telephone}`}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                    background: '#fff', color: '#1d4ed8', border: '2px solid #bfdbfe',
+                    padding: '14px 20px', borderRadius: 12, textDecoration: 'none', fontWeight: 700, fontSize: 15,
+                  }}
+                >
+                  📞 Appeler
                 </a>
               )}
-            </div>
-          )}
-
-          {boutique.horaires && Object.keys(boutique.horaires).length > 0 && (
-            <div style={{ background: '#f8fafc', borderRadius: 10, padding: 16 }}>
-              <p style={{ fontWeight: 700, margin: '0 0 10px', fontSize: 13, color: '#374151' }}>🕐 Horaires d&apos;ouverture</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 16px' }}>
-                {horairesKeys.map((key, i) => {
-                  const val = boutique.horaires?.[key]
-                  if (!val) return null
-                  return [
-                    <span key={`k-${key}`} style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{JOURS[i]}</span>,
-                    <span key={`v-${key}`} style={{ fontSize: 13, color: '#4b5563' }}>{val}</span>,
-                  ]
-                })}
-              </div>
             </div>
           )}
         </div>
