@@ -253,9 +253,14 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
        images, en_stock !== 'false', categorie||null, caracJson]
     );
     res.status(201).json({ success: true, produit: r.rows[0] });
-    // Sync catalogue Meta (async, non-bloquant)
-    const boutique = await pool.query('SELECT slug FROM boutiques WHERE id=$1', [id]);
-    syncProduit({ ...r.rows[0], boutique_slug: boutique.rows[0]?.slug }).catch(() => {});
+    // Sync catalogue Meta — hors du try/catch pour éviter double-réponse
+    const produitCree = r.rows[0];
+    setImmediate(async () => {
+      try {
+        const b = await pool.query('SELECT slug FROM boutiques WHERE id=$1', [id]);
+        await syncProduit({ ...produitCree, boutique_slug: b.rows[0]?.slug });
+      } catch {}
+    });
   } catch (err) {
     console.error('[BOUTIQUES PRODUIT POST]', err);
     res.status(500).json({ error: 'Erreur serveur' });
@@ -293,8 +298,13 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
        caracJson, prodId, id]
     );
     res.json({ success: true, produit: r.rows[0] });
-    const bout = await pool.query('SELECT slug FROM boutiques WHERE id=$1', [id]);
-    syncProduit({ ...r.rows[0], boutique_slug: bout.rows[0]?.slug }).catch(() => {});
+    const produitMaj = r.rows[0];
+    setImmediate(async () => {
+      try {
+        const b = await pool.query('SELECT slug FROM boutiques WHERE id=$1', [id]);
+        await syncProduit({ ...produitMaj, boutique_slug: b.rows[0]?.slug });
+      } catch {}
+    });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
