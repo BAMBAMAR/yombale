@@ -12,12 +12,17 @@ const nextConfig = {
   },
 
   async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${process.env.BACKEND_URL || 'http://localhost:3000'}/api/:path*`,
-      },
-    ]
+    return {
+      beforeFiles: [],
+      afterFiles: [],
+      // fallback : seulement si aucun fichier Next.js (Route Handler inclus) ne matche
+      fallback: [
+        {
+          source: '/api/:path*',
+          destination: `${process.env.BACKEND_URL || 'http://localhost:3000'}/api/:path*`,
+        },
+      ],
+    }
   },
 
   async headers() {

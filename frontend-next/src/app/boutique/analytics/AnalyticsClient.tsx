@@ -69,8 +69,6 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
       {erreur && (
         <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: '16px 20px', color: '#dc2626' }}>
           {erreur}
-          <br />
-          <a href="/boutique/abonnement" style={{ color: '#C75B00', fontWeight: 700 }}>→ Passer en Boutique Pro</a>
         </div>
       )}
 
