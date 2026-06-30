@@ -5,9 +5,10 @@ import { fmtDateHeure } from '@/lib/format'
 
 interface Commande {
   id: string; reference: string; nom_produit: string; quantite: number
-  prix_unitaire: number; montant_total: number
+  prix_unitaire: number; montant_total: number; frais_livraison: number
   client_nom: string; client_telephone: string; client_adresse: string | null
   note: string | null; statut: string; source: string; created_at: string
+  methode_paiement: string | null
 }
 
 const STATUTS: { key: string; label: string; color: string; bg: string }[] = [
@@ -97,6 +98,12 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
               <p style={{ margin: '0 0 2px', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>COMMANDE</p>
               <p style={{ margin: 0, fontSize: 13 }}>Réf : <strong>{commande.reference}</strong></p>
               <p style={{ margin: 0, fontSize: 13 }}>{commande.quantite} × {fcfa(commande.prix_unitaire)}</p>
+              {commande.frais_livraison > 0 && <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>🚚 Livraison : {fcfa(commande.frais_livraison)}</p>}
+              {commande.methode_paiement && (
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>
+                  💳 {({ wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement' } as Record<string,string>)[commande.methode_paiement] ?? commande.methode_paiement}
+                </p>
+              )}
               {commande.client_adresse && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>📍 {commande.client_adresse}</p>}
             </div>
           </div>

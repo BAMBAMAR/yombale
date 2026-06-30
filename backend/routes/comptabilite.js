@@ -481,9 +481,15 @@ router.post(
       );
       if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
 
-      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web' } = req.body;
+      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id } = req.body;
       let nomProduit = req.body.nom_produit || 'Produit';
       let prixUnitaire = Number(req.body.prix_unitaire) || 0;
+      let fraisLivraison = 0;
+
+      if (zone_livraison_id) {
+        const { rows: [zone] } = await pool.query('SELECT prix, nom FROM zones_livraison WHERE id=$1 AND boutique_id=$2', [zone_livraison_id, req.params.boutiqueId]);
+        if (zone) fraisLivraison = Number(zone.prix);
+      }
 
       if (produit_id) {
         const { rows: [p] } = await pool.query(
@@ -498,23 +504,25 @@ router.post(
         }
       }
 
-      const montantTotal = prixUnitaire * quantite;
+      const montantTotal = prixUnitaire * quantite + fraisLivraison;
       const ref = genRefCommande();
 
       const { rows: [commande] } = await pool.query(
         `INSERT INTO commandes_boutique
            (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
-            client_nom, client_telephone, client_adresse, note, source)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+            client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
         [ref, req.params.boutiqueId, produit_id || null, nomProduit, quantite, prixUnitaire, montantTotal,
-         client_nom, client_telephone, client_adresse || null, note || null, source]
+         client_nom, client_telephone, client_adresse || null, note || null, source,
+         methode_paiement, zone_livraison_id || null, fraisLivraison]
       );
 
       // Notifier le vendeur via WhatsApp
       const vendeurTel = boutique.whatsapp || boutique.telephone;
       if (vendeurTel) {
         const { sendWhatsAppText } = require('../services/whatsapp');
-        const msg = `🛒 *Nouvelle commande — ${boutique.nom}*\n\nRéf : *${ref}*\nProduit : ${nomProduit} × ${quantite}${montantTotal > 0 ? `\nMontant : *${new Intl.NumberFormat('fr-FR').format(montantTotal)} FCFA*` : ''}\n\n👤 Client : ${client_nom}\n📞 ${client_telephone}${client_adresse ? `\n📍 ${client_adresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\nRépondez vite pour confirmer !`;
+        const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement' };
+        const msg = `🛒 *Nouvelle commande — ${boutique.nom}*\n\nRéf : *${ref}*\nProduit : ${nomProduit} × ${quantite}${montantTotal > 0 ? `\nMontant : *${new Intl.NumberFormat('fr-FR').format(montantTotal)} FCFA*` : ''}${fraisLivraison > 0 ? `\nLivraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA` : ''}\n💳 Paiement souhaité : ${methodeLabel[methode_paiement] || methode_paiement}\n\n👤 Client : ${client_nom}\n📞 ${client_telephone}${client_adresse ? `\n📍 ${client_adresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\n⚡ Répondez vite pour confirmer !`;
         sendWhatsAppText(vendeurTel, msg).catch(() => {});
       }
 
@@ -803,5 +811,18 @@ router.patch(
     }
   }
 );
+
+// GET /api/comptabilite/:boutiqueId/zones/public — zones de livraison publiques (pas d'auth)
+router.get('/:boutiqueId/zones/public', param('boutiqueId').isUUID(), async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC',
+      [req.params.boutiqueId]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
 
 module.exports = router;
