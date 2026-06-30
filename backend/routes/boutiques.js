@@ -203,26 +203,31 @@ router.get('/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-// ── GET /api/boutiques/:id/produits — catalogue public
-router.get('/:id/produits', param('id').isUUID(), async (req, res) => {
-  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+// ── GET /api/boutiques/:id/produits — catalogue public (UUID ou slug)
+router.get('/:id/produits', async (req, res) => {
   try {
+    const param = req.params.id;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(param);
+    const condition = isUUID ? 'p.boutique_id=$1' : 'b.slug=$1';
     const { rows } = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
-       WHERE p.boutique_id=$1 AND b.actif=true
+       WHERE ${condition} AND b.actif=true
        ORDER BY p.ordre ASC, p.created_at DESC`,
-      [req.params.id]
+      [param]
     );
     res.json({ produits: rows });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-// ── GET /api/boutiques/:id/produits/:prodId — fiche produit publique
-router.get('/:id/produits/:prodId', param('id').isUUID(), param('prodId').isUUID(), async (req, res) => {
+// ── GET /api/boutiques/:id/produits/:prodId — fiche produit publique (UUID ou slug)
+router.get('/:id/produits/:prodId', param('prodId').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
+    const idParam = req.params.id;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const boutiqueCondition = isUUID ? 'b.id=$2' : 'b.slug=$2';
     const { rows } = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock,
               p.categorie, p.caracteristiques, p.ordre, p.created_at,
@@ -231,8 +236,8 @@ router.get('/:id/produits/:prodId', param('id').isUUID(), param('prodId').isUUID
               b.logo_url AS boutique_logo, b.actif AS boutique_actif
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
-       WHERE p.id=$1 AND p.boutique_id=$2 AND b.actif=true`,
-      [req.params.prodId, req.params.id]
+       WHERE p.id=$1 AND ${boutiqueCondition} AND b.actif=true`,
+      [req.params.prodId, idParam]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
     res.json({ produit: rows[0] });

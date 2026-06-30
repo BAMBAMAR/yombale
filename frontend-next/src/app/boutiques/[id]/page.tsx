@@ -57,9 +57,9 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
 
   const b = boutique!
 
-  // Fetch produits + annonces en parallèle
+  // Fetch produits + annonces en parallèle — utiliser b.id (UUID) même si params.id est un slug
   await Promise.all([
-    apiFetch<{ produits: Produit[] }>(`/boutiques/${params.id}/produits`)
+    apiFetch<{ produits: Produit[] }>(`/boutiques/${b.id}/produits`)
       .then(d => { produits = d.produits ?? [] })
       .catch(() => {}),
     apiFetch<{ annonces: Annonce[] }>(`/annonces?utilisateur_id=${b.utilisateur_id}&limit=24`)
