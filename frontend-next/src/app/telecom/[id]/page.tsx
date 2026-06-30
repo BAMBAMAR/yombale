@@ -109,6 +109,10 @@ export default async function FicheForfaitPage({ params }: { params: { id: strin
   }, null as (ForfaitSimilaire & { score: number }) | null)
   const proposerMeilleur = !!(meilleurForfait && meilleurForfait.score > scoreActuel * 1.05)
 
+  // Même sélection pré-remplie pour le bouton "Comparaison détaillée" du résumé
+  // et celui en bas de la section "Comparer avec d'autres forfaits".
+  const idsComparaison = [f.id, ...similaires.slice(0, 2).map(s => s.id)].join(',')
+
   return (
     <div className="page-container" style={{ paddingTop: '2rem' }}>
       {/* Fil d'Ariane */}
@@ -258,7 +262,7 @@ export default async function FicheForfaitPage({ params }: { params: { id: strin
               </div>
             )}
             <Link
-              href={`/telecom/comparaison?ids=${f.id}`}
+              href={`/telecom/comparaison?ids=${idsComparaison}`}
               className="sidebar-cta"
               style={{ background: 'var(--accent)' }}
             >
@@ -283,7 +287,6 @@ export default async function FicheForfaitPage({ params }: { params: { id: strin
 
         const meilleurPrix = lignes[0]?.prix ?? f.prix
         const courantEstMeilleur = meilleurPrix === f.prix
-        const idsComparaison = [f.id, ...similaires.slice(0, 2).map(s => s.id)].join(',')
 
         return (
           <section className="similaires-section">
