@@ -140,116 +140,138 @@ export default async function FicheForfaitPage({ params }: { params: { id: strin
         </Link>
       )}
 
-      <div className="forfait-fiche">
-        {/* En-tête opérateur */}
-        <div className="forfait-fiche-header" style={{ background: colors.bg }}>
-          <div className="forfait-fiche-top">
-            <div className="forfait-fiche-op" style={{ color: colors.text }}>
-              <span className="forfait-fiche-icon">{icon}</span>
-              <span className="forfait-fiche-operateur">{f.operateur}</span>
+      <div className="fiche-grid">
+        {/* ── Colonne principale ──────────────────────────────── */}
+        <div className="fiche-main">
+          <div className="forfait-fiche">
+            {/* En-tête opérateur */}
+            <div className="forfait-fiche-header" style={{ background: colors.bg }}>
+              <div className="forfait-fiche-top">
+                <div className="forfait-fiche-op" style={{ color: colors.text }}>
+                  <span className="forfait-fiche-icon">{icon}</span>
+                  <span className="forfait-fiche-operateur">{f.operateur}</span>
+                </div>
+                <span className="forfait-fiche-type-tag" style={{ background: colors.badge }}>
+                  {typeLabel}
+                </span>
+              </div>
+              <h1 className="forfait-fiche-nom">{f.nom}</h1>
+              <div className="forfait-fiche-prix-row">
+                <span className="forfait-fiche-prix">{fcfa(f.prix)}</span>
+                {f.validite_jours && (
+                  <span className="forfait-fiche-duree">
+                    · {f.validite_jours} jour{f.validite_jours > 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
             </div>
-            <span className="forfait-fiche-type-tag" style={{ background: colors.badge }}>
-              {typeLabel}
-            </span>
-          </div>
-          <h1 className="forfait-fiche-nom">{f.nom}</h1>
-          <div className="forfait-fiche-prix-row">
-            <span className="forfait-fiche-prix">{fcfa(f.prix)}</span>
-            {f.validite_jours && (
-              <span className="forfait-fiche-duree">
-                · {f.validite_jours} jour{f.validite_jours > 1 ? 's' : ''}
-              </span>
+
+            {/* Specs principales */}
+            <div className="forfait-fiche-specs">
+              {f.data_mo != null && (
+                <div className="forfait-fiche-spec">
+                  <span className="forfait-fiche-spec-val">{formatData(f.data_mo)}</span>
+                  <span className="forfait-fiche-spec-lbl">🌐 Internet</span>
+                </div>
+              )}
+              {f.minutes != null && (
+                <div className="forfait-fiche-spec">
+                  <span className="forfait-fiche-spec-val">{f.minutes === -1 ? '∞' : `${f.minutes}`}</span>
+                  <span className="forfait-fiche-spec-lbl">📞 {f.minutes === -1 ? 'Illimité' : 'Minutes'}</span>
+                </div>
+              )}
+              {f.sms != null && (
+                <div className="forfait-fiche-spec">
+                  <span className="forfait-fiche-spec-val">{f.sms === -1 ? '∞' : f.sms}</span>
+                  <span className="forfait-fiche-spec-lbl">💬 SMS</span>
+                </div>
+              )}
+              {f.validite_jours != null && (
+                <div className="forfait-fiche-spec">
+                  <span className="forfait-fiche-spec-val">{f.validite_jours}j</span>
+                  <span className="forfait-fiche-spec-lbl">⏱ Validité</span>
+                </div>
+              )}
+            </div>
+
+            {/* Ratios qualité/prix */}
+            {(prixParJour || prixParGo || prixParMin) && (
+              <div className="forfait-fiche-ratios">
+                <p className="forfait-fiche-ratios-titre">Rapport qualité/prix</p>
+                <div className="forfait-fiche-ratios-grid">
+                  {prixParJour && (
+                    <div className="forfait-fiche-ratio">
+                      <span className="forfait-fiche-ratio-val">
+                        {prixParJour.toLocaleString('fr-FR')} F
+                      </span>
+                      <span className="forfait-fiche-ratio-lbl">par jour</span>
+                    </div>
+                  )}
+                  {prixParGo && (
+                    <div className="forfait-fiche-ratio">
+                      <span className="forfait-fiche-ratio-val">
+                        {prixParGo.toLocaleString('fr-FR')} F
+                      </span>
+                      <span className="forfait-fiche-ratio-lbl">par Go</span>
+                    </div>
+                  )}
+                  {prixParMin && f.minutes !== -1 && (
+                    <div className="forfait-fiche-ratio">
+                      <span className="forfait-fiche-ratio-val">
+                        {Number(prixParMin).toLocaleString('fr-FR')} F
+                      </span>
+                      <span className="forfait-fiche-ratio-lbl">par minute</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
+            {f.description && (
+              <div className="forfait-fiche-desc-block">
+                <p className="forfait-fiche-desc">{f.description}</p>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Specs principales */}
-        <div className="forfait-fiche-specs">
-          {f.data_mo != null && (
-            <div className="forfait-fiche-spec">
-              <span className="forfait-fiche-spec-val">{formatData(f.data_mo)}</span>
-              <span className="forfait-fiche-spec-lbl">🌐 Internet</span>
+        {/* ── Sidebar résumé + actions ──────────────────────────── */}
+        <aside className="fiche-sidebar">
+          <div className="sidebar-card">
+            <p className="sidebar-titre">RÉSUMÉ</p>
+            <p className="sidebar-produit">{f.nom} — {f.operateur}</p>
+            <div className="sidebar-ligne">
+              <span>Prix</span>
+              <strong>{fcfa(f.prix)}</strong>
             </div>
-          )}
-          {f.minutes != null && (
-            <div className="forfait-fiche-spec">
-              <span className="forfait-fiche-spec-val">{f.minutes === -1 ? '∞' : `${f.minutes}`}</span>
-              <span className="forfait-fiche-spec-lbl">📞 {f.minutes === -1 ? 'Illimité' : 'Minutes'}</span>
-            </div>
-          )}
-          {f.sms != null && (
-            <div className="forfait-fiche-spec">
-              <span className="forfait-fiche-spec-val">{f.sms === -1 ? '∞' : f.sms}</span>
-              <span className="forfait-fiche-spec-lbl">💬 SMS</span>
-            </div>
-          )}
-          {f.validite_jours != null && (
-            <div className="forfait-fiche-spec">
-              <span className="forfait-fiche-spec-val">{f.validite_jours}j</span>
-              <span className="forfait-fiche-spec-lbl">⏱ Validité</span>
-            </div>
-          )}
-        </div>
-
-        {/* Ratios qualité/prix */}
-        {(prixParJour || prixParGo || prixParMin) && (
-          <div className="forfait-fiche-ratios">
-            <p className="forfait-fiche-ratios-titre">Rapport qualité/prix</p>
-            <div className="forfait-fiche-ratios-grid">
-              {prixParJour && (
-                <div className="forfait-fiche-ratio">
-                  <span className="forfait-fiche-ratio-val">
-                    {prixParJour.toLocaleString('fr-FR')} F
-                  </span>
-                  <span className="forfait-fiche-ratio-lbl">par jour</span>
-                </div>
-              )}
-              {prixParGo && (
-                <div className="forfait-fiche-ratio">
-                  <span className="forfait-fiche-ratio-val">
-                    {prixParGo.toLocaleString('fr-FR')} F
-                  </span>
-                  <span className="forfait-fiche-ratio-lbl">par Go</span>
-                </div>
-              )}
-              {prixParMin && f.minutes !== -1 && (
-                <div className="forfait-fiche-ratio">
-                  <span className="forfait-fiche-ratio-val">
-                    {Number(prixParMin).toLocaleString('fr-FR')} F
-                  </span>
-                  <span className="forfait-fiche-ratio-lbl">par minute</span>
-                </div>
-              )}
-            </div>
+            {f.validite_jours != null && (
+              <div className="sidebar-ligne">
+                <span>Validité</span>
+                <strong>{f.validite_jours} j</strong>
+              </div>
+            )}
+            {f.data_mo != null && (
+              <div className="sidebar-ligne">
+                <span>Internet</span>
+                <strong>{formatData(f.data_mo)}</strong>
+              </div>
+            )}
+            <Link
+              href={`/telecom/comparaison?ids=${f.id}`}
+              className="sidebar-cta"
+              style={{ background: 'var(--accent)' }}
+            >
+              ⚖ Comparaison détaillée côte à côte
+            </Link>
+            <Link href={`/telecom?operateur=${encodeURIComponent(f.operateur)}`} className="sidebar-link">
+              {icon} Tous les forfaits {f.operateur}
+            </Link>
+            <Link href="/telecom" className="sidebar-link">
+              ← Retour aux forfaits
+            </Link>
           </div>
-        )}
-
-        {/* Description */}
-        {f.description && (
-          <div className="forfait-fiche-desc-block">
-            <p className="forfait-fiche-desc">{f.description}</p>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="forfait-fiche-actions">
-          <Link href="/telecom" className="budget-pill">
-            ← Retour aux forfaits
-          </Link>
-          <Link
-            href={`/telecom?operateur=${encodeURIComponent(f.operateur)}`}
-            className="budget-pill"
-          >
-            {icon} Tous les forfaits {f.operateur}
-          </Link>
-          <Link
-            href={`/telecom/comparaison?ids=${f.id}`}
-            className="budget-pill"
-            style={{ background: 'var(--accent)', color: '#fff', border: 'none' }}
-          >
-            ⚖ Comparer ce forfait
-          </Link>
-        </div>
+        </aside>
       </div>
 
       {/* ── Comparaison automatique avec d'autres forfaits ───────── */}
@@ -329,7 +351,7 @@ export default async function FicheForfaitPage({ params }: { params: { id: strin
               </tbody>
             </table>
             <div style={{ textAlign: 'center', marginTop: 20 }}>
-              <Link href={`/telecom/comparaison?ids=${idsComparaison}`} className="budget-pill">
+              <Link href={`/telecom/comparaison?ids=${idsComparaison}`} className="comparaison-cta-btn">
                 ⚖ Comparaison détaillée côte à côte
               </Link>
             </div>

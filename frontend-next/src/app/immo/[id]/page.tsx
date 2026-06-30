@@ -422,7 +422,7 @@ export default async function FicheImmoPage({
               </tbody>
             </table>
             <div style={{ textAlign: 'center', marginTop: 20 }}>
-              <Link href={`/immo/comparaison?ids=${idsComparaison}`} className="budget-pill">
+              <Link href={`/immo/comparaison?ids=${idsComparaison}`} className="comparaison-cta-btn">
                 ⚖ Comparaison détaillée côte à côte
               </Link>
             </div>
