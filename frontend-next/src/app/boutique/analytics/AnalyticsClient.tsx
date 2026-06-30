@@ -28,7 +28,7 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
     if (!boutiqueId) return
     setLoading(true)
     setErreur(null)
-    fetch(`/api/boutique/analytics/${boutiqueId}`)
+    fetch(`/api/analytics/boutique/${boutiqueId}`)
       .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error || r.status)))
       .then(data => { setStats(data.stats); setHistorique(data.historique ?? []) })
       .catch((msg) => setErreur(typeof msg === 'string' ? msg : 'Impossible de charger les statistiques.'))
