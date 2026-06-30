@@ -3,8 +3,12 @@ const router = require('express').Router();
 const { body, param, validationResult } = require('express-validator');
 const PDFDocument = require('pdfkit');
 const axios = require('axios');
+const multer = require('multer');
 const { pool } = require('../models/db');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
+const { uploadBuffer } = require('../services/cloudinary');
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 async function fetchImageBuffer(url) {
   try {
@@ -243,6 +247,28 @@ router.get('/:boutiqueId/ventes/export.csv', verifierToken, param('boutiqueId').
   }
 });
 
+// DELETE /api/comptabilite/:boutiqueId/ventes/:venteId
+router.delete(
+  '/:boutiqueId/ventes/:venteId',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  param('venteId').isUUID(),
+  async (req, res) => {
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+      const { rowCount } = await pool.query(
+        'DELETE FROM ventes WHERE id=$1 AND boutique_id=$2',
+        [req.params.venteId, req.params.boutiqueId]
+      );
+      if (rowCount === 0) return res.status(404).json({ error: 'Vente introuvable' });
+      res.json({ message: 'Vente supprimée' });
+    } catch (err) {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
 // GET /api/comptabilite/:boutiqueId/ventes/:venteId/facture.pdf
 router.get(
   '/:boutiqueId/ventes/:venteId/facture.pdf',
@@ -336,15 +362,16 @@ router.get(
 
       let nextY = row1Y + 28;
 
-      // Ligne livraison (si applicable)
-      if (Number(vente.frais_livraison) > 0) {
+      // Ligne livraison (si zone sélectionnée ou frais > 0)
+      if (vente.zone_livraison_id || Number(vente.frais_livraison) > 0) {
         doc.rect(50, nextY, 495, 28).fill('#fff');
         doc.fillColor(GRAY).fontSize(10).font('Helvetica-Oblique');
         doc.text('Frais de livraison', col.desc + 6, nextY + 9, { width: 250 });
         doc.text('—', col.qty, nextY + 9, { width: 50, align: 'right' });
         doc.text('—', col.pu, nextY + 9, { width: 70, align: 'right' });
         doc.fillColor('#374151').font('Helvetica');
-        doc.text(`${Number(vente.frais_livraison).toLocaleString('fr-FR')} FCFA`, col.total, nextY + 9, { width: 90, align: 'right' });
+        const livraisonAmt = Number(vente.frais_livraison);
+        doc.text(livraisonAmt > 0 ? `${livraisonAmt.toLocaleString('fr-FR')} FCFA` : 'Gratuit', col.total, nextY + 9, { width: 90, align: 'right' });
         nextY += 28;
       }
 
@@ -630,6 +657,33 @@ router.delete(
       await pool.query('DELETE FROM depenses WHERE id=$1 AND boutique_id=$2', [req.params.depenseId, req.params.boutiqueId]);
       res.json({ message: 'Dépense supprimée' });
     } catch (err) {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
+// POST /api/comptabilite/:boutiqueId/depenses/:depenseId/justificatif
+router.post(
+  '/:boutiqueId/depenses/:depenseId/justificatif',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  param('depenseId').isUUID(),
+  upload.single('justificatif'),
+  async (req, res) => {
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+      if (!req.file) return res.status(400).json({ error: 'Fichier manquant' });
+
+      const url = await uploadBuffer(req.file.buffer, 'justificatifs');
+      const { rows } = await pool.query(
+        'UPDATE depenses SET justificatif_url=$1 WHERE id=$2 AND boutique_id=$3 RETURNING *',
+        [url, req.params.depenseId, req.params.boutiqueId]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Dépense introuvable' });
+      res.json(rows[0]);
+    } catch (err) {
+      console.error('[JUSTIFICATIF]', err.message);
       res.status(500).json({ error: 'Erreur serveur' });
     }
   }

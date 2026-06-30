@@ -556,6 +556,7 @@ module.exports = async function migrateInline() {
       );
       CREATE INDEX IF NOT EXISTS idx_depenses_boutique ON depenses(boutique_id, date_depense DESC);
     `);
+    await pool.query(`ALTER TABLE depenses ADD COLUMN IF NOT EXISTS justificatif_url TEXT`);
     console.log('[MIGRATE] ✅ Table depenses OK');
   } catch (e) { console.warn('[MIGRATE] depenses:', e.message); }
 

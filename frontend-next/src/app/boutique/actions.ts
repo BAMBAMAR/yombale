@@ -231,6 +231,16 @@ export async function deleteDepense(boutiqueId: string, depenseId: string): Prom
   }
 }
 
+export async function deleteVente(boutiqueId: string, venteId: string): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/ventes/${venteId}`, { method: 'DELETE' })
+    if (!res.ok) return { error: 'Impossible de supprimer' }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
 export async function listCommandes(boutiqueId: string, statut?: string) {
   try {
     const qs = statut ? `?statut=${statut}` : ''

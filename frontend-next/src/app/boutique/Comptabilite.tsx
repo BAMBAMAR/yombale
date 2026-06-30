@@ -2,7 +2,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import {
   listZones, createZone, deleteZone,
-  listVentes, declarerVente,
+  listVentes, declarerVente, deleteVente,
   getDashboard, listDepenses, addDepense, deleteDepense,
   updateStock,
 } from './actions'
@@ -11,7 +11,7 @@ import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
 interface Zone    { id: string; nom: string; prix: number }
 interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string }
 interface Produit { id: string; nom: string; prix: number | null; stock_quantite: number | null }
-interface Depense { id: string; montant: number; categorie: string; description: string | null; date_depense: string }
+interface Depense { id: string; montant: number; categorie: string; description: string | null; date_depense: string; justificatif_url: string | null }
 interface Dashboard {
   ca_mois: number; ca_mois_precedent: number; nb_ventes_mois: number; ca_total: number
   depenses_mois: number; depenses_total: number; benefice_mois: number
@@ -233,6 +233,8 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
   const [produits, setProduits] = useState<Produit[]>([])
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
   async function load() {
@@ -247,6 +249,16 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
   }
 
   useEffect(() => { load() }, [boutiqueId])
+
+  function removeVente(id: string) {
+    if (!confirm('Supprimer cette vente ? Elle ne sera plus comptabilisée.')) return
+    setDeleting(id)
+    startTransition(async () => {
+      await deleteVente(boutiqueId, id)
+      setDeleting(null)
+      load()
+    })
+  }
 
   const methodeLabel: Record<string, string> = { cash: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', virement: 'Virement' }
 
@@ -290,11 +302,18 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
                   {fmtDate(v.created_at)} · Réf {v.reference}
                 </p>
               </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                 <p style={{ margin: 0, fontWeight: 800, fontSize: 15, color: '#1d4ed8' }}>{fcfa(v.montant_total)}</p>
-                <a href={`/boutique/ventes/facture/${boutiqueId}/${v.id}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#6b7280' }}>
-                  PDF ↗
-                </a>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <a href={`/boutique/ventes/facture/${boutiqueId}/${v.id}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#6b7280' }}>
+                    PDF ↗
+                  </a>
+                  <button
+                    onClick={() => removeVente(v.id)}
+                    disabled={deleting === v.id}
+                    style={{ background: 'none', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 6, padding: '3px 7px', cursor: 'pointer', fontSize: 11, opacity: deleting === v.id ? 0.5 : 1 }}
+                  >✕</button>
+                </div>
               </div>
             </div>
           ))}
@@ -305,6 +324,72 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
 }
 
 // ── Dépenses ──────────────────────────────────────────────────────────────────
+
+function DepenseCard({ depense: d, boutiqueId, onDelete, onUpdated }: {
+  depense: Depense; boutiqueId: string; onDelete: (id: string) => void; onUpdated: () => void
+}) {
+  const [uploading, setUploading] = useState(false)
+  const fileRef = { current: null as HTMLInputElement | null }
+
+  async function uploadJustificatif(file: File) {
+    setUploading(true)
+    try {
+      const form = new FormData()
+      form.append('justificatif', file)
+      const res = await fetch(`/api/compta-proxy/${boutiqueId}/depenses/${d.id}/justificatif`, {
+        method: 'POST', body: form,
+      })
+      if (res.ok) onUpdated()
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: '#f1f5f9', color: '#475569' }}>
+              {d.categorie}
+            </span>
+            {d.description && <span style={{ fontSize: 13, color: '#374151' }}>{d.description}</span>}
+          </div>
+          <p style={{ margin: '4px 0 0', fontSize: 11, color: '#9ca3af' }}>{fmtDate(d.date_depense)}</p>
+          {/* Justificatif */}
+          <div style={{ marginTop: 6 }}>
+            {d.justificatif_url ? (
+              <a href={d.justificatif_url} target="_blank" rel="noreferrer"
+                style={{ fontSize: 11, color: '#1d4ed8', textDecoration: 'none' }}>
+                📎 Justificatif ↗
+              </a>
+            ) : (
+              <>
+                <input
+                  ref={el => { fileRef.current = el }}
+                  type="file" accept="image/*,application/pdf"
+                  style={{ display: 'none' }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadJustificatif(f) }}
+                />
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  style={{ fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                >
+                  {uploading ? 'Envoi…' : '+ Ajouter justificatif'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <span style={{ fontWeight: 800, fontSize: 15, color: '#dc2626' }}>{fcfa(d.montant)}</span>
+          <button onClick={() => onDelete(d.id)} style={{ background: 'none', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }}>✕</button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function DepensesView({ boutiqueId }: { boutiqueId: string }) {
   const [depenses, setDepenses] = useState<Depense[]>([])
@@ -397,23 +482,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {depenses.map(d => (
-            <div key={d.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: '#f1f5f9', color: '#475569' }}>
-                    {d.categorie}
-                  </span>
-                  {d.description && <span style={{ fontSize: 13, color: '#374151' }}>{d.description}</span>}
-                </div>
-                <p style={{ margin: '4px 0 0', fontSize: 11, color: '#9ca3af' }}>
-                  {fmtDate(d.date_depense)}
-                </p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                <span style={{ fontWeight: 800, fontSize: 15, color: '#dc2626' }}>{fcfa(d.montant)}</span>
-                <button onClick={() => remove(d.id)} style={{ background: 'none', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }}>✕</button>
-              </div>
-            </div>
+            <DepenseCard key={d.id} depense={d} boutiqueId={boutiqueId} onDelete={remove} onUpdated={load} />
           ))}
         </div>
       )}
