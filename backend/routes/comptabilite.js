@@ -377,4 +377,154 @@ router.get(
   }
 );
 
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+// GET /api/comptabilite/:boutiqueId/dashboard
+router.get('/:boutiqueId/dashboard', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {
+  try {
+    const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+    if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+    const id = req.params.boutiqueId;
+
+    const [statsVentes, statsDepenses, topProduit, stockAlerte] = await Promise.all([
+      pool.query(`
+        SELECT
+          COALESCE(SUM(CASE WHEN date_trunc('month', created_at) = date_trunc('month', NOW()) THEN montant_total END), 0) AS ca_mois,
+          COALESCE(SUM(CASE WHEN date_trunc('month', created_at) = date_trunc('month', NOW() - INTERVAL '1 month') THEN montant_total END), 0) AS ca_mois_precedent,
+          COUNT(CASE WHEN date_trunc('month', created_at) = date_trunc('month', NOW()) THEN 1 END)::int AS nb_ventes_mois,
+          COALESCE(SUM(montant_total), 0) AS ca_total
+        FROM ventes WHERE boutique_id=$1
+      `, [id]),
+      pool.query(`
+        SELECT
+          COALESCE(SUM(CASE WHEN date_trunc('month', date_depense) = date_trunc('month', CURRENT_DATE) THEN montant END), 0) AS depenses_mois,
+          COALESCE(SUM(montant), 0) AS depenses_total
+        FROM depenses WHERE boutique_id=$1
+      `, [id]),
+      pool.query(`
+        SELECT nom_produit, SUM(quantite)::int AS total_vendu, SUM(montant_total) AS ca
+        FROM ventes WHERE boutique_id=$1
+          AND date_trunc('month', created_at) = date_trunc('month', NOW())
+        GROUP BY nom_produit ORDER BY total_vendu DESC LIMIT 5
+      `, [id]),
+      pool.query(`
+        SELECT id, nom, stock_quantite FROM boutique_produits
+        WHERE boutique_id=$1 AND stock_quantite IS NOT NULL AND stock_quantite <= 3
+        ORDER BY stock_quantite ASC
+      `, [id]),
+    ]);
+
+    const v = statsVentes.rows[0];
+    const d = statsDepenses.rows[0];
+    res.json({
+      ca_mois: Number(v.ca_mois),
+      ca_mois_precedent: Number(v.ca_mois_precedent),
+      nb_ventes_mois: v.nb_ventes_mois,
+      ca_total: Number(v.ca_total),
+      depenses_mois: Number(d.depenses_mois),
+      depenses_total: Number(d.depenses_total),
+      benefice_mois: Number(v.ca_mois) - Number(d.depenses_mois),
+      top_produits: topProduit.rows,
+      stock_alerte: stockAlerte.rows,
+    });
+  } catch (err) {
+    console.error('[DASHBOARD]', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── Dépenses ──────────────────────────────────────────────────────────────────
+
+// GET /api/comptabilite/:boutiqueId/depenses
+router.get('/:boutiqueId/depenses', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {
+  try {
+    const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+    if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+    const { from, to } = req.query;
+    const conds = ['boutique_id=$1'];
+    const params = [req.params.boutiqueId];
+    if (from) { params.push(from); conds.push(`date_depense >= $${params.length}`); }
+    if (to)   { params.push(to);   conds.push(`date_depense <= $${params.length}`); }
+    const { rows } = await pool.query(
+      `SELECT * FROM depenses WHERE ${conds.join(' AND ')} ORDER BY date_depense DESC, created_at DESC`,
+      params
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// POST /api/comptabilite/:boutiqueId/depenses
+router.post(
+  '/:boutiqueId/depenses',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  body('montant').isFloat({ min: 1 }),
+  body('categorie').trim().isLength({ min: 1, max: 50 }),
+  body('description').optional().trim().isLength({ max: 300 }),
+  body('date_depense').optional().isDate(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+      const { montant, categorie, description, date_depense } = req.body;
+      const { rows } = await pool.query(
+        `INSERT INTO depenses (boutique_id, montant, categorie, description, date_depense)
+         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+        [req.params.boutiqueId, montant, categorie, description || null, date_depense || new Date().toISOString().slice(0,10)]
+      );
+      res.status(201).json(rows[0]);
+    } catch (err) {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
+// DELETE /api/comptabilite/:boutiqueId/depenses/:depenseId
+router.delete(
+  '/:boutiqueId/depenses/:depenseId',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  param('depenseId').isUUID(),
+  async (req, res) => {
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+      await pool.query('DELETE FROM depenses WHERE id=$1 AND boutique_id=$2', [req.params.depenseId, req.params.boutiqueId]);
+      res.json({ message: 'Dépense supprimée' });
+    } catch (err) {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
+// ── Stock ─────────────────────────────────────────────────────────────────────
+
+// PATCH /api/comptabilite/:boutiqueId/stock/:produitId
+router.patch(
+  '/:boutiqueId/stock/:produitId',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  param('produitId').isUUID(),
+  body('stock_quantite').isInt({ min: 0 }),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+      const { rows } = await pool.query(
+        `UPDATE boutique_produits SET stock_quantite=$1 WHERE id=$2 AND boutique_id=$3 RETURNING id, nom, stock_quantite`,
+        [req.body.stock_quantite, req.params.produitId, req.params.boutiqueId]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+      res.json(rows[0]);
+    } catch (err) {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
 module.exports = router;

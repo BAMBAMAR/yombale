@@ -186,3 +186,62 @@ export async function declarerVente(
     return { error: 'Erreur de connexion au serveur' }
   }
 }
+
+export async function getDashboard(boutiqueId: string) {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/dashboard`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+export async function listDepenses(boutiqueId: string) {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/depenses`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+export async function addDepense(
+  boutiqueId: string,
+  data: { montant: number; categorie: string; description?: string; date_depense?: string }
+): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/depenses`, {
+      method: 'POST', body: JSON.stringify(data),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible d\'enregistrer la dépense' }
+    }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
+export async function deleteDepense(boutiqueId: string, depenseId: string): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/depenses/${depenseId}`, { method: 'DELETE' })
+    if (!res.ok) return { error: 'Impossible de supprimer' }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
+export async function updateStock(boutiqueId: string, produitId: string, stock_quantite: number): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/stock/${produitId}`, {
+      method: 'PATCH', body: JSON.stringify({ stock_quantite }),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de mettre à jour le stock' }
+    }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}

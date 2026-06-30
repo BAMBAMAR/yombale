@@ -515,5 +515,22 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Tables comptabilité boutique (stock, zones_livraison, ventes) OK');
   } catch (e) { console.warn('[MIGRATE] comptabilite_boutique:', e.message); }
 
+  // Dépenses boutique
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS depenses (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        montant     NUMERIC(12,2) NOT NULL,
+        categorie   VARCHAR(50) NOT NULL DEFAULT 'autre',
+        description VARCHAR(300),
+        date_depense DATE NOT NULL DEFAULT CURRENT_DATE,
+        created_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_depenses_boutique ON depenses(boutique_id, date_depense DESC);
+    `);
+    console.log('[MIGRATE] ✅ Table depenses OK');
+  } catch (e) { console.warn('[MIGRATE] depenses:', e.message); }
+
   try { await pool.end(); } catch (_) {}
 };

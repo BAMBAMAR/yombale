@@ -1,25 +1,108 @@
 'use client'
 import { useEffect, useState, useTransition } from 'react'
-import { listZones, createZone, deleteZone, listVentes, declarerVente } from './actions'
+import {
+  listZones, createZone, deleteZone,
+  listVentes, declarerVente,
+  getDashboard, listDepenses, addDepense, deleteDepense,
+  updateStock,
+} from './actions'
 import { fcfa } from '@/lib/format'
 
-interface Zone { id: string; nom: string; prix: number }
-interface Vente {
-  id: string; reference: string; nom_produit: string; quantite: number
-  prix_unitaire: number; frais_livraison: number; montant_total: number
-  client_nom: string | null; methode_paiement: string; created_at: string
-}
-interface Produit { id: string; nom: string; prix: number | null }
-
-const inputStyle = {
-  padding: '10px 14px', border: '1px solid #d1d5db',
-  borderRadius: 8, fontSize: 14, width: '100%',
-  background: '#fff', boxSizing: 'border-box' as const,
+interface Zone    { id: string; nom: string; prix: number }
+interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string }
+interface Produit { id: string; nom: string; prix: number | null; stock_quantite: number | null }
+interface Depense { id: string; montant: number; categorie: string; description: string | null; date_depense: string }
+interface Dashboard {
+  ca_mois: number; ca_mois_precedent: number; nb_ventes_mois: number; ca_total: number
+  depenses_mois: number; depenses_total: number; benefice_mois: number
+  top_produits: { nom_produit: string; total_vendu: number; ca: number }[]
+  stock_alerte: { id: string; nom: string; stock_quantite: number }[]
 }
 
-function VenteForm({ boutiqueId, produits, zones, onDone }: {
-  boutiqueId: string; produits: Produit[]; zones: Zone[]; onDone: () => void
-}) {
+const inputStyle = { padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, width: '100%', background: '#fff', boxSizing: 'border-box' as const }
+const labelStyle = { fontSize: 13, fontWeight: 600 as const, color: '#374151', display: 'block' as const, marginBottom: 4 }
+
+const CAT_DEPENSES = ['loyer', 'stock', 'transport', 'salaires', 'marketing', 'fournitures', 'taxes', 'autre']
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+
+function KpiCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
+  return (
+    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 20px', flex: 1, minWidth: 140 }}>
+      <p style={{ margin: '0 0 4px', fontSize: 12, color: '#6b7280', fontWeight: 600 }}>{label}</p>
+      <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: color ?? '#111' }}>{value}</p>
+      {sub && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9ca3af' }}>{sub}</p>}
+    </div>
+  )
+}
+
+function DashboardView({ boutiqueId }: { boutiqueId: string }) {
+  const [data, setData] = useState<Dashboard | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getDashboard(boutiqueId).then(d => { setData(d); setLoading(false) })
+  }, [boutiqueId])
+
+  if (loading) return <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p>
+  if (!data)   return <p style={{ color: '#dc2626', fontSize: 14 }}>Impossible de charger le tableau de bord.</p>
+
+  const evol = data.ca_mois_precedent > 0
+    ? ((data.ca_mois - data.ca_mois_precedent) / data.ca_mois_precedent * 100).toFixed(0)
+    : null
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* KPIs principaux */}
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <KpiCard
+          label="CA ce mois"
+          value={fcfa(data.ca_mois)}
+          sub={evol ? `${Number(evol) >= 0 ? '▲' : '▼'} ${Math.abs(Number(evol))}% vs mois dernier` : undefined}
+          color="#1d4ed8"
+        />
+        <KpiCard label="Dépenses mois" value={fcfa(data.depenses_mois)} color="#dc2626" />
+        <KpiCard
+          label="Bénéfice net"
+          value={fcfa(data.benefice_mois)}
+          color={data.benefice_mois >= 0 ? '#16a34a' : '#dc2626'}
+        />
+        <KpiCard label="Ventes mois" value={String(data.nb_ventes_mois)} sub="transactions" />
+      </div>
+
+      {/* Top produits */}
+      {data.top_produits.length > 0 && (
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 20px' }}>
+          <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#374151' }}>🏆 Top produits ce mois</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {data.top_produits.map((p, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                <span style={{ color: '#374151' }}>{i + 1}. {p.nom_produit}</span>
+                <span style={{ color: '#6b7280' }}>{p.total_vendu} vendu{p.total_vendu > 1 ? 's' : ''} · {fcfa(p.ca)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Alertes stock */}
+      {data.stock_alerte.length > 0 && (
+        <div style={{ background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 12, padding: '16px 20px' }}>
+          <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: '#92400e' }}>⚠️ Stock bas</p>
+          {data.stock_alerte.map(p => (
+            <p key={p.id} style={{ margin: '4px 0', fontSize: 13, color: '#b45309' }}>
+              {p.nom} — <strong>{p.stock_quantite} restant{p.stock_quantite > 1 ? 's' : ''}</strong>
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Formulaire vente ──────────────────────────────────────────────────────────
+
+function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string; produits: Produit[]; zones: Zone[]; onDone: () => void }) {
   const [produitId, setProduitId] = useState('')
   const [nomLibre, setNomLibre] = useState('')
   const [quantite, setQuantite] = useState(1)
@@ -54,149 +137,461 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: {
     })
   }
 
+  const stock = produits.find(p => p.id === produitId)?.stock_quantite
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 16 }}>
-      <h4 style={{ margin: 0, fontSize: 14 }}>✅ Déclarer une vente</h4>
-      {error && <div style={{ color: '#dc2626', fontSize: 13 }}>{error}</div>}
-      <select value={produitId} onChange={e => handleProduit(e.target.value)} style={inputStyle}>
-        <option value="">— Produit hors catalogue —</option>
-        {produits.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
-      </select>
-      {!produitId && (
-        <input placeholder="Nom du produit vendu" value={nomLibre} onChange={e => setNomLibre(e.target.value)} style={inputStyle} />
+    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>Nouvelle vente</p>
+      {error && <div style={{ background: '#fef2f2', borderRadius: 8, padding: '8px 12px', color: '#dc2626', fontSize: 13 }}>{error}</div>}
+
+      {produits.length > 0 && (
+        <div>
+          <label style={labelStyle}>Produit du catalogue</label>
+          <select value={produitId} onChange={e => handleProduit(e.target.value)} style={inputStyle}>
+            <option value="">— Sélectionner (ou saisir manuellement) —</option>
+            {produits.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.nom}{p.prix ? ` — ${fcfa(p.prix)}` : ''}{p.stock_quantite !== null ? ` (stock: ${p.stock_quantite})` : ''}
+              </option>
+            ))}
+          </select>
+          {stock !== null && stock !== undefined && stock <= 3 && (
+            <p style={{ fontSize: 11, color: '#b45309', margin: '4px 0 0' }}>⚠️ Stock bas : {stock} restant{stock > 1 ? 's' : ''}</p>
+          )}
+        </div>
       )}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <input type="number" min={1} placeholder="Quantité" value={quantite} onChange={e => setQuantite(Number(e.target.value))} style={inputStyle} />
-        <input type="number" min={0} placeholder="Prix unitaire (FCFA)" value={prix} onChange={e => setPrix(Number(e.target.value))} style={inputStyle} />
+
+      {!produitId && (
+        <div>
+          <label style={labelStyle}>Nom du produit / service</label>
+          <input value={nomLibre} onChange={e => setNomLibre(e.target.value)} style={inputStyle} placeholder="Ex: Réparation téléphone, Robe Wax…" />
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div>
+          <label style={labelStyle}>Quantité</label>
+          <input type="number" min={1} value={quantite} onChange={e => setQuantite(Number(e.target.value))} style={inputStyle} />
+        </div>
+        <div>
+          <label style={labelStyle}>Prix unitaire (FCFA)</label>
+          <input type="number" min={0} value={prix} onChange={e => setPrix(Number(e.target.value))} style={inputStyle} />
+        </div>
       </div>
-      <select value={zoneId} onChange={e => setZoneId(e.target.value)} style={inputStyle}>
-        <option value="">— Sans livraison —</option>
-        {zones.map(z => <option key={z.id} value={z.id}>{z.nom} ({fcfa(z.prix)})</option>)}
-      </select>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <input placeholder="Nom client (optionnel)" value={clientNom} onChange={e => setClientNom(e.target.value)} style={inputStyle} />
-        <input placeholder="Téléphone client (optionnel)" value={clientTel} onChange={e => setClientTel(e.target.value)} style={inputStyle} />
+
+      {zones.length > 0 && (
+        <div>
+          <label style={labelStyle}>Zone de livraison</label>
+          <select value={zoneId} onChange={e => setZoneId(e.target.value)} style={inputStyle}>
+            <option value="">— Sans livraison —</option>
+            {zones.map(z => <option key={z.id} value={z.id}>{z.nom} — {fcfa(z.prix)}</option>)}
+          </select>
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div>
+          <label style={labelStyle}>Nom client</label>
+          <input value={clientNom} onChange={e => setClientNom(e.target.value)} style={inputStyle} placeholder="Optionnel" />
+        </div>
+        <div>
+          <label style={labelStyle}>Téléphone client</label>
+          <input value={clientTel} onChange={e => setClientTel(e.target.value)} style={inputStyle} placeholder="77 000 00 00" />
+        </div>
       </div>
-      <select value={paiement} onChange={e => setPaiement(e.target.value)} style={inputStyle}>
-        <option value="cash">Espèces</option>
-        <option value="wave">Wave</option>
-        <option value="orange_money">Orange Money</option>
-        <option value="virement">Virement</option>
-      </select>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={submit} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 700, cursor: 'pointer' }}>
-          Enregistrer la vente
-        </button>
-        <button onClick={onDone} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: 8, padding: '8px 18px', cursor: 'pointer' }}>
-          Annuler
-        </button>
+
+      <div>
+        <label style={labelStyle}>Mode de paiement</label>
+        <select value={paiement} onChange={e => setPaiement(e.target.value)} style={inputStyle}>
+          <option value="cash">Espèces</option>
+          <option value="wave">Wave</option>
+          <option value="orange_money">Orange Money</option>
+          <option value="virement">Virement</option>
+        </select>
       </div>
+
+      {prix > 0 && (
+        <div style={{ background: '#eff6ff', borderRadius: 8, padding: '10px 14px', fontSize: 14, fontWeight: 700, color: '#1d4ed8' }}>
+          Total : {fcfa(prix * quantite + (zoneId ? (zones.find(z => z.id === zoneId)?.prix ?? 0) : 0))}
+        </div>
+      )}
+
+      <button onClick={submit} style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
+        Enregistrer la vente
+      </button>
     </div>
   )
 }
 
-function ZonesManager({ boutiqueId, zones, onChange }: { boutiqueId: string; zones: Zone[]; onChange: () => void }) {
-  const [nom, setNom] = useState('')
-  const [prix, setPrix] = useState<number>(0)
-  const [error, setError] = useState<string | null>(null)
-  const [, startTransition] = useTransition()
+// ── Ventes ────────────────────────────────────────────────────────────────────
 
-  function add() {
-    if (!nom.trim()) return
-    setError(null)
-    startTransition(async () => {
-      const res = await createZone(boutiqueId, nom, prix)
-      if (res.error) setError(res.error)
-      else { setNom(''); setPrix(0); onChange() }
-    })
-  }
-
-  function remove(id: string) {
-    startTransition(async () => { await deleteZone(boutiqueId, id); onChange() })
-  }
-
-  return (
-    <div style={{ marginBottom: 20 }}>
-      <h4 style={{ fontSize: 14, margin: '0 0 8px' }}>📍 Zones de livraison</h4>
-      {error && <div style={{ color: '#dc2626', fontSize: 13, marginBottom: 6 }}>{error}</div>}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
-        {zones.map(z => (
-          <div key={z.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 12px' }}>
-            <span style={{ fontSize: 13 }}>{z.nom} — {fcfa(z.prix)}</span>
-            <button onClick={() => remove(z.id)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: 13 }}>✕</button>
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input placeholder="Ex: Dakar" value={nom} onChange={e => setNom(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-        <input type="number" min={0} placeholder="Prix" value={prix} onChange={e => setPrix(Number(e.target.value))} style={{ ...inputStyle, width: 120 }} />
-        <button onClick={add} style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8, padding: '0 16px', cursor: 'pointer', fontWeight: 700 }}>+</button>
-      </div>
-    </div>
-  )
-}
-
-export default function Comptabilite({ boutiqueId }: { boutiqueId: string }) {
-  const [zones, setZones] = useState<Zone[]>([])
+function VentesView({ boutiqueId }: { boutiqueId: string }) {
   const [ventes, setVentes] = useState<Vente[]>([])
+  const [zones, setZones] = useState<Zone[]>([])
   const [produits, setProduits] = useState<Produit[]>([])
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
-
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
-  async function reload() {
+  async function load() {
     setLoading(true)
-    const [z, v] = await Promise.all([listZones(boutiqueId), listVentes(boutiqueId)])
-    setZones(z); setVentes(v)
+    const [v, z, p] = await Promise.all([
+      listVentes(boutiqueId),
+      listZones(boutiqueId),
+      fetch(`${backendUrl}/api/boutiques/${boutiqueId}/produits`).then(r => r.json()).then(d => d.produits ?? []).catch(() => []),
+    ])
+    setVentes(v); setZones(z); setProduits(p)
     setLoading(false)
   }
 
-  useEffect(() => {
-    reload()
-    fetch(`${backendUrl}/api/boutiques/${boutiqueId}/produits`)
-      .then(r => r.json())
-      .then(d => setProduits(d.produits ?? []))
-      .catch(() => setProduits([]))
-  }, [boutiqueId]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load() }, [boutiqueId])
 
-  const totalVentes = ventes.reduce((s, v) => s + Number(v.montant_total), 0)
+  const methodeLabel: Record<string, string> = { cash: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', virement: 'Virement' }
 
   return (
-    <div>
-      <ZonesManager boutiqueId={boutiqueId} zones={zones} onChange={reload} />
-
-      {showForm ? (
-        <VenteForm boutiqueId={boutiqueId} produits={produits} zones={zones} onDone={() => { setShowForm(false); reload() }} />
-      ) : (
-        <button onClick={() => setShowForm(true)} style={{
-          background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8,
-          padding: '8px 18px', fontWeight: 700, cursor: 'pointer', marginBottom: 16,
-        }}>
-          ✅ Déclarer une vente
-        </button>
-      )}
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '20px 0 10px' }}>
-        <h4 style={{ margin: 0, fontSize: 14 }}>📒 Historique des ventes {ventes.length > 0 && `(${ventes.length} — total ${fcfa(totalVentes)})`}</h4>
-        <a href={`/boutique/ventes/export/${boutiqueId}`} style={{ fontSize: 13, color: '#1d4ed8' }}>⬇ Export CSV</a>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{ventes.length} vente{ventes.length !== 1 ? 's' : ''} enregistrée{ventes.length !== 1 ? 's' : ''}</p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <a href={`/boutique/ventes/export/${boutiqueId}`} style={{ fontSize: 12, color: '#374151', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 6, padding: '5px 12px', textDecoration: 'none' }}>
+            ↓ CSV
+          </a>
+          <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 13, background: '#C75B00', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer' }}>
+            + Déclarer une vente
+          </button>
+        </div>
       </div>
+
+      {showForm && (
+        <VenteForm boutiqueId={boutiqueId} produits={produits} zones={zones} onDone={() => { setShowForm(false); load() }} />
+      )}
 
       {loading ? (
         <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p>
       ) : ventes.length === 0 ? (
-        <p style={{ color: '#9ca3af', fontSize: 14 }}>Aucune vente enregistrée.</p>
+        <div style={{ textAlign: 'center', padding: '32px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db', color: '#9ca3af', fontSize: 14 }}>
+          Aucune vente enregistrée. Cliquez sur &quot;+ Déclarer une vente&quot; pour commencer.
+        </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {ventes.map(v => (
-            <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 14px' }}>
-              <div>
-                <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>{v.nom_produit} × {v.quantite}</p>
-                <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>{v.reference} · {new Date(v.created_at).toLocaleDateString('fr-FR')} {v.client_nom ? `· ${v.client_nom}` : ''}</p>
+            <div key={v.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{v.nom_produit}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>
+                  {v.quantite} × {fcfa(v.prix_unitaire)}
+                  {v.frais_livraison > 0 ? ` + ${fcfa(v.frais_livraison)} livraison` : ''}
+                  {v.client_nom ? ` · ${v.client_nom}` : ''}
+                  {' · '}{methodeLabel[v.methode_paiement] ?? v.methode_paiement}
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9ca3af' }}>
+                  {new Date(v.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })} · Réf {v.reference}
+                </p>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontWeight: 700, fontSize: 13, color: '#C75B00' }}>{fcfa(v.montant_total)}</span>
-                <a href={`/boutique/ventes/facture/${boutiqueId}/${v.id}`} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#1d4ed8' }}>Facture PDF</a>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 15, color: '#1d4ed8' }}>{fcfa(v.montant_total)}</p>
+                <a href={`/boutique/ventes/facture/${boutiqueId}/${v.id}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#6b7280' }}>
+                  PDF ↗
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Dépenses ──────────────────────────────────────────────────────────────────
+
+function DepensesView({ boutiqueId }: { boutiqueId: string }) {
+  const [depenses, setDepenses] = useState<Depense[]>([])
+  const [showForm, setShowForm] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [montant, setMontant] = useState('')
+  const [categorie, setCategorie] = useState('stock')
+  const [description, setDescription] = useState('')
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [error, setError] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
+
+  async function load() {
+    setLoading(true)
+    const d = await listDepenses(boutiqueId)
+    setDepenses(d)
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [boutiqueId])
+
+  function submit() {
+    if (!montant || Number(montant) <= 0) { setError('Montant invalide'); return }
+    setError(null)
+    startTransition(async () => {
+      const res = await addDepense(boutiqueId, { montant: Number(montant), categorie, description: description || undefined, date_depense: date })
+      if (res.error) { setError(res.error); return }
+      setMontant(''); setDescription(''); setShowForm(false)
+      load()
+    })
+  }
+
+  function remove(id: string) {
+    if (!confirm('Supprimer cette dépense ?')) return
+    startTransition(async () => { await deleteDepense(boutiqueId, id); load() })
+  }
+
+  const total = depenses.reduce((s, d) => s + Number(d.montant), 0)
+  const mois = new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' })
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Total affiché : <strong style={{ color: '#dc2626' }}>{fcfa(total)}</strong></p>
+        <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 13, background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer' }}>
+          + Ajouter une dépense
+        </button>
+      </div>
+
+      {showForm && (
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {error && <div style={{ background: '#fef2f2', borderRadius: 8, padding: '8px 12px', color: '#dc2626', fontSize: 13 }}>{error}</div>}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={labelStyle}>Montant (FCFA) *</label>
+              <input type="number" min={1} value={montant} onChange={e => setMontant(e.target.value)} style={inputStyle} placeholder="Ex: 25000" />
+            </div>
+            <div>
+              <label style={labelStyle}>Date</label>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inputStyle} />
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Catégorie</label>
+            <select value={categorie} onChange={e => setCategorie(e.target.value)} style={inputStyle}>
+              {CAT_DEPENSES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Description</label>
+            <input value={description} onChange={e => setDescription(e.target.value)} style={inputStyle} placeholder="Ex: Achat stock riz, Livraison DHL…" />
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={submit} style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>
+              Enregistrer
+            </button>
+            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: 8, padding: '9px 16px', cursor: 'pointer', fontSize: 13 }}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p>
+      ) : depenses.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '32px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db', color: '#9ca3af', fontSize: 14 }}>
+          Aucune dépense enregistrée.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {depenses.map(d => (
+            <div key={d.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: '#f1f5f9', color: '#475569' }}>
+                    {d.categorie}
+                  </span>
+                  {d.description && <span style={{ fontSize: 13, color: '#374151' }}>{d.description}</span>}
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: '#9ca3af' }}>
+                  {new Date(d.date_depense).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                <span style={{ fontWeight: 800, fontSize: 15, color: '#dc2626' }}>{fcfa(d.montant)}</span>
+                <button onClick={() => remove(d.id)} style={{ background: 'none', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Stock ─────────────────────────────────────────────────────────────────────
+
+function StockView({ boutiqueId }: { boutiqueId: string }) {
+  const [produits, setProduits] = useState<Produit[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState<string | null>(null)
+  const [stockVal, setStockVal] = useState<Record<string, string>>({})
+  const [, startTransition] = useTransition()
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
+
+  async function load() {
+    setLoading(true)
+    const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/produits`).catch(() => null)
+    const data = res ? await res.json().catch(() => ({})) : {}
+    setProduits(data.produits ?? [])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [boutiqueId])
+
+  function saveStock(produitId: string) {
+    const val = stockVal[produitId]
+    if (val === undefined || val === '') return
+    startTransition(async () => {
+      await updateStock(boutiqueId, produitId, Number(val))
+      setEditing(null)
+      load()
+    })
+  }
+
+  if (loading) return <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p>
+
+  if (produits.length === 0) return (
+    <div style={{ textAlign: 'center', padding: '32px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db', color: '#9ca3af', fontSize: 14 }}>
+      Aucun produit dans le catalogue. Ajoutez des produits via l&apos;onglet &quot;Catalogue produits&quot;.
+    </div>
+  )
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {produits.map(p => (
+        <div key={p.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, flex: 1, minWidth: 0 }}>{p.nom}</p>
+          {editing === p.id ? (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+              <input
+                type="number" min={0}
+                value={stockVal[p.id] ?? (p.stock_quantite ?? '')}
+                onChange={e => setStockVal(prev => ({ ...prev, [p.id]: e.target.value }))}
+                style={{ ...inputStyle, width: 80 }}
+                autoFocus
+              />
+              <button onClick={() => saveStock(p.id)} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>✓</button>
+              <button onClick={() => setEditing(null)} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12 }}>✕</button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+              <span style={{
+                fontSize: 13, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                background: p.stock_quantite === null ? '#f1f5f9' : p.stock_quantite <= 3 ? '#fef2f2' : '#dcfce7',
+                color: p.stock_quantite === null ? '#9ca3af' : p.stock_quantite <= 3 ? '#dc2626' : '#16a34a',
+              }}>
+                {p.stock_quantite === null ? 'Non suivi' : `${p.stock_quantite} en stock`}
+              </span>
+              <button onClick={() => { setEditing(p.id); setStockVal(prev => ({ ...prev, [p.id]: String(p.stock_quantite ?? '') })) }}
+                style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', fontSize: 12 }}>
+                Modifier
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Composant principal ───────────────────────────────────────────────────────
+
+export default function Comptabilite({ boutiqueId }: { boutiqueId: string }) {
+  const [tab, setTab] = useState<'dashboard' | 'ventes' | 'depenses' | 'stock' | 'zones'>('dashboard')
+
+  const tabBtn = (t: typeof tab, label: string) => (
+    <button type="button" onClick={() => setTab(t)} style={{
+      padding: '8px 16px', border: 'none', background: 'none', cursor: 'pointer',
+      fontSize: 13, fontWeight: tab === t ? 700 : 500,
+      color: tab === t ? '#C75B00' : '#6b7280',
+      borderBottom: tab === t ? '2px solid #C75B00' : '2px solid transparent',
+      whiteSpace: 'nowrap',
+    }}>
+      {label}
+    </button>
+  )
+
+  return (
+    <div>
+      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, overflowX: 'auto' }}>
+        {tabBtn('dashboard', '📊 Tableau de bord')}
+        {tabBtn('ventes',    '💰 Ventes')}
+        {tabBtn('depenses',  '📉 Dépenses')}
+        {tabBtn('stock',     '📦 Stock')}
+        {tabBtn('zones',     '🚚 Livraison')}
+      </div>
+
+      {tab === 'dashboard' && <DashboardView boutiqueId={boutiqueId} />}
+      {tab === 'ventes'    && <VentesView    boutiqueId={boutiqueId} />}
+      {tab === 'depenses'  && <DepensesView  boutiqueId={boutiqueId} />}
+      {tab === 'stock'     && <StockView     boutiqueId={boutiqueId} />}
+      {tab === 'zones'     && <ZonesView     boutiqueId={boutiqueId} />}
+    </div>
+  )
+}
+
+// ── Zones de livraison ────────────────────────────────────────────────────────
+
+function ZonesView({ boutiqueId }: { boutiqueId: string }) {
+  const [zones, setZones] = useState<Zone[]>([])
+  const [loading, setLoading] = useState(true)
+  const [nom, setNom] = useState('')
+  const [prix, setPrix] = useState('')
+  const [showForm, setShowForm] = useState(false)
+  const [, startTransition] = useTransition()
+
+  async function load() { setLoading(true); const z = await listZones(boutiqueId); setZones(z); setLoading(false) }
+  useEffect(() => { load() }, [boutiqueId])
+
+  function submit() {
+    if (!nom.trim() || !prix) return
+    startTransition(async () => {
+      await createZone(boutiqueId, nom.trim(), Number(prix))
+      setNom(''); setPrix(''); setShowForm(false); load()
+    })
+  }
+
+  function remove(id: string) {
+    if (!confirm('Supprimer cette zone ?')) return
+    startTransition(async () => { await deleteZone(boutiqueId, id); load() })
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{zones.length} zone{zones.length !== 1 ? 's' : ''} de livraison</p>
+        <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 13, background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer' }}>
+          + Ajouter une zone
+        </button>
+      </div>
+
+      {showForm && (
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>Nom de la zone</label>
+            <input value={nom} onChange={e => setNom(e.target.value)} style={inputStyle} placeholder="Ex: Dakar Plateau, Banlieue…" />
+          </div>
+          <div style={{ width: 130 }}>
+            <label style={labelStyle}>Frais (FCFA)</label>
+            <input type="number" min={0} value={prix} onChange={e => setPrix(e.target.value)} style={inputStyle} placeholder="0" />
+          </div>
+          <button onClick={submit} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>Ajouter</button>
+        </div>
+      )}
+
+      {loading ? <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p> : zones.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '24px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db', color: '#9ca3af', fontSize: 14 }}>
+          Aucune zone de livraison. Ajoutez-en pour calculer les frais automatiquement.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {zones.map(z => (
+            <div key={z.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 14, fontWeight: 600 }}>{z.nom}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 14, color: '#374151' }}>{fcfa(z.prix)}</span>
+                <button onClick={() => remove(z.id)} style={{ background: 'none', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }}>✕</button>
               </div>
             </div>
           ))}
