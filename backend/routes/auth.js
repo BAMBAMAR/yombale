@@ -142,4 +142,40 @@ router.post('/reinitialiser-mot-de-passe', limiterAuth, body('mot_de_passe').isL
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// PUT /api/auth/profil — modifier nom et/ou email
+router.put('/profil',
+  verifierToken,
+  body('nom').optional().trim().notEmpty().withMessage('Le nom ne peut pas être vide'),
+  body('email').optional().isEmail().normalizeEmail().withMessage('Email invalide'),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    try {
+      const { nom, email } = req.body;
+      if (!nom && !email) return res.status(400).json({ error: 'Au moins un champ à modifier' });
+
+      if (email) {
+        const exist = await pool.query(
+          'SELECT id FROM utilisateurs WHERE email=$1 AND id!=$2',
+          [email, req.user.userId]
+        );
+        if (exist.rows.length) return res.status(409).json({ error: 'Cet email est déjà utilisé' });
+      }
+
+      const sets = [];
+      const vals = [];
+      let i = 1;
+      if (nom)   { sets.push(`nom=$${i++}`);   vals.push(nom); }
+      if (email) { sets.push(`email=$${i++}`); vals.push(email); }
+      vals.push(req.user.userId);
+
+      const { rows } = await pool.query(
+        `UPDATE utilisateurs SET ${sets.join(', ')} WHERE id=$${i} RETURNING id, nom, email`,
+        vals
+      );
+      res.json({ user: rows[0] });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  }
+);
+
 module.exports = router;

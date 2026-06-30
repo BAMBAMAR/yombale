@@ -1,6 +1,7 @@
 'use server'
 import { redirect } from 'next/navigation'
-import { createSession, deleteSession } from '@/lib/session'
+import { createSession, deleteSession, getSession } from '@/lib/session'
+import { backendFetch } from '@/lib/backend-fetch'
 
 const API = process.env.BACKEND_URL ?? 'http://localhost:3000'
 
@@ -68,6 +69,31 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
 export async function logout(): Promise<void> {
   await deleteSession()
   redirect('/')
+}
+
+// ── Mise à jour profil ───────────────────────────────────────────
+export async function updateProfil(prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const nom   = formData.get('nom')?.toString().trim() ?? ''
+  const email = formData.get('email')?.toString().trim() ?? ''
+
+  if (!nom && !email) return { error: 'Remplissez au moins un champ' }
+
+  try {
+    const res = await backendFetch('/api/auth/profil', {
+      method: 'PUT',
+      body: JSON.stringify({ ...(nom && { nom }), ...(email && { email }) }),
+    })
+    const data = await res.json()
+    if (!res.ok) return { error: data.errors?.[0]?.msg ?? data.error ?? 'Erreur lors de la mise à jour' }
+
+    const current = await getSession()
+    if (current) {
+      await createSession({ userId: current.userId, nom: data.user.nom, email: data.user.email })
+    }
+    return { message: 'Profil mis à jour ✓' }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
 }
 
 // ── Types ────────────────────────────────────────────────────────
