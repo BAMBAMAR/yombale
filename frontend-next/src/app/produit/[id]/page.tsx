@@ -308,6 +308,10 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
   }, null as { px: number; nom: string; id: string; image_url: string | null } | null)
   const existeMoinsCher = !!(meilleurSimilaire && prixMin && meilleurSimilaire.px < prixMin)
 
+  // Même sélection pré-remplie pour le bouton "Comparaison détaillée" du résumé
+  // et celui en bas de la section "Comparer les prix du marché".
+  const idsComparaison = [String(produit.id), ...proches.slice(0, 2).map(p => p.id)].join(',')
+
   return (
     <>
       <TrackRecent id={produit.id} nom={produit.nom} prix_min={prixMin} image_url={produit.image_url} />
@@ -494,6 +498,15 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               {session && (
                 <SponsoringProduitBtn produitId={String(produit.id)} />
               )}
+              {proches.length > 0 && (
+                <Link
+                  href={`/comparaison?ids=${idsComparaison}`}
+                  className="sidebar-cta"
+                  style={{ background: 'var(--accent)' }}
+                >
+                  ⚖ Comparaison détaillée côte à côte
+                </Link>
+              )}
             </div>
           </aside>
         </div>
@@ -600,6 +613,11 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                   })}
                 </tbody>
               </table>
+              <div style={{ textAlign: 'center', marginTop: 20 }}>
+                <Link href={`/comparaison?ids=${idsComparaison}`} className="comparaison-cta-btn">
+                  ⚖ Comparaison détaillée côte à côte
+                </Link>
+              </div>
             </section>
           )
         })()}
