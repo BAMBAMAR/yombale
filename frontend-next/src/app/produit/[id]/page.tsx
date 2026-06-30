@@ -248,6 +248,66 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
   const best     = valides.find(o => o.prix === prixMin)
   const economie = prixMin && prixMax && prixMax > prixMin ? prixMax - prixMin : null
 
+  // ── Produits similaires (même modèle/gamme chez d'autres vendeurs ou variantes proches) ──
+  const catProduit = produit.categorie_nom ?? produit.categorie
+
+  // Normalise un nom : minuscules sans accents, split en mots ≥4 chars
+  const GENERIQUES = new Set([
+    'smart','avec','pour','noir','gris','blanc',
+    'android','google','slim','full','dual','inch',
+    'pouces','serie','mode','type','sans','dans','vers','this','that',
+  ])
+  function motsCles(nom: string): string[] {
+    return nom.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length >= 4 && !GENERIQUES.has(w))
+  }
+
+  // Variantes de gamme : on ne compare jamais un modèle de base à sa version
+  // Pro/Max/Ultra — prix et positionnement trop différents pour être "similaires".
+  const VARIANTES = ['pro', 'max', 'ultra', 'plus', 'mini', 'lite', 'se', 'fe']
+  function variantes(nom: string): string[] {
+    const tokens = nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').split(/[\s,\-/]+/)
+    return VARIANTES.filter(v => tokens.includes(v))
+  }
+
+  // Un appareil et son accessoire (coque, chargeur…) ne sont jamais "similaires"
+  // même s'ils partagent un mot-clé (ex: "iPhone 13" vs "Coque iPhone 13").
+  const ACCESSOIRE_RE = /\b(chargeur|cable|câble|adaptateur|support|housse|etui|étui|coque|sacoche|powerbank|power\s*bank)\b/i
+  const produitEstAccessoire = ACCESSOIRE_RE.test(produit.nom)
+  const variantesProduit = variantes(produit.nom)
+
+  const motsProduit = motsCles(produit.nom)
+  // Seuil de mots-clés communs : 2 si la source en a ≥2, sinon 1 (titres courts)
+  const seuilMots = motsProduit.length >= 2 ? 2 : 1
+
+  // Similaires filtrés : même catégorie + mots-clés communs + même gamme + fourchette prix
+  const proches = (prixMin ? similaires.filter(p => {
+    const catP = p.categorie_nom
+    if (catProduit && catP && catP !== catProduit) return false
+    if (ACCESSOIRE_RE.test(p.nom) !== produitEstAccessoire) return false
+    const variantesP = variantes(p.nom)
+    if (variantesP.length !== variantesProduit.length
+      || !variantesProduit.every(v => variantesP.includes(v))) return false
+    const motsP = motsCles(p.nom)
+    const motsCommuns = motsProduit.filter(w => motsP.includes(w)).length
+    if (motsCommuns < seuilMots) return false
+    const px = p.prix_min ? parseFloat(p.prix_min) : null
+    if (!px) return false
+    const ratio = px / prixMin!
+    return ratio >= 0.35 && ratio <= 2.5
+  }) : []).slice(0, 7)
+
+  // Meilleur prix du marché parmi le produit courant + ses similaires
+  const meilleurSimilaire = proches.reduce((best, p) => {
+    const px = p.prix_min ? parseFloat(p.prix_min) : null
+    if (px == null) return best
+    return (!best || px < best.px!) ? { px, nom: p.nom, id: p.id } : best
+  }, null as { px: number; nom: string; id: string } | null)
+  const existeMoinsCher = !!(meilleurSimilaire && prixMin && meilleurSimilaire.px < prixMin)
+
   return (
     <>
       <TrackRecent id={produit.id} nom={produit.nom} prix_min={prixMin} image_url={produit.image_url} />
@@ -287,7 +347,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
             {/* Box prix */}
             {prixMin && (
               <div className="prix-box">
-                <p className="prix-box-label">💰 PRIX LE PLUS BAS TROUVÉ</p>
+                <p className="prix-box-label">💰 PRIX LE PLUS BAS TROUVÉ <span style={{ fontWeight: 400, fontSize: '0.8em' }}>pour ce produit</span></p>
                 <p className="prix-box-montant">{fcfa(prixMin)}</p>
                 {valides.length > 1 && economie && (
                   <p className="prix-box-eco">🔥 Écart entre marchands : {fcfa(economie)}</p>
@@ -297,6 +357,11 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                     ? `${valides.length} marchands comparés`
                     : '1 marchand référencé'}
                 </p>
+                {existeMoinsCher && meilleurSimilaire && (
+                  <Link href={`/produit/${meilleurSimilaire.id}`} className="prix-box-alt">
+                    💡 Un produit similaire moins cher existe : {meilleurSimilaire.nom} à {fcfa(meilleurSimilaire.px)} →
+                  </Link>
+                )}
               </div>
             )}
 
@@ -419,37 +484,6 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
 
         {/* ── Comparaison produits similaires ───────────────────── */}
         {prixMin && (() => {
-          const catProduit = produit.categorie_nom ?? produit.categorie
-
-          // Normalise un nom : minuscules sans accents, split en mots ≥4 chars
-          const GENERIQUES = new Set([
-            'smart','avec','pour','noir','gris','blanc','lite','plus','mini',
-            'ultra','pro','max','android','google','slim','full','dual','inch',
-            'pouces','serie','mode','type','sans','dans','vers','this','that',
-          ])
-          function motsCles(nom: string): string[] {
-            return nom.toLowerCase()
-              .normalize('NFD').replace(/[̀-ͯ]/g, '')
-              .replace(/[^a-z0-9]/g, ' ')
-              .split(/\s+/)
-              .filter(w => w.length >= 4 && !GENERIQUES.has(w))
-          }
-
-          const motsProduit = motsCles(produit.nom)
-
-          // Similaires filtrés : même catégorie + au moins 1 mot-clé commun + fourchette prix
-          const proches = similaires.filter(p => {
-            const catP = p.categorie_nom
-            if (catProduit && catP && catP !== catProduit) return false
-            // Au moins un mot significatif en commun
-            const motsP = motsCles(p.nom)
-            if (!motsProduit.some(w => motsP.includes(w))) return false
-            const px = p.prix_min ? parseFloat(p.prix_min) : null
-            if (!px) return false
-            const ratio = px / prixMin!
-            return ratio >= 0.35 && ratio <= 2.5
-          }).slice(0, 7)
-
           // Ligne du produit courant (toujours incluse)
           const lignes = [
             {
@@ -472,7 +506,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
 
           // Meilleur prix du marché parmi tous les produits comparés
           const meilleuxPrix = lignes[0]?.px ?? prixMin
-          const courantEstMeilleur = meilleuxPrix === prixMin
+          const courantEstMeilleur = !existeMoinsCher
 
           if (lignes.length <= 1) return null
 

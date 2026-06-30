@@ -261,6 +261,30 @@ router.get('/:id/offres', checkUUID, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Mots indiquant un accessoire plutôt qu'un appareil principal — un téléphone et sa
+// coque ne sont jamais "similaires" même s'ils partagent marque/catégorie/mots-clés.
+const ACCESSOIRE_PATTERN = '(chargeur|cable|câble|adaptateur|support|housse|etui|étui|coque|sacoche|protection ecran|film de protection|verre trempe|batterie externe|power ?bank|powerbank)';
+
+// Variantes de gamme : "Pro"/"Max"/"Ultra" etc. changent fondamentalement le prix et
+// le positionnement d'un produit — ne jamais rapprocher un modèle de base de sa variante.
+const VARIANTE_MOTS = ['pro','max','ultra','plus','mini','lite','se','fe'];
+
+function extraireVariantes(nom) {
+  const tokens = nom.toLowerCase().split(/[\s,\-\/]+/);
+  return VARIANTE_MOTS.filter(v => tokens.includes(v));
+}
+
+// Exclut les produits dont la gamme (Pro/Max/Ultra/…) diffère de celle de la source —
+// évite de comparer un "iPhone 13" à un "iPhone 13 Pro Max" comme s'ils étaient le même produit.
+function filtrerVariantesIncompatibles(rows, srcVariantes) {
+  return rows.filter(r => {
+    const rVariantes = extraireVariantes(r.nom);
+    if (srcVariantes.length === 0 && rVariantes.length === 0) return true;
+    return srcVariantes.length === rVariantes.length
+      && srcVariantes.every(v => rVariantes.includes(v));
+  });
+}
+
 // GET /api/produits/:id/similaires — similaires intelligents : même marque > même catégorie
 router.get('/:id/similaires', checkUUID, async (req, res) => {
   try {
@@ -291,8 +315,15 @@ router.get('/:id/similaires', checkUUID, async (req, res) => {
 
     // Combiner mots-clés + specs pour la recherche
     const motsClesRecherche = [...new Set([...mots, ...specs])].slice(0, 5);
+    const srcEstAccessoire = new RegExp(ACCESSOIRE_PATTERN, 'i').test(nom);
+    const srcVariantes = extraireVariantes(nom);
 
-    // Priorité 1 : même marque + mots-clés
+    // Priorité 1 : même marque + au moins 1 mot-clé commun (si la source en a) +
+    // même statut accessoire/appareil principal
+    const scoreClauses1 = mots.map((_, i) => `CASE WHEN p.nom ILIKE $${8 + i} THEN 1 ELSE 0 END`);
+    const scoreExpr1 = scoreClauses1.length ? `(${scoreClauses1.join('+')})` : '0';
+    const requireScore1 = mots.length > 0;
+
     const q1 = `
       SELECT p.*, c.nom AS categorie_nom,
              MIN(o.prix) AS prix_min, COUNT(DISTINCT o.id) AS nb_offres,
@@ -307,24 +338,28 @@ router.get('/:id/similaires', checkUUID, async (req, res) => {
         AND ($4::text IS NULL OR m.nom ILIKE '%'||$4||'%')
         AND ($5::numeric IS NULL OR o.prix <= $5)
         AND ($6::numeric IS NULL OR o.prix >= $6)
+        AND (p.nom ~* $7) = ${srcEstAccessoire}
+        ${requireScore1 ? `AND ${scoreExpr1} > 0` : ''}
       GROUP BY p.id, c.nom
       HAVING COUNT(o.id) = 0 OR MIN(o.prix) >= 500
-      ORDER BY
-        -- Score de similarité : compter les mots-clés communs dans le nom
-        (${mots.map((m,i) => `CASE WHEN p.nom ILIKE '%'||$${7+i}||'%' THEN 1 ELSE 0 END`).join('+')}) DESC,
-        MIN(o.prix) ASC NULLS LAST
-      LIMIT $${7+motsClesRecherche.length}`;
+      ORDER BY ${scoreExpr1} DESC, MIN(o.prix) ASC NULLS LAST
+      LIMIT $${8 + mots.length}`;
 
     const params1 = [req.params.id, marque || '%', categorie_id,
       marchand || null, prixMax || null, prixMin || null,
-      ...motsClesRecherche, Math.ceil(+limit)];
+      ACCESSOIRE_PATTERN, ...mots.map(m => '%' + m + '%'), Math.ceil(+limit)];
 
-    const { rows: r1 } = await pool.query(q1, params1);
+    const { rows: r1raw } = await pool.query(q1, params1);
+    const r1 = filtrerVariantesIncompatibles(r1raw, srcVariantes);
 
-    // Priorité 2 : même catégorie + mots-clés (si pas assez de résultats)
+    // Priorité 2 : même catégorie + au moins 1 mot-clé commun (si pas assez de résultats)
     let rows = r1;
     if (r1.length < Math.ceil(+limit / 2)) {
       const excludeIds = [req.params.id, ...r1.map(r => r.id)];
+      const scoreClauses2 = motsClesRecherche.map((_, i) => `CASE WHEN p.nom ILIKE $${7 + i} THEN 1 ELSE 0 END`);
+      const scoreExpr2 = scoreClauses2.length ? `(${scoreClauses2.join('+')})` : '0';
+      const requireScore2 = motsClesRecherche.length > 0;
+
       const q2 = `
         SELECT p.*, c.nom AS categorie_nom,
                MIN(o.prix) AS prix_min, COUNT(DISTINCT o.id) AS nb_offres,
@@ -338,18 +373,19 @@ router.get('/:id/similaires', checkUUID, async (req, res) => {
           AND ($3::text IS NULL OR m.nom ILIKE '%'||$3||'%')
           AND ($4::numeric IS NULL OR o.prix <= $4)
           AND ($5::numeric IS NULL OR o.prix >= $5)
+          AND (p.nom ~* $6) = ${srcEstAccessoire}
+          ${requireScore2 ? `AND ${scoreExpr2} > 0` : ''}
         GROUP BY p.id, c.nom
         HAVING COUNT(o.id) = 0 OR MIN(o.prix) >= 500
-        ORDER BY
-          (${motsClesRecherche.map((m,i) => `CASE WHEN p.nom ILIKE '%'||$${6+i}||'%' THEN 1 ELSE 0 END`).join('+')}) DESC,
-          MIN(o.prix) ASC NULLS LAST
-        LIMIT $${6+motsClesRecherche.length}`;
+        ORDER BY ${scoreExpr2} DESC, MIN(o.prix) ASC NULLS LAST
+        LIMIT $${7 + motsClesRecherche.length}`;
 
       const params2 = [excludeIds, categorie_id,
         marchand || null, prixMax || null, prixMin || null,
-        ...motsClesRecherche, +limit - r1.length];
+        ACCESSOIRE_PATTERN, ...motsClesRecherche.map(m => '%' + m + '%'), +limit - r1.length];
 
-      const { rows: r2 } = await pool.query(q2, params2);
+      const { rows: r2raw } = await pool.query(q2, params2);
+      const r2 = filtrerVariantesIncompatibles(r2raw, srcVariantes);
       rows = [...r1, ...r2];
     }
 

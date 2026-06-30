@@ -55,6 +55,36 @@ router.get('/operateurs', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/telecom/:id/similaires — alternatives tous opérateurs, même type, budget proche
+router.get('/:id/similaires', async (req, res) => {
+  try {
+    const { limit = 8 } = req.query;
+    const { rows: src } = await pool.query(
+      'SELECT type, prix FROM forfaits_telecom WHERE id = $1', [req.params.id]
+    );
+    if (!src.length) return res.status(404).json({ error: 'Forfait introuvable' });
+
+    const { type, prix } = src[0];
+    const prixMin = prix * 0.5;
+    const prixMax = prix * 2;
+
+    const { rows } = await pool.query(
+      `SELECT id, operateur, nom, type, data_mo, minutes, sms, validite_jours, prix,
+              (COALESCE(data_mo,0)::numeric / NULLIF(prix,0) * 600
+               + (CASE WHEN minutes = -1 THEN 2000 ELSE COALESCE(minutes,0) END)::numeric / NULLIF(prix,0) * 70
+              ) AS score
+       FROM forfaits_telecom
+       WHERE actif = true AND id != $1 AND type = $2
+         AND prix >= $3 AND prix <= $4
+       ORDER BY score DESC NULLS LAST, prix ASC
+       LIMIT $5`,
+      [req.params.id, type, prixMin, prixMax, +limit]
+    );
+
+    res.json({ forfaits: rows, source: src[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/telecom/:id — détail
 router.get('/:id', async (req, res) => {
   try {

@@ -34,6 +34,20 @@ interface AnnonceImmo {
   sponsorisee_jusqu_au: string | null;
 }
 
+interface AnnonceSimilaire {
+  id: string;
+  titre: string;
+  prix: number | null;
+  ville: string | null;
+  quartier: string | null;
+  type_bien: string | null;
+  transaction: string | null;
+  surface_m2: number | null;
+  nb_pieces: number | null;
+  nb_chambres: number | null;
+  photos: string[] | null;
+}
+
 // ── JSON-LD ───────────────────────────────────────────────────────
 
 function buildRealEstateJsonLd(annonce: AnnonceImmo): string {
@@ -106,6 +120,7 @@ export default async function FicheImmoPage({
   params: { id: string };
 }) {
   let annonce: AnnonceImmo;
+  let similaires: AnnonceSimilaire[] = [];
   const session = await getOptionalSession();
 
   try {
@@ -113,6 +128,10 @@ export default async function FicheImmoPage({
   } catch {
     notFound();
   }
+
+  await apiFetch<{ annonces: AnnonceSimilaire[] }>(`/immo/${params.id}/similaires`)
+    .then(raw => { similaires = raw?.annonces ?? []; })
+    .catch(() => {});
 
   const localisation = [annonce.quartier, annonce.ville].filter(Boolean).join(', ');
   const photos = Array.isArray(annonce.photos) ? annonce.photos : [];
@@ -287,6 +306,99 @@ export default async function FicheImmoPage({
           )
         )}
       </div>
+
+      {/* ── Comparaison automatique avec des biens similaires ───── */}
+      {similaires.length > 0 && annonce.prix && (() => {
+        const prixCourant = annonce.prix!
+        const lignes = [
+          { id: annonce.id, titre: annonce.titre, prix: prixCourant, surface_m2: annonce.surface_m2, photo: mainPhoto, courant: true },
+          ...similaires.map(s => ({
+            id: s.id, titre: s.titre, prix: s.prix, surface_m2: s.surface_m2,
+            photo: s.photos?.[0] ?? null, courant: false,
+          })),
+        ].sort((a, b) => (a.prix ?? Infinity) - (b.prix ?? Infinity))
+
+        const meilleurPrix = lignes[0]?.prix ?? prixCourant
+        const courantEstMeilleur = meilleurPrix === prixCourant
+        const idsComparaison = [annonce.id, ...similaires.slice(0, 2).map(s => s.id)].join(',')
+
+        return (
+          <section className="similaires-section">
+            <h2 className="similaires-titre">📊 Biens comparables dans le secteur</h2>
+            <p className="similaires-sous-titre">
+              {courantEstMeilleur
+                ? '✅ Cette annonce a le prix le plus bas parmi les biens comparables.'
+                : `💡 Un bien comparable est disponible à partir de ${fcfa(meilleurPrix)} — voir ci-dessous.`}
+            </p>
+            <table className="similaires-table">
+              <thead>
+                <tr>
+                  <th>Bien</th>
+                  <th>Prix / m²</th>
+                  <th>Prix</th>
+                  <th>vs cette annonce</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {lignes.map((l, idx) => {
+                  const ecartPct = (!l.courant && l.prix) ? Math.round((l.prix - prixCourant) / prixCourant * 100) : null
+                  const prixM2 = (l.prix && l.surface_m2) ? Math.round(l.prix / l.surface_m2) : null
+                  const isBest = idx === 0
+                  return (
+                    <tr key={l.id} className={`simil-row${l.courant ? ' simil-row--courant' : ''}`}>
+                      <td>
+                        <div className="simil-produit-cell">
+                          <div className="simil-img-wrap">
+                            {l.photo
+                              ? <img src={l.photo} alt={l.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              : <span>🏠</span>
+                            }
+                          </div>
+                          <div>
+                            <span className="simil-nom">{l.titre}</span>
+                            {l.courant && <span className="simil-courant-badge">Cette annonce</span>}
+                          </div>
+                        </div>
+                      </td>
+                      <td>{prixM2 ? `${fcfa(prixM2)}/m²` : '—'}</td>
+                      <td>
+                        <span className={`simil-prix-val${isBest ? ' simil-prix-val--best' : ''}`}>
+                          {l.prix ? fcfa(l.prix) : '—'}
+                          {isBest && <span className="simil-best-ico"> 🏆</span>}
+                        </span>
+                      </td>
+                      <td>
+                        {l.courant ? (
+                          <span className="simil-ecart simil-ecart--egale">référence</span>
+                        ) : (
+                          <span className={`simil-ecart ${ecartPct !== null && ecartPct < -2 ? 'simil-ecart--moins' : ecartPct !== null && ecartPct > 2 ? 'simil-ecart--plus' : 'simil-ecart--egale'}`}>
+                            {ecartPct === null ? '—'
+                              : ecartPct < -2 ? `${ecartPct}% moins cher`
+                              : ecartPct > 2  ? `+${ecartPct}% plus cher`
+                              : '≈ même prix'}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {l.courant
+                          ? <span className="simil-courant-lbl">Vous êtes ici</span>
+                          : <Link href={`/immo/${l.id}`} className="simil-voir-btn">Voir →</Link>
+                        }
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            <div style={{ textAlign: 'center', marginTop: 20 }}>
+              <Link href={`/immo/comparaison?ids=${idsComparaison}`} className="budget-pill">
+                ⚖ Comparaison détaillée côte à côte
+              </Link>
+            </div>
+          </section>
+        )
+      })()}
 
       <script
         type="application/ld+json"

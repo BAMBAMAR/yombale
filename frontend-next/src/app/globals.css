@@ -294,6 +294,20 @@ a {
   color: #166534;
 }
 
+.prix-box-alt {
+  display: block;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #86efac;
+  font-size: 13px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.prix-box-alt:hover {
+  text-decoration: underline;
+}
+
 /* ── CTA principal ────────────────────────────────────────────── */
 .cta-acheter {
   display: block;

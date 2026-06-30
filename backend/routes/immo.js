@@ -244,6 +244,53 @@ router.get('/admin/demandes-sponsorisation', adminSecretOnly, async (req, res) =
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/immo/:id/similaires — biens comparables : même secteur + type + transaction, prix proche
+router.get('/:id/similaires', async (req, res) => {
+  try {
+    const { limit = 8 } = req.query;
+    const { rows: src } = await pool.query(
+      'SELECT ville, quartier, type_bien, transaction, prix FROM annonces_immo WHERE id = $1', [req.params.id]
+    );
+    if (!src.length) return res.status(404).json({ error: 'Annonce introuvable' });
+
+    const { ville, quartier, type_bien, transaction, prix } = src[0];
+    const prixMin = prix ? prix * 0.6 : null;
+    const prixMax = prix ? prix * 1.6 : null;
+
+    let rows = [];
+    if (quartier) {
+      const { rows: r1 } = await pool.query(
+        `SELECT id, titre, prix, ville, quartier, type_bien, transaction, surface_m2, nb_pieces, nb_chambres, photos
+         FROM annonces_immo
+         WHERE actif = true AND supprimee = false AND id != $1
+           AND quartier ILIKE $2 AND type_bien = $3 AND transaction = $4
+           AND ($5::numeric IS NULL OR prix IS NULL OR (prix >= $5 AND prix <= $6))
+         ORDER BY ABS(COALESCE(prix, $7) - $7) ASC
+         LIMIT $8`,
+        [req.params.id, quartier, type_bien, transaction, prixMin, prixMax, prix || 0, +limit]
+      );
+      rows = r1;
+    }
+
+    if (rows.length < Math.ceil(+limit / 2)) {
+      const excludeIds = [req.params.id, ...rows.map(r => r.id)];
+      const { rows: r2 } = await pool.query(
+        `SELECT id, titre, prix, ville, quartier, type_bien, transaction, surface_m2, nb_pieces, nb_chambres, photos
+         FROM annonces_immo
+         WHERE actif = true AND supprimee = false AND id != ALL($1::uuid[])
+           AND ville ILIKE $2 AND type_bien = $3 AND transaction = $4
+           AND ($5::numeric IS NULL OR prix IS NULL OR (prix >= $5 AND prix <= $6))
+         ORDER BY ABS(COALESCE(prix, $7) - $7) ASC
+         LIMIT $8`,
+        [excludeIds, ville, type_bien, transaction, prixMin, prixMax, prix || 0, +limit - rows.length]
+      );
+      rows = [...rows, ...r2];
+    }
+
+    res.json({ annonces: rows, source: src[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/immo/:id — détail
 router.get('/:id', async (req, res) => {
   try {

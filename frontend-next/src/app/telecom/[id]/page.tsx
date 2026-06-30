@@ -19,6 +19,18 @@ interface Forfait {
   source: string | null
 }
 
+interface ForfaitSimilaire {
+  id: string
+  operateur: string
+  nom: string
+  type: string
+  data_mo: number | null
+  minutes: number | null
+  sms: number | null
+  validite_jours: number | null
+  prix: number
+}
+
 const OP_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
   Orange:   { bg: '#FFF4E6', text: '#FF7900', badge: '#FF7900' },
   Free:     { bg: '#FEF2F2', text: '#CD1127', badge: '#CD1127' },
@@ -55,12 +67,17 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 export default async function FicheForfaitPage({ params }: { params: { id: string } }) {
   let forfait: Forfait
+  let similaires: ForfaitSimilaire[] = []
 
   try {
     forfait = await apiFetch<Forfait>(`/telecom/${params.id}`)
   } catch {
     notFound()
   }
+
+  await apiFetch<{ forfaits: ForfaitSimilaire[] }>(`/telecom/${params.id}/similaires`)
+    .then(raw => { similaires = raw?.forfaits ?? [] })
+    .catch(() => {})
 
   const f = forfait!
   const colors = OP_COLORS[f.operateur] ?? { bg: '#F8F5F0', text: '#1C2B4A', badge: '#1C2B4A' }
@@ -199,6 +216,91 @@ export default async function FicheForfaitPage({ params }: { params: { id: strin
           </Link>
         </div>
       </div>
+
+      {/* ── Comparaison automatique avec d'autres forfaits ───────── */}
+      {similaires.length > 0 && (() => {
+        const lignes = [
+          { id: f.id, operateur: f.operateur, nom: f.nom, prix: f.prix, courant: true },
+          ...similaires.map(s => ({ id: s.id, operateur: s.operateur, nom: s.nom, prix: s.prix, courant: false })),
+        ].sort((a, b) => a.prix - b.prix)
+
+        const meilleurPrix = lignes[0]?.prix ?? f.prix
+        const courantEstMeilleur = meilleurPrix === f.prix
+        const idsComparaison = [f.id, ...similaires.slice(0, 2).map(s => s.id)].join(',')
+
+        return (
+          <section className="similaires-section">
+            <h2 className="similaires-titre">📊 Comparer avec d&apos;autres forfaits</h2>
+            <p className="similaires-sous-titre">
+              {courantEstMeilleur
+                ? '✅ Ce forfait a le prix le plus bas parmi les alternatives comparées.'
+                : `💡 Un forfait similaire est disponible à partir de ${fcfa(meilleurPrix)} — voir ci-dessous.`}
+            </p>
+            <table className="similaires-table">
+              <thead>
+                <tr>
+                  <th>Forfait</th>
+                  <th>Data</th>
+                  <th>Prix</th>
+                  <th>vs ce forfait</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {lignes.map((l, idx) => {
+                  const original = l.courant ? f : similaires.find(s => s.id === l.id)!
+                  const ecartPct = !l.courant ? Math.round((l.prix - f.prix) / f.prix * 100) : null
+                  const isBest = idx === 0
+                  return (
+                    <tr key={l.id} className={`simil-row${l.courant ? ' simil-row--courant' : ''}`}>
+                      <td>
+                        <div className="simil-produit-cell">
+                          <span style={{ fontSize: 20 }}>{OP_ICONS[l.operateur] ?? '📡'}</span>
+                          <div>
+                            <span className="simil-nom">{l.nom}</span>
+                            <span className="simil-prod-marque" style={{ display: 'block', fontSize: 12, color: OP_COLORS[l.operateur]?.text }}>{l.operateur}</span>
+                            {l.courant && <span className="simil-courant-badge">Ce forfait</span>}
+                          </div>
+                        </div>
+                      </td>
+                      <td>{formatData(original.data_mo)}</td>
+                      <td>
+                        <span className={`simil-prix-val${isBest ? ' simil-prix-val--best' : ''}`}>
+                          {fcfa(l.prix)}
+                          {isBest && <span className="simil-best-ico"> 🏆</span>}
+                        </span>
+                      </td>
+                      <td>
+                        {l.courant ? (
+                          <span className="simil-ecart simil-ecart--egale">référence</span>
+                        ) : (
+                          <span className={`simil-ecart ${ecartPct !== null && ecartPct < -2 ? 'simil-ecart--moins' : ecartPct !== null && ecartPct > 2 ? 'simil-ecart--plus' : 'simil-ecart--egale'}`}>
+                            {ecartPct === null ? '—'
+                              : ecartPct < -2 ? `${ecartPct}% moins cher`
+                              : ecartPct > 2  ? `+${ecartPct}% plus cher`
+                              : '≈ même prix'}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {l.courant
+                          ? <span className="simil-courant-lbl">Vous êtes ici</span>
+                          : <Link href={`/telecom/${l.id}`} className="simil-voir-btn">Voir →</Link>
+                        }
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            <div style={{ textAlign: 'center', marginTop: 20 }}>
+              <Link href={`/telecom/comparaison?ids=${idsComparaison}`} className="budget-pill">
+                ⚖ Comparaison détaillée côte à côte
+              </Link>
+            </div>
+          </section>
+        )
+      })()}
     </div>
   )
 }
