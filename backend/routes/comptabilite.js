@@ -361,7 +361,7 @@ router.get(
       nextY += 50;
 
       // ── Paiement ─────────────────────────────────────────────────────────
-      const methodes: Record<string, string> = { cash: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', virement: 'Virement' };
+      const methodes = { cash: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', virement: 'Virement' };
       doc.fillColor(GRAY).fontSize(9).font('Helvetica')
          .text(`Mode de paiement : ${methodes[vente.methode_paiement] || vente.methode_paiement}`, 50, nextY);
 
