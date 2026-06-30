@@ -60,9 +60,21 @@ function catLabel(slug: string) {
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ categorie?: string }> }): Promise<Metadata> {
   const { categorie } = await searchParams
   const cat = CATEGORIES.find(c => c.slug === (categorie ?? ''))
+  const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+  const titre = cat && cat.slug ? `Annonces ${cat.label} — Nopalou` : 'Annonces au Sénégal — Nopalou'
+  const desc = cat && cat.slug
+    ? `Petites annonces ${cat.label} entre particuliers au Sénégal — téléphones, voitures, électro, mode et plus.`
+    : 'Achetez et vendez entre particuliers au Sénégal. Téléphones, informatique, mode, maison, auto, services.'
   return {
-    title: cat && cat.slug ? `Annonces ${cat.label} — Nopalou` : 'Annonces au Sénégal — Nopalou',
-    description: 'Achetez et vendez entre particuliers au Sénégal. Téléphones, informatique, mode, maison, auto, services.',
+    title: titre,
+    description: desc,
+    alternates: { canonical: `${BASE}/annonces` },
+    openGraph: {
+      title: titre,
+      description: desc,
+      type: 'website',
+      images: [{ url: '/api/og-image', width: 1200, height: 630, alt: titre }],
+    },
   }
 }
 

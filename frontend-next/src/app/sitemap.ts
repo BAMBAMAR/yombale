@@ -27,17 +27,20 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
 
 interface Produit { id: string; updated_at?: string }
 interface Annonce { id: string; updated_at?: string }
+interface AnnonceClassifiee { id: string; updated_at?: string }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 
-  let produitEntries: MetadataRoute.Sitemap = []
-  let immoEntries: MetadataRoute.Sitemap    = []
+  let produitEntries: MetadataRoute.Sitemap  = []
+  let immoEntries: MetadataRoute.Sitemap     = []
+  let annonceEntries: MetadataRoute.Sitemap  = []
 
   try {
-    const [prodRes, immoRes] = await Promise.allSettled([
+    const [prodRes, immoRes, annonceRes] = await Promise.allSettled([
       fetch(`${BACKEND}/api/produits?limit=500&page=1`, { next: { revalidate: 3600 } }),
       fetch(`${BACKEND}/api/immo?limit=200&page=1&transaction=location`, { next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/annonces?limit=200&page=1`, { next: { revalidate: 3600 } }),
     ])
 
     if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
@@ -61,9 +64,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       }))
     }
+
+    if (annonceRes.status === 'fulfilled' && annonceRes.value.ok) {
+      const data = await annonceRes.value.json()
+      const items: AnnonceClassifiee[] = data.annonces ?? []
+      annonceEntries = items.map(a => ({
+        url: `${BASE}/annonces/${a.id}`,
+        lastModified: a.updated_at ? new Date(a.updated_at) : undefined,
+        changeFrequency: 'weekly' as const,
+        priority: 0.65,
+      }))
+    }
   } catch {
     // sitemap dégradé si backend indisponible
   }
 
-  return [...STATIC_ROUTES, ...produitEntries, ...immoEntries]
+  return [...STATIC_ROUTES, ...produitEntries, ...immoEntries, ...annonceEntries]
 }

@@ -34,6 +34,36 @@ interface AnnonceImmo {
   sponsorisee_jusqu_au: string | null;
 }
 
+// ── JSON-LD ───────────────────────────────────────────────────────
+
+function buildRealEstateJsonLd(annonce: AnnonceImmo): string {
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateListing',
+    name: annonce.titre,
+    description: annonce.description ?? undefined,
+    url: `https://nopalou.com/immo/${annonce.id}`,
+    ...(annonce.prix ? {
+      offers: {
+        '@type': 'Offer',
+        price: annonce.prix,
+        priceCurrency: 'XOF',
+        availability: 'https://schema.org/InStock',
+      },
+    } : {}),
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: annonce.ville ?? 'Dakar',
+      addressRegion: annonce.ville ?? 'Dakar',
+      addressCountry: 'SN',
+      ...(annonce.quartier ? { streetAddress: annonce.quartier } : {}),
+    },
+    ...(Array.isArray(annonce.photos) && annonce.photos[0] ? {
+      image: annonce.photos[0],
+    } : {}),
+  })
+}
+
 // ── generateMetadata ─────────────────────────────────────────────
 
 export async function generateMetadata({
@@ -257,6 +287,11 @@ export default async function FicheImmoPage({
           )
         )}
       </div>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: buildRealEstateJsonLd(annonce) }}
+      />
     </div>
   );
 }

@@ -12,6 +12,15 @@ export const metadata: Metadata = {
   title: 'Immobilier au Sénégal — Nopalou',
   description:
     'Annonces immobilières au Sénégal : appartements, villas, terrains à louer ou à vendre à Dakar et dans tout le pays.',
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/immo`,
+  },
+  openGraph: {
+    title: 'Immobilier au Sénégal — Appartements, villas, terrains',
+    description: 'Trouvez votre bien immobilier au Sénégal : louer ou acheter à Dakar, Saint-Louis, Thiès et partout au pays.',
+    type: 'website',
+    images: [{ url: '/api/og-image', width: 1200, height: 630, alt: 'Immobilier au Sénégal — Nopalou' }],
+  },
 }
 
 interface AnnonceImmo {

@@ -55,10 +55,57 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params
   const annonce = await fetchAnnonce(id)
   if (!annonce) return { title: 'Annonce introuvable' }
+
+  const titre = annonce.titre
+  const desc = annonce.description?.slice(0, 155) ??
+    `${annonce.titre} — ${annonce.ville ?? 'Dakar'}, ${formatPrix(annonce.prix)}`
+  const mainPhoto = annonce.photos?.[0] ?? null
+  const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+
   return {
-    title: annonce.titre,
-    description: annonce.description?.slice(0, 155) ?? `${annonce.titre} — ${annonce.ville ?? 'Dakar'}, ${formatPrix(annonce.prix)}`,
+    title: titre,
+    description: desc,
+    alternates: { canonical: `${BASE}/annonces/${id}` },
+    openGraph: {
+      title: titre,
+      description: desc,
+      type: 'website',
+      url: `${BASE}/annonces/${id}`,
+      ...(mainPhoto ? { images: [{ url: mainPhoto, width: 800, height: 600, alt: titre }] } : {}),
+    },
   }
+}
+
+function buildAnnonceJsonLd(annonce: Annonce): string {
+  const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'ItemPage',
+    name: annonce.titre,
+    description: annonce.description ?? undefined,
+    url: `${BASE}/annonces/${annonce.id}`,
+    ...(annonce.photos?.[0] ? { image: annonce.photos[0] } : {}),
+    ...(annonce.prix ? {
+      offers: {
+        '@type': 'Offer',
+        price: annonce.prix,
+        priceCurrency: 'XOF',
+        availability: 'https://schema.org/InStock',
+        seller: {
+          '@type': 'Person',
+          name: annonce.contact_nom ?? 'Vendeur particulier',
+        },
+      },
+    } : {}),
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${BASE}/` },
+        { '@type': 'ListItem', position: 2, name: 'Annonces', item: `${BASE}/annonces` },
+        { '@type': 'ListItem', position: 3, name: annonce.titre },
+      ],
+    },
+  })
 }
 
 export default async function AnnonceDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -172,6 +219,11 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
           </div>
         </aside>
       </div>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: buildAnnonceJsonLd(annonce) }}
+      />
     </div>
   )
 }

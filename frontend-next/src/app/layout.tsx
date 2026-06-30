@@ -33,14 +33,14 @@ export const metadata: Metadata = {
     siteName: 'Nopalou',
     locale: 'fr_SN',
     type: 'website',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Nopalou — Comparateur de prix Sénégal' }],
+    images: [{ url: '/api/og-image', width: 1200, height: 630, alt: 'Nopalou — Comparateur de prix Sénégal' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@nopalou_sn',
     title: 'Nopalou — Comparateur de prix Sénégal',
     description: 'Comparez les prix de milliers de produits au Sénégal.',
-    images: ['/og-image.png'],
+    images: ['/api/og-image'],
   },
   manifest: '/manifest.json',
   appleWebApp: {
