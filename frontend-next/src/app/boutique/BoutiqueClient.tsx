@@ -693,7 +693,7 @@ function CatalogueProduits({ boutique, planActif }: { boutique: Boutique; planAc
   )
 }
 
-// ── Carte boutique (dans la liste) ───────────────────────────────────────────
+// ── Carte boutique ────────────────────────────────────────────────────────────
 
 function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onManage }: {
   boutique: Boutique
@@ -704,90 +704,92 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onM
   onManage: () => void
 }) {
   const sponsorActif = boutique.sponsorise && boutique.sponsor_jusqu_au && new Date(boutique.sponsor_jusqu_au) > new Date()
+  const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#e5e7eb'
 
   return (
     <div style={{
-      background: '#fff', border: '1px solid #e5e7eb',
-      borderLeft: planActif === 'business' ? '4px solid #1e3a5f'
-               : planActif === 'pro'      ? '4px solid #C75B00'
-               : '4px solid #e5e7eb',
-      borderRadius: 12, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,.06)',
-      display: 'flex', gap: 16, alignItems: 'flex-start',
+      background: '#fff', borderRadius: 16,
+      boxShadow: '0 2px 12px rgba(0,0,0,.07)',
+      border: '1px solid #e5e7eb',
+      overflow: 'hidden',
     }}>
-      {boutique.logo_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={boutique.logo_url} alt={boutique.nom}
-          style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
-      ) : (
-        <div style={{ width: 64, height: 64, borderRadius: 8, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>
-          🏪
-        </div>
-      )}
+      {/* Bande colorée plan */}
+      <div style={{ height: 4, background: planColor }} />
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <p style={{ fontFamily: 'Sora, sans-serif', fontWeight: 700, fontSize: 15, margin: 0 }}>{boutique.nom}</p>
-            {planActif === 'business' && (
-              <span style={{ fontSize: 11, background: '#1e3a5f', color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>💼 Business</span>
+      <div style={{ padding: '20px 24px' }}>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+          {/* Logo */}
+          {boutique.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={boutique.logo_url} alt={boutique.nom}
+              style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 12, flexShrink: 0, border: '1px solid #f0f0f0' }} />
+          ) : (
+            <div style={{ width: 72, height: 72, borderRadius: 12, background: 'linear-gradient(135deg,#f0f4ff,#e0e7ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0 }}>
+              🏪
+            </div>
+          )}
+
+          {/* Infos */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h2 style={{ fontFamily: 'Sora, sans-serif', fontWeight: 700, fontSize: 17, margin: 0, color: '#111' }}>{boutique.nom}</h2>
+                {planActif === 'business' && <span style={{ fontSize: 11, background: '#1e3a5f', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700, letterSpacing: '.02em' }}>💼 Business</span>}
+                {planActif === 'pro'      && <span style={{ fontSize: 11, background: '#C75B00', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>⭐ Pro</span>}
+                {sponsorActif            && <span style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>Mis en avant</span>}
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, flexShrink: 0, color: boutique.actif ? '#16a34a' : '#9ca3af', background: boutique.actif ? '#dcfce7' : '#f1f5f9' }}>
+                {boutique.actif ? '● Active' : '○ Inactive'}
+              </span>
+            </div>
+
+            {boutique.description && (
+              <p style={{ fontSize: 13, color: '#6b7280', margin: '6px 0 4px', lineHeight: 1.5 }}>{boutique.description}</p>
             )}
-            {planActif === 'pro' && (
-              <span style={{ fontSize: 11, background: '#C75B00', color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>⭐ Pro</span>
-            )}
-            {sponsorActif && (
-              <span style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>⭐ En avant</span>
-            )}
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: '4px 0 0', display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
+              {[boutique.categorie, boutique.ville, boutique.telephone].filter(Boolean).map((v, i) => (
+                <span key={i}>{v}</span>
+              ))}
+            </p>
           </div>
-          <span style={{
-            fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, flexShrink: 0,
-            color: boutique.actif ? '#16a34a' : '#9ca3af',
-            background: boutique.actif ? '#dcfce7' : '#f1f5f9',
-          }}>
-            {boutique.actif ? 'Active' : 'Inactive'}
-          </span>
         </div>
 
-        {boutique.description && (
-          <p style={{ fontSize: 13, color: '#6b7280', margin: '4px 0' }}>{boutique.description}</p>
-        )}
-        <p style={{ fontSize: 12, color: '#9ca3af', margin: '4px 0 12px' }}>
-          {[boutique.categorie, boutique.ville, boutique.telephone].filter(Boolean).join(' · ')}
-        </p>
-
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {/* Actions */}
+        <div style={{ marginTop: 18, display: 'flex', gap: 8, flexWrap: 'wrap', borderTop: '1px solid #f3f4f6', paddingTop: 16 }}>
           <button onClick={onManage} style={{
             fontSize: 13, color: '#fff', background: '#C75B00', border: 'none',
-            borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontWeight: 700,
+            borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontWeight: 700,
+            boxShadow: '0 1px 4px rgba(199,91,0,.3)',
           }}>
-            🛍 Gérer la boutique
+            Gérer la boutique →
           </button>
           <button onClick={onEdit} style={{
             fontSize: 13, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe',
-            borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontWeight: 600,
+            borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 600,
           }}>
-            ✏️ Modifier
+            Modifier
           </button>
           <Link href="/boutique/analytics" style={{
             fontSize: 13, color: '#16a34a', background: '#f0fdf4', border: '1px solid #86efac',
-            borderRadius: 6, padding: '6px 14px', fontWeight: 600, textDecoration: 'none',
+            borderRadius: 8, padding: '8px 16px', fontWeight: 600, textDecoration: 'none',
           }}>
-            📊 Analytics
+            Analytics
           </Link>
           <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer" style={{
             fontSize: 13, color: '#374151', background: '#f8fafc', border: '1px solid #e5e7eb',
-            borderRadius: 6, padding: '6px 14px', fontWeight: 600, textDecoration: 'none',
+            borderRadius: 8, padding: '8px 16px', fontWeight: 600, textDecoration: 'none',
           }}>
             Voir ↗
           </a>
           <button onClick={onSponsoring} style={{
             fontSize: 13, color: '#92400e', background: '#fffbeb', border: '1px solid #fcd34d',
-            borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontWeight: 600,
+            borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 600, marginLeft: 'auto',
           }}>
             ⭐ Mettre en avant
           </button>
           <button onClick={onDelete} style={{
             fontSize: 13, color: '#dc2626', background: 'none', border: '1px solid #fecaca',
-            borderRadius: 6, padding: '6px 14px', cursor: 'pointer',
+            borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
           }}>
             Supprimer
           </button>
@@ -797,7 +799,13 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onM
   )
 }
 
-// ── Vue de gestion d'une boutique ────────────────────────────────────────────
+// ── Vue de gestion d'une boutique — layout sidebar ────────────────────────────
+
+const NAV_ITEMS: { key: 'produits' | 'compta' | 'infos'; icon: string; label: string }[] = [
+  { key: 'produits', icon: '🛍', label: 'Catalogue' },
+  { key: 'compta',   icon: '💰', label: 'Comptabilité' },
+  { key: 'infos',    icon: '⚙️', label: 'Paramètres' },
+]
 
 function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
   boutique: Boutique
@@ -805,57 +813,85 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
   onBack: () => void
   onEdit: () => void
 }) {
-  const [tab, setTab] = useState<'produits' | 'ventes' | 'infos'>('produits')
-
-  const tabBtn = (t: typeof tab, label: string) => (
-    <button type="button" onClick={() => setTab(t)} style={{
-      padding: '10px 20px', border: 'none', background: 'none', cursor: 'pointer',
-      fontSize: 14, fontWeight: tab === t ? 700 : 500,
-      color: tab === t ? '#C75B00' : '#6b7280',
-      borderBottom: tab === t ? '2px solid #C75B00' : '2px solid transparent',
-    }}>
-      {label}
-    </button>
-  )
+  const [tab, setTab] = useState<'produits' | 'compta' | 'infos'>('produits')
+  const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#6b7280'
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <button onClick={onBack} style={{
-          background: 'none', border: '1px solid #e5e7eb', borderRadius: 8,
-          padding: '6px 12px', cursor: 'pointer', fontSize: 13, color: '#374151',
-        }}>
-          ← Retour
-        </button>
-        <div>
-          <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 18, margin: 0 }}>{boutique.nom}</h2>
-          {planActif && (
-            <span style={{ fontSize: 12, color: planActif === 'business' ? '#1e3a5f' : '#C75B00', fontWeight: 700 }}>
-              {planActif === 'business' ? '💼 Plan Business' : '⭐ Plan Pro'}
-            </span>
-          )}
+    <div style={{ display: 'flex', gap: 0, minHeight: '70vh', background: '#f8fafc', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+
+      {/* Sidebar */}
+      <aside style={{ width: 220, flexShrink: 0, background: '#fff', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column' }}>
+        {/* Boutique header dans sidebar */}
+        <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid #f3f4f6' }}>
+          <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#9ca3af', padding: 0, display: 'flex', alignItems: 'center', gap: 4, marginBottom: 14 }}>
+            ← Retour
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {boutique.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={boutique.logo_url} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+            ) : (
+              <div style={{ width: 40, height: 40, borderRadius: 8, background: '#f0f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🏪</div>
+            )}
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{boutique.nom}</p>
+              {planActif && <span style={{ fontSize: 10, color: planColor, fontWeight: 700 }}>{planActif === 'business' ? '💼 Business' : '⭐ Pro'}</span>}
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20 }}>
-        {tabBtn('produits', '🛍 Catalogue produits')}
-        {tabBtn('ventes', '💰 Ventes')}
-        {tabBtn('infos', 'ℹ Infos & contact')}
-      </div>
+        {/* Nav */}
+        <nav style={{ padding: '12px 8px', flex: 1 }}>
+          {NAV_ITEMS.map(item => (
+            <button key={item.key} onClick={() => setTab(item.key)} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 12px', border: 'none', borderRadius: 8, cursor: 'pointer',
+              background: tab === item.key ? '#fff7f0' : 'none',
+              color: tab === item.key ? '#C75B00' : '#374151',
+              fontWeight: tab === item.key ? 700 : 500,
+              fontSize: 13, marginBottom: 2, textAlign: 'left' as const,
+              borderLeft: tab === item.key ? '3px solid #C75B00' : '3px solid transparent',
+            }}>
+              <span style={{ fontSize: 16 }}>{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+        </nav>
 
-      {tab === 'produits' && <CatalogueProduits boutique={boutique} planActif={planActif} />}
-
-      {tab === 'ventes' && <Comptabilite boutiqueId={boutique.id} />}
-
-      {tab === 'infos' && (
-        <div style={{ maxWidth: 560 }}>
-          <BoutiqueForm
-            boutique={boutique}
-            onCancel={onBack}
-            onSuccess={onEdit}
-          />
+        {/* Liens rapides */}
+        <div style={{ padding: '12px 8px', borderTop: '1px solid #f3f4f6' }}>
+          <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#6b7280', textDecoration: 'none', borderRadius: 6 }}>
+            Voir la boutique ↗
+          </a>
+          <Link href="/boutique/analytics"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#6b7280', textDecoration: 'none', borderRadius: 6 }}>
+            📊 Analytics
+          </Link>
         </div>
-      )}
+      </aside>
+
+      {/* Contenu principal */}
+      <main style={{ flex: 1, minWidth: 0, padding: '28px 32px', overflowY: 'auto' }}>
+        {/* Titre de section */}
+        <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
+          <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, margin: 0, color: '#111' }}>
+            {NAV_ITEMS.find(i => i.key === tab)?.icon}{' '}
+            {tab === 'produits' ? 'Catalogue produits' : tab === 'compta' ? 'Comptabilité' : 'Paramètres boutique'}
+          </h2>
+          {tab === 'produits' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Gérez vos produits, stocks et tarifs.</p>}
+          {tab === 'compta'   && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Ventes, dépenses, stock et zones de livraison.</p>}
+          {tab === 'infos'    && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Modifiez les informations, contacts et photos.</p>}
+        </div>
+
+        {tab === 'produits' && <CatalogueProduits boutique={boutique} planActif={planActif} />}
+        {tab === 'compta'   && <Comptabilite boutiqueId={boutique.id} />}
+        {tab === 'infos'    && (
+          <div style={{ maxWidth: 580 }}>
+            <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={onEdit} />
+          </div>
+        )}
+      </main>
     </div>
   )
 }
@@ -903,10 +939,10 @@ export default function BoutiqueClient({
     router.refresh()
   }
 
-  // Mode formulaire création/édition
+  // Mode formulaire création
   if (mode === 'create' || (typeof mode === 'object' && 'editing' in mode)) {
     return (
-      <div style={{ maxWidth: 600, margin: '40px auto', padding: '0 20px' }}>
+      <div style={{ maxWidth: 640, margin: '40px auto', padding: '0 24px' }}>
         <BoutiqueForm
           boutique={typeof mode === 'object' && 'editing' in mode ? mode.editing : undefined}
           onCancel={() => setMode('list')}
@@ -916,10 +952,10 @@ export default function BoutiqueClient({
     )
   }
 
-  // Mode gestion d'une boutique (catalogue + infos)
+  // Mode gestion — layout pleine largeur avec sidebar
   if (typeof mode === 'object' && 'managing' in mode) {
     return (
-      <div style={{ maxWidth: 700, margin: '40px auto', padding: '0 20px' }}>
+      <div style={{ maxWidth: 1100, margin: '32px auto', padding: '0 24px' }}>
         <BoutiqueManage
           boutique={mode.managing}
           planActif={planActif ?? null}
@@ -930,17 +966,20 @@ export default function BoutiqueClient({
     )
   }
 
+  // Vue liste
   return (
-    <div style={{ maxWidth: 700, margin: '40px auto', padding: '0 20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+    <div style={{ maxWidth: 860, margin: '40px auto', padding: '0 24px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 22, margin: 0 }}>Ma boutique</h1>
-          <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 4 }}>{boutiques.length}/3 boutiques</p>
+          <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 24, margin: 0, color: '#111' }}>Ma boutique</h1>
+          <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 4 }}>{boutiques.length}/3 boutique{boutiques.length > 1 ? 's' : ''}</p>
         </div>
         {canCreate && (
           <button onClick={() => setMode('create')} style={{
-            padding: '9px 18px', background: '#1d4ed8', color: '#fff',
-            border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            padding: '10px 20px', background: '#1d4ed8', color: '#fff',
+            border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(29,78,216,.25)',
           }}>
             + Créer une boutique
           </button>
@@ -949,51 +988,47 @@ export default function BoutiqueClient({
 
       {/* Messages */}
       {successMsg && (
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '10px 14px', color: '#16a34a', fontSize: 14, marginBottom: 16, fontWeight: 600 }}>
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '12px 16px', color: '#16a34a', fontSize: 14, marginBottom: 20, fontWeight: 600 }}>
           {successMsg}
         </div>
       )}
-      {deleteError && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', fontSize: 14, marginBottom: 16 }}>
-          {deleteError}
-        </div>
-      )}
-      {sponsorError && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', fontSize: 14, marginBottom: 16 }}>
-          ❌ {sponsorError}
+      {(deleteError || sponsorError) && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '12px 16px', color: '#dc2626', fontSize: 14, marginBottom: 20 }}>
+          {deleteError || sponsorError}
         </div>
       )}
 
-      {/* Bannière abonnement (si pas encore abonné) */}
-      {!planActif && (
+      {/* Bannière pro */}
+      {!planActif && boutiques.length > 0 && (
         <Link href="/boutique/abonnement" style={{
-          display: 'flex', alignItems: 'center', gap: 12,
-          background: 'linear-gradient(135deg, #fff8f0, #fff3e0)',
-          border: '1px solid #f59e0b', borderRadius: 12,
-          padding: '14px 18px', marginBottom: 20, textDecoration: 'none',
+          display: 'flex', alignItems: 'center', gap: 14,
+          background: 'linear-gradient(135deg, #fff8f0 0%, #fff3e0 100%)',
+          border: '1px solid #f59e0b', borderRadius: 14,
+          padding: '16px 20px', marginBottom: 24, textDecoration: 'none',
         }}>
-          <span style={{ fontSize: 28 }}>⭐</span>
+          <span style={{ fontSize: 32, flexShrink: 0 }}>⭐</span>
           <div style={{ flex: 1 }}>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: '#92400e' }}>Passer en Boutique Pro</p>
-            <p style={{ margin: 0, fontSize: 12, color: '#b45309' }}>Catalogue produits · Placement prioritaire · Analytics — 15 000 FCFA/mois</p>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#92400e' }}>Passez en Boutique Pro</p>
+            <p style={{ margin: '2px 0 0', fontSize: 13, color: '#b45309' }}>Catalogue · Comptabilité · Analytics · Placement prioritaire — 15 000 FCFA/mois</p>
           </div>
-          <span style={{ color: '#C75B00', fontWeight: 700, fontSize: 13 }}>Voir →</span>
+          <span style={{ color: '#C75B00', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>Voir les plans →</span>
         </Link>
       )}
 
       {boutiques.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px 20px', color: '#9ca3af' }}>
-          <p style={{ fontSize: 32, marginBottom: 12 }}>🏪</p>
-          <p style={{ fontSize: 15, marginBottom: 16 }}>Vous n&apos;avez pas encore de boutique.</p>
+        <div style={{ textAlign: 'center', padding: '64px 20px', background: '#fff', borderRadius: 16, border: '1px dashed #d1d5db' }}>
+          <p style={{ fontSize: 48, marginBottom: 16 }}>🏪</p>
+          <p style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Créez votre boutique en ligne</p>
+          <p style={{ fontSize: 14, color: '#9ca3af', marginBottom: 24 }}>Vendez vos produits directement sur Nopalou.</p>
           <button onClick={() => setMode('create')} style={{
-            padding: '10px 24px', background: '#1d4ed8', color: '#fff',
-            border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            padding: '12px 28px', background: '#1d4ed8', color: '#fff',
+            border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer',
           }}>
             Créer ma boutique
           </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {boutiques.map(b => (
             <BoutiqueCard
               key={b.id}
