@@ -9,6 +9,7 @@ import NavbarSearch from './NavbarSearch';
 import NavbarGuides from './NavbarGuides'
 import MobileNav from './MobileNav'
 import BottomBars from './BottomBars';
+import RegisterSW from './RegisterSW';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -139,6 +140,7 @@ export default async function RootLayout({
         <main>{children}</main>
 
         <BottomBars />
+        <RegisterSW />
 
         <footer className="site-footer">
           <div className="footer-inner">

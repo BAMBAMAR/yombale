@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hors ligne — Nopalou</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F8F5F0;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #2b2b2b;
+    text-align: center;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+  .box { max-width: 360px; }
+  h1 { font-size: 20px; margin: 0 0 8px; color: #C75B00; }
+  p { font-size: 14px; line-height: 1.5; color: #555; margin: 0 0 20px; }
+  button {
+    background: #C75B00;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>Vous êtes hors ligne</h1>
+    <p>Impossible de joindre Nopalou pour le moment. Vérifiez votre connexion internet et réessayez.</p>
+    <button onclick="location.reload()">Réessayer</button>
+  </div>
+</body>
+</html>
