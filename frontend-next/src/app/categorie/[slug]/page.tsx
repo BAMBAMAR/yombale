@@ -25,7 +25,11 @@ const CATEGORIES: Record<string, {
     h1: 'Téléphones & Smartphones au Sénégal',
     intro: 'Comparez les prix de smartphones et téléphones portables chez tous les marchands du Sénégal. Samsung, iPhone, Infinix, Tecno, Xiaomi — trouvez le meilleur prix à Dakar et dans tout le pays sans vous déplacer.',
     description: 'Comparez les prix de smartphones et téléphones portables au Sénégal. Samsung, iPhone, Infinix, Xiaomi — les meilleures offres à Dakar et partout au Sénégal.',
-    keywords: ['smartphone Sénégal', 'téléphone Dakar', 'prix téléphone Sénégal', 'Samsung Dakar', 'iPhone Sénégal', 'Infinix prix Dakar', 'Tecno Sénégal', 'Xiaomi Dakar'],
+    keywords: [
+      'smartphone Sénégal', 'téléphone Dakar', 'prix téléphone Sénégal', 'Samsung Dakar', 'iPhone Sénégal', 'Infinix prix Dakar', 'Tecno Sénégal', 'Xiaomi Dakar',
+      'Téléphone 20000 FCFA', 'Jumia Promo Téléphone', 'Téléphone de 30000 FCFA', 'Téléphone moins cher Dakar',
+      'Téléphone portable prix Sénégal', 'Téléphone 40000 FCFA', 'Téléphone 10000 FCFA', 'Promo téléphone Orange Senegal',
+    ],
     exemples: 'Samsung Galaxy, iPhone, Infinix, Tecno, Xiaomi',
   },
   informatique: {
@@ -43,7 +47,16 @@ const CATEGORIES: Record<string, {
     h1: 'Télévisions & Électroménager au Sénégal',
     intro: 'Comparez les prix de télévisions, réfrigérateurs, climatiseurs, machines à laver et tout l\'électroménager au Sénégal. Samsung, LG, Hisense, TCL — les meilleures offres TV et électro à Dakar.',
     description: 'Comparez les prix de télévisions et électroménager au Sénégal. TV Samsung, LG, Hisense — réfrigérateurs, climatiseurs, les meilleures offres à Dakar.',
-    keywords: ['télévision Dakar', 'TV Sénégal', 'réfrigérateur Dakar', 'électroménager Sénégal', 'climatiseur Dakar', 'Samsung TV Sénégal', 'LG prix Dakar', 'Hisense Sénégal', 'machine à laver Dakar'],
+    keywords: [
+      'télévision Dakar', 'TV Sénégal', 'réfrigérateur Dakar', 'électroménager Sénégal', 'climatiseur Dakar', 'Samsung TV Sénégal', 'LG prix Dakar', 'Hisense Sénégal', 'machine à laver Dakar',
+      'TV Smart 43 pouces Prix Dakar', 'Smart TV 32 pouces Prix Sénégal', 'Télévision Smart TV 32', 'Smart TV prix Sénégal',
+      'Jumia TV 43 Pouces', 'Télévision Dakar', 'Télévision Smart TV 43 pouces', 'Jumia TV 32 Pouces',
+      'Prix Frigo Sénégal', 'Prix frigo Samsung Sénégal', 'Jumia Frigo Prix', 'Frigo congélateur prix',
+      'Prix Frigo ASTECH', 'Frigo deux portes prix', 'Frigo Bar prix Dakar', 'Jumia Frigo bar Prix',
+      'Climatiseur 1.5CV prix Dakar', 'Climatiseur 2 chevaux prix Dakar', 'Prix Climatiseur Samsung Sénégal',
+      'Climatiseur Inverter 1.5CV prix Dakar', 'Climatiseur 1 CV prix', 'Climatiseur Dakar prix',
+      'Climatiseur Inverter prix Dakar', 'Climatiseur Beko Dakar prix',
+    ],
     exemples: 'TV Samsung, LG, Hisense, réfrigérateurs, climatiseurs',
   },
   mode: {

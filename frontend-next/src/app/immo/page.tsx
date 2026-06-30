@@ -12,6 +12,12 @@ export const metadata: Metadata = {
   title: 'Immobilier au Sénégal — Nopalou',
   description:
     'Annonces immobilières au Sénégal : appartements, villas, terrains à louer ou à vendre à Dakar et dans tout le pays.',
+  keywords: [
+    'Location chambre Dakar par mois', 'Chambre à louer 30000 par mois',
+    'Location chambre Parcelles Assainies par mois', 'Location chambre salle de bain Dakar par mois',
+    'Chambre salle de bain à louer par mois', 'Chambre à louer 30000 par mois Dakar',
+    'Chambre à louer à Dakar Medina Par mois', 'Chambre à louer 5000f par jour',
+  ],
   alternates: {
     canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/immo`,
   },

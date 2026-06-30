@@ -7,6 +7,11 @@ import TelecomClient from './TelecomClient'
 export const metadata: Metadata = {
   title: 'Forfaits Télécom — Nopalou',
   description: 'Comparez les forfaits internet, voix et data des opérateurs télécom au Sénégal : Orange, Free, Expresso et plus.',
+  keywords: [
+    'Forfait Orange Sénégal', 'Forfait Internet Orange Sénégal', 'Promobile forfait internet',
+    'Promobile forfait appel', 'Forfait illimix Orange', 'Forfait Promobile',
+    'Forfait Orange appel', 'Forfait mobile sénégal', 'Promo téléphone Orange Senegal',
+  ],
 }
 
 export interface Forfait {
