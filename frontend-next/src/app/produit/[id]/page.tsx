@@ -452,6 +452,15 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               </div>
             )}
 
+            {/* CTA comparaison — visible sur mobile avant la sidebar */}
+            {proches.length > 0 && (
+              <div style={{ marginTop: 8, textAlign: 'center' }}>
+                <Link href={`/comparaison?ids=${idsComparaison}`} className="comparaison-cta-btn">
+                  ⚖ Comparaison détaillée côte à côte
+                </Link>
+              </div>
+            )}
+
             {/* Historique des prix */}
             <HistoriqueChart data={historique} />
 
