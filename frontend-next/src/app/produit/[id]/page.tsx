@@ -353,35 +353,55 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
           {/* ── Colonne principale ──────────────────────────────── */}
           <div className="fiche-main">
 
-            {/* Image + identité */}
-            <div className="fiche-hero">
-              {produit.image_url && (
-                <div className="fiche-hero-img">
-                  <Image src={produit.image_url} alt={produit.nom} fill sizes="(max-width:900px) 90vw, 520px" style={{ objectFit: 'contain' }} priority />
-                </div>
-              )}
-              <div className="fiche-hero-info">
+            {/* ── Header produit — aligné sur la fiche forfait ── */}
+            <div className="produit-fiche-header">
+              <div className="produit-fiche-top">
                 {produit.marque && <span className="marque-badge">{produit.marque}</span>}
-                <h1>{produit.nom}</h1>
                 {(produit.categorie_nom ?? produit.categorie) && (
-                  <span className="categ-tag">{produit.categorie_nom ?? produit.categorie}</span>
+                  <Link href={`/?categorie=${produit.categorie}`} className="categ-tag">
+                    {produit.categorie_nom ?? produit.categorie}
+                  </Link>
+                )}
+              </div>
+              <div className="produit-fiche-nom-row">
+                {produit.image_url && (
+                  <div className="produit-fiche-img">
+                    <Image src={produit.image_url} alt={produit.nom} fill sizes="88px" style={{ objectFit: 'contain' }} priority />
+                  </div>
+                )}
+                <h1 className="produit-fiche-nom">{produit.nom}</h1>
+              </div>
+              <div className="forfait-fiche-prix-row">
+                <span className="forfait-fiche-prix">{prixMin ? fcfa(prixMin) : '—'}</span>
+                {best?.marchand_nom && (
+                  <span className="forfait-fiche-duree">chez {best.marchand_nom}</span>
                 )}
               </div>
             </div>
 
-            {/* Box prix */}
-            {prixMin && (
-              <div className="prix-box">
-                <p className="prix-box-label">💰 PRIX LE PLUS BAS TROUVÉ <span style={{ fontWeight: 400, fontSize: '0.8em' }}>pour ce produit</span></p>
-                <p className="prix-box-montant">{fcfa(prixMin)}</p>
-                {valides.length > 1 && economie && (
-                  <p className="prix-box-eco">🔥 Écart entre marchands : {fcfa(economie)}</p>
+            {/* ── Grille métriques clés — alignée sur forfait-fiche-specs ── */}
+            {valides.length > 0 && (
+              <div className="forfait-fiche-specs">
+                <div className="forfait-fiche-spec">
+                  <span className="forfait-fiche-spec-val">{valides.length}</span>
+                  <span className="forfait-fiche-spec-lbl">🏪 Marchands</span>
+                </div>
+                <div className="forfait-fiche-spec">
+                  <span className="forfait-fiche-spec-val">{fcfa(prixMin)}</span>
+                  <span className="forfait-fiche-spec-lbl">💰 Prix le plus bas</span>
+                </div>
+                {prixMax && prixMax !== prixMin && (
+                  <div className="forfait-fiche-spec">
+                    <span className="forfait-fiche-spec-val">{fcfa(prixMax)}</span>
+                    <span className="forfait-fiche-spec-lbl">📈 Prix le plus haut</span>
+                  </div>
                 )}
-                <p className="prix-box-nb">
-                  {valides.length > 1
-                    ? `${valides.length} marchands comparés`
-                    : '1 marchand référencé'}
-                </p>
+                {economie && (
+                  <div className="forfait-fiche-spec">
+                    <span className="forfait-fiche-spec-val">{fcfa(economie)}</span>
+                    <span className="forfait-fiche-spec-lbl">💸 Économie possible</span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -391,13 +411,6 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                 🛒 Acheter au meilleur prix →
               </a>
             )}
-
-            {/* Trust badges */}
-            <div className="trust-row">
-              <span className="trust-badge">🔒 Paiement sécurisé</span>
-              <span className="trust-badge">🚚 Livraison Dakar</span>
-              <span className="trust-badge">✅ Prix vérifiés</span>
-            </div>
 
             {/* Description */}
             {produit.description && (

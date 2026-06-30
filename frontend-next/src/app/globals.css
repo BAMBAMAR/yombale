@@ -256,6 +256,46 @@ a {
   align-self: flex-start;
 }
 
+/* ── Produit fiche header — aligned with forfait-fiche-header ── */
+.produit-fiche-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px 28px 20px;
+}
+
+.produit-fiche-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.produit-fiche-nom-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.produit-fiche-img {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.produit-fiche-nom {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.2;
+}
+
 /* ── Box meilleur prix ────────────────────────────────────────── */
 .prix-box {
   background: #f0fdf4;
