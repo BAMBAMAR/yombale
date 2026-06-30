@@ -196,7 +196,7 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
           </p>
           {!filtre && (
             <p style={{ color: '#9ca3af', fontSize: 12, marginTop: 8 }}>
-              Les commandes apparaîtront ici dès qu\'un client commande depuis votre boutique ou via WhatsApp.
+              Les commandes apparaîtront ici dès qu&apos;un client commande depuis votre boutique ou via WhatsApp.
             </p>
           )}
         </div>
