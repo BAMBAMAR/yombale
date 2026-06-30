@@ -109,3 +109,80 @@ export async function deleteProduit(boutiqueId: string, produitId: string): Prom
     return { error: 'Erreur de connexion au serveur' }
   }
 }
+
+// ── Comptabilité : zones de livraison + ventes ──
+
+export async function listZones(boutiqueId: string) {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/zones`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
+export async function createZone(boutiqueId: string, nom: string, prix: number): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/zones`, {
+      method: 'POST', body: JSON.stringify({ nom, prix }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      return { error: data.error ?? 'Impossible de créer la zone' }
+    }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
+export async function deleteZone(boutiqueId: string, zoneId: string): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/zones/${zoneId}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      return { error: data.error ?? 'Impossible de supprimer la zone' }
+    }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
+export async function listVentes(boutiqueId: string) {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/ventes`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
+export async function declarerVente(
+  boutiqueId: string,
+  data: {
+    produit_id?: string
+    nom_produit?: string
+    quantite: number
+    prix_unitaire: number
+    zone_livraison_id?: string
+    client_nom?: string
+    client_telephone?: string
+    methode_paiement?: string
+  }
+): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/ventes`, {
+      method: 'POST', body: JSON.stringify(data),
+    })
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}))
+      return { error: errData.error ?? 'Impossible d\'enregistrer la vente' }
+    }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}

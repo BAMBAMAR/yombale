@@ -8,6 +8,7 @@
     "dev": "nodemon backend/app.js",
     "migrate": "node backend/migrate.js",
     "test": "playwright test",
+    "test:unit": "jest tests/unit --runInBand",
     "test:pub": "playwright test tests/e2e/01-pages-publiques.spec.ts",
     "test:auth": "playwright test tests/e2e/02-auth.spec.ts",
     "test:publication": "playwright test tests/e2e/03-publication.spec.ts",
@@ -31,11 +32,14 @@
     "morgan": "^1.10.0",
     "multer": "^2.2.0",
     "node-cron": "^3.0.3",
+    "pdfkit": "^0.19.1",
     "pg": "^8.11.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
-    "nodemon": "^3.0.1"
+    "jest": "^30.4.2",
+    "nodemon": "^3.0.1",
+    "supertest": "^7.2.2"
   },
   "engines": {
     "node": ">=18.0.0"

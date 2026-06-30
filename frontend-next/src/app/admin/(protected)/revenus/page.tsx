@@ -1,7 +1,20 @@
 import { cookies } from 'next/headers'
+import Link from 'next/link'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 const COOKIE  = 'nopalou_admin'
+
+interface VentesStats {
+  global: {
+    total_ventes: number
+    chiffre_affaires_total: string
+    ca_mois: string
+    ca_semaine: string
+    boutiques_actives: number
+  }
+  top_boutiques: { boutique_nom: string; slug: string | null; nb_ventes: number; ca_total: string }[]
+  recentes: { reference: string; nom_produit: string; montant_total: string; methode_paiement: string; created_at: string; boutique_nom: string }[]
+}
 
 interface RevenusStats {
   total_transactions:     string
@@ -41,12 +54,14 @@ export default async function AdminRevenusPage() {
   if (!secret) return null
 
   let stats: RevenusStats | null = null
+  let ventes: VentesStats | null = null
   try {
-    const res = await fetch(`${BACKEND}/api/paiement/stats`, {
-      headers: { 'X-Admin-Secret': secret },
-      cache: 'no-store',
-    })
-    if (res.ok) stats = await res.json()
+    const [resStats, resVentes] = await Promise.all([
+      fetch(`${BACKEND}/api/paiement/stats`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' }),
+      fetch(`${BACKEND}/api/comptabilite/admin/stats`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' }),
+    ])
+    if (resStats.ok) stats = await resStats.json()
+    if (resVentes.ok) ventes = await resVentes.json()
   } catch {}
 
   if (!stats) {
@@ -116,9 +131,82 @@ export default async function AdminRevenusPage() {
         </div>
       </div>
 
+      {/* ── Ventes boutiques ──────────────────────────────────────────────── */}
+      {ventes && (
+        <>
+          <div className="admin-section" style={{ marginBottom: 32 }}>
+            <h2 className="admin-section-titre">🏪 Ventes boutiques (comptabilité)</h2>
+            <div className="admin-stats-grid" style={{ marginBottom: 20 }}>
+              <div className="admin-stat-card admin-stat-card--green">
+                <p className="admin-stat-value">{fcfa(ventes.global.chiffre_affaires_total)}</p>
+                <p className="admin-stat-label">CA total déclaré</p>
+              </div>
+              <div className="admin-stat-card admin-stat-card--navy">
+                <p className="admin-stat-value">{fcfa(ventes.global.ca_mois)}</p>
+                <p className="admin-stat-label">Ce mois-ci</p>
+              </div>
+              <div className="admin-stat-card admin-stat-card--navy">
+                <p className="admin-stat-value">{ventes.global.total_ventes}</p>
+                <p className="admin-stat-label">Ventes déclarées</p>
+              </div>
+              <div className="admin-stat-card admin-stat-card--navy">
+                <p className="admin-stat-value">{ventes.global.boutiques_actives}</p>
+                <p className="admin-stat-label">Boutiques actives</p>
+              </div>
+            </div>
+
+            {ventes.top_boutiques.length > 0 && (
+              <>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)', marginBottom: 10 }}>Top boutiques</h3>
+                <div className="admin-table-wrap" style={{ marginBottom: 20 }}>
+                  <table className="admin-table">
+                    <thead><tr><th>Boutique</th><th>Ventes</th><th>CA total</th></tr></thead>
+                    <tbody>
+                      {ventes.top_boutiques.map(b => (
+                        <tr key={b.boutique_nom}>
+                          <td>
+                            <Link href={`/boutiques/${b.slug || ''}`} target="_blank" style={{ color: 'var(--navy)', textDecoration: 'none', fontWeight: 600 }}>
+                              {b.boutique_nom}
+                            </Link>
+                          </td>
+                          <td>{b.nb_ventes}</td>
+                          <td style={{ fontWeight: 700, color: 'var(--green)' }}>{fcfa(b.ca_total)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+
+            {ventes.recentes.length > 0 && (
+              <>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)', marginBottom: 10 }}>30 dernières ventes boutiques</h3>
+                <div className="admin-table-wrap">
+                  <table className="admin-table">
+                    <thead><tr><th>Date</th><th>Boutique</th><th>Produit</th><th>Montant</th><th>Paiement</th></tr></thead>
+                    <tbody>
+                      {ventes.recentes.map(v => (
+                        <tr key={v.reference}>
+                          <td style={{ fontSize: 12, color: '#6b7280' }}>{new Date(v.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}</td>
+                          <td style={{ fontSize: 13 }}>{v.boutique_nom}</td>
+                          <td style={{ fontSize: 13 }}>{v.nom_produit}</td>
+                          <td style={{ fontWeight: 700, color: 'var(--green)' }}>{fcfa(v.montant_total)}</td>
+                          <td><span className="admin-badge admin-badge--blue">{v.methode_paiement}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
       {/* Transactions récentes */}
       <div className="admin-section">
-        <h2 className="admin-section-titre">30 dernières transactions</h2>
+        <h2 className="admin-section-titre">30 dernières transactions Nopalou</h2>
         {stats.recentes.length === 0 ? (
           <p style={{ color: 'var(--text2)', fontSize: 14 }}>Aucune transaction pour l&apos;instant.</p>
         ) : (

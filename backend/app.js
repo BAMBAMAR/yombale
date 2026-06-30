@@ -130,6 +130,8 @@ app.use('/api/abonnements',     require('./routes/abonnements'));
 app.use('/api/click',           require('./routes/click'));
 app.use('/api/analytics',       require('./routes/analytics'));
 app.use('/api/whatsapp',        require('./routes/whatsapp'));
+app.use('/api/comptabilite',    require('./routes/comptabilite'));
+app.use('/api/search',          require('./routes/search'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', async (req, res) => {

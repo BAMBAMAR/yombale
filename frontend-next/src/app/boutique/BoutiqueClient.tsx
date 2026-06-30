@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit } from './actions'
+import Comptabilite from './Comptabilite'
 import { initierWaveBoutiqueSponsoring } from '@/app/actions/paiement'
 import { fcfa } from '@/lib/format'
 import type { ActionState } from '@/lib/backend-fetch'
@@ -803,7 +804,7 @@ function BoutiqueManage({ boutique, planActif, onBack }: {
   planActif: 'pro' | 'business' | null
   onBack: () => void
 }) {
-  const [tab, setTab] = useState<'produits' | 'infos'>('produits')
+  const [tab, setTab] = useState<'produits' | 'ventes' | 'infos'>('produits')
 
   const tabBtn = (t: typeof tab, label: string) => (
     <button type="button" onClick={() => setTab(t)} style={{
@@ -837,10 +838,13 @@ function BoutiqueManage({ boutique, planActif, onBack }: {
 
       <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20 }}>
         {tabBtn('produits', '🛍 Catalogue produits')}
+        {tabBtn('ventes', '💰 Ventes')}
         {tabBtn('infos', 'ℹ Infos & contact')}
       </div>
 
       {tab === 'produits' && <CatalogueProduits boutique={boutique} planActif={planActif} />}
+
+      {tab === 'ventes' && <Comptabilite boutiqueId={boutique.id} />}
 
       {tab === 'infos' && (
         <div style={{ maxWidth: 560 }}>

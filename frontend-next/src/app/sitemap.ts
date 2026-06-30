@@ -28,6 +28,7 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
 interface Produit { id: string; updated_at?: string }
 interface Annonce { id: string; updated_at?: string }
 interface AnnonceClassifiee { id: string; updated_at?: string }
+interface Boutique { id: string; slug: string | null; updated_at?: string }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
@@ -35,12 +36,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let produitEntries: MetadataRoute.Sitemap  = []
   let immoEntries: MetadataRoute.Sitemap     = []
   let annonceEntries: MetadataRoute.Sitemap  = []
+  let boutiqueEntries: MetadataRoute.Sitemap = []
 
   try {
-    const [prodRes, immoRes, annonceRes] = await Promise.allSettled([
+    const [prodRes, immoRes, annonceRes, boutiqueRes] = await Promise.allSettled([
       fetch(`${BACKEND}/api/produits?limit=500&page=1`, { next: { revalidate: 3600 } }),
       fetch(`${BACKEND}/api/immo?limit=200&page=1&transaction=location`, { next: { revalidate: 3600 } }),
       fetch(`${BACKEND}/api/annonces?limit=200&page=1`, { next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/boutiques?limit=200&page=1`, { next: { revalidate: 3600 } }),
     ])
 
     if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
@@ -75,9 +78,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.65,
       }))
     }
+
+    if (boutiqueRes.status === 'fulfilled' && boutiqueRes.value.ok) {
+      const data = await boutiqueRes.value.json()
+      const items: Boutique[] = data.boutiques ?? []
+      boutiqueEntries = items.map(b => ({
+        url: `${BASE}/boutiques/${b.slug || b.id}`,
+        lastModified: b.updated_at ? new Date(b.updated_at) : undefined,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }))
+    }
   } catch {
     // sitemap dégradé si backend indisponible
   }
 
-  return [...STATIC_ROUTES, ...produitEntries, ...immoEntries, ...annonceEntries]
+  return [...STATIC_ROUTES, ...produitEntries, ...boutiqueEntries, ...immoEntries, ...annonceEntries]
 }

@@ -31,6 +31,20 @@ async function setSession(phone, state, context = {}) {
   );
 }
 
+// ── Nettoyage périodique ─────────────────────────────────────────────────────
+async function cleanupOldMessages() {
+  await pool.query(
+    `DELETE FROM whatsapp_processed_messages WHERE processed_at < NOW() - INTERVAL '7 days'`
+  );
+}
+
+async function resetInactiveSessions() {
+  await pool.query(
+    `UPDATE whatsapp_sessions SET state='IDLE', context='{}', updated_at=NOW()
+     WHERE state != 'IDLE' AND updated_at < NOW() - INTERVAL '1 hour'`
+  );
+}
+
 // ── Déduplication ─────────────────────────────────────────────────────────────
 async function isDuplicate(messageId) {
   const r = await pool.query(
@@ -302,4 +316,4 @@ async function handleSearchQuery(phone, query) {
   await setSession(phone, 'IDLE', {});
 }
 
-module.exports = { handleIncoming };
+module.exports = { handleIncoming, cleanupOldMessages, resetInactiveSessions };

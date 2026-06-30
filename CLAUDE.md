@@ -123,7 +123,7 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
-## État du projet (30 juin 2026)
+## État du projet (30 juin 2026 — mis à jour après audit)
 
 ### Ce qui est complet et fonctionnel
 
@@ -182,15 +182,17 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ### Ce qui reste à faire
 
-#### Priorité haute (avant mise en prod WhatsApp)
-1. **Configurer Meta** — WABA, catalogue, 4 templates, webhook (3-7 jours, hors code)
-2. **Étendre `services/matching.js`** pour notifier les alertes WhatsApp (colonne `telephone`) — le chatbot crée les alertes, mais le service de détection de baisse de prix ne les envoie pas encore par WhatsApp
-3. **Brancher `cleanupOldMessages()`** (définie dans `whatsapp-chatbot.js`, jamais appelée) sur le cron journalier dans `services/scraper.js`
-4. **Reset sessions WhatsApp inactives** — ajouter un nettoyage périodique (`updated_at < NOW() - 1h → state = IDLE`) dans le cron
+#### ✅ Fait (depuis l'audit du 30 juin 2026)
+- `cleanupOldMessages()` et `resetInactiveSessions()` implémentés dans `whatsapp-chatbot.js` et branchés sur un cron quotidien (3h UTC) dans `scraper.js`
+- Alertes prix WhatsApp : **déjà fonctionnel** — `scraper.js:751-765` détecte les baisses de prix et appelle `envoyerAlertePrix()` qui envoie le WhatsApp via `notifications.js:23-28`
+- `.env.example` nettoyé (ajout `RAILWAY_PUBLIC_DOMAIN`/`RENDER_EXTERNAL_URL`, suppression `ORANGE_CLIENT_ID` inutilisé)
+
+#### Hors code (avant mise en prod WhatsApp)
+1. **Configurer Meta** — WABA, catalogue, 4 templates (`nopalou_carousel_annonce`, `nopalou_carousel_immo`, `nopalou_carousel_telecom`, `nopalou_fiche_texte`), webhook (3-7 jours)
 
 #### Priorité moyenne
-5. **Sync initiale catalogue Meta** — les produits boutique déjà en base ne sont pas synchronisés au démarrage. Ajouter un endpoint admin `POST /api/boutiques/admin/sync-catalog` ou un script one-shot
-6. **Tests end-to-end du chatbot** — simuler des webhooks avec curl sur `/api/whatsapp/webhook` pour vérifier la machine à états, la recherche FTS et les insertions `alertes` en conditions réelles
+2. **Sync initiale catalogue Meta** — les produits boutique déjà en base ne sont pas synchronisés au démarrage. Ajouter un endpoint admin `POST /api/boutiques/admin/sync-catalog` ou un script one-shot
+3. **Tests unitaires services critiques** — `whatsapp-chatbot.js`, `notifications.js`, `scraper.js` couverts uniquement par E2E Playwright ; pas de tests unitaires/intégration
 
 #### Schéma DB — tables clés à connaître
 | Table | Usage |

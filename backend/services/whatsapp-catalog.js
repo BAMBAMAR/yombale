@@ -1,12 +1,17 @@
 // backend/services/whatsapp-catalog.js — Sync vers Meta Commerce Catalog
 const axios = require('axios');
 
-const TOKEN      = process.env.WHATSAPP_API_TOKEN;
-const CATALOG_ID = process.env.WHATSAPP_CATALOG_ID;
-const SITE       = process.env.FRONTEND_URL || 'https://nopalou.com';
+const TOKEN            = process.env.WHATSAPP_API_TOKEN;
+const CATALOG_ID_GLOBAL = process.env.WHATSAPP_CATALOG_ID;
+const SITE             = process.env.FRONTEND_URL || 'https://nopalou.com';
 
-function guard() {
-  if (!TOKEN || !CATALOG_ID) {
+function resolveCatalog(produit) {
+  // Priorité : catalog_id propre à la boutique, sinon catalog global Nopalou
+  return produit.whatsapp_catalog_id || CATALOG_ID_GLOBAL;
+}
+
+function guard(catalogId) {
+  if (!TOKEN || !catalogId) {
     console.log('[CATALOG] Credentials manquants — sync ignorée');
     return false;
   }
@@ -15,11 +20,12 @@ function guard() {
 
 // Crée ou met à jour un produit dans le catalogue Meta Commerce
 async function syncProduit(produit) {
-  if (!guard()) return;
+  const catalogId = resolveCatalog(produit);
+  if (!guard(catalogId)) return;
   const retailerId = `nopalou-produit-${produit.id}`;
   try {
     await axios.post(
-      `https://graph.facebook.com/v18.0/${CATALOG_ID}/products`,
+      `https://graph.facebook.com/v18.0/${catalogId}/products`,
       {
         retailer_id:  retailerId,
         name:         produit.nom,
@@ -39,12 +45,13 @@ async function syncProduit(produit) {
 }
 
 // Retire un produit du catalogue Meta Commerce
-async function deleteProduit(produitId) {
-  if (!guard()) return;
+async function deleteProduit(produitId, whatsappCatalogId = null) {
+  const catalogId = whatsappCatalogId || CATALOG_ID_GLOBAL;
+  if (!guard(catalogId)) return;
   const retailerId = `nopalou-produit-${produitId}`;
   try {
     await axios.delete(
-      `https://graph.facebook.com/v18.0/${CATALOG_ID}/products`,
+      `https://graph.facebook.com/v18.0/${catalogId}/products`,
       {
         headers: { Authorization: `Bearer ${TOKEN}` },
         data: { retailer_id: retailerId },

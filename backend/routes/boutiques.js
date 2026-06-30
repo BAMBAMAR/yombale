@@ -72,17 +72,42 @@ router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
+// ── POST /api/boutiques/admin/sync-catalog — sync initiale tous les produits → Meta Commerce
+router.post('/admin/sync-catalog', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT bp.*, b.slug AS boutique_slug
+       FROM boutique_produits bp
+       JOIN boutiques b ON b.id = bp.boutique_id
+       WHERE b.actif = true`
+    );
+    res.json({ message: `Sync lancée pour ${rows.length} produit(s)`, total: rows.length });
+    // Après la réponse, on sync sans bloquer le client
+    setImmediate(async () => {
+      let ok = 0, ko = 0;
+      for (const p of rows) {
+        try { await syncProduit(p); ok++; }
+        catch { ko++; }
+      }
+      console.log(`[CATALOG] Sync initiale terminée — ${ok} OK, ${ko} erreurs`);
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // ── PUT /api/boutiques/admin/:id — activer/désactiver/sponsoriser (admin)
 router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
-    const { actif, sponsorise, sponsor_jusqu_au } = req.body;
+    const { actif, sponsorise, sponsor_jusqu_au, whatsapp_catalog_id } = req.body;
     // Build dynamic SET clause
     const sets = ['updated_at=NOW()'];
     const vals = [];
     if (actif !== undefined) { vals.push(Boolean(actif)); sets.push(`actif=$${vals.length}`); }
     if (sponsorise !== undefined) { vals.push(Boolean(sponsorise)); sets.push(`sponsorise=$${vals.length}`); }
     if (sponsor_jusqu_au !== undefined) { vals.push(sponsor_jusqu_au); sets.push(`sponsor_jusqu_au=$${vals.length}`); }
+    if (whatsapp_catalog_id !== undefined) { vals.push(whatsapp_catalog_id || null); sets.push(`whatsapp_catalog_id=$${vals.length}`); }
     vals.push(req.params.id);
     const { rows } = await pool.query(
       `UPDATE boutiques SET ${sets.join(', ')} WHERE id=$${vals.length} RETURNING id`,
@@ -137,7 +162,7 @@ router.get('/mine', verifierToken, async (req, res) => {
     const rows = await pool.query(
       `SELECT id, nom, description, categorie, telephone, whatsapp, adresse, ville,
               logo_url, cover_url, site_web, facebook, instagram, slug,
-              actif, sponsorise, sponsor_jusqu_au, created_at
+              actif, sponsorise, sponsor_jusqu_au, whatsapp_catalog_id, created_at
        FROM boutiques WHERE utilisateur_id=$1 ORDER BY created_at DESC`,
       [req.user.userId]
     );
@@ -257,8 +282,8 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
     const produitCree = r.rows[0];
     setImmediate(async () => {
       try {
-        const b = await pool.query('SELECT slug FROM boutiques WHERE id=$1', [id]);
-        await syncProduit({ ...produitCree, boutique_slug: b.rows[0]?.slug });
+        const b = await pool.query('SELECT slug, whatsapp_catalog_id FROM boutiques WHERE id=$1', [id]);
+        await syncProduit({ ...produitCree, boutique_slug: b.rows[0]?.slug, whatsapp_catalog_id: b.rows[0]?.whatsapp_catalog_id });
       } catch {}
     });
   } catch (err) {
@@ -301,8 +326,8 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     const produitMaj = r.rows[0];
     setImmediate(async () => {
       try {
-        const b = await pool.query('SELECT slug FROM boutiques WHERE id=$1', [id]);
-        await syncProduit({ ...produitMaj, boutique_slug: b.rows[0]?.slug });
+        const b = await pool.query('SELECT slug, whatsapp_catalog_id FROM boutiques WHERE id=$1', [id]);
+        await syncProduit({ ...produitMaj, boutique_slug: b.rows[0]?.slug, whatsapp_catalog_id: b.rows[0]?.whatsapp_catalog_id });
       } catch {}
     });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
@@ -318,7 +343,9 @@ router.delete('/:id/produits/:prodId', verifierToken, param('id').isUUID(), para
 
     const r = await pool.query('DELETE FROM boutique_produits WHERE id=$1 AND boutique_id=$2 RETURNING id', [prodId, id]);
     if (!r.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
-    deleteProduit(prodId).catch(() => {});
+    pool.query('SELECT whatsapp_catalog_id FROM boutiques WHERE id=$1', [id])
+      .then(b => deleteProduit(prodId, b.rows[0]?.whatsapp_catalog_id))
+      .catch(() => {});
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });

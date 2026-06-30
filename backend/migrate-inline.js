@@ -250,6 +250,13 @@ module.exports = async function migrateInline() {
       EXCEPTION WHEN others THEN NULL; END $$;
     `);
 
+    // Catalogue WhatsApp par boutique (optionnel — upgrade Pro/Business)
+    await pool.query(`
+      DO $$ BEGIN
+        ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS whatsapp_catalog_id TEXT;
+      EXCEPTION WHEN others THEN NULL; END $$;
+    `);
+
     // Contrainte unique sur marchands.nom — nécessaire pour getMarchandId()
     await pool.query(`
       DO $$
@@ -470,6 +477,43 @@ module.exports = async function migrateInline() {
   ]) {
     try { await pool.query(sql); } catch (e) { console.warn('[MIGRATE] bp_colonnes:', e.message); }
   }
+
+  // Comptabilité boutique — stock, zones de livraison, ventes
+  try {
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS stock_quantite INT`);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS zones_livraison (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        nom         VARCHAR(100) NOT NULL,
+        prix        NUMERIC(10,2) NOT NULL DEFAULT 0,
+        created_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_zones_boutique ON zones_livraison(boutique_id);
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS ventes (
+        id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        reference         VARCHAR(30) UNIQUE NOT NULL,
+        boutique_id       UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        produit_id        UUID REFERENCES boutique_produits(id) ON DELETE SET NULL,
+        nom_produit       VARCHAR(300) NOT NULL,
+        quantite          INT NOT NULL DEFAULT 1,
+        prix_unitaire     NUMERIC(12,2) NOT NULL,
+        zone_livraison_id UUID REFERENCES zones_livraison(id) ON DELETE SET NULL,
+        frais_livraison   NUMERIC(10,2) NOT NULL DEFAULT 0,
+        montant_total     NUMERIC(12,2) NOT NULL,
+        client_nom        VARCHAR(150),
+        client_telephone  VARCHAR(30),
+        methode_paiement  VARCHAR(20) DEFAULT 'cash',
+        created_at        TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_ventes_boutique ON ventes(boutique_id, created_at DESC);
+    `);
+    console.log('[MIGRATE] ✅ Tables comptabilité boutique (stock, zones_livraison, ventes) OK');
+  } catch (e) { console.warn('[MIGRATE] comptabilite_boutique:', e.message); }
 
   try { await pool.end(); } catch (_) {}
 };

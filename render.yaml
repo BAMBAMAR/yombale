@@ -1,4 +1,5 @@
 services:
+  # ── Backend Express ───────────────────────────────────────────────────────────
   - type: web
     name: yombale-backend
     runtime: node
@@ -11,72 +12,123 @@ services:
         value: 18
       - key: NODE_ENV
         value: "production"
+
+      # ── PostgreSQL (REQUIRED) ────────────────────────────────────────────────
       - key: DATABASE_URL
         sync: false
+
+      # ── Secrets (REQUIRED) ──────────────────────────────────────────────────
       - key: JWT_SECRET
         sync: false
       - key: ADMIN_SECRET
         sync: false
+
+      # ── URLs (REQUIRED) ─────────────────────────────────────────────────────
+      # FRONTEND_URL = URL du frontend Next.js (ex: https://nopalou.com)
       - key: FRONTEND_URL
         sync: false
+      # BACKEND_URL = URL publique du backend (utilisée dans les emails/liens)
       - key: BACKEND_URL
         sync: false
+
+      # ── Scraping ────────────────────────────────────────────────────────────
+      # Garder true sur le plan gratuit (timeouts) ; passer false si plan payant
       - key: SCRAPING_DISABLED
         value: "true"
+
+      # ── Emails — Resend (REQUIRED en production) ─────────────────────────────
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM
         sync: false
       - key: ADMIN_EMAIL
         sync: false
-      - key: FB_EMAIL
-        sync: false
-      - key: FB_PASSWORD
-        sync: false
-      - key: FB_APP_ID
-        sync: false
-      - key: FB_APP_SECRET
-        sync: false
-      - key: FB_PAGE_ID
-        sync: false
-      - key: IG_USER_ID
-        sync: false
+
+      # ── Cloudinary — images (REQUIRED) ──────────────────────────────────────
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+
+      # ── Paiement Wave (REQUIRED si paiement activé) ──────────────────────────
       - key: WAVE_API_KEY
         sync: false
       - key: WAVE_WEBHOOK_SECRET
         sync: false
-      - key: ORANGE_CLIENT_ID
-        sync: false
+
+      # ── Paiement Orange Money (optionnel) ────────────────────────────────────
       - key: ORANGE_CLIENT_SECRET
         sync: false
       - key: ORANGE_MERCHANT_KEY
         sync: false
 
+      # ── WhatsApp Business API — Meta Cloud API (optionnel) ───────────────────
+      # Activer après configuration WABA + templates Meta
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_API_TOKEN
+        sync: false
+      - key: WHATSAPP_APP_SECRET
+        sync: false
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: WHATSAPP_CATALOG_ID
+        sync: false
+      - key: WHATSAPP_BUSINESS_ACCOUNT_ID
+        sync: false
+
+      # ── Réseaux sociaux — publication automatique (optionnel) ────────────────
+      - key: FB_PAGE_ID
+        sync: false
+      - key: FB_PAGE_ACCESS_TOKEN
+        sync: false
+      - key: FB_APP_ID
+        sync: false
+      - key: FB_APP_SECRET
+        sync: false
+      - key: IG_USER_ID
+        sync: false
+
+      # ── Scrapers immo Facebook (optionnel) ───────────────────────────────────
+      - key: FB_EMAIL
+        sync: false
+      - key: FB_PASSWORD
+        sync: false
+
+  # ── Frontend Next.js ─────────────────────────────────────────────────────────
   - type: web
     name: nopalou-frontend
     runtime: node
     plan: free
     rootDir: frontend-next
     buildCommand: npm install --include=dev && npm run build
-    startCommand: npm start
+    # npm run build exécute next build + scripts/postbuild.js (copie public/ et .next/static/ dans standalone)
+    # next start lit le dossier .next/standalone généré par output:'standalone'
+    startCommand: node .next/standalone/server.js
+    healthCheckPath: /api/ping
     envVars:
       - key: NODE_VERSION
         value: 18
       - key: NODE_ENV
         value: "production"
-      - key: NEXT_PUBLIC_BACKEND_URL
-        sync: false
+
+      # ── URLs ────────────────────────────────────────────────────────────────
+      # BACKEND_URL = URL interne ou publique du backend (côté serveur Next.js)
       - key: BACKEND_URL
         sync: false
+      # NEXT_PUBLIC_BACKEND_URL = même URL, exposée au navigateur
+      - key: NEXT_PUBLIC_BACKEND_URL
+        sync: false
+      # URL canonique du site (metadataBase, og:url, liens dans emails)
       - key: NEXT_PUBLIC_SITE_URL
         value: "https://nopalou.com"
+
+      # ── Secrets (REQUIRED) ──────────────────────────────────────────────────
+      # Générer : node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
       - key: SESSION_SECRET
         sync: false
+      # DOIT être identique au JWT_SECRET du backend
       - key: JWT_SECRET
         sync: false

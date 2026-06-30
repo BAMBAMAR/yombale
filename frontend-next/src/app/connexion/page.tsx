@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import ConnexionForm from './ConnexionForm'
 
 export const metadata: Metadata = {
@@ -12,7 +13,7 @@ export default function ConnexionPage() {
       {/* Panneau gauche — visuel */}
       <div className="auth-visual">
         <a href="/" className="auth-visual-logo">
-          <img src="/icons/logo-mark.svg" alt="" width={32} height={32} style={{ borderRadius: 7, flexShrink: 0 }} />
+          <Image src="/icons/logo-mark.svg" alt="" width={32} height={32} style={{ borderRadius: 7, flexShrink: 0 }} priority />
           <span className="auth-logo-name" data-suffix="lou">Nopa</span>
         </a>
         <div className="auth-visual-body">

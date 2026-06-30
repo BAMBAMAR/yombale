@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import MotDePasseOublieForm from './MotDePasseOublieForm'
 
 export const metadata: Metadata = {
@@ -11,7 +12,7 @@ export default function MotDePasseOubliePage() {
     <div className="auth-page">
       <div className="auth-visual">
         <a href="/" className="auth-visual-logo">
-          <img src="/icons/logo-mark.svg" alt="" width={32} height={32} style={{ borderRadius: 7, flexShrink: 0 }} />
+          <Image src="/icons/logo-mark.svg" alt="" width={32} height={32} style={{ borderRadius: 7, flexShrink: 0 }} priority />
           <span className="auth-logo-name" data-suffix="lou">Nopa</span>
         </a>
         <div className="auth-visual-body">

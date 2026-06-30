@@ -898,6 +898,12 @@ function demarrerScraping() {
   cron.schedule('0 6,18 * * *', () => lancerScrapingNouveauxSites().catch(console.error));
   // Publication réseaux sociaux — vérifie toutes les heures les posts approuvés
   cron.schedule('0 * * * *', () => publierPostsApprouves().catch(console.error));
+  // Nettoyage WhatsApp — messages dédupliqués >7j et sessions inactives >1h, chaque jour à 3h
+  cron.schedule('0 3 * * *', () => {
+    const { cleanupOldMessages, resetInactiveSessions } = require('./whatsapp-chatbot');
+    cleanupOldMessages().catch(err => console.error('[WHATSAPP] cleanup messages:', err.message));
+    resetInactiveSessions().catch(err => console.error('[WHATSAPP] reset sessions:', err.message));
+  });
   // Premier scraping 10 min après démarrage (laisser l'app se stabiliser)
   setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 10 * 60 * 1000);
   setTimeout(() => lancerScrapingNouveauxSites().catch(console.error), 15 * 60 * 1000);

@@ -1,0 +1,288 @@
+// backend/routes/comptabilite.js — Comptabilité boutique (stock, zones de livraison, ventes, factures PDF)
+const router = require('express').Router();
+const { body, param, validationResult } = require('express-validator');
+const PDFDocument = require('pdfkit');
+const { pool } = require('../models/db');
+const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
+
+// ── GET /api/comptabilite/admin/stats — agrégats ventes toutes boutiques (admin)
+router.get('/admin/stats', adminSecretOnly, async (req, res) => {
+  try {
+    const [global, parBoutique, recentes] = await Promise.all([
+      pool.query(`
+        SELECT
+          COUNT(*)::int                          AS total_ventes,
+          COALESCE(SUM(montant_total), 0)        AS chiffre_affaires_total,
+          COALESCE(SUM(CASE WHEN created_at >= date_trunc('month', NOW()) THEN montant_total END), 0) AS ca_mois,
+          COALESCE(SUM(CASE WHEN created_at >= NOW() - INTERVAL '7 days'  THEN montant_total END), 0) AS ca_semaine,
+          COUNT(DISTINCT boutique_id)::int       AS boutiques_actives
+        FROM ventes
+      `),
+      pool.query(`
+        SELECT b.nom AS boutique_nom, b.slug,
+               COUNT(v.id)::int                   AS nb_ventes,
+               COALESCE(SUM(v.montant_total), 0)  AS ca_total
+        FROM boutiques b
+        JOIN ventes v ON v.boutique_id = b.id
+        GROUP BY b.id, b.nom, b.slug
+        ORDER BY ca_total DESC
+        LIMIT 10
+      `),
+      pool.query(`
+        SELECT v.reference, v.nom_produit, v.montant_total, v.methode_paiement,
+               v.created_at, b.nom AS boutique_nom
+        FROM ventes v
+        JOIN boutiques b ON b.id = v.boutique_id
+        ORDER BY v.created_at DESC
+        LIMIT 30
+      `),
+    ]);
+
+    res.json({
+      global: global.rows[0],
+      top_boutiques: parBoutique.rows,
+      recentes: recentes.rows,
+    });
+  } catch (err) {
+    console.error('[COMPTA ADMIN]', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+async function ownsBoutique(boutiqueId, userId) {
+  const r = await pool.query('SELECT id, nom, logo_url, telephone, adresse, ville FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [boutiqueId, userId]);
+  return r.rows[0] || null;
+}
+
+function genReference() {
+  return `V-${Date.now().toString(36).toUpperCase()}`;
+}
+
+// ── Zones de livraison ─────────────────────────────────────────────────────
+
+// GET /api/comptabilite/:boutiqueId/zones
+router.get('/:boutiqueId/zones', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {
+  try {
+    const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+    if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+    const { rows } = await pool.query(
+      'SELECT * FROM zones_livraison WHERE boutique_id=$1 ORDER BY created_at',
+      [req.params.boutiqueId]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// POST /api/comptabilite/:boutiqueId/zones
+router.post(
+  '/:boutiqueId/zones',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  body('nom').trim().isLength({ min: 1, max: 100 }),
+  body('prix').isFloat({ min: 0 }),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+      const { rows } = await pool.query(
+        'INSERT INTO zones_livraison (boutique_id, nom, prix) VALUES ($1,$2,$3) RETURNING *',
+        [req.params.boutiqueId, req.body.nom, req.body.prix]
+      );
+      res.status(201).json(rows[0]);
+    } catch (err) {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
+// DELETE /api/comptabilite/:boutiqueId/zones/:zoneId
+router.delete(
+  '/:boutiqueId/zones/:zoneId',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  param('zoneId').isUUID(),
+  async (req, res) => {
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+      await pool.query('DELETE FROM zones_livraison WHERE id=$1 AND boutique_id=$2', [req.params.zoneId, req.params.boutiqueId]);
+      res.json({ message: 'Zone supprimée' });
+    } catch (err) {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
+// ── Ventes ──────────────────────────────────────────────────────────────────
+
+// POST /api/comptabilite/:boutiqueId/ventes — déclarer une vente
+router.post(
+  '/:boutiqueId/ventes',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  body('quantite').isInt({ min: 1 }),
+  body('prix_unitaire').isFloat({ min: 0 }),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+
+      const { produit_id, quantite, prix_unitaire, zone_livraison_id, client_nom, client_telephone, methode_paiement } = req.body;
+
+      let nomProduit = req.body.nom_produit || 'Produit';
+      let fraisLivraison = 0;
+
+      if (produit_id) {
+        const p = await pool.query('SELECT nom, stock_quantite FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [produit_id, req.params.boutiqueId]);
+        if (!p.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+        nomProduit = p.rows[0].nom;
+        if (p.rows[0].stock_quantite !== null && p.rows[0].stock_quantite < quantite) {
+          return res.status(400).json({ error: 'Stock insuffisant' });
+        }
+      }
+
+      if (zone_livraison_id) {
+        const z = await pool.query('SELECT prix FROM zones_livraison WHERE id=$1 AND boutique_id=$2', [zone_livraison_id, req.params.boutiqueId]);
+        if (z.rows[0]) fraisLivraison = Number(z.rows[0].prix);
+      }
+
+      const montantTotal = Number(prix_unitaire) * Number(quantite) + fraisLivraison;
+
+      const { rows } = await pool.query(
+        `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire,
+                              zone_livraison_id, frais_livraison, montant_total, client_nom, client_telephone, methode_paiement)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+        [genReference(), req.params.boutiqueId, produit_id || null, nomProduit, quantite, prix_unitaire,
+         zone_livraison_id || null, fraisLivraison, montantTotal, client_nom || null, client_telephone || null, methode_paiement || 'cash']
+      );
+
+      if (produit_id) {
+        await pool.query(
+          `UPDATE boutique_produits SET stock_quantite = GREATEST(stock_quantite - $1, 0)
+           WHERE id=$2 AND stock_quantite IS NOT NULL`,
+          [quantite, produit_id]
+        );
+      }
+
+      res.status(201).json(rows[0]);
+    } catch (err) {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
+// GET /api/comptabilite/:boutiqueId/ventes — liste (filtrable par date)
+router.get('/:boutiqueId/ventes', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {
+  try {
+    const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+    if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { from, to } = req.query;
+    const conditions = ['boutique_id=$1'];
+    const params = [req.params.boutiqueId];
+    if (from) { params.push(from); conditions.push(`created_at >= $${params.length}`); }
+    if (to) { params.push(to); conditions.push(`created_at <= $${params.length}`); }
+
+    const { rows } = await pool.query(
+      `SELECT * FROM ventes WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`,
+      params
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// GET /api/comptabilite/:boutiqueId/ventes/export.csv
+router.get('/:boutiqueId/ventes/export.csv', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {
+  try {
+    const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+    if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { rows } = await pool.query(
+      'SELECT * FROM ventes WHERE boutique_id=$1 ORDER BY created_at DESC',
+      [req.params.boutiqueId]
+    );
+
+    const header = ['reference', 'date', 'produit', 'quantite', 'prix_unitaire', 'frais_livraison', 'montant_total', 'client', 'telephone', 'paiement'];
+    const lines = [header.join(',')];
+    for (const v of rows) {
+      lines.push([
+        v.reference,
+        v.created_at.toISOString(),
+        `"${(v.nom_produit || '').replace(/"/g, '""')}"`,
+        v.quantite,
+        v.prix_unitaire,
+        v.frais_livraison,
+        v.montant_total,
+        `"${(v.client_nom || '').replace(/"/g, '""')}"`,
+        v.client_telephone || '',
+        v.methode_paiement,
+      ].join(','));
+    }
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="ventes-${req.params.boutiqueId}.csv"`);
+    res.send(lines.join('\n'));
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// GET /api/comptabilite/:boutiqueId/ventes/:venteId/facture.pdf
+router.get(
+  '/:boutiqueId/ventes/:venteId/facture.pdf',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  param('venteId').isUUID(),
+  async (req, res) => {
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+
+      const { rows } = await pool.query('SELECT * FROM ventes WHERE id=$1 AND boutique_id=$2', [req.params.venteId, req.params.boutiqueId]);
+      const vente = rows[0];
+      if (!vente) return res.status(404).json({ error: 'Vente introuvable' });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="facture-${vente.reference}.pdf"`);
+
+      const doc = new PDFDocument({ margin: 50 });
+      doc.pipe(res);
+
+      doc.fontSize(20).text(boutique.nom, { continued: false });
+      if (boutique.adresse || boutique.ville) doc.fontSize(10).text(`${boutique.adresse || ''} ${boutique.ville || ''}`.trim());
+      if (boutique.telephone) doc.fontSize(10).text(`Tél : ${boutique.telephone}`);
+      doc.moveDown();
+
+      doc.fontSize(16).text('Facture', { underline: true });
+      doc.fontSize(10).text(`Référence : ${vente.reference}`);
+      doc.text(`Date : ${vente.created_at.toLocaleDateString('fr-FR')}`);
+      if (vente.client_nom) doc.text(`Client : ${vente.client_nom}`);
+      if (vente.client_telephone) doc.text(`Téléphone client : ${vente.client_telephone}`);
+      doc.moveDown();
+
+      doc.fontSize(11);
+      doc.text(`${vente.nom_produit}  —  ${vente.quantite} x ${Number(vente.prix_unitaire).toLocaleString('fr-FR')} FCFA`);
+      if (Number(vente.frais_livraison) > 0) doc.text(`Frais de livraison : ${Number(vente.frais_livraison).toLocaleString('fr-FR')} FCFA`);
+      doc.moveDown();
+
+      doc.fontSize(14).text(`Total : ${Number(vente.montant_total).toLocaleString('fr-FR')} FCFA`, { bold: true });
+      doc.moveDown(2);
+
+      doc.fontSize(9).fillColor('gray').text(`Paiement : ${vente.methode_paiement} — Généré par Nopalou`, { align: 'center' });
+
+      doc.end();
+    } catch (err) {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
+module.exports = router;

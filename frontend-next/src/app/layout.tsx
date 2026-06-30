@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Sora } from 'next/font/google';
 import Script from 'next/script';
 import { headers } from 'next/headers';
+import Image from 'next/image';
 import './globals.css';
 import { getOptionalSession } from '@/lib/dal';
 import NavbarActions from './NavbarActions';
@@ -108,7 +109,7 @@ export default async function RootLayout({
           `}
         </Script>
         <nav className="navbar">
-          <a href="/" className="logo"><img src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} /><span className="logo-name" data-suffix="lou">Nopa</span></a>
+          <a href="/" className="logo"><Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority /><span className="logo-name" data-suffix="lou">Nopa</span></a>
           <div className="navbar-links">
             <a href="/" className="navbar-link">Produits</a>
             <a href="/immo" className="navbar-link">Immobilier</a>
@@ -147,7 +148,7 @@ export default async function RootLayout({
             {/* Colonne 1 — Brand */}
             <div className="footer-brand">
               <a href="/" className="footer-logo">
-                <img src="/icons/logo-mark.svg" alt="" width={28} height={28} style={{ borderRadius: 7, flexShrink: 0 }} />
+                <Image src="/icons/logo-mark.svg" alt="" width={28} height={28} style={{ borderRadius: 7, flexShrink: 0 }} />
                 <span className="footer-logo-name" data-suffix="lou">Nopa</span>
               </a>
               <p className="footer-tagline">Le premier comparateur de prix dédié au marché sénégalais — produits, immobilier, forfaits télécom.</p>
