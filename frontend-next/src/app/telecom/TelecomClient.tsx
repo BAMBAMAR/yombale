@@ -63,71 +63,67 @@ function ForfaitCard({ f, isRecommande }: { f: Forfait; isRecommande: boolean })
   const typeLabel = TYPE_LABELS[f.type] ?? f.type
 
   return (
-    <div className={`forfait-card${isRecommande ? ' forfait-card--recommande' : ''}`} style={{ position: 'relative' }}>
-      <CardActions id={f.id} nom={f.nom} type="telecom" />
-      {isRecommande && (
-        <div className="forfait-recommande-ribbon">🏆 Recommandé</div>
-      )}
-      <div className="forfait-card-header" style={{ background: colors.bg }}>
-        <div className="forfait-op-badge" style={{ color: colors.text, borderColor: colors.badge }}>
-          <span>{icon}</span>
-          <span>{f.operateur}</span>
-        </div>
-        <span className="forfait-type-tag" style={{ background: colors.badge }}>
-          {typeLabel}
-        </span>
-      </div>
-
-      <div className="forfait-card-body">
-        <h3 className="forfait-nom">{f.nom}</h3>
-
-        <div className="forfait-specs">
-          {f.data_mo != null && (
-            <div className="forfait-spec forfait-spec--data">
-              <span className="forfait-spec-val">{formatData(f.data_mo)}</span>
-              <span className="forfait-spec-lbl">Internet</span>
-            </div>
-          )}
-          {f.minutes != null && (
-            <div className="forfait-spec">
-              <span className="forfait-spec-val">
-                {f.minutes === -1 ? '∞' : `${f.minutes} min`}
-              </span>
-              <span className="forfait-spec-lbl">Appels</span>
-            </div>
-          )}
-          {f.sms != null && (
-            <div className="forfait-spec">
-              <span className="forfait-spec-val">
-                {f.sms === -1 ? '∞' : f.sms}
-              </span>
-              <span className="forfait-spec-lbl">SMS</span>
-            </div>
-          )}
-          {f.validite_jours != null && (
-            <div className="forfait-spec">
-              <span className="forfait-spec-val">{f.validite_jours}j</span>
-              <span className="forfait-spec-lbl">Validité</span>
-            </div>
-          )}
-        </div>
-
-        {f.description && (
-          <p className="forfait-desc">{f.description}</p>
+    <Link href={`/telecom/${f.id}`} style={{ display: 'contents' }}>
+      <div className={`forfait-card${isRecommande ? ' forfait-card--recommande' : ''}`} style={{ position: 'relative' }}>
+        <CardActions id={f.id} nom={f.nom} type="telecom" />
+        {isRecommande && (
+          <div className="forfait-recommande-ribbon">🏆 Recommandé</div>
         )}
-      </div>
+        <div className="forfait-card-header" style={{ background: colors.bg }}>
+          <div className="forfait-op-badge" style={{ color: colors.text, borderColor: colors.badge }}>
+            <span>{icon}</span>
+            <span>{f.operateur}</span>
+          </div>
+          <span className="forfait-type-tag" style={{ background: colors.badge }}>
+            {typeLabel}
+          </span>
+        </div>
 
-      <div className="forfait-card-footer">
-        <span className="forfait-prix">{fcfa(f.prix)}</span>
-        <Link
-          href={`/telecom/${f.id}`}
-          className="forfait-btn"
-          style={{ background: colors.badge }}
-        >
-          Voir l&apos;offre
-        </Link>
+        <div className="forfait-card-body">
+          <h3 className="forfait-nom">{f.nom}</h3>
+
+          <div className="forfait-specs">
+            {f.data_mo != null && (
+              <div className="forfait-spec forfait-spec--data">
+                <span className="forfait-spec-val">{formatData(f.data_mo)}</span>
+                <span className="forfait-spec-lbl">Internet</span>
+              </div>
+            )}
+            {f.minutes != null && (
+              <div className="forfait-spec">
+                <span className="forfait-spec-val">
+                  {f.minutes === -1 ? '∞' : `${f.minutes} min`}
+                </span>
+                <span className="forfait-spec-lbl">Appels</span>
+              </div>
+            )}
+            {f.sms != null && (
+              <div className="forfait-spec">
+                <span className="forfait-spec-val">
+                  {f.sms === -1 ? '∞' : f.sms}
+                </span>
+                <span className="forfait-spec-lbl">SMS</span>
+              </div>
+            )}
+            {f.validite_jours != null && (
+              <div className="forfait-spec">
+                <span className="forfait-spec-val">{f.validite_jours}j</span>
+                <span className="forfait-spec-lbl">Validité</span>
+              </div>
+            )}
+          </div>
+
+          {f.description && (
+            <p className="forfait-desc">{f.description}</p>
+          )}
+        </div>
+
+        <div className="forfait-card-footer">
+          <span className="forfait-prix">{fcfa(f.prix)}</span>
+          <span className="forfait-voir-arrow" style={{ color: colors.badge }}>Voir →</span>
+        </div>
       </div>
-    </div>
+    </Link>
   )
 }
 

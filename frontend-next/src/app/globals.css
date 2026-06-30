@@ -964,7 +964,7 @@ a {
 
 /* ── Fiche immo ────────────────────────────────────────────────── */
 .fiche-immo {
-  max-width: 860px;
+  max-width: 1200px;
   margin: 32px auto;
   padding: 0 5%;
 }
@@ -2948,6 +2948,7 @@ a {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
   transition: box-shadow .18s, transform .18s;
 }
 
@@ -3056,21 +3057,12 @@ a {
   color: var(--price);
 }
 
-.forfait-btn {
-  display: inline-block;
-  color: #fff;
+.forfait-voir-arrow {
   font-size: 12px;
-  font-weight: 600;
-  padding: 7px 14px;
-  border-radius: 20px;
-  text-decoration: none;
-  transition: opacity .15s;
+  font-weight: 700;
 }
 
-.forfait-btn:hover {
-  opacity: .85;
-  text-decoration: none;
-}
+.forfait-card:hover .forfait-voir-arrow { text-decoration: underline; }
 
 /* Pagination + empty state */
 .pagination {

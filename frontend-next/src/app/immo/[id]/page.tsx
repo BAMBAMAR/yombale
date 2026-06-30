@@ -188,153 +188,156 @@ export default async function FicheImmoPage({
         </Link>
       )}
 
-      {/* Hero */}
-      <div className="fiche-immo-hero">
-        {/* Photo principale */}
-        {mainPhoto && (
-          <div style={{ position: 'relative', width: '100%', height: '360px', marginBottom: '12px', borderRadius: '10px', overflow: 'hidden', background: 'var(--bg)' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={cloudinaryHQ(mainPhoto, { width: 900 })}
-              alt={annonce.titre}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              loading="eager"
-            />
-          </div>
-        )}
-        {/* Galerie miniatures */}
-        {photos.length > 1 && (
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 20, paddingBottom: 4 }}>
-            {photos.slice(1).map((url, i) => (
-              <div key={i} style={{ flexShrink: 0, width: 100, height: 72, borderRadius: 6, overflow: 'hidden', background: 'var(--bg)' }}>
+      {/* ── Layout 2 colonnes : galerie/description à gauche, prix/contact à droite ── */}
+      <div className="fiche-grid">
+        {/* Colonne principale */}
+        <div className="fiche-main">
+          <div className="fiche-immo-hero">
+            {/* Photo principale */}
+            {mainPhoto && (
+              <div style={{ position: 'relative', width: '100%', height: '360px', marginBottom: '12px', borderRadius: '10px', overflow: 'hidden', background: 'var(--bg)' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={cloudinaryHQ(url, { width: 200 })} alt={`Photo ${i + 2}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                <img
+                  src={cloudinaryHQ(mainPhoto, { width: 900 })}
+                  alt={annonce.titre}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  loading="eager"
+                />
               </div>
-            ))}
+            )}
+            {/* Galerie miniatures */}
+            {photos.length > 1 && (
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 20, paddingBottom: 4 }}>
+                {photos.slice(1).map((url, i) => (
+                  <div key={i} style={{ flexShrink: 0, width: 100, height: 72, borderRadius: 6, overflow: 'hidden', background: 'var(--bg)' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={cloudinaryHQ(url, { width: 200 })} alt={`Photo ${i + 2}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                  </div>
+                ))}
+              </div>
+            )}
+            {annonce.type_bien && (
+              <span
+                className="type-badge"
+                style={{ display: 'inline-block', marginBottom: '12px' }}
+              >
+                {annonce.type_bien}
+                {annonce.transaction ? ` · ${annonce.transaction}` : ''}
+              </span>
+            )}
+
+            <h1>{annonce.titre}</h1>
+
+            {/* Méta-données */}
+            <div className="meta-row">
+              {localisation && (
+                <span className="meta-chip">
+                  Localisation : <strong>{localisation}</strong>
+                </span>
+              )}
+              {annonce.surface_m2 && (
+                <span className="meta-chip">
+                  Surface : <strong>{annonce.surface_m2} m²</strong>
+                </span>
+              )}
+              {annonce.nb_pieces && (
+                <span className="meta-chip">
+                  Pièces : <strong>{annonce.nb_pieces}</strong>
+                </span>
+              )}
+              {annonce.nb_chambres && (
+                <span className="meta-chip">
+                  Chambres : <strong>{annonce.nb_chambres}</strong>
+                </span>
+              )}
+              {annonce.contact_nom && (
+                <span className="meta-chip">
+                  Contact : <strong>{annonce.contact_nom}</strong>
+                </span>
+              )}
+              {annonce.created_at && (
+                <span className="meta-chip">
+                  Publié le :{' '}
+                  <strong>
+                    {new Date(annonce.created_at).toLocaleDateString('fr-FR')}
+                  </strong>
+                </span>
+              )}
+            </div>
+
+            {/* Description */}
+            {annonce.description && (
+              <p className="description">{annonce.description}</p>
+            )}
           </div>
-        )}
-        {annonce.type_bien && (
-          <span
-            className="type-badge"
-            style={{ display: 'inline-block', marginBottom: '12px' }}
-          >
-            {annonce.type_bien}
-            {annonce.transaction ? ` · ${annonce.transaction}` : ''}
-          </span>
-        )}
-
-        <h1>{annonce.titre}</h1>
-
-        {/* Méta-données */}
-        <div className="meta-row">
-          {localisation && (
-            <span className="meta-chip">
-              Localisation : <strong>{localisation}</strong>
-            </span>
-          )}
-          {annonce.surface_m2 && (
-            <span className="meta-chip">
-              Surface : <strong>{annonce.surface_m2} m²</strong>
-            </span>
-          )}
-          {annonce.nb_pieces && (
-            <span className="meta-chip">
-              Pièces : <strong>{annonce.nb_pieces}</strong>
-            </span>
-          )}
-          {annonce.nb_chambres && (
-            <span className="meta-chip">
-              Chambres : <strong>{annonce.nb_chambres}</strong>
-            </span>
-          )}
-          {annonce.contact_nom && (
-            <span className="meta-chip">
-              Contact : <strong>{annonce.contact_nom}</strong>
-            </span>
-          )}
-          {annonce.created_at && (
-            <span className="meta-chip">
-              Publié le :{' '}
-              <strong>
-                {new Date(annonce.created_at).toLocaleDateString('fr-FR')}
-              </strong>
-            </span>
-          )}
         </div>
 
-        {/* Prix */}
-        <p
-          style={{
-            fontSize: '32px',
-            fontWeight: 800,
-            color: 'var(--blue)',
-            marginBottom: '4px',
-          }}
-        >
-          {fcfa(annonce.prix)}
-        </p>
-        {annonce.transaction?.toLowerCase().includes('locat') && (
-          <p style={{ fontSize: '13px', color: 'var(--text3)' }}>par mois</p>
-        )}
+        {/* Sidebar : prix, contact, actions */}
+        <aside className="fiche-sidebar">
+          <div className="sidebar-card" style={{ background: 'var(--card)', color: 'var(--text1)', border: '1px solid var(--border)' }}>
+            <p className="sidebar-titre" style={{ color: 'var(--text3)' }}>PRIX</p>
+            <p style={{ fontSize: '30px', fontWeight: 800, color: 'var(--blue)', marginBottom: 2 }}>
+              {fcfa(annonce.prix)}
+            </p>
+            {annonce.transaction?.toLowerCase().includes('locat') && (
+              <p style={{ fontSize: '13px', color: 'var(--text3)', marginBottom: 12 }}>par mois</p>
+            )}
 
-        {/* Description */}
-        {annonce.description && (
-          <p className="description">{annonce.description}</p>
-        )}
+            {/* Contact */}
+            {annonce.contact_tel && (
+              <div style={{ background: 'var(--navy)', color: '#fff', borderRadius: 10, padding: '16px 20px', marginTop: 12 }}>
+                {annonce.contact_nom && <p style={{ fontWeight: 700, marginBottom: 8 }}>{annonce.contact_nom}</p>}
+                <a href={`tel:${annonce.contact_tel}`} style={{ color: '#fff', fontWeight: 600, fontSize: 16 }}>
+                  📞 {annonce.contact_tel}
+                </a>
+                <a
+                  href={`https://wa.me/${annonce.contact_tel.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par :\n\n*${annonce.titre}*${annonce.prix ? ` — ${fcfa(annonce.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/immo/${annonce.id}`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'block', marginTop: 8, color: '#25d366', fontWeight: 600 }}
+                >
+                  💬 WhatsApp
+                </a>
+                <BoutonWhatsApp type="immo" id={annonce.id} isConnecte={!!session} />
+              </div>
+            )}
 
-        {/* Contact */}
-        {annonce.contact_tel && (
-          <div style={{ background: 'var(--navy)', color: '#fff', borderRadius: 10, padding: '16px 20px', marginTop: 20 }}>
-            {annonce.contact_nom && <p style={{ fontWeight: 700, marginBottom: 8 }}>{annonce.contact_nom}</p>}
-            <a href={`tel:${annonce.contact_tel}`} style={{ color: '#fff', fontWeight: 600, fontSize: 16 }}>
-              📞 {annonce.contact_tel}
-            </a>
-            <a
-              href={`https://wa.me/${annonce.contact_tel.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par :\n\n*${annonce.titre}*${annonce.prix ? ` — ${fcfa(annonce.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/immo/${annonce.id}`)}`}
-              target="_blank" rel="noopener noreferrer"
-              style={{ display: 'block', marginTop: 8, color: '#25d366', fontWeight: 600 }}
-            >
-              💬 WhatsApp
-            </a>
-            <BoutonWhatsApp type="immo" id={annonce.id} isConnecte={!!session} />
+            {/* Lien source */}
+            {annonce.url_source && (
+              <a
+                href={annonce.url_source}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'block',
+                  textAlign: 'center',
+                  background: 'var(--blue)',
+                  color: '#fff',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  marginTop: 16,
+                }}
+              >
+                Voir l&apos;annonce originale →
+              </a>
+            )}
+
+            {/* Sponsoring — propriétaire uniquement */}
+            {isOwner && (
+              isSponsorise ? (
+                <div style={{ marginTop: 16, padding: '14px 18px', background: '#FEF9C3', border: '1px solid #FDE047', borderRadius: 10 }}>
+                  <p style={{ fontWeight: 700, color: '#854D0E' }}>
+                    ⭐ Mise en avant active jusqu&apos;au{' '}
+                    {new Date(annonce.sponsorisee_jusqu_au!).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+              ) : (
+                <SponsoringImmoBtn immoId={annonce.id} />
+              )
+            )}
           </div>
-        )}
-
-        {/* Lien source */}
-        {annonce.url_source && (
-          <div style={{ marginTop: '20px' }}>
-            <a
-              href={annonce.url_source}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-block',
-                background: 'var(--blue)',
-                color: '#fff',
-                padding: '10px 20px',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 600,
-              }}
-            >
-              Voir l&apos;annonce originale →
-            </a>
-          </div>
-        )}
-
-        {/* Sponsoring — propriétaire uniquement */}
-        {isOwner && (
-          isSponsorise ? (
-            <div style={{ marginTop: 20, padding: '14px 18px', background: '#FEF9C3', border: '1px solid #FDE047', borderRadius: 10 }}>
-              <p style={{ fontWeight: 700, color: '#854D0E' }}>
-                ⭐ Mise en avant active jusqu&apos;au{' '}
-                {new Date(annonce.sponsorisee_jusqu_au!).toLocaleDateString('fr-FR')}
-              </p>
-            </div>
-          ) : (
-            <SponsoringImmoBtn immoId={annonce.id} />
-          )
-        )}
+        </aside>
       </div>
 
       {/* ── Comparaison automatique avec des biens similaires ───── */}
