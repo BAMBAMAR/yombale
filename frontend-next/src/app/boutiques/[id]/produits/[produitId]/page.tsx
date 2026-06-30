@@ -5,7 +5,8 @@ import { apiFetch } from '@/lib/api'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import { fcfa } from '@/lib/format'
 import GalerieClient from './GalerieClient'
-import { getOptionalSession } from '@/lib/dal'
+import ProduitCTA from './ProduitCTA'
+
 
 interface ProduitDetail {
   id: string
@@ -58,7 +59,6 @@ export default async function FicheProduitPage(
   { params }: { params: { id: string; produitId: string } }
 ) {
   let produit: ProduitDetail
-  const session = await getOptionalSession()
 
   try {
     const data = await apiFetch<{ produit: ProduitDetail }>(
@@ -205,35 +205,14 @@ export default async function FicheProduitPage(
             </div>
           </Link>
 
-          {/* CTA contact */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {waUrl && (
-              <a
-                href={waUrl}
-                target="_blank" rel="noopener noreferrer"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                  background: '#25d366', color: '#fff', padding: '14px 24px',
-                  borderRadius: 12, textDecoration: 'none', fontWeight: 800, fontSize: 16,
-                  boxShadow: '0 4px 14px rgba(37,211,102,.3)',
-                }}
-              >
-                💬 Commander via WhatsApp
-              </a>
-            )}
-            {telUrl && (
-              <a
-                href={telUrl}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                  background: '#fff', color: '#1d4ed8', border: '2px solid #bfdbfe',
-                  padding: '13px 24px', borderRadius: 12, textDecoration: 'none', fontWeight: 700, fontSize: 15,
-                }}
-              >
-                📞 Appeler le vendeur
-              </a>
-            )}
-          </div>
+          {/* CTA */}
+          <ProduitCTA
+            boutiqueId={params.id}
+            produit={{ id: p.id, nom: p.nom, prix: p.prix }}
+            enStock={p.en_stock}
+            waUrl={waUrl}
+            telUrl={telUrl}
+          />
 
         </div>
       </div>
