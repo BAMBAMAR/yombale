@@ -2,8 +2,16 @@
 const router = require('express').Router();
 const { body, param, validationResult } = require('express-validator');
 const PDFDocument = require('pdfkit');
+const axios = require('axios');
 const { pool } = require('../models/db');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
+
+async function fetchImageBuffer(url) {
+  try {
+    const r = await axios.get(url, { responseType: 'arraybuffer', timeout: 5000 });
+    return Buffer.from(r.data);
+  } catch { return null; }
+}
 
 // ── GET /api/comptabilite/admin/stats — agrégats ventes toutes boutiques (admin)
 router.get('/admin/stats', adminSecretOnly, async (req, res) => {
@@ -253,30 +261,114 @@ router.get(
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="facture-${vente.reference}.pdf"`);
 
-      const doc = new PDFDocument({ margin: 50 });
+      // Charger le logo en avance (peut être null)
+      const logoBuffer = boutique.logo_url ? await fetchImageBuffer(boutique.logo_url) : null;
+
+      const NAVY  = '#1e3a5f';
+      const ORANGE = '#C75B00';
+      const GRAY  = '#6b7280';
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
       doc.pipe(res);
 
-      doc.fontSize(20).text(boutique.nom, { continued: false });
-      if (boutique.adresse || boutique.ville) doc.fontSize(10).text(`${boutique.adresse || ''} ${boutique.ville || ''}`.trim());
-      if (boutique.telephone) doc.fontSize(10).text(`Tél : ${boutique.telephone}`);
-      doc.moveDown();
+      // ── En-tête boutique ──────────────────────────────────────────────────
+      const headerTop = 50;
+      if (logoBuffer) {
+        try {
+          doc.image(logoBuffer, 50, headerTop, { width: 60, height: 60 });
+          doc.moveDown(0.5);
+        } catch (_) { /* ignore si format non supporté */ }
+      }
+      const textX = logoBuffer ? 125 : 50;
+      doc.fillColor(NAVY).fontSize(20).font('Helvetica-Bold')
+         .text(boutique.nom, textX, headerTop, { lineBreak: false });
+      doc.fontSize(10).font('Helvetica').fillColor(GRAY);
+      let infoY = headerTop + 28;
+      if (boutique.adresse || boutique.ville) {
+        doc.text(`${boutique.adresse || ''} ${boutique.ville || ''}`.trim(), textX, infoY);
+        infoY += 14;
+      }
+      if (boutique.telephone) { doc.text(`Tél : ${boutique.telephone}`, textX, infoY); infoY += 14; }
 
-      doc.fontSize(16).text('Facture', { underline: true });
-      doc.fontSize(10).text(`Référence : ${vente.reference}`);
-      doc.text(`Date : ${vente.created_at.toLocaleDateString('fr-FR')}`);
-      if (vente.client_nom) doc.text(`Client : ${vente.client_nom}`);
-      if (vente.client_telephone) doc.text(`Téléphone client : ${vente.client_telephone}`);
-      doc.moveDown();
+      // Ligne de séparation
+      doc.moveTo(50, Math.max(infoY, headerTop + 70) + 8)
+         .lineTo(545, Math.max(infoY, headerTop + 70) + 8)
+         .strokeColor(NAVY).lineWidth(1.5).stroke();
 
-      doc.fontSize(11);
-      doc.text(`${vente.nom_produit}  —  ${vente.quantite} x ${Number(vente.prix_unitaire).toLocaleString('fr-FR')} FCFA`);
-      if (Number(vente.frais_livraison) > 0) doc.text(`Frais de livraison : ${Number(vente.frais_livraison).toLocaleString('fr-FR')} FCFA`);
-      doc.moveDown();
+      doc.moveDown(3);
 
-      doc.fontSize(14).text(`Total : ${Number(vente.montant_total).toLocaleString('fr-FR')} FCFA`, { bold: true });
-      doc.moveDown(2);
+      // ── Titre FACTURE + référence ─────────────────────────────────────────
+      const facY = doc.y;
+      doc.fillColor(NAVY).fontSize(22).font('Helvetica-Bold').text('FACTURE', 50, facY);
+      doc.fillColor(GRAY).fontSize(10).font('Helvetica')
+         .text(`Réf : ${vente.reference}`, 50, facY + 28)
+         .text(`Date : ${vente.created_at.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}`, 50, facY + 42);
 
-      doc.fontSize(9).fillColor('gray').text(`Paiement : ${vente.methode_paiement} — Généré par Nopalou`, { align: 'center' });
+      // Bloc client (droite)
+      if (vente.client_nom || vente.client_telephone) {
+        doc.fillColor(NAVY).fontSize(11).font('Helvetica-Bold').text('Client', 350, facY);
+        doc.fillColor('#374151').fontSize(10).font('Helvetica');
+        if (vente.client_nom)      doc.text(vente.client_nom, 350, facY + 16);
+        if (vente.client_telephone) doc.text(vente.client_telephone, 350, facY + (vente.client_nom ? 30 : 16));
+      }
+
+      doc.moveDown(4);
+
+      // ── Tableau produit ───────────────────────────────────────────────────
+      const tableTop = doc.y;
+      const col = { desc: 50, qty: 310, pu: 370, total: 450 };
+
+      // Header tableau
+      doc.rect(50, tableTop, 495, 24).fill(NAVY);
+      doc.fillColor('#fff').fontSize(10).font('Helvetica-Bold');
+      doc.text('Description',      col.desc + 6, tableTop + 7, { width: 250 });
+      doc.text('Qté',              col.qty,       tableTop + 7, { width: 50, align: 'right' });
+      doc.text('Prix unit.',       col.pu,        tableTop + 7, { width: 70, align: 'right' });
+      doc.text('Montant',          col.total,     tableTop + 7, { width: 90, align: 'right' });
+
+      // Ligne produit
+      const row1Y = tableTop + 24;
+      doc.rect(50, row1Y, 495, 28).fill('#f8fafc');
+      doc.fillColor('#111').fontSize(10).font('Helvetica');
+      doc.text(vente.nom_produit, col.desc + 6, row1Y + 9, { width: 250 });
+      doc.text(String(vente.quantite), col.qty, row1Y + 9, { width: 50, align: 'right' });
+      doc.text(`${Number(vente.prix_unitaire).toLocaleString('fr-FR')} FCFA`, col.pu, row1Y + 9, { width: 70, align: 'right' });
+      doc.text(`${(Number(vente.prix_unitaire) * Number(vente.quantite)).toLocaleString('fr-FR')} FCFA`, col.total, row1Y + 9, { width: 90, align: 'right' });
+
+      let nextY = row1Y + 28;
+
+      // Ligne livraison (si applicable)
+      if (Number(vente.frais_livraison) > 0) {
+        doc.rect(50, nextY, 495, 28).fill('#fff');
+        doc.fillColor(GRAY).fontSize(10).font('Helvetica-Oblique');
+        doc.text('Frais de livraison', col.desc + 6, nextY + 9, { width: 250 });
+        doc.text('—', col.qty, nextY + 9, { width: 50, align: 'right' });
+        doc.text('—', col.pu, nextY + 9, { width: 70, align: 'right' });
+        doc.fillColor('#374151').font('Helvetica');
+        doc.text(`${Number(vente.frais_livraison).toLocaleString('fr-FR')} FCFA`, col.total, nextY + 9, { width: 90, align: 'right' });
+        nextY += 28;
+      }
+
+      // Séparation
+      doc.moveTo(50, nextY).lineTo(545, nextY).strokeColor('#e5e7eb').lineWidth(1).stroke();
+      nextY += 6;
+
+      // Total
+      doc.rect(350, nextY, 195, 32).fill(ORANGE);
+      doc.fillColor('#fff').fontSize(13).font('Helvetica-Bold')
+         .text('TOTAL', 360, nextY + 10, { width: 80 })
+         .text(`${Number(vente.montant_total).toLocaleString('fr-FR')} FCFA`, 360, nextY + 10, { width: 175, align: 'right' });
+
+      nextY += 50;
+
+      // ── Paiement ─────────────────────────────────────────────────────────
+      const methodes: Record<string, string> = { cash: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', virement: 'Virement' };
+      doc.fillColor(GRAY).fontSize(9).font('Helvetica')
+         .text(`Mode de paiement : ${methodes[vente.methode_paiement] || vente.methode_paiement}`, 50, nextY);
+
+      // ── Pied de page ──────────────────────────────────────────────────────
+      doc.moveTo(50, 760).lineTo(545, 760).strokeColor('#e5e7eb').lineWidth(0.5).stroke();
+      doc.fillColor(GRAY).fontSize(8).font('Helvetica')
+         .text('Document généré par Nopalou — nopalou.com', 50, 768, { align: 'center', width: 495 });
 
       doc.end();
     } catch (err) {

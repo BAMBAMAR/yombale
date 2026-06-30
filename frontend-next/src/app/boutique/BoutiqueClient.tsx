@@ -799,10 +799,11 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onM
 
 // ── Vue de gestion d'une boutique ────────────────────────────────────────────
 
-function BoutiqueManage({ boutique, planActif, onBack }: {
+function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
   boutique: Boutique
   planActif: 'pro' | 'business' | null
   onBack: () => void
+  onEdit: () => void
 }) {
   const [tab, setTab] = useState<'produits' | 'ventes' | 'infos'>('produits')
 
@@ -848,16 +849,11 @@ function BoutiqueManage({ boutique, planActif, onBack }: {
 
       {tab === 'infos' && (
         <div style={{ maxWidth: 560 }}>
-          <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 16 }}>
-            Modifiez les informations de votre boutique : contacts, réseaux sociaux, photos.
-          </p>
-          {/* On réutilise le BoutiqueForm en mode édition, sans le wrapper conteneur */}
-          <Link href="/boutique" style={{
-            display: 'inline-block', background: '#1d4ed8', color: '#fff',
-            padding: '10px 20px', borderRadius: 8, textDecoration: 'none', fontWeight: 700, fontSize: 14,
-          }}>
-            Modifier la boutique ✏️
-          </Link>
+          <BoutiqueForm
+            boutique={boutique}
+            onCancel={onBack}
+            onSuccess={onEdit}
+          />
         </div>
       )}
     </div>
@@ -928,6 +924,7 @@ export default function BoutiqueClient({
           boutique={mode.managing}
           planActif={planActif ?? null}
           onBack={() => setMode('list')}
+          onEdit={() => { setSuccessMsg('✅ Boutique modifiée !'); setMode('list'); router.refresh() }}
         />
       </div>
     )
