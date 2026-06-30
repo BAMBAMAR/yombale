@@ -208,7 +208,7 @@ router.get('/:id/produits', param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { rows } = await pool.query(
-      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques
+      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
        WHERE p.boutique_id=$1 AND b.actif=true

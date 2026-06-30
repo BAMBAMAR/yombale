@@ -6,7 +6,7 @@ import {
   getDashboard, listDepenses, addDepense, deleteDepense,
   updateStock,
 } from './actions'
-import { fcfa } from '@/lib/format'
+import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
 
 interface Zone    { id: string; nom: string; prix: number }
 interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string }
@@ -18,6 +18,8 @@ interface Dashboard {
   top_produits: { nom_produit: string; total_vendu: number; ca: number }[]
   stock_alerte: { id: string; nom: string; stock_quantite: number }[]
 }
+
+const MOIS_NOMS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
 
 const inputStyle = { padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, width: '100%', background: '#fff', boxSizing: 'border-box' as const }
 const labelStyle = { fontSize: 13, fontWeight: 600 as const, color: '#374151', display: 'block' as const, marginBottom: 4 }
@@ -285,7 +287,7 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
                   {' · '}{methodeLabel[v.methode_paiement] ?? v.methode_paiement}
                 </p>
                 <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9ca3af' }}>
-                  {new Date(v.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })} · Réf {v.reference}
+                  {fmtDate(v.created_at)} · Réf {v.reference}
                 </p>
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -341,7 +343,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
   }
 
   const total = depenses.reduce((s, d) => s + Number(d.montant), 0)
-  const mois = new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' })
+  const now = new Date(); const mois = `${MOIS_NOMS[now.getMonth()]} ${now.getFullYear()}`
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -404,7 +406,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
                   {d.description && <span style={{ fontSize: 13, color: '#374151' }}>{d.description}</span>}
                 </div>
                 <p style={{ margin: '4px 0 0', fontSize: 11, color: '#9ca3af' }}>
-                  {new Date(d.date_depense).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  {fmtDate(d.date_depense)}
                 </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>

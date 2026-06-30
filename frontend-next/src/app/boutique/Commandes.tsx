@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useTransition } from 'react'
 import { listCommandes, updateStatutCommande } from './actions'
+import { fmtDateHeure } from '@/lib/format'
 
 interface Commande {
   id: string; reference: string; nom_produit: string; quantite: number
@@ -74,7 +75,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <p style={{ margin: 0, fontWeight: 800, fontSize: 15, color: '#C75B00' }}>{fcfa(commande.montant_total)}</p>
           <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>
-            {new Date(commande.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            {fmtDateHeure(commande.created_at)}
           </p>
         </div>
         <span style={{ color: '#9ca3af', flexShrink: 0, fontSize: 12 }}>{open ? '▲' : '▼'}</span>
