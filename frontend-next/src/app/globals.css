@@ -6395,7 +6395,6 @@ a {
 
 @media (max-width: 600px) {
   .annonces-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .footer-links { grid-template-columns: 1fr !important; }
 }
 
 /* ── Historique des prix (Sprint 14) ───────────────────────────── */
