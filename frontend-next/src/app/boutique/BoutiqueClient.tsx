@@ -816,9 +816,57 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
   onEdit: () => void
 }) {
   const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'infos'>('produits')
+  const [nbEnAttente, setNbEnAttente] = useState(0)
+  const [toast, setToast] = useState<string | null>(null)
   const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#6b7280'
 
+  // Polling toutes les 30s pour détecter nouvelles commandes en attente
+  useEffect(() => {
+    let lastCount = -1
+    async function check() {
+      try {
+        const res = await fetch(`/api/compta-proxy/${boutique.id}/commandes-count`)
+        if (!res.ok) return
+        const { count } = await res.json()
+        if (lastCount >= 0 && count > lastCount) {
+          const diff = count - lastCount
+          setToast(`🛒 ${diff} nouvelle${diff > 1 ? 's' : ''} commande${diff > 1 ? 's' : ''} en attente !`)
+          setTimeout(() => setToast(null), 6000)
+        }
+        lastCount = count
+        setNbEnAttente(count)
+      } catch { /* silencieux */ }
+    }
+    check()
+    const id = setInterval(check, 30_000)
+    return () => clearInterval(id)
+  }, [boutique.id])
+
   return (
+    <>
+    {/* Toast nouvelle commande */}
+    {toast && (
+      <div
+        onClick={() => { setTab('commandes'); setToast(null) }}
+        style={{
+          position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
+          background: '#1e3a5f', color: '#fff', borderRadius: 14,
+          padding: '14px 20px', fontSize: 14, fontWeight: 700,
+          boxShadow: '0 8px 32px rgba(0,0,0,.25)', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 10, maxWidth: 320,
+          animation: 'slideUp .3s ease',
+        }}
+      >
+        <span style={{ fontSize: 24 }}>🛒</span>
+        <div>
+          <p style={{ margin: 0 }}>{toast}</p>
+          <p style={{ margin: '2px 0 0', fontSize: 12, opacity: .75 }}>Cliquer pour voir</p>
+        </div>
+        <button onClick={e => { e.stopPropagation(); setToast(null) }} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 18, padding: 0, marginLeft: 4, opacity: .7 }}>✕</button>
+      </div>
+    )}
+    <style>{`@keyframes slideUp { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }`}</style>
+
     <div style={{ display: 'flex', gap: 0, minHeight: '70vh', background: '#f8fafc', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
 
       {/* Sidebar */}
@@ -845,7 +893,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
         {/* Nav */}
         <nav style={{ padding: '12px 8px', flex: 1 }}>
           {NAV_ITEMS.map(item => (
-            <button key={item.key} onClick={() => setTab(item.key)} style={{
+            <button key={item.key} onClick={() => { setTab(item.key); if (item.key === 'commandes') setNbEnAttente(0) }} style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 10,
               padding: '10px 12px', border: 'none', borderRadius: 8, cursor: 'pointer',
               background: tab === item.key ? '#fff7f0' : 'none',
@@ -853,9 +901,19 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
               fontWeight: tab === item.key ? 700 : 500,
               fontSize: 13, marginBottom: 2, textAlign: 'left' as const,
               borderLeft: tab === item.key ? '3px solid #C75B00' : '3px solid transparent',
+              position: 'relative',
             }}>
               <span style={{ fontSize: 16 }}>{item.icon}</span>
               {item.label}
+              {item.key === 'commandes' && nbEnAttente > 0 && (
+                <span style={{
+                  marginLeft: 'auto', background: '#dc2626', color: '#fff',
+                  borderRadius: 20, fontSize: 10, fontWeight: 800,
+                  padding: '2px 7px', minWidth: 18, textAlign: 'center',
+                }}>
+                  {nbEnAttente}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -897,6 +955,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
         )}
       </main>
     </div>
+    </>
   )
 }
 
