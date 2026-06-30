@@ -53,6 +53,13 @@ function formatData(mo: number | null): string {
   return `${mo} Mo`
 }
 
+function scoreMixte(data_mo: number | null, minutes: number | null, prix: number): number {
+  if (!prix) return 0
+  const data = data_mo ?? 0
+  const mins = minutes === -1 ? 2000 : (minutes ?? 0)
+  return (data / prix) * 600 + (mins / prix) * 70
+}
+
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   try {
     const f = await apiFetch<Forfait>(`/telecom/${params.id}`)
@@ -94,6 +101,14 @@ export default async function FicheForfaitPage({ params }: { params: { id: strin
     ? (f.prix / f.minutes).toFixed(0)
     : null
 
+  // Meilleur choix parmi les alternatives — backend trie déjà par score qualité/prix DESC
+  const scoreActuel = scoreMixte(f.data_mo, f.minutes, f.prix)
+  const meilleurForfait = similaires.reduce((best, s) => {
+    const score = scoreMixte(s.data_mo, s.minutes, s.prix)
+    return (!best || score > best.score) ? { ...s, score } : best
+  }, null as (ForfaitSimilaire & { score: number }) | null)
+  const proposerMeilleur = !!(meilleurForfait && meilleurForfait.score > scoreActuel * 1.05)
+
   return (
     <div className="page-container" style={{ paddingTop: '2rem' }}>
       {/* Fil d'Ariane */}
@@ -104,6 +119,26 @@ export default async function FicheForfaitPage({ params }: { params: { id: strin
         {' › '}
         <span>{f.nom}</span>
       </p>
+
+      {/* Bandeau "meilleur choix" — pousse vers le forfait au meilleur rapport qualité/prix */}
+      {proposerMeilleur && meilleurForfait && (
+        <Link href={`/telecom/${meilleurForfait.id}`} className="meilleur-choix-banner">
+          <div className="meilleur-choix-img">
+            <span>{OP_ICONS[meilleurForfait.operateur] ?? '📡'}</span>
+          </div>
+          <div className="meilleur-choix-info">
+            <span className="meilleur-choix-label">✨ Meilleur choix pour vous</span>
+            <span className="meilleur-choix-nom">{meilleurForfait.nom} — {meilleurForfait.operateur}</span>
+            <span className="meilleur-choix-prix">
+              {fcfa(meilleurForfait.prix)}
+              {meilleurForfait.prix < f.prix && (
+                <span className="meilleur-choix-eco"> · -{Math.round((f.prix - meilleurForfait.prix) / f.prix * 100)}%</span>
+              )}
+            </span>
+          </div>
+          <span className="meilleur-choix-cta">Voir ce forfait →</span>
+        </Link>
+      )}
 
       <div className="forfait-fiche">
         {/* En-tête opérateur */}

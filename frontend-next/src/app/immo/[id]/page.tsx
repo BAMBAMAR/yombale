@@ -141,6 +141,13 @@ export default async function FicheImmoPage({
     ? new Date(annonce.sponsorisee_jusqu_au) > new Date()
     : false;
 
+  // Meilleur choix parmi les biens comparables — le moins cher du secteur, à type/transaction identiques
+  const meilleurBien = annonce.prix ? similaires.reduce((best, s) => {
+    if (s.prix == null) return best
+    return (!best || s.prix < best.prix!) ? s : best
+  }, null as AnnonceSimilaire | null) : null
+  const proposerMeilleur = !!(meilleurBien && annonce.prix && meilleurBien.prix! < annonce.prix)
+
   return (
     <div className="fiche-immo">
       {/* Fil d'Ariane */}
@@ -157,6 +164,29 @@ export default async function FicheImmoPage({
         {' › '}
         <span>{annonce.titre}</span>
       </p>
+
+      {/* Bandeau "meilleur choix" — pousse vers le bien comparable le moins cher du secteur */}
+      {proposerMeilleur && meilleurBien && (
+        <Link href={`/immo/${meilleurBien.id}`} className="meilleur-choix-banner">
+          <div className="meilleur-choix-img">
+            {meilleurBien.photos?.[0]
+              ? <img src={meilleurBien.photos[0]} alt={meilleurBien.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <span>🏠</span>
+            }
+          </div>
+          <div className="meilleur-choix-info">
+            <span className="meilleur-choix-label">✨ Meilleur choix pour vous</span>
+            <span className="meilleur-choix-nom">{meilleurBien.titre}</span>
+            <span className="meilleur-choix-prix">
+              {fcfa(meilleurBien.prix)}
+              {annonce.prix && (
+                <span className="meilleur-choix-eco"> · -{Math.round((annonce.prix - meilleurBien.prix!) / annonce.prix * 100)}%</span>
+              )}
+            </span>
+          </div>
+          <span className="meilleur-choix-cta">Voir ce bien →</span>
+        </Link>
+      )}
 
       {/* Hero */}
       <div className="fiche-immo-hero">

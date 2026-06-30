@@ -304,8 +304,8 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
   const meilleurSimilaire = proches.reduce((best, p) => {
     const px = p.prix_min ? parseFloat(p.prix_min) : null
     if (px == null) return best
-    return (!best || px < best.px!) ? { px, nom: p.nom, id: p.id } : best
-  }, null as { px: number; nom: string; id: string } | null)
+    return (!best || px < best.px!) ? { px, nom: p.nom, id: p.id, image_url: p.image_url } : best
+  }, null as { px: number; nom: string; id: string; image_url: string | null } | null)
   const existeMoinsCher = !!(meilleurSimilaire && prixMin && meilleurSimilaire.px < prixMin)
 
   return (
@@ -323,6 +323,27 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
           )}
           <span>{produit.nom}</span>
         </p>
+
+        {/* Bandeau "meilleur choix" — pousse vers l'alternative la moins chère si elle existe */}
+        {existeMoinsCher && meilleurSimilaire && (
+          <Link href={`/produit/${meilleurSimilaire.id}`} className="meilleur-choix-banner">
+            <div className="meilleur-choix-img">
+              {meilleurSimilaire.image_url
+                ? <Image src={meilleurSimilaire.image_url} alt={meilleurSimilaire.nom} fill sizes="64px" style={{ objectFit: 'contain' }} />
+                : <span>📦</span>
+              }
+            </div>
+            <div className="meilleur-choix-info">
+              <span className="meilleur-choix-label">✨ Meilleur choix pour vous</span>
+              <span className="meilleur-choix-nom">{meilleurSimilaire.nom}</span>
+              <span className="meilleur-choix-prix">
+                {fcfa(meilleurSimilaire.px)}
+                {prixMin && <span className="meilleur-choix-eco"> · -{Math.round((prixMin - meilleurSimilaire.px) / prixMin * 100)}%</span>}
+              </span>
+            </div>
+            <span className="meilleur-choix-cta">Voir ce produit →</span>
+          </Link>
+        )}
 
         <div className="fiche-grid">
           {/* ── Colonne principale ──────────────────────────────── */}
@@ -357,11 +378,6 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                     ? `${valides.length} marchands comparés`
                     : '1 marchand référencé'}
                 </p>
-                {existeMoinsCher && meilleurSimilaire && (
-                  <Link href={`/produit/${meilleurSimilaire.id}`} className="prix-box-alt">
-                    💡 Un produit similaire moins cher existe : {meilleurSimilaire.nom} à {fcfa(meilleurSimilaire.px)} →
-                  </Link>
-                )}
               </div>
             )}
 

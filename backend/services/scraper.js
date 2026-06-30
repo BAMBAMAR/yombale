@@ -39,7 +39,8 @@ const CATS = {
 };
 
 const MARQUES = ['Samsung','Apple','Xiaomi','Tecno','Infinix','Oppo','Vivo','Huawei','Nokia',
-  'HP','Lenovo','Dell','Asus','Acer','LG','Sony','Hisense','Haier','TCL','Realme','OnePlus','Motorola'];
+  'HP','Lenovo','Dell','Asus','Acer','LG','Sony','Hisense','Haier','TCL','Realme','OnePlus','Motorola',
+  'Astech','Bruhm','Skyworth','Finix','Enduro','Nasco','Polystar'];
 
 // Mots trop communs pour discriminer deux produits : marques, familles de produits.
 // Exclus du matching par mots-clés pour éviter ex. "Galaxy Buds" ≈ "Galaxy A55".
@@ -47,6 +48,10 @@ const MOTS_GENERIQUES = new Set([
   'samsung','apple','xiaomi','tecno','infinix','oppo','vivo','huawei','nokia',
   'realme','oneplus','motorola','itel','hp','lenovo','dell','asus','acer',
   'lg','sony','hisense','haier','tcl','galaxy','redmi','iphone','ipad','macbook',
+  'astech','bruhm','skyworth','finix','enduro','nasco','polystar',
+  // Termes techniques de climatisation/électroménager : décrivent la catégorie,
+  // pas le modèle — ne doivent jamais suffire à eux seuls à fusionner deux produits.
+  'split','inverter','double','wifi','climatiseur','climatiseurs',
 ]);
 
 const CAT_MOTS = [
@@ -668,10 +673,17 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
           );
           // Seuil 0.65 : "Galaxy Buds" vs "Galaxy A55" → ~0.61 → rejeté correctement
           if(fuzzy.length > 0 && (fuzzy[0].sim > 0.65 || _motsClesCommuns(item.titre, fuzzy[0].nom) >= 2)){
+            // Bloquer les fusions inter-marques (ex: "Split Astech 24000BTU" ne doit
+            // jamais devenir la même fiche qu'un "Split Samsung 24000BTU" — les
+            // mots-clés techniques communs (split/inverter/btu…) ne suffisent pas).
+            const marqueSrc  = extraireMarque(item.titre);
+            const marqueDest = extraireMarque(fuzzy[0].nom);
             // Bloquer les regroupements inter-tailles écran (ex: TV 43" vs TV 98")
             const tailleSrc  = extrairePouce(item.titre);
             const tailleDest = extrairePouce(fuzzy[0].nom);
-            if (tailleSrc && tailleDest && Math.abs(tailleSrc - tailleDest) > 10) {
+            if (marqueSrc && marqueDest && marqueSrc !== marqueDest) {
+              // Marques différentes → laisser créer un nouveau produit
+            } else if (tailleSrc && tailleDest && Math.abs(tailleSrc - tailleDest) > 10) {
               // Tailles incompatibles → laisser créer un nouveau produit
             } else {
               produitId = fuzzy[0].id; stats.mis_a_jour++;
