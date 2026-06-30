@@ -231,6 +231,47 @@ export async function deleteDepense(boutiqueId: string, depenseId: string): Prom
   }
 }
 
+export async function updateVente(
+  boutiqueId: string,
+  venteId: string,
+  data: {
+    nom_produit?: string; quantite?: number; prix_unitaire?: number; frais_livraison?: number
+    client_nom?: string; client_telephone?: string; methode_paiement?: string
+  }
+): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/ventes/${venteId}`, {
+      method: 'PUT', body: JSON.stringify(data),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de modifier la vente' }
+    }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
+export async function updateDepense(
+  boutiqueId: string,
+  depenseId: string,
+  data: { montant?: number; categorie?: string; description?: string; date_depense?: string }
+): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/depenses/${depenseId}`, {
+      method: 'PUT', body: JSON.stringify(data),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de modifier la dépense' }
+    }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
 export async function deleteVente(boutiqueId: string, venteId: string): Promise<ActionState> {
   try {
     const res = await backendFetch(`/api/comptabilite/${boutiqueId}/ventes/${venteId}`, { method: 'DELETE' })

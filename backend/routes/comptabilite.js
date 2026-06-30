@@ -201,6 +201,7 @@ router.get('/:boutiqueId/ventes', verifierToken, param('boutiqueId').isUUID(), a
     if (from) { params.push(from); conditions.push(`created_at >= $${params.length}`); }
     if (to) { params.push(to); conditions.push(`created_at <= $${params.length}`); }
 
+    conditions.push('archivee IS NOT TRUE');
     const { rows } = await pool.query(
       `SELECT * FROM ventes WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`,
       params
@@ -218,7 +219,7 @@ router.get('/:boutiqueId/ventes/export.csv', verifierToken, param('boutiqueId').
     if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
 
     const { rows } = await pool.query(
-      'SELECT * FROM ventes WHERE boutique_id=$1 ORDER BY created_at DESC',
+      'SELECT * FROM ventes WHERE boutique_id=$1 AND archivee IS NOT TRUE ORDER BY created_at DESC',
       [req.params.boutiqueId]
     );
 
@@ -247,7 +248,56 @@ router.get('/:boutiqueId/ventes/export.csv', verifierToken, param('boutiqueId').
   }
 });
 
-// DELETE /api/comptabilite/:boutiqueId/ventes/:venteId
+// PUT /api/comptabilite/:boutiqueId/ventes/:venteId — modifier une vente
+router.put(
+  '/:boutiqueId/ventes/:venteId',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  param('venteId').isUUID(),
+  body('quantite').optional().isInt({ min: 1 }),
+  body('prix_unitaire').optional().isFloat({ min: 0 }),
+  body('frais_livraison').optional().isFloat({ min: 0 }),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+
+      const { nom_produit, quantite, prix_unitaire, frais_livraison, client_nom, client_telephone, methode_paiement } = req.body;
+
+      // Recalcule le total si quantite/prix/livraison changent
+      const { rows: [current] } = await pool.query('SELECT * FROM ventes WHERE id=$1 AND boutique_id=$2', [req.params.venteId, req.params.boutiqueId]);
+      if (!current) return res.status(404).json({ error: 'Vente introuvable' });
+
+      const newQty   = quantite      !== undefined ? Number(quantite)       : current.quantite;
+      const newPrix  = prix_unitaire !== undefined ? Number(prix_unitaire)  : Number(current.prix_unitaire);
+      const newFrais = frais_livraison !== undefined ? Number(frais_livraison) : Number(current.frais_livraison);
+      const newTotal = newQty * newPrix + newFrais;
+
+      const { rows } = await pool.query(
+        `UPDATE ventes SET
+           nom_produit=$1, quantite=$2, prix_unitaire=$3, frais_livraison=$4, montant_total=$5,
+           client_nom=$6, client_telephone=$7, methode_paiement=$8
+         WHERE id=$9 AND boutique_id=$10 RETURNING *`,
+        [
+          nom_produit      ?? current.nom_produit,
+          newQty, newPrix, newFrais, newTotal,
+          client_nom       !== undefined ? client_nom       : current.client_nom,
+          client_telephone !== undefined ? client_telephone : current.client_telephone,
+          methode_paiement ?? current.methode_paiement,
+          req.params.venteId, req.params.boutiqueId,
+        ]
+      );
+      res.json(rows[0]);
+    } catch (err) {
+      console.error('[PUT VENTE]', err.message);
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
+// DELETE /api/comptabilite/:boutiqueId/ventes/:venteId — archiver (soft delete)
 router.delete(
   '/:boutiqueId/ventes/:venteId',
   verifierToken,
@@ -258,11 +308,11 @@ router.delete(
       const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
       if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
       const { rowCount } = await pool.query(
-        'DELETE FROM ventes WHERE id=$1 AND boutique_id=$2',
+        'UPDATE ventes SET archivee=true WHERE id=$1 AND boutique_id=$2',
         [req.params.venteId, req.params.boutiqueId]
       );
       if (rowCount === 0) return res.status(404).json({ error: 'Vente introuvable' });
-      res.json({ message: 'Vente supprimée' });
+      res.json({ message: 'Vente archivée' });
     } catch (err) {
       res.status(500).json({ error: 'Erreur serveur' });
     }
@@ -606,6 +656,7 @@ router.get('/:boutiqueId/depenses', verifierToken, param('boutiqueId').isUUID(),
     const params = [req.params.boutiqueId];
     if (from) { params.push(from); conds.push(`date_depense >= $${params.length}`); }
     if (to)   { params.push(to);   conds.push(`date_depense <= $${params.length}`); }
+    conds.push('archivee IS NOT TRUE');
     const { rows } = await pool.query(
       `SELECT * FROM depenses WHERE ${conds.join(' AND ')} ORDER BY date_depense DESC, created_at DESC`,
       params
@@ -644,7 +695,44 @@ router.post(
   }
 );
 
-// DELETE /api/comptabilite/:boutiqueId/depenses/:depenseId
+// PUT /api/comptabilite/:boutiqueId/depenses/:depenseId — modifier une dépense
+router.put(
+  '/:boutiqueId/depenses/:depenseId',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  param('depenseId').isUUID(),
+  body('montant').optional().isFloat({ min: 1 }),
+  body('categorie').optional().trim().isLength({ min: 1, max: 50 }),
+  body('description').optional().trim().isLength({ max: 300 }),
+  body('date_depense').optional().isDate(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+      const { montant, categorie, description, date_depense } = req.body;
+      const { rows: [current] } = await pool.query('SELECT * FROM depenses WHERE id=$1 AND boutique_id=$2', [req.params.depenseId, req.params.boutiqueId]);
+      if (!current) return res.status(404).json({ error: 'Dépense introuvable' });
+      const { rows } = await pool.query(
+        `UPDATE depenses SET montant=$1, categorie=$2, description=$3, date_depense=$4
+         WHERE id=$5 AND boutique_id=$6 RETURNING *`,
+        [
+          montant      !== undefined ? montant      : current.montant,
+          categorie    !== undefined ? categorie    : current.categorie,
+          description  !== undefined ? description  : current.description,
+          date_depense !== undefined ? date_depense : current.date_depense,
+          req.params.depenseId, req.params.boutiqueId,
+        ]
+      );
+      res.json(rows[0]);
+    } catch (err) {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
+// DELETE /api/comptabilite/:boutiqueId/depenses/:depenseId — archiver (soft delete)
 router.delete(
   '/:boutiqueId/depenses/:depenseId',
   verifierToken,
@@ -654,8 +742,8 @@ router.delete(
     try {
       const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
       if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
-      await pool.query('DELETE FROM depenses WHERE id=$1 AND boutique_id=$2', [req.params.depenseId, req.params.boutiqueId]);
-      res.json({ message: 'Dépense supprimée' });
+      await pool.query('UPDATE depenses SET archivee=true WHERE id=$1 AND boutique_id=$2', [req.params.depenseId, req.params.boutiqueId]);
+      res.json({ message: 'Dépense archivée' });
     } catch (err) {
       res.status(500).json({ error: 'Erreur serveur' });
     }

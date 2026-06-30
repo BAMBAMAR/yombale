@@ -2,8 +2,8 @@
 import { useEffect, useState, useTransition } from 'react'
 import {
   listZones, createZone, deleteZone,
-  listVentes, declarerVente, deleteVente,
-  getDashboard, listDepenses, addDepense, deleteDepense,
+  listVentes, declarerVente, deleteVente, updateVente,
+  getDashboard, listDepenses, addDepense, deleteDepense, updateDepense,
   updateStock,
 } from './actions'
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
@@ -227,6 +227,75 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
 
 // ── Ventes ────────────────────────────────────────────────────────────────────
 
+function EditVenteModal({ vente, boutiqueId, onClose, onDone }: { vente: Vente; boutiqueId: string; onClose: () => void; onDone: () => void }) {
+  const [nomProduit, setNomProduit] = useState(vente.nom_produit)
+  const [quantite, setQuantite] = useState(vente.quantite)
+  const [prix, setPrix] = useState(vente.prix_unitaire)
+  const [frais, setFrais] = useState(vente.frais_livraison)
+  const [clientNom, setClientNom] = useState(vente.client_nom ?? '')
+  const [clientTel, setClientTel] = useState('')
+  const [paiement, setPaiement] = useState(vente.methode_paiement)
+  const [error, setError] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
+
+  function submit() {
+    setError(null)
+    startTransition(async () => {
+      const res = await updateVente(boutiqueId, vente.id, {
+        nom_produit: nomProduit, quantite, prix_unitaire: prix,
+        frais_livraison: frais, client_nom: clientNom || undefined,
+        client_telephone: clientTel || undefined, methode_paiement: paiement,
+      })
+      if (res.error) { setError(res.error); return }
+      onDone(); onClose()
+    })
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={onClose}>
+      <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ margin: 0, fontWeight: 800, fontSize: 16 }}>Modifier la vente</p>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#6b7280' }}>✕</button>
+        </div>
+        {error && <div style={{ background: '#fef2f2', borderRadius: 8, padding: '8px 12px', color: '#dc2626', fontSize: 13 }}>{error}</div>}
+        <div>
+          <label style={labelStyle}>Produit / service</label>
+          <input value={nomProduit} onChange={e => setNomProduit(e.target.value)} style={inputStyle} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div><label style={labelStyle}>Quantité</label><input type="number" min={1} value={quantite} onChange={e => setQuantite(Number(e.target.value))} style={inputStyle} /></div>
+          <div><label style={labelStyle}>Prix unitaire (FCFA)</label><input type="number" min={0} value={prix} onChange={e => setPrix(Number(e.target.value))} style={inputStyle} /></div>
+        </div>
+        <div>
+          <label style={labelStyle}>Frais de livraison (FCFA)</label>
+          <input type="number" min={0} value={frais} onChange={e => setFrais(Number(e.target.value))} style={inputStyle} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div><label style={labelStyle}>Nom client</label><input value={clientNom} onChange={e => setClientNom(e.target.value)} style={inputStyle} placeholder="Optionnel" /></div>
+          <div><label style={labelStyle}>Téléphone</label><input value={clientTel} onChange={e => setClientTel(e.target.value)} style={inputStyle} placeholder="Optionnel" /></div>
+        </div>
+        <div>
+          <label style={labelStyle}>Mode de paiement</label>
+          <select value={paiement} onChange={e => setPaiement(e.target.value)} style={inputStyle}>
+            <option value="cash">Espèces</option>
+            <option value="wave">Wave</option>
+            <option value="orange_money">Orange Money</option>
+            <option value="virement">Virement</option>
+          </select>
+        </div>
+        <div style={{ background: '#eff6ff', borderRadius: 8, padding: '10px 14px', fontSize: 14, fontWeight: 700, color: '#1d4ed8' }}>
+          Nouveau total : {fcfa(prix * quantite + frais)}
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={submit} style={{ flex: 1, background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>Enregistrer</button>
+          <button onClick={onClose} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', cursor: 'pointer' }}>Annuler</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function VentesView({ boutiqueId }: { boutiqueId: string }) {
   const [ventes, setVentes] = useState<Vente[]>([])
   const [zones, setZones] = useState<Zone[]>([])
@@ -234,6 +303,7 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [editingVente, setEditingVente] = useState<Vente | null>(null)
   const [, startTransition] = useTransition()
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
@@ -264,6 +334,7 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {editingVente && <EditVenteModal vente={editingVente} boutiqueId={boutiqueId} onClose={() => setEditingVente(null)} onDone={load} />}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{ventes.length} vente{ventes.length !== 1 ? 's' : ''} enregistrée{ventes.length !== 1 ? 's' : ''}</p>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -309,9 +380,14 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
                     PDF ↗
                   </a>
                   <button
+                    onClick={() => setEditingVente(v)}
+                    style={{ background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8', borderRadius: 6, padding: '3px 7px', cursor: 'pointer', fontSize: 11 }}
+                  >✎</button>
+                  <button
                     onClick={() => removeVente(v.id)}
                     disabled={deleting === v.id}
                     style={{ background: 'none', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 6, padding: '3px 7px', cursor: 'pointer', fontSize: 11, opacity: deleting === v.id ? 0.5 : 1 }}
+                    title="Archiver"
                   >✕</button>
                 </div>
               </div>
@@ -329,7 +405,27 @@ function DepenseCard({ depense: d, boutiqueId, onDelete, onUpdated }: {
   depense: Depense; boutiqueId: string; onDelete: (id: string) => void; onUpdated: () => void
 }) {
   const [uploading, setUploading] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [eMontant, setEMontant] = useState(String(d.montant))
+  const [eCategorie, setECategorie] = useState(d.categorie)
+  const [eDesc, setEDesc] = useState(d.description ?? '')
+  const [eDate, setEDate] = useState(d.date_depense.slice(0, 10))
+  const [eError, setEError] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
   const fileRef = { current: null as HTMLInputElement | null }
+
+  function saveEdit() {
+    if (!eMontant || Number(eMontant) <= 0) { setEError('Montant invalide'); return }
+    setEError(null)
+    startTransition(async () => {
+      const res = await updateDepense(boutiqueId, d.id, {
+        montant: Number(eMontant), categorie: eCategorie,
+        description: eDesc || undefined, date_depense: eDate,
+      })
+      if (res.error) { setEError(res.error); return }
+      setEditing(false); onUpdated()
+    })
+  }
 
   async function uploadJustificatif(file: File) {
     setUploading(true)
@@ -347,6 +443,25 @@ function DepenseCard({ depense: d, boutiqueId, onDelete, onUpdated }: {
 
   return (
     <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 16px' }}>
+      {editing ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {eError && <div style={{ background: '#fef2f2', borderRadius: 6, padding: '6px 10px', color: '#dc2626', fontSize: 12 }}>{eError}</div>}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div><label style={labelStyle}>Montant (FCFA)</label><input type="number" min={1} value={eMontant} onChange={e => setEMontant(e.target.value)} style={inputStyle} /></div>
+            <div><label style={labelStyle}>Date</label><input type="date" value={eDate} onChange={e => setEDate(e.target.value)} style={inputStyle} /></div>
+          </div>
+          <div><label style={labelStyle}>Catégorie</label>
+            <select value={eCategorie} onChange={e => setECategorie(e.target.value)} style={inputStyle}>
+              {CAT_DEPENSES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+            </select>
+          </div>
+          <div><label style={labelStyle}>Description</label><input value={eDesc} onChange={e => setEDesc(e.target.value)} style={inputStyle} placeholder="Optionnel" /></div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={saveEdit} style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>Enregistrer</button>
+            <button onClick={() => setEditing(false)} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: 7, padding: '8px 12px', cursor: 'pointer', fontSize: 13 }}>Annuler</button>
+          </div>
+        </div>
+      ) : (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -382,11 +497,13 @@ function DepenseCard({ depense: d, boutiqueId, onDelete, onUpdated }: {
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <span style={{ fontWeight: 800, fontSize: 15, color: '#dc2626' }}>{fcfa(d.montant)}</span>
-          <button onClick={() => onDelete(d.id)} style={{ background: 'none', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }}>✕</button>
+          <button onClick={() => setEditing(true)} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8', borderRadius: 6, padding: '4px 7px', cursor: 'pointer', fontSize: 12 }} title="Modifier">✎</button>
+          <button onClick={() => onDelete(d.id)} style={{ background: 'none', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }} title="Archiver">✕</button>
         </div>
       </div>
+      )}
     </div>
   )
 }

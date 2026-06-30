@@ -6,7 +6,6 @@ import { cloudinaryHQ } from '@/lib/cloudinary'
 import { fcfa } from '@/lib/format'
 import GalerieClient from './GalerieClient'
 import { getOptionalSession } from '@/lib/dal'
-import BoutonWhatsApp from '@/components/BoutonWhatsApp'
 
 interface ProduitDetail {
   id: string
@@ -222,7 +221,6 @@ export default async function FicheProduitPage(
                 💬 Commander via WhatsApp
               </a>
             )}
-            <BoutonWhatsApp type="produit" id={p.id} isConnecte={!!session} />
             {telUrl && (
               <a
                 href={telUrl}

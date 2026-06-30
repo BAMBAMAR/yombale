@@ -512,6 +512,7 @@ module.exports = async function migrateInline() {
       );
       CREATE INDEX IF NOT EXISTS idx_ventes_boutique ON ventes(boutique_id, created_at DESC);
     `);
+    await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS archivee BOOLEAN DEFAULT false`);
     console.log('[MIGRATE] ✅ Tables comptabilité boutique (stock, zones_livraison, ventes) OK');
   } catch (e) { console.warn('[MIGRATE] comptabilite_boutique:', e.message); }
 
@@ -557,6 +558,7 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_depenses_boutique ON depenses(boutique_id, date_depense DESC);
     `);
     await pool.query(`ALTER TABLE depenses ADD COLUMN IF NOT EXISTS justificatif_url TEXT`);
+    await pool.query(`ALTER TABLE depenses ADD COLUMN IF NOT EXISTS archivee BOOLEAN DEFAULT false`);
     console.log('[MIGRATE] ✅ Table depenses OK');
   } catch (e) { console.warn('[MIGRATE] depenses:', e.message); }
 
