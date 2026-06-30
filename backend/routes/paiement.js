@@ -194,7 +194,11 @@ router.post('/produit-sponsoring/initier', verifierToken, limiterEcriture, async
       { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
     );
     res.json({ wave_url: session.data.wave_launch_url, session_id: session.data.id });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+  } catch (err) {
+    const detail = err?.response?.data ?? err?.message ?? 'inconnu';
+    console.error('[produit-sponsoring] erreur Wave:', detail);
+    res.status(500).json({ error: 'Erreur serveur', detail });
+  }
 });
 
 // POST /api/paiement/boutique-sponsoring/initier — mise en avant boutique 30j (Wave)

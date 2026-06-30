@@ -88,7 +88,10 @@ export async function initierWaveProduitSponsoring(produit_id: string): Promise<
       body: JSON.stringify({ produit_id }),
     })
     const body = await res.json()
-    if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }
+    if (!res.ok) {
+      const detail = body.detail ? ` (${JSON.stringify(body.detail)})` : ''
+      return { ok: false, error: (body.error ?? `Erreur ${res.status}`) + detail }
+    }
     return { ok: true, url: body.wave_url }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }
