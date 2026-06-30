@@ -231,6 +231,30 @@ export async function deleteDepense(boutiqueId: string, depenseId: string): Prom
   }
 }
 
+export async function listCommandes(boutiqueId: string, statut?: string) {
+  try {
+    const qs = statut ? `?statut=${statut}` : ''
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/commandes${qs}`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+export async function updateStatutCommande(boutiqueId: string, commandeId: string, statut: string): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/commandes/${commandeId}`, {
+      method: 'PATCH', body: JSON.stringify({ statut }),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de mettre à jour le statut' }
+    }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
 export async function updateStock(boutiqueId: string, produitId: string, stock_quantite: number): Promise<ActionState> {
   try {
     const res = await backendFetch(`/api/comptabilite/${boutiqueId}/stock/${produitId}`, {

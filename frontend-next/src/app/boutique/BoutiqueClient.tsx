@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit } from './actions'
 import Comptabilite from './Comptabilite'
+import Commandes from './Commandes'
 import { initierWaveBoutiqueSponsoring } from '@/app/actions/paiement'
 import { fcfa } from '@/lib/format'
 import type { ActionState } from '@/lib/backend-fetch'
@@ -801,10 +802,11 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onM
 
 // ── Vue de gestion d'une boutique — layout sidebar ────────────────────────────
 
-const NAV_ITEMS: { key: 'produits' | 'compta' | 'infos'; icon: string; label: string }[] = [
-  { key: 'produits', icon: '🛍', label: 'Catalogue' },
-  { key: 'compta',   icon: '💰', label: 'Comptabilité' },
-  { key: 'infos',    icon: '⚙️', label: 'Paramètres' },
+const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'infos'; icon: string; label: string }[] = [
+  { key: 'produits',  icon: '🛍',  label: 'Catalogue' },
+  { key: 'commandes', icon: '📋',  label: 'Commandes' },
+  { key: 'compta',    icon: '💰',  label: 'Comptabilité' },
+  { key: 'infos',     icon: '⚙️', label: 'Paramètres' },
 ]
 
 function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
@@ -813,7 +815,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
   onBack: () => void
   onEdit: () => void
 }) {
-  const [tab, setTab] = useState<'produits' | 'compta' | 'infos'>('produits')
+  const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'infos'>('produits')
   const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#6b7280'
 
   return (
@@ -877,15 +879,17 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
         <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
           <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, margin: 0, color: '#111' }}>
             {NAV_ITEMS.find(i => i.key === tab)?.icon}{' '}
-            {tab === 'produits' ? 'Catalogue produits' : tab === 'compta' ? 'Comptabilité' : 'Paramètres boutique'}
+            {{ produits: 'Catalogue produits', commandes: 'Commandes', compta: 'Comptabilité', infos: 'Paramètres boutique' }[tab]}
           </h2>
-          {tab === 'produits' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Gérez vos produits, stocks et tarifs.</p>}
-          {tab === 'compta'   && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Ventes, dépenses, stock et zones de livraison.</p>}
-          {tab === 'infos'    && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Modifiez les informations, contacts et photos.</p>}
+          {tab === 'produits'  && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Gérez vos produits, stocks et tarifs.</p>}
+          {tab === 'commandes' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Commandes reçues — web et WhatsApp. Mettez à jour les statuts.</p>}
+          {tab === 'compta'    && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Ventes, dépenses, stock et zones de livraison.</p>}
+          {tab === 'infos'     && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Modifiez les informations, contacts et photos.</p>}
         </div>
 
-        {tab === 'produits' && <CatalogueProduits boutique={boutique} planActif={planActif} />}
-        {tab === 'compta'   && <Comptabilite boutiqueId={boutique.id} />}
+        {tab === 'produits'  && <CatalogueProduits boutique={boutique} planActif={planActif} />}
+        {tab === 'commandes' && <Commandes boutiqueId={boutique.id} />}
+        {tab === 'compta'    && <Comptabilite boutiqueId={boutique.id} />}
         {tab === 'infos'    && (
           <div style={{ maxWidth: 580 }}>
             <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={onEdit} />

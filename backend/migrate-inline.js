@@ -515,6 +515,33 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Tables comptabilité boutique (stock, zones_livraison, ventes) OK');
   } catch (e) { console.warn('[MIGRATE] comptabilite_boutique:', e.message); }
 
+  // Commandes boutique
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS commandes_boutique (
+        id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        reference        VARCHAR(30) UNIQUE NOT NULL,
+        boutique_id      UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        produit_id       UUID REFERENCES boutique_produits(id) ON DELETE SET NULL,
+        nom_produit      VARCHAR(300) NOT NULL,
+        quantite         INT NOT NULL DEFAULT 1,
+        prix_unitaire    NUMERIC(12,2) NOT NULL DEFAULT 0,
+        montant_total    NUMERIC(12,2) NOT NULL DEFAULT 0,
+        client_nom       VARCHAR(150) NOT NULL,
+        client_telephone VARCHAR(30) NOT NULL,
+        client_adresse   VARCHAR(300),
+        note             TEXT,
+        statut           VARCHAR(30) NOT NULL DEFAULT 'en_attente',
+        source           VARCHAR(20) NOT NULL DEFAULT 'web',
+        created_at       TIMESTAMPTZ DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_commandes_boutique ON commandes_boutique(boutique_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_commandes_statut   ON commandes_boutique(boutique_id, statut);
+    `);
+    console.log('[MIGRATE] ✅ Table commandes_boutique OK');
+  } catch (e) { console.warn('[MIGRATE] commandes_boutique:', e.message); }
+
   // Dépenses boutique
   try {
     await pool.query(`

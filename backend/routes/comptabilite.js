@@ -377,6 +377,141 @@ router.get(
   }
 );
 
+// ── Commandes boutique ────────────────────────────────────────────────────────
+
+const STATUTS_VALIDES = ['en_attente', 'confirmee', 'en_preparation', 'expediee', 'livree', 'annulee'];
+
+function genRefCommande() {
+  return `C-${Date.now().toString(36).toUpperCase()}`;
+}
+
+// POST /api/comptabilite/:boutiqueId/commandes — public, client passe commande
+router.post(
+  '/:boutiqueId/commandes',
+  param('boutiqueId').isUUID(),
+  body('client_nom').trim().isLength({ min: 2, max: 150 }),
+  body('client_telephone').trim().isLength({ min: 6, max: 30 }),
+  body('produit_id').optional().isUUID(),
+  body('nom_produit').optional().trim().isLength({ max: 300 }),
+  body('quantite').optional().isInt({ min: 1, max: 100 }),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+    try {
+      const { rows: [boutique] } = await pool.query(
+        'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE id=$1 AND actif=true',
+        [req.params.boutiqueId]
+      );
+      if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
+
+      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web' } = req.body;
+      let nomProduit = req.body.nom_produit || 'Produit';
+      let prixUnitaire = Number(req.body.prix_unitaire) || 0;
+
+      if (produit_id) {
+        const { rows: [p] } = await pool.query(
+          'SELECT nom, prix, stock_quantite FROM boutique_produits WHERE id=$1 AND boutique_id=$2',
+          [produit_id, req.params.boutiqueId]
+        );
+        if (!p) return res.status(404).json({ error: 'Produit introuvable' });
+        nomProduit = p.nom;
+        if (!prixUnitaire && p.prix) prixUnitaire = Number(p.prix);
+        if (p.stock_quantite !== null && p.stock_quantite < quantite) {
+          return res.status(400).json({ error: 'Stock insuffisant' });
+        }
+      }
+
+      const montantTotal = prixUnitaire * quantite;
+      const ref = genRefCommande();
+
+      const { rows: [commande] } = await pool.query(
+        `INSERT INTO commandes_boutique
+           (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
+            client_nom, client_telephone, client_adresse, note, source)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+        [ref, req.params.boutiqueId, produit_id || null, nomProduit, quantite, prixUnitaire, montantTotal,
+         client_nom, client_telephone, client_adresse || null, note || null, source]
+      );
+
+      // Notifier le vendeur via WhatsApp
+      const vendeurTel = boutique.whatsapp || boutique.telephone;
+      if (vendeurTel) {
+        const { sendWhatsAppText } = require('../services/whatsapp');
+        const msg = `🛒 *Nouvelle commande — ${boutique.nom}*\n\nRéf : *${ref}*\nProduit : ${nomProduit} × ${quantite}${montantTotal > 0 ? `\nMontant : *${new Intl.NumberFormat('fr-FR').format(montantTotal)} FCFA*` : ''}\n\n👤 Client : ${client_nom}\n📞 ${client_telephone}${client_adresse ? `\n📍 ${client_adresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\nRépondez vite pour confirmer !`;
+        sendWhatsAppText(vendeurTel, msg).catch(() => {});
+      }
+
+      res.status(201).json({ commande, message: 'Commande envoyée avec succès' });
+    } catch (err) {
+      console.error('[COMMANDE]', err.message);
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
+// GET /api/comptabilite/:boutiqueId/commandes — vendeur voit ses commandes
+router.get('/:boutiqueId/commandes', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {
+  try {
+    const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+    if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { statut } = req.query;
+    const conds = ['boutique_id=$1'];
+    const params = [req.params.boutiqueId];
+    if (statut) { params.push(statut); conds.push(`statut=$${params.length}`); }
+
+    const { rows } = await pool.query(
+      `SELECT * FROM commandes_boutique WHERE ${conds.join(' AND ')} ORDER BY created_at DESC`,
+      params
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// PATCH /api/comptabilite/:boutiqueId/commandes/:commandeId — vendeur change le statut
+router.patch(
+  '/:boutiqueId/commandes/:commandeId',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  param('commandeId').isUUID(),
+  body('statut').isIn(STATUTS_VALIDES),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+
+      const { rows: [commande] } = await pool.query(
+        `UPDATE commandes_boutique SET statut=$1, updated_at=NOW()
+         WHERE id=$2 AND boutique_id=$3 RETURNING *`,
+        [req.body.statut, req.params.commandeId, req.params.boutiqueId]
+      );
+      if (!commande) return res.status(404).json({ error: 'Commande introuvable' });
+
+      // Notifier le client du changement de statut
+      if (commande.client_telephone) {
+        const { sendWhatsAppText } = require('../services/whatsapp');
+        const msgs = {
+          confirmee:      `✅ *Commande confirmée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* (${commande.nom_produit}) a été confirmée. Nous préparons votre colis !`,
+          en_preparation: `📦 *En préparation — ${boutique.nom}*\n\nVotre commande *${commande.reference}* est en cours de préparation.`,
+          expediee:       `🚚 *Commande expédiée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* est en route ! Vous serez livré(e) prochainement.`,
+          livree:         `🎉 *Livraison confirmée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* a été livrée. Merci pour votre achat !`,
+          annulee:        `❌ *Commande annulée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* a été annulée. Contactez la boutique pour plus d'informations.`,
+        };
+        const msg = msgs[req.body.statut];
+        if (msg) sendWhatsAppText(commande.client_telephone, msg).catch(() => {});
+      }
+
+      res.json(commande);
+    } catch (err) {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 // GET /api/comptabilite/:boutiqueId/dashboard
 router.get('/:boutiqueId/dashboard', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {

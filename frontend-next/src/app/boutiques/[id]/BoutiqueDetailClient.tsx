@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import { fcfa } from '@/lib/format'
+import CommanderModal from './CommanderModal'
 
 export interface Produit {
   id: string
@@ -32,68 +33,79 @@ const CAT_ICONS: Record<string, string> = {
   services: '🛠', alimentation: '🥗', beaute: '💄', autre: '🏪',
 }
 
-function ProduitCard({ p, boutiqueId }: { p: Produit; boutiqueId: string }) {
+function ProduitCard({ p, boutiqueId, onCommander }: { p: Produit; boutiqueId: string; onCommander: (p: Produit) => void }) {
   const img = p.images?.[0] ?? null
   const remise = p.prix && p.prix_barre && p.prix_barre > p.prix
     ? Math.round((1 - p.prix / p.prix_barre) * 100) : null
 
   return (
-    <Link
-      href={`/boutiques/${boutiqueId}/produits/${p.id}`}
-      style={{
-        background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12,
-        overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.06)',
-        display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit',
-        transition: 'box-shadow .15s, transform .15s',
-      }}
+    <div style={{
+      background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12,
+      overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.06)',
+      display: 'flex', flexDirection: 'column',
+      transition: 'box-shadow .15s, transform .15s',
+    }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 6px 20px rgba(0,0,0,.12)'
-        ;(e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(-2px)'
+        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 6px 20px rgba(0,0,0,.12)'
+        ;(e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 1px 4px rgba(0,0,0,.06)'
-        ;(e.currentTarget as HTMLAnchorElement).style.transform = ''
+        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,.06)'
+        ;(e.currentTarget as HTMLDivElement).style.transform = ''
       }}
     >
-      <div style={{ width: '100%', paddingTop: '75%', position: 'relative', background: '#f8fafc' }}>
-        {img
-          // eslint-disable-next-line @next/next/no-img-element
-          ? <img src={cloudinaryHQ(img, { width: 400 })} alt={p.nom}
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-          : <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>📦</span>
-        }
-        {!p.en_stock && (
-          <span style={{ position: 'absolute', top: 8, right: 8, background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
-            Rupture
-          </span>
-        )}
-        {remise && (
-          <span style={{ position: 'absolute', top: 8, left: 8, background: '#16a34a', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 20 }}>
-            -{remise}%
-          </span>
-        )}
-      </div>
-      <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <p style={{ fontWeight: 700, fontSize: 14, margin: 0, lineHeight: 1.3 }}>{p.nom}</p>
-        {p.caracteristiques?.marque && (
-          <p style={{ fontSize: 11, color: '#9ca3af', margin: 0, fontWeight: 600 }}>{p.caracteristiques.marque}</p>
-        )}
-        {p.description && (
-          <p style={{ fontSize: 12, color: '#6b7280', margin: 0, lineHeight: 1.4,
-            overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
-            {p.description}
-          </p>
-        )}
-        <div style={{ marginTop: 'auto', paddingTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
-          <div>
+      <Link href={`/boutiques/${boutiqueId}/produits/${p.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+        <div style={{ width: '100%', paddingTop: '75%', position: 'relative', background: '#f8fafc' }}>
+          {img
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={cloudinaryHQ(img, { width: 400 })} alt={p.nom}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+            : <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>📦</span>
+          }
+          {!p.en_stock && (
+            <span style={{ position: 'absolute', top: 8, right: 8, background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
+              Rupture
+            </span>
+          )}
+          {remise && (
+            <span style={{ position: 'absolute', top: 8, left: 8, background: '#16a34a', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 20 }}>
+              -{remise}%
+            </span>
+          )}
+        </div>
+        <div style={{ padding: '12px 12px 8px', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <p style={{ fontWeight: 700, fontSize: 14, margin: 0, lineHeight: 1.3 }}>{p.nom}</p>
+          {p.caracteristiques?.marque && (
+            <p style={{ fontSize: 11, color: '#9ca3af', margin: 0, fontWeight: 600 }}>{p.caracteristiques.marque}</p>
+          )}
+          {p.description && (
+            <p style={{ fontSize: 12, color: '#6b7280', margin: 0, lineHeight: 1.4,
+              overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
+              {p.description}
+            </p>
+          )}
+          <div style={{ paddingTop: 6, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             {p.prix && <span style={{ fontWeight: 800, fontSize: 15, color: '#C75B00' }}>{fcfa(p.prix)}</span>}
-            {p.prix_barre && <span style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'line-through', marginLeft: 6 }}>{fcfa(p.prix_barre)}</span>}
+            {p.prix_barre && <span style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'line-through' }}>{fcfa(p.prix_barre)}</span>}
             {!p.prix && <span style={{ fontSize: 13, color: '#6b7280' }}>Prix à négocier</span>}
           </div>
-          <span style={{ fontSize: 11, color: '#C75B00', fontWeight: 700 }}>Voir →</span>
         </div>
+      </Link>
+      {/* Bouton Commander */}
+      <div style={{ padding: '0 12px 12px' }}>
+        <button
+          onClick={() => onCommander(p)}
+          disabled={!p.en_stock}
+          style={{
+            width: '100%', padding: '8px', border: 'none', borderRadius: 8, cursor: p.en_stock ? 'pointer' : 'not-allowed',
+            background: p.en_stock ? '#C75B00' : '#e5e7eb', color: p.en_stock ? '#fff' : '#9ca3af',
+            fontWeight: 700, fontSize: 13,
+          }}
+        >
+          {p.en_stock ? 'Commander' : 'Rupture de stock'}
+        </button>
       </div>
-    </Link>
+    </div>
   )
 }
 
@@ -121,6 +133,7 @@ export default function BoutiqueDetailClient({
   annonces: Annonce[]
 }) {
   const [tab, setTab] = useState<'produits' | 'annonces' | 'infos'>('produits')
+  const [commanderProduit, setCommanderProduit] = useState<Produit | null>(null)
 
   const tabStyle = (active: boolean) => ({
     padding: '10px 20px', border: 'none', background: 'none', cursor: 'pointer',
@@ -171,7 +184,7 @@ export default function BoutiqueDetailClient({
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
               {produits.map(p => (
-                <ProduitCard key={p.id} p={p} boutiqueId={boutique.id} />
+                <ProduitCard key={p.id} p={p} boutiqueId={boutique.id} onCommander={setCommanderProduit} />
               ))}
             </div>
           )}
@@ -387,6 +400,15 @@ export default function BoutiqueDetailClient({
             </div>
           )}
         </div>
+      )}
+
+      {/* Modal commande */}
+      {commanderProduit && (
+        <CommanderModal
+          boutiqueId={boutique.id}
+          produit={commanderProduit}
+          onClose={() => setCommanderProduit(null)}
+        />
       )}
     </div>
   )
