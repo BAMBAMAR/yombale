@@ -147,6 +147,11 @@ export default async function FicheImmoPage({
     return (!best || s.prix < best.prix!) ? s : best
   }, null as AnnonceSimilaire | null) : null
   const proposerMeilleur = !!(meilleurBien && annonce.prix && meilleurBien.prix! < annonce.prix)
+  const prixM2 = (annonce.prix && annonce.surface_m2) ? Math.round(annonce.prix / annonce.surface_m2) : null
+
+  // Même sélection pré-remplie pour le bouton "Comparaison détaillée" du résumé
+  // et celui en bas de la section "Biens comparables dans le secteur".
+  const idsComparaison = [annonce.id, ...similaires.slice(0, 2).map(s => s.id)].join(',')
 
   return (
     <div className="fiche-immo">
@@ -272,15 +277,65 @@ export default async function FicheImmoPage({
           </div>
         </div>
 
-        {/* Sidebar : prix, contact, actions */}
+        {/* Sidebar : résumé, prix, contact, actions */}
         <aside className="fiche-sidebar">
           <div className="sidebar-card" style={{ background: 'var(--card)', color: 'var(--text1)', border: '1px solid var(--border)' }}>
-            <p className="sidebar-titre" style={{ color: 'var(--text3)' }}>PRIX</p>
-            <p style={{ fontSize: '30px', fontWeight: 800, color: 'var(--blue)', marginBottom: 2 }}>
-              {fcfa(annonce.prix)}
+            <p className="sidebar-titre" style={{ color: 'var(--text3)' }}>RÉSUMÉ</p>
+            <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text1)', lineHeight: 1.4, marginBottom: 16 }}>
+              {annonce.titre}
             </p>
-            {annonce.transaction?.toLowerCase().includes('locat') && (
-              <p style={{ fontSize: '13px', color: 'var(--text3)', marginBottom: 12 }}>par mois</p>
+
+            <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
+              <span>Prix</span>
+              <strong style={{ color: 'var(--text1)' }}>
+                {fcfa(annonce.prix)}{annonce.transaction?.toLowerCase().includes('locat') ? ' /mois' : ''}
+              </strong>
+            </div>
+            {prixM2 && (
+              <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
+                <span>Prix / m²</span>
+                <strong style={{ color: 'var(--text1)' }}>{fcfa(prixM2)}</strong>
+              </div>
+            )}
+            {annonce.surface_m2 && (
+              <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
+                <span>Surface</span>
+                <strong style={{ color: 'var(--text1)' }}>{annonce.surface_m2} m²</strong>
+              </div>
+            )}
+            {annonce.nb_pieces && (
+              <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
+                <span>Pièces</span>
+                <strong style={{ color: 'var(--text1)' }}>{annonce.nb_pieces}</strong>
+              </div>
+            )}
+            {annonce.nb_chambres && (
+              <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
+                <span>Chambres</span>
+                <strong style={{ color: 'var(--text1)' }}>{annonce.nb_chambres}</strong>
+              </div>
+            )}
+            {localisation && (
+              <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
+                <span>Localisation</span>
+                <strong style={{ color: 'var(--text1)' }}>{localisation}</strong>
+              </div>
+            )}
+            {annonce.transaction && (
+              <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
+                <span>Transaction</span>
+                <strong style={{ color: 'var(--text1)' }}>{annonce.transaction === 'vente' ? '🔑 Vente' : '🏠 Location'}</strong>
+              </div>
+            )}
+
+            {similaires.length > 0 && (
+              <Link
+                href={`/immo/comparaison?ids=${idsComparaison}`}
+                className="sidebar-cta"
+                style={{ background: 'var(--accent)' }}
+              >
+                ⚖ Comparaison détaillée côte à côte
+              </Link>
             )}
 
             {/* Contact */}
@@ -353,7 +408,6 @@ export default async function FicheImmoPage({
 
         const meilleurPrix = lignes[0]?.prix ?? prixCourant
         const courantEstMeilleur = meilleurPrix === prixCourant
-        const idsComparaison = [annonce.id, ...similaires.slice(0, 2).map(s => s.id)].join(',')
 
         return (
           <section className="similaires-section">
