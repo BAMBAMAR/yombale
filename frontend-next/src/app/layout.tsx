@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Sora } from 'next/font/google';
+import Script from 'next/script';
+import { headers } from 'next/headers';
 import './globals.css';
 import { getOptionalSession } from '@/lib/dal';
 import NavbarActions from './NavbarActions';
@@ -77,6 +79,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await getOptionalSession();
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
 
   return (
     <html lang="fr" className={`${inter.variable} ${sora.variable}`}>
@@ -90,6 +93,19 @@ export default async function RootLayout({
         />
       </head>
       <body>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-3KGE1YBMVJ"
+          strategy="afterInteractive"
+          nonce={nonce}
+        />
+        <Script id="ga4-init" strategy="afterInteractive" nonce={nonce}>
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-3KGE1YBMVJ');
+          `}
+        </Script>
         <nav className="navbar">
           <a href="/" className="logo"><img src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} /><span className="logo-name" data-suffix="lou">Nopa</span></a>
           <div className="navbar-links">

@@ -45,11 +45,11 @@ export async function middleware(req: NextRequest) {
 
   const csp = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://www.googletagmanager.com${isDev ? " 'unsafe-eval'" : ''}`,
     `style-src 'self' 'unsafe-inline'`,
     "img-src 'self' blob: data: https:",
     "font-src 'self'",
-    `connect-src 'self' ${process.env.BACKEND_URL ?? 'http://localhost:3000'}`,
+    `connect-src 'self' ${process.env.BACKEND_URL ?? 'http://localhost:3000'} https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
