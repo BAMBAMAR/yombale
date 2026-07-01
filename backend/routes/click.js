@@ -17,6 +17,11 @@ router.get('/:offreId', limiterGeneral, async (req, res) => {
 
     const { url_achat, produit_id, marchand_id } = r.rows[0];
 
+    // Vérifier que l'URL est bien https:// (évite les redirects vers des URLs malveillantes)
+    if (!url_achat || !url_achat.startsWith('https://')) {
+      return res.status(400).json({ error: 'URL de destination invalide' });
+    }
+
     // Log async — ne bloque pas la redirection
     pool.query(
       `INSERT INTO clics_affiliation (offre_id, produit_id, marchand_id, url_cible, user_agent)

@@ -5,9 +5,32 @@ const { pool } = require('../models/db');
 const notifs   = require('../services/notifications');
 const { limiterEcriture, limiterAuth, limiterGeneral } = require('../middlewares/rateLimit');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
+const cfg = require('../lib/settingsCache');
 
-const PRIX_ANNONCE     = 1500;  // FCFA
-const PRIX_SPONSORING  = 5000;  // FCFA / 30 jours
+// Prix dynamiques — lus depuis la table settings (avec cache 5 min)
+async function getPrix() {
+  const [annonce, sponsoring, boost, boostJours, pro, business, commissionBiz, promoActive, promoReduc] = await Promise.all([
+    cfg.getNum('prix_annonce'),
+    cfg.getNum('prix_sponsoring'),
+    cfg.getNum('prix_boost'),
+    cfg.getNum('boost_duree_jours'),
+    cfg.getNum('plan_pro_prix'),
+    cfg.getNum('plan_business_prix'),
+    cfg.getNum('commission_business'),
+    cfg.getBool('promo_active'),
+    cfg.getNum('promo_reduction'),
+  ]);
+  return {
+    annonce:       annonce  || 1500,
+    sponsoring:    sponsoring || 5000,
+    boost:         boost    || 500,
+    boostJours:    boostJours || 7,
+    pro:           pro      || 15000,
+    business:      business || 35000,
+    commissionBiz: commissionBiz || 2.0,
+    promo:         promoActive ? promoReduc : 0,
+  };
+}
 
 // POST /api/paiement/wave/initier
 router.post('/wave/initier', verifierToken, limiterEcriture, async (req, res) => {
@@ -88,12 +111,24 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
         );
       }
     }
+    // Boost annonce 7 jours : ref = boost_userId_annonceId
+    if (ref && ref.startsWith('boost_')) {
+      const annonceId = ref.split('_')[2];
+      if (annonceId) {
+        const until = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        await pool.query(
+          "UPDATE annonces_classifiees SET boost_until=$1 WHERE id=$2",
+          [until, annonceId]
+        );
+      }
+    }
     // Abonnement Boutique Pro/Business : ref = abmt_userId_plan
     if (ref && ref.startsWith('abmt_')) {
       const parts = ref.split('_');
       const userId = parts[1];
       const plan   = parts[2];
-      const PRIX   = { pro: 15000, business: 35000 };
+      const pxAbmt = await getPrix();
+      const PRIX   = { pro: pxAbmt.pro, business: pxAbmt.business };
       if (userId && plan && PRIX[plan]) {
         const fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
         await pool.query(
@@ -102,6 +137,13 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
            ON CONFLICT DO NOTHING`,
           [userId, plan, PRIX[plan], fin, ref]
         );
+        // Boutiques Business → commission dynamique
+        if (plan === 'business') {
+          await pool.query(
+            'UPDATE boutiques SET commission_rate=$1 WHERE utilisateur_id=$2',
+            [pxAbmt.commissionBiz, userId]
+          );
+        }
       }
     }
     if (data.customer_phone)
@@ -124,7 +166,8 @@ router.post('/annonce/initier', verifierToken, limiterEcriture, async (req, res)
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable ou déjà payée' });
 
-    const montant = 1500; // FCFA
+    const prix = await getPrix();
+    const montant = prix.annonce;
     const clientRef = `ann_${userId}_${annonce_id}`;
 
     const session = await require('axios').post(
@@ -156,10 +199,11 @@ router.post('/immo-sponsoring/initier', verifierToken, limiterEcriture, async (r
     if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
 
     const clientRef = `immo_${userId}_${immo_id}`;
+    const { sponsoring: prixSponsoImmo } = await getPrix();
     const session = await axios.post(
       'https://api.wave.com/v1/checkout/sessions',
       {
-        amount:           PRIX_SPONSORING,
+        amount:           prixSponsoImmo,
         currency:         'XOF',
         success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${immo_id}&type=immo-sponsoring`,
         error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
@@ -182,10 +226,11 @@ router.post('/produit-sponsoring/initier', verifierToken, limiterEcriture, async
     if (!r.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
 
     const clientRef = `prod_${userId}_${produit_id}`;
+    const { sponsoring: prixSponsoProd } = await getPrix();
     const session = await axios.post(
       'https://api.wave.com/v1/checkout/sessions',
       {
-        amount:           PRIX_SPONSORING,
+        amount:           prixSponsoProd,
         currency:         'XOF',
         success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${produit_id}&type=produit-sponsoring`,
         error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
@@ -215,10 +260,11 @@ router.post('/boutique-sponsoring/initier', verifierToken, limiterEcriture, asyn
     if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
 
     const clientRef = `bout_${userId}_${boutique_id}`;
+    const { sponsoring: prixSponsoBout } = await getPrix();
     const session = await axios.post(
       'https://api.wave.com/v1/checkout/sessions',
       {
-        amount:           PRIX_SPONSORING,
+        amount:           prixSponsoBout,
         currency:         'XOF',
         success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${boutique_id}&type=boutique-sponsoring`,
         error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
@@ -256,6 +302,17 @@ router.post('/orange/initier', verifierToken, limiterEcriture, async (req, res) 
 
 // POST /api/paiement/orange/webhook — notification de paiement Orange Money
 router.post('/orange/webhook', limiterGeneral, async (req, res) => {
+  // Validation HMAC-SHA256 (même pattern que Wave)
+  if (process.env.ORANGE_WEBHOOK_SECRET) {
+    const sig      = req.headers['x-orange-signature'] || req.headers['authorization'] || '';
+    const expected = crypto
+      .createHmac('sha256', process.env.ORANGE_WEBHOOK_SECRET)
+      .update(req.rawBody || JSON.stringify(req.body)).digest('hex');
+    const clean = sig.replace(/^sha256=/, '');
+    if (!crypto.timingSafeEqual(Buffer.from(clean || '', 'hex'), Buffer.from(expected, 'hex'))) {
+      return res.status(401).json({ error: 'Signature Orange invalide' });
+    }
+  }
   try {
     const { status, order_id, amount } = req.body;
     if (status !== 'SUCCESS') return res.sendStatus(200);
@@ -306,12 +363,24 @@ router.post('/orange/webhook', limiterGeneral, async (req, res) => {
         );
       }
     }
+    // Boost annonce 7 jours (Orange)
+    if (order_id?.startsWith('boost_')) {
+      const annonceId = order_id.split('_')[2];
+      if (annonceId) {
+        const until = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        await pool.query(
+          "UPDATE annonces_classifiees SET boost_until=$1 WHERE id=$2",
+          [until, annonceId]
+        );
+      }
+    }
     // Abonnement Pro/Business (Orange)
     if (order_id?.startsWith('abmt_')) {
       const parts  = order_id.split('_');
       const userId = parts[1];
       const plan   = parts[2];
-      const PRIX   = { pro: 15000, business: 35000 };
+      const pxO    = await getPrix();
+      const PRIX   = { pro: pxO.pro, business: pxO.business };
       if (userId && plan && PRIX[plan]) {
         const fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
         await pool.query(
@@ -320,6 +389,9 @@ router.post('/orange/webhook', limiterGeneral, async (req, res) => {
            ON CONFLICT DO NOTHING`,
           [userId, plan, PRIX[plan], fin, order_id]
         );
+        if (plan === 'business') {
+          await pool.query('UPDATE boutiques SET commission_rate=$1 WHERE utilisateur_id=$2', [pxO.commissionBiz, userId]);
+        }
       }
     }
     res.sendStatus(200);
@@ -356,6 +428,35 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
     `);
 
     res.json({ ...rows[0], recentes });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/paiement/boost/initier — boost annonce 7 jours (500 FCFA, Wave)
+router.post('/boost/initier', verifierToken, limiterEcriture, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { annonce_id } = req.body;
+    if (!annonce_id) return res.status(400).json({ error: 'annonce_id requis' });
+
+    const r = await pool.query(
+      'SELECT id FROM annonces_classifiees WHERE id=$1 AND utilisateur_id=$2 AND supprimee=false',
+      [annonce_id, userId]
+    );
+    if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
+
+    const clientRef = `boost_${userId}_${annonce_id}`;
+    const session = await require('axios').post(
+      'https://api.wave.com/v1/checkout/sessions',
+      {
+        amount:           500,
+        currency:         'XOF',
+        success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${annonce_id}&type=boost`,
+        error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+        client_reference: clientRef,
+      },
+      { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
+    );
+    res.json({ wave_url: session.data.wave_launch_url });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

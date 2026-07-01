@@ -892,6 +892,44 @@ async function publierPostsApprouves() {
   }
 }
 
+async function envoyerRelancesExpiration() {
+  const { envoyerEmail } = require('./email');
+  const { sendWhatsAppText } = require('./whatsapp');
+  const FRONTEND = process.env.FRONTEND_URL || 'https://nopalou.com';
+
+  // Sponsorings expirés il y a 7 jours (boutiques, immo, annonces boostées)
+  const { rows: boutiques } = await pool.query(`
+    SELECT u.email, u.nom, b.nom AS boutique_nom
+    FROM boutiques b JOIN utilisateurs u ON u.id = b.utilisateur_id
+    WHERE b.sponsorise = true
+      AND b.sponsor_jusqu_au BETWEEN NOW() - INTERVAL '8 days' AND NOW() - INTERVAL '6 days'
+  `);
+  for (const b of boutiques) {
+    envoyerEmail({
+      to: b.email,
+      subject: 'Votre mise en avant Nopalou a expiré',
+      html: `<p>Bonjour ${b.nom},</p><p>La mise en avant de votre boutique <strong>${b.boutique_nom}</strong> a expiré. <a href="${FRONTEND}/boutique">Renouvelez maintenant →</a></p>`,
+    }).catch(() => {});
+  }
+
+  // Abonnements Pro/Business expirés il y a 7 jours
+  const { rows: abonnements } = await pool.query(`
+    SELECT u.email, u.nom, a.plan
+    FROM abonnements a JOIN utilisateurs u ON u.id = a.utilisateur_id
+    WHERE a.statut = 'actif'
+      AND a.fin BETWEEN NOW() - INTERVAL '8 days' AND NOW() - INTERVAL '6 days'
+  `);
+  for (const a of abonnements) {
+    envoyerEmail({
+      to: a.email,
+      subject: `Votre abonnement Nopalou ${a.plan} a expiré`,
+      html: `<p>Bonjour ${a.nom},</p><p>Votre abonnement <strong>${a.plan}</strong> a expiré. <a href="${FRONTEND}/boutique/abonnement">Renouveler →</a></p>`,
+    }).catch(() => {});
+  }
+
+  console.log(`[RELANCE] ${boutiques.length} boutiques + ${abonnements.length} abonnements relancés`);
+}
+
 function demarrerScraping() {
   // Toutes les 12h pour limiter la consommation mémoire (plan gratuit Railway)
   cron.schedule('0 */12 * * *', () => lancerScraping(['expat', 'jumia', 'coinafrique']).catch(console.error));
@@ -904,6 +942,9 @@ function demarrerScraping() {
     cleanupOldMessages().catch(err => console.error('[WHATSAPP] cleanup messages:', err.message));
     resetInactiveSessions().catch(err => console.error('[WHATSAPP] reset sessions:', err.message));
   });
+  // Relance commerciale — chaque jour à 9h UTC : email + WhatsApp aux sponsorings/abonnements expirés J-7
+  cron.schedule('0 9 * * *', () => envoyerRelancesExpiration().catch(err => console.error('[RELANCE]', err.message)));
+
   // Premier scraping 10 min après démarrage (laisser l'app se stabiliser)
   setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 10 * 60 * 1000);
   setTimeout(() => lancerScrapingNouveauxSites().catch(console.error), 15 * 60 * 1000);

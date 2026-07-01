@@ -17,6 +17,11 @@ async function uploadBuffer(buffer, folder) {
         fetch_format:  'auto',
         flags:         'progressive',
         max_bytes:     8 * 1024 * 1024,
+        // Watermark © Nopalou en bas à droite (30% opacité)
+        transformation: [
+          { overlay: { font_family: 'Arial', font_size: 18, font_weight: 'bold', text: '© nopalou.com' },
+            color: 'white', opacity: 35, gravity: 'south_east', x: 10, y: 10 }
+        ],
         // Générer automatiquement des variantes optimisées
         eager: [
           { width: 800,  crop: 'limit', quality: 90, fetch_format: 'auto' },

@@ -1,5 +1,6 @@
 const jwt    = require('jsonwebtoken');
 const crypto = require('crypto');
+const { pool } = require('../models/db');
 
 function secretsMatch(a, b) {
   const bufA = Buffer.from(String(a || ''));
@@ -30,6 +31,19 @@ function tokenOptional(req, res, next) {
   next();
 }
 
+// Bloque les actions de publication si l'email n'est pas vérifié
+async function requireEmailVerifie(req, res, next) {
+  try {
+    const { rows } = await pool.query('SELECT email_verifie FROM utilisateurs WHERE id=$1', [req.user.userId]);
+    if (!rows[0]?.email_verifie) {
+      return res.status(403).json({ error: 'Veuillez vérifier votre adresse email avant de publier. Vérifiez votre boîte mail.' });
+    }
+    next();
+  } catch (err) {
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
 // Protège par ADMIN_SECRET (variable d'env Railway) — header X-Admin-Secret ou ?secret=
 function adminSecretOnly(req, res, next) {
   const secret = req.headers['x-admin-secret'];
@@ -39,4 +53,4 @@ function adminSecretOnly(req, res, next) {
   next();
 }
 
-module.exports = { verifierToken, tokenOptional, adminSecretOnly, secretsMatch };
+module.exports = { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie, secretsMatch };

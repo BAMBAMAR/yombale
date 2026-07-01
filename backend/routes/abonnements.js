@@ -3,11 +3,14 @@ const axios  = require('axios');
 const { pool } = require('../models/db');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
 const { limiterEcriture, limiterGeneral } = require('../middlewares/rateLimit');
+const cfg = require('../lib/settingsCache');
 
-const PLANS = {
-  pro:      { prix: 15000, label: 'Boutique Pro' },
-  business: { prix: 35000, label: 'Boutique Business' },
-};
+async function getPlans() {
+  return {
+    pro:      { prix: await cfg.getNum('plan_pro_prix')      || 15000, label: await cfg.get('plan_pro_label')      || 'Boutique Pro' },
+    business: { prix: await cfg.getNum('plan_business_prix') || 35000, label: await cfg.get('plan_business_label') || 'Boutique Business' },
+  };
+}
 
 // GET /api/abonnements/mon-plan — plan actif de l'utilisateur connecté
 router.get('/mon-plan', verifierToken, async (req, res) => {
@@ -28,6 +31,7 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { plan } = req.body;
+    const PLANS = await getPlans();
     if (!PLANS[plan]) return res.status(400).json({ error: 'Plan invalide (pro ou business)' });
 
     // Vérifier qu'il n'y a pas déjà un abonnement actif

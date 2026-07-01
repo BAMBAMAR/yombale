@@ -42,4 +42,12 @@ const limiterEcriture = rateLimit({
   message: { error: 'Trop de requêtes — réessayez dans quelques minutes' }
 });
 
-module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImmo, blockScraperUA };
+// Limite les accès bulk (listes produits/immo/annonces) pour freiner le scraping
+const limiterBulk = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 20,
+  message: { error: 'Trop de requêtes — créez un compte gratuit pour un accès illimité' },
+  standardHeaders: true,
+  skip: (req) => !!(req.user), // les utilisateurs authentifiés ne sont pas limités
+});
+
+module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImmo, limiterBulk, blockScraperUA };

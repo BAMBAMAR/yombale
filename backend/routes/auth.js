@@ -29,6 +29,16 @@ router.post('/inscription',
       const token = jwt.sign({ userId: rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
       res.status(201).json({ user: rows[0], token });
 
+      // Enregistrer le parrainage si un code ref est présent
+      const refCode = req.body.ref_code;
+      if (refCode) {
+        pool.query(
+          `INSERT INTO parrainages (referrer_id, referred_id)
+           SELECT id, $2 FROM utilisateurs WHERE id=$1 ON CONFLICT (referred_id) DO NOTHING`,
+          [refCode, rows[0].id]
+        ).catch(() => {});
+      }
+
       // Email de bienvenue + vérification (envoyé en arrière-plan, n'empêche pas l'inscription)
       const verifToken = jwt.sign({ userId: rows[0].id, type: 'verify' }, process.env.JWT_SECRET, { expiresIn: '24h' });
       const lien = `${FRONTEND_URL}/api/auth/verifier-email?token=${verifToken}`;
@@ -139,6 +149,25 @@ router.post('/reinitialiser-mot-de-passe', limiterAuth, body('mot_de_passe').isL
     const hash = await bcrypt.hash(mot_de_passe, 12);
     await pool.query('UPDATE utilisateurs SET mot_de_passe_hash=$1 WHERE id=$2', [hash, payload.userId]);
     res.json({ success: true, message: 'Mot de passe mis à jour.' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/auth/parrainage — code de parrainage + compteur de filleuls
+router.get('/parrainage', verifierToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { rows } = await pool.query(
+      `SELECT COUNT(*) FILTER (WHERE statut='actif') AS filleuls_actifs,
+              COUNT(*) AS filleuls_total
+       FROM parrainages WHERE referrer_id=$1`,
+      [userId]
+    );
+    res.json({
+      code_parrainage: userId, // l'UUID est le code de parrainage
+      filleuls_actifs: parseInt(rows[0].filleuls_actifs),
+      filleuls_total:  parseInt(rows[0].filleuls_total),
+      recompense_seuil: 3,
+    });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

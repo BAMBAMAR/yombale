@@ -566,5 +566,46 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table depenses OK');
   } catch (e) { console.warn('[MIGRATE] depenses:', e.message); }
 
+  // Boost annonces + parrainage + API partenaires + commissions boutiques Business
+  const colonnesCommerciales = [
+    `ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS boost_until TIMESTAMPTZ`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS commission_rate DECIMAL(5,2) DEFAULT 0`,
+    `ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS montant_commission NUMERIC(12,2) DEFAULT 0`,
+  ];
+  for (const sql of colonnesCommerciales) {
+    try { await pool.query(sql); }
+    catch (e) { console.warn('[MIGRATE] commercial:', e.message); }
+  }
+
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS parrainages (
+        id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        referrer_id   UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        referred_id   UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        statut        VARCHAR(20) DEFAULT 'en_attente',
+        recompense_at TIMESTAMPTZ,
+        created_at    TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(referred_id)
+      );
+    `);
+    console.log('[MIGRATE] ✅ Table parrainages OK');
+  } catch (e) { console.warn('[MIGRATE] parrainages:', e.message); }
+
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS api_keys (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        key_hash           VARCHAR(64) NOT NULL UNIQUE,
+        utilisateur_id     UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        plan               VARCHAR(20) DEFAULT 'gratuit',
+        requests_this_month INT DEFAULT 0,
+        reset_at           TIMESTAMPTZ DEFAULT DATE_TRUNC('month', NOW()) + INTERVAL '1 month',
+        created_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    console.log('[MIGRATE] ✅ Table api_keys OK');
+  } catch (e) { console.warn('[MIGRATE] api_keys:', e.message); }
+
   try { await pool.end(); } catch (_) {}
 };

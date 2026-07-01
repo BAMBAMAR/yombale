@@ -2,7 +2,7 @@
 const router = require('express').Router();
 const { body, param, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
-const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
+const { verifierToken, adminSecretOnly, requireEmailVerifie } = require('../middlewares/auth');
 const { checkAbonnement, requireAbonnement } = require('../middlewares/checkAbonnement');
 const { limiterPublication } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
@@ -356,7 +356,7 @@ router.delete('/:id/produits/:prodId', verifierToken, param('id').isUUID(), para
 });
 
 // ── POST /api/boutiques — créer boutique (auth)
-router.post('/', limiterPublication, verifierToken, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'cover', maxCount: 1 }]), [
+router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'cover', maxCount: 1 }]), [
   body('nom').trim().notEmpty().withMessage('Nom de boutique requis').isLength({ max: 200 }),
   body('telephone').optional({ checkFalsy: true }).isString(),
   body('ville').optional({ checkFalsy: true }).isString(),

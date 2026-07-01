@@ -576,6 +576,18 @@ router.patch(
       );
       if (!commande) return res.status(404).json({ error: 'Commande introuvable' });
 
+      // Calculer et enregistrer la commission si la commande passe à "livree"
+      if (req.body.statut === 'livree' && commande.montant_total > 0) {
+        const { rows: [b] } = await pool.query('SELECT commission_rate FROM boutiques WHERE id=$1', [req.params.boutiqueId]);
+        if (b?.commission_rate > 0) {
+          const commission = (commande.montant_total * b.commission_rate / 100).toFixed(2);
+          pool.query(
+            'UPDATE commandes_boutique SET montant_commission=$1 WHERE id=$2',
+            [commission, commande.id]
+          ).catch(() => {});
+        }
+      }
+
       // Notifier le client du changement de statut
       if (commande.client_telephone) {
         const { sendWhatsAppText } = require('../services/whatsapp');

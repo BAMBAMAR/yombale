@@ -4,8 +4,8 @@
 const router = require('express').Router();
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
-const { adminSecretOnly, verifierToken } = require('../middlewares/auth');
-const { limiterPublication, limiterImmo, blockScraperUA } = require('../middlewares/rateLimit');
+const { adminSecretOnly, verifierToken, tokenOptional, requireEmailVerifie } = require('../middlewares/auth');
+const { limiterPublication, limiterImmo, limiterBulk, blockScraperUA } = require('../middlewares/rateLimit');
 const { notifierModerationImmo } = require('../services/notifications');
 
 const validationAnnonce = [
@@ -28,7 +28,7 @@ const ORDER_MAP = {
 };
 
 // GET /api/immo — liste / filtre paginé
-router.get('/', blockScraperUA, limiterImmo, async (req, res) => {
+router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
   try {
     const {
       ville, quartier, type_bien, transaction = 'location',
@@ -304,7 +304,7 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/immo/public — annonce gratuite déposée par un utilisateur
 // (en attente de validation par un admin : actif = false)
-router.post('/public', limiterPublication, verifierToken, validationAnnonce, async (req, res) => {
+router.post('/public', limiterPublication, verifierToken, requireEmailVerifie, validationAnnonce, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });

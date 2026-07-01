@@ -80,9 +80,17 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // ── Protection pages admin ────────────────────────────────────
 // Doit être AVANT express.static pour intercepter les routes
+function getAdminCookie(req) {
+  const raw = req.headers.cookie || '';
+  const match = raw.match(/(?:^|;\s*)nopalou_admin=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 function adminPageGuard(req, res, next) {
   const { secretsMatch } = require('./middlewares/auth');
-  const secret = req.headers['x-admin-secret'];
+  const cookieSecret = getAdminCookie(req);
+  const headerSecret = req.headers['x-admin-secret'];
+  const secret = cookieSecret || headerSecret;
   if (process.env.ADMIN_SECRET && !secretsMatch(secret, process.env.ADMIN_SECRET)) {
     const page = req.path.replace('/', '');
     return res.status(401).send(
@@ -96,7 +104,9 @@ function adminPageGuard(req, res, next) {
       '<input type="password" id="s" placeholder="Secret admin" autofocus onkeydown="if(event.key===\'Enter\')go()">' +
       '<br><button onclick="go()">Accéder →</button>' +
       '<p id="err" style="color:#e63946;font-size:13px;min-height:18px"></p>' +
-      '<script>async function go(){var s=document.getElementById("s").value;var r=await fetch("/'+page+'",{headers:{"x-admin-secret":s}});if(r.ok){sessionStorage.setItem("nopalou_admin_secret",s);location.href="/'+page+'";}else{document.getElementById("err").textContent="Secret invalide";}}<\/script>' +
+      '<script>async function go(){var s=document.getElementById("s").value;' +
+      'var r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({secret:s}),credentials:"include"});' +
+      'if(r.ok){location.href="/' + page + '";}else{document.getElementById("err").textContent="Secret invalide";}}<\/script>' +
       '</div></body></html>'
     );
   }
@@ -112,6 +122,20 @@ app.get('/admin.html', adminPageGuard);
 
 // ── Fichiers statiques frontend ───────────────────────────────
 app.use(express.static(path.join(__dirname, '../frontend')));
+
+// ── Login admin — cookie httpOnly (8h) ───────────────────────
+app.post('/api/admin/login', (req, res) => {
+  const { secretsMatch } = require('./middlewares/auth');
+  const { secret } = req.body || {};
+  if (!secretsMatch(secret, process.env.ADMIN_SECRET)) {
+    return res.status(401).json({ error: 'Secret invalide' });
+  }
+  const isSecure = process.env.NODE_ENV === 'production';
+  res.setHeader('Set-Cookie',
+    `nopalou_admin=${encodeURIComponent(secret)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${8 * 3600}${isSecure ? '; Secure' : ''}`
+  );
+  res.json({ ok: true });
+});
 
 // ── Routes API ────────────────────────────────────────────────
 app.use('/api/produits',  require('./routes/produits'));
@@ -132,6 +156,8 @@ app.use('/api/analytics',       require('./routes/analytics'));
 app.use('/api/whatsapp',        require('./routes/whatsapp'));
 app.use('/api/comptabilite',    require('./routes/comptabilite'));
 app.use('/api/search',          require('./routes/search'));
+app.use('/api/v1',              require('./routes/api-partenaire'));
+app.use('/api/settings',        require('./routes/settings'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', async (req, res) => {

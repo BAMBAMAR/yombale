@@ -3,8 +3,8 @@ const router  = require('express').Router();
 const multer  = require('multer');
 const { body, param, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
-const { adminSecretOnly, verifierToken } = require('../middlewares/auth');
-const { limiterPublication, limiterEcriture, blockScraperUA, limiterRecherche } = require('../middlewares/rateLimit');
+const { adminSecretOnly, verifierToken, tokenOptional, requireEmailVerifie } = require('../middlewares/auth');
+const { limiterPublication, limiterEcriture, limiterBulk, blockScraperUA, limiterRecherche } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
 const { sendWhatsAppCarousel, sendWhatsAppTemplate } = require('../services/whatsapp');
 
@@ -106,7 +106,7 @@ function autoModerer({ titre, description, contact_tel, prix }) {
 }
 
 // ── GET /api/annonces — liste publique paginée
-router.get('/', blockScraperUA, limiterRecherche, async (req, res) => {
+router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
   try {
     const { categorie, ville, q, utilisateur_id, limit = 20, page = 1 } = req.query;
     const offset = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit));
@@ -184,7 +184,7 @@ router.get('/:id', param('id').isUUID(), async (req, res) => {
 });
 
 // ── POST /api/annonces — créer annonce (auth, multipart, photos, quota)
-router.post('/', limiterPublication, verifierToken, upload.array('photos', 5), validationCreation, async (req, res) => {
+router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.array('photos', 5), validationCreation, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
