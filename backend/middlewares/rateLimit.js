@@ -61,12 +61,24 @@ const limiterEcriture = rateLimit({
 // Limite les accès bulk (listes produits/immo/annonces) pour freiner le scraping
 // Exclut les IPs internes (serveur Next.js → Express en SSR) et les utilisateurs authentifiés
 const INTERNAL_IPS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
+function isPrivateIp(ip) {
+  return /^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|::1$|::ffff:127\.)/.test(ip)
+}
 const limiterBulk = rateLimit({
   windowMs: 15 * 60 * 1000, max: 300,
   keyGenerator: realIp,
   message: { error: 'Trop de requêtes — créez un compte gratuit pour un accès illimité' },
   standardHeaders: true,
-  skip: (req) => !!(req.user) || INTERNAL_IPS.has(realIp(req)),
+  // Skip: utilisateurs authentifiés, IPs internes/privées (Next.js SSR → Express), et UA vide (SSR sans User-Agent)
+  skip: (req) => {
+    if (req.user) return true
+    const ip = realIp(req)
+    if (INTERNAL_IPS.has(ip) || isPrivateIp(ip)) return true
+    // UA vide = appel SSR Next.js (les bots UA "node" sont déjà bloqués par blockScraperUA avant)
+    const ua = (req.headers['user-agent'] || '').trim()
+    if (!ua) return true
+    return false
+  },
 });
 
 module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImmo, limiterBulk, blockScraperUA };
