@@ -13,11 +13,15 @@ const limiterGeneral = rateLimit({
   standardHeaders: true
 });
 
-// Bloque les user-agents de scripts nus (node, python-requests, curl sans referer, etc.)
+// Bloque les user-agents de scripts nus connus (bots, scrapers)
+// Ne bloque PAS les UAs vides : le serveur Next.js (SSR) utilise Node.js fetch sans UA
 function blockScraperUA(req, res, next) {
   const ua = (req.headers['user-agent'] || '').toLowerCase().trim()
-  const blocked = ['node', 'python-requests', 'python-httpx', 'go-http-client', 'java/', 'okhttp', 'axios/']
-  if (!ua || blocked.some(b => ua === b || ua.startsWith(b))) {
+  if (!ua) return next() // appels SSR légitimes (Next.js server) sans UA → laisser passer
+  const blocked = ['python-requests', 'python-httpx', 'go-http-client', 'java/', 'okhttp']
+  // "node" exact ou "node/xx.x" → bot, mais pas "node-fetch" (bibliothèque courante légitime)
+  const isNodeBot = ua === 'node' || /^node\/\d/.test(ua)
+  if (isNodeBot || blocked.some(b => ua === b || ua.startsWith(b))) {
     return res.status(429).json({ error: 'Accès automatisé non autorisé' })
   }
   next()
