@@ -123,27 +123,30 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
-## État du projet (30 juin 2026 — mis à jour après audit)
+## État du projet (1er juillet 2026 — mis à jour après audit complet + implémentation)
 
 ### Ce qui est complet et fonctionnel
 
-#### Backend Express — routes
+#### Backend Express — routes (toutes complètes au 1er juillet 2026)
 | Route | État |
 |---|---|
-| `/api/auth` | Complet — inscription, connexion, reset mot de passe, **mise à jour profil (nom/email)** |
-| `/api/produits`, `/api/offres` | Complet — scraping + comparaison prix |
-| `/api/annonces` | Complet — dépôt, modération admin, paiement Wave/Orange |
-| `/api/immo` | Complet — dépôt manuel + scrapers CoinAfrique/Expat/Facebook |
+| `/api/auth` | Complet — inscription, connexion, reset MDP, mise à jour profil, vérification email, parrainage |
+| `/api/produits`, `/api/offres` | Complet — scraping + comparaison prix + limiterBulk anti-scraping |
+| `/api/annonces` | Complet — dépôt (email vérifié requis), modération admin, paiement Wave/Orange, boost 7j |
+| `/api/immo` | Complet — dépôt (email vérifié requis) + scrapers CoinAfrique/Expat/Facebook |
 | `/api/telecom` | Complet — forfaits (`forfaits_telecom`), comparaison ARTP |
-| `/api/boutiques` | Complet — création, produits, abonnements Pro/Business |
+| `/api/boutiques` | Complet — création (email vérifié requis), produits, abonnements Pro/Business |
 | `/api/alertes` | Complet — alertes prix (par `produit_id` pour les comptes web) |
-| `/api/paiement` | Complet — Wave, Orange Money, callbacks webhook |
-| `/api/abonnements` | Complet — plans Pro/Business pour boutiques |
+| `/api/paiement` | Complet — Wave, Orange Money (+ HMAC), webhooks, boost annonce, prix dynamiques depuis settings |
+| `/api/abonnements` | Complet — plans Pro/Business, prix lus depuis `settings` table |
 | `/api/analytics` | Complet — `GET /api/analytics/boutique/:id` pour les stats propriétaire |
-| `/api/whatsapp` | Complet — webhook HMAC + chatbot + send |
+| `/api/whatsapp` | Complet — webhook HMAC + chatbot + send + 5 endpoints admin (status/toggle/test/sessions) |
 | `/api/partenaires` | Complet |
+| `/api/settings` | **Nouveau** — `GET/PUT` admin + `GET /public` — tous les prix/promos configurables depuis l'admin |
+| `/api/v1/prix`, `/api/v1/boutiques` | **Nouveau** — API partenaire payante avec clé API + quota mensuel |
+| `/api/admin/login` | **Nouveau** — cookie httpOnly `nopalou_admin` (remplace sessionStorage) |
 
-#### WhatsApp — feature complète (code prêt, Meta à configurer)
+#### WhatsApp — code complet, activation Meta en cours
 | Niveau | Fichier clé |
 |---|---|
 | Webhook unifié + HMAC | `backend/routes/whatsapp.js` |
@@ -152,57 +155,130 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 | Carousel auto à la validation admin (annonces + immo) | `backend/services/notifications.js`, `routes/annonces.js` |
 | Chatbot — machine à états (menu, recherche FTS, alertes prix, commandes) | `backend/services/whatsapp-chatbot.js` |
 | Bouton "Recevoir par WhatsApp" + modal | `frontend-next/src/components/BoutonWhatsApp.tsx`, `ModalWhatsApp.tsx` |
+| **Admin panel WhatsApp** | `frontend-next/src/app/admin/(protected)/whatsapp/` — status Meta, test envoi, sessions |
 
-**Tables DB WhatsApp** (dans `migrate-inline.js`) : `whatsapp_sessions`, `whatsapp_processed_messages`.
-**Colonnes ajoutées sur `alertes`** : `telephone TEXT`, `produit_nom TEXT` (pour alertes créées via chatbot sans compte).
+Le chatbot vérifie `whatsapp_enabled` et `whatsapp_chatbot` (table `settings`) avant de répondre — désactivable depuis `/admin/whatsapp` sans redéploiement.
 
-⚠️ **Prérequis Meta à compléter avant déploiement WhatsApp** : vérification entreprise Business Manager, WABA, numéro dédié, catalogue Commerce, 4 templates (`nopalou_carousel_annonce`, `nopalou_carousel_immo`, `nopalou_carousel_telecom`, `nopalou_fiche_texte`), webhook. Guide détaillé : `docs/superpowers/plans/2026-06-29-whatsapp-catalogue-chatbot.md`.
+**Tables DB WhatsApp** : `whatsapp_sessions`, `whatsapp_processed_messages`.
+**Colonnes sur `alertes`** : `telephone TEXT`, `produit_nom TEXT`.
 
-#### Next.js 14 — pages protégées (toutes complètes)
+#### Sécurité (implémentée le 1er juillet 2026)
+- Webhook Orange Money : validation HMAC-SHA256 (`ORANGE_WEBHOOK_SECRET`)
+- `requireEmailVerifie` middleware — bloque création annonces/immo/boutiques si email non confirmé
+- Admin : cookie httpOnly `nopalou_admin` via `POST /api/admin/login` (remplace sessionStorage)
+- Redirect `click.js` : `https://` obligatoire sur `url_achat`
+- `limiterBulk` (20 req/15min par IP non authentifiée) sur `/api/produits`, `/api/immo`, `/api/annonces`
+- Watermark `© nopalou.com` sur toutes les images uploadées via Cloudinary
+- Module `backend/lib/hashids.js` disponible pour obfuscation des IDs
+
+#### Tarifs dynamiques — configurer depuis `/admin/tarifs` sans redéploiement
+| Clé settings | Défaut | Description |
+|---|---|---|
+| `prix_annonce` | 1500 | Publication annonce classifiée (FCFA) |
+| `prix_sponsoring` | 5000 | Mise en avant immo/boutique/produit 30j (FCFA) |
+| `prix_boost` | 500 | Boost annonce urgence 7j (FCFA) |
+| `boost_duree_jours` | 7 | Durée boost (jours) |
+| `plan_pro_prix` | 15000 | Abonnement Pro mensuel (FCFA) |
+| `plan_business_prix` | 35000 | Abonnement Business mensuel (FCFA) |
+| `commission_business` | 2.0 | Commission ventes boutiques Business (%) |
+| `paiement_wave` | true | Activer/désactiver Wave |
+| `paiement_orange` | true | Activer/désactiver Orange Money |
+| `promo_active` | false | Activer un code promo |
+| `promo_code` | — | Code promo (ex: NOPALOU25) |
+| `promo_reduction` | 0 | % de réduction |
+
+Cache mémoire 5 min — fichier : `backend/lib/settingsCache.js`.
+
+#### Commercial (implémenté le 1er juillet 2026)
+- **Boost annonce 7j** — `POST /api/paiement/boost/initier` (Wave) + webhook Orange
+- **Relance expiration** — cron 9h UTC, email Resend aux boutiques/abonnements expirés J-7 (`envoyerRelancesExpiration()` dans `scraper.js`)
+- **Parrainage** — table `parrainages`, `?ref_code=UUID` à l'inscription, `GET /api/auth/parrainage`
+- **API partenaire** — `GET /api/v1/prix`, `GET /api/v1/boutiques`, clé SHA256, quota 1000 req/mois gratuit, `POST /api/v1/keys`
+- **Commissions 2%** — `commission_rate` sur `boutiques`, calculé à `statut=livree` dans `comptabilite.js`
+
+#### Next.js 14 — pages (toutes complètes)
 | Page | Contenu |
 |---|---|
 | `/compte` | Dashboard menu |
-| `/compte/profil` | Édition nom/email + reset mot de passe + déconnexion |
-| `/mes-annonces` | Liste avec statuts (publiée/modération/rejetée/en attente), CRUD |
+| `/compte/profil` | Édition nom/email + reset mot de passe + déconnexion + code parrainage |
+| `/mes-annonces` | Liste avec statuts, CRUD |
 | `/mes-annonces/[id]/modifier` | Formulaire d'édition |
 | `/mes-annonces-immo` | Liste avec photos et statuts, CRUD |
 | `/mes-annonces-immo/[id]/modifier` | Formulaire d'édition |
 | `/boutique` | Gestion boutique + produits (CRUD) + sponsoring |
-| `/boutique/analytics` | KPIs + historique 30j (`GET /api/analytics/boutique/:id`) |
+| `/boutique/analytics` | KPIs + historique 30j |
 | `/boutique/abonnement` | Plans Pro/Business + paiement Wave |
 | `/deposer-annonce` | Formulaire complet |
 | `/deposer-immo` | Formulaire complet |
 | `/favoris` | Favoris localStorage |
+| **`/admin/tarifs`** | **Nouveau** — prix, promos, toggle Wave/Orange |
+| **`/admin/whatsapp`** | **Nouveau** — statut Meta, test envoi, sessions chatbot, toggle chatbot |
 
-#### Next.js 14 — sécurité (depuis v42-v44)
+#### Next.js 14 — sécurité
 - httpOnly cookies JWT (`nopalou_session`) — plus de localStorage
 - CSP nonce sans `unsafe-inline`
 - DAL avec `verifySession()` + `getOptionalSession()` via React `cache()`
 - Middleware de protection des routes
 
-### Ce qui reste à faire
+### Ce qui reste à faire — actions externes uniquement
 
-#### ✅ Fait (depuis l'audit du 30 juin 2026)
-- `cleanupOldMessages()` et `resetInactiveSessions()` implémentés dans `whatsapp-chatbot.js` et branchés sur un cron quotidien (3h UTC) dans `scraper.js`
-- Alertes prix WhatsApp : **déjà fonctionnel** — `scraper.js:751-765` détecte les baisses de prix et appelle `envoyerAlertePrix()` qui envoie le WhatsApp via `notifications.js:23-28`
-- `.env.example` nettoyé (ajout `RAILWAY_PUBLIC_DOMAIN`/`RENDER_EXTERNAL_URL`, suppression `ORANGE_CLIENT_ID` inutilisé)
+#### 🔴 Immédiat (Render — variables d'environnement)
+```
+ORANGE_WEBHOOK_SECRET=<demander à Orange ou mettre valeur random si pas de HMAC Orange>
+HASHIDS_SALT=<node -e "console.log(require('crypto').randomBytes(24).toString('hex'))">
+```
 
-#### Hors code (avant mise en prod WhatsApp)
-1. **Configurer Meta** — WABA, catalogue, 4 templates (`nopalou_carousel_annonce`, `nopalou_carousel_immo`, `nopalou_carousel_telecom`, `nopalou_fiche_texte`), webhook (3-7 jours)
+#### 🟠 Urgent (30 min chacun)
+1. **Wave webhook** — déclarer `https://votre-app.onrender.com/api/paiement/wave/webhook` dans le dashboard Wave + copier `WAVE_WEBHOOK_SECRET` dans Render
+2. **Resend DNS** — valider le domaine `nopalou.com` sur [resend.com/domains](https://resend.com/domains) → mettre à jour `EMAIL_FROM=Nopalou <noreply@nopalou.com>` sur Render
 
-#### Priorité moyenne
-2. **Sync initiale catalogue Meta** — les produits boutique déjà en base ne sont pas synchronisés au démarrage. Ajouter un endpoint admin `POST /api/boutiques/admin/sync-catalog` ou un script one-shot
-3. **Tests unitaires services critiques** — `whatsapp-chatbot.js`, `notifications.js`, `scraper.js` couverts uniquement par E2E Playwright ; pas de tests unitaires/intégration
+#### 🟡 Cette semaine (Meta WhatsApp — 3-7 jours total)
+Ordre exact :
+1. Créer compte Meta Business Manager → vérifier l'entreprise (document officiel, délai 1-3 jours)
+2. Créer app Meta → Type "Business" → ajouter produit WhatsApp
+3. Obtenir numéro dédié WhatsApp Business (+221 Sénégal recommandé)
+4. Créer **utilisateur système Admin** dans Business Manager → générer token permanent avec scopes `whatsapp_business_messaging` + `whatsapp_business_management`
+5. Ajouter dans Render :
+   ```
+   WHATSAPP_PHONE_NUMBER_ID=<API Setup de l'app Meta>
+   WHATSAPP_API_TOKEN=<token système permanent>
+   WHATSAPP_APP_SECRET=<Paramètres de l'app Meta>
+   WHATSAPP_VERIFY_TOKEN=<chaîne arbitraire, ex: nopalou_wh_2026>
+   WHATSAPP_BUSINESS_ACCOUNT_ID=<WABA ID dans Business Manager>
+   WHATSAPP_CATALOG_ID=<si catalogue Meta Commerce — optionnel>
+   ```
+6. Déclarer webhook dans Meta → URL : `https://votre-app.onrender.com/api/whatsapp/webhook` → Token : valeur de `WHATSAPP_VERIFY_TOKEN` → S'abonner à `messages`
+7. Soumettre les 4 templates (délai approbation 24-48h) :
+   - `nopalou_carousel_annonce` (Carousel)
+   - `nopalou_carousel_immo` (Carousel)
+   - `nopalou_carousel_telecom` (Carousel)
+   - `nopalou_fiche_texte` (Text + boutons)
+
+#### 🟡 Orange Money webhook (10 min)
+- Déclarer `https://votre-app.onrender.com/api/paiement/orange/webhook` dans le dashboard Orange Money Sénégal
+- Si Orange fournit un secret HMAC → l'ajouter dans `ORANGE_WEBHOOK_SECRET` sur Render
+
+#### 🟢 Optionnel
+- **Scraper Facebook immo** : ajouter `FB_EMAIL` + `FB_PASSWORD` sur Render
+- **Sync initiale catalogue Meta** : endpoint admin `POST /api/boutiques/admin/sync-catalog` (pas encore implémenté)
+- **Tests unitaires** : `whatsapp-chatbot.js`, `notifications.js`, `scraper.js`
+
+#### Vérification post-déploiement
+Aller sur `/admin/whatsapp` — la checklist indique en temps réel ce qui est configuré ou manquant.
 
 #### Schéma DB — tables clés à connaître
 | Table | Usage |
 |---|---|
 | `produits` | Produits scrapés (marketplace) |
 | `boutique_produits` | Produits des boutiques utilisateurs (`images TEXT[]`, pas JSONB) |
-| `annonces_classifiees` | Annonces classées (`photos JSONB` — accès JS: `row.photos?.[0]`, SQL: `photos->>0`) |
+| `annonces_classifiees` | Annonces classées (`photos JSONB` — accès JS: `row.photos?.[0]`, SQL: `photos->>0`) — colonne `boost_until TIMESTAMPTZ` |
 | `annonces_immo` | Annonces immo (`photos JSONB` — même syntaxe) |
 | `forfaits_telecom` | Forfaits télécom (⚠️ PAS `offres_telecom`) |
-| `commandes` | Suivi paiements (⚠️ PAS `paiements`) |
+| `commandes` | Suivi paiements Wave/Orange (⚠️ PAS `paiements`) |
 | `alertes` | Alertes prix — colonnes `telephone` et `produit_nom` pour alertes WhatsApp sans compte |
 | `whatsapp_sessions` | Sessions chatbot (state machine) |
 | `whatsapp_processed_messages` | Déduplication messages entrants |
+| `settings` | Config dynamique clé-valeur (prix, promos, toggles) — lue via `backend/lib/settingsCache.js` |
+| `parrainages` | Programme de parrainage (referrer_id, referred_id, statut, recompense_at) |
+| `api_keys` | Clés API partenaires (key_hash SHA256, plan, quota mensuel) |
+| `commandes_boutique` | Commandes boutique — colonne `montant_commission` calculé à livraison |
