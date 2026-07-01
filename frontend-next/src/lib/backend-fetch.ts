@@ -3,6 +3,7 @@ import { SignJWT } from 'jose'
 import { verifySession } from './dal'
 
 const API = process.env.BACKEND_URL ?? 'http://localhost:3000'
+const SSR_SECRET = process.env.SSR_SECRET || ''
 
 export interface ActionState {
   error?: string
@@ -22,6 +23,7 @@ export async function backendFetch(
 
   const headers = new Headers(options.headers)
   headers.set('Authorization', `Bearer ${token}`)
+  if (SSR_SECRET) headers.set('X-SSR-Token', SSR_SECRET)
   // Ne pas forcer Content-Type si body est FormData (le browser gère le boundary)
   if (!(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json')

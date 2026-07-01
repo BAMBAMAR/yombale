@@ -2,6 +2,7 @@ import { SignJWT } from 'jose'
 import { getOptionalSession } from './dal'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+const SSR_SECRET = process.env.SSR_SECRET || ''
 
 export async function backendAuthFetch(path: string, init?: RequestInit) {
   const session = await getOptionalSession()
@@ -18,6 +19,7 @@ export async function backendAuthFetch(path: string, init?: RequestInit) {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
+      ...(SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}),
       ...(init?.headers ?? {}),
     },
   })

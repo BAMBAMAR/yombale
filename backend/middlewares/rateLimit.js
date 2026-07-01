@@ -6,6 +6,12 @@ function realIp(req) {
   return (req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
 }
 
+// Vérifie si la requête vient du serveur Next.js SSR (header secret partagé)
+const SSR_SECRET = process.env.SSR_SECRET || ''
+function isSsrRequest(req) {
+  return SSR_SECRET && req.headers['x-ssr-token'] === SSR_SECRET
+}
+
 const limiterGeneral = rateLimit({
   windowMs: 15 * 60 * 1000, max: 200,
   keyGenerator: realIp,
@@ -14,13 +20,13 @@ const limiterGeneral = rateLimit({
 });
 
 // Bloque les user-agents de scripts nus connus (bots, scrapers)
-// Ne bloque PAS les UAs vides : le serveur Next.js (SSR) utilise Node.js fetch sans UA
+// Laisse passer les requêtes SSR Next.js identifiées par X-SSR-Token
 function blockScraperUA(req, res, next) {
+  if (isSsrRequest(req)) return next() // SSR Next.js authentifié → toujours laisser passer
   const ua = (req.headers['user-agent'] || '').toLowerCase().trim()
-  if (!ua) return next() // appels SSR légitimes (Next.js server) sans UA → laisser passer
   const blocked = ['python-requests', 'python-httpx', 'go-http-client', 'java/', 'okhttp']
-  // "node" exact ou "node/xx.x" → bot, mais pas "node-fetch" (bibliothèque courante légitime)
-  const isNodeBot = ua === 'node' || /^node\/\d/.test(ua)
+  // "node" exact ou "node/xx.x" → bot (Next.js SSR est identifié par X-SSR-Token ci-dessus)
+  const isNodeBot = !ua || ua === 'node' || /^node\/\d/.test(ua)
   if (isNodeBot || blocked.some(b => ua === b || ua.startsWith(b))) {
     return res.status(429).json({ error: 'Accès automatisé non autorisé' })
   }
@@ -69,14 +75,11 @@ const limiterBulk = rateLimit({
   keyGenerator: realIp,
   message: { error: 'Trop de requêtes — créez un compte gratuit pour un accès illimité' },
   standardHeaders: true,
-  // Skip: utilisateurs authentifiés, IPs internes/privées (Next.js SSR → Express), et UA vide (SSR sans User-Agent)
   skip: (req) => {
     if (req.user) return true
+    if (isSsrRequest(req)) return true
     const ip = realIp(req)
     if (INTERNAL_IPS.has(ip) || isPrivateIp(ip)) return true
-    // UA vide = appel SSR Next.js (les bots UA "node" sont déjà bloqués par blockScraperUA avant)
-    const ua = (req.headers['user-agent'] || '').trim()
-    if (!ua) return true
     return false
   },
 });
