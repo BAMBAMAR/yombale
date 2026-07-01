@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit } from './actions'
 import Comptabilite from './Comptabilite'
 import Commandes from './Commandes'
+import AnalyticsClient from './analytics/AnalyticsClient'
 import { initierWaveBoutiqueSponsoring } from '@/app/actions/paiement'
 import { fcfa } from '@/lib/format'
 import type { ActionState } from '@/lib/backend-fetch'
@@ -770,12 +771,6 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onM
           }}>
             Modifier
           </button>
-          <Link href="/boutique/analytics" style={{
-            fontSize: 13, color: '#16a34a', background: '#f0fdf4', border: '1px solid #86efac',
-            borderRadius: 8, padding: '8px 16px', fontWeight: 600, textDecoration: 'none',
-          }}>
-            Analytics
-          </Link>
           <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer" style={{
             fontSize: 13, color: '#374151', background: '#f8fafc', border: '1px solid #e5e7eb',
             borderRadius: 8, padding: '8px 16px', fontWeight: 600, textDecoration: 'none',
@@ -802,10 +797,11 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onM
 
 // ── Vue de gestion d'une boutique — layout sidebar ────────────────────────────
 
-const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'infos'; icon: string; label: string }[] = [
+const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos'; icon: string; label: string }[] = [
   { key: 'produits',  icon: '🛍',  label: 'Catalogue' },
   { key: 'commandes', icon: '📋',  label: 'Commandes' },
   { key: 'compta',    icon: '💰',  label: 'Comptabilité' },
+  { key: 'analytics', icon: '📊',  label: 'Analytics' },
   { key: 'infos',     icon: '⚙️', label: 'Paramètres' },
 ]
 
@@ -815,7 +811,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
   onBack: () => void
   onEdit: () => void
 }) {
-  const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'infos'>('produits')
+  const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'analytics' | 'infos'>('produits')
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
   const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#6b7280'
@@ -924,10 +920,6 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#6b7280', textDecoration: 'none', borderRadius: 6 }}>
             Voir la boutique ↗
           </a>
-          <Link href="/boutique/analytics"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#6b7280', textDecoration: 'none', borderRadius: 6 }}>
-            📊 Analytics
-          </Link>
         </div>
       </aside>
 
@@ -937,17 +929,19 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
         <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
           <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, margin: 0, color: '#111' }}>
             {NAV_ITEMS.find(i => i.key === tab)?.icon}{' '}
-            {{ produits: 'Catalogue produits', commandes: 'Commandes', compta: 'Comptabilité', infos: 'Paramètres boutique' }[tab]}
+            {{ produits: 'Catalogue produits', commandes: 'Commandes', compta: 'Comptabilité', analytics: 'Analytics', infos: 'Paramètres boutique' }[tab]}
           </h2>
           {tab === 'produits'  && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Gérez vos produits, stocks et tarifs.</p>}
           {tab === 'commandes' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Commandes reçues — web et WhatsApp. Mettez à jour les statuts.</p>}
           {tab === 'compta'    && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Ventes, dépenses, stock et zones de livraison.</p>}
+          {tab === 'analytics' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Vues, clics et performances de votre boutique.</p>}
           {tab === 'infos'     && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Modifiez les informations, contacts et photos.</p>}
         </div>
 
         {tab === 'produits'  && <CatalogueProduits boutique={boutique} planActif={planActif} />}
         {tab === 'commandes' && <Commandes boutiqueId={boutique.id} />}
         {tab === 'compta'    && <Comptabilite boutiqueId={boutique.id} />}
+        {tab === 'analytics' && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
         {tab === 'infos'    && (
           <div style={{ maxWidth: 580 }}>
             <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={onEdit} />

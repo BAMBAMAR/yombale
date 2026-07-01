@@ -172,7 +172,7 @@ export async function declarerVente(
     client_telephone?: string
     methode_paiement?: string
   }
-): Promise<ActionState> {
+): Promise<ActionState & { id?: string }> {
   try {
     const res = await backendFetch(`/api/comptabilite/${boutiqueId}/ventes`, {
       method: 'POST', body: JSON.stringify(data),
@@ -181,7 +181,8 @@ export async function declarerVente(
       const errData = await res.json().catch(() => ({}))
       return { error: errData.error ?? 'Impossible d\'enregistrer la vente' }
     }
-    return { success: true }
+    const created = await res.json().catch(() => ({}))
+    return { success: true, id: created.id }
   } catch {
     return { error: 'Erreur de connexion au serveur' }
   }
@@ -206,7 +207,7 @@ export async function listDepenses(boutiqueId: string) {
 export async function addDepense(
   boutiqueId: string,
   data: { montant: number; categorie: string; description?: string; date_depense?: string }
-): Promise<ActionState> {
+): Promise<ActionState & { id?: string }> {
   try {
     const res = await backendFetch(`/api/comptabilite/${boutiqueId}/depenses`, {
       method: 'POST', body: JSON.stringify(data),
@@ -215,7 +216,8 @@ export async function addDepense(
       const d = await res.json().catch(() => ({}))
       return { error: d.error ?? 'Impossible d\'enregistrer la dépense' }
     }
-    return { success: true }
+    const created = await res.json().catch(() => ({}))
+    return { success: true, id: created.id }
   } catch {
     return { error: 'Erreur de connexion au serveur' }
   }

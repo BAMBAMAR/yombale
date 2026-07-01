@@ -5,7 +5,7 @@ const router = require('express').Router();
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken } = require('../middlewares/auth');
-const { limiterPublication } = require('../middlewares/rateLimit');
+const { limiterPublication, limiterImmo, blockScraperUA } = require('../middlewares/rateLimit');
 const { notifierModerationImmo } = require('../services/notifications');
 
 const validationAnnonce = [
@@ -28,7 +28,7 @@ const ORDER_MAP = {
 };
 
 // GET /api/immo — liste / filtre paginé
-router.get('/', async (req, res) => {
+router.get('/', blockScraperUA, limiterImmo, async (req, res) => {
   try {
     const {
       ville, quartier, type_bien, transaction = 'location',

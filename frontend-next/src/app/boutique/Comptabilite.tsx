@@ -9,7 +9,7 @@ import {
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
 
 interface Zone    { id: string; nom: string; prix: number }
-interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string }
+interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string; justificatif_url: string | null }
 interface Produit { id: string; nom: string; prix: number | null; stock_quantite: number | null }
 interface Depense { id: string; montant: number; categorie: string; description: string | null; date_depense: string; justificatif_url: string | null }
 interface Dashboard {
@@ -113,6 +113,8 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
   const [clientNom, setClientNom] = useState('')
   const [clientTel, setClientTel] = useState('')
   const [paiement, setPaiement] = useState('cash')
+  const [fichier, setFichier] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
@@ -134,8 +136,15 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
         client_telephone: clientTel || undefined,
         methode_paiement: paiement,
       })
-      if (res.error) setError(res.error)
-      else onDone()
+      if (res.error) { setError(res.error); return }
+      if (fichier && res.id) {
+        setUploading(true)
+        const form = new FormData()
+        form.append('justificatif', fichier)
+        await fetch(`/api/compta-proxy/${boutiqueId}/ventes/${res.id}/justificatif`, { method: 'POST', body: form }).catch(() => null)
+        setUploading(false)
+      }
+      onDone()
     })
   }
 
@@ -218,8 +227,18 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
         </div>
       )}
 
-      <button onClick={submit} style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
-        Enregistrer la vente
+      <div>
+        <label style={labelStyle}>Pièce jointe (facture, reçu…)</label>
+        <input
+          type="file" accept="image/*,application/pdf"
+          onChange={e => setFichier(e.target.files?.[0] ?? null)}
+          style={{ fontSize: 13, color: '#374151' }}
+        />
+        {fichier && <p style={{ margin: '4px 0 0', fontSize: 11, color: '#6b7280' }}>📎 {fichier.name}</p>}
+      </div>
+
+      <button onClick={submit} disabled={uploading} style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 700, cursor: uploading ? 'not-allowed' : 'pointer', fontSize: 14, opacity: uploading ? 0.7 : 1 }}>
+        {uploading ? 'Envoi du justificatif…' : 'Enregistrer la vente'}
       </button>
     </div>
   )
@@ -372,6 +391,11 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
                 <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9ca3af' }}>
                   {fmtDate(v.created_at)} · Réf {v.reference}
                 </p>
+                {v.justificatif_url && (
+                  <a href={v.justificatif_url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#1d4ed8', textDecoration: 'none' }}>
+                    📎 Justificatif ↗
+                  </a>
+                )}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                 <p style={{ margin: 0, fontWeight: 800, fontSize: 15, color: '#1d4ed8' }}>{fcfa(v.montant_total)}</p>
@@ -516,6 +540,8 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
   const [categorie, setCategorie] = useState('stock')
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [fichier, setFichier] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
@@ -534,7 +560,14 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
     startTransition(async () => {
       const res = await addDepense(boutiqueId, { montant: Number(montant), categorie, description: description || undefined, date_depense: date })
       if (res.error) { setError(res.error); return }
-      setMontant(''); setDescription(''); setShowForm(false)
+      if (fichier && res.id) {
+        setUploading(true)
+        const form = new FormData()
+        form.append('justificatif', fichier)
+        await fetch(`/api/compta-proxy/${boutiqueId}/depenses/${res.id}/justificatif`, { method: 'POST', body: form }).catch(() => null)
+        setUploading(false)
+      }
+      setMontant(''); setDescription(''); setFichier(null); setShowForm(false)
       load()
     })
   }
@@ -579,9 +612,18 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
             <label style={labelStyle}>Description</label>
             <input value={description} onChange={e => setDescription(e.target.value)} style={inputStyle} placeholder="Ex: Achat stock riz, Livraison DHL…" />
           </div>
+          <div>
+            <label style={labelStyle}>Pièce jointe (facture, reçu…)</label>
+            <input
+              type="file" accept="image/*,application/pdf"
+              onChange={e => setFichier(e.target.files?.[0] ?? null)}
+              style={{ fontSize: 13, color: '#374151' }}
+            />
+            {fichier && <p style={{ margin: '4px 0 0', fontSize: 11, color: '#6b7280' }}>📎 {fichier.name}</p>}
+          </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={submit} style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>
-              Enregistrer
+            <button onClick={submit} disabled={uploading} style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontWeight: 700, cursor: uploading ? 'not-allowed' : 'pointer', fontSize: 13, opacity: uploading ? 0.7 : 1 }}>
+              {uploading ? 'Envoi du justificatif…' : 'Enregistrer'}
             </button>
             <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: 8, padding: '9px 16px', cursor: 'pointer', fontSize: 13 }}>
               Annuler

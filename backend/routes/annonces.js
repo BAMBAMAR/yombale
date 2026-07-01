@@ -4,7 +4,7 @@ const multer  = require('multer');
 const { body, param, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken } = require('../middlewares/auth');
-const { limiterPublication, limiterEcriture } = require('../middlewares/rateLimit');
+const { limiterPublication, limiterEcriture, blockScraperUA, limiterRecherche } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
 const { sendWhatsAppCarousel, sendWhatsAppTemplate } = require('../services/whatsapp');
 
@@ -106,7 +106,7 @@ function autoModerer({ titre, description, contact_tel, prix }) {
 }
 
 // ── GET /api/annonces — liste publique paginée
-router.get('/', async (req, res) => {
+router.get('/', blockScraperUA, limiterRecherche, async (req, res) => {
   try {
     const { categorie, ville, q, utilisateur_id, limit = 20, page = 1 } = req.query;
     const offset = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit));

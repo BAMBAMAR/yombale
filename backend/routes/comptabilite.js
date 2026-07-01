@@ -785,6 +785,33 @@ router.post(
   }
 );
 
+// POST /api/comptabilite/:boutiqueId/ventes/:venteId/justificatif
+router.post(
+  '/:boutiqueId/ventes/:venteId/justificatif',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  param('venteId').isUUID(),
+  upload.single('justificatif'),
+  async (req, res) => {
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+      if (!req.file) return res.status(400).json({ error: 'Fichier manquant' });
+
+      const url = await uploadBuffer(req.file.buffer, 'justificatifs');
+      const { rows } = await pool.query(
+        'UPDATE ventes SET justificatif_url=$1 WHERE id=$2 AND boutique_id=$3 RETURNING *',
+        [url, req.params.venteId, req.params.boutiqueId]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Vente introuvable' });
+      res.json(rows[0]);
+    } catch (err) {
+      console.error('[JUSTIFICATIF_VENTE]', err.message);
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
 // ── Stock ─────────────────────────────────────────────────────────────────────
 
 // PATCH /api/comptabilite/:boutiqueId/stock/:produitId

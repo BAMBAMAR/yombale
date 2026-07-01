@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
+const { blockScraperUA, limiterRecherche } = require('../middlewares/rateLimit');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function checkUUID(req, res, next) {
@@ -9,7 +10,7 @@ function checkUUID(req, res, next) {
 }
 
 // GET /api/produits
-router.get('/', async (req, res) => {
+router.get('/', blockScraperUA, limiterRecherche, async (req, res) => {
   try {
     const { q, categorie, sousType, limit = 20, page = 1, tri, prixMax, prixMin } = req.query;
     const offset = (page - 1) * limit;

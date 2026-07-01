@@ -41,6 +41,8 @@ function statutLabel(statut: string) {
 function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; boutiqueId: string; onUpdate: () => void }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [correcting, setCorrecting] = useState(false)
+  const [correctStatut, setCorrectStatut] = useState(commande.statut)
   const [, startTransition] = useTransition()
   const next = TRANSITIONS[commande.statut] ?? []
   const fcfa = (n: number) => n > 0 ? new Intl.NumberFormat('fr-FR').format(n) + ' FCFA' : '—'
@@ -52,6 +54,12 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
       setLoading(false)
       onUpdate()
     })
+  }
+
+  function applyCorrection() {
+    if (correctStatut === commande.statut) { setCorrecting(false); return }
+    changeStatut(correctStatut)
+    setCorrecting(false)
   }
 
   return (
@@ -114,25 +122,55 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
           )}
 
           {/* Actions de statut */}
-          {next.length > 0 && (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 12, color: '#6b7280', alignSelf: 'center' }}>Passer à :</span>
-              {next.map(s => {
-                const info = STATUTS.find(x => x.key === s)!
-                return (
-                  <button key={s} onClick={() => changeStatut(s)} disabled={loading} style={{
-                    fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, cursor: loading ? 'not-allowed' : 'pointer', border: 'none',
-                    background: info.bg, color: info.color, opacity: loading ? 0.6 : 1,
-                  }}>
-                    {info.label} →
-                  </button>
-                )
-              })}
-            </div>
-          )}
-          {next.length === 0 && (
-            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Commande terminée — aucune action disponible.</p>
-          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {next.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: 12, color: '#6b7280' }}>Passer à :</span>
+                {next.map(s => {
+                  const info = STATUTS.find(x => x.key === s)!
+                  return (
+                    <button key={s} onClick={() => changeStatut(s)} disabled={loading} style={{
+                      fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, cursor: loading ? 'not-allowed' : 'pointer', border: 'none',
+                      background: info.bg, color: info.color, opacity: loading ? 0.6 : 1,
+                    }}>
+                      {info.label} →
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            {next.length === 0 && (
+              <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Commande terminée.</p>
+            )}
+            {/* Correction de statut */}
+            {!correcting ? (
+              <button onClick={() => { setCorrecting(true); setCorrectStatut(commande.statut) }} style={{
+                fontSize: 11, color: '#6b7280', background: 'none', border: '1px solid #e5e7eb',
+                borderRadius: 6, padding: '4px 10px', cursor: 'pointer', alignSelf: 'flex-start',
+              }}>
+                ✎ Corriger le statut
+              </button>
+            ) : (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 12, color: '#6b7280' }}>Corriger vers :</span>
+                <select value={correctStatut} onChange={e => setCorrectStatut(e.target.value)} style={{
+                  fontSize: 12, border: '1px solid #d1d5db', borderRadius: 6, padding: '4px 8px', background: '#fff',
+                }}>
+                  {STATUTS.map(s => (
+                    <option key={s.key} value={s.key}>{s.label}</option>
+                  ))}
+                </select>
+                <button onClick={applyCorrection} disabled={loading} style={{
+                  fontSize: 12, fontWeight: 700, background: '#374151', color: '#fff', border: 'none',
+                  borderRadius: 6, padding: '4px 12px', cursor: 'pointer',
+                }}>Appliquer</button>
+                <button onClick={() => setCorrecting(false)} style={{
+                  fontSize: 12, background: 'none', border: '1px solid #d1d5db', borderRadius: 6,
+                  padding: '4px 10px', cursor: 'pointer', color: '#6b7280',
+                }}>Annuler</button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

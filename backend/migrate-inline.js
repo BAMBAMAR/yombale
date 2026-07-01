@@ -513,6 +513,7 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_ventes_boutique ON ventes(boutique_id, created_at DESC);
     `);
     await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS archivee BOOLEAN DEFAULT false`);
+    await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS justificatif_url TEXT`);
     console.log('[MIGRATE] ✅ Tables comptabilité boutique (stock, zones_livraison, ventes) OK');
   } catch (e) { console.warn('[MIGRATE] comptabilite_boutique:', e.message); }
 
