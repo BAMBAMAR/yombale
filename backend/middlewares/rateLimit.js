@@ -43,11 +43,13 @@ const limiterEcriture = rateLimit({
 });
 
 // Limite les accès bulk (listes produits/immo/annonces) pour freiner le scraping
+// Exclut les IPs internes (serveur Next.js → Express en SSR) et les utilisateurs authentifiés
+const INTERNAL_IPS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
 const limiterBulk = rateLimit({
-  windowMs: 15 * 60 * 1000, max: 20,
+  windowMs: 15 * 60 * 1000, max: 300,
   message: { error: 'Trop de requêtes — créez un compte gratuit pour un accès illimité' },
   standardHeaders: true,
-  skip: (req) => !!(req.user), // les utilisateurs authentifiés ne sont pas limités
+  skip: (req) => !!(req.user) || INTERNAL_IPS.has(req.ip || ''),
 });
 
 module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImmo, limiterBulk, blockScraperUA };

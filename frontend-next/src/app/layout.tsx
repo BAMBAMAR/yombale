@@ -216,7 +216,7 @@ export default async function RootLayout({
           </div>
 
           <div className="footer-bottom">
-            <p>© {new Date().getFullYear()} Nopalou — Dakar, Sénégal. Tous droits réservés.</p>
+            <p>© 2026 Nopalou — Dakar, Sénégal. Tous droits réservés.</p>
           </div>
         </footer>
       </body>
