@@ -1,7 +1,14 @@
 const rateLimit = require('express-rate-limit');
 
+// Derrière Cloudflare, req.ip est une IP CDN partagée.
+// CF-Connecting-IP contient la vraie IP du client.
+function realIp(req) {
+  return (req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
+}
+
 const limiterGeneral = rateLimit({
-  windowMs: 15 * 60 * 1000, max: 100,
+  windowMs: 15 * 60 * 1000, max: 200,
+  keyGenerator: realIp,
   message: { error: 'Trop de requêtes — réessayez dans 15 min' },
   standardHeaders: true
 });
@@ -17,28 +24,33 @@ function blockScraperUA(req, res, next) {
 }
 
 const limiterImmo = rateLimit({
-  windowMs: 60 * 1000, max: 20,
+  windowMs: 60 * 1000, max: 60,
+  keyGenerator: realIp,
   message: { error: 'Trop de recherches immo — attendez 1 minute' },
   standardHeaders: true,
 });
 
 const limiterAuth = rateLimit({
   windowMs: 15 * 60 * 1000, max: 10,
+  keyGenerator: realIp,
   message: { error: 'Trop de tentatives de connexion' }
 });
 
 const limiterRecherche = rateLimit({
   windowMs: 60 * 1000, max: 60,
+  keyGenerator: realIp,
   message: { error: 'Trop de recherches — attendez 1 minute' }
 });
 
 const limiterPublication = rateLimit({
   windowMs: 60 * 60 * 1000, max: 5,
+  keyGenerator: realIp,
   message: { error: 'Trop d\'annonces publiées — réessayez dans 1 heure' }
 });
 
 const limiterEcriture = rateLimit({
   windowMs: 15 * 60 * 1000, max: 15,
+  keyGenerator: realIp,
   message: { error: 'Trop de requêtes — réessayez dans quelques minutes' }
 });
 
@@ -47,9 +59,10 @@ const limiterEcriture = rateLimit({
 const INTERNAL_IPS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
 const limiterBulk = rateLimit({
   windowMs: 15 * 60 * 1000, max: 300,
+  keyGenerator: realIp,
   message: { error: 'Trop de requêtes — créez un compte gratuit pour un accès illimité' },
   standardHeaders: true,
-  skip: (req) => !!(req.user) || INTERNAL_IPS.has(req.ip || ''),
+  skip: (req) => !!(req.user) || INTERNAL_IPS.has(realIp(req)),
 });
 
 module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImmo, limiterBulk, blockScraperUA };
