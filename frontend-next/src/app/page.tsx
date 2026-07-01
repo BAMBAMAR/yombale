@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 const SSR_SECRET = process.env.SSR_SECRET || ''
-const SSR_HEADERS = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}
+const SSR_HEADERS: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}
 import ProduitsListe from './ProduitsListe'
 import RecentlyViewed from './RecentlyViewed'
 
