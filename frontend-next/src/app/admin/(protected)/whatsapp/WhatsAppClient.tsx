@@ -119,13 +119,13 @@ export default function WhatsAppClient({
 
       {card('📊 État de la connexion Meta', <>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-          {[
-            ['Statut API', <span style={{ color: statusColor[status.api_status], fontWeight: 700 }}>{statusLabel[status.api_status]}</span>],
+          {([
+            ['Statut API', <span key="statut" style={{ color: statusColor[status.api_status], fontWeight: 700 }}>{statusLabel[status.api_status]}</span>],
             ['Phone ID', status.config.phone_number_id || '—'],
             ['Token', status.config.token_present ? '✅ Présent' : '❌ Manquant'],
             ['App Secret', status.config.app_secret ? '✅' : '❌'],
             ['Catalog ID', status.config.catalog_id || '—'],
-          ].map(([k, v]) => (
+          ] as [string, React.ReactNode][]).map(([k, v]) => (
             <div key={String(k)} style={{ background: '#f9fafb', borderRadius: 8, padding: '10px 16px', minWidth: 130 }}>
               <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>{k}</div>
               <div style={{ fontSize: 14, fontWeight: 600 }}>{v}</div>
