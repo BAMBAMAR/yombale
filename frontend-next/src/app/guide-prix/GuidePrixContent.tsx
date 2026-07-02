@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
+import ExternalImg from '@/components/ExternalImg'
 
 interface Produit {
   id: string
@@ -184,10 +185,7 @@ export default function GuidePrixPage() {
               onClick={() => voirDetail(p)}
             >
               <div className="guide-prix-item-img">
-                {p.image_url
-                  ? <img src={p.image_url} alt={p.nom} loading="lazy" />
-                  : <span style={{ fontSize: 24 }}>📦</span>
-                }
+                <ExternalImg src={p.image_url} alt={p.nom} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
               </div>
               <div className="guide-prix-item-info">
                 <p className="guide-prix-item-nom">{p.nom}</p>

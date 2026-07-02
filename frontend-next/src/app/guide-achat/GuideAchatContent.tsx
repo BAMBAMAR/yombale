@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
+import ExternalImg from '@/components/ExternalImg'
 
 const API = ''  // utilise le proxy Next.js /api/* → backend
 
@@ -288,9 +289,7 @@ export default function GuideAchatPage() {
                 {sorted.map((p, idx) => (
                   <Link href={`/produit/${p.id}`} key={p.id} className="guide-result-card">
                     {idx === 0 && <div className="guide-result-badge">🥇 Meilleur score</div>}
-                    {p.image_url && (
-                      <img src={p.image_url} alt={p.nom} className="guide-result-img" loading="lazy" />
-                    )}
+                    <ExternalImg src={p.image_url} alt={p.nom} className="guide-result-img" />
                     <div className="guide-result-body">
                       <p className="guide-result-nom">{p.nom}</p>
                       <p className="guide-result-prix">{fcfa(p.prix_min)}</p>

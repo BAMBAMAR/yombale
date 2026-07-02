@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
+import ExternalImg from '@/components/ExternalImg'
 
 interface Produit {
   id: string
@@ -76,12 +77,7 @@ export default function FavorisClient() {
       {produits.map(p => (
         <div key={p.id} className="fav-card">
           <div className="fav-card-img">
-            {p.image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.image_url} alt={p.nom} loading="lazy" />
-            ) : (
-              <span className="fav-img-placeholder">📦</span>
-            )}
+            <ExternalImg src={p.image_url} alt={p.nom} className="fav-img-placeholder" />
           </div>
           <div className="fav-card-body">
             {p.marque && <span className="fav-marque">{p.marque}</span>}

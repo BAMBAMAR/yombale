@@ -64,7 +64,9 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: '**.jumia.com' },
+      { protocol: 'https', hostname: 'jumia.com' },
       { protocol: 'https', hostname: '**.jumia.com.sn' },
+      { protocol: 'https', hostname: 'jumia.com.sn' },
       { protocol: 'https', hostname: 'www.coinafrique.com' },
       { protocol: 'https', hostname: 'images.coinafrique.com' },
       { protocol: 'https', hostname: '**.dakar-auto.com' },

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import CardActions from './CardActions'
+import ExternalImg from '@/components/ExternalImg'
 
 interface Produit {
   id: number
@@ -67,12 +68,7 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
                     -{Math.round((1 - p.prix_min / p.prix_max) * 100)}%
                   </span>
                 )}
-                {p.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.image_url} alt={p.nom} loading="lazy" />
-                ) : (
-                  <span className="card-img-placeholder">📦</span>
-                )}
+                <ExternalImg src={p.image_url} alt={p.nom} className="card-img-placeholder" />
               </div>
               {p.marque && <p className="marque">{p.marque}</p>}
               <p className="nom">{p.nom}</p>

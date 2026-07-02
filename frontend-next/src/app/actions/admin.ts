@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 const COOKIE  = 'nopalou_admin'
@@ -64,6 +65,8 @@ export async function modererAnnonce(
   })
 
   if (!r.ok) return { error: 'Erreur lors de la modération' }
+  revalidatePath('/admin/annonces')
+  revalidatePath('/annonces')
   return {}
 }
 

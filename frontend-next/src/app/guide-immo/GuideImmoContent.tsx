@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
+import ExternalImg from '@/components/ExternalImg'
 
 const API = ''
 
@@ -293,9 +294,7 @@ export default function GuideImmoPage() {
                 {sorted.map((a, idx) => (
                   <Link href={`/immo/${a.id}`} key={a.id} className="guide-result-card">
                     {idx === 0 && <div className="guide-result-badge">🥇 Meilleur score</div>}
-                    {a.image_url && (
-                      <img src={a.image_url} alt={a.titre} className="guide-result-img" loading="lazy" />
-                    )}
+                    <ExternalImg src={a.image_url} alt={a.titre} className="guide-result-img" />
                     <div className="guide-result-body">
                       <p className="guide-result-nom">{a.titre}</p>
                       <p className="guide-result-prix">

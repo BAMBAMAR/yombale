@@ -8,7 +8,13 @@ export default async function AdminWhatsAppPage() {
   const secret = jar.get('nopalou_admin')?.value ?? ''
   if (!secret) return null
 
-  let status: Record<string, any> = {}
+  let status: Record<string, any> = {
+    config: { phone_number_id: null, token_present: false, app_secret: false, verify_token: false, catalog_id: null, webhook_url: '' },
+    api_status: 'non_configure',
+    enabled: false,
+    chatbot: false,
+    stats: { sessions_total: 0, sessions_actives: 0, messages_24h: 0 },
+  }
   let sessions: any[] = []
 
   try {

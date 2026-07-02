@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import CardActions from '@/app/CardActions'
+import ExternalImg from '@/components/ExternalImg'
 
 export const dynamic = 'force-dynamic'
 
@@ -316,12 +317,7 @@ export default async function CategoriePage({
               <Link key={p.id} href={`/produit/${p.id}`} style={{ display: 'contents' }}>
                 <article className="card-produit">
                   <div className="card-img">
-                    {p.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.image_url} alt={p.nom} loading="lazy" />
-                    ) : (
-                      <span className="card-img-placeholder">{cat.emoji}</span>
-                    )}
+                    <ExternalImg src={p.image_url} alt={p.nom} fallback={cat.emoji} className="card-img-placeholder" />
                   </div>
                   {p.marque && <p className="marque">{p.marque}</p>}
                   <p className="nom">{p.nom}</p>

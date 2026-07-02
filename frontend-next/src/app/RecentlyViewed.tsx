@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
+import ExternalImg from '@/components/ExternalImg'
 
 export interface RecentItem {
   id: number
@@ -42,11 +43,7 @@ export default function RecentlyViewed() {
         {recents.map(p => (
           <Link key={p.id} href={`/produit/${p.id}`} className="recents-card">
             <div className="recents-img">
-              {p.image_url
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={p.image_url} alt={p.nom} loading="lazy" />
-                : <span>📦</span>
-              }
+              <ExternalImg src={p.image_url} alt={p.nom} />
             </div>
             <p className="recents-nom">{p.nom}</p>
             {p.prix_min && <p className="recents-prix">{fcfa(p.prix_min)}</p>}

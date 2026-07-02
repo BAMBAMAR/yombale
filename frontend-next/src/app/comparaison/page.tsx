@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
+import ExternalImg from '@/components/ExternalImg'
 
 export const metadata: Metadata = {
   title: 'Comparaison produits — Nopalou',
@@ -119,12 +120,7 @@ export default async function ComparaisonPage({
                     <div className="comp-best-badge">Meilleur prix</div>
                   )}
                   <div className="comp-prod-img">
-                    {produit.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={produit.image_url} alt={produit.nom} loading="lazy" />
-                    ) : (
-                      <span className="comp-img-placeholder">📦</span>
-                    )}
+                    <ExternalImg src={produit.image_url} alt={produit.nom} className="comp-img-placeholder" />
                   </div>
                   <Link href={`/produit/${produit.id}`} className="comp-prod-nom">
                     {produit.nom}

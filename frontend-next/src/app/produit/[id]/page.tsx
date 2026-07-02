@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { apiFetch } from '@/lib/api';
+import ExternalImg from '@/components/ExternalImg';
 import { fcfa, escapeHtml } from '@/lib/format';
 import { getOptionalSession } from '@/lib/dal';
 import AlertePrix from '@/app/AlertePrix';
@@ -332,10 +332,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
         {existeMoinsCher && meilleurSimilaire && (
           <Link href={`/produit/${meilleurSimilaire.id}`} className="meilleur-choix-banner">
             <div className="meilleur-choix-img">
-              {meilleurSimilaire.image_url
-                ? <Image src={meilleurSimilaire.image_url} alt={meilleurSimilaire.nom} fill sizes="64px" style={{ objectFit: 'contain' }} />
-                : <span>📦</span>
-              }
+              <ExternalImg src={meilleurSimilaire.image_url} alt={meilleurSimilaire.nom} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
             <div className="meilleur-choix-info">
               <span className="meilleur-choix-label">✨ Meilleur choix pour vous</span>
@@ -366,7 +363,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               <div className="produit-fiche-nom-row">
                 {produit.image_url && (
                   <div className="produit-fiche-img">
-                    <Image src={produit.image_url} alt={produit.nom} fill sizes="88px" style={{ objectFit: 'contain' }} priority />
+                    <ExternalImg src={produit.image_url} alt={produit.nom} style={{ width: '100%', height: '100%', objectFit: 'contain' }} loading="eager" />
                   </div>
                 )}
                 <h1 className="produit-fiche-nom">{produit.nom}</h1>
@@ -590,10 +587,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                         <td>
                           <div className="simil-produit-cell">
                             <div className="simil-img-wrap">
-                              {l.image_url
-                                ? <Image src={l.image_url} alt={l.nom} fill sizes="44px" style={{ objectFit: 'contain' }} />
-                                : <span>📦</span>
-                              }
+                              <ExternalImg src={l.image_url} alt={l.nom} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             </div>
                             <div>
                               <span className="simil-nom">{l.nom}</span>
