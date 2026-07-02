@@ -748,7 +748,7 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       [ids]
     );
 
-    // Vérifier les alertes de prix déclenchées par cette mise à jour
+    // Vérifier les alertes de prix déclenchées par cette mise à jour (comptes web, via produit_id)
     const { rows: declenchees } = await pool.query(
       `SELECT a.*, p.nom AS produit_nom, p.prix_min
        FROM alertes a
@@ -757,9 +757,21 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
          AND p.prix_min IS NOT NULL AND p.prix_min <= a.prix_cible`,
       [ids]
     );
-    if (declenchees.length > 0) {
+
+    // Idem pour les alertes créées via le chatbot WhatsApp (sans produit_id, matching par nom)
+    const { rows: declencheesWhatsapp } = await pool.query(
+      `SELECT a.*, p.id AS produit_id, p.nom AS produit_nom, p.prix_min
+       FROM alertes a
+       JOIN produits p ON p.id = ANY($1::uuid[])
+         AND p.nom ILIKE '%' || a.produit_nom || '%'
+       WHERE a.active = true AND a.telephone IS NOT NULL AND a.produit_id IS NULL
+         AND p.prix_min IS NOT NULL AND p.prix_min <= a.prix_cible`,
+      [ids]
+    );
+
+    if (declenchees.length > 0 || declencheesWhatsapp.length > 0) {
       const { envoyerAlertePrix } = require('./notifications');
-      for (const alerte of declenchees) {
+      for (const alerte of [...declenchees, ...declencheesWhatsapp]) {
         await envoyerAlertePrix(alerte, alerte.prix_min).catch(err => console.error('[ALERTE]', err.message));
       }
     }

@@ -250,6 +250,12 @@ module.exports = async function migrateInline() {
       EXCEPTION WHEN others THEN NULL; END $$;
     `);
 
+    // Requis par l'INSERT ... ON CONFLICT DO NOTHING du chatbot WhatsApp (whatsapp-chatbot.js)
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS uidx_alertes_telephone_produit_nom
+        ON alertes(telephone, produit_nom) WHERE telephone IS NOT NULL;
+    `);
+
     // Catalogue WhatsApp par boutique (optionnel — upgrade Pro/Business)
     await pool.query(`
       DO $$ BEGIN
