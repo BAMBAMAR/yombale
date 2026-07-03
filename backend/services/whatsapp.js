@@ -230,7 +230,7 @@ async function sendFiche(type, id, phone) {
     const r = await pool.query('SELECT * FROM forfaits_telecom WHERE id=$1', [id]);
     const o = r.rows[0];
     if (!o) throw new Error('Offre télécom introuvable');
-    return sendWhatsAppTemplate(phone, 'nopalou_carousel_telecom', [
+    return sendWhatsAppTemplate(phone, 'nopalou_carousel_telecoms', [
       { type: 'body', parameters: [{ type: 'text', text: o.nom || o.operateur }, { type: 'text', text: prixFmt(o.prix) }, { type: 'text', text: `${SITE}/telecom` }] },
     ]);
   }
