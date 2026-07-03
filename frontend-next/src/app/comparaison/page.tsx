@@ -120,7 +120,7 @@ export default async function ComparaisonPage({
                     <div className="comp-best-badge">Meilleur prix</div>
                   )}
                   <div className="comp-prod-img">
-                    <ExternalImg src={produit.image_url} alt={produit.nom} className="comp-img-placeholder" />
+                    <ExternalImg src={produit.image_url} alt={produit.nom} fallbackClassName="comp-img-placeholder" />
                   </div>
                   <Link href={`/produit/${produit.id}`} className="comp-prod-nom">
                     {produit.nom}

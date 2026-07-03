@@ -317,7 +317,7 @@ export default async function CategoriePage({
               <Link key={p.id} href={`/produit/${p.id}`} style={{ display: 'contents' }}>
                 <article className="card-produit">
                   <div className="card-img">
-                    <ExternalImg src={p.image_url} alt={p.nom} fallback={cat.emoji} className="card-img-placeholder" />
+                    <ExternalImg src={p.image_url} alt={p.nom} fallback={cat.emoji} fallbackClassName="card-img-placeholder" />
                   </div>
                   {p.marque && <p className="marque">{p.marque}</p>}
                   <p className="nom">{p.nom}</p>

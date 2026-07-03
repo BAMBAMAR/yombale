@@ -77,7 +77,7 @@ export default function FavorisClient() {
       {produits.map(p => (
         <div key={p.id} className="fav-card">
           <div className="fav-card-img">
-            <ExternalImg src={p.image_url} alt={p.nom} className="fav-img-placeholder" />
+            <ExternalImg src={p.image_url} alt={p.nom} fallbackClassName="fav-img-placeholder" />
           </div>
           <div className="fav-card-body">
             {p.marque && <span className="fav-marque">{p.marque}</span>}

@@ -68,7 +68,7 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
                     -{Math.round((1 - p.prix_min / p.prix_max) * 100)}%
                   </span>
                 )}
-                <ExternalImg src={p.image_url} alt={p.nom} className="card-img-placeholder" />
+                <ExternalImg src={p.image_url} alt={p.nom} fallbackClassName="card-img-placeholder" />
               </div>
               {p.marque && <p className="marque">{p.marque}</p>}
               <p className="nom">{p.nom}</p>

@@ -7,6 +7,7 @@ interface ExternalImgProps {
   alt: string
   fallback?: string
   className?: string
+  fallbackClassName?: string
   style?: React.CSSProperties
   loading?: 'lazy' | 'eager'
   width?: number
@@ -15,13 +16,15 @@ interface ExternalImgProps {
 
 /**
  * Balise img native avec fallback emoji quand l'URL externe est cassée (Jumia, Expat-Dakar…).
- * Préférer ce composant à next/image pour les URLs non-Cloudinary dont on ne maîtrise pas la disponibilité.
+ * - className  : appliquée à <img> uniquement
+ * - fallbackClassName : appliquée au <span> emoji fallback (défaut : aucune classe)
  */
 export default function ExternalImg({
   src,
   alt,
   fallback = '📦',
   className,
+  fallbackClassName,
   style,
   loading = 'lazy',
   width,
@@ -32,7 +35,7 @@ export default function ExternalImg({
   if (!src || broken) {
     return (
       <span
-        className={className}
+        className={fallbackClassName}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, ...style }}
         aria-label={alt}
       >
