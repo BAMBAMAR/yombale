@@ -54,11 +54,15 @@ router.post('/wave/initier', verifierToken, limiterEcriture, async (req, res) =>
 
 // POST /api/paiement/wave/webhook — appelé automatiquement par Wave
 router.post('/wave/webhook', limiterGeneral, async (req, res) => {
-  const sig      = req.headers['x-wave-signature'];
+  const sig      = req.headers['x-wave-signature'] || '';
   const expected = crypto
     .createHmac('sha256', process.env.WAVE_WEBHOOK_SECRET)
     .update(JSON.stringify(req.body)).digest('hex');
-  if (sig !== expected) return res.status(401).json({ error: 'Signature invalide' });
+  const sigBuf = Buffer.from(sig, 'hex');
+  const expBuf = Buffer.from(expected, 'hex');
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+    return res.status(401).json({ error: 'Signature invalide' });
+  }
 
   const { type, data } = req.body;
   if (type === 'checkout.session.completed') {
@@ -309,7 +313,9 @@ router.post('/orange/webhook', limiterGeneral, async (req, res) => {
       .createHmac('sha256', process.env.ORANGE_WEBHOOK_SECRET)
       .update(req.rawBody || JSON.stringify(req.body)).digest('hex');
     const clean = sig.replace(/^sha256=/, '');
-    if (!crypto.timingSafeEqual(Buffer.from(clean || '', 'hex'), Buffer.from(expected, 'hex'))) {
+    const sigBuf = Buffer.from(clean, 'hex');
+    const expBuf = Buffer.from(expected, 'hex');
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
       return res.status(401).json({ error: 'Signature Orange invalide' });
     }
   }
@@ -445,10 +451,11 @@ router.post('/boost/initier', verifierToken, limiterEcriture, async (req, res) =
     if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
 
     const clientRef = `boost_${userId}_${annonce_id}`;
+    const { boost: prixBoost } = await getPrix();
     const session = await require('axios').post(
       'https://api.wave.com/v1/checkout/sessions',
       {
-        amount:           500,
+        amount:           prixBoost,
         currency:         'XOF',
         success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${annonce_id}&type=boost`,
         error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
