@@ -123,7 +123,25 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
-## État du projet (1er juillet 2026 — mis à jour après audit complet + implémentation)
+## État du projet (3 juillet 2026 — mis à jour après tests réels WhatsApp/paiement + corrections de bugs)
+
+**Résumé** : le code est fonctionnellement complet (confirmé le 1er juillet). Le 3 juillet, une revue approfondie + des tests réels en production (Render + Meta) ont trouvé et corrigé 4 bugs. L'intégration WhatsApp est techniquement opérationnelle côté serveur mais bloquée sur des étapes externes Meta (voir ci-dessous). Docs créés dans `docs/` : `LANCEMENT-CHECKLIST.md`, `STRATEGIE-COMMERCIALE.md`, `PLAN-MARKETING.md`, `WHATSAPP-TEMPLATES.md`.
+
+### Bugs corrigés le 3 juillet 2026 (4 commits sur `main`)
+1. **`alertes` (contrainte manquante)** — `migrate-inline.js` : ajout d'un index UNIQUE sur `alertes(telephone, produit_nom)`. Sans lui, l'`INSERT ... ON CONFLICT DO NOTHING` du chatbot (`whatsapp-chatbot.js`) échouait avec une erreur Postgres 42P10 à chaque création d'alerte WhatsApp.
+2. **Déclenchement des alertes WhatsApp** — `scraper.js` : le job qui déclenche les alertes prix ne matchait que via `produit_id` (comptes web). Les alertes créées par chatbot WhatsApp (sans `produit_id`, juste `produit_nom` texte libre) n'étaient jamais déclenchées. Ajout d'un second bloc de requête avec matching `ILIKE` sur le nom.
+3. **`/api/whatsapp/admin/status`** — `whatsapp.js` : la requête utilisait `created_at` alors que la table `whatsapp_processed_messages` n'a que `processed_at`. Faisait planter l'endpoint de diagnostic admin.
+4. **Sécurité paiement** — `paiement.js` : comparaison de signature Wave passée en `timingSafeEqual` (était un `!==` classique, vulnérable en théorie à une attaque de timing) ; ajout d'une vérification de longueur de buffer avant `timingSafeEqual` côté Orange (évitait un crash sur signature malformée) ; le prix du boost annonce était codé en dur à 500 FCFA au lieu d'être lu depuis `settings` (`prix_boost`) comme partout ailleurs.
+5. **Nom de template télécom** — le template `nopalou_carousel_telecom` a été soumis à Meta avec un contenu erroné et ne peut pas être corrigé/supprimé tant qu'il est en review. Le code (`whatsapp.js`) référence maintenant `nopalou_carousel_telecoms` (avec un "s") qui est le template correctement soumis. **Si vous retouchez ce code, gardez le "s".**
+
+### État réel de l'intégration WhatsApp (testé en direct le 3 juillet)
+- ✅ Webhook, HMAC (`WHATSAPP_APP_SECRET` était absent, corrigé), token système permanent, `BACKEND_URL` (était `undefined`, corrigé) — tous vérifiés via `GET /api/whatsapp/admin/status`, `api_status: ok`.
+- ✅ Les 4 templates WhatsApp sont soumis à Meta (approbation 24-48h) — contenu exact dans `docs/WHATSAPP-TEMPLATES.md`. Format **Standard** (pas de vrai Carousel — l'option n'a pas été trouvée dans l'interface Meta actuelle ; le code a un fallback texte qui fonctionne avec ce format).
+- ⚠️ **Bloquant réel** : le numéro de test WhatsApp reste lié à un ancien compte WhatsApp personnel (message Meta *"Ce numéro de téléphone est déjà enregistré dans un compte WhatsApp"*). Il faut supprimer ce compte (pas juste désinstaller l'app) et attendre plusieurs heures avant de pouvoir réenregistrer le numéro.
+- ⚠️ **Constat important, non documenté avant** : tant que l'app Meta n'est pas **publiée**, un vrai message WhatsApp entrant (envoyé depuis un vrai téléphone, même un numéro testeur ajouté à l'app) n'est **PAS transmis au webhook**. Seul le bouton "Test" du WhatsApp Manager (dashboard Meta) simule un événement webhook et atteint le serveur. Ceci explique pourquoi `messages_24h` dans `/admin/status` ne reflète que les tests dashboard, pas les vrais messages envoyés pendant les tests du 3 juillet.
+- ⏳ Publication de l'app Meta = nécessite la vérification d'entreprise Business Manager (pas encore lancée au 3 juillet), + le numéro dissocié, + un moyen de paiement pour les messages business-initiated.
+
+### État du projet (1er juillet 2026 — mis à jour après audit complet + implémentation)
 
 ### Ce qui est complet et fonctionnel
 
@@ -220,51 +238,27 @@ Cache mémoire 5 min — fichier : `backend/lib/settingsCache.js`.
 - DAL avec `verifySession()` + `getOptionalSession()` via React `cache()`
 - Middleware de protection des routes
 
-### Ce qui reste à faire — actions externes uniquement
+### Ce qui reste à faire (mis à jour 3 juillet 2026 — voir aussi `docs/LANCEMENT-CHECKLIST.md` pour le suivi détaillé)
 
-#### 🔴 Immédiat (Render — variables d'environnement)
-```
-ORANGE_WEBHOOK_SECRET=<demander à Orange ou mettre valeur random si pas de HMAC Orange>
-HASHIDS_SALT=<node -e "console.log(require('crypto').randomBytes(24).toString('hex'))">
-```
+#### ✅ Déjà fait (3 juillet 2026)
+- `ORANGE_WEBHOOK_SECRET`, `HASHIDS_SALT` générés et configurés sur Render
+- Resend/DNS : domaine `nopalou.com` vérifié
+- WhatsApp : app Meta créée, token permanent, webhook déclaré + validé, `WHATSAPP_APP_SECRET`/`BACKEND_URL` corrigés, 4 templates soumis (voir bugs corrigés ci-dessus)
 
-#### 🟠 Urgent (30 min chacun)
-1. **Wave webhook** — déclarer `https://votre-app.onrender.com/api/paiement/wave/webhook` dans le dashboard Wave + copier `WAVE_WEBHOOK_SECRET` dans Render
-2. **Resend DNS** — valider le domaine `nopalou.com` sur [resend.com/domains](https://resend.com/domains) → mettre à jour `EMAIL_FROM=Nopalou <noreply@nopalou.com>` sur Render
-
-#### 🟡 Cette semaine (Meta WhatsApp — 3-7 jours total)
-Ordre exact :
-1. Créer compte Meta Business Manager → vérifier l'entreprise (document officiel, délai 1-3 jours)
-2. Créer app Meta → Type "Business" → ajouter produit WhatsApp
-3. Obtenir numéro dédié WhatsApp Business (+221 Sénégal recommandé)
-4. Créer **utilisateur système Admin** dans Business Manager → générer token permanent avec scopes `whatsapp_business_messaging` + `whatsapp_business_management`
-5. Ajouter dans Render :
-   ```
-   WHATSAPP_PHONE_NUMBER_ID=<API Setup de l'app Meta>
-   WHATSAPP_API_TOKEN=<token système permanent>
-   WHATSAPP_APP_SECRET=<Paramètres de l'app Meta>
-   WHATSAPP_VERIFY_TOKEN=<chaîne arbitraire, ex: nopalou_wh_2026>
-   WHATSAPP_BUSINESS_ACCOUNT_ID=<WABA ID dans Business Manager>
-   WHATSAPP_CATALOG_ID=<si catalogue Meta Commerce — optionnel>
-   ```
-6. Déclarer webhook dans Meta → URL : `https://votre-app.onrender.com/api/whatsapp/webhook` → Token : valeur de `WHATSAPP_VERIFY_TOKEN` → S'abonner à `messages`
-7. Soumettre les 4 templates (délai approbation 24-48h) :
-   - `nopalou_carousel_annonce` (Carousel)
-   - `nopalou_carousel_immo` (Carousel)
-   - `nopalou_carousel_telecom` (Carousel)
-   - `nopalou_fiche_texte` (Text + boutons)
-
-#### 🟡 Orange Money webhook (10 min)
-- Déclarer `https://votre-app.onrender.com/api/paiement/orange/webhook` dans le dashboard Orange Money Sénégal
-- Si Orange fournit un secret HMAC → l'ajouter dans `ORANGE_WEBHOOK_SECRET` sur Render
+#### 🔴 Bloquants externes en cours
+1. **Wave** — aucun compte Wave Business ouvert. Créer sur business.wave.com (KYC : pièce d'identité + RCCM/NINEA), puis déclarer le webhook `/api/paiement/wave/webhook` + copier `WAVE_WEBHOOK_SECRET` dans Render.
+2. **Orange Money** — aucun compte marchand ouvert. Ouvrir un compte marchand Orange Money Sénégal, obtenir les identifiants API/webpay, déclarer le webhook `/api/paiement/orange/webhook`.
+3. **Numéro WhatsApp coincé** — lié à un ancien compte WhatsApp personnel. Supprimer ce compte (pas juste désinstaller l'app), attendre plusieurs heures, réessayer l'enregistrement côté Meta.
+4. **Vérification d'entreprise Meta Business Manager** — pas encore lancée (RCCM/NINEA disponibles). Nécessaire pour publier l'app et recevoir de vrais messages WhatsApp entrants (pas juste les tests dashboard).
+5. **Publication de l'app Meta** — dépend des points 3 et 4.
 
 #### 🟢 Optionnel
 - **Scraper Facebook immo** : ajouter `FB_EMAIL` + `FB_PASSWORD` sur Render
-- **Sync initiale catalogue Meta** : endpoint admin `POST /api/boutiques/admin/sync-catalog` (pas encore implémenté)
+- **Sync initiale catalogue Meta** : `POST /api/boutiques/admin/sync-catalog` (déjà implémenté, juste besoin de `WHATSAPP_CATALOG_ID` configuré + appel manuel)
 - **Tests unitaires** : `whatsapp-chatbot.js`, `notifications.js`, `scraper.js`
 
 #### Vérification post-déploiement
-Aller sur `/admin/whatsapp` — la checklist indique en temps réel ce qui est configuré ou manquant.
+Aller sur `/admin/whatsapp` — la checklist indique en temps réel ce qui est configuré ou manquant (endpoint réel : `GET /api/whatsapp/admin/status`, testable via `curl.exe` sur Windows/PowerShell avec le header `X-Admin-Secret`).
 
 #### Schéma DB — tables clés à connaître
 | Table | Usage |
