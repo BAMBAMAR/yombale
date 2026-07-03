@@ -15,12 +15,27 @@ n'est implémenté — ce document couvre le système technique complet.
 
 | Sujet | Décision |
 |---|---|
-| Taux de commission | 10% du montant de l'abonnement, récurrent chaque mois tant que l'abonnement recruté reste actif |
+| Taux de commission | Paramétrable via `settings` (défaut 10%), du montant de l'abonnement, récurrent chaque mois tant que l'abonnement recruté reste actif |
 | Auth apporteur | Compte utilisateur existant (auth JWT actuelle) + flag `est_apporteur` — pas de nouveau système d'auth |
 | Attribution boutique → apporteur | Combinaison des 3 : (1) lien trackable automatique via cookie, (2) champ manuel de secours au dépôt boutique, (3) correction/attribution manuelle par l'admin |
 | Déclenchement commission | À chaque paiement d'abonnement réellement encaissé (webhook Wave/Orange), pas à la création de l'abonnement |
-| Règlement | Calcul automatique du montant dû, mais versement 100% manuel (Wave/Orange par le fondateur) — un statut `du`/`paye` à cocher en admin, aucun virement automatisé |
+| Règlement | Calcul automatique du montant dû, mais versement 100% manuel (Wave/Orange par le fondateur) — un statut `du`/`paye` à cocher en admin, aucun virement automatisé. Un seuil minimum paramétrable bloque le règlement d'un apporteur individuel tant que son cumul `du` ne l'atteint pas. |
 | QR code carte de visite | QR générique vers `nopalou.com` (pas personnalisé par apporteur dans ce lot — enrichissement futur possible) |
+| Activation du programme | Paramétrable via `settings` — toggle global, comme `paiement_wave`/`paiement_orange` |
+| Fenêtre d'attribution (cookie) | Paramétrable via `settings` (défaut 30 jours) |
+
+### Tous les paramètres numériques/toggles du programme sont configurables sans redéploiement
+
+Cohérent avec le système `settings` existant (`backend/lib/settingsCache.js`, cache mémoire 5 min),
+utilisé pour `plan_pro_prix`, `plan_business_prix`, `paiement_wave`, etc. Nouvelles clés à ajouter
+à l'objet `DEFAULTS` de `settingsCache.js` (comme les clés existantes) :
+
+| Clé settings | Défaut | Description |
+|---|---|---|
+| `apporteur_actif` | `true` | Active/désactive le programme dans son ensemble — si `false`, `POST /api/apporteurs/devenir` refuse (403) et aucune commission n'est générée |
+| `apporteur_taux_commission` | `10` | % appliqué sur chaque paiement d'abonnement encaissé pour une boutique liée à un apporteur |
+| `apporteur_seuil_paiement` | `3000` | Montant cumulé minimum (FCFA) de commissions `du` avant que l'admin puisse les marquer `paye` |
+| `apporteur_cookie_jours` | `30` | Durée de validité (jours) du cookie d'attribution posé après un clic sur un lien `?apporteur=CODE` |
 
 ## Architecture
 
@@ -55,11 +70,11 @@ regénérés en cas de collision (vérification unicité avant insertion).
 
 | Route | Auth | Description |
 |---|---|---|
-| `POST /api/apporteurs/devenir` | `verifierToken` | Active `est_apporteur=true`, génère `code_apporteur` si absent. Idempotent (si déjà apporteur, renvoie le code existant). |
-| `GET /api/apporteurs/mes-stats` | `verifierToken` | 403 si `est_apporteur=false`. Renvoie : code, lien de partage, liste des boutiques recrutées (nom, plan, statut abonnement), total dû, total payé. |
+| `POST /api/apporteurs/devenir` | `verifierToken` | 403 si `apporteur_actif=false` (settings). Sinon active `est_apporteur=true`, génère `code_apporteur` si absent. Idempotent (si déjà apporteur, renvoie le code existant). |
+| `GET /api/apporteurs/mes-stats` | `verifierToken` | 403 si `est_apporteur=false`. Renvoie : code, lien de partage, liste des boutiques recrutées (nom, plan, statut abonnement), total dû, total payé, taux de commission actuel, seuil de paiement actuel. |
 | `GET /api/apporteurs/admin` | `adminSecretOnly` | Liste tous les apporteurs avec total dû/payé, pour vue d'ensemble. |
-| `GET /api/apporteurs/admin/commissions` | `adminSecretOnly` | Liste toutes les lignes de commission (filtrable par statut), pour l'écran de règlement. |
-| `PUT /api/apporteurs/admin/commissions/:id/payer` | `adminSecretOnly` | Passe une ligne `du` → `paye`, fixe `paye_at=NOW()`. Rejette si déjà payée (409). |
+| `GET /api/apporteurs/admin/commissions` | `adminSecretOnly` | Liste toutes les lignes de commission (filtrable par statut), pour l'écran de règlement. Indique pour chaque apporteur si son cumul `du` atteint `apporteur_seuil_paiement`. |
+| `PUT /api/apporteurs/admin/commissions/:id/payer` | `adminSecretOnly` | Passe une ligne `du` → `paye`, fixe `paye_at=NOW()`. Rejette si déjà payée (409). Rejette aussi (422) si le cumul `du` de l'apporteur pour cette ligne est sous `apporteur_seuil_paiement` — sauf si l'admin force via `{ ignorer_seuil: true }` dans le body (cas exceptionnel, ex. départ d'un apporteur). |
 | `PUT /api/apporteurs/admin/boutiques/:id/attribuer` | `adminSecretOnly` | Body `{ code_apporteur }` ou `{ apporteur_id: null }` pour dissocier. Résout le code → id, met à jour `boutiques.apporteur_id`. |
 
 ### 3. Attribution automatique (lien trackable)
@@ -68,10 +83,11 @@ regénérés en cas de collision (vérification unicité avant insertion).
   et équivalents pour `/boutique`, `/deposer-immo` (toute page d'entrée qui mène à la création
   d'une boutique/annonce payante).
 - Le middleware Next.js (`middleware.ts`) détecte `?apporteur=CODE` sur ces routes et pose un
-  cookie `nopalou_apporteur=CODE` (non-httpOnly, 30 jours, pour rester lisible côté Server Action
-  si besoin — mais écrit uniquement côté serveur pour éviter la falsification triviale... note :
-  un cookie simple reste falsifiable côté client ; acceptable ici car l'enjeu est un abus de
-  commission détectable a posteriori par l'admin, pas une faille de sécurité critique).
+  cookie `nopalou_apporteur=CODE` (non-httpOnly, durée lue depuis `apporteur_cookie_jours` via
+  `GET /api/settings/public`, pour rester lisible côté Server Action si besoin — mais écrit
+  uniquement côté serveur pour éviter la falsification triviale... note : un cookie simple reste
+  falsifiable côté client ; acceptable ici car l'enjeu est un abus de commission détectable a
+  posteriori par l'admin, pas une faille de sécurité critique).
 - Le formulaire de création boutique (`/boutique` — création initiale) inclut un champ optionnel
   "Code apporteur (si recommandé par quelqu'un)" pré-rempli depuis le cookie si présent, modifiable
   par l'utilisateur.
@@ -85,20 +101,27 @@ Dans `backend/routes/paiement.js`, aux points où un paiement d'abonnement Wave/
 confirmé (webhook) et où `abonnements` passe à `statut='actif'` avec succès :
 
 ```js
-const boutique = await pool.query('SELECT apporteur_id FROM boutiques WHERE utilisateur_id=$1', [userId]);
-if (boutique.rows[0]?.apporteur_id) {
-  const montantCommission = prixPaye * 0.10;
-  await pool.query(
-    `INSERT INTO commissions_apporteur (apporteur_id, boutique_id, abonnement_id, montant)
-     VALUES ($1, $2, $3, $4)`,
-    [boutique.rows[0].apporteur_id, boutique.rows[0].id, abonnementId, montantCommission]
-  );
+const settingsCache = require('../lib/settingsCache');
+
+const apporteurActif = await settingsCache.getBool('apporteur_actif');
+if (apporteurActif) {
+  const boutique = await pool.query('SELECT apporteur_id FROM boutiques WHERE utilisateur_id=$1', [userId]);
+  if (boutique.rows[0]?.apporteur_id) {
+    const taux = await settingsCache.getNum('apporteur_taux_commission');
+    const montantCommission = prixPaye * (taux / 100);
+    await pool.query(
+      `INSERT INTO commissions_apporteur (apporteur_id, boutique_id, abonnement_id, montant)
+       VALUES ($1, $2, $3, $4)`,
+      [boutique.rows[0].apporteur_id, boutique.rows[0].id, abonnementId, montantCommission]
+    );
+  }
 }
 ```
 
-Le taux 10% est en dur dans le code pour ce lot (pas dans `settings`, contrairement aux autres
-tarifs) — cohérent avec la décision produit actuelle ; migration vers `settings` possible plus
-tard sans casser le schéma.
+Le taux est lu depuis `settings` (clé `apporteur_taux_commission`) à chaque déclenchement, pas
+figé à l'insertion — un changement de taux en cours de mois s'applique aux paiements suivants
+sans affecter les commissions déjà enregistrées (chaque ligne stocke le `montant` déjà calculé,
+donc l'historique reste stable même si le taux global change ensuite).
 
 ### 5. Frontend Next.js
 
@@ -108,24 +131,28 @@ tard sans casser le schéma.
   liste des boutiques recrutées avec statut, total dû / payé.
 
 **`/admin/apporteurs`** (nouvelle page admin, dans `(protected)/`)
+- Bloc configuration en haut de page (lit/écrit `settings` via les routes `/api/settings`
+  existantes, même pattern que `/admin/tarifs`) : toggle actif/inactif, taux de commission (%),
+  seuil de paiement (FCFA), durée du cookie d'attribution (jours)
 - Tableau des apporteurs avec total dû/payé
-- Tableau des commissions `du` avec bouton "Marquer payé"
+- Tableau des commissions `du` avec bouton "Marquer payé" — désactivé (grisé, avec tooltip) si
+  le cumul de l'apporteur est sous le seuil configuré, avec option "forcer" pour l'admin
 - Formulaire d'attribution manuelle boutique → code apporteur (pour corriger les cas où le
   tracking automatique a échoué)
 
-### 6. QR code carte de visite
+### 6. QR code carte de visite — ✅ déjà livré (hors périmètre de ce lot)
 
-- Ajout dépendance `qrcode` (génère SVG serveur, compatible edge runtime `next/og` à vérifier —
-  si incompatible avec `runtime = 'edge'`, basculer cette route spécifique en `runtime = 'nodejs'`).
-- `frontend-next/src/app/assets/carte-visite/route.tsx` : remplace le placeholder texte
-  `[QR code nopalou.com]` par le SVG généré, pointant vers `https://nopalou.com` (générique,
-  pas personnalisé par apporteur dans ce lot).
+Fait le 2026-07-03 (commit `9c97b76`) : `qrcode-svg` (pure JS, compatible edge runtime) génère un
+SVG encodé en data URI, affiché dans `frontend-next/src/app/assets/carte-visite/route.tsx`,
+pointant vers `https://nopalou.com` (générique, pas personnalisé par apporteur).
 
 ## Hors scope (explicitement exclu de ce lot)
 
 - Virement automatique de la commission (Wave/Orange payout API) — reste manuel
 - QR code personnalisé par apporteur (avec son propre code de tracking encodé)
-- Paliers de commission variables selon volume recruté
+- Paliers de commission automatiques selon volume recruté (ex: 15% après 10 boutiques actives) —
+  le taux reste unique et global, ajustable manuellement via `settings`, mais pas de règle
+  automatique par palier
 - Notifications automatiques (email/WhatsApp) à l'apporteur quand une commission est due ou payée
 - Historique/export comptable des commissions (CSV, etc.)
 
@@ -133,11 +160,12 @@ tard sans casser le schéma.
 
 1. **Cookie falsifiable** : un utilisateur technique pourrait forger `nopalou_apporteur=CODE`
    pour attribuer une fausse commission à un apporteur complice. Accepté comme risque mineur
-   (impact financier limité au 10% d'un abonnement, détectable en admin) — pas de mitigation
-   dans ce lot.
-2. **Compatibilité edge runtime + `qrcode`** : à vérifier en implémentation ; certaines
-   librairies QR ne fonctionnent pas en edge runtime (dépendance à `canvas` ou Buffer Node).
-   Si incompatible, utiliser une génération SVG pure sans dépendance native.
-3. **Boutique existante sans apporteur, recrutée rétroactivement** : le formulaire de création
+   (impact financier limité au taux configuré d'un abonnement, détectable en admin) — pas de
+   mitigation dans ce lot.
+2. **Boutique existante sans apporteur, recrutée rétroactivement** : le formulaire de création
    boutique n'est déclenché qu'à la création — si un apporteur recrute un commerçant qui a
    *déjà* une boutique, l'attribution ne peut se faire que via la route admin manuelle.
+3. **Changement de taux en cours de route** : si `apporteur_taux_commission` est modifié en
+   admin, les commissions déjà en base gardent leur `montant` figé (calculé au moment du
+   paiement) — seuls les paiements futurs utilisent le nouveau taux. Comportement voulu, mais
+   à garder en tête si l'admin s'attend à un recalcul rétroactif (ce n'est pas le cas).
