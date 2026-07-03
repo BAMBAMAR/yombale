@@ -1,9 +1,17 @@
 import { ImageResponse } from 'next/og'
+import QRCode from 'qrcode-svg'
 
 export const runtime = 'edge'
 
+function qrDataUri(text: string) {
+  const svg = new QRCode({ content: text, padding: 0, width: 200, height: 200, color: '#1C2B4A', background: '#ffffff' }).svg()
+  const base64 = Buffer.from(svg).toString('base64')
+  return `data:image/svg+xml;base64,${base64}`
+}
+
 // Carte de visite numérique — à partager par WhatsApp lors du démarchage
 export async function GET() {
+  const qr = qrDataUri('https://nopalou.com')
   return new ImageResponse(
     (
       <div style={{
@@ -70,10 +78,10 @@ export async function GET() {
             width: 200, height: 200, background: '#fff',
             borderRadius: 16, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
-            fontSize: 14, color: '#1C2B4A', fontWeight: 700, textAlign: 'center',
             padding: 12,
           }}>
-            [QR code nopalou.com]
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qr} width={176} height={176} alt="QR nopalou.com" />
           </div>
           <span style={{ fontSize: 15, color: '#94A3B8' }}>
             Scannez pour visiter
