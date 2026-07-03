@@ -105,7 +105,7 @@ router.get('/admin/status', adminSecretOnly, async (req, res) => {
     // Stats sessions
     const [sessions, processed] = await Promise.all([
       pool.query('SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE updated_at > NOW() - INTERVAL \'1 hour\') AS actives FROM whatsapp_sessions'),
-      pool.query('SELECT COUNT(*) AS total FROM whatsapp_processed_messages WHERE created_at > NOW() - INTERVAL \'24 hours\''),
+      pool.query('SELECT COUNT(*) AS total FROM whatsapp_processed_messages WHERE processed_at > NOW() - INTERVAL \'24 hours\''),
     ]);
 
     const enabled = await cfg.getBool('whatsapp_enabled');
