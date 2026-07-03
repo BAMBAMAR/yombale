@@ -31,6 +31,36 @@ const VISUELS = [
     url: '/assets/logo-sombre',
     usage: 'Réseaux sociaux',
   },
+  {
+    titre: 'Bannière hero (desktop)',
+    desc: '1920 × 600 px — Bannière page d\'accueil du site',
+    url: '/assets/banniere-hero',
+    usage: 'Site web',
+  },
+  {
+    titre: 'Bannière hero (mobile)',
+    desc: '750 × 1000 px — Version mobile de la bannière d\'accueil',
+    url: '/assets/banniere-hero-mobile',
+    usage: 'Site web mobile',
+  },
+  {
+    titre: 'Flyer démarchage terrain',
+    desc: '1240 × 1748 px (A5, 150 dpi) — À imprimer et laisser chez les commerçants démarchés',
+    url: '/assets/flyer-demarchage',
+    usage: 'Démarchage terrain',
+  },
+  {
+    titre: 'Visuel programme apporteur d\'affaires',
+    desc: '1080 × 1080 px — Post pour recruter des apporteurs dans votre réseau',
+    url: '/assets/apporteur-affaires',
+    usage: 'Recrutement apporteurs',
+  },
+  {
+    titre: 'Carte de visite numérique',
+    desc: '1050 × 600 px — À partager par WhatsApp lors du démarchage (QR code à ajouter manuellement)',
+    url: '/assets/carte-visite',
+    usage: 'WhatsApp',
+  },
 ]
 
 const TEXTES = [
@@ -208,6 +238,24 @@ const PLAN_DEMARCHAGE = [
     cible: 'Recueillir témoignages des early adopters, relancer ceux non convertis',
     objectif: 'Convertir 30-50% des essais gratuits en abonnements payants',
   },
+]
+
+const APPORTEUR_TEXTE = `💼 Devenez apporteur d'affaires Nopalou
+
+Vous connaissez des commerçants, agences immobilières ou vendeurs à Dakar ? Présentez-leur Nopalou et touchez 10% de commission récurrente sur chaque abonnement Pro ou Business que vous recrutez — chaque mois, tant que la boutique reste abonnée.
+
+Comment ça marche :
+1. Vous présentez Nopalou à votre contact (script fourni)
+2. Le commerçant crée sa boutique avec votre code apporteur
+3. Dès qu'il passe en Pro ou Business payant, vous touchez 10% chaque mois
+
+Aucun investissement, aucun engagement de votre part. Paiement mensuel par Wave ou Orange Money.
+
+📲 Contact : [votre numéro WhatsApp]`
+
+const APPORTEUR_EXEMPLES = [
+  { formule: 'Boutique Pro', prix: '15 000 FCFA/mois', commission: '1 500 FCFA/mois par boutique' },
+  { formule: 'Boutique Business', prix: '35 000 FCFA/mois', commission: '3 500 FCFA/mois par boutique' },
 ]
 
 export default function CommunicationPage() {
@@ -418,6 +466,59 @@ export default function CommunicationPage() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <hr style={{ border: 'none', borderTop: '2px solid #E2E8F0', margin: '48px 0' }} />
+
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1C2B4A', marginBottom: 6 }}>
+        💼 Programme apporteur d&apos;affaires
+      </h1>
+      <p style={{ color: '#64748B', marginBottom: 32, fontSize: 14 }}>
+        Recrutez des apporteurs dans votre réseau pour vulgariser Nopalou moyennant commission.
+        ⚠️ Le suivi (code apporteur, calcul et paiement de la commission) n&apos;est pas encore développé — ceci est le kit de présentation, pas un système automatisé.
+      </p>
+
+      <section style={{ marginBottom: 48 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
+          💰 Grille de commission — 10% récurrent
+        </h2>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10 }}>
+            <thead>
+              <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
+                {['Formule recrutée', 'Prix', 'Commission apporteur (10%)'].map(h => (
+                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: '#64748B', fontWeight: 700 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {APPORTEUR_EXEMPLES.map(e => (
+                <tr key={e.formule} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={{ padding: '12px 14px', fontWeight: 700, color: '#1C2B4A' }}>{e.formule}</td>
+                  <td style={{ padding: '12px 14px', color: '#64748B' }}>{e.prix}</td>
+                  <td style={{ padding: '12px 14px', color: '#C75B00', fontWeight: 700 }}>{e.commission}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p style={{ fontSize: 12, color: '#94A3B8', marginTop: 12 }}>
+          Commission versée chaque mois tant que l&apos;abonnement recruté reste actif. Paiement par Wave ou Orange Money.
+        </p>
+      </section>
+
+      <section>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
+          📢 Texte de recrutement (à partager par WhatsApp/réseaux)
+        </h2>
+        <pre style={{
+          fontSize: 13, color: '#1C2B4A', whiteSpace: 'pre-wrap',
+          background: '#F8FAFC', border: '1px solid #E2E8F0',
+          borderRadius: 8, padding: '20px', margin: 0, lineHeight: 1.8,
+          fontFamily: 'system-ui, sans-serif',
+        }}>
+          {APPORTEUR_TEXTE}
+        </pre>
       </section>
     </div>
   )
