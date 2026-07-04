@@ -102,3 +102,43 @@ No other lines in either file were touched.
 ### DB-backed migration test
 
 Skipped honestly: no `backend/.env` file exists in this worktree and no `DATABASE_URL` is reachable in this sandbox (same limitation noted in the original Task 4 report above). The new index statement follows the exact same idempotent `CREATE ... IF NOT EXISTS` pattern already used and proven elsewhere in this same file (e.g. `uidx_utilisateurs_code_apporteur`), so it is expected to apply cleanly, but this was not empirically verified against a live database in this run.
+
+## Fix: admin/activer commande_ref collision
+
+### Statut : DONE
+
+### Contexte
+Régression trouvée en code review : le commit `66026a8` a ajouté un index UNIQUE partiel sur `abonnements.commande_ref` (`WHERE commande_ref IS NOT NULL`) pour empêcher les doubles commissions en cas de replay webhook. Correct pour les vrais chemins webhook Wave/Orange, mais la route `POST /api/abonnements/admin/activer` (activation admin/test, bypass paiement) codait en dur `commande_ref = 'admin_test'` sur chaque appel. Comme cette valeur n'est pas NULL, l'index unique s'applique : le 2e appel de cette route (pour n'importe quel utilisateur/plan) provoquait une violation de contrainte Postgres, remontée en 500 par le `catch` générique de la route — sans `ON CONFLICT` sur cet INSERT.
+
+### Fichier modifié
+`backend/routes/abonnements.js` — route `POST /admin/activer` (ligne ~117-121)
+
+### Changement exact
+Avant :
+```js
+const { rows } = await pool.query(
+  `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
+   VALUES ($1,$2,'actif',$3,$4,'admin_test') RETURNING id, plan, fin`,
+  [userId, plan, PLANS[plan].prix, fin]
+);
+```
+
+Après :
+```js
+const { rows } = await pool.query(
+  `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
+   VALUES ($1,$2,'actif',$3,$4,$5) RETURNING id, plan, fin`,
+  [userId, plan, PLANS[plan].prix, fin, `admin_test_${userId}_${Date.now()}`]
+);
+```
+
+Le littéral `'admin_test'` dans le SQL a été remplacé par un placeholder `$5`, avec la valeur générée dynamiquement via template literal (cohérent avec la convention existante du fichier, ex. ligne 45 : `` `abmt_${userId}_${plan}` ``). Chaque appel génère désormais un `commande_ref` unique (préfixe reconnaissable `admin_test_` + `userId` + timestamp ms), qui reste identifiable dans la table `abonnements` comme provenant de cette route admin, sans jamais entrer en collision avec un appel précédent.
+
+### Vérification
+1. `node -c backend/routes/abonnements.js` → passe sans erreur de syntaxe.
+2. `git diff HEAD -- backend/routes/abonnements.js` → confirme que seule cette valeur dans cet INSERT a changé (2 lignes touchées : la chaîne SQL et le tableau de paramètres), rien d'autre dans le fichier.
+3. Arithmétique de longueur : `utilisateurs.id` est de type `UUID` (confirmé via `backend/migrate-inline.js`, ex. ligne 93 `utilisateur_id UUID REFERENCES utilisateurs(id)`), soit 36 caractères sous forme texte. `admin_test_` = 11 caractères, `_` séparateur = 1, `Date.now()` = 13 chiffres (millisecondes, valide jusqu'en l'an 2286). Total = 11 + 36 + 1 + 13 = 61 caractères, bien en dessous de la limite `commande_ref VARCHAR(100)`.
+4. Aucune base de données vivante n'est accessible dans ce sandbox (cohérent avec les tâches précédentes de ce plan) — aucun test d'exécution réel contre Postgres n'a été effectué ; seule la vérification syntaxique Node a pu être réalisée.
+
+### Concerns
+Aucun. Le changement est isolé, suit la convention existante du fichier, et corrige précisément la régression décrite sans effet de bord.

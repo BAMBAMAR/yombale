@@ -116,8 +116,8 @@ router.post('/admin/activer', adminSecretOnly, async (req, res) => {
 
     const { rows } = await pool.query(
       `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
-       VALUES ($1,$2,'actif',$3,$4,'admin_test') RETURNING id, plan, fin`,
-      [userId, plan, PLANS[plan].prix, fin]
+       VALUES ($1,$2,'actif',$3,$4,$5) RETURNING id, plan, fin`,
+      [userId, plan, PLANS[plan].prix, fin, `admin_test_${userId}_${Date.now()}`]
     );
     res.json({ success: true, abonnement: rows[0] });
   } catch (err) {
