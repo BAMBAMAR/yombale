@@ -241,10 +241,11 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   )
 }
 
-function BoutiqueForm({ boutique, onCancel, onSuccess }: {
+function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
   boutique?: Boutique
   onCancel: () => void
   onSuccess: () => void
+  codeApporteurDefaut?: string
 }) {
   const action = boutique ? updateBoutique.bind(null, boutique.id) : createBoutique
   const [state, formAction] = useFormState<ActionState, FormData>(action, {})
@@ -269,6 +270,12 @@ function BoutiqueForm({ boutique, onCancel, onSuccess }: {
         <label style={labelStyle}>Nom de la boutique *</label>
         <input name="nom" required maxLength={200} defaultValue={boutique?.nom} style={inputStyle} placeholder="Ex: Tech Dakar" />
       </div>
+      {!boutique && (
+        <div>
+          <label style={labelStyle}>Code apporteur (si recommandé par quelqu&apos;un)</label>
+          <input name="code_apporteur" maxLength={20} defaultValue={codeApporteurDefaut} style={inputStyle} placeholder="Ex: A3F9K2" />
+        </div>
+      )}
       <div>
         <label style={labelStyle}>Description</label>
         <textarea name="description" rows={3} defaultValue={boutique?.description ?? ''} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Décrivez votre boutique…" />
@@ -959,10 +966,12 @@ export default function BoutiqueClient({
   boutiques,
   canCreate,
   planActif,
+  codeApporteurDefaut,
 }: {
   boutiques: Boutique[]
   canCreate: boolean
   planActif?: 'pro' | 'business' | null
+  codeApporteurDefaut?: string
 }) {
   type Mode = 'list' | 'create' | { editing: Boutique } | { managing: Boutique }
   const [mode, setMode] = useState<Mode>('list')
@@ -1004,6 +1013,7 @@ export default function BoutiqueClient({
           boutique={typeof mode === 'object' && 'editing' in mode ? mode.editing : undefined}
           onCancel={() => setMode('list')}
           onSuccess={handleSuccess}
+          codeApporteurDefaut={codeApporteurDefaut}
         />
       </div>
     )

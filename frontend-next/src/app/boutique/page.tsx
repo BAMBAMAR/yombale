@@ -29,7 +29,14 @@ interface PlanActif {
   plan: 'pro' | 'business'
 }
 
-export default async function BoutiquePage() {
+export default async function BoutiquePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ apporteur?: string }>
+}) {
+  const params = await searchParams
+  const codeApporteurDefaut = params.apporteur?.trim().toUpperCase() || ''
+
   let boutiques: Boutique[] = []
   let planActif: 'pro' | 'business' | null = null
 
@@ -46,5 +53,5 @@ export default async function BoutiquePage() {
 
   const canCreate = boutiques.length < 3
 
-  return <BoutiqueClient boutiques={boutiques} canCreate={canCreate} planActif={planActif} />
+  return <BoutiqueClient boutiques={boutiques} canCreate={canCreate} planActif={planActif} codeApporteurDefaut={codeApporteurDefaut} />
 }
