@@ -186,6 +186,7 @@ export default async function RootLayout({
                 <a href="/mes-annonces">Mes annonces</a>
                 <a href="/favoris">Mes favoris</a>
                 <a href="/boutique">Ma boutique</a>
+                <a href="/compte/apporteur">Devenir apporteur</a>
               </div>
 
               {/* Colonne 4 — Informations */}

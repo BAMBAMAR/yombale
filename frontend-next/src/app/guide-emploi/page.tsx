@@ -55,6 +55,12 @@ const STEPS = [
     texte: "Vous louez ou vendez un bien ? Vous voulez vendre un article ? Cliquez \"+ Déposer\" dans la barre de navigation. Votre annonce sera visible après validation.",
     ctas: [{ label: 'Publier une annonce →', href: '/deposer-annonce', couleur: '#059669', bg: '#f0fdf4' }],
   },
+  {
+    icon: '💼', couleur: '#C75B00',
+    titre: 'Devenir apporteur d\'affaires',
+    texte: "Vous connaissez des commerçants, agences immo ou vendeurs ? Partagez votre lien personnel et touchez une commission chaque mois sur les abonnements des boutiques que vous recrutez — sans investissement, sans engagement.",
+    ctas: [{ label: 'Devenir apporteur →', href: '/compte/apporteur', couleur: '#C75B00', bg: '#fff7ed' }],
+  },
 ]
 
 export default function GuideEmploiPage() {
