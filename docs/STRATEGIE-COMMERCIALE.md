@@ -57,6 +57,15 @@ La mécanique existe en base (`parrainages`, `ref_code`) mais la récompense n'e
 - **1 mois d'abonnement Pro offert** par filleul qui devient payant (boutique) — coût marginal nul pour Nopalou (pas de cash out), effet d'acquisition direct.
 - Pour les particuliers : offrir un boost gratuit (500 FCFA de valeur) par filleul inscrit et actif.
 
+## 5bis. Programme apporteur d'affaires (implémenté 4 juillet 2026)
+
+Distinct du parrainage ci-dessus : ici l'apporteur touche une **commission en argent réel**, récurrente, sur les abonnements Pro/Business de boutiques qu'il recrute — pensé pour un réseau de démarcheurs (voir kit dans `/admin/communication`), pas pour l'acquisition virale grand public.
+
+- **Taux** : 10% par défaut, récurrent chaque mois tant que l'abonnement recruté reste actif — paramétrable sans redéploiement (`/admin/apporteurs`, clé settings `apporteur_taux_commission`).
+- **Seuil de règlement** : 3000 FCFA cumulés par défaut avant de pouvoir marquer une commission payée (évite les micro-paiements Wave/Orange coûteux en frais) — paramétrable (`apporteur_seuil_paiement`).
+- **Parcours** : un utilisateur active le statut apporteur depuis `/compte/apporteur`, reçoit un code unique et un lien à partager (`nopalou.com/boutique?apporteur=CODE`). Le commerçant recruté crée sa boutique via ce lien (ou saisit le code manuellement) ; la boutique est liée à l'apporteur. Chaque paiement d'abonnement réellement encaissé déclenche une ligne de commission ; l'admin règle manuellement (Wave/Orange) et coche "payé" dans `/admin/apporteurs`.
+- **Hors scope actuel** (voir spec complète) : pas de virement automatique, pas de paliers de commission selon volume, pas de notifications automatiques à l'apporteur.
+
 ## 6. Commission Business (2%)
 
 À comparer aux alternatives locales avant lancement massif :

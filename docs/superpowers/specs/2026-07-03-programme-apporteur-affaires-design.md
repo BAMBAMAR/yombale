@@ -1,7 +1,7 @@
 # Programme apporteur d'affaires — Design
 
 Date : 2026-07-03
-Statut : validé, prêt pour plan d'implémentation
+Statut : **implémenté et fusionné sur `main` le 4 juillet 2026** (9 tâches + revue finale de branche, 1 bug important trouvé et corrigé en revue finale — produit cartésien dans `GET /api/apporteurs/admin`). Voir `docs/superpowers/plans/2026-07-04-programme-apporteur-affaires.md` pour le détail des tâches.
 
 ## Contexte
 
