@@ -13,9 +13,11 @@ export default function MentionsLegalesPage() {
 
       <section className="legal-section">
         <h2>Éditeur du site</h2>
-        <p><strong>Nopalou</strong> est un comparateur de prix en ligne opérant au Sénégal.</p>
+        <p>Le site <strong>Nopalou</strong> (nopalou.com), comparateur de prix en ligne opérant au Sénégal, est édité par <strong>SKYROAD SARL</strong>.</p>
+        <p>N.I.N.E.A. : 011847714</p>
+        <p>Siège social : Cité Khandar Ouest, T Foirelot 10 N°106, Yoff, Dakar, Sénégal</p>
+        <p>Téléphone : <a href="tel:+221777202086">+221 77 720 20 86</a></p>
         <p>Email : <a href="mailto:contact@nopalou.com">contact@nopalou.com</a></p>
-        <p>Siège social : Dakar, Sénégal</p>
       </section>
 
       <section className="legal-section">

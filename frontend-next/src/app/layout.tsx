@@ -89,6 +89,7 @@ export default async function RootLayout({
         <meta name="theme-color" content="#C75B00" />
         <meta name="color-scheme" content="light" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="facebook-domain-verification" content="cuulztpcqwrgoat2wfubj3cuerfwu0" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSON_LD) }}
@@ -216,7 +217,7 @@ export default async function RootLayout({
           </div>
 
           <div className="footer-bottom">
-            <p>© 2026 Nopalou — Dakar, Sénégal. Tous droits réservés.</p>
+            <p>© 2026 Nopalou — Une marque de SKYROAD - SARL. Dakar, Sénégal. Tous droits réservés.</p>
           </div>
         </footer>
       </body>
