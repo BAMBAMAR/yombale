@@ -1,6 +1,7 @@
 'use client'
 import { useState, useTransition } from 'react'
 import { devenirApporteur, type StatsApporteur } from './actions'
+import { fcfa } from '@/lib/format'
 
 export default function ApporteurClient({ statsInitiales }: { statsInitiales: StatsApporteur | null }) {
   const [stats, setStats] = useState(statsInitiales)
@@ -53,16 +54,16 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales: St
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 16 }}>
           <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 4px' }}>Commission due</p>
-          <p style={{ fontSize: 20, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>{stats.total_du.toLocaleString('fr-FR')} FCFA</p>
+          <p style={{ fontSize: 20, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>{fcfa(stats.total_du)}</p>
         </div>
         <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 16 }}>
           <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 4px' }}>Déjà payé</p>
-          <p style={{ fontSize: 20, fontWeight: 800, color: '#16a34a', margin: 0 }}>{stats.total_paye.toLocaleString('fr-FR')} FCFA</p>
+          <p style={{ fontSize: 20, fontWeight: 800, color: '#16a34a', margin: 0 }}>{fcfa(stats.total_paye)}</p>
         </div>
       </div>
 
       <p style={{ fontSize: 12, color: '#94A3B8' }}>
-        Taux de commission actuel : {stats.taux_commission}% · Règlement à partir de {stats.seuil_paiement.toLocaleString('fr-FR')} FCFA cumulés
+        Taux de commission actuel : {stats.taux_commission}% · Règlement à partir de {fcfa(stats.seuil_paiement)} cumulés
       </p>
 
       <div>
