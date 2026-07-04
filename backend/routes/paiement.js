@@ -138,7 +138,7 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
         const abonnementRow = await pool.query(
           `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
            VALUES ($1,$2,'actif',$3,$4,$5)
-           ON CONFLICT DO NOTHING
+           ON CONFLICT (commande_ref) DO NOTHING
            RETURNING id`,
           [userId, plan, PRIX[plan], fin, ref]
         );
@@ -150,25 +150,28 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
           );
         }
         // Programme apporteur d'affaires : commission si la boutique a un apporteur attribué
-        try {
-          const apporteurActif = await cfg.getBool('apporteur_actif');
-          if (apporteurActif) {
-            const boutiqueApporteur = await pool.query(
-              'SELECT id, apporteur_id FROM boutiques WHERE utilisateur_id=$1 AND apporteur_id IS NOT NULL LIMIT 1',
-              [userId]
-            );
-            if (boutiqueApporteur.rows[0]) {
-              const taux = await cfg.getNum('apporteur_taux_commission');
-              const montantCommission = Number(PRIX[plan]) * (taux / 100);
-              await pool.query(
-                `INSERT INTO commissions_apporteur (apporteur_id, boutique_id, abonnement_id, montant)
-                 VALUES ($1,$2,$3,$4)`,
-                [boutiqueApporteur.rows[0].apporteur_id, boutiqueApporteur.rows[0].id, abonnementRow.rows[0]?.id || null, montantCommission]
+        // (uniquement si un nouvel abonnement a réellement été inséré — pas un replay du webhook)
+        if (abonnementRow.rows[0]) {
+          try {
+            const apporteurActif = await cfg.getBool('apporteur_actif');
+            if (apporteurActif) {
+              const boutiqueApporteur = await pool.query(
+                'SELECT id, apporteur_id FROM boutiques WHERE utilisateur_id=$1 AND apporteur_id IS NOT NULL LIMIT 1',
+                [userId]
               );
+              if (boutiqueApporteur.rows[0]) {
+                const taux = await cfg.getNum('apporteur_taux_commission');
+                const montantCommission = Number(PRIX[plan]) * (taux / 100);
+                await pool.query(
+                  `INSERT INTO commissions_apporteur (apporteur_id, boutique_id, abonnement_id, montant)
+                   VALUES ($1,$2,$3,$4)`,
+                  [boutiqueApporteur.rows[0].apporteur_id, boutiqueApporteur.rows[0].id, abonnementRow.rows[0].id, montantCommission]
+                );
+              }
             }
+          } catch (commErr) {
+            console.error('[WAVE WEBHOOK] commission apporteur:', commErr.message);
           }
-        } catch (commErr) {
-          console.error('[WAVE WEBHOOK] commission apporteur:', commErr.message);
         }
       }
     }
@@ -414,32 +417,35 @@ router.post('/orange/webhook', limiterGeneral, async (req, res) => {
         const abonnementRow = await pool.query(
           `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
            VALUES ($1,$2,'actif',$3,$4,$5)
-           ON CONFLICT DO NOTHING
+           ON CONFLICT (commande_ref) DO NOTHING
            RETURNING id`,
           [userId, plan, PRIX[plan], fin, order_id]
         );
         if (plan === 'business') {
           await pool.query('UPDATE boutiques SET commission_rate=$1 WHERE utilisateur_id=$2', [pxO.commissionBiz, userId]);
         }
-        try {
-          const apporteurActif = await cfg.getBool('apporteur_actif');
-          if (apporteurActif) {
-            const boutiqueApporteur = await pool.query(
-              'SELECT id, apporteur_id FROM boutiques WHERE utilisateur_id=$1 AND apporteur_id IS NOT NULL LIMIT 1',
-              [userId]
-            );
-            if (boutiqueApporteur.rows[0]) {
-              const taux = await cfg.getNum('apporteur_taux_commission');
-              const montantCommission = Number(PRIX[plan]) * (taux / 100);
-              await pool.query(
-                `INSERT INTO commissions_apporteur (apporteur_id, boutique_id, abonnement_id, montant)
-                 VALUES ($1,$2,$3,$4)`,
-                [boutiqueApporteur.rows[0].apporteur_id, boutiqueApporteur.rows[0].id, abonnementRow.rows[0]?.id || null, montantCommission]
+        // (uniquement si un nouvel abonnement a réellement été inséré — pas un replay du webhook)
+        if (abonnementRow.rows[0]) {
+          try {
+            const apporteurActif = await cfg.getBool('apporteur_actif');
+            if (apporteurActif) {
+              const boutiqueApporteur = await pool.query(
+                'SELECT id, apporteur_id FROM boutiques WHERE utilisateur_id=$1 AND apporteur_id IS NOT NULL LIMIT 1',
+                [userId]
               );
+              if (boutiqueApporteur.rows[0]) {
+                const taux = await cfg.getNum('apporteur_taux_commission');
+                const montantCommission = Number(PRIX[plan]) * (taux / 100);
+                await pool.query(
+                  `INSERT INTO commissions_apporteur (apporteur_id, boutique_id, abonnement_id, montant)
+                   VALUES ($1,$2,$3,$4)`,
+                  [boutiqueApporteur.rows[0].apporteur_id, boutiqueApporteur.rows[0].id, abonnementRow.rows[0].id, montantCommission]
+                );
+              }
             }
+          } catch (commErr) {
+            console.error('[ORANGE WEBHOOK] commission apporteur:', commErr.message);
           }
-        } catch (commErr) {
-          console.error('[ORANGE WEBHOOK] commission apporteur:', commErr.message);
         }
       }
     }

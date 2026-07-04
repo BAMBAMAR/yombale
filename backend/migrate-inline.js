@@ -431,6 +431,11 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table abonnements OK');
   } catch (e) { console.warn('[MIGRATE] abonnements:', e.message); }
 
+  try {
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS uidx_abonnements_commande_ref ON abonnements(commande_ref) WHERE commande_ref IS NOT NULL`);
+    console.log('[MIGRATE] ✅ Index unique abonnements.commande_ref OK');
+  } catch (e) { console.warn('[MIGRATE] index abonnements commande_ref:', e.message); }
+
   // Programme apporteur d'affaires — colonnes + table de commissions
   const colonnesApporteur = [
     `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS est_apporteur BOOLEAN DEFAULT FALSE`,
