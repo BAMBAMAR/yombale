@@ -91,14 +91,11 @@ router.get('/admin', adminSecretOnly, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT u.id, u.nom, u.email, u.code_apporteur,
-             COUNT(b.id) AS nb_boutiques,
-             COALESCE(SUM(c.montant) FILTER (WHERE c.statut='du'), 0)   AS total_du,
-             COALESCE(SUM(c.montant) FILTER (WHERE c.statut='paye'), 0) AS total_paye
+             (SELECT COUNT(*) FROM boutiques WHERE apporteur_id = u.id) AS nb_boutiques,
+             (SELECT COALESCE(SUM(montant),0) FROM commissions_apporteur WHERE apporteur_id=u.id AND statut='du')   AS total_du,
+             (SELECT COALESCE(SUM(montant),0) FROM commissions_apporteur WHERE apporteur_id=u.id AND statut='paye') AS total_paye
       FROM utilisateurs u
-      LEFT JOIN boutiques b ON b.apporteur_id = u.id
-      LEFT JOIN commissions_apporteur c ON c.apporteur_id = u.id
       WHERE u.est_apporteur = true
-      GROUP BY u.id, u.nom, u.email, u.code_apporteur
       ORDER BY total_du DESC
     `);
     res.json({ apporteurs: rows });
