@@ -64,6 +64,8 @@ Distinct du parrainage ci-dessus : ici l'apporteur touche une **commission en ar
 - **Taux** : 10% par défaut, récurrent chaque mois tant que l'abonnement recruté reste actif — paramétrable sans redéploiement (`/admin/apporteurs`, clé settings `apporteur_taux_commission`).
 - **Seuil de règlement** : 3000 FCFA cumulés par défaut avant de pouvoir marquer une commission payée (évite les micro-paiements Wave/Orange coûteux en frais) — paramétrable (`apporteur_seuil_paiement`).
 - **Parcours** : un utilisateur active le statut apporteur depuis `/compte/apporteur`, reçoit un code unique et un lien à partager (`nopalou.com/boutique?apporteur=CODE`). Le commerçant recruté crée sa boutique via ce lien (ou saisit le code manuellement) ; la boutique est liée à l'apporteur. Chaque paiement d'abonnement réellement encaissé déclenche une ligne de commission ; l'admin règle manuellement (Wave/Orange) et coche "payé" dans `/admin/apporteurs`.
+- **Kit apporteur intégré à `/compte/apporteur`** : bouton copier le lien, partage WhatsApp pré-rempli, visuel téléchargeable, guide "Comment ça marche" en 3 étapes et un argumentaire court à dire — pour que l'apporteur n'ait pas besoin de contacter l'équipe pour démarcher efficacement.
+- **Découvrabilité** : programme accessible depuis le footer du site (section "Mon compte") et depuis le guide public `/guide-emploi` — plus seulement en connaissant l'URL directement.
 - **Hors scope actuel** (voir spec complète) : pas de virement automatique, pas de paliers de commission selon volume, pas de notifications automatiques à l'apporteur.
 
 ## 6. Commission Business (2%)
