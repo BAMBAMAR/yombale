@@ -388,12 +388,23 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
     const slugBase = slugInput?.trim() ? slugify(slugInput.trim()) : slugify(nom.trim());
     const slug = await uniqueSlug(slugBase);
 
+    // Résoudre le code apporteur (optionnel) en apporteur_id
+    let apporteurId = null;
+    const codeApporteur = req.body.code_apporteur?.trim().toUpperCase();
+    if (codeApporteur) {
+      const apporteurRow = await pool.query(
+        'SELECT id FROM utilisateurs WHERE code_apporteur=$1 AND est_apporteur=true',
+        [codeApporteur]
+      );
+      if (apporteurRow.rows[0]) apporteurId = apporteurRow.rows[0].id;
+    }
+
     // INSERT avec colonnes de base (toujours présentes)
     const r = await pool.query(
-      `INSERT INTO boutiques (utilisateur_id, nom, description, categorie, telephone, adresse, ville, logo_url)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+      `INSERT INTO boutiques (utilisateur_id, nom, description, categorie, telephone, adresse, ville, logo_url, apporteur_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
       [userId, nom.trim(), description||null, categorie||null, telephone||null,
-       adresse||null, ville||'Dakar', logo_url]
+       adresse||null, ville||'Dakar', logo_url, apporteurId]
     );
     const newId = r.rows[0].id;
 
