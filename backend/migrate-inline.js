@@ -431,6 +431,39 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table abonnements OK');
   } catch (e) { console.warn('[MIGRATE] abonnements:', e.message); }
 
+  // Programme apporteur d'affaires — colonnes + table de commissions
+  const colonnesApporteur = [
+    `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS est_apporteur BOOLEAN DEFAULT FALSE`,
+    `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS code_apporteur VARCHAR(20)`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS apporteur_id UUID REFERENCES utilisateurs(id) ON DELETE SET NULL`,
+  ];
+  for (const sql of colonnesApporteur) {
+    try { await pool.query(sql); }
+    catch (e) { console.warn('[MIGRATE] colonne apporteur:', e.message); }
+  }
+  try {
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS uidx_utilisateurs_code_apporteur ON utilisateurs(code_apporteur) WHERE code_apporteur IS NOT NULL`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_boutiques_apporteur ON boutiques(apporteur_id)`);
+    console.log('[MIGRATE] ✅ Colonnes apporteur OK');
+  } catch (e) { console.warn('[MIGRATE] index apporteur:', e.message); }
+
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS commissions_apporteur (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        apporteur_id   UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        boutique_id    UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        abonnement_id  UUID REFERENCES abonnements(id) ON DELETE SET NULL,
+        montant        NUMERIC(10,2) NOT NULL,
+        statut         VARCHAR(20) DEFAULT 'du' CHECK (statut IN ('du', 'paye')),
+        created_at     TIMESTAMPTZ DEFAULT NOW(),
+        paye_at        TIMESTAMPTZ
+      );
+      CREATE INDEX IF NOT EXISTS idx_commissions_apporteur ON commissions_apporteur(apporteur_id, statut);
+    `);
+    console.log('[MIGRATE] ✅ Table commissions_apporteur OK');
+  } catch (e) { console.warn('[MIGRATE] commissions_apporteur:', e.message); }
+
   // Colonnes boutique avancées (pro/business features)
   const colonnesBoutiqueAvancees = [
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(30)`,
