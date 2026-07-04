@@ -11,7 +11,8 @@ export default async function ApporteurPage() {
     <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 680 }}>
       <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>💼 Programme apporteur d&apos;affaires</h1>
       <p style={{ color: '#64748B', marginBottom: 32, fontSize: 14 }}>
-        Recommandez Nopalou aux commerçants de votre réseau et touchez une commission sur leurs abonnements.
+        Recommandez Nopalou aux commerçants, agences immo ou vendeurs de votre réseau et touchez une
+        commission chaque mois sur leurs abonnements — sans investissement, sans engagement de votre part.
       </p>
       <ApporteurClient statsInitiales={stats} />
     </div>
