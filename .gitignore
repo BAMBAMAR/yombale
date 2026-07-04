@@ -29,3 +29,6 @@ test-results/
 # Build Next.js
 frontend-next/.next/
 frontend-next/tsconfig.tsbuildinfo
+
+# Superpowers subagent-driven-development scratch state
+.superpowers/
