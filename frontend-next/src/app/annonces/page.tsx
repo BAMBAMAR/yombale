@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+const SSR_SECRET = process.env.SSR_SECRET || ''
+const SSR_HEADERS: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}
 
 const CATEGORIES = [
   { slug: '',              label: 'Toutes',       emoji: '🗂' },
@@ -33,7 +35,7 @@ async function fetchAnnonces(categorie: string, page: number) {
   const params = new URLSearchParams({ limit: '24', page: String(page) })
   if (categorie) params.set('categorie', categorie)
   try {
-    const r = await fetch(`${BACKEND}/api/annonces?${params}`, { next: { revalidate: 60 } })
+    const r = await fetch(`${BACKEND}/api/annonces?${params}`, { headers: SSR_HEADERS, next: { revalidate: 60 } })
     if (!r.ok) return { annonces: [], total: 0 }
     return r.json()
   } catch { return { annonces: [], total: 0 } }

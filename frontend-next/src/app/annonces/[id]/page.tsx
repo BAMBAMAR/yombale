@@ -6,6 +6,8 @@ import { getOptionalSession } from '@/lib/dal'
 import BoutonWhatsApp from '@/components/BoutonWhatsApp'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+const SSR_SECRET = process.env.SSR_SECRET || ''
+const SSR_HEADERS: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}
 
 const CAT_LABELS: Record<string, string> = {
   smartphones:  'Téléphones',
@@ -35,7 +37,7 @@ interface Annonce {
 
 async function fetchAnnonce(id: string): Promise<Annonce | null> {
   try {
-    const r = await fetch(`${BACKEND}/api/annonces/${id}`, { next: { revalidate: 120 } })
+    const r = await fetch(`${BACKEND}/api/annonces/${id}`, { headers: SSR_HEADERS, next: { revalidate: 120 } })
     if (r.status === 404) return null
     if (!r.ok) return null
     return r.json()
