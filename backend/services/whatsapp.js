@@ -127,6 +127,25 @@ async function sendWhatsAppInteractive(phone, headerText, bodyText, sections) {
   });
 }
 
+// ── Bouton de réponse rapide (ex: retour au menu) ─────────────────────────────
+async function sendWhatsAppButton(phone, bodyText, buttonId, buttonTitle) {
+  return post({
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: normalisePhone(phone),
+    type: 'interactive',
+    interactive: {
+      type: 'button',
+      body: { text: bodyText },
+      action: {
+        buttons: [
+          { type: 'reply', reply: { id: buttonId, title: buttonTitle } },
+        ],
+      },
+    },
+  });
+}
+
 // ── Product Message (catalogue Meta Commerce) ─────────────────────────────────
 async function sendWhatsAppProduct(phone, retailerProductId, bodyText) {
   if (!CATALOG_ID) {
@@ -233,6 +252,7 @@ module.exports = {
   sendWhatsAppTemplate,
   sendWhatsAppCarousel,
   sendWhatsAppInteractive,
+  sendWhatsAppButton,
   sendWhatsAppProduct,
   sendReadReceipt,
   sendFiche,
