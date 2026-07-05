@@ -6,7 +6,6 @@ const {
   sendWhatsAppCarousel,
   sendWhatsAppProduct,
   sendReadReceipt,
-  sendTyping,
   normalisePhone,
 } = require('./whatsapp');
 
@@ -125,15 +124,12 @@ async function handleIncoming(msg) {
   // Déduplication
   if (await isDuplicate(msg.id)) return;
 
-  // Read receipt immédiat
-  await sendReadReceipt(msg.id).catch(() => {});
+  // Read receipt + indicateur de frappe pendant le traitement
+  await sendReadReceipt(msg.id, true).catch(() => {});
 
   const { state, context } = await getSession(phone);
   const text = msg.text?.body?.trim() || '';
   const interactiveId = msg.interactive?.list_reply?.id || msg.interactive?.button_reply?.id || '';
-
-  // Typing pendant traitement
-  await sendTyping(phone).catch(() => {});
 
   // Mots-clés globaux : "menu" ou "aide" depuis n'importe quel état
   if (['menu', 'aide', 'help', '0'].includes(text.toLowerCase())) {
@@ -175,6 +171,7 @@ async function handleIncoming(msg) {
           sendWhatsAppText(phone, cards.map(c => `• ${c.title} — ${c.detail}\n${c.pageUrl}`).join('\n\n'))
         );
       }
+      await sendWhatsAppText(phone, 'Tapez *menu* pour revenir au menu.');
       await setSession(phone, 'IDLE', {});
       return;
     }
@@ -188,6 +185,7 @@ async function handleIncoming(msg) {
         const lines = r.rows.map(o => `📱 *${o.nom || o.operateur}* — ${prixFmt(o.prix)}\n👉 ${SITE}/telecom`);
         await sendWhatsAppText(phone, lines.join('\n\n'));
       }
+      await sendWhatsAppText(phone, 'Tapez *menu* pour revenir au menu.');
       await setSession(phone, 'IDLE', {});
       return;
     }
@@ -202,7 +200,7 @@ async function handleIncoming(msg) {
       return;
     }
     if (action === 'support') {
-      await sendWhatsAppText(phone, '💬 *Support Nopalou*\n\nPour nous contacter :\n📧 contact@nopalou.com\n🌐 nopalou.com\n\nNous répondons sous 24h. Merci !');
+      await sendWhatsAppText(phone, '💬 *Support Nopalou*\n\nPour nous contacter :\n📧 contact@nopalou.com\n🌐 nopalou.com\n\nNous répondons sous 24h. Merci !\n\nTapez *menu* pour revenir au menu.');
       await setSession(phone, 'IDLE', {});
       return;
     }
@@ -259,7 +257,7 @@ async function handleIncoming(msg) {
       const date = new Date(p.created_at).toLocaleDateString('fr-FR');
       await sendWhatsAppText(
         phone,
-        `📦 *Commande ${p.reference}*\n\nStatut : *${p.statut}*\nMontant : *${prixFmt(p.montant)}*\nDate : ${date}\n\nPour toute question, contactez contact@nopalou.com`
+        `📦 *Commande ${p.reference}*\n\nStatut : *${p.statut}*\nMontant : *${prixFmt(p.montant)}*\nDate : ${date}\n\nPour toute question, contactez contact@nopalou.com\n\nTapez *menu* pour revenir au menu.`
       );
     }
     await setSession(phone, 'IDLE', {});

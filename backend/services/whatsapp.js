@@ -149,25 +149,15 @@ async function sendWhatsAppProduct(phone, retailerProductId, bodyText) {
   });
 }
 
-// ── Read receipt ──────────────────────────────────────────────────────────────
-async function sendReadReceipt(messageId) {
+// ── Read receipt (+ indicateur de frappe) ─────────────────────────────────────
+// Le typing indicator se pose via le read receipt, pas via un message séparé.
+async function sendReadReceipt(messageId, withTyping = false) {
   return post({
     messaging_product: 'whatsapp',
     status: 'read',
     message_id: messageId,
+    ...(withTyping ? { typing_indicator: { type: 'text' } } : {}),
   });
-}
-
-// ── Typing indicator ──────────────────────────────────────────────────────────
-// Nota : supporté sur certains comptes Cloud API uniquement
-async function sendTyping(phone) {
-  return post({
-    messaging_product: 'whatsapp',
-    recipient_type: 'individual',
-    to: normalisePhone(phone),
-    type: 'action',
-    action: { name: 'typing_on' },
-  }).catch(() => {}); // silencieux si non supporté
 }
 
 // ── Dispatcher /send ──────────────────────────────────────────────────────────
@@ -245,7 +235,6 @@ module.exports = {
   sendWhatsAppInteractive,
   sendWhatsAppProduct,
   sendReadReceipt,
-  sendTyping,
   sendFiche,
   normalisePhone,
 };
