@@ -18,6 +18,9 @@ const DEFAULTS = {
   commission_business: '2.0',
   paiement_wave:       'true',
   paiement_orange:     'true',
+  paiement_manuel_actif:      'true',
+  paiement_manuel_numero_wave: '',
+  paiement_manuel_numero_om:   '',
   promo_active:        'false',
   promo_code:          '',
   promo_reduction:     '0',      // pourcentage de réduction

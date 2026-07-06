@@ -33,7 +33,9 @@ router.get('/public', async (req, res) => {
   try {
     const keys = ['prix_annonce','prix_sponsoring','prix_boost','boost_duree_jours',
                   'plan_pro_prix','plan_business_prix','plan_pro_label','plan_business_label',
-                  'promo_active','promo_reduction'];
+                  'promo_active','promo_reduction',
+                  'paiement_wave','paiement_orange','paiement_manuel_actif',
+                  'paiement_manuel_numero_wave','paiement_manuel_numero_om'];
     const result = {};
     for (const k of keys) result[k] = await s.get(k);
     res.json(result);
