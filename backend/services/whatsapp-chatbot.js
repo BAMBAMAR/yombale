@@ -86,7 +86,16 @@ async function sendMenu(phone) {
 async function searchContent(query) {
   const r = await pool.query(
     `(
-      SELECT 'produit' AS type, p.id::text, p.nom AS titre, p.prix,
+      SELECT 'marketplace' AS type, id::text, nom AS titre, prix_min AS prix,
+             image_url AS photo, NULL::text AS boutique_slug, NULL::text AS ville
+      FROM produits
+      WHERE to_tsvector('french', nom || ' ' || COALESCE(description,''))
+            @@ plainto_tsquery('french', $1)
+      LIMIT 3
+    )
+    UNION ALL
+    (
+      SELECT 'produit', p.id::text, p.nom AS titre, p.prix,
              p.images[1] AS photo, b.slug AS boutique_slug, NULL AS ville
       FROM boutique_produits p
       JOIN boutiques b ON b.id = p.boutique_id
@@ -112,7 +121,7 @@ async function searchContent(query) {
             @@ plainto_tsquery('french', $1)
       LIMIT 3
     )
-    LIMIT 3`,
+    LIMIT 5`,
     [query]
   );
   return r.rows;
@@ -285,10 +294,11 @@ async function handleSearchQuery(phone, query) {
     return;
   }
 
-  const produits = results.filter(r => r.type === 'produit');
-  const autres   = results.filter(r => r.type !== 'produit');
+  const produits     = results.filter(r => r.type === 'produit');
+  const marketplace  = results.filter(r => r.type === 'marketplace');
+  const autres       = results.filter(r => r.type !== 'produit' && r.type !== 'marketplace');
 
-  // Product Messages pour les produits boutique
+  // Product Messages pour les produits boutique (catalogue Meta)
   for (const p of produits) {
     await sendWhatsAppProduct(
       phone,
@@ -297,6 +307,12 @@ async function handleSearchQuery(phone, query) {
     ).catch(async () => {
       await sendWhatsAppText(phone, `• *${p.titre}* — ${prixFmt(p.prix)}\n👉 ${SITE}/boutiques/${p.boutique_slug}/produits/${p.id}`);
     });
+  }
+
+  // Texte pour les produits du comparateur (pas dans le catalogue Meta)
+  if (marketplace.length) {
+    const lines = marketplace.map(m => `• *${m.titre}* — à partir de ${prixFmt(m.prix)}\n👉 ${SITE}/produit/${m.id}`);
+    await sendWhatsAppText(phone, lines.join('\n\n'));
   }
 
   // Carousel pour annonces/immo
