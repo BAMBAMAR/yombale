@@ -436,6 +436,29 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Index unique abonnements.commande_ref OK');
   } catch (e) { console.warn('[MIGRATE] index abonnements commande_ref:', e.message); }
 
+  // Table paiements_manuels — déclarations de dépôt Wave/Orange en attendant les clés API
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS paiements_manuels (
+        id                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id        UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        reference             VARCHAR(100) NOT NULL,
+        montant               NUMERIC(12,2) NOT NULL,
+        methode               VARCHAR(20) NOT NULL CHECK (methode IN ('wave', 'orange')),
+        telephone_expediteur  VARCHAR(30) NOT NULL,
+        transaction_id_client VARCHAR(100),
+        preuve_url            TEXT,
+        statut                VARCHAR(20) NOT NULL DEFAULT 'en_attente' CHECK (statut IN ('en_attente', 'valide', 'rejete')),
+        motif_rejet           TEXT,
+        valide_par            VARCHAR(100),
+        valide_at             TIMESTAMPTZ,
+        created_at            TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_paiements_manuels_statut ON paiements_manuels(statut);
+    `);
+    console.log('[MIGRATE] ✅ Table paiements_manuels OK');
+  } catch (e) { console.warn('[MIGRATE] paiements_manuels:', e.message); }
+
   // Programme apporteur d'affaires — colonnes + table de commissions
   const colonnesApporteur = [
     `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS est_apporteur BOOLEAN DEFAULT FALSE`,
