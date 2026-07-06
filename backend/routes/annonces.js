@@ -381,7 +381,7 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
                 { type: 'text', text: card.detail },
                 { type: 'text', text: card.pageUrl },
               ]},
-              { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: `annonces/${a.id}` }] },
+              { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: a.id }] },
             ]);
           }
         } catch {}

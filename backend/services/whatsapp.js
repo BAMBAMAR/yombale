@@ -197,9 +197,12 @@ async function sendFiche(type, id, phone) {
     if (a.photos?.[0]) {
       return sendWhatsAppCarousel(phone, 'nopalou_carousel_annonce', cards);
     }
+    // Nota : le bouton du template nopalou_fiche_texte pointe vers une URL fixe
+    // https://nopalou.com/immo/{{1}} côté Meta — le lien sera donc incorrect pour
+    // une annonce classifiée tant qu'un template dédié n'est pas soumis à Meta.
     return sendWhatsAppTemplate(phone, 'nopalou_fiche_texte', [
       { type: 'body', parameters: [{ type: 'text', text: a.titre }, { type: 'text', text: prixFmt(a.prix) }, { type: 'text', text: `${SITE}/annonces/${a.id}` }] },
-      { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: `annonces/${a.id}` }] },
+      { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: a.id }] },
     ]);
   }
 
@@ -219,7 +222,7 @@ async function sendFiche(type, id, phone) {
     }
     return sendWhatsAppTemplate(phone, 'nopalou_fiche_texte', [
       { type: 'body', parameters: [{ type: 'text', text: a.titre }, { type: 'text', text: detail }, { type: 'text', text: `${SITE}/immo/${a.id}` }] },
-      { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: `immo/${a.id}` }] },
+      { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: a.id }] },
     ]);
   }
 
