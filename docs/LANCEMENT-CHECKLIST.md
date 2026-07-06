@@ -13,32 +13,35 @@
 - [x] **Resend / DNS** : domaine `nopalou.com` vérifié sur resend.com/domains (Cloudflare, depuis le 15 juin) → à confirmer : `EMAIL_FROM=Nopalou <noreply@nopalou.com>` bien réglé sur Render (pas `onboarding@resend.dev`)
 - [ ] **Orange Money** — ⚠️ bloqué : pas encore de compte marchand. Ouvrir un compte marchand Orange Money Sénégal (agence Orange ou espace pro en ligne), obtenir les identifiants API/webpay, puis déclarer `https://<votre-app>.onrender.com/api/paiement/orange/webhook` dans le dashboard → ajouter le secret HMAC si fourni
 
-## 🟡 Meta WhatsApp — état détaillé (mis à jour 3 juillet 2026)
+## 🟢 Meta WhatsApp — RÉSOLU le 6 juillet 2026, fonctionnel en production
 
-1. [x] App Meta créée, produit WhatsApp ajouté, numéro de test fonctionnel
-2. [x] Token système permanent généré et configuré (`WHATSAPP_API_TOKEN`) — scopes `whatsapp_business_messaging` + `whatsapp_business_management`
+Tous les points ci-dessous sont clos. Réception de vrais messages, réponses chatbot,
+et notifications de validation d'annonces (carousel + fallback texte) confirmées en
+conditions réelles. Voir la section "État du projet (6 juillet 2026)" dans `CLAUDE.md`
+pour le détail des bugs trouvés et corrigés pendant la vérification finale.
+
+1. [x] App Meta créée, produit WhatsApp ajouté, **app publiée** (vérification d'entreprise
+   SKYROAD SARL terminée le 4 juillet, moyen de paiement ajouté et app publiée le 5 juillet)
+2. [x] Token système permanent généré et configuré (`WHATSAPP_API_TOKEN`)
 3. [x] Toutes les variables Render configurées et vérifiées via `/api/whatsapp/admin/status` :
-   - `WHATSAPP_PHONE_NUMBER_ID` ✅
-   - `WHATSAPP_API_TOKEN` ✅ (permanent)
-   - `WHATSAPP_APP_SECRET` ✅ (corrigé le 3 juillet — était absent, trou de sécurité HMAC comblé)
-   - `WHATSAPP_VERIFY_TOKEN` ✅
-   - `BACKEND_URL` ✅ (corrigé le 3 juillet — était `undefined`, cassait l'URL webhook affichée)
-   - `WHATSAPP_CATALOG_ID` — optionnel, pas encore configuré
-4. [x] Webhook déclaré et validé côté Meta (URL + Verify Token), abonné au champ `messages`
-5. [x] Bugs chatbot corrigés et déployés : contrainte UNIQUE manquante sur `alertes`, déclenchement des alertes WhatsApp par nom de produit, colonne `processed_at` dans `/admin/status`
-6. [ ] **⚠️ BLOQUANT** — Le numéro de test est encore lié à un ancien compte WhatsApp personnel : message Meta *"Ce numéro de téléphone est déjà enregistré dans un compte WhatsApp"*. Procédure de déblocage :
-   a. Réinstaller WhatsApp (app normale) sur ce numéro
-   b. Paramètres → Compte → **Supprimer mon compte** (pas juste désinstaller l'app)
-   c. Attendre quelques heures à 24h (délai réel souvent supérieur aux "3 minutes" annoncées)
-   d. Réessayer l'enregistrement du numéro côté Meta for Developers
-7. [ ] **⚠️ Constat important** : tant que l'app Meta n'est pas **publiée**, les vrais messages WhatsApp entrants (envoyés depuis un vrai téléphone, même testeur) ne sont PAS transmis au webhook — seul le bouton "Test" du dashboard Meta simule un événement. La publication nécessite la vérification d'entreprise (étape 8).
-8. [~] Vérification d'entreprise Business Manager (business.facebook.com → Centre de vérification) — nom légal, adresse, RCCM/NINEA. **En cours** (soumise, délai 1-3 jours ouvrés). Indépendante du blocage du numéro (étape 6), peut être lancée en parallèle.
-9. [ ] Publier l'app Meta une fois vérification + numéro + moyen de paiement (pour messages business-initiated) réglés
-10. [x] 4 templates soumis à Meta (approbation 24-48h en cours) — voir [docs/WHATSAPP-TEMPLATES.md](WHATSAPP-TEMPLATES.md) :
-    - `nopalou_carousel_annonce` ✅
-    - `nopalou_carousel_immo` ✅
-    - `nopalou_carousel_telecoms` ✅ (nom réel avec "s", code aligné — le premier essai sans "s" a un contenu erroné et reste en attente chez Meta, sans impact)
-    - `nopalou_fiche_texte` ✅
+   - `WHATSAPP_PHONE_NUMBER_ID` ✅ — **corrigé le 6 juillet** : pointait vers le numéro de
+     test (`1178090512058107`) au lieu du vrai numéro `+221 70 87179 42` (`1239035322623638`)
+   - `WHATSAPP_API_TOKEN`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `BACKEND_URL` ✅
+   - `WHATSAPP_CATALOG_ID` — optionnel, toujours pas configuré (sync catalogue Meta non testée)
+4. [x] Webhook déclaré et validé, abonné au champ `messages`
+5. [x] **Piège découvert le 6 juillet** : deux WABA distincts existent sous ce Business
+   Manager (un de test, un de production) — l'app était abonnée au mauvais WABA
+   (`GET /v19.0/{waba_id}/subscribed_apps` renvoyait `{"data":[]}` sur le vrai WABA de
+   prod `901008702321523`). Réabonnée manuellement via `POST /v19.0/901008702321523/subscribed_apps`.
+6. [x] Numéro `+221 70 87179 42` enregistré et vérifié (`code_verification_status: VERIFIED`)
+   dans le bon WABA — le blocage "déjà enregistré" documenté ici concernait l'ancien
+   numéro de test, résolu par la migration vers le vrai numéro de prod.
+7. [x] Templates soumis et approuvés — voir [docs/WHATSAPP-TEMPLATES.md](WHATSAPP-TEMPLATES.md) :
+   - `nopalou_carousel_annonce`, `nopalou_carousel_immo`, `nopalou_carousel_telecoms`, `nopalou_fiche_texte` ✅
+   - **Bug de code corrigé le 6 juillet** (pas un problème Meta) : le paramètre du bouton
+     dynamique envoyait un chemin (`immo/<id>`) ou l'URL complète au lieu de l'id brut
+     attendu par Meta, cassant systématiquement le lien (404) ou faisant échouer l'envoi
+     entier. Voir section "Piège vécu" dans `WHATSAPP-TEMPLATES.md`.
 
 ## 🟢 Optionnel
 
@@ -50,5 +53,5 @@
 - [ ] Ouvrir `/admin/whatsapp` → la checklist doit passer entièrement au vert
 - [ ] Faire un paiement test réel via Wave → vérifier la mise à jour en base (`commandes`)
 - [ ] Faire un paiement test réel via Orange Money → idem
-- [ ] Envoyer un message WhatsApp au numéro Nopalou → vérifier la réponse du chatbot
+- [x] Envoyer un message WhatsApp au numéro Nopalou → vérifier la réponse du chatbot (confirmé le 6 juillet 2026)
 - [ ] Vérifier réception d'un email transactionnel (inscription/reset mdp)

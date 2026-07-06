@@ -123,6 +123,27 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## État du projet (6 juillet 2026 — WhatsApp pleinement fonctionnel en production)
+
+**WhatsApp est désormais opérationnel de bout en bout** : réception de vrais messages (webhook), réponses automatiques du chatbot, notifications de validation/rejet d'annonces (carousel + fallback texte), avec liens cliquables corrects. Tous les blocages de lancement documentés le 3 juillet sont levés.
+
+### Cause racine du blocage final (config Meta, pas du code)
+Deux WhatsApp Business Accounts (WABA) coexistaient sous ce Business Manager : un WABA de test (`1663286391571815`, numéro `+1 555-639-6609`) et le vrai WABA de production (`901008702321523`, numéro réel `+221 70 87179 42`, `phone_number_id` `1239035322623638`). L'app Nopalou était abonnée au mauvais WABA, et `WHATSAPP_PHONE_NUMBER_ID` sur Render pointait vers le numéro de test. Si l'intégration semble à nouveau mal configurée : vérifier `GET /v19.0/{waba_id}/phone_numbers` et `GET /v19.0/{waba_id}/subscribed_apps` avant de supposer un nouveau blocage Meta — ne pas supposer qu'un seul WABA existe.
+
+### Bugs corrigés le 6 juillet 2026 (5 commits sur `main`)
+1. **Typing indicator invalide** — `sendTyping()` envoyait `type: 'action'`, rejeté par l'API Meta à chaque message reçu. Remplacé par le vrai mécanisme Meta : `typing_indicator` intégré au read receipt (`sendReadReceipt(msg.id, true)`).
+2. **Retour au menu chatbot** — remplacé le rappel texte "Tapez *menu*" par un vrai bouton cliquable (`sendWhatsAppButton`, reply button interactif) dans tous les flux (immo, télécom, support, alerte, commande, recherche). Le mot-clé texte reste un fallback fonctionnel.
+3. **Template `nopalou_fiche_texte` cassé** — le composant `button` n'était jamais envoyé alors que Meta l'exige (`(#131008) Required parameter is missing`), et une fois ajouté, le lien pointait vers une URL doublée/404 (`nopalou.com/immo/immo/xxx`) car le code envoyait un chemin (`immo/${id}`) alors que Meta n'attend que l'id brut — le segment `immo/` est câblé côté Meta dans l'URL du bouton. Voir `docs/WHATSAPP-TEMPLATES.md` section "Piège vécu" pour le détail par template. Même correctif appliqué aux templates carousel (`nopalou_carousel_immo`, `nopalou_carousel_annonce`).
+4. **`/deposer-immo` sans champ photo** — le formulaire de dépôt d'annonce immo n'avait jamais eu d'upload de photo (contrairement à `/deposer-annonce`), donc les annonces immo créées par les utilisateurs tombaient systématiquement sur le fallback texte au lieu du carousel. Ajouté : dropzone + upload Cloudinary côté backend (`POST /api/immo/public` accepte maintenant `multipart/form-data` via `multer`), en réutilisant le pattern déjà en place sur les annonces classifiées.
+5. **Bouton "Soumettre mon annonce" sans style** — `.form-submit-btn` n'avait aucune règle CSS (tombait sur le gris par défaut du navigateur) ; stylé pour correspondre à `.annonce-submit-btn`.
+
+**Limitation connue** : le template `nopalou_fiche_texte` a une URL de bouton fixe pointant vers `/immo/{{1}}` côté Meta — le lien reste incorrect pour les annonces **classifiées** (`/annonces/*`) tant qu'un template Meta dédié n'est pas soumis et approuvé pour ce cas. `nopalou_carousel_telecoms` n'est pas concerné par ce piège : son bouton est une URL statique (`https://nopalou.com/telecom`), sans paramètre dynamique.
+
+### Debug distant via Render Shell
+Pour interroger la vraie base de production (pas la base locale `.env`, qui pointe vers un ancien environnement Railway obsolète) : Render → service → onglet **Shell**. Attention au bracketed-paste mode qui casse le collage de commandes `node -e "..."` multi-lignes — écrire la commande dans un fichier via `printf '%s' "..." > /tmp/check.js` puis `node /tmp/check.js` contourne le problème. Utiliser un chemin absolu (`/opt/render/project/src/...`) dans les `require()`, jamais relatif, car il est résolu depuis le fichier appelant, pas depuis le `cwd`.
+
+---
+
 ## État du projet (4 juillet 2026 — programme apporteur d'affaires ajouté)
 
 **Nouveau** : programme d'apporteur d'affaires complet (voir section "Commercial" et tableau `settings` ci-dessous pour le détail fonctionnel). Implémenté en 9 tâches + revue finale de branche. Un bug important a été trouvé et corrigé lors de la revue finale : la requête `GET /api/apporteurs/admin` faisait un double `LEFT JOIN` (boutiques + commissions) qui gonflait les totaux par produit cartésien quand un apporteur avait plusieurs boutiques ET plusieurs commissions — corrigé en remplaçant par des sous-requêtes corrélées indépendantes.

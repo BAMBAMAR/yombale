@@ -84,8 +84,36 @@ Exemple : `{{1}}` = "Villa 4 pièces — Sacré-Cœur" · `{{2}}` = "120 000 000
 - Type d'action : Consulter le site Web
 - Texte du bouton : "Voir les détails"
 - Type d'URL : Dynamique
-- URL du site Web : `https://nopalou.com/{{1}}`
+- URL du site Web (réelle, vérifiée le 06/07/2026) : `https://nopalou.com/immo/{{1}}`
 - Exemple d'URL : `https://nopalou.com/immo/abc123`
+
+---
+
+## ⚠️ Piège vécu — paramètre du bouton dynamique = id seul, jamais l'URL complète
+
+Découvert le 06/07/2026 : pour les 4 templates dont le bouton a une URL **Dynamique**
+(`nopalou_carousel_annonce`, `nopalou_carousel_immo`, `nopalou_fiche_texte`), le segment
+de chemin (`immo/`, `annonces/`) est **câblé en dur côté Meta dans l'URL du bouton**, pas
+dans le code. Le paramètre `{{1}}` du bouton n'attend donc que l'**id brut** (ex: `abc123`),
+jamais un chemin ou une URL complète.
+
+Envoyer autre chose que l'id brut casse silencieusement le lien :
+- Envoyer `immo/abc123` → Meta compose `https://nopalou.com/immo/immo/abc123` → 404
+- Ne pas envoyer le paramètre bouton du tout → Meta rejette l'envoi entier avec
+  `(#131008) Required parameter is missing` (le composant `body` seul ne suffit pas,
+  même si le bouton n'affiche pas de variable dans son texte visible)
+
+Le composant `button` doit être fourni en plus du `body` dans tous les appels
+`sendWhatsAppTemplate`/`sendWhatsAppCarousel` utilisant un de ces 3 templates :
+```js
+{ type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: a.id }] }
+```
+`nopalou_carousel_telecoms` fait exception : son bouton est **Statique** (`https://nopalou.com/telecom`,
+sans `{{1}}`), donc aucun composant `button` n'est nécessaire dans l'appel — n'en ajoutez pas.
+
+Avant de faire confiance à cette doc pour un template modifié depuis, revérifier le champ
+réel dans WhatsApp Manager → Modèles de message, comme fait ici — la doc peut diverger
+de ce qui a été effectivement soumis/approuvé côté Meta.
 
 ---
 
