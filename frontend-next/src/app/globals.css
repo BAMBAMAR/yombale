@@ -6764,6 +6764,31 @@ a {
   gap: 16px;
 }
 
+.form-submit-btn {
+  padding: 14px 28px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s;
+  width: 100%;
+}
+.form-submit-btn:disabled { opacity: .6; cursor: not-allowed; }
+.form-submit-btn:hover:not(:disabled) { opacity: .88; }
+
+.form-error-banner {
+  background: #FEF2F2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--red);
+  font-size: 13px;
+  margin: 0;
+}
+
 @media (max-width: 560px) {
   .deposer-immo-row { grid-template-columns: 1fr; }
   .forfait-fiche-specs { grid-template-columns: 1fr 1fr; }
