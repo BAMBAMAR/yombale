@@ -6,6 +6,9 @@ const notifs   = require('../services/notifications');
 const { limiterEcriture, limiterAuth, limiterGeneral } = require('../middlewares/rateLimit');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
 const cfg = require('../lib/settingsCache');
+const multer = require('multer');
+const { uploadBuffer } = require('../services/cloudinary');
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 
 // Prix dynamiques — lus depuis la table settings (avec cache 5 min)
 async function getPrix() {
@@ -441,6 +444,106 @@ router.post('/boost/initier', verifierToken, limiterEcriture, async (req, res) =
       { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
     );
     res.json({ wave_url: session.data.wave_launch_url });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/paiement/manuel/declarer — le client déclare un dépôt Wave/Orange effectué manuellement
+router.post('/manuel/declarer', verifierToken, limiterEcriture, upload.single('preuve'), async (req, res) => {
+  try {
+    if (!(await cfg.getBool('paiement_manuel_actif'))) {
+      return res.status(403).json({ error: 'Paiement manuel temporairement indisponible' });
+    }
+    const userId = req.user.userId;
+    const { reference, montant, methode, telephone_expediteur, transaction_id_client } = req.body;
+
+    if (!reference || !montant || !methode || !telephone_expediteur) {
+      return res.status(400).json({ error: 'Champs requis manquants' });
+    }
+    if (!['wave', 'orange'].includes(methode)) {
+      return res.status(400).json({ error: 'Méthode invalide' });
+    }
+    if (!transaction_id_client && !req.file) {
+      return res.status(400).json({ error: 'Fournir un ID de transaction ou une preuve de paiement' });
+    }
+
+    let preuveUrl = null;
+    if (req.file) {
+      preuveUrl = await uploadBuffer(req.file.buffer, 'paiements-manuels');
+    }
+
+    const { rows } = await pool.query(
+      `INSERT INTO paiements_manuels
+         (utilisateur_id, reference, montant, methode, telephone_expediteur, transaction_id_client, preuve_url)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       RETURNING id`,
+      [userId, reference, montant, methode, telephone_expediteur, transaction_id_client || null, preuveUrl]
+    );
+
+    res.json({ ok: true, id: rows[0].id });
+  } catch (err) {
+    console.error('[PAIEMENT MANUEL DECLARER]', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// GET /api/paiement/manuel/liste — déclarations en attente (admin)
+router.get('/manuel/liste', adminSecretOnly, async (req, res) => {
+  try {
+    const statut = ['en_attente', 'valide', 'rejete'].includes(req.query.statut) ? req.query.statut : 'en_attente';
+    const { rows } = await pool.query(
+      `SELECT pm.id, pm.reference, pm.montant, pm.methode, pm.telephone_expediteur,
+              pm.transaction_id_client, pm.preuve_url, pm.statut, pm.motif_rejet, pm.created_at,
+              u.nom AS utilisateur_nom, u.email AS utilisateur_email, u.telephone AS utilisateur_telephone
+       FROM paiements_manuels pm
+       JOIN utilisateurs u ON u.id = pm.utilisateur_id
+       WHERE pm.statut = $1
+       ORDER BY pm.created_at DESC
+       LIMIT 200`,
+      [statut]
+    );
+    res.json({ paiements: rows });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/paiement/manuel/:id/valider — valide un dépôt déclaré et applique l'effet (admin)
+router.post('/manuel/:id/valider', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, reference, montant, methode, statut FROM paiements_manuels WHERE id=$1`,
+      [req.params.id]
+    );
+    const paiement = rows[0];
+    if (!paiement) return res.status(404).json({ error: 'Déclaration introuvable' });
+    if (paiement.statut !== 'en_attente') {
+      return res.status(409).json({ error: 'Déclaration déjà traitée' });
+    }
+
+    await appliquerPaiementReussi(paiement.reference, paiement.montant, 'manuel');
+
+    await pool.query(
+      `UPDATE paiements_manuels SET statut='valide', valide_par=$1, valide_at=NOW() WHERE id=$2`,
+      [req.headers['x-admin-secret'] ? 'admin' : 'admin', req.params.id]
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[PAIEMENT MANUEL VALIDER]', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// POST /api/paiement/manuel/:id/rejeter — rejette un dépôt déclaré (admin)
+router.post('/manuel/:id/rejeter', adminSecretOnly, async (req, res) => {
+  try {
+    const { motif } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE paiements_manuels SET statut='rejete', motif_rejet=$1
+       WHERE id=$2 AND statut='en_attente'
+       RETURNING id`,
+      [motif || null, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Déclaration introuvable ou déjà traitée' });
+    res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
