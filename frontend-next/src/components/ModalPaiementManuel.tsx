@@ -83,8 +83,9 @@ export default function ModalPaiementManuel({ reference, montant, numeroWave, nu
           Déposez sur le numéro : <strong>{numero || 'Numéro non configuré — contactez le support'}</strong>
         </div>
 
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Votre numéro de téléphone (expéditeur)</label>
+        <label htmlFor="pm-telephone" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Votre numéro de téléphone (expéditeur)</label>
         <input
+          id="pm-telephone"
           type="tel"
           value={telephone}
           onChange={e => setTelephone(e.target.value)}
@@ -92,8 +93,9 @@ export default function ModalPaiementManuel({ reference, montant, numeroWave, nu
           style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, marginBottom: 12 }}
         />
 
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>ID de transaction (optionnel si preuve fournie)</label>
+        <label htmlFor="pm-transaction-id" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>ID de transaction (optionnel si preuve fournie)</label>
         <input
+          id="pm-transaction-id"
           type="text"
           value={transactionId}
           onChange={e => setTransactionId(e.target.value)}
@@ -101,8 +103,9 @@ export default function ModalPaiementManuel({ reference, montant, numeroWave, nu
           style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, marginBottom: 12 }}
         />
 
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Capture d&apos;écran du paiement (optionnel si ID fourni)</label>
+        <label htmlFor="pm-preuve" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Capture d&apos;écran du paiement (optionnel si ID fourni)</label>
         <input
+          id="pm-preuve"
           type="file"
           accept="image/*"
           onChange={e => setPreuve(e.target.files?.[0] ?? null)}
