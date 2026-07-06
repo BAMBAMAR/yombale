@@ -88,7 +88,9 @@ async function sendWhatsAppCarousel(phone, templateName, cards) {
         type: 'button',
         sub_type: 'url',
         index: '0',
-        parameters: [{ type: 'text', text: c.pageUrl }],
+        // Le bouton du template pointe vers une URL fixe côté Meta
+        // (ex: https://nopalou.com/immo/{{1}}) — seul l'id final est attendu.
+        parameters: [{ type: 'text', text: c.pageUrl.split('/').pop() }],
       },
     ],
   }));
