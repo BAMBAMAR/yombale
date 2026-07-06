@@ -2,11 +2,23 @@
 // Verticale distincte : une annonce = un bien unique chez un propriétaire/agence,
 // pas un produit multi-marchands.
 const router = require('express').Router();
+const multer  = require('multer');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken, tokenOptional, requireEmailVerifie } = require('../middlewares/auth');
 const { limiterPublication, limiterImmo, limiterBulk, blockScraperUA } = require('../middlewares/rateLimit');
 const { notifierModerationImmo } = require('../services/notifications');
+const { uploadBuffer } = require('../services/cloudinary');
+
+// Multer — mémoire (max 5 fichiers, 5 Mo chacun)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits:  { fileSize: 5 * 1024 * 1024, files: 5 },
+  fileFilter: function(req, file, cb) {
+    if (file.mimetype.startsWith('image/')) return cb(null, true);
+    cb(new Error('Seules les images sont acceptées'));
+  },
+});
 
 const validationAnnonce = [
   body('titre').trim().notEmpty(),
@@ -304,7 +316,7 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/immo/public — annonce gratuite déposée par un utilisateur
 // (en attente de validation par un admin : actif = false)
-router.post('/public', limiterPublication, verifierToken, requireEmailVerifie, validationAnnonce, async (req, res) => {
+router.post('/public', limiterPublication, verifierToken, requireEmailVerifie, upload.array('photos', 5), validationAnnonce, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -316,15 +328,29 @@ router.post('/public', limiterPublication, verifierToken, requireEmailVerifie, v
       contact_nom, contact_tel,
     } = req.body;
 
+    // Upload des photos vers Cloudinary
+    const photoUrls = [];
+    if (req.files && req.files.length) {
+      for (const f of req.files) {
+        try {
+          const url = await uploadBuffer(f.buffer, 'immo');
+          photoUrls.push(url);
+        } catch (e) {
+          console.error('[CLOUDINARY] upload error:', e.message);
+        }
+      }
+    }
+
     const { rows } = await pool.query(`
       INSERT INTO annonces_immo
         (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres, meuble,
-         ville, quartier, description, source, actif, contact_nom, contact_tel, utilisateur_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'utilisateur',false,$12,$13,$14)
+         ville, quartier, description, photos, source, actif, contact_nom, contact_tel, utilisateur_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'utilisateur',false,$13,$14,$15)
       RETURNING id`,
       [titre, type_bien, transaction, prix || null, surface_m2 || null,
        nb_pieces || null, nb_chambres || null, meuble === true || meuble === 'true' ? true : false,
-       ville, quartier || null, description || null, contact_nom || null, contact_tel, req.user.userId]
+       ville, quartier || null, description || null, JSON.stringify(photoUrls),
+       contact_nom || null, contact_tel, req.user.userId]
     );
     res.status(201).json({
       success: true,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deposerAnnonceImmo } from '@/app/actions/immo'
 
@@ -21,6 +21,20 @@ export default function FormulaireImmo() {
   const [error, setError] = useState<string | null>(null)
   const [typeBien, setTypeBien] = useState('appartement')
   const [transaction, setTransaction] = useState('location')
+  const [photos, setPhotos] = useState<File[]>([])
+  const [previews, setPreviews] = useState<string[]>([])
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  function handlePhotos(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []).slice(0, 5)
+    setPhotos(files)
+    setPreviews(files.map(f => URL.createObjectURL(f)))
+  }
+
+  function removePhoto(i: number) {
+    setPhotos(p => p.filter((_, j) => j !== i))
+    setPreviews(p => p.filter((_, j) => j !== i))
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -28,6 +42,8 @@ export default function FormulaireImmo() {
     const fd = new FormData(e.currentTarget)
     fd.set('type_bien', typeBien)
     fd.set('transaction', transaction)
+    fd.delete('photos')
+    photos.forEach(f => fd.append('photos', f))
 
     startTransition(async () => {
       const res = await deposerAnnonceImmo(fd)
@@ -199,6 +215,49 @@ export default function FormulaireImmo() {
           className="form-input"
           style={{ resize: 'vertical', minHeight: 100 }}
         />
+      </div>
+
+      <p className="deposer-immo-section-title">Photos</p>
+
+      <div className="photos-zone">
+        <div
+          className="photos-dropzone"
+          onClick={() => fileRef.current?.click()}
+          onKeyDown={e => e.key === 'Enter' && fileRef.current?.click()}
+          tabIndex={0}
+          role="button"
+          aria-label="Ajouter des photos"
+        >
+          <span style={{ fontSize: 32 }}>📷</span>
+          <p>Cliquez pour ajouter des photos</p>
+          <span className="form-hint">Max 5 photos · 5 Mo chacune · JPG / PNG / WebP</span>
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          name="photos"
+          accept="image/*"
+          multiple
+          style={{ display: 'none' }}
+          onChange={handlePhotos}
+        />
+
+        {previews.length > 0 && (
+          <div className="photos-previews">
+            {previews.map((src, i) => (
+              <div key={i} className="photo-thumb">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt={`Photo ${i + 1}`} />
+                <button
+                  type="button"
+                  className="photo-remove"
+                  onClick={() => removePhoto(i)}
+                  aria-label="Supprimer"
+                >✕</button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <p className="deposer-immo-section-title">Contact</p>
