@@ -193,12 +193,7 @@ async function handleIncoming(msg) {
   const text = msg.text?.body?.trim() || '';
   const interactiveId = msg.interactive?.list_reply?.id || msg.interactive?.button_reply?.id || '';
 
-  // Mots-clés globaux : "menu" ou "aide" depuis n'importe quel état
-  if (['menu', 'aide', 'help', '0'].includes(text.toLowerCase()) || interactiveId === 'menu') {
-    await setSession(phone, 'IDLE', {});
-    await sendMenu(phone);
-    return;
-  }
+  const SALUTATIONS = ['menu', 'aide', 'help', '0', 'bonjour', 'bonsoir', 'salut', 'slt', 'hello', 'coucou'];
 
   // ── IDLE → présentation puis menu (nouvelle session ou session expirée) ────
   if (state === 'IDLE') {
@@ -206,6 +201,13 @@ async function handleIncoming(msg) {
       phone,
       '👋 Bienvenue sur *Nopalou* !\n\nJe suis votre assistant — je peux comparer des prix, vous montrer des annonces immo ou des offres télécom, créer une alerte de prix, suivre une commande ou répondre à vos questions sur le site. 100% gratuit, disponible 24h/24.'
     );
+    await setSession(phone, 'MENU', {});
+    await sendMenu(phone);
+    return;
+  }
+
+  // Mots-clés globaux : "menu", "aide" ou une salutation depuis n'importe quel état actif
+  if (SALUTATIONS.includes(text.toLowerCase()) || interactiveId === 'menu') {
     await setSession(phone, 'MENU', {});
     await sendMenu(phone);
     return;
