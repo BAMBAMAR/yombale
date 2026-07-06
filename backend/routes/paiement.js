@@ -32,6 +32,121 @@ async function getPrix() {
   };
 }
 
+// Applique l'effet d'un paiement réussi (annonce, boost, sponsoring, abonnement)
+// Appelée par les webhooks Wave/Orange ET par la validation admin d'un paiement manuel.
+async function appliquerPaiementReussi(reference, montant, methode) {
+  await pool.query(
+    "INSERT INTO commandes (reference,montant,statut,methode_paiement) VALUES ($1,$2,'payee',$3) ON CONFLICT (reference) DO NOTHING",
+    [reference, montant, methode]
+  );
+
+  const ref = reference;
+
+  // Annonce classifiée : ref = ann_userId_annonceId
+  if (ref && ref.startsWith('ann_')) {
+    const annonceId = ref.split('_')[2];
+    if (annonceId) {
+      await pool.query(
+        "UPDATE annonces_classifiees SET payee=true, actif=true, commande_ref=$1 WHERE id=$2",
+        [ref, annonceId]
+      );
+    }
+  }
+  // Sponsoring immo : ref = immo_userId_immoId
+  if (ref && ref.startsWith('immo_')) {
+    const immoId = ref.split('_')[2];
+    if (immoId) {
+      const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      await pool.query(
+        "UPDATE annonces_immo SET sponsorisee=true, sponsorisee_jusqu_au=$1, demande_sponsorisation=false WHERE id=$2",
+        [until, immoId]
+      );
+    }
+  }
+  // Sponsoring boutique : ref = bout_userId_boutiqueId
+  if (ref && ref.startsWith('bout_')) {
+    const boutiqueId = ref.split('_')[2];
+    if (boutiqueId) {
+      const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      await pool.query(
+        "UPDATE boutiques SET sponsorise=true, sponsor_jusqu_au=$1 WHERE id=$2",
+        [until, boutiqueId]
+      );
+    }
+  }
+  // Sponsoring produit : ref = prod_userId_produitId
+  if (ref && ref.startsWith('prod_')) {
+    const produitId = ref.split('_')[2];
+    if (produitId) {
+      const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      await pool.query(
+        "UPDATE produits SET sponsorise=true, sponsor_jusqu_au=$1 WHERE id=$2",
+        [until, produitId]
+      );
+    }
+  }
+  // Boost annonce 7 jours : ref = boost_userId_annonceId
+  if (ref && ref.startsWith('boost_')) {
+    const annonceId = ref.split('_')[2];
+    if (annonceId) {
+      const boostJours = (await cfg.getNum('boost_duree_jours')) || 7;
+      const until = new Date(Date.now() + boostJours * 24 * 60 * 60 * 1000).toISOString();
+      await pool.query(
+        "UPDATE annonces_classifiees SET boost_until=$1 WHERE id=$2",
+        [until, annonceId]
+      );
+    }
+  }
+  // Abonnement Boutique Pro/Business : ref = abmt_userId_plan
+  if (ref && ref.startsWith('abmt_')) {
+    const parts = ref.split('_');
+    const userId = parts[1];
+    const plan   = parts[2];
+    const pxAbmt = await getPrix();
+    const PRIX   = { pro: pxAbmt.pro, business: pxAbmt.business };
+    if (userId && plan && PRIX[plan]) {
+      const fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const abonnementRow = await pool.query(
+        `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
+         VALUES ($1,$2,'actif',$3,$4,$5)
+         ON CONFLICT (commande_ref) DO NOTHING
+         RETURNING id`,
+        [userId, plan, PRIX[plan], fin, ref]
+      );
+      if (plan === 'business') {
+        await pool.query(
+          'UPDATE boutiques SET commission_rate=$1 WHERE utilisateur_id=$2',
+          [pxAbmt.commissionBiz, userId]
+        );
+      }
+      if (abonnementRow.rows[0]) {
+        try {
+          const apporteurActif = await cfg.getBool('apporteur_actif');
+          if (apporteurActif) {
+            const boutiqueApporteur = await pool.query(
+              'SELECT id, apporteur_id FROM boutiques WHERE utilisateur_id=$1 AND apporteur_id IS NOT NULL LIMIT 1',
+              [userId]
+            );
+            if (boutiqueApporteur.rows[0]) {
+              const taux = await cfg.getNum('apporteur_taux_commission');
+              const montantCommission = Number(PRIX[plan]) * (taux / 100);
+              await pool.query(
+                `INSERT INTO commissions_apporteur (apporteur_id, boutique_id, abonnement_id, montant)
+                 VALUES ($1,$2,$3,$4)`,
+                [boutiqueApporteur.rows[0].apporteur_id, boutiqueApporteur.rows[0].id, abonnementRow.rows[0].id, montantCommission]
+              );
+            }
+          }
+        } catch (commErr) {
+          console.error(`[${methode.toUpperCase()}] commission apporteur:`, commErr.message);
+        }
+      }
+    }
+  }
+
+  return ref;
+}
+
 // POST /api/paiement/wave/initier
 router.post('/wave/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
@@ -66,115 +181,7 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
 
   const { type, data } = req.body;
   if (type === 'checkout.session.completed') {
-    await pool.query(
-      "INSERT INTO commandes (reference,montant,statut,methode_paiement) VALUES ($1,$2,'payee','wave') ON CONFLICT (reference) DO NOTHING",
-      [data.client_reference, data.amount]
-    );
-    const ref = data.client_reference;
-    // Annonce classifiée : ref = ann_userId_annonceId
-    if (ref && ref.startsWith('ann_')) {
-      const parts = ref.split('_');
-      const annonceId = parts[2];
-      if (annonceId) {
-        await pool.query(
-          "UPDATE annonces_classifiees SET payee=true, actif=true, commande_ref=$1 WHERE id=$2",
-          [ref, annonceId]
-        );
-      }
-    }
-    // Sponsoring immo : ref = immo_userId_immoId
-    if (ref && ref.startsWith('immo_')) {
-      const immoId = ref.split('_')[2];
-      if (immoId) {
-        const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        await pool.query(
-          "UPDATE annonces_immo SET sponsorisee=true, sponsorisee_jusqu_au=$1, demande_sponsorisation=false WHERE id=$2",
-          [until, immoId]
-        );
-      }
-    }
-    // Sponsoring boutique : ref = bout_userId_boutiqueId
-    if (ref && ref.startsWith('bout_')) {
-      const boutiqueId = ref.split('_')[2];
-      if (boutiqueId) {
-        const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        await pool.query(
-          "UPDATE boutiques SET sponsorise=true, sponsor_jusqu_au=$1 WHERE id=$2",
-          [until, boutiqueId]
-        );
-      }
-    }
-    // Sponsoring produit : ref = prod_userId_produitId
-    if (ref && ref.startsWith('prod_')) {
-      const produitId = ref.split('_')[2];
-      if (produitId) {
-        const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        await pool.query(
-          "UPDATE produits SET sponsorise=true, sponsor_jusqu_au=$1 WHERE id=$2",
-          [until, produitId]
-        );
-      }
-    }
-    // Boost annonce 7 jours : ref = boost_userId_annonceId
-    if (ref && ref.startsWith('boost_')) {
-      const annonceId = ref.split('_')[2];
-      if (annonceId) {
-        const until = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        await pool.query(
-          "UPDATE annonces_classifiees SET boost_until=$1 WHERE id=$2",
-          [until, annonceId]
-        );
-      }
-    }
-    // Abonnement Boutique Pro/Business : ref = abmt_userId_plan
-    if (ref && ref.startsWith('abmt_')) {
-      const parts = ref.split('_');
-      const userId = parts[1];
-      const plan   = parts[2];
-      const pxAbmt = await getPrix();
-      const PRIX   = { pro: pxAbmt.pro, business: pxAbmt.business };
-      if (userId && plan && PRIX[plan]) {
-        const fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        const abonnementRow = await pool.query(
-          `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
-           VALUES ($1,$2,'actif',$3,$4,$5)
-           ON CONFLICT (commande_ref) DO NOTHING
-           RETURNING id`,
-          [userId, plan, PRIX[plan], fin, ref]
-        );
-        // Boutiques Business → commission dynamique
-        if (plan === 'business') {
-          await pool.query(
-            'UPDATE boutiques SET commission_rate=$1 WHERE utilisateur_id=$2',
-            [pxAbmt.commissionBiz, userId]
-          );
-        }
-        // Programme apporteur d'affaires : commission si la boutique a un apporteur attribué
-        // (uniquement si un nouvel abonnement a réellement été inséré — pas un replay du webhook)
-        if (abonnementRow.rows[0]) {
-          try {
-            const apporteurActif = await cfg.getBool('apporteur_actif');
-            if (apporteurActif) {
-              const boutiqueApporteur = await pool.query(
-                'SELECT id, apporteur_id FROM boutiques WHERE utilisateur_id=$1 AND apporteur_id IS NOT NULL LIMIT 1',
-                [userId]
-              );
-              if (boutiqueApporteur.rows[0]) {
-                const taux = await cfg.getNum('apporteur_taux_commission');
-                const montantCommission = Number(PRIX[plan]) * (taux / 100);
-                await pool.query(
-                  `INSERT INTO commissions_apporteur (apporteur_id, boutique_id, abonnement_id, montant)
-                   VALUES ($1,$2,$3,$4)`,
-                  [boutiqueApporteur.rows[0].apporteur_id, boutiqueApporteur.rows[0].id, abonnementRow.rows[0].id, montantCommission]
-                );
-              }
-            }
-          } catch (commErr) {
-            console.error('[WAVE WEBHOOK] commission apporteur:', commErr.message);
-          }
-        }
-      }
-    }
+    const ref = await appliquerPaiementReussi(data.client_reference, data.amount, 'wave');
     if (data.customer_phone)
       await notifs.confirmationCommande(data.customer_phone, ref);
   }
@@ -348,107 +355,7 @@ router.post('/orange/webhook', limiterGeneral, async (req, res) => {
     const { status, order_id, amount } = req.body;
     if (status !== 'SUCCESS') return res.sendStatus(200);
 
-    await pool.query(
-      "INSERT INTO commandes (reference,montant,statut,methode_paiement) VALUES ($1,$2,'payee','orange') ON CONFLICT (reference) DO NOTHING",
-      [order_id, amount || 0]
-    );
-
-    // Annonce classifiée
-    if (order_id?.startsWith('ann_')) {
-      const annonceId = order_id.replace('ann_', '');
-      await pool.query(
-        "UPDATE annonces_classifiees SET payee=true, actif=true, commande_ref=$1 WHERE id=$2",
-        [order_id, annonceId]
-      );
-    }
-    // Sponsoring immo
-    if (order_id?.startsWith('immo_')) {
-      const immoId = order_id.split('_')[2];
-      if (immoId) {
-        const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        await pool.query(
-          "UPDATE annonces_immo SET sponsorisee=true, sponsorisee_jusqu_au=$1, demande_sponsorisation=false WHERE id=$2",
-          [until, immoId]
-        );
-      }
-    }
-    // Sponsoring boutique
-    if (order_id?.startsWith('bout_')) {
-      const boutiqueId = order_id.split('_')[2];
-      if (boutiqueId) {
-        const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        await pool.query(
-          "UPDATE boutiques SET sponsorise=true, sponsor_jusqu_au=$1 WHERE id=$2",
-          [until, boutiqueId]
-        );
-      }
-    }
-    // Sponsoring produit
-    if (order_id?.startsWith('prod_')) {
-      const produitId = order_id.split('_')[2];
-      if (produitId) {
-        const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        await pool.query(
-          "UPDATE produits SET sponsorise=true, sponsor_jusqu_au=$1 WHERE id=$2",
-          [until, produitId]
-        );
-      }
-    }
-    // Boost annonce 7 jours (Orange)
-    if (order_id?.startsWith('boost_')) {
-      const annonceId = order_id.split('_')[2];
-      if (annonceId) {
-        const until = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        await pool.query(
-          "UPDATE annonces_classifiees SET boost_until=$1 WHERE id=$2",
-          [until, annonceId]
-        );
-      }
-    }
-    // Abonnement Pro/Business (Orange)
-    if (order_id?.startsWith('abmt_')) {
-      const parts  = order_id.split('_');
-      const userId = parts[1];
-      const plan   = parts[2];
-      const pxO    = await getPrix();
-      const PRIX   = { pro: pxO.pro, business: pxO.business };
-      if (userId && plan && PRIX[plan]) {
-        const fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        const abonnementRow = await pool.query(
-          `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
-           VALUES ($1,$2,'actif',$3,$4,$5)
-           ON CONFLICT (commande_ref) DO NOTHING
-           RETURNING id`,
-          [userId, plan, PRIX[plan], fin, order_id]
-        );
-        if (plan === 'business') {
-          await pool.query('UPDATE boutiques SET commission_rate=$1 WHERE utilisateur_id=$2', [pxO.commissionBiz, userId]);
-        }
-        // (uniquement si un nouvel abonnement a réellement été inséré — pas un replay du webhook)
-        if (abonnementRow.rows[0]) {
-          try {
-            const apporteurActif = await cfg.getBool('apporteur_actif');
-            if (apporteurActif) {
-              const boutiqueApporteur = await pool.query(
-                'SELECT id, apporteur_id FROM boutiques WHERE utilisateur_id=$1 AND apporteur_id IS NOT NULL LIMIT 1',
-                [userId]
-              );
-              if (boutiqueApporteur.rows[0]) {
-                const taux = await cfg.getNum('apporteur_taux_commission');
-                const montantCommission = Number(PRIX[plan]) * (taux / 100);
-                await pool.query(
-                  `INSERT INTO commissions_apporteur (apporteur_id, boutique_id, abonnement_id, montant)
-                   VALUES ($1,$2,$3,$4)`,
-                  [boutiqueApporteur.rows[0].apporteur_id, boutiqueApporteur.rows[0].id, abonnementRow.rows[0].id, montantCommission]
-                );
-              }
-            }
-          } catch (commErr) {
-            console.error('[ORANGE WEBHOOK] commission apporteur:', commErr.message);
-          }
-        }
-      }
-    }
+    await appliquerPaiementReussi(order_id, amount || 0, 'orange');
     res.sendStatus(200);
   } catch (err) {
     console.error('[Orange webhook]', err.message);
@@ -517,3 +424,4 @@ router.post('/boost/initier', verifierToken, limiterEcriture, async (req, res) =
 });
 
 module.exports = router;
+module.exports.appliquerPaiementReussi = appliquerPaiementReussi;
