@@ -62,21 +62,24 @@ export async function GET() {
             💬 NOUVEAU — ASSISTANT WHATSAPP
           </div>
 
-          <p style={{
-            fontSize: 62, fontWeight: 900, color: '#fff',
-            textAlign: 'center', margin: '0 0 32px', lineHeight: 1.15,
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            fontSize: 56, fontWeight: 900, color: '#fff',
+            textAlign: 'center', marginBottom: 32, lineHeight: 1.2,
           }}>
-            Comparez les prix<br />directement sur WhatsApp
-          </p>
+            <span>Comparez les prix</span>
+            <span>directement sur WhatsApp</span>
+          </div>
 
-          <p style={{
-            fontSize: 26, color: '#94A3B8',
-            textAlign: 'center', margin: 0, lineHeight: 1.7, maxWidth: 780,
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            fontSize: 24, color: '#94A3B8',
+            textAlign: 'center', lineHeight: 1.8, maxWidth: 820,
           }}>
-            🔍 Recherchez un produit · 🏠 Annonces immo<br />
-            📱 Offres télécom · 🔔 Alertes de prix<br />
-            📦 Suivi de commande — sans quitter votre chat.
-          </p>
+            <span>🔍 Recherchez un produit · 🏠 Annonces immo</span>
+            <span>📱 Offres télécom · 🔔 Alertes de prix</span>
+            <span>📦 Suivi de commande — sans quitter votre chat</span>
+          </div>
 
           <div style={{
             marginTop: 48,

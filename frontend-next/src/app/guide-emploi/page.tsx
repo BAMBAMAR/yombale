@@ -59,7 +59,10 @@ const STEPS = [
     icon: '💬', couleur: '#25D366',
     titre: 'Discuter avec l\'assistant WhatsApp',
     texte: "Recherchez un produit, consultez les annonces immo ou créez une alerte de prix directement depuis WhatsApp, sans installer d'application. Envoyez simplement \"menu\" au numéro Nopalou.",
-    ctas: [{ label: 'Découvrir l\'assistant →', href: '/assistant-whatsapp', couleur: '#25D366', bg: '#f0fdf4' }],
+    ctas: [
+      { label: 'Découvrir l\'assistant →', href: '/assistant-whatsapp', couleur: '#25D366', bg: '#f0fdf4' },
+      { label: 'Discuter sur WhatsApp →', href: 'https://wa.me/221708717942?text=menu', couleur: '#25D366', bg: '#f0fdf4' },
+    ],
   },
   {
     icon: '💼', couleur: '#C75B00',
@@ -94,16 +97,21 @@ export default function GuideEmploiPage() {
               <div className="guide-emploi-texte" dangerouslySetInnerHTML={{ __html: step.texte }} />
               {step.ctas.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 11 }}>
-                  {step.ctas.map(cta => (
-                    <Link
-                      key={cta.href}
-                      href={cta.href}
-                      className="guide-emploi-cta"
-                      style={{ background: cta.bg, color: cta.couleur, borderColor: cta.couleur }}
-                    >
-                      {cta.label}
-                    </Link>
-                  ))}
+                  {step.ctas.map(cta => {
+                    const externe = cta.href.startsWith('http')
+                    return (
+                      <Link
+                        key={cta.href}
+                        href={cta.href}
+                        target={externe ? '_blank' : undefined}
+                        rel={externe ? 'noopener noreferrer' : undefined}
+                        className="guide-emploi-cta"
+                        style={{ background: cta.bg, color: cta.couleur, borderColor: cta.couleur }}
+                      >
+                        {cta.label}
+                      </Link>
+                    )
+                  })}
                 </div>
               )}
             </div>
