@@ -135,3 +135,37 @@ export async function initierWaveBoutiqueSponsoring(boutique_id: string): Promis
     return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }
   }
 }
+
+export async function declarerPaiementManuel(input: {
+  reference: string
+  montant: number
+  methode: 'wave' | 'orange'
+  telephoneExpediteur: string
+  transactionId?: string
+  preuve?: File
+}): Promise<PaiementResult> {
+  const session = await getOptionalSession()
+  if (!session) return { ok: false, error: 'Connexion requise' }
+
+  try {
+    const token = await getAuthToken(session)
+    const form = new FormData()
+    form.set('reference', input.reference)
+    form.set('montant', String(input.montant))
+    form.set('methode', input.methode)
+    form.set('telephone_expediteur', input.telephoneExpediteur)
+    if (input.transactionId) form.set('transaction_id_client', input.transactionId)
+    if (input.preuve) form.set('preuve', input.preuve)
+
+    const res = await fetch(`${BACKEND}/api/paiement/manuel/declarer`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    })
+    const body = await res.json()
+    if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }
+  }
+}
