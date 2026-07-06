@@ -182,7 +182,7 @@ async function handleIncoming(msg) {
         );
       }
       await sendWhatsAppButton(phone, 'Envie de continuer ?', 'menu', 'Menu').catch(() => {});
-      await setSession(phone, 'IDLE', {});
+      await setSession(phone, 'MENU', {});
       return;
     }
     if (action === 'telecom') {
@@ -196,7 +196,7 @@ async function handleIncoming(msg) {
         await sendWhatsAppText(phone, lines.join('\n\n'));
       }
       await sendWhatsAppButton(phone, 'Envie de continuer ?', 'menu', 'Menu').catch(() => {});
-      await setSession(phone, 'IDLE', {});
+      await setSession(phone, 'MENU', {});
       return;
     }
     if (action === 'alert') {
@@ -212,7 +212,7 @@ async function handleIncoming(msg) {
     if (action === 'support') {
       await sendWhatsAppText(phone, '💬 *Support Nopalou*\n\nPour nous contacter :\n📧 contact@nopalou.com\n🌐 nopalou.com\n\nNous répondons sous 24h. Merci !');
       await sendWhatsAppButton(phone, 'Envie de continuer ?', 'menu', 'Menu').catch(() => {});
-      await setSession(phone, 'IDLE', {});
+      await setSession(phone, 'MENU', {});
       return;
     }
     // Texte libre reçu en état MENU → traiter comme recherche
@@ -252,7 +252,7 @@ async function handleIncoming(msg) {
       `✅ *Alerte créée !*\n\nJe vous notifierai dès que *${context.produit_nom}* passe sous *${prixFmt(prix)}*.`
     );
     await sendWhatsAppButton(phone, 'Envie de continuer ?', 'menu', 'Menu').catch(() => {});
-    await setSession(phone, 'IDLE', {});
+    await setSession(phone, 'MENU', {});
     return;
   }
 
@@ -273,7 +273,7 @@ async function handleIncoming(msg) {
       );
       await sendWhatsAppButton(phone, 'Envie de continuer ?', 'menu', 'Menu').catch(() => {});
     }
-    await setSession(phone, 'IDLE', {});
+    await setSession(phone, 'MENU', {});
     return;
   }
 
@@ -290,7 +290,7 @@ async function handleSearchQuery(phone, query) {
   const results = await searchContent(query);
   if (!results.length) {
     await sendWhatsAppText(phone, `😕 Aucun résultat pour *"${query}"*.\n\nEssayez avec d'autres mots-clés ou tapez *menu*.`);
-    await setSession(phone, 'IDLE', {});
+    await setSession(phone, 'SEARCH_QUERY', {});
     return;
   }
 
@@ -331,7 +331,7 @@ async function handleSearchQuery(phone, query) {
   }
 
   await sendWhatsAppButton(phone, 'Faites une nouvelle recherche, ou :', 'menu', 'Menu').catch(() => {});
-  await setSession(phone, 'IDLE', {});
+  await setSession(phone, 'MENU', {});
 }
 
 module.exports = { handleIncoming, cleanupOldMessages, resetInactiveSessions };
