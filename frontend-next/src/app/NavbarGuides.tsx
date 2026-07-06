@@ -62,6 +62,13 @@ export default function NavbarGuides() {
               <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--text3)' }}>Comment utiliser Nopalou</span>
             </span>
           </Link>
+          <Link href="/assistant-whatsapp" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>
+            <span>💬</span>
+            <span>
+              <span style={{ display: 'block', fontWeight: 700 }}>Assistant WhatsApp</span>
+              <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--text3)' }}>Comparez les prix depuis WhatsApp</span>
+            </span>
+          </Link>
         </div>
       )}
     </div>

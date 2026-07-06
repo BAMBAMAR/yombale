@@ -13,6 +13,7 @@ const GUIDES = [
   { href: '/guide-immo',   emoji: '🏡', label: 'Guide immobilier' },
   { href: '/guide-prix',   emoji: '💡', label: 'Guide des prix' },
   { href: '/guide-emploi', emoji: '📖', label: 'Comment utiliser Nopalou' },
+  { href: '/assistant-whatsapp', emoji: '💬', label: 'Assistant WhatsApp' },
 ]
 
 export default function MobileNav({ isLoggedIn, nom }: Props) {
