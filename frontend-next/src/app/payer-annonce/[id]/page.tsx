@@ -67,6 +67,15 @@ export default async function PayerAnnoncePage({ params }: { params: { id: strin
     ? annonce.titre.slice(0, 57) + '…'
     : annonce.titre
 
+  const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+  let settings: Record<string, string> = {}
+  try {
+    const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' })
+    if (r.ok) settings = await r.json()
+  } catch {
+    // handled by defaults in PaiementClient
+  }
+
   return (
     <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 560 }}>
       <div style={{ marginBottom: 24 }}>
@@ -81,7 +90,12 @@ export default async function PayerAnnoncePage({ params }: { params: { id: strin
         </p>
       </div>
 
-      <PaiementClient annonceId={params.id} titreCourt={titreCourt} />
+      <PaiementClient
+        annonceId={params.id}
+        titreCourt={titreCourt}
+        settings={settings}
+        userId={session.userId}
+      />
     </div>
   )
 }

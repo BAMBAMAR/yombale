@@ -1,16 +1,25 @@
 'use client'
 import { useState, useTransition } from 'react'
 import { initierWaveAnnonce, initierOrangeAnnonce } from '@/app/actions/paiement'
+import ModalPaiementManuel from '@/components/ModalPaiementManuel'
 
 interface Props {
   annonceId: string
   titreCourt: string
+  settings: Record<string, string>
+  userId: string
 }
 
-export default function PaiementClient({ annonceId, titreCourt }: Props) {
+export default function PaiementClient({ annonceId, titreCourt, settings, userId }: Props) {
   const [error, setError]                     = useState<string | null>(null)
   const [pendingWave, startWave]             = useTransition()
   const [pendingOrange, startOrange]         = useTransition()
+  const [showManuel, setShowManuel]           = useState(false)
+
+  const waveActif    = settings.paiement_wave !== 'false'
+  const orangeActif  = settings.paiement_orange !== 'false'
+  const manuelActif  = settings.paiement_manuel_actif !== 'false'
+  const montant      = Number(settings.prix_annonce) || 1500
 
   function payerWave() {
     setError(null)
@@ -44,7 +53,7 @@ export default function PaiementClient({ annonceId, titreCourt }: Props) {
       </div>
 
       <div className="paiement-montant-box">
-        <span className="paiement-montant">1 500 FCFA</span>
+        <span className="paiement-montant">{montant.toLocaleString('fr-FR')} FCFA</span>
         <span className="paiement-montant-desc">Activation annonce — paiement unique</span>
       </div>
 
@@ -53,45 +62,58 @@ export default function PaiementClient({ annonceId, titreCourt }: Props) {
       <div className="paiement-methodes">
         <p className="paiement-methodes-titre">Choisissez votre mode de paiement</p>
 
-        {/* Wave */}
-        <button
-          onClick={payerWave}
-          disabled={pendingWave || pendingOrange}
-          className="paiement-btn paiement-btn--wave"
-        >
-          {pendingWave ? (
-            <span>Connexion Wave…</span>
-          ) : (
-            <>
-              <span className="paiement-btn-logo">🌊</span>
-              <div className="paiement-btn-text">
-                <span className="paiement-btn-nom">Wave</span>
-                <span className="paiement-btn-desc">Paiement mobile instantané</span>
-              </div>
-              <span className="paiement-btn-arrow">→</span>
-            </>
-          )}
-        </button>
+        {waveActif && (
+          <button
+            onClick={payerWave}
+            disabled={pendingWave || pendingOrange}
+            className="paiement-btn paiement-btn--wave"
+          >
+            {pendingWave ? (
+              <span>Connexion Wave…</span>
+            ) : (
+              <>
+                <span className="paiement-btn-logo">🌊</span>
+                <div className="paiement-btn-text">
+                  <span className="paiement-btn-nom">Wave</span>
+                  <span className="paiement-btn-desc">Paiement mobile instantané</span>
+                </div>
+                <span className="paiement-btn-arrow">→</span>
+              </>
+            )}
+          </button>
+        )}
 
-        {/* Orange Money */}
-        <button
-          onClick={payerOrange}
-          disabled={pendingWave || pendingOrange}
-          className="paiement-btn paiement-btn--orange"
-        >
-          {pendingOrange ? (
-            <span>Connexion Orange Money…</span>
-          ) : (
-            <>
-              <span className="paiement-btn-logo">🟠</span>
-              <div className="paiement-btn-text">
-                <span className="paiement-btn-nom">Orange Money</span>
-                <span className="paiement-btn-desc">Paiement via votre compte Orange</span>
-              </div>
-              <span className="paiement-btn-arrow">→</span>
-            </>
-          )}
-        </button>
+        {orangeActif && (
+          <button
+            onClick={payerOrange}
+            disabled={pendingWave || pendingOrange}
+            className="paiement-btn paiement-btn--orange"
+          >
+            {pendingOrange ? (
+              <span>Connexion Orange Money…</span>
+            ) : (
+              <>
+                <span className="paiement-btn-logo">🟠</span>
+                <div className="paiement-btn-text">
+                  <span className="paiement-btn-nom">Orange Money</span>
+                  <span className="paiement-btn-desc">Paiement via votre compte Orange</span>
+                </div>
+                <span className="paiement-btn-arrow">→</span>
+              </>
+            )}
+          </button>
+        )}
+
+        {manuelActif && (
+          <button onClick={() => setShowManuel(true)} className="paiement-btn">
+            <span className="paiement-btn-logo">🧾</span>
+            <div className="paiement-btn-text">
+              <span className="paiement-btn-nom">J&apos;ai déjà payé / Payer sans app</span>
+              <span className="paiement-btn-desc">Dépôt manuel Wave/Orange, validé par notre équipe</span>
+            </div>
+            <span className="paiement-btn-arrow">→</span>
+          </button>
+        )}
       </div>
 
       <div className="paiement-garanties">
@@ -99,6 +121,17 @@ export default function PaiementClient({ annonceId, titreCourt }: Props) {
         <span>✅ Activation immédiate</span>
         <span>📞 Support disponible</span>
       </div>
+
+      {showManuel && (
+        <ModalPaiementManuel
+          reference={`ann_${userId}_${annonceId}`}
+          montant={montant}
+          numeroWave={settings.paiement_manuel_numero_wave || ''}
+          numeroOM={settings.paiement_manuel_numero_om || ''}
+          onClose={() => setShowManuel(false)}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
     </div>
   )
 }
