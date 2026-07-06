@@ -236,11 +236,15 @@ router.post('/:id/demande-sponsorisation', verifierToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// GET /api/immo/admin/en-attente — annonces utilisateurs à valider (admin)
+// GET /api/immo/admin/en-attente (admin) — toutes les annonces utilisateurs non supprimées
 router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT * FROM annonces_immo WHERE actif = false AND source = 'utilisateur' ORDER BY created_at DESC`
+      `SELECT ai.*, u.nom AS compte_nom, u.email AS compte_email
+       FROM annonces_immo ai
+       LEFT JOIN utilisateurs u ON u.id = ai.utilisateur_id
+       WHERE ai.source = 'utilisateur' AND ai.supprimee = false
+       ORDER BY ai.created_at DESC`
     );
     res.json(rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -250,7 +254,11 @@ router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
 router.get('/admin/demandes-sponsorisation', adminSecretOnly, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT * FROM annonces_immo WHERE demande_sponsorisation = true ORDER BY updated_at DESC`
+      `SELECT ai.*, u.nom AS compte_nom, u.email AS compte_email
+       FROM annonces_immo ai
+       LEFT JOIN utilisateurs u ON u.id = ai.utilisateur_id
+       WHERE ai.demande_sponsorisation = true
+       ORDER BY ai.updated_at DESC`
     );
     res.json(rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
