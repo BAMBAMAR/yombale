@@ -12,6 +12,7 @@ const {
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 const prixFmt = (p) => p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' : 'N/C';
+const attendre = (ms) => new Promise(r => setTimeout(r, ms));
 
 // ── FAQ par mots-clés — questions sur le fonctionnement du site ───────────────
 // Chaque entrée : mots-clés à détecter dans le texte libre (sans accents, minuscule) + réponse.
@@ -240,6 +241,7 @@ async function handleIncoming(msg) {
         await sendWhatsAppCarousel(phone, 'nopalou_carousel_immo', cards).catch(() =>
           sendWhatsAppText(phone, cards.map(c => `• ${c.title} — ${c.detail}\n${c.pageUrl}`).join('\n\n'))
         );
+        await attendre(1200); // laisse le temps aux messages du carousel de s'afficher avant le bouton
       }
       await sendWhatsAppButton(phone, 'Envie de continuer ?', 'menu', 'Menu').catch(() => {});
       await setSession(phone, 'MENU', {});
@@ -410,6 +412,9 @@ async function handleSearchQuery(phone, query) {
     });
   }
 
+  if (produits.length + autres.length > 1) {
+    await attendre(1200); // laisse le temps aux messages précédents de s'afficher avant le bouton
+  }
   await sendWhatsAppButton(phone, 'Faites une nouvelle recherche, ou :', 'menu', 'Menu').catch(() => {});
   await setSession(phone, 'MENU', {});
 }
