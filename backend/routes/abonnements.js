@@ -29,6 +29,9 @@ router.get('/mon-plan', verifierToken, async (req, res) => {
 // POST /api/abonnements/initier — lancer le paiement Wave pour un abonnement
 router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
+    if (!(await cfg.getBool('paiement_wave'))) {
+      return res.status(403).json({ error: 'Paiement Wave temporairement indisponible' });
+    }
     const userId = req.user.userId;
     const { plan } = req.body;
     const PLANS = await getPlans();
