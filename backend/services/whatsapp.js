@@ -199,6 +199,7 @@ async function sendFiche(type, id, phone) {
     }
     return sendWhatsAppTemplate(phone, 'nopalou_fiche_texte', [
       { type: 'body', parameters: [{ type: 'text', text: a.titre }, { type: 'text', text: prixFmt(a.prix) }, { type: 'text', text: `${SITE}/annonces/${a.id}` }] },
+      { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: `annonces/${a.id}` }] },
     ]);
   }
 
@@ -218,6 +219,7 @@ async function sendFiche(type, id, phone) {
     }
     return sendWhatsAppTemplate(phone, 'nopalou_fiche_texte', [
       { type: 'body', parameters: [{ type: 'text', text: a.titre }, { type: 'text', text: detail }, { type: 'text', text: `${SITE}/immo/${a.id}` }] },
+      { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: `immo/${a.id}` }] },
     ]);
   }
 
