@@ -56,6 +56,12 @@ const VISUELS = [
     usage: 'Recrutement apporteurs',
   },
   {
+    titre: 'Visuel assistant WhatsApp',
+    desc: '1080 × 1080 px — Post pour annoncer le chatbot WhatsApp',
+    url: '/assets/chatbot-whatsapp',
+    usage: 'Lancement chatbot',
+  },
+  {
     titre: 'Carte de visite numérique',
     desc: '1050 × 600 px — À partager par WhatsApp lors du démarchage (QR code à ajouter manuellement)',
     url: '/assets/carte-visite',
@@ -144,6 +150,24 @@ Maintenant : [nouveau prix] FCFA
 👉 Voir l'offre sur nopalou.com
 
 #Nopalou #BaisseDeprix #BonPlan #Dakar #Sénégal`,
+  },
+  {
+    titre: 'Post de lancement — Assistant WhatsApp',
+    texte: `💬 Nopalou débarque sur WhatsApp !
+
+Plus besoin d'ouvrir une app : comparez les prix, consultez les annonces immo, les offres télécom et créez des alertes de prix directement dans votre chat WhatsApp.
+
+🔍 Recherche produit en un message
+🏠 Dernières annonces immo
+📱 Offres télécom à jour
+🔔 Alertes de prix personnalisées
+📦 Suivi de commande
+
+100% gratuit, disponible 24h/24, aucune inscription.
+
+👉 Envoyez "menu" au +221 70 871 79 42 ou cliquez : wa.me/221708717942
+
+#Nopalou #WhatsApp #Dakar #Sénégal #BonPlan #Innovation`,
   },
 ]
 
@@ -257,6 +281,28 @@ const APPORTEUR_EXEMPLES = [
   { formule: 'Boutique Pro', prix: '15 000 FCFA/mois', commission: '1 500 FCFA/mois par boutique' },
   { formule: 'Boutique Business', prix: '35 000 FCFA/mois', commission: '3 500 FCFA/mois par boutique' },
 ]
+
+const CHATBOT_FONCTIONS = [
+  { titre: 'Recherche produit/annonce', detail: 'Texte libre (ex: "iPhone 14") → renvoie prix comparés, annonces classifiées ou biens immo correspondants, avec lien direct.' },
+  { titre: 'Annonces immo', detail: 'Dernières annonces immobilières actives, envoyées en carrousel avec photo, prix et lien.' },
+  { titre: 'Offres télécom', detail: 'Derniers forfaits Orange, Free, Expresso, Wave.' },
+  { titre: 'Alerte de prix', detail: 'L\'utilisateur indique un produit et un prix cible — notifié par WhatsApp dès que le seuil est atteint, sans compte requis.' },
+  { titre: 'Suivi de commande', detail: 'Référence de commande (ex: PAY-12345) → statut et montant.' },
+  { titre: 'Support', detail: 'Coordonnées de l\'équipe Nopalou en un message.' },
+]
+
+const CHATBOT_TEXTE = `💬 Nopalou est maintenant sur WhatsApp !
+
+Comparez les prix, suivez les annonces immo et créez des alertes de prix sans quitter votre conversation WhatsApp — pas d'app à installer, pas d'inscription.
+
+Comment l'utiliser :
+1. Enregistrez le +221 70 871 79 42 (ou cliquez wa.me/221708717942)
+2. Envoyez "menu"
+3. Choisissez une option : recherche, immo, télécom, alerte prix, suivi commande, support
+
+100% gratuit, disponible 24h/24.
+
+📲 wa.me/221708717942`
 
 export default function CommunicationPage() {
   return (
@@ -518,6 +564,54 @@ export default function CommunicationPage() {
           fontFamily: 'system-ui, sans-serif',
         }}>
           {APPORTEUR_TEXTE}
+        </pre>
+      </section>
+
+      <hr style={{ border: 'none', borderTop: '2px solid #E2E8F0', margin: '48px 0' }} />
+
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1C2B4A', marginBottom: 6 }}>
+        💬 Kit assistant WhatsApp
+      </h1>
+      <p style={{ color: '#64748B', marginBottom: 32, fontSize: 14 }}>
+        Visuel, texte et argumentaire pour annoncer le chatbot WhatsApp sur les réseaux et auprès des utilisateurs.
+        Page publique de présentation : <a href="/assistant-whatsapp" target="_blank" rel="noopener noreferrer" style={{ color: '#25D366', fontWeight: 700 }}>nopalou.com/assistant-whatsapp</a>
+      </p>
+
+      <section style={{ marginBottom: 48 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
+          ⚙️ Ce que le chatbot sait faire
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {CHATBOT_FONCTIONS.map((f, i) => (
+            <div key={f.titre} style={{
+              border: '1px solid #E2E8F0', borderRadius: 10, padding: '16px 20px',
+              background: '#fff', display: 'flex', gap: 14,
+            }}>
+              <span style={{
+                fontSize: 13, fontWeight: 800, color: '#25D366', background: '#f0fdf4',
+                borderRadius: '50%', width: 26, height: 26, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>{i + 1}</span>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', margin: '0 0 4px' }}>{f.titre}</p>
+                <p style={{ fontSize: 13, color: '#64748B', margin: 0, lineHeight: 1.6 }}>{f.detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
+          📢 Texte d&apos;annonce (à partager par WhatsApp/réseaux)
+        </h2>
+        <pre style={{
+          fontSize: 13, color: '#1C2B4A', whiteSpace: 'pre-wrap',
+          background: '#F8FAFC', border: '1px solid #E2E8F0',
+          borderRadius: 8, padding: '20px', margin: 0, lineHeight: 1.8,
+          fontFamily: 'system-ui, sans-serif',
+        }}>
+          {CHATBOT_TEXTE}
         </pre>
       </section>
     </div>

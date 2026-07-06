@@ -193,6 +193,7 @@ export default async function RootLayout({
               <div className="footer-col">
                 <p className="footer-col-titre">Informations</p>
                 <a href="/guide-emploi">Comment ça marche ?</a>
+                <a href="/assistant-whatsapp">💬 Assistant WhatsApp</a>
                 <a href="/boutiques">Boutiques partenaires</a>
                 <a href="/mentions-legales">Mentions légales</a>
                 <a href="/confidentialite">Confidentialité</a>

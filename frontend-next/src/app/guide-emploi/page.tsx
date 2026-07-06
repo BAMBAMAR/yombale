@@ -56,6 +56,12 @@ const STEPS = [
     ctas: [{ label: 'Publier une annonce →', href: '/deposer-annonce', couleur: '#059669', bg: '#f0fdf4' }],
   },
   {
+    icon: '💬', couleur: '#25D366',
+    titre: 'Discuter avec l\'assistant WhatsApp',
+    texte: "Recherchez un produit, consultez les annonces immo ou créez une alerte de prix directement depuis WhatsApp, sans installer d'application. Envoyez simplement \"menu\" au numéro Nopalou.",
+    ctas: [{ label: 'Découvrir l\'assistant →', href: '/assistant-whatsapp', couleur: '#25D366', bg: '#f0fdf4' }],
+  },
+  {
     icon: '💼', couleur: '#C75B00',
     titre: 'Devenir apporteur d\'affaires',
     texte: "Vous connaissez des commerçants, agences immo ou vendeurs ? Partagez votre lien personnel et touchez une commission chaque mois sur les abonnements des boutiques que vous recrutez — sans investissement, sans engagement.",

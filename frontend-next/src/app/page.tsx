@@ -260,6 +260,32 @@ export default async function HomePage({
         </section>
       )}
 
+      {/* ── CTA Assistant WhatsApp ──────────────────────────────── */}
+      {!hasFiltre && (
+        <section className="home-cta-annonce">
+          <div className="home-cta-annonce-inner" style={{ background: 'linear-gradient(135deg, #f0fdf4, #fff)', borderColor: '#25D366' }}>
+            <div className="home-cta-annonce-text">
+              <h2>💬 Comparez les prix sur WhatsApp</h2>
+              <p>Recherchez un produit, suivez une annonce immo ou créez une alerte de prix, directement dans votre chat — sans app à installer.</p>
+            </div>
+            <div className="home-cta-annonce-btns">
+              <a
+                href="https://wa.me/221708717942?text=menu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="home-cta-btn"
+                style={{ background: '#25D366', color: '#fff' }}
+              >
+                Discuter sur WhatsApp
+              </a>
+              <Link href="/assistant-whatsapp" className="home-cta-btn home-cta-btn--secondary">
+                Voir ce qu&apos;il sait faire
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Tarifs Boutique Pro / Business ──────────────────────── */}
       {!hasFiltre && (
         <section style={{ maxWidth: 900, margin: '48px auto 0', padding: '0 16px' }}>
