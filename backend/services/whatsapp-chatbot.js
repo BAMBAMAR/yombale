@@ -13,6 +13,57 @@ const {
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 const prixFmt = (p) => p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' : 'N/C';
 
+// ── FAQ par mots-clés — questions sur le fonctionnement du site ───────────────
+// Chaque entrée : mots-clés à détecter dans le texte libre (sans accents, minuscule) + réponse.
+// Testée avant la recherche produit/annonce pour éviter des requêtes SQL inutiles.
+const FAQ = [
+  {
+    motsCles: ['gratuit', 'payant', 'coute', 'couter', 'prix nopalou'],
+    reponse: '✅ *Nopalou est 100% gratuit* pour comparer les prix, chercher une annonce ou un bien immo.\n\nSeuls certains services optionnels sont payants : publier une annonce (à partir de 1 500 FCFA), booster une annonce, ou créer une boutique en ligne (abonnement Pro/Business).',
+  },
+  {
+    motsCles: ['publier', 'deposer', 'vendre', 'poster annonce'],
+    reponse: '📢 *Publier une annonce*\n\nSur le site, cliquez "+ Déposer" puis "Publier une annonce". Ajoutez photos, prix et description — votre annonce est visible après validation par notre équipe.\n👉 ' + SITE + '/deposer-annonce',
+  },
+  {
+    motsCles: ['louer mon', 'vendre mon appartement', 'vendre ma maison', 'annonce immo', 'bien immo'],
+    reponse: '🏠 *Publier un bien immobilier*\n\nSur le site, cliquez "+ Déposer" puis "Publier un bien immo". Ajoutez photos, prix, ville et description — visible après validation.\n👉 ' + SITE + '/deposer-immo',
+  },
+  {
+    motsCles: ['boutique', 'vendre en ligne'],
+    reponse: '🛍️ *Créer votre boutique*\n\nVendez directement sur Nopalou : catalogue produits, statistiques, mise en avant. Formules Pro (15 000 FCFA/mois) et Business (35 000 FCFA/mois, 2% de commission).\n👉 ' + SITE + '/boutique',
+  },
+  {
+    motsCles: ['comparer', 'meilleur prix', 'moins cher'],
+    reponse: '📊 *Comparer les prix*\n\nSur le site, tapez le nom d\'un produit dans la barre de recherche — Nopalou compare automatiquement les prix chez tous les marchands partenaires (Jumia, Expat-Dakar, CoinAfrique...) et affiche le moins cher.\n👉 ' + SITE,
+  },
+  {
+    motsCles: ['favoris', 'sauvegarder'],
+    reponse: '❤️ *Favoris*\n\nSur le site, cliquez le cœur ❤ sur un produit ou une annonce pour le sauvegarder. Retrouvez tous vos favoris dans la page Favoris, sans inscription requise.\n👉 ' + SITE + '/favoris',
+  },
+  {
+    motsCles: ['apporteur', 'parrainage', 'commission'],
+    reponse: '💼 *Programme apporteur d\'affaires*\n\nPrésentez Nopalou aux commerçants de votre réseau et touchez une commission chaque mois sur les abonnements des boutiques que vous recrutez — sans investissement.\n👉 ' + SITE + '/compte/apporteur',
+  },
+  {
+    motsCles: ['forfait', 'internet', 'telecom', 'orange', 'free', 'expresso'],
+    reponse: '📱 *Comparer les forfaits télécom*\n\nSur le site, comparez tous les forfaits mobiles Orange, Free, Expresso et Wave : data, appels, SMS, prix.\n👉 ' + SITE + '/telecom',
+  },
+  {
+    motsCles: ['comment ça marche', 'comment ca marche', 'comment utiliser', 'aide site', 'utiliser nopalou', 'utiliser le site'],
+    reponse: '📖 *Comment utiliser Nopalou*\n\n🔍 Comparez les prix produits\n🏆 Guide d\'achat personnalisé\n🏡 Trouvez un logement\n📶 Comparez les forfaits télécom\n⚖️ Comparez côte à côte\n❤️ Sauvegardez vos favoris\n🔔 Créez des alertes de prix\n📢 Publiez une annonce\n\nGuide complet : ' + SITE + '/guide-emploi',
+  },
+];
+
+function normaliserTexte(s) {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+function detecterFAQ(texte) {
+  const normalise = normaliserTexte(texte);
+  return FAQ.find(f => f.motsCles.some(mot => normalise.includes(normaliserTexte(mot))));
+}
+
 // ── Session DB ────────────────────────────────────────────────────────────────
 async function getSession(phone) {
   const r = await pool.query(
@@ -76,6 +127,7 @@ async function sendMenu(phone) {
           { id: 'alert',   title: '🔔 Alerte prix',     description: 'Être notifié d\'une baisse' },
           { id: 'order',   title: '📦 Suivre commande', description: 'Statut de votre paiement' },
           { id: 'support', title: '💬 Support',         description: 'Contacter l\'équipe Nopalou' },
+          { id: 'guide',   title: 'ℹ️ Comment ça marche', description: 'Utiliser le site Nopalou' },
         ],
       },
     ]
@@ -148,8 +200,12 @@ async function handleIncoming(msg) {
     return;
   }
 
-  // ── IDLE → envoyer le menu ─────────────────────────────────────────────────
+  // ── IDLE → présentation puis menu (nouvelle session ou session expirée) ────
   if (state === 'IDLE') {
+    await sendWhatsAppText(
+      phone,
+      '👋 Bienvenue sur *Nopalou* !\n\nJe suis votre assistant — je peux comparer des prix, vous montrer des annonces immo ou des offres télécom, créer une alerte de prix, suivre une commande ou répondre à vos questions sur le site. 100% gratuit, disponible 24h/24.'
+    );
     await setSession(phone, 'MENU', {});
     await sendMenu(phone);
     return;
@@ -217,7 +273,20 @@ async function handleIncoming(msg) {
       await setSession(phone, 'MENU', {});
       return;
     }
-    // Texte libre reçu en état MENU → traiter comme recherche
+    if (action === 'guide') {
+      await sendWhatsAppText(phone, FAQ[FAQ.length - 1].reponse);
+      await sendWhatsAppButton(phone, 'Une autre question ?', 'menu', 'Menu').catch(() => {});
+      await setSession(phone, 'MENU', {});
+      return;
+    }
+    // Texte libre reçu en état MENU → question FAQ, sinon traiter comme recherche
+    const faq = detecterFAQ(text);
+    if (faq) {
+      await sendWhatsAppText(phone, faq.reponse);
+      await sendWhatsAppButton(phone, 'Une autre question ?', 'menu', 'Menu').catch(() => {});
+      await setSession(phone, 'MENU', {});
+      return;
+    }
     await setSession(phone, 'SEARCH_QUERY', {});
     await handleSearchQuery(phone, text);
     return;
@@ -225,6 +294,13 @@ async function handleIncoming(msg) {
 
   // ── SEARCH_QUERY ──────────────────────────────────────────────────────────
   if (state === 'SEARCH_QUERY') {
+    const faq = detecterFAQ(text);
+    if (faq) {
+      await sendWhatsAppText(phone, faq.reponse);
+      await sendWhatsAppButton(phone, 'Une autre question ?', 'menu', 'Menu').catch(() => {});
+      await setSession(phone, 'MENU', {});
+      return;
+    }
     await handleSearchQuery(phone, text);
     return;
   }
