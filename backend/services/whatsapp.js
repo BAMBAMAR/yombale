@@ -36,6 +36,7 @@ async function post(payload) {
     return data;
   } catch (err) {
     console.error('[WHATSAPP] Erreur:', err.response?.data?.error?.message || err.message);
+    throw err;
   }
 }
 
@@ -65,47 +66,47 @@ async function sendWhatsAppTemplate(phone, templateName, components = []) {
   });
 }
 
-// ── Carousel Template (plusieurs cartes) ─────────────────────────────────────
-// cards = [{ imageUrl, title, detail, pageUrl }] (max 10)
+// ── "Carousel" (en réalité : templates à 1 carte, envoyés en série) ──────────
+// Malgré leur nom, nopalou_carousel_immo/annonce ne sont PAS de vrais templates
+// Carousel Meta (l'option n'existe pas dans l'interface actuelle) — ce sont de
+// simples templates BODY à 3 paramètres (titre, prix, lien complet) + un bouton
+// URL à 1 paramètre (l'id, l'URL de base étant fixée côté template Meta).
+// nopalou_carousel_immo a été approuvé par Meta en langue "en" (pas "fr").
+// cards = [{ title, detail, pageUrl }] (imageUrl ignoré — pas de header dans ce template)
+const CAROUSEL_LANG = { nopalou_carousel_immo: 'en' };
+
 async function sendWhatsAppCarousel(phone, templateName, cards) {
-  const carouselCards = cards.map((c, i) => ({
-    card_index: i,
-    components: [
-      {
-        type: 'header',
-        parameters: c.imageUrl
-          ? [{ type: 'image', image: { link: c.imageUrl } }]
-          : [],
-      },
-      {
-        type: 'body',
-        parameters: [
-          { type: 'text', text: c.title },
-          { type: 'text', text: c.detail },
+  const lang = CAROUSEL_LANG[templateName] || 'fr';
+  let dernier;
+  for (const c of cards) {
+    dernier = await post({
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: normalisePhone(phone),
+      type: 'template',
+      template: {
+        name: templateName,
+        language: { code: lang },
+        components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: c.title },
+              { type: 'text', text: c.detail },
+              { type: 'text', text: c.pageUrl },
+            ],
+          },
+          {
+            type: 'button',
+            sub_type: 'url',
+            index: '0',
+            parameters: [{ type: 'text', text: c.pageUrl.split('/').pop() }],
+          },
         ],
       },
-      {
-        type: 'button',
-        sub_type: 'url',
-        index: '0',
-        // Le bouton du template pointe vers une URL fixe côté Meta
-        // (ex: https://nopalou.com/immo/{{1}}) — seul l'id final est attendu.
-        parameters: [{ type: 'text', text: c.pageUrl.split('/').pop() }],
-      },
-    ],
-  }));
-
-  return post({
-    messaging_product: 'whatsapp',
-    recipient_type: 'individual',
-    to: normalisePhone(phone),
-    type: 'template',
-    template: {
-      name: templateName,
-      language: { code: 'fr' },
-      components: [{ type: 'carousel', cards: carouselCards }],
-    },
-  });
+    });
+  }
+  return dernier;
 }
 
 // ── Interactive List Message (menu chatbot) ───────────────────────────────────
