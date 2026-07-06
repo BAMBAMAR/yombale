@@ -107,7 +107,7 @@ async function searchContent(query) {
     (
       SELECT 'annonce', id::text, titre, prix, (photos->>0), NULL::text, NULL::text
       FROM annonces_classifiees
-      WHERE actif=true AND supprimee=false
+      WHERE actif=true AND supprimee=false AND jsonb_array_length(photos) > 0
         AND to_tsvector('french', titre || ' ' || COALESCE(description,''))
             @@ plainto_tsquery('french', $1)
       LIMIT 3
@@ -116,7 +116,7 @@ async function searchContent(query) {
     (
       SELECT 'immo', id::text, titre, prix, (photos->>0), NULL::text, ville
       FROM annonces_immo
-      WHERE actif=true
+      WHERE actif=true AND jsonb_array_length(photos) > 0
         AND to_tsvector('french', titre || ' ' || COALESCE(description,''))
             @@ plainto_tsquery('french', $1)
       LIMIT 3
@@ -166,7 +166,9 @@ async function handleIncoming(msg) {
     }
     if (action === 'immo') {
       const r = await pool.query(
-        `SELECT id, titre, prix, (photos->>0) AS photo FROM annonces_immo WHERE actif=true ORDER BY created_at DESC LIMIT 3`
+        `SELECT id, titre, prix, (photos->>0) AS photo FROM annonces_immo
+         WHERE actif=true AND jsonb_array_length(photos) > 0
+         ORDER BY created_at DESC LIMIT 3`
       );
       if (!r.rows.length) {
         await sendWhatsAppText(phone, 'Aucune annonce immo disponible pour le moment.');
