@@ -19,6 +19,9 @@ interface Settings {
   promo_code: string
   promo_reduction: string
   promo_expiry: string
+  paiement_manuel_actif: string
+  paiement_manuel_numero_wave: string
+  paiement_manuel_numero_om: string
 }
 
 export default function TarifsClient({ initial, secret }: { initial: Settings; secret: string }) {
@@ -45,7 +48,7 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
     )
   }
 
-  function toggle(key: 'paiement_wave' | 'paiement_orange' | 'promo_active', label: string) {
+  function toggle(key: 'paiement_wave' | 'paiement_orange' | 'promo_active' | 'paiement_manuel_actif', label: string) {
     const on = form[key] === 'true'
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
@@ -118,6 +121,12 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
       {card('💳 Méthodes de paiement', <>
         {toggle('paiement_wave', 'Wave Senegal')}
         {toggle('paiement_orange', 'Orange Money')}
+      </>)}
+
+      {card('🧾 Paiement manuel (dépôt Wave/Orange)', <>
+        {toggle('paiement_manuel_actif', 'Paiement manuel activé')}
+        {field('paiement_manuel_numero_wave', 'Numéro Wave pour dépôt', 'text')}
+        {field('paiement_manuel_numero_om', 'Numéro Orange Money pour dépôt', 'text')}
       </>)}
 
       {card('🎁 Code promo', <>
