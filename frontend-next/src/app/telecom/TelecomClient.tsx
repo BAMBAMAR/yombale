@@ -298,7 +298,7 @@ export default function TelecomClient({
       )}
 
       {/* Wizard */}
-      {showWizard && <WizardForfait onClose={() => setShowWizard(false)} />}
+      {showWizard && <WizardForfait onClose={() => setShowWizard(false)} operateurs={operateurs} />}
     </div>
   )
 }

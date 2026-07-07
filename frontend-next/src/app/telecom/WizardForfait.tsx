@@ -18,6 +18,7 @@ interface Forfait {
 
 interface Props {
   onClose: () => void
+  operateurs: string[]
 }
 
 const PROFILS = [
@@ -45,11 +46,12 @@ function scoreForfait(f: Forfait, profil: string): number {
   return ((data / f.prix) * 600 + (mins / f.prix) * 70)
 }
 
-export default function WizardForfait({ onClose }: Props) {
+export default function WizardForfait({ onClose, operateurs }: Props) {
   const [step, setStep]       = useState<1 | 2>(1)
   const [budget, setBudget]   = useState(3000)
   const [profil, setProfil]   = useState('internet')
   const [validite, setValidite] = useState<string>('')
+  const [operateur, setOperateur] = useState<string>('')
   const [results, setResults] = useState<Forfait[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
@@ -61,6 +63,7 @@ export default function WizardForfait({ onClose }: Props) {
       const qs = new URLSearchParams({ limit: '100', prixMax: String(budget) })
       if (profil === 'internet') qs.set('type', 'internet')
       else if (profil === 'appels') qs.set('type', 'voix')
+      if (operateur) qs.set('operateur', operateur)
 
       const r = await fetch(`/api/telecom?${qs}`)
       const data = await r.json()
@@ -152,6 +155,32 @@ export default function WizardForfait({ onClose }: Props) {
               </div>
             </div>
 
+            {/* Opérateur */}
+            <div className="wizard-section">
+              <label className="wizard-label">Opérateur préféré</label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => setOperateur('')}
+                  className={`budget-pill${operateur === '' ? ' active' : ''}`}
+                  style={{ fontSize: 13 }}
+                >
+                  📡 Peu importe
+                </button>
+                {operateurs.map(op => (
+                  <button
+                    key={op}
+                    type="button"
+                    onClick={() => setOperateur(op)}
+                    className={`budget-pill${operateur === op ? ' active' : ''}`}
+                    style={{ fontSize: 13, ...(operateur === op ? { background: OP_COLORS[op] ?? 'var(--accent)', borderColor: OP_COLORS[op] ?? 'var(--accent)' } : {}) }}
+                  >
+                    {op}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {error && <p className="wizard-error">{error}</p>}
 
             <button
@@ -168,6 +197,7 @@ export default function WizardForfait({ onClose }: Props) {
               <h2 className="wizard-titre">✨ Meilleurs forfaits pour vous</h2>
               <p className="wizard-sous-titre">
                 Budget : <strong>{fcfa(budget)}</strong> · Profil : <strong>{PROFILS.find(p => p.val === profil)?.label}</strong>
+                {operateur && <> · Opérateur : <strong>{operateur}</strong></>}
               </p>
               <button className="wizard-back" onClick={() => setStep(1)}>← Modifier</button>
             </div>
