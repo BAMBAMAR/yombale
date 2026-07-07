@@ -3,7 +3,9 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { deleteAnnonce } from '@/app/actions/annonces'
+import { initierWaveBoost } from '@/app/actions/paiement'
 import { cloudinaryHQ } from '@/lib/cloudinary'
+import ModalPaiementManuel from '@/components/ModalPaiementManuel'
 
 interface Annonce {
   id: string
@@ -43,10 +45,26 @@ function StatutBadge({ a }: { a: Annonce }) {
   return <span className="annonce-statut annonce-statut--attente">En attente</span>
 }
 
-function AnnonceCard({ annonce }: { annonce: Annonce }) {
+function AnnonceCard({
+  annonce,
+  userId,
+  prixBoost,
+  numeroWave,
+  numeroOM,
+}: {
+  annonce: Annonce
+  userId: string
+  prixBoost: number
+  numeroWave: string
+  numeroOM: string
+}) {
   const [deleteErr, setDeleteErr]  = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
+
+  const [showBoostModal, setShowBoostModal] = useState(false)
+  const [pendingBoost, startBoost] = useTransition()
+  const [boostErr, setBoostErr] = useState<string | null>(null)
 
   function handleDelete() {
     if (!confirm('Supprimer cette annonce définitivement ?')) return
@@ -55,6 +73,15 @@ function AnnonceCard({ annonce }: { annonce: Annonce }) {
       const res = await deleteAnnonce(annonce.id)
       if (res.error) setDeleteErr(res.error)
       else router.refresh()
+    })
+  }
+
+  function payerBoostWave() {
+    setBoostErr(null)
+    startBoost(async () => {
+      const res = await initierWaveBoost(annonce.id)
+      if (res.ok && res.url) window.location.href = res.url
+      else setBoostErr(res.error ?? 'Erreur lors du boost')
     })
   }
 
@@ -100,6 +127,16 @@ function AnnonceCard({ annonce }: { annonce: Annonce }) {
           <Link href={`/mes-annonces/${annonce.id}/modifier`} className="annonce-action-btn annonce-action-btn--edit">
             Modifier
           </Link>
+          {annonce.actif && (
+            <button onClick={payerBoostWave} disabled={pendingBoost} className="annonce-action-btn">
+              {pendingBoost ? '…' : '🚀 Booster 7j'}
+            </button>
+          )}
+          {annonce.actif && (
+            <button onClick={() => setShowBoostModal(true)} className="annonce-action-btn">
+              Booster sans app
+            </button>
+          )}
           <button
             onClick={handleDelete}
             disabled={isPending}
@@ -108,6 +145,18 @@ function AnnonceCard({ annonce }: { annonce: Annonce }) {
             {isPending ? '…' : 'Supprimer'}
           </button>
         </div>
+
+        {boostErr && <p className="annonce-delete-err">{boostErr}</p>}
+        {showBoostModal && (
+          <ModalPaiementManuel
+            reference={`boost_${userId}_${annonce.id}`}
+            montant={prixBoost}
+            numeroWave={numeroWave}
+            numeroOM={numeroOM}
+            onClose={() => setShowBoostModal(false)}
+            onSuccess={() => window.location.reload()}
+          />
+        )}
       </div>
     </div>
   )
@@ -117,10 +166,18 @@ export default function AnnoncesClient({
   annonces,
   created,
   updated,
+  userId,
+  prixBoost,
+  numeroWave,
+  numeroOM,
 }: {
   annonces: Annonce[]
   created?: boolean
   updated?: boolean
+  userId: string
+  prixBoost: number
+  numeroWave: string
+  numeroOM: string
 }) {
   return (
     <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 760 }}>
@@ -159,7 +216,16 @@ export default function AnnoncesClient({
         </div>
       ) : (
         <div className="annonces-list">
-          {annonces.map(a => <AnnonceCard key={a.id} annonce={a} />)}
+          {annonces.map(a => (
+            <AnnonceCard
+              key={a.id}
+              annonce={a}
+              userId={userId}
+              prixBoost={prixBoost}
+              numeroWave={numeroWave}
+              numeroOM={numeroOM}
+            />
+          ))}
         </div>
       )}
     </div>

@@ -38,6 +38,25 @@ export async function initierWaveAnnonce(annonce_id: string): Promise<PaiementRe
   }
 }
 
+export async function initierWaveBoost(annonce_id: string): Promise<PaiementResult> {
+  const session = await getOptionalSession()
+  if (!session) return { ok: false, error: 'Connexion requise' }
+
+  try {
+    const token = await getAuthToken(session)
+    const res = await fetch(`${BACKEND}/api/paiement/boost/initier`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ annonce_id }),
+    })
+    const body = await res.json()
+    if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }
+    return { ok: true, url: body.wave_url }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }
+  }
+}
+
 export async function initierOrangeAnnonce(annonce_id: string): Promise<PaiementResult> {
   const session = await getOptionalSession()
   if (!session) return { ok: false, error: 'Connexion requise' }
