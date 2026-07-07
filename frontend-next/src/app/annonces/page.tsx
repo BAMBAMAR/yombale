@@ -18,6 +18,12 @@ const CATEGORIES = [
   { slug: 'services',     label: 'Services',     emoji: '🛠' },
 ]
 
+const TRIS = [
+  { val: '',          label: 'Récent' },
+  { val: 'prix_asc',  label: 'Prix ↑' },
+  { val: 'prix_desc', label: 'Prix ↓' },
+]
+
 interface Annonce {
   id: string
   titre: string
@@ -31,9 +37,10 @@ interface Annonce {
   created_at: string
 }
 
-async function fetchAnnonces(categorie: string, page: number) {
+async function fetchAnnonces(categorie: string, page: number, tri: string) {
   const params = new URLSearchParams({ limit: '24', page: String(page) })
   if (categorie) params.set('categorie', categorie)
+  if (tri)       params.set('tri', tri)
   try {
     const r = await fetch(`${BACKEND}/api/annonces?${params}`, { headers: SSR_HEADERS, next: { revalidate: 60 } })
     if (!r.ok) return { annonces: [], total: 0 }
@@ -83,12 +90,12 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 export default async function AnnoncesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ categorie?: string; page?: string }>
+  searchParams: Promise<{ categorie?: string; page?: string; tri?: string }>
 }) {
-  const { categorie = '', page: pageStr = '1' } = await searchParams
+  const { categorie = '', page: pageStr = '1', tri = '' } = await searchParams
   const page = Math.max(1, parseInt(pageStr))
 
-  const { annonces, total } = await fetchAnnonces(categorie, page)
+  const { annonces, total } = await fetchAnnonces(categorie, page, tri)
 
   const totalPages = Math.ceil(total / 24)
   const catActuelle = CATEGORIES.find(c => c.slug === categorie) ?? CATEGORIES[0]
@@ -96,6 +103,7 @@ export default async function AnnoncesPage({
   function pageUrl(p: number) {
     const params = new URLSearchParams()
     if (categorie) params.set('categorie', categorie)
+    if (tri)       params.set('tri', tri)
     if (p > 1) params.set('page', String(p))
     const qs = params.toString()
     return `/annonces${qs ? `?${qs}` : ''}`
@@ -129,6 +137,26 @@ export default async function AnnoncesPage({
               className={`annonces-cat-pill${active ? ' annonces-cat-pill--active' : ''}`}
             >
               <span>{cat.emoji}</span> {cat.label}
+            </Link>
+          )
+        })}
+      </div>
+
+      {/* Tri */}
+      <div className="annonces-cats" style={{ marginTop: 8 }}>
+        <span className="filtres-label">Trier :</span>
+        {TRIS.map(t => {
+          const params = new URLSearchParams()
+          if (categorie) params.set('categorie', categorie)
+          if (t.val)     params.set('tri', t.val)
+          const href = `/annonces${params.toString() ? `?${params}` : ''}`
+          return (
+            <Link
+              key={t.val || 'defaut'}
+              href={href}
+              className={`annonces-cat-pill${tri === t.val ? ' annonces-cat-pill--active' : ''}`}
+            >
+              {t.label}
             </Link>
           )
         })}
