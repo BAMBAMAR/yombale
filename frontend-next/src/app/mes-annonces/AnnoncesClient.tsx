@@ -48,12 +48,14 @@ function StatutBadge({ a }: { a: Annonce }) {
 function AnnonceCard({
   annonce,
   userId,
+  prixAnnonce,
   prixBoost,
   numeroWave,
   numeroOM,
 }: {
   annonce: Annonce
   userId: string
+  prixAnnonce: number
   prixBoost: number
   numeroWave: string
   numeroOM: string
@@ -121,7 +123,7 @@ function AnnonceCard({
         <div className="annonce-card-actions">
           {needsPayment && (
             <Link href={`/payer-annonce/${annonce.id}`} className="annonce-action-btn annonce-action-btn--pay">
-              💳 Activer (1 500 FCFA)
+              💳 Activer ({prixAnnonce.toLocaleString('fr-FR')} FCFA)
             </Link>
           )}
           <Link href={`/mes-annonces/${annonce.id}/modifier`} className="annonce-action-btn annonce-action-btn--edit">
@@ -167,6 +169,7 @@ export default function AnnoncesClient({
   created,
   updated,
   userId,
+  prixAnnonce,
   prixBoost,
   numeroWave,
   numeroOM,
@@ -175,6 +178,7 @@ export default function AnnoncesClient({
   created?: boolean
   updated?: boolean
   userId: string
+  prixAnnonce: number
   prixBoost: number
   numeroWave: string
   numeroOM: string
@@ -221,6 +225,7 @@ export default function AnnoncesClient({
               key={a.id}
               annonce={a}
               userId={userId}
+              prixAnnonce={prixAnnonce}
               prixBoost={prixBoost}
               numeroWave={numeroWave}
               numeroOM={numeroOM}

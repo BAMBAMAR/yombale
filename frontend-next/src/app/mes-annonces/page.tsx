@@ -52,6 +52,7 @@ export default async function MesAnnoncesPage({
       created={params.created === '1'}
       updated={params.updated === '1'}
       userId={session.userId}
+      prixAnnonce={Number(settings.prix_annonce) || 1500}
       prixBoost={Number(settings.prix_boost) || 500}
       numeroWave={settings.paiement_manuel_numero_wave || ''}
       numeroOM={settings.paiement_manuel_numero_om || ''}

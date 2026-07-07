@@ -86,7 +86,7 @@ export default async function PayerAnnoncePage({ params }: { params: { id: strin
           Activer votre annonce
         </h1>
         <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-          Votre quota gratuit est atteint. Activez votre annonce pour 1 500 FCFA.
+          Votre quota gratuit est atteint. Activez votre annonce pour {(Number(settings.prix_annonce) || 1500).toLocaleString('fr-FR')} FCFA.
         </p>
       </div>
 

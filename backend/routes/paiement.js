@@ -35,12 +35,27 @@ async function getPrix() {
   };
 }
 
+// Calcule le montant réel attendu pour une référence, à partir des prix settings —
+// ignore le montant déclaré par le client (utile pour methode='manuel', où ce montant n'est qu'indicatif).
+async function montantAttendu(reference, montantDeclare) {
+  const prix = await getPrix();
+  if (reference.startsWith('ann_'))   return prix.annonce;
+  if (reference.startsWith('boost_')) return prix.boost;
+  if (reference.startsWith('immo_') || reference.startsWith('bout_') || reference.startsWith('prod_')) return prix.sponsoring;
+  if (reference.startsWith('abmt_')) {
+    const plan = reference.split('_')[2];
+    return { pro: prix.pro, business: prix.business }[plan] ?? montantDeclare;
+  }
+  return montantDeclare;
+}
+
 // Applique l'effet d'un paiement réussi (annonce, boost, sponsoring, abonnement)
 // Appelée par les webhooks Wave/Orange ET par la validation admin d'un paiement manuel.
 async function appliquerPaiementReussi(reference, montant, methode) {
+  const montantReel = await montantAttendu(reference, montant);
   await pool.query(
     "INSERT INTO commandes (reference,montant,statut,methode_paiement) VALUES ($1,$2,'payee',$3) ON CONFLICT (reference) DO NOTHING",
-    [reference, montant, methode]
+    [reference, montantReel, methode]
   );
 
   const ref = reference;
