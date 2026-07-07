@@ -121,7 +121,7 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
 // ── GET /api/boutiques — liste publique paginée
 router.get('/', async (req, res) => {
   try {
-    const { ville, q, limit = 20, page = 1 } = req.query;
+    const { ville, q, tri, limit = 20, page = 1 } = req.query;
     const offset = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit));
     const lim = Math.min(50, parseInt(limit));
     const conds = ['actif=true'];
@@ -129,6 +129,12 @@ router.get('/', async (req, res) => {
 
     if (ville) { vals.push(ville); conds.push(`ville ILIKE $${vals.length}`); }
     if (q) { vals.push(`%${q}%`); conds.push(`(nom ILIKE $${vals.length} OR description ILIKE $${vals.length})`); }
+
+    const orderBy = tri === 'recent'  ? 'b.created_at DESC'
+                  : tri === 'nom_asc' ? 'b.nom ASC'
+                  : `CASE a.plan WHEN 'business' THEN 0 WHEN 'pro' THEN 1 ELSE 2 END ASC,
+                     (b.sponsorise = true AND (b.sponsor_jusqu_au IS NULL OR b.sponsor_jusqu_au > NOW())) DESC,
+                     b.created_at DESC`;
 
     const where = 'WHERE ' + conds.join(' AND ');
     const [rows, cnt] = await Promise.all([
@@ -143,10 +149,7 @@ router.get('/', async (req, res) => {
            ORDER BY fin DESC LIMIT 1
          ) a ON true
          ${where}
-         ORDER BY
-           CASE a.plan WHEN 'business' THEN 0 WHEN 'pro' THEN 1 ELSE 2 END ASC,
-           (b.sponsorise = true AND (b.sponsor_jusqu_au IS NULL OR b.sponsor_jusqu_au > NOW())) DESC,
-           b.created_at DESC
+         ORDER BY ${orderBy}
          LIMIT $${vals.length+1} OFFSET $${vals.length+2}`,
         [...vals, lim, offset]
       ),

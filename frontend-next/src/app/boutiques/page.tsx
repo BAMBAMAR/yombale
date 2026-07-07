@@ -31,18 +31,26 @@ const CAT_ICONS: Record<string, string> = {
 
 const VILLES = ['Dakar', 'Thiès', 'Saint-Louis', 'Ziguinchor', 'Kaolack', 'Mbour']
 
+const TRIS = [
+  { val: '',        label: 'Recommandé' },
+  { val: 'recent',  label: 'Récent' },
+  { val: 'nom_asc', label: 'Nom A-Z' },
+]
+
 export default async function BoutiquesPage({
   searchParams,
 }: {
-  searchParams: { ville?: string; q?: string; page?: string }
+  searchParams: { ville?: string; q?: string; page?: string; tri?: string }
 }) {
   const ville = searchParams.ville ?? ''
   const q     = searchParams.q     ?? ''
   const page  = searchParams.page  ?? '1'
+  const tri   = searchParams.tri   ?? ''
 
   const qs = new URLSearchParams({ limit: '24', page })
   if (ville) qs.set('ville', ville)
   if (q)     qs.set('q', q)
+  if (tri)   qs.set('tri', tri)
 
   let boutiques: Boutique[] = []
   let total = 0
@@ -59,6 +67,7 @@ export default async function BoutiquesPage({
     const p = new URLSearchParams()
     if (ville) p.set('ville', ville)
     if (q)     p.set('q', q)
+    if (tri)   p.set('tri', tri)
     Object.entries(params).forEach(([k, v]) => (v ? p.set(k, v) : p.delete(k)))
     const s = p.toString()
     return `/boutiques${s ? `?${s}` : ''}`
@@ -87,6 +96,15 @@ export default async function BoutiquesPage({
             </Link>
           ))}
           {ville && <Link href={buildLink({ ville: '', page: '1' })} className="budget-pill budget-pill--reset">✕ Ville</Link>}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+          <span className="filtres-label">Trier :</span>
+          {TRIS.map(t => (
+            <Link key={t.val || 'defaut'} href={buildLink({ tri: t.val, page: '1' })} className={`budget-pill${tri === t.val ? ' active' : ''}`}>
+              {t.label}
+            </Link>
+          ))}
         </div>
       </div>
 
