@@ -10,6 +10,7 @@ import AnalyticsClient from './analytics/AnalyticsClient'
 import { initierWaveBoutiqueSponsoring } from '@/app/actions/paiement'
 import { fcfa } from '@/lib/format'
 import type { ActionState } from '@/lib/backend-fetch'
+import ModalPaiementManuel from '@/components/ModalPaiementManuel'
 
 const CATEGORIES = [
   { value: 'smartphones',  label: 'Smartphones' },
@@ -704,12 +705,13 @@ function CatalogueProduits({ boutique, planActif }: { boutique: Boutique; planAc
 
 // ── Carte boutique ────────────────────────────────────────────────────────────
 
-function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onManage }: {
+function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onPayerManuel, onManage }: {
   boutique: Boutique
   planActif: 'pro' | 'business' | null
   onEdit: () => void
   onDelete: () => void
   onSponsoring: () => void
+  onPayerManuel?: () => void
   onManage: () => void
 }) {
   const sponsorActif = boutique.sponsorise && boutique.sponsor_jusqu_au && new Date(boutique.sponsor_jusqu_au) > new Date()
@@ -790,6 +792,14 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onM
           }}>
             ⭐ Mettre en avant
           </button>
+          {onPayerManuel && (
+            <button onClick={onPayerManuel} style={{
+              fontSize: 13, color: '#92400e', background: '#fff', border: '1px solid #fcd34d',
+              borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 600,
+            }}>
+              🧾 Payer sans app
+            </button>
+          )}
           <button onClick={onDelete} style={{
             fontSize: 13, color: '#dc2626', background: 'none', border: '1px solid #fecaca',
             borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
@@ -967,19 +977,27 @@ export default function BoutiqueClient({
   canCreate,
   planActif,
   codeApporteurDefaut,
+  userId,
+  settings,
 }: {
   boutiques: Boutique[]
   canCreate: boolean
   planActif?: 'pro' | 'business' | null
   codeApporteurDefaut?: string
+  userId: string
+  settings: Record<string, string>
 }) {
   type Mode = 'list' | 'create' | { editing: Boutique } | { managing: Boutique }
   const [mode, setMode] = useState<Mode>('list')
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [sponsorError, setSponsorError] = useState<string | null>(null)
+  const [manuelBoutiqueId, setManuelBoutiqueId] = useState<string | null>(null)
   const [, startSponsoring] = useTransition()
   const router = useRouter()
+
+  const manuelActif  = settings.paiement_manuel_actif !== 'false'
+  const montantSponsor = Number(settings.prix_sponsoring) || 5000
 
   async function handleSponsoring(boutiqueId: string) {
     setSponsorError(null)
@@ -1104,10 +1122,22 @@ export default function BoutiqueClient({
               onEdit={() => setMode({ editing: b })}
               onDelete={() => handleDelete(b.id)}
               onSponsoring={() => handleSponsoring(b.id)}
+              onPayerManuel={manuelActif ? () => setManuelBoutiqueId(b.id) : undefined}
               onManage={() => setMode({ managing: b })}
             />
           ))}
         </div>
+      )}
+
+      {manuelBoutiqueId && (
+        <ModalPaiementManuel
+          reference={`bout_${userId}_${manuelBoutiqueId}`}
+          montant={montantSponsor}
+          numeroWave={settings.paiement_manuel_numero_wave || ''}
+          numeroOM={settings.paiement_manuel_numero_om || ''}
+          onClose={() => setManuelBoutiqueId(null)}
+          onSuccess={() => { setManuelBoutiqueId(null); router.refresh() }}
+        />
       )}
     </div>
   )

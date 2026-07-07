@@ -233,6 +233,15 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
       .catch(() => {}),
   ]);
 
+  const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000';
+  let settings: Record<string, string> = {};
+  try {
+    const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' });
+    if (r.ok) settings = await r.json();
+  } catch {
+    // handled by defaults in SponsoringProduitBtn
+  }
+
   // Filtre 1 : exclure les offres marquées suspectes par le backend
   const sansSupects = offres.filter(o => !o._suspect && o.prix != null && o.prix > 0)
   // Filtre 2 : exclure les outliers par rapport à la médiane (fourchette 0.4× – 2.0×)
@@ -515,7 +524,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                 </Link>
               )}
               {session && (
-                <SponsoringProduitBtn produitId={String(produit.id)} />
+                <SponsoringProduitBtn produitId={String(produit.id)} userId={session.userId} settings={settings} />
               )}
               {proches.length > 0 && (
                 <Link

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { backendFetch } from '@/lib/backend-fetch'
+import { verifySession } from '@/lib/dal'
 import BoutiqueClient from './BoutiqueClient'
 
 export const metadata: Metadata = { title: 'Ma boutique — Nopalou' }
@@ -36,6 +37,7 @@ export default async function BoutiquePage({
 }) {
   const params = await searchParams
   const codeApporteurDefaut = params.apporteur?.trim().toUpperCase() || ''
+  const session = await verifySession()
 
   let boutiques: Boutique[] = []
   let planActif: 'pro' | 'business' | null = null
@@ -53,5 +55,23 @@ export default async function BoutiquePage({
 
   const canCreate = boutiques.length < 3
 
-  return <BoutiqueClient boutiques={boutiques} canCreate={canCreate} planActif={planActif} codeApporteurDefaut={codeApporteurDefaut} />
+  const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+  let settings: Record<string, string> = {}
+  try {
+    const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' })
+    if (r.ok) settings = await r.json()
+  } catch {
+    // handled by defaults in BoutiqueClient
+  }
+
+  return (
+    <BoutiqueClient
+      boutiques={boutiques}
+      canCreate={canCreate}
+      planActif={planActif}
+      codeApporteurDefaut={codeApporteurDefaut}
+      userId={session.userId}
+      settings={settings}
+    />
+  )
 }

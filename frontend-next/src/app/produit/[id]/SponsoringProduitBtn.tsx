@@ -2,10 +2,21 @@
 
 import { useState, useTransition } from 'react'
 import { initierWaveProduitSponsoring } from '@/app/actions/paiement'
+import ModalPaiementManuel from '@/components/ModalPaiementManuel'
 
-export default function SponsoringProduitBtn({ produitId }: { produitId: string }) {
+interface Props {
+  produitId: string
+  userId: string
+  settings: Record<string, string>
+}
+
+export default function SponsoringProduitBtn({ produitId, userId, settings }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [showManuel, setShowManuel] = useState(false)
+
+  const manuelActif = settings.paiement_manuel_actif !== 'false'
+  const montant     = Number(settings.prix_sponsoring) || 5000
 
   function handleClick() {
     setError(null)
@@ -29,9 +40,31 @@ export default function SponsoringProduitBtn({ produitId }: { produitId: string 
         {isPending ? 'Redirection…' : '⭐ Mettre en avant ce produit'}
       </button>
       <p className="sponsoring-produit-info">
-        5 000 FCFA · 30 jours · Affiché en tête de liste
+        {montant.toLocaleString('fr-FR')} FCFA · 30 jours · Affiché en tête de liste
       </p>
       {error && <p className="sponsoring-produit-error">{error}</p>}
+
+      {manuelActif && (
+        <button
+          type="button"
+          onClick={() => setShowManuel(true)}
+          className="sponsoring-produit-btn"
+          style={{ marginTop: 8, background: 'none', border: '1px solid var(--border, #d1d5db)' }}
+        >
+          🧾 Payer sans app
+        </button>
+      )}
+
+      {showManuel && (
+        <ModalPaiementManuel
+          reference={`prod_${userId}_${produitId}`}
+          montant={montant}
+          numeroWave={settings.paiement_manuel_numero_wave || ''}
+          numeroOM={settings.paiement_manuel_numero_om || ''}
+          onClose={() => setShowManuel(false)}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
     </div>
   )
 }

@@ -133,6 +133,15 @@ export default async function FicheImmoPage({
     .then(raw => { similaires = raw?.annonces ?? []; })
     .catch(() => {});
 
+  const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000';
+  let settings: Record<string, string> = {};
+  try {
+    const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' });
+    if (r.ok) settings = await r.json();
+  } catch {
+    // handled by defaults in SponsoringImmoBtn
+  }
+
   const localisation = [annonce.quartier, annonce.ville].filter(Boolean).join(', ');
   const photos = Array.isArray(annonce.photos) ? annonce.photos : [];
   const mainPhoto = photos[0] ?? null;
@@ -388,7 +397,7 @@ export default async function FicheImmoPage({
                   </p>
                 </div>
               ) : (
-                <SponsoringImmoBtn immoId={annonce.id} />
+                <SponsoringImmoBtn immoId={annonce.id} userId={session!.userId} settings={settings} />
               )
             )}
           </div>
