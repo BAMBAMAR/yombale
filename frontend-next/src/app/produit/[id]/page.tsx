@@ -369,13 +369,18 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                   </Link>
                 )}
               </div>
-              <div className="produit-fiche-nom-row">
+              <div className="produit-fiche-nom-row produit-fiche-nom-row--avec-cta">
                 {produit.image_url && (
                   <div className="produit-fiche-img">
                     <ExternalImg src={produit.image_url} alt={produit.nom} style={{ width: '100%', height: '100%', objectFit: 'contain' }} loading="eager" />
                   </div>
                 )}
                 <h1 className="produit-fiche-nom">{produit.nom}</h1>
+                {best?.url_achat && (
+                  <a href={`/api/click/${best.id}`} target="_blank" rel="noopener noreferrer" className="cta-acheter cta-acheter--header">
+                    🛒 Acheter →
+                  </a>
+                )}
               </div>
               <div className="forfait-fiche-prix-row">
                 <span className="forfait-fiche-prix">{prixMin ? fcfa(prixMin) : '—'}</span>
@@ -409,13 +414,6 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                   </div>
                 )}
               </div>
-            )}
-
-            {/* CTA principal */}
-            {best?.url_achat && (
-              <a href={`/api/click/${best.id}`} target="_blank" rel="noopener noreferrer" className="cta-acheter">
-                🛒 Acheter au meilleur prix →
-              </a>
             )}
 
             {/* Description */}

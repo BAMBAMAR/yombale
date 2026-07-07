@@ -279,6 +279,32 @@ a {
   margin-bottom: 14px;
 }
 
+.produit-fiche-nom-row--avec-cta {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.produit-fiche-nom-row--avec-cta .produit-fiche-nom {
+  flex: 1 1 auto;
+}
+
+.cta-acheter--header {
+  display: inline-block;
+  width: auto;
+  margin-left: auto;
+  padding: 10px 24px;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .cta-acheter--header {
+    width: 100%;
+    margin-left: 0;
+    text-align: center;
+  }
+}
+
 .produit-fiche-img {
   position: relative;
   width: 88px;
