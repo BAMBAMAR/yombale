@@ -57,6 +57,8 @@ interface Produit {
   en_stock: boolean
   categorie: string | null
   caracteristiques: Record<string, string> | null
+  whatsapp_sync_statut: 'synchronise' | 'en_attente' | 'echec' | null
+  whatsapp_sync_erreur: string | null
 }
 
 // ── Caractéristiques par catégorie ────────────────────────────────────────────
@@ -544,6 +546,9 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
   const [mode, setMode] = useState<'list' | 'create' | { editing: Produit }>('list')
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [rechercheTexte, setRechercheTexte] = useState('')
+  const [filtreStatut, setFiltreStatut] = useState<'tous' | 'synchronise' | 'en_attente' | 'echec'>('tous')
+  const [filtreCategorie, setFiltreCategorie] = useState<string>('toutes')
   const [, startTransition] = useTransition()
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
@@ -583,6 +588,15 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
 
   const quota = planActif === 'business' ? '∞' : '50'
 
+  const categoriesDisponibles = Array.from(new Set(produits.map(p => p.categorie).filter(Boolean))) as string[]
+
+  const produitsFiltres = produits.filter(p => {
+    if (rechercheTexte.trim() && !p.nom.toLowerCase().includes(rechercheTexte.trim().toLowerCase())) return false
+    if (filtreStatut !== 'tous' && (p.whatsapp_sync_statut || 'en_attente') !== filtreStatut) return false
+    if (filtreCategorie !== 'toutes' && p.categorie !== filtreCategorie) return false
+    return true
+  })
+
   if (mode === 'create' || (typeof mode === 'object' && 'editing' in mode)) {
     return (
       <div style={{ maxWidth: 560 }}>
@@ -618,6 +632,38 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
         </button>
       </div>
 
+      {produits.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <input
+            type="text"
+            placeholder="Rechercher un produit…"
+            value={rechercheTexte}
+            onChange={e => setRechercheTexte(e.target.value)}
+            style={{ flex: '1 1 180px', padding: '7px 10px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 8 }}
+          />
+          <select
+            value={filtreStatut}
+            onChange={e => setFiltreStatut(e.target.value as typeof filtreStatut)}
+            style={{ padding: '7px 10px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 8 }}
+          >
+            <option value="tous">Tous les statuts</option>
+            <option value="synchronise">✓ Sur WhatsApp</option>
+            <option value="en_attente">⏳ En attente</option>
+            <option value="echec">✗ Échec</option>
+          </select>
+          {categoriesDisponibles.length > 1 && (
+            <select
+              value={filtreCategorie}
+              onChange={e => setFiltreCategorie(e.target.value)}
+              style={{ padding: '7px 10px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 8 }}
+            >
+              <option value="toutes">Toutes les catégories</option>
+              {categoriesDisponibles.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
+        </div>
+      )}
+
       {successMsg && (
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '10px 14px', color: '#16a34a', fontSize: 14, marginBottom: 12, fontWeight: 600 }}>
           {successMsg}
@@ -644,7 +690,7 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {produits.map(p => (
+          {produitsFiltres.map(p => (
             <div key={p.id} style={{
               display: 'flex', gap: 12, alignItems: 'center',
               background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px',
@@ -660,7 +706,7 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
               {/* Infos */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{p.nom}</p>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2, flexWrap: 'wrap' }}>
                   {p.prix && <span style={{ fontSize: 13, color: '#C75B00', fontWeight: 700 }}>{fcfa(p.prix)}</span>}
                   {p.prix_barre && <span style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'line-through' }}>{fcfa(p.prix_barre)}</span>}
                   <span style={{
@@ -669,6 +715,16 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
                     color: p.en_stock ? '#16a34a' : '#dc2626', fontWeight: 700,
                   }}>
                     {p.en_stock ? 'En stock' : 'Rupture'}
+                  </span>
+                  <span
+                    title={p.whatsapp_sync_statut === 'echec' ? (p.whatsapp_sync_erreur || 'Échec de synchronisation') : undefined}
+                    style={{
+                      fontSize: 11, padding: '1px 6px', borderRadius: 20, fontWeight: 700,
+                      background: p.whatsapp_sync_statut === 'synchronise' ? '#dcfce7' : p.whatsapp_sync_statut === 'echec' ? '#fee2e2' : '#f1f5f9',
+                      color: p.whatsapp_sync_statut === 'synchronise' ? '#16a34a' : p.whatsapp_sync_statut === 'echec' ? '#dc2626' : '#64748b',
+                    }}
+                  >
+                    {p.whatsapp_sync_statut === 'synchronise' ? '✓ Sur WhatsApp' : p.whatsapp_sync_statut === 'echec' ? '✗ Échec' : '⏳ En attente'}
                   </span>
                 </div>
               </div>
