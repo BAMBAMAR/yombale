@@ -165,7 +165,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
                   disabled={isPending || !!planActif}
                   style={{ width: '100%', marginTop: 8, padding: '8px 0', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', color: '#374151', fontSize: 13, fontWeight: 600, cursor: (isPending || !!planActif) ? 'default' : 'pointer' }}
                 >
-                  Payer manuellement (Wave/Orange)
+                  Payer (Wave/Orange)
                 </button>
               )}
             </div>

@@ -138,7 +138,7 @@ function AnnonceCard({
           )}
           {annonce.actif && (
             <button onClick={() => setShowBoostModal(true)} className="annonce-action-btn">
-              Booster manuellement
+              Booster
             </button>
           )}
           <button

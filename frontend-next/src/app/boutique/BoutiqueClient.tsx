@@ -800,7 +800,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
               borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 600,
               marginLeft: onSponsoring ? undefined : 'auto',
             }}>
-              🧾 Payer manuellement
+              🧾 Payer
             </button>
           )}
           <button onClick={onDelete} style={{

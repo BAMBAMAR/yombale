@@ -60,7 +60,7 @@ export default function SponsoringImmoBtn({ immoId, userId, settings }: Props) {
             fontSize: 14, cursor: 'pointer',
           }}
         >
-          🧾 Payer manuellement
+          🧾 Payer
         </button>
       )}
 
