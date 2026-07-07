@@ -158,6 +158,19 @@ Un audit exhaustif a trouvé plusieurs écrans qui affichaient encore des prix c
 
 Les fallbacks codés en dur restants (ex: `Number(settings.prix_annonce) || 1500`) sont volontaires — ils ne s'appliquent que si le fetch `/api/settings/public` échoue, pas des valeurs qui ignorent `settings`.
 
+### Correctif complémentaire (7 juillet 2026, suite) : boutons Wave non masqués quand désactivé + libellés simplifiés
+
+Suite à un retour d'usage réel (capture d'écran montrant le bouton "Booster 7j" toujours visible sur `/mes-annonces` malgré `paiement_wave` désactivé), un audit a trouvé que **5 écrans sur 6** consommant les toggles `paiement_wave`/`paiement_orange` ne les vérifiaient en fait jamais pour masquer leur bouton Wave — seul `PaiementClient.tsx` (`/payer-annonce`) le faisait déjà correctement. Résultat concret : un admin qui désactive Wave depuis `/admin/tarifs` (ex: en attendant les clés API) voyait quand même le bouton Wave partout ailleurs, qui aboutissait à un 403 `Paiement Wave temporairement indisponible` au lieu de rediriger vers le paiement manuel déjà disponible juste à côté.
+
+Corrigé (ajout de `waveActif = settings.paiement_wave !== 'false'` + rendu conditionnel du bouton Wave) sur :
+- `mes-annonces/AnnoncesClient.tsx` + `page.tsx` — bouton "Booster 7j"
+- `immo/[id]/SponsoringImmoBtn.tsx` — sponsoring immo
+- `produit/[id]/SponsoringProduitBtn.tsx` — sponsoring produit
+- `boutique/BoutiqueClient.tsx` — sponsoring boutique (le prop `onSponsoring` de `BoutiqueCard` est devenu optionnel, sur le même modèle que `onPayerManuel` déjà en place)
+- `boutique/abonnement/AbonnementClient.tsx` — bouton "Souscrire" Pro/Business
+
+**Libellés simplifiés dans la foulée** (retrait de "sans app" puis de "manuellement", sur demande explicite) : les boutons de paiement manuel sont maintenant juste "Payer" / "Booster" (au lieu de "Payer sans app" / "Booster manuellement"), y compris le titre de `ModalPaiementManuel.tsx` ("Payer / j'ai déjà payé"). Les labels informatifs non cliquables (ex: "Paiement via Wave ou manuel" sur la page d'accueil et `/boutique/abonnement`) n'ont pas été touchés — la demande visait les libellés de boutons, pas les textes explicatifs.
+
 ---
 
 ## État du projet (6 juillet 2026, soir — chatbot WhatsApp : recherche, menu et carousel corrigés)
