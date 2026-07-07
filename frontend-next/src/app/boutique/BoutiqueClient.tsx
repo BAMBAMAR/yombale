@@ -538,7 +538,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: 
 
 // ── Gestionnaire de catalogue produits ───────────────────────────────────────
 
-function CatalogueProduits({ boutique, planActif }: { boutique: Boutique; planActif: 'pro' | 'business' | null }) {
+function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutique; planActif: 'pro' | 'business' | null; prixPro: number }) {
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<'list' | 'create' | { editing: Produit }>('list')
@@ -575,7 +575,7 @@ function CatalogueProduits({ boutique, planActif }: { boutique: Boutique; planAc
           display: 'inline-block', background: '#C75B00', color: '#fff',
           padding: '10px 24px', borderRadius: 10, textDecoration: 'none', fontWeight: 700,
         }}>
-          Passer en Pro — 15 000 FCFA/mois
+          Passer en Pro — {prixPro.toLocaleString('fr-FR')} FCFA/mois
         </Link>
       </div>
     )
@@ -822,11 +822,12 @@ const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'analytics' | 'inf
   { key: 'infos',     icon: '⚙️', label: 'Paramètres' },
 ]
 
-function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
+function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
   boutique: Boutique
   planActif: 'pro' | 'business' | null
   onBack: () => void
   onEdit: () => void
+  prixPro: number
 }) {
   const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'analytics' | 'infos'>('produits')
   const [nbEnAttente, setNbEnAttente] = useState(0)
@@ -955,7 +956,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit }: {
           {tab === 'infos'     && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Modifiez les informations, contacts et photos.</p>}
         </div>
 
-        {tab === 'produits'  && <CatalogueProduits boutique={boutique} planActif={planActif} />}
+        {tab === 'produits'  && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} />}
         {tab === 'commandes' && <Commandes boutiqueId={boutique.id} />}
         {tab === 'compta'    && <Comptabilite boutiqueId={boutique.id} />}
         {tab === 'analytics' && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
@@ -998,6 +999,7 @@ export default function BoutiqueClient({
 
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const montantSponsor = Number(settings.prix_sponsoring) || 5000
+  const prixPro = Number(settings.plan_pro_prix) || 15000
 
   async function handleSponsoring(boutiqueId: string) {
     setSponsorError(null)
@@ -1046,6 +1048,7 @@ export default function BoutiqueClient({
           planActif={planActif ?? null}
           onBack={() => setMode('list')}
           onEdit={() => { setSuccessMsg('✅ Boutique modifiée !'); setMode('list'); router.refresh() }}
+          prixPro={prixPro}
         />
       </div>
     )
@@ -1094,7 +1097,7 @@ export default function BoutiqueClient({
           <span style={{ fontSize: 32, flexShrink: 0 }}>⭐</span>
           <div style={{ flex: 1 }}>
             <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#92400e' }}>Passez en Boutique Pro</p>
-            <p style={{ margin: '2px 0 0', fontSize: 13, color: '#b45309' }}>Catalogue · Comptabilité · Analytics · Placement prioritaire — 15 000 FCFA/mois</p>
+            <p style={{ margin: '2px 0 0', fontSize: 13, color: '#b45309' }}>Catalogue · Comptabilité · Analytics · Placement prioritaire — {prixPro.toLocaleString('fr-FR')} FCFA/mois</p>
           </div>
           <span style={{ color: '#C75B00', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>Voir les plans →</span>
         </Link>

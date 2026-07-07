@@ -20,7 +20,7 @@ const inp = {
   fontSize: 14, background: '#fff',
 } as const
 
-export default function ActiverPlanClient() {
+export default function ActiverPlanClient({ prixPro, prixBusiness }: { prixPro: number; prixBusiness: number }) {
   const [state, action] = useFormState<ActionState, FormData>(activerPlanTest, {})
 
   return (
@@ -51,8 +51,8 @@ export default function ActiverPlanClient() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Plan</label>
           <select name="plan" style={inp}>
-            <option value="pro">Pro (15 000 FCFA)</option>
-            <option value="business">Business (35 000 FCFA)</option>
+            <option value="pro">Pro ({prixPro.toLocaleString('fr-FR')} FCFA)</option>
+            <option value="business">Business ({prixBusiness.toLocaleString('fr-FR')} FCFA)</option>
           </select>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

@@ -42,9 +42,12 @@ function fcfa(v: string | number) {
 }
 
 function typeLabel(ref: string) {
-  if (ref.startsWith('ann_'))  return '📢 Annonce'
-  if (ref.startsWith('immo_')) return '🏘 Immo sponsoring'
-  if (ref.startsWith('bout_')) return '🏪 Boutique sponsoring'
+  if (ref.startsWith('ann_'))   return '📢 Annonce'
+  if (ref.startsWith('immo_'))  return '🏘 Immo sponsoring'
+  if (ref.startsWith('bout_'))  return '🏪 Boutique sponsoring'
+  if (ref.startsWith('prod_'))  return '🛒 Produit sponsoring'
+  if (ref.startsWith('boost_')) return '🚀 Boost annonce'
+  if (ref.startsWith('abmt_'))  return '⭐ Abonnement'
   return '—'
 }
 
@@ -55,13 +58,16 @@ export default async function AdminRevenusPage() {
 
   let stats: RevenusStats | null = null
   let ventes: VentesStats | null = null
+  let prixAnnonce = 1500
   try {
-    const [resStats, resVentes] = await Promise.all([
+    const [resStats, resVentes, resSettings] = await Promise.all([
       fetch(`${BACKEND}/api/paiement/stats`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' }),
       fetch(`${BACKEND}/api/comptabilite/admin/stats`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' }),
+      fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' }),
     ])
     if (resStats.ok) stats = await resStats.json()
     if (resVentes.ok) ventes = await resVentes.json()
+    if (resSettings.ok) prixAnnonce = Number((await resSettings.json()).prix_annonce) || 1500
   } catch {}
 
   if (!stats) {
@@ -122,7 +128,7 @@ export default async function AdminRevenusPage() {
           </div>
           <div className="admin-stat-card admin-stat-card--navy">
             <p className="admin-stat-value">📢 {annonces}</p>
-            <p className="admin-stat-label">Annonces activées (1 500 FCFA)</p>
+            <p className="admin-stat-label">Annonces activées ({prixAnnonce.toLocaleString('fr-FR')} FCFA)</p>
           </div>
           <div className="admin-stat-card admin-stat-card--navy">
             <p className="admin-stat-value">⭐ {immoSponsor + boutSponsor}</p>
@@ -231,8 +237,8 @@ export default async function AdminRevenusPage() {
                     <td><code style={{ fontSize: 11 }}>{tx.reference.slice(0, 30)}</code></td>
                     <td style={{ fontWeight: 700, color: 'var(--green)' }}>{fcfa(tx.montant)}</td>
                     <td>
-                      <span className={`admin-badge ${tx.methode_paiement === 'wave' ? 'admin-badge--blue' : 'admin-badge--green'}`}>
-                        {tx.methode_paiement === 'wave' ? '🌊 Wave' : '🟠 Orange'}
+                      <span className={`admin-badge ${tx.methode_paiement === 'wave' ? 'admin-badge--blue' : tx.methode_paiement === 'orange' ? 'admin-badge--green' : 'admin-badge--gray'}`}>
+                        {tx.methode_paiement === 'wave' ? '🌊 Wave' : tx.methode_paiement === 'orange' ? '🟠 Orange' : '🧾 Manuel'}
                       </span>
                     </td>
                   </tr>

@@ -93,6 +93,23 @@ export default async function HomePage({
 
   const hasFiltre = q || categorie || prixMax
 
+  let settings: Record<string, string> = {}
+  try {
+    const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store', headers: SSR_HEADERS })
+    if (r.ok) settings = await r.json()
+  } catch {
+    // valeurs par défaut ci-dessous
+  }
+  const prixPro      = Number(settings.plan_pro_prix) || 15000
+  const prixBusiness = Number(settings.plan_business_prix) || 35000
+  const waveActif    = settings.paiement_wave !== 'false'
+  const manuelActif  = settings.paiement_manuel_actif !== 'false'
+  const modePaiementLabel = waveActif && manuelActif
+    ? 'Paiement via Wave ou sans app'
+    : waveActif
+    ? 'Paiement via Wave'
+    : 'Paiement sans app disponible'
+
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────────── */}
@@ -310,9 +327,9 @@ export default async function HomePage({
                 fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20, letterSpacing: '.04em',
               }}>BOUTIQUE PRO</span>
               <p style={{ fontSize: 30, fontWeight: 800, margin: '8px 0 2px', color: '#C75B00' }}>
-                15 000 <span style={{ fontSize: 14, fontWeight: 400, color: '#64748b' }}>FCFA/mois</span>
+                {prixPro.toLocaleString('fr-FR')} <span style={{ fontSize: 14, fontWeight: 400, color: '#64748b' }}>FCFA/mois</span>
               </p>
-              <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>Paiement via Wave</p>
+              <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>{modePaiementLabel}</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 9 }}>
                 {[
                   'Catalogue produits avec photos',
@@ -347,9 +364,9 @@ export default async function HomePage({
                 fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20, letterSpacing: '.04em',
               }}>BOUTIQUE BUSINESS</span>
               <p style={{ fontSize: 30, fontWeight: 800, margin: '8px 0 2px', color: '#1e3a5f' }}>
-                35 000 <span style={{ fontSize: 14, fontWeight: 400, color: '#64748b' }}>FCFA/mois</span>
+                {prixBusiness.toLocaleString('fr-FR')} <span style={{ fontSize: 14, fontWeight: 400, color: '#64748b' }}>FCFA/mois</span>
               </p>
-              <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>Paiement via Wave</p>
+              <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>{modePaiementLabel}</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 9 }}>
                 {[
                   'Tout ce qui est inclus dans Pro',
@@ -375,7 +392,7 @@ export default async function HomePage({
           </div>
 
           <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', marginTop: 16 }}>
-            Pas de débit automatique · Renouvellement manuel · Paiement sécurisé Wave
+            Pas de débit automatique · Renouvellement manuel · {modePaiementLabel}
           </p>
         </section>
       )}

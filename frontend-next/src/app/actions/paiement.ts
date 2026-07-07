@@ -62,11 +62,19 @@ export async function initierOrangeAnnonce(annonce_id: string): Promise<Paiement
   if (!session) return { ok: false, error: 'Connexion requise' }
 
   try {
+    let montant = 1500
+    try {
+      const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' })
+      if (r.ok) montant = Number((await r.json()).prix_annonce) || 1500
+    } catch {
+      // fallback 1500 en cas d'échec du fetch settings
+    }
+
     const token = await getAuthToken(session)
     const res = await fetch(`${BACKEND}/api/paiement/orange/initier`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ montant: 1500, commande_id: `ann_${annonce_id}` }),
+      body: JSON.stringify({ montant, commande_id: `ann_${annonce_id}` }),
     })
     const body = await res.json()
     if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }

@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers'
+
 export const metadata = { title: 'Kit communication — Admin Nopalou' }
 
 const VISUELS = [
@@ -194,24 +196,26 @@ const ARGUMENTAIRE_B2B = [
   },
 ]
 
-const OBJECTIONS = [
-  {
-    objection: '"C\'est encore un truc à payer, j\'ai déjà Facebook"',
-    reponse: 'Facebook ne compare pas les prix pour vos clients, ni ne trie vos produits par catégorie. Nopalou vous amène des acheteurs qui cherchent déjà à comparer — vous captez une demande que Facebook ne vous donne pas. Et le premier mois est gratuit, sans risque.',
-  },
-  {
-    objection: '"Je ne veux pas payer de commission"',
-    reponse: 'La formule Pro (15 000 FCFA/mois) n\'a aucune commission — seule la formule Business (pour plus de volume) prend 2%, très en dessous de Jumia. Vous choisissez la formule adaptée à votre activité.',
-  },
-  {
-    objection: '"Je n\'ai pas le temps de gérer un site en plus"',
-    reponse: 'Tout passe par WhatsApp, l\'outil que vous utilisez déjà toute la journée. Pas de nouveau tableau de bord à apprendre pour recevoir les commandes.',
-  },
-  {
-    objection: '"Comment je sais que ça marche avant de payer ?"',
-    reponse: '30 jours d\'essai Pro gratuits, sans carte bancaire. Vous voyez les vues et contacts réels sur votre boutique avant de décider.',
-  },
-]
+function getObjections(prixPro: number, commissionBusiness: number) {
+  return [
+    {
+      objection: '"C\'est encore un truc à payer, j\'ai déjà Facebook"',
+      reponse: 'Facebook ne compare pas les prix pour vos clients, ni ne trie vos produits par catégorie. Nopalou vous amène des acheteurs qui cherchent déjà à comparer — vous captez une demande que Facebook ne vous donne pas. Et le premier mois est gratuit, sans risque.',
+    },
+    {
+      objection: '"Je ne veux pas payer de commission"',
+      reponse: `La formule Pro (${prixPro.toLocaleString('fr-FR')} FCFA/mois) n'a aucune commission — seule la formule Business (pour plus de volume) prend ${commissionBusiness}%, très en dessous de Jumia. Vous choisissez la formule adaptée à votre activité.`,
+    },
+    {
+      objection: '"Je n\'ai pas le temps de gérer un site en plus"',
+      reponse: 'Tout passe par WhatsApp, l\'outil que vous utilisez déjà toute la journée. Pas de nouveau tableau de bord à apprendre pour recevoir les commandes.',
+    },
+    {
+      objection: '"Comment je sais que ça marche avant de payer ?"',
+      reponse: '30 jours d\'essai Pro gratuits, sans carte bancaire. Vous voyez les vues et contacts réels sur votre boutique avant de décider.',
+    },
+  ]
+}
 
 const SCRIPT_ORAL = `[Accroche — 15 sec]
 Bonjour, je m'appelle [Prénom], je représente Nopalou, une plateforme sénégalaise qui compare les prix produits, immobilier et forfaits télécom pour aider les gens à mieux acheter à Dakar.
@@ -264,23 +268,27 @@ const PLAN_DEMARCHAGE = [
   },
 ]
 
-const APPORTEUR_TEXTE = `💼 Devenez apporteur d'affaires Nopalou
+function getApporteurTexte(tauxApporteur: number) {
+  return `💼 Devenez apporteur d'affaires Nopalou
 
-Vous connaissez des commerçants, agences immobilières ou vendeurs à Dakar ? Présentez-leur Nopalou et touchez 10% de commission récurrente sur chaque abonnement Pro ou Business que vous recrutez — chaque mois, tant que la boutique reste abonnée.
+Vous connaissez des commerçants, agences immobilières ou vendeurs à Dakar ? Présentez-leur Nopalou et touchez ${tauxApporteur}% de commission récurrente sur chaque abonnement Pro ou Business que vous recrutez — chaque mois, tant que la boutique reste abonnée.
 
 Comment ça marche :
 1. Vous présentez Nopalou à votre contact (script fourni)
 2. Le commerçant crée sa boutique avec votre code apporteur
-3. Dès qu'il passe en Pro ou Business payant, vous touchez 10% chaque mois
+3. Dès qu'il passe en Pro ou Business payant, vous touchez ${tauxApporteur}% chaque mois
 
 Aucun investissement, aucun engagement de votre part. Paiement mensuel par Wave ou Orange Money.
 
 📲 Contact : [votre numéro WhatsApp]`
+}
 
-const APPORTEUR_EXEMPLES = [
-  { formule: 'Boutique Pro', prix: '15 000 FCFA/mois', commission: '1 500 FCFA/mois par boutique' },
-  { formule: 'Boutique Business', prix: '35 000 FCFA/mois', commission: '3 500 FCFA/mois par boutique' },
-]
+function getApporteurExemples(prixPro: number, prixBusiness: number, tauxApporteur: number) {
+  return [
+    { formule: 'Boutique Pro', prix: `${prixPro.toLocaleString('fr-FR')} FCFA/mois`, commission: `${Math.round(prixPro * tauxApporteur / 100).toLocaleString('fr-FR')} FCFA/mois par boutique` },
+    { formule: 'Boutique Business', prix: `${prixBusiness.toLocaleString('fr-FR')} FCFA/mois`, commission: `${Math.round(prixBusiness * tauxApporteur / 100).toLocaleString('fr-FR')} FCFA/mois par boutique` },
+  ]
+}
 
 const CHATBOT_FONCTIONS = [
   { titre: 'Recherche produit/annonce', detail: 'Texte libre (ex: "iPhone 14") → renvoie prix comparés, annonces classifiées ou biens immo correspondants, avec lien direct.' },
@@ -304,7 +312,31 @@ Comment l'utiliser :
 
 📲 wa.me/221708717942`
 
-export default function CommunicationPage() {
+export default async function CommunicationPage() {
+  const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+  const jar    = await cookies()
+  const secret = jar.get('nopalou_admin')?.value ?? ''
+
+  let prixPro = 15000
+  let prixBusiness = 35000
+  let commissionBusiness = 2
+  let tauxApporteur = 10
+  try {
+    const r = await fetch(`${BACKEND}/api/settings`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' })
+    if (r.ok) {
+      const s = await r.json()
+      prixPro = Number(s.plan_pro_prix) || 15000
+      prixBusiness = Number(s.plan_business_prix) || 35000
+      commissionBusiness = Number(s.commission_business) || 2
+      tauxApporteur = Number(s.apporteur_taux_commission) || 10
+    }
+  } catch {
+    // fallback aux valeurs par défaut
+  }
+  const objections = getObjections(prixPro, commissionBusiness)
+  const apporteurTexte = getApporteurTexte(tauxApporteur)
+  const apporteurExemples = getApporteurExemples(prixPro, prixBusiness, tauxApporteur)
+
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px', fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1C2B4A', marginBottom: 6 }}>
@@ -456,7 +488,7 @@ export default function CommunicationPage() {
           🛡️ Réponses aux objections courantes
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {OBJECTIONS.map(o => (
+          {objections.map(o => (
             <div key={o.objection} style={{
               border: '1px solid #E2E8F0', borderRadius: 10, padding: '18px 20px', background: '#fff',
             }}>
@@ -538,7 +570,7 @@ export default function CommunicationPage() {
               </tr>
             </thead>
             <tbody>
-              {APPORTEUR_EXEMPLES.map(e => (
+              {apporteurExemples.map(e => (
                 <tr key={e.formule} style={{ borderBottom: '1px solid #F1F5F9' }}>
                   <td style={{ padding: '12px 14px', fontWeight: 700, color: '#1C2B4A' }}>{e.formule}</td>
                   <td style={{ padding: '12px 14px', color: '#64748B' }}>{e.prix}</td>
@@ -563,7 +595,7 @@ export default function CommunicationPage() {
           borderRadius: 8, padding: '20px', margin: 0, lineHeight: 1.8,
           fontFamily: 'system-ui, sans-serif',
         }}>
-          {APPORTEUR_TEXTE}
+          {apporteurTexte}
         </pre>
       </section>
 

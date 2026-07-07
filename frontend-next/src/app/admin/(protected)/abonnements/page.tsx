@@ -44,14 +44,22 @@ export default async function AdminAbonnementsPage() {
 
   let stats: Stats | null = null
   let abonnements: Abonnement[] = []
+  let prixPro = 15000
+  let prixBusiness = 35000
 
   try {
-    const [sRes, aRes] = await Promise.all([
+    const [sRes, aRes, settingsRes] = await Promise.all([
       fetch(`${BACKEND}/api/abonnements/admin/stats`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' }),
       fetch(`${BACKEND}/api/abonnements/admin`,       { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' }),
+      fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' }),
     ])
     if (sRes.ok) stats = await sRes.json()
     if (aRes.ok) abonnements = (await aRes.json()).abonnements ?? []
+    if (settingsRes.ok) {
+      const s = await settingsRes.json()
+      prixPro = Number(s.plan_pro_prix) || 15000
+      prixBusiness = Number(s.plan_business_prix) || 35000
+    }
   } catch {}
 
   const badge = (plan: string) => plan === 'business'
@@ -64,7 +72,7 @@ export default async function AdminAbonnementsPage() {
     <div style={{ padding: 24 }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>Abonnements</h1>
 
-      <ActiverPlanClient />
+      <ActiverPlanClient prixPro={prixPro} prixBusiness={prixBusiness} />
 
       {/* Stats */}
       {stats && (

@@ -48,6 +48,12 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
   const [planManuel, setPlanManuel] = useState<'pro' | 'business' | null>(null)
 
   const manuelActif = settings.paiement_manuel_actif !== 'false'
+  const waveActif   = settings.paiement_wave !== 'false'
+  const modePaiementLabel = waveActif && manuelActif
+    ? 'Paiement via Wave ou sans app — renouvellement manuel'
+    : waveActif
+    ? 'Paiement via Wave — renouvellement manuel'
+    : 'Paiement sans app — renouvellement manuel'
   const PLANS = PLANS_INFO.map(p => ({
     ...p,
     prix: Number(settings[`plan_${p.id}_prix`]) || PLANS_DEFAUT[p.id],
@@ -128,7 +134,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
                 <span style={{ fontSize: 14, fontWeight: 400, color: '#64748b' }}>/mois</span>
               </p>
               <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>
-                Paiement via Wave — renouvellement manuel
+                {modePaiementLabel}
               </p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {plan.avantages.map((a) => (

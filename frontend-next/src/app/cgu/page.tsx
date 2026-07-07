@@ -5,7 +5,16 @@ export const metadata: Metadata = {
   description: "Conditions générales d'utilisation du comparateur de prix Nopalou.",
 }
 
-export default function CguPage() {
+export default async function CguPage() {
+  const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+  let prixAnnonce = 1500
+  try {
+    const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' })
+    if (r.ok) prixAnnonce = Number((await r.json()).prix_annonce) || 1500
+  } catch {
+    // fallback 1500 en cas d'échec du fetch settings
+  }
+
   return (
     <div className="legal-page">
       <h1 className="legal-titre">Conditions Générales d&apos;Utilisation</h1>
@@ -28,7 +37,7 @@ export default function CguPage() {
 
       <section className="legal-section">
         <h2>4. Dépôt d&apos;annonces</h2>
-        <p>Les deux premières annonces sont publiées gratuitement. À partir de la troisième, un paiement de <strong>1 500 FCFA</strong> par annonce est requis.</p>
+        <p>Les deux premières annonces sont publiées gratuitement. À partir de la troisième, un paiement de <strong>{prixAnnonce.toLocaleString('fr-FR')} FCFA</strong> par annonce est requis.</p>
         <p>En déposant une annonce, vous vous engagez à :</p>
         <ul>
           <li>Décrire fidèlement le produit ou service proposé.</li>

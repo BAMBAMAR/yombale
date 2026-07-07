@@ -7137,6 +7137,7 @@ a {
 .admin-badge--sms     { background: #f3e8ff; color: #7e22ce; }
 .admin-badge--green   { background: #dcfce7; color: #15803d; }
 .admin-badge--blue    { background: #dbeafe; color: #1d4ed8; }
+.admin-badge--gray    { background: #f1f5f9; color: #475569; }
 
 .admin-nav-sep { height: 1px; background: rgba(255,255,255,.12); margin: 10px 0; }
 
