@@ -1,12 +1,17 @@
 'use client'
 import { useState, useTransition } from 'react'
 import { initierWaveAbonnement } from '@/app/actions/paiement'
+import ModalPaiementManuel from '@/components/ModalPaiementManuel'
 
-const PLANS = [
+const PLANS_DEFAUT = {
+  pro: 15000,
+  business: 35000,
+}
+
+const PLANS_INFO = [
   {
     id: 'pro' as const,
     label: 'Boutique Pro',
-    prix: 15000,
     couleur: '#C75B00',
     avantages: [
       'Placement prioritaire dans /boutiques',
@@ -19,7 +24,6 @@ const PLANS = [
   {
     id: 'business' as const,
     label: 'Boutique Business',
-    prix: 35000,
     couleur: '#1e3a5f',
     avantages: [
       'Tout ce qui est inclus dans Pro',
@@ -33,12 +37,21 @@ const PLANS = [
 
 interface Props {
   planActif: { plan: string; fin: string } | null
+  userId: string
+  settings: Record<string, string>
 }
 
-export default function AbonnementClient({ planActif }: Props) {
+export default function AbonnementClient({ planActif, userId, settings }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+  const [planManuel, setPlanManuel] = useState<'pro' | 'business' | null>(null)
+
+  const manuelActif = settings.paiement_manuel_actif !== 'false'
+  const PLANS = PLANS_INFO.map(p => ({
+    ...p,
+    prix: Number(settings[`plan_${p.id}_prix`]) || PLANS_DEFAUT[p.id],
+  }))
 
   const handleSouscrire = (plan: 'pro' | 'business') => {
     setError(null)
@@ -137,6 +150,16 @@ export default function AbonnementClient({ planActif }: Props) {
               >
                 {estActif ? 'Plan actif' : enCours ? 'Redirection Wave…' : `Souscrire ${plan.label}`}
               </button>
+
+              {manuelActif && !estActif && (
+                <button
+                  onClick={() => setPlanManuel(plan.id)}
+                  disabled={isPending || !!planActif}
+                  style={{ width: '100%', marginTop: 8, padding: '8px 0', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', color: '#374151', fontSize: 13, fontWeight: 600, cursor: (isPending || !!planActif) ? 'default' : 'pointer' }}
+                >
+                  Payer sans app (Wave/Orange manuel)
+                </button>
+              )}
             </div>
           )
         })}
@@ -145,6 +168,17 @@ export default function AbonnementClient({ planActif }: Props) {
       <p style={{ marginTop: 24, fontSize: 13, color: '#94a3b8', textAlign: 'center' }}>
         Paiement sécurisé par Wave. Pas de débit automatique — vous recevrez un email de rappel 7 jours avant expiration.
       </p>
+
+      {planManuel && (
+        <ModalPaiementManuel
+          reference={`abmt_${userId}_${planManuel}`}
+          montant={PLANS.find(p => p.id === planManuel)!.prix}
+          numeroWave={settings.paiement_manuel_numero_wave || ''}
+          numeroOM={settings.paiement_manuel_numero_om || ''}
+          onClose={() => setPlanManuel(null)}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
     </div>
   )
 }
