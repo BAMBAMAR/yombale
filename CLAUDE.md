@@ -243,9 +243,8 @@ Pour interroger la vraie base de production (pas la base locale `.env`, qui poin
 ### État réel de l'intégration WhatsApp (testé en direct le 3 juillet)
 - ✅ Webhook, HMAC (`WHATSAPP_APP_SECRET` était absent, corrigé), token système permanent, `BACKEND_URL` (était `undefined`, corrigé) — tous vérifiés via `GET /api/whatsapp/admin/status`, `api_status: ok`.
 - ✅ Les 4 templates WhatsApp sont soumis à Meta (approbation 24-48h) — contenu exact dans `docs/WHATSAPP-TEMPLATES.md`. Format **Standard** (pas de vrai Carousel — l'option n'a pas été trouvée dans l'interface Meta actuelle ; le code a un fallback texte qui fonctionne avec ce format).
-- ⚠️ **Bloquant réel** : le numéro de test WhatsApp reste lié à un ancien compte WhatsApp personnel (message Meta *"Ce numéro de téléphone est déjà enregistré dans un compte WhatsApp"*). Il faut supprimer ce compte (pas juste désinstaller l'app) et attendre plusieurs heures avant de pouvoir réenregistrer le numéro.
-- ⚠️ **Constat important, non documenté avant** : tant que l'app Meta n'est pas **publiée**, un vrai message WhatsApp entrant (envoyé depuis un vrai téléphone, même un numéro testeur ajouté à l'app) n'est **PAS transmis au webhook**. Seul le bouton "Test" du WhatsApp Manager (dashboard Meta) simule un événement webhook et atteint le serveur. Ceci explique pourquoi `messages_24h` dans `/admin/status` ne reflète que les tests dashboard, pas les vrais messages envoyés pendant les tests du 3 juillet.
-- ⏳ Publication de l'app Meta = nécessite la vérification d'entreprise Business Manager (pas encore lancée au 3 juillet), + le numéro dissocié, + un moyen de paiement pour les messages business-initiated.
+- ✅ **Résolu depuis (voir état du 7 juillet 2026 plus bas)** : le numéro a été dissocié de l'ancien compte personnel et réenregistré, la vérification d'entreprise Meta Business Manager a été obtenue (SKYROAD SARL), et l'app Meta est maintenant publiée — WhatsApp fonctionne pleinement en production avec de vrais messages entrants.
+- ⚠️ **Constat qui reste valable historiquement** : tant qu'une app Meta n'est pas publiée, un vrai message WhatsApp entrant n'est pas transmis au webhook — seul le bouton "Test" du WhatsApp Manager (dashboard Meta) simule un événement webhook. Ceci explique pourquoi `messages_24h` dans `/admin/status` ne reflétait que les tests dashboard avant la publication.
 
 ### État du projet (1er juillet 2026 — mis à jour après audit complet + implémentation)
 
@@ -359,12 +358,14 @@ Cache mémoire 5 min — fichier : `backend/lib/settingsCache.js`.
 - Resend/DNS : domaine `nopalou.com` vérifié
 - WhatsApp : app Meta créée, token permanent, webhook déclaré + validé, `WHATSAPP_APP_SECRET`/`BACKEND_URL` corrigés, 4 templates soumis (voir bugs corrigés ci-dessus)
 
+#### ✅ Résolu depuis (WhatsApp/Meta, au 7 juillet 2026)
+- **Numéro WhatsApp** dissocié de l'ancien compte personnel et réenregistré avec succès.
+- **Vérification d'entreprise Meta Business Manager** obtenue (SKYROAD SARL).
+- **Publication de l'app Meta** faite — WhatsApp reçoit désormais de vrais messages entrants (pas seulement les tests dashboard) et fonctionne pleinement en production.
+
 #### 🔴 Bloquants externes en cours
 1. **Wave** — aucun compte Wave Business ouvert. Créer sur business.wave.com (KYC : pièce d'identité + RCCM/NINEA), puis déclarer le webhook `/api/paiement/wave/webhook` + copier `WAVE_WEBHOOK_SECRET` dans Render.
 2. **Orange Money** — aucun compte marchand ouvert. Ouvrir un compte marchand Orange Money Sénégal, obtenir les identifiants API/webpay, déclarer le webhook `/api/paiement/orange/webhook`.
-3. **Numéro WhatsApp coincé** — lié à un ancien compte WhatsApp personnel. Supprimer ce compte (pas juste désinstaller l'app), attendre plusieurs heures, réessayer l'enregistrement côté Meta.
-4. **Vérification d'entreprise Meta Business Manager** — pas encore lancée (RCCM/NINEA disponibles). Nécessaire pour publier l'app et recevoir de vrais messages WhatsApp entrants (pas juste les tests dashboard).
-5. **Publication de l'app Meta** — dépend des points 3 et 4.
 
 #### 🟢 Optionnel
 - **Scraper Facebook immo** : ajouter `FB_EMAIL` + `FB_PASSWORD` sur Render
