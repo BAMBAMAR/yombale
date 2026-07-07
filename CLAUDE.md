@@ -123,6 +123,29 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## État du projet (7 juillet 2026 — mode de paiement manuel Wave/Orange ajouté)
+
+En attendant l'obtention des clés API Wave Business / Orange Money marchand (KYC en cours), un **mode de paiement manuel** a été ajouté sur les 6 flux de paiement existants : le client dépose de l'argent sur un numéro Wave/Orange affiché sur le site, déclare sa transaction (téléphone expéditeur + ID de transaction OU capture d'écran de preuve), et un admin valide manuellement depuis `/admin/paiements-manuels` — ce qui déclenche exactement la même logique d'activation que les webhooks automatiques.
+
+**Backend** :
+- Nouvelle table `paiements_manuels` (`id`, `utilisateur_id`, `reference`, `montant`, `methode` `wave`/`orange`, `telephone_expediteur`, `transaction_id_client`, `preuve_url`, `statut` `en_attente`/`valide`/`rejete`, `valide_par`, `valide_at`).
+- La logique d'activation post-paiement (précédemment dupliquée dans les webhooks Wave et Orange de `backend/routes/paiement.js`) a été extraite dans une fonction partagée `appliquerPaiementReussi(reference, montant, methode)`, exportée et réutilisée par les deux webhooks ET par la nouvelle route de validation admin — élimine tout risque de divergence entre les 3 méthodes de paiement. Cette extraction a aussi corrigé un bug préexistant : le webhook Orange extrayait mal l'ID d'annonce pour le préfixe `ann_` (`.replace('ann_','')` au lieu de `split('_')[2]`), donc un paiement d'annonce via Orange Money n'activait jamais réellement l'annonce — corrigé de fait par l'unification (changement approuvé explicitement, voir `docs/superpowers/specs/2026-07-06-paiement-manuel-design.md`).
+- Le montant réellement inscrit dans `commandes` (utilisé par les stats revenus admin) est désormais recalculé côté serveur via `montantAttendu()` selon le préfixe de référence — jamais celui déclaré par le client, y compris en mode manuel.
+- 4 nouvelles routes dans `paiement.js` : `POST /manuel/declarer` (client, upload preuve via `multer`+Cloudinary), `GET /manuel/liste`, `POST /manuel/:id/valider`, `POST /manuel/:id/rejeter` (admin, `adminSecretOnly`).
+- Les toggles `paiement_wave`/`paiement_orange` (existaient dans `settings` mais n'étaient jamais lus) sont maintenant vérifiés sur les 7 routes d'initiation concernées (6 Wave + 1 Orange + la route abonnement) — répondent `403` si désactivés depuis `/admin/tarifs`.
+- Nouveaux settings : `paiement_manuel_actif` (toggle), `paiement_manuel_numero_wave`, `paiement_manuel_numero_om` (numéros affichés au client), éditables depuis `/admin/tarifs`.
+
+**Frontend** :
+- Composant partagé `frontend-next/src/components/ModalPaiementManuel.tsx` (formulaire de déclaration), réutilisé comme 3ᵉ mode de paiement sur les 6 écrans : `/payer-annonce/[id]`, sponsoring immo/produit/boutique, `/boutique/abonnement`, et **le bouton "Booster 7j" sur `/mes-annonces`, qui n'avait jamais eu d'UI jusqu'ici** malgré l'existence du flux backend `POST /api/paiement/boost/initier` depuis longtemps.
+- Nouvelle page admin `/admin/paiements-manuels` (liste des déclarations en attente + boutons Valider/Rejeter), lien ajouté au menu admin.
+- Format de référence strict à respecter partout : `{prefix}_${userId}_${entityId}` (`ann_`, `immo_`, `bout_`, `prod_`, `boost_`) ou `{prefix}_${userId}_${plan}` pour l'abonnement (`abmt_`) — c'est ce que `ref.split('_')[2]` extrait côté backend dans `appliquerPaiementReussi()`.
+
+**Documentation associée** : `docs/superpowers/specs/2026-07-06-paiement-manuel-design.md` (design validé) et `docs/superpowers/plans/2026-07-06-paiement-manuel.md` (plan d'implémentation en 13 tâches, exécuté via subagents avec revue à chaque étape + revue finale de branche).
+
+**Pour activer en production** : sur `/admin/tarifs`, renseigner les numéros Wave/Orange Money et activer `paiement_manuel_actif` ; optionnellement désactiver `paiement_wave`/`paiement_orange` tant que les clés API ne sont pas prêtes pour ne pas afficher des boutons qui échoueraient.
+
+---
+
 ## État du projet (6 juillet 2026, soir — chatbot WhatsApp : recherche, menu et carousel corrigés)
 
 Suite à des remontées d'usage réel (utilisateur testant le chatbot en production), 7 commits ont corrigé des bugs fonctionnels non détectés par les tests précédents.
