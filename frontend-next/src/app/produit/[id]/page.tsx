@@ -8,6 +8,7 @@ import { getOptionalSession } from '@/lib/dal';
 import AlertePrix from '@/app/AlertePrix';
 import TrackRecent from './TrackRecent';
 import SponsoringProduitBtn from './SponsoringProduitBtn';
+import SimilRow from './SimilRow';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -590,7 +591,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                       : null
                     const isBest = idx === 0
                     return (
-                      <tr key={l.id} className={`simil-row${l.courant ? ' simil-row--courant' : ''}`}>
+                      <SimilRow key={l.id} id={l.id} courant={l.courant}>
                         <td>
                           <div className="simil-produit-cell">
                             <div className="simil-img-wrap">
@@ -628,10 +629,10 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                         <td>
                           {l.courant
                             ? <span className="simil-courant-lbl">Vous êtes ici</span>
-                            : <Link href={`/produit/${l.id}`} className="simil-voir-btn">Voir →</Link>
+                            : <span className="simil-voir-btn">Voir →</span>
                           }
                         </td>
-                      </tr>
+                      </SimilRow>
                     )
                   })}
                 </tbody>
