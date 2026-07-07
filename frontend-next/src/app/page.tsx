@@ -105,10 +105,10 @@ export default async function HomePage({
   const waveActif    = settings.paiement_wave !== 'false'
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const modePaiementLabel = waveActif && manuelActif
-    ? 'Paiement via Wave ou sans app'
+    ? 'Paiement via Wave ou manuel'
     : waveActif
     ? 'Paiement via Wave'
-    : 'Paiement sans app disponible'
+    : 'Paiement manuel disponible'
 
   return (
     <>

@@ -54,7 +54,7 @@ export default function SponsoringProduitBtn({ produitId, userId, settings }: Pr
           className="sponsoring-produit-btn"
           style={{ marginTop: 8, background: 'none', border: '1px solid var(--border, #d1d5db)' }}
         >
-          🧾 Payer sans app
+          🧾 Payer manuellement
         </button>
       )}
 

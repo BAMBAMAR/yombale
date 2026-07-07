@@ -50,10 +50,10 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
   const manuelActif = settings.paiement_manuel_actif !== 'false'
   const waveActif   = settings.paiement_wave !== 'false'
   const modePaiementLabel = waveActif && manuelActif
-    ? 'Paiement via Wave ou sans app — renouvellement manuel'
+    ? 'Paiement via Wave ou manuel — renouvellement manuel'
     : waveActif
     ? 'Paiement via Wave — renouvellement manuel'
-    : 'Paiement sans app — renouvellement manuel'
+    : 'Paiement manuel — renouvellement manuel'
   const PLANS = PLANS_INFO.map(p => ({
     ...p,
     prix: Number(settings[`plan_${p.id}_prix`]) || PLANS_DEFAUT[p.id],
@@ -165,7 +165,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
                   disabled={isPending || !!planActif}
                   style={{ width: '100%', marginTop: 8, padding: '8px 0', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', color: '#374151', fontSize: 13, fontWeight: 600, cursor: (isPending || !!planActif) ? 'default' : 'pointer' }}
                 >
-                  Payer sans app (Wave/Orange manuel)
+                  Payer manuellement (Wave/Orange)
                 </button>
               )}
             </div>

@@ -108,7 +108,7 @@ export default function PaiementClient({ annonceId, titreCourt, settings, userId
           <button onClick={() => setShowManuel(true)} className="paiement-btn">
             <span className="paiement-btn-logo">🧾</span>
             <div className="paiement-btn-text">
-              <span className="paiement-btn-nom">J&apos;ai déjà payé / Payer sans app</span>
+              <span className="paiement-btn-nom">J&apos;ai déjà payé / Payer manuellement</span>
               <span className="paiement-btn-desc">Dépôt manuel Wave/Orange, validé par notre équipe</span>
             </div>
             <span className="paiement-btn-arrow">→</span>
