@@ -44,7 +44,7 @@ Dans `backend/migrate-inline.js`, juste avant la ligne finale `try { await pool.
 
 - [ ] **Step 2: Démarrer le backend pour appliquer la migration**
 
-Run: `cd backend && npm run dev`
+Run: `npm run dev` (depuis la racine du dépôt — le script `dev` du `package.json` racine lance `nodemon backend/app.js`)
 Expected: dans les logs de démarrage, aucune ligne `[MIGRATE] sync_catalogue: ...` (ce qui indiquerait un échec) — la migration se fait silencieusement en succès, comme les autres blocs `colonnesXxx` du fichier. Arrêter le serveur après vérification (Ctrl+C).
 
 - [ ] **Step 3: Confirmer les colonnes en base**
@@ -70,32 +70,32 @@ git commit -m "feat(boutique): ajoute les colonnes de statut de synchro catalogu
 
 **Files:**
 - Modify: `backend/services/whatsapp-catalog.js` (réécriture complète, 67 lignes actuelles)
-- Create: `backend/services/__tests__/whatsapp-catalog.test.js`
+- Create: `tests/unit/whatsapp-catalog.test.js`
 
 **Interfaces:**
 - Consumes: colonnes `whatsapp_sync_statut`/`whatsapp_sync_erreur` de Task 1 ; `pool` depuis `../models/db`.
 - Produces: `syncProduit(produit)` et `deleteProduit(produitId, whatsappCatalogId)` — signatures externes inchangées (mêmes paramètres, toujours appelées depuis `boutiques.js` sans modification d'appel). Nouvel export `mapEtatToCondition(etat: string | undefined): 'new' | 'used' | 'refurbished'`, consommé par aucune autre tâche mais testé directement.
 
-Ce dossier n'a pas de test existant identifié — c'est le premier test de `backend/services/`. Si `jest` n'est pas déjà une dépendance de dev à la racine de `backend/` (vérifier `backend/package.json`), l'ajouter d'abord avec `cd backend && npm install --save-dev jest`.
+Ce projet utilise Jest à la racine du dépôt (voir `package.json`, script `test:unit`), avec les tests unitaires regroupés dans `tests/unit/` (déjà en place : `tests/unit/whatsapp-chatbot.test.js`, `tests/unit/matching.test.js`, etc.) — pas de sous-dossier `__tests__/` par service. Toutes les commandes de ce plan s'exécutent depuis la racine du dépôt, jamais depuis `backend/`. Les chemins de mock sont relatifs à `tests/unit/`, sur le modèle exact de `tests/unit/whatsapp-chatbot.test.js` (`jest.mock('../../backend/models/db', ...)`).
 
 - [ ] **Step 1: Vérifier la présence de Jest**
 
-Run: `cd backend && npx jest --version`
-Expected: affiche un numéro de version. Si la commande échoue avec "command not found" ou équivalent, lancer `cd backend && npm install --save-dev jest` puis relancer la vérification.
+Run: `npx jest --version`
+Expected: affiche un numéro de version (Jest est déjà une dépendance du `package.json` racine).
 
 - [ ] **Step 2: Écrire le test qui échoue — mapping état → condition Meta**
 
-Créer `backend/services/__tests__/whatsapp-catalog.test.js` :
+Créer `tests/unit/whatsapp-catalog.test.js` :
 
 ```js
 jest.mock('axios');
-jest.mock('../../models/db', () => ({ pool: { query: jest.fn().mockResolvedValue({ rows: [] }) } }));
+jest.mock('../../backend/models/db', () => ({ pool: { query: jest.fn().mockResolvedValue({ rows: [] }) } }));
 
 const axios = require('axios');
-const { pool } = require('../../models/db');
+const { pool } = require('../../backend/models/db');
 
 describe('mapEtatToCondition', () => {
-  const { mapEtatToCondition } = require('../whatsapp-catalog');
+  const { mapEtatToCondition } = require('../../backend/services/whatsapp-catalog');
 
   it('mappe les 4 valeurs Nopalou vers les valeurs Meta attendues', () => {
     expect(mapEtatToCondition('Neuf')).toBe('new');
@@ -113,7 +113,7 @@ describe('mapEtatToCondition', () => {
 
 - [ ] **Step 3: Lancer le test pour vérifier qu'il échoue**
 
-Run: `cd backend && npx jest services/__tests__/whatsapp-catalog.test.js`
+Run: `npx jest tests/unit/whatsapp-catalog.test.js`
 Expected: FAIL — `mapEtatToCondition is not a function` (la fonction n'existe pas encore ; `whatsapp-catalog.js` n'exporte pour l'instant que `syncProduit`/`deleteProduit`).
 
 - [ ] **Step 4: Réécrire `backend/services/whatsapp-catalog.js` en entier**
@@ -226,7 +226,7 @@ module.exports = { syncProduit, deleteProduit, mapEtatToCondition };
 
 - [ ] **Step 5: Lancer le test pour vérifier qu'il passe**
 
-Run: `cd backend && npx jest services/__tests__/whatsapp-catalog.test.js`
+Run: `npx jest tests/unit/whatsapp-catalog.test.js`
 Expected: PASS — les deux tests de `mapEtatToCondition` réussissent.
 
 - [ ] **Step 6: Ajouter les tests de `syncProduit` (statut échec et statut succès avec champs enrichis)**
@@ -235,7 +235,7 @@ Ajouter au même fichier de test, après le `describe('mapEtatToCondition', ...)
 
 ```js
 describe('syncProduit', () => {
-  const { syncProduit } = require('../whatsapp-catalog');
+  const { syncProduit } = require('../../backend/services/whatsapp-catalog');
 
   beforeEach(() => {
     pool.query.mockClear();
@@ -286,13 +286,13 @@ describe('syncProduit', () => {
 
 - [ ] **Step 7: Lancer tous les tests du fichier pour vérifier qu'ils passent**
 
-Run: `cd backend && npx jest services/__tests__/whatsapp-catalog.test.js`
+Run: `npx jest tests/unit/whatsapp-catalog.test.js`
 Expected: PASS — 4 tests au total, tous verts.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add backend/services/whatsapp-catalog.js backend/services/__tests__/whatsapp-catalog.test.js
+git add backend/services/whatsapp-catalog.js tests/unit/whatsapp-catalog.test.js
 git commit -m "feat(boutique): enrichit le payload catalogue Meta et trace le statut de synchro"
 ```
 
@@ -324,7 +324,7 @@ par :
 
 - [ ] **Step 2: Vérifier manuellement la réponse de l'API**
 
-Cette route est publique (pas d'auth requise). Démarrer le backend (`cd backend && npm run dev`), puis avec l'`id` d'une boutique existante en base locale :
+Cette route est publique (pas d'auth requise). Démarrer le backend (`npm run dev` depuis la racine du dépôt), puis avec l'`id` d'une boutique existante en base locale :
 
 Run: `curl.exe http://localhost:3000/api/boutiques/<id-boutique>/produits`
 Expected: chaque objet dans `produits` contient désormais les clés `whatsapp_sync_statut` (`"en_attente"` par défaut pour un produit non modifié depuis la migration) et `whatsapp_sync_erreur` (`null` par défaut).
@@ -520,7 +520,7 @@ par :
 
 - [ ] **Step 6: Vérifier visuellement dans le navigateur**
 
-Run: `cd frontend-next && npm run dev`
+Run (backend déjà lancé depuis la racine via `npm run dev`) : `cd frontend-next && npm run dev`
 
 Se connecter avec un compte boutique existant ayant un plan Pro/Business actif et au moins 2-3 produits, aller sur `/boutique` → gérer une boutique → onglet Catalogue.
 
@@ -541,7 +541,7 @@ git commit -m "feat(boutique): badge de statut catalogue + recherche/filtres dan
 - Modify: `backend/services/whatsapp.js:232-244` (fonction `sendFiche`, branche `type === 'produit'`)
 - Modify: `backend/services/whatsapp-chatbot.js:139-181` (`searchContent`)
 - Modify: `backend/services/whatsapp-chatbot.js:379-392` (boucle d'envoi dans `handleSearchQuery`)
-- Create: `backend/services/__tests__/whatsapp-chatbot-search.test.js`
+- Create: `tests/unit/whatsapp-chatbot-search.test.js`
 
 **Interfaces:**
 - Consumes: rien de nouveau côté DB — `boutiques.nom` existe déjà et `boutique_slug` est déjà joint dans les deux requêtes concernées ; il suffit d'ajouter la colonne à la sélection.
@@ -639,25 +639,27 @@ Ouvrir `backend/services/whatsapp-chatbot.js` et localiser le bloc `module.expor
 
 - [ ] **Step 4: Écrire le test qui échoue pour le texte du message incluant le nom de la boutique**
 
-Créer `backend/services/__tests__/whatsapp-chatbot-search.test.js` :
+Créer `tests/unit/whatsapp-chatbot-search.test.js` :
 
 ```js
-jest.mock('../../models/db', () => ({
+jest.mock('../../backend/models/db', () => ({
   pool: {
     query: jest.fn().mockResolvedValue({
       rows: [{ type: 'produit', id: 'p1', titre: 'iPhone 13', prix: 250000, photo: 'https://x/i.jpg', boutique_slug: 'techdakar', boutique_nom: 'Boutique TechDakar', ville: null }],
     }),
   },
 }));
-jest.mock('../whatsapp', () => ({
+jest.mock('../../backend/services/whatsapp', () => ({
   sendWhatsAppText: jest.fn().mockResolvedValue({}),
   sendWhatsAppProduct: jest.fn().mockRejectedValue(new Error('no catalog')), // force le fallback texte
   sendReadReceipt: jest.fn().mockResolvedValue({}),
   sendWhatsAppCarousel: jest.fn().mockResolvedValue({}),
+  normalisePhone: jest.fn(p => p),
+  sendTyping: jest.fn().mockResolvedValue({}),
 }));
 
-const { sendWhatsAppText } = require('../whatsapp');
-const { handleSearchQuery } = require('../whatsapp-chatbot');
+const { sendWhatsAppText } = require('../../backend/services/whatsapp');
+const { handleSearchQuery } = require('../../backend/services/whatsapp-chatbot');
 
 describe('handleSearchQuery — fallback texte produit boutique', () => {
   it('inclut le nom de la boutique dans le message de secours', async () => {
@@ -671,7 +673,7 @@ describe('handleSearchQuery — fallback texte produit boutique', () => {
 
 - [ ] **Step 5: Lancer le test pour vérifier qu'il échoue**
 
-Run: `cd backend && npx jest services/__tests__/whatsapp-chatbot-search.test.js`
+Run: `npx jest tests/unit/whatsapp-chatbot-search.test.js`
 Expected: FAIL — le message envoyé ne contient pas encore "Boutique TechDakar" (le texte de fallback actuel, ligne 390 avant modification, ne montre que `${p.titre} — ${prixFmt(p.prix)}\n👉 ...`).
 
 - [ ] **Step 6: Modifier le texte du fallback et du corps du Product Message dans `handleSearchQuery`**
@@ -706,18 +708,18 @@ par :
 
 - [ ] **Step 7: Lancer le test pour vérifier qu'il passe**
 
-Run: `cd backend && npx jest services/__tests__/whatsapp-chatbot-search.test.js`
+Run: `npx jest tests/unit/whatsapp-chatbot-search.test.js`
 Expected: PASS.
 
-- [ ] **Step 8: Lancer toute la suite de tests backend pour vérifier l'absence de régression**
+- [ ] **Step 8: Lancer toute la suite de tests unitaires pour vérifier l'absence de régression**
 
-Run: `cd backend && npx jest`
-Expected: PASS — tous les tests (ceux des Tasks 2 et 5 inclus) passent.
+Run: `npx jest tests/unit --runInBand`
+Expected: PASS — tous les tests (ceux des Tasks 2 et 5 inclus, plus les tests unitaires déjà existants comme `tests/unit/whatsapp-chatbot.test.js`) passent.
 
 - [ ] **Step 9: Commit**
 
 ```bash
-git add backend/services/whatsapp.js backend/services/whatsapp-chatbot.js backend/services/__tests__/whatsapp-chatbot-search.test.js
+git add backend/services/whatsapp.js backend/services/whatsapp-chatbot.js tests/unit/whatsapp-chatbot-search.test.js
 git commit -m "feat(boutique): affiche le nom de la boutique dans les messages WhatsApp produit"
 ```
 
@@ -725,8 +727,8 @@ git commit -m "feat(boutique): affiche le nom de la boutique dans les messages W
 
 ## Vérification finale (bout en bout)
 
-1. `cd backend && npx jest` — tous les tests passent.
-2. `cd backend && npm run dev` puis `cd frontend-next && npm run dev` — les deux serveurs démarrent sans erreur.
+1. `npx jest tests/unit --runInBand` (depuis la racine du dépôt) — tous les tests passent.
+2. `npm run dev` (racine) puis `cd frontend-next && npm run dev` — les deux serveurs démarrent sans erreur.
 3. Dans le navigateur (`/boutique`, compte Pro/Business) : ajouter un produit avec marque + état + prix barré renseignés → badge "⏳ En attente" visible immédiatement (car `WHATSAPP_CATALOG_ID` n'est probablement pas configuré en local) — confirme que le badge fonctionne indépendamment de la config Meta réelle.
 4. Une fois `WHATSAPP_CATALOG_ID` posé (étape 0 de la spec, faite séparément par l'utilisateur), relancer `POST /api/boutiques/admin/sync-catalog` et vérifier dans Meta Commerce Manager que le produit de test apparaît avec `brand`, `condition`, `category`, `sale_price` renseignés — et que le badge dashboard repasse à "✓ Sur WhatsApp" après une nouvelle modification du produit (qui redéclenche `syncProduit`).
 5. Envoyer une recherche chatbot de test réelle (sur un numéro autorisé) et confirmer que le nom de la boutique apparaît dans le résultat reçu.
