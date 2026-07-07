@@ -378,7 +378,13 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                 )}
                 <h1 className="produit-fiche-nom">{produit.nom}</h1>
                 {best?.url_achat && (
-                  <a href={`/api/click/${best.id}`} target="_blank" rel="noopener noreferrer" className="cta-acheter cta-acheter--header">
+                  <a
+                    href={`/api/click/${best.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cta-acheter cta-acheter--header"
+                    aria-label={`Acheter au meilleur prix${best.marchand_nom ? ` chez ${best.marchand_nom}` : ''}`}
+                  >
                     🛒 Acheter →
                   </a>
                 )}
@@ -468,6 +474,12 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                   })}
                 </div>
               </div>
+            )}
+
+            {best?.url_achat && (
+              <a href={`/api/click/${best.id}`} target="_blank" rel="noopener noreferrer" className="cta-acheter">
+                🛒 Acheter au meilleur prix →
+              </a>
             )}
 
             {/* CTA comparaison — visible sur mobile avant la sidebar */}

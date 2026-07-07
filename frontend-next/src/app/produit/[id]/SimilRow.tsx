@@ -1,7 +1,8 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import type { ReactNode, KeyboardEvent } from 'react'
+import Link from 'next/link'
+import type { ReactNode } from 'react'
+import { Children, isValidElement, cloneElement } from 'react'
 
 interface Props {
   id: string
@@ -10,29 +11,24 @@ interface Props {
 }
 
 export default function SimilRow({ id, courant, children }: Props) {
-  const router = useRouter()
-
   if (courant) {
     return <tr className="simil-row simil-row--courant">{children}</tr>
   }
 
-  function goTo() {
-    router.push(`/produit/${id}`)
-  }
-
-  function onKeyDown(e: KeyboardEvent<HTMLTableRowElement>) {
-    if (e.key === 'Enter') goTo()
-  }
+  const href = `/produit/${encodeURIComponent(id)}`
 
   return (
-    <tr
-      className="simil-row simil-row--cliquable"
-      onClick={goTo}
-      onKeyDown={onKeyDown}
-      role="link"
-      tabIndex={0}
-    >
-      {children}
+    <tr className="simil-row simil-row--cliquable">
+      {Children.map(children, (child) => {
+        if (!isValidElement(child)) return child
+        return cloneElement(child as React.ReactElement, {
+          children: (
+            <Link href={href} className="simil-td-link">
+              {(child as React.ReactElement).props.children}
+            </Link>
+          ),
+        })
+      })}
     </tr>
   )
 }
