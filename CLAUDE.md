@@ -144,6 +144,20 @@ En attendant l'obtention des clés API Wave Business / Orange Money marchand (KY
 
 **Pour activer en production** : sur `/admin/tarifs`, renseigner les numéros Wave/Orange Money et activer `paiement_manuel_actif` ; optionnellement désactiver `paiement_wave`/`paiement_orange` tant que les clés API ne sont pas prêtes pour ne pas afficher des boutons qui échoueraient.
 
+### Correctif complémentaire (même jour) : tous les prix Pro/Business/annonce rendus dynamiques
+
+Un audit exhaustif a trouvé plusieurs écrans qui affichaient encore des prix codés en dur (15 000 / 35 000 / 1 500 FCFA) au lieu de lire `settings.plan_pro_prix` / `plan_business_prix` / `prix_annonce` comme le reste du site — un changement de tarif depuis `/admin/tarifs` ne se répercutait donc pas partout. Corrigé sur 10 fichiers :
+- **Page d'accueil** (section "Boutique Pro/Business") — prix + libellé de paiement (Wave/manuel) désormais dynamiques.
+- **`frontend-next/src/app/actions/paiement.ts`** — le montant Orange Money réellement facturé pour une annonce venait d'une valeur en dur (`1500`), pas de `settings.prix_annonce` : impact fonctionnel réel (facturation), pas seulement d'affichage.
+- **`BoutiqueClient.tsx`** — 2 CTA "Passer en Pro" (catalogue produits + bannière incitative).
+- **`AbonnementClient.tsx`** (`/boutique/abonnement`) — le libellé "Paiement via..." reflète maintenant les toggles réels `paiement_wave`/`paiement_manuel_actif`.
+- **CGU** (`/cgu`) — montant légal de la 3ᵉ annonce payante.
+- **Admin `/revenus`** — libellé stat + badges méthode de paiement étendus (ajout badge "🧾 Manuel", reconnaissance des préfixes `prod_`/`boost_`/`abmt_` en plus de `ann_`/`immo_`/`bout_`).
+- **Admin `/abonnements`** (`ActiverPlanClient`) — options du select d'activation manuelle.
+- **Admin `/communication`** — kit marketing (objections commerciales, texte apporteur d'affaires, exemples de commission) recalculé depuis les vrais tarifs/taux (`commission_business`, `apporteur_taux_commission`) au lieu de valeurs figées dans le texte.
+
+Les fallbacks codés en dur restants (ex: `Number(settings.prix_annonce) || 1500`) sont volontaires — ils ne s'appliquent que si le fetch `/api/settings/public` échoue, pas des valeurs qui ignorent `settings`.
+
 ---
 
 ## État du projet (6 juillet 2026, soir — chatbot WhatsApp : recherche, menu et carousel corrigés)

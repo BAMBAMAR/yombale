@@ -56,6 +56,7 @@ export default async function MesAnnoncesPage({
       prixBoost={Number(settings.prix_boost) || 500}
       numeroWave={settings.paiement_manuel_numero_wave || ''}
       numeroOM={settings.paiement_manuel_numero_om || ''}
+      waveActif={settings.paiement_wave !== 'false'}
     />
   )
 }

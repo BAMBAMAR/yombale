@@ -52,6 +52,7 @@ function AnnonceCard({
   prixBoost,
   numeroWave,
   numeroOM,
+  waveActif,
 }: {
   annonce: Annonce
   userId: string
@@ -59,6 +60,7 @@ function AnnonceCard({
   prixBoost: number
   numeroWave: string
   numeroOM: string
+  waveActif: boolean
 }) {
   const [deleteErr, setDeleteErr]  = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -129,7 +131,7 @@ function AnnonceCard({
           <Link href={`/mes-annonces/${annonce.id}/modifier`} className="annonce-action-btn annonce-action-btn--edit">
             Modifier
           </Link>
-          {annonce.actif && (
+          {annonce.actif && waveActif && (
             <button onClick={payerBoostWave} disabled={pendingBoost} className="annonce-action-btn">
               {pendingBoost ? '…' : '🚀 Booster 7j'}
             </button>
@@ -173,6 +175,7 @@ export default function AnnoncesClient({
   prixBoost,
   numeroWave,
   numeroOM,
+  waveActif,
 }: {
   annonces: Annonce[]
   created?: boolean
@@ -182,6 +185,7 @@ export default function AnnoncesClient({
   prixBoost: number
   numeroWave: string
   numeroOM: string
+  waveActif: boolean
 }) {
   return (
     <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 760 }}>
@@ -229,6 +233,7 @@ export default function AnnoncesClient({
               prixBoost={prixBoost}
               numeroWave={numeroWave}
               numeroOM={numeroOM}
+              waveActif={waveActif}
             />
           ))}
         </div>

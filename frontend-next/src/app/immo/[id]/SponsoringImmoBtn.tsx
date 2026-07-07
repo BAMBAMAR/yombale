@@ -15,6 +15,7 @@ export default function SponsoringImmoBtn({ immoId, userId, settings }: Props) {
   const [showManuel, setShowManuel] = useState(false)
 
   const manuelActif = settings.paiement_manuel_actif !== 'false'
+  const waveActif   = settings.paiement_wave !== 'false'
   const montant     = Number(settings.prix_sponsoring) || 5000
 
   function handleClick() {
@@ -36,17 +37,19 @@ export default function SponsoringImmoBtn({ immoId, userId, settings }: Props) {
         Apparaissez en tête des résultats pendant 30 jours — <strong>{montant.toLocaleString('fr-FR')} FCFA</strong>
       </p>
       {error && <p style={{ color: 'red', fontSize: 13, marginBottom: 8 }}>❌ {error}</p>}
-      <button
-        onClick={handleClick}
-        disabled={pending}
-        style={{
-          background: '#D97706', color: '#fff', border: 'none',
-          borderRadius: 8, padding: '10px 20px', fontWeight: 700,
-          fontSize: 14, cursor: pending ? 'not-allowed' : 'pointer', opacity: pending ? 0.7 : 1,
-        }}
-      >
-        {pending ? 'Connexion Wave…' : `🌊 Payer ${montant.toLocaleString('fr-FR')} FCFA via Wave`}
-      </button>
+      {waveActif && (
+        <button
+          onClick={handleClick}
+          disabled={pending}
+          style={{
+            background: '#D97706', color: '#fff', border: 'none',
+            borderRadius: 8, padding: '10px 20px', fontWeight: 700,
+            fontSize: 14, cursor: pending ? 'not-allowed' : 'pointer', opacity: pending ? 0.7 : 1,
+          }}
+        >
+          {pending ? 'Connexion Wave…' : `🌊 Payer ${montant.toLocaleString('fr-FR')} FCFA via Wave`}
+        </button>
+      )}
 
       {manuelActif && (
         <button

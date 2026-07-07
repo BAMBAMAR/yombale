@@ -710,7 +710,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
   planActif: 'pro' | 'business' | null
   onEdit: () => void
   onDelete: () => void
-  onSponsoring: () => void
+  onSponsoring?: () => void
   onPayerManuel?: () => void
   onManage: () => void
 }) {
@@ -786,16 +786,19 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
           }}>
             Voir ↗
           </a>
-          <button onClick={onSponsoring} style={{
-            fontSize: 13, color: '#92400e', background: '#fffbeb', border: '1px solid #fcd34d',
-            borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 600, marginLeft: 'auto',
-          }}>
-            ⭐ Mettre en avant
-          </button>
+          {onSponsoring && (
+            <button onClick={onSponsoring} style={{
+              fontSize: 13, color: '#92400e', background: '#fffbeb', border: '1px solid #fcd34d',
+              borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 600, marginLeft: 'auto',
+            }}>
+              ⭐ Mettre en avant
+            </button>
+          )}
           {onPayerManuel && (
             <button onClick={onPayerManuel} style={{
               fontSize: 13, color: '#92400e', background: '#fff', border: '1px solid #fcd34d',
               borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 600,
+              marginLeft: onSponsoring ? undefined : 'auto',
             }}>
               🧾 Payer sans app
             </button>
@@ -998,6 +1001,7 @@ export default function BoutiqueClient({
   const router = useRouter()
 
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
+  const waveActif    = settings.paiement_wave !== 'false'
   const montantSponsor = Number(settings.prix_sponsoring) || 5000
   const prixPro = Number(settings.plan_pro_prix) || 15000
 
@@ -1124,7 +1128,7 @@ export default function BoutiqueClient({
               planActif={planActif ?? null}
               onEdit={() => setMode({ editing: b })}
               onDelete={() => handleDelete(b.id)}
-              onSponsoring={() => handleSponsoring(b.id)}
+              onSponsoring={waveActif ? () => handleSponsoring(b.id) : undefined}
               onPayerManuel={manuelActif ? () => setManuelBoutiqueId(b.id) : undefined}
               onManage={() => setMode({ managing: b })}
             />

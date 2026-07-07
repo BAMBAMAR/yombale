@@ -16,6 +16,7 @@ export default function SponsoringProduitBtn({ produitId, userId, settings }: Pr
   const [showManuel, setShowManuel] = useState(false)
 
   const manuelActif = settings.paiement_manuel_actif !== 'false'
+  const waveActif   = settings.paiement_wave !== 'false'
   const montant     = Number(settings.prix_sponsoring) || 5000
 
   function handleClick() {
@@ -32,13 +33,15 @@ export default function SponsoringProduitBtn({ produitId, userId, settings }: Pr
 
   return (
     <div className="sponsoring-produit-wrap">
-      <button
-        onClick={handleClick}
-        disabled={isPending}
-        className="sponsoring-produit-btn"
-      >
-        {isPending ? 'Redirection…' : '⭐ Mettre en avant ce produit'}
-      </button>
+      {waveActif && (
+        <button
+          onClick={handleClick}
+          disabled={isPending}
+          className="sponsoring-produit-btn"
+        >
+          {isPending ? 'Redirection…' : '⭐ Mettre en avant ce produit'}
+        </button>
+      )}
       <p className="sponsoring-produit-info">
         {montant.toLocaleString('fr-FR')} FCFA · 30 jours · Affiché en tête de liste
       </p>

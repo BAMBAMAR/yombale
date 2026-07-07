@@ -144,18 +144,20 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
                   </li>
                 ))}
               </ul>
-              <button
-                onClick={() => handleSouscrire(plan.id)}
-                disabled={isPending || !!planActif}
-                style={{
-                  width: '100%', padding: '12px 0', borderRadius: 10, border: 'none',
-                  background: planActif ? '#e2e8f0' : plan.couleur,
-                  color: planActif ? '#64748b' : '#fff',
-                  fontWeight: 700, fontSize: 15, cursor: (isPending || !!planActif) ? 'default' : 'pointer',
-                }}
-              >
-                {estActif ? 'Plan actif' : enCours ? 'Redirection Wave…' : `Souscrire ${plan.label}`}
-              </button>
+              {(waveActif || estActif) && (
+                <button
+                  onClick={() => handleSouscrire(plan.id)}
+                  disabled={isPending || !!planActif}
+                  style={{
+                    width: '100%', padding: '12px 0', borderRadius: 10, border: 'none',
+                    background: planActif ? '#e2e8f0' : plan.couleur,
+                    color: planActif ? '#64748b' : '#fff',
+                    fontWeight: 700, fontSize: 15, cursor: (isPending || !!planActif) ? 'default' : 'pointer',
+                  }}
+                >
+                  {estActif ? 'Plan actif' : enCours ? 'Redirection Wave…' : `Souscrire ${plan.label}`}
+                </button>
+              )}
 
               {manuelActif && !estActif && (
                 <button
