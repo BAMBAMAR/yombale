@@ -40,6 +40,13 @@ const BUDGETS = [
   { label: '+ 100 000',  prixMax: ''       },
 ]
 
+const TRIS = [
+  { val: '',          label: 'Pertinence' },
+  { val: 'prix_asc',  label: 'Prix ↑' },
+  { val: 'prix_desc', label: 'Prix ↓' },
+  { val: 'nom_asc',   label: 'Nom A-Z' },
+]
+
 interface Produit {
   id: number
   nom: string
@@ -60,12 +67,13 @@ interface ApiResponse {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: { q?: string; categorie?: string; prixMax?: string; page?: string }
+  searchParams: { q?: string; categorie?: string; prixMax?: string; page?: string; tri?: string }
 }) {
   const q         = searchParams.q         ?? ''
   const categorie = searchParams.categorie ?? ''
   const prixMax   = searchParams.prixMax   ?? ''
   const page      = searchParams.page      ?? '1'
+  const tri       = searchParams.tri       ?? ''
 
   let produits: Produit[] = []
   let total               = 0
@@ -76,6 +84,7 @@ export default async function HomePage({
     if (q)         params.set('q',         q)
     if (categorie) params.set('categorie', categorie)
     if (prixMax)   params.set('prixMax',   prixMax)
+    if (tri)       params.set('tri',       tri)
 
     const r = await fetch(`${BACKEND}/api/produits?${params}`, { cache: 'no-store', headers: SSR_HEADERS })
     if (!r.ok) throw new Error(`API produits → ${r.status}`)
@@ -186,6 +195,27 @@ export default async function HomePage({
         )}
       </div>
 
+      {/* ── Tri ──────────────────────────────────────────────────── */}
+      <div className="filtres-bar">
+        <span className="filtres-label">Trier :</span>
+        {TRIS.map((t) => {
+          const ps = new URLSearchParams()
+          if (q)         ps.set('q',         q)
+          if (categorie) ps.set('categorie', categorie)
+          if (prixMax)   ps.set('prixMax',   prixMax)
+          if (t.val)     ps.set('tri',       t.val)
+          return (
+            <Link
+              key={t.val || 'defaut'}
+              href={`/?${ps}`}
+              className={`budget-pill${tri === t.val ? ' active' : ''}`}
+            >
+              {t.label}
+            </Link>
+          )
+        })}
+      </div>
+
       {/* ── Récemment consultés ──────────────────────────────────── */}
       <RecentlyViewed />
 
@@ -197,12 +227,13 @@ export default async function HomePage({
         </div>
       ) : (
         <ProduitsListe
-          key={`${q}-${categorie}-${prixMax}`}
+          key={`${q}-${categorie}-${prixMax}-${tri}`}
           initialProduits={produits}
           total={total}
           q={q}
           categorie={categorie}
           prixMax={prixMax}
+          tri={tri}
         />
       )}
 
