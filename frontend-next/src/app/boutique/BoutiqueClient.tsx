@@ -583,7 +583,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
 function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutique; planActif: 'pro' | 'business' | null; prixPro: number }) {
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
-  const [mode, setMode] = useState<'list' | 'create' | { editing: Produit }>('list')
+  const [mode, setMode] = useState<'list' | { creating: 'rapide' | 'detaille' } | { editing: Produit }>('list')
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [rechercheTexte, setRechercheTexte] = useState('')
@@ -637,17 +637,19 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
     return true
   })
 
-  if (mode === 'create' || (typeof mode === 'object' && 'editing' in mode)) {
+  if (typeof mode === 'object' && ('creating' in mode || 'editing' in mode)) {
+    const editing = 'editing' in mode ? mode.editing : undefined
     return (
       <div style={{ maxWidth: 560 }}>
         <ProduitForm
           boutiqueId={boutique.id}
           boutiqueCat={boutique.categorie}
-          produit={typeof mode === 'object' ? mode.editing : undefined}
+          produit={editing}
+          modeInitial={'creating' in mode ? mode.creating : 'detaille'}
           onCancel={() => setMode('list')}
           onSuccess={() => {
             setMode('list')
-            setSuccessMsg(typeof mode === 'object' ? '✅ Produit modifié !' : '✅ Produit ajouté !')
+            setSuccessMsg(editing ? '✅ Produit modifié !' : '✅ Produit ajouté !')
             loadProduits()
           }}
         />
@@ -657,19 +659,30 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
           {produits.length} produit{produits.length !== 1 ? 's' : ''} / {quota} max
         </p>
-        <button
-          onClick={() => setMode('create')}
-          style={{
-            background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8,
-            padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-          }}
-        >
-          + Ajouter un produit
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => setMode({ creating: 'rapide' })}
+            style={{
+              background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8,
+              padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            }}
+          >
+            ⚡ Ajout rapide
+          </button>
+          <button
+            onClick={() => setMode({ creating: 'detaille' })}
+            style={{
+              background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8,
+              padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            }}
+          >
+            Ajout détaillé
+          </button>
+        </div>
       </div>
 
       {produits.length > 0 && (
@@ -722,7 +735,7 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
           <span style={{ fontSize: 36, display: 'block', marginBottom: 12 }}>📦</span>
           <p style={{ color: '#6b7280', margin: '0 0 16px' }}>Aucun produit dans votre catalogue.</p>
           <button
-            onClick={() => setMode('create')}
+            onClick={() => setMode({ creating: 'rapide' })}
             style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 700, cursor: 'pointer' }}
           >
             Ajouter mon premier produit
