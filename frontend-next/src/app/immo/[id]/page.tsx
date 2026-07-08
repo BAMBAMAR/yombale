@@ -8,6 +8,7 @@ import { getOptionalSession } from '@/lib/dal';
 import SponsoringImmoBtn from './SponsoringImmoBtn';
 import { cloudinaryHQ } from '@/lib/cloudinary';
 import BoutonWhatsApp from '@/components/BoutonWhatsApp';
+import SimilRow from '@/components/SimilRow';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -442,7 +443,7 @@ export default async function FicheImmoPage({
                   const prixM2 = (l.prix && l.surface_m2) ? Math.round(l.prix / l.surface_m2) : null
                   const isBest = idx === 0
                   return (
-                    <tr key={l.id} className={`simil-row${l.courant ? ' simil-row--courant' : ''}`}>
+                    <SimilRow key={l.id} id={l.id} basePath="/immo" courant={l.courant}>
                       <td>
                         <div className="simil-produit-cell">
                           <div className="simil-img-wrap">
@@ -479,10 +480,10 @@ export default async function FicheImmoPage({
                       <td>
                         {l.courant
                           ? <span className="simil-courant-lbl">Vous êtes ici</span>
-                          : <Link href={`/immo/${l.id}`} className="simil-voir-btn">Voir →</Link>
+                          : <span className="simil-voir-btn">Voir →</span>
                         }
                       </td>
-                    </tr>
+                    </SimilRow>
                   )
                 })}
               </tbody>

@@ -6,16 +6,17 @@ import { Children, isValidElement, cloneElement } from 'react'
 
 interface Props {
   id: string
+  basePath: string
   courant: boolean
   children: ReactNode
 }
 
-export default function SimilRow({ id, courant, children }: Props) {
+export default function SimilRow({ id, basePath, courant, children }: Props) {
   if (courant) {
     return <tr className="simil-row simil-row--courant">{children}</tr>
   }
 
-  const href = `/produit/${encodeURIComponent(id)}`
+  const href = `${basePath}/${encodeURIComponent(id)}`
 
   return (
     <tr className="simil-row simil-row--cliquable">

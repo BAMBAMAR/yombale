@@ -8,7 +8,7 @@ import { getOptionalSession } from '@/lib/dal';
 import AlertePrix from '@/app/AlertePrix';
 import TrackRecent from './TrackRecent';
 import SponsoringProduitBtn from './SponsoringProduitBtn';
-import SimilRow from './SimilRow';
+import SimilRow from '@/components/SimilRow';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -608,7 +608,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                       : null
                     const isBest = idx === 0
                     return (
-                      <SimilRow key={l.id} id={l.id} courant={l.courant}>
+                      <SimilRow key={l.id} id={l.id} basePath="/produit" courant={l.courant}>
                         <td>
                           <div className="simil-produit-cell">
                             <div className="simil-img-wrap">

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
+import SimilRow from '@/components/SimilRow'
 
 interface Forfait {
   id: string
@@ -312,7 +313,7 @@ export default async function FicheForfaitPage({ params }: { params: { id: strin
                   const ecartPct = !l.courant ? Math.round((l.prix - f.prix) / f.prix * 100) : null
                   const isBest = idx === 0
                   return (
-                    <tr key={l.id} className={`simil-row${l.courant ? ' simil-row--courant' : ''}`}>
+                    <SimilRow key={l.id} id={l.id} basePath="/telecom" courant={l.courant}>
                       <td>
                         <div className="simil-produit-cell">
                           <span style={{ fontSize: 20 }}>{OP_ICONS[l.operateur] ?? '📡'}</span>
@@ -345,10 +346,10 @@ export default async function FicheForfaitPage({ params }: { params: { id: strin
                       <td>
                         {l.courant
                           ? <span className="simil-courant-lbl">Vous êtes ici</span>
-                          : <Link href={`/telecom/${l.id}`} className="simil-voir-btn">Voir →</Link>
+                          : <span className="simil-voir-btn">Voir →</span>
                         }
                       </td>
-                    </tr>
+                    </SimilRow>
                   )
                 })}
               </tbody>
