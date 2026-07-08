@@ -1751,6 +1751,10 @@ a {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  position: sticky;
+  top: 109px;
+  align-self: flex-start;
+  max-height: calc(100vh - 109px);
 }
 .guide-left--navy { background: var(--navy); }
 
@@ -2119,7 +2123,10 @@ a {
 
 @media (max-width: 820px) {
   .guide-wrap { flex-direction: column; }
-  .guide-left { width: 100%; min-width: 0; }
+  .guide-left {
+    width: 100%; min-width: 0;
+    max-height: 60vh;
+  }
 }
 
 @keyframes popHeart {
@@ -7535,8 +7542,14 @@ a {
 .guide-prix-liste {
   border: 1.5px solid #eef0f3;
   border-radius: 14px;
-  overflow: hidden;
+  overflow-y: auto;
   background: #fff;
+  position: sticky;
+  top: 76px;
+  max-height: calc(100vh - 96px);
+}
+@media (max-width: 768px) {
+  .guide-prix-liste { position: static; max-height: none; }
 }
 .guide-prix-empty {
   padding: 40px 20px;
