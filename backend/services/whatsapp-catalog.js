@@ -7,7 +7,9 @@ const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 // Lus à l'appel (pas au chargement du module) pour rester réactifs si les
 // variables d'environnement changent après le require (tests, reload à chaud).
 function getToken() {
-  return process.env.WHATSAPP_API_TOKEN;
+  // Token séparé requis : le catalog_management n'est pas couvert par le
+  // token système whatsapp_business_messaging (WHATSAPP_API_TOKEN).
+  return process.env.WHATSAPP_CATALOG_TOKEN || process.env.WHATSAPP_API_TOKEN;
 }
 
 function getCatalogIdGlobal() {
