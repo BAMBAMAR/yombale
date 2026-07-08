@@ -1,7 +1,7 @@
 // backend/routes/scraper.js — Route admin pour diagnostics et déclenchement manuel
 const router  = require('express').Router();
 const { pool } = require('../models/db');
-const { lancerScraping, lancerScrapingNouveauxSites, diagnosticScraper, diagnosticNouveauSite, corrigerPrixParPlancher } = require('../services/scraper');
+const { lancerScraping, lancerScrapingNouveauxSites, diagnosticScraper, diagnosticNouveauSite, corrigerPrixParPlancher, nettoyerOffresExpirees } = require('../services/scraper');
 const { adminSecretOnly: adminOnly } = require('../middlewares/auth');
 
 // ── GET /api/scraper/status ───────────────────────────────────
@@ -146,6 +146,18 @@ router.post('/corriger-prix', adminOnly, async (req, res) => {
     }
 
     res.json({ dryRun, analysees: rows.length, corrigees: corrections.length, corrections });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── POST /api/scraper/nettoyer-offres-mortes ──────────────────
+// Vérifie les offres non revues depuis 20h+ et retire (stock=false)
+// celles dont l'URL marchand renvoie 404/410 (annonce expirée côté marchand).
+// Query: ?limite=200 (nombre max d'offres vérifiées par appel)
+router.post('/nettoyer-offres-mortes', adminOnly, async (req, res) => {
+  try {
+    const limite = req.query.limite ? parseInt(req.query.limite) : 200;
+    res.json({ message: `Vérification lancée en arrière-plan (limite ${limite})` });
+    nettoyerOffresExpirees(limite).catch(console.error);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

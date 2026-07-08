@@ -968,6 +968,80 @@ async function envoyerRelancesExpiration() {
   console.log(`[RELANCE] ${boutiques.length} boutiques + ${abonnements.length} abonnements relancés`);
 }
 
+// ══════════════════════════════════════════════════════
+//  NETTOYAGE DES OFFRES AVEC URL MORTE
+//  Une annonce CoinAfrique/Expat-Dakar expire côté marchand sans que le
+//  scraper (qui ne fait qu'ajouter/mettre à jour ce qu'il retrouve) ne le
+//  détecte jamais — l'offre restait "en stock" indéfiniment même quand
+//  /api/click menait à un lien mort chez le marchand.
+// ══════════════════════════════════════════════════════
+async function offreEstMorte(url) {
+  try {
+    await axios.head(url, {
+      headers: { 'User-Agent': randUA() },
+      timeout: 10000,
+      maxRedirects: 5,
+      validateStatus: null,
+    });
+    return false;
+  } catch {
+    // Certains sites (ex: CoinAfrique) rejettent HEAD — on retente en GET avant de conclure
+    try {
+      const r = await axios.get(url, {
+        headers: { 'User-Agent': randUA() },
+        timeout: 10000,
+        maxRedirects: 5,
+        validateStatus: null,
+      });
+      return r.status === 404 || r.status === 410;
+    } catch {
+      // Timeout/DNS/refus de connexion répété : on ne peut pas conclure avec certitude
+      // (peut être un blocage anti-bot temporaire) → ne pas supprimer sur un seul échec réseau
+      return false;
+    }
+  }
+}
+
+async function nettoyerOffresExpirees(limite = 200) {
+  const { rows: offres } = await pool.query(
+    `SELECT id, url_achat, produit_id FROM offres
+     WHERE stock = true AND scraped_at < NOW() - INTERVAL '20 hours'
+     ORDER BY scraped_at ASC LIMIT $1`,
+    [limite]
+  );
+  let mortes = 0;
+  const produitsModifies = new Set();
+  for (const o of offres) {
+    if (await offreEstMorte(o.url_achat)) {
+      await pool.query('UPDATE offres SET stock = false WHERE id = $1', [o.id]);
+      produitsModifies.add(o.produit_id);
+      mortes++;
+    }
+    await sleep(500 + Math.random() * 500);
+  }
+  if (produitsModifies.size > 0) {
+    const ids = [...produitsModifies];
+    await pool.query(`
+      UPDATE produits SET
+        prix_min = sub.prix_min,
+        nb_offres = sub.nb_offres
+      FROM (
+        SELECT p.id,
+          MIN(CASE WHEN o.stock THEN o.prix END) AS prix_min,
+          COUNT(o.id) FILTER (WHERE o.stock) AS nb_offres
+        FROM produits p
+        LEFT JOIN offres o ON o.produit_id = p.id
+        WHERE p.id = ANY($1::uuid[])
+        GROUP BY p.id
+      ) sub
+      WHERE produits.id = sub.id`,
+      [ids]
+    );
+  }
+  console.log(`[NETTOYAGE] ${offres.length} offres vérifiées, ${mortes} retirées (URL morte)`);
+  return { verifiees: offres.length, mortes };
+}
+
 function demarrerScraping() {
   // Toutes les 12h pour limiter la consommation mémoire (plan gratuit Railway)
   cron.schedule('0 */12 * * *', () => lancerScraping(['expat', 'jumia', 'coinafrique']).catch(console.error));
@@ -982,6 +1056,8 @@ function demarrerScraping() {
   });
   // Relance commerciale — chaque jour à 9h UTC : email + WhatsApp aux sponsorings/abonnements expirés J-7
   cron.schedule('0 9 * * *', () => envoyerRelancesExpiration().catch(err => console.error('[RELANCE]', err.message)));
+  // Nettoyage des offres avec URL marchand morte (annonces expirées côté CoinAfrique/Expat-Dakar)
+  cron.schedule('30 4 * * *', () => nettoyerOffresExpirees().catch(err => console.error('[NETTOYAGE]', err.message)));
 
   // Premier scraping 10 min après démarrage (laisser l'app se stabiliser)
   setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 10 * 60 * 1000);
@@ -990,4 +1066,4 @@ function demarrerScraping() {
   console.log('[SOCIAL]  ✅ Cron actif — publication bons plans chaque jour à 8h UTC');
 }
 
-module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher };
+module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher, nettoyerOffresExpirees };
