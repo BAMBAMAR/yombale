@@ -336,28 +336,35 @@ async function diagnosticNouveauSite(siteId) {
 }
 
 // ── SCRAPING GLOBAL ──────────────────────────────────────────
-async function scraperTousNouveauxSites(siteIds = null) {
+// onSiteScrape(config, items) est appelé site par site pour permettre
+// l'insertion en base au fil de l'eau — évite d'accumuler les produits
+// de tous les sites (jusqu'à ~800 par site) en mémoire simultanément,
+// cause identifiée d'un dépassement mémoire sur le plan gratuit Render.
+async function scraperTousNouveauxSites(siteIds = null, onSiteScrape = null) {
   const configs = siteIds
     ? SITES_CONFIG.filter(s => siteIds.includes(s.id))
     : SITES_CONFIG;
 
-  const resultatsParSite = {};
   console.log(`\n[NEW-SITES] ══════ DÉBUT (${configs.length} sites) ══════`);
+  let total = 0;
 
   for (const config of configs) {
+    let items = [];
     try {
-      const items = await scraperSite(config);
-      resultatsParSite[config.id] = { nom: config.nom, baseUrl: config.baseUrl, items };
+      items = await scraperSite(config);
     } catch (err) {
       console.error(`[NEW-SITES] ${config.nom}: ${err.message}`);
-      resultatsParSite[config.id] = { nom: config.nom, baseUrl: config.baseUrl, items: [] };
     }
+    if (onSiteScrape) {
+      await onSiteScrape(config, items);
+    }
+    total += items.length;
+    items = null; // libère la référence avant le site suivant
     await sleep(6000 + Math.random() * 3000);
   }
 
-  const total = Object.values(resultatsParSite).reduce((s, v) => s + v.items.length, 0);
   console.log(`\n[NEW-SITES] ══════ FIN — ${total} produits total ══════`);
-  return resultatsParSite;
+  return total;
 }
 
 module.exports = {

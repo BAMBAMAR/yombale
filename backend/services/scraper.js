@@ -815,34 +815,49 @@ async function diagnosticScraper(source, categorie) {
 // ══════════════════════════════════════════════════════
 //  ORCHESTRATION
 // ══════════════════════════════════════════════════════
+// Verrou global : empêche lancerScraping() et lancerScrapingNouveauxSites()
+// de tourner en même temps (chevauchement cron/setTimeout constaté comme
+// cause probable d'un dépassement mémoire sur le plan gratuit Render — deux
+// pipelines de scraping simultanés cumulent leurs tableaux en RAM).
+let scrapingEnCours = false;
+
 async function lancerScraping(sources=['expat','jumia','coinafrique']) {
-  const rapport={debut:new Date(),sources:{}};
-  // BUG FIX : invalider le cache catégories pour recharger depuis la DB
-  invaliderCatCache();
-  console.log('\n[SCRAPER] ══════ DÉBUT ══════');
-  const conf={
-    expat:       {nom:'Expat-Dakar',  url:'https://www.expat-dakar.com',  cats:CATS.expat,       fn:scraperExpatDakar},
-    jumia:       {nom:'Jumia Senegal',url:'https://www.jumia.sn',         cats:CATS.jumia,       fn:scraperJumia},
-    coinafrique: {nom:'CoinAfrique',  url:'https://sn.coinafrique.com',   cats:CATS.coinafrique, fn:scraperCoinAfrique},
-  };
-  for(const src of sources){
-    const c=conf[src]; if(!c) continue;
-    const stats={inseres:0,mis_a_jour:0,erreurs:0,scrapes:0};
-    for(const cat of c.cats){
-      try{
-        const items=await c.fn(cat,2); stats.scrapes+=items.length;
-        if(items.length>0){ const r=await sauvegarderProduits(items,c.nom,c.url); stats.inseres+=r.inseres; stats.mis_a_jour+=r.mis_a_jour; stats.erreurs+=r.erreurs; }
-      }catch(err){ console.error(`[SCRAPER] ${src}/${cat}:`,err.message); stats.erreurs++; }
-      await sleep(4000);
-    }
-    rapport.sources[src]=stats;
-    await pool.query('UPDATE marchands SET derniere_sync=NOW() WHERE nom=$1',[c.nom]);
-    console.log(`[SCRAPER] ${c.nom}: ${stats.scrapes} scrapés → ${stats.inseres} nouveaux, ${stats.mis_a_jour} màj`);
-    await sleep(5000);
+  if (scrapingEnCours) {
+    console.log('[SCRAPER] Cycle déjà en cours, requête ignorée');
+    return { ignore: true };
   }
-  rapport.fin=new Date(); rapport.duree_s=Math.round((rapport.fin-rapport.debut)/1000);
-  console.log(`[SCRAPER] ══════ FIN ${rapport.duree_s}s ══════`);
-  return rapport;
+  scrapingEnCours = true;
+  try {
+    const rapport={debut:new Date(),sources:{}};
+    // BUG FIX : invalider le cache catégories pour recharger depuis la DB
+    invaliderCatCache();
+    console.log('\n[SCRAPER] ══════ DÉBUT ══════');
+    const conf={
+      expat:       {nom:'Expat-Dakar',  url:'https://www.expat-dakar.com',  cats:CATS.expat,       fn:scraperExpatDakar},
+      jumia:       {nom:'Jumia Senegal',url:'https://www.jumia.sn',         cats:CATS.jumia,       fn:scraperJumia},
+      coinafrique: {nom:'CoinAfrique',  url:'https://sn.coinafrique.com',   cats:CATS.coinafrique, fn:scraperCoinAfrique},
+    };
+    for(const src of sources){
+      const c=conf[src]; if(!c) continue;
+      const stats={inseres:0,mis_a_jour:0,erreurs:0,scrapes:0};
+      for(const cat of c.cats){
+        try{
+          const items=await c.fn(cat,2); stats.scrapes+=items.length;
+          if(items.length>0){ const r=await sauvegarderProduits(items,c.nom,c.url); stats.inseres+=r.inseres; stats.mis_a_jour+=r.mis_a_jour; stats.erreurs+=r.erreurs; }
+        }catch(err){ console.error(`[SCRAPER] ${src}/${cat}:`,err.message); stats.erreurs++; }
+        await sleep(4000);
+      }
+      rapport.sources[src]=stats;
+      await pool.query('UPDATE marchands SET derniere_sync=NOW() WHERE nom=$1',[c.nom]);
+      console.log(`[SCRAPER] ${c.nom}: ${stats.scrapes} scrapés → ${stats.inseres} nouveaux, ${stats.mis_a_jour} màj`);
+      await sleep(5000);
+    }
+    rapport.fin=new Date(); rapport.duree_s=Math.round((rapport.fin-rapport.debut)/1000);
+    console.log(`[SCRAPER] ══════ FIN ${rapport.duree_s}s ══════`);
+    return rapport;
+  } finally {
+    scrapingEnCours = false;
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -851,25 +866,36 @@ async function lancerScraping(sources=['expat','jumia','coinafrique']) {
 const { scraperTousNouveauxSites, diagnosticNouveauSite } = require('./scraper-new-sites');
 
 async function lancerScrapingNouveauxSites(siteIds = null) {
-  invaliderCatCache();
-  const resultatsParSite = await scraperTousNouveauxSites(siteIds);
-  const stats = { inseres: 0, mis_a_jour: 0, erreurs: 0, scrapes: 0 };
-
-  for (const { nom, baseUrl, items } of Object.values(resultatsParSite)) {
-    if (!items.length) continue;
-    stats.scrapes += items.length;
-    try {
-      const r = await sauvegarderProduits(items, nom, baseUrl);
-      stats.inseres += r.inseres;
-      stats.mis_a_jour += r.mis_a_jour;
-      stats.erreurs += r.erreurs;
-      await pool.query('UPDATE marchands SET derniere_sync=NOW() WHERE nom=$1', [nom]);
-      console.log(`[NEW-SITES] ${nom}: ${items.length} scrapés → ${r.inseres} nouveaux, ${r.mis_a_jour} màj`);
-    } catch (err) {
-      console.error(`[NEW-SITES] ${nom} sauvegarde:`, err.message);
-    }
+  if (scrapingEnCours) {
+    console.log('[NEW-SITES] Cycle déjà en cours, requête ignorée');
+    return { ignore: true };
   }
-  return stats;
+  scrapingEnCours = true;
+  try {
+    invaliderCatCache();
+    const stats = { inseres: 0, mis_a_jour: 0, erreurs: 0, scrapes: 0 };
+
+    // Insertion en base immédiatement après chaque site (pas d'accumulation
+    // de tous les sites en mémoire — cf. commentaire dans scraper-new-sites.js)
+    await scraperTousNouveauxSites(siteIds, async (config, items) => {
+      if (!items.length) return;
+      stats.scrapes += items.length;
+      try {
+        const r = await sauvegarderProduits(items, config.nom, config.baseUrl);
+        stats.inseres += r.inseres;
+        stats.mis_a_jour += r.mis_a_jour;
+        stats.erreurs += r.erreurs;
+        await pool.query('UPDATE marchands SET derniere_sync=NOW() WHERE nom=$1', [config.nom]);
+        console.log(`[NEW-SITES] ${config.nom}: ${items.length} scrapés → ${r.inseres} nouveaux, ${r.mis_a_jour} màj`);
+      } catch (err) {
+        console.error(`[NEW-SITES] ${config.nom} sauvegarde:`, err.message);
+      }
+    });
+
+    return stats;
+  } finally {
+    scrapingEnCours = false;
+  }
 }
 
 // ── Publication réseaux sociaux ────────────────────────────────────
