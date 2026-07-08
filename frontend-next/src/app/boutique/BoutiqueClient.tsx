@@ -425,10 +425,11 @@ export function nomParDefautPourCategorie(categorie: string): string {
   return NOMS_PAR_DEFAUT[categorie] ?? 'Produit — à modifier'
 }
 
-function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: {
+function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille', onCancel, onSuccess }: {
   boutiqueId: string
   boutiqueCat?: string | null
   produit?: Produit
+  modeInitial?: 'rapide' | 'detaille'
   onCancel: () => void
   onSuccess: () => void
 }) {
@@ -441,6 +442,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: 
   const [carac, setCarac] = useState<Record<string, string>>(
     produit?.caracteristiques ?? {}
   )
+  const [modeRapide, setModeRapide] = useState(modeInitial === 'rapide' && !produit)
 
   useEffect(() => { if (state.success) onSuccess() }, [state.success])
 
@@ -448,7 +450,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: 
     setCarac(prev => ({ ...prev, [k]: v }))
   }
 
-  const hasCaracFields = cat && cat !== 'autre'
+  const hasCaracFields = cat && cat !== 'autre' && !modeRapide
 
   return (
     <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -480,10 +482,14 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: 
       </div>
 
       {/* Nom */}
-      <div>
-        <label style={labelStyle}>Nom du produit <span style={{ color: '#dc2626' }}>*</span></label>
-        <input name="nom" required maxLength={300} defaultValue={produit?.nom} style={inputStyle} placeholder="Ex: iPhone 14 Pro 256 Go" />
-      </div>
+      {modeRapide ? (
+        <input type="hidden" name="nom" value={nomParDefautPourCategorie(cat)} />
+      ) : (
+        <div>
+          <label style={labelStyle}>Nom du produit <span style={{ color: '#dc2626' }}>*</span></label>
+          <input name="nom" required maxLength={300} defaultValue={produit?.nom ?? (modeInitial === 'rapide' ? nomParDefautPourCategorie(cat) : undefined)} style={inputStyle} placeholder="Ex: iPhone 14 Pro 256 Go" />
+        </div>
+      )}
 
       {/* Caractéristiques dynamiques par catégorie */}
       {hasCaracFields && (
@@ -496,21 +502,25 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: 
       )}
 
       {/* Description */}
-      <div>
-        <label style={labelStyle}>Description</label>
-        <textarea name="description" rows={3} defaultValue={produit?.description ?? ''} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Détails supplémentaires, accessoires inclus, garantie…" />
-      </div>
+      {!modeRapide && (
+        <div>
+          <label style={labelStyle}>Description</label>
+          <textarea name="description" rows={3} defaultValue={produit?.description ?? ''} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Détails supplémentaires, accessoires inclus, garantie…" />
+        </div>
+      )}
 
       {/* Prix */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: modeRapide ? '1fr' : '1fr 1fr', gap: 12 }}>
         <div>
-          <label style={labelStyle}>Prix (FCFA)</label>
-          <input name="prix" type="number" min={0} defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 350 000" />
+          <label style={labelStyle}>Prix (FCFA) <span style={{ color: '#dc2626' }}>*</span></label>
+          <input name="prix" type="number" min={0} required defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 350 000" />
         </div>
-        <div>
-          <label style={labelStyle}>Prix barré <span style={{ fontSize: 11, color: '#9ca3af' }}>(ancien prix)</span></label>
-          <input name="prix_barre" type="number" min={0} defaultValue={produit?.prix_barre ?? ''} style={inputStyle} placeholder="Ex: 400 000" />
-        </div>
+        {!modeRapide && (
+          <div>
+            <label style={labelStyle}>Prix barré <span style={{ fontSize: 11, color: '#9ca3af' }}>(ancien prix)</span></label>
+            <input name="prix_barre" type="number" min={0} defaultValue={produit?.prix_barre ?? ''} style={inputStyle} placeholder="Ex: 400 000" />
+          </div>
+        )}
       </div>
 
       {/* Photo */}
@@ -525,23 +535,35 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: 
         )}
       </div>
 
-      {/* En stock toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <input type="hidden" name="en_stock" value={enStock ? 'true' : 'false'} />
-        <button type="button" onClick={() => setEnStock(!enStock)} style={{
-          width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
-          background: enStock ? '#16a34a' : '#d1d5db', transition: 'background .2s', position: 'relative',
-        }}>
-          <span style={{
-            position: 'absolute', top: 3, left: enStock ? 20 : 4,
-            width: 16, height: 16, borderRadius: '50%', background: '#fff',
-            transition: 'left .2s', display: 'block',
-          }} />
+      {modeRapide && (
+        <button
+          type="button"
+          onClick={() => setModeRapide(false)}
+          style={{ background: 'none', border: 'none', color: '#1d4ed8', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: 0 }}
+        >
+          Voir tous les champs (description, caractéristiques…)
         </button>
-        <span style={{ fontSize: 13, color: '#374151' }}>
-          {enStock ? '✅ En stock' : '❌ Rupture de stock'}
-        </span>
-      </div>
+      )}
+
+      {/* En stock toggle */}
+      <input type="hidden" name="en_stock" value={enStock ? 'true' : 'false'} />
+      {!modeRapide && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button type="button" onClick={() => setEnStock(!enStock)} style={{
+            width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
+            background: enStock ? '#16a34a' : '#d1d5db', transition: 'background .2s', position: 'relative',
+          }}>
+            <span style={{
+              position: 'absolute', top: 3, left: enStock ? 20 : 4,
+              width: 16, height: 16, borderRadius: '50%', background: '#fff',
+              transition: 'left .2s', display: 'block',
+            }} />
+          </button>
+          <span style={{ fontSize: 13, color: '#374151' }}>
+            {enStock ? '✅ En stock' : '❌ Rupture de stock'}
+          </span>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 12 }}>
         <SubmitButton label={produit ? 'Enregistrer' : 'Ajouter le produit'} />
