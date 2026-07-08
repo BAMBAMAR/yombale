@@ -779,6 +779,14 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
                   >
                     {p.whatsapp_sync_statut === 'synchronise' ? '✓ Sur WhatsApp' : p.whatsapp_sync_statut === 'echec' ? '✗ Échec' : '⏳ En attente'}
                   </span>
+                  {p.nom.endsWith('— à modifier') && (
+                    <span style={{
+                      fontSize: 11, padding: '1px 6px', borderRadius: 20,
+                      background: '#fef3c7', color: '#b45309', fontWeight: 700,
+                    }}>
+                      ✏️ À compléter
+                    </span>
+                  )}
                 </div>
               </div>
               {/* Actions */}
