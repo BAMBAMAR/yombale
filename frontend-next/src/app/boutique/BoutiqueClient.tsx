@@ -11,6 +11,7 @@ import { initierWaveBoutiqueSponsoring } from '@/app/actions/paiement'
 import { fcfa } from '@/lib/format'
 import type { ActionState } from '@/lib/backend-fetch'
 import ModalPaiementManuel from '@/components/ModalPaiementManuel'
+import BoutonPartager from '@/components/BoutonPartager'
 
 const CATEGORIES = [
   { value: 'smartphones',  label: 'Smartphones' },
@@ -790,7 +791,12 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
                 </div>
               </div>
               {/* Actions */}
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+                <BoutonPartager
+                  lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
+                  message={`${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
+                  lienVisuel={`/assets/produit-boutique/${p.id}/story?boutiqueId=${boutique.id}`}
+                />
                 <button
                   onClick={() => setMode({ editing: p })}
                   style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
