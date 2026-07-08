@@ -224,7 +224,12 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
 
   await Promise.all([
     apiFetch<Offre[] | { offres?: Offre[]; data?: Offre[] }>(`/produits/${params.id}/offres`)
-      .then(raw => { offres = Array.isArray(raw) ? raw : (raw.offres ?? raw.data ?? []); })
+      .then(raw => {
+        const list = Array.isArray(raw) ? raw : (raw.offres ?? raw.data ?? []);
+        // Le backend renvoie prix en NUMERIC Postgres (sérialisé en string, ex: "230000.00") —
+        // sans cette conversion, les comparaisons strictes (`o.prix === prixMin`) échouent toujours.
+        offres = list.map(o => ({ ...o, prix: o.prix != null ? Number(o.prix) : null }));
+      })
       .catch(() => {}),
     apiFetch<HistoriquePoint[]>(`/produits/${params.id}/historique`)
       .then(raw => { historique = Array.isArray(raw) ? raw : []; })
