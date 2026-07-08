@@ -469,9 +469,9 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                         <div className="offre-prix-col">
                           <p className={`offre-prix${isBest ? ' offre-prix--best' : ''}`}>{fcfa(o.prix)}</p>
                           {o.url_achat && (
-                            <Link href={`/produit/${produit.id}`} className={`offre-btn${isBest ? ' offre-btn--best' : ''}`}>
+                            <a href={`/api/click/${o.id}`} target="_blank" rel="noopener noreferrer" className={`offre-btn${isBest ? ' offre-btn--best' : ''}`}>
                               Voir l&apos;offre →
-                            </Link>
+                            </a>
                           )}
                         </div>
                       </div>
