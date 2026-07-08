@@ -113,6 +113,13 @@ services:
         value: 18
       - key: NODE_ENV
         value: "production"
+      # Le serveur standalone généré par Next.js (.next/standalone/server.js) peut
+      # se binder sur localhost au lieu de 0.0.0.0 selon l'environnement — dans ce
+      # cas le process Node répond bien en interne (logs "Ready", healthy) mais le
+      # proxy Render ne peut jamais l'atteindre depuis l'extérieur (502 systématique
+      # malgré des métriques CPU/mémoire propres). Forcer 0.0.0.0 corrige ce cas.
+      - key: HOSTNAME
+        value: "0.0.0.0"
 
       # ── URLs ────────────────────────────────────────────────────────────────
       # BACKEND_URL = URL interne ou publique du backend (côté serveur Next.js)
