@@ -1,7 +1,9 @@
 // backend/services/whatsapp-catalog.js — Sync vers Meta Commerce Catalog
 const axios = require('axios');
 
-const TOKEN            = process.env.WHATSAPP_API_TOKEN;
+// Token séparé requis : le catalog_management n'est pas couvert par le
+// token système whatsapp_business_messaging (WHATSAPP_API_TOKEN).
+const TOKEN            = process.env.WHATSAPP_CATALOG_TOKEN || process.env.WHATSAPP_API_TOKEN;
 const CATALOG_ID_GLOBAL = process.env.WHATSAPP_CATALOG_ID;
 const SITE             = process.env.FRONTEND_URL || 'https://nopalou.com';
 
