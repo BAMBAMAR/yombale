@@ -579,6 +579,43 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   )
 }
 
+// ── Marketing / partage de la boutique ────────────────────────────────────────
+
+function MarketingBoutique({ boutique }: { boutique: Boutique }) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+  const lienBoutique = `${siteUrl}/boutiques/${boutique.slug || boutique.id}`
+  const messageBoutique = `Découvrez ${boutique.nom} sur Nopalou !\n\n${lienBoutique}`
+
+  return (
+    <div>
+      <p style={{ margin: '0 0 16px', fontSize: 13, color: '#6b7280' }}>
+        Partagez votre boutique sur WhatsApp, Instagram ou Facebook pour attirer plus de clients.
+      </p>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 16,
+        background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '20px',
+      }}>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {boutique.logo_url
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={boutique.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : <span style={{ fontSize: 28 }}>🏪</span>
+          }
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>{boutique.nom}</p>
+          <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{lienBoutique}</p>
+        </div>
+        <BoutonPartager
+          lien={lienBoutique}
+          message={messageBoutique}
+          lienVisuel={`/assets/boutique/${boutique.id}/story`}
+        />
+      </div>
+    </div>
+  )
+}
+
 // ── Gestionnaire de catalogue produits ───────────────────────────────────────
 
 function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutique; planActif: 'pro' | 'business' | null; prixPro: number }) {
@@ -940,12 +977,13 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
 
 // ── Vue de gestion d'une boutique — layout sidebar ────────────────────────────
 
-const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos'; icon: string; label: string }[] = [
-  { key: 'produits',  icon: '🛍',  label: 'Catalogue' },
-  { key: 'commandes', icon: '📋',  label: 'Commandes' },
-  { key: 'compta',    icon: '💰',  label: 'Comptabilité' },
-  { key: 'analytics', icon: '📊',  label: 'Analytics' },
-  { key: 'infos',     icon: '⚙️', label: 'Paramètres' },
+const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing'; icon: string; label: string }[] = [
+  { key: 'produits',   icon: '🛍',  label: 'Catalogue' },
+  { key: 'commandes',  icon: '📋',  label: 'Commandes' },
+  { key: 'compta',     icon: '💰',  label: 'Comptabilité' },
+  { key: 'analytics',  icon: '📊',  label: 'Analytics' },
+  { key: 'infos',      icon: '⚙️', label: 'Paramètres' },
+  { key: 'marketing',  icon: '📣',  label: 'Marketing' },
 ]
 
 function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
@@ -955,7 +993,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
   onEdit: () => void
   prixPro: number
 }) {
-  const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'analytics' | 'infos'>('produits')
+  const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing'>('produits')
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
   const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#6b7280'
@@ -1073,13 +1111,14 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
         <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
           <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, margin: 0, color: '#111' }}>
             {NAV_ITEMS.find(i => i.key === tab)?.icon}{' '}
-            {{ produits: 'Catalogue produits', commandes: 'Commandes', compta: 'Comptabilité', analytics: 'Analytics', infos: 'Paramètres boutique' }[tab]}
+            {{ produits: 'Catalogue produits', commandes: 'Commandes', compta: 'Comptabilité', analytics: 'Analytics', infos: 'Paramètres boutique', marketing: 'Marketing' }[tab]}
           </h2>
           {tab === 'produits'  && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Gérez vos produits, stocks et tarifs.</p>}
           {tab === 'commandes' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Commandes reçues — web et WhatsApp. Mettez à jour les statuts.</p>}
           {tab === 'compta'    && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Ventes, dépenses, stock et zones de livraison.</p>}
           {tab === 'analytics' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Vues, clics et performances de votre boutique.</p>}
           {tab === 'infos'     && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Modifiez les informations, contacts et photos.</p>}
+          {tab === 'marketing' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Partagez votre boutique pour attirer plus de clients.</p>}
         </div>
 
         {tab === 'produits'  && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} />}
@@ -1091,6 +1130,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
             <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={onEdit} />
           </div>
         )}
+        {tab === 'marketing' && <MarketingBoutique boutique={boutique} />}
       </main>
     </div>
     </>
