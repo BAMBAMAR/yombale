@@ -149,6 +149,26 @@ async function sendWhatsAppButton(phone, bodyText, buttonId, buttonTitle) {
   });
 }
 
+// ── Bouton "Menu" + "Non merci" (fin d'action, cf. sendWhatsAppButton) ────────
+async function sendWhatsAppMenuOuFin(phone, bodyText) {
+  return post({
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: normalisePhone(phone),
+    type: 'interactive',
+    interactive: {
+      type: 'button',
+      body: { text: bodyText },
+      action: {
+        buttons: [
+          { type: 'reply', reply: { id: 'menu', title: 'Menu' } },
+          { type: 'reply', reply: { id: 'fin', title: 'Non merci 😊' } },
+        ],
+      },
+    },
+  });
+}
+
 // ── Product Message (catalogue Meta Commerce) ─────────────────────────────────
 async function sendWhatsAppProduct(phone, retailerProductId, bodyText) {
   if (!CATALOG_ID) {
@@ -261,6 +281,7 @@ module.exports = {
   sendWhatsAppCarousel,
   sendWhatsAppInteractive,
   sendWhatsAppButton,
+  sendWhatsAppMenuOuFin,
   sendWhatsAppProduct,
   sendReadReceipt,
   sendFiche,

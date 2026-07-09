@@ -6,6 +6,7 @@ const {
   sendWhatsAppCarousel,
   sendWhatsAppProduct,
   sendWhatsAppButton,
+  sendWhatsAppMenuOuFin,
   sendReadReceipt,
   normalisePhone,
 } = require('./whatsapp');
@@ -214,6 +215,19 @@ async function handleIncoming(msg) {
     return;
   }
 
+  // ── Fin de conversation : clôture polie + sondage satisfaction ─────────────
+  if (interactiveId === 'fin') {
+    await sendWhatsAppText(phone, 'Merci de nous avoir écrit ! 🙏 Nopalou vous souhaite une excellente journée.');
+    await sendWhatsAppButton(phone, 'Êtes-vous satisfait(e) de cet échange ?', 'sat_oui', '🙂 Oui, c\'est bien').catch(() => {});
+    await setSession(phone, 'MENU', {});
+    return;
+  }
+  if (interactiveId === 'sat_oui' || interactiveId === 'sat_non') {
+    await sendWhatsAppText(phone, 'Merci beaucoup pour votre retour ! 😊 À très vite sur Nopalou.');
+    await setSession(phone, 'MENU', {});
+    return;
+  }
+
   // ── MENU → réponse au menu interactif ─────────────────────────────────────
   if (state === 'MENU') {
     const action = interactiveId || text.toLowerCase();
@@ -243,7 +257,7 @@ async function handleIncoming(msg) {
         );
         await attendre(1200); // laisse le temps aux messages du carousel de s'afficher avant le bouton
       }
-      await sendWhatsAppButton(phone, 'Envie de continuer ?', 'menu', 'Menu').catch(() => {});
+      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
       await setSession(phone, 'MENU', {});
       return;
     }
@@ -257,7 +271,7 @@ async function handleIncoming(msg) {
         const lines = r.rows.map(o => `📱 *${o.nom || o.operateur}* — ${prixFmt(o.prix)}\n👉 ${SITE}/telecom`);
         await sendWhatsAppText(phone, lines.join('\n\n'));
       }
-      await sendWhatsAppButton(phone, 'Envie de continuer ?', 'menu', 'Menu').catch(() => {});
+      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
       await setSession(phone, 'MENU', {});
       return;
     }
@@ -273,13 +287,13 @@ async function handleIncoming(msg) {
     }
     if (action === 'support') {
       await sendWhatsAppText(phone, '💬 *Support Nopalou*\n\nPour nous contacter :\n📧 contact@nopalou.com\n🌐 nopalou.com\n\nNous répondons sous 24h. Merci !');
-      await sendWhatsAppButton(phone, 'Envie de continuer ?', 'menu', 'Menu').catch(() => {});
+      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
       await setSession(phone, 'MENU', {});
       return;
     }
     if (action === 'guide') {
       await sendWhatsAppText(phone, FAQ[FAQ.length - 1].reponse);
-      await sendWhatsAppButton(phone, 'Une autre question ?', 'menu', 'Menu').catch(() => {});
+      await sendWhatsAppMenuOuFin(phone, 'Une autre question ?').catch(() => {});
       await setSession(phone, 'MENU', {});
       return;
     }
@@ -287,7 +301,7 @@ async function handleIncoming(msg) {
     const faq = detecterFAQ(text);
     if (faq) {
       await sendWhatsAppText(phone, faq.reponse);
-      await sendWhatsAppButton(phone, 'Une autre question ?', 'menu', 'Menu').catch(() => {});
+      await sendWhatsAppMenuOuFin(phone, 'Une autre question ?').catch(() => {});
       await setSession(phone, 'MENU', {});
       return;
     }
@@ -301,7 +315,7 @@ async function handleIncoming(msg) {
     const faq = detecterFAQ(text);
     if (faq) {
       await sendWhatsAppText(phone, faq.reponse);
-      await sendWhatsAppButton(phone, 'Une autre question ?', 'menu', 'Menu').catch(() => {});
+      await sendWhatsAppMenuOuFin(phone, 'Une autre question ?').catch(() => {});
       await setSession(phone, 'MENU', {});
       return;
     }
@@ -333,7 +347,7 @@ async function handleIncoming(msg) {
       phone,
       `✅ *Alerte créée !*\n\nJe vous notifierai dès que *${context.produit_nom}* passe sous *${prixFmt(prix)}*.`
     );
-    await sendWhatsAppButton(phone, 'Envie de continuer ?', 'menu', 'Menu').catch(() => {});
+    await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
     await setSession(phone, 'MENU', {});
     return;
   }
@@ -353,7 +367,7 @@ async function handleIncoming(msg) {
         phone,
         `📦 *Commande ${p.reference}*\n\nStatut : *${p.statut}*\nMontant : *${prixFmt(p.montant)}*\nDate : ${date}\n\nPour toute question, contactez contact@nopalou.com`
       );
-      await sendWhatsAppButton(phone, 'Envie de continuer ?', 'menu', 'Menu').catch(() => {});
+      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
     }
     await setSession(phone, 'MENU', {});
     return;
@@ -415,7 +429,7 @@ async function handleSearchQuery(phone, query) {
   if (produits.length + autres.length > 1) {
     await attendre(1200); // laisse le temps aux messages précédents de s'afficher avant le bouton
   }
-  await sendWhatsAppButton(phone, 'Faites une nouvelle recherche, ou :', 'menu', 'Menu').catch(() => {});
+  await sendWhatsAppMenuOuFin(phone, 'Faites une nouvelle recherche, ou :').catch(() => {});
   await setSession(phone, 'MENU', {});
 }
 

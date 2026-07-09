@@ -221,8 +221,8 @@ export default function WhatsAppClient({
           ['WHATSAPP_VERIFY_TOKEN', status.config.verify_token ? '✅' : '❌'],
           ['WHATSAPP_CATALOG_ID (pour catalogue)', status.config.catalog_id ? '✅' : '⚠️ Optionnel'],
           ['Webhook déclaré sur Meta', status.api_status === 'ok' ? '✅' : '⏳ À faire'],
-          ['4 templates soumis à Meta', '⏳ À faire manuellement'],
-          ['Vérification entreprise Business Manager', '⏳ Externe'],
+          ['4 templates soumis à Meta', '✅ Approuvés'],
+          ['Vérification entreprise Business Manager', '✅ SKYROAD SARL'],
         ].map(([item, ok]) => (
           <div key={String(item)} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid #f3f4f6', fontSize: 13 }}>
             <span style={{ color: '#374151' }}>{item}</span>
