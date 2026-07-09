@@ -123,6 +123,34 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## État du projet (9 juillet 2026 — caractéristiques par offre sur la fiche produit et la comparaison)
+
+Suite à un retour d'usage réel ("comment avoir les caractéristiques par offre en résumé avant d'acheter"), 2 commits (`d76eda9`, `4d682f7`) ajoutent l'extraction et l'affichage automatique de caractéristiques structurées par offre — jusque-là, la table `offres` (produits scrapés/marketplace) ne stockait que `prix`/`url_achat`/`titre_marchand` brut, sans aucune donnée structurée, contrairement à `annonces_classifiees`/`boutique_produits` qui ont une colonne `caracteristiques JSONB`.
+
+**Backend** :
+- Nouvelle colonne `offres.specs JSONB`, peuplée automatiquement au scraping (`sauvegarderProduits()` dans `scraper.js`) via une nouvelle fonction `extraireSpecs(titre)`, exportée pour réutilisation.
+- Extraction par regex déterministes (pas de LLM — même choix que la FAQ chatbot WhatsApp, pour rester prévisible et sans coût API), **réutilisant** les signaux déjà présents dans `prixPlancher()` (RAM, stockage, écran en pouces, BTU, litres) au lieu de les dupliquer — nouveaux helpers partagés `extraireRamGo`/`extraireStockageGo`/`extraireBtu`/`extraireLitres`/`extraireKg`/`extrairePouce`.
+- Champs extraits, conditionnés par mot-clé de catégorie détecté dans le titre (pour éviter les faux positifs entre catégories) :
+  - Téléphone/tablette : `ram_go`, `stockage_go`, `couleur`, `etat` (`neuf`/`occasion`/`reconditionne`)
+  - Climatiseur : `puissance_btu` (BTU explicite, ou converti depuis "X,XXcv" via `extraireBtuAffichage`, 1 CV ≈ 3500 BTU/h)
+  - Frigo/congélateur : `capacite_litres`
+  - Machine à laver : `capacite_kg`
+  - TV/écran : `ecran_pouces`
+- **Piège rencontré** : la première version de la conversion CV→BTU était faite directement dans `extraireBtu()`, la même fonction utilisée par `prixPlancher()` pour l'heuristique anti-fraude de prix (détection ×100/÷1000). Ça changeait le plancher de prix pour des climatiseurs existants (ex: un split 2,25cv passait de 100 000 à 80 000 FCFA de plancher) — effet de bord non voulu sur un mécanisme sensible. Corrigé en isolant la conversion CV dans `extraireBtuAffichage()`, utilisée uniquement par `extraireSpecs()` ; `prixPlancher()` garde exactement son comportement d'avant (vérifié par comparaison directe avant/après via `git stash`).
+- **Autres bugs de regex trouvés en testant contre les 6100+ offres réelles de prod** (pas seulement des cas synthétiques) : le motif "128Go RAM 4Go" faisait capturer `4` comme stockage au lieu de `128` (le lookahead négatif `(?!\s*ram)` excluait le premier nombre à tort) ; les libellés disjoints ("Ram 12Go ... Memoire 128Go") n'étaient pas reconnus ; "1To" et "256Gb" (anglicisme) n'étaient pas capturés du tout. Corrigés avec des regex dédiées à priorité (libellé explicite > motif double ambigu > fallback).
+- `GET /api/produits/:id/offres` (`routes/produits.js`) normalise `r.specs = r.specs || {}` pour les offres pas encore backfillées.
+- Script `backend/scripts/backfill-specs-offres.js` (`--dry-run` supporté, même pattern que `corriger-prix-outliers.js`) — retraite **toutes** les offres avec `titre_marchand` (pas seulement `specs IS NULL`, pour permettre de relancer après extension des champs extraits sans dead rows). Exécuté 2 fois en prod pendant ce chantier (ajout initial, puis ajout des champs par catégorie) — 6100+ offres couvertes.
+
+**Frontend** :
+- Fiche produit (`produit/[id]/page.tsx`) : chaque ligne de la section "Comparer les prix" affiche désormais des badges compacts (`.offre-specs`/`.offre-spec-badge`, `globals.css`) pour les specs détectées, la fraîcheur relative ("il y a 6j", via nouvelle fonction `tempsRelatif()` dans `lib/format.ts`), et le titre complet en tooltip natif (`title=`) même si tronqué visuellement à 60 caractères.
+- Page de comparaison côte à côte (`comparaison/page.tsx`) : nouvelle ligne "Caractéristiques" dans le tableau, affichant les specs de l'offre la moins chère par produit comparé (même badges que la fiche produit, réutilisés).
+- **Changement de comportement demandé séparément** : le bouton "Voir" des mini-cartes d'offres dans la section "Meilleures offres" de `/comparaison` pointait directement vers `o.url_achat` (le marchand, sans tracking) — il pointe maintenant vers `/produit/{id}` (la fiche interne), cohérent avec le fait que ces 3 mini-offres appartiennent toutes au même produit de la colonne. Le champ `url_achat`, devenu inutilisé dans ce fichier, a été retiré du type `Offre`.
+- **Distinction importante à retenir si on retouche ces boutons** : sur la **fiche produit**, les boutons "Voir l'offre →"/"Acheter" pointent vers `/api/click/{offreId}` (redirection marchand + tracking) — volontaire, car chaque ligne y est une offre différente du **même** produit chez des vendeurs différents. Sur la page **comparaison**, le bouton "Voir" pointe vers `/produit/{id}` — volontaire aussi, car chaque colonne y est un produit **différent** à comparer, donc "voir" doit amener à sa fiche, pas directement chez un marchand.
+
+**Limitation connue** : `puissance_btu`/`capacite_litres`/`capacite_kg`/`ecran_pouces` ne sont peuplés que si le titre brut scrapé mentionne explicitement l'unité correspondante (BTU/CV, litres, kg, pouces) — de nombreuses offres de ces catégories (ex: "Split Haier" sans aucune puissance précisée) n'ont et n'auront jamais ces champs tant que le marchand source ne les inclut pas dans son titre. C'est un comportement attendu (dégradation propre avec `—`), pas un bug.
+
+---
+
 ## État du projet (7 juillet 2026, soir — fiche produit, tri des listes et filtre opérateur)
 
 Suite à un retour d'usage réel signalant 4 insuffisances UX, un chantier de 7 commits (`970518b`..`8d75c6f`) a corrigé :
@@ -408,6 +436,7 @@ Aller sur `/admin/whatsapp` — la checklist indique en temps réel ce qui est c
 | `commandes_boutique` | Commandes boutique — colonne `montant_commission` calculé à livraison |
 | `commissions_apporteur` | Programme apporteur d'affaires — `apporteur_id`, `boutique_id`, `abonnement_id`, `montant`, `statut` (`du`/`paye`) |
 
+**Colonne sur `offres`** : `specs JSONB` (ajouté 9 juillet 2026) — caractéristiques extraites automatiquement du titre scrapé au moment du scraping (`extraireSpecs()` dans `scraper.js`) : `ram_go`, `stockage_go`, `couleur`, `etat`, `puissance_btu`, `capacite_litres`, `capacite_kg`, `ecran_pouces` (tous `null` si non détectés). Purement informatif pour l'affichage — n'intervient jamais dans le matching produit (`similarity(nom)`/EAN).
 **Colonnes sur `utilisateurs`** : `est_apporteur BOOLEAN`, `code_apporteur VARCHAR(20)` (unique, 6 caractères alphanumériques).
 **Colonne sur `boutiques`** : `apporteur_id UUID` (FK `utilisateurs.id`, ON DELETE SET NULL).
 **Colonne sur `abonnements`** : index unique partiel sur `commande_ref` (ajouté 4 juillet 2026 — corrige un bug de double-commission sur replay webhook Wave/Orange ; `ON CONFLICT (commande_ref) DO NOTHING` s'appuie dessus).
