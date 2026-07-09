@@ -70,6 +70,13 @@ services:
         sync: false
       - key: WHATSAPP_API_TOKEN
         sync: false
+      # Token système séparé, scope catalog_management uniquement — distinct de
+      # WHATSAPP_API_TOKEN (scope whatsapp_business_messaging). Ne pas confondre
+      # les deux valeurs lors de la saisie sur le dashboard Render : la messagerie
+      # (webhook, chatbot, /send) casse silencieusement si le mauvais token est
+      # mis dans WHATSAPP_API_TOKEN (erreur Meta #100/33 "missing permissions").
+      - key: WHATSAPP_CATALOG_TOKEN
+        sync: false
       - key: WHATSAPP_APP_SECRET
         sync: false
       - key: WHATSAPP_VERIFY_TOKEN
