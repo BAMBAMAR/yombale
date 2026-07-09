@@ -196,6 +196,7 @@ async function handleIncoming(msg) {
   const interactiveId = msg.interactive?.list_reply?.id || msg.interactive?.button_reply?.id || '';
 
   const SALUTATIONS = ['menu', 'aide', 'help', '0', 'bonjour', 'bonsoir', 'salut', 'slt', 'hello', 'coucou'];
+  const CLOTURE = ['merci', 'merci beaucoup', 'ok merci', 'c\'est bon', 'cest bon', 'au revoir', 'bye', 'a bientot', 'à bientôt', 'non merci', 'ça ira', 'ca ira', 'c\'est tout', 'cest tout'];
 
   // ── IDLE → présentation puis menu (nouvelle session ou session expirée) ────
   if (state === 'IDLE') {
@@ -216,7 +217,8 @@ async function handleIncoming(msg) {
   }
 
   // ── Fin de conversation : clôture polie + sondage satisfaction ─────────────
-  if (interactiveId === 'fin') {
+  // Déclenchée soit par le bouton "Non merci", soit par une formule de clôture tapée en texte libre.
+  if (interactiveId === 'fin' || CLOTURE.includes(normaliserTexte(text))) {
     await sendWhatsAppText(phone, 'Merci de nous avoir écrit ! 🙏 Nopalou vous souhaite une excellente journée.');
     await sendWhatsAppButton(phone, 'Êtes-vous satisfait(e) de cet échange ?', 'sat_oui', '🙂 Oui, c\'est bien').catch(() => {});
     await setSession(phone, 'MENU', {});
