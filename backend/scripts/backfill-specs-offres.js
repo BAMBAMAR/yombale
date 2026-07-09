@@ -15,15 +15,16 @@ async function main() {
   const { rows } = await pool.query(`
     SELECT id, titre_marchand
     FROM offres
-    WHERE specs IS NULL AND titre_marchand IS NOT NULL
+    WHERE titre_marchand IS NOT NULL
   `);
 
-  console.log(`Analyse de ${rows.length} offre(s) sans specs…`);
+  console.log(`Analyse de ${rows.length} offre(s) avec titre…`);
 
   let nbMisesAJour = 0;
   for (const row of rows) {
     const specs = extraireSpecs(row.titre_marchand);
-    const aDesSpecs = specs.stockage_go || specs.ram_go || specs.couleur || specs.etat;
+    const aDesSpecs = specs.stockage_go || specs.ram_go || specs.couleur || specs.etat
+      || specs.puissance_btu || specs.capacite_litres || specs.capacite_kg || specs.ecran_pouces;
     if (aDesSpecs) {
       console.log(`[SPECS] "${row.titre_marchand}" →`, specs);
     }

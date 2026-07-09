@@ -28,6 +28,10 @@ interface OffreSpecs {
   ram_go?: number | null;
   couleur?: string | null;
   etat?: 'neuf' | 'occasion' | 'reconditionne' | null;
+  puissance_btu?: number | null;
+  capacite_litres?: number | null;
+  capacite_kg?: number | null;
+  ecran_pouces?: number | null;
 }
 
 interface Offre {
@@ -472,10 +476,14 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                           {o.titre_affiche && (
                             <p className="offre-ref" title={o.titre_affiche}>{o.titre_affiche.slice(0, 60)}{o.titre_affiche.length > 60 ? '…' : ''}</p>
                           )}
-                          {o.specs && (o.specs.stockage_go || o.specs.ram_go || o.specs.couleur || o.specs.etat) && (
+                          {o.specs && (o.specs.stockage_go || o.specs.ram_go || o.specs.couleur || o.specs.etat || o.specs.puissance_btu || o.specs.capacite_litres || o.specs.capacite_kg || o.specs.ecran_pouces) && (
                             <div className="offre-specs">
+                              {o.specs.ecran_pouces && <span className="offre-spec-badge">{o.specs.ecran_pouces}″</span>}
                               {o.specs.ram_go && <span className="offre-spec-badge">{o.specs.ram_go} Go RAM</span>}
                               {o.specs.stockage_go && <span className="offre-spec-badge">{o.specs.stockage_go} Go</span>}
+                              {o.specs.puissance_btu && <span className="offre-spec-badge">{o.specs.puissance_btu.toLocaleString('fr-FR')} BTU</span>}
+                              {o.specs.capacite_litres && <span className="offre-spec-badge">{o.specs.capacite_litres} L</span>}
+                              {o.specs.capacite_kg && <span className="offre-spec-badge">{o.specs.capacite_kg} Kg</span>}
                               {o.specs.couleur && <span className="offre-spec-badge">{o.specs.couleur}</span>}
                               {o.specs.etat && (
                                 <span className={`offre-spec-badge offre-spec-badge--${o.specs.etat}`}>

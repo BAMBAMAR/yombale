@@ -486,6 +486,39 @@ function extraireStockageGo(s) {
   return parseInt(sto[1]);
 }
 
+// ── Puissance climatiseur (BTU). `s` normalisé (voir prixPlancher/extraireSpecs).
+// N'inclut PAS le CV (voir extraireBtuAffichage) : prixPlancher utilise déjà
+// un plancher flat pour "climatiseur/split" générique qui couvre ces cas,
+// et convertir le CV ici changerait ce plancher pour des offres existantes.
+function extraireBtu(s) {
+  const btu = s.match(/(\d[\d\s]*)\s*btu/);
+  return btu ? parseInt(btu[1].replace(/\s/g, '')) : null;
+}
+
+// ── Puissance climatiseur pour l'affichage (specs) — BTU, ou "X,XXcv"
+// (chevaux) convertis en BTU-équivalent (1 CV clim ≈ 3500 BTU/h, conversion
+// standard du secteur). Distinct de extraireBtu (utilisé par prixPlancher)
+// pour ne pas modifier l'heuristique de correction de prix existante.
+function extraireBtuAffichage(s) {
+  const btu = extraireBtu(s);
+  if (btu != null) return btu;
+  const cv = s.match(/(\d+(?:[.,]\d+)?)\s*cv\b/);
+  return cv ? Math.round(parseFloat(cv[1].replace(',', '.')) * 3500) : null;
+}
+
+// ── Capacité réfrigérateur/congélateur (litres).
+function extraireLitres(s) {
+  const vol = s.match(/(\d{2,3})\s*(?:litres?|l)\b/);
+  return vol ? parseInt(vol[1]) : null;
+}
+
+// ── Capacité machine à laver (kg) — exclut le kg de séchage secondaire
+// (ex: "12KG+SECH 6KG" → retient le premier nombre, capacité de lavage).
+function extraireKg(s) {
+  const kg = s.match(/(\d{1,2})\s*kg\b/);
+  return kg ? parseInt(kg[1]) : null;
+}
+
 // ── Prix plancher déduit du titre (taille écran, RAM, BTU, audio…) ─
 // Permet de détecter une division par 100/1000 même sur offre unique.
 function prixPlancher(titre) {
@@ -547,9 +580,8 @@ function prixPlancher(titre) {
   }
 
   // ── BTU climatiseur ────────────────────────────────────────────
-  const btu = s.match(/(\d[\d\s]*)\s*btu/);
-  if (btu) {
-    const b = parseInt(btu[1].replace(/\s/g, ''));
+  const b = extraireBtu(s);
+  if (b != null) {
     if (b >= 18000) return 300_000;
     if (b >= 12000) return 200_000;
     if (b >=  9000) return 150_000;
@@ -557,9 +589,8 @@ function prixPlancher(titre) {
   }
 
   // ── Réfrigérateur / congélateur (litres) ──────────────────────
-  const vol = s.match(/(\d{2,3})\s*(?:litres?|l)\b/);
-  if (vol && /frigo|refrig|congelat/.test(s)) {
-    const v = parseInt(vol[1]);
+  const v = /frigo|refrig|congelat/.test(s) ? extraireLitres(s) : null;
+  if (v != null) {
     if (v >= 400) return 400_000;
     if (v >= 300) return 250_000;
     if (v >= 200) return 150_000;
@@ -695,17 +726,27 @@ function extraireEtat(s) {
   return null;
 }
 
-// ── Specs structurées extraites du titre brut scrapé (stockage, RAM,
-// couleur, état) — purement informatif pour l'affichage, ne touche jamais
-// au pipeline de matching produit (normaliserTitre / similarity trigram).
+// ── Specs structurées extraites du titre brut scrapé — purement informatif
+// pour l'affichage, ne touche jamais au pipeline de matching produit
+// (normaliserTitre / similarity trigram). Les attributs par catégorie
+// (BTU, litres, kg, pouces) sont conditionnés à un mot-clé de type détecté
+// dans le titre pour éviter les faux positifs entre catégories.
 function extraireSpecs(titre) {
   const s = ' ' + (titre || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'') + ' ';
   const couleur = COULEURS.find(c => c.re.test(s));
+  const estClim       = /climatiseur|split |clim\b/.test(s);
+  const estFrigo       = /frigo|refrig|congelat/.test(s);
+  const estLaveLinge   = /lave[- ]linge|machine.{0,6}laver/.test(s);
+  const estEcran       = /\b(tv|tele|television)\b|televiseur|ecran|moniteur/.test(s);
   return {
     stockage_go: extraireStockageGo(s),
     ram_go: extraireRamGo(s),
     couleur: couleur ? couleur.nom : null,
     etat: extraireEtat(s),
+    puissance_btu: estClim ? extraireBtuAffichage(s) : null,
+    capacite_litres: estFrigo ? extraireLitres(s) : null,
+    capacite_kg: estLaveLinge ? extraireKg(s) : null,
+    ecran_pouces: estEcran ? extrairePouce(s) : null,
   };
 }
 

@@ -25,6 +25,10 @@ interface OffreSpecs {
   ram_go?: number | null
   couleur?: string | null
   etat?: 'neuf' | 'occasion' | 'reconditionne' | null
+  puissance_btu?: number | null
+  capacite_litres?: number | null
+  capacite_kg?: number | null
+  ecran_pouces?: number | null
 }
 
 interface Offre {
@@ -178,13 +182,17 @@ export default async function ComparaisonPage({
                   ? valides.reduce((a, b) => (a.prix! <= b.prix! ? a : b))
                   : null
                 const specs = moinsChere?.specs
-                const aDesSpecs = specs && (specs.stockage_go || specs.ram_go || specs.couleur || specs.etat)
+                const aDesSpecs = specs && (specs.stockage_go || specs.ram_go || specs.couleur || specs.etat || specs.puissance_btu || specs.capacite_litres || specs.capacite_kg || specs.ecran_pouces)
                 return (
                   <td key={produit.id} className="comp-td">
                     {aDesSpecs ? (
                       <div className="offre-specs" style={{ justifyContent: 'center' }}>
+                        {specs!.ecran_pouces && <span className="offre-spec-badge">{specs!.ecran_pouces}″</span>}
                         {specs!.ram_go && <span className="offre-spec-badge">{specs!.ram_go} Go RAM</span>}
                         {specs!.stockage_go && <span className="offre-spec-badge">{specs!.stockage_go} Go</span>}
+                        {specs!.puissance_btu && <span className="offre-spec-badge">{specs!.puissance_btu.toLocaleString('fr-FR')} BTU</span>}
+                        {specs!.capacite_litres && <span className="offre-spec-badge">{specs!.capacite_litres} L</span>}
+                        {specs!.capacite_kg && <span className="offre-spec-badge">{specs!.capacite_kg} Kg</span>}
                         {specs!.couleur && <span className="offre-spec-badge">{specs!.couleur}</span>}
                         {specs!.etat && (
                           <span className={`offre-spec-badge offre-spec-badge--${specs!.etat}`}>
