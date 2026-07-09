@@ -92,8 +92,8 @@ export async function GET(
             )}
           </div>
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 10, marginTop: 12,
-            background: 'rgba(255,255,255,0.1)', borderRadius: 16, padding: '16px 20px', width: 'fit-content',
+            display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, alignSelf: 'flex-start',
+            background: 'rgba(255,255,255,0.1)', borderRadius: 16, padding: '16px 20px',
           }}>
             <span style={{ fontSize: 24 }}>🏪</span>
             <span style={{ fontSize: 26, fontWeight: 700, color: '#fff' }}>{boutiqueNom}</span>
