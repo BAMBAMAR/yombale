@@ -63,6 +63,10 @@ module.exports = async function migrateInline() {
       DO $$ BEGIN
         ALTER TABLE offres ADD COLUMN IF NOT EXISTS titre_marchand TEXT;
       EXCEPTION WHEN others THEN NULL; END $$;
+      -- Specs structurées extraites du titre (stockage_go, ram_go, couleur, etat) — affichage uniquement
+      DO $$ BEGIN
+        ALTER TABLE offres ADD COLUMN IF NOT EXISTS specs JSONB;
+      EXCEPTION WHEN others THEN NULL; END $$;
       CREATE INDEX IF NOT EXISTS idx_offres_produit ON offres(produit_id);
       CREATE INDEX IF NOT EXISTS idx_offres_prix    ON offres(prix);
       -- Index composite : couvre les filtres stock=true + tri par prix (toutes les queries offres)

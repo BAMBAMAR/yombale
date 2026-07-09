@@ -436,6 +436,56 @@ async function getPrixMedianCategorie(categorieId) {
   } catch { return null; }
 }
 
+// ── RAM/stockage explicitement labellisés (ex: "Ram 12Go - Memoire 128Go",
+// "128Go/RAM 8Go", "ROM 16Go") — cherchés en priorité car sans ambiguïté,
+// y compris quand RAM et stockage sont séparés par d'autres mots (écran, 5G…).
+// "gb" (anglicisme fréquent chez certains marchands) accepté comme "go".
+const RAM_LABEL_RE   = /\bram\s*:?\s*(\d+)\s*g[ob]\b/;
+const STOCKAGE_LABEL_RE = /\b(?:memoire|rom|stockage)\s*:?\s*(\d+)\s*g[ob]\b/;
+// Stockage en téraoctets (ex: "1To", "1 tb") — converti en Go (×1024).
+const STOCKAGE_TO_RE = /\b(\d+(?:[.,]\d+)?)\s*t[ob]\b/;
+// Motif ambigu "Xgo/gb [/ ]ram[/ ]Ygo/gb" (stockage et RAM de part et
+// d'autre du mot "ram", séparés par un espace ou un "/", ordre variable).
+const RAM_DOUBLE_RE = /(\d+)\s*g[ob]\s*[/]?\s*ram\s*[/]?\s*(\d+)\s*g[ob]/;
+
+// ── RAM (Go) déduite du titre — priorité au libellé explicite "Ram Xgo",
+// sinon motif ambigu ci-dessus : la RAM étant toujours ≤ au stockage, on
+// retient le plus petit des deux.
+// `s` doit déjà être en minuscules/normalisé (voir prixPlancher/extraireSpecs).
+function extraireRamGo(s) {
+  const label = s.match(RAM_LABEL_RE);
+  if (label) return parseInt(label[1]);
+  const ramDouble = s.match(RAM_DOUBLE_RE);
+  if (ramDouble) return Math.min(parseInt(ramDouble[1]), parseInt(ramDouble[2]));
+  const ram = s.match(/(\d+)\s*g[ob]\s*ram/);
+  return ram ? parseInt(ram[1]) : null;
+}
+
+// ── Stockage (Go) déduit du titre — priorité au libellé explicite
+// "Memoire/ROM/Stockage Xgo", puis "XTo" (téraoctets, ×1024), sinon motif
+// double ambigu (le plus grand des deux), sinon le premier "Xgo" non suivi
+// de "ram". Exclut cartes mémoire/clés USB/SSD et tablettes enfants
+// (stockage souvent gonflé).
+function extraireStockageGo(s) {
+  const label = s.match(STOCKAGE_LABEL_RE);
+  const to = !label && s.match(STOCKAGE_TO_RE);
+  let sto;
+  if (label) {
+    sto = [null, label[1]];
+  } else if (to) {
+    sto = [null, String(Math.round(parseFloat(to[1].replace(',', '.')) * 1024))];
+  } else {
+    const ramDouble = s.match(RAM_DOUBLE_RE);
+    sto = ramDouble
+      ? [null, String(Math.max(parseInt(ramDouble[1]), parseInt(ramDouble[2])))]
+      : s.match(/(\d+)\s*go(?!\s*ram)/);
+  }
+  if (!sto) return null;
+  if (/carte\s*(memoire|memory|sd|micro\s*sd)|cle\s*usb|disque dur|ssd|hdd/.test(s)) return null;
+  if (/tablette.{0,15}enfant|enfant.{0,15}tablette|oteeto/.test(s)) return null;
+  return parseInt(sto[1]);
+}
+
 // ── Prix plancher déduit du titre (taille écran, RAM, BTU, audio…) ─
 // Permet de détecter une division par 100/1000 même sur offre unique.
 function prixPlancher(titre) {
@@ -478,15 +528,8 @@ function prixPlancher(titre) {
   }
 
   // ── RAM smartphone/PC ──────────────────────────────────────────
-  // Motif ambigu "Xgo ram Ygo" (stockage et RAM de part et d'autre du mot
-  // "ram", ordre variable selon l'annonceur) : la RAM étant toujours ≤ au
-  // stockage, on retient le plus petit des deux nombres.
-  const ramDouble = s.match(/(\d+)\s*go\s+ram\s+(\d+)\s*go/);
-  const ram = ramDouble || s.match(/(\d+)\s*go\s+ram|ram\s*:?\s*(\d+)\s*go/);
-  if (ram) {
-    const r = ramDouble
-      ? Math.min(parseInt(ramDouble[1]), parseInt(ramDouble[2]))
-      : parseInt(ram[1] || ram[2]);
+  const r = extraireRamGo(s);
+  if (r != null) {
     if (r >= 12) return 150_000;
     if (r >= 8)  return  80_000;
     if (r >= 6)  return  50_000;
@@ -496,11 +539,8 @@ function prixPlancher(titre) {
   // ── Stockage seul (≥ 128 Go) — exclut cartes mémoire/clés USB/SSD et
   // tablettes enfants/entrée de gamme : leur stockage annoncé est souvent
   // gonflé (marketing/microSD) alors que l'appareil reste très bon marché ──
-  const sto = s.match(/(\d+)\s*go(?!\s*ram)/);
-  if (sto
-      && !/carte\s*(memoire|memory|sd|micro\s*sd)|cle\s*usb|disque dur|ssd|hdd/.test(s)
-      && !/tablette.{0,15}enfant|enfant.{0,15}tablette|oteeto/.test(s)) {
-    const st = parseInt(sto[1]);
+  const st = extraireStockageGo(s);
+  if (st != null) {
     if (st >= 512) return 200_000;
     if (st >= 256) return 100_000;
     if (st >= 128) return  50_000;
@@ -631,6 +671,44 @@ function extrairePouce(titre) {
   return m ? parseInt(m[1], 10) : null;
 }
 
+// ── Couleurs reconnues (FR + variantes EN fréquentes sur Jumia/CoinAfrique) ──
+const COULEURS = [
+  { re: /\b(noir|black)\b/,        nom: 'Noir' },
+  { re: /\b(blanc|white)\b/,       nom: 'Blanc' },
+  { re: /\b(gris|gray|grey)\b/,    nom: 'Gris' },
+  { re: /\b(bleu|blue)\b/,         nom: 'Bleu' },
+  { re: /\b(rouge|red)\b/,         nom: 'Rouge' },
+  { re: /\b(vert|green)\b/,        nom: 'Vert' },
+  { re: /\b(or|dore|gold)\b/,      nom: 'Or' },
+  { re: /\b(argent|silver)\b/,     nom: 'Argent' },
+  { re: /\b(rose|pink)\b/,         nom: 'Rose' },
+  { re: /\b(violet|purple)\b/,     nom: 'Violet' },
+  { re: /\b(jaune|yellow)\b/,      nom: 'Jaune' },
+];
+
+// ── État de l'appareil — même vocabulaire que normaliserTitre (ligne ~794),
+// mais capture la valeur ici au lieu de la supprimer du texte.
+function extraireEtat(s) {
+  if (/\breconditionn[ée]\b/.test(s)) return 'reconditionne';
+  if (/\bcomme neuf\b|\boccasion\b/.test(s)) return 'occasion';
+  if (/\bneuf\b/.test(s)) return 'neuf';
+  return null;
+}
+
+// ── Specs structurées extraites du titre brut scrapé (stockage, RAM,
+// couleur, état) — purement informatif pour l'affichage, ne touche jamais
+// au pipeline de matching produit (normaliserTitre / similarity trigram).
+function extraireSpecs(titre) {
+  const s = ' ' + (titre || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'') + ' ';
+  const couleur = COULEURS.find(c => c.re.test(s));
+  return {
+    stockage_go: extraireStockageGo(s),
+    ram_go: extraireRamGo(s),
+    couleur: couleur ? couleur.nom : null,
+    etat: extraireEtat(s),
+  };
+}
+
 async function sauvegarderProduits(items, marchandNom, siteUrl) {
   const marchandId=await getMarchandId(marchandNom,siteUrl);
   const stats={inseres:0,mis_a_jour:0,erreurs:0,filtres:0};
@@ -710,16 +788,18 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         [catDetectee, produitId]
       );
 
-      // Upsert offre avec titre du marchand
+      // Upsert offre avec titre du marchand + specs extraites du titre brut
+      const specs = extraireSpecs(item.titre);
       const {rows:offre}=await pool.query(
-        `INSERT INTO offres(produit_id,marchand_id,prix,url_achat,titre_marchand,scraped_at,stock)
-         VALUES($1,$2,$3,$4,$5,NOW(),true)
+        `INSERT INTO offres(produit_id,marchand_id,prix,url_achat,titre_marchand,specs,scraped_at,stock)
+         VALUES($1,$2,$3,$4,$5,$6,NOW(),true)
          ON CONFLICT(produit_id,marchand_id)
          DO UPDATE SET prix=EXCLUDED.prix, url_achat=EXCLUDED.url_achat,
                        titre_marchand=EXCLUDED.titre_marchand,
+                       specs=EXCLUDED.specs,
                        scraped_at=NOW(), stock=true
          RETURNING id`,
-        [produitId,marchandId,item.prix,item.url,item.titre]
+        [produitId,marchandId,item.prix,item.url,item.titre,JSON.stringify(specs)]
       );
       if(offre.length>0) await pool.query('INSERT INTO historique_prix(offre_id,prix) VALUES($1,$2)',[offre[0].id,item.prix]);
 
@@ -1066,4 +1146,4 @@ function demarrerScraping() {
   console.log('[SOCIAL]  ✅ Cron actif — publication bons plans chaque jour à 8h UTC');
 }
 
-module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher, nettoyerOffresExpirees };
+module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher, nettoyerOffresExpirees, extraireSpecs };

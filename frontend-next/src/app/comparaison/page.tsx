@@ -20,12 +20,19 @@ interface Produit {
   description: string | null
 }
 
+interface OffreSpecs {
+  stockage_go?: number | null
+  ram_go?: number | null
+  couleur?: string | null
+  etat?: 'neuf' | 'occasion' | 'reconditionne' | null
+}
+
 interface Offre {
   id: number
   prix: number | null
-  url_achat: string | null
   marchand_nom: string | null
   stock: boolean | null
+  specs?: OffreSpecs | null
 }
 
 interface ProduitAvecOffres {
@@ -162,6 +169,37 @@ export default async function ComparaisonPage({
               ))}
             </tr>
 
+            {/* Caractéristiques de l'offre la moins chère */}
+            <tr>
+              <td className="comp-td-label">Caractéristiques</td>
+              {items.map(({ produit, offres }) => {
+                const valides = offres.filter(o => o.prix && o.prix > 0)
+                const moinsChere = valides.length
+                  ? valides.reduce((a, b) => (a.prix! <= b.prix! ? a : b))
+                  : null
+                const specs = moinsChere?.specs
+                const aDesSpecs = specs && (specs.stockage_go || specs.ram_go || specs.couleur || specs.etat)
+                return (
+                  <td key={produit.id} className="comp-td">
+                    {aDesSpecs ? (
+                      <div className="offre-specs" style={{ justifyContent: 'center' }}>
+                        {specs!.ram_go && <span className="offre-spec-badge">{specs!.ram_go} Go RAM</span>}
+                        {specs!.stockage_go && <span className="offre-spec-badge">{specs!.stockage_go} Go</span>}
+                        {specs!.couleur && <span className="offre-spec-badge">{specs!.couleur}</span>}
+                        {specs!.etat && (
+                          <span className={`offre-spec-badge offre-spec-badge--${specs!.etat}`}>
+                            {specs!.etat === 'neuf' ? 'Neuf' : specs!.etat === 'occasion' ? 'Occasion' : 'Reconditionné'}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span style={{ color: 'var(--text3)' }}>—</span>
+                    )}
+                  </td>
+                )
+              })}
+            </tr>
+
             {/* Specs communes */}
             {SPECS.map(spec => (
               <tr key={spec.key}>
@@ -204,16 +242,9 @@ export default async function ComparaisonPage({
                         <div key={o.id} className="comp-mini-offre">
                           <span className="comp-mini-marchand">{o.marchand_nom ?? 'Vendeur'}</span>
                           <span className="comp-mini-prix">{fcfa(o.prix)}</span>
-                          {o.url_achat && (
-                            <a
-                              href={o.url_achat}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="comp-mini-btn"
-                            >
-                              Voir
-                            </a>
-                          )}
+                          <Link href={`/produit/${produit.id}`} className="comp-mini-btn">
+                            Voir
+                          </Link>
                         </div>
                       ))
                     )}

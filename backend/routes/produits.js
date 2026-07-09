@@ -240,6 +240,7 @@ router.get('/:id/offres', checkUUID, async (req, res) => {
 
     // Enrichir chaque offre avec titre_affiche extrait depuis l'URL
     rows.forEach(r => {
+      r.specs = r.specs || {};
       if (r.titre_marchand) {
         r.titre_affiche = r.titre_marchand;
       } else if (r.url_achat && r.url_achat !== '#') {

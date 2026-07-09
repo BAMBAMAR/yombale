@@ -71,6 +71,8 @@ async function migrate() {
       );
       -- Ajouter titre_marchand si manquant (migration idempotente)
       ALTER TABLE offres ADD COLUMN IF NOT EXISTS titre_marchand TEXT;
+      -- Specs structurées extraites du titre (stockage_go, ram_go, couleur, etat) — affichage uniquement
+      ALTER TABLE offres ADD COLUMN IF NOT EXISTS specs JSONB;
 
       CREATE TABLE IF NOT EXISTS historique_prix (
         id       BIGSERIAL PRIMARY KEY,

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import ExternalImg from '@/components/ExternalImg';
-import { fcfa, escapeHtml } from '@/lib/format';
+import { fcfa, escapeHtml, tempsRelatif } from '@/lib/format';
 import { getOptionalSession } from '@/lib/dal';
 import AlertePrix from '@/app/AlertePrix';
 import TrackRecent from './TrackRecent';
@@ -23,15 +23,23 @@ interface Produit {
   image_url: string | null;
 }
 
+interface OffreSpecs {
+  stockage_go?: number | null;
+  ram_go?: number | null;
+  couleur?: string | null;
+  etat?: 'neuf' | 'occasion' | 'reconditionne' | null;
+}
+
 interface Offre {
   id: number;
   prix: number | null;
   url_achat: string | null;
   site_url: string | null;
   stock: boolean | null;
-  date_maj: string | null;
+  scraped_at: string | null;
   marchand_nom: string | null;
   titre_affiche: string | null;
+  specs?: OffreSpecs | null;
   _suspect?: boolean;
 }
 
@@ -462,7 +470,22 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                             }
                           </p>
                           {o.titre_affiche && (
-                            <p className="offre-ref">{o.titre_affiche.slice(0, 60)}{o.titre_affiche.length > 60 ? '…' : ''}</p>
+                            <p className="offre-ref" title={o.titre_affiche}>{o.titre_affiche.slice(0, 60)}{o.titre_affiche.length > 60 ? '…' : ''}</p>
+                          )}
+                          {o.specs && (o.specs.stockage_go || o.specs.ram_go || o.specs.couleur || o.specs.etat) && (
+                            <div className="offre-specs">
+                              {o.specs.ram_go && <span className="offre-spec-badge">{o.specs.ram_go} Go RAM</span>}
+                              {o.specs.stockage_go && <span className="offre-spec-badge">{o.specs.stockage_go} Go</span>}
+                              {o.specs.couleur && <span className="offre-spec-badge">{o.specs.couleur}</span>}
+                              {o.specs.etat && (
+                                <span className={`offre-spec-badge offre-spec-badge--${o.specs.etat}`}>
+                                  {o.specs.etat === 'neuf' ? 'Neuf' : o.specs.etat === 'occasion' ? 'Occasion' : 'Reconditionné'}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {tempsRelatif(o.scraped_at) && (
+                            <p className="offre-fraicheur">Mis à jour {tempsRelatif(o.scraped_at)}</p>
                           )}
                           {ecart > 0 && <p className="offre-ecart">+{fcfa(ecart)} de plus que le moins cher</p>}
                         </div>
