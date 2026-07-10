@@ -4,8 +4,8 @@
   "description":      "Comparateur de prix au Senegal",
   "start_url":        "/",
   "display":          "standalone",
-  "background_color": "#f0f4ff",
-  "theme_color":      "#1d4ed8",
+  "background_color": "#F8F5F0",
+  "theme_color":      "#C75B00",
   "lang":             "fr",
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
