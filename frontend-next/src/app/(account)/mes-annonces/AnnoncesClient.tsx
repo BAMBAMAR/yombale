@@ -188,7 +188,7 @@ export default function AnnoncesClient({
   waveActif: boolean
 }) {
   return (
-    <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 760 }}>
+    <div>
       {created && (
         <div className="annonce-created-banner">
           ✅ Annonce créée avec succès !
@@ -201,14 +201,9 @@ export default function AnnoncesClient({
       )}
 
       <div className="mes-annonces-header">
-        <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--navy)', margin: '0 0 4px' }}>
-            Mes <span style={{ color: 'var(--accent)' }}>annonces</span>
-          </h1>
-          <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-            {annonces.length} annonce{annonces.length !== 1 ? 's' : ''}
-          </p>
-        </div>
+        <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
+          {annonces.length} annonce{annonces.length !== 1 ? 's' : ''}
+        </p>
         <Link href="/deposer-annonce" className="annonce-new-btn">
           + Publier une annonce
         </Link>
