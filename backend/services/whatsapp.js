@@ -251,7 +251,7 @@ async function sendFiche(type, id, phone) {
 
   if (type === 'produit') {
     const r = await pool.query(
-      'SELECT p.*, b.slug AS boutique_slug FROM boutique_produits p JOIN boutiques b ON b.id=p.boutique_id WHERE p.id=$1',
+      'SELECT p.*, b.slug AS boutique_slug, b.nom AS boutique_nom FROM boutique_produits p JOIN boutiques b ON b.id=p.boutique_id WHERE p.id=$1',
       [id]
     );
     const p = r.rows[0];
@@ -259,7 +259,7 @@ async function sendFiche(type, id, phone) {
     return sendWhatsAppProduct(
       phone,
       `nopalou-produit-${p.id}`,
-      `${p.nom} — ${prixFmt(p.prix)}\n\n👉 ${SITE}/boutiques/${p.boutique_slug}/produits/${p.id}`
+      `${p.nom} — ${prixFmt(p.prix)}\n📍 *${p.boutique_nom}*\n\n👉 ${SITE}/boutiques/${p.boutique_slug}/produits/${p.id}`
     );
   }
 

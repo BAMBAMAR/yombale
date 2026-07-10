@@ -5341,6 +5341,89 @@ a {
   overflow-y: auto;
 }
 
+/* ── Dashboard compte utilisateur (/compte/*) ── */
+.account-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  align-items: start;
+  padding: 24px 20px 80px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.account-sidebar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  position: sticky;
+  top: 84px; /* sous la navbar sticky (62px) + marge */
+}
+
+.account-sidebar-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.account-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.account-nav-group {
+  margin-bottom: 18px;
+}
+
+.account-nav-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text3);
+  padding: 0 10px 6px;
+}
+
+.account-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  text-decoration: none;
+  border-left: 3px solid transparent;
+}
+
+.account-nav-link:hover {
+  background: var(--bg);
+}
+
+.account-nav-link--active {
+  background: #FFF3E8;
+  border-left-color: var(--accent);
+  color: var(--text1);
+}
+
+.account-main {
+  min-width: 0;
+}
+
 /* ── Admin content (Sprint 12) ─────────────────────────────────── */
 .admin-content {
   padding: 36px 40px;
@@ -7181,6 +7264,25 @@ a {
   .admin-annonce-actions-col { border-left: none; border-top: 1px solid var(--border); grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; }
   .admin-annonce-img { width: 90px; min-height: 80px; }
   .admin-annonce-img--vide { width: 90px; }
+}
+
+/* ── Dashboard compte responsive ───────────────────────────────── */
+@media (max-width: 900px) {
+  .account-layout {
+    grid-template-columns: 1fr;
+  }
+  .account-sidebar {
+    position: static;
+  }
+  .account-sidebar > div:not(.account-sidebar-identity) {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .account-nav-group-label {
+    display: none;
+  }
 }
 
 /* ── Admin Télécom — table + modal ─────────────────────────────── */

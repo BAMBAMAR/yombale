@@ -141,7 +141,7 @@ async function searchContent(query) {
   const r = await pool.query(
     `(
       SELECT 'marketplace' AS type, id::text, nom AS titre, prix_min AS prix,
-             image_url AS photo, NULL::text AS boutique_slug, NULL::text AS ville
+             image_url AS photo, NULL::text AS boutique_slug, NULL::text AS boutique_nom, NULL::text AS ville
       FROM produits
       WHERE to_tsvector('french', nom || ' ' || COALESCE(description,''))
             @@ plainto_tsquery('french', $1)
@@ -150,7 +150,7 @@ async function searchContent(query) {
     UNION ALL
     (
       SELECT 'produit', p.id::text, p.nom AS titre, p.prix,
-             p.images[1] AS photo, b.slug AS boutique_slug, NULL AS ville
+             p.images[1] AS photo, b.slug AS boutique_slug, b.nom AS boutique_nom, NULL AS ville
       FROM boutique_produits p
       JOIN boutiques b ON b.id = p.boutique_id
       WHERE to_tsvector('french', p.nom || ' ' || COALESCE(p.description,''))
@@ -159,7 +159,7 @@ async function searchContent(query) {
     )
     UNION ALL
     (
-      SELECT 'annonce', id::text, titre, prix, (photos->>0), NULL::text, NULL::text
+      SELECT 'annonce', id::text, titre, prix, (photos->>0), NULL::text, NULL::text, NULL::text
       FROM annonces_classifiees
       WHERE actif=true AND supprimee=false AND jsonb_array_length(photos) > 0
         AND to_tsvector('french', titre || ' ' || COALESCE(description,''))
@@ -168,7 +168,7 @@ async function searchContent(query) {
     )
     UNION ALL
     (
-      SELECT 'immo', id::text, titre, prix, (photos->>0), NULL::text, ville
+      SELECT 'immo', id::text, titre, prix, (photos->>0), NULL::text, NULL::text, ville
       FROM annonces_immo
       WHERE actif=true AND jsonb_array_length(photos) > 0
         AND to_tsvector('french', titre || ' ' || COALESCE(description,''))
@@ -401,9 +401,9 @@ async function handleSearchQuery(phone, query) {
     await sendWhatsAppProduct(
       phone,
       `nopalou-produit-${p.id}`,
-      `${p.titre} — ${prixFmt(p.prix)}`
+      `${p.titre} — ${prixFmt(p.prix)}\n📍 ${p.boutique_nom}`
     ).catch(async () => {
-      await sendWhatsAppText(phone, `• *${p.titre}* — ${prixFmt(p.prix)}\n👉 ${SITE}/boutiques/${p.boutique_slug}/produits/${p.id}`);
+      await sendWhatsAppText(phone, `• *${p.titre}* — ${prixFmt(p.prix)}\n📍 *${p.boutique_nom}*\n👉 ${SITE}/boutiques/${p.boutique_slug}/produits/${p.id}`);
     });
   }
 
@@ -435,4 +435,4 @@ async function handleSearchQuery(phone, query) {
   await setSession(phone, 'MENU', {});
 }
 
-module.exports = { handleIncoming, cleanupOldMessages, resetInactiveSessions };
+module.exports = { handleIncoming, cleanupOldMessages, resetInactiveSessions, handleSearchQuery };

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { backendFetch } from '@/lib/backend-fetch'
 import ModifierAnnonceForm from './ModifierAnnonceForm'
 
@@ -41,11 +42,11 @@ export default async function ModifierAnnoncePage({
   if (!annonce) redirect('/mes-annonces')
 
   return (
-    <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 680 }}>
+    <div>
       <div style={{ marginBottom: '1.5rem' }}>
-        <a href="/mes-annonces" style={{ fontSize: 14, color: 'var(--accent)', textDecoration: 'none' }}>
-          ← Mes annonces
-        </a>
+        <Link href="/mes-annonces" style={{ fontSize: 14, color: 'var(--accent)', textDecoration: 'none' }}>
+          ← Retour à mes annonces
+        </Link>
         <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--navy)', margin: '8px 0 4px' }}>
           Modifier l&apos;annonce
         </h1>

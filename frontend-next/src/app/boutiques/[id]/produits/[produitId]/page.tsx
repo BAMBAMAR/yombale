@@ -6,6 +6,7 @@ import { cloudinaryHQ } from '@/lib/cloudinary'
 import { fcfa } from '@/lib/format'
 import GalerieClient from './GalerieClient'
 import ProduitCTA from './ProduitCTA'
+import BoutonPartager from '@/components/BoutonPartager'
 
 
 interface ProduitDetail {
@@ -212,6 +213,12 @@ export default async function FicheProduitPage(
             enStock={p.en_stock}
             waUrl={waUrl}
             telUrl={telUrl}
+          />
+
+          <BoutonPartager
+            lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${params.id}/produits/${params.produitId}`}
+            message={`${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${params.id}/produits/${params.produitId}`}
+            lienVisuel={`/assets/produit-boutique/${params.produitId}/story?boutiqueId=${params.id}`}
           />
 
         </div>

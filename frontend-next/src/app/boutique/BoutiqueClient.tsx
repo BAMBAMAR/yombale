@@ -11,6 +11,7 @@ import { initierWaveBoutiqueSponsoring } from '@/app/actions/paiement'
 import { fcfa } from '@/lib/format'
 import type { ActionState } from '@/lib/backend-fetch'
 import ModalPaiementManuel from '@/components/ModalPaiementManuel'
+import BoutonPartager from '@/components/BoutonPartager'
 
 const CATEGORIES = [
   { value: 'smartphones',  label: 'Smartphones' },
@@ -57,6 +58,8 @@ interface Produit {
   en_stock: boolean
   categorie: string | null
   caracteristiques: Record<string, string> | null
+  whatsapp_sync_statut: 'synchronise' | 'en_attente' | 'echec' | null
+  whatsapp_sync_erreur: string | null
 }
 
 // ── Caractéristiques par catégorie ────────────────────────────────────────────
@@ -405,10 +408,29 @@ const PRODUIT_CATEGORIES = [
   { value: 'autre',        label: '📦 Autre' },
 ]
 
-function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: {
+const NOMS_PAR_DEFAUT: Record<string, string> = {
+  'smartphones':  'Smartphone — à modifier',
+  'informatique': 'Article informatique — à modifier',
+  'tv-electro':   'TV / Électroménager — à modifier',
+  'mode':         'Article mode — à modifier',
+  'maison':       'Article maison — à modifier',
+  'auto-moto':    'Véhicule — à modifier',
+  'jeux':         'Jeu / Console — à modifier',
+  'alimentation': 'Produit alimentaire — à modifier',
+  'beaute':       'Produit beauté — à modifier',
+  'services':     'Service — à modifier',
+  'autre':        'Produit — à modifier',
+}
+
+export function nomParDefautPourCategorie(categorie: string): string {
+  return NOMS_PAR_DEFAUT[categorie] ?? 'Produit — à modifier'
+}
+
+function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille', onCancel, onSuccess }: {
   boutiqueId: string
   boutiqueCat?: string | null
   produit?: Produit
+  modeInitial?: 'rapide' | 'detaille'
   onCancel: () => void
   onSuccess: () => void
 }) {
@@ -421,6 +443,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: 
   const [carac, setCarac] = useState<Record<string, string>>(
     produit?.caracteristiques ?? {}
   )
+  const [modeRapide, setModeRapide] = useState(modeInitial === 'rapide' && !produit)
 
   useEffect(() => { if (state.success) onSuccess() }, [state.success])
 
@@ -428,7 +451,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: 
     setCarac(prev => ({ ...prev, [k]: v }))
   }
 
-  const hasCaracFields = cat && cat !== 'autre'
+  const hasCaracFields = cat && cat !== 'autre' && !modeRapide
 
   return (
     <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -460,10 +483,14 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: 
       </div>
 
       {/* Nom */}
-      <div>
-        <label style={labelStyle}>Nom du produit <span style={{ color: '#dc2626' }}>*</span></label>
-        <input name="nom" required maxLength={300} defaultValue={produit?.nom} style={inputStyle} placeholder="Ex: iPhone 14 Pro 256 Go" />
-      </div>
+      {modeRapide ? (
+        <input type="hidden" name="nom" value={nomParDefautPourCategorie(cat)} />
+      ) : (
+        <div>
+          <label style={labelStyle}>Nom du produit <span style={{ color: '#dc2626' }}>*</span></label>
+          <input name="nom" required maxLength={300} defaultValue={produit?.nom ?? (modeInitial === 'rapide' ? nomParDefautPourCategorie(cat) : undefined)} style={inputStyle} placeholder="Ex: iPhone 14 Pro 256 Go" />
+        </div>
+      )}
 
       {/* Caractéristiques dynamiques par catégorie */}
       {hasCaracFields && (
@@ -476,21 +503,25 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: 
       )}
 
       {/* Description */}
-      <div>
-        <label style={labelStyle}>Description</label>
-        <textarea name="description" rows={3} defaultValue={produit?.description ?? ''} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Détails supplémentaires, accessoires inclus, garantie…" />
-      </div>
+      {!modeRapide && (
+        <div>
+          <label style={labelStyle}>Description</label>
+          <textarea name="description" rows={3} defaultValue={produit?.description ?? ''} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Détails supplémentaires, accessoires inclus, garantie…" />
+        </div>
+      )}
 
       {/* Prix */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: modeRapide ? '1fr' : '1fr 1fr', gap: 12 }}>
         <div>
-          <label style={labelStyle}>Prix (FCFA)</label>
-          <input name="prix" type="number" min={0} defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 350 000" />
+          <label style={labelStyle}>Prix (FCFA) <span style={{ color: '#dc2626' }}>*</span></label>
+          <input name="prix" type="number" min={0} required defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 350 000" />
         </div>
-        <div>
-          <label style={labelStyle}>Prix barré <span style={{ fontSize: 11, color: '#9ca3af' }}>(ancien prix)</span></label>
-          <input name="prix_barre" type="number" min={0} defaultValue={produit?.prix_barre ?? ''} style={inputStyle} placeholder="Ex: 400 000" />
-        </div>
+        {!modeRapide && (
+          <div>
+            <label style={labelStyle}>Prix barré <span style={{ fontSize: 11, color: '#9ca3af' }}>(ancien prix)</span></label>
+            <input name="prix_barre" type="number" min={0} defaultValue={produit?.prix_barre ?? ''} style={inputStyle} placeholder="Ex: 400 000" />
+          </div>
+        )}
       </div>
 
       {/* Photo */}
@@ -505,23 +536,35 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: 
         )}
       </div>
 
-      {/* En stock toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <input type="hidden" name="en_stock" value={enStock ? 'true' : 'false'} />
-        <button type="button" onClick={() => setEnStock(!enStock)} style={{
-          width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
-          background: enStock ? '#16a34a' : '#d1d5db', transition: 'background .2s', position: 'relative',
-        }}>
-          <span style={{
-            position: 'absolute', top: 3, left: enStock ? 20 : 4,
-            width: 16, height: 16, borderRadius: '50%', background: '#fff',
-            transition: 'left .2s', display: 'block',
-          }} />
+      {modeRapide && (
+        <button
+          type="button"
+          onClick={() => setModeRapide(false)}
+          style={{ background: 'none', border: 'none', color: '#1d4ed8', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: 0 }}
+        >
+          Voir tous les champs (description, caractéristiques…)
         </button>
-        <span style={{ fontSize: 13, color: '#374151' }}>
-          {enStock ? '✅ En stock' : '❌ Rupture de stock'}
-        </span>
-      </div>
+      )}
+
+      {/* En stock toggle */}
+      <input type="hidden" name="en_stock" value={enStock ? 'true' : 'false'} />
+      {!modeRapide && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button type="button" onClick={() => setEnStock(!enStock)} style={{
+            width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
+            background: enStock ? '#16a34a' : '#d1d5db', transition: 'background .2s', position: 'relative',
+          }}>
+            <span style={{
+              position: 'absolute', top: 3, left: enStock ? 20 : 4,
+              width: 16, height: 16, borderRadius: '50%', background: '#fff',
+              transition: 'left .2s', display: 'block',
+            }} />
+          </button>
+          <span style={{ fontSize: 13, color: '#374151' }}>
+            {enStock ? '✅ En stock' : '❌ Rupture de stock'}
+          </span>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 12 }}>
         <SubmitButton label={produit ? 'Enregistrer' : 'Ajouter le produit'} />
@@ -536,14 +579,54 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, onCancel, onSuccess }: 
   )
 }
 
+// ── Marketing / partage de la boutique ────────────────────────────────────────
+
+function MarketingBoutique({ boutique }: { boutique: Boutique }) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+  const lienBoutique = `${siteUrl}/boutiques/${boutique.slug || boutique.id}`
+  const messageBoutique = `Découvrez ${boutique.nom} sur Nopalou !\n\n${lienBoutique}`
+
+  return (
+    <div>
+      <p style={{ margin: '0 0 16px', fontSize: 13, color: '#6b7280' }}>
+        Partagez votre boutique sur WhatsApp, Instagram ou Facebook pour attirer plus de clients.
+      </p>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 16,
+        background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '20px',
+      }}>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {boutique.logo_url
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={boutique.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : <span style={{ fontSize: 28 }}>🏪</span>
+          }
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>{boutique.nom}</p>
+          <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{lienBoutique}</p>
+        </div>
+        <BoutonPartager
+          lien={lienBoutique}
+          message={messageBoutique}
+          lienVisuel={`/assets/boutique/${boutique.id}/story`}
+        />
+      </div>
+    </div>
+  )
+}
+
 // ── Gestionnaire de catalogue produits ───────────────────────────────────────
 
 function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutique; planActif: 'pro' | 'business' | null; prixPro: number }) {
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
-  const [mode, setMode] = useState<'list' | 'create' | { editing: Produit }>('list')
+  const [mode, setMode] = useState<'list' | { creating: 'rapide' | 'detaille' } | { editing: Produit }>('list')
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [rechercheTexte, setRechercheTexte] = useState('')
+  const [filtreStatut, setFiltreStatut] = useState<'tous' | 'synchronise' | 'en_attente' | 'echec'>('tous')
+  const [filtreCategorie, setFiltreCategorie] = useState<string>('toutes')
   const [, startTransition] = useTransition()
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
@@ -583,17 +666,28 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
 
   const quota = planActif === 'business' ? '∞' : '50'
 
-  if (mode === 'create' || (typeof mode === 'object' && 'editing' in mode)) {
+  const categoriesDisponibles = Array.from(new Set(produits.map(p => p.categorie).filter(Boolean))) as string[]
+
+  const produitsFiltres = produits.filter(p => {
+    if (rechercheTexte.trim() && !p.nom.toLowerCase().includes(rechercheTexte.trim().toLowerCase())) return false
+    if (filtreStatut !== 'tous' && (p.whatsapp_sync_statut || 'en_attente') !== filtreStatut) return false
+    if (filtreCategorie !== 'toutes' && p.categorie !== filtreCategorie) return false
+    return true
+  })
+
+  if (typeof mode === 'object' && ('creating' in mode || 'editing' in mode)) {
+    const editing = 'editing' in mode ? mode.editing : undefined
     return (
       <div style={{ maxWidth: 560 }}>
         <ProduitForm
           boutiqueId={boutique.id}
           boutiqueCat={boutique.categorie}
-          produit={typeof mode === 'object' ? mode.editing : undefined}
+          produit={editing}
+          modeInitial={'creating' in mode ? mode.creating : 'detaille'}
           onCancel={() => setMode('list')}
           onSuccess={() => {
             setMode('list')
-            setSuccessMsg(typeof mode === 'object' ? '✅ Produit modifié !' : '✅ Produit ajouté !')
+            setSuccessMsg(editing ? '✅ Produit modifié !' : '✅ Produit ajouté !')
             loadProduits()
           }}
         />
@@ -603,20 +697,63 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
           {produits.length} produit{produits.length !== 1 ? 's' : ''} / {quota} max
         </p>
-        <button
-          onClick={() => setMode('create')}
-          style={{
-            background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8,
-            padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-          }}
-        >
-          + Ajouter un produit
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => setMode({ creating: 'rapide' })}
+            style={{
+              background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8,
+              padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            }}
+          >
+            ⚡ Ajout rapide
+          </button>
+          <button
+            onClick={() => setMode({ creating: 'detaille' })}
+            style={{
+              background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8,
+              padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            }}
+          >
+            Ajout détaillé
+          </button>
+        </div>
       </div>
+
+      {produits.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <input
+            type="text"
+            placeholder="Rechercher un produit…"
+            value={rechercheTexte}
+            onChange={e => setRechercheTexte(e.target.value)}
+            style={{ flex: '1 1 180px', padding: '7px 10px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 8 }}
+          />
+          <select
+            value={filtreStatut}
+            onChange={e => setFiltreStatut(e.target.value as typeof filtreStatut)}
+            style={{ padding: '7px 10px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 8 }}
+          >
+            <option value="tous">Tous les statuts</option>
+            <option value="synchronise">✓ Sur WhatsApp</option>
+            <option value="en_attente">⏳ En attente</option>
+            <option value="echec">✗ Échec</option>
+          </select>
+          {categoriesDisponibles.length > 1 && (
+            <select
+              value={filtreCategorie}
+              onChange={e => setFiltreCategorie(e.target.value)}
+              style={{ padding: '7px 10px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 8 }}
+            >
+              <option value="toutes">Toutes les catégories</option>
+              {categoriesDisponibles.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
+        </div>
+      )}
 
       {successMsg && (
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '10px 14px', color: '#16a34a', fontSize: 14, marginBottom: 12, fontWeight: 600 }}>
@@ -636,7 +773,7 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
           <span style={{ fontSize: 36, display: 'block', marginBottom: 12 }}>📦</span>
           <p style={{ color: '#6b7280', margin: '0 0 16px' }}>Aucun produit dans votre catalogue.</p>
           <button
-            onClick={() => setMode('create')}
+            onClick={() => setMode({ creating: 'rapide' })}
             style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 700, cursor: 'pointer' }}
           >
             Ajouter mon premier produit
@@ -644,7 +781,7 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {produits.map(p => (
+          {produitsFiltres.map(p => (
             <div key={p.id} style={{
               display: 'flex', gap: 12, alignItems: 'center',
               background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px',
@@ -660,7 +797,7 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
               {/* Infos */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{p.nom}</p>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2, flexWrap: 'wrap' }}>
                   {p.prix && <span style={{ fontSize: 13, color: '#C75B00', fontWeight: 700 }}>{fcfa(p.prix)}</span>}
                   {p.prix_barre && <span style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'line-through' }}>{fcfa(p.prix_barre)}</span>}
                   <span style={{
@@ -670,10 +807,33 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
                   }}>
                     {p.en_stock ? 'En stock' : 'Rupture'}
                   </span>
+                  <span
+                    title={p.whatsapp_sync_statut === 'echec' ? (p.whatsapp_sync_erreur || 'Échec de synchronisation') : undefined}
+                    style={{
+                      fontSize: 11, padding: '1px 6px', borderRadius: 20, fontWeight: 700,
+                      background: p.whatsapp_sync_statut === 'synchronise' ? '#dcfce7' : p.whatsapp_sync_statut === 'echec' ? '#fee2e2' : '#f1f5f9',
+                      color: p.whatsapp_sync_statut === 'synchronise' ? '#16a34a' : p.whatsapp_sync_statut === 'echec' ? '#dc2626' : '#64748b',
+                    }}
+                  >
+                    {p.whatsapp_sync_statut === 'synchronise' ? '✓ Sur WhatsApp' : p.whatsapp_sync_statut === 'echec' ? '✗ Échec' : '⏳ En attente'}
+                  </span>
+                  {p.nom.endsWith('— à modifier') && (
+                    <span style={{
+                      fontSize: 11, padding: '1px 6px', borderRadius: 20,
+                      background: '#fef3c7', color: '#b45309', fontWeight: 700,
+                    }}>
+                      ✏️ À compléter
+                    </span>
+                  )}
                 </div>
               </div>
               {/* Actions */}
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+                <BoutonPartager
+                  lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
+                  message={`${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
+                  lienVisuel={`/assets/produit-boutique/${p.id}/story?boutiqueId=${boutique.id}`}
+                />
                 <button
                   onClick={() => setMode({ editing: p })}
                   style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
@@ -817,12 +977,13 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
 
 // ── Vue de gestion d'une boutique — layout sidebar ────────────────────────────
 
-const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos'; icon: string; label: string }[] = [
-  { key: 'produits',  icon: '🛍',  label: 'Catalogue' },
-  { key: 'commandes', icon: '📋',  label: 'Commandes' },
-  { key: 'compta',    icon: '💰',  label: 'Comptabilité' },
-  { key: 'analytics', icon: '📊',  label: 'Analytics' },
-  { key: 'infos',     icon: '⚙️', label: 'Paramètres' },
+const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing'; icon: string; label: string }[] = [
+  { key: 'produits',   icon: '🛍',  label: 'Catalogue' },
+  { key: 'commandes',  icon: '📋',  label: 'Commandes' },
+  { key: 'compta',     icon: '💰',  label: 'Comptabilité' },
+  { key: 'analytics',  icon: '📊',  label: 'Analytics' },
+  { key: 'infos',      icon: '⚙️', label: 'Paramètres' },
+  { key: 'marketing',  icon: '📣',  label: 'Marketing' },
 ]
 
 function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
@@ -832,7 +993,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
   onEdit: () => void
   prixPro: number
 }) {
-  const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'analytics' | 'infos'>('produits')
+  const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing'>('produits')
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
   const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#6b7280'
@@ -950,13 +1111,14 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
         <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
           <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, margin: 0, color: '#111' }}>
             {NAV_ITEMS.find(i => i.key === tab)?.icon}{' '}
-            {{ produits: 'Catalogue produits', commandes: 'Commandes', compta: 'Comptabilité', analytics: 'Analytics', infos: 'Paramètres boutique' }[tab]}
+            {{ produits: 'Catalogue produits', commandes: 'Commandes', compta: 'Comptabilité', analytics: 'Analytics', infos: 'Paramètres boutique', marketing: 'Marketing' }[tab]}
           </h2>
           {tab === 'produits'  && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Gérez vos produits, stocks et tarifs.</p>}
           {tab === 'commandes' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Commandes reçues — web et WhatsApp. Mettez à jour les statuts.</p>}
           {tab === 'compta'    && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Ventes, dépenses, stock et zones de livraison.</p>}
           {tab === 'analytics' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Vues, clics et performances de votre boutique.</p>}
           {tab === 'infos'     && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Modifiez les informations, contacts et photos.</p>}
+          {tab === 'marketing' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Partagez votre boutique pour attirer plus de clients.</p>}
         </div>
 
         {tab === 'produits'  && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} />}
@@ -968,6 +1130,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
             <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={onEdit} />
           </div>
         )}
+        {tab === 'marketing' && <MarketingBoutique boutique={boutique} />}
       </main>
     </div>
     </>

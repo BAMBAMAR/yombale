@@ -56,14 +56,11 @@ export default async function MesAnnoncesImmoPage({
   const justUpdated = params.updated === '1'
 
   return (
-    <div className="page-container" style={{ paddingTop: '2rem' }}>
+    <div>
       <div className="mes-immo-header">
-        <div>
-          <h1 className="mes-immo-titre">Mes annonces immobilières</h1>
-          <p style={{ fontSize: 14, color: 'var(--text2)', marginTop: 4 }}>
-            {annonces.length} annonce{annonces.length !== 1 ? 's' : ''}
-          </p>
-        </div>
+        <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
+          {annonces.length} annonce{annonces.length !== 1 ? 's' : ''}
+        </p>
         <Link href="/deposer-immo" className="deposer-btn">
           + Publier un bien
         </Link>

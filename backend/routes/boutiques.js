@@ -213,7 +213,8 @@ router.get('/:id/produits', async (req, res) => {
     const isUUID = /^[0-9a-f-]{36}$/i.test(param);
     const condition = isUUID ? 'p.boutique_id=$1' : 'b.slug=$1';
     const { rows } = await pool.query(
-      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite
+      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite,
+              p.whatsapp_sync_statut, p.whatsapp_sync_erreur
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
        WHERE ${condition} AND b.actif=true

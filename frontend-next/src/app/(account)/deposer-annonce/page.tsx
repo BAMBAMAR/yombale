@@ -17,16 +17,7 @@ export default async function DeposerAnnoncePage() {
   }
 
   return (
-    <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 720 }}>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--navy)', margin: '0 0 6px' }}>
-          Publier une <span style={{ color: 'var(--accent)' }}>annonce</span>
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-          Publiez gratuitement sur Nopalou — les 2 premières annonces sont publiées instantanément.
-        </p>
-      </div>
-
+    <div>
       <FormulaireAnnonce email={session.email ?? ''} />
 
       <p style={{ marginTop: 24, fontSize: 12, color: 'var(--text3)', textAlign: 'center' }}>

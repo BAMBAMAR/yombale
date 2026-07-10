@@ -678,5 +678,15 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table api_keys OK');
   } catch (e) { console.warn('[MIGRATE] api_keys:', e.message); }
 
+  // Statut de synchro catalogue Meta Commerce — visible au vendeur dans le dashboard
+  const colonnesSyncCatalogue = [
+    `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS whatsapp_sync_statut VARCHAR(20) DEFAULT 'en_attente'`,
+    `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS whatsapp_sync_erreur TEXT`,
+  ];
+  for (const sql of colonnesSyncCatalogue) {
+    try { await pool.query(sql); }
+    catch (e) { console.warn('[MIGRATE] sync_catalogue:', e.message); }
+  }
+
   try { await pool.end(); } catch (_) {}
 };
