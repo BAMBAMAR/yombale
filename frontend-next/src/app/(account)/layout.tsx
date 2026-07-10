@@ -1,8 +1,13 @@
-import { verifySession } from '@/lib/dal'
+import { getOptionalSession } from '@/lib/dal'
 import AccountNavLinks from './AccountNavLinks'
 
+// Toutes les routes de ce groupe sauf /favoris sont dans PROTECTED_ROUTES
+// (middleware.ts) — session garantie non-nulle pour elles. /favoris est la
+// seule exception volontaire (fonctionne aussi pour visiteurs anonymes).
 export default async function CompteLayout({ children }: { children: React.ReactNode }) {
-  const session = await verifySession()
+  const session = await getOptionalSession()
+  if (!session) return <>{children}</>
+
   const nom = session.nom ?? session.email ?? 'vous'
   const initiale = nom.charAt(0).toUpperCase()
 
