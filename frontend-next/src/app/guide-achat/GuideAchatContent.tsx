@@ -29,6 +29,7 @@ const POIDS_LABELS = ['', 'Peu important', 'Secondaire', 'Équilibré', 'Importa
 
 interface Produit {
   id: string; nom: string; prix_min: number; nb_offres: number; image_url?: string; categorie?: string
+  etats?: string[]
   _score?: number; _sPrix?: number; _sDispo?: number
 }
 
@@ -75,6 +76,7 @@ export default function GuideAchatPage() {
   const [error, setError]       = useState('')
   const [total, setTotal]       = useState(0)
   const [triPar, setTriPar]     = useState<'score' | 'prix' | 'dispo'>('score')
+  const [etatFiltre, setEtatFiltre] = useState(searchParams.get('etat') ?? '')
 
   function appliquerProfil(id: string) {
     const p = PROFILS.find(p => p.id === id)
@@ -92,6 +94,7 @@ export default function GuideAchatPage() {
     if (cat)       urlParams.set('cat', cat)
     if (budgetMin) urlParams.set('bMin', budgetMin)
     if (budgetMax) urlParams.set('bMax', budgetMax)
+    if (etatFiltre) urlParams.set('etat', etatFiltre)
     if (profilActif) urlParams.set('profil', profilActif)
     urlParams.set('pp', String(poidsPrix))
     urlParams.set('ps', String(poidsSpecs))
@@ -104,6 +107,7 @@ export default function GuideAchatPage() {
         q: q || '', categorie: cat, limit: '48', page: '1',
         prixMin: budgetMin || '', prixMax: budgetMax || '', tri: 'pertinence',
       })
+      if (etatFiltre) params.set('etat', etatFiltre)
       const res  = await fetch(`${API}/api/produits?${params}`)
       const data = await res.json()
       const liste: Produit[] = ((data.produits as Produit[]) || []).filter(p => +p.prix_min > 0)
@@ -140,11 +144,11 @@ export default function GuideAchatPage() {
     } finally {
       setLoading(false)
     }
-  }, [q, cat, budgetMin, budgetMax, poidsPrix, poidsSpecs, poidsDispo, profilActif, router])
+  }, [q, cat, budgetMin, budgetMax, etatFiltre, poidsPrix, poidsSpecs, poidsDispo, profilActif, router])
 
   // Auto-lance la recherche si des params sont dans l'URL (navigation retour)
   useEffect(() => {
-    if (searchParams.get('q') || searchParams.get('cat') || searchParams.get('bMax')) {
+    if (searchParams.get('q') || searchParams.get('cat') || searchParams.get('bMax') || searchParams.get('etat')) {
       lancer()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -210,6 +214,16 @@ export default function GuideAchatPage() {
               {CATEGORIES.map(c => (
                 <option key={c.slug} value={c.slug}>{c.icon} {c.label}</option>
               ))}
+            </select>
+          </div>
+
+          <div className="guide-field">
+            <label className="guide-label">État</label>
+            <select className="guide-select" value={etatFiltre} onChange={e => setEtatFiltre(e.target.value)}>
+              <option value="">Tous</option>
+              <option value="neuf">Neuf</option>
+              <option value="occasion">Occasion</option>
+              <option value="reconditionne">Reconditionné</option>
             </select>
           </div>
 
