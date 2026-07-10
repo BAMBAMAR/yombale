@@ -77,6 +77,7 @@ export default function GuideAchatPage() {
   const [total, setTotal]       = useState(0)
   const [triPar, setTriPar]     = useState<'score' | 'prix' | 'dispo'>('score')
   const [etatFiltre, setEtatFiltre] = useState(searchParams.get('etat') ?? '')
+  const [dispoMin, setDispoMin] = useState(searchParams.get('dispoMin') ?? '')
 
   function appliquerProfil(id: string) {
     const p = PROFILS.find(p => p.id === id)
@@ -95,6 +96,7 @@ export default function GuideAchatPage() {
     if (budgetMin) urlParams.set('bMin', budgetMin)
     if (budgetMax) urlParams.set('bMax', budgetMax)
     if (etatFiltre) urlParams.set('etat', etatFiltre)
+    if (dispoMin) urlParams.set('dispoMin', dispoMin)
     if (profilActif) urlParams.set('profil', profilActif)
     urlParams.set('pp', String(poidsPrix))
     urlParams.set('ps', String(poidsSpecs))
@@ -136,19 +138,22 @@ export default function GuideAchatPage() {
         return { ...p, _score: score, _sPrix: Math.round(sPrix * 100), _sDispo: Math.round(sDispo * 100) }
       })
 
-      setResults(scored)
-      setTotal(data.total || scored.length)
+      const dispoMinNum = Number(dispoMin) || 0
+      const filtered = dispoMinNum > 0 ? scored.filter(p => (+p.nb_offres || 0) >= dispoMinNum) : scored
+
+      setResults(filtered)
+      setTotal(dispoMinNum > 0 ? filtered.length : (data.total || scored.length))
     } catch (e) {
       setError('Erreur lors de la recherche. Vérifiez votre connexion.')
       console.error(e)
     } finally {
       setLoading(false)
     }
-  }, [q, cat, budgetMin, budgetMax, etatFiltre, poidsPrix, poidsSpecs, poidsDispo, profilActif, router])
+  }, [q, cat, budgetMin, budgetMax, etatFiltre, dispoMin, poidsPrix, poidsSpecs, poidsDispo, profilActif, router])
 
   // Auto-lance la recherche si des params sont dans l'URL (navigation retour)
   useEffect(() => {
-    if (searchParams.get('q') || searchParams.get('cat') || searchParams.get('bMax') || searchParams.get('etat')) {
+    if (searchParams.get('q') || searchParams.get('cat') || searchParams.get('bMax') || searchParams.get('etat') || searchParams.get('dispoMin')) {
       lancer()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -225,6 +230,15 @@ export default function GuideAchatPage() {
               <option value="occasion">Occasion</option>
               <option value="reconditionne">Reconditionné</option>
             </select>
+          </div>
+
+          <div className="guide-field">
+            <label className="guide-label">Disponible chez au moins</label>
+            <input
+              className="guide-input" type="number" min={0}
+              placeholder="ex: 2 marchands"
+              value={dispoMin} onChange={e => setDispoMin(e.target.value)}
+            />
           </div>
 
           <div className="guide-budget-row">
