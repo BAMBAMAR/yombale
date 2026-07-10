@@ -182,7 +182,7 @@ export default function GuidePrixPage() {
                   ['pertinence', 'Pertinence'],
                   ['prix_asc', '💰 Prix ↑'],
                   ['prix_desc', '💰 Prix ↓'],
-                  ['nb_offres', '🏪 Plus d'offres'],
+                  ['nb_offres', `🏪 Plus d'offres`],
                 ] as const).map(([val, label]) => (
                   <button key={val} className={`guide-tri-btn${triPar === val ? ' active' : ''}`} onClick={() => setTriPar(val)}>
                     {label}
