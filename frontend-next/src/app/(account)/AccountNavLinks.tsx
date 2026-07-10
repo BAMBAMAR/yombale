@@ -38,7 +38,7 @@ export default function AccountNavLinks() {
           <p className="account-nav-group-label">{groupe.label}</p>
           <div>
             {groupe.liens.map(lien => {
-              const actif = pathname === lien.href
+              const actif = pathname === lien.href || pathname.startsWith(lien.href + '/')
               return (
                 <Link
                   key={lien.href}
