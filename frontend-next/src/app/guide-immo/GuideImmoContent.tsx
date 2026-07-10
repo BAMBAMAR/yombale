@@ -31,7 +31,7 @@ const POIDS_LABELS = ['', 'Peu important', 'Secondaire', 'Équilibré', 'Importa
 interface AnnonceImmo {
   id: string; titre: string; prix: number; transaction: string; type_bien: string
   ville?: string; surface?: number; image_url?: string; description?: string
-  nb_pieces?: number; meuble?: boolean
+  nb_pieces?: number; meuble?: boolean; created_at?: string
   _score?: number; _sPrix?: number; _sSurface?: number
 }
 
@@ -52,7 +52,7 @@ export default function GuideImmoPage() {
   const [results, setResults]           = useState<AnnonceImmo[]>([])
   const [loading, setLoading]           = useState(false)
   const [error, setError]               = useState('')
-  const [triPar, setTriPar]             = useState<'score' | 'prix' | 'surface'>('score')
+  const [triPar, setTriPar]             = useState<'score' | 'prix' | 'surface' | 'recent'>('score')
 
   function appliquerProfil(id: string) {
     const p = PROFILS.find(p => p.id === id)
@@ -126,6 +126,7 @@ export default function GuideImmoPage() {
   const sorted = [...results].sort((a, b) => {
     if (triPar === 'prix')    return +a.prix - +b.prix
     if (triPar === 'surface') return (b.surface ?? 0) - (a.surface ?? 0)
+    if (triPar === 'recent')  return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
     return (b._score ?? 0) - (a._score ?? 0)
   })
 
@@ -282,9 +283,9 @@ export default function GuideImmoPage() {
               <div className="guide-results-header">
                 <span className="guide-results-count">{results.length} annonce{results.length > 1 ? 's' : ''} · classées par scoring</span>
                 <div className="guide-tri-btns">
-                  {(['score', 'prix', 'surface'] as const).map(t => (
+                  {(['score', 'prix', 'surface', 'recent'] as const).map(t => (
                     <button key={t} className={`guide-tri-btn${triPar === t ? ' active' : ''}`} onClick={() => setTriPar(t)}>
-                      {t === 'score' ? '🏆 Score' : t === 'prix' ? '💰 Prix' : '📐 Surface'}
+                      {t === 'score' ? '🏆 Score' : t === 'prix' ? '💰 Prix' : t === 'surface' ? '📐 Surface' : '🆕 Récent'}
                     </button>
                   ))}
                 </div>
