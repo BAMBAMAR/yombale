@@ -51,6 +51,7 @@ export default function GuidePrixPage() {
   const [loading, setLoading]   = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [triPar, setTriPar] = useState<'pertinence' | 'prix_asc' | 'prix_desc' | 'nb_offres'>('pertinence')
 
   async function search(e?: React.FormEvent) {
     e?.preventDefault()
@@ -127,6 +128,13 @@ export default function GuidePrixPage() {
     : null
   const variation = (_v !== null && isFinite(_v)) ? _v : null
 
+  const sortedResults = [...results].sort((a, b) => {
+    if (triPar === 'prix_asc')  return a.prix_min - b.prix_min
+    if (triPar === 'prix_desc') return b.prix_min - a.prix_min
+    if (triPar === 'nb_offres') return b.nb_offres - a.nb_offres
+    return 0
+  })
+
   return (
     <div className="guide-prix-page">
       <div className="guide-prix-hero">
@@ -165,8 +173,26 @@ export default function GuidePrixPage() {
 
       <div className="guide-prix-body">
         {/* Liste résultats */}
-        <div className="guide-prix-liste">
-          {!searched && !loading && (
+        <div>
+          {searched && results.length > 0 && (
+            <div className="guide-results-header" style={{ marginBottom: 10 }}>
+              <span className="guide-results-count">{results.length} résultat{results.length > 1 ? 's' : ''}</span>
+              <div className="guide-tri-btns">
+                {([
+                  ['pertinence', 'Pertinence'],
+                  ['prix_asc', '💰 Prix ↑'],
+                  ['prix_desc', '💰 Prix ↓'],
+                  ['nb_offres', '🏪 Plus d'offres'],
+                ] as const).map(([val, label]) => (
+                  <button key={val} className={`guide-tri-btn${triPar === val ? ' active' : ''}`} onClick={() => setTriPar(val)}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="guide-prix-liste">
+            {!searched && !loading && (
             <div className="guide-prix-empty">
               <p style={{ fontSize: 36 }}>🔍</p>
               <p>Entrez le nom d&apos;un produit pour voir ses prix</p>
@@ -178,7 +204,7 @@ export default function GuidePrixPage() {
               <p>Aucun produit trouvé. Essayez un autre mot-clé.</p>
             </div>
           )}
-          {results.map(p => (
+            {sortedResults.map(p => (
             <button
               key={p.id}
               className={`guide-prix-item${selected?.produit.id === p.id ? ' guide-prix-item--active' : ''}`}
@@ -199,7 +225,8 @@ export default function GuidePrixPage() {
               </div>
               <span className="guide-prix-item-arrow">›</span>
             </button>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* Détail */}
