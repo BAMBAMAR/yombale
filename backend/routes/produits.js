@@ -12,7 +12,7 @@ function checkUUID(req, res, next) {
 // GET /api/produits
 router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
   try {
-    const { q, categorie, sousType, limit = 20, page = 1, tri, prixMax, prixMin } = req.query;
+    const { q, categorie, sousType, limit = 20, page = 1, tri, prixMax, prixMin, etat } = req.query;
     const offset = (page - 1) * limit;
 
     const orderBy = tri === 'prix_asc'  ? 'MIN(o.prix) ASC NULLS LAST'
@@ -91,9 +91,9 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       if (parts.length > 1) parts.forEach(p => expandedSet.add(p));
     }
     const tokens = [...expandedSet];
-    // Les token params viennent après les 6 params de base ($7, $8, ...)
+    // Les token params viennent après les 7 params de base ($8, $9, ...)
     const tokenParams = tokens.map(t => '%' + t + '%');
-    const baseParams  = [q||null, categorieNorm, prixMax||null, prixMin||null, limit, offset];
+    const baseParams  = [q||null, categorieNorm, prixMax||null, prixMin||null, limit, offset, etat || null];
 
     // Construire la condition texte selon le nombre de tokens
     function buildQCond(operator) {
@@ -104,7 +104,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       // Cas multi-tokens : chaque mot doit apparaître (AND) ou n'importe lequel (OR fallback)
       // $1::text IS NULL est toujours référencé pour que PostgreSQL puisse typer $1
       const clauses = tokens.map((_, i) => {
-        const pidx = 7 + i;
+        const pidx = 8 + i;
         return `(p.nom ILIKE $${pidx} OR p.marque ILIKE $${pidx})`;
       });
       return `($1::text IS NULL OR (${clauses.join(' ' + operator + ' ')}))`;
@@ -116,6 +116,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
                MIN(o.prix) AS prix_min,
                MAX(o.prix) AS prix_max,
                COUNT(o.id) AS nb_offres,
+               COALESCE(jsonb_agg(DISTINCT o.specs->>'etat') FILTER (WHERE o.specs->>'etat' IS NOT NULL), '[]'::jsonb) AS etats,
                COUNT(*) OVER() AS total_count
         FROM produits p
         LEFT JOIN categories c ON c.id = p.categorie_id
@@ -124,6 +125,10 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
           AND ${catCondition}
           AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
           AND ($4::numeric IS NULL OR o.prix >= $4::numeric)
+          AND ($7::text IS NULL OR EXISTS (
+                SELECT 1 FROM offres o2
+                WHERE o2.produit_id = p.id AND o2.stock = true AND o2.specs->>'etat' = $7
+              ))
           ${sousTypeCondition}
         GROUP BY p.id, c.nom
         HAVING COUNT(o.id) = 0 OR MIN(o.prix) >= 500
