@@ -52,6 +52,8 @@ export default function GuidePrixPage() {
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [searched, setSearched] = useState(false)
   const [triPar, setTriPar] = useState<'pertinence' | 'prix_asc' | 'prix_desc' | 'nb_offres'>('pertinence')
+  const [prixMinFiltre, setPrixMinFiltre] = useState('')
+  const [prixMaxFiltre, setPrixMaxFiltre] = useState('')
 
   async function search(e?: React.FormEvent) {
     e?.preventDefault()
@@ -63,6 +65,11 @@ export default function GuidePrixPage() {
       const qs = new URLSearchParams({ limit: '20' })
       if (q.trim()) qs.set('q', q.trim())
       if (categorie) qs.set('categorie', categorie)
+      const pMin = Number(prixMinFiltre)
+      const pMax = Number(prixMaxFiltre)
+      const prixValide = !(prixMinFiltre && prixMaxFiltre && pMin > pMax)
+      if (prixValide && prixMinFiltre) qs.set('prixMin', prixMinFiltre)
+      if (prixValide && prixMaxFiltre) qs.set('prixMax', prixMaxFiltre)
       const r = await fetch(`/api/produits?${qs}`)
       const data = await r.json()
       setResults(data.produits ?? [])
@@ -167,6 +174,28 @@ export default function GuidePrixPage() {
                 {c.icon} {c.label}
               </button>
             ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <input
+              type="number"
+              placeholder="Prix min"
+              value={prixMinFiltre}
+              onChange={e => setPrixMinFiltre(e.target.value)}
+              className="guide-prix-input"
+              style={{ maxWidth: 140 }}
+            />
+            <span style={{ color: 'var(--text3)' }}>—</span>
+            <input
+              type="number"
+              placeholder="Prix max"
+              value={prixMaxFiltre}
+              onChange={e => setPrixMaxFiltre(e.target.value)}
+              className="guide-prix-input"
+              style={{ maxWidth: 140 }}
+            />
+            <button type="button" className="guide-prix-btn" onClick={() => search()} disabled={loading}>
+              Filtrer
+            </button>
           </div>
         </form>
       </div>
