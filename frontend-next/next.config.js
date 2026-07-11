@@ -1,5 +1,14 @@
 const path = require('path')
 
+// ── Sentry (optionnel, si @sentry/nextjs installé) ──────────────
+let withSentryConfig;
+try {
+  const SentryWebpack = require('@sentry/nextjs');
+  withSentryConfig = SentryWebpack.withSentryConfig;
+} catch {
+  withSentryConfig = (config) => config; // no-op si pas installé
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
@@ -87,4 +96,13 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = withSentryConfig(nextConfig, {
+  org: 'nopalou',
+  project: 'nopalou-frontend',
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.SENTRY_DSN, // silent si pas de DSN
+  widenClientFileUpload: true,
+  transpileClientSDK: true,
+  tunnelRoute: '/monitoring',
+  hideSourceMaps: true,
+})

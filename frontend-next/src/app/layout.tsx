@@ -5,6 +5,27 @@ import { headers } from 'next/headers';
 import Image from 'next/image';
 import './globals.css';
 import { getOptionalSession } from '@/lib/dal';
+
+// ── Sentry (optionnel, front-end error tracking) ────────────────
+let Sentry;
+try {
+  Sentry = require('@sentry/nextjs');
+  if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+    Sentry.init({
+      dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+      environment: process.env.NODE_ENV || 'development',
+      tracesSampleRate: 0.1,
+      integrations: [
+        new Sentry.Replay({ maskAllText: true, blockAllMedia: true }),
+      ],
+      replaySessionSampleRate: 0.1,
+      replayOnErrorSampleRate: 1.0,
+    });
+  }
+} catch (err) {
+  // Sentry pas disponible, c'est OK (frontend peut fonctionner sans)
+}
+
 import NavbarActions from './NavbarActions';
 import NavbarSearch from './NavbarSearch';
 import NavbarGuides from './NavbarGuides'

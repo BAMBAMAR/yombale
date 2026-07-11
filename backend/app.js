@@ -18,6 +18,28 @@ const compression = require('compression');
 const path        = require('path');
 require('dotenv').config();
 
+// ── Sentry (monitoring, free tier) ──────────────────────────────
+let Sentry;
+try {
+  Sentry = require('@sentry/node');
+  if (process.env.SENTRY_DSN) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      environment: process.env.NODE_ENV || 'development',
+      tracesSampleRate: 0.1, // 10% des requêtes
+      integrations: [
+        new Sentry.Integrations.Http({ tracing: true }),
+        new Sentry.Integrations.Express({ app: true, request: true, serverName: true }),
+        new Sentry.Integrations.OnUncaughtException(),
+        new Sentry.Integrations.OnUnhandledRejection(),
+      ],
+    });
+  }
+} catch (err) {
+  console.log('[SENTRY] Non disponible (npm install @sentry/node pour activer)');
+  Sentry = null;
+}
+
 const app = express();
 app.set('trust proxy', 1);
 
@@ -72,6 +94,13 @@ app.use(cors({
   credentials: true,
 }));
 app.use(compression());
+
+// Sentry request handler — DOIT être après helmet/cors/compression, AVANT les routes
+if (Sentry) {
+  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.tracingHandler());
+}
+
 app.use(express.json({
   limit: '10mb',
   verify: (req, _res, buf) => { req.rawBody = buf; },
@@ -177,6 +206,11 @@ app.get('*', (req, res) =>
 );
 
 // ── Gestion erreurs globale ───────────────────────────────────
+// Sentry error handler — DOIT être APRÈS tous les autres middlewares
+if (Sentry) {
+  app.use(Sentry.Handlers.errorHandler());
+}
+
 app.use((err, req, res, next) => {
   console.error('[ERROR]', req.method, req.path, err.stack);
   const isDev = process.env.NODE_ENV !== 'production';
