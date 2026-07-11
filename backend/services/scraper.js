@@ -1186,6 +1186,8 @@ async function verifierAlertsPrix() {
       const prixActuel = offres[0]?.prix_min;
       if (prixActuel && prixActuel <= alerte.prix_cible) {
         await envoyerAlertePrix(alerte, prixActuel);
+        // Désactiver après envoi — sinon l'utilisateur serait re-notifié toutes les 15 min
+        await pool.query('UPDATE alertes SET active = false WHERE id = $1', [alerte.id]);
         console.log(`[ALERTE] ✅ ${alerte.produit_nom} déclenché (${prixActuel} FCFA)`);
       }
     }
@@ -1217,6 +1219,8 @@ async function verifierAlertsPrix() {
       const prixActuel = offres[0]?.prix_min;
       if (prixActuel && prixActuel <= alerte.prix_cible) {
         await envoyerAlertePrix(alerte, prixActuel);
+        // Désactiver après envoi — sinon l'utilisateur serait re-notifié toutes les 15 min
+        await pool.query('UPDATE alertes SET active = false WHERE id = $1', [alerte.id]);
         console.log(`[ALERTE] ✅ ${alerte.produit_nom} (chatbot) déclenché (${prixActuel} FCFA)`);
       }
     }
