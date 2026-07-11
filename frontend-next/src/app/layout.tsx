@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Archivo } from 'next/font/google';
 import Script from 'next/script';
 import { headers } from 'next/headers';
@@ -44,6 +44,13 @@ const archivo = Archivo({
   variable: '--font-archivo',
   display: 'swap',
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover', // safe-area iPhone à encoche (les barres fixes en bas utilisent env(safe-area-inset-bottom))
+  themeColor: '#C75B00',
+};
 
 export const metadata: Metadata = {
   title: {
@@ -107,7 +114,6 @@ export default async function RootLayout({
   return (
     <html lang="fr" className={`${inter.variable} ${archivo.variable}`}>
       <head>
-        <meta name="theme-color" content="#C75B00" />
         <meta name="color-scheme" content="light" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="facebook-domain-verification" content="cuulztpcqwrgoat2wfubj3cuerfwu0" />

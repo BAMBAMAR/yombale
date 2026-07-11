@@ -1569,6 +1569,8 @@ a {
   z-index: 300;
   display: flex;
   flex-direction: column;
+  /* iPhone à encoche : ne pas passer sous la barre home (viewport-fit=cover) */
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* ── FavBar ────────────────────────────────────────────────────── */
