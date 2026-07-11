@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { backendAuthFetch } from '@/lib/backendFetch';
+import { createAlerte } from '@/app/actions/alertes';
 
 interface FormAlerteProps {
   userId: string;
@@ -25,17 +25,10 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
 
     setLoading(true);
     try {
-      const res = await backendAuthFetch('/api/alertes', {
-        method: 'POST',
-        body: JSON.stringify({
-          produit_id: produitId,
-          prix_cible: parseFloat(prixCible),
-          email,
-        }),
-      });
+      const result = await createAlerte(produitId, parseFloat(prixCible), email);
 
-      if (!res.ok) {
-        throw new Error(`Erreur ${res.status}`);
+      if (!result.ok) {
+        throw new Error(result.error || 'Erreur serveur');
       }
 
       setStatus('success');
