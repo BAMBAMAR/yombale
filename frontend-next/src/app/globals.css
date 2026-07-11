@@ -50,6 +50,12 @@ img, video, iframe {
   /* Pile monospace système — 0 Ko, chiffres tabulaires alignés (prix, compteurs) */
   --font-mono: ui-monospace, 'Cascadia Mono', 'Roboto Mono', Consolas, monospace;
 
+  /* Largeur commune des sections homepage — ces variables étaient référencées
+     par .home-how/.home-proof/.home-cta-annonce mais jamais définies : les
+     sections s'étiraient d'un bord à l'autre sur grand écran */
+  --max-w: 1200px;
+  --px:    20px;
+
   /* ── Aliases pour compatibilité avec le code existant ────────── */
   --blue:    #1C2B4A;   /* → navy */
   --blue2:   #C75B00;   /* → accent (tous les boutons, liens) */
@@ -1308,11 +1314,11 @@ a {
 .home-how-step {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 32px 24px;
   transition: box-shadow .2s;
 }
-.home-how-step:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+.home-how-step:hover { box-shadow: 0 1px 2px rgba(26,22,18,.08), 0 8px 24px rgba(26,22,18,.10); }
 
 .home-how-icon {
   font-size: 40px;
@@ -1327,10 +1333,12 @@ a {
 }
 
 .home-how-step p {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text2);
   line-height: 1.7;
   margin: 0;
+  max-width: 34ch;
+  margin-inline: auto;
 }
 
 /* ── Social proof ──────────────────────────────────────────────── */
@@ -1346,7 +1354,7 @@ a {
   justify-content: center;
   gap: 0;
   background: var(--navy);
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 32px 40px;
 }
 
@@ -1391,7 +1399,7 @@ a {
 .home-cta-annonce-inner {
   background: linear-gradient(135deg, #fff7f0, #fff);
   border: 1.5px solid var(--accent);
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 32px 40px;
   display: flex;
   align-items: center;

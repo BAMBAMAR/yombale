@@ -349,7 +349,7 @@ export default async function HomePage({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
             {/* Plan Pro */}
             <div style={{
-              border: '2px solid #C75B00', borderRadius: 16, padding: '28px 24px',
+              border: '2px solid #C75B00', borderRadius: 12, padding: '28px 24px',
               background: '#fff', position: 'relative',
             }}>
               <span style={{
@@ -386,7 +386,7 @@ export default async function HomePage({
 
             {/* Plan Business */}
             <div style={{
-              border: '2px solid #1e3a5f', borderRadius: 16, padding: '28px 24px',
+              border: '2px solid #1e3a5f', borderRadius: 12, padding: '28px 24px',
               background: '#f8fafc', position: 'relative',
             }}>
               <span style={{
