@@ -57,7 +57,7 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
           onChange={(e) => setProduitId(e.target.value)}
           disabled={loading}
         />
-        <small>Trouvez l'ID sur la fiche produit (URL: /produit/[id])</small>
+        <small>Trouvez l&apos;ID sur la fiche produit (URL: /produit/[id])</small>
       </div>
 
       <div className="form-group">

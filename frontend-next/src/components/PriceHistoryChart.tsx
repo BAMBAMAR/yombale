@@ -16,7 +16,7 @@ export default function PriceHistoryChart({ data, height = 200 }: PriceHistoryCh
   if (!data || data.length === 0) {
     return (
       <div className="chart-empty">
-        Pas d'historique disponible pour ce produit.
+        Pas d&apos;historique disponible pour ce produit.
       </div>
     );
   }

@@ -31,7 +31,7 @@ export default function SocialProof({
     <div className="social-proof-strip">
       <div className="social-proof-item">
         <span className="social-proof-number">{comparaisonsAujourdhui.toLocaleString('fr-SN')}</span>
-        <span className="social-proof-label">comparaisons aujourd'hui</span>
+        <span className="social-proof-label">comparaisons aujourd&apos;hui</span>
       </div>
       <div className="social-proof-separator">·</div>
       <div className="social-proof-item">

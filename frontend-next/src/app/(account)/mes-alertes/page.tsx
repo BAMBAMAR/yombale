@@ -15,7 +15,7 @@ export default async function MesAlertesPage() {
     <div className="page-container">
       <h1>Mes alertes prix</h1>
       <p className="subtitle">
-        Recevez une alerte WhatsApp ou email quand un prix baisse jusqu'à votre prix cible.
+        Recevez une alerte WhatsApp ou email quand un prix baisse jusqu&apos;à votre prix cible.
       </p>
 
       <div className="grid gap-32" style={{ gridTemplateColumns: '1fr 1fr' }}>
