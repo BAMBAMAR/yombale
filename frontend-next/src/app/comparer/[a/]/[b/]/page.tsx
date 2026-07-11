@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
@@ -11,10 +11,12 @@ interface PageParams {
   b: string;
 }
 
+export const dynamic = 'force-dynamic'
+
 export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {
   return {
     title: `Comparer ${decodeURIComponent(params.a)} vs ${decodeURIComponent(params.b)} | Nopalou`,
-    description: `Comparaison détaillée : ${decodeURIComponent(params.a)} vs ${decodeURIComponent(params.b)}. Trouvez le meilleur prix au Sénégal.`,
+    description: `Comparaison dÃ©taillÃ©e : ${decodeURIComponent(params.a)} vs ${decodeURIComponent(params.b)}. Trouvez le meilleur prix au SÃ©nÃ©gal.`,
   };
 }
 
@@ -109,14 +111,14 @@ export default async function ComparerPage({ params }: { params: PageParams }) {
         <table>
           <tbody>
             <tr>
-              <td>Catégorie</td>
+              <td>CatÃ©gorie</td>
               <td>{produitA.categorie_nom}</td>
               <td>{produitB.categorie_nom}</td>
             </tr>
             <tr>
               <td>Marque</td>
-              <td>{produitA.marque || '—'}</td>
-              <td>{produitB.marque || '—'}</td>
+              <td>{produitA.marque || 'â€”'}</td>
+              <td>{produitB.marque || 'â€”'}</td>
             </tr>
             <tr>
               <td>Prix le moins cher</td>
@@ -124,7 +126,7 @@ export default async function ComparerPage({ params }: { params: PageParams }) {
               <td className="price">{fcfa(produitB.prix_min)}</td>
             </tr>
             <tr>
-              <td>Différence</td>
+              <td>DiffÃ©rence</td>
               <td colSpan={2} className="price">
                 {fcfa(Math.abs(produitA.prix_min - produitB.prix_min))}
               </td>
@@ -134,8 +136,9 @@ export default async function ComparerPage({ params }: { params: PageParams }) {
       </div>
 
       <Link href="/comparaison" className="button-link">
-        ← Retour à la comparaison
+        â† Retour Ã  la comparaison
       </Link>
     </div>
   );
 }
+
