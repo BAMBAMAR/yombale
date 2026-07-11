@@ -8,6 +8,7 @@ const GROUPES = [
     liens: [
       { href: '/mes-annonces',      label: 'Mes annonces',        emoji: '📋' },
       { href: '/mes-annonces-immo', label: 'Mes biens immo',      emoji: '🏠' },
+      { href: '/mes-alertes',       label: 'Mes alertes prix',    emoji: '🔔' },
       { href: '/favoris',           label: 'Mes favoris',         emoji: '♥' },
       { href: '/deposer-annonce',   label: 'Publier une annonce', emoji: '➕' },
       { href: '/deposer-immo',      label: 'Publier un bien',     emoji: '🏡' },
