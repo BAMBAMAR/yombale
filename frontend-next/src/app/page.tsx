@@ -342,7 +342,7 @@ export default async function HomePage({
 
       {/* ── Tarifs Boutique Pro / Business ──────────────────────── */}
       {!hasFiltre && (
-        <section style={{ maxWidth: 860, margin: '32px auto 0', padding: '0 16px' }}>
+        <section style={{ maxWidth: 1200, margin: '32px auto 0', padding: '0 20px' }}>
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy)', margin: '0 0 8px' }}>
               Ouvrez votre boutique en ligne
@@ -436,15 +436,16 @@ export default async function HomePage({
 
       {/* ── Bloc SEO ─────────────────────────────────────────────── */}
       {!hasFiltre && (
-        <section style={{
-          maxWidth: 820, margin: '48px auto 24px',
-          padding: '28px 32px',
-          background: 'var(--card)', border: '1px solid var(--border)',
-          borderRadius: 12,
-        }}>
+        <section style={{ maxWidth: 1200, margin: '24px auto 24px', padding: '0 20px' }}>
+          <div style={{
+            padding: '24px 28px',
+            background: 'var(--card)', border: '1px solid var(--border)',
+            borderRadius: 12,
+          }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--navy)', marginBottom: 12 }}>
             Le comparateur de prix N°1 au Sénégal
           </h2>
+          <div className="home-seo-cols">
           <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8, marginBottom: 12 }}>
             <strong>Nopalou</strong> est le premier comparateur de prix dédié au marché sénégalais.
             Vous cherchez le <strong>prix le moins cher</strong> pour un téléphone, une télévision, un réfrigérateur ou un ordinateur ?
@@ -457,12 +458,14 @@ export default async function HomePage({
           <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8 }}>
             Comparer les prix au Sénégal n&apos;a jamais été aussi simple : recherchez votre produit, voyez toutes les offres côte à côte, et choisissez le vendeur le moins cher. <strong>Gratuit, sans inscription, sans pub intrusive.</strong>
           </p>
+          </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
             {CATEGORIES.filter(c => c.slug !== 'telecom').map(c => (
               <Link key={c.slug} href={`/categorie/${c.slug}`} style={{ fontSize: 13, color: 'var(--accent)', textDecoration: 'underline' }}>
                 {c.label} au Sénégal
               </Link>
             ))}
+          </div>
           </div>
         </section>
       )}

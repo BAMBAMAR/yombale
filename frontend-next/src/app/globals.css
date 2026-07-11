@@ -8074,6 +8074,14 @@ a {
 .partner-logo-emoji { font-size: 32px; }
 .partner-logo-name { font-size: 12px; font-weight: 500; color: var(--text2); }
 
+/* Bloc SEO homepage : texte en 2 colonnes sur desktop (lignes lisibles
+   malgré la largeur 1200px alignée sur les autres sections) */
+.home-seo-cols { columns: 2; column-gap: 40px; }
+.home-seo-cols p { break-inside: avoid; }
+@media (max-width: 900px) {
+  .home-seo-cols { columns: 1; }
+}
+
 /* ── Focus clavier — anneau net, jamais supprimé (finition 2026-07-11) ── */
 a:focus-visible,
 button:focus-visible,
