@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Sora } from 'next/font/google';
+import { Inter, Archivo } from 'next/font/google';
 import Script from 'next/script';
 import { headers } from 'next/headers';
 import Image from 'next/image';
@@ -39,9 +39,9 @@ const inter = Inter({
   display: 'swap',
 });
 
-const sora = Sora({
+const archivo = Archivo({
   subsets: ['latin'],
-  variable: '--font-sora',
+  variable: '--font-archivo',
   display: 'swap',
 });
 
@@ -105,7 +105,7 @@ export default async function RootLayout({
   const nonce = (await headers()).get('x-nonce') ?? undefined;
 
   return (
-    <html lang="fr" className={`${inter.variable} ${sora.variable}`}>
+    <html lang="fr" className={`${inter.variable} ${archivo.variable}`}>
       <head>
         <meta name="theme-color" content="#C75B00" />
         <meta name="color-scheme" content="light" />

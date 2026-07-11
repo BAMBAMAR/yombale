@@ -47,6 +47,9 @@ img, video, iframe {
   --shadow:  0 1px 4px rgba(26,22,18,.07);
   --shadow2: 0 6px 24px rgba(26,22,18,.13);
 
+  /* Pile monospace système — 0 Ko, chiffres tabulaires alignés (prix, compteurs) */
+  --font-mono: ui-monospace, 'Cascadia Mono', 'Roboto Mono', Consolas, monospace;
+
   /* ── Aliases pour compatibilité avec le code existant ────────── */
   --blue:    #1C2B4A;   /* → navy */
   --blue2:   #C75B00;   /* → accent (tous les boutons, liens) */
@@ -67,7 +70,7 @@ body {
 }
 
 h1, h2, h3, h4 {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
 }
 
 a {
@@ -101,7 +104,7 @@ a {
 }
 
 .card-produit .nom {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: var(--text1);
@@ -138,7 +141,7 @@ a {
 }
 
 .logo {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 22px;
   font-weight: 800;
   color: var(--blue);
@@ -339,7 +342,7 @@ a {
 }
 
 .prix-box-montant {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 36px;
   font-weight: 900;
   color: #15803d;
@@ -449,7 +452,7 @@ a {
   text-align: center;
   padding: 16px 24px;
   border-radius: var(--radius);
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 16px;
   font-weight: 800;
   text-decoration: none;
@@ -644,7 +647,7 @@ a {
 }
 
 .offre-prix {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 20px;
   font-weight: 900;
   color: var(--text1);
@@ -692,7 +695,7 @@ a {
 }
 
 .sidebar-produit {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 14px;
   font-weight: 700;
   color: #fff;
@@ -1233,7 +1236,7 @@ a {
 .stat-item:last-child { border-right: none; }
 
 .stat-num {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 22px;
   font-weight: 800;
   color: #fff;
@@ -1323,7 +1326,7 @@ a {
   font-size: 32px;
   font-weight: 900;
   color: var(--accent);
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
 }
 
 .home-proof-lbl {
@@ -1525,7 +1528,7 @@ a {
 }
 
 .fav-bar-label {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
@@ -1592,7 +1595,7 @@ a {
 }
 
 .compare-bar-label {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
@@ -2307,7 +2310,7 @@ a {
 }
 
 .auth-visual-logo {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 28px;
   font-weight: 800;
   color: #fff;
@@ -3425,7 +3428,7 @@ a {
 
 /* ── Pages Boutiques ───────────────────────────────────────────── */
 .boutiques-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-.boutiques-titre { font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 800; color: var(--navy); margin: 0; }
+.boutiques-titre { font-family: var(--font-archivo), sans-serif; font-size: 26px; font-weight: 800; color: var(--navy); margin: 0; }
 .boutiques-sous-titre { font-size: 14px; color: var(--text3); margin: 4px 0 0; }
 .boutiques-creer-btn { padding: 9px 18px; background: var(--accent); color: #fff; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .boutiques-filtres { margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px; }
@@ -3441,7 +3444,7 @@ a {
 .boutique-card-logo { height: 100px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 40px; overflow: hidden; }
 .boutique-card-logo img { width: 100%; height: 100%; object-fit: cover; }
 .boutique-card-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.boutique-card-nom { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; color: var(--navy); margin: 0; }
+.boutique-card-nom { font-family: var(--font-archivo), sans-serif; font-size: 14px; font-weight: 700; color: var(--navy); margin: 0; }
 .boutique-card-desc { font-size: 12px; color: var(--text2); margin: 0; flex: 1; }
 .boutique-card-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--text3); margin-top: 4px; }
 
@@ -3449,7 +3452,7 @@ a {
 .boutique-fiche-logo { width: 100px; height: 100px; border-radius: 12px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 44px; overflow: hidden; flex-shrink: 0; }
 .boutique-fiche-logo img { width: 100%; height: 100%; object-fit: cover; }
 .boutique-fiche-info { flex: 1; min-width: 200px; }
-.boutique-fiche-nom { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800; color: var(--navy); margin: 0 0 8px; }
+.boutique-fiche-nom { font-family: var(--font-archivo), sans-serif; font-size: 22px; font-weight: 800; color: var(--navy); margin: 0 0 8px; }
 .boutique-fiche-desc { font-size: 14px; color: var(--text2); margin: 0 0 12px; }
 .boutique-fiche-meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--text3); margin-bottom: 16px; }
 .boutique-fiche-tel { color: var(--accent); text-decoration: none; font-weight: 600; }
@@ -3457,7 +3460,7 @@ a {
 .boutique-contact-btn { padding: 9px 18px; background: var(--navy); color: #fff; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; }
 .boutique-whatsapp-btn { padding: 9px 18px; background: #25d366; color: #fff; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; }
 .boutique-annonces-section { margin-top: 8px; }
-.boutique-annonces-titre { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.boutique-annonces-titre { font-family: var(--font-archivo), sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
 .boutique-annonces-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
 .boutique-annonce-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; text-decoration: none; color: inherit; transition: box-shadow .15s; }
 .boutique-annonce-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
@@ -4776,7 +4779,7 @@ a {
 }
 
 .footer-logo {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 22px;
   font-weight: 800;
   color: #fff;
@@ -5187,7 +5190,7 @@ a {
 }
 
 .admin-login-logo {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 22px;
   font-weight: 800;
   color: var(--navy);
@@ -5269,7 +5272,7 @@ a {
 .admin-logo {
   display: block;
   padding: 0 24px 24px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 20px;
   font-weight: 800;
   color: #fff;
@@ -5861,7 +5864,7 @@ a {
 }
 
 .mobile-nav-logo {
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 20px;
   font-weight: 800;
   color: var(--navy);
@@ -7389,7 +7392,7 @@ a {
   box-shadow: 0 20px 60px rgba(0,0,0,.18);
 }
 .admin-modal-titre {
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: var(--navy);
@@ -7453,7 +7456,7 @@ a {
   max-width: 480px;
 }
 .notfound-code {
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 96px;
   font-weight: 800;
   color: var(--accent);
@@ -7461,7 +7464,7 @@ a {
   margin-bottom: 12px;
 }
 .notfound-titre {
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 28px;
   font-weight: 700;
   color: var(--navy);
@@ -7523,7 +7526,7 @@ a {
   font-weight: 700;
   cursor: pointer;
   transition: background .15s, color .15s;
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-archivo), sans-serif;
 }
 .voir-plus-btn:hover:not(:disabled) { background: var(--navy); color: #fff; }
 .voir-plus-btn:disabled { opacity: .55; cursor: not-allowed; }
@@ -7535,7 +7538,7 @@ a {
   margin: 0 auto;
 }
 .recents-titre {
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 16px;
   font-weight: 700;
   color: var(--navy);
@@ -7615,7 +7618,7 @@ a {
   text-align: center;
 }
 .guide-prix-titre {
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 32px;
   font-weight: 800;
   color: var(--navy);
@@ -7735,7 +7738,7 @@ a {
   padding: 24px;
 }
 .guide-prix-fiche-titre {
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-archivo), sans-serif;
   font-size: 18px; font-weight: 700; color: var(--navy);
   margin: 0 0 20px;
 }
