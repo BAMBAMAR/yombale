@@ -124,7 +124,7 @@ export default async function RootLayout({
       </head>
       <body>
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-3KGE1YBMVJ"
+          src="https://www.googletagmanager.com/gtag/js?id=G-GD7365PKTS"
           strategy="afterInteractive"
           nonce={nonce}
         />
@@ -133,7 +133,7 @@ export default async function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-3KGE1YBMVJ');
+            gtag('config', 'G-GD7365PKTS');
           `}
         </Script>
         <nav className="navbar">
