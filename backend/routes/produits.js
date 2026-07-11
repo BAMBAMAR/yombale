@@ -40,6 +40,11 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       'audio'   : ['ecouteur','casque audio','casque bluetooth','enceinte bluetooth','enceinte portable','soundbar','barre de son','haut-parleur','airpod','tws'],
       'electro' : ['micro-onde','four electrique','four elec','lave-linge','machine a laver','ventilateur','aspirateur','air fryer','friteuse','induction','plaque de cuisson','chauffe-eau','fer a repasser','cafetiere','bouilloire','grille-pain'],
       'tablette': ['tablette','ipad','galaxy tab','samsung tab','lenovo tab','matepad','xiaomi pad'],
+      'iphone'      : ['iphone'],
+      'samsung'     : ['samsung', 'galaxy'],
+      'xiaomi'      : ['xiaomi', 'redmi', 'poco'],
+      'tecno'       : ['tecno', 'spark', 'camon'],
+      'ordinateurs' : ['laptop', 'ordinateur', 'macbook', 'notebook', 'pc portable', 'lenovo', 'dell', 'asus', 'acer', 'chromebook'],
     };
 
     if (categorieNorm && !CAT_FALLBACK[categorieNorm]) {
