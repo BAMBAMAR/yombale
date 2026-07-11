@@ -90,7 +90,7 @@ export default function CommanderModal({
         {success ? (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <p style={{ fontSize: 48, marginBottom: 16 }}>✅</p>
-            <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, marginBottom: 8 }}>Commande envoyée !</h2>
+            <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 20, marginBottom: 8 }}>Commande envoyée !</h2>
             <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 8 }}>
               La boutique a reçu votre commande et vous contactera sur le <strong>{tel}</strong> pour confirmer.
             </p>
@@ -107,7 +107,7 @@ export default function CommanderModal({
           <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 18, margin: '0 0 4px' }}>Commander</h2>
+                <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 18, margin: '0 0 4px' }}>Commander</h2>
                 <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{produit.nom}</p>
               </div>
               <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9ca3af', padding: 4 }}>✕</button>

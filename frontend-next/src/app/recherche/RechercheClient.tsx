@@ -136,7 +136,7 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
         <>
           {/* En-tête résultats */}
           <div style={{ marginBottom: 16 }}>
-            <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 18, margin: '0 0 4px' }}>
+            <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 18, margin: '0 0 4px' }}>
               Résultats pour <em style={{ fontStyle: 'normal', color: '#C75B00' }}>« {data.q} »</em>
             </h1>
             <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>

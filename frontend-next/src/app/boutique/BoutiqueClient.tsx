@@ -258,7 +258,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
 
   return (
     <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 18, margin: 0 }}>
+      <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 18, margin: 0 }}>
         {boutique ? 'Modifier la boutique' : 'Créer une boutique'}
       </h2>
 
@@ -455,7 +455,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
 
   return (
     <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <h3 style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, margin: 0 }}>
+      <h3 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 16, margin: 0 }}>
         {produit ? 'Modifier le produit' : 'Ajouter un produit'}
       </h3>
 
@@ -904,7 +904,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h2 style={{ fontFamily: 'Sora, sans-serif', fontWeight: 700, fontSize: 17, margin: 0, color: '#111' }}>{boutique.nom}</h2>
+                <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontWeight: 700, fontSize: 17, margin: 0, color: '#111' }}>{boutique.nom}</h2>
                 {planActif === 'business' && <span style={{ fontSize: 11, background: '#1e3a5f', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700, letterSpacing: '.02em' }}>💼 Business</span>}
                 {planActif === 'pro'      && <span style={{ fontSize: 11, background: '#C75B00', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>⭐ Pro</span>}
                 {sponsorActif            && <span style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>Mis en avant</span>}
@@ -1109,7 +1109,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
       <main style={{ flex: 1, minWidth: 0, padding: '28px 32px', overflowY: 'auto' }}>
         {/* Titre de section */}
         <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
-          <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, margin: 0, color: '#111' }}>
+          <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 20, margin: 0, color: '#111' }}>
             {NAV_ITEMS.find(i => i.key === tab)?.icon}{' '}
             {{ produits: 'Catalogue produits', commandes: 'Commandes', compta: 'Comptabilité', analytics: 'Analytics', infos: 'Paramètres boutique', marketing: 'Marketing' }[tab]}
           </h2>
@@ -1227,7 +1227,7 @@ export default function BoutiqueClient({
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 24, margin: 0, color: '#111' }}>Ma boutique</h1>
+          <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 24, margin: 0, color: '#111' }}>Ma boutique</h1>
           <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 4 }}>{boutiques.length}/3 boutique{boutiques.length > 1 ? 's' : ''}</p>
         </div>
         {canCreate && (

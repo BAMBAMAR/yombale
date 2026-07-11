@@ -120,7 +120,7 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
 
             <div style={{ flex: 1, paddingBottom: 4 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 22, fontWeight: 800, margin: 0 }}>
+                <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 22, fontWeight: 800, margin: 0 }}>
                   {b.nom}
                 </h1>
                 {b.plan_actif === 'business' && (

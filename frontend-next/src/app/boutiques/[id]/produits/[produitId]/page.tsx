@@ -114,7 +114,7 @@ export default async function FicheProduitPage(
                 {p.caracteristiques.marque}
               </p>
             )}
-            <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 24, fontWeight: 800, margin: 0, lineHeight: 1.3 }}>
+            <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 24, fontWeight: 800, margin: 0, lineHeight: 1.3 }}>
               {p.nom}
             </h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
