@@ -97,6 +97,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  font-variant-numeric: tabular-nums;
 }
 
 .card-produit:hover {
@@ -112,18 +113,19 @@ a {
 }
 
 .card-produit .marque {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text3);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
 }
 
 .card-produit .prix {
-  font-size: 20px;
-  font-weight: 800;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
   color: var(--price);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 /* ── Navbar simple ─────────────────────────────────────────────── */
@@ -1137,6 +1139,8 @@ a {
   color: #fff;
   margin-bottom: 12px;
   position: relative;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 
 .hero-home h1 span { color: var(--accent); }
@@ -1262,6 +1266,8 @@ a {
   font-weight: 800;
   color: var(--navy);
   margin: 0 0 32px;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 
 .home-how-grid {
@@ -1327,6 +1333,7 @@ a {
   font-weight: 900;
   color: var(--accent);
   font-family: var(--font-archivo), sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 .home-proof-lbl {
@@ -1334,6 +1341,8 @@ a {
   color: rgba(255,255,255,.6);
   margin-top: 4px;
   text-align: center;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .home-proof-sep {
