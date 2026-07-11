@@ -23,17 +23,14 @@ let Sentry;
 try {
   Sentry = require('@sentry/node');
   if (process.env.SENTRY_DSN) {
+    // v8+ : les intégrations http/express/uncaught sont automatiques
     Sentry.init({
       dsn: process.env.SENTRY_DSN,
       environment: process.env.NODE_ENV || 'development',
       tracesSampleRate: 0.1, // 10% des requêtes
-      integrations: [
-        new Sentry.Integrations.Http({ tracing: true }),
-        new Sentry.Integrations.Express({ app: true, request: true, serverName: true }),
-        new Sentry.Integrations.OnUncaughtException(),
-        new Sentry.Integrations.OnUnhandledRejection(),
-      ],
     });
+  } else {
+    Sentry = null;
   }
 } catch (err) {
   console.log('[SENTRY] Non disponible (npm install @sentry/node pour activer)');
@@ -95,11 +92,7 @@ app.use(cors({
 }));
 app.use(compression());
 
-// Sentry request handler — DOIT être après helmet/cors/compression, AVANT les routes
-if (Sentry) {
-  app.use(Sentry.Handlers.requestHandler());
-  app.use(Sentry.Handlers.tracingHandler());
-}
+// Sentry v8+ : l'instrumentation des requêtes est automatique (pas de middleware requis)
 
 app.use(express.json({
   limit: '10mb',
@@ -208,9 +201,9 @@ app.get('*', (req, res) =>
 );
 
 // ── Gestion erreurs globale ───────────────────────────────────
-// Sentry error handler — DOIT être APRÈS tous les autres middlewares
+// Sentry error handler — DOIT être APRÈS toutes les routes, AVANT les autres error handlers
 if (Sentry) {
-  app.use(Sentry.Handlers.errorHandler());
+  Sentry.setupExpressErrorHandler(app);
 }
 
 app.use((err, req, res, next) => {

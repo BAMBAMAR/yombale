@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.65.0",
     "jose": "^6.2.3",
     "next": "^14.2.0",
     "qrcode-svg": "^1.1.0",
@@ -25,6 +26,7 @@
     "@types/react-dom": "^18",
     "eslint": "8.57",
     "eslint-config-next": "^14.2.35",
+    "fdir": "^6.5.0",
     "jsdom": "^29.1.1",
     "typescript": "5.9.3",
     "vitest": "^4.1.10"

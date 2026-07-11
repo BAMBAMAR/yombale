@@ -78,8 +78,8 @@ router.post('/track', async (req, res) => {
   }
 });
 
-// POST /api/affiliates/:click_ref/convert — marquer une conversion
-router.post('/:click_ref/convert', async (req, res) => {
+// POST /api/affiliates/:click_ref/convert — marquer une conversion (admin/interne uniquement)
+router.post('/:click_ref/convert', adminSecretOnly, async (req, res) => {
   try {
     const { click_ref } = req.params;
     const { boutique_id, abonnement_id, commission_montant } = req.body;
