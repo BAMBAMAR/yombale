@@ -22,6 +22,9 @@ backend/.fb-session.json
 *.png
 *.jpg
 *.jpeg
+# ...mais les assets d'app sont versionnés (icônes PWA, apple-touch-icon)
+!frontend-next/public/icons/*.png
+!frontend-next/src/app/apple-icon.png
 
 # Résultats de tests
 test-results/
