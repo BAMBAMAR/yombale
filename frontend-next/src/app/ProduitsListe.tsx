@@ -61,11 +61,16 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
       )}
 
       <div className="grid-produits">
-        {produits.map((p) => (
+        {(() => { let promoIdx = 0; return produits.map((p) => {
+          const estPromo = !!(p.prix_min && p.prix_max && p.prix_max > p.prix_min * 1.1);
+          const ticketClass = estPromo
+            ? ` card-produit--ticket ${promoIdx++ % 2 === 0 ? 'tilt-a' : 'tilt-b'}`
+            : '';
+          return (
           <Link key={p.id} href={`/produit/${p.id}`} style={{ display: 'contents' }}>
-            <article className="card-produit">
+            <article className={`card-produit${ticketClass}`}>
               <div className="card-img">
-                {p.prix_min && p.prix_max && p.prix_max > p.prix_min * 1.1 && (
+                {estPromo && p.prix_min && p.prix_max && (
                   <span className="badge-promo">
                     -{Math.round((1 - p.prix_min / p.prix_max) * 100)}%
                   </span>
@@ -83,7 +88,8 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
               <CardActions id={p.id} nom={p.nom} />
             </article>
           </Link>
-        ))}
+          );
+        }); })()}
       </div>
 
       {restants > 0 && (

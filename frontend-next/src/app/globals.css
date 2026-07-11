@@ -104,6 +104,33 @@ a {
   box-shadow: var(--shadow2), inset 3px 0 0 var(--accent);
 }
 
+/* ── Signature « ticket » — cartes promo uniquement (spec 2026-07-11) ──
+   Le tilt signale « bon plan à saisir ». Perforation = vraies encoches
+   semi-circulaires de la couleur du fond (papier poinçonné), PAS de
+   border dashed. */
+.card-produit--ticket {
+  transition: transform .25s ease, box-shadow .25s ease;
+  will-change: transform;
+}
+.card-produit--ticket.tilt-a { transform: rotate(-1deg); }
+.card-produit--ticket.tilt-b { transform: rotate(1deg); }
+.card-produit--ticket:hover  { transform: rotate(0); }
+
+.card-produit--ticket::before {
+  content: '';
+  display: block;
+  height: 5px;
+  margin: -16px -16px 6px;   /* annule le padding 16px de la carte pour toucher le bord */
+  background:
+    radial-gradient(circle at 5px -1px, var(--bg) 3.5px, transparent 4px) repeat-x left top / 14px 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-produit--ticket,
+  .card-produit--ticket.tilt-a,
+  .card-produit--ticket.tilt-b { transform: none; transition: none; }
+}
+
 .card-produit .nom {
   font-family: var(--font-archivo), sans-serif;
   font-size: 14px;
