@@ -400,6 +400,58 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table clics_affiliation OK');
   } catch (e) { console.warn('[MIGRATE] clics_affiliation:', e.message); }
 
+  // Table affiliate_clicks — tracking avancé des clics affiliés (Phase 5)
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS affiliate_clicks (
+        id            BIGSERIAL PRIMARY KEY,
+        click_ref     VARCHAR(100) UNIQUE NOT NULL,
+        apporteur_id  UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        apporteur_code VARCHAR(20),
+        geo           VARCHAR(5) DEFAULT 'SN',
+        device        VARCHAR(20) DEFAULT 'web',
+        ip_hash       VARCHAR(64),
+        converted     BOOLEAN DEFAULT FALSE,
+        created_at    TIMESTAMPTZ DEFAULT NOW(),
+        converted_at  TIMESTAMPTZ
+      );
+      CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_apporteur ON affiliate_clicks(apporteur_id, created_at);
+      CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_converted ON affiliate_clicks(converted, created_at);
+      CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_date       ON affiliate_clicks(created_at);
+    `);
+    console.log('[MIGRATE] ✅ Table affiliate_clicks OK');
+  } catch (e) { console.warn('[MIGRATE] affiliate_clicks:', e.message); }
+
+  // Table quarantines_log — historique des quarantines (Phase 6)
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS quarantines_log (
+        id               BIGSERIAL PRIMARY KEY,
+        offre_id         UUID NOT NULL REFERENCES offres(id) ON DELETE CASCADE,
+        raison           VARCHAR(100) NOT NULL,
+        prix             NUMERIC(12,2),
+        prix_moyen_30j   NUMERIC(12,2),
+        status           VARCHAR(20) DEFAULT 'quarantined' CHECK (status IN ('quarantined', 'validated', 'rejected')),
+        validated_by     VARCHAR(100),
+        validated_at     TIMESTAMPTZ,
+        created_at       TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_quarantines_offre  ON quarantines_log(offre_id);
+      CREATE INDEX IF NOT EXISTS idx_quarantines_status ON quarantines_log(status, created_at);
+      CREATE INDEX IF NOT EXISTS idx_quarantines_date   ON quarantines_log(created_at);
+    `);
+    console.log('[MIGRATE] ✅ Table quarantines_log OK');
+  } catch (e) { console.warn('[MIGRATE] quarantines_log:', e.message); }
+
+  // Colonne offres.quarantinee (Phase 6)
+  try {
+    await pool.query(`
+      ALTER TABLE offres ADD COLUMN IF NOT EXISTS quarantinee BOOLEAN DEFAULT FALSE;
+      CREATE INDEX IF NOT EXISTS idx_offres_quarantinee ON offres(quarantinee);
+    `);
+    console.log('[MIGRATE] ✅ Colonne offres.quarantinee OK');
+  } catch (e) { console.warn('[MIGRATE] offres.quarantinee:', e.message); }
+
   // Table analytics_events — tracking vues/clics boutiques et annonces
   try {
     await pool.query(`

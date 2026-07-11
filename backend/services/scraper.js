@@ -1245,11 +1245,16 @@ function demarrerScraping() {
   // Détection des baisses de prix et envoi des alertes — toutes les 15 min
   cron.schedule('*/15 * * * *', () => verifierAlertsPrix().catch(err => console.error('[ALERTES]', err.message)));
 
+  // Détection anomalies — chaque jour à 1h UTC (Phase 6)
+  const { detecterAnomalies } = require('./anomaly-detector');
+  cron.schedule('0 1 * * *', () => detecterAnomalies().catch(err => console.error('[ANOMALY]', err.message)));
+
   // Premier scraping 10 min après démarrage (laisser l'app se stabiliser)
   setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 10 * 60 * 1000);
   setTimeout(() => lancerScrapingNouveauxSites().catch(console.error), 15 * 60 * 1000);
   console.log('[SCRAPER] ✅ Cron actif — premier scraping dans 10 min, puis toutes les 12h');
   console.log('[SOCIAL]  ✅ Cron actif — publication bons plans chaque jour à 8h UTC');
+  console.log('[ANOMALY] ✅ Cron actif — détection anomalies chaque jour à 1h UTC');
 }
 
-module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher, nettoyerOffresExpirees, extraireSpecs, verifierAlertsPrix };
+module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher, nettoyerOffresExpirees, extraireSpecs, verifierAlertsPrix, detecterAnomalies: require('./anomaly-detector').detecterAnomalies };

@@ -120,14 +120,14 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
                COUNT(*) OVER() AS total_count
         FROM produits p
         LEFT JOIN categories c ON c.id = p.categorie_id
-        LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true
+        LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true AND o.quarantinee = false
         WHERE ${qCond}
           AND ${catCondition}
           AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
           AND ($4::numeric IS NULL OR o.prix >= $4::numeric)
           AND ($7::text IS NULL OR EXISTS (
                 SELECT 1 FROM offres o2
-                WHERE o2.produit_id = p.id AND o2.stock = true AND o2.specs->>'etat' = $7
+                WHERE o2.produit_id = p.id AND o2.stock = true AND o2.quarantinee = false AND o2.specs->>'etat' = $7
               ))
           ${sousTypeCondition}
         GROUP BY p.id, c.nom
@@ -228,7 +228,7 @@ router.get('/:id/offres', checkUUID, async (req, res) => {
       FROM offres o
       JOIN marchands m ON m.id = o.marchand_id
       JOIN produits p  ON p.id = o.produit_id
-      WHERE o.produit_id = $1 AND o.stock = true
+      WHERE o.produit_id = $1 AND o.stock = true AND o.quarantinee = false
       ORDER BY o.prix ASC`,
       [req.params.id]
     );

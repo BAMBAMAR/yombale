@@ -188,6 +188,8 @@ app.use('/api/search',          require('./routes/search'));
 app.use('/api/v1',              require('./routes/api-partenaire'));
 app.use('/api/settings',        require('./routes/settings'));
 app.use('/api/apporteurs',      require('./routes/apporteurs'));
+app.use('/api/affiliates',      require('./routes/affiliates'));
+app.use('/api/qualite',         require('./routes/qualite'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', async (req, res) => {
