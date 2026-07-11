@@ -17,6 +17,7 @@
     "test:report": "playwright show-report"
   },
   "dependencies": {
+    "@sentry/node": "^10.65.0",
     "axios": "^1.6.0",
     "bcryptjs": "^2.4.3",
     "cheerio": "^1.0.0-rc.12",
