@@ -1163,6 +1163,69 @@ async function nettoyerOffresExpirees(limite = 200) {
   return { verifiees: offres.length, mortes };
 }
 
+async function verifierAlertsPrix() {
+  const { pool } = require('../models/db');
+  const { envoyerAlertePrix } = require('./notifications');
+
+  try {
+    // Alertes par produit_id (utilisateurs connectés)
+    const { rows: alertesProd } = await pool.query(`
+      SELECT a.*, p.nom as produit_nom, p.id as produit_id
+      FROM alertes a
+      JOIN produits p ON a.produit_id = p.id
+      WHERE a.active = true AND a.produit_id IS NOT NULL
+      ORDER BY a.created_at DESC
+    `);
+
+    for (const alerte of alertesProd) {
+      const { rows: offres } = await pool.query(`
+        SELECT MIN(prix) as prix_min FROM offres
+        WHERE produit_id = $1 AND stock = true
+      `, [alerte.produit_id]);
+
+      const prixActuel = offres[0]?.prix_min;
+      if (prixActuel && prixActuel <= alerte.prix_cible) {
+        await envoyerAlertePrix(alerte, prixActuel);
+        console.log(`[ALERTE] ✅ ${alerte.produit_nom} déclenché (${prixActuel} FCFA)`);
+      }
+    }
+
+    // Alertes par produit_nom (chatbot WhatsApp, sans compte)
+    const { rows: alertesChat } = await pool.query(`
+      SELECT a.*, a.produit_nom
+      FROM alertes a
+      WHERE a.active = true AND a.telephone IS NOT NULL AND a.produit_id IS NULL
+      ORDER BY a.created_at DESC
+    `);
+
+    for (const alerte of alertesChat) {
+      // Recherche par nom (ILIKE + texte brut)
+      const { rows: produits } = await pool.query(`
+        SELECT p.id FROM produits p
+        WHERE p.nom ILIKE '%' || $1 || '%'
+        LIMIT 1
+      `, [alerte.produit_nom]);
+
+      if (produits.length === 0) continue;
+      const produitId = produits[0].id;
+
+      const { rows: offres } = await pool.query(`
+        SELECT MIN(prix) as prix_min FROM offres
+        WHERE produit_id = $1 AND stock = true
+      `, [produitId]);
+
+      const prixActuel = offres[0]?.prix_min;
+      if (prixActuel && prixActuel <= alerte.prix_cible) {
+        await envoyerAlertePrix(alerte, prixActuel);
+        console.log(`[ALERTE] ✅ ${alerte.produit_nom} (chatbot) déclenché (${prixActuel} FCFA)`);
+      }
+    }
+
+  } catch (err) {
+    console.error('[ALERTES] Erreur vérification:', err.message);
+  }
+}
+
 function demarrerScraping() {
   // Toutes les 12h pour limiter la consommation mémoire (plan gratuit Railway)
   cron.schedule('0 */12 * * *', () => lancerScraping(['expat', 'jumia', 'coinafrique']).catch(console.error));
@@ -1179,6 +1242,8 @@ function demarrerScraping() {
   cron.schedule('0 9 * * *', () => envoyerRelancesExpiration().catch(err => console.error('[RELANCE]', err.message)));
   // Nettoyage des offres avec URL marchand morte (annonces expirées côté CoinAfrique/Expat-Dakar)
   cron.schedule('30 4 * * *', () => nettoyerOffresExpirees().catch(err => console.error('[NETTOYAGE]', err.message)));
+  // Détection des baisses de prix et envoi des alertes — toutes les 15 min
+  cron.schedule('*/15 * * * *', () => verifierAlertsPrix().catch(err => console.error('[ALERTES]', err.message)));
 
   // Premier scraping 10 min après démarrage (laisser l'app se stabiliser)
   setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 10 * 60 * 1000);
@@ -1187,4 +1252,4 @@ function demarrerScraping() {
   console.log('[SOCIAL]  ✅ Cron actif — publication bons plans chaque jour à 8h UTC');
 }
 
-module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher, nettoyerOffresExpirees, extraireSpecs };
+module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher, nettoyerOffresExpirees, extraireSpecs, verifierAlertsPrix };
