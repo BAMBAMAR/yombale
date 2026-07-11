@@ -112,8 +112,10 @@ a {
   transition: transform .25s ease, box-shadow .25s ease;
   will-change: transform;
 }
-.card-produit--ticket.tilt-a { transform: rotate(-1deg); }
-.card-produit--ticket.tilt-b { transform: rotate(1deg); }
+/* Inclinaison volontairement subtile (retour utilisateur : presque invisible,
+   et un angle plus fort rend le texte flou par anti-aliasing de rotation) */
+.card-produit--ticket.tilt-a { transform: rotate(-0.35deg); }
+.card-produit--ticket.tilt-b { transform: rotate(0.35deg); }
 .card-produit--ticket:hover  { transform: rotate(0); }
 
 .card-produit--ticket::before {
@@ -1514,20 +1516,20 @@ a {
 
 .card-action-btn {
   flex: 1;
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: #fff;
+  border: 1px solid var(--accent);
   border-radius: 6px;
   padding: 5px 0;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
   transition: background .15s, border-color .15s, color .15s;
-  color: var(--text3);
+  color: var(--accent);
 }
 
 .card-action-btn:hover {
-  border-color: var(--navy);
-  color: var(--navy);
-  background: #fff;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--orange2);
 }
 
 .card-action-btn.active {
