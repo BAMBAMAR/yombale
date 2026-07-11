@@ -234,8 +234,12 @@ async function demarrerApp() {
   const server = app.listen(PORT, () => {
     console.log(`✅ Nopalou → http://localhost:${PORT}`);
 
+    // Crons métier (alertes prix, détection anomalies) — toujours actifs,
+    // y compris sur Render où SCRAPING_DISABLED=true
+    const { demarrerScraping, demarrerCronsMetier } = require('./services/scraper');
+    demarrerCronsMetier();
+
     if (process.env.SCRAPING_DISABLED !== 'true') {
-      const { demarrerScraping } = require('./services/scraper');
       demarrerScraping();
     } else {
       console.log('[SCRAPER] Désactivé (SCRAPING_DISABLED=true)');

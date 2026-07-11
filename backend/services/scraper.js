@@ -1242,6 +1242,18 @@ function demarrerScraping() {
   cron.schedule('0 9 * * *', () => envoyerRelancesExpiration().catch(err => console.error('[RELANCE]', err.message)));
   // Nettoyage des offres avec URL marchand morte (annonces expirées côté CoinAfrique/Expat-Dakar)
   cron.schedule('30 4 * * *', () => nettoyerOffresExpirees().catch(err => console.error('[NETTOYAGE]', err.message)));
+
+  // Premier scraping 10 min après démarrage (laisser l'app se stabiliser)
+  setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 10 * 60 * 1000);
+  setTimeout(() => lancerScrapingNouveauxSites().catch(console.error), 15 * 60 * 1000);
+  console.log('[SCRAPER] ✅ Cron actif — premier scraping dans 10 min, puis toutes les 12h');
+  console.log('[SOCIAL]  ✅ Cron actif — publication bons plans chaque jour à 8h UTC');
+}
+
+// Crons métier — TOUJOURS actifs, même avec SCRAPING_DISABLED=true (cas de Render).
+// Ne pas déplacer dans demarrerScraping() : les alertes prix et la détection
+// d'anomalies doivent tourner en production où le scraping est désactivé.
+function demarrerCronsMetier() {
   // Détection des baisses de prix et envoi des alertes — toutes les 15 min
   cron.schedule('*/15 * * * *', () => verifierAlertsPrix().catch(err => console.error('[ALERTES]', err.message)));
 
@@ -1249,12 +1261,8 @@ function demarrerScraping() {
   const { detecterAnomalies } = require('./anomaly-detector');
   cron.schedule('0 1 * * *', () => detecterAnomalies().catch(err => console.error('[ANOMALY]', err.message)));
 
-  // Premier scraping 10 min après démarrage (laisser l'app se stabiliser)
-  setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 10 * 60 * 1000);
-  setTimeout(() => lancerScrapingNouveauxSites().catch(console.error), 15 * 60 * 1000);
-  console.log('[SCRAPER] ✅ Cron actif — premier scraping dans 10 min, puis toutes les 12h');
-  console.log('[SOCIAL]  ✅ Cron actif — publication bons plans chaque jour à 8h UTC');
+  console.log('[ALERTES] ✅ Cron actif — vérification baisses de prix toutes les 15 min');
   console.log('[ANOMALY] ✅ Cron actif — détection anomalies chaque jour à 1h UTC');
 }
 
-module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher, nettoyerOffresExpirees, extraireSpecs, verifierAlertsPrix, detecterAnomalies: require('./anomaly-detector').detecterAnomalies };
+module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, demarrerCronsMetier, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher, nettoyerOffresExpirees, extraireSpecs, verifierAlertsPrix, detecterAnomalies: require('./anomaly-detector').detecterAnomalies };
