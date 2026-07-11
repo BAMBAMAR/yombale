@@ -36,7 +36,8 @@ export async function fetchUserAlertes(
   userId: string
 ): Promise<{ ok: boolean; alertes?: any[]; error?: string }> {
   try {
-    const res = await backendAuthFetch(`/api/alertes/user/${userId}`)
+    // backendAuthFetch ajoute déjà le préfixe /api/ — ne pas le doubler
+    const res = await backendAuthFetch(`/alertes/user/${userId}`)
     if (!res.ok) return { ok: false, error: `Erreur ${res.status}` }
     const data = await res.json()
     const alertes = Array.isArray(data) ? data : data.alertes || []
