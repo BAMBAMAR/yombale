@@ -18,21 +18,36 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   };
 }
 
+interface Produit {
+  id: string;
+  nom: string;
+  categorie_nom: string;
+  marque?: string;
+  prix_min: number;
+  nb_offres: number;
+}
+
+interface ApiResponse {
+  produits?: Produit[];
+  data?: Produit[];
+}
+
 export default async function ComparerPage({ params }: { params: PageParams }) {
   const produitAName = decodeURIComponent(params.a);
   const produitBName = decodeURIComponent(params.b);
 
-  let produitA, produitB;
+  let produitA: Produit | undefined;
+  let produitB: Produit | undefined;
 
   try {
     // Rechercher les deux produits par nom (first match)
     const [resA, resB] = await Promise.all([
-      apiFetch(`/produits?q=${encodeURIComponent(produitAName)}&limit=1`),
-      apiFetch(`/produits?q=${encodeURIComponent(produitBName)}&limit=1`),
+      apiFetch<ApiResponse>(`/produits?q=${encodeURIComponent(produitAName)}&limit=1`),
+      apiFetch<ApiResponse>(`/produits?q=${encodeURIComponent(produitBName)}&limit=1`),
     ]);
 
-    const listA = Array.isArray(resA) ? resA : resA.produits || resA.data || [];
-    const listB = Array.isArray(resB) ? resB : resB.produits || resB.data || [];
+    const listA: Produit[] = Array.isArray(resA) ? resA : (resA?.produits || resA?.data || []);
+    const listB: Produit[] = Array.isArray(resB) ? resB : (resB?.produits || resB?.data || []);
 
     if (listA.length === 0 || listB.length === 0) {
       notFound();
@@ -41,6 +56,10 @@ export default async function ComparerPage({ params }: { params: PageParams }) {
     produitA = listA[0];
     produitB = listB[0];
   } catch {
+    notFound();
+  }
+
+  if (!produitA || !produitB) {
     notFound();
   }
 

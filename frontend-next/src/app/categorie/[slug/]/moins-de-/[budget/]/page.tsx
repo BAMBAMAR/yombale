@@ -30,15 +30,29 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   };
 }
 
+interface Produit {
+  id: string;
+  nom: string;
+  image_url?: string;
+  marque?: string;
+  prix_min: number;
+  nb_offres: number;
+}
+
+interface ApiResponse {
+  produits?: Produit[];
+  data?: Produit[];
+}
+
 export default async function BudgetCategoryPage({ params }: { params: PageParams }) {
   const catLabel = CATEGORIES[params.slug as keyof typeof CATEGORIES] || params.slug;
   const budgetNum = parseInt(params.budget) || 100000;
 
-  let produits = [];
+  let produits: Produit[] = [];
 
   try {
-    const res = await apiFetch(`/produits?categorie=${params.slug}&prixMax=${budgetNum}&limit=40`);
-    produits = Array.isArray(res) ? res : res.produits || res.data || [];
+    const res = await apiFetch<ApiResponse>(`/produits?categorie=${params.slug}&prixMax=${budgetNum}&limit=40`);
+    produits = Array.isArray(res) ? res : (res?.produits || res?.data || []);
   } catch {
     produits = [];
   }
@@ -62,7 +76,7 @@ export default async function BudgetCategoryPage({ params }: { params: PageParam
         <div className="empty">Aucun produit trouvé dans cette gamme de prix.</div>
       ) : (
         <div className="grid-produits">
-          {produits.map((p) => (
+          {produits.map((p: Produit) => (
             <Link key={p.id} href={`/produit/${p.id}`} className="card-produit">
               {p.image_url && (
                 <ExternalImg

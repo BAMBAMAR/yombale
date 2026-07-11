@@ -113,7 +113,7 @@ export default function QualiteDataPage() {
                     <td style={{ padding: '10px', textAlign: 'right' }}>
                       {q.prix_moyen_30j?.toLocaleString('fr-SN') || '—'} XOF
                     </td>
-                    <td style={{ padding: '10px', textAlign: 'center', color: variation > 50 ? '#d32f2f' : '#666' }}>
+                    <td style={{ padding: '10px', textAlign: 'center', color: Number(variation) > 50 ? '#d32f2f' : '#666' }}>
                       {variation}%
                     </td>
                     <td style={{ padding: '10px', textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center' }}>
