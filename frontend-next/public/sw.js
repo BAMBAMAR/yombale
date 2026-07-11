@@ -1,9 +1,11 @@
-const CACHE_NAME = 'nopalou-shell-v1';
+const CACHE_NAME = 'nopalou-shell-v2';
 const APP_SHELL = [
   '/',
   '/offline.html',
   '/manifest.json',
-  '/icons/icon-192.svg',
+  '/icons/192',
+  '/icons/512',
+  '/icons/maskable-512',
   '/icons/icon-512.svg',
   '/icons/logo-mark.svg',
 ];
