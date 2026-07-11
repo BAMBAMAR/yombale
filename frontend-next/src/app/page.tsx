@@ -244,18 +244,24 @@ export default async function HomePage({
           <div className="home-how-grid">
             <div className="home-how-step">
               <div className="home-how-icon">🔍</div>
-              <h3>Cherchez votre produit</h3>
-              <p>Tapez le nom d&apos;un produit, d&apos;une marque ou d&apos;une catégorie dans la barre de recherche.</p>
+              <div className="home-how-body">
+                <h3>Cherchez votre produit</h3>
+                <p>Tapez le nom d&apos;un produit, d&apos;une marque ou d&apos;une catégorie dans la barre de recherche.</p>
+              </div>
             </div>
             <div className="home-how-step">
               <div className="home-how-icon">📊</div>
-              <h3>Comparez les prix</h3>
-              <p>Nopalou compare automatiquement les prix chez Jumia, Expat-Dakar, CoinAfrique et plus.</p>
+              <div className="home-how-body">
+                <h3>Comparez les prix</h3>
+                <p>Nopalou compare automatiquement les prix chez Jumia, Expat-Dakar, CoinAfrique et plus.</p>
+              </div>
             </div>
             <div className="home-how-step">
               <div className="home-how-icon">💰</div>
-              <h3>Économisez</h3>
-              <p>Choisissez le marchand le moins cher et économisez jusqu&apos;à 40% sur vos achats.</p>
+              <div className="home-how-body">
+                <h3>Économisez</h3>
+                <p>Choisissez le marchand le moins cher et économisez jusqu&apos;à 40% sur vos achats.</p>
+              </div>
             </div>
           </div>
         </section>
@@ -336,8 +342,8 @@ export default async function HomePage({
 
       {/* ── Tarifs Boutique Pro / Business ──────────────────────── */}
       {!hasFiltre && (
-        <section style={{ maxWidth: 900, margin: '48px auto 0', padding: '0 16px' }}>
-          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <section style={{ maxWidth: 860, margin: '32px auto 0', padding: '0 16px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy)', margin: '0 0 8px' }}>
               Ouvrez votre boutique en ligne
             </h2>
@@ -349,7 +355,7 @@ export default async function HomePage({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
             {/* Plan Pro */}
             <div style={{
-              border: '2px solid #C75B00', borderRadius: 12, padding: '28px 24px',
+              border: '2px solid #C75B00', borderRadius: 12, padding: '22px 20px',
               background: '#fff', position: 'relative',
             }}>
               <span style={{
@@ -386,7 +392,7 @@ export default async function HomePage({
 
             {/* Plan Business */}
             <div style={{
-              border: '2px solid #1e3a5f', borderRadius: 12, padding: '28px 24px',
+              border: '2px solid #1e3a5f', borderRadius: 12, padding: '22px 20px',
               background: '#f8fafc', position: 'relative',
             }}>
               <span style={{

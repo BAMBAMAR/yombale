@@ -1291,7 +1291,7 @@ a {
 /* ── Comment ça marche ─────────────────────────────────────────── */
 .home-how {
   max-width: var(--max-w);
-  margin: 56px auto 0;
+  margin: 40px auto 0;
   padding: 0 var(--px);
   text-align: center;
 }
@@ -1300,7 +1300,7 @@ a {
   font-size: 22px;
   font-weight: 800;
   color: var(--navy);
-  margin: 0 0 32px;
+  margin: 0 0 18px;
   letter-spacing: -0.02em;
   text-wrap: balance;
 }
@@ -1315,14 +1315,20 @@ a {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 32px 24px;
+  padding: 20px 18px;
   transition: box-shadow .2s;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  text-align: left;
 }
 .home-how-step:hover { box-shadow: 0 1px 2px rgba(26,22,18,.08), 0 8px 24px rgba(26,22,18,.10); }
 
 .home-how-icon {
-  font-size: 40px;
-  margin-bottom: 16px;
+  font-size: 28px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 .home-how-step h3 {
@@ -1333,18 +1339,19 @@ a {
 }
 
 .home-how-step p {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text2);
-  line-height: 1.7;
+  line-height: 1.55;
   margin: 0;
-  max-width: 34ch;
-  margin-inline: auto;
 }
+
+.home-how-body { min-width: 0; }
+.home-how-body h3 { margin: 0 0 4px; }
 
 /* ── Social proof ──────────────────────────────────────────────── */
 .home-proof {
   max-width: var(--max-w);
-  margin: 40px auto 0;
+  margin: 28px auto 0;
   padding: 0 var(--px);
 }
 
@@ -1355,7 +1362,7 @@ a {
   gap: 0;
   background: var(--navy);
   border-radius: 12px;
-  padding: 32px 40px;
+  padding: 20px 28px;
 }
 
 .home-proof-item {
@@ -1366,7 +1373,7 @@ a {
 }
 
 .home-proof-num {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 900;
   color: var(--accent);
   font-family: var(--font-archivo), sans-serif;
@@ -1392,7 +1399,7 @@ a {
 /* ── CTA Annonce ───────────────────────────────────────────────── */
 .home-cta-annonce {
   max-width: var(--max-w);
-  margin: 40px auto 0;
+  margin: 24px auto 0;
   padding: 0 var(--px);
 }
 
@@ -1400,7 +1407,7 @@ a {
   background: linear-gradient(135deg, #fff7f0, #fff);
   border: 1.5px solid var(--accent);
   border-radius: 12px;
-  padding: 32px 40px;
+  padding: 20px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1409,7 +1416,7 @@ a {
 }
 
 .home-cta-annonce-text h2 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--navy);
   margin: 0 0 6px;
