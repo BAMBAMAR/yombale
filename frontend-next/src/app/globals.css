@@ -7841,3 +7841,53 @@ a {
 .chart-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px; margin-top: 16px; }
 .chart-stats-label { font-size: 12px; color: var(--text3); margin: 0; }
 .chart-stats-value { font-size: 16px; font-weight: 700; color: var(--accent); margin: 0; }
+
+/* ── Composants Design System Réutilisables ────────────────────── */
+.ticket {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+.ticket:hover { box-shadow: var(--shadow2); }
+
+/* Bord perforé (optionnel) */
+.ticket::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background-image: radial-gradient(circle at 8px 0, transparent 8px, currentColor 8px);
+  background-size: 16px 8px;
+  background-repeat: repeat-x;
+  background-color: var(--card);
+}
+
+.price-tag {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+.price-tag-value { font-weight: 700; font-size: 16px; color: var(--navy); }
+.price-tag-timestamp { font-size: 11px; color: var(--text3); }
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-sm { padding: 3px 8px; font-size: 11px; }
+.badge-lg { padding: 6px 12px; font-size: 13px; }
+.badge-disc { background: #dbeafe; color: #1e40af; }
+.badge-verified { background: #dcfce7; color: #166534; }
+.badge-best-price { background: #fef3c7; color: #92400e; }
