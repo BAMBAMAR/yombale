@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { backendAuthFetch } from '@/lib/backendFetch';
+import { deleteAlerte, fetchUserAlertes } from '@/app/actions/alertes';
 
 interface Alerte {
   id: string;
@@ -26,10 +26,11 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
   useEffect(() => {
     const fetchAlertes = async () => {
       try {
-        const res = await backendAuthFetch(`/api/alertes/user/${userId}`);
-        if (!res.ok) throw new Error(`Erreur ${res.status}`);
-        const data = await res.json();
-        setAlertes(Array.isArray(data) ? data : data.alertes || []);
+        const result = await fetchUserAlertes(userId);
+        if (!result.ok) {
+          throw new Error(result.error || 'Erreur chargement');
+        }
+        setAlertes(result.alertes || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur chargement');
       } finally {
@@ -45,10 +46,10 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
 
     setDeletingId(id);
     try {
-      const res = await backendAuthFetch(`/api/alertes/${id}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error(`Erreur ${res.status}`);
+      const result = await deleteAlerte(id);
+      if (!result.ok) {
+        throw new Error(result.error || 'Erreur suppression');
+      }
       setAlertes((prev) => prev.filter((a) => a.id !== id));
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erreur suppression');

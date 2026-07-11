@@ -31,3 +31,17 @@ export async function deleteAlerte(id: string): Promise<{ ok: boolean; error?: s
     return { ok: false, error: e instanceof Error ? e.message : 'Erreur inconnue' }
   }
 }
+
+export async function fetchUserAlertes(
+  userId: string
+): Promise<{ ok: boolean; alertes?: any[]; error?: string }> {
+  try {
+    const res = await backendAuthFetch(`/api/alertes/user/${userId}`)
+    if (!res.ok) return { ok: false, error: `Erreur ${res.status}` }
+    const data = await res.json()
+    const alertes = Array.isArray(data) ? data : data.alertes || []
+    return { ok: true, alertes }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Erreur inconnue' }
+  }
+}
