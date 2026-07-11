@@ -92,7 +92,7 @@ a {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 1px 2px rgba(26,22,18,.08), 0 8px 24px rgba(26,22,18,.10);
   transition: box-shadow 0.2s;
   display: flex;
   flex-direction: column;
@@ -1493,10 +1493,14 @@ a {
   left: 8px;
   background: var(--accent);
   color: #fff;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 10px;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 8px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 3px;
+  transform: rotate(-3deg);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.55), inset 0 0 0 2.5px var(--accent), inset 0 0 0 3.5px rgba(255,255,255,.35);
   z-index: 1;
   pointer-events: none;
 }
@@ -8037,3 +8041,12 @@ a {
 .partner-logo-item:hover { background: #f9fafb; }
 .partner-logo-emoji { font-size: 32px; }
 .partner-logo-name { font-size: 12px; font-weight: 500; color: var(--text2); }
+
+/* ── Focus clavier — anneau net, jamais supprimé (finition 2026-07-11) ── */
+a:focus-visible,
+button:focus-visible,
+.card-produit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
