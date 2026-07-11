@@ -52,7 +52,7 @@ function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () 
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 14,
+      display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
       background: '#fff', border: '1px solid var(--border)',
       borderLeft: boutique.plan_actif === 'business' ? '4px solid #1e3a5f'
                 : boutique.plan_actif === 'pro'      ? '4px solid #C75B00'

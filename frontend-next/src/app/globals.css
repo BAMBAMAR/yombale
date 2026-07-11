@@ -2276,13 +2276,26 @@ a {
   .stat-item:nth-child(odd) { border-right: 1px solid rgba(255,255,255,.1); }
   .stat-item:nth-last-child(-n+2) { border-bottom: none; }
 
-  .home-how-grid { grid-template-columns: 1fr; gap: 16px; }
-  .home-proof-grid { flex-wrap: wrap; gap: 20px; padding: 24px 20px; }
+  .home-how-grid { grid-template-columns: 1fr; gap: 12px; }
+  .home-proof-grid { flex-wrap: wrap; gap: 16px; padding: 18px 16px; }
   .home-proof-sep { display: none; }
   .home-proof-item { flex: 1 1 40%; }
-  .home-cta-annonce-inner { flex-direction: column; align-items: flex-start; padding: 24px; }
+  .home-cta-annonce-inner { flex-direction: column; align-items: flex-start; padding: 18px 16px; }
   .home-cta-annonce-btns { width: 100%; }
   .home-cta-btn { flex: 1; justify-content: center; }
+
+  /* Grille produits : 2 colonnes denses sur téléphone (pattern marketplace),
+     au lieu d'1 seule colonne issue de l'auto-fill 220px */
+  .grid-produits { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 16px 12px; }
+  .card-produit { padding: 10px; gap: 6px; }
+  .card-produit .prix { font-size: 15px; }
+  .card-produit .nom { font-size: 12.5px; }
+  /* La perforation ticket annule le padding de la carte — suivre le padding mobile */
+  .card-produit--ticket::before { margin: -10px -10px 4px; }
+
+  /* Tables sans colonne fluide : scroll horizontal de secours */
+  .table-alertes-wrap { overflow-x: auto; }
+  .table-alertes { min-width: 480px; }
 }
 
 /* ── Telecom page ──────────────────────────────────────────────── */
@@ -2352,7 +2365,7 @@ a {
 /* ── Auth pages (connexion / inscription) ───────────────────────── */
 .auth-page {
   display: grid;
-  grid-template-columns: 420px 1fr;
+  grid-template-columns: minmax(0, 420px) 1fr;
   min-height: calc(100vh - 62px);
 }
 
@@ -2671,7 +2684,7 @@ a {
 .auth-link:hover { text-decoration: underline; }
 
 /* Responsive auth */
-@media (max-width: 860px) {
+@media (max-width: 900px) {
   .auth-page { grid-template-columns: 1fr; }
   .auth-visual { display: none; }
   .auth-panel { min-height: calc(100vh - 62px); }
@@ -8003,7 +8016,7 @@ a {
   color: var(--text3);
   font-size: 18px;
 }
-.comparison-table { margin-top: 32px; }
+.comparison-table { margin-top: 32px; overflow-x: auto; }
 .comparison-table table { width: 100%; border-collapse: collapse; }
 .comparison-table td {
   padding: 12px;

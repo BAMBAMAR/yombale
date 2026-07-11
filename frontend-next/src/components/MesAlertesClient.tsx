@@ -64,7 +64,7 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
     return <div className="empty">Aucune alerte créée.</div>;
 
   return (
-    <div className="alertes-list">
+    <div className="alertes-list table-alertes-wrap">
       <table className="table-alertes">
         <thead>
           <tr>

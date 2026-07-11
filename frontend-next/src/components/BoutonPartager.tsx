@@ -35,7 +35,7 @@ export default function BoutonPartager({ lien, message, lienVisuel }: Props) {
         <div style={{
           position: 'absolute', top: '110%', left: 0, zIndex: 10,
           background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.1)', padding: 8, minWidth: 220,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.1)', padding: 8, minWidth: 220, maxWidth: 'calc(100vw - 24px)',
           display: 'flex', flexDirection: 'column', gap: 4,
         }}>
           <button
