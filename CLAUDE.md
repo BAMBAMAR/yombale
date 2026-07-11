@@ -123,6 +123,39 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## État du projet (11 juillet 2026 — Phases 1-6 CDC + design « ticket » + audit mobile/PWA, tout mergé en prod)
+
+Trois chantiers livrés et déployés le même jour (32 commits sur `main`, Render auto-déployé).
+
+### Chantier 1 — Phases 1-6 du CDC v4.0 (17 commits, `720432b`..`3254403`)
+- **Alertes prix** : cron toutes les 15 min (`verifierAlertsPrix()` dans `scraper.js`), page `/mes-alertes` (Server Actions — ne PAS importer `backendAuthFetch` dans un Client Component, ça tire `server-only` et casse le build). **Piège corrigé** : l'alerte est désactivée (`active=false`) après envoi — sans ça l'utilisateur était re-notifié toutes les 15 min.
+- **Bug de prod critique corrigé** : les crons métier (alertes, anomalies) étaient dans `demarrerScraping()`, jamais appelée sur Render (`SCRAPING_DISABLED=true`) → nouvelle fonction **`demarrerCronsMetier()`** appelée inconditionnellement dans `app.js`. ⚠️ Les crons relances-expiration/nettoyage/WhatsApp-cleanup sont TOUJOURS derrière le flag scraping — dette connue, jamais exécutés sur Render.
+- **Historique prix** : chart SVG 30j (`PriceHistoryChart.tsx`) sur la fiche produit.
+- **Sentry v10** : `@sentry/node` v10 n'a plus `Sentry.Handlers` (API v7) — init simple + `Sentry.setupExpressErrorHandler(app)` ; côté Next `@sentry/nextjs` installé. **Inactif tant que `SENTRY_DSN`/`NEXT_PUBLIC_SENTRY_DSN` ne sont pas configurés sur Render.** (Le code frontend référence encore `new Sentry.Replay(...)` API v7 — à migrer si un DSN est ajouté.)
+- **Pages programmatiques SEO** : `/comparer/[a]/[b]` et `/categorie/[slug]/moins-de-[budget]`. **Piège majeur vécu** : les dossiers avaient été créés avec des brackets fragmentés (`[slug` + dossier `]`) — Next ne reconnaissait pas les segments dynamiques et pré-générait avec `params` vide (crash `toLowerCase` au build). Sur Windows/PowerShell, manipuler ces dossiers exige `-LiteralPath` ou les APIs .NET.
+- **Phase 5 affiliation** : routes `/api/affiliates` (track public, clicks/convert protégés `adminSecretOnly`), tables `affiliate_clicks`, service `awin-postback.js`, dashboard `/admin/affiliates/tracking`.
+- **Phase 6 qualité données** : `anomaly-detector.js` (cron 1h UTC — quarantaine si prix ≤ 0 ou variation > 50% vs moyenne 30j de `historique_prix`), colonne **`offres.quarantinee`** (DEFAULT FALSE) filtrée par `AND o.quarantinee = false` dans les requêtes produits/offres, table `quarantines_log`, dashboard `/admin/qualite` (valider/rejeter). Première exécution réelle : **138 offres quarantinées** (variations 50-112%, légitimes).
+- **Piège local (pas committé)** : `SSR_SECRET` doit exister dans `frontend-next/.env.local` ET dans le `.env` backend — sinon `blockScraperUA` (middlewares/rateLimit.js) bloque le fetch SSR de Next (UA `node`) en 429 → « Impossible de charger les produits ». Vérifier ce couple sur tout nouvel environnement.
+
+### Chantier 2 — Design « ticket » + finition typographique (9 commits)
+Spec/plan : `docs/superpowers/specs/2026-07-11-design-ticket-homepage-design.md` + plan associé. Décisions validées : palette existante conservée (PAS la palette kraft/indigo du CDC), monospace **système** pour les prix (0 Ko, `--font-mono`), tilt sur cartes promo uniquement, **Archivo** remplace Sora pour les titres.
+- **Bug latent corrigé au passage** : 29 sélecteurs utilisaient `'Sora'` en littéral (CSS + styles inline TSX) — ça ne matche JAMAIS le nom scopé généré par `next/font`, ces titres rendaient en sans-serif système depuis toujours. Toujours utiliser `var(--font-archivo)`.
+- **Bug d'uniformisation corrigé** : `.home-how`/`.home-proof`/`.home-cta-annonce` référençaient `var(--max-w)`/`var(--px)` **jamais définies** → sections étirées bord à bord. Définies dans `:root` (1200px/20px). Toutes les sections homepage (y compris tarifs et bloc SEO, passé en 2 colonnes desktop via `.home-seo-cols`) partagent maintenant cette largeur.
+- Signature : tilt ±0.35° (à 1° le texte devenait flou — anti-aliasing de rotation ; retour utilisateur explicite « presque invisible »), perforation en `radial-gradient` (jamais `border: dashed`), badge promo tampon (-3°, triple `box-shadow inset`), ombres 2 couches teintées encre `rgba(26,22,18,…)` (jamais de noir pur), boutons comparer/favori en orange accent. Règle focus : `outline` SANS `border-radius` (sinon les liens circulaires du footer se déforment au focus).
+- Retours utilisateur intégrés : densification générale (paddings réduits, cartes « Comment ça marche » horizontales icône+texte), exigence « pas de design IA par défaut, travail fin ».
+
+### Chantier 3 — Audit mobile + PWA (5 commits)
+- `export const viewport` dans `layout.tsx` (`viewportFit: 'cover'`, themeColor déplacé ici) + `env(safe-area-inset-bottom)` sur `.bottom-bars-wrap`.
+- **Icônes PWA PNG** 192/512 + **maskable dédiée** (safe-zone 20%) : routes `ImageResponse` sous `src/app/icons/{192,512,maskable-512}/route.tsx`. **Piège : `runtime = 'edge'` obligatoire** — `@vercel/og` plante en runtime Node sur Windows (ERR_INVALID_URL sur sa police embarquée). Manifest v3 avec entrées `any`/`maskable` séparées ; SW bump `nopalou-shell-v2`.
+- Mobile : grille produits **2 colonnes** sous 600px (pattern marketplace), `.table-alertes` et `.comparison-table` avec scroll horizontal de secours, `.auth-page` en `minmax(0,420px)` + bascule à 900px, perforation ticket ajustée au padding mobile.
+
+### Pièges d'environnement local (Windows) à connaître
+- `npm run build` pendant que le dev server tourne **corrompt `.next`** → le site rend sans CSS (404 sur layout.css). Toujours : tuer le process du port 3001, builder, relancer `npm run dev`.
+- L'erreur **EBUSY** en fin de build (copie `standalone`) est un verrou antivirus Windows — PAS un échec si « Generating static pages 61/61 ✓ » apparaît ; sans impact sur Render (Linux).
+- `TaskStop`/kill du shell ne tue pas le process node enfant sur Windows — libérer le port via `Get-NetTCPConnection -LocalPort 3001` + `Stop-Process`.
+
+---
+
 ## État du projet (10 juillet 2026 — tri et filtres sur les pages guide)
 
 Audit demandé ("ajouter tri et filtre sur les résultats des guides") sur les 4 pages "guide" à résultats (`guide-prix`, `guide-achat`, `guide-immo`, `guide-forfait`). Constat initial : `guide-achat`/`guide-immo`/`guide-forfait` avaient déjà un système de tri (pills Score/Prix/Dispo-Surface-Data, classes CSS partagées `.guide-tri-btns`/`.guide-tri-btn`) et des filtres riches dans un panneau gauche (budget, catégorie/type, sliders de pondération) — seul `guide-prix` n'avait qu'un filtre par catégorie et aucun tri sur sa liste de résultats. Périmètre validé avec l'utilisateur (7 commits `45f5bc1`..`df57d3d`, exécutés via subagent-driven-development avec revue à chaque tâche + revue finale de branche) :
