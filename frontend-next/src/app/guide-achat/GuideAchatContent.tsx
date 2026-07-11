@@ -76,6 +76,7 @@ export default function GuideAchatPage() {
   const [error, setError]       = useState('')
   const [total, setTotal]       = useState(0)
   const [triPar, setTriPar]     = useState<'score' | 'prix' | 'dispo'>('score')
+  const [triSimple, setTriSimple] = useState<'pertinence' | 'prix_asc' | 'prix_desc' | 'nom_asc'>('pertinence')
   const [etatFiltre, setEtatFiltre] = useState(searchParams.get('etat') ?? '')
   const [dispoMin, setDispoMin] = useState(searchParams.get('dispoMin') ?? '')
 
@@ -160,6 +161,9 @@ export default function GuideAchatPage() {
   }, [])
 
   const sorted = [...results].sort((a, b) => {
+    if (triSimple === 'prix_asc')  return +a.prix_min - +b.prix_min
+    if (triSimple === 'prix_desc') return +b.prix_min - +a.prix_min
+    if (triSimple === 'nom_asc')   return a.nom.localeCompare(b.nom)
     if (triPar === 'prix')  return +a.prix_min - +b.prix_min
     if (triPar === 'dispo') return (b._sDispo ?? 0) - (a._sDispo ?? 0)
     return (b._score ?? 0) - (a._score ?? 0)
@@ -304,12 +308,32 @@ export default function GuideAchatPage() {
             <>
               <div className="guide-results-header">
                 <span className="guide-results-count">{total} produit{total > 1 ? 's' : ''} · classés par scoring</span>
-                <div className="guide-tri-btns">
-                  {(['score', 'prix', 'dispo'] as const).map(t => (
-                    <button key={t} className={`guide-tri-btn${triPar === t ? ' active' : ''}`} onClick={() => setTriPar(t)}>
-                      {t === 'score' ? '🏆 Score' : t === 'prix' ? '💰 Prix' : '🏪 Dispo'}
-                    </button>
-                  ))}
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: 11, color: 'var(--text3)', marginRight: 6 }}>Scoring :</span>
+                    <div className="guide-tri-btns" style={{ display: 'inline-flex' }}>
+                      {(['score', 'prix', 'dispo'] as const).map(t => (
+                        <button key={t} className={`guide-tri-btn${triPar === t ? ' active' : ''}`} onClick={() => setTriPar(t)}>
+                          {t === 'score' ? '🏆 Score' : t === 'prix' ? '💰 Prix' : '🏪 Dispo'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 11, color: 'var(--text3)', marginRight: 6 }}>Trier :</span>
+                    <div className="guide-tri-btns" style={{ display: 'inline-flex' }}>
+                      {([
+                        ['pertinence', 'Pertinence'],
+                        ['prix_asc', 'Prix ↑'],
+                        ['prix_desc', 'Prix ↓'],
+                        ['nom_asc', 'Nom A-Z'],
+                      ] as const).map(([val, label]) => (
+                        <button key={val} className={`guide-tri-btn${triSimple === val ? ' active' : ''}`} onClick={() => setTriSimple(val)}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
