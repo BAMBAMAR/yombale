@@ -9,7 +9,6 @@ import AlertePrix from '@/app/AlertePrix';
 import TrackRecent from './TrackRecent';
 import SponsoringProduitBtn from './SponsoringProduitBtn';
 import SimilRow from '@/components/SimilRow';
-import PriceHistoryChart from '@/components/PriceHistoryChart';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -528,18 +527,10 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               </div>
             )}
 
-            {/* Historique des prix */}
+            {/* Historique des prix — un seul chart : HistoriqueChart (SVG fluide).
+                Ne PAS réintroduire PriceHistoryChart ici : son <svg width=600> fixe
+                gonflait la colonne .fiche-grid à 600px et tronquait la page sur mobile. */}
             <HistoriqueChart data={historique} />
-            {historique.length > 0 && (
-              <PriceHistoryChart
-                data={historique.map((h) => ({
-                  jour: h.jour,
-                  prix_min: parseFloat(h.prix_min),
-                  prix_max: parseFloat(h.prix_max),
-                  variation_pct: 0,
-                }))}
-              />
-            )}
 
           </div>
 
