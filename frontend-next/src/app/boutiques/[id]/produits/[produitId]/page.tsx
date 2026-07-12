@@ -47,12 +47,12 @@ export async function generateMetadata(
       `/boutiques/${params.id}/produits/${params.produitId}`
     )
     return {
-      title: `${produit.nom} — ${produit.boutique_nom} | Nopalou`,
+      title: `${produit.nom} — ${produit.boutique_nom}`,
       description: produit.description ?? `${produit.nom} disponible chez ${produit.boutique_nom} à ${produit.boutique_ville}`,
       openGraph: produit.images?.[0] ? { images: [produit.images[0]] } : undefined,
     }
   } catch {
-    return { title: 'Produit — Nopalou' }
+    return { title: 'Produit' }
   }
 }
 

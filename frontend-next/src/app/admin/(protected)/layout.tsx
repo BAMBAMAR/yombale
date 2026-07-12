@@ -4,7 +4,7 @@ import { adminLogout } from '@/app/actions/admin'
 
 const COOKIE = 'nopalou_admin'
 
-export const metadata = { title: 'Administration — Nopalou', robots: 'noindex, nofollow' }
+export const metadata = { title: 'Administration', robots: 'noindex, nofollow' }
 
 export default async function AdminProtectedLayout({ children }: { children: React.ReactNode }) {
   const jar    = await cookies()

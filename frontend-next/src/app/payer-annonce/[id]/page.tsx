@@ -6,7 +6,7 @@ import { backendAuthFetch } from '@/lib/backendFetch'
 import PaiementClient from './PaiementClient'
 
 export const metadata: Metadata = {
-  title: 'Activer mon annonce — Nopalou',
+  title: 'Activer mon annonce',
 }
 
 interface Annonce {

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import GuidePrixPage from './GuidePrixContent'
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+
 export const metadata: Metadata = {
   title: 'Guide prix — Comparer les prix et créer des alertes au Sénégal',
   description: 'Utilisez Nopalou pour ne jamais payer trop cher au Sénégal : historique des prix, alertes baisse, comparaison multi-marchands pour smartphones, TV, électroménager.',
@@ -9,6 +11,7 @@ export const metadata: Metadata = {
     description: 'Maîtrisez vos achats au Sénégal grâce aux alertes prix et à l\'historique des prix sur Nopalou.',
     type: 'website',
   },
+  alternates: { canonical: `${BASE}/guide-prix` },
 }
 
 export default GuidePrixPage

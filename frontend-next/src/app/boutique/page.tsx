@@ -3,7 +3,7 @@ import { backendFetch } from '@/lib/backend-fetch'
 import { verifySession } from '@/lib/dal'
 import BoutiqueClient from './BoutiqueClient'
 
-export const metadata: Metadata = { title: 'Ma boutique — Nopalou' }
+export const metadata: Metadata = { title: 'Ma boutique' }
 
 interface Boutique {
   id: string

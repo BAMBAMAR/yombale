@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { adminLogin } from '@/app/actions/admin'
 
 export const metadata: Metadata = {
-  title: 'Connexion Admin — Nopalou',
+  title: 'Connexion Admin',
   robots: 'noindex, nofollow',
 }
 

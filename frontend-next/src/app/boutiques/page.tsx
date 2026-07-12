@@ -3,9 +3,12 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import BoutiquesSearch from './BoutiquesSearch'
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+
 export const metadata: Metadata = {
-  title: 'Boutiques partenaires — Nopalou',
-  description: 'Découvrez les boutiques des vendeurs et particuliers sur Nopalou au Sénégal.',
+  title: 'Boutiques partenaires au Sénégal',
+  description: `Découvrez les boutiques des vendeurs professionnels et particuliers sur Nopalou : produits, prix et contact direct, partout au Sénégal.`,
+  alternates: { canonical: `${BASE}/boutiques` },
 }
 
 interface Boutique {

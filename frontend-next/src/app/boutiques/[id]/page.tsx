@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       openGraph: b.logo_url ? { images: [b.logo_url] } : undefined,
     }
   } catch {
-    return { title: 'Boutique — Nopalou' }
+    return { title: 'Boutique' }
   }
 }
 

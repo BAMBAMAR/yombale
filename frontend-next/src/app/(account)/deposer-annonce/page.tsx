@@ -5,7 +5,7 @@ import Link from 'next/link'
 import FormulaireAnnonce from './FormulaireAnnonce'
 
 export const metadata: Metadata = {
-  title: 'Publier une annonce — Nopalou',
+  title: 'Publier une annonce',
   description: 'Publiez votre annonce gratuitement sur Nopalou : téléphones, informatique, mode, auto, services et plus au Sénégal.',
 }
 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Politique de confidentialité — Nopalou',
+  title: 'Politique de confidentialité',
   description: 'Politique de confidentialité et protection des données personnelles de Nopalou.',
 }
 

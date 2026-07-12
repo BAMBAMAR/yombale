@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
-  title: 'Retour paiement — Nopalou',
+  title: 'Retour paiement',
   robots: { index: false },
 }
 

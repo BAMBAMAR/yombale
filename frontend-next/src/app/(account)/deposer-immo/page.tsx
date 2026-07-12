@@ -4,7 +4,7 @@ import { getOptionalSession } from '@/lib/dal'
 import FormulaireImmo from './FormulaireImmo'
 
 export const metadata: Metadata = {
-  title: 'Publier une annonce immobilière — Nopalou',
+  title: 'Publier une annonce immobilière',
   description: 'Publiez gratuitement votre bien immobilier à louer ou à vendre au Sénégal.',
 }
 

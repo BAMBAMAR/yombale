@@ -4,7 +4,7 @@ import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 
 export const metadata: Metadata = {
-  title: 'Comparaison forfaits télécom — Nopalou',
+  title: 'Comparaison forfaits télécom',
 }
 
 interface Forfait {

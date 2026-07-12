@@ -5,7 +5,7 @@ import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
 
 export const metadata: Metadata = {
-  title: 'Comparaison produits — Nopalou',
+  title: 'Comparaison produits',
   description: 'Comparez côte à côte les prix et offres de plusieurs produits au Sénégal.',
 }
 
