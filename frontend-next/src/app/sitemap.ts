@@ -1,11 +1,17 @@
 import type { MetadataRoute } from 'next'
+import { SOUS_CATEGORIES } from './categorie/sous-categories-data'
+import { IMMO_LANDINGS } from './immo/landing-data'
+import { TELECOM_LANDINGS } from './telecom/landing-data'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
+// beaute exclue : 0 produit en base — page vide contre-productive pour Google
 const CATEGORY_SLUGS = [
   'smartphones', 'informatique', 'tv-electro', 'mode',
-  'maison', 'auto-moto', 'jeux', 'beaute',
+  'maison', 'auto-moto', 'jeux',
 ]
+
+const BUDGETS_SITEMAP = [50000, 100000]
 
 const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${BASE}/`,              changeFrequency: 'daily',   priority: 1.0 },
@@ -17,10 +23,39 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: 'daily' as const,
     priority: 0.85,
   })),
-  { url: `${BASE}/favoris`,       changeFrequency: 'monthly', priority: 0.4 },
-  { url: `${BASE}/comparaison`,   changeFrequency: 'monthly', priority: 0.4 },
-  { url: `${BASE}/connexion`,     changeFrequency: 'monthly', priority: 0.3 },
-  { url: `${BASE}/inscription`,   changeFrequency: 'monthly', priority: 0.3 },
+  // Landing pages sous-catégories produits
+  ...Object.keys(SOUS_CATEGORIES).map(key => ({
+    url: `${BASE}/categorie/${key}`,
+    changeFrequency: 'daily' as const,
+    priority: 0.85,
+  })),
+  // Pages budget (route [sousCategorie], segment moins-de-<n>)
+  ...CATEGORY_SLUGS.flatMap(slug =>
+    BUDGETS_SITEMAP.map(b => ({
+      url: `${BASE}/categorie/${slug}/moins-de-${b}`,
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    })),
+  ),
+  // Landing pages immo
+  ...Object.keys(IMMO_LANDINGS).map(slug => ({
+    url: `${BASE}/immo/${slug}`,
+    changeFrequency: 'daily' as const,
+    priority: 0.85,
+  })),
+  // Landing pages télécom
+  ...Object.keys(TELECOM_LANDINGS).map(slug => ({
+    url: `${BASE}/telecom/${slug}`,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  })),
+  // Guides
+  { url: `${BASE}/guide-prix`,    changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${BASE}/guide-achat`,   changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${BASE}/guide-immo`,    changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${BASE}/guide-forfait`, changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${BASE}/guide-emploi`,  changeFrequency: 'monthly', priority: 0.5 },
+  { url: `${BASE}/assistant-whatsapp`, changeFrequency: 'monthly', priority: 0.5 },
   { url: `${BASE}/deposer-annonce`, changeFrequency: 'monthly', priority: 0.5 },
   { url: `${BASE}/deposer-immo`,  changeFrequency: 'monthly', priority: 0.5 },
 ]
