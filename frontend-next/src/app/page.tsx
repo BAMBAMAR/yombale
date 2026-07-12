@@ -466,6 +466,22 @@ export default async function HomePage({
               </Link>
             ))}
           </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+            {[
+              { href: '/categorie/tv-electro/climatiseurs', label: 'Climatiseur prix Dakar' },
+              { href: '/categorie/smartphones/iphone', label: 'iPhone prix Dakar' },
+              { href: '/categorie/smartphones/samsung', label: 'Samsung Galaxy prix Dakar' },
+              { href: '/categorie/tv-electro/televiseurs', label: 'TV prix Dakar' },
+              { href: '/categorie/tv-electro/refrigerateurs', label: 'Frigo prix Dakar' },
+              { href: '/categorie/informatique/ordinateurs', label: 'Ordinateur portable prix Dakar' },
+              { href: '/immo/location-appartement-dakar', label: 'Location appartement Dakar' },
+              { href: '/immo/location-chambre-dakar', label: 'Chambre à louer Dakar' },
+            ].map(l => (
+              <Link key={l.href} href={l.href} style={{ fontSize: 13, color: 'var(--accent)', textDecoration: 'underline' }}>
+                {l.label}
+              </Link>
+            ))}
+          </div>
           </div>
         </section>
       )}

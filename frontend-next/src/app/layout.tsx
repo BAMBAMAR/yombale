@@ -238,6 +238,24 @@ export default async function RootLayout({
             </div>
           </div>
 
+          {/* Recherches populaires — maillage SEO */}
+          <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Recherches populaires</p>
+            <div style={{ display: 'flex', gap: '8px 18px', flexWrap: 'wrap', fontSize: 13 }}>
+              <a href="/categorie/tv-electro/climatiseurs">Climatiseur prix Dakar</a>
+              <a href="/categorie/smartphones/iphone">iPhone prix Dakar</a>
+              <a href="/categorie/smartphones/samsung">Samsung prix Dakar</a>
+              <a href="/categorie/tv-electro/televiseurs">TV prix Dakar</a>
+              <a href="/categorie/tv-electro/refrigerateurs">Frigo prix Dakar</a>
+              <a href="/categorie/informatique/ordinateurs">Ordinateur portable Dakar</a>
+              <a href="/immo/location-appartement-dakar">Location appartement Dakar</a>
+              <a href="/immo/location-chambre-dakar">Chambre à louer Dakar</a>
+              <a href="/immo/vente-terrain-dakar">Terrain à vendre Dakar</a>
+              <a href="/telecom/orange">Forfaits Orange</a>
+              <a href="/telecom/yas">Forfaits Yas</a>
+            </div>
+          </div>
+
           {/* Bandeau confiance */}
           <div className="footer-trust">
             <div className="footer-trust-item">✅ <strong>Gratuit</strong> &amp; indépendant</div>
