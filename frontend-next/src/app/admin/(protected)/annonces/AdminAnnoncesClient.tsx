@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { modererAnnonce, lancerSyncFacebook } from '@/app/actions/admin'
+import { modererAnnonce } from '@/app/actions/admin'
 
 interface Annonce {
   id: string
@@ -171,36 +171,6 @@ function AnnonceRow({ annonce, onAction }: { annonce: Annonce; onAction: () => v
   )
 }
 
-function SyncFacebookButton() {
-  const [pending, startTransition] = useTransition()
-  const [feedback, setFeedback] = useState<string | null>(null)
-
-  function handleClick() {
-    setFeedback(null)
-    startTransition(async () => {
-      const res = await lancerSyncFacebook()
-      setFeedback(res.error || res.message || null)
-    })
-  }
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-      <button
-        onClick={handleClick}
-        disabled={pending}
-        className="admin-btn admin-btn--approuver"
-      >
-        {pending ? '…' : '📘 Scraper Facebook'}
-      </button>
-      {feedback && (
-        <span className="admin-annonce-meta">
-          {feedback} — dure plusieurs minutes en arrière-plan, rechargez la page ensuite.
-        </span>
-      )}
-    </div>
-  )
-}
-
 export default function AdminAnnoncesClient({
   annonces: initial,
 }: {
@@ -226,7 +196,6 @@ export default function AdminAnnoncesClient({
 
   return (
     <div className="admin-annonces-sections">
-      <SyncFacebookButton />
       {sections.map(s => (
         s.items.length === 0 ? null : (
           <section key={s.titre} className="admin-annonces-section">
