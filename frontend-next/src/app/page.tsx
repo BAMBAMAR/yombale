@@ -437,49 +437,66 @@ export default async function HomePage({
       {/* ── Bloc SEO ─────────────────────────────────────────────── */}
       {!hasFiltre && (
         <section style={{ maxWidth: 1200, margin: '24px auto 24px', padding: '0 20px' }}>
-          <div style={{
-            padding: '24px 28px',
-            background: 'var(--card)', border: '1px solid var(--border)',
-            borderRadius: 12,
-          }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--navy)', marginBottom: 12 }}>
-            Le comparateur de prix N°1 au Sénégal
-          </h2>
-          <div className="home-seo-cols">
-            <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8, margin: 0 }}>
-              <strong>Nopalou</strong> est le premier comparateur de prix dédié au marché sénégalais.
-              Vous cherchez le <strong>prix le moins cher</strong> pour un téléphone, une télévision, un réfrigérateur ou un ordinateur ?
-              Nopalou compare en temps réel les prix de milliers de produits chez tous les grands marchands en ligne au Sénégal.
-            </p>
-            <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8, margin: 0 }}>
-              Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis, Ziguinchor ou Kaolack — trouvez le meilleur prix avant d&apos;acheter.
-              Nos prix sont mis à jour automatiquement toutes les 6 heures depuis Jumia, Expat-Dakar, CoinAfrique et d&apos;autres marchands.
-              Comparer les prix au Sénégal n&apos;a jamais été aussi simple : recherchez votre produit, voyez toutes les offres côte à côte, et choisissez le vendeur le moins cher. <strong>Gratuit, sans inscription, sans pub intrusive.</strong>
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
-            {CATEGORIES.filter(c => c.slug !== 'telecom').map(c => (
-              <Link key={c.slug} href={`/categorie/${c.slug}`} style={{ fontSize: 13, color: 'var(--accent)', textDecoration: 'underline' }}>
-                {c.label} au Sénégal
-              </Link>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
-            {[
-              { href: '/categorie/tv-electro/climatiseurs', label: 'Climatiseur prix Dakar' },
-              { href: '/categorie/smartphones/iphone', label: 'iPhone prix Dakar' },
-              { href: '/categorie/smartphones/samsung', label: 'Samsung Galaxy prix Dakar' },
-              { href: '/categorie/tv-electro/televiseurs', label: 'TV prix Dakar' },
-              { href: '/categorie/tv-electro/refrigerateurs', label: 'Frigo prix Dakar' },
-              { href: '/categorie/informatique/ordinateurs', label: 'Ordinateur portable prix Dakar' },
-              { href: '/immo/location-appartement-dakar', label: 'Location appartement Dakar' },
-              { href: '/immo/location-chambre-dakar', label: 'Chambre à louer Dakar' },
-            ].map(l => (
-              <Link key={l.href} href={l.href} style={{ fontSize: 13, color: 'var(--accent)', textDecoration: 'underline' }}>
-                {l.label}
-              </Link>
-            ))}
-          </div>
+          <div className="seo-card">
+            <div className="seo-head">
+              <h2>Le comparateur de prix N°1 au Sénégal</h2>
+              <span className="seo-tag">6800+ produits · maj / 6h</span>
+            </div>
+
+            <div className="seo-cols-wrap">
+              <div className="home-seo-cols">
+                <div className="seo-blurb">
+                  <span className="seo-icon">📊</span>
+                  <p>
+                    <strong>Nopalou</strong> est le premier comparateur de prix dédié au marché sénégalais.
+                    Vous cherchez le <strong>prix le moins cher</strong> pour un téléphone, une télévision, un réfrigérateur ou un ordinateur ?
+                    Nopalou compare en temps réel les prix de milliers de produits chez tous les grands marchands en ligne au Sénégal.
+                  </p>
+                </div>
+                <div className="seo-blurb">
+                  <span className="seo-icon">📍</span>
+                  <p>
+                    Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis, Ziguinchor ou Kaolack — trouvez le meilleur prix avant d&apos;acheter.
+                    Nos prix sont mis à jour automatiquement toutes les 6 heures depuis Jumia, Expat-Dakar, CoinAfrique et d&apos;autres marchands.
+                    Comparer les prix au Sénégal n&apos;a jamais été aussi simple : recherchez votre produit, voyez toutes les offres côte à côte, et choisissez le vendeur le moins cher. <strong>Gratuit, sans inscription, sans pub intrusive.</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <p className="chip-row-label">Comparer par catégorie</p>
+            <div className="chip-row">
+              {CATEGORIES.filter(c => c.slug !== 'telecom').map(c => (
+                <Link key={c.slug} href={`/categorie/${c.slug}`} className="chip">
+                  <span className="chip-em">{c.emoji}</span>
+                  {c.label}
+                </Link>
+              ))}
+            </div>
+
+            <p className="chip-row-label">Recherches populaires à Dakar</p>
+            <div className="chip-row">
+              {[
+                { href: '/categorie/tv-electro/climatiseurs', label: 'Climatiseur prix Dakar', emoji: '❄️' },
+                { href: '/categorie/smartphones/iphone', label: 'iPhone prix Dakar', emoji: '📱' },
+                { href: '/categorie/smartphones/samsung', label: 'Samsung Galaxy prix Dakar', emoji: '📱' },
+                { href: '/categorie/tv-electro/televiseurs', label: 'TV prix Dakar', emoji: '📺' },
+                { href: '/categorie/tv-electro/refrigerateurs', label: 'Frigo prix Dakar', emoji: '🧊' },
+                { href: '/categorie/informatique/ordinateurs', label: 'Ordinateur portable prix Dakar', emoji: '💻' },
+                { href: '/immo/location-appartement-dakar', label: 'Location appartement Dakar', emoji: '🏢' },
+                { href: '/immo/location-chambre-dakar', label: 'Chambre à louer Dakar', emoji: '🛏️' },
+              ].map(l => (
+                <Link key={l.href} href={l.href} className="chip chip-small">
+                  <span className="chip-em">{l.emoji}</span>
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="seo-foot">
+              <span className="seo-dot" />
+              Prix vérifiés automatiquement toutes les 6 heures sur tous les grands marchands sénégalais
+            </div>
           </div>
         </section>
       )}
