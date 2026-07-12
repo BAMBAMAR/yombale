@@ -7,12 +7,17 @@ services:
     # --only-shell : installe uniquement chrome-headless-shell (le seul binaire utilisé par
     # chromium.launch({ headless: true })) plutôt que le Chromium complet — plus léger, adapté
     # au plan free. Nécessaire pour le scraper Facebook (services/scraper-immo-facebook.js).
-    buildCommand: npm install && npx playwright install --only-shell chromium
+    # PLAYWRIGHT_BROWSERS_PATH=0 force l'installation dans node_modules/.cache (donc dans le
+    # dossier du projet, inclus dans le déploiement) au lieu du cache global /opt/render/.cache
+    # qui ne persiste pas entre l'étape de build et le runtime sur Render.
+    buildCommand: PLAYWRIGHT_BROWSERS_PATH=0 npm install && PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install --only-shell chromium
     startCommand: node backend/app.js
     healthCheckPath: /health
     envVars:
       - key: NODE_VERSION
         value: 18
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: "0"
       - key: NODE_ENV
         value: "production"
 
