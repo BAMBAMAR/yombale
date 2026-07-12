@@ -5,6 +5,7 @@ import { fcfa } from '@/lib/format'
 import CardActions from '@/app/CardActions'
 import ExternalImg from '@/components/ExternalImg'
 import { CATEGORIES } from '../categories-data'
+import { SOUS_CATEGORIES } from '../sous-categories-data'
 
 export const dynamic = 'force-dynamic'
 
@@ -269,7 +270,19 @@ export default async function CategoriePage({
             Les prix sont mis à jour automatiquement toutes les 6 heures.
             Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis ou Ziguinchor, trouvez le meilleur prix avant d&apos;acheter.
           </p>
+          {cat.contenu.map((para, i) => (
+            <p key={i} style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.7, marginTop: 10 }}>{para}</p>
+          ))}
           <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
+            {Object.entries(SOUS_CATEGORIES)
+              .filter(([, sc]) => sc.categorie === params.slug)
+              .map(([key, sc]) => (
+                <Link key={key} href={`/categorie/${key}`} className="budget-pill">
+                  {sc.emoji} {sc.label}
+                </Link>
+              ))}
+            <Link href={`/categorie/${params.slug}/moins-de-50000`} className="budget-pill">Moins de 50 000 FCFA</Link>
+            <Link href={`/categorie/${params.slug}/moins-de-100000`} className="budget-pill">Moins de 100 000 FCFA</Link>
             <Link href="/" className="budget-pill active">Tous les produits</Link>
             {Object.entries(CATEGORIES)
               .filter(([s]) => s !== params.slug)
