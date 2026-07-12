@@ -8068,10 +8068,11 @@ a {
 
 /* Bloc SEO homepage : texte en 2 colonnes sur desktop (lignes lisibles
    malgré la largeur 1200px alignée sur les autres sections) */
-.home-seo-cols { columns: 2; column-gap: 40px; }
-.home-seo-cols p { break-inside: avoid; }
+.home-seo-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; align-items: start; }
+.home-seo-cols p { margin-bottom: 12px; }
+.home-seo-cols p:last-child { margin-bottom: 0; }
 @media (max-width: 900px) {
-  .home-seo-cols { columns: 1; }
+  .home-seo-cols { grid-template-columns: 1fr; }
 }
 
 /* ── Focus clavier — anneau net, jamais supprimé (finition 2026-07-11) ── */
