@@ -9,7 +9,6 @@ import AlertePrix from '@/app/AlertePrix';
 import TrackRecent from './TrackRecent';
 import SponsoringProduitBtn from './SponsoringProduitBtn';
 import SimilRow from '@/components/SimilRow';
-import PriceHistoryChart from '@/components/PriceHistoryChart';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -343,7 +342,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
   return (
     <>
       <TrackRecent id={produit.id} nom={produit.nom} prix_min={prixMin} image_url={produit.image_url} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: buildJsonLd(produit, offres) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: buildJsonLd(produit, valides) }} />
 
       <div className="fiche">
         {/* Fil d'Ariane */}
@@ -530,16 +529,6 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
 
             {/* Historique des prix */}
             <HistoriqueChart data={historique} />
-            {historique.length > 0 && (
-              <PriceHistoryChart
-                data={historique.map((h) => ({
-                  jour: h.jour,
-                  prix_min: parseFloat(h.prix_min),
-                  prix_max: parseFloat(h.prix_max),
-                  variation_pct: 0,
-                }))}
-              />
-            )}
 
           </div>
 
