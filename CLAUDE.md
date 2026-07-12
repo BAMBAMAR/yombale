@@ -56,7 +56,7 @@ npm run migrate               # Apply schema (idempotent — runs automatically 
 - **Next.js**: httpOnly cookies (`nopalou_session`) signed with `SESSION_SECRET`. The Next.js Server Actions call the Express API to authenticate, then set the cookie independently. These are two different secrets and two different token formats.
 
 ### Deployment
-- `render.yaml` defines a single "yombale-backend" web service on Render (Node 18). `SCRAPING_DISABLED=true` is set by default on Render to avoid scraping on the free tier.
+- `render.yaml` defines **two** Render web services : `nopalou-frontend` (Next.js standalone, sert nopalou.com) et `yombale-backend` (Express API + SPA legacy, proxifié via le rewrite `/api/*` de `next.config.js`). `SCRAPING_DISABLED=true` est posé par défaut sur Render (free tier).
 - No Redis dependency in the current codebase (listed in `.env.example` but no Redis client is imported).
 
 ### Next.js fetch helpers (server-side only)
@@ -120,6 +120,31 @@ Generate secrets: `node -e "console.log(require('crypto').randomBytes(64).toStri
 ## Admin Pages
 
 The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, `/admin-partenaires.html`, `/admin-annonces.html`) in `frontend/` are protected by `adminPageGuard` middleware in `app.js`. They require the `X-Admin-Secret` header matching `ADMIN_SECRET`. API admin routes use `adminSecretOnly` middleware.
+
+---
+
+## État du projet (12 juillet 2026 — chantier SEO site-wide « Qualité puis conquête », mergé en prod)
+
+Déclencheur : audit SEO demandé par l'utilisateur (« quelle chance qu'on retrouve mon site sur ses mots-clés ? »). Constat Search Console : **719 pages découvertes, 4 indexées** (uniquement les 4 liens de la navbar) — domaine jeune, maillage interne quasi nul, pages jugées minces. Spec `docs/superpowers/specs/2026-07-11-seo-site-wide-design.md`, plan en 13 tâches `docs/superpowers/plans/2026-07-11-seo-site-wide.md`, exécuté via subagent-driven-development (~20 commits, merge `a97e5eb`), revue finale de branche opus « Ready to merge » 0 Critical/Important.
+
+### Livré
+- **20 landing pages config-driven** : 9 sous-catégories produits `/categorie/[slug]/[sousCategorie]` (climatiseurs 2150 produits, iphone, samsung, xiaomi-redmi, tecno, televiseurs, refrigerateurs, electromenager, ordinateurs), 7 immo `/immo/{location,vente}-{appartement,chambre,studio,maison,terrain}-dakar` (dossiers statiques + composant partagé `ImmoLanding`), 4 télécom `/telecom/{orange,yas,promobile,expresso}` (`OperateurLanding`). Pattern clé : les fichiers de données (`categorie/categories-data.ts`, `categorie/sous-categories-data.ts`, `immo/landing-data.ts`, `telecom/landing-data.ts`) sont la source unique importée par les pages, le sitemap ET le maillage — aucune URL ne peut dériver.
+- **Backend** : 5 nouveaux `sousType` dans `SOUS_TYPE_MOTS` (`iphone`, `samsung`, `xiaomi`, `tecno`, `ordinateurs`) — extension additive pure, aucun placeholder SQL touché.
+- **Correctifs** : titles dédupliqués sur ~40 pages (« … | Nopalou | Nopalou » — voir piège ci-dessous), canonicals + descriptions (telecom, 5 guides, boutiques, assistant-whatsapp), JSON-LD produit construit sur les offres filtrées `valides` (plus la liste brute), mojibake corrigé (pages budget + `comparer/[a]/[b]`), contenu éditorial unique par catégorie (champ `contenu: string[]`), maillage footer « Recherches populaires » + bloc SEO homepage + fil d'Ariane produit cliquable (map `CAT_SLUGS` : libellés DB réels `Telephones`/`TV & Electro`/… → slugs), sitemap assaini (retrait `/connexion`, `/inscription`, `/favoris`, `/comparaison`, `/categorie/beaute` (0 produit) ; ajout guides + pages budget + 20 landing pages). ID Google Analytics corrigé : `G-GD7365PKTS` (l'ancien `G-3KGE1YBMVJ` ne collectait rien).
+
+### Pièges découverts (à retenir absolument)
+- **`moins-de-[budget]` était un triple bug** : Next.js traite un dossier à brackets partiels comme un segment dynamique COMPLET → la route capturait n'importe quel 3ᵉ segment (`/categorie/smartphones/nimportequoi` rendait la page), `params.budget` recevait le segment entier (`parseInt` → NaN → toujours 100 000), et tout le texte était en mojibake. Remplacée par `[sousCategorie]` qui gère budget (`/^moins-de-(\d{4,9})$/`) + sous-catégories + `notFound()`. Deux segments dynamiques frères sont interdits par Next — d'où le remplacement plutôt que l'ajout.
+- **Template de titre** : `layout.tsx` définit `template: '%s | Nopalou'` — AUCUN `title:` de page ne doit contenir « Nopalou » (doublon garanti en prod). Les `openGraph.title` ne sont PAS templétés (garder la marque là est correct).
+- **Soft-404 site-wide** : `notFound()` sur les pages `force-dynamic` renvoie HTTP **200** (streaming — les headers partent avant), en dev ET en prod, sur tout le site (`produit/[id]`, `categorie/[slug]` inclus). Le contenu « Page introuvable » est bien rendu. Dette connue, faible impact (rien ne pointe vers ces URLs) — ne pas « redécouvrir » ce bug.
+- **`npm run build` pendant que le dev server tourne** : toujours interdit (corrompt `.next`) ; et supprimer un dossier de route sous un dev server actif le fait planter en boucle « Jest worker exceptions » → seul un restart le répare.
+- **Sitemap en dev** : la partie dynamique (produits/immo/annonces/boutiques) rend vide si le premier fetch part avant que le backend soit chaud, puis reste cachée 1h (`revalidate: 3600`) — ne pas conclure à une régression, la prod fonctionne.
+- Le libellé « Yas » (ex-Free) est la valeur `operateur` réelle en base pour le 2ᵉ opérateur ; `?operateur=` matche en ILIKE.
+
+### Reste à faire (côté fondateur — voir `docs/SEO-POST-DEPLOIEMENT.md`)
+Re-soumettre le sitemap dans Search Console, demandes d'indexation des ~32 pages stratégiques (~10/jour sur 4 jours), règles Cloudflare (redirect www + cache edge), suivi hebdo de la courbe « Pages indexées » (départ : 4). Résultat attendu sous 2-6 semaines — domaine jeune.
+
+### Dette acceptée
+Soft-404 streaming (ci-dessus) ; priorité sitemap 0.85 partagée catégories/sous-catégories ; interface `ImmoResponse` dupliquée (`ImmoLanding.tsx` + `immo/page.tsx`) ; `Number(page)` → NaN possible dans la pagination si `?page=abc` (motif préexistant, dupliqué dans `[sousCategorie]`).
 
 ---
 
