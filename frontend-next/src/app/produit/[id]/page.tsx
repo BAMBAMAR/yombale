@@ -63,6 +63,17 @@ interface ProduitSimilaire {
   similarite: string | null;
 }
 
+// Libellés categorie_nom réels en base → slugs des pages catégories
+const CAT_SLUGS: Record<string, string> = {
+  'Telephones': 'smartphones',
+  'Informatique': 'informatique',
+  'TV & Electro': 'tv-electro',
+  'Mode': 'mode',
+  'Maison': 'maison',
+  'Auto & Moto': 'auto-moto',
+  'Jeux': 'jeux',
+}
+
 const MARCHAND_ICONS: Record<string, string> = {
   'Jumia':       '🛒',
   'Expat-Dakar': '📦',
@@ -346,14 +357,25 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
 
       <div className="fiche">
         {/* Fil d'Ariane */}
-        <p className="breadcrumb">
-          <Link href="/">Accueil</Link>
-          {' › '}
-          {(produit.categorie_nom ?? produit.categorie) && (
-            <><Link href={`/?categorie=${produit.categorie}`}>{produit.categorie_nom ?? produit.categorie}</Link>{' › '}</>
-          )}
-          <span>{produit.nom}</span>
-        </p>
+        {(() => {
+          const catNom = produit.categorie_nom ?? produit.categorie
+          const catSlug = catNom ? CAT_SLUGS[catNom] : undefined
+          return (
+            <nav aria-label="Fil d'Ariane" style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 16 }}>
+              <Link href="/" style={{ color: 'var(--text2)' }}>Accueil</Link>
+              {catNom && (
+                <>
+                  {' › '}
+                  {catSlug
+                    ? <Link href={`/categorie/${catSlug}`} style={{ color: 'var(--text2)' }}>{catNom}</Link>
+                    : <span>{catNom}</span>}
+                </>
+              )}
+              {' › '}
+              <span style={{ color: 'var(--text1)' }}>{produit.nom}</span>
+            </nav>
+          )
+        })()}
 
         {/* Bandeau "meilleur choix" — pousse vers l'alternative la moins chère si elle existe */}
         {existeMoinsCher && meilleurSimilaire && (
