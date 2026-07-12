@@ -13,6 +13,16 @@
 
    (Quota Google ≈ 10-12 demandes/jour : étaler sur 3-4 jours, commencer par les sous-catégories.)
 
+## 1bis. Vérification du statut 404 en prod (2 minutes)
+
+En local (dev), les routes dynamiques renvoient 200 même sur `notFound()` (comportement de streaming Next). Vérifier qu'en prod le statut est bien 404 :
+
+```
+curl -s -o /dev/null -w "%{http_code}" https://nopalou.com/categorie/smartphones/nimportequoi-xyz
+```
+
+Attendu : `404`. Si `200` : signaler — il faudra désactiver le streaming sur ces pages (sinon Google les classera « soft 404 », sans gravité mais moins propre).
+
 ## 2. Cloudflare (si le domaine passe par Cloudflare)
 
 - **Rules → Redirect Rules** : forcer une seule version canonique — rediriger `www.nopalou.com/*` vers `nopalou.com/$1` en 301 (ou l'inverse selon la config DNS actuelle).

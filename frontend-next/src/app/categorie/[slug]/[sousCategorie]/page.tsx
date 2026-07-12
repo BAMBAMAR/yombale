@@ -41,7 +41,9 @@ function resolve(params: PageParams) {
 
 export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {
   const r = resolve(params)
-  if (!r) return { title: 'Page introuvable' }
+  // notFound() dès les métadonnées : lancé seulement dans le composant, le statut
+  // HTTP resterait 200 (soft-404) car le streaming a déjà commencé.
+  if (!r) notFound()
   const canonical = `${BASE}/categorie/${params.slug}/${params.sousCategorie}`
   if (r.kind === 'budget') {
     return {
