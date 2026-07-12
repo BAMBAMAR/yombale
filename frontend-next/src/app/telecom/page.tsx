@@ -4,6 +4,8 @@ import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import TelecomClient from './TelecomClient'
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+
 export const metadata: Metadata = {
   title: 'Forfaits télécom au Sénégal — Orange, Yas, Expresso, Promobile',
   description: 'Comparez les forfaits internet, voix et data des opérateurs télécom au Sénégal : Orange, Free, Expresso et plus.',
@@ -12,6 +14,7 @@ export const metadata: Metadata = {
     'Promobile forfait appel', 'Forfait illimix Orange', 'Forfait Promobile',
     'Forfait Orange appel', 'Forfait mobile sénégal', 'Promo téléphone Orange Senegal',
   ],
+  alternates: { canonical: `${BASE}/telecom` },
 }
 
 export interface Forfait {

@@ -1,7 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-export const metadata: Metadata = { title: 'Comment utiliser Nopalou — Guide' }
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+
+export const metadata: Metadata = {
+  title: 'Comment utiliser Nopalou — Guide complet',
+  description: `Guide pas à pas pour utiliser Nopalou : comparer les prix au Sénégal, créer une alerte prix, publier une annonce, ouvrir une boutique et devenir apporteur d'affaires.`,
+  alternates: { canonical: `${BASE}/guide-emploi` },
+}
 
 const STEPS = [
   {

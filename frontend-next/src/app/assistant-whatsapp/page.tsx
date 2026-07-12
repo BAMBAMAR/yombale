@@ -1,7 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-export const metadata: Metadata = { title: 'Assistant WhatsApp' }
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+
+export const metadata: Metadata = {
+  title: 'Assistant WhatsApp — Comparez les prix par message',
+  description: `L'assistant WhatsApp de Nopalou : recherchez un produit, recevez les meilleurs prix au Sénégal, créez des alertes et consultez l'immobilier, directement sur WhatsApp.`,
+  alternates: { canonical: `${BASE}/assistant-whatsapp` },
+}
 
 const WA_LINK = 'https://wa.me/221708717942?text=' + encodeURIComponent('menu')
 
