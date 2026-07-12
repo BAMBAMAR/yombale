@@ -39,7 +39,7 @@ export async function generateMetadata({
   if (!cat) return { title: 'Catégorie introuvable' }
 
   return {
-    title: `${cat.label} au Sénégal — Comparer les prix | Nopalou`,
+    title: `${cat.label} au Sénégal — Comparer les prix`,
     description: cat.description,
     keywords: cat.keywords,
     openGraph: {

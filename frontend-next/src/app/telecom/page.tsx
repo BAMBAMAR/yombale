@@ -5,7 +5,7 @@ import { fcfa } from '@/lib/format'
 import TelecomClient from './TelecomClient'
 
 export const metadata: Metadata = {
-  title: 'Forfaits Télécom — Nopalou',
+  title: 'Forfaits télécom au Sénégal — Orange, Yas, Expresso, Promobile',
   description: 'Comparez les forfaits internet, voix et data des opérateurs télécom au Sénégal : Orange, Free, Expresso et plus.',
   keywords: [
     'Forfait Orange Sénégal', 'Forfait Internet Orange Sénégal', 'Promobile forfait internet',

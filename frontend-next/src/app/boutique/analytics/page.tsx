@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { backendFetch } from '@/lib/backend-fetch'
 import AnalyticsClient from './AnalyticsClient'
 
-export const metadata: Metadata = { title: 'Analytics boutique — Nopalou' }
+export const metadata: Metadata = { title: 'Analytics boutique' }
 
 export default async function BoutiqueAnalyticsPage() {
   // Récupère les boutiques de l'utilisateur

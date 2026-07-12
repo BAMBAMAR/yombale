@@ -11,7 +11,7 @@ import ProduitsListe from './ProduitsListe'
 import RecentlyViewed from './RecentlyViewed'
 
 export const metadata: Metadata = {
-  title: 'Nopalou — Comparateur de prix au Sénégal · Dakar',
+  title: 'Comparateur de prix au Sénégal · Dakar',
   description:
     'Nopalou est le comparateur de prix N°1 au Sénégal. Trouvez le prix le moins cher pour vos achats à Dakar : téléphones, TV, électroménager, informatique. Gratuit et mis à jour toutes les 6h.',
   keywords: [

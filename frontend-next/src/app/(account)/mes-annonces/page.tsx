@@ -3,7 +3,7 @@ import { backendFetch } from '@/lib/backend-fetch'
 import { verifySession } from '@/lib/dal'
 import AnnoncesClient from './AnnoncesClient'
 
-export const metadata: Metadata = { title: 'Mes annonces — Nopalou' }
+export const metadata: Metadata = { title: 'Mes annonces' }
 
 interface Annonce {
   id: string

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-export const metadata: Metadata = { title: 'Assistant WhatsApp — Nopalou' }
+export const metadata: Metadata = { title: 'Assistant WhatsApp' }
 
 const WA_LINK = 'https://wa.me/221708717942?text=' + encodeURIComponent('menu')
 

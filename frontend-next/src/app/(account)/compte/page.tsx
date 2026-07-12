@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-export const metadata: Metadata = { title: 'Mon compte — Nopalou' }
+export const metadata: Metadata = { title: 'Mon compte' }
 
 const MENU = [
   { href: '/mes-annonces',       label: 'Mes annonces',      emoji: '📋', desc: 'Gérer vos annonces classifiées',   actif: true },

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Paiement réussi — Nopalou',
+  title: 'Paiement réussi',
 }
 
 type PayType = 'annonce' | 'immo-sponsoring' | 'boutique-sponsoring' | string

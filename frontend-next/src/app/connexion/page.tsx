@@ -3,7 +3,7 @@ import Image from 'next/image'
 import ConnexionForm from './ConnexionForm'
 
 export const metadata: Metadata = {
-  title: 'Connexion — Nopalou',
+  title: 'Connexion',
   description: 'Connectez-vous à votre compte Nopalou.',
 }
 

@@ -3,7 +3,7 @@ import { verifySession } from '@/lib/dal'
 import { logout } from '@/app/actions/auth'
 import ProfilClient from './ProfilClient'
 
-export const metadata: Metadata = { title: 'Mon profil — Nopalou' }
+export const metadata: Metadata = { title: 'Mon profil' }
 
 export default async function ProfilPage() {
   const session = await verifySession()

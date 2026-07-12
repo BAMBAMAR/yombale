@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Page introuvable — Nopalou',
+  title: 'Page introuvable',
   robots: 'noindex',
 }
 

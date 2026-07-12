@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {
   return {
-    title: `Comparer ${decodeURIComponent(params.a)} vs ${decodeURIComponent(params.b)} | Nopalou`,
+    title: `Comparer ${decodeURIComponent(params.a)} vs ${decodeURIComponent(params.b)}`,
     description: `Comparaison dÃ©taillÃ©e : ${decodeURIComponent(params.a)} vs ${decodeURIComponent(params.b)}. Trouvez le meilleur prix au SÃ©nÃ©gal.`,
   };
 }

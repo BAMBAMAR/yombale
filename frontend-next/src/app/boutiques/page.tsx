@@ -4,7 +4,7 @@ import { apiFetch } from '@/lib/api'
 import BoutiquesSearch from './BoutiquesSearch'
 
 export const metadata: Metadata = {
-  title: 'Boutiques partenaires — Nopalou',
+  title: 'Boutiques partenaires au Sénégal',
   description: 'Découvrez les boutiques des vendeurs et particuliers sur Nopalou au Sénégal.',
 }
 

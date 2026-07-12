@@ -6,7 +6,7 @@ import { fcfa } from '@/lib/format'
 import DeleteImmoButton from './DeleteImmoButton'
 
 export const metadata: Metadata = {
-  title: 'Mes annonces immo — Nopalou',
+  title: 'Mes annonces immo',
 }
 
 interface AnnonceImmo {

@@ -3,7 +3,7 @@ import Image from 'next/image'
 import MotDePasseOublieForm from './MotDePasseOublieForm'
 
 export const metadata: Metadata = {
-  title: 'Mot de passe oublié — Nopalou',
+  title: 'Mot de passe oublié',
   robots: 'noindex',
 }
 

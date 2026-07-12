@@ -3,7 +3,7 @@ import { backendFetch } from '@/lib/backend-fetch'
 import { verifySession } from '@/lib/dal'
 import AbonnementClient from './AbonnementClient'
 
-export const metadata: Metadata = { title: 'Abonnement Boutique — Nopalou' }
+export const metadata: Metadata = { title: 'Abonnement Boutique' }
 
 export default async function AbonnementPage() {
   const session = await verifySession()

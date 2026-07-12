@@ -9,7 +9,7 @@ import ImmoQuartierInput from './ImmoQuartierInput'
 import CardActions from '@/app/CardActions'
 
 export const metadata: Metadata = {
-  title: 'Immobilier au Sénégal — Nopalou',
+  title: 'Immobilier au Sénégal — Location et vente à Dakar',
   description:
     'Annonces immobilières au Sénégal : appartements, villas, terrains à louer ou à vendre à Dakar et dans tout le pays.',
   keywords: [

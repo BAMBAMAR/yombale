@@ -65,11 +65,11 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   try {
     const f = await apiFetch<Forfait>(`/telecom/${params.id}`)
     return {
-      title: `${f.nom} — ${f.operateur} | Nopalou Télécom`,
+      title: `${f.nom} — Forfait ${f.operateur}`,
       description: `Forfait ${f.operateur} ${f.nom} à ${fcfa(f.prix)}${f.data_mo ? ` — ${formatData(f.data_mo)} internet` : ''}${f.minutes === -1 ? ', appels illimités' : f.minutes ? `, ${f.minutes} min d'appels` : ''}`,
     }
   } catch {
-    return { title: 'Forfait introuvable | Nopalou' }
+    return { title: 'Forfait introuvable' }
   }
 }
 

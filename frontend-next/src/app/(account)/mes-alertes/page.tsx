@@ -4,7 +4,7 @@ import FormAlerte from '@/components/FormAlerte';
 import MesAlertesClient from '@/components/MesAlertesClient';
 
 export const metadata: Metadata = {
-  title: 'Mes alertes prix | Nopalou',
+  title: 'Mes alertes prix',
   description: 'Gérez vos alertes de baisse de prix — recevez une notification WhatsApp ou email quand un produit baisse.',
 };
 

@@ -3,7 +3,7 @@ import Image from 'next/image'
 import InscriptionForm from './InscriptionForm'
 
 export const metadata: Metadata = {
-  title: 'Créer un compte — Nopalou',
+  title: 'Créer un compte',
   description: 'Créez votre compte Nopalou gratuitement pour gérer vos annonces et favoris.',
 }
 
