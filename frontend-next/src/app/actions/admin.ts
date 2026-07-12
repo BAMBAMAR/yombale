@@ -155,6 +155,23 @@ export async function activerSponsoringBoutique(
   return {}
 }
 
+// ── Lancer le scraping Facebook (annonces classifiées) ───────────────
+export async function lancerSyncFacebook(): Promise<{ error?: string; message?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  const r = await fetch(`${BACKEND}/api/immo/sync/facebook`, {
+    method: 'POST',
+    headers: { 'X-Admin-Secret': secret },
+    cache: 'no-store',
+  })
+
+  if (!r.ok) return { error: 'Erreur lors du lancement du scraping' }
+  const data = await r.json().catch(() => ({}))
+  return { message: data.message || 'Scraping lancé en arrière-plan' }
+}
+
 // ── Modérer annonce immo ────────────────────────────────────────────
 export async function modererImmo(
   id: number,
