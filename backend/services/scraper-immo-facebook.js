@@ -24,6 +24,22 @@ const scrapingLock = require('../lib/scrapingLock');
 // Session sauvegardée via `node scripts/fb-login-setup.js` (gère le 2FA manuellement une fois)
 const SESSION_FILE = path.join(__dirname, '../.fb-session.json');
 
+// Position de la fenêtre glissante (cf. dernierIndexGroupe plus bas) — persistée sur disque
+// car le scraper est relancé en local via `node backend/scripts/scraper-facebook-local.js`,
+// un nouveau process à chaque fois, donc une variable en mémoire seule repartirait toujours
+// de zéro et ne couvrirait jamais que les 5 premiers groupes.
+const STATE_FILE = path.join(__dirname, '../.fb-scraper-state.json');
+
+function lireIndexGroupe() {
+  try { return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')).dernierIndexGroupe || 0; }
+  catch { return 0; }
+}
+
+function ecrireIndexGroupe(index) {
+  try { fs.writeFileSync(STATE_FILE, JSON.stringify({ dernierIndexGroupe: index })); }
+  catch (e) { console.error('[FB-SCRAPER] Impossible d\'écrire l\'état de rotation :', e.message); }
+}
+
 // Résout la session à utiliser : fichier local en priorité (dev), sinon la variable d'env
 // (prod). Retourne un objet storageState Playwright, ou null si aucune source disponible.
 function resoudreSession() {
@@ -56,11 +72,6 @@ const GROUPES = [
   { id: '670553284135014',   label: 'Thies ventes et achats en ligne' },
   { id: 'saintlouisachats',  label: 'Achats et ventes a Saint-Louis' },
 ];
-
-// Index du prochain groupe à visiter (fenêtre glissante entre les runs, cf. maxGroupes) —
-// réinitialisé à chaque redémarrage du process, ce n'est pas grave : on retombe sur le
-// début de la liste, pas d'incohérence possible.
-let dernierIndexGroupe = 0;
 
 const VILLES = ['Dakar', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor',
                 'Kaolack', 'Touba', 'Diourbel', 'Louga'];
@@ -237,9 +248,10 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
     console.log('[FB-SCRAPER] Connecté :', page.url().split('?')[0]);
 
     // ── Parcours des groupes (fenêtre glissante, cf. maxGroupes ci-dessus) ──────
-    const groupesDuRun = GROUPES.slice(dernierIndexGroupe, dernierIndexGroupe + maxGroupes);
-    dernierIndexGroupe = (dernierIndexGroupe + groupesDuRun.length) % GROUPES.length;
-    if (groupesDuRun.length === 0) { dernierIndexGroupe = 0; }
+    const indexDepart = lireIndexGroupe();
+    const groupesDuRun = GROUPES.slice(indexDepart, indexDepart + maxGroupes);
+    const prochainIndex = groupesDuRun.length === 0 ? 0 : (indexDepart + groupesDuRun.length) % GROUPES.length;
+    ecrireIndexGroupe(prochainIndex);
     console.log(`[FB-SCRAPER] ${groupesDuRun.length} groupe(s) ce run : ${groupesDuRun.map(g => g.label).join(', ')}`);
 
     for (const groupe of groupesDuRun) {
