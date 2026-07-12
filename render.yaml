@@ -4,7 +4,10 @@ services:
     name: yombale-backend
     runtime: node
     plan: free
-    buildCommand: npm install
+    # --only-shell : installe uniquement chrome-headless-shell (le seul binaire utilisé par
+    # chromium.launch({ headless: true })) plutôt que le Chromium complet — plus léger, adapté
+    # au plan free. Nécessaire pour le scraper Facebook (services/scraper-immo-facebook.js).
+    buildCommand: npm install && npx playwright install --only-shell chromium
     startCommand: node backend/app.js
     healthCheckPath: /health
     envVars:
