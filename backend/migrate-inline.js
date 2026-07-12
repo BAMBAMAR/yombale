@@ -214,6 +214,11 @@ module.exports = async function migrateInline() {
 
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS caracteristiques JSONB DEFAULT '{}';
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS rejete BOOLEAN DEFAULT FALSE;
+      ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS source VARCHAR(100) DEFAULT 'manuel';
+      ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS ref_externe VARCHAR(300);
+      CREATE UNIQUE INDEX IF NOT EXISTS uidx_annonces_source_ref
+        ON annonces_classifiees(source, ref_externe)
+        WHERE ref_externe IS NOT NULL;
 
       INSERT INTO categories (nom, slug, icone) VALUES
         ('Telephones',   'smartphones', '📱'),
