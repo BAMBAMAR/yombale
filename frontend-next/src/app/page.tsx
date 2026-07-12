@@ -446,22 +446,16 @@ export default async function HomePage({
             Le comparateur de prix N°1 au Sénégal
           </h2>
           <div className="home-seo-cols">
-          <div>
-            <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8 }}>
+            <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8, margin: 0 }}>
               <strong>Nopalou</strong> est le premier comparateur de prix dédié au marché sénégalais.
               Vous cherchez le <strong>prix le moins cher</strong> pour un téléphone, une télévision, un réfrigérateur ou un ordinateur ?
               Nopalou compare en temps réel les prix de milliers de produits chez tous les grands marchands en ligne au Sénégal.
             </p>
-          </div>
-          <div>
-            <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8, marginBottom: 12 }}>
+            <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8, margin: 0 }}>
               Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis, Ziguinchor ou Kaolack — trouvez le meilleur prix avant d&apos;acheter.
               Nos prix sont mis à jour automatiquement toutes les 6 heures depuis Jumia, Expat-Dakar, CoinAfrique et d&apos;autres marchands.
-            </p>
-            <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8 }}>
               Comparer les prix au Sénégal n&apos;a jamais été aussi simple : recherchez votre produit, voyez toutes les offres côte à côte, et choisissez le vendeur le moins cher. <strong>Gratuit, sans inscription, sans pub intrusive.</strong>
             </p>
-          </div>
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
             {CATEGORIES.filter(c => c.slug !== 'telecom').map(c => (
