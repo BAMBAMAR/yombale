@@ -19,6 +19,7 @@ catch { playwright = null; }
 const fs   = require('fs');
 const path = require('path');
 const { pool } = require('../models/db');
+const scrapingLock = require('../lib/scrapingLock');
 
 // Session sauvegardée via `node scripts/fb-login-setup.js` (gère le 2FA manuellement une fois)
 const SESSION_FILE = path.join(__dirname, '../.fb-session.json');
@@ -55,6 +56,11 @@ const GROUPES = [
   { id: '670553284135014',   label: 'Thies ventes et achats en ligne' },
   { id: 'saintlouisachats',  label: 'Achats et ventes a Saint-Louis' },
 ];
+
+// Index du prochain groupe à visiter (fenêtre glissante entre les runs, cf. maxGroupes) —
+// réinitialisé à chaque redémarrage du process, ce n'est pas grave : on retombe sur le
+// début de la liste, pas d'incohérence possible.
+let dernierIndexGroupe = 0;
 
 const VILLES = ['Dakar', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor',
                 'Kaolack', 'Touba', 'Diourbel', 'Louga'];
@@ -157,7 +163,12 @@ async function upsertAnnonceClassifiee(a) {
   ]);
 }
 
-async function scraperImmo({ dryRun = false } = {}) {
+// maxGroupes limite le nombre de groupes visités par run (défaut 5) — un navigateur
+// Chromium headless est lourd en RAM, et le plan Render free (512 Mo) a connu un OOM
+// kill en cours d'exécution quand ce scraper tournait longtemps (16 groupes) en même
+// temps que le cron de scraping produits. Relancer le bouton admin plusieurs fois
+// couvre progressivement tous les groupes.
+async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
   if (!playwright) {
     console.error('[FB-SCRAPER] playwright non installé. Lancez : npm install playwright && npx playwright install chromium');
     return { erreurs: ['playwright non installé'], inseres: 0 };
@@ -169,6 +180,13 @@ async function scraperImmo({ dryRun = false } = {}) {
   if (!session && (!email || !password)) {
     console.error('[FB-SCRAPER] Aucune session Facebook (fichier ou FB_SESSION_JSON) ni FB_EMAIL/FB_PASSWORD — lancez : node scripts/fb-login-setup.js');
     return { erreurs: ['Session Facebook manquante'], inseres: 0 };
+  }
+
+  // Évite un chevauchement avec le scraper produits (axios/cheerio) — les deux en même
+  // temps ont provoqué un crash mémoire constaté en prod sur le plan free.
+  if (!scrapingLock.tenterAcquerir('facebook')) {
+    console.log(`[FB-SCRAPER] Verrou occupé par "${scrapingLock.actif()}", requête ignorée`);
+    return { erreurs: ['Un autre scraping est déjà en cours'], inseres: 0 };
   }
 
   const stats = { scrapes: 0, inseres: 0, ignores: 0, erreurs: [], dryRun };
@@ -218,8 +236,13 @@ async function scraperImmo({ dryRun = false } = {}) {
     }
     console.log('[FB-SCRAPER] Connecté :', page.url().split('?')[0]);
 
-    // ── Parcours des groupes ────────────────────────────────────
-    for (const groupe of GROUPES) {
+    // ── Parcours des groupes (fenêtre glissante, cf. maxGroupes ci-dessus) ──────
+    const groupesDuRun = GROUPES.slice(dernierIndexGroupe, dernierIndexGroupe + maxGroupes);
+    dernierIndexGroupe = (dernierIndexGroupe + groupesDuRun.length) % GROUPES.length;
+    if (groupesDuRun.length === 0) { dernierIndexGroupe = 0; }
+    console.log(`[FB-SCRAPER] ${groupesDuRun.length} groupe(s) ce run : ${groupesDuRun.map(g => g.label).join(', ')}`);
+
+    for (const groupe of groupesDuRun) {
       const url = `https://www.facebook.com/groups/${groupe.id}`;
       console.log(`[FB-SCRAPER] Groupe : ${groupe.label} (${url})`);
 
@@ -333,6 +356,7 @@ async function scraperImmo({ dryRun = false } = {}) {
     }
   } finally {
     await browser.close();
+    scrapingLock.relacher();
   }
 
   console.log(`[FB-SCRAPER] Terminé — scrapes: ${stats.scrapes}, retenus: ${stats.inseres}, ignorés: ${stats.ignores}, erreurs: ${stats.erreurs.length}`);

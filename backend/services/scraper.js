@@ -3,6 +3,7 @@ const axios    = require('axios');
 const cheerio  = require('cheerio');
 const cron     = require('node-cron');
 const { pool } = require('../models/db');
+const scrapingLock = require('../lib/scrapingLock');
 
 const UA = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -947,6 +948,12 @@ async function lancerScraping(sources=['expat','jumia','coinafrique']) {
     console.log('[SCRAPER] Cycle déjà en cours, requête ignorée');
     return { ignore: true };
   }
+  // Évite un chevauchement avec le scraper Facebook (navigateur headless) — les deux
+  // en même temps ont provoqué un crash mémoire constaté en prod sur le plan free.
+  if (!scrapingLock.tenterAcquerir('produits')) {
+    console.log(`[SCRAPER] Verrou occupé par "${scrapingLock.actif()}", requête ignorée`);
+    return { ignore: true };
+  }
   scrapingEnCours = true;
   try {
     const rapport={debut:new Date(),sources:{}};
@@ -978,6 +985,7 @@ async function lancerScraping(sources=['expat','jumia','coinafrique']) {
     return rapport;
   } finally {
     scrapingEnCours = false;
+    scrapingLock.relacher();
   }
 }
 
@@ -989,6 +997,10 @@ const { scraperTousNouveauxSites, diagnosticNouveauSite } = require('./scraper-n
 async function lancerScrapingNouveauxSites(siteIds = null) {
   if (scrapingEnCours) {
     console.log('[NEW-SITES] Cycle déjà en cours, requête ignorée');
+    return { ignore: true };
+  }
+  if (!scrapingLock.tenterAcquerir('nouveaux-sites')) {
+    console.log(`[NEW-SITES] Verrou occupé par "${scrapingLock.actif()}", requête ignorée`);
     return { ignore: true };
   }
   scrapingEnCours = true;
@@ -1016,6 +1028,7 @@ async function lancerScrapingNouveauxSites(siteIds = null) {
     return stats;
   } finally {
     scrapingEnCours = false;
+    scrapingLock.relacher();
   }
 }
 
