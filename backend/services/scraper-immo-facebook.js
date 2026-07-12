@@ -3,7 +3,12 @@
 // et les insère dans annonces_classifiees (catégorie détectée par mots-clés).
 //
 // ⚠️  PRÉREQUIS
-//   - Variables d'env : FB_EMAIL, FB_PASSWORD (compte Facebook valide)
+//   - Session Facebook authentifiée, via l'une de ces deux sources :
+//       • fichier backend/.fb-session.json (dev local, généré via node scripts/fb-login-setup.js)
+//       • variable d'env FB_SESSION_JSON contenant le même JSON (prod/Render — le fichier
+//         local est gitignoré, il ne peut pas être déployé tel quel)
+//     Sans l'une des deux, la connexion par email/mot de passe (FB_EMAIL, FB_PASSWORD)
+//     est tentée en repli mais échoue presque toujours si le compte a la 2FA activée.
 //   - Package playwright installé : npm install playwright
 //   - Navigateur Chromium : npx playwright install chromium
 
@@ -17,6 +22,20 @@ const { pool } = require('../models/db');
 
 // Session sauvegardée via `node scripts/fb-login-setup.js` (gère le 2FA manuellement une fois)
 const SESSION_FILE = path.join(__dirname, '../.fb-session.json');
+
+// Résout la session à utiliser : fichier local en priorité (dev), sinon la variable d'env
+// (prod). Retourne un objet storageState Playwright, ou null si aucune source disponible.
+function resoudreSession() {
+  if (fs.existsSync(SESSION_FILE)) {
+    try { return JSON.parse(fs.readFileSync(SESSION_FILE, 'utf8')); }
+    catch (e) { console.error('[FB-SCRAPER] .fb-session.json illisible :', e.message); }
+  }
+  if (process.env.FB_SESSION_JSON) {
+    try { return JSON.parse(process.env.FB_SESSION_JSON); }
+    catch (e) { console.error('[FB-SCRAPER] FB_SESSION_JSON illisible :', e.message); }
+  }
+  return null;
+}
 
 const GROUPES = [
   { id: '252740871421764',   label: 'Groupe immo 1' },
@@ -144,12 +163,12 @@ async function scraperImmo({ dryRun = false } = {}) {
     return { erreurs: ['playwright non installé'], inseres: 0 };
   }
 
-  const hasSession = fs.existsSync(SESSION_FILE);
+  const session  = resoudreSession();
   const email    = process.env.FB_EMAIL;
   const password = process.env.FB_PASSWORD;
-  if (!hasSession && (!email || !password)) {
-    console.error('[FB-SCRAPER] FB_EMAIL et FB_PASSWORD requis (ou lancez node scripts/fb-login-setup.js)');
-    return { erreurs: ['FB_EMAIL/FB_PASSWORD manquants'], inseres: 0 };
+  if (!session && (!email || !password)) {
+    console.error('[FB-SCRAPER] Aucune session Facebook (fichier ou FB_SESSION_JSON) ni FB_EMAIL/FB_PASSWORD — lancez : node scripts/fb-login-setup.js');
+    return { erreurs: ['Session Facebook manquante'], inseres: 0 };
   }
 
   const stats = { scrapes: 0, inseres: 0, ignores: 0, erreurs: [], dryRun };
@@ -159,11 +178,11 @@ async function scraperImmo({ dryRun = false } = {}) {
     const ctx  = await browser.newContext({
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36',
       locale: 'fr-FR',
-      ...(hasSession ? { storageState: SESSION_FILE } : {}),
+      ...(session ? { storageState: session } : {}),
     });
     const page = await ctx.newPage();
 
-    if (hasSession) {
+    if (session) {
       // ── Session déjà connectée (cookies sauvegardés via fb-login-setup.js) ──
       console.log('[FB-SCRAPER] Session existante — connexion sans formulaire');
       await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded', timeout: 40000 });
