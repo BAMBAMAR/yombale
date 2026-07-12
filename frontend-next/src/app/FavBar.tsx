@@ -8,7 +8,7 @@ export default function FavBar() {
 
   function read() {
     try {
-      const favs: string[] = JSON.parse(localStorage.getItem('nopalou_favs') || '[]')
+      const favs: unknown[] = JSON.parse(localStorage.getItem('nopalou_favs') || '[]')
       setCount(favs.length)
     } catch {}
   }

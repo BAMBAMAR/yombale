@@ -4,10 +4,21 @@ import { useState, useEffect } from 'react'
 interface Props {
   id: string | number
   nom: string
-  type?: 'produit' | 'immo' | 'telecom'
+  type?: 'produit' | 'immo' | 'telecom' | 'annonce'
 }
 
+interface FavEntry { id: string; type: string }
+
 const MAX_COMPARE = 3
+
+// nopalou_favs a historiquement stocké un tableau d'IDs bruts (produits uniquement).
+// On accepte les deux formats en lecture et on réécrit toujours au nouveau format.
+function lireFavs(): FavEntry[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem('nopalou_favs') || '[]')
+    return raw.map((f: string | FavEntry) => typeof f === 'string' ? { id: f, type: 'produit' } : f)
+  } catch { return [] }
+}
 
 export default function CardActions({ id, nom, type = 'produit' }: Props) {
   const sid = String(id)
@@ -16,10 +27,8 @@ export default function CardActions({ id, nom, type = 'produit' }: Props) {
   const [cmp, setCmp]         = useState(false)
 
   function syncFav() {
-    try {
-      const favs: string[] = JSON.parse(localStorage.getItem('nopalou_favs') || '[]')
-      setFav(favs.includes(sid))
-    } catch {}
+    const favs = lireFavs()
+    setFav(favs.some(f => f.id === sid && f.type === type))
   }
 
   function syncCmp() {
@@ -42,9 +51,11 @@ export default function CardActions({ id, nom, type = 'produit' }: Props) {
   function toggleFav(e: React.MouseEvent) {
     e.preventDefault()
     try {
-      const favs: string[] = JSON.parse(localStorage.getItem('nopalou_favs') || '[]')
+      const favs = lireFavs()
       const adding = !fav
-      const next = adding ? [...favs, sid] : favs.filter(f => f !== sid)
+      const next = adding
+        ? [...favs, { id: sid, type }]
+        : favs.filter(f => !(f.id === sid && f.type === type))
       localStorage.setItem('nopalou_favs', JSON.stringify(next))
       setFav(adding)
       setFavAnim(true)

@@ -6100,11 +6100,47 @@ a {
 
 .annonces-cta-btn:hover { opacity: .88; }
 
+.annonces-search {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.annonces-search-input {
+  flex: 1 1 280px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--card);
+  color: var(--text);
+}
+
+.annonces-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.annonces-search-btn {
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  background: var(--navy);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: opacity .15s;
+}
+
+.annonces-search-btn:hover { opacity: .88; }
+
 .annonces-cats {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 28px;
+  margin-bottom: 12px;
 }
 
 .annonces-cat-pill {

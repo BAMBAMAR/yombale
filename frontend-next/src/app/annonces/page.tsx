@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { cloudinaryHQ } from '@/lib/cloudinary'
+import CardActions from '@/app/CardActions'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 const SSR_SECRET = process.env.SSR_SECRET || ''
@@ -24,6 +25,21 @@ const TRIS = [
   { val: 'prix_desc', label: 'Prix ↓' },
 ]
 
+const PRIX_MAX = [
+  { label: '< 10k',  val: '10000'   },
+  { label: '< 50k',  val: '50000'   },
+  { label: '< 100k', val: '100000'  },
+  { label: '< 500k', val: '500000'  },
+]
+
+const VILLES_SN = ['Dakar', 'Pikine', 'Guédiawaye', 'Rufisque', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor', 'Kaolack', 'Touba']
+
+const SOURCES = [
+  { val: '',         label: 'Toutes les sources' },
+  { val: 'manuel',   label: 'Publiées sur Nopalou' },
+  { val: 'facebook', label: 'Importées de Facebook' },
+]
+
 interface Annonce {
   id: string
   titre: string
@@ -37,10 +53,17 @@ interface Annonce {
   created_at: string
 }
 
-async function fetchAnnonces(categorie: string, page: number, tri: string) {
+async function fetchAnnonces(
+  categorie: string, page: number, tri: string,
+  q: string, prixMax: string, ville: string, source: string
+) {
   const params = new URLSearchParams({ limit: '24', page: String(page) })
   if (categorie) params.set('categorie', categorie)
   if (tri)       params.set('tri', tri)
+  if (q)         params.set('q', q)
+  if (prixMax)   params.set('prixMax', prixMax)
+  if (ville)     params.set('ville', ville)
+  if (source)    params.set('source', source)
   try {
     const r = await fetch(`${BACKEND}/api/annonces?${params}`, { headers: SSR_HEADERS, next: { revalidate: 60 } })
     if (!r.ok) return { annonces: [], total: 0 }
@@ -90,23 +113,37 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 export default async function AnnoncesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ categorie?: string; page?: string; tri?: string }>
+  searchParams: Promise<{
+    categorie?: string; page?: string; tri?: string
+    q?: string; prixMax?: string; ville?: string; source?: string
+  }>
 }) {
-  const { categorie = '', page: pageStr = '1', tri = '' } = await searchParams
+  const {
+    categorie = '', page: pageStr = '1', tri = '',
+    q = '', prixMax = '', ville = '', source = '',
+  } = await searchParams
   const page = Math.max(1, parseInt(pageStr))
 
-  const { annonces, total } = await fetchAnnonces(categorie, page, tri)
+  const { annonces, total } = await fetchAnnonces(categorie, page, tri, q, prixMax, ville, source)
 
   const totalPages = Math.ceil(total / 24)
   const catActuelle = CATEGORIES.find(c => c.slug === categorie) ?? CATEGORIES[0]
 
-  function pageUrl(p: number) {
+  function buildLink(overrides: Record<string, string>) {
     const params = new URLSearchParams()
     if (categorie) params.set('categorie', categorie)
     if (tri)       params.set('tri', tri)
-    if (p > 1) params.set('page', String(p))
+    if (q)         params.set('q', q)
+    if (prixMax)   params.set('prixMax', prixMax)
+    if (ville)     params.set('ville', ville)
+    if (source)    params.set('source', source)
+    Object.entries(overrides).forEach(([k, v]) => (v ? params.set(k, v) : params.delete(k)))
     const qs = params.toString()
     return `/annonces${qs ? `?${qs}` : ''}`
+  }
+
+  function pageUrl(p: number) {
+    return buildLink({ page: p > 1 ? String(p) : '' })
   }
 
   return (
@@ -125,15 +162,36 @@ export default async function AnnoncesPage({
         </Link>
       </div>
 
+      {/* Recherche texte */}
+      <form action="/annonces" method="get" className="annonces-search">
+        {categorie && <input type="hidden" name="categorie" value={categorie} />}
+        {tri       && <input type="hidden" name="tri" value={tri} />}
+        {prixMax   && <input type="hidden" name="prixMax" value={prixMax} />}
+        {ville     && <input type="hidden" name="ville" value={ville} />}
+        {source    && <input type="hidden" name="source" value={source} />}
+        <input
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="Rechercher une annonce (ex: iphone, canapé, voiture…)"
+          className="annonces-search-input"
+        />
+        <button type="submit" className="annonces-search-btn">🔍 Rechercher</button>
+        {q && (
+          <Link href={buildLink({ q: '' })} className="budget-pill budget-pill--reset">
+            ✕ Recherche
+          </Link>
+        )}
+      </form>
+
       {/* Filtres catégories */}
       <div className="annonces-cats">
         {CATEGORIES.map(cat => {
           const active = cat.slug === categorie
-          const href = cat.slug ? `/annonces?categorie=${cat.slug}` : '/annonces'
           return (
             <Link
               key={cat.slug}
-              href={href}
+              href={buildLink({ categorie: cat.slug, page: '' })}
               className={`annonces-cat-pill${active ? ' annonces-cat-pill--active' : ''}`}
             >
               <span>{cat.emoji}</span> {cat.label}
@@ -145,21 +203,67 @@ export default async function AnnoncesPage({
       {/* Tri */}
       <div className="annonces-cats" style={{ marginTop: 8 }}>
         <span className="filtres-label">Trier :</span>
-        {TRIS.map(t => {
-          const params = new URLSearchParams()
-          if (categorie) params.set('categorie', categorie)
-          if (t.val)     params.set('tri', t.val)
-          const href = `/annonces${params.toString() ? `?${params}` : ''}`
-          return (
-            <Link
-              key={t.val || 'defaut'}
-              href={href}
-              className={`annonces-cat-pill${tri === t.val ? ' annonces-cat-pill--active' : ''}`}
-            >
-              {t.label}
-            </Link>
-          )
-        })}
+        {TRIS.map(t => (
+          <Link
+            key={t.val || 'defaut'}
+            href={buildLink({ tri: t.val, page: '' })}
+            className={`annonces-cat-pill${tri === t.val ? ' annonces-cat-pill--active' : ''}`}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </div>
+
+      {/* Prix max */}
+      <div className="annonces-cats" style={{ marginTop: 8 }}>
+        <span className="filtres-label">Budget max :</span>
+        {PRIX_MAX.map(p => (
+          <Link
+            key={p.val}
+            href={buildLink({ prixMax: prixMax === p.val ? '' : p.val, page: '' })}
+            className={`annonces-cat-pill${prixMax === p.val ? ' annonces-cat-pill--active' : ''}`}
+          >
+            {p.label}
+          </Link>
+        ))}
+        {prixMax && (
+          <Link href={buildLink({ prixMax: '', page: '' })} className="budget-pill budget-pill--reset">
+            ✕ Budget
+          </Link>
+        )}
+      </div>
+
+      {/* Ville */}
+      <div className="annonces-cats" style={{ marginTop: 8 }}>
+        <span className="filtres-label">Ville :</span>
+        {VILLES_SN.map(v => (
+          <Link
+            key={v}
+            href={buildLink({ ville: ville === v ? '' : v, page: '' })}
+            className={`annonces-cat-pill${ville === v ? ' annonces-cat-pill--active' : ''}`}
+          >
+            {v}
+          </Link>
+        ))}
+        {ville && (
+          <Link href={buildLink({ ville: '', page: '' })} className="budget-pill budget-pill--reset">
+            ✕ Ville
+          </Link>
+        )}
+      </div>
+
+      {/* Source */}
+      <div className="annonces-cats" style={{ marginTop: 8 }}>
+        <span className="filtres-label">Origine :</span>
+        {SOURCES.map(s => (
+          <Link
+            key={s.val || 'toutes'}
+            href={buildLink({ source: s.val, page: '' })}
+            className={`annonces-cat-pill${source === s.val ? ' annonces-cat-pill--active' : ''}`}
+          >
+            {s.label}
+          </Link>
+        ))}
       </div>
 
       {/* Grille */}
@@ -175,7 +279,8 @@ export default async function AnnoncesPage({
           {(annonces as Annonce[]).map(a => {
             const photo = Array.isArray(a.photos) ? a.photos[0] : null
             return (
-              <Link href={`/annonces/${a.id}`} key={a.id} className="annonce-pub-card">
+              <Link href={`/annonces/${a.id}`} key={a.id} className="annonce-pub-card" style={{ position: 'relative' }}>
+                <CardActions id={a.id} nom={a.titre} type="annonce" />
                 <div className="annonce-pub-img-wrap">
                   {photo
                     // eslint-disable-next-line @next/next/no-img-element

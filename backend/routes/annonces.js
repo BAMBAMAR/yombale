@@ -108,7 +108,7 @@ function autoModerer({ titre, description, contact_tel, prix }) {
 // ── GET /api/annonces — liste publique paginée
 router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
   try {
-    const { categorie, ville, q, utilisateur_id, tri, limit = 20, page = 1 } = req.query;
+    const { categorie, ville, q, utilisateur_id, tri, prixMin, prixMax, source, limit = 20, page = 1 } = req.query;
     const offset = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit));
     const lim    = Math.min(50, parseInt(limit));
     const conds  = ['actif=true', 'supprimee=false'];
@@ -121,6 +121,10 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       vals.push(`%${q}%`);
       conds.push(`(titre ILIKE $${vals.length} OR description ILIKE $${vals.length})`);
     }
+    if (prixMin && !isNaN(parseFloat(prixMin))) { vals.push(parseFloat(prixMin)); conds.push(`prix >= $${vals.length}`); }
+    if (prixMax && !isNaN(parseFloat(prixMax))) { vals.push(parseFloat(prixMax)); conds.push(`prix <= $${vals.length}`); }
+    if (source === 'facebook') { conds.push(`source LIKE 'facebook-%'`); }
+    else if (source === 'manuel') { conds.push(`(source IS NULL OR source NOT LIKE 'facebook-%')`); }
 
     const orderBy = tri === 'prix_asc'  ? 'prix ASC NULLS LAST'
                   : tri === 'prix_desc' ? 'prix DESC NULLS LAST'
@@ -130,7 +134,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     const [rows, cnt] = await Promise.all([
       pool.query(
         `SELECT id, categorie_slug, titre, description, prix, ville, quartier,
-                contact_nom, contact_tel, photos, caracteristiques, created_at
+                contact_nom, contact_tel, photos, caracteristiques, source, created_at
          FROM annonces_classifiees ${where}
          ORDER BY ${orderBy} LIMIT $${vals.length+1} OFFSET $${vals.length+2}`,
         [...vals, lim, offset]

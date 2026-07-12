@@ -4,47 +4,110 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
 
-interface Produit {
+type FavType = 'produit' | 'immo' | 'telecom' | 'annonce'
+
+interface FavEntry { id: string; type: FavType }
+
+interface FavItem {
   id: string
+  type: FavType
   nom: string
-  marque: string | null
-  categorie: string | null
-  prix_min: number | null
+  souscategorie: string | null
+  prix: number | null
   image_url: string | null
+  href: string
+}
+
+const ENDPOINTS: Record<FavType, (id: string) => string> = {
+  produit: id => `/api/produits/${id}`,
+  immo:    id => `/api/immo/${id}`,
+  telecom: id => `/api/telecom/${id}`,
+  annonce: id => `/api/annonces/${id}`,
+}
+
+const HREFS: Record<FavType, (id: string) => string> = {
+  produit: id => `/produit/${id}`,
+  immo:    id => `/immo/${id}`,
+  telecom: id => `/telecom/${id}`,
+  annonce: id => `/annonces/${id}`,
+}
+
+function normaliser(type: FavType, id: string, raw: Record<string, unknown>): FavItem {
+  const photo = Array.isArray(raw.photos) ? (raw.photos[0] as string) : null
+  switch (type) {
+    case 'immo':
+      return {
+        id, type, nom: raw.titre as string,
+        souscategorie: raw.type_bien as string | null,
+        prix: raw.prix as number | null,
+        image_url: photo,
+        href: HREFS.immo(id),
+      }
+    case 'telecom':
+      return {
+        id, type, nom: raw.nom as string,
+        souscategorie: raw.operateur as string | null,
+        prix: raw.prix as number | null,
+        image_url: raw.image_url as string | null,
+        href: HREFS.telecom(id),
+      }
+    case 'annonce':
+      return {
+        id, type, nom: raw.titre as string,
+        souscategorie: raw.categorie_slug as string | null,
+        prix: raw.prix as number | null,
+        image_url: photo,
+        href: HREFS.annonce(id),
+      }
+    case 'produit':
+    default:
+      return {
+        id, type, nom: raw.nom as string,
+        souscategorie: raw.marque as string | null,
+        prix: raw.prix_min as number | null,
+        image_url: raw.image_url as string | null,
+        href: HREFS.produit(id),
+      }
+  }
+}
+
+function lireFavs(): FavEntry[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem('nopalou_favs') || '[]')
+    return raw.map((f: string | FavEntry) => typeof f === 'string' ? { id: f, type: 'produit' as const } : f)
+  } catch { return [] }
 }
 
 export default function FavorisClient() {
-  const [ids, setIds]           = useState<string[]>([])
-  const [produits, setProduits] = useState<Produit[]>([])
-  const [loading, setLoading]   = useState(true)
+  const [entries, setEntries] = useState<FavEntry[]>([])
+  const [items, setItems]     = useState<FavItem[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    try {
-      const stored: string[] = JSON.parse(localStorage.getItem('nopalou_favs') || '[]')
-      setIds(stored)
-      if (stored.length === 0) { setLoading(false); return }
+    const stored = lireFavs()
+    setEntries(stored)
+    if (stored.length === 0) { setLoading(false); return }
 
-      Promise.all(
-        stored.map(id =>
-          fetch(`/api/produits/${id}`)
-            .then(r => r.ok ? r.json() as Promise<Produit> : null)
-            .catch(() => null)
-        )
-      ).then(results => {
-        setProduits(results.filter((p): p is Produit => p !== null))
-        setLoading(false)
-      })
-    } catch {
+    Promise.all(
+      stored.map(({ id, type }) =>
+        fetch(ENDPOINTS[type](id))
+          .then(r => r.ok ? r.json() : null)
+          .then(raw => raw ? normaliser(type, id, raw) : null)
+          .catch(() => null)
+      )
+    ).then(results => {
+      setItems(results.filter((it): it is FavItem => it !== null))
       setLoading(false)
-    }
+    })
   }, [])
 
-  function removeFav(id: string) {
+  function removeFav(id: string, type: FavType) {
     try {
-      const next = ids.filter(i => i !== id)
+      const next = entries.filter(f => !(f.id === id && f.type === type))
       localStorage.setItem('nopalou_favs', JSON.stringify(next))
-      setIds(next)
-      setProduits(p => p.filter(pr => String(pr.id) !== id))
+      setEntries(next)
+      setItems(its => its.filter(it => !(it.id === id && it.type === type)))
+      window.dispatchEvent(new CustomEvent('nopalou:fav', { detail: { adding: false, nom: '', count: next.length } }))
     } catch {}
   }
 
@@ -57,13 +120,13 @@ export default function FavorisClient() {
     )
   }
 
-  if (ids.length === 0 || produits.length === 0) {
+  if (entries.length === 0 || items.length === 0) {
     return (
       <div className="empty-state">
         <span style={{ fontSize: 48 }}>♥</span>
         <p>Vous n&apos;avez pas encore de favoris.</p>
         <p style={{ fontSize: 13, color: 'var(--text3)' }}>
-          Cliquez sur ♥ sur n&apos;importe quel produit pour l&apos;ajouter ici.
+          Cliquez sur ♥ sur un produit, une annonce, un bien immo ou un forfait pour l&apos;ajouter ici.
         </p>
         <Link href="/" className="budget-pill active" style={{ marginTop: 12 }}>
           Parcourir les produits
@@ -74,24 +137,24 @@ export default function FavorisClient() {
 
   return (
     <div className="favs-grid">
-      {produits.map(p => (
-        <div key={p.id} className="fav-card">
+      {items.map(it => (
+        <div key={`${it.type}-${it.id}`} className="fav-card">
           <div className="fav-card-img">
-            <ExternalImg src={p.image_url} alt={p.nom} fallbackClassName="fav-img-placeholder" />
+            <ExternalImg src={it.image_url} alt={it.nom} fallbackClassName="fav-img-placeholder" />
           </div>
           <div className="fav-card-body">
-            {p.marque && <span className="fav-marque">{p.marque}</span>}
-            <h3 className="fav-nom">{p.nom}</h3>
+            {it.souscategorie && <span className="fav-marque">{it.souscategorie}</span>}
+            <h3 className="fav-nom">{it.nom}</h3>
             <p className="fav-prix">
-              {p.prix_min ? `À partir de ${fcfa(p.prix_min)}` : 'Prix non disponible'}
+              {it.prix ? fcfa(it.prix) : 'Prix non disponible'}
             </p>
           </div>
           <div className="fav-card-actions">
-            <Link href={`/produit/${p.id}`} className="fav-btn-voir">
-              Voir les offres →
+            <Link href={it.href} className="fav-btn-voir">
+              Voir →
             </Link>
             <button
-              onClick={() => removeFav(String(p.id))}
+              onClick={() => removeFav(it.id, it.type)}
               className="fav-btn-remove"
               title="Retirer des favoris"
             >
