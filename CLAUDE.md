@@ -123,6 +123,19 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## État du projet (12 juillet 2026, soir — refonte visuelle du bloc SEO homepage)
+
+Suite au chantier SEO site-wide du même jour (voir entrée ci-dessous), retour utilisateur sur le rendu du bloc SEO homepage ajouté par ce chantier (« pas bien aligné et mal formaté », puis « pas vivant ni attirant »). Deux passes :
+
+1. **Correctif d'alignement** (`88fbd74`) — le bloc utilisait `columns: 2` (CSS multi-colonnes façon journal), qui répartissait 3 paragraphes de façon déséquilibrée (1 paragraphe en colonne 1, 2 entassés en colonne 2, laissant un vide visuel). Remplacé par un vrai `display: grid` 2 colonnes avec un paragraphe par colonne.
+2. **Refonte visuelle complète** (`649d3bc` CSS + `d902cc3` JSX) — le bloc restait plat (div bordé générique, liens simplement soulignés) sans lien avec l'identité visuelle « ticket » du reste de la homepage. Process complet brainstorming → maquette Artifact (comparatif avant/après validé par l'utilisateur) → spec → plan → subagent-driven-development. Nouvelle carte `.seo-card` : perforation en haut (même motif `radial-gradient` que `.card-produit--ticket`), en-tête centré (titre + badge `.seo-tag`), 2 paragraphes avec icône ronde (`.seo-icon`), catégories principales et recherches longue traîne en chips cliquables (`.chip`/`.chip-small`) avec icône emoji et hover à liseré accent (`inset 3px 0 0 var(--accent)`, cohérent avec le hover déjà utilisé sur les autres cartes du site), pied de carte avec point de statut. Aucune URL ni contenu éditorial modifié — refonte purement visuelle, `CATEGORIES[].emoji` réutilisé directement (pas de mapping icône dupliqué). Revue finale opus : « Ready to merge », 0 Critical/Important.
+
+Spec : `docs/superpowers/specs/2026-07-12-refonte-bloc-seo-homepage-design.md`. Plan : `docs/superpowers/plans/2026-07-12-refonte-bloc-seo-homepage.md`.
+
+**Piège à noter** : le plan contenait une incohérence rédactionnelle entre sa section « Global Constraints » (« wording byte-identical ») et son propre JSX prescrit (qui retire volontairement le suffixe « au Sénégal » des chips catégorie, la carte portant déjà ce contexte via son H2). La revue finale a tranché : le JSX/la maquette approuvée font foi, ce n'est pas une régression — juste une imprécision du texte de contrainte du plan, à ne pas reproduire si ce plan sert de modèle.
+
+---
+
 ## État du projet (12 juillet 2026 — chantier SEO site-wide « Qualité puis conquête », mergé en prod)
 
 Déclencheur : audit SEO demandé par l'utilisateur (« quelle chance qu'on retrouve mon site sur ses mots-clés ? »). Constat Search Console : **719 pages découvertes, 4 indexées** (uniquement les 4 liens de la navbar) — domaine jeune, maillage interne quasi nul, pages jugées minces. Spec `docs/superpowers/specs/2026-07-11-seo-site-wide-design.md`, plan en 13 tâches `docs/superpowers/plans/2026-07-11-seo-site-wide.md`, exécuté via subagent-driven-development (~20 commits, merge `a97e5eb`), revue finale de branche opus « Ready to merge » 0 Critical/Important.
