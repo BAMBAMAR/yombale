@@ -227,7 +227,11 @@ async function scraperImmo({ dryRun = false } = {}) {
         // 'networkidle' n'atteint jamais un état stable sur Facebook (polling/websockets
         // permanents) — timeout systématique constaté en test réel. 'domcontentloaded' +
         // attente fixe est le seul mode fiable ici.
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        // Timeout 60s (au lieu de 30s) : sur le plan Render free (CPU/bande passante limités),
+        // le chargement d'une page de groupe Facebook dépasse régulièrement 30s alors qu'il
+        // prend ~17s en local — constaté en observant des timeouts systématiques en prod alors
+        // que la même page charge sans souci en local.
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForTimeout(3000);
 
         // Scroller pour charger plus de posts (6 fois)
