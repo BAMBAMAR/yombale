@@ -318,6 +318,13 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
             // mélangent au corps réel du post (ex: "Machine à vendre ... Voir plus de
             // commentaires Muslim Balde Prix J'aime Répondre Partager ...").
             texte = texte.split(/Voir plus de commentaires|Voir \d+ commentaires?/)[0];
+            // Suffixes d'interface Facebook (placeholder du champ de commentaire, jamais du
+            // vrai contenu du post) — toujours en toute fin de texte, simple retrait.
+            texte = texte.split(/Envoyez votre premier commentaire|Écrivez un commentaire public/)[0];
+            // "En voir plus" : bouton de troncature Facebook — le texte réel au-delà n'existe
+            // pas dans le DOM tant qu'on ne clique pas dessus, on ne peut que retirer le bouton
+            // lui-même du texte visible (le contenu reste tronqué, ce n'est pas récupérable ici).
+            texte = texte.replace(/…?\s*En voir plus\s*$/i, '');
             texte = texte.replace(/(?:\b[a-zA-Z0-9]{1,2}\b[\s]+){6,}/g, ' ');
             texte = texte.replace(/\s+/g, ' ').trim();
             if (!texte) continue;
