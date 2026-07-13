@@ -123,6 +123,36 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## État du projet (13 juillet 2026 — scraper Facebook réparé, exécution locale + automatisation Windows)
+
+Le scraper Facebook (`backend/services/scraper-immo-facebook.js`) n'avait **jamais fonctionné depuis sa création en juin** — `waitUntil: 'networkidle'` ne se résout jamais sur Facebook (polling/websockets permanents), et `playwright` n'était qu'en devDependency donc jamais installé sur Render en production. Chantier en deux temps : d'abord tenter de le faire tourner sur Render, puis pivot vers exécution locale + automatisation Windows après avoir confirmé que le plan Render free ne peut structurellement pas le supporter.
+
+### Tentative Render (abandonnée — voir raison ci-dessous)
+Corrigé dans l'ordre, chaque étape validée en conditions réelles avant de passer à la suivante : `networkidle` → `domcontentloaded` (timeout 30s puis 60s, le plan free est plus lent que le local) ; `playwright` déplacé en dependency réelle + `render.yaml` pour installer `chrome-headless-shell` au build (`--only-shell`, plus léger que Chromium complet) ; `PLAYWRIGHT_BROWSERS_PATH=0` pour que le binaire installé au build survive jusqu'au runtime (sinon `/opt/render/.cache` ne persiste pas) ; session Facebook transmise via variable d'env `FB_SESSION_JSON` (le fichier `.fb-session.json` local est gitignoré, jamais déployé) ; verrou mémoire (`backend/lib/scrapingLock.js`) pour empêcher le scraper Facebook et le cron de scraping produits de tourner en même temps.
+
+**Abandonné après confirmation en prod** : même avec toutes ces corrections, le service **redémarrait tout seul** (OOM) en pleine exécution du scraping — logs montrant `Instance restarted`, `[SIGTERM]`, des dizaines de `Cannot use a pool after calling end on the pool`. 512 Mo de RAM (plan Render free/Hobby) est structurellement insuffisant pour Express + PostgreSQL pool + un navigateur Chromium headless, quelle que soit la taille du run. Décision utilisateur explicite : rester 100% gratuit, ne pas upgrader le plan.
+
+### Solution retenue — script local
+- `backend/scripts/scraper-facebook-local.js` : lance `scraperImmo()` depuis la machine locale, écrit directement dans la base de production via le `DATABASE_URL` du `.env` local (pas de synchronisation supplémentaire nécessaire — une seule base existe). `render.yaml`/`PLAYWRIGHT_BROWSERS_PATH` revertés à l'état d'origine, plus besoin de Chromium sur Render.
+- Bouton admin `/admin/annonces` retiré (`lancerSyncFacebook` server action supprimée) — devenu trompeur puisqu'il ne peut plus fonctionner de façon fiable en prod.
+- `backend/scripts/fb-login-setup.js` créé — référencé 4 fois dans le code depuis juin mais n'avait jamais existé dans le repo ; ouvre un navigateur visible pour se connecter manuellement (gère 2FA/vérification Meta), sauvegarde la session dans `backend/.fb-session.json`.
+- **Rotation des 16 groupes persistée sur disque** (`backend/.fb-scraper-state.json`, gitignoré) — bug trouvé en conditions réelles : la variable de rotation était en mémoire, donc remise à zéro à chaque lancement CLI (un nouveau process Node à chaque fois), les mêmes 5 premiers groupes étaient rescrapés en boucle. `maxGroupes: 5` par défaut (limite la durée d'un run), `--tout` pour les 16 d'un coup.
+- **Automatisation Windows Task Scheduler** : `backend/scripts/scraper-facebook-auto.bat` (wrapper qui logge dans `backend/scripts/logs/`, gitignoré) + `notifier-scraper-fb.ps1` (notification Windows toast au début du run et à la fin avec résumé — annonces ajoutées/doublons/erreurs, lu depuis `backend/.fb-scraper-resume.txt`). Piège Task Scheduler : l'option "Exécuter que l'utilisateur soit connecté ou non" exige un mot de passe Windows et échoue souvent (« compte inconnu ») — utiliser "Exécuter uniquement si l'utilisateur est connecté" à la place, plus l'option "Si la tâche planifiée est manquée, l'exécuter dès que possible" pour rattraper au redémarrage si le PC était éteint.
+
+### Bugs de qualité de données trouvés en observant les vraies annonces scrapées
+- **Dédoublonnage inter-groupes** : un même post republié tel quel dans plusieurs groupes Facebook créait autant de lignes quasi-identiques (`ref_externe` ne détecte que les doublons dans un même groupe, pas entre groupes). `upsertAnnonceClassifiee()` vérifie désormais si un numéro de téléphone extrait a déjà une annonce Facebook des 7 derniers jours avant d'insérer.
+- **Commentaires réels mélangés au texte du post** : `estFilDeCommentaires()` ne rejetait un fil de commentaires que si le texte total faisait ≤15 mots — un post + 2 vrais commentaires dépasse largement ce seuil et passait tel quel (ex: titre affichant des noms de commentateurs + "J'aime Répondre Partager"). Le texte est désormais coupé à "Voir plus de commentaires" avant tout autre traitement.
+- **Suffixes d'interface Facebook** ("Envoyez votre premier commentaire...", "Écrivez un commentaire public...", bouton résiduel "En voir plus") retirés du texte extrait — 11 annonces déjà en base nettoyées en place.
+- **`contact_tel = 'Voir sur Facebook'` générait des liens cassés** : `href="tel:Voir sur Facebook"` et un lien `wa.me` avec numéro vide, au lieu d'un vrai lien. Nouvelle colonne `annonces_classifiees.url_source` (alimentée par le scraper avec le lien réel du post) ; la fiche annonce affiche un vrai bouton "Voir sur Facebook" quand le numéro n'a pas pu être extrait, masqué proprement si `url_source` est absent (8 annonces scrapées avant ce fix n'ont pas cette donnée rétroactivement).
+- Bouton "Recevoir par WhatsApp" retiré de la fiche annonce (demande explicite) — ne restent que le tél. cliquable et le bouton WhatsApp direct.
+
+### Fonctionnalités `/annonces` ajoutées au passage (avant le pivot ci-dessus)
+Recherche texte (titre+description — le backend le supportait déjà, jamais exposé côté UI), filtres prix min/max et origine (Nopalou vs Facebook), favoris (♥) sur les cartes. Pas de comparateur ajouté — décision assumée, les annonces sont trop hétérogènes (meuble vs voiture vs téléphone) pour qu'un comparatif côte à côte ait un sens, contrairement aux produits/immo/télécom qui partagent des critères communs. Bug pré-existant corrigé au passage : `nopalou_favs` ne stockait qu'un tableau d'IDs sans type (produits uniquement) — un favori immo/telecom ajouté depuis `CardActions` n'apparaissait jamais sur `/favoris`. Migré vers `{id, type}[]`.
+
+**Pour relancer le scraping** : `node backend/scripts/scraper-facebook-local.js` (5 groupes, rotation automatique) ou configurer la tâche planifiée Windows décrite ci-dessus pour un fonctionnement autonome.
+
+---
+
 ## État du projet (12 juillet 2026, soir — refonte visuelle du bloc SEO homepage)
 
 Suite au chantier SEO site-wide du même jour (voir entrée ci-dessous), retour utilisateur sur le rendu du bloc SEO homepage ajouté par ce chantier (« pas bien aligné et mal formaté », puis « pas vivant ni attirant »). Deux passes :
