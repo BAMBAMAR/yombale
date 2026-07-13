@@ -15,6 +15,7 @@ tmp/
 .fb-session.json
 backend/.fb-session.json
 backend/.fb-scraper-state.json
+backend/.fb-scraper-resume.txt
 
 # Dumps SQL (données sensibles)
 *.sql

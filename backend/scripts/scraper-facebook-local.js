@@ -18,11 +18,17 @@
 //   node backend/scripts/scraper-facebook-local.js --tout        (les 16 groupes en un seul run)
 
 require('dotenv').config();
+const fs   = require('fs');
+const path = require('path');
 const { scraperImmo } = require('../services/scraper-immo-facebook');
 
 const dryRun    = process.argv.includes('--dry-run');
 const tout      = process.argv.includes('--tout');
 const maxGroupes = tout ? 16 : 5;
+
+// Résumé texte écrit à part (pas dans le log complet) — lu par
+// scraper-facebook-auto.bat pour construire la notification Windows de fin d'exécution.
+const RESUME_FILE = path.join(__dirname, '../.fb-scraper-resume.txt');
 
 (async () => {
   console.log(dryRun ? '[DRY-RUN] Aperçu — aucune écriture en base' : '[LIVE] Insertion réelle en base');
@@ -30,8 +36,15 @@ const maxGroupes = tout ? 16 : 5;
 
   const stats = await scraperImmo({ dryRun, maxGroupes });
   console.log('\nRésultat :', JSON.stringify(stats, null, 2));
+
+  const resume = stats.erreurs.length > 0
+    ? `Erreur : ${stats.erreurs[0]}`
+    : `${stats.inseres} annonce(s) ajoutee(s), ${stats.doublons} doublon(s), ${stats.ignores} ignoree(s)`;
+  try { fs.writeFileSync(RESUME_FILE, resume); } catch {}
+
   process.exit(stats.erreurs.length > 0 ? 1 : 0);
 })().catch(err => {
+  try { fs.writeFileSync(RESUME_FILE, `Erreur fatale : ${err.message}`); } catch {}
   console.error('[FATAL]', err);
   process.exit(1);
 });
