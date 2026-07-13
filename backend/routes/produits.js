@@ -45,6 +45,11 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       'xiaomi'      : ['xiaomi', 'redmi', 'poco'],
       'tecno'       : ['tecno', 'spark', 'camon'],
       'ordinateurs' : ['laptop', 'ordinateur', 'macbook', 'notebook', 'pc portable', 'lenovo', 'dell', 'asus', 'acer', 'chromebook'],
+      'smartphones' : ['iphone','galaxy','tecno ','infinix','itel ','vivo ','oppo ','realme','redmi','xiaomi','huawei','nokia ','oneplus','pixel','motorola','smartphone','telephone portable'],
+      'maison'      : ['canape','chaise','matelas','lit ','armoire','meuble','fontaine','table basse','commode'],
+      'mode'        : ['robe ','chaussure','sac a main','chemise','pantalon','sneaker','basket','parfum','eau de toilette','t-shirt','jean '],
+      'auto-moto'   : ['voiture','moto ','scooter','trottinette','piece auto','batterie voiture'],
+      'jeux'        : ['playstation','ps4','ps5','xbox','nintendo','manette','jeu video','gaming','casque gamer'],
     };
 
     if (categorieNorm && !CAT_FALLBACK[categorieNorm]) {
