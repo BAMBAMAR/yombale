@@ -67,13 +67,14 @@ interface ApiResponse {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: { q?: string; categorie?: string; prixMax?: string; page?: string; tri?: string }
+  searchParams: { q?: string; categorie?: string; prixMax?: string; page?: string; tri?: string; sousType?: string }
 }) {
   const q         = searchParams.q         ?? ''
   const categorie = searchParams.categorie ?? ''
   const prixMax   = searchParams.prixMax   ?? ''
   const page      = searchParams.page      ?? '1'
   const tri       = searchParams.tri       ?? ''
+  const sousType  = searchParams.sousType  ?? ''
 
   let produits: Produit[] = []
   let total               = 0
@@ -85,6 +86,7 @@ export default async function HomePage({
     if (categorie) params.set('categorie', categorie)
     if (prixMax)   params.set('prixMax',   prixMax)
     if (tri)       params.set('tri',       tri)
+    if (sousType)  params.set('sousType',  sousType)
 
     const r = await fetch(`${BACKEND}/api/produits?${params}`, { cache: 'no-store', headers: SSR_HEADERS })
     if (!r.ok) throw new Error(`API produits → ${r.status}`)
@@ -100,7 +102,7 @@ export default async function HomePage({
     erreur = e instanceof Error ? e.message : 'Erreur inconnue'
   }
 
-  const hasFiltre = q || categorie || prixMax
+  const hasFiltre = q || categorie || prixMax || sousType
 
   let settings: Record<string, string> = {}
   try {
@@ -227,13 +229,14 @@ export default async function HomePage({
         </div>
       ) : (
         <ProduitsListe
-          key={`${q}-${categorie}-${prixMax}-${tri}`}
+          key={`${q}-${categorie}-${prixMax}-${tri}-${sousType}`}
           initialProduits={produits}
           total={total}
           q={q}
           categorie={categorie}
           prixMax={prixMax}
           tri={tri}
+          sousType={sousType}
         />
       )}
 

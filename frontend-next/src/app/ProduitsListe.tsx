@@ -24,9 +24,10 @@ interface Props {
   categorie: string
   prixMax: string
   tri: string
+  sousType?: string
 }
 
-export default function ProduitsListe({ initialProduits, total, q, categorie, prixMax, tri }: Props) {
+export default function ProduitsListe({ initialProduits, total, q, categorie, prixMax, tri, sousType = '' }: Props) {
   const [produits, setProduits] = useState<Produit[]>(initialProduits)
   const [loading, setLoading]   = useState(false)
   const [page, setPage]         = useState(1)
@@ -42,6 +43,7 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
       if (categorie) params.set('categorie', categorie)
       if (prixMax)   params.set('prixMax',   prixMax)
       if (tri)       params.set('tri',       tri)
+      if (sousType)  params.set('sousType',  sousType)
 
       const r    = await fetch(`/api/produits?${params}`)
       const data = await r.json()

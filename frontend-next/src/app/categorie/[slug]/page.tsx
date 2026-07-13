@@ -62,7 +62,7 @@ export default async function CategoriePage({
   searchParams,
 }: {
   params: { slug: string }
-  searchParams: { page?: string; prixMax?: string; tri?: string }
+  searchParams: { page?: string; prixMax?: string; tri?: string; sousType?: string }
 }) {
   const cat = CATEGORIES[params.slug]
   if (!cat) notFound()
@@ -70,10 +70,12 @@ export default async function CategoriePage({
   const page   = searchParams.page   ?? '1'
   const prixMax = searchParams.prixMax ?? ''
   const tri    = searchParams.tri    ?? 'pertinence'
+  const sousType = searchParams.sousType ?? ''
 
   const qs = new URLSearchParams({ limit: '24', page, categorie: params.slug })
   if (prixMax) qs.set('prixMax', prixMax)
   if (tri !== 'pertinence') qs.set('tri', tri)
+  if (sousType) qs.set('sousType', sousType)
 
   let produits: Produit[] = []
   let total = 0
@@ -97,6 +99,7 @@ export default async function CategoriePage({
     const ps = new URLSearchParams()
     if (prixMax) ps.set('prixMax', prixMax)
     if (tri !== 'pertinence') ps.set('tri', tri)
+    if (sousType) ps.set('sousType', sousType)
     Object.entries(p).forEach(([k, v]) => (v ? ps.set(k, v) : ps.delete(k)))
     const qs2 = ps.toString()
     return `/categorie/${params.slug}${qs2 ? `?${qs2}` : ''}`
