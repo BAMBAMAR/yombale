@@ -1,14 +1,25 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-
-interface Item { id: string; nom: string; type?: string }
+import { useRouter, usePathname } from 'next/navigation'
+import { lireCompare, type CompareEntry } from '@/lib/comparaison'
 
 export default function CompareBar() {
-  const [items, setItems] = useState<Item[]>([])
+  const router = useRouter()
+  const pathname = usePathname()
+  const [items, setItems] = useState<CompareEntry[]>([])
 
   function read() {
-    try { setItems(JSON.parse(localStorage.getItem('nopalou_compare') || '[]')) } catch {}
+    setItems(lireCompare())
+  }
+
+  function retirerFiltreUrl() {
+    const params = new URLSearchParams(window.location.search)
+    if (!params.get('sousType')) return
+    params.delete('sousType')
+    params.delete('page')
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname)
   }
 
   useEffect(() => {
@@ -24,6 +35,7 @@ export default function CompareBar() {
     localStorage.removeItem('nopalou_compare')
     setItems([])
     window.dispatchEvent(new CustomEvent('nopalou:compare'))
+    retirerFiltreUrl()
   }
 
   function removeOne(id: string) {
@@ -31,6 +43,9 @@ export default function CompareBar() {
     localStorage.setItem('nopalou_compare', JSON.stringify(next))
     setItems(next)
     window.dispatchEvent(new CustomEvent('nopalou:compare'))
+    if (next.length === 0) {
+      retirerFiltreUrl()
+    }
   }
 
   return (
