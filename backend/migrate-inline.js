@@ -216,6 +216,7 @@ module.exports = async function migrateInline() {
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS rejete BOOLEAN DEFAULT FALSE;
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS source VARCHAR(100) DEFAULT 'manuel';
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS ref_externe VARCHAR(300);
+      ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS url_source TEXT;
       CREATE UNIQUE INDEX IF NOT EXISTS uidx_annonces_source_ref
         ON annonces_classifiees(source, ref_externe)
         WHERE ref_externe IS NOT NULL;

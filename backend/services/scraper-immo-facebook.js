@@ -177,15 +177,15 @@ async function upsertAnnonceClassifiee(a) {
   await pool.query(`
     INSERT INTO annonces_classifiees
       (categorie_slug, titre, description, prix, ville, contact_tel,
-       photos, actif, source, ref_externe)
-    VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,true,$8,$9)
+       photos, actif, source, ref_externe, url_source)
+    VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,true,$8,$9,$10)
     ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
     DO UPDATE SET
       prix       = COALESCE(EXCLUDED.prix, annonces_classifiees.prix),
       updated_at = NOW()
   `, [
     a.categorie_slug, a.titre, a.description, a.prix, a.ville, a.contact_tel,
-    JSON.stringify(a.photos || []), a.source, a.ref_externe,
+    JSON.stringify(a.photos || []), a.source, a.ref_externe, a.url_source,
   ]);
   return { doublon: false };
 }
@@ -381,6 +381,7 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
             photos:      post.imgs,
             source:      `facebook-${groupe.id}`,
             ref_externe,
+            url_source:  post.href || url,
           };
 
           if (dryRun) {

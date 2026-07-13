@@ -29,6 +29,7 @@ interface Annonce {
   photos: string[]
   contact_nom: string | null
   contact_tel: string
+  url_source: string | null
   caracteristiques: Record<string, string> | null
   created_at: string
 }
@@ -188,20 +189,35 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
             {annonce.contact_nom && (
               <p className="annonce-contact-nom">{annonce.contact_nom}</p>
             )}
-            <a
-              href={`tel:${annonce.contact_tel}`}
-              className="annonce-contact-tel"
-            >
-              📞 {annonce.contact_tel}
-            </a>
-            <a
-              href={`https://wa.me/${annonce.contact_tel.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par votre annonce :\n\n*${annonce.titre}*${annonce.prix ? ` — ${formatPrix(annonce.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/annonces/${annonce.id}`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="annonce-contact-whatsapp"
-            >
-              WhatsApp
-            </a>
+            {annonce.contact_tel === 'Voir sur Facebook' ? (
+              annonce.url_source && (
+                <a
+                  href={annonce.url_source}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="annonce-contact-tel"
+                >
+                  📘 Voir sur Facebook
+                </a>
+              )
+            ) : (
+              <>
+                <a
+                  href={`tel:${annonce.contact_tel}`}
+                  className="annonce-contact-tel"
+                >
+                  📞 {annonce.contact_tel}
+                </a>
+                <a
+                  href={`https://wa.me/${annonce.contact_tel.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par votre annonce :\n\n*${annonce.titre}*${annonce.prix ? ` — ${formatPrix(annonce.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/annonces/${annonce.id}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="annonce-contact-whatsapp"
+                >
+                  WhatsApp
+                </a>
+              </>
+            )}
             <p className="annonce-contact-warn">
               ⚠️ Ne payez jamais à l&apos;avance sans avoir vu le produit.
             </p>
