@@ -312,6 +312,12 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
             let texte = el.innerText || '';
             texte = texte.replace(/(?:Facebook\s*){2,}/g, ' ');
             texte = texte.split(/Commenter en tant que/)[0];
+            // Coupe avant le fil de commentaires : Facebook affiche "Voir plus de
+            // commentaires", puis chaque commentaire suivi de son propre "J'aime Répondre
+            // Partager" — sans cette coupe, les noms des commentateurs et leur texte se
+            // mélangent au corps réel du post (ex: "Machine à vendre ... Voir plus de
+            // commentaires Muslim Balde Prix J'aime Répondre Partager ...").
+            texte = texte.split(/Voir plus de commentaires|Voir \d+ commentaires?/)[0];
             texte = texte.replace(/(?:\b[a-zA-Z0-9]{1,2}\b[\s]+){6,}/g, ' ');
             texte = texte.replace(/\s+/g, ' ').trim();
             if (!texte) continue;
