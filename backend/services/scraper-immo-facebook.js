@@ -285,8 +285,10 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForTimeout(3000);
 
-        // Scroller pour charger plus de posts (6 fois)
-        for (let i = 0; i < 6; i++) {
+        // Scroller pour charger plus de posts (15 fois — avec 6, seulement ~15-25 posts
+        // étaient visibles par groupe sur des fils qui en contiennent des milliers, ce qui
+        // limitait fortement le nombre d'annonces trouvées malgré un groupe actif)
+        for (let i = 0; i < 15; i++) {
           await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
           await page.waitForTimeout(2500);
         }
