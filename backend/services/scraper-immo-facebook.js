@@ -158,7 +158,22 @@ function parseTelephoneFB(texte) {
   return digits.length === 9 ? digits : null;
 }
 
+// Un même post est souvent republié tel quel dans plusieurs groupes Facebook — ref_externe
+// (spécifique à un post dans un groupe donné) ne peut pas détecter ces doublons inter-groupes.
+// Le numéro de téléphone extrait est en revanche stable d'une republication à l'autre :
+// on ignore l'insertion si ce numéro a déjà une annonce Facebook des 7 derniers jours (fenêtre
+// courte pour ne pas bloquer un vendeur qui republie légitimement un article différent plus
+// tard). Ne s'applique qu'aux numéros réellement extraits, pas au repli "Voir sur Facebook".
 async function upsertAnnonceClassifiee(a) {
+  if (a.contact_tel !== 'Voir sur Facebook') {
+    const { rows } = await pool.query(`
+      SELECT 1 FROM annonces_classifiees
+      WHERE contact_tel = $1 AND source LIKE 'facebook-%' AND created_at > NOW() - INTERVAL '7 days'
+      LIMIT 1
+    `, [a.contact_tel]);
+    if (rows.length > 0) return { doublon: true };
+  }
+
   await pool.query(`
     INSERT INTO annonces_classifiees
       (categorie_slug, titre, description, prix, ville, contact_tel,
@@ -172,6 +187,7 @@ async function upsertAnnonceClassifiee(a) {
     a.categorie_slug, a.titre, a.description, a.prix, a.ville, a.contact_tel,
     JSON.stringify(a.photos || []), a.source, a.ref_externe,
   ]);
+  return { doublon: false };
 }
 
 // maxGroupes limite le nombre de groupes visités par run (défaut 5) — un navigateur
@@ -200,7 +216,7 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
     return { erreurs: ['Un autre scraping est déjà en cours'], inseres: 0 };
   }
 
-  const stats = { scrapes: 0, inseres: 0, ignores: 0, erreurs: [], dryRun };
+  const stats = { scrapes: 0, inseres: 0, doublons: 0, ignores: 0, erreurs: [], dryRun };
   const browser = await playwright.chromium.launch({ headless: true });
 
   try {
@@ -354,10 +370,13 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
 
           if (dryRun) {
             console.log('[FB-SCRAPER DRY]', categorie_slug, '|', titre, '|', prix, '|', ville);
+            stats.inseres++;
           } else {
-            try { await upsertAnnonceClassifiee(annonce); } catch (e) { stats.erreurs.push(e.message); }
+            try {
+              const { doublon } = await upsertAnnonceClassifiee(annonce);
+              if (doublon) { stats.doublons++; } else { stats.inseres++; }
+            } catch (e) { stats.erreurs.push(e.message); }
           }
-          stats.inseres++;
         }
       } catch (err) {
         console.warn(`[FB-SCRAPER] Erreur groupe ${groupe.label}: ${err.message}`);
@@ -371,7 +390,7 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
     scrapingLock.relacher();
   }
 
-  console.log(`[FB-SCRAPER] Terminé — scrapes: ${stats.scrapes}, retenus: ${stats.inseres}, ignorés: ${stats.ignores}, erreurs: ${stats.erreurs.length}`);
+  console.log(`[FB-SCRAPER] Terminé — scrapes: ${stats.scrapes}, retenus: ${stats.inseres}, doublons: ${stats.doublons}, ignorés: ${stats.ignores}, erreurs: ${stats.erreurs.length}`);
   return stats;
 }
 
