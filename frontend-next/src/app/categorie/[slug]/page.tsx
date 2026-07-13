@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import CardActions from '@/app/CardActions'
 import ExternalImg from '@/components/ExternalImg'
+import CompareFilterBanner from '@/components/CompareFilterBanner'
 import { CATEGORIES } from '../categories-data'
 import { SOUS_CATEGORIES } from '../sous-categories-data'
 
@@ -210,6 +211,7 @@ export default async function CategoriePage({
         </div>
 
         {/* Grille produits */}
+        <CompareFilterBanner />
         {produits.length === 0 ? (
           <div className="empty-state">
             <span style={{ fontSize: 48 }}>{cat.emoji}</span>

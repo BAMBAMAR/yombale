@@ -1747,6 +1747,22 @@ a {
 
 .compare-bar-clear:hover { background: rgba(255,255,255,.25); }
 
+/* Bandeau « Comparaison active » au-dessus des listes produits */
+.compare-filter-banner {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  border: 1.5px solid var(--accent); border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+  padding: 10px 16px; margin: 0 0 14px; font-size: 13px;
+}
+.compare-filter-banner-titre { font-weight: 700; color: var(--accent); }
+.compare-filter-banner-texte { flex: 1; color: var(--text2); min-width: 200px; }
+.compare-filter-banner-vider {
+  border: 1px solid var(--border); background: transparent;
+  border-radius: 8px; padding: 5px 12px; font-size: 12px; cursor: pointer;
+  color: var(--text2);
+}
+.compare-filter-banner-vider:hover { color: #ef4444; border-color: #ef4444; }
+
 /* Animation pop sur les boutons carte */
 /* ── FavToast ─────────────────────────────────────────────────── */
 .fav-toast {

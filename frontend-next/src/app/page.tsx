@@ -9,6 +9,7 @@ const SSR_SECRET = process.env.SSR_SECRET || ''
 const SSR_HEADERS: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}
 import ProduitsListe from './ProduitsListe'
 import RecentlyViewed from './RecentlyViewed'
+import CompareFilterBanner from '@/components/CompareFilterBanner'
 
 export const metadata: Metadata = {
   title: 'Comparateur de prix au Sénégal · Dakar',
@@ -228,6 +229,8 @@ export default async function HomePage({
           <p>{erreur}</p>
         </div>
       ) : (
+        <>
+        <CompareFilterBanner />
         <ProduitsListe
           key={`${q}-${categorie}-${prixMax}-${tri}-${sousType}`}
           initialProduits={produits}
@@ -238,6 +241,7 @@ export default async function HomePage({
           tri={tri}
           sousType={sousType}
         />
+        </>
       )}
 
       {/* ── Comment ça marche ───────────────────────────────────── */}
