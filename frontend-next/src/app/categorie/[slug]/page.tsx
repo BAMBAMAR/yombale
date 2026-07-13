@@ -11,6 +11,8 @@ import { SOUS_CATEGORIES } from '../sous-categories-data'
 export const dynamic = 'force-dynamic'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+const SSR_SECRET = process.env.SSR_SECRET || ''
+const SSR_HEADERS: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -83,7 +85,7 @@ export default async function CategoriePage({
   let pages = 1
 
   try {
-    const res  = await fetch(`${BACKEND}/api/produits?${qs}`, { cache: 'no-store' })
+    const res  = await fetch(`${BACKEND}/api/produits?${qs}`, { cache: 'no-store', headers: SSR_HEADERS })
     if (res.ok) {
       const data: ApiResponse = await res.json()
       produits = data.produits ?? data.data ?? []
