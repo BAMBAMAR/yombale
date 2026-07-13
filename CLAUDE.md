@@ -123,6 +123,26 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## État du projet (13 juillet 2026, soir — comparaison « zéro rejet » : filtrage auto par groupe de produit)
+
+Constat utilisateur : la comparaison Next.js n'avait **aucun contrôle de type** (écouteur vs frigo comparables) — le contrôle existait dans le SPA legacy (`comparerCat` + filtre auto, `frontend/app.js:4753`) mais n'avait jamais été porté. Exigence validée : **jamais de rejet après clic** — au lieu de bloquer, filtrer. Spec `docs/superpowers/specs/2026-07-13-comparaison-zero-rejet-design.md`, plan en 7 tâches, exécuté via subagent-driven-development, revue finale opus « Ready to merge » 0 Critical/Important, mergé fast-forward dans `main` (`2104dce..fe31532`), poussé (déploiement Render).
+
+### Livré
+- **`frontend-next/src/lib/comparaison.ts`** : `infererGroupe(nom)` (portage de `_inferCat` legacy — l'ORDRE des regex est significatif : audio/tv avant smartphones, tablette avant smartphones), `GROUPE_LABELS`, `CAT_NOM_SLUG`, `lireCompare()`. Clé legacy `informatique` renommée `ordinateurs` (= la clé backend). Contrat : toute clé retournée doit exister dans `SOUS_TYPE_MOTS` (backend).
+- **Backend** : 5 nouveaux `sousType` dans `SOUS_TYPE_MOTS` (`smartphones`, `maison`, `mode`, `auto-moto`, `jeux`) — additif pur.
+- **`CardActions`** : au 1er ajout d'un produit, groupe inféré (repli : catégorie DB via `CAT_NOM_SLUG`), stocké dans les entrées `nopalou_compare` (`{id, nom, type, groupe?, catSlug?}` — tableau racine conservé, rétrocompatible), et `?sousType=` poussé dans l'URL des pages liste (`/` et `/categorie/[slug]`). Boutons ⚖ incompatibles (autre type quand une comparaison produit est active, ou autre groupe) rendus `disabled` + `title` explicatif — jamais de toast d'erreur. Logique favoris inchangée.
+- **Accueil + page catégorie** transmettent `sousType` au backend (filtre serveur → pagination/compteurs justes ; `sousType` inclus dans `hasFiltre` et la `key` de `ProduitsListe`) ; « Voir plus » filtré aussi.
+- **`CompareFilterBanner`** (monté sur ces 2 pages) : « ⚖ Comparaison active — affichage limité aux X (similaires à « … ») » + ✕ Vider ; synchronise le filtre d'URL si la comparaison a été démarrée ailleurs. **`CompareBar`** retire `sousType` de l'URL quand la sélection se vide.
+
+### Pièges / notes à retenir
+- **`useSearchParams()` interdit** dans `CardActions`/`CompareBar`/`CompareFilterBanner` : montés sur des pages statiques (landing `[sousCategorie]`) et le layout global — sans Suspense boundary, `next build` échoue. Lire `window.location.search` dans les handlers/effets uniquement (jamais pendant le rendu). Build validé 73/73 pages.
+- **Bug pré-existant corrigé au passage** (`fe31532`) : le fetch SSR de `categorie/[slug]/page.tsx` n'envoyait pas `X-SSR-Token` → `blockScraperUA` le bloquait en 429 (page « aucun produit » en local, cf. piège `SSR_SECRET` du 11 juillet). Aligné sur l'accueil (`SSR_HEADERS`).
+- **Dette notée (revue)** : `SOUS_TYPE_MOTS` et `CAT_FALLBACK` (même fichier `backend/routes/produits.js`) dupliquent partiellement les mots-clés de `maison`/`mode`/`auto-moto`/`jeux` — si l'un évolue, mettre l'autre à jour.
+- Périmètre assumé : produits uniquement — une comparaison immo/télécom active ne désactive PAS les ⚖ produits (comportement historique conservé).
+- Non vérifié par navigateur réel (aucun outil dispo) : rendu du bandeau, grisage effectif des ⚖, Vider — smoke-test manuel recommandé après déploiement.
+
+---
+
 ## État du projet (13 juillet 2026 — scraper Facebook réparé, exécution locale + automatisation Windows)
 
 Le scraper Facebook (`backend/services/scraper-immo-facebook.js`) n'avait **jamais fonctionné depuis sa création en juin** — `waitUntil: 'networkidle'` ne se résout jamais sur Facebook (polling/websockets permanents), et `playwright` n'était qu'en devDependency donc jamais installé sur Render en production. Chantier en deux temps : d'abord tenter de le faire tourner sur Render, puis pivot vers exécution locale + automatisation Windows après avoir confirmé que le plan Render free ne peut structurellement pas le supporter.
