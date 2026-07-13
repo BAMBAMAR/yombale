@@ -85,7 +85,7 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
                   {p.nb_offres} offre{p.nb_offres > 1 ? 's' : ''}
                 </p>
               )}
-              <CardActions id={p.id} nom={p.nom} />
+              <CardActions id={p.id} nom={p.nom} categorie={p.categorie} />
             </article>
           </Link>
           );

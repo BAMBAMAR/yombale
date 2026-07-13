@@ -172,7 +172,7 @@ export default async function SousCategoriePage({
                   {p.nb_offres != null && p.nb_offres > 1 && (
                     <p style={{ fontSize: '12px', color: 'var(--text3)' }}>{p.nb_offres} offres</p>
                   )}
-                  <CardActions id={p.id} nom={p.nom} />
+                  <CardActions id={p.id} nom={p.nom} categorieSlug={params.slug} />
                 </article>
               </Link>
             ))}

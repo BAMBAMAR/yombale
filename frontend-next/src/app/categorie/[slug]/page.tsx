@@ -231,7 +231,7 @@ export default async function CategoriePage({
                       {p.nb_offres} offres
                     </p>
                   )}
-                  <CardActions id={p.id} nom={p.nom} />
+                  <CardActions id={p.id} nom={p.nom} categorieSlug={params.slug} />
                 </article>
               </Link>
             ))}

@@ -1,15 +1,20 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import {
+  infererGroupe, lireCompare, CAT_NOM_SLUG, MAX_COMPARE, GROUPE_LABELS,
+  type CompareEntry,
+} from '@/lib/comparaison'
 
 interface Props {
   id: string | number
   nom: string
   type?: 'produit' | 'immo' | 'telecom' | 'annonce'
+  categorie?: string | null   // nom DB ('Telephones') — cartes de l'accueil
+  categorieSlug?: string      // slug direct — pages /categorie/[slug]
 }
 
 interface FavEntry { id: string; type: string }
-
-const MAX_COMPARE = 3
 
 // nopalou_favs a historiquement stocké un tableau d'IDs bruts (produits uniquement).
 // On accepte les deux formats en lecture et on réécrit toujours au nouveau format.
@@ -20,11 +25,18 @@ function lireFavs(): FavEntry[] {
   } catch { return [] }
 }
 
-export default function CardActions({ id, nom, type = 'produit' }: Props) {
+export default function CardActions({ id, nom, type = 'produit', categorie, categorieSlug }: Props) {
   const sid = String(id)
   const [fav, setFav]         = useState(false)
   const [favAnim, setFavAnim] = useState(false)
   const [cmp, setCmp]         = useState(false)
+
+  const router       = useRouter()
+  const pathname     = usePathname()
+  const [blocage, setBlocage] = useState<string | null>(null) // null = cliquable
+
+  const monGroupe  = type === 'produit' ? infererGroupe(nom) : ''
+  const monCatSlug = categorieSlug || (categorie ? CAT_NOM_SLUG[categorie] : '') || ''
 
   function syncFav() {
     const favs = lireFavs()
@@ -32,10 +44,25 @@ export default function CardActions({ id, nom, type = 'produit' }: Props) {
   }
 
   function syncCmp() {
-    try {
-      const list: { id: string }[] = JSON.parse(localStorage.getItem('nopalou_compare') || '[]')
-      setCmp(list.some(i => i.id === sid))
-    } catch {}
+    const list = lireCompare()
+    setCmp(list.some(i => i.id === sid))
+    // Désactivation « zéro rejet » : uniquement quand une comparaison PRODUIT est active.
+    if (list.length === 0 || list[0].type !== 'produit' || list.some(i => i.id === sid)) {
+      setBlocage(null)
+      return
+    }
+    if (type !== 'produit') {
+      setBlocage('Comparaison produits en cours — videz-la pour comparer autre chose')
+      return
+    }
+    const actif    = list[0].groupe || list[0].catSlug || ''
+    const mien     = monGroupe || monCatSlug
+    if (actif && mien && actif !== mien) {
+      const label = GROUPE_LABELS[actif] || actif
+      setBlocage(`Comparaison en cours limitée aux ${label}`)
+    } else {
+      setBlocage(null)
+    }
   }
 
   useEffect(() => {
@@ -66,20 +93,34 @@ export default function CardActions({ id, nom, type = 'produit' }: Props) {
 
   function toggleCompare(e: React.MouseEvent) {
     e.preventDefault()
+    if (blocage) return // bouton rendu disabled — garde-fou
     try {
-      const list: { id: string; nom: string; type: string }[] =
-        JSON.parse(localStorage.getItem('nopalou_compare') || '[]')
+      const list = lireCompare()
       const already = list.some(i => i.id === sid)
-      let next
+      let next: CompareEntry[]
       if (already) {
         next = list.filter(i => i.id !== sid)
       } else {
         if (list.length >= MAX_COMPARE) return // silently ignore si déjà 3
-        next = [...list, { id: sid, nom, type }]
+        next = [...list, { id: sid, nom, type, groupe: monGroupe || undefined, catSlug: monCatSlug || undefined }]
       }
       localStorage.setItem('nopalou_compare', JSON.stringify(next))
       setCmp(!already)
       window.dispatchEvent(new CustomEvent('nopalou:compare'))
+
+      // Premier ajout d'un produit : pousser le filtre dans l'URL des pages liste.
+      const estListe = pathname === '/' || /^\/categorie\/[^/]+$/.test(pathname)
+      if (!already && list.length === 0 && type === 'produit' && estListe) {
+        const params = new URLSearchParams(window.location.search)
+        params.delete('page')
+        if (monGroupe) {
+          params.set('sousType', monGroupe)
+          router.push(`${pathname}?${params.toString()}`)
+        } else if (monCatSlug && pathname === '/') {
+          params.set('categorie', monCatSlug)
+          router.push(`${pathname}?${params.toString()}`)
+        }
+      }
     } catch {}
   }
 
@@ -87,9 +128,12 @@ export default function CardActions({ id, nom, type = 'produit' }: Props) {
     <div className="card-actions" onClick={e => e.preventDefault()}>
       <button
         onClick={toggleCompare}
+        disabled={!!blocage}
         className={`card-action-btn${cmp ? ' active' : ''}`}
-        title={cmp ? 'Retirer de la comparaison' : 'Comparer'}
+        title={blocage ?? (cmp ? 'Retirer de la comparaison' : 'Comparer')}
         aria-label="Comparer"
+        aria-disabled={!!blocage}
+        style={blocage ? { opacity: 0.35, cursor: 'not-allowed' } : undefined}
       >
         ⚖
       </button>
