@@ -96,6 +96,18 @@ export async function updateProfil(prevState: AuthState, formData: FormData): Pr
   }
 }
 
+// ── Renvoi email de vérification ─────────────────────────────────
+export async function renvoyerEmailVerification(): Promise<AuthState> {
+  try {
+    const res = await backendFetch('/api/auth/renvoyer-verification', { method: 'POST' })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) return { error: data.error ?? 'Impossible d\'envoyer l\'email.' }
+    return { message: 'Email de vérification envoyé ✓ Vérifiez votre boîte mail.' }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
 // ── Types ────────────────────────────────────────────────────────
 export interface AuthState {
   error?: string

@@ -32,6 +32,9 @@ import NavbarGuides from './NavbarGuides'
 import MobileNav from './MobileNav'
 import BottomBars from './BottomBars';
 import RegisterSW from './RegisterSW';
+import FavToast from './FavToast';
+import VerifyEmailToast from './VerifyEmailToast';
+import { Suspense } from 'react';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -170,6 +173,10 @@ export default async function RootLayout({
 
         <BottomBars />
         <RegisterSW />
+        <FavToast />
+        <Suspense fallback={null}>
+          <VerifyEmailToast />
+        </Suspense>
 
         <footer className="site-footer">
           <div className="footer-inner">

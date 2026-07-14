@@ -207,4 +207,16 @@ router.put('/profil',
   }
 );
 
+// GET /api/auth/statut — renvoie le statut de vérification de l'email de l'utilisateur connecté
+router.get('/statut', verifierToken, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT email_verifie FROM utilisateurs WHERE id=$1',
+      [req.user.userId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    res.json({ email_verifie: rows[0].email_verifie === true });
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
 module.exports = router;
