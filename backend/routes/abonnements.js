@@ -102,6 +102,7 @@ router.get('/admin/stats', adminSecretOnly, async (req, res) => {
 router.post('/admin/activer', adminSecretOnly, async (req, res) => {
   try {
     const { email, plan, jours = 30 } = req.body;
+    const PLANS = await getPlans();
     if (!PLANS[plan]) return res.status(400).json({ error: 'Plan invalide (pro ou business)' });
     if (!email) return res.status(400).json({ error: 'Email requis' });
 
