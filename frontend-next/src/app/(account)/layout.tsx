@@ -27,20 +27,22 @@ export default async function CompteLayout({ children }: { children: React.React
   const initiale = nom.charAt(0).toUpperCase()
 
   return (
-    <div className="account-layout">
+    <>
       {!emailVerifie && <BannerEmailNonVerifie />}
-      <aside className="account-sidebar">
-        <div className="account-sidebar-identity">
-          <div className="account-avatar">{initiale}</div>
-          <div>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{nom}</p>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text3)' }}>{session.email}</p>
+      <div className="account-layout">
+        <aside className="account-sidebar">
+          <div className="account-sidebar-identity">
+            <div className="account-avatar">{initiale}</div>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{nom}</p>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--text3)' }}>{session.email}</p>
+            </div>
           </div>
-        </div>
-        <AccountNavLinks />
-      </aside>
-      <main className="account-main">{children}</main>
-    </div>
+          <AccountNavLinks />
+        </aside>
+        <main className="account-main">{children}</main>
+      </div>
+    </>
   )
 }
 
