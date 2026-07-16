@@ -746,5 +746,17 @@ module.exports = async function migrateInline() {
     catch (e) { console.warn('[MIGRATE] sync_catalogue:', e.message); }
   }
 
+  // Gestion des comptes admin — suspension + suppression RGPD réversible
+  const colonnesGestionComptes = [
+    `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS suspendu BOOLEAN DEFAULT FALSE`,
+    `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS supprime_le TIMESTAMPTZ`,
+    `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS anonymise_le TIMESTAMPTZ`,
+  ];
+  for (const sql of colonnesGestionComptes) {
+    try { await pool.query(sql); }
+    catch (e) { console.warn('[MIGRATE] gestion_comptes:', e.message); }
+  }
+  console.log('[MIGRATE] ✅ Colonnes gestion comptes (suspendu/supprime_le/anonymise_le) OK');
+
   try { await pool.end(); } catch (_) {}
 };
