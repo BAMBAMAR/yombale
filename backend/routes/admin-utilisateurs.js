@@ -191,16 +191,18 @@ router.post('/:id/purger', adminSecretOnly, async (req, res) => {
     }
 
     const id = req.params.id;
-    await pool.query(
+    const purgeRes = await pool.query(
       `UPDATE utilisateurs
        SET nom = 'Utilisateur supprimé',
            email = 'deleted-' || id || '@nopalou.local',
            telephone = NULL,
            mot_de_passe_hash = 'INVALIDATED',
            anonymise_le = NOW()
-       WHERE id = $1`,
+       WHERE id = $1 AND anonymise_le IS NULL
+       RETURNING id`,
       [id]
     );
+    if (!purgeRes.rows[0]) return res.status(400).json({ error: 'Ce compte a déjà été purgé' });
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
