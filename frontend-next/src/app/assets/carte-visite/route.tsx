@@ -1,8 +1,6 @@
 import { ImageResponse } from 'next/og'
 import QRCode from 'qrcode-svg'
 
-export const runtime = 'edge'
-
 function qrDataUri(text: string) {
   const svg = new QRCode({ content: text, padding: 0, width: 200, height: 200, color: '#1C2B4A', background: '#ffffff' }).svg()
   const base64 = Buffer.from(svg).toString('base64')
