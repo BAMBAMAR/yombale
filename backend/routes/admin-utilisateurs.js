@@ -153,4 +153,56 @@ router.put('/:id/reactiver', adminSecretOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// POST /api/admin/utilisateurs/:id/marquer-supprime — démarre la période de grâce (30j)
+router.post('/:id/marquer-supprime', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE utilisateurs SET supprime_le=NOW() WHERE id=$1 AND anonymise_le IS NULL RETURNING id, supprime_le`,
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable ou déjà purgé' });
+    res.json({ success: true, supprime_le: rows[0].supprime_le });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/admin/utilisateurs/:id/restaurer — annule la suppression pendant la période de grâce
+router.post('/:id/restaurer', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE utilisateurs SET supprime_le=NULL WHERE id=$1 AND anonymise_le IS NULL RETURNING id`,
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable ou déjà purgé' });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/admin/utilisateurs/:id/purger — anonymisation définitive après 30j révolus
+router.post('/:id/purger', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT id, supprime_le, anonymise_le FROM utilisateurs WHERE id=$1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    if (!rows[0].supprime_le) return res.status(400).json({ error: 'Ce compte n\'est pas marqué pour suppression' });
+    if (rows[0].anonymise_le) return res.status(400).json({ error: 'Ce compte a déjà été purgé' });
+
+    const joursEcoules = (Date.now() - new Date(rows[0].supprime_le).getTime()) / (1000 * 60 * 60 * 24);
+    if (joursEcoules < 30) {
+      return res.status(400).json({ error: `Période de grâce en cours (${Math.ceil(30 - joursEcoules)} jour(s) restant(s))` });
+    }
+
+    const id = req.params.id;
+    await pool.query(
+      `UPDATE utilisateurs
+       SET nom = 'Utilisateur supprimé',
+           email = 'deleted-' || id || '@nopalou.local',
+           telephone = NULL,
+           mot_de_passe_hash = 'INVALIDATED',
+           anonymise_le = NOW()
+       WHERE id = $1`,
+      [id]
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 module.exports = router;
