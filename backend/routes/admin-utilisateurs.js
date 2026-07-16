@@ -1,6 +1,8 @@
 const router = require('express').Router();
+const jwt = require('jsonwebtoken');
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
+const { envoyerEmail } = require('../services/email');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:8080';
 
@@ -81,6 +83,49 @@ router.get('/:id', adminSecretOnly, async (req, res) => {
       },
       abonnement: abonnementRes.rows[0] || null,
     });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/admin/utilisateurs/:id/verifier-email — force email_verifie=true
+router.put('/:id/verifier-email', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'UPDATE utilisateurs SET email_verifie=true WHERE id=$1 RETURNING id',
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/admin/utilisateurs/:id/renvoyer-verification
+router.post('/:id/renvoyer-verification', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT nom, email, email_verifie FROM utilisateurs WHERE id=$1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    if (rows[0].email_verifie) return res.status(400).json({ error: 'Email déjà vérifié' });
+
+    const verifToken = jwt.sign({ userId: req.params.id, type: 'verify' }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const lien = `${FRONTEND_URL}/api/auth/verifier-email?token=${verifToken}`;
+    await envoyerEmail({
+      to: rows[0].email,
+      subject: 'Nopalou — vérifiez votre email',
+      html: `<p>Bonjour ${rows[0].nom},</p>
+             <p><a href="${lien}">Cliquez ici pour vérifier votre adresse email</a> (lien valide 24h).</p>`,
+    });
+    res.json({ success: true, message: 'Email de vérification renvoyé.' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/admin/utilisateurs/:id/lien-reset — génère le lien sans l'envoyer
+router.post('/:id/lien-reset', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT id FROM utilisateurs WHERE id=$1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+    const resetToken = jwt.sign({ userId: req.params.id, type: 'reset' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const lien = `${FRONTEND_URL}/mot-de-passe-oublie?token=${resetToken}`;
+    res.json({ lien });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
