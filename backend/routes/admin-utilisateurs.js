@@ -1,8 +1,6 @@
 const router = require('express').Router();
-const jwt    = require('jsonwebtoken');
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
-const { envoyerEmail } = require('../services/email');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:8080';
 
