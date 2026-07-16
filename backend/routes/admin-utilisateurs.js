@@ -129,4 +129,28 @@ router.post('/:id/lien-reset', adminSecretOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// PUT /api/admin/utilisateurs/:id/suspendre
+router.put('/:id/suspendre', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'UPDATE utilisateurs SET suspendu=true WHERE id=$1 RETURNING id',
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/admin/utilisateurs/:id/reactiver
+router.put('/:id/reactiver', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'UPDATE utilisateurs SET suspendu=false WHERE id=$1 RETURNING id',
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 module.exports = router;

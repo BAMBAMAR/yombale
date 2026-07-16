@@ -77,13 +77,15 @@ router.post('/connexion',
     try {
       const { email, mot_de_passe } = req.body;
       const { rows } = await pool.query(
-        'SELECT id,nom,email,mot_de_passe_hash,email_verifie FROM utilisateurs WHERE email=$1', [email]
+        'SELECT id,nom,email,mot_de_passe_hash,email_verifie,suspendu,supprime_le FROM utilisateurs WHERE email=$1', [email]
       );
       if (!rows.length) return res.status(401).json({ error: 'Identifiants incorrects' });
       const ok = await bcrypt.compare(mot_de_passe, rows[0].mot_de_passe_hash);
       if (!ok) return res.status(401).json({ error: 'Identifiants incorrects' });
+      if (rows[0].suspendu) return res.status(403).json({ error: 'Compte suspendu. Contactez le support.' });
+      if (rows[0].supprime_le) return res.status(403).json({ error: 'Ce compte est en cours de suppression.' });
       const token = jwt.sign({ userId: rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-      const { mot_de_passe_hash, ...user } = rows[0];
+      const { mot_de_passe_hash, suspendu, supprime_le, ...user } = rows[0];
       res.json({ user, token });
     } catch (err) { res.status(500).json({ error: err.message }); }
   }
