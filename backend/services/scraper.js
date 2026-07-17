@@ -776,6 +776,18 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         if(byEan.length>0){ produitId=byEan[0].id; stats.mis_a_jour++; }
       }
 
+      // 1bis. Correspondance EXACTE sur nom normalisé — couvre les titres composés
+      // uniquement de mots génériques ("Split Haier", "iPhone X") pour lesquels
+      // motsCles est vide et l'étape 2 est sautée, ainsi que les apostrophes
+      // ("J'adore EDP 100ml") que le LIKE de l'étape 2 ne matche jamais.
+      if(!produitId){
+        const {rows:byNom}=await pool.query(
+          `SELECT id FROM produits WHERE ${sqlNomNormalise('nom')} = ${sqlNomNormalise('$1')} LIMIT 1`,
+          [normaliserTitre(item.titre)]
+        );
+        if(byNom.length>0){ produitId=byNom[0].id; stats.mis_a_jour++; }
+      }
+
       // 2. Correspondance par similarité sur le nom normalisé
       if(!produitId){
         const nomNorm = normaliserTitre(item.titre);
@@ -908,6 +920,13 @@ function _motsClesCommuns(a, b) {
   const wordsA = new Set(a.toLowerCase().split(/\W+/).filter(w => w.length >= 3 && !MOTS_GENERIQUES.has(w)));
   const wordsB = b.toLowerCase().split(/\W+/).filter(w => w.length >= 3 && !MOTS_GENERIQUES.has(w));
   return wordsB.filter(w => wordsA.has(w)).length;
+}
+
+// Expression SQL de nom normalisé — DOIT produire le même résultat que normaliserTitre()
+// côté JS (minuscules, apostrophes/guillemets/parenthèses/crochets retirés, espaces réduits).
+// Source unique : réutilisée par backend/scripts/fusionner-doublons-produits.js — ne pas dupliquer.
+function sqlNomNormalise(col) {
+  return `TRIM(LOWER(regexp_replace(regexp_replace(${col}, '[''''"""()\\[\\]]', '', 'g'), '\\s+', ' ', 'g')))`;
 }
 
 function normaliserTitre(s) {
@@ -1282,4 +1301,4 @@ function demarrerCronsMetier() {
   console.log('[ANOMALY] ✅ Cron actif — détection anomalies chaque jour à 1h UTC');
 }
 
-module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, demarrerCronsMetier, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher, nettoyerOffresExpirees, extraireSpecs, verifierAlertsPrix, detecterAnomalies: require('./anomaly-detector').detecterAnomalies };
+module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, demarrerCronsMetier, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher, nettoyerOffresExpirees, extraireSpecs, verifierAlertsPrix, detecterAnomalies: require('./anomaly-detector').detecterAnomalies, sqlNomNormalise };
