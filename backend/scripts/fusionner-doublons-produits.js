@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// Fusion one-shot des produits en doublon (même nom normalisé).
+// Fusion one-shot des produits en doublon.
+// Critère STRICT (décision utilisateur 17/07/2026) : ne fusionner que les fiches ayant
+// même nom normalisé ET même catégorie ET même marque ET même prix_min ET même(s) marchand(s).
 // Usage : node backend/scripts/fusionner-doublons-produits.js [--dry-run]
 // --dry-run : affiche les groupes et ce qui serait fusionné, AUCUNE écriture.
 //
@@ -17,15 +19,21 @@ const DRY_RUN = process.argv.includes('--dry-run');
 const NORM = sqlNomNormalise('p.nom');
 
 async function listerGroupes() {
+  // Clés de groupe strictes : nom normalisé + catégorie + marque + prix_min + ensemble
+  // ordonné des marchands des offres. NULL groupé avec NULL (jamais avec une valeur).
   const { rows } = await pool.query(`
-    SELECT ${NORM} AS cle,
+    SELECT p.nom_n || ' | cat:' || COALESCE(p.categorie_id::text,'∅') || ' | marque:' || COALESCE(p.marque,'∅')
+           || ' | prix:' || COALESCE(p.prix_min::text,'∅') || ' | marchands:' || COALESCE(p.marchands,'∅') AS cle,
            json_agg(json_build_object('id', p.id, 'nom', p.nom, 'ean', p.ean, 'nb', p.nb, 'created_at', p.created_at)
                     ORDER BY (p.ean IS NOT NULL) DESC, p.nb DESC, p.created_at ASC, p.id ASC) AS membres
     FROM (
-      SELECT p.*, (SELECT COUNT(*) FROM offres o WHERE o.produit_id = p.id)::int AS nb
+      SELECT p.*, ${NORM} AS nom_n,
+             (SELECT COUNT(*) FROM offres o WHERE o.produit_id = p.id)::int AS nb,
+             (SELECT string_agg(DISTINCT o.marchand_id::text, ',' ORDER BY o.marchand_id::text)
+              FROM offres o WHERE o.produit_id = p.id) AS marchands
       FROM produits p
     ) p
-    GROUP BY 1
+    GROUP BY p.nom_n, p.categorie_id, p.marque, p.prix_min, p.marchands
     HAVING COUNT(*) > 1
     ORDER BY COUNT(*) DESC
   `);
