@@ -132,9 +132,11 @@ export default async function CategoriePage({
     })),
   } : null
 
+  // 'pertinence' est la sentinelle historique "aucun paramètre tri envoyé au backend"
+  // (voir buildLink / construction de qs plus haut) — le défaut backend est désormais prix croissant.
   const TRIS = [
-    { val: 'pertinence', label: 'Pertinence' },
-    { val: 'prix_asc',   label: 'Prix ↑' },
+    { val: 'pertinence', label: '💰 Prix ↑' },
+    { val: 'populaire',  label: '⭐ Populaires' },
     { val: 'prix_desc',  label: 'Prix ↓' },
   ]
 
