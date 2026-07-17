@@ -123,6 +123,19 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## État du projet (17 juillet 2026 — chatbot WhatsApp : pagination « plus / encore / d'autres »)
+
+Retour d'usage réel : après une recherche (« Samsung »), retaper la requête ou dire « plus » remontrait toujours les 3-5 mêmes résultats — la session repassait en `MENU` sans mémoire de ce qui avait été affiché, et « plus » partait en recherche full-text du mot « plus ». Spec `docs/superpowers/specs/2026-07-13-chatbot-pagination-plus-design.md`, plan en 5 tâches `docs/superpowers/plans/2026-07-13-chatbot-pagination-plus.md`, exécuté via subagent-driven-development, revue finale opus « Ready to merge » 0 Critical/Important, mergé fast-forward dans `main` (`a9a5a59..f0e4c82`), poussé (déploiement Render).
+
+**Livré** (un seul fichier de code : `backend/services/whatsapp-chatbot.js`) :
+- Mots-clés `MOTS_PLUS` (`plus`, `encore`, `d'autres`, `dautres`, `autres`, `autre`, `voir plus`, `la suite`, `suivant`, `ok`, `oui` — correspondance exacte sur texte normalisé) détectés en état `MENU`, AVANT `detecterFAQ` et le fallback recherche. « ok merci » reste une clôture (`CLOTURE` testée avant le bloc MENU — ne pas réordonner).
+- Le contexte de session (`whatsapp_sessions.context`) mémorise `{ last: { type: 'search'|'immo'|'telecom', query?, shownIds: [] } }` après chaque affichage paginable ; « plus » relance la même requête en excluant `shownIds` (`AND id::text <> ALL($n::text[])` — le cast `::text[]` est obligatoire, tableau vide = vacuously true = comportement d'origine).
+- `searchContent(query, excludeIds = [])`, `handleSearchQuery(phone, query, excludeIds = [])` (signatures rétrocompatibles), listes immo/télécom du menu factorisées en `envoyerListeImmo`/`envoyerListeTelecom(phone, excludeIds = [])`.
+- Fin de liste → « ✅ Vous avez vu tout ce que j'ai pour "…" » ; « plus » sans contexte (session neuve/expirée 1h/détour FAQ-alerte-commande qui écrase `last`) → « 🔍 Plus de quoi ? » + état `SEARCH_QUERY`. Ces écrasements de `last` par les autres flux sont VOULUS (spec).
+- Notes de revue (pas des bugs) : le `LIMIT 5` global de l'UNION peut couper des lignes non enregistrées dans `shownIds` — elles réapparaissent à la page suivante, jamais de doublon affiché ; `shownIds` croît en session mais borné par le reset 1h. Non testé en réel WhatsApp — smoke-test recommandé : recherche → *plus* → *plus*, « oui » après « Envie de continuer ? », « ok merci » (doit clôturer), immo/télécom → *plus*.
+
+---
+
 ## État du projet (16 juillet 2026 — gestion des comptes admin, correctifs bandeau email et PLANS, dette carte-visite)
 
 Quatre chantiers sur `main` (`c68b4bc..1beca60`, poussé) : deux correctifs ponctuels puis un chantier complet de gestion des comptes admin, avec un effet de bord découvert en fin de parcours.
