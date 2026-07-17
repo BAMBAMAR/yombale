@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
@@ -222,10 +222,10 @@ const labelStyle = {
   display: 'block' as const, marginBottom: 4,
 }
 
-function SubmitButton({ label }: { label: string }) {
+function SubmitButton({ label, disabled }: { label: string; disabled?: boolean }) {
   const { pending } = useFormStatus()
   return (
-    <button type="submit" disabled={pending} style={{
+    <button type="submit" disabled={pending || disabled} style={{
       padding: '10px 24px', background: pending ? '#94a3b8' : '#1d4ed8',
       color: '#fff', border: 'none', borderRadius: 8,
       fontSize: 14, fontWeight: 700, cursor: pending ? 'not-allowed' : 'pointer',
@@ -444,6 +444,36 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
     produit?.caracteristiques ?? {}
   )
   const [modeRapide, setModeRapide] = useState(modeInitial === 'rapide' && !produit)
+  const [photos, setPhotos] = useState<File[]>([])
+  const [previews, setPreviews] = useState<string[]>([])
+  const [imagesExistantes, setImagesExistantes] = useState<string[]>(produit?.images ?? [])
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  function syncFileInput(files: File[]) {
+    if (!fileRef.current) return
+    const dt = new DataTransfer()
+    files.forEach(f => dt.items.add(f))
+    fileRef.current.files = dt.files
+  }
+
+  function handlePhotos(e: React.ChangeEvent<HTMLInputElement>) {
+    const restant = 5 - imagesExistantes.length
+    const files = Array.from(e.target.files ?? []).slice(0, Math.max(0, restant))
+    setPhotos(files)
+    setPreviews(files.map(f => URL.createObjectURL(f)))
+    syncFileInput(files)
+  }
+
+  function removeNouvellePhoto(i: number) {
+    const next = photos.filter((_, j) => j !== i)
+    setPhotos(next)
+    setPreviews(prev => prev.filter((_, j) => j !== i))
+    syncFileInput(next)
+  }
+
+  function removeImageExistante(i: number) {
+    setImagesExistantes(prev => prev.filter((_, j) => j !== i))
+  }
 
   useEffect(() => { if (state.success) onSuccess() }, [state.success])
 
@@ -524,16 +554,52 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         )}
       </div>
 
-      {/* Photo */}
+      {/* Photos */}
       <div>
-        <label style={labelStyle}>Photo du produit <span style={{ fontSize: 11, color: '#9ca3af' }}>(max 5 Mo)</span></label>
-        <input name="image" type="file" accept="image/*" style={{ fontSize: 14 }} />
-        {produit?.images?.[0] && (
-          <div style={{ marginTop: 8 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={produit.images[0]} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb' }} />
-          </div>
-        )}
+        <label style={labelStyle}>Photos du produit <span style={{ fontSize: 11, color: '#9ca3af' }}>(max 5, 5 Mo chacune)</span></label>
+        <div className="photos-zone">
+          {imagesExistantes.length + photos.length < 5 && (
+            <div
+              className="photos-dropzone"
+              onClick={() => fileRef.current?.click()}
+              onKeyDown={e => e.key === 'Enter' && fileRef.current?.click()}
+              tabIndex={0}
+              role="button"
+              aria-label="Ajouter des photos"
+            >
+              <span style={{ fontSize: 28 }}>📷</span>
+              <p>Cliquez pour ajouter des photos</p>
+            </div>
+          )}
+          <input
+            ref={fileRef}
+            name="photos"
+            type="file"
+            accept="image/*"
+            multiple
+            style={{ display: 'none' }}
+            onChange={handlePhotos}
+          />
+
+          {(imagesExistantes.length > 0 || previews.length > 0) && (
+            <div className="photos-previews">
+              {imagesExistantes.map((src, i) => (
+                <div key={`existante-${i}`} className="photo-thumb">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt={`Photo ${i + 1}`} />
+                  <button type="button" className="photo-remove" onClick={() => removeImageExistante(i)} aria-label="Supprimer">✕</button>
+                </div>
+              ))}
+              {previews.map((src, i) => (
+                <div key={`nouvelle-${i}`} className="photo-thumb">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt={`Nouvelle photo ${i + 1}`} />
+                  <button type="button" className="photo-remove" onClick={() => removeNouvellePhoto(i)} aria-label="Supprimer">✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {modeRapide && (
@@ -566,8 +632,11 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         </div>
       )}
 
+      {imagesExistantes.length === 0 && photos.length === 0 && (
+        <p style={{ color: '#dc2626', fontSize: 12, margin: 0 }}>Ajoutez au moins une photo.</p>
+      )}
       <div style={{ display: 'flex', gap: 12 }}>
-        <SubmitButton label={produit ? 'Enregistrer' : 'Ajouter le produit'} />
+        <SubmitButton label={produit ? 'Enregistrer' : 'Ajouter le produit'} disabled={imagesExistantes.length === 0 && photos.length === 0} />
         <button type="button" onClick={onCancel} style={{
           padding: '10px 20px', background: 'none', border: '1px solid #d1d5db',
           borderRadius: 8, fontSize: 14, cursor: 'pointer',
