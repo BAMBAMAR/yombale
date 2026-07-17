@@ -18,6 +18,15 @@ const upload = multer({
   },
 });
 
+const uploadProduitPhotos = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 5 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) return cb(null, true);
+    cb(null, false);
+  },
+});
+
 const CATS = ['smartphones','informatique','tv-electro','mode','maison','auto-moto','jeux','services','alimentation','beaute','autre'];
 const MAX_BOUTIQUES = 3;
 const QUOTA_PRODUITS = { pro: 50, business: Infinity };
@@ -249,7 +258,7 @@ router.get('/:id/produits/:prodId', param('prodId').isUUID(), async (req, res) =
 });
 
 // ── POST /api/boutiques/:id/produits — ajouter produit (Pro/Business)
-router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnement, requireAbonnement, upload.single('image'), async (req, res) => {
+router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnement, requireAbonnement, uploadProduitPhotos.array('photos', 5), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { id } = req.params;
@@ -271,8 +280,10 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
     if (!nom?.trim()) return res.status(400).json({ error: 'Nom requis' });
 
     let images = [];
-    if (req.file) {
-      try { images = [await uploadBuffer(req.file.buffer, 'boutique_produits')]; } catch {}
+    if (req.files && req.files.length) {
+      for (const f of req.files) {
+        try { images.push(await uploadBuffer(f.buffer, 'boutique_produits')); } catch {}
+      }
     }
 
     let caracJson = {};
@@ -302,7 +313,7 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
 });
 
 // ── PUT /api/boutiques/:id/produits/:prodId — modifier produit
-router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('prodId').isUUID(), upload.single('image'), async (req, res) => {
+router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('prodId').isUUID(), uploadProduitPhotos.array('photos', 5), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { id, prodId } = req.params;
@@ -314,8 +325,11 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
 
     const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques } = req.body;
     let images = existing.rows[0].images;
-    if (req.file) {
-      try { images = [await uploadBuffer(req.file.buffer, 'boutique_produits')]; } catch {}
+    if (req.files && req.files.length) {
+      images = [];
+      for (const f of req.files) {
+        try { images.push(await uploadBuffer(f.buffer, 'boutique_produits')); } catch {}
+      }
     }
 
     let caracJson = existing.rows[0].caracteristiques ?? {};
