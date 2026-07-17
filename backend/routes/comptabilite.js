@@ -462,6 +462,79 @@ function genRefCommande() {
   return `C-${Date.now().toString(36).toUpperCase()}`;
 }
 
+// Logique de création de commande, partagée entre la route HTTP publique
+// (POST /:boutiqueId/commandes, source='web') et le chatbot WhatsApp (source='whatsapp').
+// Lève une erreur avec .status (404/400) et .message (message utilisateur) en cas d'échec.
+async function creerCommandeBoutique({
+  boutiqueId, produitId, quantite = 1, clientNom, clientTelephone, clientAdresse,
+  note, source = 'web', methodePaiement = 'wave', zoneLivraisonId,
+  nomProduitManuel, prixUnitaireManuel,
+}) {
+  const { rows: [boutique] } = await pool.query(
+    'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE id=$1 AND actif=true',
+    [boutiqueId]
+  );
+  if (!boutique) {
+    const e = new Error('Boutique introuvable');
+    e.status = 404;
+    throw e;
+  }
+
+  let nomProduit = nomProduitManuel || 'Produit';
+  let prixUnitaire = Number(prixUnitaireManuel) || 0;
+  let fraisLivraison = 0;
+
+  if (zoneLivraisonId) {
+    const { rows: [zone] } = await pool.query(
+      'SELECT prix, nom FROM zones_livraison WHERE id=$1 AND boutique_id=$2',
+      [zoneLivraisonId, boutiqueId]
+    );
+    if (zone) fraisLivraison = Number(zone.prix);
+  }
+
+  if (produitId) {
+    const { rows: [p] } = await pool.query(
+      'SELECT nom, prix, stock_quantite FROM boutique_produits WHERE id=$1 AND boutique_id=$2',
+      [produitId, boutiqueId]
+    );
+    if (!p) {
+      const e = new Error('Produit introuvable');
+      e.status = 404;
+      throw e;
+    }
+    nomProduit = p.nom;
+    if (!prixUnitaire && p.prix) prixUnitaire = Number(p.prix);
+    if (p.stock_quantite !== null && p.stock_quantite < quantite) {
+      const e = new Error('Stock insuffisant');
+      e.status = 400;
+      throw e;
+    }
+  }
+
+  const montantTotal = prixUnitaire * quantite + fraisLivraison;
+  const ref = genRefCommande();
+
+  const { rows: [commande] } = await pool.query(
+    `INSERT INTO commandes_boutique
+       (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
+        client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+    [ref, boutiqueId, produitId || null, nomProduit, quantite, prixUnitaire, montantTotal,
+     clientNom, clientTelephone, clientAdresse || null, note || null, source,
+     methodePaiement, zoneLivraisonId || null, fraisLivraison]
+  );
+
+  const vendeurTel = boutique.whatsapp || boutique.telephone;
+  if (vendeurTel) {
+    const { sendWhatsAppText } = require('../services/whatsapp');
+    const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement' };
+    const msg = `🛒 *Nouvelle commande — ${boutique.nom}*\n\nRéf : *${ref}*\nProduit : ${nomProduit} × ${quantite}${montantTotal > 0 ? `\nMontant : *${new Intl.NumberFormat('fr-FR').format(montantTotal)} FCFA*` : ''}${fraisLivraison > 0 ? `\nLivraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA` : ''}\n💳 Paiement souhaité : ${methodeLabel[methodePaiement] || methodePaiement}\n\n👤 Client : ${clientNom}\n📞 ${clientTelephone}${clientAdresse ? `\n📍 ${clientAdresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\n⚡ Répondez vite pour confirmer !`;
+    sendWhatsAppText(vendeurTel, msg).catch(() => {});
+  }
+
+  return { commande };
+}
+
 // POST /api/comptabilite/:boutiqueId/commandes — public, client passe commande
 router.post(
   '/:boutiqueId/commandes',
@@ -475,59 +548,26 @@ router.post(
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
     try {
-      const { rows: [boutique] } = await pool.query(
-        'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE id=$1 AND actif=true',
-        [req.params.boutiqueId]
-      );
-      if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
-
       const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id } = req.body;
-      let nomProduit = req.body.nom_produit || 'Produit';
-      let prixUnitaire = Number(req.body.prix_unitaire) || 0;
-      let fraisLivraison = 0;
 
-      if (zone_livraison_id) {
-        const { rows: [zone] } = await pool.query('SELECT prix, nom FROM zones_livraison WHERE id=$1 AND boutique_id=$2', [zone_livraison_id, req.params.boutiqueId]);
-        if (zone) fraisLivraison = Number(zone.prix);
-      }
-
-      if (produit_id) {
-        const { rows: [p] } = await pool.query(
-          'SELECT nom, prix, stock_quantite FROM boutique_produits WHERE id=$1 AND boutique_id=$2',
-          [produit_id, req.params.boutiqueId]
-        );
-        if (!p) return res.status(404).json({ error: 'Produit introuvable' });
-        nomProduit = p.nom;
-        if (!prixUnitaire && p.prix) prixUnitaire = Number(p.prix);
-        if (p.stock_quantite !== null && p.stock_quantite < quantite) {
-          return res.status(400).json({ error: 'Stock insuffisant' });
-        }
-      }
-
-      const montantTotal = prixUnitaire * quantite + fraisLivraison;
-      const ref = genRefCommande();
-
-      const { rows: [commande] } = await pool.query(
-        `INSERT INTO commandes_boutique
-           (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
-            client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
-        [ref, req.params.boutiqueId, produit_id || null, nomProduit, quantite, prixUnitaire, montantTotal,
-         client_nom, client_telephone, client_adresse || null, note || null, source,
-         methode_paiement, zone_livraison_id || null, fraisLivraison]
-      );
-
-      // Notifier le vendeur via WhatsApp
-      const vendeurTel = boutique.whatsapp || boutique.telephone;
-      if (vendeurTel) {
-        const { sendWhatsAppText } = require('../services/whatsapp');
-        const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement' };
-        const msg = `🛒 *Nouvelle commande — ${boutique.nom}*\n\nRéf : *${ref}*\nProduit : ${nomProduit} × ${quantite}${montantTotal > 0 ? `\nMontant : *${new Intl.NumberFormat('fr-FR').format(montantTotal)} FCFA*` : ''}${fraisLivraison > 0 ? `\nLivraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA` : ''}\n💳 Paiement souhaité : ${methodeLabel[methode_paiement] || methode_paiement}\n\n👤 Client : ${client_nom}\n📞 ${client_telephone}${client_adresse ? `\n📍 ${client_adresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\n⚡ Répondez vite pour confirmer !`;
-        sendWhatsAppText(vendeurTel, msg).catch(() => {});
-      }
+      const { commande } = await creerCommandeBoutique({
+        boutiqueId: req.params.boutiqueId,
+        produitId: produit_id,
+        quantite,
+        clientNom: client_nom,
+        clientTelephone: client_telephone,
+        clientAdresse: client_adresse,
+        note,
+        source,
+        methodePaiement: methode_paiement,
+        zoneLivraisonId: zone_livraison_id,
+        nomProduitManuel: req.body.nom_produit,
+        prixUnitaireManuel: req.body.prix_unitaire,
+      });
 
       res.status(201).json({ commande, message: 'Commande envoyée avec succès' });
     } catch (err) {
+      if (err.status) return res.status(err.status).json({ error: err.message });
       console.error('[COMMANDE]', err.message);
       res.status(500).json({ error: 'Erreur serveur' });
     }
@@ -865,3 +905,4 @@ router.get('/:boutiqueId/zones/public', param('boutiqueId').isUUID(), async (req
 });
 
 module.exports = router;
+module.exports.creerCommandeBoutique = creerCommandeBoutique;
