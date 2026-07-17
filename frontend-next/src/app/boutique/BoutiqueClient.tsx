@@ -51,6 +51,7 @@ interface Boutique {
 interface Variante {
   nom: string
   valeurs: string[]
+  typeId?: string
 }
 
 interface Produit {
@@ -74,6 +75,51 @@ const ETATS_PRODUIT = ['Neuf', 'Bon état', 'Occasion', 'Pour pièces']
 const GENRES_MODE   = ['Homme', 'Femme', 'Enfant', 'Unisexe']
 const PLATEFORMES   = ['PS4', 'PS5', 'Xbox One', 'Xbox Series', 'Nintendo Switch', 'PC', 'Mobile']
 const POUR_QUI      = ['Homme', 'Femme', 'Mixte']
+
+// ── Types de variantes prédéfinis ──────────────────────────────────────────────
+
+const COULEURS_PALETTE: { nom: string; hex: string }[] = [
+  { nom: 'Noir',        hex: '#111111' },
+  { nom: 'Blanc',       hex: '#ffffff' },
+  { nom: 'Gris',        hex: '#9ca3af' },
+  { nom: 'Rouge',       hex: '#dc2626' },
+  { nom: 'Bleu',        hex: '#2563eb' },
+  { nom: 'Bleu marine', hex: '#1e3a5f' },
+  { nom: 'Vert',        hex: '#16a34a' },
+  { nom: 'Jaune',       hex: '#eab308' },
+  { nom: 'Orange',      hex: '#f97316' },
+  { nom: 'Rose',        hex: '#ec4899' },
+  { nom: 'Violet',      hex: '#9333ea' },
+  { nom: 'Marron',      hex: '#78350f' },
+  { nom: 'Beige',       hex: '#e7d7c1' },
+  { nom: 'Or',          hex: '#d4af37' },
+  { nom: 'Argent',      hex: '#c0c0c0' },
+  { nom: 'Bordeaux',    hex: '#7f1d1d' },
+]
+
+const TAILLES_VETEMENT = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const POINTURES_CHAUSSURE = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46']
+const STOCKAGES_RAM = ['4 Go', '8 Go', '16 Go', '32 Go', '64 Go', '128 Go', '256 Go', '512 Go', '1 To']
+const CAPACITES_PUISSANCE = ['0,75 CV', '1 CV', '1,5 CV', '2 CV', '2,5 CV', '3 CV', '100 L', '150 L', '200 L', '300 L', '400 L']
+
+type TypeVarianteId = 'couleur' | 'taille' | 'pointure' | 'stockage' | 'capacite' | 'autre'
+
+interface TypeVariante {
+  id: TypeVarianteId
+  label: string
+  nomVariante: string
+  suggestions: string[]
+  repetable: boolean
+}
+
+const TYPES_VARIANTE: TypeVariante[] = [
+  { id: 'couleur',  label: '🎨 Couleur',              nomVariante: 'Couleur',   suggestions: COULEURS_PALETTE.map(c => c.nom), repetable: false },
+  { id: 'taille',   label: '📏 Taille (vêtement)',     nomVariante: 'Taille',    suggestions: TAILLES_VETEMENT,     repetable: false },
+  { id: 'pointure', label: '👟 Pointure (chaussure)',  nomVariante: 'Pointure',  suggestions: POINTURES_CHAUSSURE,  repetable: false },
+  { id: 'stockage', label: '💾 Stockage / RAM',        nomVariante: 'Stockage',  suggestions: STOCKAGES_RAM,        repetable: false },
+  { id: 'capacite', label: '⚙️ Capacité / Puissance',  nomVariante: 'Capacité',  suggestions: CAPACITES_PUISSANCE,  repetable: false },
+  { id: 'autre',    label: '➕ Autre (personnalisé)',   nomVariante: '',          suggestions: [],                   repetable: true },
+]
 
 function CaracField({ label, name, value, onChange, placeholder, required: req = false }: {
   label: string; name: string; value: string; onChange: (k: string, v: string) => void
@@ -432,6 +478,44 @@ export function nomParDefautPourCategorie(categorie: string): string {
   return NOMS_PAR_DEFAUT[categorie] ?? 'Produit — à modifier'
 }
 
+function ValeursLibres({ valeurs, onAjouter, onRetirer }: {
+  valeurs: string[]; onAjouter: (v: string) => void; onRetirer: (v: string) => void
+}) {
+  const [saisie, setSaisie] = useState('')
+
+  function ajouter() {
+    const val = saisie.trim()
+    if (!val || valeurs.includes(val)) return
+    onAjouter(val)
+    setSaisie('')
+  }
+
+  return (
+    <div>
+      {valeurs.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+          {valeurs.map(val => (
+            <span key={val} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 20, padding: '4px 10px', fontSize: 12, fontWeight: 600 }}>
+              {val}
+              <button type="button" onClick={() => onRetirer(val)} style={{ background: 'none', border: 'none', color: '#1d4ed8', cursor: 'pointer', fontSize: 12, padding: 0 }}>✕</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          type="text" value={saisie} onChange={e => setSaisie(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); ajouter() } }}
+          style={{ ...inputStyle, flex: 1 }} placeholder="Valeur, Entrée pour ajouter"
+        />
+        <button type="button" onClick={ajouter} style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+          Ajouter
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille', onCancel, onSuccess }: {
   boutiqueId: string
   boutiqueCat?: string | null
@@ -482,34 +566,32 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   }
 
   const [variantes, setVariantes] = useState<Variante[]>(produit?.variantes ?? [])
-  const [nouvelleValeur, setNouvelleValeur] = useState<Record<number, string>>({})
+  const [nomsPersonnalises, setNomsPersonnalises] = useState<Record<number, string>>({})
 
-  function ajouterOption() {
-    setVariantes(prev => [...prev, { nom: '', valeurs: [] }])
+  const typesDejaUtilises = new Set(variantes.filter(v => v.typeId && v.typeId !== 'autre').map(v => v.typeId))
+  const typesDisponibles = TYPES_VARIANTE.filter(t => t.repetable || !typesDejaUtilises.has(t.id))
+
+  function ajouterOption(typeId: TypeVarianteId) {
+    const type = TYPES_VARIANTE.find(t => t.id === typeId)!
+    setVariantes(prev => [...prev, { nom: type.nomVariante, valeurs: [], typeId: type.id }])
   }
 
-  function renommerOption(index: number, nom: string) {
+  function renommerOptionPersonnalisee(index: number, nom: string) {
+    setNomsPersonnalises(prev => ({ ...prev, [index]: nom }))
     setVariantes(prev => prev.map((v, i) => i === index ? { ...v, nom } : v))
   }
 
   function retirerOption(index: number) {
     setVariantes(prev => prev.filter((_, i) => i !== index))
-    setNouvelleValeur(prev => { const next = { ...prev }; delete next[index]; return next })
+    setNomsPersonnalises(prev => { const next = { ...prev }; delete next[index]; return next })
   }
 
-  function ajouterValeur(index: number) {
-    const val = (nouvelleValeur[index] ?? '').trim()
-    if (!val) return
+  function toggleValeur(index: number, valeur: string) {
     setVariantes(prev => prev.map((v, i) => {
       if (i !== index) return v
-      if (v.valeurs.includes(val)) return v
-      return { ...v, valeurs: [...v.valeurs, val] }
+      if (v.valeurs.includes(valeur)) return { ...v, valeurs: v.valeurs.filter(x => x !== valeur) }
+      return { ...v, valeurs: [...v.valeurs, valeur] }
     }))
-    setNouvelleValeur(prev => ({ ...prev, [index]: '' }))
-  }
-
-  function retirerValeur(index: number, valeur: string) {
-    setVariantes(prev => prev.map((v, i) => i === index ? { ...v, valeurs: v.valeurs.filter(x => x !== valeur) } : v))
   }
 
   useEffect(() => { if (state.success) onSuccess() }, [state.success])
@@ -573,46 +655,96 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       {/* Variantes (options + valeurs) */}
       {!modeRapide && (
         <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '14px 16px' }}>
-          <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+          <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
             Variantes (optionnel)
           </p>
-          {variantes.map((v, i) => (
-            <div key={i} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: i < variantes.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-                <input
-                  type="text" value={v.nom} onChange={e => renommerOption(i, e.target.value)}
-                  style={{ ...inputStyle, flex: 1 }} placeholder="Nom de l'option (ex: Couleur, Taille…)"
-                />
-                <button type="button" onClick={() => retirerOption(i)} style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, padding: '8px 10px', fontSize: 12, cursor: 'pointer' }}>
-                  ✕
+          <p style={{ margin: '0 0 12px', fontSize: 12, color: '#9ca3af' }}>
+            Ajoutez une option (ex: Couleur) puis cliquez sur les valeurs proposées.
+          </p>
+
+          {variantes.map((v, i) => {
+            const type = TYPES_VARIANTE.find(t => t.id === v.typeId)
+            const estCouleur = v.typeId === 'couleur'
+            const estPersonnalise = !type || v.typeId === 'autre'
+
+            return (
+              <div key={i} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: i < variantes.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+                  {estPersonnalise ? (
+                    <input
+                      type="text" value={nomsPersonnalises[i] ?? v.nom} onChange={e => renommerOptionPersonnalisee(i, e.target.value)}
+                      style={{ ...inputStyle, flex: 1 }} placeholder="Nom de l'option (ex: Matière)"
+                    />
+                  ) : (
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: '#374151' }}>{type?.label}</span>
+                  )}
+                  <button type="button" onClick={() => retirerOption(i)} style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, padding: '8px 10px', fontSize: 12, cursor: 'pointer' }}>
+                    ✕
+                  </button>
+                </div>
+
+                {estCouleur ? (
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    {COULEURS_PALETTE.map(c => {
+                      const selectionnee = v.valeurs.includes(c.nom)
+                      return (
+                        <button
+                          key={c.nom} type="button" onClick={() => toggleValeur(i, c.nom)}
+                          title={c.nom}
+                          style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                            background: 'none', border: 'none', cursor: 'pointer', padding: 2,
+                          }}
+                        >
+                          <span style={{
+                            width: 28, height: 28, borderRadius: '50%', background: c.hex,
+                            border: selectionnee ? '3px solid #C75B00' : '2px solid #d1d5db',
+                            boxShadow: c.hex === '#ffffff' ? 'inset 0 0 0 1px #e5e7eb' : undefined,
+                            display: 'block',
+                          }} />
+                          <span style={{ fontSize: 10, color: selectionnee ? '#C75B00' : '#6b7280', fontWeight: selectionnee ? 700 : 500 }}>{c.nom}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : type ? (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {type.suggestions.map(val => {
+                      const selectionnee = v.valeurs.includes(val)
+                      return (
+                        <button
+                          key={val} type="button" onClick={() => toggleValeur(i, val)}
+                          style={{
+                            padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                            border: selectionnee ? '2px solid #C75B00' : '1px solid #d1d5db',
+                            background: selectionnee ? '#fff7f0' : '#fff',
+                            color: selectionnee ? '#C75B00' : '#374151',
+                          }}
+                        >
+                          {val}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <ValeursLibres valeurs={v.valeurs} onAjouter={val => toggleValeur(i, val)} onRetirer={val => toggleValeur(i, val)} />
+                )}
+              </div>
+            )
+          })}
+
+          {typesDisponibles.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: variantes.length > 0 ? 12 : 0 }}>
+              {typesDisponibles.map(t => (
+                <button
+                  key={t.id} type="button" onClick={() => ajouterOption(t.id)}
+                  style={{ background: 'none', border: '1px dashed #d1d5db', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer' }}
+                >
+                  + {t.label}
                 </button>
-              </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
-                {v.valeurs.map(val => (
-                  <span key={val} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 20, padding: '4px 10px', fontSize: 12, fontWeight: 600 }}>
-                    {val}
-                    <button type="button" onClick={() => retirerValeur(i, val)} style={{ background: 'none', border: 'none', color: '#1d4ed8', cursor: 'pointer', fontSize: 12, padding: 0 }}>✕</button>
-                  </span>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="text"
-                  value={nouvelleValeur[i] ?? ''}
-                  onChange={e => setNouvelleValeur(prev => ({ ...prev, [i]: e.target.value }))}
-                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); ajouterValeur(i) } }}
-                  style={{ ...inputStyle, flex: 1 }}
-                  placeholder="Valeur (ex: Rouge), Entrée pour ajouter"
-                />
-                <button type="button" onClick={() => ajouterValeur(i)} style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                  Ajouter
-                </button>
-              </div>
+              ))}
             </div>
-          ))}
-          <button type="button" onClick={ajouterOption} style={{ background: 'none', border: '1px dashed #d1d5db', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>
-            + Ajouter une option
-          </button>
+          )}
         </div>
       )}
 
