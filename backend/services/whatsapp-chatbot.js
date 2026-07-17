@@ -318,6 +318,92 @@ async function envoyerListeBoutiques(phone, secteur, excludeIds = []) {
   });
 }
 
+// ── Fiche produit complète (boutique) ───────────────────────────────────────
+// Product Message Meta native + message texte détaillé + bouton "Commander".
+async function envoyerFicheProduitBoutique(phone, produit, boutique) {
+  await sendWhatsAppProduct(
+    phone,
+    `nopalou-produit-${produit.id}`,
+    `${produit.nom} — ${prixFmt(produit.prix)}\n📍 ${boutique.nom}`
+  ).catch(async () => {
+    await sendWhatsAppText(phone, `• *${produit.nom}* — ${prixFmt(produit.prix)}\n📍 *${boutique.nom}*`);
+  });
+
+  const lignes = [`🏪 *${boutique.nom}*`];
+  if (produit.description) lignes.push(produit.description);
+
+  const variantes = Array.isArray(produit.variantes) ? produit.variantes : [];
+  for (const v of variantes) {
+    if (v?.nom && Array.isArray(v.valeurs) && v.valeurs.length) {
+      lignes.push(`*${v.nom}* : ${v.valeurs.join(', ')}`);
+    }
+  }
+
+  const carac = produit.caracteristiques && typeof produit.caracteristiques === 'object' ? produit.caracteristiques : {};
+  for (const [cle, val] of Object.entries(carac)) {
+    if (val) lignes.push(`*${cle}* : ${val}`);
+  }
+
+  if (produit.stock_quantite !== null && produit.stock_quantite !== undefined) {
+    lignes.push(produit.stock_quantite > 0 ? `✅ ${produit.stock_quantite} en stock` : '❌ Rupture de stock');
+  } else {
+    lignes.push(produit.en_stock === false ? '❌ Rupture de stock' : '✅ En stock');
+  }
+
+  await sendWhatsAppText(phone, lignes.join('\n'));
+  await sendWhatsAppButton(phone, 'Intéressé par ce produit ?', `commander_${produit.id}`, '🛒 Commander').catch(() => {});
+}
+
+// ── Recherche / navigation par catégorie dans une boutique précise ─────────────
+async function envoyerProduitsBoutique(phone, boutique, { query, categorie, excludeIds = [] }) {
+  let sql, params;
+  if (query) {
+    sql = `SELECT id, nom, description, prix, en_stock, stock_quantite, caracteristiques, variantes
+           FROM boutique_produits
+           WHERE boutique_id=$1
+             AND to_tsvector('french', nom || ' ' || COALESCE(description,'')) @@ plainto_tsquery('french', $2)
+             AND id::text <> ALL($3::text[])
+           LIMIT 3`;
+    params = [boutique.id, query, excludeIds];
+  } else {
+    sql = `SELECT id, nom, description, prix, en_stock, stock_quantite, caracteristiques, variantes
+           FROM boutique_produits
+           WHERE boutique_id=$1 AND categorie=$2
+             AND id::text <> ALL($3::text[])
+           LIMIT 3`;
+    params = [boutique.id, categorie, excludeIds];
+  }
+
+  const r = await pool.query(sql, params);
+
+  if (!r.rows.length) {
+    await sendWhatsAppText(
+      phone,
+      excludeIds.length
+        ? `✅ Vous avez vu tous les produits ${query ? `pour *"${query}"*` : `de la catégorie *${categorie}*`} dans cette boutique.`
+        : `😕 Aucun produit trouvé ${query ? `pour *"${query}"*` : `dans cette catégorie`}.`
+    );
+    await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+    await setSession(phone, 'BOUTIQUE_MENU', { boutique });
+    return;
+  }
+
+  for (const p of r.rows) {
+    await envoyerFicheProduitBoutique(phone, p, boutique);
+  }
+
+  await attendre(1200);
+  await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres produits, ou :').catch(() => {});
+  await setSession(phone, 'BOUTIQUE_MENU', {
+    boutique,
+    last: {
+      type: query ? 'boutique_search' : 'boutique_categorie',
+      query, categorie,
+      shownIds: excludeIds.concat(r.rows.map(p => String(p.id))),
+    },
+  });
+}
+
 // ── Dispatcher principal ──────────────────────────────────────────────────────
 async function handleIncoming(msg) {
   const phone = normalisePhone(msg.from);
@@ -505,6 +591,110 @@ async function handleIncoming(msg) {
       return;
     }
     await envoyerMenuBoutique(phone, r.rows[0]);
+    return;
+  }
+
+  // ── BOUTIQUE_MENU → actions du menu boutique ────────────────────────────────
+  if (state === 'BOUTIQUE_MENU') {
+    const boutique = context?.boutique;
+    if (!boutique) {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+
+    if (interactiveId === 'boutique_recherche') {
+      await setSession(phone, 'BOUTIQUE_SEARCH_QUERY', { boutique });
+      await sendWhatsAppText(phone, `🔍 Que recherchez-vous chez *${boutique.nom}* ?`);
+      return;
+    }
+    if (interactiveId === 'boutique_categorie') {
+      const r = await pool.query(
+        `SELECT DISTINCT categorie FROM boutique_produits WHERE boutique_id=$1 AND categorie IS NOT NULL ORDER BY categorie LIMIT 10`,
+        [boutique.id]
+      );
+      if (!r.rows.length) {
+        await sendWhatsAppText(phone, 'Cette boutique n\'a pas encore de catégories définies.');
+        await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+        await setSession(phone, 'BOUTIQUE_MENU', { boutique });
+        return;
+      }
+      const rows = r.rows.map(row => ({ id: `bcat_${row.categorie}`, title: row.categorie.slice(0, 24) }));
+      await sendWhatsAppInteractive(phone, boutique.nom, 'Choisissez une catégorie :', [{ title: 'Catégories', rows }]);
+      await setSession(phone, 'BOUTIQUE_CATEGORIE', { boutique });
+      return;
+    }
+    if (interactiveId === 'boutique_contact') {
+      const contact = boutique.whatsapp || boutique.telephone;
+      if (!contact) {
+        await sendWhatsAppText(phone, 'Cette boutique n\'a pas encore renseigné de contact direct.');
+      } else {
+        await sendWhatsAppText(phone, `📞 Contactez directement *${boutique.nom}* :\nhttps://wa.me/${normalisePhone(contact)}`);
+      }
+      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+      await setSession(phone, 'BOUTIQUE_MENU', { boutique });
+      return;
+    }
+    if (interactiveId === 'boutique_quitter' || interactiveId === 'menu') {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    const commanderMatch = interactiveId.match(/^commander_(.+)$/);
+    if (commanderMatch) {
+      await demarrerCommande(phone, boutique, commanderMatch[1]);
+      return;
+    }
+    if (MOTS_PLUS.includes(normaliserTexte(text))) {
+      const last = context?.last;
+      if (!last || !last.type) {
+        await sendWhatsAppText(phone, '🔍 Plus de quoi ? Dites-moi ce que vous cherchez, ou choisissez dans le menu.');
+        return;
+      }
+      const shownIds = Array.isArray(last.shownIds) ? last.shownIds : [];
+      if (last.type === 'boutique_search') {
+        await envoyerProduitsBoutique(phone, boutique, { query: last.query, excludeIds: shownIds });
+      } else {
+        await envoyerProduitsBoutique(phone, boutique, { categorie: last.categorie, excludeIds: shownIds });
+      }
+      return;
+    }
+    // Texte libre en BOUTIQUE_MENU = recherche directe dans cette boutique
+    await setSession(phone, 'BOUTIQUE_SEARCH_QUERY', { boutique });
+    await envoyerProduitsBoutique(phone, boutique, { query: text });
+    return;
+  }
+
+  // ── BOUTIQUE_SEARCH_QUERY → recherche dans la boutique ──────────────────────
+  if (state === 'BOUTIQUE_SEARCH_QUERY') {
+    const boutique = context?.boutique;
+    if (!boutique) {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    if (!text || text.length < 2) {
+      await sendWhatsAppText(phone, '⚠️ Entrez au moins 2 caractères.');
+      return;
+    }
+    await envoyerProduitsBoutique(phone, boutique, { query: text });
+    return;
+  }
+
+  // ── BOUTIQUE_CATEGORIE → choix d'une catégorie ───────────────────────────────
+  if (state === 'BOUTIQUE_CATEGORIE') {
+    const boutique = context?.boutique;
+    if (!boutique) {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    const catMatch = interactiveId.match(/^bcat_(.+)$/);
+    if (!catMatch) {
+      await sendWhatsAppText(phone, 'Choisissez une catégorie dans la liste ci-dessus, ou tapez *menu*.');
+      return;
+    }
+    await envoyerProduitsBoutique(phone, boutique, { categorie: catMatch[1] });
     return;
   }
 
