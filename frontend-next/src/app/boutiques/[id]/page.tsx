@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import BoutiqueDetailClient, { type Produit, type Annonce } from './BoutiqueDetailClient'
 
 interface Boutique {
   id: string
+  slug: string | null
   nom: string
   description: string | null
   categorie: string | null
@@ -56,6 +57,11 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
   }
 
   const b = boutique!
+
+  // URL canonique : rediriger vers le slug si on est arrivé via l'UUID
+  if (b.slug && params.id !== b.slug) {
+    redirect(`/boutiques/${b.slug}`)
+  }
 
   // Fetch produits + annonces en parallèle — utiliser b.id (UUID) même si params.id est un slug
   await Promise.all([
@@ -189,6 +195,7 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
         <BoutiqueDetailClient
           boutique={{
             id: b.id,
+            slug: b.slug,
             nom: b.nom,
             telephone: b.telephone,
             whatsapp: b.whatsapp,

@@ -148,7 +148,7 @@ router.get('/', async (req, res) => {
     const where = 'WHERE ' + conds.join(' AND ');
     const [rows, cnt] = await Promise.all([
       pool.query(
-        `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
+        `SELECT b.id, b.slug, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
                 b.logo_url, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
                 a.plan AS plan_actif
          FROM boutiques b

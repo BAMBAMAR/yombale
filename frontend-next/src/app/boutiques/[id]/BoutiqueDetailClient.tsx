@@ -116,6 +116,7 @@ export default function BoutiqueDetailClient({
 }: {
   boutique: {
     id: string
+    slug: string | null
     nom: string
     telephone: string | null
     whatsapp: string | null
@@ -184,7 +185,7 @@ export default function BoutiqueDetailClient({
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
               {produits.map(p => (
-                <ProduitCard key={p.id} p={p} boutiqueId={boutique.id} onCommander={setCommanderProduit} />
+                <ProduitCard key={p.id} p={p} boutiqueId={boutique.slug || boutique.id} onCommander={setCommanderProduit} />
               ))}
             </div>
           )}

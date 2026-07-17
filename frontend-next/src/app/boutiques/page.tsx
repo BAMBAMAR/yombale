@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 
 interface Boutique {
   id: string
+  slug: string | null
   nom: string
   description: string | null
   categorie: string | null
@@ -125,7 +126,7 @@ export default async function BoutiquesPage({
             const estPro      = b.plan_actif === 'pro'
             const estBusiness = b.plan_actif === 'business'
             return (
-              <Link href={`/boutiques/${b.id}`} key={b.id} className={`boutique-card${(sponsorActif || estPro || estBusiness) ? ' boutique-card--sponsor' : ''}`}>
+              <Link href={`/boutiques/${b.slug || b.id}`} key={b.id} className={`boutique-card${(sponsorActif || estPro || estBusiness) ? ' boutique-card--sponsor' : ''}`}>
                 {estBusiness && (
                   <div className="boutique-sponsor-badge" style={{ background: '#1e3a5f' }}>💼 Business</div>
                 )}
