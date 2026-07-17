@@ -15,10 +15,13 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     const { q, categorie, sousType, limit = 20, page = 1, tri, prixMax, prixMin, etat } = req.query;
     const offset = (page - 1) * limit;
 
+    // Défaut = meilleur prix d'abord (demande produit, 17/07/2026). L'ancien défaut
+    // "popularité" (nb d'offres) reste accessible via tri=populaire.
     const orderBy = tri === 'prix_asc'  ? 'MIN(o.prix) ASC NULLS LAST'
                   : tri === 'prix_desc' ? 'MIN(o.prix) DESC NULLS LAST'
                   : tri === 'nom_asc'   ? 'p.nom ASC'
-                  :                      'COUNT(o.id) DESC NULLS LAST';
+                  : tri === 'populaire' ? 'COUNT(o.id) DESC NULLS LAST'
+                  :                       'MIN(o.prix) ASC NULLS LAST';
 
     const categorieNorm = categorie || null;
 
