@@ -222,7 +222,7 @@ router.get('/:id/produits', async (req, res) => {
     const isUUID = /^[0-9a-f-]{36}$/i.test(param);
     const condition = isUUID ? 'p.boutique_id=$1' : 'b.slug=$1';
     const { rows } = await pool.query(
-      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite,
+      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes,
               p.whatsapp_sync_statut, p.whatsapp_sync_erreur
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
@@ -243,7 +243,7 @@ router.get('/:id/produits/:prodId', param('prodId').isUUID(), async (req, res) =
     const boutiqueCondition = isUUID ? 'b.id=$2' : 'b.slug=$2';
     const { rows } = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock,
-              p.categorie, p.caracteristiques, p.ordre, p.created_at,
+              p.categorie, p.caracteristiques, p.variantes, p.ordre, p.created_at,
               b.nom AS boutique_nom, b.telephone AS boutique_telephone,
               b.whatsapp AS boutique_whatsapp, b.ville AS boutique_ville,
               b.logo_url AS boutique_logo, b.actif AS boutique_actif
@@ -276,7 +276,7 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
       }
     }
 
-    const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques } = req.body;
+    const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques, variantes } = req.body;
     if (!nom?.trim()) return res.status(400).json({ error: 'Nom requis' });
 
     let images = [];
@@ -291,11 +291,19 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
       try { caracJson = typeof caracteristiques === 'string' ? JSON.parse(caracteristiques) : caracteristiques; } catch {}
     }
 
+    let variantesJson = [];
+    if (variantes) {
+      try {
+        const parsed = typeof variantes === 'string' ? JSON.parse(variantes) : variantes;
+        if (Array.isArray(parsed)) variantesJson = parsed;
+      } catch {}
+    }
+
     const r = await pool.query(
-      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, images, en_stock, categorie, caracteristiques)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, images, en_stock, categorie, caracteristiques, variantes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
       [id, nom.trim(), description||null, prix||null, prix_barre||null,
-       images, en_stock !== 'false', categorie||null, caracJson]
+       images, en_stock !== 'false', categorie||null, caracJson, JSON.stringify(variantesJson)]
     );
     res.status(201).json({ success: true, produit: r.rows[0] });
     // Sync catalogue Meta — hors du try/catch pour éviter double-réponse
@@ -323,7 +331,7 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     const existing = await pool.query('SELECT * FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
     if (!existing.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
 
-    const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques } = req.body;
+    const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques, variantes } = req.body;
     let images = existing.rows[0].images;
     if (req.files && req.files.length) {
       images = [];
@@ -337,13 +345,21 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
       try { caracJson = typeof caracteristiques === 'string' ? JSON.parse(caracteristiques) : caracteristiques; } catch {}
     }
 
+    let variantesJson = existing.rows[0].variantes ?? [];
+    if (variantes) {
+      try {
+        const parsed = typeof variantes === 'string' ? JSON.parse(variantes) : variantes;
+        if (Array.isArray(parsed)) variantesJson = parsed;
+      } catch {}
+    }
+
     const r = await pool.query(
       `UPDATE boutique_produits SET nom=$1, description=$2, prix=$3, prix_barre=$4,
-       images=$5, en_stock=$6, categorie=$7, caracteristiques=$8, updated_at=NOW()
-       WHERE id=$9 AND boutique_id=$10 RETURNING *`,
+       images=$5, en_stock=$6, categorie=$7, caracteristiques=$8, variantes=$9, updated_at=NOW()
+       WHERE id=$10 AND boutique_id=$11 RETURNING *`,
       [nom||existing.rows[0].nom, description||null, prix||null, prix_barre||null,
        images, en_stock !== 'false', categorie||existing.rows[0].categorie||null,
-       caracJson, prodId, id]
+       caracJson, JSON.stringify(variantesJson), prodId, id]
     );
     res.json({ success: true, produit: r.rows[0] });
     const produitMaj = r.rows[0];
