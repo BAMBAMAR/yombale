@@ -137,7 +137,8 @@ async function sendMenu(phone) {
 }
 
 // ── Recherche full-text ───────────────────────────────────────────────────────
-async function searchContent(query) {
+// excludeIds : IDs (text) déjà montrés à l'utilisateur — exclus pour la pagination "plus".
+async function searchContent(query, excludeIds = []) {
   const r = await pool.query(
     `(
       SELECT 'marketplace' AS type, id::text, nom AS titre, prix_min AS prix,
@@ -145,6 +146,7 @@ async function searchContent(query) {
       FROM produits
       WHERE to_tsvector('french', nom || ' ' || COALESCE(description,''))
             @@ plainto_tsquery('french', $1)
+        AND id::text <> ALL($2::text[])
       LIMIT 3
     )
     UNION ALL
@@ -155,6 +157,7 @@ async function searchContent(query) {
       JOIN boutiques b ON b.id = p.boutique_id
       WHERE to_tsvector('french', p.nom || ' ' || COALESCE(p.description,''))
             @@ plainto_tsquery('french', $1)
+        AND p.id::text <> ALL($2::text[])
       LIMIT 3
     )
     UNION ALL
@@ -164,6 +167,7 @@ async function searchContent(query) {
       WHERE actif=true AND supprimee=false AND jsonb_array_length(photos) > 0
         AND to_tsvector('french', titre || ' ' || COALESCE(description,''))
             @@ plainto_tsquery('french', $1)
+        AND id::text <> ALL($2::text[])
       LIMIT 3
     )
     UNION ALL
@@ -173,10 +177,11 @@ async function searchContent(query) {
       WHERE actif=true AND jsonb_array_length(photos) > 0
         AND to_tsvector('french', titre || ' ' || COALESCE(description,''))
             @@ plainto_tsquery('french', $1)
+        AND id::text <> ALL($2::text[])
       LIMIT 3
     )
     LIMIT 5`,
-    [query]
+    [query, excludeIds]
   );
   return r.rows;
 }
