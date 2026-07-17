@@ -607,6 +607,12 @@ module.exports = async function migrateInline() {
     try { await pool.query(sql); } catch (e) { console.warn('[MIGRATE] bp_colonnes:', e.message); }
   }
 
+  // Variantes simples produit (options + valeurs, ex: Couleur/Taille) – 17 juillet 2026
+  try {
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS variantes JSONB DEFAULT '[]'`);
+    console.log('[MIGRATE] ✅ Colonne boutique_produits.variantes OK');
+  } catch (e) { console.warn('[MIGRATE] bp_variantes:', e.message); }
+
   // Comptabilité boutique — stock, zones de livraison, ventes
   try {
     await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS stock_quantite INT`);
