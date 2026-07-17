@@ -926,7 +926,7 @@ function _motsClesCommuns(a, b) {
 // côté JS (minuscules, apostrophes/guillemets/parenthèses/crochets retirés, espaces réduits).
 // Source unique : réutilisée par backend/scripts/fusionner-doublons-produits.js — ne pas dupliquer.
 function sqlNomNormalise(col) {
-  return `TRIM(LOWER(regexp_replace(regexp_replace(${col}, '[''''"""()\\[\\]]', '', 'g'), '\\s+', ' ', 'g')))`;
+  return `TRIM(LOWER(regexp_replace(regexp_replace(${col}, '[''''"""()\[\]]', '', 'g'), '\\s+', ' ', 'g')))`;
 }
 
 function normaliserTitre(s) {
