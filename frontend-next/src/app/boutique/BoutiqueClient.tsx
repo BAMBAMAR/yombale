@@ -48,6 +48,11 @@ interface Boutique {
   created_at: string
 }
 
+interface Variante {
+  nom: string
+  valeurs: string[]
+}
+
 interface Produit {
   id: string
   nom: string
@@ -58,6 +63,7 @@ interface Produit {
   en_stock: boolean
   categorie: string | null
   caracteristiques: Record<string, string> | null
+  variantes: Variante[] | null
   whatsapp_sync_statut: 'synchronise' | 'en_attente' | 'echec' | null
   whatsapp_sync_erreur: string | null
 }
@@ -475,6 +481,37 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
     setImagesExistantes(prev => prev.filter((_, j) => j !== i))
   }
 
+  const [variantes, setVariantes] = useState<Variante[]>(produit?.variantes ?? [])
+  const [nouvelleValeur, setNouvelleValeur] = useState<Record<number, string>>({})
+
+  function ajouterOption() {
+    setVariantes(prev => [...prev, { nom: '', valeurs: [] }])
+  }
+
+  function renommerOption(index: number, nom: string) {
+    setVariantes(prev => prev.map((v, i) => i === index ? { ...v, nom } : v))
+  }
+
+  function retirerOption(index: number) {
+    setVariantes(prev => prev.filter((_, i) => i !== index))
+    setNouvelleValeur(prev => { const next = { ...prev }; delete next[index]; return next })
+  }
+
+  function ajouterValeur(index: number) {
+    const val = (nouvelleValeur[index] ?? '').trim()
+    if (!val) return
+    setVariantes(prev => prev.map((v, i) => {
+      if (i !== index) return v
+      if (v.valeurs.includes(val)) return v
+      return { ...v, valeurs: [...v.valeurs, val] }
+    }))
+    setNouvelleValeur(prev => ({ ...prev, [index]: '' }))
+  }
+
+  function retirerValeur(index: number, valeur: string) {
+    setVariantes(prev => prev.map((v, i) => i === index ? { ...v, valeurs: v.valeurs.filter(x => x !== valeur) } : v))
+  }
+
   useEffect(() => { if (state.success) onSuccess() }, [state.success])
 
   function handleCarac(k: string, v: string) {
@@ -498,6 +535,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       {/* Champs cachés pour caractéristiques + catégorie */}
       <input type="hidden" name="categorie" value={cat} />
       <input type="hidden" name="caracteristiques" value={JSON.stringify(carac)} />
+      <input type="hidden" name="variantes" value={JSON.stringify(variantes.filter(v => v.nom.trim() && v.valeurs.length > 0))} />
 
       {/* Catégorie */}
       <div>
@@ -529,6 +567,52 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
             Caractéristiques
           </p>
           <CaracteristiquesFields slug={cat} values={carac} onChange={handleCarac} />
+        </div>
+      )}
+
+      {/* Variantes (options + valeurs) */}
+      {!modeRapide && (
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '14px 16px' }}>
+          <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            Variantes (optionnel)
+          </p>
+          {variantes.map((v, i) => (
+            <div key={i} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: i < variantes.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                <input
+                  type="text" value={v.nom} onChange={e => renommerOption(i, e.target.value)}
+                  style={{ ...inputStyle, flex: 1 }} placeholder="Nom de l'option (ex: Couleur, Taille…)"
+                />
+                <button type="button" onClick={() => retirerOption(i)} style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, padding: '8px 10px', fontSize: 12, cursor: 'pointer' }}>
+                  ✕
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                {v.valeurs.map(val => (
+                  <span key={val} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 20, padding: '4px 10px', fontSize: 12, fontWeight: 600 }}>
+                    {val}
+                    <button type="button" onClick={() => retirerValeur(i, val)} style={{ background: 'none', border: 'none', color: '#1d4ed8', cursor: 'pointer', fontSize: 12, padding: 0 }}>✕</button>
+                  </span>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="text"
+                  value={nouvelleValeur[i] ?? ''}
+                  onChange={e => setNouvelleValeur(prev => ({ ...prev, [i]: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); ajouterValeur(i) } }}
+                  style={{ ...inputStyle, flex: 1 }}
+                  placeholder="Valeur (ex: Rouge), Entrée pour ajouter"
+                />
+                <button type="button" onClick={() => ajouterValeur(i)} style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  Ajouter
+                </button>
+              </div>
+            </div>
+          ))}
+          <button type="button" onClick={ajouterOption} style={{ background: 'none', border: '1px dashed #d1d5db', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>
+            + Ajouter une option
+          </button>
         </div>
       )}
 
