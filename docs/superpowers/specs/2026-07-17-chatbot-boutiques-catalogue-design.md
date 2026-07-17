@@ -1,7 +1,7 @@
 # Chatbot WhatsApp — navigation boutiques, catalogue et commande (design)
 
 **Date** : 17 juillet 2026
-**Fichiers concernés** : `backend/services/whatsapp-chatbot.js` (state machine), `backend/routes/comptabilite.js` (extraction fonction commande partagée), `backend/services/whatsapp.js` (aucun changement attendu — fonctions d'envoi déjà suffisantes). Aucune migration de schéma nécessaire (`boutiques.categorie`, `boutiques.whatsapp`, `boutiques.telephone`, `zones_livraison`, `commandes_boutique.source` existent déjà).
+**Fichiers concernés** : `backend/services/whatsapp-chatbot.js` (state machine), `backend/routes/comptabilite.js` (extraction fonction commande partagée), `backend/services/whatsapp.js` (aucun changement attendu — fonctions d'envoi déjà suffisantes), `frontend-next/src/app/boutique/BoutiqueClient.tsx` (bloc lien partageable, espace gestion), `frontend-next/src/app/boutiques/[id]/BoutiqueDetailClient.tsx` (bouton public « Discuter sur WhatsApp »). Aucune migration de schéma nécessaire (`boutiques.categorie`, `boutiques.whatsapp`, `boutiques.telephone`, `zones_livraison`, `commandes_boutique.source` existent déjà).
 
 ## Problème
 
@@ -43,6 +43,15 @@ Nouvelle option dans `sendMenu()`. Déclenche l'état **`BOUTIQUE_SECTEUR`** :
 
 ### c) Depuis une recherche globale existante
 Dans `handleSearchQuery`, pour chaque résultat de type `produit` (boutique_produits), la Product Message est suivie d'un message avec un bouton reply `entrer_boutique_{boutiqueId}` (« 🏪 Voir toute la boutique {nom} »). Un clic pose `context.boutique` et entre dans le menu boutique.
+
+### Diffusion du lien par le marchand (côté site, pas chatbot)
+
+Le lien `https://wa.me/{numero_nopalou}?text=boutique_{slug}` est exposé à deux endroits, sur le même modèle que le lien apporteur d'affaires déjà en place (`ApporteurClient.tsx` — `navigator.clipboard`, bouton « 📋 Copier le lien », bouton « 💬 Partager sur WhatsApp » via `wa.me/?text=` avec message pré-rempli) :
+
+1. **Espace de gestion boutique** (`frontend-next/src/app/boutique/BoutiqueClient.tsx`) — nouveau bloc avec le lien complet affiché, bouton copier, et bouton partager (ouvre `wa.me/?text=` avec un message pré-rempli du type « Découvrez ma boutique {nom} sur Nopalou WhatsApp : {lien} »). Visible uniquement par le propriétaire connecté.
+2. **Page publique de la boutique** (`frontend-next/src/app/boutiques/[id]/BoutiqueDetailClient.tsx`) — bouton « 💬 Discuter sur WhatsApp » utilisant ce même lien, visible par tout visiteur. Distinct du `CommanderModal.tsx` existant sur cette page (formulaire de commande web classique, inchangé) — ce bouton-ci ouvre une conversation WhatsApp avec le bot Nopalou pré-filtrée sur la boutique, pas une commande directe.
+
+Le `numero_nopalou` (numéro WhatsApp Business du bot, `WHATSAPP_PHONE_NUMBER_ID`/numéro affiché) est déjà utilisé ailleurs dans le code pour construire des liens `wa.me` similaires — à récupérer de la même source (probablement une constante d'env exposée publiquement, à vérifier lors du plan d'implémentation) plutôt que codé en dur une seconde fois.
 
 ## Section 2 — Menu boutique (état `BOUTIQUE_MENU`)
 
