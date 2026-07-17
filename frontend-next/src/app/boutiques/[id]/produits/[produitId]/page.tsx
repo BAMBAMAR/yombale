@@ -19,6 +19,7 @@ interface ProduitDetail {
   en_stock: boolean
   categorie: string | null
   caracteristiques: Record<string, string> | null
+  variantes: { nom: string; valeurs: string[] }[] | null
   boutique_nom: string
   boutique_telephone: string | null
   boutique_whatsapp: string | null
@@ -213,6 +214,7 @@ export default async function FicheProduitPage(
             enStock={p.en_stock}
             waUrl={waUrl}
             telUrl={telUrl}
+            variantes={p.variantes ?? []}
           />
 
           <BoutonPartager

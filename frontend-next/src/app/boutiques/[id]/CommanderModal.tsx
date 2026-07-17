@@ -16,16 +16,18 @@ export default function CommanderModal({
   boutiqueId,
   produit,
   onClose,
+  noteInitiale,
 }: {
   boutiqueId: string
   produit: Produit
   onClose: () => void
+  noteInitiale?: string
 }) {
   const [nom, setNom] = useState('')
   const [tel, setTel] = useState('')
   const [adresse, setAdresse] = useState('')
   const [quantite, setQuantite] = useState(1)
-  const [note, setNote] = useState('')
+  const [note, setNote] = useState(noteInitiale ?? '')
   const [paiement, setPaiement] = useState('wave')
   const [zones, setZones] = useState<Zone[]>([])
   const [zoneId, setZoneId] = useState('')
