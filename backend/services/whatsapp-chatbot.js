@@ -118,9 +118,10 @@ async function sendMenu(phone) {
       {
         title: 'Découvrir',
         rows: [
-          { id: 'search',  title: '🔍 Rechercher',      description: 'Trouver un produit ou annonce' },
-          { id: 'immo',    title: '🏠 Annonces immo',   description: 'Maisons, appartements, terrains' },
-          { id: 'telecom', title: '📱 Offres télécom',  description: 'Mobile, internet, forfaits' },
+          { id: 'search',    title: '🔍 Rechercher',      description: 'Trouver un produit ou annonce' },
+          { id: 'boutiques', title: '🏪 Boutiques',        description: 'Découvrir les boutiques Nopalou' },
+          { id: 'immo',      title: '🏠 Annonces immo',   description: 'Maisons, appartements, terrains' },
+          { id: 'telecom',   title: '📱 Offres télécom',  description: 'Mobile, internet, forfaits' },
         ],
       },
       {
@@ -281,6 +282,42 @@ async function envoyerListeTelecom(phone, excludeIds = []) {
   });
 }
 
+async function envoyerListeBoutiques(phone, secteur, excludeIds = []) {
+  const r = await pool.query(
+    `SELECT id, nom, slug, ville FROM boutiques
+     WHERE actif=true AND categorie=$1 AND id::text <> ALL($2::text[])
+     ORDER BY created_at DESC LIMIT 3`,
+    [secteur, excludeIds]
+  );
+  if (!r.rows.length) {
+    await sendWhatsAppText(
+      phone,
+      excludeIds.length
+        ? '✅ Vous avez vu toutes les boutiques de ce secteur. Tapez *menu* pour revenir.'
+        : 'Aucune boutique disponible dans ce secteur pour le moment.'
+    );
+    await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+    await setSession(phone, 'MENU', {});
+    return;
+  }
+
+  const rows = r.rows.map(b => ({
+    id: `boutique_choisie_${b.id}`,
+    title: b.nom.slice(0, 24),
+    description: b.ville || undefined,
+  }));
+  await sendWhatsAppInteractive(phone, 'Boutiques', `Boutiques du secteur *${secteur}* :`, [
+    { title: secteur, rows },
+  ]);
+
+  await attendre(400);
+  await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres boutiques, ou choisissez-en une ci-dessus :').catch(() => {});
+  await setSession(phone, 'BOUTIQUE_LISTE', {
+    secteur,
+    last: { type: 'boutique_liste', shownIds: excludeIds.concat(r.rows.map(b => String(b.id))) },
+  });
+}
+
 // ── Dispatcher principal ──────────────────────────────────────────────────────
 async function handleIncoming(msg) {
   const phone = normalisePhone(msg.from);
@@ -378,6 +415,23 @@ async function handleIncoming(msg) {
       await sendWhatsAppText(phone, '📦 Entrez votre référence de commande (ex: PAY-12345) :');
       return;
     }
+    if (action === 'boutiques') {
+      const r = await pool.query(
+        `SELECT DISTINCT categorie FROM boutiques WHERE actif=true AND categorie IS NOT NULL ORDER BY categorie LIMIT 10`
+      );
+      if (!r.rows.length) {
+        await sendWhatsAppText(phone, 'Aucune boutique disponible pour le moment.');
+        await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+        await setSession(phone, 'MENU', {});
+        return;
+      }
+      const rows = r.rows.map(row => ({ id: `secteur_${row.categorie}`, title: row.categorie.slice(0, 24) }));
+      await sendWhatsAppInteractive(phone, '🏪 Boutiques', 'Choisissez un secteur :', [
+        { title: 'Secteurs', rows },
+      ]);
+      await setSession(phone, 'BOUTIQUE_SECTEUR', {});
+      return;
+    }
     if (action === 'support') {
       await sendWhatsAppText(phone, '💬 *Support Nopalou*\n\nPour nous contacter :\n📧 contact@nopalou.com\n🌐 nopalou.com\n\nNous répondons sous 24h. Merci !');
       await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
@@ -414,6 +468,43 @@ async function handleIncoming(msg) {
     }
     await setSession(phone, 'SEARCH_QUERY', {});
     await handleSearchQuery(phone, text);
+    return;
+  }
+
+  // ── BOUTIQUE_SECTEUR → choix du secteur ─────────────────────────────────────
+  if (state === 'BOUTIQUE_SECTEUR') {
+    const secteurMatch = interactiveId.match(/^secteur_(.+)$/);
+    if (!secteurMatch) {
+      await sendWhatsAppText(phone, 'Choisissez un secteur dans la liste ci-dessus, ou tapez *menu*.');
+      return;
+    }
+    await envoyerListeBoutiques(phone, secteurMatch[1]);
+    return;
+  }
+
+  // ── BOUTIQUE_LISTE → choix d'une boutique ou pagination ─────────────────────
+  if (state === 'BOUTIQUE_LISTE') {
+    if (MOTS_PLUS.includes(normaliserTexte(text))) {
+      const shownIds = Array.isArray(context?.last?.shownIds) ? context.last.shownIds : [];
+      await envoyerListeBoutiques(phone, context.secteur, shownIds);
+      return;
+    }
+    const choixMatch = interactiveId.match(/^boutique_choisie_(.+)$/);
+    if (!choixMatch) {
+      await sendWhatsAppText(phone, 'Choisissez une boutique dans la liste ci-dessus, ou tapez *menu*.');
+      return;
+    }
+    const r = await pool.query(
+      'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE id=$1 AND actif=true',
+      [choixMatch[1]]
+    );
+    if (!r.rows[0]) {
+      await sendWhatsAppText(phone, '😕 Cette boutique n\'est plus disponible.');
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    await envoyerMenuBoutique(phone, r.rows[0]);
     return;
   }
 
