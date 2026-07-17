@@ -105,7 +105,7 @@ function CaracteristiquesFields({ slug, values, onChange }: {
   const f = (k: string) => values[k] ?? ''
 
   if (slug === 'smartphones') return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+    <div className="bq-form-grid-2">
       <CaracField    label="Marque"   name="marque"   value={f('marque')}   onChange={onChange} placeholder="Samsung, Apple…" required />
       <CaracField    label="Modèle"   name="modele"   value={f('modele')}   onChange={onChange} placeholder="iPhone 14 Pro…" />
       <CaracField    label="Stockage" name="stockage" value={f('stockage')} onChange={onChange} placeholder="128 Go, 256 Go…" />
@@ -116,7 +116,7 @@ function CaracteristiquesFields({ slug, values, onChange }: {
   )
 
   if (slug === 'informatique') return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+    <div className="bq-form-grid-2">
       <CaracField  label="Marque"     name="marque"     value={f('marque')}     onChange={onChange} placeholder="Dell, Lenovo, HP…" required />
       <CaracField  label="Modèle"     name="modele"     value={f('modele')}     onChange={onChange} placeholder="XPS 15…" />
       <CaracField  label="Processeur" name="processeur" value={f('processeur')} onChange={onChange} placeholder="Intel i7, AMD Ryzen…" />
@@ -127,7 +127,7 @@ function CaracteristiquesFields({ slug, values, onChange }: {
   )
 
   if (slug === 'tv-electro') return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+    <div className="bq-form-grid-2">
       <CaracField  label="Marque"       name="marque"       value={f('marque')}       onChange={onChange} placeholder="Samsung, LG…" required />
       <CaracField  label="Modèle"       name="modele"       value={f('modele')}       onChange={onChange} placeholder="55QN90B…" />
       <CaracField  label="Type"         name="type_article" value={f('type_article')} onChange={onChange} placeholder="TV, Frigo, Clim…" />
@@ -137,7 +137,7 @@ function CaracteristiquesFields({ slug, values, onChange }: {
   )
 
   if (slug === 'auto-moto') return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+    <div className="bq-form-grid-2">
       <CaracField  label="Marque"      name="marque"      value={f('marque')}      onChange={onChange} placeholder="Toyota, Yamaha…" required />
       <CaracField  label="Modèle"      name="modele"      value={f('modele')}      onChange={onChange} placeholder="Corolla, R1…" required />
       <div>
@@ -152,7 +152,7 @@ function CaracteristiquesFields({ slug, values, onChange }: {
   )
 
   if (slug === 'mode') return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+    <div className="bq-form-grid-2">
       <CaracField  label="Marque"  name="marque"  value={f('marque')}  onChange={onChange} placeholder="Zara, Nike…" />
       <CaracField  label="Taille"  name="taille"  value={f('taille')}  onChange={onChange} placeholder="M, 42, XL…" required />
       <CaracSelect label="Genre"   name="genre"   value={f('genre')}   onChange={onChange} options={GENRES_MODE} />
@@ -162,7 +162,7 @@ function CaracteristiquesFields({ slug, values, onChange }: {
   )
 
   if (slug === 'maison') return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+    <div className="bq-form-grid-2">
       <CaracField  label="Type d'article" name="type_article" value={f('type_article')} onChange={onChange} placeholder="Canapé, Lit, Table…" required />
       <CaracField  label="Marque"         name="marque"       value={f('marque')}       onChange={onChange} placeholder="IKEA, Broyhill…" />
       <CaracField  label="Matière"        name="matiere"      value={f('matiere')}      onChange={onChange} placeholder="Bois, Métal, Tissu…" />
@@ -172,7 +172,7 @@ function CaracteristiquesFields({ slug, values, onChange }: {
   )
 
   if (slug === 'jeux') return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+    <div className="bq-form-grid-2">
       <CaracSelect label="Plateforme" name="plateforme" value={f('plateforme')} onChange={onChange} options={PLATEFORMES} required />
       <CaracField  label="Éditeur"    name="editeur"    value={f('editeur')}    onChange={onChange} placeholder="EA, Ubisoft…" />
       <CaracSelect label="État"       name="etat"       value={f('etat')}       onChange={onChange} options={ETATS_PRODUIT} required />
@@ -180,7 +180,7 @@ function CaracteristiquesFields({ slug, values, onChange }: {
   )
 
   if (slug === 'alimentation') return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+    <div className="bq-form-grid-2">
       <CaracField label="Poids / Quantité"   name="poids_quantite"  value={f('poids_quantite')}  onChange={onChange} placeholder="500g, 1L, 12 unités…" />
       <CaracField label="Conditionnement"    name="conditionnement" value={f('conditionnement')} onChange={onChange} placeholder="Sachet, Boîte, Vrac…" />
       <CaracField label="Date de péremption" name="date_peremption" value={f('date_peremption')} onChange={onChange} placeholder="12/2025" />
@@ -189,7 +189,7 @@ function CaracteristiquesFields({ slug, values, onChange }: {
   )
 
   if (slug === 'beaute') return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+    <div className="bq-form-grid-2">
       <CaracField  label="Marque"       name="marque"       value={f('marque')}       onChange={onChange} placeholder="L'Oréal, Nivea…" />
       <CaracField  label="Type"         name="type_produit" value={f('type_produit')} onChange={onChange} placeholder="Crème, Parfum, Shampoing…" required />
       <CaracSelect label="Pour qui"     name="pour_qui"     value={f('pour_qui')}     onChange={onChange} options={POUR_QUI} />
@@ -198,7 +198,7 @@ function CaracteristiquesFields({ slug, values, onChange }: {
   )
 
   if (slug === 'services') return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+    <div className="bq-form-grid-2">
       <CaracField label="Type de service"    name="type_service"     value={f('type_service')}     onChange={onChange} placeholder="Plomberie, Cours, Transport…" required />
       <CaracField label="Zone d'intervention" name="zone_intervention" value={f('zone_intervention')} onChange={onChange} placeholder="Dakar, Plateau…" />
       <CaracField label="Durée / Fréquence"  name="duree"            value={f('duree')}            onChange={onChange} placeholder="1h, par séance…" />
@@ -291,7 +291,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
           {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="bq-form-grid-2">
         <div>
           <label style={labelStyle}>Adresse</label>
           <input name="adresse" defaultValue={boutique?.adresse ?? ''} style={inputStyle} placeholder="Av. Cheikh Anta Diop" />
@@ -304,7 +304,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
 
       <SectionTitle>📞 Contact</SectionTitle>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="bq-form-grid-2">
         <div>
           <label style={labelStyle}>Téléphone</label>
           <input name="telephone" type="tel" defaultValue={boutique?.telephone ?? ''} style={inputStyle} placeholder="77 000 00 00" />
@@ -318,7 +318,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         <label style={labelStyle}>Site web</label>
         <input name="site_web" type="url" defaultValue={boutique?.site_web ?? ''} style={inputStyle} placeholder="https://votresite.com" />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="bq-form-grid-2">
         <div>
           <label style={labelStyle}>Page Facebook</label>
           <input name="facebook" type="url" defaultValue={boutique?.facebook ?? ''} style={inputStyle} placeholder="https://facebook.com/…" />
@@ -355,7 +355,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
 
       <SectionTitle>🖼 Photos</SectionTitle>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="bq-form-grid-2">
         <div>
           <label style={labelStyle}>Logo (max 5 Mo)</label>
           <input name="logo" type="file" accept="image/*" style={{ fontSize: 13 }} />
@@ -511,7 +511,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       )}
 
       {/* Prix */}
-      <div style={{ display: 'grid', gridTemplateColumns: modeRapide ? '1fr' : '1fr 1fr', gap: 12 }}>
+      <div className={modeRapide ? '' : 'bq-form-grid-2'} style={modeRapide ? { display: 'grid' } : undefined}>
         <div>
           <label style={labelStyle}>Prix (FCFA) <span style={{ color: '#dc2626' }}>*</span></label>
           <input name="prix" type="number" min={0} required defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 350 000" />
@@ -782,10 +782,7 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {produitsFiltres.map(p => (
-            <div key={p.id} style={{
-              display: 'flex', gap: 12, alignItems: 'center',
-              background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px',
-            }}>
+            <div key={p.id} className="bq-produit-row">
               {/* Image */}
               <div style={{ width: 56, height: 56, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {p.images?.[0]
@@ -878,16 +875,11 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
   const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#e5e7eb'
 
   return (
-    <div style={{
-      background: '#fff', borderRadius: 16,
-      boxShadow: '0 2px 12px rgba(0,0,0,.07)',
-      border: '1px solid #e5e7eb',
-      overflow: 'hidden',
-    }}>
+    <div className="bq-card">
       {/* Bande colorée plan */}
       <div style={{ height: 4, background: planColor }} />
 
-      <div style={{ padding: '20px 24px' }}>
+      <div className="bq-card-body">
         <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
           {/* Logo */}
           {boutique.logo_url ? (
@@ -926,7 +918,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
         </div>
 
         {/* Actions */}
-        <div style={{ marginTop: 18, display: 'flex', gap: 8, flexWrap: 'wrap', borderTop: '1px solid #f3f4f6', paddingTop: 16 }}>
+        <div className="bq-card-actions">
           <button onClick={onManage} style={{
             fontSize: 13, color: '#fff', background: '#C75B00', border: 'none',
             borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontWeight: 700,
@@ -1045,12 +1037,12 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
     )}
     <style>{`@keyframes slideUp { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }`}</style>
 
-    <div style={{ display: 'flex', gap: 0, minHeight: '70vh', background: '#f8fafc', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+    <div className="bq-manage-layout">
 
       {/* Sidebar */}
-      <aside style={{ width: 220, flexShrink: 0, background: '#fff', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column' }}>
+      <aside className="bq-sidebar">
         {/* Boutique header dans sidebar */}
-        <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid #f3f4f6' }}>
+        <div className="bq-sidebar-header">
           <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#9ca3af', padding: 0, display: 'flex', alignItems: 'center', gap: 4, marginBottom: 14 }}>
             ← Retour
           </button>
@@ -1069,28 +1061,13 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
         </div>
 
         {/* Nav */}
-        <nav style={{ padding: '12px 8px', flex: 1 }}>
+        <nav className="bq-nav">
           {NAV_ITEMS.map(item => (
-            <button key={item.key} onClick={() => { setTab(item.key); if (item.key === 'commandes') setNbEnAttente(0) }} style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 12px', border: 'none', borderRadius: 8, cursor: 'pointer',
-              background: tab === item.key ? '#fff7f0' : 'none',
-              color: tab === item.key ? '#C75B00' : '#374151',
-              fontWeight: tab === item.key ? 700 : 500,
-              fontSize: 13, marginBottom: 2, textAlign: 'left' as const,
-              borderLeft: tab === item.key ? '3px solid #C75B00' : '3px solid transparent',
-              position: 'relative',
-            }}>
+            <button key={item.key} onClick={() => { setTab(item.key); if (item.key === 'commandes') setNbEnAttente(0) }} className={`bq-nav-item${tab === item.key ? ' active' : ''}`}>
               <span style={{ fontSize: 16 }}>{item.icon}</span>
               {item.label}
               {item.key === 'commandes' && nbEnAttente > 0 && (
-                <span style={{
-                  marginLeft: 'auto', background: '#dc2626', color: '#fff',
-                  borderRadius: 20, fontSize: 10, fontWeight: 800,
-                  padding: '2px 7px', minWidth: 18, textAlign: 'center',
-                }}>
-                  {nbEnAttente}
-                </span>
+                <span className="bq-nav-badge">{nbEnAttente}</span>
               )}
             </button>
           ))}
@@ -1106,7 +1083,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
       </aside>
 
       {/* Contenu principal */}
-      <main style={{ flex: 1, minWidth: 0, padding: '28px 32px', overflowY: 'auto' }}>
+      <main className="bq-main">
         {/* Titre de section */}
         <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
           <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 20, margin: 0, color: '#111' }}>
