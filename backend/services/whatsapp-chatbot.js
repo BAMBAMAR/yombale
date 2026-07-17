@@ -186,6 +186,68 @@ async function searchContent(query, excludeIds = []) {
   return r.rows;
 }
 
+// ── Listes immo / télécom (menu + pagination "plus") ─────────────────────────
+async function envoyerListeImmo(phone, excludeIds = []) {
+  const r = await pool.query(
+    `SELECT id, titre, prix, (photos->>0) AS photo FROM annonces_immo
+     WHERE actif=true AND jsonb_array_length(photos) > 0
+       AND id::text <> ALL($1::text[])
+     ORDER BY created_at DESC LIMIT 3`,
+    [excludeIds]
+  );
+  if (!r.rows.length) {
+    await sendWhatsAppText(
+      phone,
+      excludeIds.length
+        ? '✅ Vous avez vu toutes les annonces immo disponibles. Revenez bientôt, ou tapez *menu*.'
+        : 'Aucune annonce immo disponible pour le moment.'
+    );
+    await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+    await setSession(phone, 'MENU', {});
+    return;
+  }
+  const cards = r.rows.map(a => ({
+    imageUrl: a.photo || null,
+    title: a.titre,
+    detail: prixFmt(a.prix),
+    pageUrl: `${SITE}/immo/${a.id}`,
+  }));
+  await sendWhatsAppCarousel(phone, 'nopalou_carousel_immo', cards).catch(() =>
+    sendWhatsAppText(phone, cards.map(c => `• ${c.title} — ${c.detail}\n${c.pageUrl}`).join('\n\n'))
+  );
+  await attendre(1200); // laisse le temps aux messages du carousel de s'afficher avant le bouton
+  await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ? Tapez *plus* pour d\'autres annonces, ou :').catch(() => {});
+  await setSession(phone, 'MENU', {
+    last: { type: 'immo', shownIds: excludeIds.concat(r.rows.map(a => String(a.id))) },
+  });
+}
+
+async function envoyerListeTelecom(phone, excludeIds = []) {
+  const r = await pool.query(
+    `SELECT id, nom, operateur, prix FROM forfaits_telecom
+     WHERE actif=true AND id::text <> ALL($1::text[])
+     ORDER BY created_at DESC LIMIT 5`,
+    [excludeIds]
+  );
+  if (!r.rows.length) {
+    await sendWhatsAppText(
+      phone,
+      excludeIds.length
+        ? '✅ Vous avez vu toutes les offres télécom disponibles. Revenez bientôt, ou tapez *menu*.'
+        : 'Aucune offre télécom disponible pour le moment.'
+    );
+    await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+    await setSession(phone, 'MENU', {});
+    return;
+  }
+  const lines = r.rows.map(o => `📱 *${o.nom || o.operateur}* — ${prixFmt(o.prix)}\n👉 ${SITE}/telecom`);
+  await sendWhatsAppText(phone, lines.join('\n\n'));
+  await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ? Tapez *plus* pour d\'autres offres, ou :').catch(() => {});
+  await setSession(phone, 'MENU', {
+    last: { type: 'telecom', shownIds: excludeIds.concat(r.rows.map(o => String(o.id))) },
+  });
+}
+
 // ── Dispatcher principal ──────────────────────────────────────────────────────
 async function handleIncoming(msg) {
   const phone = normalisePhone(msg.from);
@@ -245,41 +307,11 @@ async function handleIncoming(msg) {
       return;
     }
     if (action === 'immo') {
-      const r = await pool.query(
-        `SELECT id, titre, prix, (photos->>0) AS photo FROM annonces_immo
-         WHERE actif=true AND jsonb_array_length(photos) > 0
-         ORDER BY created_at DESC LIMIT 3`
-      );
-      if (!r.rows.length) {
-        await sendWhatsAppText(phone, 'Aucune annonce immo disponible pour le moment.');
-      } else {
-        const cards = r.rows.map(a => ({
-          imageUrl: a.photo || null,
-          title: a.titre,
-          detail: prixFmt(a.prix),
-          pageUrl: `${SITE}/immo/${a.id}`,
-        }));
-        await sendWhatsAppCarousel(phone, 'nopalou_carousel_immo', cards).catch(() =>
-          sendWhatsAppText(phone, cards.map(c => `• ${c.title} — ${c.detail}\n${c.pageUrl}`).join('\n\n'))
-        );
-        await attendre(1200); // laisse le temps aux messages du carousel de s'afficher avant le bouton
-      }
-      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
-      await setSession(phone, 'MENU', {});
+      await envoyerListeImmo(phone);
       return;
     }
     if (action === 'telecom') {
-      const r = await pool.query(
-        `SELECT id, nom, operateur, prix FROM forfaits_telecom WHERE actif=true ORDER BY created_at DESC LIMIT 5`
-      );
-      if (!r.rows.length) {
-        await sendWhatsAppText(phone, 'Aucune offre télécom disponible pour le moment.');
-      } else {
-        const lines = r.rows.map(o => `📱 *${o.nom || o.operateur}* — ${prixFmt(o.prix)}\n👉 ${SITE}/telecom`);
-        await sendWhatsAppText(phone, lines.join('\n\n'));
-      }
-      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
-      await setSession(phone, 'MENU', {});
+      await envoyerListeTelecom(phone);
       return;
     }
     if (action === 'alert') {
