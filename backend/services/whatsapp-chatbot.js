@@ -417,13 +417,20 @@ async function handleIncoming(msg) {
   await sendMenu(phone);
 }
 
-async function handleSearchQuery(phone, query) {
+async function handleSearchQuery(phone, query, excludeIds = []) {
   if (!query || query.length < 2) {
     await sendWhatsAppText(phone, '⚠️ Entrez au moins 2 caractères.');
     return;
   }
-  const results = await searchContent(query);
+  const results = await searchContent(query, excludeIds);
   if (!results.length) {
+    if (excludeIds.length) {
+      // Pagination épuisée — tout a déjà été montré.
+      await sendWhatsAppText(phone, `✅ Vous avez vu tout ce que j'ai pour *"${query}"*.\n\nEssayez avec d'autres mots-clés ou tapez *menu*.`);
+      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+      await setSession(phone, 'MENU', {});
+      return;
+    }
     await sendWhatsAppText(phone, `😕 Aucun résultat pour *"${query}"*.\n\nEssayez avec d'autres mots-clés ou tapez *menu*.`);
     await setSession(phone, 'SEARCH_QUERY', {});
     return;
@@ -468,8 +475,10 @@ async function handleSearchQuery(phone, query) {
   if (produits.length + autres.length > 1) {
     await attendre(1200); // laisse le temps aux messages précédents de s'afficher avant le bouton
   }
-  await sendWhatsAppMenuOuFin(phone, 'Faites une nouvelle recherche, ou :').catch(() => {});
-  await setSession(phone, 'MENU', {});
+  await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres résultats, faites une nouvelle recherche, ou :').catch(() => {});
+  await setSession(phone, 'MENU', {
+    last: { type: 'search', query, shownIds: excludeIds.concat(results.map(r => String(r.id))) },
+  });
 }
 
 module.exports = { handleIncoming, cleanupOldMessages, resetInactiveSessions, handleSearchQuery };
