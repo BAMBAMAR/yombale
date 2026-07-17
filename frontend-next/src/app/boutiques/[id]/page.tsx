@@ -12,6 +12,7 @@ interface Boutique {
   categorie: string | null
   telephone: string | null
   whatsapp: string | null
+  slug: string | null
   adresse: string | null
   ville: string
   logo_url: string | null
@@ -192,6 +193,7 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
             nom: b.nom,
             telephone: b.telephone,
             whatsapp: b.whatsapp,
+            slug: b.slug,
             facebook: b.facebook,
             instagram: b.instagram,
             site_web: b.site_web,

@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { cloudinaryHQ } from '@/lib/cloudinary'
-import { fcfa } from '@/lib/format'
+import { fcfa, lienBoutiqueWhatsapp } from '@/lib/format'
 import CommanderModal from './CommanderModal'
 
 export interface Produit {
@@ -119,6 +119,7 @@ export default function BoutiqueDetailClient({
     nom: string
     telephone: string | null
     whatsapp: string | null
+    slug: string | null
     facebook: string | null
     instagram: string | null
     site_web: string | null
@@ -398,6 +399,21 @@ export default function BoutiqueDetailClient({
                 </a>
               )}
             </div>
+          )}
+
+          {boutique.slug && (
+            <a
+              href={lienBoutiqueWhatsapp(boutique.slug)}
+              target="_blank" rel="noopener noreferrer"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                background: '#fff', color: '#16a34a', border: '2px solid #bbf7d0',
+                padding: '14px 20px', borderRadius: 12, textDecoration: 'none', fontWeight: 700, fontSize: 15,
+                marginTop: 12,
+              }}
+            >
+              🤖 Voir le catalogue sur l&apos;assistant Nopalou
+            </a>
           )}
         </div>
       )}
