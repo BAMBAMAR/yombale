@@ -264,6 +264,9 @@ async function handleIncoming(msg) {
 
   const SALUTATIONS = ['menu', 'aide', 'help', '0', 'bonjour', 'bonsoir', 'salut', 'slt', 'hello', 'coucou'];
   const CLOTURE = ['merci', 'merci beaucoup', 'ok merci', 'c\'est bon', 'cest bon', 'au revoir', 'bye', 'a bientot', 'à bientôt', 'non merci', 'ça ira', 'ca ira', 'c\'est tout', 'cest tout'];
+  // Mots de pagination : montrer la suite des derniers résultats (spec 2026-07-13).
+  // "ok"/"oui" = réponse naturelle à "Envie de continuer ?". "ok merci" reste une clôture (CLOTURE testée avant).
+  const MOTS_PLUS = ['plus', 'encore', 'd\'autres', 'dautres', 'autres', 'autre', 'voir plus', 'la suite', 'suivant', 'ok', 'oui'];
 
   // ── IDLE → présentation puis menu (nouvelle session ou session expirée) ────
   if (state === 'IDLE') {
@@ -334,6 +337,20 @@ async function handleIncoming(msg) {
       await sendWhatsAppText(phone, FAQ[FAQ.length - 1].reponse);
       await sendWhatsAppMenuOuFin(phone, 'Une autre question ?').catch(() => {});
       await setSession(phone, 'MENU', {});
+      return;
+    }
+    // "plus" / "encore" / "d'autres" / "oui"... → paginer les derniers résultats affichés
+    if (MOTS_PLUS.includes(normaliserTexte(text))) {
+      const last = context?.last;
+      if (!last || !last.type) {
+        await setSession(phone, 'SEARCH_QUERY', {});
+        await sendWhatsAppText(phone, '🔍 Plus de quoi ? Dites-moi ce que vous cherchez (ex: télévision Samsung, canapé, forfait Tigo...)');
+        return;
+      }
+      const shownIds = Array.isArray(last.shownIds) ? last.shownIds : [];
+      if (last.type === 'immo')    { await envoyerListeImmo(phone, shownIds); return; }
+      if (last.type === 'telecom') { await envoyerListeTelecom(phone, shownIds); return; }
+      await handleSearchQuery(phone, last.query, shownIds);
       return;
     }
     // Texte libre reçu en état MENU → question FAQ, sinon traiter comme recherche
