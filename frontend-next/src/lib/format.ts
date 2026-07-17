@@ -36,3 +36,9 @@ export function escapeHtml(s: string | null | undefined): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+
+export function lienBoutiqueWhatsapp(slug: string): string {
+  const numero = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || ''
+  const texte = encodeURIComponent(`boutique_${slug}`)
+  return `https://wa.me/${numero}?text=${texte}`
+}
