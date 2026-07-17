@@ -123,6 +123,22 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## État du projet (17 juillet 2026, suite — dédoublonnage produits + tri par défaut « meilleur prix »)
+
+Déclencheur : doublons visibles dans la recherche chatbot (« Samsung Galaxy 16 5G » en double). Diagnostic prod : **5 230 lignes en trop sur 8 200 produits (64 %)**, doublons recréés à chaque run de scraping. Spec `docs/superpowers/specs/2026-07-17-dedoublonnage-produits-tri-prix-design.md`, plan 6 tâches, subagent-driven-development, revue finale opus « Ready to merge » 0 Critical/Important, mergé ff (`9b3953b..d97f487` + `33141b2`), poussé.
+
+**Causes racines corrigées** :
+- Titres 100 % génériques (« Split Haier », « iPhone X ») : tous les mots filtrés par `MOTS_GENERIQUES`/longueur < 3 → `motsCles` vide → matching flou **sauté** → INSERT à chaque run. Corrigé par une étape **1bis** dans `sauvegarderProduits` : correspondance exacte sur nom normalisé via `sqlNomNormalise(col)` (exportée de `scraper.js`, source unique — appliquée AUX DEUX côtés de l'égalité). ⚠️ Deux fix rounds ont été nécessaires : les subagents haiku **mutilent les caractères Unicode** (`’‘“”`) et l'échappement `\[\]` dans les template literals — écrire ce genre de ligne soi-même.
+- Apostrophes : `normaliserTitre` les retire côté requête mais pas côté base → « J'adore EDP 100ml » ne matchait jamais (124 doublons).
+
+**Fusion exécutée en prod (2 passes)** : `backend/scripts/fusionner-doublons-produits.js` (`--dry-run` supporté, une transaction par groupe, offres/alertes/clics rattachés au canonique, conflit `UNIQUE(produit_id,marchand_id)` → l'offre la plus récente gagne + historique réparenté, recalcul `prix_min`/`nb_offres`). Critère STRICT exigé par l'utilisateur : même nom normalisé + catégorie + marque + prix_min + ensemble des marchands. Résultat : 71 groupes fusionnés, **5 190 fiches supprimées, 8 200 → 3 016 produits**, 0 échec, alertes intactes. Le critère strict est **instable après recalcul** (des fiches convergent vers le même prix) → une 2ᵉ passe a été nécessaire ; ~40 fiches restent en doublon de nom (prix/marchands différents — assumé). Le fix scraper vérifié en réel : le scrape de 11h16 a rattaché son offre à la fiche de mai au lieu d'en créer une 8ᵉ.
+
+**Tri par défaut** : `GET /api/produits` sans `tri` → `MIN(o.prix) ASC NULLS LAST` (sponsorisés toujours en tête), `tri=populaire` = ancien classement popularité. Pills accueil/catégorie : défaut « 💰 Prix ↑ », « ⭐ Populaires » → `?tri=populaire`. Guides/immo/annonces/boutiques/télécom inchangés. Vérifié en prod : prix croissants sur nopalou.com/api/produits.
+
+**Dette notée (revues)** : `nb_offres` stocké = `COUNT(o.id)` toutes offres vs API qui compte les offres en stock (divergence pré-existante, reproduite fidèlement par le script) ; asymétrie mots retirés `normaliserTitre` vs `sqlNomNormalise` (neuf/occasion/promo…) — 0 occurrence en prod aujourd'hui, à surveiller si nouvelle source scrape ces mots dans les titres.
+
+---
+
 ## État du projet (17 juillet 2026 — chatbot WhatsApp : pagination « plus / encore / d'autres »)
 
 Retour d'usage réel : après une recherche (« Samsung »), retaper la requête ou dire « plus » remontrait toujours les 3-5 mêmes résultats — la session repassait en `MENU` sans mémoire de ce qui avait été affiché, et « plus » partait en recherche full-text du mot « plus ». Spec `docs/superpowers/specs/2026-07-13-chatbot-pagination-plus-design.md`, plan en 5 tâches `docs/superpowers/plans/2026-07-13-chatbot-pagination-plus.md`, exécuté via subagent-driven-development, revue finale opus « Ready to merge » 0 Critical/Important, mergé fast-forward dans `main` (`a9a5a59..f0e4c82`), poussé (déploiement Render).
