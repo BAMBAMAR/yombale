@@ -136,6 +136,39 @@ async function sendMenu(phone) {
   );
 }
 
+// ── Menu d'une boutique précise (état BOUTIQUE_MENU) ───────────────────────────
+async function envoyerMenuBoutique(phone, boutique) {
+  const infos = [boutique.categorie, boutique.ville].filter(Boolean).join(' — ');
+  let entete = `🏪 *${boutique.nom}*`;
+  if (infos) entete += `\n${infos}`;
+  if (boutique.description) entete += `\n${boutique.description}`;
+  await sendWhatsAppText(phone, entete);
+
+  await sendWhatsAppInteractive(
+    phone,
+    boutique.nom,
+    'Que voulez-vous faire ?',
+    [
+      {
+        title: 'Catalogue',
+        rows: [
+          { id: 'boutique_recherche', title: '🔍 Rechercher', description: 'Chercher un produit dans cette boutique' },
+          { id: 'boutique_categorie', title: '📂 Par catégorie', description: 'Parcourir les catégories de produits' },
+        ],
+      },
+      {
+        title: 'Autre',
+        rows: [
+          { id: 'boutique_contact', title: '📞 Contacter le vendeur', description: 'Ouvrir une conversation directe' },
+          { id: 'boutique_quitter', title: '⬅️ Changer de boutique', description: 'Retour au menu principal' },
+        ],
+      },
+    ]
+  );
+
+  await setSession(phone, 'BOUTIQUE_MENU', { boutique });
+}
+
 // ── Recherche full-text ───────────────────────────────────────────────────────
 // excludeIds : IDs (text) déjà montrés à l'utilisateur — exclus pour la pagination "plus".
 async function searchContent(query, excludeIds = []) {
@@ -261,6 +294,24 @@ async function handleIncoming(msg) {
   const { state, context } = await getSession(phone);
   const text = msg.text?.body?.trim() || '';
   const interactiveId = msg.interactive?.list_reply?.id || msg.interactive?.button_reply?.id || '';
+
+  // ── Lien direct partagé par un marchand : "boutique_{slug}" ────────────────
+  const matchBoutique = text.match(/^boutique_(.+)$/i);
+  if (matchBoutique) {
+    const slug = matchBoutique[1].trim();
+    const r = await pool.query(
+      'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE slug=$1 AND actif=true',
+      [slug]
+    );
+    if (!r.rows[0]) {
+      await sendWhatsAppText(phone, '😕 Cette boutique est introuvable ou n\'est plus active.');
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    await envoyerMenuBoutique(phone, r.rows[0]);
+    return;
+  }
 
   const SALUTATIONS = ['menu', 'aide', 'help', '0', 'bonjour', 'bonsoir', 'salut', 'slt', 'hello', 'coucou'];
   const CLOTURE = ['merci', 'merci beaucoup', 'ok merci', 'c\'est bon', 'cest bon', 'au revoir', 'bye', 'a bientot', 'à bientôt', 'non merci', 'ça ira', 'ca ira', 'c\'est tout', 'cest tout'];
