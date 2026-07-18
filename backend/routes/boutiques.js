@@ -223,7 +223,7 @@ router.get('/:id/produits', async (req, res) => {
     const condition = isUUID ? 'p.boutique_id=$1' : 'b.slug=$1';
     const { rows } = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes,
-              p.whatsapp_sync_statut, p.whatsapp_sync_erreur
+              p.whatsapp_sync_statut, p.whatsapp_sync_erreur, p.partage_le
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
        WHERE ${condition} AND b.actif=true
@@ -386,6 +386,23 @@ router.delete('/:id/produits/:prodId', verifierToken, param('id').isUUID(), para
       .then(b => deleteProduit(prodId, b.rows[0]?.whatsapp_catalog_id))
       .catch(() => {});
     res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+// ── PATCH /api/boutiques/:id/produits/:prodId/partage — marquer un produit comme partagé
+router.patch('/:id/produits/:prodId/partage', verifierToken, param('id').isUUID(), param('prodId').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const { id, prodId } = req.params;
+    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
+    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+
+    const r = await pool.query(
+      'UPDATE boutique_produits SET partage_le=NOW() WHERE id=$1 AND boutique_id=$2 RETURNING partage_le',
+      [prodId, id]
+    );
+    if (!r.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+    res.json({ success: true, partage_le: r.rows[0].partage_le });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 

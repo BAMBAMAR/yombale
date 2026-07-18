@@ -613,6 +613,12 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Colonne boutique_produits.variantes OK');
   } catch (e) { console.warn('[MIGRATE] bp_variantes:', e.message); }
 
+  // Traçage du partage produit (marketing boutique) – 18 juillet 2026
+  try {
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS partage_le TIMESTAMPTZ`);
+    console.log('[MIGRATE] ✅ Colonne boutique_produits.partage_le OK');
+  } catch (e) { console.warn('[MIGRATE] bp_partage_le:', e.message); }
+
   // Comptabilité boutique — stock, zones de livraison, ventes
   try {
     await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS stock_quantite INT`);
