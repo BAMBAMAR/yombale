@@ -662,8 +662,27 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   const [variantes, setVariantes] = useState<Variante[]>(produit?.variantes ?? [])
   const [nomsPersonnalises, setNomsPersonnalises] = useState<Record<number, string>>({})
 
-  const typesDejaUtilises = new Set(variantes.filter(v => v.typeId && v.typeId !== 'autre').map(v => v.typeId))
+  const typesDejaUtilises = new Set(
+    variantes
+      .map(v => v.typeId)
+      .filter((t): t is TypeVarianteId => !!t && t !== 'autre')
+  )
   const typesDisponibles = TYPES_VARIANTE.filter(t => t.repetable || !typesDejaUtilises.has(t.id))
+
+  useEffect(() => {
+    setCarac(prev => {
+      let changed = false
+      const next = { ...prev }
+      for (const champ of ['taille', 'couleur', 'stockage'] as const) {
+        if (!champVisibleSelonVariante(champ, typesDejaUtilises) && champ in next) {
+          delete next[champ]
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typesDejaUtilises.size, Array.from(typesDejaUtilises).join(',')])
 
   function ajouterOption(typeId: TypeVarianteId) {
     const type = TYPES_VARIANTE.find(t => t.id === typeId)!
@@ -742,7 +761,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
           <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
             Caractéristiques
           </p>
-          <CaracteristiquesFields slug={cat} values={carac} onChange={handleCarac} />
+          <CaracteristiquesFields slug={cat} values={carac} onChange={handleCarac} typesVarianteActifs={typesDejaUtilises} />
         </div>
       )}
 
