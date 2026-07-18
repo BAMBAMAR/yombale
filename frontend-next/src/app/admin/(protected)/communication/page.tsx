@@ -291,22 +291,47 @@ function getApporteurExemples(prixPro: number, prixBusiness: number, tauxApporte
 }
 
 const CHATBOT_FONCTIONS = [
-  { titre: 'Recherche produit/annonce', detail: 'Texte libre (ex: "iPhone 14") → renvoie prix comparés, annonces classifiées ou biens immo correspondants, avec lien direct.' },
-  { titre: 'Annonces immo', detail: 'Dernières annonces immobilières actives, envoyées en carrousel avec photo, prix et lien.' },
-  { titre: 'Offres télécom', detail: 'Derniers forfaits Orange, Free, Expresso, Wave.' },
-  { titre: 'Alerte de prix', detail: 'L\'utilisateur indique un produit et un prix cible — notifié par WhatsApp dès que le seuil est atteint, sans compte requis.' },
-  { titre: 'Suivi de commande', detail: 'Référence de commande (ex: PAY-12345) → statut et montant.' },
-  { titre: 'Support', detail: 'Coordonnées de l\'équipe Nopalou en un message.' },
+  {
+    groupe: '🔍 Recherche & comparaison',
+    items: [
+      { titre: 'Recherche unifiée', detail: 'Texte libre (ex: "iPhone 14") → renvoie en une seule requête les prix comparés du marketplace (3000+ produits scrapés, tous marchands), les boutiques marchandes Nopalou, les annonces classifiées ou les biens immo correspondants, avec lien direct.' },
+      { titre: 'Annonces immo', detail: 'Dernières annonces immobilières actives (appartements, villas, terrains), envoyées avec photo, prix et lien.' },
+      { titre: 'Offres télécom', detail: 'Derniers forfaits Orange, Yas, Expresso, Promobile.' },
+      { titre: 'Pagination des résultats', detail: 'Le client peut dire "plus" ou "encore" pour voir d\'autres résultats sans reformuler sa recherche.' },
+    ],
+  },
+  {
+    groupe: '🛍️ Boutiques & achat',
+    items: [
+      { titre: 'Parcourir une boutique', detail: 'Le client accède à une boutique précise via un lien direct partagé par le commerçant, ou parcourt par secteur/catégorie.' },
+      { titre: 'Commander dans le chat', detail: 'Le client choisit ses produits, indique ses coordonnées et son mode de livraison/paiement, sans quitter WhatsApp — la commande arrive directement chez le commerçant.' },
+      { titre: 'Panier multi-produits (Meta Commerce)', detail: 'Depuis le catalogue WhatsApp d\'une boutique, le client compose un panier avec plusieurs articles et l\'envoie en une seule fois — pas besoin de chercher chaque produit un par un.' },
+    ],
+  },
+  {
+    groupe: '🔔 Alertes & suivi',
+    items: [
+      { titre: 'Alerte de prix', detail: 'L\'utilisateur indique un produit et un prix cible — notifié par WhatsApp dès que le seuil est atteint, sans compte requis.' },
+      { titre: 'Suivi de commande', detail: 'Référence de commande (ex: PAY-12345) → statut et montant.' },
+    ],
+  },
+  {
+    groupe: '❓ FAQ & support',
+    items: [
+      { titre: 'Questions fréquentes automatiques', detail: 'Le bot répond seul aux questions courantes : gratuit/payant, publier une annonce/un bien immo, créer une boutique, comparer les prix, favoris, programme apporteur, forfaits télécom, guide général.' },
+      { titre: 'Support', detail: 'Coordonnées de l\'équipe Nopalou en un message si aucune réponse automatique ne correspond.' },
+    ],
+  },
 ]
 
 const CHATBOT_TEXTE = `💬 Nopalou est maintenant sur WhatsApp !
 
-Comparez les prix, suivez les annonces immo et créez des alertes de prix sans quitter votre conversation WhatsApp — pas d'app à installer, pas d'inscription.
+Comparez les prix (produits, boutiques, immo, télécom), commandez directement dans une boutique — même avec plusieurs produits en un seul panier — créez des alertes de prix et posez vos questions, sans quitter votre conversation WhatsApp. Pas d'app à installer, pas d'inscription.
 
 Comment l'utiliser :
 1. Enregistrez le +221 70 871 79 42 (ou cliquez wa.me/221708717942)
 2. Envoyez "menu"
-3. Choisissez une option : recherche, immo, télécom, alerte prix, suivi commande, support
+3. Choisissez une option : recherche, boutiques, immo, télécom, alerte prix, suivi commande, ou posez directement votre question
 
 100% gratuit, disponible 24h/24.
 
@@ -613,20 +638,29 @@ export default async function CommunicationPage() {
         <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
           ⚙️ Ce que le chatbot sait faire
         </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {CHATBOT_FONCTIONS.map((f, i) => (
-            <div key={f.titre} style={{
-              border: '1px solid #E2E8F0', borderRadius: 10, padding: '16px 20px',
-              background: '#fff', display: 'flex', gap: 14,
-            }}>
-              <span style={{
-                fontSize: 13, fontWeight: 800, color: '#25D366', background: '#f0fdf4',
-                borderRadius: '50%', width: 26, height: 26, display: 'flex',
-                alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>{i + 1}</span>
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', margin: '0 0 4px' }}>{f.titre}</p>
-                <p style={{ fontSize: 13, color: '#64748B', margin: 0, lineHeight: 1.6 }}>{f.detail}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          {CHATBOT_FONCTIONS.map(groupe => (
+            <div key={groupe.groupe}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#25D366', margin: '0 0 12px' }}>
+                {groupe.groupe}
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {groupe.items.map((f, i) => (
+                  <div key={f.titre} style={{
+                    border: '1px solid #E2E8F0', borderRadius: 10, padding: '16px 20px',
+                    background: '#fff', display: 'flex', gap: 14,
+                  }}>
+                    <span style={{
+                      fontSize: 13, fontWeight: 800, color: '#25D366', background: '#f0fdf4',
+                      borderRadius: '50%', width: 26, height: 26, display: 'flex',
+                      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>{i + 1}</span>
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', margin: '0 0 4px' }}>{f.titre}</p>
+                      <p style={{ fontSize: 13, color: '#64748B', margin: 0, lineHeight: 1.6 }}>{f.detail}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
