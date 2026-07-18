@@ -13,34 +13,64 @@ const WA_LINK = 'https://wa.me/221708717942?text=' + encodeURIComponent('menu')
 
 const FONCTIONS = [
   {
-    icon: '🔍', couleur: '#1d4ed8',
-    titre: 'Rechercher un produit ou une annonce',
-    texte: "Tapez le nom d'un produit (ex : \"iPhone 14\", \"climatiseur Haier\") et l'assistant vous répond avec les prix trouvés chez les marchands partenaires, une annonce classifiée ou un bien immo correspondant — avec le lien direct vers la fiche.",
+    groupe: '🔍 Recherche & comparaison',
+    items: [
+      {
+        icon: '🔍', couleur: '#1d4ed8',
+        titre: 'Rechercher un produit, une boutique ou une annonce',
+        texte: "Tapez le nom d'un produit (ex : \"iPhone 14\", \"climatiseur Haier\") et l'assistant vous répond avec les prix trouvés chez les marchands partenaires, dans les boutiques Nopalou, une annonce classifiée ou un bien immo correspondant — avec le lien direct vers la fiche.",
+      },
+      {
+        icon: '🏠', couleur: '#059669',
+        titre: 'Parcourir les annonces immo',
+        texte: "Recevez directement dans la conversation les dernières annonces immobilières (appartements, villas, terrains) avec photo, prix et lien vers l'annonce complète.",
+      },
+      {
+        icon: '📱', couleur: '#7c3aed',
+        titre: 'Comparer les offres télécom',
+        texte: "Consultez les derniers forfaits mobiles Orange, Yas, Expresso et Promobile sans quitter WhatsApp.",
+      },
+      {
+        icon: '➡️', couleur: '#64748b',
+        titre: 'Voir plus de résultats',
+        texte: "Dites \"plus\" ou \"encore\" pour continuer une recherche sans avoir à la retaper.",
+      },
+    ],
   },
   {
-    icon: '🏠', couleur: '#059669',
-    titre: 'Parcourir les annonces immo',
-    texte: "Recevez directement dans la conversation les dernières annonces immobilières (appartements, villas, terrains) avec photo, prix et lien vers l'annonce complète.",
+    groupe: '🛍️ Boutiques & achat',
+    items: [
+      {
+        icon: '🏪', couleur: '#25D366',
+        titre: 'Commander directement sur WhatsApp',
+        texte: "Parcourez une boutique via son lien ou par catégorie, choisissez vos produits — même plusieurs à la fois grâce au panier WhatsApp — et passez commande sans quitter la conversation. Le vendeur reçoit tout instantanément.",
+      },
+    ],
   },
   {
-    icon: '📱', couleur: '#7c3aed',
-    titre: 'Comparer les offres télécom',
-    texte: "Consultez les derniers forfaits mobiles Orange, Free, Expresso et Wave sans quitter WhatsApp.",
+    groupe: '🔔 Alertes & suivi',
+    items: [
+      {
+        icon: '🔔', couleur: '#f59e0b',
+        titre: 'Créer une alerte de prix',
+        texte: "Dites à l'assistant quel produit vous intéresse et à quel prix vous voulez être alerté — vous serez notifié par WhatsApp dès que le prix cible est atteint, sans avoir de compte.",
+      },
+      {
+        icon: '📦', couleur: '#0891b2',
+        titre: 'Suivre une commande',
+        texte: "Entrez votre référence de commande (ex : PAY-12345) pour connaître son statut et son montant, à tout moment.",
+      },
+    ],
   },
   {
-    icon: '🔔', couleur: '#f59e0b',
-    titre: 'Créer une alerte de prix',
-    texte: "Dites à l'assistant quel produit vous intéresse et à quel prix vous voulez être alerté — vous serez notifié par WhatsApp dès que le prix cible est atteint, sans avoir de compte.",
-  },
-  {
-    icon: '📦', couleur: '#0891b2',
-    titre: 'Suivre une commande',
-    texte: "Entrez votre référence de commande (ex : PAY-12345) pour connaître son statut et son montant, à tout moment.",
-  },
-  {
-    icon: '💬', couleur: '#C75B00',
-    titre: 'Contacter le support',
-    texte: "Besoin d'aide ? L'assistant vous donne les coordonnées de l'équipe Nopalou en un message.",
+    groupe: '❓ FAQ & support',
+    items: [
+      {
+        icon: '💬', couleur: '#C75B00',
+        titre: 'Poser une question sur le site',
+        texte: "Gratuit ou payant, comment publier une annonce, créer une boutique, comparer les prix... L'assistant répond directement aux questions les plus courantes, et vous donne les coordonnées de l'équipe Nopalou si besoin.",
+      },
+    ],
   },
 ]
 
@@ -87,15 +117,24 @@ export default function AssistantWhatsAppPage() {
         </a>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-        {FONCTIONS.map((f) => (
-          <div key={f.titre} className="guide-emploi-step">
-            <div className="guide-emploi-icon" style={{ background: f.couleur + '18' }}>
-              {f.icon}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 28, marginBottom: 24 }}>
+        {FONCTIONS.map(groupe => (
+          <div key={groupe.groupe}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy)', marginBottom: 12 }}>
+              {groupe.groupe}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="guide-emploi-titre">{f.titre}</div>
-              <div className="guide-emploi-texte">{f.texte}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {groupe.items.map((f) => (
+                <div key={f.titre} className="guide-emploi-step">
+                  <div className="guide-emploi-icon" style={{ background: f.couleur + '18' }}>
+                    {f.icon}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="guide-emploi-titre">{f.titre}</div>
+                    <div className="guide-emploi-texte">{f.texte}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ))}
