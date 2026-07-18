@@ -121,6 +121,16 @@ const TYPES_VARIANTE: TypeVariante[] = [
   { id: 'autre',    label: '➕ Autre (personnalisé)',   nomVariante: '',          suggestions: [],                   repetable: true },
 ]
 
+export const CHAMP_VERS_TYPE_VARIANTE: Record<'taille' | 'couleur' | 'stockage', TypeVarianteId> = {
+  taille: 'taille',
+  couleur: 'couleur',
+  stockage: 'stockage',
+}
+
+export function champVisibleSelonVariante(champ: 'taille' | 'couleur' | 'stockage', typesVarianteActifs: Set<TypeVarianteId>): boolean {
+  return !typesVarianteActifs.has(CHAMP_VERS_TYPE_VARIANTE[champ])
+}
+
 function CaracField({ label, name, value, onChange, placeholder, required: req = false }: {
   label: string; name: string; value: string; onChange: (k: string, v: string) => void
   placeholder?: string; required?: boolean
