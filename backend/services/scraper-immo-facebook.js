@@ -333,6 +333,28 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
           await page.waitForTimeout(2500);
         }
 
+        // Déplier les posts tronqués ("Voir plus") AVANT l'extraction : le texte au-delà du
+        // bouton n'existe pas dans le DOM tant qu'on ne clique pas dessus (contrairement au
+        // nettoyage regex du texte ci-dessous, qui ne fait que retirer le libellé du bouton
+        // sans révéler le contenu masqué). Beaucoup d'annonces immo mettent justement le
+        // numéro de téléphone juste après cette coupure — sans ce clic, elles étaient
+        // définitivement perdues. Playwright (pas page.evaluate + .click() DOM) car Facebook
+        // attache ses handlers React aux événements de pointeur réels, pas juste au clic
+        // JS brut. Boucle bornée (20 max) pour ne pas tourner indéfiniment si de nouveaux
+        // boutons apparaissent après chaque clic (React peut réinsérer le feed).
+        const boutonVoirPlus = page.locator('[role="feed"] div[role="button"], [role="feed"] span[role="button"]')
+          .filter({ hasText: /^voir plus$/i });
+        for (let i = 0; i < 20; i++) {
+          const n = await boutonVoirPlus.count();
+          if (n === 0) break;
+          try {
+            await boutonVoirPlus.first().click({ timeout: 3000 });
+            await page.waitForTimeout(400);
+          } catch {
+            break; // élément détaché/non cliquable — pas bloquant, on garde ce qui est déplié
+          }
+        }
+
         // Extraire les posts depuis le fil (`[role="feed"]`). Chaque enfant direct qui contient
         // un lien /user/ est un post top-level (les commentaires n'ont pas ce lien). Le texte
         // brut (`innerText`) contient deux types de bruit injectés par Facebook contre le
