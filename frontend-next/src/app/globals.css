@@ -4850,6 +4850,10 @@ a {
   gap: 8px;
 }
 
+.navbar-actions-compte {
+  display: flex;
+}
+
 .navbar-deposer {
   padding: 7px 14px;
   background: var(--accent);
@@ -4884,6 +4888,10 @@ a {
   /* Connexion + S'inscrire sont dans le tiroir mobile — on les cache de la navbar */
   .navbar-link   { display: none; }
   .navbar-inscription { display: none; }
+  /* Nom du compte + Déconnexion sont dans le tiroir mobile aussi — sans ce
+     masquage, .navbar-actions dépasse le viewport (nom + Déconnexion + Publier
+     + hamburger ne tiennent pas sur une largeur téléphone) */
+  .navbar-actions-compte { display: none; }
   /* Réduire le bouton Publier pour laisser de la place au hamburger */
   .navbar-deposer { font-size: 11px; padding: 5px 8px; }
   /* S'assurer que le bouton hamburger est toujours visible */

@@ -28,6 +28,7 @@
     "eslint-config-next": "^14.2.35",
     "fdir": "^6.5.0",
     "jsdom": "^29.1.1",
+    "playwright": "^1.61.1",
     "typescript": "5.9.3",
     "vitest": "^4.1.10"
   }

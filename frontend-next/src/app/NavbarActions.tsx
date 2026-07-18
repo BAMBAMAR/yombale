@@ -7,7 +7,7 @@ interface Props {
 
 export default function NavbarActions({ nom }: Props) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div className="navbar-actions-compte" style={{ alignItems: 'center', gap: '8px' }}>
       <a
         href="/compte"
         style={{
