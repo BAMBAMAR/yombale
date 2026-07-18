@@ -10,6 +10,7 @@ const {
   sendReadReceipt,
   normalisePhone,
 } = require('./whatsapp');
+const { creerCommandeBoutique } = require('../routes/comptabilite');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 const prixFmt = (p) => p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' : 'N/C';
@@ -404,6 +405,70 @@ async function envoyerProduitsBoutique(phone, boutique, { query, categorie, excl
   });
 }
 
+// ── Démarrage du flux de commande ────────────────────────────────────────────
+async function demarrerCommande(phone, boutique, produitId) {
+  const r = await pool.query(
+    'SELECT id, nom, prix, stock_quantite FROM boutique_produits WHERE id=$1 AND boutique_id=$2',
+    [produitId, boutique.id]
+  );
+  const produit = r.rows[0];
+  if (!produit) {
+    await sendWhatsAppText(phone, '😕 Ce produit n\'est plus disponible.');
+    await setSession(phone, 'BOUTIQUE_MENU', { boutique });
+    return;
+  }
+  await sendWhatsAppText(phone, `🛒 *Commande — ${produit.nom}*\n\nCombien en voulez-vous ? (tapez un nombre, ex: 1)`);
+  await setSession(phone, 'COMMANDE_QUANTITE', {
+    boutique,
+    commande: { produit_id: produit.id, nom_produit: produit.nom, prix: Number(produit.prix) || 0, stock_quantite: produit.stock_quantite },
+  });
+}
+
+async function envoyerRecapCommande(phone, boutique, commande) {
+  await sendWhatsAppInteractive(
+    phone,
+    'Paiement',
+    'Quel mode de paiement souhaitez-vous utiliser ?',
+    [{
+      title: 'Paiement',
+      rows: [
+        { id: 'pay_wave', title: 'Wave' },
+        { id: 'pay_om', title: 'Orange Money' },
+        { id: 'pay_cash', title: 'Espèces à la livraison' },
+        { id: 'pay_virement', title: 'Virement' },
+      ],
+    }]
+  );
+  await setSession(phone, 'COMMANDE_PAIEMENT', { boutique, commande });
+}
+
+async function envoyerRecapFinal(phone, boutique, commande) {
+  const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement' };
+  const total = (commande.prix * commande.quantite) + (commande.frais_livraison || 0);
+  const lignes = [
+    `📋 *Récapitulatif de votre commande*`,
+    ``,
+    `🛍️ ${commande.nom_produit} × ${commande.quantite}`,
+    `💰 ${prixFmt(commande.prix * commande.quantite)}`,
+  ];
+  if (commande.frais_livraison) lignes.push(`🚚 Livraison (${commande.zone_nom}) : ${prixFmt(commande.frais_livraison)}`);
+  lignes.push(`*Total : ${prixFmt(total)}*`, ``);
+  lignes.push(`👤 ${commande.client_nom}`, `📞 ${commande.client_telephone}`, `📍 ${commande.client_adresse}`);
+  lignes.push(`💳 Paiement : ${methodeLabel[commande.methode_paiement] || commande.methode_paiement}`);
+
+  await sendWhatsAppText(phone, lignes.join('\n'));
+  await sendWhatsAppInteractive(
+    phone,
+    'Confirmation',
+    'Confirmez-vous cette commande ?',
+    [{ title: 'Action', rows: [
+      { id: 'cmd_confirmer', title: '✅ Confirmer' },
+      { id: 'cmd_annuler', title: '✏️ Annuler' },
+    ] }]
+  );
+  await setSession(phone, 'COMMANDE_CONFIRMATION', { boutique, commande });
+}
+
 // ── Dispatcher principal ──────────────────────────────────────────────────────
 async function handleIncoming(msg) {
   const phone = normalisePhone(msg.from);
@@ -695,6 +760,168 @@ async function handleIncoming(msg) {
       return;
     }
     await envoyerProduitsBoutique(phone, boutique, { categorie: catMatch[1] });
+    return;
+  }
+
+  // ── COMMANDE_* : séquence de collecte des infos de commande ────────────────
+  const ANNULER = ['annuler', 'annule', 'stop', 'abandonner'];
+
+  if (state === 'COMMANDE_QUANTITE') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    if (ANNULER.includes(normaliserTexte(text))) {
+      await sendWhatsAppText(phone, 'Commande annulée.');
+      await envoyerMenuBoutique(phone, boutique);
+      return;
+    }
+    const quantite = parseInt(text.replace(/[^\d]/g, ''), 10);
+    if (!quantite || quantite < 1) {
+      await sendWhatsAppText(phone, '⚠️ Entrez un nombre valide (ex: 1, 2, 3...).');
+      return;
+    }
+    const stock = context.commande?.stock_quantite;
+    if (stock !== null && stock !== undefined && stock < quantite) {
+      await sendWhatsAppText(phone, `⚠️ Il ne reste que ${stock} en stock. Entrez une quantité inférieure ou égale.`);
+      return;
+    }
+    await sendWhatsAppText(phone, 'Votre nom complet ?');
+    await setSession(phone, 'COMMANDE_NOM', { boutique, commande: { ...context.commande, quantite } });
+    return;
+  }
+
+  if (state === 'COMMANDE_NOM') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    if (ANNULER.includes(normaliserTexte(text))) {
+      await sendWhatsAppText(phone, 'Commande annulée.');
+      await envoyerMenuBoutique(phone, boutique);
+      return;
+    }
+    if (!text || text.trim().length < 2) {
+      await sendWhatsAppText(phone, '⚠️ Entrez votre nom complet.');
+      return;
+    }
+    await sendWhatsAppText(phone, `Quel numéro de téléphone pour vous joindre ? (ex: ${phone})`);
+    await setSession(phone, 'COMMANDE_TELEPHONE', { boutique, commande: { ...context.commande, client_nom: text.trim() } });
+    return;
+  }
+
+  if (state === 'COMMANDE_TELEPHONE') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    if (ANNULER.includes(normaliserTexte(text))) {
+      await sendWhatsAppText(phone, 'Commande annulée.');
+      await envoyerMenuBoutique(phone, boutique);
+      return;
+    }
+    const chiffres = text.replace(/[^\d]/g, '');
+    if (chiffres.length < 6) {
+      await sendWhatsAppText(phone, '⚠️ Entrez un numéro de téléphone valide.');
+      return;
+    }
+    await sendWhatsAppText(phone, 'Votre adresse de livraison ? (quartier, ville...)');
+    await setSession(phone, 'COMMANDE_ADRESSE', { boutique, commande: { ...context.commande, client_telephone: chiffres } });
+    return;
+  }
+
+  if (state === 'COMMANDE_ADRESSE') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    if (ANNULER.includes(normaliserTexte(text))) {
+      await sendWhatsAppText(phone, 'Commande annulée.');
+      await envoyerMenuBoutique(phone, boutique);
+      return;
+    }
+    if (!text || text.trim().length < 3) {
+      await sendWhatsAppText(phone, '⚠️ Entrez une adresse de livraison.');
+      return;
+    }
+    const commandeAvecAdresse = { ...context.commande, client_adresse: text.trim() };
+
+    const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC', [boutique.id]);
+    if (!zones.rows.length) {
+      await envoyerRecapCommande(phone, boutique, commandeAvecAdresse);
+      return;
+    }
+    const rows = zones.rows.map(z => ({ id: `zone_${z.id}`, title: z.nom.slice(0, 24), description: prixFmt(Number(z.prix)) }));
+    await sendWhatsAppInteractive(phone, 'Livraison', 'Choisissez votre zone de livraison :', [{ title: 'Zones', rows }]);
+    await setSession(phone, 'COMMANDE_ZONE', { boutique, commande: commandeAvecAdresse });
+    return;
+  }
+
+  if (state === 'COMMANDE_ZONE') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    if (ANNULER.includes(normaliserTexte(text))) {
+      await sendWhatsAppText(phone, 'Commande annulée.');
+      await envoyerMenuBoutique(phone, boutique);
+      return;
+    }
+    const zoneMatch = interactiveId.match(/^zone_(.+)$/);
+    if (!zoneMatch) {
+      await sendWhatsAppText(phone, 'Choisissez une zone dans la liste ci-dessus.');
+      return;
+    }
+    const { rows: [zone] } = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE id=$1 AND boutique_id=$2', [zoneMatch[1], boutique.id]);
+    if (!zone) {
+      await sendWhatsAppText(phone, '⚠️ Zone invalide, réessayez.');
+      return;
+    }
+    await envoyerRecapCommande(phone, boutique, {
+      ...context.commande,
+      zone_livraison_id: zone.id,
+      zone_nom: zone.nom,
+      frais_livraison: Number(zone.prix),
+    });
+    return;
+  }
+
+  if (state === 'COMMANDE_PAIEMENT') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    const PAIEMENTS = { pay_wave: 'wave', pay_om: 'orange_money', pay_cash: 'cash', pay_virement: 'virement' };
+    const methode = PAIEMENTS[interactiveId];
+    if (!methode) {
+      await sendWhatsAppText(phone, 'Choisissez un mode de paiement dans les boutons ci-dessus.');
+      return;
+    }
+    await envoyerRecapFinal(phone, boutique, { ...context.commande, methode_paiement: methode });
+    return;
+  }
+
+  if (state === 'COMMANDE_CONFIRMATION') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    if (interactiveId === 'cmd_annuler' || ANNULER.includes(normaliserTexte(text))) {
+      await sendWhatsAppText(phone, 'Commande annulée.');
+      await envoyerMenuBoutique(phone, boutique);
+      return;
+    }
+    if (interactiveId !== 'cmd_confirmer') {
+      await sendWhatsAppText(phone, 'Cliquez sur ✅ Confirmer ou ✏️ Annuler ci-dessus.');
+      return;
+    }
+    const c = context.commande;
+    try {
+      const { commande } = await creerCommandeBoutique({
+        boutiqueId: boutique.id,
+        produitId: c.produit_id,
+        quantite: c.quantite,
+        clientNom: c.client_nom,
+        clientTelephone: c.client_telephone,
+        clientAdresse: c.client_adresse,
+        source: 'whatsapp',
+        methodePaiement: c.methode_paiement,
+        zoneLivraisonId: c.zone_livraison_id || null,
+      });
+      await sendWhatsAppText(
+        phone,
+        `✅ *Commande ${commande.reference} envoyée !*\n\nLe vendeur *${boutique.nom}* va vous contacter pour finaliser le paiement et la livraison.`
+      );
+    } catch (err) {
+      await sendWhatsAppText(phone, `😕 Impossible de créer la commande : ${err.message}. Réessayez ou tapez *menu*.`);
+    }
+    await envoyerMenuBoutique(phone, boutique);
     return;
   }
 
