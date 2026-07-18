@@ -162,17 +162,14 @@ function parseTelephoneFB(texte) {
 // (spécifique à un post dans un groupe donné) ne peut pas détecter ces doublons inter-groupes.
 // Le numéro de téléphone extrait est en revanche stable d'une republication à l'autre :
 // on ignore l'insertion si ce numéro a déjà une annonce Facebook des 7 derniers jours (fenêtre
-// courte pour ne pas bloquer un vendeur qui republie légitimement un article différent plus
-// tard). Ne s'applique qu'aux numéros réellement extraits, pas au repli "Voir sur Facebook".
+// courte pour ne pas bloquer un vendeur qui republie légitimement un article différent plus tard).
 async function upsertAnnonceClassifiee(a) {
-  if (a.contact_tel !== 'Voir sur Facebook') {
-    const { rows } = await pool.query(`
-      SELECT 1 FROM annonces_classifiees
-      WHERE contact_tel = $1 AND source LIKE 'facebook-%' AND created_at > NOW() - INTERVAL '7 days'
-      LIMIT 1
-    `, [a.contact_tel]);
-    if (rows.length > 0) return { doublon: true };
-  }
+  const { rows } = await pool.query(`
+    SELECT 1 FROM annonces_classifiees
+    WHERE contact_tel = $1 AND source LIKE 'facebook-%' AND created_at > NOW() - INTERVAL '7 days'
+    LIMIT 1
+  `, [a.contact_tel]);
+  if (rows.length > 0) return { doublon: true };
 
   await pool.query(`
     INSERT INTO annonces_classifiees
@@ -393,10 +390,16 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
           if (titreLigne && (DATE_FRAGMENT.test(titreLigne) || titreLigne.length < 8)) {
             titreLigne = lignes.slice(0, -1).reverse().find(l => !DATE_FRAGMENT.test(l) && l.length >= 8);
           }
-          const titre = titreLigne?.slice(0, 250) || 'Annonce';
           const prix   = parsePrixFB(post.texte);
           const ville  = parseVilleFB(post.texte);
           const tel    = parseTelephoneFB(post.texte);
+          // Sans numéro extrait, l'annonce n'est pas exploitable pour un acheteur (le repli
+          // "Voir sur Facebook" laissait passer trop de faux positifs — bruit d'obfuscation
+          // Facebook non filtré, posts tronqués sans coordonnées réelles) : on l'ignore plutôt
+          // que de l'insérer avec un contact non fonctionnel.
+          if (!tel) { stats.ignores++; continue; }
+
+          const titre = titreLigne?.slice(0, 250) || 'Annonce';
 
           const ref_externe = post.refExterneId ? `fb-${groupe.id}-${post.refExterneId}` : null;
 
@@ -406,7 +409,7 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
             description: post.texte.slice(0, 2000),
             prix,
             ville,
-            contact_tel: tel || 'Voir sur Facebook',
+            contact_tel: tel,
             photos:      post.imgs,
             source:      `facebook-${groupe.id}`,
             ref_externe,
