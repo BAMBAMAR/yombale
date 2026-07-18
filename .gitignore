@@ -17,6 +17,9 @@ backend/.fb-session.json
 backend/.fb-scraper-state.json
 backend/.fb-scraper-resume.txt
 
+# Modèle OCR tesseract.js (téléchargé automatiquement au premier run, ~1.2 Mo)
+*.traineddata
+
 # Dumps SQL (données sensibles)
 *.sql
 
