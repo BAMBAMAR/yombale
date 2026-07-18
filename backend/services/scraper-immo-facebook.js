@@ -16,6 +16,10 @@ let playwright;
 try { playwright = require('playwright'); }
 catch { playwright = null; }
 
+let Tesseract;
+try { Tesseract = require('tesseract.js'); }
+catch { Tesseract = null; }
+
 const fs   = require('fs');
 const path = require('path');
 const { pool } = require('../models/db');
@@ -160,6 +164,41 @@ function parseTelephoneFB(texte) {
   if (!m) return null;
   const digits = m[1].replace(/[\s.-]/g, '');
   return digits.length === 9 ? digits : null;
+}
+
+// Beaucoup d'annonces Facebook (bannières colorées type "Babacar Immobilier", "El Hadji Seck")
+// incrustent le numéro DANS l'image plutôt que dans le texte du post — invisible pour
+// parseTelephoneFB. Repli OCR (tesseract.js), utilisé uniquement quand le texte n'a livré
+// aucun numéro (coûteux : ~1-3s par image), sur les 5 premières photos du post au plus,
+// arrêt dès qu'un numéro valide est trouvé. Un seul worker Tesseract est créé et réutilisé
+// pour tout le run plutôt qu'un par image (l'initialisation du worker est le coût dominant).
+let ocrWorker = null;
+async function obtenirOcrWorker() {
+  if (!Tesseract) return null;
+  if (!ocrWorker) ocrWorker = await Tesseract.createWorker('fra');
+  return ocrWorker;
+}
+
+// Retourne le texte OCR de la première image du post (les bannières colorées portent tout
+// leur contenu — titre, prix, tel — sur une seule image ; les photos suivantes d'un même
+// post sont généralement des vues complémentaires, pas du texte additionnel utile).
+async function ocrPremiereImage(imgs) {
+  const worker = await obtenirOcrWorker();
+  if (!worker || imgs.length === 0) return '';
+  try {
+    const { data: { text } } = await worker.recognize(imgs[0]);
+    return text || '';
+  } catch (e) {
+    console.warn('[FB-SCRAPER] OCR échoué sur une image :', e.message);
+    return '';
+  }
+}
+
+// Un post dont le texte DOM ne contient presque aucun mot utile (après nettoyage du bruit
+// Facebook) est probablement une bannière colorée où titre/prix/tel sont incrustés dans
+// l'image — le texte seul ne permettrait jamais de passer les filtres catégorie/signal-vente.
+function texteEstPauvre(texte) {
+  return texte.split(/\s+/).filter(Boolean).length < 6;
 }
 
 // Un même post est souvent republié tel quel dans plusieurs groupes Facebook — ref_externe
@@ -381,27 +420,43 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
         for (const post of posts) {
           stats.scrapes++;
           if (estFilDeCommentaires(post.texte)) { stats.ignores++; continue; }
-          if (!estAnnoncePotentielle(post.texte)) { stats.ignores++; continue; }
-          const categorie_slug = detecterCategorie(post.texte);
-          if (!categorie_slug) { stats.ignores++; continue; }
 
-          // Le dernier segment "·" est en général le corps de l'annonce, mais peut parfois
-          // être un fragment résiduel (date de republication type "12 juil") sur les posts
-          // partagés depuis un autre groupe — on retombe alors sur l'avant-dernier segment utile.
-          const DATE_FRAGMENT = /^\d{1,2}\s+(janv|févr|mars|avr|mai|juin|juil|août|sept|oct|nov|déc)/i;
-          const lignes = post.texte.split('·').map(l => l.trim()).filter(Boolean);
-          let titreLigne = lignes[lignes.length - 1];
-          if (titreLigne && (DATE_FRAGMENT.test(titreLigne) || titreLigne.length < 8)) {
-            titreLigne = lignes.slice(0, -1).reverse().find(l => !DATE_FRAGMENT.test(l) && l.length >= 8);
+          // Bannière colorée : titre/prix/tel incrustés dans l'image, texte DOM quasi vide
+          // (juste le bruit "Facebook" répété résiduel) — sans l'OCR ici, ces posts échoueraient
+          // systématiquement estAnnoncePotentielle/detecterCategorie faute de mots à y trouver.
+          // Fusionné avec le texte DOM (jamais remplacé) : garde les infos déjà présentes en
+          // texte (ex: légende ajoutée en commentaire du post) en plus de celles de l'image.
+          let texte = post.texte;
+          if (texteEstPauvre(texte) && post.imgs.length > 0) {
+            const texteOcr = await ocrPremiereImage(post.imgs);
+            if (texteOcr) texte = `${texte} ${texteOcr}`.trim();
           }
-          const prix   = parsePrixFB(post.texte);
-          const ville  = parseVilleFB(post.texte);
-          const tel    = parseTelephoneFB(post.texte);
+
+          const categorie_slug = detecterCategorie(texte);
+          if (!categorie_slug) { stats.ignores++; continue; }
+          const tel = parseTelephoneFB(texte);
+          // Un numéro de téléphone réel + une catégorie détectée sont déjà le signal le plus
+          // fort qu'il s'agit d'une vraie annonce — le style local ("45 mille x 3", "prend un
+          // homme") omet souvent tout mot de SIGNAUX_VENTE (pas de "prix"/"vends"/"disponible"
+          // explicite), donc ce filtre ne s'applique qu'en repli si aucun numéro n'est trouvé.
+          if (!tel && !estAnnoncePotentielle(texte)) { stats.ignores++; continue; }
           // Sans numéro extrait, l'annonce n'est pas exploitable pour un acheteur (le repli
           // "Voir sur Facebook" laissait passer trop de faux positifs — bruit d'obfuscation
           // Facebook non filtré, posts tronqués sans coordonnées réelles) : on l'ignore plutôt
           // que de l'insérer avec un contact non fonctionnel.
           if (!tel) { stats.ignores++; continue; }
+
+          // Le dernier segment "·" est en général le corps de l'annonce, mais peut parfois
+          // être un fragment résiduel (date de republication type "12 juil") sur les posts
+          // partagés depuis un autre groupe — on retombe alors sur l'avant-dernier segment utile.
+          const DATE_FRAGMENT = /^\d{1,2}\s+(janv|févr|mars|avr|mai|juin|juil|août|sept|oct|nov|déc)/i;
+          const lignes = texte.split('·').map(l => l.trim()).filter(Boolean);
+          let titreLigne = lignes[lignes.length - 1];
+          if (titreLigne && (DATE_FRAGMENT.test(titreLigne) || titreLigne.length < 8)) {
+            titreLigne = lignes.slice(0, -1).reverse().find(l => !DATE_FRAGMENT.test(l) && l.length >= 8);
+          }
+          const prix  = parsePrixFB(texte);
+          const ville = parseVilleFB(texte);
 
           const titre = titreLigne?.slice(0, 250) || 'Annonce';
 
@@ -410,7 +465,7 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
           const annonce = {
             categorie_slug,
             titre,
-            description: post.texte.slice(0, 2000),
+            description: texte.slice(0, 2000),
             prix,
             ville,
             contact_tel: tel,
@@ -439,6 +494,7 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
     }
   } finally {
     await browser.close();
+    if (ocrWorker) { await ocrWorker.terminate(); ocrWorker = null; }
     scrapingLock.relacher();
   }
 
