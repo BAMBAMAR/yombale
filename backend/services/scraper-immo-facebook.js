@@ -301,6 +301,23 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
         // Identifiant stable du post : Facebook n'expose plus d'ID /posts/N dans ce rendu ; on
         // récupère plutôt `set=pcb.<id>` depuis un lien photo (même id pour toutes les photos
         // d'un même post).
+        // Détecte une session invalidée côté serveur Facebook : les cookies ne sont pas
+        // expirés par date mais Facebook sert quand même la vue "déconnecté" sur cette même
+        // URL de groupe (formulaire de connexion visible, pas de redirection vers /login) —
+        // le contrôle plus haut sur page.url() ne capte donc pas ce cas. Sans cette détection,
+        // [role="feed"] est simplement absent et le scraper termine silencieusement avec
+        // scrapes:0/erreurs:0 sur tous les groupes, indiscernable d'un groupe réellement vide.
+        const sessionInvalidee = await page.evaluate(() => {
+          return !document.querySelector('[role="feed"]')
+              && !!document.querySelector('input[name="pass"], [data-testid="royal_pass"]');
+        });
+        if (sessionInvalidee) {
+          // Inutile de continuer sur les groupes suivants : la session est invalidée pour
+          // toute la durée du run, chaque groupe échouerait de la même façon.
+          stats.erreurs.push(`${groupe.label}: Session Facebook invalidée par le serveur (mur de connexion détecté) — relancez : node backend/scripts/fb-login-setup.js`);
+          break;
+        }
+
         const posts = await page.evaluate(() => {
           const feedRoot = document.querySelector('[role="feed"]');
           if (!feedRoot) return [];
