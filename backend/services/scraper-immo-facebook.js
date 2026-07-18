@@ -150,11 +150,15 @@ function parseVilleFB(texte) {
   return 'Dakar';
 }
 
-// Numéro sénégalais : 9 chiffres commençant par 7 (mobile), avec ou sans +221/00221, espaces/points/tirets tolérés
+// Numéro sénégalais : 9 chiffres commençant par 7 (mobile), avec ou sans +221/00221, espaces/points/tirets
+// tolérés N'IMPORTE OÙ entre les chiffres — pas seulement entre les groupes de fin. Le
+// groupement le plus courant sur Facebook est "XX XXX XX XX" (77 617 37 13, 78 332 22 99),
+// avec un espace dès après le 2ᵉ chiffre — un séparateur figé uniquement après le 3ᵉ chiffre
+// (comme "770 12 34 56") ratait donc la majorité des numéros réels.
 function parseTelephoneFB(texte) {
-  const m = texte.match(/(?:\+?221|00221)?[\s.-]*(7[05-8]\d(?:[\s.-]?\d{2}){3})/);
+  const m = texte.match(/(?:\+?221|00221)?[\s.-]*(7[\s.-]?[05-8][\s.-]?\d(?:[\s.-]?\d){6})/);
   if (!m) return null;
-  const digits = ('7' + m[1].slice(1)).replace(/[\s.-]/g, '');
+  const digits = m[1].replace(/[\s.-]/g, '');
   return digits.length === 9 ? digits : null;
 }
 
