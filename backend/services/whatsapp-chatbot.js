@@ -418,8 +418,8 @@ async function handleIncoming(msg) {
   const text = msg.text?.body?.trim() || '';
   const interactiveId = msg.interactive?.list_reply?.id || msg.interactive?.button_reply?.id || '';
 
-  // ── Lien direct partagé par un marchand : "boutique_{slug}" ────────────────
-  const matchBoutique = text.match(/^boutique_(.+)$/i);
+  // ── Lien direct partagé par un marchand : "boutique_{slug}" (texte ou bouton) ─
+  const matchBoutique = (text.match(/^boutique_(.+)$/i)) || (interactiveId.match(/^boutique_(.+)$/i));
   if (matchBoutique) {
     const slug = matchBoutique[1].trim();
     const r = await pool.query(
@@ -798,6 +798,9 @@ async function handleSearchQuery(phone, query, excludeIds = []) {
     ).catch(async () => {
       await sendWhatsAppText(phone, `• *${p.titre}* — ${prixFmt(p.prix)}\n📍 *${p.boutique_nom}*\n👉 ${SITE}/boutiques/${p.boutique_slug}/produits/${p.id}`);
     });
+    if (p.boutique_slug) {
+      await sendWhatsAppButton(phone, `Envie de voir tout le catalogue de ${p.boutique_nom} ?`, `boutique_${p.boutique_slug}`, '🏪 Voir la boutique').catch(() => {});
+    }
   }
 
   // Texte pour les produits du comparateur (pas dans le catalogue Meta)
