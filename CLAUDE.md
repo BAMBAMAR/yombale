@@ -139,6 +139,30 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## État du projet (18 juillet 2026, suite — scraper Facebook réparé en profondeur, OCR ajouté)
+
+Déclencheur : le scraper Facebook (`backend/scripts/scraper-facebook-local.js` + `backend/services/scraper-immo-facebook.js`) ne remontait plus aucune annonce depuis le 17 juillet (`scrapes: 0, erreurs: 0` sur tous les groupes, silencieusement). Investigation en direct (session réelle contre Facebook, pas de suppositions) ayant révélé plusieurs problèmes empilés, corrigés un par un au fil de retours d'usage réels sur les annonces manquées. 8 commits sur `main` (`7dfbced..0f275d9`), poussés directement (pas de spec/plan formels — série de correctifs ciblés en debug interactif).
+
+**Cause racine initiale** : la session Facebook sauvegardée (`backend/.fb-session.json`) avait été invalidée côté serveur par Facebook (cookies non expirés par date, mais Facebook sert quand même la vue déconnectée sur la même URL de groupe — pas de redirection vers `/login`, donc le contrôle existant sur `page.url()` ne le détectait pas). Reconnectée manuellement via `node backend/scripts/fb-login-setup.js` (avec le bon compte, membre des 16 groupes — une première tentative de reconnexion avec le mauvais compte a été détectée et corrigée). **Détection ajoutée** : si `[role="feed"]` est absent ET qu'un formulaire de mot de passe est visible sur la page de groupe, le run s'arrête immédiatement avec une erreur explicite au lieu de continuer silencieusement sur tous les groupes restants.
+
+**Corrections en cascade, chacune découverte en creusant pourquoi de vraies annonces visibles sur Facebook n'étaient toujours pas captées après la première réparation** :
+- **Bruit vidéo/reel non filtré** : minuteur de lecteur (`0:00 / 1:44`), bouton « Voir plus » apparaissant ailleurs qu'en toute fin (contrairement à « En voir plus »), hashtags de promotion (`#viralfacebookreels...`), bouton « Envoyer un message » (+ compteur de réactions isolé qui suit) — tous retirés du texte extrait.
+- **Regex téléphone structurellement incomplète** : `parseTelephoneFB` exigeait un séparateur figé après le 3ᵉ chiffre (format `770 12 34 56`), mais le groupement le plus courant sur Facebook sénégalais est `XX XXX XX XX` (espace dès le 2ᵉ chiffre, ex. `78 332 22 99`) — jamais reconnu jusque-là. Corrigé en tolérant un séparateur optionnel entre chacun des 9 chiffres.
+- **Annonces sans numéro exploitable** : le repli `contact_tel: 'Voir sur Facebook'` laissait passer du pur bruit d'obfuscation Facebook (posts où le texte n'est que des tokens 1-2 caractères) sous forme d'annonces creuses. Retiré — un post sans numéro réellement extrait est maintenant ignoré (`stats.ignores++`), plus jamais inséré.
+- **Numéro incrusté dans l'image** (bannières colorées type « Babacar Immobilier Niane », « El Hadji Seck ») : invisible pour `parseTelephoneFB` qui ne lit que `innerText`. Ajout d'un repli OCR (**`tesseract.js`**, nouvelle dependency à la racine — jamais utilisée côté serveur, ce scraper ne tourne qu'en local, aucun impact RAM/build sur Render) : si le texte DOM d'un post est pauvre (< 6 mots utiles après nettoyage) et qu'il a des images, la première image est passée à l'OCR et son texte fusionné avec le texte DOM avant tous les filtres. Un seul worker Tesseract réutilisé pour tout le run (coût d'init dominant). Filtres réordonnés : téléphone + catégorie réellement détectés valident déjà qu'il s'agit d'une vraie annonce — le filtre `estAnnoncePotentielle` (liste de mots-clés type « vends »/« disponible ») ne s'applique plus qu'en repli si aucun numéro n'est trouvé, car le style d'annonce local (« 45 mille x 3 », « prend un homme ») omet souvent tout mot de cette liste.
+- **Posts tronqués par « Voir plus »** : le numéro de téléphone se trouve très souvent juste après la coupure (ex. « …Niveau disponible : 5ème étage Voir plus » → « …Prix: 400 000HT Contactez-nous au 77 697 14 73 »), texte qui n'existe pas dans le DOM tant qu'on ne clique pas dessus — aucun nettoyage regex ne peut le récupérer. Ajout d'un clic Playwright réel (pas `page.evaluate` + `.click()` DOM brut — Facebook attache ses handlers React aux événements de pointeur réels) sur chaque bouton « Voir plus » du feed avant l'extraction, boucle bornée à 20 clics par groupe.
+
+**Vérifié en conditions réelles à chaque étape** (jamais de suppositions) : session reconnectée testée contre une vraie page de groupe, chaque regex testée contre les exemples exacts fournis par l'utilisateur, OCR et clic « Voir plus » testés contre de vrais posts du groupe immo `252740871421764` — le post « Saidou Niang » (« APPAREMMENT F3… ») précédemment perdu (numéro caché derrière « Voir plus ») est maintenant correctement retenu avec son numéro extrait après dépliage.
+
+**Fichiers modifiés** : uniquement `backend/services/scraper-immo-facebook.js` (toute la logique) + `package.json`/`package-lock.json` (ajout `tesseract.js`) + `.gitignore` (ignore `*.traineddata`, modèle OCR téléchargé au runtime, ~1.2 Mo, pas à committer).
+
+**Dette / non couvert** :
+- Annonces déjà en base avec `contact_tel = 'Voir sur Facebook'` (insérées par les runs avant ce chantier) non nettoyées rétroactivement — restent telles quelles.
+- L'OCR n'est tenté que sur la **première** image d'un post à texte pauvre (les photos suivantes sont supposées être des vues complémentaires sans texte additionnel) — un post à bannière sur sa 2ᵉ+ photo uniquement resterait manqué.
+- Le filtre `estAnnoncePotentielle` reste inchangé en tant que tel (liste de mots-clés), simplement contourné quand un numéro est déjà trouvé — un post sans numéro ET sans mot-clé de cette liste reste ignoré, cas jugé acceptable (pas assez de signal pour une insertion fiable).
+
+---
+
 ## État du projet (18 juillet 2026, suite — traitement du panier natif WhatsApp/Meta Commerce)
 
 Spec `docs/superpowers/specs/2026-07-18-panier-meta-whatsapp-design.md`, plan en 6 tâches `docs/superpowers/plans/2026-07-18-panier-meta-whatsapp.md`, exécuté sur la branche worktree `worktree-panier-meta-whatsapp` (5 commits, `7da3967..f6e6713`), sur `main`, poussé.
