@@ -487,10 +487,15 @@ async function handleIncoming(msg) {
   // Le texte libre "boutique_{slug}" n'est intercepté qu'en IDLE/MENU (seuls états où
   // ce lien de partage a un sens légitime) — sinon un client déjà dans une recherche
   // (BOUTIQUE_SEARCH_QUERY, BOUTIQUE_MENU, COMMANDE_*...) qui tape ce texte par hasard
-  // serait détourné à tort. Un clic sur bouton (interactiveId) reste toujours un choix
-  // explicite, donc actif depuis n'importe quel état.
+  // serait détourné à tort. Un clic sur bouton (interactiveId) reste actif depuis
+  // n'importe quel état, SAUF les ids internes du chatbot qui commencent aussi par
+  // "boutique_" (menu boutique : boutique_recherche/categorie/contact/quitter ;
+  // sélection dans une liste : boutique_choisie_{id}) — sinon ces boutons sont
+  // interceptés à tort par ce regex générique et renvoient "boutique introuvable".
   const matchBoutiqueText = (state === 'IDLE' || state === 'MENU') ? text.match(/^boutique_(.+)$/i) : null;
-  const matchBoutique = matchBoutiqueText || interactiveId.match(/^boutique_(.+)$/i);
+  const estIdInterne = /^boutique_(recherche|categorie|contact|quitter|choisie_)/.test(interactiveId);
+  const matchBoutique = matchBoutiqueText ||
+    (!estIdInterne ? interactiveId.match(/^boutique_(.+)$/i) : null);
   if (matchBoutique) {
     const slug = matchBoutique[1].trim();
     const r = await pool.query(
