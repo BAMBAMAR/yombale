@@ -5,37 +5,56 @@ interface Props {
   lien: string
   message: string
   lienVisuel: string
+  onPartage?: () => void
 }
 
-export default function BoutonPartager({ lien, message, lienVisuel }: Props) {
+export default function BoutonPartager({ lien, message, lienVisuel, onPartage }: Props) {
   const [ouvert, setOuvert] = useState(false)
   const [copie, setCopie] = useState(false)
+
+  const urlWhatsApp = `https://wa.me/?text=${encodeURIComponent(message)}`
+
+  function partagerWhatsApp() {
+    window.open(urlWhatsApp, '_blank', 'noopener,noreferrer')
+    onPartage?.()
+  }
 
   function copierLien() {
     navigator.clipboard.writeText(lien).then(() => {
       setCopie(true)
       setTimeout(() => setCopie(false), 2000)
+      onPartage?.()
     })
+    setOuvert(false)
   }
 
-  const urlWhatsApp = `https://wa.me/?text=${encodeURIComponent(message)}`
-
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
+    <div style={{ position: 'relative', display: 'inline-flex', gap: 4 }}>
       <button
-        onClick={() => setOuvert(o => !o)}
+        onClick={partagerWhatsApp}
         style={{
-          padding: '8px 16px', background: '#fff', color: '#374151',
-          border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          padding: '8px 16px', background: '#25D366', color: '#fff',
+          border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          display: 'inline-flex', alignItems: 'center', gap: 6,
         }}
       >
-        📤 Partager
+        💬 Partager
+      </button>
+      <button
+        onClick={() => setOuvert(o => !o)}
+        aria-label="Plus d'options de partage"
+        style={{
+          padding: '8px 10px', background: '#fff', color: '#374151',
+          border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, cursor: 'pointer',
+        }}
+      >
+        ⋯
       </button>
       {ouvert && (
         <div style={{
-          position: 'absolute', top: '110%', left: 0, zIndex: 10,
+          position: 'absolute', top: '110%', right: 0, zIndex: 10,
           background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.1)', padding: 8, minWidth: 220, maxWidth: 'calc(100vw - 24px)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.1)', padding: 8, minWidth: 200, maxWidth: 'calc(100vw - 24px)',
           display: 'flex', flexDirection: 'column', gap: 4,
         }}>
           <button
@@ -45,17 +64,10 @@ export default function BoutonPartager({ lien, message, lienVisuel }: Props) {
             {copie ? '✓ Copié' : '📋 Copier le lien'}
           </button>
           <a
-            href={urlWhatsApp}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ padding: '8px 12px', textDecoration: 'none', color: '#111827', fontSize: 13, fontWeight: 600, borderRadius: 6 }}
-          >
-            💬 Partager sur WhatsApp
-          </a>
-          <a
             href={lienVisuel}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => setOuvert(false)}
             style={{ padding: '8px 12px', textDecoration: 'none', color: '#111827', fontSize: 13, fontWeight: 600, borderRadius: 6 }}
           >
             🖼 Télécharger le visuel
