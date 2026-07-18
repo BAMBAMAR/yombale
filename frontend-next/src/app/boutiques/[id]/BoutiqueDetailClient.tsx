@@ -120,7 +120,6 @@ export default function BoutiqueDetailClient({
     nom: string
     telephone: string | null
     whatsapp: string | null
-    slug: string | null
     facebook: string | null
     instagram: string | null
     site_web: string | null
