@@ -110,6 +110,16 @@ export async function deleteProduit(boutiqueId: string, produitId: string): Prom
   }
 }
 
+export async function marquerProduitPartage(boutiqueId: string, produitId: string): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/produits/${produitId}/partage`, { method: 'PATCH' })
+    if (!res.ok) return { error: 'Impossible de marquer le produit comme partagé' }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
 // ── Comptabilité : zones de livraison + ventes ──
 
 export async function listZones(boutiqueId: string) {
