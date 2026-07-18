@@ -124,6 +124,34 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## État du projet (18 juillet 2026, suite — traitement du panier natif WhatsApp/Meta Commerce)
+
+Spec `docs/superpowers/specs/2026-07-18-panier-meta-whatsapp-design.md`, plan en 6 tâches `docs/superpowers/plans/2026-07-18-panier-meta-whatsapp.md`, exécuté sur la branche worktree `worktree-panier-meta-whatsapp` (5 commits, `7da3967..f6e6713`), sur `main`, poussé.
+
+**Livré** :
+- `creerCommandeBoutique()` (`backend/routes/comptabilite.js`) n'envoie plus de notification WhatsApp elle-même — extraite dans `notifierVendeurCommande()`, exportée, appelée par chaque appelant. Comportement de la route web `POST /:boutiqueId/commandes` inchangé (même message, notification immédiate).
+- Colonne additive `commandes_boutique.groupe_commande UUID` (nullable) + index partiel, pour lier les lignes d'un même panier multi-articles.
+- `context.commande` du chatbot WhatsApp généralisé : passe d'un produit unique implicite à un tableau `items[]` (`{ produit_id, nom_produit, prix, quantite, stock_quantite }`), pour le flux « Commander » mono-produit existant **et** le nouveau panier Meta — mêmes clés dans les deux chemins, `COMMANDE_QUANTITE`/`envoyerRecapFinal`/`COMMANDE_CONFIRMATION` fonctionnent identiquement quelle que soit l'origine.
+- Détection `msg.type === 'order'` en tête de `handleIncoming` (`whatsapp-chatbot.js`) — un client qui utilise le bouton panier natif WhatsApp depuis une fiche produit Meta Commerce déclenche `traiterPanierMeta()` : résolution des `retailer_id` (`nopalou-produit-{id}`) en produits réels (prix toujours relu en base, jamais celui envoyé par Meta), articles introuvables écartés silencieusement (panier partiellement invalide continue, panier entièrement invalide → message clair), puis démarrage direct de la collecte de coordonnées (saute l'étape quantité, déjà connue).
+- Notification vendeur groupée (`notifierVendeurPanierGroupe`) pour un panier à plusieurs articles — un seul message WhatsApp listant toutes les lignes, `groupe_commande` partagé par toutes les commandes créées. Panier à 1 article → notification simple identique au flux mono-produit existant (`groupe_commande` reste `NULL`).
+- `/boutique` → onglet Commandes (`Commandes.tsx`) : `regrouperCommandes()` regroupe les lignes partageant un `groupe_commande` en carte dépliable `CommandeGroupeCard` (badge « 🛒 Panier · N articles », total agrégé, statut mixte si les lignes divergent) ; les commandes sans groupe (tout l'historique existant, mono-produit web classique) continuent d'utiliser `CommandeCard` telle quelle, aucune régression visuelle.
+
+**Vérifications faites** :
+- `node --check` propre sur les 3 fichiers backend touchés (`whatsapp-chatbot.js`, `comptabilite.js`, `migrate-inline.js`) et `npx tsc --noEmit` propre côté Next.js (`Commandes.tsx`).
+- **Migration réellement appliquée en base de production** — piège découvert en le faisant : `npm run migrate` exécute en fait `backend/migrate.js`, un script **obsolète et distinct** de `migrate-inline.js` (celui réellement appelé par `app.js` au démarrage du serveur), qui a sa propre copie ancienne du schéma sans la colonne `groupe_commande`. `npm run migrate` seul aurait donc donné un faux sentiment de succès sans réellement créer la colonne en prod. Migration correcte relancée directement via `require('./backend/migrate-inline')()`, colonne `commandes_boutique.groupe_commande` (type `uuid`) confirmée présente par requête directe sur `information_schema.columns`. **Si `npm run migrate` doit resservir un jour, vérifier qu'il pointe vers `migrate-inline.js` ou le retirer pour éviter ce piège.**
+- Test isolé du chemin `msg.type === 'order'` avec un `retailer_id` factice (produit inexistant) contre la base réelle : `handleIncoming()` se termine sans exception (`OK: pas de crash`), aboutit proprement au message « produits non disponibles ».
+
+**Non vérifié — nécessite un test manuel réel sur WhatsApp** (pas d'outil d'automatisation WhatsApp/navigateur dans cet environnement, cohérent avec la limitation déjà documentée ailleurs dans ce fichier) :
+- Flux « Commander » mono-produit existant (non-régression) : un seul message de notification, contenu identique à avant ce chantier, `groupe_commande` NULL en base.
+- Panier Meta réel à 1 article envoyé depuis une Product Message WhatsApp.
+- Panier Meta réel à plusieurs articles de la même boutique : `groupe_commande` partagé, notification vendeur groupée reçue, affichage `CommandeGroupeCard` visible et correct dans `/boutique`.
+- Panier mélangeant un article valide et un `retailer_id` invalide (produit supprimé) : seul l'article valide doit aboutir à une commande.
+- Non-régression de la route web classique (`CommanderModal.tsx` sur `/boutiques/{id}`) — notification vendeur immédiate, contenu inchangé.
+
+Smoke-test recommandé avant de considérer ce chantier définitivement clos : passer une vraie commande via chacun des 3 chemins (web, WhatsApp mono-produit, panier Meta multi-articles) et confirmer les 5 points ci-dessus.
+
+---
+
 ## État du projet (18 juillet 2026 — variantes visuelles + correctif débordement navbar mobile compte)
 
 Suite directe du chantier boutique du 17 juillet (voir entrée ci-dessous). Deux correctifs distincts, tous deux sur `main`, poussés.
