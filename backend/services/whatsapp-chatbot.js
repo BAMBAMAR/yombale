@@ -529,6 +529,15 @@ async function handleIncoming(msg) {
     return;
   }
 
+  // Bouton "Menu" explicite : si le client est encore dans une boutique (context.boutique
+  // présent), y retourner plutôt que de sortir vers le menu général — évite de perdre le
+  // contexte boutique sur une simple relance de "Envie de continuer ?". Sortir de la
+  // boutique reste possible via "⬅️ Changer de boutique" (bouton dédié du menu boutique).
+  if (interactiveId === 'menu' && context?.boutique) {
+    await envoyerMenuBoutique(phone, context.boutique);
+    return;
+  }
+
   // Mots-clés globaux : "menu", "aide" ou une salutation depuis n'importe quel état actif
   if (SALUTATIONS.includes(text.toLowerCase()) || interactiveId === 'menu') {
     await setSession(phone, 'MENU', {});
@@ -618,6 +627,15 @@ async function handleIncoming(msg) {
       if (last.type === 'immo')    { await envoyerListeImmo(phone, shownIds); return; }
       if (last.type === 'telecom') { await envoyerListeTelecom(phone, shownIds); return; }
       await handleSearchQuery(phone, last.query, shownIds);
+      return;
+    }
+    // Bouton d'un contexte boutique/commande expiré (session déjà repassée en MENU
+    // général entre-temps, ex: après un clic sur "Menu") — l'utilisateur clique un
+    // bouton resté affiché sur son téléphone (🔍 Rechercher, 🛒 Commander, etc.) qui
+    // n'a plus de sens ici. Sans cette garde, ces ids tombent dans le fallback
+    // "recherche globale" ci-dessous avec un texte vide, ce qui casse la recherche.
+    if (/^(boutique_|bcat_|zone_|commander_|pay_|cmd_)/.test(interactiveId)) {
+      await sendWhatsAppText(phone, '⏱️ Cette action a expiré. Tapez *menu* pour recommencer.');
       return;
     }
     // Texte libre reçu en état MENU → question FAQ, sinon traiter comme recherche
@@ -711,7 +729,9 @@ async function handleIncoming(msg) {
       await setSession(phone, 'BOUTIQUE_MENU', { boutique });
       return;
     }
-    if (interactiveId === 'boutique_quitter' || interactiveId === 'menu') {
+    // "menu" n'atteint jamais ce point : intercepté plus haut par la garde globale
+    // qui ramène au menu boutique tant que context.boutique existe (voir handleIncoming).
+    if (interactiveId === 'boutique_quitter') {
       await setSession(phone, 'MENU', {});
       await sendMenu(phone);
       return;
