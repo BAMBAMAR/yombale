@@ -350,6 +350,10 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
             // Hashtags de reels ("#diallovaisselldakar #viralfacebookreels...") — bruit de
             // promotion vidéo, jamais une info produit utile.
             texte = texte.replace(/#\S+/g, ' ');
+            // "Envoyer un message" : bouton de contact Facebook Marketplace, toujours en toute
+            // fin de post, parfois suivi d'un compteur de réactions/vues isolé — tout ce qui
+            // suit ce bouton n'est jamais du contenu de l'annonce.
+            texte = texte.split(/Envoyer un message/)[0];
             texte = texte.replace(/(?:\b[a-zA-Z0-9]{1,2}\b[\s]+){6,}/g, ' ');
             texte = texte.replace(/\s+/g, ' ').trim();
             if (!texte) continue;
