@@ -124,6 +124,29 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## État du projet (18 juillet 2026 — variantes visuelles + correctif débordement navbar mobile compte)
+
+Suite directe du chantier boutique du 17 juillet (voir entrée ci-dessous). Deux correctifs distincts, tous deux sur `main`, poussés.
+
+### Sélection visuelle des variantes (`419ee47`)
+Retour utilisateur : le formulaire texte libre livré la veille (« nom de l'option » + « valeur, Entrée pour ajouter ») ne correspondait pas à la demande — il fallait une sélection **visuelle**, avec des **types de variante prédéfinis** (pas de saisie de nom) et des **couleurs cliquables** (pastilles, pas de texte) pour rester facile à utiliser pour un petit commerçant. Refonte complète de la section « Variantes » dans `ProduitForm` (`BoutiqueClient.tsx`) :
+- 6 types prédéfinis (`TYPES_VARIANTE`) : 🎨 Couleur, 📏 Taille (vêtement), 👟 Pointure (chaussure), 💾 Stockage/RAM, ⚙️ Capacité/Puissance, ➕ Autre (personnalisé) — le marchand clique sur un type au lieu de taper un nom. Un seul groupe par type prédéfini (retiré de la liste de choix une fois ajouté), sauf « Autre » qui reste répétable.
+- **Couleur** : 16 pastilles rondes (palette fixe `COULEURS_PALETTE`, nom + hex), cliquables, nom affiché en dessous — aucune saisie texte.
+- Autres types prédéfinis : boutons avec valeurs suggérées standards (ex. XS/S/M/L/XL/XXL, 36-46, 4 Go→1 To…), cliquables (toggle sélection).
+- **Autre (personnalisé)** : reste en saisie libre texte + Entrée (nouveau composant `ValeursLibres`), pour les cas non couverts par les types prédéfinis (matière, etc.).
+- `Variante` a gagné un champ optionnel `typeId` (forme JSON stockée en base inchangée pour le reste — `{ nom, valeurs, typeId? }`). Rétrocompatible : les variantes créées par l'ancien formulaire texte libre (sans `typeId`) s'affichent en mode « Autre » à l'édition, aucune perte de données.
+
+### Correctif — débordement horizontal navbar mobile sur tout `/compte/*` (`880040d`)
+Retour utilisateur avec captures : sur mobile connecté, toutes les pages du compte (pas seulement `/boutique`) affichaient un décalage vers la droite avec un vide à gauche et une scrollbar horizontale. **Cause racine, sans rapport avec le chantier boutique** : `NavbarActions.tsx` (bloc « nom du compte + Déconnexion », visible uniquement connecté, monté dans `layout.tsx` juste avant le hamburger mobile) n'avait aucune règle responsive, et surtout son `style={{ display: 'flex' }}` **inline** empêchait toute règle CSS externe `display: none` de s'appliquer (même spécificité, l'inline gagne toujours en cascade). Résultat : sous ~1040px, `.navbar-actions` (nom + Déconnexion + bouton Publier + hamburger) dépassait le viewport de ~136px sur un écran 375px.
+
+**Méthode de vérification** : aucun outil de capture navigateur disponible dans l'environnement (limite déjà documentée) — Playwright installé en devDependency (`frontend-next/package.json`, ne touche jamais au build/runtime Render car en `devDependencies`, jamais installé en production), compte de test créé via `/inscription`, mesure `document.documentElement.scrollWidth` vs `clientWidth` en viewport 375px avant/après correctif (511 vs 375 → 375 vs 375), capture d'écran confirmant visuellement la disparition du débordement.
+
+**Correctif** : classe `navbar-actions-compte` ajoutée sur le wrapper (au lieu du style inline `display`), masquée sous 1040px dans `globals.css` (même media query que `.navbar-link`/`.navbar-inscription` pour les visiteurs anonymes — le nom/Déconnexion est de toute façon déjà dupliqué dans le tiroir `MobileNav`). Playwright conservé en devDependency pour faciliter ce type de vérification visuelle mobile à l'avenir.
+
+**Piège à retenir** : un style inline `display` sur un élément ne peut JAMAIS être masqué par une media query CSS externe de même spécificité — si un composant a besoin d'être caché/affiché de façon responsive, le `display` doit venir d'une classe CSS, jamais d'un style inline, même si le reste des styles (gap, align-items…) peut rester inline.
+
+---
+
 ## État du projet (17 juillet 2026, suite — boutique : responsive mobile, multi-photos et variantes produit)
 
 Déclencheur : retour utilisateur avec captures d'écran mobile montrant la zone « Ma boutique » écrasée sur téléphone, plus deux limitations signalées par comparaison avec AliExpress (un seul champ photo, aucune variante). Spec `docs/superpowers/specs/2026-07-17-boutique-mobile-photos-variantes-design.md`, plan en 8 tâches `docs/superpowers/plans/2026-07-17-boutique-mobile-photos-variantes.md`, exécuté via subagent-driven-development (revue par tâche + revue finale de branche opus), mergé sur `main` (`aeaf235..1d49f40`), poussé.
