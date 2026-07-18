@@ -679,6 +679,8 @@ module.exports = async function migrateInline() {
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS methode_paiement VARCHAR(20) DEFAULT 'wave'`);
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS zone_livraison_id UUID REFERENCES zones_livraison(id) ON DELETE SET NULL`);
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS frais_livraison NUMERIC(12,2) DEFAULT 0`);
+    await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS groupe_commande UUID`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_commandes_groupe ON commandes_boutique(groupe_commande) WHERE groupe_commande IS NOT NULL`);
     console.log('[MIGRATE] ✅ Table commandes_boutique OK');
   } catch (e) { console.warn('[MIGRATE] commandes_boutique:', e.message); }
 

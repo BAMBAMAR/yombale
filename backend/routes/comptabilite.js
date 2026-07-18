@@ -534,11 +534,11 @@ async function creerCommandeBoutique({
   const { rows: [commande] } = await pool.query(
     `INSERT INTO commandes_boutique
        (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
-        client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+        client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison, groupe_commande)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
     [ref, boutiqueId, produitId || null, nomProduit, quantite, prixUnitaire, montantTotal,
      clientNom, clientTelephone, clientAdresse || null, note || null, source,
-     methodePaiement, zoneLivraisonId || null, fraisLivraison]
+     methodePaiement, zoneLivraisonId || null, fraisLivraison, groupeCommande || null]
   );
 
   return { commande, boutique };
