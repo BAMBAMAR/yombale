@@ -484,7 +484,13 @@ async function handleIncoming(msg) {
   const interactiveId = msg.interactive?.list_reply?.id || msg.interactive?.button_reply?.id || '';
 
   // ── Lien direct partagé par un marchand : "boutique_{slug}" (texte ou bouton) ─
-  const matchBoutique = (text.match(/^boutique_(.+)$/i)) || (interactiveId.match(/^boutique_(.+)$/i));
+  // Le texte libre "boutique_{slug}" n'est intercepté qu'en IDLE/MENU (seuls états où
+  // ce lien de partage a un sens légitime) — sinon un client déjà dans une recherche
+  // (BOUTIQUE_SEARCH_QUERY, BOUTIQUE_MENU, COMMANDE_*...) qui tape ce texte par hasard
+  // serait détourné à tort. Un clic sur bouton (interactiveId) reste toujours un choix
+  // explicite, donc actif depuis n'importe quel état.
+  const matchBoutiqueText = (state === 'IDLE' || state === 'MENU') ? text.match(/^boutique_(.+)$/i) : null;
+  const matchBoutique = matchBoutiqueText || interactiveId.match(/^boutique_(.+)$/i);
   if (matchBoutique) {
     const slug = matchBoutique[1].trim();
     const r = await pool.query(
