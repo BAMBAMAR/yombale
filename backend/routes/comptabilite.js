@@ -462,13 +462,30 @@ function genRefCommande() {
   return `C-${Date.now().toString(36).toUpperCase()}`;
 }
 
+// Construit et envoie le message WhatsApp de notification au vendeur.
+// Extrait de creerCommandeBoutique pour permettre à un appelant (ex: panier
+// multi-articles) de notifier une seule fois après plusieurs insertions.
+async function notifierVendeurCommande(boutique, {
+  reference, nomProduit, quantite, montantTotal, fraisLivraison,
+  methodePaiement, clientNom, clientTelephone, clientAdresse, note,
+}) {
+  const vendeurTel = boutique.whatsapp || boutique.telephone;
+  if (!vendeurTel) return;
+  const { sendWhatsAppText } = require('../services/whatsapp');
+  const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement' };
+  const msg = `🛒 *Nouvelle commande — ${boutique.nom}*\n\nRéf : *${reference}*\nProduit : ${nomProduit} × ${quantite}${montantTotal > 0 ? `\nMontant : *${new Intl.NumberFormat('fr-FR').format(montantTotal)} FCFA*` : ''}${fraisLivraison > 0 ? `\nLivraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA` : ''}\n💳 Paiement souhaité : ${methodeLabel[methodePaiement] || methodePaiement}\n\n👤 Client : ${clientNom}\n📞 ${clientTelephone}${clientAdresse ? `\n📍 ${clientAdresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\n⚡ Répondez vite pour confirmer !`;
+  sendWhatsAppText(vendeurTel, msg).catch(() => {});
+}
+
 // Logique de création de commande, partagée entre la route HTTP publique
 // (POST /:boutiqueId/commandes, source='web') et le chatbot WhatsApp (source='whatsapp').
 // Lève une erreur avec .status (404/400) et .message (message utilisateur) en cas d'échec.
+// N'envoie PAS de notification elle-même — l'appelant appelle notifierVendeurCommande()
+// séparément (permet de grouper la notification pour un panier multi-articles).
 async function creerCommandeBoutique({
   boutiqueId, produitId, quantite = 1, clientNom, clientTelephone, clientAdresse,
   note, source = 'web', methodePaiement = 'wave', zoneLivraisonId,
-  nomProduitManuel, prixUnitaireManuel,
+  nomProduitManuel, prixUnitaireManuel, groupeCommande,
 }) {
   const { rows: [boutique] } = await pool.query(
     'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE id=$1 AND actif=true',
@@ -517,22 +534,14 @@ async function creerCommandeBoutique({
   const { rows: [commande] } = await pool.query(
     `INSERT INTO commandes_boutique
        (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
-        client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+        client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison, groupe_commande)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
     [ref, boutiqueId, produitId || null, nomProduit, quantite, prixUnitaire, montantTotal,
      clientNom, clientTelephone, clientAdresse || null, note || null, source,
-     methodePaiement, zoneLivraisonId || null, fraisLivraison]
+     methodePaiement, zoneLivraisonId || null, fraisLivraison, groupeCommande || null]
   );
 
-  const vendeurTel = boutique.whatsapp || boutique.telephone;
-  if (vendeurTel) {
-    const { sendWhatsAppText } = require('../services/whatsapp');
-    const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement' };
-    const msg = `🛒 *Nouvelle commande — ${boutique.nom}*\n\nRéf : *${ref}*\nProduit : ${nomProduit} × ${quantite}${montantTotal > 0 ? `\nMontant : *${new Intl.NumberFormat('fr-FR').format(montantTotal)} FCFA*` : ''}${fraisLivraison > 0 ? `\nLivraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA` : ''}\n💳 Paiement souhaité : ${methodeLabel[methodePaiement] || methodePaiement}\n\n👤 Client : ${clientNom}\n📞 ${clientTelephone}${clientAdresse ? `\n📍 ${clientAdresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\n⚡ Répondez vite pour confirmer !`;
-    sendWhatsAppText(vendeurTel, msg).catch(() => {});
-  }
-
-  return { commande };
+  return { commande, boutique };
 }
 
 // POST /api/comptabilite/:boutiqueId/commandes — public, client passe commande
@@ -550,7 +559,7 @@ router.post(
     try {
       const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id } = req.body;
 
-      const { commande } = await creerCommandeBoutique({
+      const { commande, boutique } = await creerCommandeBoutique({
         boutiqueId: req.params.boutiqueId,
         produitId: produit_id,
         quantite,
@@ -563,6 +572,19 @@ router.post(
         zoneLivraisonId: zone_livraison_id,
         nomProduitManuel: req.body.nom_produit,
         prixUnitaireManuel: req.body.prix_unitaire,
+      });
+
+      await notifierVendeurCommande(boutique, {
+        reference: commande.reference,
+        nomProduit: commande.nom_produit,
+        quantite: commande.quantite,
+        montantTotal: Number(commande.montant_total),
+        fraisLivraison: Number(commande.frais_livraison),
+        methodePaiement: commande.methode_paiement,
+        clientNom: commande.client_nom,
+        clientTelephone: commande.client_telephone,
+        clientAdresse: commande.client_adresse,
+        note: commande.note,
       });
 
       res.status(201).json({ commande, message: 'Commande envoyée avec succès' });
@@ -906,3 +928,4 @@ router.get('/:boutiqueId/zones/public', param('boutiqueId').isUUID(), async (req
 
 module.exports = router;
 module.exports.creerCommandeBoutique = creerCommandeBoutique;
+module.exports.notifierVendeurCommande = notifierVendeurCommande;

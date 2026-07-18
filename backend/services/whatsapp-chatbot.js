@@ -10,7 +10,7 @@ const {
   sendReadReceipt,
   normalisePhone,
 } = require('./whatsapp');
-const { creerCommandeBoutique } = require('../routes/comptabilite');
+const { creerCommandeBoutique, notifierVendeurCommande } = require('../routes/comptabilite');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 const prixFmt = (p) => p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' : 'N/C';
@@ -420,7 +420,9 @@ async function demarrerCommande(phone, boutique, produitId) {
   await sendWhatsAppText(phone, `🛒 *Commande — ${produit.nom}*\n\nCombien en voulez-vous ? (tapez un nombre, ex: 1)`);
   await setSession(phone, 'COMMANDE_QUANTITE', {
     boutique,
-    commande: { produit_id: produit.id, nom_produit: produit.nom, prix: Number(produit.prix) || 0, stock_quantite: produit.stock_quantite },
+    commande: {
+      items: [{ produit_id: produit.id, nom_produit: produit.nom, prix: Number(produit.prix) || 0, quantite: null, stock_quantite: produit.stock_quantite }],
+    },
   });
 }
 
@@ -444,13 +446,12 @@ async function envoyerRecapCommande(phone, boutique, commande) {
 
 async function envoyerRecapFinal(phone, boutique, commande) {
   const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement' };
-  const total = (commande.prix * commande.quantite) + (commande.frais_livraison || 0);
-  const lignes = [
-    `📋 *Récapitulatif de votre commande*`,
-    ``,
-    `🛍️ ${commande.nom_produit} × ${commande.quantite}`,
-    `💰 ${prixFmt(commande.prix * commande.quantite)}`,
-  ];
+  const sousTotal = commande.items.reduce((s, it) => s + (it.prix * it.quantite), 0);
+  const total = sousTotal + (commande.frais_livraison || 0);
+  const lignes = [`📋 *Récapitulatif de votre commande*`, ``];
+  for (const it of commande.items) {
+    lignes.push(`🛍️ ${it.nom_produit} × ${it.quantite} — ${prixFmt(it.prix * it.quantite)}`);
+  }
   if (commande.frais_livraison) lignes.push(`🚚 Livraison (${commande.zone_nom}) : ${prixFmt(commande.frais_livraison)}`);
   lignes.push(`*Total : ${prixFmt(total)}*`, ``);
   lignes.push(`👤 ${commande.client_nom}`, `📞 ${commande.client_telephone}`, `📍 ${commande.client_adresse}`);
@@ -469,12 +470,96 @@ async function envoyerRecapFinal(phone, boutique, commande) {
   await setSession(phone, 'COMMANDE_CONFIRMATION', { boutique, commande });
 }
 
+// ── Panier natif WhatsApp/Meta Commerce ─────────────────────────────────────
+// order.product_items = [{ product_retailer_id, quantity, item_price, currency }]
+// Le prix envoyé par Meta n'est jamais utilisé — toujours relu depuis boutique_produits
+// pour rester fiable (le panier peut dater de plusieurs minutes/heures).
+async function traiterPanierMeta(phone, order) {
+  const items = Array.isArray(order.product_items) ? order.product_items : [];
+  const produitIds = items
+    .map(it => {
+      const m = String(it.product_retailer_id || '').match(/^nopalou-produit-(.+)$/);
+      return m ? { id: m[1], quantite: parseInt(it.quantity, 10) || 1 } : null;
+    })
+    .filter(Boolean);
+
+  if (!produitIds.length) {
+    await sendWhatsAppText(phone, '😕 Ce panier ne contient aucun produit reconnu.');
+    await setSession(phone, 'MENU', {});
+    await sendMenu(phone);
+    return;
+  }
+
+  const r = await pool.query(
+    `SELECT id, nom, prix, stock_quantite, boutique_id FROM boutique_produits WHERE id = ANY($1::uuid[])`,
+    [produitIds.map(p => p.id)]
+  );
+  const produitsById = new Map(r.rows.map(p => [p.id, p]));
+
+  const itemsValides = [];
+  for (const { id, quantite } of produitIds) {
+    const p = produitsById.get(id);
+    if (p) itemsValides.push({ produit_id: p.id, nom_produit: p.nom, prix: Number(p.prix) || 0, quantite, stock_quantite: p.stock_quantite, boutique_id: p.boutique_id });
+  }
+
+  if (!itemsValides.length) {
+    await sendWhatsAppText(phone, '😕 Ces produits ne sont plus disponibles.');
+    await setSession(phone, 'MENU', {});
+    await sendMenu(phone);
+    return;
+  }
+
+  // Tous les articles valides d'un même panier appartiennent à la même boutique
+  // (le catalogue Meta d'un client vient d'une seule Product Message à la fois).
+  const boutiqueId = itemsValides[0].boutique_id;
+  const { rows: [boutique] } = await pool.query(
+    'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE id=$1 AND actif=true',
+    [boutiqueId]
+  );
+  if (!boutique) {
+    await sendWhatsAppText(phone, '😕 Cette boutique n\'est plus disponible.');
+    await setSession(phone, 'MENU', {});
+    await sendMenu(phone);
+    return;
+  }
+
+  const itemsBoutique = itemsValides.filter(it => it.boutique_id === boutiqueId);
+  await sendWhatsAppText(phone, `🛒 *Panier reçu (${itemsBoutique.length} article${itemsBoutique.length > 1 ? 's' : ''})*\n\nVotre nom complet ?`);
+  await setSession(phone, 'COMMANDE_NOM', {
+    boutique,
+    commande: { items: itemsBoutique.map(({ boutique_id, ...it }) => it) },
+  });
+}
+
+// Notification vendeur pour un panier groupé (plusieurs commandes liées par groupeCommande).
+async function notifierVendeurPanierGroupe(boutique, commandesCreees, groupeCommande) {
+  const vendeurTel = boutique.whatsapp || boutique.telephone;
+  if (!vendeurTel) return;
+  const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement' };
+  const premiere = commandesCreees[0];
+  const totalArticles = commandesCreees.reduce((s, c) => s + Number(c.montant_total) - Number(c.frais_livraison || 0), 0);
+  const fraisLivraison = Number(premiere.frais_livraison) || 0;
+  const total = totalArticles + fraisLivraison;
+  const lignesArticles = commandesCreees.map(c => `• ${c.nom_produit} × ${c.quantite} — ${prixFmt(Number(c.prix_unitaire) * c.quantite)}`).join('\n');
+  const msg = `🛒 *Nouvelle commande groupée — ${boutique.nom}*\n\nRéf groupe : *${groupeCommande}*\n${lignesArticles}${fraisLivraison > 0 ? `\n🚚 Livraison : ${prixFmt(fraisLivraison)}` : ''}\n💰 *Total : ${prixFmt(total)}*\n💳 Paiement souhaité : ${methodeLabel[premiere.methode_paiement] || premiere.methode_paiement}\n\n👤 Client : ${premiere.client_nom}\n📞 ${premiere.client_telephone}${premiere.client_adresse ? `\n📍 ${premiere.client_adresse}` : ''}\n\n⚡ Répondez vite pour confirmer !`;
+  sendWhatsAppText(vendeurTel, msg).catch(() => {});
+}
+
 // ── Dispatcher principal ──────────────────────────────────────────────────────
 async function handleIncoming(msg) {
   const phone = normalisePhone(msg.from);
 
   // Déduplication
   if (await isDuplicate(msg.id)) return;
+
+  // ── Panier natif WhatsApp/Meta Commerce (msg.type === 'order') ──────────────
+  // Envoyé quand un client utilise le bouton panier natif de WhatsApp depuis une
+  // Product Message. Traité en priorité absolue, quel que soit l'état de session
+  // en cours — interrompt toute conversation active, comme les mots-clés globaux.
+  if (msg.type === 'order' && msg.order) {
+    await traiterPanierMeta(phone, msg.order);
+    return;
+  }
 
   // Read receipt + indicateur de frappe pendant le traitement
   await sendReadReceipt(msg.id, true).catch(() => {});
@@ -810,13 +895,15 @@ async function handleIncoming(msg) {
       await sendWhatsAppText(phone, '⚠️ Entrez un nombre valide (ex: 1, 2, 3...).');
       return;
     }
-    const stock = context.commande?.stock_quantite;
+    const item = context.commande?.items?.[0];
+    const stock = item?.stock_quantite;
     if (stock !== null && stock !== undefined && stock < quantite) {
       await sendWhatsAppText(phone, `⚠️ Il ne reste que ${stock} en stock. Entrez une quantité inférieure ou égale.`);
       return;
     }
     await sendWhatsAppText(phone, 'Votre nom complet ?');
-    await setSession(phone, 'COMMANDE_NOM', { boutique, commande: { ...context.commande, quantite } });
+    const items = [{ ...item, quantite }];
+    await setSession(phone, 'COMMANDE_NOM', { boutique, commande: { ...context.commande, items } });
     return;
   }
 
@@ -933,24 +1020,56 @@ async function handleIncoming(msg) {
       return;
     }
     const c = context.commande;
-    try {
-      const { commande } = await creerCommandeBoutique({
-        boutiqueId: boutique.id,
-        produitId: c.produit_id,
-        quantite: c.quantite,
-        clientNom: c.client_nom,
-        clientTelephone: c.client_telephone,
-        clientAdresse: c.client_adresse,
-        source: 'whatsapp',
-        methodePaiement: c.methode_paiement,
-        zoneLivraisonId: c.zone_livraison_id || null,
-      });
-      await sendWhatsAppText(
-        phone,
-        `✅ *Commande ${commande.reference} envoyée !*\n\nLe vendeur *${boutique.nom}* va vous contacter pour finaliser le paiement et la livraison.`
-      );
-    } catch (err) {
-      await sendWhatsAppText(phone, `😕 Impossible de créer la commande : ${err.message}. Réessayez ou tapez *menu*.`);
+    const groupeCommande = c.items.length > 1 ? require('crypto').randomUUID() : null;
+    const creees = [];
+    const echecs = [];
+    let boutiqueChargee = boutique;
+    for (const item of c.items) {
+      try {
+        const { commande, boutique: b } = await creerCommandeBoutique({
+          boutiqueId: boutique.id,
+          produitId: item.produit_id,
+          quantite: item.quantite,
+          clientNom: c.client_nom,
+          clientTelephone: c.client_telephone,
+          clientAdresse: c.client_adresse,
+          source: 'whatsapp',
+          methodePaiement: c.methode_paiement,
+          zoneLivraisonId: c.zone_livraison_id || null,
+          groupeCommande,
+        });
+        creees.push(commande);
+        boutiqueChargee = b;
+      } catch (err) {
+        echecs.push({ nom: item.nom_produit, erreur: err.message });
+      }
+    }
+
+    if (creees.length > 0) {
+      if (creees.length === 1) {
+        await notifierVendeurCommande(boutiqueChargee, {
+          reference: creees[0].reference,
+          nomProduit: creees[0].nom_produit,
+          quantite: creees[0].quantite,
+          montantTotal: Number(creees[0].montant_total),
+          fraisLivraison: Number(creees[0].frais_livraison),
+          methodePaiement: creees[0].methode_paiement,
+          clientNom: creees[0].client_nom,
+          clientTelephone: creees[0].client_telephone,
+          clientAdresse: creees[0].client_adresse,
+          note: creees[0].note,
+        });
+      } else {
+        await notifierVendeurPanierGroupe(boutiqueChargee, creees, groupeCommande);
+      }
+      const refs = creees.map(c => c.reference).join(', ');
+      let msgFinal = `✅ *Commande ${refs} envoyée !*\n\nLe vendeur *${boutique.nom}* va vous contacter pour finaliser le paiement et la livraison.`;
+      if (echecs.length > 0) {
+        msgFinal += `\n\n⚠️ ${echecs.map(e => e.nom).join(', ')} n'${echecs.length > 1 ? 'ont' : 'a'} pas pu être commandé(s) : ${echecs[0].erreur}.`;
+      }
+      await sendWhatsAppText(phone, msgFinal);
+    } else {
+      await sendWhatsAppText(phone, `😕 Impossible de créer la commande : ${echecs[0]?.erreur || 'erreur inconnue'}. Réessayez ou tapez *menu*.`);
     }
     await envoyerMenuBoutique(phone, boutique);
     return;
