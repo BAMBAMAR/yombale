@@ -838,7 +838,7 @@ async function handleIncoming(msg) {
     }
     const commandeAvecAdresse = { ...context.commande, client_adresse: text.trim() };
 
-    const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC', [boutique.id]);
+    const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 10', [boutique.id]);
     if (!zones.rows.length) {
       await envoyerRecapCommande(phone, boutique, commandeAvecAdresse);
       return;
