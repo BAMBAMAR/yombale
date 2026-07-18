@@ -8,7 +8,7 @@ interface Commande {
   prix_unitaire: number; montant_total: number; frais_livraison: number
   client_nom: string; client_telephone: string; client_adresse: string | null
   note: string | null; statut: string; source: string; created_at: string
-  methode_paiement: string | null
+  methode_paiement: string | null; groupe_commande: string | null
 }
 
 const STATUTS: { key: string; label: string; color: string; bg: string }[] = [
@@ -177,6 +177,68 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
   )
 }
 
+// Regroupe les commandes partageant le même groupe_commande (panier multi-articles).
+// Les commandes sans groupe (mono-produit, web classique) restent des entrées individuelles.
+function regrouperCommandes(commandes: Commande[]): (Commande | Commande[])[] {
+  const groupes = new Map<string, Commande[]>()
+  const resultat: (Commande | Commande[])[] = []
+  for (const c of commandes) {
+    if (!c.groupe_commande) { resultat.push(c); continue }
+    if (!groupes.has(c.groupe_commande)) {
+      const groupe: Commande[] = []
+      groupes.set(c.groupe_commande, groupe)
+      resultat.push(groupe)
+    }
+    groupes.get(c.groupe_commande)!.push(c)
+  }
+  return resultat
+}
+
+function CommandeGroupeCard({ commandes, boutiqueId, onUpdate }: { commandes: Commande[]; boutiqueId: string; onUpdate: () => void }) {
+  const [open, setOpen] = useState(false)
+  const fcfa = (n: number) => n > 0 ? new Intl.NumberFormat('fr-FR').format(n) + ' FCFA' : '—'
+  const premiere = commandes[0]
+  const total = commandes.reduce((s, c) => s + Number(c.montant_total), 0)
+  const statuts = new Set(commandes.map(c => c.statut))
+  const statutAffiche = statuts.size === 1 ? premiere.statut : 'mixte'
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid #C75B00', borderRadius: 12, overflow: 'hidden' }}>
+      <div
+        onClick={() => setOpen(!open)}
+        style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', gap: 12, background: '#fff7f0' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+          <span style={{ background: '#C75B00', color: '#fff', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+            🛒 Panier · {commandes.length} articles
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {statutAffiche === 'mixte' ? 'Statuts multiples' : statutLabel(statutAffiche)}
+            </p>
+            <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>
+              {premiere.client_nom} · {premiere.client_telephone}
+              {premiere.source === 'whatsapp' && <span style={{ marginLeft: 6, background: '#dcfce7', color: '#16a34a', borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 700 }}>WhatsApp</span>}
+            </p>
+          </div>
+        </div>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <p style={{ margin: 0, fontWeight: 800, fontSize: 15, color: '#C75B00' }}>{fcfa(total)}</p>
+          <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>{fmtDateHeure(premiere.created_at)}</p>
+        </div>
+        <span style={{ color: '#9ca3af', flexShrink: 0, fontSize: 12 }}>{open ? '▲' : '▼'}</span>
+      </div>
+      {open && (
+        <div style={{ borderTop: '1px solid #f3f4f6', padding: '14px 18px', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {commandes.map(c => (
+            <CommandeCard key={c.id} commande={c} boutiqueId={boutiqueId} onUpdate={onUpdate} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const FILTRE_STATUTS = [
   { key: '', label: 'Toutes' },
   { key: 'en_attente', label: 'En attente' },
@@ -247,9 +309,11 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {commandes.map(c => (
-            <CommandeCard key={c.id} commande={c} boutiqueId={boutiqueId} onUpdate={load} />
-          ))}
+          {regrouperCommandes(commandes).map((item, i) =>
+            Array.isArray(item)
+              ? <CommandeGroupeCard key={item[0].groupe_commande ?? i} commandes={item} boutiqueId={boutiqueId} onUpdate={load} />
+              : <CommandeCard key={item.id} commande={item} boutiqueId={boutiqueId} onUpdate={load} />
+          )}
         </div>
       )}
     </div>
