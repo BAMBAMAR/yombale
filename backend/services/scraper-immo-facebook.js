@@ -338,10 +338,18 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
             // Suffixes d'interface Facebook (placeholder du champ de commentaire, jamais du
             // vrai contenu du post) — toujours en toute fin de texte, simple retrait.
             texte = texte.split(/Envoyez votre premier commentaire|Écrivez un commentaire public/)[0];
-            // "En voir plus" : bouton de troncature Facebook — le texte réel au-delà n'existe
-            // pas dans le DOM tant qu'on ne clique pas dessus, on ne peut que retirer le bouton
-            // lui-même du texte visible (le contenu reste tronqué, ce n'est pas récupérable ici).
-            texte = texte.replace(/…?\s*En voir plus\s*$/i, '');
+            // "En voir plus" / "Voir plus" : boutons de troncature Facebook — le texte réel
+            // au-delà n'existe pas dans le DOM tant qu'on ne clique pas dessus, on ne peut que
+            // retirer le bouton lui-même du texte visible (le contenu reste tronqué, ce n'est
+            // pas récupérable ici). Peut apparaître ailleurs qu'en toute fin (ex: suivi du
+            // minuteur vidéo d'un reel), donc retiré n'importe où dans le texte, pas juste en fin.
+            texte = texte.replace(/…?\s*(?:En\s+)?[Vv]oir\s+plus\b/g, ' ');
+            // Minuteur de lecteur vidéo Facebook ("0:00 / 1:44") — apparaît sur les posts de
+            // type reel/vidéo, aucune valeur pour une annonce.
+            texte = texte.replace(/\d{1,2}:\d{2}\s*\/\s*\d{1,2}:\d{2}/g, ' ');
+            // Hashtags de reels ("#diallovaisselldakar #viralfacebookreels...") — bruit de
+            // promotion vidéo, jamais une info produit utile.
+            texte = texte.replace(/#\S+/g, ' ');
             texte = texte.replace(/(?:\b[a-zA-Z0-9]{1,2}\b[\s]+){6,}/g, ' ');
             texte = texte.replace(/\s+/g, ' ').trim();
             if (!texte) continue;
