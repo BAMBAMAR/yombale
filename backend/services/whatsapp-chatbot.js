@@ -10,6 +10,7 @@ const {
   sendReadReceipt,
   normalisePhone,
 } = require('./whatsapp');
+const { creerCommandeBoutique } = require('../routes/comptabilite');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 const prixFmt = (p) => p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' : 'N/C';
@@ -118,9 +119,10 @@ async function sendMenu(phone) {
       {
         title: 'Découvrir',
         rows: [
-          { id: 'search',  title: '🔍 Rechercher',      description: 'Trouver un produit ou annonce' },
-          { id: 'immo',    title: '🏠 Annonces immo',   description: 'Maisons, appartements, terrains' },
-          { id: 'telecom', title: '📱 Offres télécom',  description: 'Mobile, internet, forfaits' },
+          { id: 'search',    title: '🔍 Rechercher',      description: 'Trouver un produit ou annonce' },
+          { id: 'boutiques', title: '🏪 Boutiques',        description: 'Découvrir les boutiques Nopalou' },
+          { id: 'immo',      title: '🏠 Annonces immo',   description: 'Maisons, appartements, terrains' },
+          { id: 'telecom',   title: '📱 Offres télécom',  description: 'Mobile, internet, forfaits' },
         ],
       },
       {
@@ -134,6 +136,39 @@ async function sendMenu(phone) {
       },
     ]
   );
+}
+
+// ── Menu d'une boutique précise (état BOUTIQUE_MENU) ───────────────────────────
+async function envoyerMenuBoutique(phone, boutique) {
+  const infos = [boutique.categorie, boutique.ville].filter(Boolean).join(' — ');
+  let entete = `🏪 *${boutique.nom}*`;
+  if (infos) entete += `\n${infos}`;
+  if (boutique.description) entete += `\n${boutique.description}`;
+  await sendWhatsAppText(phone, entete);
+
+  await sendWhatsAppInteractive(
+    phone,
+    boutique.nom,
+    'Que voulez-vous faire ?',
+    [
+      {
+        title: 'Catalogue',
+        rows: [
+          { id: 'boutique_recherche', title: '🔍 Rechercher', description: 'Chercher un produit dans cette boutique' },
+          { id: 'boutique_categorie', title: '📂 Par catégorie', description: 'Parcourir les catégories de produits' },
+        ],
+      },
+      {
+        title: 'Autre',
+        rows: [
+          { id: 'boutique_contact', title: '📞 Contacter le vendeur', description: 'Ouvrir une conversation directe' },
+          { id: 'boutique_quitter', title: '⬅️ Changer de boutique', description: 'Retour au menu principal' },
+        ],
+      },
+    ]
+  );
+
+  await setSession(phone, 'BOUTIQUE_MENU', { boutique });
 }
 
 // ── Recherche full-text ───────────────────────────────────────────────────────
@@ -248,6 +283,192 @@ async function envoyerListeTelecom(phone, excludeIds = []) {
   });
 }
 
+async function envoyerListeBoutiques(phone, secteur, excludeIds = []) {
+  const r = await pool.query(
+    `SELECT id, nom, slug, ville FROM boutiques
+     WHERE actif=true AND categorie=$1 AND id::text <> ALL($2::text[])
+     ORDER BY created_at DESC LIMIT 3`,
+    [secteur, excludeIds]
+  );
+  if (!r.rows.length) {
+    await sendWhatsAppText(
+      phone,
+      excludeIds.length
+        ? '✅ Vous avez vu toutes les boutiques de ce secteur. Tapez *menu* pour revenir.'
+        : 'Aucune boutique disponible dans ce secteur pour le moment.'
+    );
+    await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+    await setSession(phone, 'MENU', {});
+    return;
+  }
+
+  const rows = r.rows.map(b => ({
+    id: `boutique_choisie_${b.id}`,
+    title: b.nom.slice(0, 24),
+    description: b.ville || undefined,
+  }));
+  await sendWhatsAppInteractive(phone, 'Boutiques', `Boutiques du secteur *${secteur}* :`, [
+    { title: secteur, rows },
+  ]);
+
+  await attendre(400);
+  await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres boutiques, ou choisissez-en une ci-dessus :').catch(() => {});
+  await setSession(phone, 'BOUTIQUE_LISTE', {
+    secteur,
+    last: { type: 'boutique_liste', shownIds: excludeIds.concat(r.rows.map(b => String(b.id))) },
+  });
+}
+
+// ── Fiche produit complète (boutique) ───────────────────────────────────────
+// Product Message Meta native + message texte détaillé + bouton "Commander".
+async function envoyerFicheProduitBoutique(phone, produit, boutique) {
+  await sendWhatsAppProduct(
+    phone,
+    `nopalou-produit-${produit.id}`,
+    `${produit.nom} — ${prixFmt(produit.prix)}\n📍 ${boutique.nom}`
+  ).catch(async () => {
+    await sendWhatsAppText(phone, `• *${produit.nom}* — ${prixFmt(produit.prix)}\n📍 *${boutique.nom}*`);
+  });
+
+  const lignes = [`🏪 *${boutique.nom}*`];
+  if (produit.description) lignes.push(produit.description);
+
+  const variantes = Array.isArray(produit.variantes) ? produit.variantes : [];
+  for (const v of variantes) {
+    if (v?.nom && Array.isArray(v.valeurs) && v.valeurs.length) {
+      lignes.push(`*${v.nom}* : ${v.valeurs.join(', ')}`);
+    }
+  }
+
+  const carac = produit.caracteristiques && typeof produit.caracteristiques === 'object' ? produit.caracteristiques : {};
+  for (const [cle, val] of Object.entries(carac)) {
+    if (val) lignes.push(`*${cle}* : ${val}`);
+  }
+
+  if (produit.stock_quantite !== null && produit.stock_quantite !== undefined) {
+    lignes.push(produit.stock_quantite > 0 ? `✅ ${produit.stock_quantite} en stock` : '❌ Rupture de stock');
+  } else {
+    lignes.push(produit.en_stock === false ? '❌ Rupture de stock' : '✅ En stock');
+  }
+
+  await sendWhatsAppText(phone, lignes.join('\n'));
+  await sendWhatsAppButton(phone, 'Intéressé par ce produit ?', `commander_${produit.id}`, '🛒 Commander').catch(() => {});
+}
+
+// ── Recherche / navigation par catégorie dans une boutique précise ─────────────
+async function envoyerProduitsBoutique(phone, boutique, { query, categorie, excludeIds = [] }) {
+  let sql, params;
+  if (query) {
+    sql = `SELECT id, nom, description, prix, en_stock, stock_quantite, caracteristiques, variantes
+           FROM boutique_produits
+           WHERE boutique_id=$1
+             AND to_tsvector('french', nom || ' ' || COALESCE(description,'')) @@ plainto_tsquery('french', $2)
+             AND id::text <> ALL($3::text[])
+           LIMIT 3`;
+    params = [boutique.id, query, excludeIds];
+  } else {
+    sql = `SELECT id, nom, description, prix, en_stock, stock_quantite, caracteristiques, variantes
+           FROM boutique_produits
+           WHERE boutique_id=$1 AND categorie=$2
+             AND id::text <> ALL($3::text[])
+           LIMIT 3`;
+    params = [boutique.id, categorie, excludeIds];
+  }
+
+  const r = await pool.query(sql, params);
+
+  if (!r.rows.length) {
+    await sendWhatsAppText(
+      phone,
+      excludeIds.length
+        ? `✅ Vous avez vu tous les produits ${query ? `pour *"${query}"*` : `de la catégorie *${categorie}*`} dans cette boutique.`
+        : `😕 Aucun produit trouvé ${query ? `pour *"${query}"*` : `dans cette catégorie`}.`
+    );
+    await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+    await setSession(phone, 'BOUTIQUE_MENU', { boutique });
+    return;
+  }
+
+  for (const p of r.rows) {
+    await envoyerFicheProduitBoutique(phone, p, boutique);
+  }
+
+  await attendre(1200);
+  await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres produits, ou :').catch(() => {});
+  await setSession(phone, 'BOUTIQUE_MENU', {
+    boutique,
+    last: {
+      type: query ? 'boutique_search' : 'boutique_categorie',
+      query, categorie,
+      shownIds: excludeIds.concat(r.rows.map(p => String(p.id))),
+    },
+  });
+}
+
+// ── Démarrage du flux de commande ────────────────────────────────────────────
+async function demarrerCommande(phone, boutique, produitId) {
+  const r = await pool.query(
+    'SELECT id, nom, prix, stock_quantite FROM boutique_produits WHERE id=$1 AND boutique_id=$2',
+    [produitId, boutique.id]
+  );
+  const produit = r.rows[0];
+  if (!produit) {
+    await sendWhatsAppText(phone, '😕 Ce produit n\'est plus disponible.');
+    await setSession(phone, 'BOUTIQUE_MENU', { boutique });
+    return;
+  }
+  await sendWhatsAppText(phone, `🛒 *Commande — ${produit.nom}*\n\nCombien en voulez-vous ? (tapez un nombre, ex: 1)`);
+  await setSession(phone, 'COMMANDE_QUANTITE', {
+    boutique,
+    commande: { produit_id: produit.id, nom_produit: produit.nom, prix: Number(produit.prix) || 0, stock_quantite: produit.stock_quantite },
+  });
+}
+
+async function envoyerRecapCommande(phone, boutique, commande) {
+  await sendWhatsAppInteractive(
+    phone,
+    'Paiement',
+    'Quel mode de paiement souhaitez-vous utiliser ?',
+    [{
+      title: 'Paiement',
+      rows: [
+        { id: 'pay_wave', title: 'Wave' },
+        { id: 'pay_om', title: 'Orange Money' },
+        { id: 'pay_cash', title: 'Espèces à la livraison' },
+        { id: 'pay_virement', title: 'Virement' },
+      ],
+    }]
+  );
+  await setSession(phone, 'COMMANDE_PAIEMENT', { boutique, commande });
+}
+
+async function envoyerRecapFinal(phone, boutique, commande) {
+  const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement' };
+  const total = (commande.prix * commande.quantite) + (commande.frais_livraison || 0);
+  const lignes = [
+    `📋 *Récapitulatif de votre commande*`,
+    ``,
+    `🛍️ ${commande.nom_produit} × ${commande.quantite}`,
+    `💰 ${prixFmt(commande.prix * commande.quantite)}`,
+  ];
+  if (commande.frais_livraison) lignes.push(`🚚 Livraison (${commande.zone_nom}) : ${prixFmt(commande.frais_livraison)}`);
+  lignes.push(`*Total : ${prixFmt(total)}*`, ``);
+  lignes.push(`👤 ${commande.client_nom}`, `📞 ${commande.client_telephone}`, `📍 ${commande.client_adresse}`);
+  lignes.push(`💳 Paiement : ${methodeLabel[commande.methode_paiement] || commande.methode_paiement}`);
+
+  await sendWhatsAppText(phone, lignes.join('\n'));
+  await sendWhatsAppInteractive(
+    phone,
+    'Confirmation',
+    'Confirmez-vous cette commande ?',
+    [{ title: 'Action', rows: [
+      { id: 'cmd_confirmer', title: '✅ Confirmer' },
+      { id: 'cmd_annuler', title: '✏️ Annuler' },
+    ] }]
+  );
+  await setSession(phone, 'COMMANDE_CONFIRMATION', { boutique, commande });
+}
+
 // ── Dispatcher principal ──────────────────────────────────────────────────────
 async function handleIncoming(msg) {
   const phone = normalisePhone(msg.from);
@@ -261,6 +482,30 @@ async function handleIncoming(msg) {
   const { state, context } = await getSession(phone);
   const text = msg.text?.body?.trim() || '';
   const interactiveId = msg.interactive?.list_reply?.id || msg.interactive?.button_reply?.id || '';
+
+  // ── Lien direct partagé par un marchand : "boutique_{slug}" (texte ou bouton) ─
+  // Le texte libre "boutique_{slug}" n'est intercepté qu'en IDLE/MENU (seuls états où
+  // ce lien de partage a un sens légitime) — sinon un client déjà dans une recherche
+  // (BOUTIQUE_SEARCH_QUERY, BOUTIQUE_MENU, COMMANDE_*...) qui tape ce texte par hasard
+  // serait détourné à tort. Un clic sur bouton (interactiveId) reste toujours un choix
+  // explicite, donc actif depuis n'importe quel état.
+  const matchBoutiqueText = (state === 'IDLE' || state === 'MENU') ? text.match(/^boutique_(.+)$/i) : null;
+  const matchBoutique = matchBoutiqueText || interactiveId.match(/^boutique_(.+)$/i);
+  if (matchBoutique) {
+    const slug = matchBoutique[1].trim();
+    const r = await pool.query(
+      'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE slug=$1 AND actif=true',
+      [slug]
+    );
+    if (!r.rows[0]) {
+      await sendWhatsAppText(phone, '😕 Cette boutique est introuvable ou n\'est plus active.');
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    await envoyerMenuBoutique(phone, r.rows[0]);
+    return;
+  }
 
   const SALUTATIONS = ['menu', 'aide', 'help', '0', 'bonjour', 'bonsoir', 'salut', 'slt', 'hello', 'coucou'];
   const CLOTURE = ['merci', 'merci beaucoup', 'ok merci', 'c\'est bon', 'cest bon', 'au revoir', 'bye', 'a bientot', 'à bientôt', 'non merci', 'ça ira', 'ca ira', 'c\'est tout', 'cest tout'];
@@ -327,6 +572,23 @@ async function handleIncoming(msg) {
       await sendWhatsAppText(phone, '📦 Entrez votre référence de commande (ex: PAY-12345) :');
       return;
     }
+    if (action === 'boutiques') {
+      const r = await pool.query(
+        `SELECT DISTINCT categorie FROM boutiques WHERE actif=true AND categorie IS NOT NULL ORDER BY categorie LIMIT 10`
+      );
+      if (!r.rows.length) {
+        await sendWhatsAppText(phone, 'Aucune boutique disponible pour le moment.');
+        await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+        await setSession(phone, 'MENU', {});
+        return;
+      }
+      const rows = r.rows.map(row => ({ id: `secteur_${row.categorie}`, title: row.categorie.slice(0, 24) }));
+      await sendWhatsAppInteractive(phone, '🏪 Boutiques', 'Choisissez un secteur :', [
+        { title: 'Secteurs', rows },
+      ]);
+      await setSession(phone, 'BOUTIQUE_SECTEUR', {});
+      return;
+    }
     if (action === 'support') {
       await sendWhatsAppText(phone, '💬 *Support Nopalou*\n\nPour nous contacter :\n📧 contact@nopalou.com\n🌐 nopalou.com\n\nNous répondons sous 24h. Merci !');
       await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
@@ -363,6 +625,309 @@ async function handleIncoming(msg) {
     }
     await setSession(phone, 'SEARCH_QUERY', {});
     await handleSearchQuery(phone, text);
+    return;
+  }
+
+  // ── BOUTIQUE_SECTEUR → choix du secteur ─────────────────────────────────────
+  if (state === 'BOUTIQUE_SECTEUR') {
+    const secteurMatch = interactiveId.match(/^secteur_(.+)$/);
+    if (!secteurMatch) {
+      await sendWhatsAppText(phone, 'Choisissez un secteur dans la liste ci-dessus, ou tapez *menu*.');
+      return;
+    }
+    await envoyerListeBoutiques(phone, secteurMatch[1]);
+    return;
+  }
+
+  // ── BOUTIQUE_LISTE → choix d'une boutique ou pagination ─────────────────────
+  if (state === 'BOUTIQUE_LISTE') {
+    if (MOTS_PLUS.includes(normaliserTexte(text))) {
+      const shownIds = Array.isArray(context?.last?.shownIds) ? context.last.shownIds : [];
+      await envoyerListeBoutiques(phone, context.secteur, shownIds);
+      return;
+    }
+    const choixMatch = interactiveId.match(/^boutique_choisie_(.+)$/);
+    if (!choixMatch) {
+      await sendWhatsAppText(phone, 'Choisissez une boutique dans la liste ci-dessus, ou tapez *menu*.');
+      return;
+    }
+    const r = await pool.query(
+      'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE id=$1 AND actif=true',
+      [choixMatch[1]]
+    );
+    if (!r.rows[0]) {
+      await sendWhatsAppText(phone, '😕 Cette boutique n\'est plus disponible.');
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    await envoyerMenuBoutique(phone, r.rows[0]);
+    return;
+  }
+
+  // ── BOUTIQUE_MENU → actions du menu boutique ────────────────────────────────
+  if (state === 'BOUTIQUE_MENU') {
+    const boutique = context?.boutique;
+    if (!boutique) {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+
+    if (interactiveId === 'boutique_recherche') {
+      await setSession(phone, 'BOUTIQUE_SEARCH_QUERY', { boutique });
+      await sendWhatsAppText(phone, `🔍 Que recherchez-vous chez *${boutique.nom}* ?`);
+      return;
+    }
+    if (interactiveId === 'boutique_categorie') {
+      const r = await pool.query(
+        `SELECT DISTINCT categorie FROM boutique_produits WHERE boutique_id=$1 AND categorie IS NOT NULL ORDER BY categorie LIMIT 10`,
+        [boutique.id]
+      );
+      if (!r.rows.length) {
+        await sendWhatsAppText(phone, 'Cette boutique n\'a pas encore de catégories définies.');
+        await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+        await setSession(phone, 'BOUTIQUE_MENU', { boutique });
+        return;
+      }
+      const rows = r.rows.map(row => ({ id: `bcat_${row.categorie}`, title: row.categorie.slice(0, 24) }));
+      await sendWhatsAppInteractive(phone, boutique.nom, 'Choisissez une catégorie :', [{ title: 'Catégories', rows }]);
+      await setSession(phone, 'BOUTIQUE_CATEGORIE', { boutique });
+      return;
+    }
+    if (interactiveId === 'boutique_contact') {
+      const contact = boutique.whatsapp || boutique.telephone;
+      if (!contact) {
+        await sendWhatsAppText(phone, 'Cette boutique n\'a pas encore renseigné de contact direct.');
+      } else {
+        await sendWhatsAppText(phone, `📞 Contactez directement *${boutique.nom}* :\nhttps://wa.me/${normalisePhone(contact)}`);
+      }
+      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+      await setSession(phone, 'BOUTIQUE_MENU', { boutique });
+      return;
+    }
+    if (interactiveId === 'boutique_quitter' || interactiveId === 'menu') {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    const commanderMatch = interactiveId.match(/^commander_(.+)$/);
+    if (commanderMatch) {
+      await demarrerCommande(phone, boutique, commanderMatch[1]);
+      return;
+    }
+    if (MOTS_PLUS.includes(normaliserTexte(text))) {
+      const last = context?.last;
+      if (!last || !last.type) {
+        await sendWhatsAppText(phone, '🔍 Plus de quoi ? Dites-moi ce que vous cherchez, ou choisissez dans le menu.');
+        return;
+      }
+      const shownIds = Array.isArray(last.shownIds) ? last.shownIds : [];
+      if (last.type === 'boutique_search') {
+        await envoyerProduitsBoutique(phone, boutique, { query: last.query, excludeIds: shownIds });
+      } else {
+        await envoyerProduitsBoutique(phone, boutique, { categorie: last.categorie, excludeIds: shownIds });
+      }
+      return;
+    }
+    // Texte libre en BOUTIQUE_MENU = recherche directe dans cette boutique
+    await setSession(phone, 'BOUTIQUE_SEARCH_QUERY', { boutique });
+    await envoyerProduitsBoutique(phone, boutique, { query: text });
+    return;
+  }
+
+  // ── BOUTIQUE_SEARCH_QUERY → recherche dans la boutique ──────────────────────
+  if (state === 'BOUTIQUE_SEARCH_QUERY') {
+    const boutique = context?.boutique;
+    if (!boutique) {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    if (!text || text.length < 2) {
+      await sendWhatsAppText(phone, '⚠️ Entrez au moins 2 caractères.');
+      return;
+    }
+    await envoyerProduitsBoutique(phone, boutique, { query: text });
+    return;
+  }
+
+  // ── BOUTIQUE_CATEGORIE → choix d'une catégorie ───────────────────────────────
+  if (state === 'BOUTIQUE_CATEGORIE') {
+    const boutique = context?.boutique;
+    if (!boutique) {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    const catMatch = interactiveId.match(/^bcat_(.+)$/);
+    if (!catMatch) {
+      await sendWhatsAppText(phone, 'Choisissez une catégorie dans la liste ci-dessus, ou tapez *menu*.');
+      return;
+    }
+    await envoyerProduitsBoutique(phone, boutique, { categorie: catMatch[1] });
+    return;
+  }
+
+  // ── COMMANDE_* : séquence de collecte des infos de commande ────────────────
+  const ANNULER = ['annuler', 'annule', 'stop', 'abandonner'];
+
+  if (state === 'COMMANDE_QUANTITE') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    if (ANNULER.includes(normaliserTexte(text))) {
+      await sendWhatsAppText(phone, 'Commande annulée.');
+      await envoyerMenuBoutique(phone, boutique);
+      return;
+    }
+    const quantite = parseInt(text.replace(/[^\d]/g, ''), 10);
+    if (!quantite || quantite < 1) {
+      await sendWhatsAppText(phone, '⚠️ Entrez un nombre valide (ex: 1, 2, 3...).');
+      return;
+    }
+    const stock = context.commande?.stock_quantite;
+    if (stock !== null && stock !== undefined && stock < quantite) {
+      await sendWhatsAppText(phone, `⚠️ Il ne reste que ${stock} en stock. Entrez une quantité inférieure ou égale.`);
+      return;
+    }
+    await sendWhatsAppText(phone, 'Votre nom complet ?');
+    await setSession(phone, 'COMMANDE_NOM', { boutique, commande: { ...context.commande, quantite } });
+    return;
+  }
+
+  if (state === 'COMMANDE_NOM') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    if (ANNULER.includes(normaliserTexte(text))) {
+      await sendWhatsAppText(phone, 'Commande annulée.');
+      await envoyerMenuBoutique(phone, boutique);
+      return;
+    }
+    if (!text || text.trim().length < 2) {
+      await sendWhatsAppText(phone, '⚠️ Entrez votre nom complet.');
+      return;
+    }
+    await sendWhatsAppText(phone, `Quel numéro de téléphone pour vous joindre ? (ex: ${phone})`);
+    await setSession(phone, 'COMMANDE_TELEPHONE', { boutique, commande: { ...context.commande, client_nom: text.trim() } });
+    return;
+  }
+
+  if (state === 'COMMANDE_TELEPHONE') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    if (ANNULER.includes(normaliserTexte(text))) {
+      await sendWhatsAppText(phone, 'Commande annulée.');
+      await envoyerMenuBoutique(phone, boutique);
+      return;
+    }
+    const chiffres = text.replace(/[^\d]/g, '');
+    if (chiffres.length < 6) {
+      await sendWhatsAppText(phone, '⚠️ Entrez un numéro de téléphone valide.');
+      return;
+    }
+    await sendWhatsAppText(phone, 'Votre adresse de livraison ? (quartier, ville...)');
+    await setSession(phone, 'COMMANDE_ADRESSE', { boutique, commande: { ...context.commande, client_telephone: chiffres } });
+    return;
+  }
+
+  if (state === 'COMMANDE_ADRESSE') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    if (ANNULER.includes(normaliserTexte(text))) {
+      await sendWhatsAppText(phone, 'Commande annulée.');
+      await envoyerMenuBoutique(phone, boutique);
+      return;
+    }
+    if (!text || text.trim().length < 3) {
+      await sendWhatsAppText(phone, '⚠️ Entrez une adresse de livraison.');
+      return;
+    }
+    const commandeAvecAdresse = { ...context.commande, client_adresse: text.trim() };
+
+    const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 10', [boutique.id]);
+    if (!zones.rows.length) {
+      await envoyerRecapCommande(phone, boutique, commandeAvecAdresse);
+      return;
+    }
+    const rows = zones.rows.map(z => ({ id: `zone_${z.id}`, title: z.nom.slice(0, 24), description: prixFmt(Number(z.prix)) }));
+    await sendWhatsAppInteractive(phone, 'Livraison', 'Choisissez votre zone de livraison :', [{ title: 'Zones', rows }]);
+    await setSession(phone, 'COMMANDE_ZONE', { boutique, commande: commandeAvecAdresse });
+    return;
+  }
+
+  if (state === 'COMMANDE_ZONE') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    if (ANNULER.includes(normaliserTexte(text))) {
+      await sendWhatsAppText(phone, 'Commande annulée.');
+      await envoyerMenuBoutique(phone, boutique);
+      return;
+    }
+    const zoneMatch = interactiveId.match(/^zone_(.+)$/);
+    if (!zoneMatch) {
+      await sendWhatsAppText(phone, 'Choisissez une zone dans la liste ci-dessus.');
+      return;
+    }
+    const { rows: [zone] } = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE id=$1 AND boutique_id=$2', [zoneMatch[1], boutique.id]);
+    if (!zone) {
+      await sendWhatsAppText(phone, '⚠️ Zone invalide, réessayez.');
+      return;
+    }
+    await envoyerRecapCommande(phone, boutique, {
+      ...context.commande,
+      zone_livraison_id: zone.id,
+      zone_nom: zone.nom,
+      frais_livraison: Number(zone.prix),
+    });
+    return;
+  }
+
+  if (state === 'COMMANDE_PAIEMENT') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    const PAIEMENTS = { pay_wave: 'wave', pay_om: 'orange_money', pay_cash: 'cash', pay_virement: 'virement' };
+    const methode = PAIEMENTS[interactiveId];
+    if (!methode) {
+      await sendWhatsAppText(phone, 'Choisissez un mode de paiement dans les boutons ci-dessus.');
+      return;
+    }
+    await envoyerRecapFinal(phone, boutique, { ...context.commande, methode_paiement: methode });
+    return;
+  }
+
+  if (state === 'COMMANDE_CONFIRMATION') {
+    const boutique = context?.boutique;
+    if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+    if (interactiveId === 'cmd_annuler' || ANNULER.includes(normaliserTexte(text))) {
+      await sendWhatsAppText(phone, 'Commande annulée.');
+      await envoyerMenuBoutique(phone, boutique);
+      return;
+    }
+    if (interactiveId !== 'cmd_confirmer') {
+      await sendWhatsAppText(phone, 'Cliquez sur ✅ Confirmer ou ✏️ Annuler ci-dessus.');
+      return;
+    }
+    const c = context.commande;
+    try {
+      const { commande } = await creerCommandeBoutique({
+        boutiqueId: boutique.id,
+        produitId: c.produit_id,
+        quantite: c.quantite,
+        clientNom: c.client_nom,
+        clientTelephone: c.client_telephone,
+        clientAdresse: c.client_adresse,
+        source: 'whatsapp',
+        methodePaiement: c.methode_paiement,
+        zoneLivraisonId: c.zone_livraison_id || null,
+      });
+      await sendWhatsAppText(
+        phone,
+        `✅ *Commande ${commande.reference} envoyée !*\n\nLe vendeur *${boutique.nom}* va vous contacter pour finaliser le paiement et la livraison.`
+      );
+    } catch (err) {
+      await sendWhatsAppText(phone, `😕 Impossible de créer la commande : ${err.message}. Réessayez ou tapez *menu*.`);
+    }
+    await envoyerMenuBoutique(phone, boutique);
     return;
   }
 
@@ -466,6 +1031,9 @@ async function handleSearchQuery(phone, query, excludeIds = []) {
     ).catch(async () => {
       await sendWhatsAppText(phone, `• *${p.titre}* — ${prixFmt(p.prix)}\n📍 *${p.boutique_nom}*\n👉 ${SITE}/boutiques/${p.boutique_slug}/produits/${p.id}`);
     });
+    if (p.boutique_slug) {
+      await sendWhatsAppButton(phone, `Envie de voir tout le catalogue de ${p.boutique_nom} ?`, `boutique_${p.boutique_slug}`, '🏪 Voir la boutique').catch(() => {});
+    }
   }
 
   // Texte pour les produits du comparateur (pas dans le catalogue Meta)

@@ -114,6 +114,7 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 | `BACKEND_URL` | Server-side URL for Server Actions and `apiFetch` |
 | `NEXT_PUBLIC_BACKEND_URL` | Client-side URL (exposed to browser) |
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL for `metadataBase` in `layout.tsx` |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Numéro WhatsApp Business Nopalou (format `221XXXXXXXXX`, sans `+`) — utilisé pour générer les liens `wa.me` de partage boutique |
 
 Generate secrets: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
 

@@ -8,7 +8,7 @@ import Comptabilite from './Comptabilite'
 import Commandes from './Commandes'
 import AnalyticsClient from './analytics/AnalyticsClient'
 import { initierWaveBoutiqueSponsoring } from '@/app/actions/paiement'
-import { fcfa } from '@/lib/format'
+import { fcfa, lienBoutiqueWhatsapp } from '@/lib/format'
 import type { ActionState } from '@/lib/backend-fetch'
 import ModalPaiementManuel from '@/components/ModalPaiementManuel'
 import BoutonPartager from '@/components/BoutonPartager'
@@ -870,6 +870,8 @@ function MarketingBoutique({ boutique }: { boutique: Boutique }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
   const lienBoutique = `${siteUrl}/boutiques/${boutique.slug || boutique.id}`
   const messageBoutique = `Découvrez ${boutique.nom} sur Nopalou !\n\n${lienBoutique}`
+  const lienAssistant = lienBoutiqueWhatsapp(boutique.slug || boutique.id)
+  const messageAssistant = `Découvrez ${boutique.nom} sur Nopalou et commandez directement sur WhatsApp !\n\n${lienAssistant}`
 
   return (
     <div>
@@ -879,6 +881,7 @@ function MarketingBoutique({ boutique }: { boutique: Boutique }) {
       <div style={{
         display: 'flex', alignItems: 'center', gap: 16,
         background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '20px',
+        marginBottom: 16,
       }}>
         <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {boutique.logo_url
@@ -894,6 +897,26 @@ function MarketingBoutique({ boutique }: { boutique: Boutique }) {
         <BoutonPartager
           lien={lienBoutique}
           message={messageBoutique}
+          lienVisuel={`/assets/boutique/${boutique.id}/story`}
+        />
+      </div>
+
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 16,
+        background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '20px',
+      }}>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ fontSize: 28 }}>🤖</span>
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>Assistant WhatsApp de la boutique</p>
+          <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
+            Ce lien ouvre directement votre catalogue dans l&apos;assistant Nopalou — vos clients peuvent chercher, voir vos produits et commander sans quitter WhatsApp.
+          </p>
+        </div>
+        <BoutonPartager
+          lien={lienAssistant}
+          message={messageAssistant}
           lienVisuel={`/assets/boutique/${boutique.id}/story`}
         />
       </div>
