@@ -121,6 +121,16 @@ const TYPES_VARIANTE: TypeVariante[] = [
   { id: 'autre',    label: '➕ Autre (personnalisé)',   nomVariante: '',          suggestions: [],                   repetable: true },
 ]
 
+export const CHAMP_VERS_TYPE_VARIANTE: Record<'taille' | 'couleur' | 'stockage', TypeVarianteId> = {
+  taille: 'taille',
+  couleur: 'couleur',
+  stockage: 'stockage',
+}
+
+export function champVisibleSelonVariante(champ: 'taille' | 'couleur' | 'stockage', typesVarianteActifs: Set<TypeVarianteId>): boolean {
+  return !typesVarianteActifs.has(CHAMP_VERS_TYPE_VARIANTE[champ])
+}
+
 function CaracField({ label, name, value, onChange, placeholder, required: req = false }: {
   label: string; name: string; value: string; onChange: (k: string, v: string) => void
   placeholder?: string; required?: boolean
@@ -151,90 +161,174 @@ function CaracSelect({ label, name, value, onChange, options, required: req = fa
   )
 }
 
-function CaracteristiquesFields({ slug, values, onChange }: {
+export function CaracChips({ label, name, value, onChange, suggestions, allowAutre = true, required: req = false }: {
+  label: string; name: string; value: string; onChange: (k: string, v: string) => void
+  suggestions: string[]; allowAutre?: boolean; required?: boolean
+}) {
+  const estSuggestion = suggestions.includes(value)
+  const [modeAutre, setModeAutre] = useState(!!value && !estSuggestion)
+
+  function choisir(val: string) {
+    setModeAutre(false)
+    onChange(name, value === val ? '' : val)
+  }
+
+  function activerAutre() {
+    setModeAutre(true)
+    onChange(name, '')
+  }
+
+  return (
+    <div>
+      <label style={labelStyle}>{label}{req && <span style={{ color: '#dc2626' }}> *</span>}</label>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: modeAutre ? 8 : 0 }}>
+        {suggestions.map(val => {
+          const selectionnee = !modeAutre && value === val
+          return (
+            <button
+              key={val} type="button" onClick={() => choisir(val)}
+              style={{
+                padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                border: selectionnee ? '2px solid #C75B00' : '1px solid #d1d5db',
+                background: selectionnee ? '#fff7f0' : '#fff',
+                color: selectionnee ? '#C75B00' : '#374151',
+              }}
+            >
+              {val}
+            </button>
+          )
+        })}
+        {allowAutre && (
+          <button
+            type="button" onClick={activerAutre}
+            style={{
+              padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              border: modeAutre ? '2px solid #C75B00' : '1px dashed #d1d5db',
+              background: modeAutre ? '#fff7f0' : '#fff',
+              color: modeAutre ? '#C75B00' : '#374151',
+            }}
+          >
+            Autre
+          </button>
+        )}
+      </div>
+      {allowAutre && modeAutre && (
+        <input
+          type="text" value={value} onChange={e => onChange(name, e.target.value)}
+          style={inputStyle} placeholder="Autre valeur…"
+        />
+      )}
+    </div>
+  )
+}
+
+const MARQUES_MODE = ['Zara', 'Nike', 'Adidas', 'H&M', 'Shein']
+const MARQUES_SMARTPHONE = ['Samsung', 'Apple', 'Xiaomi', 'Tecno', 'Infinix']
+const MARQUES_INFORMATIQUE = ['Dell', 'Lenovo', 'HP', 'Asus', 'Apple']
+const MARQUES_TV_ELECTRO = ['Samsung', 'LG', 'Hisense', 'TCL']
+const MARQUES_AUTO = ['Toyota', 'Yamaha', 'Hyundai', 'Kia']
+const MARQUES_MAISON = ['IKEA', 'Broyhill']
+const MATIERES_MODE = ['Coton', 'Lin', 'Cuir', 'Synthétique', 'Denim']
+const MATIERES_MAISON = ['Bois', 'Métal', 'Tissu', 'Verre', 'Plastique']
+const TYPES_ARTICLE_MAISON = ['Canapé', 'Lit', 'Table', 'Armoire', 'Chaise']
+const TYPES_ARTICLE_TV_ELECTRO = ['TV', 'Frigo', 'Clim', 'Machine à laver', 'Congélateur']
+const CARBURANTS = ['Essence', 'Diesel', 'Hybride', 'Électrique']
+const CONDITIONNEMENTS = ['Sachet', 'Boîte', 'Vrac', 'Bouteille']
+const TYPES_BEAUTE = ['Crème', 'Parfum', 'Shampoing', 'Savon', 'Maquillage']
+
+function CaracteristiquesFields({ slug, values, onChange, typesVarianteActifs }: {
   slug: string; values: Record<string, string>; onChange: (k: string, v: string) => void
+  typesVarianteActifs: Set<TypeVarianteId>
 }) {
   const f = (k: string) => values[k] ?? ''
 
   if (slug === 'smartphones') return (
     <div className="bq-form-grid-2">
-      <CaracField    label="Marque"   name="marque"   value={f('marque')}   onChange={onChange} placeholder="Samsung, Apple…" required />
-      <CaracField    label="Modèle"   name="modele"   value={f('modele')}   onChange={onChange} placeholder="iPhone 14 Pro…" />
-      <CaracField    label="Stockage" name="stockage" value={f('stockage')} onChange={onChange} placeholder="128 Go, 256 Go…" />
-      <CaracField    label="RAM"      name="ram"      value={f('ram')}      onChange={onChange} placeholder="8 Go…" />
-      <CaracField    label="Couleur"  name="couleur"  value={f('couleur')}  onChange={onChange} placeholder="Noir, Bleu…" />
-      <CaracSelect   label="État"     name="etat"     value={f('etat')}     onChange={onChange} options={ETATS_PRODUIT} required />
+      <CaracChips  label="Marque"   name="marque"   value={f('marque')}   onChange={onChange} suggestions={MARQUES_SMARTPHONE} />
+      <CaracField  label="Modèle"   name="modele"   value={f('modele')}   onChange={onChange} placeholder="iPhone 14 Pro…" />
+      {champVisibleSelonVariante('stockage', typesVarianteActifs) && (
+        <CaracChips label="Stockage" name="stockage" value={f('stockage')} onChange={onChange} suggestions={STOCKAGES_RAM} />
+      )}
+      <CaracField  label="RAM"      name="ram"      value={f('ram')}      onChange={onChange} placeholder="8 Go…" />
+      {champVisibleSelonVariante('couleur', typesVarianteActifs) && (
+        <CaracChips label="Couleur" name="couleur" value={f('couleur')} onChange={onChange} suggestions={COULEURS_PALETTE.map(c => c.nom)} />
+      )}
+      <CaracSelect label="État"     name="etat"     value={f('etat')}     onChange={onChange} options={ETATS_PRODUIT} />
     </div>
   )
 
   if (slug === 'informatique') return (
     <div className="bq-form-grid-2">
-      <CaracField  label="Marque"     name="marque"     value={f('marque')}     onChange={onChange} placeholder="Dell, Lenovo, HP…" required />
+      <CaracChips  label="Marque"     name="marque"     value={f('marque')}     onChange={onChange} suggestions={MARQUES_INFORMATIQUE} />
       <CaracField  label="Modèle"     name="modele"     value={f('modele')}     onChange={onChange} placeholder="XPS 15…" />
       <CaracField  label="Processeur" name="processeur" value={f('processeur')} onChange={onChange} placeholder="Intel i7, AMD Ryzen…" />
       <CaracField  label="RAM"        name="ram"        value={f('ram')}        onChange={onChange} placeholder="16 Go…" />
-      <CaracField  label="Stockage"   name="stockage"   value={f('stockage')}   onChange={onChange} placeholder="512 Go SSD…" />
-      <CaracSelect label="État"       name="etat"       value={f('etat')}       onChange={onChange} options={ETATS_PRODUIT} required />
+      {champVisibleSelonVariante('stockage', typesVarianteActifs) && (
+        <CaracChips label="Stockage" name="stockage" value={f('stockage')} onChange={onChange} suggestions={STOCKAGES_RAM} />
+      )}
+      <CaracSelect label="État"       name="etat"       value={f('etat')}       onChange={onChange} options={ETATS_PRODUIT} />
     </div>
   )
 
   if (slug === 'tv-electro') return (
     <div className="bq-form-grid-2">
-      <CaracField  label="Marque"       name="marque"       value={f('marque')}       onChange={onChange} placeholder="Samsung, LG…" required />
+      <CaracChips  label="Marque"       name="marque"       value={f('marque')}       onChange={onChange} suggestions={MARQUES_TV_ELECTRO} />
       <CaracField  label="Modèle"       name="modele"       value={f('modele')}       onChange={onChange} placeholder="55QN90B…" />
-      <CaracField  label="Type"         name="type_article" value={f('type_article')} onChange={onChange} placeholder="TV, Frigo, Clim…" />
+      <CaracChips  label="Type"         name="type_article" value={f('type_article')} onChange={onChange} suggestions={TYPES_ARTICLE_TV_ELECTRO} />
       <CaracField  label="Taille/Capa." name="taille"       value={f('taille')}       onChange={onChange} placeholder="55 pouces, 300 L…" />
-      <CaracSelect label="État"         name="etat"         value={f('etat')}         onChange={onChange} options={ETATS_PRODUIT} required />
+      <CaracSelect label="État"         name="etat"         value={f('etat')}         onChange={onChange} options={ETATS_PRODUIT} />
     </div>
   )
 
   if (slug === 'auto-moto') return (
     <div className="bq-form-grid-2">
-      <CaracField  label="Marque"      name="marque"      value={f('marque')}      onChange={onChange} placeholder="Toyota, Yamaha…" required />
-      <CaracField  label="Modèle"      name="modele"      value={f('modele')}      onChange={onChange} placeholder="Corolla, R1…" required />
+      <CaracChips  label="Marque"      name="marque"      value={f('marque')}      onChange={onChange} suggestions={MARQUES_AUTO} />
+      <CaracField  label="Modèle"      name="modele"      value={f('modele')}      onChange={onChange} placeholder="Corolla, R1…" />
       <div>
-        <label style={labelStyle}>Année <span style={{ color: '#dc2626' }}>*</span></label>
+        <label style={labelStyle}>Année</label>
         <input type="number" min={1970} max={2026} value={f('annee')} onChange={e => onChange('annee', e.target.value)}
-          style={inputStyle} placeholder="2020" required />
+          style={inputStyle} placeholder="2020" />
       </div>
       <CaracField  label="Kilométrage" name="kilometrage" value={f('kilometrage')} onChange={onChange} placeholder="45 000 km" />
-      <CaracField  label="Carburant"   name="carburant"   value={f('carburant')}   onChange={onChange} placeholder="Essence, Diesel, Hybride…" />
-      <CaracSelect label="État"        name="etat"        value={f('etat')}        onChange={onChange} options={ETATS_PRODUIT} required />
+      <CaracChips  label="Carburant"   name="carburant"   value={f('carburant')}   onChange={onChange} suggestions={CARBURANTS} />
+      <CaracSelect label="État"        name="etat"        value={f('etat')}        onChange={onChange} options={ETATS_PRODUIT} />
     </div>
   )
 
   if (slug === 'mode') return (
     <div className="bq-form-grid-2">
-      <CaracField  label="Marque"  name="marque"  value={f('marque')}  onChange={onChange} placeholder="Zara, Nike…" />
-      <CaracField  label="Taille"  name="taille"  value={f('taille')}  onChange={onChange} placeholder="M, 42, XL…" required />
-      <CaracSelect label="Genre"   name="genre"   value={f('genre')}   onChange={onChange} options={GENRES_MODE} />
-      <CaracField  label="Matière" name="matiere" value={f('matiere')} onChange={onChange} placeholder="Coton, Lin, Cuir…" />
-      <CaracSelect label="État"    name="etat"    value={f('etat')}    onChange={onChange} options={ETATS_PRODUIT} required />
+      <CaracChips  label="Marque"  name="marque"  value={f('marque')}  onChange={onChange} suggestions={MARQUES_MODE} />
+      {champVisibleSelonVariante('taille', typesVarianteActifs) && (
+        <CaracChips label="Taille" name="taille" value={f('taille')} onChange={onChange} suggestions={TAILLES_VETEMENT} />
+      )}
+      <CaracChips  label="Genre"   name="genre"   value={f('genre')}   onChange={onChange} suggestions={GENRES_MODE} allowAutre={false} />
+      <CaracChips  label="Matière" name="matiere" value={f('matiere')} onChange={onChange} suggestions={MATIERES_MODE} />
+      <CaracSelect label="État"    name="etat"    value={f('etat')}    onChange={onChange} options={ETATS_PRODUIT} />
     </div>
   )
 
   if (slug === 'maison') return (
     <div className="bq-form-grid-2">
-      <CaracField  label="Type d'article" name="type_article" value={f('type_article')} onChange={onChange} placeholder="Canapé, Lit, Table…" required />
-      <CaracField  label="Marque"         name="marque"       value={f('marque')}       onChange={onChange} placeholder="IKEA, Broyhill…" />
-      <CaracField  label="Matière"        name="matiere"      value={f('matiere')}      onChange={onChange} placeholder="Bois, Métal, Tissu…" />
+      <CaracChips  label="Type d'article" name="type_article" value={f('type_article')} onChange={onChange} suggestions={TYPES_ARTICLE_MAISON} />
+      <CaracChips  label="Marque"         name="marque"       value={f('marque')}       onChange={onChange} suggestions={MARQUES_MAISON} />
+      <CaracChips  label="Matière"        name="matiere"      value={f('matiere')}      onChange={onChange} suggestions={MATIERES_MAISON} />
       <CaracField  label="Dimensions"     name="dimensions"   value={f('dimensions')}   onChange={onChange} placeholder="120×80×75 cm" />
-      <CaracSelect label="État"           name="etat"         value={f('etat')}         onChange={onChange} options={ETATS_PRODUIT} required />
+      <CaracSelect label="État"           name="etat"         value={f('etat')}         onChange={onChange} options={ETATS_PRODUIT} />
     </div>
   )
 
   if (slug === 'jeux') return (
     <div className="bq-form-grid-2">
-      <CaracSelect label="Plateforme" name="plateforme" value={f('plateforme')} onChange={onChange} options={PLATEFORMES} required />
+      <CaracSelect label="Plateforme" name="plateforme" value={f('plateforme')} onChange={onChange} options={PLATEFORMES} />
       <CaracField  label="Éditeur"    name="editeur"    value={f('editeur')}    onChange={onChange} placeholder="EA, Ubisoft…" />
-      <CaracSelect label="État"       name="etat"       value={f('etat')}       onChange={onChange} options={ETATS_PRODUIT} required />
+      <CaracSelect label="État"       name="etat"       value={f('etat')}       onChange={onChange} options={ETATS_PRODUIT} />
     </div>
   )
 
   if (slug === 'alimentation') return (
     <div className="bq-form-grid-2">
       <CaracField label="Poids / Quantité"   name="poids_quantite"  value={f('poids_quantite')}  onChange={onChange} placeholder="500g, 1L, 12 unités…" />
-      <CaracField label="Conditionnement"    name="conditionnement" value={f('conditionnement')} onChange={onChange} placeholder="Sachet, Boîte, Vrac…" />
+      <CaracChips label="Conditionnement"    name="conditionnement" value={f('conditionnement')} onChange={onChange} suggestions={CONDITIONNEMENTS} />
       <CaracField label="Date de péremption" name="date_peremption" value={f('date_peremption')} onChange={onChange} placeholder="12/2025" />
       <CaracField label="Origine / Marque"   name="marque"          value={f('marque')}          onChange={onChange} placeholder="Dakar Produits…" />
     </div>
@@ -243,15 +337,15 @@ function CaracteristiquesFields({ slug, values, onChange }: {
   if (slug === 'beaute') return (
     <div className="bq-form-grid-2">
       <CaracField  label="Marque"       name="marque"       value={f('marque')}       onChange={onChange} placeholder="L'Oréal, Nivea…" />
-      <CaracField  label="Type"         name="type_produit" value={f('type_produit')} onChange={onChange} placeholder="Crème, Parfum, Shampoing…" required />
-      <CaracSelect label="Pour qui"     name="pour_qui"     value={f('pour_qui')}     onChange={onChange} options={POUR_QUI} />
+      <CaracChips  label="Type"         name="type_produit" value={f('type_produit')} onChange={onChange} suggestions={TYPES_BEAUTE} />
+      <CaracChips  label="Pour qui"     name="pour_qui"     value={f('pour_qui')}     onChange={onChange} suggestions={POUR_QUI} allowAutre={false} />
       <CaracField  label="Contenance"   name="contenance"   value={f('contenance')}   onChange={onChange} placeholder="200 ml, 50 g…" />
     </div>
   )
 
   if (slug === 'services') return (
     <div className="bq-form-grid-2">
-      <CaracField label="Type de service"    name="type_service"     value={f('type_service')}     onChange={onChange} placeholder="Plomberie, Cours, Transport…" required />
+      <CaracChips label="Type de service"    name="type_service"     value={f('type_service')}     onChange={onChange} suggestions={['Plomberie', 'Cours', 'Transport', 'Ménage', 'Réparation']} />
       <CaracField label="Zone d'intervention" name="zone_intervention" value={f('zone_intervention')} onChange={onChange} placeholder="Dakar, Plateau…" />
       <CaracField label="Durée / Fréquence"  name="duree"            value={f('duree')}            onChange={onChange} placeholder="1h, par séance…" />
       <CaracField label="Disponibilité"      name="disponibilite"    value={f('disponibilite')}    onChange={onChange} placeholder="Lun-Ven 8h-18h…" />
@@ -568,8 +662,27 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   const [variantes, setVariantes] = useState<Variante[]>(produit?.variantes ?? [])
   const [nomsPersonnalises, setNomsPersonnalises] = useState<Record<number, string>>({})
 
-  const typesDejaUtilises = new Set(variantes.filter(v => v.typeId && v.typeId !== 'autre').map(v => v.typeId))
+  const typesDejaUtilises = new Set(
+    variantes
+      .map(v => v.typeId)
+      .filter((t): t is TypeVarianteId => !!t && t !== 'autre')
+  )
   const typesDisponibles = TYPES_VARIANTE.filter(t => t.repetable || !typesDejaUtilises.has(t.id))
+
+  useEffect(() => {
+    setCarac(prev => {
+      let changed = false
+      const next = { ...prev }
+      for (const champ of ['taille', 'couleur', 'stockage'] as const) {
+        if (!champVisibleSelonVariante(champ, typesDejaUtilises) && champ in next) {
+          delete next[champ]
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typesDejaUtilises.size, Array.from(typesDejaUtilises).join(',')])
 
   function ajouterOption(typeId: TypeVarianteId) {
     const type = TYPES_VARIANTE.find(t => t.id === typeId)!
@@ -648,7 +761,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
           <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
             Caractéristiques
           </p>
-          <CaracteristiquesFields slug={cat} values={carac} onChange={handleCarac} />
+          <CaracteristiquesFields slug={cat} values={carac} onChange={handleCarac} typesVarianteActifs={typesDejaUtilises} />
         </div>
       )}
 
