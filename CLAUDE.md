@@ -124,6 +124,21 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
+## Prochain chantier (à démarrer — kit communication chatbot WhatsApp à jour)
+
+**Constat** : le « Kit assistant WhatsApp » de `/admin/communication` (`frontend-next/src/app/admin/(protected)/communication/page.tsx`, tableau `CHATBOT_FONCTIONS` ligne ~293 et texte `CHATBOT_TEXTE` ligne ~302) date du 6-7 juillet 2026 et ne liste que 6 fonctions (recherche produit/annonce, annonces immo, offres télécom, alerte de prix, suivi de commande, support). La page publique `/assistant-whatsapp` a le même périmètre figé. Depuis, le chatbot a gagné beaucoup de capacités jamais reflétées dans ce kit :
+- **Boutiques marchandes** : parcourir une boutique par lien direct (`boutique_{slug}`), rechercher/parcourir par catégorie ses produits, passer commande (nom/téléphone/adresse/zone de livraison/mode de paiement), suivi.
+- **Panier natif WhatsApp/Meta Commerce** (chantier du 18 juillet 2026, voir entrée ci-dessous) — un client peut composer un panier multi-produits directement depuis le catalogue Meta et l'envoyer d'un coup, sans passer par la recherche texte.
+- **FAQ par mots-clés** (gratuit/payant, publier annonce/immo, boutique, comparer, favoris, apporteur, télécom, comment ça marche) — ajoutée le 6 juillet 2026, jamais mentionnée dans le kit.
+- **Pagination « plus / encore / d'autres »** sur les résultats de recherche (chantier du 17 juillet 2026) — change l'expérience perçue (on peut demander plus de résultats) mais n'est qu'une mécanique interne, pas forcément une « fonction » à lister séparément.
+- Recherche qui couvre maintenant le vrai marketplace scrapé (`produits`, 3000+ fiches après dédoublonnage) en plus des boutiques — le kit actuel ne précise pas l'étendue réelle du catalogue.
+
+**Objectif du chantier** : mettre à jour (ou refondre) le kit communication pour présenter fidèlement **tout ce que le chatbot sait faire aujourd'hui**, notamment le volet boutique/commande/panier qui est probablement l'argument de vente le plus fort auprès des commerçants (permet de vendre depuis WhatsApp sans app). Périmètre probable : `CHATBOT_FONCTIONS`/`CHATBOT_TEXTE` dans `/admin/communication`, la page publique `/assistant-whatsapp`, potentiellement le visuel `/assets/chatbot-whatsapp` (`ImageResponse`, mentionné dans l'entrée du 6 juillet — vérifier s'il doit aussi être retouché ou s'il reste assez générique).
+
+**Pas encore commencé** — aucune spec ni plan écrits à ce stade. Suivre le process habituel du projet (brainstorming → spec → plan → subagent-driven-development) avant de coder.
+
+---
+
 ## État du projet (18 juillet 2026, suite — traitement du panier natif WhatsApp/Meta Commerce)
 
 Spec `docs/superpowers/specs/2026-07-18-panier-meta-whatsapp-design.md`, plan en 6 tâches `docs/superpowers/plans/2026-07-18-panier-meta-whatsapp.md`, exécuté sur la branche worktree `worktree-panier-meta-whatsapp` (5 commits, `7da3967..f6e6713`), sur `main`, poussé.
