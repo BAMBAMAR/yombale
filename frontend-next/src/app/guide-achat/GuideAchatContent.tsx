@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
+import PageHeader from '@/components/PageHeader'
+import FiltresBar from '@/components/FiltresBar'
+import SeoCard from '@/components/SeoCard'
 
 const API = ''  // utilise le proxy Next.js /api/* → backend
 
@@ -174,6 +177,16 @@ export default function GuideAchatPage() {
   return (
     <div className="guide-page">
 
+      <PageHeader
+        breadcrumb={[
+          { label: 'Accueil', href: '/' },
+          { label: 'Guide d\'achat' },
+        ]}
+        emoji="🏆"
+        titre="Guide d'achat intelligent"
+        compteur="Scoring personnalisé · 4 profils d'achat"
+      />
+
       {/* Header */}
       <div className="guide-topbar">
         <Link href="/" className="guide-back-btn">← Retour</Link>
@@ -218,22 +231,24 @@ export default function GuideAchatPage() {
 
           <div className="guide-field">
             <label className="guide-label">Catégorie</label>
-            <select className="guide-select" value={cat} onChange={e => setCat(e.target.value)}>
-              <option value="">Toutes les catégories</option>
-              {CATEGORIES.map(c => (
-                <option key={c.slug} value={c.slug}>{c.icon} {c.label}</option>
-              ))}
-            </select>
+            <FiltresBar
+              essentiels={[
+                { key: 'cat-toutes', label: 'Toutes les catégories', active: cat === '', onClick: () => setCat('') },
+                ...CATEGORIES.map(c => ({ key: `cat-${c.slug}`, label: `${c.icon} ${c.label}`, active: cat === c.slug, onClick: () => setCat(c.slug) })),
+              ]}
+            />
           </div>
 
           <div className="guide-field">
             <label className="guide-label">État</label>
-            <select className="guide-select" value={etatFiltre} onChange={e => setEtatFiltre(e.target.value)}>
-              <option value="">Tous</option>
-              <option value="neuf">Neuf</option>
-              <option value="occasion">Occasion</option>
-              <option value="reconditionne">Reconditionné</option>
-            </select>
+            <FiltresBar
+              essentiels={[
+                { key: 'etat-tous', label: 'Tous', active: etatFiltre === '', onClick: () => setEtatFiltre('') },
+                { key: 'etat-neuf', label: 'Neuf', active: etatFiltre === 'neuf', onClick: () => setEtatFiltre('neuf') },
+                { key: 'etat-occasion', label: 'Occasion', active: etatFiltre === 'occasion', onClick: () => setEtatFiltre('occasion') },
+                { key: 'etat-reconditionne', label: 'Reconditionné', active: etatFiltre === 'reconditionne', onClick: () => setEtatFiltre('reconditionne') },
+              ]}
+            />
           </div>
 
           <div className="guide-field">
@@ -389,6 +404,21 @@ export default function GuideAchatPage() {
           )}
         </div>
       </div>
+
+      <SeoCard
+        titre="Pourquoi utiliser le guide d'achat intelligent Nopalou ?"
+        blurbs={[
+          { emoji: '🏆', text: 'Choisissez un profil (meilleur prix, rapport qualité/prix, haut de gamme, bien distribué…) et pondérez librement le prix, les caractéristiques et la disponibilité selon vos priorités.' },
+          { emoji: '📊', text: 'Le score de chaque produit est recalculé en direct à partir des offres réelles des marchands du comparateur — jamais de classement sponsorisé.' },
+        ]}
+        chipRows={[
+          {
+            label: 'Catégories de produits',
+            chips: CATEGORIES.map(c => ({ href: `/categorie/${c.slug}`, emoji: c.icon, label: c.label })),
+          },
+        ]}
+        foot="Scoring recalculé à chaque recherche selon vos critères"
+      />
     </div>
   )
 }
