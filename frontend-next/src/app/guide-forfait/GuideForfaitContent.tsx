@@ -4,6 +4,9 @@ import { useState, useCallback, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
+import FiltresBar from '@/components/FiltresBar'
+import SeoCard from '@/components/SeoCard'
 
 const API = ''
 
@@ -152,6 +155,17 @@ export default function GuideForfaitPage() {
   return (
     <div className="guide-page">
 
+      <PageHeader
+        breadcrumb={[
+          { label: 'Accueil', href: '/' },
+          { label: 'Télécom', href: '/telecom' },
+          { label: 'Guide forfait' },
+        ]}
+        emoji="🎯"
+        titre="Guide forfait télécom"
+        compteur="Scoring personnalisé · 5 profils d'usage"
+      />
+
       <div className="guide-topbar">
         <Link href="/telecom" className="guide-back-btn">← Forfaits</Link>
         <div>
@@ -200,16 +214,23 @@ export default function GuideForfaitPage() {
           <div className="guide-budget-row">
             <div className="guide-field" style={{ flex: 1 }}>
               <label className="guide-label">Opérateur</label>
-              <select className="guide-select" value={operateur} onChange={e => setOperateur(e.target.value)}>
-                <option value="">Tous</option>
-                {OPERATEURS.map(op => <option key={op} value={op}>{op}</option>)}
-              </select>
+              <FiltresBar
+                essentiels={[
+                  { key: 'op-tous', label: 'Tous', active: operateur === '', onClick: () => setOperateur('') },
+                  ...OPERATEURS.map(op => ({ key: `op-${op}`, label: op, active: operateur === op, onClick: () => setOperateur(op) })),
+                ]}
+              />
             </div>
             <div className="guide-field" style={{ flex: 1 }}>
               <label className="guide-label">Type de forfait</label>
-              <select className="guide-select" value={typeForfait} onChange={e => setTypeForfait(e.target.value)}>
-                {TYPES_FORFAIT.map(t => <option key={t.val} value={t.val}>{t.label}</option>)}
-              </select>
+              <FiltresBar
+                essentiels={TYPES_FORFAIT.map(t => ({
+                  key: `type-${t.val || 'tous'}`,
+                  label: t.label,
+                  active: typeForfait === t.val,
+                  onClick: () => setTypeForfait(t.val),
+                }))}
+              />
             </div>
           </div>
 
@@ -369,6 +390,26 @@ export default function GuideForfaitPage() {
           )}
         </div>
       </div>
+
+      <SeoCard
+        titre="Pourquoi utiliser le guide forfait télécom Nopalou ?"
+        blurbs={[
+          { emoji: '🎯', text: 'Choisissez un profil (grande data, grands appelants, usage mixte, économique, longue durée…) et le guide pondère automatiquement le score de chaque forfait selon vos priorités réelles.' },
+          { emoji: '📡', text: 'Les résultats comparent en direct les forfaits des 4 opérateurs sénégalais, filtrés selon votre budget, votre type de forfait et vos besoins en data et en appels.' },
+        ]}
+        chipRows={[
+          {
+            label: 'Comparer par opérateur',
+            chips: [
+              { href: '/telecom/orange', emoji: '🟠', label: 'Orange' },
+              { href: '/telecom/yas', emoji: '🟣', label: 'Yas' },
+              { href: '/telecom/expresso', emoji: '🟢', label: 'Expresso' },
+              { href: '/telecom/promobile', emoji: '🔵', label: 'Promobile' },
+            ],
+          },
+        ]}
+        foot="Comparaison recalculée à chaque recherche selon vos critères"
+      />
     </div>
   )
 }
