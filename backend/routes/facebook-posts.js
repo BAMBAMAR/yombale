@@ -3,8 +3,31 @@ const express = require('express');
 const router  = express.Router();
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
+const settingsCache = require('../lib/settingsCache');
 const https = require('https');
 const qs    = require('querystring');
+
+// Miroir de PALIERS_BOUTIQUE (frontend-next/src/lib/fonctionnalites-data.ts) — dupliqué ici
+// car ce fichier backend CommonJS ne peut pas importer un module TypeScript Next.js.
+// Si les avantages ou couleurs par palier changent côté frontend, mettre à jour aussi ici.
+const PALIERS_AVANTAGES = {
+  pro: {
+    label: 'Boutique Pro',
+    avantages: [
+      'Placement prioritaire dans /boutiques',
+      'Badge "Vendeur Pro" sur toutes vos annonces',
+      'Catalogue produits avec photos et prix',
+    ],
+  },
+  business: {
+    label: 'Boutique Business',
+    avantages: [
+      'Tout ce qui est inclus dans Pro',
+      'URL dédiée /boutiques/[votre-nom]',
+      '15 annonces classées incluses/mois',
+    ],
+  },
+};
 
 router.use(adminSecretOnly);
 
@@ -199,6 +222,18 @@ router.get('/generer/:type', async (req, res) => {
         },
       ];
       result = conseils[Math.floor(Math.random() * conseils.length)];
+    }
+
+    else if (type === 'abonnement') {
+      const palierId = Math.random() < 0.5 ? 'pro' : 'business';
+      const palier = PALIERS_AVANTAGES[palierId];
+      const prix = await settingsCache.getNum(`plan_${palierId}_prix`);
+      const avantagesTexte = palier.avantages.map(a => `✅ ${a}`).join('\n');
+      result = {
+        message: `⭐ ${palier.label.toUpperCase()}\n\nVous vendez sur Nopalou ? Passez au niveau supérieur :\n\n${avantagesTexte}\n\n💰 ${prix.toLocaleString('fr-FR')} FCFA/mois seulement\n\n👉 Créez votre boutique ou passez à ${palier.label} sur nopalou.com\n\n#Nopalou #Boutique #Vendeur #Dakar #Sénégal #Ecommerce`,
+        image_url: `https://nopalou.com/assets/palier/${palierId}/carre`,
+        lien: 'https://nopalou.com/boutique/abonnement',
+      };
     }
 
     if (!result) return res.status(404).json({ error: 'Aucun contenu trouvé pour ce type' });

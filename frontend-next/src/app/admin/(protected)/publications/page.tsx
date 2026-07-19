@@ -342,6 +342,9 @@ export default function PublicationsPage() {
           <button style={{ ...s.btn, background: '#FDF4FF', color: '#7E22CE' }} onClick={() => generer('conseil')} disabled={isPending}>
             💡 Conseil achat
           </button>
+          <button style={{ ...s.btn, background: '#FFF7ED', color: '#C75B00' }} onClick={() => generer('abonnement')} disabled={isPending}>
+            🎯 Promo abonnement
+          </button>
         </div>
         <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 8, marginBottom: 0 }}>
           Le contenu est pré-rempli avec de vraies données — modifiez avant de sauvegarder.
