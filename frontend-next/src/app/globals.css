@@ -1498,6 +1498,108 @@ a {
   color: var(--red);
 }
 
+/* ── Filtres partagés (PageHeader / FiltresBar) — remplace budget-pill,
+   filtres-group, immo-filtres-row, annonces-cat-pill (voir Task 10) ── */
+.filtres-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  background: var(--card);
+  transition: all .15s;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.filter-pill:hover,
+.filter-pill.filter-pill--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.filter-pill--reset {
+  color: var(--red);
+  border-color: #fecaca;
+}
+
+.filter-pill--reset:hover {
+  background: #fef2f2;
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.filtres-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px dashed var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  background: var(--bg);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filtres-more-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.filtres-more-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.filtres-panel {
+  margin-top: 10px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filtres-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.seo-card-wrap {
+  max-width: var(--max-w);
+  margin: 40px auto 24px;
+  padding: 0 var(--px);
+}
+
 /* ── Résultats count ───────────────────────────────────────────── */
 .resultats-count {
   font-size: 13px;
@@ -2393,16 +2495,6 @@ a {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-.filtres-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text2);
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  white-space: nowrap;
-  min-width: 72px;
 }
 
 .telecom-filtres-inner {
