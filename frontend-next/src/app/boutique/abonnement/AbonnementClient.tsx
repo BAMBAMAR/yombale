@@ -2,38 +2,16 @@
 import { useState, useTransition } from 'react'
 import { initierWaveAbonnement } from '@/app/actions/paiement'
 import ModalPaiementManuel from '@/components/ModalPaiementManuel'
+import { PALIERS_BOUTIQUE } from '@/lib/fonctionnalites-data'
 
 const PLANS_DEFAUT = {
   pro: 15000,
   business: 35000,
 }
 
-const PLANS_INFO = [
-  {
-    id: 'pro' as const,
-    label: 'Boutique Pro',
-    couleur: '#C75B00',
-    avantages: [
-      'Placement prioritaire dans /boutiques',
-      'Badge "Vendeur Pro" sur toutes vos annonces',
-      '5 annonces classées incluses/mois',
-      'Tableau de bord analytics (vues, clics)',
-      'Statistiques des prix concurrents',
-    ],
-  },
-  {
-    id: 'business' as const,
-    label: 'Boutique Business',
-    couleur: '#1e3a5f',
-    avantages: [
-      'Tout ce qui est inclus dans Pro',
-      'URL dédiée /boutiques/[votre-nom]',
-      '15 annonces classées incluses/mois',
-      'Bannière dans 1 page catégorie',
-      'Support prioritaire WhatsApp',
-    ],
-  },
-]
+const PLANS_INFO = PALIERS_BOUTIQUE.filter((p): p is typeof PALIERS_BOUTIQUE[number] & { id: 'pro' | 'business' } =>
+  p.id === 'pro' || p.id === 'business'
+)
 
 interface Props {
   planActif: { plan: string; fin: string } | null
