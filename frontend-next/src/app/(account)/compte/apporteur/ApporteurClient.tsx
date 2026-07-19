@@ -132,6 +132,30 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales: St
             🖼 Télécharger le visuel
           </a>
         </div>
+
+        <p style={{ fontSize: 12, color: '#64748B', margin: '16px 0 8px' }}>
+          Visuels par palier d&apos;abonnement, à partager avec le commerçant que vous démarchez :
+        </p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a href="/assets/palier/gratuit/carre" target="_blank" rel="noopener noreferrer" style={{
+            padding: '8px 14px', background: '#fff', color: '#64748B', border: '1px solid #E2E8F0',
+            borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+          }}>
+            Gratuit →
+          </a>
+          <a href="/assets/palier/pro/carre" target="_blank" rel="noopener noreferrer" style={{
+            padding: '8px 14px', background: '#fff', color: '#C75B00', border: '1px solid #C75B00',
+            borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+          }}>
+            Pro →
+          </a>
+          <a href="/assets/palier/business/carre" target="_blank" rel="noopener noreferrer" style={{
+            padding: '8px 14px', background: '#fff', color: '#1e3a5f', border: '1px solid #1e3a5f',
+            borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+          }}>
+            Business →
+          </a>
+        </div>
       </div>
 
       {/* Stats */}
