@@ -5,6 +5,9 @@ import { apiFetch } from '@/lib/api'
 import ImmoClientWrapper from './ImmoClientWrapper'
 import ImmoQuartierInput from './ImmoQuartierInput'
 import ImmoCard, { type AnnonceImmo, TYPE_ICONS } from './ImmoCard'
+import PageHeader from '@/components/PageHeader'
+import FiltresBar from '@/components/FiltresBar'
+import SeoCard from '@/components/SeoCard'
 
 export const metadata: Metadata = {
   title: 'Immobilier au Sénégal — Location et vente à Dakar',
@@ -163,168 +166,105 @@ export default async function ImmoPage({
   return (
     <div className="page-container" style={{ paddingTop: '2rem' }}>
       {/* En-tête */}
-      <div className="immo-header">
-        <div>
-          <h1 className="immo-titre-page">
-            Immobilier au <span style={{ color: 'var(--accent)' }}>Sénégal</span>
-          </h1>
-          <p className="immo-sous-titre">
-            {total > 0
-              ? `${total.toLocaleString('fr-FR')} annonce${total > 1 ? 's' : ''} disponible${total > 1 ? 's' : ''}`
-              : 'Trouvez votre bien idéal'}
-          </p>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
+        <PageHeader
+          breadcrumb={[{ label: 'Accueil', href: '/' }, { label: 'Immobilier' }]}
+          titre="Immobilier au Sénégal"
+          compteur={total > 0
+            ? `${total.toLocaleString('fr-FR')} annonce${total > 1 ? 's' : ''} disponible${total > 1 ? 's' : ''}`
+            : 'Trouvez votre bien idéal'}
+        />
         <ImmoClientWrapper />
       </div>
 
       {/* Barre de filtres */}
-      <div className="immo-filtres">
+      <FiltresBar
+        essentiels={[
+          {
+            key: 'transaction-location',
+            label: '🏠 Location',
+            href: buildLink({ transaction: 'location', prixMax: '', page: '1' }),
+            active: transaction === 'location',
+          },
+          {
+            key: 'transaction-vente',
+            label: '🔑 Vente',
+            href: buildLink({ transaction: 'vente', prixMax: '', page: '1' }),
+            active: transaction === 'vente',
+          },
+          ...TYPE_BIEN.map(t => ({
+            key: `type-${t.val || 'tous'}`,
+            label: t.val ? `${TYPE_ICONS[t.val] ?? ''} ${t.label}` : t.label,
+            href: buildLink({ type_bien: t.val, page: '1' }),
+            active: type_bien === t.val,
+          })),
+          ...prixOptions.map(p => ({
+            key: `prix-${p.val}`,
+            label: p.label,
+            href: buildLink({ prixMax: p.val, page: '1' }),
+            active: prixMax === p.val,
+          })),
+          ...(prixMax ? [{
+            key: 'reset-budget',
+            label: '✕ Budget',
+            href: buildLink({ prixMax: '', page: '1' }),
+            active: false,
+            reset: true,
+          }] : []),
+          ...VILLES_SN.map(v => ({
+            key: `ville-${v}`,
+            label: v,
+            href: buildLink({ ville: ville === v ? '' : v, quartier: '', page: '1' }),
+            active: ville === v,
+          })),
+          ...(ville ? [{
+            key: 'reset-ville',
+            label: '✕ Ville',
+            href: buildLink({ ville: '', quartier: '', page: '1' }),
+            active: false,
+            reset: true,
+          }] : []),
+        ]}
+        secondaires={[
+          ...SURFACE_MIN.map(s => ({
+            key: `surface-${s.val}`,
+            label: `${s.label}+`,
+            href: buildLink({ surfaceMin: surfaceMin === s.val ? '' : s.val, page: '1' }),
+            active: surfaceMin === s.val,
+          })),
+          ...NB_PIECES.map(n => ({
+            key: `pieces-${n.val}`,
+            label: `${n.label} pièce${n.val !== '1' ? 's' : ''}`,
+            href: buildLink({ nbPieces: nbPieces === n.val ? '' : n.val, page: '1' }),
+            active: nbPieces === n.val,
+          })),
+          ...NB_CHAMBRES.map(n => ({
+            key: `chambres-${n.val}`,
+            label: `${n.label} chambre${n.val !== '1' ? 's' : ''}`,
+            href: buildLink({ nbChambres: nbChambres === n.val ? '' : n.val, page: '1' }),
+            active: nbChambres === n.val,
+          })),
+          {
+            key: 'meuble',
+            label: '✅ Meublé',
+            href: buildLink({ meuble: meuble === 'true' ? '' : 'true', page: '1' }),
+            active: meuble === 'true',
+          },
+        ]}
+        tri={TRIS.map(t => ({
+          key: t.val,
+          label: t.label,
+          href: buildLink({ tri: t.val, page: '1' }),
+          active: tri === t.val,
+        }))}
+      />
 
-        {/* Transaction */}
-        <div className="immo-filtres-row">
-          <span className="filtres-label">Type</span>
-          <div className="immo-toggle">
-            <Link
-              href={buildLink({ transaction: 'location', prixMax: '', page: '1' })}
-              className={`immo-toggle-btn${transaction === 'location' ? ' active' : ''}`}
-            >
-              🏠 Location
-            </Link>
-            <Link
-              href={buildLink({ transaction: 'vente', prixMax: '', page: '1' })}
-              className={`immo-toggle-btn${transaction === 'vente' ? ' active' : ''}`}
-            >
-              🔑 Vente
-            </Link>
-          </div>
-        </div>
-
-        {/* Type de bien */}
-        <div className="immo-filtres-row">
-          <span className="filtres-label">Bien</span>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {TYPE_BIEN.map(t => (
-              <Link
-                key={t.val}
-                href={buildLink({ type_bien: t.val, page: '1' })}
-                className={`budget-pill${type_bien === t.val ? ' active' : ''}`}
-              >
-                {t.val ? (TYPE_ICONS[t.val] ?? '') + ' ' : ''}{t.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Prix max */}
-        <div className="immo-filtres-row">
-          <span className="filtres-label">Budget</span>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {prixOptions.map(p => (
-              <Link
-                key={p.val}
-                href={buildLink({ prixMax: p.val, page: '1' })}
-                className={`budget-pill${prixMax === p.val ? ' active' : ''}`}
-              >
-                {p.label}
-              </Link>
-            ))}
-            {prixMax && (
-              <Link href={buildLink({ prixMax: '', page: '1' })} className="budget-pill budget-pill--reset">
-                ✕ Budget
-              </Link>
-            )}
-          </div>
-        </div>
-
-        {/* Ville */}
-        <div className="immo-filtres-row">
-          <span className="filtres-label">Ville</span>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {VILLES_SN.map(v => (
-              <Link key={v} href={buildLink({ ville: ville === v ? '' : v, quartier: '', page: '1' })} className={`budget-pill${ville === v ? ' active' : ''}`}>
-                {v}
-              </Link>
-            ))}
-            {ville && <Link href={buildLink({ ville: '', quartier: '', page: '1' })} className="budget-pill budget-pill--reset">✕ Ville</Link>}
-          </div>
-        </div>
-
-        {/* Quartier */}
-        <div className="immo-filtres-row">
-          <span className="filtres-label">Quartier</span>
-          <Suspense fallback={<span className="immo-quartier-input" style={{display:'inline-block',width:220}}>…</span>}>
-            <ImmoQuartierInput currentQuartier={quartier} />
-          </Suspense>
-        </div>
-
-        {/* Surface min */}
-        <div className="immo-filtres-row">
-          <span className="filtres-label">Surface min</span>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {SURFACE_MIN.map(s => (
-              <Link key={s.val} href={buildLink({ surfaceMin: surfaceMin === s.val ? '' : s.val, page: '1' })} className={`budget-pill${surfaceMin === s.val ? ' active' : ''}`}>
-                {s.label}
-              </Link>
-            ))}
-            {surfaceMin && <Link href={buildLink({ surfaceMin: '', page: '1' })} className="budget-pill budget-pill--reset">✕ Surface</Link>}
-          </div>
-        </div>
-
-        {/* Nb pièces */}
-        <div className="immo-filtres-row">
-          <span className="filtres-label">Pièces</span>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {NB_PIECES.map(n => (
-              <Link key={n.val} href={buildLink({ nbPieces: nbPieces === n.val ? '' : n.val, page: '1' })} className={`budget-pill${nbPieces === n.val ? ' active' : ''}`}>
-                {n.label}
-              </Link>
-            ))}
-            {nbPieces && <Link href={buildLink({ nbPieces: '', page: '1' })} className="budget-pill budget-pill--reset">✕ Pièces</Link>}
-          </div>
-        </div>
-
-        {/* Nb chambres */}
-        <div className="immo-filtres-row">
-          <span className="filtres-label">Chambres</span>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {NB_CHAMBRES.map(n => (
-              <Link key={n.val} href={buildLink({ nbChambres: nbChambres === n.val ? '' : n.val, page: '1' })} className={`budget-pill${nbChambres === n.val ? ' active' : ''}`}>
-                {n.label}
-              </Link>
-            ))}
-            {nbChambres && <Link href={buildLink({ nbChambres: '', page: '1' })} className="budget-pill budget-pill--reset">✕ Chambres</Link>}
-          </div>
-        </div>
-
-        {/* Meublé */}
-        <div className="immo-filtres-row">
-          <span className="filtres-label">Meublé</span>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <Link
-              href={buildLink({ meuble: meuble === 'true' ? '' : 'true', page: '1' })}
-              className={`budget-pill${meuble === 'true' ? ' active' : ''}`}
-            >
-              ✅ Meublé
-            </Link>
-            {meuble && <Link href={buildLink({ meuble: '', page: '1' })} className="budget-pill budget-pill--reset">✕ Meublé</Link>}
-          </div>
-        </div>
-
-        {/* Tri */}
-        <div className="immo-filtres-row">
-          <span className="filtres-label">Trier</span>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {TRIS.map(t => (
-              <Link
-                key={t.val}
-                href={buildLink({ tri: t.val, page: '1' })}
-                className={`budget-pill${tri === t.val ? ' active' : ''}`}
-              >
-                {t.label}
-              </Link>
-            ))}
-          </div>
-        </div>
+      {/* Quartier — champ texte, garde son propre input, affiché sous la barre de pills */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, marginBottom: 20 }}>
+        <span className="filtres-label">Quartier</span>
+        <Suspense fallback={<span className="immo-quartier-input" style={{display:'inline-block',width:220}}>…</span>}>
+          <ImmoQuartierInput currentQuartier={quartier} />
+        </Suspense>
       </div>
 
       {/* Grille annonces */}
@@ -360,6 +300,43 @@ export default async function ImmoPage({
           )}
         </div>
       )}
+
+      <SeoCard
+        titre="Pourquoi chercher votre bien immobilier sur Nopalou ?"
+        blurbs={[
+          {
+            emoji: '🏘',
+            text: (
+              <>
+                Nopalou regroupe les annonces immobilières publiées directement par les propriétaires et agences,
+                ainsi que celles importées des principales plateformes du Sénégal — pour vous éviter de multiplier les sites.
+              </>
+            ),
+          },
+          {
+            emoji: '📍',
+            text: (
+              <>
+                Location ou vente, appartement, villa, studio ou terrain — filtrez par budget, ville et surface pour trouver
+                le bien qui correspond exactement à votre recherche, partout à <strong>Dakar</strong> et dans les grandes villes du Sénégal.
+              </>
+            ),
+          },
+        ]}
+        chipRows={[
+          {
+            label: 'Recherches populaires',
+            chips: [
+              { href: '/immo/location-appartement-dakar', emoji: '🏢', label: 'Location appartement Dakar' },
+              { href: '/immo/location-chambre-dakar', emoji: '🛏️', label: 'Chambre à louer Dakar' },
+              { href: '/immo/location-studio-dakar', emoji: '🏠', label: 'Studio à louer Dakar' },
+              { href: '/immo/vente-terrain-dakar', emoji: '🗺️', label: 'Terrain à vendre Dakar' },
+              { href: '/immo/vente-maison-dakar', emoji: '🏡', label: 'Maison à vendre Dakar' },
+            ],
+          },
+        ]}
+        foot="Nouvelles annonces publiées chaque jour par des particuliers et agences au Sénégal"
+      />
     </div>
   )
 }
