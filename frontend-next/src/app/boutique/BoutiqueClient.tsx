@@ -3,7 +3,7 @@ import { useState, useEffect, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
-import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit } from './actions'
+import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage } from './actions'
 import Comptabilite from './Comptabilite'
 import Commandes from './Commandes'
 import AnalyticsClient from './analytics/AnalyticsClient'
@@ -67,6 +67,7 @@ interface Produit {
   variantes: Variante[] | null
   whatsapp_sync_statut: 'synchronise' | 'en_attente' | 'echec' | null
   whatsapp_sync_erreur: string | null
+  partage_le: string | null
 }
 
 // ── Caractéristiques par catégorie ────────────────────────────────────────────
@@ -1039,14 +1040,14 @@ function MarketingBoutique({ boutique }: { boutique: Boutique }) {
 
 // ── Gestionnaire de catalogue produits ───────────────────────────────────────
 
-function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutique; planActif: 'pro' | 'business' | null; prixPro: number }) {
+function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { boutique: Boutique; planActif: 'pro' | 'business' | null; prixPro: number; filtreInitial?: 'jamais_partage' }) {
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<'list' | { creating: 'rapide' | 'detaille' } | { editing: Produit }>('list')
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [rechercheTexte, setRechercheTexte] = useState('')
-  const [filtreStatut, setFiltreStatut] = useState<'tous' | 'synchronise' | 'en_attente' | 'echec'>('tous')
+  const [filtreStatut, setFiltreStatut] = useState<'tous' | 'synchronise' | 'en_attente' | 'echec' | 'jamais_partage'>(filtreInitial ?? 'tous')
   const [filtreCategorie, setFiltreCategorie] = useState<string>('toutes')
   const [, startTransition] = useTransition()
 
@@ -1091,7 +1092,8 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
 
   const produitsFiltres = produits.filter(p => {
     if (rechercheTexte.trim() && !p.nom.toLowerCase().includes(rechercheTexte.trim().toLowerCase())) return false
-    if (filtreStatut !== 'tous' && (p.whatsapp_sync_statut || 'en_attente') !== filtreStatut) return false
+    if (filtreStatut === 'jamais_partage') { if (p.partage_le) return false }
+    else if (filtreStatut !== 'tous' && (p.whatsapp_sync_statut || 'en_attente') !== filtreStatut) return false
     if (filtreCategorie !== 'toutes' && p.categorie !== filtreCategorie) return false
     return true
   })
@@ -1162,6 +1164,7 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
             <option value="synchronise">✓ Sur WhatsApp</option>
             <option value="en_attente">⏳ En attente</option>
             <option value="echec">✗ Échec</option>
+            <option value="jamais_partage">📢 Jamais partagés</option>
           </select>
           {categoriesDisponibles.length > 1 && (
             <select
@@ -1249,8 +1252,13 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
               <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
                 <BoutonPartager
                   lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
-                  message={`${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
+                  message={
+                    p.prix_barre && p.prix && p.prix_barre > p.prix
+                      ? `🔥 ${p.nom} en promo : ${fcfa(p.prix)} au lieu de ${fcfa(p.prix_barre)} !\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`
+                      : `${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`
+                  }
                   lienVisuel={`/assets/produit-boutique/${p.id}/story?boutiqueId=${boutique.id}`}
+                  onPartage={() => { marquerProduitPartage(boutique.id, p.id).catch(() => {}) }}
                 />
                 <button
                   onClick={() => setMode({ editing: p })}
