@@ -4,6 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
+import PageHeader from '@/components/PageHeader'
+import FiltresBar from '@/components/FiltresBar'
+import SeoCard from '@/components/SeoCard'
 
 interface Produit {
   id: string
@@ -144,13 +147,13 @@ export default function GuidePrixPage() {
 
   return (
     <div className="guide-prix-page">
+      <PageHeader
+        breadcrumb={[{ label: 'Accueil', href: '/' }, { label: 'Guide des prix' }]}
+        emoji="💡"
+        titre="Guide des prix"
+        compteur="Recherchez un produit pour connaître son prix actuel au Sénégal, comparer les marchands et voir l'évolution du prix dans le temps."
+      />
       <div className="guide-prix-hero">
-        <h1 className="guide-prix-titre">💡 Guide des prix</h1>
-        <p className="guide-prix-desc">
-          Recherchez un produit pour connaître son prix actuel au Sénégal,
-          comparer les marchands et voir l&apos;évolution du prix dans le temps.
-        </p>
-
         <form onSubmit={search} className="guide-prix-form">
           <div className="guide-prix-search-wrap">
             <input
@@ -164,17 +167,17 @@ export default function GuidePrixPage() {
               {loading ? '…' : '🔍 Rechercher'}
             </button>
           </div>
-          <div className="guide-prix-cats">
-            <button type="button" onClick={() => { setCategorie(''); search() }}
-              className={`budget-pill${categorie === '' ? ' active' : ''}`}>Tous</button>
-            {CATEGORIES.map(c => (
-              <button key={c.slug} type="button"
-                onClick={() => { setCategorie(c.slug); }}
-                className={`budget-pill${categorie === c.slug ? ' active' : ''}`}>
-                {c.icon} {c.label}
-              </button>
-            ))}
-          </div>
+          <FiltresBar
+            essentiels={[
+              { key: 'cat-tous', label: 'Tous', active: categorie === '', onClick: () => { setCategorie(''); search() } },
+              ...CATEGORIES.map(c => ({
+                key: `cat-${c.slug}`,
+                label: `${c.icon} ${c.label}`,
+                active: categorie === c.slug,
+                onClick: () => setCategorie(c.slug),
+              })),
+            ]}
+          />
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
             <input
               type="number"
@@ -371,6 +374,37 @@ export default function GuidePrixPage() {
           })()}
         </div>
       </div>
+
+      <SeoCard
+        titre="Pourquoi utiliser le guide des prix Nopalou ?"
+        blurbs={[
+          {
+            emoji: '💡',
+            text: (
+              <>
+                Ce guide vous montre en un coup d&apos;œil le prix le plus bas, le prix moyen et l&apos;écart entre marchands
+                pour n&apos;importe quel produit vendu au Sénégal — sans avoir à visiter chaque site un par un.
+              </>
+            ),
+          },
+          {
+            emoji: '📈',
+            text: (
+              <>
+                L&apos;évolution du prix sur 30 jours vous aide à savoir si c&apos;est le bon moment pour acheter,
+                ou s&apos;il vaut mieux attendre une baisse.
+              </>
+            ),
+          },
+        ]}
+        chipRows={[
+          {
+            label: 'Comparer par catégorie',
+            chips: CATEGORIES.map(c => ({ href: `/categorie/${c.slug}`, emoji: c.icon, label: c.label, small: true })),
+          },
+        ]}
+        foot="Prix vérifiés automatiquement toutes les 6 heures sur tous les grands marchands sénégalais"
+      />
     </div>
   )
 }
