@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Langue
+
+Toujours répondre et communiquer en français dans ce projet, y compris dans les nouvelles sessions — quelle que soit la langue du message de l'utilisateur. Les noms de fichiers, le code, les identifiants et les commandes restent en anglais/tels quels ; seule la communication (texte de réponse, résumés, questions) est en français.
+
 ## Project Overview
 
 **Nopalou** — a Senegalese price comparison platform covering products, real estate (immo), and telecom offers. The project has two frontends:
@@ -124,18 +128,30 @@ The HTML admin pages (`/admin.html`, `/admin-immo.html`, `/admin-telecom.html`, 
 
 ---
 
-## Prochain chantier (à démarrer — kit communication chatbot WhatsApp à jour)
+## Prochain chantier
 
-**Constat** : le « Kit assistant WhatsApp » de `/admin/communication` (`frontend-next/src/app/admin/(protected)/communication/page.tsx`, tableau `CHATBOT_FONCTIONS` ligne ~293 et texte `CHATBOT_TEXTE` ligne ~302) date du 6-7 juillet 2026 et ne liste que 6 fonctions (recherche produit/annonce, annonces immo, offres télécom, alerte de prix, suivi de commande, support). La page publique `/assistant-whatsapp` a le même périmètre figé. Depuis, le chatbot a gagné beaucoup de capacités jamais reflétées dans ce kit :
-- **Boutiques marchandes** : parcourir une boutique par lien direct (`boutique_{slug}`), rechercher/parcourir par catégorie ses produits, passer commande (nom/téléphone/adresse/zone de livraison/mode de paiement), suivi.
-- **Panier natif WhatsApp/Meta Commerce** (chantier du 18 juillet 2026, voir entrée ci-dessous) — un client peut composer un panier multi-produits directement depuis le catalogue Meta et l'envoyer d'un coup, sans passer par la recherche texte.
-- **FAQ par mots-clés** (gratuit/payant, publier annonce/immo, boutique, comparer, favoris, apporteur, télécom, comment ça marche) — ajoutée le 6 juillet 2026, jamais mentionnée dans le kit.
-- **Pagination « plus / encore / d'autres »** sur les résultats de recherche (chantier du 17 juillet 2026) — change l'expérience perçue (on peut demander plus de résultats) mais n'est qu'une mécanique interne, pas forcément une « fonction » à lister séparément.
-- Recherche qui couvre maintenant le vrai marketplace scrapé (`produits`, 3000+ fiches après dédoublonnage) en plus des boutiques — le kit actuel ne précise pas l'étendue réelle du catalogue.
+Aucun chantier n'est actuellement identifié comme prioritaire — le dernier chantier planifié (kit communication chatbot WhatsApp à jour, voir entrée du 18 juillet ci-dessous) a été livré, ainsi que le chantier suivant (marketing boutique, voir entrée du 19 juillet juste en dessous). Attendre une nouvelle demande de l'utilisateur ou repartir de zéro (brainstorming → spec → plan → subagent-driven-development) sur un nouveau constat.
 
-**Objectif du chantier** : mettre à jour (ou refondre) le kit communication pour présenter fidèlement **tout ce que le chatbot sait faire aujourd'hui**, notamment le volet boutique/commande/panier qui est probablement l'argument de vente le plus fort auprès des commerçants (permet de vendre depuis WhatsApp sans app). Périmètre probable : `CHATBOT_FONCTIONS`/`CHATBOT_TEXTE` dans `/admin/communication`, la page publique `/assistant-whatsapp`, potentiellement le visuel `/assets/chatbot-whatsapp` (`ImageResponse`, mentionné dans l'entrée du 6 juillet — vérifier s'il doit aussi être retouché ou s'il reste assez générique).
+---
 
-**Pas encore commencé** — aucune spec ni plan écrits à ce stade. Suivre le process habituel du projet (brainstorming → spec → plan → subagent-driven-development) avant de coder.
+## État du projet (19 juillet 2026 — marketing boutique : partage 1-clic, traçage, bandeau conseils, visuel story)
+
+Spec `docs/superpowers/specs/2026-07-18-marketing-boutique-facilitation-design.md`, plan en 8 tâches `docs/superpowers/plans/2026-07-18-marketing-boutique-facilitation.md`, exécuté via subagent-driven-development sur `worktree-marketing-boutique-facilitation` (session reprise après une interruption utilisateur mi-Task 3 — la ledger `.superpowers/sdd/progress.md` a permis une reprise propre sans re-travail), revue finale opus « Ready to merge » 0 Critical/Important, mergé sur `main` (`da0baea..8609e73`), poussé.
+
+**Objectif explicite (demande directe utilisateur)** : réduire le travail réel du marchand pour partager sa boutique/ses produits — **pas** lui donner des textes à copier-coller (périmètre exclu explicitement).
+
+**Livré** :
+- `BoutonPartager.tsx` (composant partagé, catalogue produits ET cartes boutique de l'onglet Marketing) : l'action principale devient 1 clic → ouverture directe de `wa.me/?text=...`, au lieu d'un menu à 3 choix. Les actions secondaires (copier le lien, télécharger le visuel) restent disponibles derrière un petit bouton `⋯`. Nouvelle prop optionnelle `onPartage?: () => void`, fire-and-forget, jamais awaited.
+- **Traçage `partage_le`** : colonne additive `boutique_produits.partage_le TIMESTAMPTZ` (nullable, `NULL` = jamais partagé) + route `PATCH /api/boutiques/:id/produits/:prodId/partage`. Mise à jour déclenchée au clic WhatsApp ou copie de lien sur un produit, jamais bloquante pour l'action de partage elle-même.
+- **Message enrichi promo** : quand `prix_barre > prix`, le message WhatsApp devient `🔥 {nom} en promo : {prix} au lieu de {prix_barre} !` au lieu du format simple.
+- **Bandeau « Conseils & rappels »** en haut de l'onglet Marketing (`MarketingBoutique`) : compte les produits jamais partagés (fetch dédié léger, pas de state partagé avec `CatalogueProduits`), affiche un bandeau orange actionnable (bouton « Voir ces produits → » qui bascule vers l'onglet Catalogue avec le filtre `jamais_partage` pré-appliqué) ou un bandeau vert si tout a déjà été partagé.
+- **Refonte visuelle** de `/assets/boutique/[id]/story` (`next/og` `ImageResponse`, `runtime = 'edge'` conservé, 1080×1920 inchangé) : composition asymétrique (titre boutique dominant à gauche, carte « vitrine » inclinée avec le logo qui déborde du cadre, bande diagonale orange, halos décoratifs) — même niveau d'exigence que le visuel `/assets/chatbot-whatsapp` déjà refondu le 6 juillet. Palette `#1C2B4A`/`#C75B00` conservée, repli 🏪 si pas de logo.
+
+**Incident de session à noter** : l'exécution a été interrompue une première fois par l'utilisateur juste après un commit de fix des tests `BoutonPartager.test.tsx` (Task 3), avant que le contrôleur ne relance la revue. À la reprise (nouvelle session), la ledger `.superpowers/sdd/progress.md` a permis de retrouver l'état exact (commit du fix déjà fait, tests à re-vérifier, revue à relancer) sans deviner ni re-exécuter de travail déjà fait — confirme la valeur de la ledger pour les sessions longues/interrompues sur ce projet.
+
+**Piège Windows rencontré en fin de chantier** : `git worktree remove` a timeout (2 min) sur ce worktree — la suppression du dossier avait commencé mais pas le nettoyage de la référence `.git` interne, laissant un état incohérent (« `.git` does not exist » au retry). Résolu par suppression manuelle du dossier restant (`rm -rf`) puis `git worktree prune`. Si `git worktree remove` traîne anormalement longtemps sur ce projet, ne pas relancer la même commande en boucle — vérifier d'abord si le dossier a déjà été partiellement supprimé.
+
+**Non vérifié par navigateur réel** (limite déjà documentée sur ce projet) : rendu effectif du bandeau de conseils et bascule d'onglet en clic réel, dropzone/filtre en interaction utilisateur. Le visuel story boutique, lui, a été vérifié en rendant réellement l'image (`ImageResponse` fetché en HTTP, PNG visualisé) avec et sans logo — pas seulement par lecture de code.
 
 ---
 
