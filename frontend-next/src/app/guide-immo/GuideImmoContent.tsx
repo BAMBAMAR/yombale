@@ -5,6 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
+import PageHeader from '@/components/PageHeader'
+import FiltresBar from '@/components/FiltresBar'
+import SeoCard from '@/components/SeoCard'
+import { IMMO_LANDINGS } from '@/app/immo/landing-data'
 
 const API = ''
 
@@ -135,6 +139,17 @@ export default function GuideImmoPage() {
   return (
     <div className="guide-page">
 
+      <PageHeader
+        breadcrumb={[
+          { label: 'Accueil', href: '/' },
+          { label: 'Immobilier', href: '/immo' },
+          { label: 'Guide immobilier' },
+        ]}
+        emoji="🏡"
+        titre="Guide immobilier intelligent"
+        compteur="Scoring personnalisé · 5 profils d'acheteur"
+      />
+
       <div className="guide-topbar">
         <Link href="/immo" className="guide-back-btn">← Annonces</Link>
         <div>
@@ -186,34 +201,41 @@ export default function GuideImmoPage() {
             />
           </div>
 
-          <div className="guide-budget-row">
-            <div className="guide-field" style={{ flex: 1 }}>
-              <label className="guide-label">Type de bien</label>
-              <select className="guide-select" value={typeBien} onChange={e => setTypeBien(e.target.value)}>
-                <option value="">Tous</option>
-                {TYPES_BIEN.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-            <div className="guide-field" style={{ flex: 1 }}>
-              <label className="guide-label">Ville</label>
-              <select className="guide-select" value={ville} onChange={e => setVille(e.target.value)}>
-                <option value="">Toutes</option>
-                {VILLES.map(v => <option key={v} value={v}>{v}</option>)}
-              </select>
-            </div>
+          <div className="guide-field">
+            <label className="guide-label">Type de bien</label>
+            <FiltresBar
+              essentiels={[
+                { key: 'type-tous', label: 'Tous', active: typeBien === '', onClick: () => setTypeBien('') },
+                ...TYPES_BIEN.map(t => ({ key: `type-${t}`, label: t, active: typeBien === t, onClick: () => setTypeBien(t) })),
+              ]}
+            />
           </div>
 
-          <div className="guide-budget-row">
-            <div className="guide-field" style={{ flex: 1 }}>
-              <label className="guide-label">Nb pièces min</label>
-              <select className="guide-select" value={nbPieces} onChange={e => setNbPieces(e.target.value)}>
-                {PIECES_OPTIONS.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
-              </select>
-            </div>
-            <div className="guide-field" style={{ flex: 1 }}>
-              <label className="guide-label">Surface min (m²)</label>
-              <input className="guide-input" type="number" placeholder="ex: 40" value={surfaceMin} onChange={e => setSurfaceMin(e.target.value)} />
-            </div>
+          <div className="guide-field">
+            <label className="guide-label">Ville</label>
+            <FiltresBar
+              essentiels={[
+                { key: 'ville-toutes', label: 'Toutes', active: ville === '', onClick: () => setVille('') },
+                ...VILLES.map(v => ({ key: `ville-${v}`, label: v, active: ville === v, onClick: () => setVille(v) })),
+              ]}
+            />
+          </div>
+
+          <div className="guide-field">
+            <label className="guide-label">Nb pièces min</label>
+            <FiltresBar
+              essentiels={PIECES_OPTIONS.map(o => ({
+                key: `pieces-${o.val || 'peu-importe'}`,
+                label: o.label,
+                active: nbPieces === o.val,
+                onClick: () => setNbPieces(o.val),
+              }))}
+            />
+          </div>
+
+          <div className="guide-field">
+            <label className="guide-label">Surface min (m²)</label>
+            <input className="guide-input" type="number" placeholder="ex: 40" value={surfaceMin} onChange={e => setSurfaceMin(e.target.value)} />
           </div>
 
           <div className="guide-field">
@@ -352,6 +374,25 @@ export default function GuideImmoPage() {
           )}
         </div>
       </div>
+
+      <SeoCard
+        titre="Pourquoi utiliser le guide immobilier intelligent Nopalou ?"
+        blurbs={[
+          { emoji: '🏡', text: 'Choisissez un profil (locataire, premier achat, investisseur, expatrié…) et le guide applique automatiquement des réglages adaptés à votre projet, sans avoir à tout paramétrer vous-même.' },
+          { emoji: '📐', text: 'Ajustez librement l\'importance du prix et de la surface : le score de chaque annonce est recalculé en direct selon vos priorités, pour repérer le meilleur compromis en un coup d\'œil.' },
+        ]}
+        chipRows={[
+          {
+            label: 'Recherches populaires',
+            chips: Object.entries(IMMO_LANDINGS).map(([slug, cfg]) => ({
+              href: `/immo/${slug}`,
+              emoji: cfg.transaction === 'location' ? '🏠' : '🔑',
+              label: cfg.label,
+            })),
+          },
+        ]}
+        foot="Recommandations mises à jour à chaque nouvelle recherche"
+      />
     </div>
   )
 }
