@@ -363,20 +363,34 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
         // Identifiant stable du post : Facebook n'expose plus d'ID /posts/N dans ce rendu ; on
         // récupère plutôt `set=pcb.<id>` depuis un lien photo (même id pour toutes les photos
         // d'un même post).
-        // Détecte une session invalidée côté serveur Facebook : les cookies ne sont pas
-        // expirés par date mais Facebook sert quand même la vue "déconnecté" sur cette même
-        // URL de groupe (formulaire de connexion visible, pas de redirection vers /login) —
-        // le contrôle plus haut sur page.url() ne capte donc pas ce cas. Sans cette détection,
-        // [role="feed"] est simplement absent et le scraper termine silencieusement avec
-        // scrapes:0/erreurs:0 sur tous les groupes, indiscernable d'un groupe réellement vide.
-        const sessionInvalidee = await page.evaluate(() => {
-          return !document.querySelector('[role="feed"]')
-              && !!document.querySelector('input[name="pass"], [data-testid="royal_pass"]');
-        });
-        if (sessionInvalidee) {
-          // Inutile de continuer sur les groupes suivants : la session est invalidée pour
-          // toute la durée du run, chaque groupe échouerait de la même façon.
-          stats.erreurs.push(`${groupe.label}: Session Facebook invalidée par le serveur (mur de connexion détecté) — relancez : node backend/scripts/fb-login-setup.js`);
+        // Détecte une session invalidée ou un blocage côté serveur Facebook, sous 4 formes
+        // constatées en réel, aucune ne redirigeant vers /login :
+        //  1. Mur de connexion sur l'URL du groupe (formulaire de mot de passe visible).
+        //     ⚠️ PIÈGE VÉCU : Facebook sert parfois quand même un [role="feed"] non vide (aperçu
+        //     public limité, 2-3 éléments d'interface, aucun vrai post) à côté du formulaire de
+        //     connexion — vérifié en réel avec un diagnostic dédié (feedChildCount:3 alors que
+        //     hasPasswordField:true). Donc ce check doit tourner AVANT/INDÉPENDAMMENT du test
+        //     sur l'absence de feed, jamais seulement en repli quand le feed est absent.
+        //  2. Redirection vers /sorry.php ou /checkpoint (page de blocage/vérification
+        //     générique de Facebook — observée après des runs répétés automatisés).
+        //  3. [role="feed"] absent sans qu'aucun des deux cas ci-dessus ne soit détectable
+        //     (repli générique — Facebook peut servir une page vide sans marqueur connu).
+        // Sans cette détection, le scraper termine silencieusement avec scrapes:0/erreurs:0
+        // sur tous les groupes, indiscernable d'un groupe réellement vide.
+        const urlBlocage = page.url().includes('/sorry.php') || page.url().includes('/checkpoint');
+        const { murConnexion, feedAbsent } = await page.evaluate(() => ({
+          murConnexion: !!document.querySelector('input[name="pass"], [data-testid="royal_pass"]'),
+          feedAbsent: !document.querySelector('[role="feed"]'),
+        }));
+        if (urlBlocage || murConnexion || feedAbsent) {
+          const raison = urlBlocage
+            ? `page de blocage Facebook détectée (${page.url().split('?')[0]})`
+            : murConnexion
+              ? 'mur de connexion détecté'
+              : 'aucun contenu de groupe chargé (cause inconnue)';
+          // Inutile de continuer sur les groupes suivants : la session/le compte est
+          // vraisemblablement bloqué pour toute la durée du run, chaque groupe échouerait pareil.
+          stats.erreurs.push(`${groupe.label}: Session Facebook invalidée par le serveur (${raison}) — relancez : node backend/scripts/fb-login-setup.js`);
           break;
         }
 
