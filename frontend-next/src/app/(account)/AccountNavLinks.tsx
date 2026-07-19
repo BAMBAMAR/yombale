@@ -23,8 +23,9 @@ const GROUPES = [
   {
     label: 'Compte',
     liens: [
-      { href: '/compte/profil',    label: 'Mon profil',           emoji: '✏️' },
-      { href: '/compte/apporteur', label: 'Apporteur d\'affaires', emoji: '💼' },
+      { href: '/compte/profil',         label: 'Mon profil',                   emoji: '✏️' },
+      { href: '/compte/apporteur',      label: 'Apporteur d\'affaires',        emoji: '💼' },
+      { href: '/compte/fonctionnalites', label: 'Fonctionnalités & abonnements', emoji: '📖' },
     ],
   },
 ]

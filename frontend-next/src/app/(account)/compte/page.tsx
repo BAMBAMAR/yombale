@@ -13,6 +13,7 @@ const MENU = [
   { href: '/deposer-annonce',    label: 'Publier une annonce',emoji: '➕', desc: 'Publier une annonce classifiée',  actif: true },
   { href: '/deposer-immo',       label: 'Publier un bien',   emoji: '🏡', desc: 'Publier une annonce immobilière', actif: true },
   { href: '/compte/apporteur',   label: 'Apporteur d\'affaires', emoji: '💼', desc: 'Recommandez Nopalou et touchez une commission', actif: true },
+  { href: '/compte/fonctionnalites', label: 'Fonctionnalités & abonnements', emoji: '📖', desc: 'Découvrez tout ce que Nopalou propose', actif: true },
   { href: '/compte/profil',      label: 'Mon profil',        emoji: '✏️', desc: 'Modifier mes informations',       actif: true },
 ]
 
