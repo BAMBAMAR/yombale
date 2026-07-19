@@ -2053,19 +2053,6 @@ a {
 .guide-input::placeholder { color: rgba(255,255,255,.3); }
 .guide-input:focus { border-color: rgba(255,255,255,.45); }
 
-.guide-select {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1.5px solid rgba(255,255,255,.15);
-  border-radius: var(--radius);
-  font-size: 13px;
-  background: rgba(0,0,0,.3);
-  color: #f1f5f9;
-  outline: none;
-  box-sizing: border-box;
-  cursor: pointer;
-}
-
 .guide-budget-row { display: flex; gap: 8px; margin-bottom: 4px; }
 
 .guide-pills-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 22px; }
@@ -2425,14 +2412,6 @@ a {
 }
 
 /* ── Telecom page ──────────────────────────────────────────────── */
-.telecom-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  gap: 16px;
-}
-
 .telecom-titre {
   font-size: 28px;
   font-weight: 700;
@@ -2444,13 +2423,6 @@ a {
   color: var(--text2);
   font-size: 14px;
   margin: 0;
-}
-
-.telecom-count {
-  font-size: 13px;
-  color: var(--text2);
-  white-space: nowrap;
-  padding-bottom: 4px;
 }
 
 .telecom-filtres {
@@ -2913,13 +2885,6 @@ a {
 .navbar-guide-item span:first-child { font-size: 14px; }
 
 /* ── Sprint 15 — Télécom scoring + wizard ───────────────────────── */
-.telecom-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
 .wizard-trigger-btn {
   background: var(--accent);
   color: #fff;
@@ -3230,7 +3195,6 @@ a {
 
 @media (max-width: 600px) {
   .wizard-panel { padding: 24px 16px; }
-  .telecom-header-actions { flex-direction: column; align-items: flex-start; }
 }
 
 /* ── Forfait card (base — doit rester après les règles Sprint 15) ── */
@@ -3399,7 +3363,6 @@ a {
 }
 
 @media (max-width: 600px) {
-  .telecom-header { flex-direction: column; align-items: flex-start; }
   .telecom-titre { font-size: 22px; }
   .forfaits-grid { grid-template-columns: 1fr; }
   .forfait-specs { grid-template-columns: repeat(2, 1fr); }
@@ -6179,28 +6142,6 @@ a {
   padding: 36px 5%;
 }
 
-.annonces-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.annonces-titre {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--navy);
-  margin: 0 0 4px;
-}
-
-.annonces-sous-titre {
-  font-size: 14px;
-  color: var(--text2);
-  margin: 0;
-}
-
 .annonces-cta-btn {
   padding: 10px 18px;
   background: var(--accent);
@@ -6250,14 +6191,6 @@ a {
 }
 
 .annonces-search-btn:hover { opacity: .88; }
-
-.annonces-cats {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-
 
 .annonces-grid {
   display: grid;
@@ -7862,7 +7795,6 @@ a {
   white-space: nowrap;
 }
 .guide-prix-btn:disabled { opacity: .6; cursor: not-allowed; }
-.guide-prix-cats { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 
 .guide-prix-body {
   display: grid;
@@ -8264,10 +8196,10 @@ a {
 
 /* Bloc SEO homepage : texte en 2 colonnes sur desktop (lignes lisibles
    malgré la largeur 1200px alignée sur les autres sections) */
-.home-seo-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; align-items: start; }
+.seo-cols-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; align-items: start; }
 @media (max-width: 900px) {
-  .home-seo-cols { grid-template-columns: 1fr; }
-  .home-seo-cols p:first-child { margin-bottom: 12px; }
+  .seo-cols-grid { grid-template-columns: 1fr; }
+  .seo-cols-grid p:first-child { margin-bottom: 12px; }
 }
 
 /* ── Focus clavier — anneau net, jamais supprimé (finition 2026-07-11) ── */

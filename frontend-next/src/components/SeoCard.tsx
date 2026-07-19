@@ -35,7 +35,7 @@ export default function SeoCard({ titre, tag, blurbs, chipRows, foot }: SeoCardP
         </div>
 
         <div className="seo-cols-wrap">
-          <div className="home-seo-cols">
+          <div className="seo-cols-grid">
             {blurbs.map((b, i) => (
               <div key={i} className="seo-blurb">
                 <span className="seo-icon">{b.emoji}</span>

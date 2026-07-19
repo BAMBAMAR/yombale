@@ -451,7 +451,7 @@ export default async function HomePage({
             </div>
 
             <div className="seo-cols-wrap">
-              <div className="home-seo-cols">
+              <div className="seo-cols-grid">
                 <div className="seo-blurb">
                   <span className="seo-icon">📊</span>
                   <p>

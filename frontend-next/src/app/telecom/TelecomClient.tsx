@@ -288,7 +288,7 @@ export default function TelecomClient({
             text: (
               <>
                 Nopalou compare les forfaits internet, appels et SMS de tous les opérateurs du Sénégal —
-                Orange, Free, Expresso et Wave — pour vous aider à choisir le meilleur rapport qualité/prix
+                Orange, Yas, Expresso et ProMobile — pour vous aider à choisir le meilleur rapport qualité/prix
                 selon votre usage réel.
               </>
             ),

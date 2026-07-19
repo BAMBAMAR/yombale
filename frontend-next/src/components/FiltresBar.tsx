@@ -15,7 +15,6 @@ interface FiltrePill {
 interface FiltresBarProps {
   essentiels: FiltrePill[]
   secondaires?: FiltrePill[]
-  secondaireActifsCount?: number
   tri?: FiltrePill[]
 }
 
@@ -27,9 +26,9 @@ function Pill({ p }: { p: FiltrePill }) {
   return <button type="button" className={cls} onClick={p.onClick}>{p.label}</button>
 }
 
-export default function FiltresBar({ essentiels, secondaires = [], secondaireActifsCount, tri = [] }: FiltresBarProps) {
+export default function FiltresBar({ essentiels, secondaires = [], tri = [] }: FiltresBarProps) {
   const [open, setOpen] = useState(false)
-  const badgeCount = secondaireActifsCount ?? secondaires.filter(p => p.active).length
+  const badgeCount = secondaires.filter(p => p.active).length
 
   return (
     <div>
