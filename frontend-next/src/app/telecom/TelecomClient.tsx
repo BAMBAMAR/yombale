@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import WizardForfait from './WizardForfait'
 import CardActions from '@/app/CardActions'
+import PageHeader from '@/components/PageHeader'
+import FiltresBar from '@/components/FiltresBar'
+import SeoCard from '@/components/SeoCard'
 import type { Forfait } from './page'
 
 interface Props {
@@ -185,64 +188,44 @@ export default function TelecomClient({
   return (
     <div className="page-container" style={{ paddingTop: '2rem' }}>
       {/* En-tête */}
-      <div className="telecom-header">
-        <div className="telecom-header-text">
-          <h1 className="telecom-titre">
-            Forfaits <span style={{ color: 'var(--accent)' }}>Télécom</span>
-          </h1>
-          <p className="telecom-sous-titre">
-            Comparez les forfaits internet et appels des opérateurs au Sénégal
-          </p>
-        </div>
-        <div className="telecom-header-actions">
-          {total > 0 && (
-            <span className="telecom-count">{total} forfait{total > 1 ? 's' : ''}</span>
-          )}
-          <button className="wizard-trigger-btn" onClick={() => setShowWizard(true)}>
-            🎯 Trouver mon forfait
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumb={[{ label: 'Accueil', href: '/' }, { label: 'Télécom' }]}
+        titre="Forfaits Télécom"
+        compteur={total > 0
+          ? `${total} forfait${total > 1 ? 's' : ''} · Comparez les offres internet et appels des opérateurs au Sénégal`
+          : 'Comparez les forfaits internet et appels des opérateurs au Sénégal'}
+        cta={{ label: '🎯 Trouver mon forfait', onClick: () => setShowWizard(true) }}
+      />
 
       {/* Filtres */}
-      <div className="telecom-filtres">
-        <div className="filtres-bar telecom-filtres-inner" style={{ flexWrap: 'wrap' }}>
-          <div className="filtres-group">
-            <span className="filtres-label">Opérateur</span>
-            <Link href={buildLink({ operateur: '', page: '1' })} className={`budget-pill${!currentOperateur ? ' active' : ''}`}>
-              Tous
-            </Link>
-            {operateurs.map(op => (
-              <Link
-                key={op}
-                href={buildLink({ operateur: op, page: '1' })}
-                className={`budget-pill${currentOperateur === op ? ' active' : ''}`}
-                style={currentOperateur === op ? { background: OP_COLORS[op]?.badge ?? 'var(--accent)', borderColor: OP_COLORS[op]?.badge ?? 'var(--accent)' } : {}}
-              >
-                {OP_ICONS[op] ?? '📡'} {op}
-              </Link>
-            ))}
-          </div>
-
-          <div className="filtres-group">
-            <span className="filtres-label">Type</span>
-            {TYPES.map(t => (
-              <Link key={t.val} href={buildLink({ type: t.val, page: '1' })} className={`budget-pill${currentType === t.val ? ' active' : ''}`}>
-                {t.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="filtres-group">
-            <span className="filtres-label">Trier par</span>
-            {TRIS.map(t => (
-              <Link key={t.val} href={buildLink({ tri: t.val, page: '1' })} className={`budget-pill${currentTri === t.val ? ' active' : ''}`}>
-                {t.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
+      <FiltresBar
+        essentiels={[
+          {
+            key: 'op-tous',
+            label: 'Tous opérateurs',
+            href: buildLink({ operateur: '', page: '1' }),
+            active: !currentOperateur,
+          },
+          ...operateurs.map(op => ({
+            key: `op-${op}`,
+            label: `${OP_ICONS[op] ?? '📡'} ${op}`,
+            href: buildLink({ operateur: op, page: '1' }),
+            active: currentOperateur === op,
+          })),
+          ...TYPES.map(t => ({
+            key: `type-${t.val || 'tous'}`,
+            label: t.label,
+            href: buildLink({ type: t.val, page: '1' }),
+            active: currentType === t.val,
+          })),
+        ]}
+        tri={TRIS.map(t => ({
+          key: `tri-${t.val || 'defaut'}`,
+          label: t.label,
+          href: buildLink({ tri: t.val, page: '1' }),
+          active: currentTri === t.val,
+        }))}
+      />
 
       {/* Grille : recommandés + tous les forfaits */}
       {forfaits.length === 0 ? (
@@ -296,6 +279,43 @@ export default function TelecomClient({
 
         </div>
       )}
+
+      <SeoCard
+        titre="Pourquoi comparer les forfaits télécom sur Nopalou ?"
+        blurbs={[
+          {
+            emoji: '📡',
+            text: (
+              <>
+                Nopalou compare les forfaits internet, appels et SMS de tous les opérateurs du Sénégal —
+                Orange, Free, Expresso et Wave — pour vous aider à choisir le meilleur rapport qualité/prix
+                selon votre usage réel.
+              </>
+            ),
+          },
+          {
+            emoji: '🎯',
+            text: (
+              <>
+                Utilisez l&apos;assistant <strong>« Trouver mon forfait »</strong> pour une recommandation personnalisée
+                selon votre budget, ou comparez directement les forfaits recommandés par opérateur ci-dessus.
+              </>
+            ),
+          },
+        ]}
+        chipRows={[
+          {
+            label: 'Par opérateur',
+            chips: [
+              { href: '/telecom/orange', emoji: '🟠', label: 'Forfaits Orange' },
+              { href: '/telecom/yas', emoji: '🔵', label: 'Forfaits Yas' },
+              { href: '/telecom/expresso', emoji: '🟢', label: 'Forfaits Expresso' },
+              { href: '/telecom/promobile', emoji: '📡', label: 'Forfaits ProMobile' },
+            ],
+          },
+        ]}
+        foot="Prix et forfaits comparés selon les grilles tarifaires publiques des opérateurs"
+      />
 
       {/* Wizard */}
       {showWizard && <WizardForfait onClose={() => setShowWizard(false)} operateurs={operateurs} />}
