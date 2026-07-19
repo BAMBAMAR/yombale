@@ -69,10 +69,13 @@ img, video, iframe {
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
   background: var(--bg);
   color: var(--text1);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4 {
@@ -8183,10 +8186,10 @@ a {
 
 /* Bloc SEO homepage : texte en 2 colonnes sur desktop (lignes lisibles
    malgré la largeur 1200px alignée sur les autres sections) */
-.seo-cols-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; align-items: start; }
+.seo-cols-grid { display: flex; align-items: flex-start; gap: 0 40px; }
+.seo-cols-grid > * { flex: 1 1 0; min-width: 0; }
 @media (max-width: 900px) {
-  .seo-cols-grid { grid-template-columns: 1fr; }
-  .seo-cols-grid p:first-child { margin-bottom: 12px; }
+  .seo-cols-grid { flex-direction: column; gap: 12px 0; }
 }
 
 /* ── Focus clavier — anneau net, jamais supprimé (finition 2026-07-11) ── */
