@@ -17,9 +17,14 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
 
     // Défaut = meilleur prix d'abord (demande produit, 17/07/2026). L'ancien défaut
     // "popularité" (nb d'offres) reste accessible via tri=populaire.
-    // Défaut homepage (aucun tri ni catégorie choisis, 19/07/2026) : groupé par
-    // catégorie dans un ordre fixe demandé, puis prix croissant dans chaque groupe.
-    const CATEGORIE_ORDRE = `CASE c.nom
+    // Défaut homepage (aucun tri ni catégorie choisis, 19/07/2026) : mixage round-robin
+    // par catégorie dans un ordre fixe (un Téléphone, un Informatique, un TV&Electro...
+    // puis on reboucle), prix croissant à l'intérieur de chaque catégorie. Exclut aussi
+    // les accessoires < 20 000 FCFA (sauf si l'utilisateur choisit un prixMin explicite).
+    const defautMixe = !tri && !categorie;
+    // En mode mixé, l'ORDER BY final s'applique sur la sous-requête "ranked" — les
+    // colonnes y sont déjà aliasées (categorie_nom, prix_min), pas c.nom/MIN(o.prix).
+    const CATEGORIE_ORDRE_RANKED = `CASE ranked.categorie_nom
       WHEN 'Telephones'   THEN 1
       WHEN 'Informatique' THEN 2
       WHEN 'TV & Electro' THEN 3
@@ -29,12 +34,12 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       WHEN 'Jeux'         THEN 7
       ELSE 8
     END`;
-    const orderBy = tri === 'prix_asc'  ? 'MIN(o.prix) ASC NULLS LAST'
-                  : tri === 'prix_desc' ? 'MIN(o.prix) DESC NULLS LAST'
-                  : tri === 'nom_asc'   ? 'p.nom ASC'
-                  : tri === 'populaire' ? 'COUNT(o.id) DESC NULLS LAST'
-                  : (!tri && !categorie) ? `${CATEGORIE_ORDRE} ASC, MIN(o.prix) ASC NULLS LAST`
-                  :                       'MIN(o.prix) ASC NULLS LAST';
+    const orderBy = tri === 'prix_asc'  ? 't.agg_prix_min ASC NULLS LAST'
+                  : tri === 'prix_desc' ? 't.agg_prix_min DESC NULLS LAST'
+                  : tri === 'nom_asc'   ? 't.nom ASC'
+                  : tri === 'populaire' ? 't.agg_nb_offres DESC NULLS LAST'
+                  : defautMixe          ? `ranked.rang_categorie ASC, ${CATEGORIE_ORDRE_RANKED} ASC, ranked.agg_prix_min ASC NULLS LAST`
+                  :                       't.agg_prix_min ASC NULLS LAST';
 
     const categorieNorm = categorie || null;
 
@@ -136,14 +141,22 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       return `($1::text IS NULL OR (${clauses.join(' ' + operator + ' ')}))`;
     }
 
+    // Prix plancher par défaut (hors accessoires) — seulement quand l'utilisateur n'a
+    // fourni ni tri ni catégorie ni prixMin explicite.
+    const prixMinDefautMixe = defautMixe && !prixMin ? 20000 : null;
+
     function buildSQL(qCond) {
-      return `
+      // La table produits a elle-même des colonnes prix_min/nb_offres (stales, non
+      // utilisées — toujours recalculées ici). p.* les inclut donc en double avec les
+      // agrégats ci-dessous ⇒ agrégats calculés sous des noms distincts en interne,
+      // ré-exposés comme prix_min/nb_offres (contrat JSON existant) seulement dans le
+      // SELECT final, pour éviter toute ambiguïté de colonne dans les sous-requêtes.
+      const base = `
         SELECT p.*, c.nom AS categorie_nom,
-               MIN(o.prix) AS prix_min,
-               MAX(o.prix) AS prix_max,
-               COUNT(o.id) AS nb_offres,
-               COALESCE(jsonb_agg(DISTINCT o.specs->>'etat') FILTER (WHERE o.specs->>'etat' IS NOT NULL), '[]'::jsonb) AS etats,
-               COUNT(*) OVER() AS total_count
+               MIN(o.prix) AS agg_prix_min,
+               MAX(o.prix) AS agg_prix_max,
+               COUNT(o.id) AS agg_nb_offres,
+               COALESCE(jsonb_agg(DISTINCT o.specs->>'etat') FILTER (WHERE o.specs->>'etat' IS NOT NULL), '[]'::jsonb) AS etats
         FROM produits p
         LEFT JOIN categories c ON c.id = p.categorie_id
         LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true AND o.quarantinee = false
@@ -157,8 +170,36 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
               ))
           ${sousTypeCondition}
         GROUP BY p.id, c.nom
-        HAVING COUNT(o.id) = 0 OR MIN(o.prix) >= 500
-        ORDER BY (p.sponsorise = true AND (p.sponsor_jusqu_au IS NULL OR p.sponsor_jusqu_au > NOW())) DESC, ${orderBy}
+        HAVING (COUNT(o.id) = 0 OR MIN(o.prix) >= 500)
+          ${prixMinDefautMixe ? `AND MIN(o.prix) >= ${prixMinDefautMixe}` : ''}`;
+
+      // p.* apporte déjà id/nom/description/image_url/marque/ean/categorie_id/
+      // created_at/sponsorise/sponsor_jusqu_au/prix_min/nb_offres (stales) — on les
+      // reprend explicitement pour ne renvoyer que les colonnes utiles au frontend,
+      // avec prix_min/nb_offres pointant vers les agrégats recalculés (agg_*).
+      const colonnesFinales = `
+        t.id, t.nom, t.description, t.image_url, t.marque, t.ean, t.categorie_id,
+        t.created_at, t.sponsorise, t.sponsor_jusqu_au, t.categorie_nom,
+        t.agg_prix_min AS prix_min, t.agg_prix_max AS prix_max, t.agg_nb_offres AS nb_offres, t.etats`;
+
+      if (!defautMixe) {
+        return `
+          SELECT ${colonnesFinales}, COUNT(*) OVER() AS total_count
+          FROM (${base}) t
+          ORDER BY (t.sponsorise = true AND (t.sponsor_jusqu_au IS NULL OR t.sponsor_jusqu_au > NOW())) DESC, ${orderBy}
+          LIMIT $5 OFFSET $6`;
+      }
+
+      // Mode mixé : rang du produit au sein de sa catégorie (prix croissant), puis
+      // round-robin global — un produit de chaque catégorie à tour de rôle.
+      return `
+        SELECT ${colonnesFinales.replace(/\bt\./g, 'ranked.')}, ranked.rang_categorie, COUNT(*) OVER() AS total_count
+        FROM (
+          SELECT t.*,
+                 ROW_NUMBER() OVER (PARTITION BY t.categorie_nom ORDER BY t.agg_prix_min ASC NULLS LAST) AS rang_categorie
+          FROM (${base}) t
+        ) ranked
+        ORDER BY (ranked.sponsorise = true AND (ranked.sponsor_jusqu_au IS NULL OR ranked.sponsor_jusqu_au > NOW())) DESC, ${orderBy}
         LIMIT $5 OFFSET $6`;
     }
 
