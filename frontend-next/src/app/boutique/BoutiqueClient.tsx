@@ -3,7 +3,7 @@ import { useState, useEffect, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
-import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit } from './actions'
+import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage } from './actions'
 import Comptabilite from './Comptabilite'
 import Commandes from './Commandes'
 import AnalyticsClient from './analytics/AnalyticsClient'
@@ -67,6 +67,7 @@ interface Produit {
   variantes: Variante[] | null
   whatsapp_sync_statut: 'synchronise' | 'en_attente' | 'echec' | null
   whatsapp_sync_erreur: string | null
+  partage_le: string | null
 }
 
 // ── Caractéristiques par catégorie ────────────────────────────────────────────
@@ -979,18 +980,59 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
 
 // ── Marketing / partage de la boutique ────────────────────────────────────────
 
-function MarketingBoutique({ boutique }: { boutique: Boutique }) {
+function MarketingBoutique({ boutique, onVoirJamaisPartages }: { boutique: Boutique; onVoirJamaisPartages: () => void }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
   const lienBoutique = `${siteUrl}/boutiques/${boutique.slug || boutique.id}`
   const messageBoutique = `Découvrez ${boutique.nom} sur Nopalou !\n\n${lienBoutique}`
   const lienAssistant = lienBoutiqueWhatsapp(boutique.slug || boutique.id)
   const messageAssistant = `Découvrez ${boutique.nom} sur Nopalou et commandez directement sur WhatsApp !\n\n${lienAssistant}`
 
+  const [nbJamaisPartages, setNbJamaisPartages] = useState<number | null>(null)
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
+
+  useEffect(() => {
+    let annule = false
+    fetch(`${backendUrl}/api/boutiques/${boutique.id}/produits`)
+      .then(res => res.json())
+      .then((data: { produits?: { partage_le: string | null }[] }) => {
+        if (annule) return
+        const produits = data.produits ?? []
+        setNbJamaisPartages(produits.filter(p => !p.partage_le).length)
+      })
+      .catch(() => { if (!annule) setNbJamaisPartages(0) })
+    return () => { annule = true }
+  }, [boutique.id, backendUrl])
+
   return (
     <div>
-      <p style={{ margin: '0 0 16px', fontSize: 13, color: '#6b7280' }}>
-        Partagez votre boutique sur WhatsApp, Instagram ou Facebook pour attirer plus de clients.
-      </p>
+      {nbJamaisPartages === null ? null : nbJamaisPartages > 0 ? (
+        <div style={{
+          background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 12,
+          padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: 20 }}>📢</span>
+          <p style={{ margin: 0, fontSize: 13, color: '#78350f', flex: 1, minWidth: 200 }}>
+            <strong>{nbJamaisPartages} produit{nbJamaisPartages > 1 ? 's' : ''}</strong> n&apos;{nbJamaisPartages > 1 ? 'ont' : 'a'} jamais été partagé{nbJamaisPartages > 1 ? 's' : ''} — un partage régulier aide vos produits à être vus.
+          </p>
+          <button
+            onClick={onVoirJamaisPartages}
+            style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >
+            Voir ces produits →
+          </button>
+        </div>
+      ) : (
+        <div style={{
+          background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12,
+          padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12,
+        }}>
+          <span style={{ fontSize: 20 }}>✅</span>
+          <p style={{ margin: 0, fontSize: 13, color: '#166534' }}>
+            Tous vos produits ont déjà été partagés au moins une fois.
+          </p>
+        </div>
+      )}
+
       <div style={{
         display: 'flex', alignItems: 'center', gap: 16,
         background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '20px',
@@ -1039,14 +1081,14 @@ function MarketingBoutique({ boutique }: { boutique: Boutique }) {
 
 // ── Gestionnaire de catalogue produits ───────────────────────────────────────
 
-function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutique; planActif: 'pro' | 'business' | null; prixPro: number }) {
+function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { boutique: Boutique; planActif: 'pro' | 'business' | null; prixPro: number; filtreInitial?: 'jamais_partage' }) {
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<'list' | { creating: 'rapide' | 'detaille' } | { editing: Produit }>('list')
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [rechercheTexte, setRechercheTexte] = useState('')
-  const [filtreStatut, setFiltreStatut] = useState<'tous' | 'synchronise' | 'en_attente' | 'echec'>('tous')
+  const [filtreStatut, setFiltreStatut] = useState<'tous' | 'synchronise' | 'en_attente' | 'echec' | 'jamais_partage'>(filtreInitial ?? 'tous')
   const [filtreCategorie, setFiltreCategorie] = useState<string>('toutes')
   const [, startTransition] = useTransition()
 
@@ -1091,7 +1133,8 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
 
   const produitsFiltres = produits.filter(p => {
     if (rechercheTexte.trim() && !p.nom.toLowerCase().includes(rechercheTexte.trim().toLowerCase())) return false
-    if (filtreStatut !== 'tous' && (p.whatsapp_sync_statut || 'en_attente') !== filtreStatut) return false
+    if (filtreStatut === 'jamais_partage') { if (p.partage_le) return false }
+    else if (filtreStatut !== 'tous' && (p.whatsapp_sync_statut || 'en_attente') !== filtreStatut) return false
     if (filtreCategorie !== 'toutes' && p.categorie !== filtreCategorie) return false
     return true
   })
@@ -1162,6 +1205,7 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
             <option value="synchronise">✓ Sur WhatsApp</option>
             <option value="en_attente">⏳ En attente</option>
             <option value="echec">✗ Échec</option>
+            <option value="jamais_partage">📢 Jamais partagés</option>
           </select>
           {categoriesDisponibles.length > 1 && (
             <select
@@ -1249,8 +1293,13 @@ function CatalogueProduits({ boutique, planActif, prixPro }: { boutique: Boutiqu
               <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
                 <BoutonPartager
                   lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
-                  message={`${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
+                  message={
+                    p.prix_barre && p.prix && p.prix_barre > p.prix
+                      ? `🔥 ${p.nom} en promo : ${fcfa(p.prix)} au lieu de ${fcfa(p.prix_barre)} !\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`
+                      : `${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`
+                  }
                   lienVisuel={`/assets/produit-boutique/${p.id}/story?boutiqueId=${boutique.id}`}
+                  onPartage={() => { marquerProduitPartage(boutique.id, p.id).catch(() => {}) }}
                 />
                 <button
                   onClick={() => setMode({ editing: p })}
@@ -1407,6 +1456,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
   prixPro: number
 }) {
   const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing'>('produits')
+  const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
   const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#6b7280'
@@ -1516,10 +1566,9 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
           {tab === 'compta'    && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Ventes, dépenses, stock et zones de livraison.</p>}
           {tab === 'analytics' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Vues, clics et performances de votre boutique.</p>}
           {tab === 'infos'     && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Modifiez les informations, contacts et photos.</p>}
-          {tab === 'marketing' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Partagez votre boutique pour attirer plus de clients.</p>}
         </div>
 
-        {tab === 'produits'  && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} />}
+        {tab === 'produits'  && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
         {tab === 'commandes' && <Commandes boutiqueId={boutique.id} />}
         {tab === 'compta'    && <Comptabilite boutiqueId={boutique.id} />}
         {tab === 'analytics' && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
@@ -1528,7 +1577,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
             <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={onEdit} />
           </div>
         )}
-        {tab === 'marketing' && <MarketingBoutique boutique={boutique} />}
+        {tab === 'marketing' && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} />}
       </main>
     </div>
     </>
