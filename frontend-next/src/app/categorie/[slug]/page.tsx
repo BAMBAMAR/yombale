@@ -281,9 +281,15 @@ export default async function CategoriePage({
               emoji: '📊',
               text: (
                 <>
-                  Nopalou est le premier comparateur de prix dédié au marché sénégalais.
-                  Nous indexons les prix de {cat.exemples} chez tous les grands marchands en ligne du Sénégal — Jumia, Expat-Dakar, CoinAfrique et bien d&apos;autres.
-                  Les prix sont mis à jour automatiquement toutes les 6 heures.
+                  <p>
+                    Nopalou est le premier comparateur de prix dédié au marché sénégalais.
+                    Nous indexons les prix de {cat.exemples} chez tous les grands marchands en ligne du Sénégal — Jumia, Expat-Dakar, CoinAfrique et bien d&apos;autres.
+                    Les prix sont mis à jour automatiquement toutes les 6 heures.
+                  </p>
+                  <p>
+                    {cat.intro}
+                    {' '}Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis ou Ziguinchor, trouvez le meilleur prix avant d&apos;acheter.
+                  </p>
                 </>
               ),
             },
@@ -291,10 +297,6 @@ export default async function CategoriePage({
               emoji: '📍',
               text: (
                 <>
-                  <p>
-                    {cat.intro}
-                    {' '}Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis ou Ziguinchor, trouvez le meilleur prix avant d&apos;acheter.
-                  </p>
                   {cat.contenu.map((para, i) => (
                     <p key={i}>{para}</p>
                   ))}
