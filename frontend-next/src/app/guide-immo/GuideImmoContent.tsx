@@ -150,13 +150,7 @@ export default function GuideImmoPage() {
         compteur="Scoring personnalisé · 5 profils d'acheteur"
       />
 
-      <div className="guide-topbar">
-        <Link href="/immo" className="guide-back-btn">← Annonces</Link>
-        <div>
-          <div className="guide-topbar-titre">🏡 Guide immobilier intelligent</div>
-          <div className="guide-topbar-sub">Scoring personnalisé · 5 profils d&apos;acheteur</div>
-        </div>
-      </div>
+      <Link href="/immo" className="guide-back-btn" style={{ marginBottom: 16 }}>← Annonces</Link>
 
       <div className="guide-wrap">
 

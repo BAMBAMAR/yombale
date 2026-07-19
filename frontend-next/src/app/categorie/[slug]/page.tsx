@@ -68,7 +68,7 @@ export default async function CategoriePage({
   searchParams,
 }: {
   params: { slug: string }
-  searchParams: { page?: string; prixMax?: string; tri?: string; sousType?: string }
+  searchParams: { page?: string; prixMax?: string; tri?: string; sousType?: string; q?: string }
 }) {
   const cat = CATEGORIES[params.slug]
   if (!cat) notFound()
@@ -77,11 +77,13 @@ export default async function CategoriePage({
   const prixMax = searchParams.prixMax ?? ''
   const tri    = searchParams.tri    ?? 'pertinence'
   const sousType = searchParams.sousType ?? ''
+  const q      = searchParams.q      ?? ''
 
   const qs = new URLSearchParams({ limit: '24', page, categorie: params.slug })
   if (prixMax) qs.set('prixMax', prixMax)
   if (tri !== 'pertinence') qs.set('tri', tri)
   if (sousType) qs.set('sousType', sousType)
+  if (q) qs.set('q', q)
 
   let produits: Produit[] = []
   let total = 0
@@ -106,6 +108,7 @@ export default async function CategoriePage({
     if (prixMax) ps.set('prixMax', prixMax)
     if (tri !== 'pertinence') ps.set('tri', tri)
     if (sousType) ps.set('sousType', sousType)
+    if (q) ps.set('q', q)
     Object.entries(p).forEach(([k, v]) => (v ? ps.set(k, v) : ps.delete(k)))
     const qs2 = ps.toString()
     return `/categorie/${params.slug}${qs2 ? `?${qs2}` : ''}`
@@ -172,6 +175,26 @@ export default async function CategoriePage({
           titre={cat.h1}
           compteur={total > 0 ? `${total.toLocaleString('fr-FR')} produit${total > 1 ? 's' : ''} comparés au Sénégal · Prix mis à jour toutes les 6h` : undefined}
         />
+
+        {/* Recherche texte */}
+        <form action={`/categorie/${params.slug}`} method="get" className="annonces-search">
+          {prixMax   && <input type="hidden" name="prixMax" value={prixMax} />}
+          {tri !== 'pertinence' && <input type="hidden" name="tri" value={tri} />}
+          {sousType  && <input type="hidden" name="sousType" value={sousType} />}
+          <input
+            type="text"
+            name="q"
+            defaultValue={q}
+            placeholder={`Rechercher dans ${cat.label.toLowerCase()}…`}
+            className="annonces-search-input"
+          />
+          <button type="submit" className="annonces-search-btn">🔍 Rechercher</button>
+          {q && (
+            <Link href={buildLink({ q: '' })} className="budget-pill budget-pill--reset">
+              ✕ Recherche
+            </Link>
+          )}
+        </form>
 
         {/* Filtres */}
         <div style={{ marginBottom: 20 }}>
@@ -268,12 +291,12 @@ export default async function CategoriePage({
               emoji: '📍',
               text: (
                 <>
-                  <p style={{ margin: 0 }}>
+                  <p>
                     {cat.intro}
                     {' '}Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis ou Ziguinchor, trouvez le meilleur prix avant d&apos;acheter.
                   </p>
                   {cat.contenu.map((para, i) => (
-                    <p key={i} style={{ margin: '10px 0 0' }}>{para}</p>
+                    <p key={i}>{para}</p>
                   ))}
                 </>
               ),

@@ -187,14 +187,7 @@ export default function GuideAchatPage() {
         compteur="Scoring personnalisé · 4 profils d'achat"
       />
 
-      {/* Header */}
-      <div className="guide-topbar">
-        <Link href="/" className="guide-back-btn">← Retour</Link>
-        <div>
-          <div className="guide-topbar-titre">🏆 Guide d&apos;achat intelligent</div>
-          <div className="guide-topbar-sub">Scoring personnalisé · 4 profils d&apos;achat</div>
-        </div>
-      </div>
+      <Link href="/" className="guide-back-btn" style={{ marginBottom: 16 }}>← Retour</Link>
 
       <div className="guide-wrap">
 
