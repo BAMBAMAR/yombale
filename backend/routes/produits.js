@@ -17,10 +17,23 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
 
     // Défaut = meilleur prix d'abord (demande produit, 17/07/2026). L'ancien défaut
     // "popularité" (nb d'offres) reste accessible via tri=populaire.
+    // Défaut homepage (aucun tri ni catégorie choisis, 19/07/2026) : groupé par
+    // catégorie dans un ordre fixe demandé, puis prix croissant dans chaque groupe.
+    const CATEGORIE_ORDRE = `CASE c.nom
+      WHEN 'Telephones'   THEN 1
+      WHEN 'Informatique' THEN 2
+      WHEN 'TV & Electro' THEN 3
+      WHEN 'Mode'         THEN 4
+      WHEN 'Maison'       THEN 5
+      WHEN 'Auto & Moto'  THEN 6
+      WHEN 'Jeux'         THEN 7
+      ELSE 8
+    END`;
     const orderBy = tri === 'prix_asc'  ? 'MIN(o.prix) ASC NULLS LAST'
                   : tri === 'prix_desc' ? 'MIN(o.prix) DESC NULLS LAST'
                   : tri === 'nom_asc'   ? 'p.nom ASC'
                   : tri === 'populaire' ? 'COUNT(o.id) DESC NULLS LAST'
+                  : (!tri && !categorie) ? `${CATEGORIE_ORDRE} ASC, MIN(o.prix) ASC NULLS LAST`
                   :                       'MIN(o.prix) ASC NULLS LAST';
 
     const categorieNorm = categorie || null;
