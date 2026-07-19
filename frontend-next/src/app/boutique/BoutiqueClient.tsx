@@ -980,7 +980,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
 
 // ── Marketing / partage de la boutique ────────────────────────────────────────
 
-function MarketingBoutique({ boutique, onVoirJamaisPartages }: { boutique: Boutique; onVoirJamaisPartages: () => void }) {
+function MarketingBoutique({ boutique, onVoirJamaisPartages, planActif }: { boutique: Boutique; onVoirJamaisPartages: () => void; planActif: 'pro' | 'business' | null }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
   const lienBoutique = `${siteUrl}/boutiques/${boutique.slug || boutique.id}`
   const messageBoutique = `Découvrez ${boutique.nom} sur Nopalou !\n\n${lienBoutique}`
@@ -1074,6 +1074,27 @@ function MarketingBoutique({ boutique, onVoirJamaisPartages }: { boutique: Bouti
           message={messageAssistant}
           lienVisuel={`/assets/boutique/${boutique.id}/story`}
         />
+      </div>
+
+      <div style={{
+        marginTop: 16, padding: '16px 20px', background: '#f8fafc',
+        border: '1px solid #e2e8f0', borderRadius: 12,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
+      }}>
+        <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>
+          Un visuel prêt à partager pour votre palier actuel ({planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : 'Gratuit'}) :
+        </p>
+        <a
+          href={`/assets/palier/${planActif ?? 'gratuit'}/carre`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            padding: '8px 16px', background: '#1C2B4A', color: '#fff', borderRadius: 8,
+            fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap',
+          }}
+        >
+          🖼 Voir le visuel →
+        </a>
       </div>
     </div>
   )
@@ -1577,7 +1598,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
             <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={onEdit} />
           </div>
         )}
-        {tab === 'marketing' && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} />}
+        {tab === 'marketing' && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} planActif={planActif} />}
       </main>
     </div>
     </>
