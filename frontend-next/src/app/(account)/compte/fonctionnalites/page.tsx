@@ -31,6 +31,7 @@ export default async function FonctionnalitesPage() {
   const PRIX_PAR_PALIER: Record<string, number | null> = { gratuit: null, pro: prixPro, business: prixBusiness }
 
   const palierActuelId = planActif ? planActif.plan : 'gratuit'
+  const RANG_PALIER: Record<string, number> = { gratuit: 0, pro: 1, business: 2 }
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 16px' }}>
@@ -95,7 +96,7 @@ export default async function FonctionnalitesPage() {
                     </li>
                   ))}
                 </ul>
-                {!estActuel && palier.id !== 'gratuit' && (
+                {RANG_PALIER[palier.id] > RANG_PALIER[palierActuelId] && (
                   <Link href="/boutique/abonnement" style={{
                     display: 'block', textAlign: 'center', background: palier.couleur, color: '#fff',
                     padding: '10px 0', borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14,
