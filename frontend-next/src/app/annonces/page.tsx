@@ -2,6 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import CardActions from '@/app/CardActions'
+import PageHeader from '@/components/PageHeader'
+import FiltresBar from '@/components/FiltresBar'
+import SeoCard from '@/components/SeoCard'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 const SSR_SECRET = process.env.SSR_SECRET || ''
@@ -149,18 +152,15 @@ export default async function AnnoncesPage({
   return (
     <div className="annonces-page">
       {/* Header */}
-      <div className="annonces-header">
-        <div className="annonces-header-text">
-          <h1 className="annonces-titre">Petites annonces — Sénégal</h1>
-          <p className="annonces-sous-titre">
-            {total > 0 ? `${total.toLocaleString('fr-SN')} annonce${total > 1 ? 's' : ''}` : 'Aucune annonce'}
-            {catActuelle.slug ? ` en ${catActuelle.label}` : ''}
-          </p>
-        </div>
-        <Link href="/deposer-annonce" className="annonces-cta-btn">
-          + Publier une annonce
-        </Link>
-      </div>
+      <PageHeader
+        breadcrumb={[{ label: 'Accueil', href: '/' }, { label: 'Annonces' }]}
+        titre="Petites annonces — Sénégal"
+        compteur={
+          (total > 0 ? `${total.toLocaleString('fr-SN')} annonce${total > 1 ? 's' : ''}` : 'Aucune annonce')
+          + (catActuelle.slug ? ` en ${catActuelle.label}` : '')
+        }
+        cta={{ label: '+ Publier une annonce', href: '/deposer-annonce' }}
+      />
 
       {/* Recherche texte */}
       <form action="/annonces" method="get" className="annonces-search">
@@ -184,87 +184,50 @@ export default async function AnnoncesPage({
         )}
       </form>
 
-      {/* Filtres catégories */}
-      <div className="annonces-cats">
-        {CATEGORIES.map(cat => {
-          const active = cat.slug === categorie
-          return (
-            <Link
-              key={cat.slug}
-              href={buildLink({ categorie: cat.slug, page: '' })}
-              className={`annonces-cat-pill${active ? ' annonces-cat-pill--active' : ''}`}
-            >
-              <span>{cat.emoji}</span> {cat.label}
-            </Link>
-          )
-        })}
-      </div>
-
-      {/* Tri */}
-      <div className="annonces-cats" style={{ marginTop: 8 }}>
-        <span className="filtres-label">Trier :</span>
-        {TRIS.map(t => (
-          <Link
-            key={t.val || 'defaut'}
-            href={buildLink({ tri: t.val, page: '' })}
-            className={`annonces-cat-pill${tri === t.val ? ' annonces-cat-pill--active' : ''}`}
-          >
-            {t.label}
-          </Link>
-        ))}
-      </div>
-
-      {/* Prix max */}
-      <div className="annonces-cats" style={{ marginTop: 8 }}>
-        <span className="filtres-label">Budget max :</span>
-        {PRIX_MAX.map(p => (
-          <Link
-            key={p.val}
-            href={buildLink({ prixMax: prixMax === p.val ? '' : p.val, page: '' })}
-            className={`annonces-cat-pill${prixMax === p.val ? ' annonces-cat-pill--active' : ''}`}
-          >
-            {p.label}
-          </Link>
-        ))}
-        {prixMax && (
-          <Link href={buildLink({ prixMax: '', page: '' })} className="budget-pill budget-pill--reset">
-            ✕ Budget
-          </Link>
-        )}
-      </div>
-
-      {/* Ville */}
-      <div className="annonces-cats" style={{ marginTop: 8 }}>
-        <span className="filtres-label">Ville :</span>
-        {VILLES_SN.map(v => (
-          <Link
-            key={v}
-            href={buildLink({ ville: ville === v ? '' : v, page: '' })}
-            className={`annonces-cat-pill${ville === v ? ' annonces-cat-pill--active' : ''}`}
-          >
-            {v}
-          </Link>
-        ))}
-        {ville && (
-          <Link href={buildLink({ ville: '', page: '' })} className="budget-pill budget-pill--reset">
-            ✕ Ville
-          </Link>
-        )}
-      </div>
-
-      {/* Source */}
-      <div className="annonces-cats" style={{ marginTop: 8 }}>
-        <span className="filtres-label">Origine :</span>
-        {SOURCES.map(s => (
-          <Link
-            key={s.val || 'toutes'}
-            href={buildLink({ source: s.val, page: '' })}
-            className={`annonces-cat-pill${source === s.val ? ' annonces-cat-pill--active' : ''}`}
-          >
-            {s.label}
-          </Link>
-        ))}
-      </div>
+      {/* Filtres */}
+      <FiltresBar
+        essentiels={[
+          ...CATEGORIES.map(cat => ({
+            key: `cat-${cat.slug || 'toutes'}`,
+            label: `${cat.emoji} ${cat.label}`,
+            href: buildLink({ categorie: cat.slug, page: '' }),
+            active: cat.slug === categorie,
+          })),
+          ...PRIX_MAX.map(p => ({
+            key: `prix-${p.val}`,
+            label: p.label,
+            href: buildLink({ prixMax: prixMax === p.val ? '' : p.val, page: '' }),
+            active: prixMax === p.val,
+          })),
+          ...(prixMax ? [{
+            key: 'reset-budget',
+            label: '✕ Budget',
+            href: buildLink({ prixMax: '', page: '' }),
+            active: false,
+            reset: true,
+          }] : []),
+        ]}
+        secondaires={[
+          ...VILLES_SN.map(v => ({
+            key: `ville-${v}`,
+            label: v,
+            href: buildLink({ ville: ville === v ? '' : v, page: '' }),
+            active: ville === v,
+          })),
+          ...SOURCES.map(s => ({
+            key: `source-${s.val || 'toutes'}`,
+            label: s.label,
+            href: buildLink({ source: s.val, page: '' }),
+            active: source === s.val,
+          })),
+        ]}
+        tri={TRIS.map(t => ({
+          key: `tri-${t.val || 'defaut'}`,
+          label: t.label,
+          href: buildLink({ tri: t.val, page: '' }),
+          active: tri === t.val,
+        }))}
+      />
 
       {/* Grille */}
       {annonces.length === 0 ? (
@@ -317,6 +280,37 @@ export default async function AnnoncesPage({
           )}
         </div>
       )}
+
+      <SeoCard
+        titre="Pourquoi publier ou chercher une annonce sur Nopalou ?"
+        blurbs={[
+          {
+            emoji: '🤝',
+            text: (
+              <>
+                Nopalou regroupe les petites annonces entre particuliers au Sénégal — téléphones, informatique, mode,
+                maison, auto et services — publiées directement sur le site ou importées de Facebook pour élargir le choix.
+              </>
+            ),
+          },
+          {
+            emoji: '📢',
+            text: (
+              <>
+                Publier une annonce est gratuit et rapide. Filtrez par catégorie, budget ou ville pour trouver
+                exactement ce que vous cherchez, partout à <strong>Dakar</strong> et dans les grandes villes du Sénégal.
+              </>
+            ),
+          },
+        ]}
+        chipRows={[
+          {
+            label: 'Catégories populaires',
+            chips: CATEGORIES.filter(c => c.slug).map(c => ({ href: buildLink({ categorie: c.slug, page: '' }), emoji: c.emoji, label: c.label, small: true })),
+          },
+        ]}
+        foot="Nouvelles annonces publiées chaque jour par des particuliers au Sénégal"
+      />
     </div>
   )
 }
