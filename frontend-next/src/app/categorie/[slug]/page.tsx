@@ -5,6 +5,9 @@ import { fcfa } from '@/lib/format'
 import CardActions from '@/app/CardActions'
 import ExternalImg from '@/components/ExternalImg'
 import CompareFilterBanner from '@/components/CompareFilterBanner'
+import PageHeader from '@/components/PageHeader'
+import FiltresBar from '@/components/FiltresBar'
+import SeoCard from '@/components/SeoCard'
 import { CATEGORIES } from '../categories-data'
 import { SOUS_CATEGORIES } from '../sous-categories-data'
 
@@ -163,55 +166,38 @@ export default async function CategoriePage({
 
       <div className="page-container" style={{ paddingTop: '1.5rem' }}>
 
-        {/* Fil d'Ariane */}
-        <nav aria-label="Fil d'Ariane" style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 20 }}>
-          <Link href="/" style={{ color: 'var(--text2)' }}>Accueil</Link>
-          {' › '}
-          <span style={{ color: 'var(--text1)' }}>{cat.label}</span>
-        </nav>
-
-        {/* En-tête SEO */}
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 800, color: 'var(--navy)', lineHeight: 1.2, marginBottom: 10 }}>
-            {cat.emoji} {cat.h1}
-          </h1>
-          <p style={{ fontSize: 15, color: 'var(--text2)', lineHeight: 1.6, maxWidth: 720 }}>
-            {cat.intro}
-          </p>
-          {total > 0 && (
-            <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 8 }}>
-              <strong style={{ color: 'var(--accent)' }}>{total.toLocaleString('fr-FR')} produit{total > 1 ? 's' : ''}</strong> comparés au Sénégal · Prix mis à jour toutes les 6h
-            </p>
-          )}
-        </div>
+        <PageHeader
+          breadcrumb={[{ label: 'Accueil', href: '/' }, { label: cat.label }]}
+          emoji={cat.emoji}
+          titre={cat.h1}
+          compteur={total > 0 ? `${total.toLocaleString('fr-FR')} produit${total > 1 ? 's' : ''} comparés au Sénégal · Prix mis à jour toutes les 6h` : undefined}
+        />
 
         {/* Filtres */}
-        <div className="filtres-bar" style={{ marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
-          <span className="filtres-label">Budget :</span>
-          {BUDGETS.map(b => (
-            <Link
-              key={b.val}
-              href={buildLink({ prixMax: prixMax === b.val ? '' : b.val, page: '1' })}
-              className={`budget-pill${prixMax === b.val ? ' active' : ''}`}
-            >
-              {b.label}
-            </Link>
-          ))}
-          {prixMax && (
-            <Link href={buildLink({ prixMax: '', page: '1' })} className="budget-pill budget-pill--reset">
-              ✕ Budget
-            </Link>
-          )}
-          <span style={{ marginLeft: 8, color: 'var(--text3)', fontSize: 13 }}>Trier :</span>
-          {TRIS.map(t => (
-            <Link
-              key={t.val}
-              href={buildLink({ tri: t.val, page: '1' })}
-              className={`budget-pill${tri === t.val ? ' active' : ''}`}
-            >
-              {t.label}
-            </Link>
-          ))}
+        <div style={{ marginBottom: 20 }}>
+          <FiltresBar
+            essentiels={[
+              ...BUDGETS.map(b => ({
+                key: b.val,
+                label: b.label,
+                href: buildLink({ prixMax: prixMax === b.val ? '' : b.val, page: '1' }),
+                active: prixMax === b.val,
+              })),
+              ...(prixMax ? [{
+                key: 'reset-budget',
+                label: '✕ Budget',
+                href: buildLink({ prixMax: '', page: '1' }),
+                active: false,
+                reset: true,
+              }] : []),
+            ]}
+            tri={TRIS.map(t => ({
+              key: t.val,
+              label: t.label,
+              href: buildLink({ tri: t.val, page: '1' }),
+              active: tri === t.val,
+            }))}
+          />
         </div>
 
         {/* Grille produits */}
@@ -265,44 +251,53 @@ export default async function CategoriePage({
         )}
 
         {/* Bloc texte SEO en bas */}
-        <div style={{
-          marginTop: 48, padding: '24px 28px',
-          background: 'var(--card)', border: '1px solid var(--border)',
-          borderRadius: 12, maxWidth: 720,
-        }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--navy)', marginBottom: 10 }}>
-            Pourquoi comparer les prix {cat.label.toLowerCase()} sur Nopalou ?
-          </h2>
-          <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.7 }}>
-            Nopalou est le premier comparateur de prix dédié au marché sénégalais.
-            Nous indexons les prix de {cat.exemples} chez tous les grands marchands en ligne du Sénégal — Jumia, Expat-Dakar, CoinAfrique et bien d&apos;autres.
-            Les prix sont mis à jour automatiquement toutes les 6 heures.
-            Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis ou Ziguinchor, trouvez le meilleur prix avant d&apos;acheter.
-          </p>
-          {cat.contenu.map((para, i) => (
-            <p key={i} style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.7, marginTop: 10 }}>{para}</p>
-          ))}
-          <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
-            {Object.entries(SOUS_CATEGORIES)
-              .filter(([, sc]) => sc.categorie === params.slug)
-              .map(([key, sc]) => (
-                <Link key={key} href={`/categorie/${key}`} className="budget-pill">
-                  {sc.emoji} {sc.label}
-                </Link>
-              ))}
-            <Link href={`/categorie/${params.slug}/moins-de-50000`} className="budget-pill">Moins de 50 000 FCFA</Link>
-            <Link href={`/categorie/${params.slug}/moins-de-100000`} className="budget-pill">Moins de 100 000 FCFA</Link>
-            <Link href="/" className="budget-pill active">Tous les produits</Link>
-            {Object.entries(CATEGORIES)
-              .filter(([s]) => s !== params.slug)
-              .slice(0, 4)
-              .map(([s, c]) => (
-                <Link key={s} href={`/categorie/${s}`} className="budget-pill">
-                  {c.emoji} {c.label}
-                </Link>
-              ))}
-          </div>
-        </div>
+        <SeoCard
+          titre={`Pourquoi comparer les prix ${cat.label.toLowerCase()} sur Nopalou ?`}
+          blurbs={[
+            {
+              emoji: '📊',
+              text: (
+                <>
+                  Nopalou est le premier comparateur de prix dédié au marché sénégalais.
+                  Nous indexons les prix de {cat.exemples} chez tous les grands marchands en ligne du Sénégal — Jumia, Expat-Dakar, CoinAfrique et bien d&apos;autres.
+                  Les prix sont mis à jour automatiquement toutes les 6 heures.
+                </>
+              ),
+            },
+            {
+              emoji: '📍',
+              text: (
+                <>
+                  {cat.intro}
+                  {' '}Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis ou Ziguinchor, trouvez le meilleur prix avant d&apos;acheter.
+                </>
+              ),
+            },
+          ]}
+          chipRows={[
+            {
+              label: 'Sous-catégories & budgets',
+              chips: [
+                ...Object.entries(SOUS_CATEGORIES)
+                  .filter(([, sc]) => sc.categorie === params.slug)
+                  .map(([key, sc]) => ({ href: `/categorie/${key}`, emoji: sc.emoji, label: sc.label })),
+                { href: `/categorie/${params.slug}/moins-de-50000`, emoji: '💰', label: 'Moins de 50 000 FCFA' },
+                { href: `/categorie/${params.slug}/moins-de-100000`, emoji: '💰', label: 'Moins de 100 000 FCFA' },
+              ],
+            },
+            {
+              label: 'Autres catégories',
+              chips: [
+                { href: '/', emoji: '🗂', label: 'Tous les produits', small: true },
+                ...Object.entries(CATEGORIES)
+                  .filter(([s]) => s !== params.slug)
+                  .slice(0, 4)
+                  .map(([s, c]) => ({ href: `/categorie/${s}`, emoji: c.emoji, label: c.label, small: true })),
+              ],
+            },
+          ]}
+          foot="Prix vérifiés automatiquement toutes les 6 heures sur tous les grands marchands sénégalais"
+        />
       </div>
     </>
   )
