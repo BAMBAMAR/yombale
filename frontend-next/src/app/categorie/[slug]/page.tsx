@@ -268,8 +268,13 @@ export default async function CategoriePage({
               emoji: '📍',
               text: (
                 <>
-                  {cat.intro}
-                  {' '}Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis ou Ziguinchor, trouvez le meilleur prix avant d&apos;acheter.
+                  <p style={{ margin: 0 }}>
+                    {cat.intro}
+                    {' '}Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis ou Ziguinchor, trouvez le meilleur prix avant d&apos;acheter.
+                  </p>
+                  {cat.contenu.map((para, i) => (
+                    <p key={i} style={{ margin: '10px 0 0' }}>{para}</p>
+                  ))}
                 </>
               ),
             },
