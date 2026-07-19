@@ -1,17 +1,17 @@
 import Link from 'next/link'
 
-interface Crumb {
+export interface Crumb {
   label: string
   href?: string
 }
 
-interface PageHeaderCta {
+export interface PageHeaderCta {
   label: string
   href?: string
   onClick?: () => void
 }
 
-interface PageHeaderProps {
+export interface PageHeaderProps {
   breadcrumb: Crumb[]
   emoji?: string
   titre: string
