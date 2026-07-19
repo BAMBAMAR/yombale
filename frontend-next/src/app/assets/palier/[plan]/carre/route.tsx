@@ -116,7 +116,7 @@ export async function GET(
         </div>
 
         {/* Liste avantages */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, padding: '48px 80px 0' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16, padding: '48px 80px 0' }}>
           {palier.avantages.slice(0, 6).map(a => (
             <div key={a} style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
               <span
