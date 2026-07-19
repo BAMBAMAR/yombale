@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { PALIERS_BOUTIQUE } from '@/lib/fonctionnalites-data'
 
 export const metadata = { title: 'Kit communication — Admin Nopalou' }
 
@@ -679,6 +680,49 @@ export default async function CommunicationPage() {
         }}>
           {CHATBOT_TEXTE}
         </pre>
+      </section>
+
+      <hr style={{ border: 'none', borderTop: '2px solid #E2E8F0', margin: '48px 0' }} />
+
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1C2B4A', marginBottom: 6 }}>
+        🎯 Kit fonctionnalités & abonnements
+      </h1>
+      <p style={{ color: '#64748B', marginBottom: 32, fontSize: 14 }}>
+        Visuels par palier d&apos;abonnement boutique, pour démarcher un marchand ou l&apos;aider à comparer les paliers.
+        Page de référence pour les utilisateurs connectés : <code>/compte/fonctionnalites</code>
+      </p>
+
+      <section>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
+          🖼 Visuels par palier
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          {PALIERS_BOUTIQUE.map(palier => (
+            <div key={palier.id} style={{
+              border: '1px solid #E2E8F0', borderRadius: 10, padding: '20px', background: '#fff',
+            }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: palier.couleur, margin: '0 0 14px' }}>
+                {palier.label}
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, overflow: 'hidden' }}>
+                  <a href={`/assets/palier/${palier.id}/carre`} target="_blank" rel="noopener noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/assets/palier/${palier.id}/carre`} alt={`${palier.label} — carré`} style={{ width: '100%', display: 'block', aspectRatio: '1/1', objectFit: 'cover' }} />
+                  </a>
+                  <p style={{ fontSize: 12, color: '#64748B', margin: '8px 12px 12px' }}>Format carré (1080×1080)</p>
+                </div>
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, overflow: 'hidden' }}>
+                  <a href={`/assets/palier/${palier.id}/story`} target="_blank" rel="noopener noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/assets/palier/${palier.id}/story`} alt={`${palier.label} — story`} style={{ width: '100%', display: 'block', aspectRatio: '9/16', objectFit: 'cover' }} />
+                  </a>
+                  <p style={{ fontSize: 12, color: '#64748B', margin: '8px 12px 12px' }}>Format story (1080×1920)</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   )
