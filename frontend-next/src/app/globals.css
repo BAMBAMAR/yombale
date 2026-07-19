@@ -882,13 +882,6 @@ a {
   gap: 14px;
 }
 
-.immo-filtres-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
 .immo-quartier-input {
   padding: 6px 12px;
   border: 1.5px solid var(--border);
@@ -908,31 +901,6 @@ a {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-}
-
-.immo-toggle {
-  display: flex;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.immo-toggle-btn {
-  padding: 7px 18px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text2);
-  text-decoration: none;
-  transition: background .15s, color .15s;
-}
-
-.immo-toggle-btn.active {
-  background: var(--navy);
-  color: #fff;
-}
-
-.immo-toggle-btn:not(.active):hover {
-  background: var(--bg);
 }
 
 /* Grille */
@@ -1099,7 +1067,6 @@ a {
   .immo-card-img { height: 160px; }
   /* Input quartier : largeur fixe 220px → 100% sur mobile */
   .immo-quartier-input { width: 100%; }
-  .immo-filtres-row { gap: 8px; }
 }
 
 /* ── Fiche immo ────────────────────────────────────────────────── */
@@ -2488,13 +2455,6 @@ a {
 
 .telecom-filtres {
   margin-bottom: 28px;
-}
-
-.filtres-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 .telecom-filtres-inner {
@@ -6298,30 +6258,6 @@ a {
   margin-bottom: 12px;
 }
 
-.annonces-cat-pill {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text2);
-  background: var(--card);
-  transition: border-color .15s, color .15s, background .15s;
-}
-
-.annonces-cat-pill:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.annonces-cat-pill--active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
-}
 
 .annonces-grid {
   display: grid;
