@@ -17,10 +17,13 @@ Objectif : une brochure commerciale PDF, téléchargeable, que l'apporteur peut 
 
 ## Génération technique
 
-- **HTML source** : `frontend-next/src/app/assets/brochure-apporteur/route.tsx` — route `GET` qui retourne le HTML complet des 5 pages (une `<section>` par page, `break-after: page` en CSS print), stylée en styles inline React comme le reste du kit (`/admin/communication`, routes `ImageResponse`). Sert aussi d'aperçu navigateur direct.
-- **PDF** : `frontend-next/src/app/assets/brochure-apporteur.pdf/route.tsx` — route `GET` qui lance Playwright (déjà en devDependency, `frontend-next/package.json`), navigue vers la route HTML ci-dessus (fetch interne côté serveur), appelle `page.pdf({ format: 'A4', printBackground: true })`, retourne le buffer avec `Content-Type: application/pdf` et `Content-Disposition: inline; filename="nopalou-brochure-apporteur.pdf"`.
-- `runtime` Node (pas edge) sur les deux routes — Playwright a besoin de Node, comme documenté pour `/assets/carte-visite` (piège déjà connu sur ce projet : `next/og`/edge ne conviennent pas partout).
-- Données dynamiques (`prixPro`, `prixBusiness`, `commissionBusiness`, `tauxApporteur`) lues depuis `${BACKEND_URL}/api/settings/public`, avec les mêmes valeurs de repli que `/admin/communication` (15000 / 35000 / 2 / 10) si le fetch échoue.
+**Décision (revue après identification d'un risque prod)** : Playwright ne doit jamais tourner sur Render — le projet a déjà abandonné Playwright côté backend (scraper Facebook) sur Render pour cause d'OOM (RAM 512 Mo, plan gratuit). La route PDF à la volée est donc écartée. À la place :
+
+- **HTML source** : `frontend-next/src/app/assets/brochure-apporteur/route.tsx` — route `GET` qui retourne le HTML complet des 5 pages (une `<section>` par page, `break-after: page` en CSS print), stylée en styles inline React comme le reste du kit (`/admin/communication`, routes `ImageResponse`). Sert de source unique éditable et d'aperçu navigateur — reste accessible en prod (page HTML normale, pas de dépendance Playwright).
+- **Génération du PDF** : script local `frontend-next/scripts/generer-brochure-apporteur.js`, exécuté manuellement en dev (`node scripts/generer-brochure-apporteur.js` avec le serveur Next `npm run dev` lancé en parallèle) — utilise Playwright (déjà en devDependency) pour naviguer vers `http://localhost:3001/assets/brochure-apporteur` et appeler `page.pdf({ format: 'A4', printBackground: true })`, écrit le résultat dans `frontend-next/public/brochure-apporteur.pdf`.
+- Le PDF généré est **committé dans le repo** (`public/brochure-apporteur.pdf`) et servi comme fichier statique par Next.js à `/brochure-apporteur.pdf` — aucune génération à la volée, aucun risque mémoire en prod.
+- `runtime` Node (pas edge) sur la route HTML — cohérent avec `/assets/carte-visite` (piège déjà connu sur ce projet : `next/og`/edge ne conviennent pas partout), même si cette route n'utilise pas `ImageResponse` ici.
+- Données dynamiques (`prixPro`, `prixBusiness`, `commissionBusiness`, `tauxApporteur`) lues depuis `${BACKEND_URL}/api/settings/public`, avec les mêmes valeurs de repli que `/admin/communication` (15000 / 35000 / 2 / 10) si le fetch échoue. **Ces valeurs sont figées dans le PDF au moment de la génération** — si les tarifs changent depuis `/admin/tarifs`, le PDF doit être régénéré manuellement (limite assumée, documentée ci-dessous).
 
 ## Contenu — 5 pages A4
 
@@ -55,15 +58,16 @@ Objectif : une brochure commerciale PDF, téléchargeable, que l'apporteur peut 
 
 ## Intégration dans le produit
 
-- `/compte/apporteur` (`ApporteurClient.tsx`) : un bouton "📄 Télécharger la brochure PDF" à côté du bouton existant "🖼 Télécharger le visuel", pointant vers `/assets/brochure-apporteur.pdf`.
-- `/admin/communication` : dans la section "💼 Programme apporteur d'affaires" déjà existante, un lien vers la brochure PDF à côté du texte de recrutement.
+- `/compte/apporteur` (`ApporteurClient.tsx`) : un bouton "📄 Télécharger la brochure PDF" à côté du bouton existant "🖼 Télécharger le visuel", pointant vers `/brochure-apporteur.pdf` (fichier statique servi depuis `public/`).
+- `/admin/communication` : dans la section "💼 Programme apporteur d'affaires" déjà existante, un lien vers la brochure PDF à côté du texte de recrutement, pointant vers le même fichier `/brochure-apporteur.pdf`.
 
 ## Erreurs et dégradation
 
-- Si `/api/settings/public` échoue : valeurs de repli (mêmes que le kit admin), pas d'erreur visible.
-- Si Playwright échoue à générer le PDF (environnement sans navigateur headless disponible, ex. certains PaaS) : la route retourne une erreur 500 explicite plutôt qu'un fichier corrompu ; le lien HTML brut (`/assets/brochure-apporteur`) reste consultable indépendamment comme repli manuel (impression navigateur → PDF).
+- Si `/api/settings/public` échoue **au moment de la génération locale** : le script utilise les valeurs de repli (mêmes que le kit admin), le PDF généré reflète ces valeurs de repli — pas d'échec de build.
+- Le PDF étant statique, aucune dégradation à gérer en prod (pas de dépendance runtime à Playwright ni au backend) — c'est justement l'intérêt de ce choix après le risque Render identifié.
 
 ## Non couvert / dette assumée
 
 - Pas de personnalisation automatique du PDF par apporteur (nom, code, QR code) — reste un document générique, cohérent avec le reste du kit.
-- Pas de vérification par génération réelle du PDF dans un navigateur Windows local avant merge, si Playwright pose un problème d'environnement connu sur ce projet (voir CLAUDE.md, pièges Windows/`@vercel/og` déjà documentés) — à tester en priorité pendant l'implémentation, avec repli sur la version HTML si le PDF Playwright s'avère instable en local.
+- **Le PDF n'est pas régénéré automatiquement si les tarifs (`plan_pro_prix`, `plan_business_prix`, `commission_business`, `apporteur_taux_commission`) changent depuis `/admin/tarifs`** — contrairement au reste du kit `/admin/communication` qui est dynamique. Régénération manuelle requise (`node scripts/generer-brochure-apporteur.js`) après tout changement de tarif touchant le programme apporteur. À documenter clairement dans le CLAUDE.md du projet une fois livré.
+- La route HTML `/assets/brochure-apporteur` reste utile en soi (aperçu, aucune dépendance Playwright) — conservée même si le PDF est généré une fois, pas à la volée.
