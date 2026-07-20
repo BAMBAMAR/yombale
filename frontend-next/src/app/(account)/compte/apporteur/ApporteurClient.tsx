@@ -131,6 +131,16 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales: St
           >
             🖼 Télécharger le visuel
           </a>
+          <a
+            href="/brochure-apporteur.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ padding: '10px 18px', background: '#fff', color: '#1C2B4A',
+              border: '1px solid #1C2B4A', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
+              display: 'inline-flex', alignItems: 'center' }}
+          >
+            📄 Télécharger la brochure PDF
+          </a>
         </div>
 
         <p style={{ fontSize: 12, color: '#64748B', margin: '16px 0 8px' }}>

@@ -615,6 +615,12 @@ export default async function CommunicationPage() {
         <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
           📢 Texte de recrutement (à partager par WhatsApp/réseaux)
         </h2>
+        <p style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>
+          Brochure complète à remettre à un apporteur pour qu&apos;il puisse démarcher directement :{' '}
+          <a href="/brochure-apporteur.pdf" target="_blank" rel="noopener noreferrer" style={{ color: '#C75B00', fontWeight: 700 }}>
+            /brochure-apporteur.pdf
+          </a>
+        </p>
         <pre style={{
           fontSize: 13, color: '#1C2B4A', whiteSpace: 'pre-wrap',
           background: '#F8FAFC', border: '1px solid #E2E8F0',
