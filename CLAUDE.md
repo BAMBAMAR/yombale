@@ -144,7 +144,9 @@ Le kit `/admin/communication` ne fournissait rien qu'un apporteur actif puisse r
 
 **Ajout complémentaire** : `apporteur_taux_commission` a été ajouté à la liste des clés exposées par `GET /api/settings/public` (`backend/routes/settings.js`) — cette route existait déjà mais n'exposait pas ce taux.
 
-**Non généré dans cette session** : `public/brochure-apporteur.pdf` lui-même n'a pas pu être généré ici — environnement de dev de ce worktree instable (`node_modules` corrompu, backend sans `.env`). Le code (route HTML + script) est écrit et vérifié par compilation TypeScript propre, mais **le fichier PDF final reste à générer manuellement** avant que les liens de téléchargement fonctionnent : lancer `npm run dev` dans `frontend-next/`, puis dans un second terminal `node scripts/generer-brochure-apporteur.js`, vérifier visuellement le PDF produit, puis `git add frontend-next/public/brochure-apporteur.pdf` et committer.
+**PDF généré et committé** : `public/brochure-apporteur.pdf` (5 pages, ~466 Ko) a été produit et vérifié (comptage réel des objets `/Page` dans le PDF, pas seulement visuel). Piège rencontré : la première génération ne produisait qu'1 seule page malgré 5 blocs `<div class="page">` dans le HTML — `break-after: page` seul (spec CSS moderne) n'était pas respecté par le moteur d'impression PDF de Chromium dans ce contexte. Corrigé en ajoutant l'ancienne propriété `page-break-after: always` en complément (les deux déclarées ensemble), plus `page-break-inside: avoid`/`break-inside: avoid` sur `.page`. Toujours vérifier le nombre réel de pages d'un PDF généré par Chromium/Playwright par inspection du flux PDF (`/Count` dans l'objet `Pages`), pas seulement par la taille du fichier ou un aperçu rapide — un PDF à 1 page peut sembler correct au premier coup d'œil si seule la première page est consultée.
+
+Comme le backend n'avait pas de `.env` dans ce worktree au moment de la génération, le PDF reflète les valeurs de repli (`prixPro=15000`, `prixBusiness=35000`, `tauxApporteur=10`) plutôt que les tarifs réels de la base de production — à vérifier/régénérer si ces valeurs diffèrent en prod au moment de la diffusion de la brochure.
 
 ---
 
