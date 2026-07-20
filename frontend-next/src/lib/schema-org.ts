@@ -60,9 +60,9 @@ export function organizationSchema() {
     logo: 'https://nopalou.com/icons/icon-512.svg',
     description: 'Comparateur de prix N°1 au Sénégal',
     sameAs: [
-      'https://facebook.com/nopalou',
+      'https://www.facebook.com/profile.php?id=61591675701726',
       'https://twitter.com/nopalou_sn',
-      'https://instagram.com/nopalou_sn',
+      'https://www.instagram.com/nopalousn/',
     ],
     contactPoint: {
       '@type': 'ContactPoint',

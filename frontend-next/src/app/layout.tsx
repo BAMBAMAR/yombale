@@ -188,9 +188,9 @@ export default async function RootLayout({
               </a>
               <p className="footer-tagline">Le premier comparateur de prix dédié au marché sénégalais — produits, immobilier, forfaits télécom.</p>
               <div className="footer-social">
-                <a href="https://facebook.com/nopalou" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="footer-social-link">f</a>
+                <a href="https://www.facebook.com/profile.php?id=61591675701726" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="footer-social-link">f</a>
                 <a href="https://twitter.com/nopalou_sn" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="footer-social-link">𝕏</a>
-                <a href="https://instagram.com/nopalou_sn" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="footer-social-link">▣</a>
+                <a href="https://www.instagram.com/nopalousn/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="footer-social-link">▣</a>
                 <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="footer-social-link">💬</a>
               </div>
             </div>
