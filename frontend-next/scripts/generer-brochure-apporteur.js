@@ -10,7 +10,7 @@ const OUT = path.join(__dirname, '..', 'public', 'brochure-apporteur.pdf');
 async function main() {
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  const res = await page.goto(URL, { waitUntil: 'networkidle' });
+  const res = await page.goto(URL, { waitUntil: 'networkidle', timeout: 120000 });
   if (!res || !res.ok()) {
     throw new Error(`Impossible de charger ${URL} — code ${res ? res.status() : 'aucune réponse'}. Le serveur npm run dev tourne-t-il sur le port 3001 ?`);
   }

@@ -61,9 +61,19 @@ export async function GET() {
 <style>
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: system-ui, sans-serif; }
-  .page { width: 210mm; height: 297mm; position: relative; overflow: hidden; break-after: page; }
-  .page:last-child { break-after: auto; }
+  html, body { margin: 0; font-family: system-ui, sans-serif; }
+  .page {
+    display: block;
+    width: 210mm;
+    height: 297mm;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+    page-break-inside: avoid;
+    break-after: page;
+    break-inside: avoid;
+  }
+  .page:last-of-type { page-break-after: auto; break-after: auto; }
 </style>
 </head>
 <body>
