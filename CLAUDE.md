@@ -134,6 +134,20 @@ Aucun chantier n'est actuellement identifié comme prioritaire — le dernier ch
 
 ---
 
+## État du projet (20 juillet 2026 — brochure PDF pour les apporteurs d'affaires)
+
+Le kit `/admin/communication` ne fournissait rien qu'un apporteur actif puisse remettre lui-même à un commerçant prospect. Ajout d'une brochure PDF de 5 pages (couverture, présentation Nopalou, programme apporteur avec grille de commission dynamique, guide pratique en 4 étapes, contact). Spec : `docs/superpowers/specs/2026-07-20-brochure-apporteur-affaires-design.md`. Plan : `docs/superpowers/plans/2026-07-20-brochure-apporteur-affaires.md`.
+
+**Décision technique notable** : la génération du PDF à la volée via une route Next.js + Playwright a été envisagée puis écartée avant implémentation — Playwright a déjà causé des OOM sur Render côté backend (scraper Facebook, voir entrée du 13 juillet 2026), et le service frontend Render (`output: 'standalone'`) n'a pas Chromium installé. À la place : une route HTML normale (`frontend-next/src/app/assets/brochure-apporteur/route.tsx`, sans Playwright, sert aussi d'aperçu navigateur) + un script local (`frontend-next/scripts/generer-brochure-apporteur.js`) qui utilise Playwright uniquement en développement pour produire `frontend-next/public/brochure-apporteur.pdf`, à committer et servir comme fichier statique — zéro dépendance runtime en production.
+
+**Dette assumée** : le PDF n'est **pas régénéré automatiquement** si les tarifs (`plan_pro_prix`, `plan_business_prix`, `commission_business`, `apporteur_taux_commission`) changent depuis `/admin/tarifs` — contrairement au reste du kit `/admin/communication` qui est dynamique. Si les tarifs changent, relancer manuellement : `npm run dev` (frontend-next) puis `node scripts/generer-brochure-apporteur.js`, et committer le nouveau `public/brochure-apporteur.pdf`.
+
+**Ajout complémentaire** : `apporteur_taux_commission` a été ajouté à la liste des clés exposées par `GET /api/settings/public` (`backend/routes/settings.js`) — cette route existait déjà mais n'exposait pas ce taux.
+
+**Non généré dans cette session** : `public/brochure-apporteur.pdf` lui-même n'a pas pu être généré ici — environnement de dev de ce worktree instable (`node_modules` corrompu, backend sans `.env`). Le code (route HTML + script) est écrit et vérifié par compilation TypeScript propre, mais **le fichier PDF final reste à générer manuellement** avant que les liens de téléchargement fonctionnent : lancer `npm run dev` dans `frontend-next/`, puis dans un second terminal `node scripts/generer-brochure-apporteur.js`, vérifier visuellement le PDF produit, puis `git add frontend-next/public/brochure-apporteur.pdf` et committer.
+
+---
+
 ## État du projet (19 juillet 2026, suite — homogénéisation en-tête/filtres/bloc SEO des pages listing et guides)
 
 Retour utilisateur direct avec captures d'écran : les pages du site n'avaient pas de style homogène — chaque page listing avait réinventé son propre système de filtres/en-tête au fil des chantiers précédents (SEO du 11-12 juillet, tri/filtres guides du 10 juillet, etc.), sans composant partagé. Process complet brainstorming → spec → plan → subagent-driven-development (10 tâches + revue finale de branche opus), exécuté sur `worktree-homogeneisation-pages-listing`, mergé fast-forward sur `main` (`ce96ee9..6e75fc1`), poussé. Spec : `docs/superpowers/specs/2026-07-19-homogeneisation-pages-listing-design.md`. Plan : `docs/superpowers/plans/2026-07-19-homogeneisation-pages-listing.md`.
