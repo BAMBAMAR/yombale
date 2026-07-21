@@ -14,8 +14,12 @@ const CAT_LABELS: Record<string, string> = {
   mode:         'Mode',
   maison:       'Maison',
   'auto-moto':  'Auto & Moto',
+  immo:         'Immobilier',
+  beaute:       'Beauté',
+  emploi:       'Emploi',
   jeux:         'Jeux',
   services:     'Services',
+  divers:       'Divers',
 }
 
 interface Annonce {

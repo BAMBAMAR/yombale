@@ -75,6 +75,7 @@ const GROUPES = [
   { id: '276857303027165',   label: 'Tout vendre et tout acheter au Senegal' },
   { id: '670553284135014',   label: 'Thies ventes et achats en ligne' },
   { id: 'saintlouisachats',  label: 'Achats et ventes a Saint-Louis' },
+  { id: 'ndeyeyacineseckfaye', label: 'Ndeye Yacine Seck Faye (Offres Emploi)', type: 'page' },
 ];
 
 const VILLES = ['Dakar', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor',
@@ -82,30 +83,41 @@ const VILLES = ['Dakar', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor',
 
 // Catégories connues (categories.slug en DB) + mots-clés associés, ordre = priorité de match
 const CATEGORIES_MOTS = [
-  { slug: 'immo',        mots: ['loue', 'location', 'à louer', 'appartement', 'villa', 'studio',
-                                 'chambre à louer', 'maison à louer', 'bureau', 'terrain', 'duplex',
-                                 'immeuble', 'titre foncier', 'bail', 'caution'] },
+  { slug: 'immo',        mots: ['loue', 'location', 'à louer', 'a louer', 'appartement', 'villa', 'studio',
+                                 'chambre à louer', 'chambre a louer', 'chambre', 'maison à louer', 'maison', 'bureau',
+                                 'terrain', 'duplex', 'immeuble', 'titre foncier', 'bail', 'caution', 'parcelle',
+                                 'bâtiment', 'batiment', 'meublé', 'meuble', 'magasin', 'entrepôt', 'entrepot',
+                                 'f2', 'f3', 'f4', 'f5', 'salle de bain', 'fond de commerce', 'residence', 'résidence'] },
   { slug: 'smartphones', mots: ['iphone', 'samsung', 'xiaomi', 'redmi', 'tecno', 'infinix', 'huawei',
-                                 'smartphone', 'telephone', 'téléphone', 'portable', 'android'] },
+                                 'smartphone', 'telephone', 'téléphone', 'portable', 'android', 'galaxy',
+                                 'pro max', 'pixel', 'ipad', 'tablette', 'gb', 'go ram', 'oppo', 'realme'] },
   { slug: 'informatique', mots: ['ordinateur', 'laptop', 'pc portable', 'macbook', 'imprimante',
-                                  'clavier', 'souris', 'disque dur', 'ram', 'processeur'] },
-  { slug: 'tv-electro',  mots: ['televiseur', 'téléviseur', 'tv ', 'ecran', 'écran', 'climatiseur',
-                                 'refrigerateur', 'réfrigérateur', 'congelateur', 'congélateur',
-                                 'machine a laver', 'machine à laver', 'ventilateur', 'micro-onde'] },
-  { slug: 'mode',        mots: ['robe', 'chaussure', 'sac a main', 'sac à main', 'vetement', 'vêtement',
-                                 'boubou', 'basket', 'montre', 'bijoux', 'dressing'] },
+                                  'clavier', 'souris', 'disque dur', 'ram', 'processeur', 'ecran pc', 'écran pc'] },
+  { slug: 'tv-electro',  mots: ['televiseur', 'téléviseur', 'tv ', 'tv', 'ecran', 'écran', 'climatiseur',
+                                 'refrigerateur', 'réfrigérateur', 'frigo', 'congelateur', 'congélateur',
+                                 'machine a laver', 'machine à laver', 'ventilateur', 'micro-onde', 'micro onde',
+                                 'cuisiniere', 'cuisinière', 'split', 'gaz'] },
+  { slug: 'mode',        mots: ['robe', 'chaussure', 'chaussures', 'sac a main', 'sac à main', 'vetement', 'vêtement',
+                                 'boubou', 'basket', 'montre', 'bijoux', 'dressing', 'tissu', 'bazin', 'gagnila', 'habit'] },
   { slug: 'auto-moto',   mots: ['voiture', 'moto', 'scooter', 'jakarta', 'vehicule', 'véhicule',
-                                 'pneu', 'moteur voiture'] },
+                                 'pneu', 'moteur voiture', 'ford', 'toyota', 'hyundai', 'kia', 'peugeot',
+                                 'renault', 'nissan', 'mercedes', 'bmw', 'suv', '4x4', 'dedouane', 'dédouané', 'venant'] },
   { slug: 'beaute',      mots: ['parfum', 'maquillage', 'creme', 'crème', 'cosmetique', 'cosmétique',
-                                 'perruque', 'meche', 'mèche'] },
+                                 'perruque', 'meche', 'mèche', 'savon', 'pommade'] },
   { slug: 'jeux',        mots: ['playstation', 'ps4', 'ps5', 'xbox', 'manette', 'console de jeux', 'nintendo'] },
   { slug: 'maison',      mots: ['meuble', 'canape', 'canapé', 'matelas', 'table a manger',
-                                 'table à manger', 'lit', 'armoire', 'tapis', 'rideaux'] },
+                                 'table à manger', 'lit', 'armoire', 'tapis', 'rideaux', 'fauteuil', 'salon'] },
+  { slug: 'emploi',      mots: ['recrutement', 'recrute', 'offre d\'emploi', 'offres d\'emploi', 'offre d emploi',
+                                 'stage', 'stagiaire', 'cherche emploi', 'cherche un emploi', 'postuler', 'poste de',
+                                 'avis de recrutement', 'besoin de', 'souhaite recruter', 'cv', 'embauche', 'job',
+                                 'appel a candidature', 'appel à candidature', 'profil recherche', 'profil recherché'] },
 ];
 
 // Doit matcher au moins 1 mot-clé d'une catégorie ET avoir un signal de vente (prix, contact...)
 const SIGNAUX_VENTE = ['fcfa', 'xof', 'prix', 'a vendre', 'à vendre', 'vends', 'vend', 'disponible',
-                        'dispo', 'livraison', 'contact', 'whatsapp', 'inbox', 'messagez'];
+                        'dispo', 'livraison', 'contact', 'whatsapp', 'inbox', 'messagez', 'tel', 'tél',
+                        'service', 'cmd', 'commande', 'arrivage', 'promo', 'offres', 'offre',
+                        'recrutement', 'recrute', 'candidature', 'postuler', 'cv', 'embauche', 'cherche', 'besoin'];
 
 // Marqueurs d'un fil de commentaires capturé par erreur au lieu du post lui-même
 // (pas de prix/description, juste les boutons de réaction Facebook)
@@ -154,16 +166,19 @@ function parseVilleFB(texte) {
   return 'Dakar';
 }
 
-// Numéro sénégalais : 9 chiffres commençant par 7 (mobile), avec ou sans +221/00221, espaces/points/tirets
-// tolérés N'IMPORTE OÙ entre les chiffres — pas seulement entre les groupes de fin. Le
-// groupement le plus courant sur Facebook est "XX XXX XX XX" (77 617 37 13, 78 332 22 99),
-// avec un espace dès après le 2ᵉ chiffre — un séparateur figé uniquement après le 3ᵉ chiffre
-// (comme "770 12 34 56") ratait donc la majorité des numéros réels.
+// Numéro sénégalais : 9 chiffres commençant par 7 (mobile : 70, 71, 72, 75, 76, 77, 78, 79),
+// avec ou sans +221/00221, tolérant espaces, points, tirets, slashs ou underscores entre les chiffres.
 function parseTelephoneFB(texte) {
-  const m = texte.match(/(?:\+?221|00221)?[\s.-]*(7[\s.-]?[05-8][\s.-]?\d(?:[\s.-]?\d){6})/);
-  if (!m) return null;
-  const digits = m[1].replace(/[\s.-]/g, '');
-  return digits.length === 9 ? digits : null;
+  if (!texte) return null;
+  const regex = /(?:\+?221|00221)?[\s._/-]*(7[\s._/-]?[01256789](?:[\s._/-]?\d){7})/g;
+  let match;
+  while ((match = regex.exec(texte)) !== null) {
+    const digits = match[1].replace(/[\s._/-]/g, '');
+    if (digits.length === 9) {
+      return digits;
+    }
+  }
+  return null;
 }
 
 // Beaucoup d'annonces Facebook (bannières colorées type "Babacar Immobilier", "El Hadji Seck")
@@ -311,8 +326,8 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
     console.log(`[FB-SCRAPER] ${groupesDuRun.length} groupe(s) ce run : ${groupesDuRun.map(g => g.label).join(', ')}`);
 
     for (const groupe of groupesDuRun) {
-      const url = `https://www.facebook.com/groups/${groupe.id}`;
-      console.log(`[FB-SCRAPER] Groupe : ${groupe.label} (${url})`);
+      const url = groupe.type === 'page' ? `https://www.facebook.com/${groupe.id}` : `https://www.facebook.com/groups/${groupe.id}`;
+      console.log(`[FB-SCRAPER] ${groupe.type === 'page' ? 'Page' : 'Groupe'} : ${groupe.label} (${url})`);
 
       try {
         // 'networkidle' n'atteint jamais un état stable sur Facebook (polling/websockets
@@ -343,7 +358,7 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
         // JS brut. Boucle bornée (20 max) pour ne pas tourner indéfiniment si de nouveaux
         // boutons apparaissent après chaque clic (React peut réinsérer le feed).
         const boutonVoirPlus = page.locator('[role="feed"] div[role="button"], [role="feed"] span[role="button"]')
-          .filter({ hasText: /^voir plus$/i });
+          .filter({ hasText: /(?:voir plus|en voir plus|see more)/i });
         for (let i = 0; i < 20; i++) {
           const n = await boutonVoirPlus.count();
           if (n === 0) break;
@@ -399,8 +414,9 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
           if (!feedRoot) return [];
           const items = [];
           for (const el of Array.from(feedRoot.children)) {
-            const userLien = el.querySelector('a[href*="/user/"], a[href*="/profile.php"]');
-            if (!userLien) continue; // pas un post top-level identifiable
+            const userLien = el.querySelector('a[href*="/user/"], a[href*="/profile.php"], a[href*="/people/"], a[href*="/groups/"], a[role="link"]');
+            const photoLien = el.querySelector('a[href*="set=pcb."], a[href*="/posts/"], a[href*="/permalink/"]');
+            if (!userLien && !photoLien) continue; // pas un post top-level identifiable
 
             let texte = el.innerText || '';
             texte = texte.replace(/(?:Facebook\s*){2,}/g, ' ');
@@ -437,9 +453,8 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
             const imgs = Array.from(el.querySelectorAll('img[src*="scontent"]'))
                               .map(img => img.src).slice(0, 5);
 
-            const photoLien = el.querySelector('a[href*="set=pcb."]');
             const setM = photoLien?.href.match(/set=pcb\.(\d+)/);
-            const href = setM ? photoLien.href : userLien.href;
+            const href = setM ? photoLien.href : (userLien?.href || photoLien?.href || '');
 
             items.push({ texte, imgs, href, refExterneId: setM ? setM[1] : null });
           }
@@ -468,8 +483,7 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
             if (texteOcr) texte = `${texte} ${texteOcr}`.trim();
           }
 
-          const categorie_slug = detecterCategorie(texte);
-          if (!categorie_slug) { stats.ignores++; continue; }
+          const categorie_slug = detecterCategorie(texte) || 'divers';
           const tel = parseTelephoneFB(texte);
           // Un numéro de téléphone réel + une catégorie détectée sont déjà le signal le plus
           // fort qu'il s'agit d'une vraie annonce — le style local ("45 mille x 3", "prend un

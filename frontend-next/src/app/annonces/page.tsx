@@ -11,15 +11,19 @@ const SSR_SECRET = process.env.SSR_SECRET || ''
 const SSR_HEADERS: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}
 
 const CATEGORIES = [
-  { slug: '',              label: 'Toutes',       emoji: '🗂' },
+  { slug: '',             label: 'Toutes',       emoji: '🗂' },
   { slug: 'smartphones',  label: 'Téléphones',   emoji: '📱' },
   { slug: 'informatique', label: 'Informatique', emoji: '💻' },
   { slug: 'tv-electro',   label: 'TV & Électro', emoji: '📺' },
   { slug: 'mode',         label: 'Mode',         emoji: '👗' },
   { slug: 'maison',       label: 'Maison',       emoji: '🏠' },
   { slug: 'auto-moto',    label: 'Auto & Moto',  emoji: '🚗' },
+  { slug: 'immo',         label: 'Immobilier',   emoji: '🏡' },
+  { slug: 'beaute',       label: 'Beauté',       emoji: '💄' },
+  { slug: 'emploi',       label: 'Emploi',       emoji: '💼' },
   { slug: 'jeux',         label: 'Jeux',         emoji: '🎮' },
   { slug: 'services',     label: 'Services',     emoji: '🛠' },
+  { slug: 'divers',       label: 'Divers',       emoji: '📦' },
 ]
 
 const TRIS = [

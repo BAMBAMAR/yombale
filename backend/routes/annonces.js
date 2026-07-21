@@ -13,7 +13,7 @@ const QUOTA_GRATUIT = 2;
 
 const CATS_AUTORISEES = [
   'smartphones', 'informatique', 'tv-electro', 'mode',
-  'maison', 'auto-moto', 'jeux', 'services',
+  'maison', 'auto-moto', 'jeux', 'services', 'immo', 'beaute', 'emploi', 'divers',
 ];
 
 // Champs requis par catégorie (clés dans caracteristiques JSONB)

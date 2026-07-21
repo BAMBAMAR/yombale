@@ -231,7 +231,9 @@ module.exports = async function migrateInline() {
         ('Beaute',       'beaute',      '💄'),
         ('Jeux',         'jeux',        '🎮'),
         ('Telecom & Forfaits', 'telecom', '📶'),
-        ('Immobilier',   'immo',        '🏡')
+        ('Immobilier',   'immo',        '🏡'),
+        ('Emploi & Job', 'emploi',      '💼'),
+        ('Divers',       'divers',      '📦')
       ON CONFLICT (slug) DO NOTHING;
 
       CREATE TABLE IF NOT EXISTS whatsapp_sessions (
