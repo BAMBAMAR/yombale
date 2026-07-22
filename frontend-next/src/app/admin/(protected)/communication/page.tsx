@@ -130,6 +130,18 @@ Vous en avez assez de payer trop cher ? Nopalou compare les prix de milliers de 
 #Nopalou #Sénégal #Dakar #PrixMoinsCher #Shopping #BonPlan`,
   },
   {
+    titre: 'Template Vente Flash & Relance WhatsApp (Marchand)',
+    texte: `⚡ Vente Flash 24h sur notre boutique Nopalou !
+
+Profitez de nos offres exclusives directement sur WhatsApp sans vous déplacer.
+
+🛒 Commandez vos articles en 1 clic : vos articles et détails de livraison sont envoyés directement à notre service client.
+
+👉 Enregistrez notre numéro et envoyez "MENU" ou cliquez sur le lien de notre boutique Nopalou pour passer commande instantanément.
+
+#VenteFlash #Dakar #WhatsAppShopping #NopalouBoutique`,
+  },
+  {
     titre: 'Post "Bon plan" (template quotidien)',
     texte: `🔥 BON PLAN DU JOUR
 
