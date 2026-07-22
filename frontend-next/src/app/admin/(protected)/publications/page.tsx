@@ -345,9 +345,21 @@ export default function PublicationsPage() {
           <button style={{ ...s.btn, background: '#FFF7ED', color: '#C75B00' }} onClick={() => generer('abonnement')} disabled={isPending}>
             🎯 Promo abonnement
           </button>
+          <button style={{ ...s.btn, background: '#ECFDF5', color: '#065F46' }} onClick={() => generer('boutiques')} disabled={isPending}>
+            🏪 Vitrine boutique
+          </button>
+          <button style={{ ...s.btn, background: '#F0F9FF', color: '#0369A1' }} onClick={() => generer('telecom')} disabled={isPending}>
+            📱 Forfait télécom
+          </button>
+          <button style={{ ...s.btn, background: '#FEF9C3', color: '#854D0E' }} onClick={() => generer('apporteur')} disabled={isPending}>
+            🤝 Programme apporteur
+          </button>
+          <button style={{ ...s.btn, background: '#FEF2F2', color: '#991B1B' }} onClick={() => generer('vente-flash')} disabled={isPending}>
+            ⚡ Vente flash
+          </button>
         </div>
         <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 8, marginBottom: 0 }}>
-          Le contenu est pré-rempli avec de vraies données — modifiez avant de sauvegarder.
+          Le contenu est pré-rempli avec de vraies données — modifiez avant de sauvegarder. Cliquez plusieurs fois pour varier le texte.
         </p>
       </div>
 
