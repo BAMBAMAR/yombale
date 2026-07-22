@@ -149,18 +149,19 @@ router.get('/generer/:type', async (req, res) => {
         JOIN offres o ON o.produit_id = p.id
         WHERE o.stock = true AND o.prix > 0 AND p.image_url IS NOT NULL
         GROUP BY p.id, p.nom, p.marque, p.image_url
-        HAVING MAX(o.prix) - MIN(o.prix) > 1000
-        ORDER BY (MAX(o.prix) - MIN(o.prix)) DESC
-        LIMIT 10
+        HAVING MAX(o.prix) - MIN(o.prix) > 500
+        ORDER BY RANDOM()
+        LIMIT 30
       `);
       if (rows.length) {
         const p = rows[Math.floor(Math.random() * rows.length)];
         const eco = Math.round(p.prix_max - p.prix_min);
         const nom = [p.marque, p.nom].filter(Boolean).join(' ');
         const gabarits = [
-          `🔥 BON PLAN DU JOUR !\n\n📱 ${nom}\n💰 À partir de ${Number(p.prix_min).toLocaleString('fr-FR')} FCFA chez ${p.marchand}\n\nÉconomisez jusqu'à ${eco.toLocaleString('fr-FR')} FCFA en comparant avant d'acheter !\n\n👉 Comparez tous les prix sur nopalou.com\n\n#Nopalou #BonPlan #Dakar #Sénégal #PrixMoinsCher`,
-          `⚡ PROMO REPÉRÉE !\n\n${nom} disponible dès ${Number(p.prix_min).toLocaleString('fr-FR')} FCFA chez ${p.marchand} — un des meilleurs prix du marché en ce moment.\n\n💸 Économie potentielle : ${eco.toLocaleString('fr-FR')} FCFA par rapport au prix le plus cher.\n\n👉 nopalou.com pour voir toutes les offres\n\n#Nopalou #Promo #Dakar #Sénégal #BonPlan`,
-          `👀 À NE PAS RATER\n\n${nom} — les prix varient énormément selon le marchand au Sénégal en ce moment.\n\n✅ Meilleur prix trouvé : ${Number(p.prix_min).toLocaleString('fr-FR')} FCFA chez ${p.marchand}\n✅ Économie possible : ${eco.toLocaleString('fr-FR')} FCFA\n\n👉 Comparez avant d'acheter sur nopalou.com\n\n#Nopalou #Shopping #Dakar #Sénégal #PrixMoinsCher`,
+          `🔥 BON PLAN DU JOUR !\n\n📱 ${nom}\n💰 À partir de ${Number(p.prix_min).toLocaleString('fr-FR')} FCFA chez ${p.marchand || 'nos marchands partenaires'}\n\nÉconomisez jusqu'à ${eco > 0 ? eco.toLocaleString('fr-FR') + ' FCFA' : 'plusieurs milliers de FCFA'} en comparant avant d'acheter !\n\n👉 Comparez tous les prix sur nopalou.com\n\n#Nopalou #BonPlan #Dakar #Sénégal #PrixMoinsCher`,
+          `⚡ PROMO REPÉRÉE !\n\n${nom} disponible dès ${Number(p.prix_min).toLocaleString('fr-FR')} FCFA${p.marchand ? ` chez ${p.marchand}` : ''} — un des meilleurs prix du marché en ce moment.\n\n💸 Économie potentielle : ${eco.toLocaleString('fr-FR')} FCFA par rapport aux offres plus chères.\n\n👉 nopalou.com pour voir toutes les offres\n\n#Nopalou #Promo #Dakar #Sénégal #BonPlan`,
+          `👀 À NE PAS RATER\n\n${nom} — les prix varient énormément selon le vendeur au Sénégal.\n\n✅ Meilleur prix trouvé : ${Number(p.prix_min).toLocaleString('fr-FR')} FCFA\n✅ Économie possible : jusqu'à ${eco.toLocaleString('fr-FR')} FCFA\n\n👉 Comparez avant d'acheter sur nopalou.com\n\n#Nopalou #Shopping #Dakar #Sénégal #PrixMoinsCher`,
+          `🛍️ MEILLEUR PRIX REPÉRÉ !\n\n${nom}\n\n🏷️ Tarif de départ : ${Number(p.prix_min).toLocaleString('fr-FR')} FCFA\n📍 Nopalou compare les offres de plusieurs marchands pour vous trouver le meilleur deal.\n\n👉 nopalou.com\n\n#Nopalou #BonneAffaire #Dakar #Sénégal`,
         ];
         result = {
           message: gabarits[Math.floor(Math.random() * gabarits.length)],
@@ -175,18 +176,18 @@ router.get('/generer/:type', async (req, res) => {
         SELECT id, titre, prix, ville, quartier, type_bien, transaction, photos
         FROM annonces_immo
         WHERE actif = true AND supprimee = false AND photos IS NOT NULL AND jsonb_array_length(photos) > 0
-        ORDER BY created_at DESC LIMIT 5
+        ORDER BY RANDOM() LIMIT 20
       `);
       if (rows.length) {
         const a = rows[Math.floor(Math.random() * rows.length)];
         const loc = [a.quartier, a.ville].filter(Boolean).join(', ') || 'Dakar';
-        const type = a.transaction === 'vente' ? 'À VENDRE' : 'À LOUER';
+        const typeBien = a.transaction === 'vente' ? 'À VENDRE' : 'À LOUER';
         const prix = a.prix ? `${Number(a.prix).toLocaleString('fr-FR')} FCFA${a.transaction !== 'vente' ? '/mois' : ''}` : 'Prix à négocier';
         const hashtagTransaction = a.transaction === 'vente' ? 'Vente' : 'Location';
         const gabarits = [
-          `🏠 ${type} — ${a.type_bien || 'Bien immobilier'}\n\n📍 ${loc}\n💰 ${prix}\n\n${a.titre}\n\nDes centaines d'annonces immo disponibles sur Nopalou — villas, appartements, terrains à Dakar et partout au Sénégal.\n\n👉 nopalou.com/immo\n\n#Immobilier #Dakar #Sénégal #${hashtagTransaction} #Nopalou`,
-          `📍 NOUVEAU SUR NOPALOU\n\n${a.type_bien || 'Bien immobilier'} ${type.toLowerCase()} à ${loc}\n\n💰 ${prix}\n\n${a.titre}\n\nParcourez toutes les annonces immo vérifiées du Sénégal sur Nopalou.\n\n👉 nopalou.com/immo\n\n#Immo #Dakar #Sénégal #${hashtagTransaction} #Nopalou`,
-          `🔑 ${a.type_bien || 'Bien'} disponible ${type === 'À VENDRE' ? 'à la vente' : 'à la location'}\n\n📍 ${loc}\n💰 ${prix}\n\n${a.titre}\n\nNopalou référence des centaines de biens immobiliers partout au Sénégal — mis à jour en continu.\n\n👉 nopalou.com/immo\n\n#Immobilier #Dakar #Sénégal #${hashtagTransaction} #Nopalou`,
+          `🏠 ${typeBien} — ${a.type_bien || 'Bien immobilier'}\n\n📍 ${loc}\n💰 ${prix}\n\n${a.titre}\n\nDes centaines d'annonces immo disponibles sur Nopalou — villas, appartements, terrains à Dakar et partout au Sénégal.\n\n👉 nopalou.com/immo\n\n#Immobilier #Dakar #Sénégal #${hashtagTransaction} #Nopalou`,
+          `📍 NOUVEAU SUR NOPALOU\n\n${a.type_bien || 'Bien immobilier'} ${typeBien.toLowerCase()} à ${loc}\n\n💰 ${prix}\n\n${a.titre}\n\nParcourez toutes les annonces immo vérifiées du Sénégal sur Nopalou.\n\n👉 nopalou.com/immo\n\n#Immo #Dakar #Sénégal #${hashtagTransaction} #Nopalou`,
+          `🔑 ${a.type_bien || 'Bien'} disponible ${typeBien === 'À VENDRE' ? 'à la vente' : 'à la location'}\n\n📍 ${loc}\n💰 ${prix}\n\n${a.titre}\n\nNopalou référence des centaines de biens immobiliers partout au Sénégal — mis à jour en continu.\n\n👉 nopalou.com/immo\n\n#Immobilier #Dakar #Sénégal #${hashtagTransaction} #Nopalou`,
         ];
         result = {
           message: gabarits[Math.floor(Math.random() * gabarits.length)],
@@ -205,9 +206,9 @@ router.get('/generer/:type', async (req, res) => {
         JOIN offres o ON o.produit_id = p.id
         WHERE o.stock = true AND o.prix > 0 AND p.image_url IS NOT NULL
         GROUP BY p.id, p.nom, p.marque, p.image_url
-        HAVING COUNT(DISTINCT o.marchand_id) >= 2 AND MAX(o.prix) - MIN(o.prix) > 3000
-        ORDER BY COUNT(DISTINCT o.marchand_id) DESC, (MAX(o.prix) - MIN(o.prix)) DESC
-        LIMIT 10
+        HAVING COUNT(DISTINCT o.marchand_id) >= 2
+        ORDER BY RANDOM()
+        LIMIT 30
       `);
       if (rows.length) {
         const p = rows[Math.floor(Math.random() * rows.length)];
@@ -215,7 +216,7 @@ router.get('/generer/:type', async (req, res) => {
         const nom = [p.marque, p.nom].filter(Boolean).join(' ');
         const hashtagMarque = (p.marque || 'Tech').replace(/\s/g,'');
         const gabarits = [
-          `📊 COMPARER C'EST ÉCONOMISER !\n\n${nom} est vendu à des prix très différents selon le marchand au Sénégal.\n\n💸 Jusqu'à ${eco.toLocaleString('fr-FR')} FCFA de différence entre les marchands !\n\nNopalou compare ${p.nb_marchands} marchands en temps réel pour vous trouver le meilleur prix.\n\n👉 Voir tous les prix sur nopalou.com\n\n#Nopalou #Comparateur #${hashtagMarque} #Dakar #Sénégal #PrixMoinsCher`,
+          `📊 COMPARER C'EST ÉCONOMISER !\n\n${nom} est vendu à des prix très différents selon le marchand au Sénégal.\n\n💸 Jusqu'à ${eco > 0 ? eco.toLocaleString('fr-FR') + ' FCFA' : 'plusieurs milliers de FCFA'} de différence entre les vendeurs !\n\nNopalou compare ${p.nb_marchands} marchands en temps réel pour vous trouver le meilleur prix.\n\n👉 Voir tous les prix sur nopalou.com\n\n#Nopalou #Comparateur #${hashtagMarque} #Dakar #Sénégal #PrixMoinsCher`,
           `🤔 SAVIEZ-VOUS QUE LES PRIX VARIENT AUTANT ?\n\nPour ${nom}, l'écart entre le prix le plus bas et le plus haut atteint ${eco.toLocaleString('fr-FR')} FCFA au Sénégal.\n\nNopalou surveille ${p.nb_marchands} marchands en temps réel pour vous faire gagner cet argent.\n\n👉 nopalou.com\n\n#Nopalou #Comparateur #${hashtagMarque} #Dakar #Sénégal`,
           `💸 NE PAYEZ PAS PLUS CHER QUE NÉCESSAIRE\n\n${nom} : jusqu'à ${eco.toLocaleString('fr-FR')} FCFA d'écart entre marchands sur ${p.nb_marchands} sites comparés par Nopalou.\n\nUn coup d'œil avant d'acheter peut vous faire économiser gros.\n\n👉 Comparez sur nopalou.com\n\n#Nopalou #BonPlan #${hashtagMarque} #Dakar #Sénégal`,
         ];
@@ -284,49 +285,73 @@ router.get('/generer/:type', async (req, res) => {
     }
 
     else if (type === 'boutiques') {
-      const { rows } = await pool.query(`
-        SELECT b.nom, b.description, b.slug, b.logo_url,
-               COUNT(bp.id) as nb_produits
-        FROM boutiques b
-        LEFT JOIN boutique_produits bp ON bp.boutique_id = b.id AND bp.actif = true
-        WHERE b.actif = true
-        GROUP BY b.id, b.nom, b.description, b.slug, b.logo_url
-        HAVING COUNT(bp.id) > 0
-        ORDER BY RANDOM()
-        LIMIT 5
-      `);
-      if (rows.length) {
-        const b = rows[Math.floor(Math.random() * rows.length)];
+      let b = null;
+      let nbProduits = 0;
+      try {
+        const { rows } = await pool.query(`
+          SELECT b.nom, b.description, b.slug, b.logo_url,
+                 COUNT(bp.id) as nb_produits
+          FROM boutiques b
+          LEFT JOIN boutique_produits bp ON bp.boutique_id = b.id AND bp.actif = true
+          WHERE b.actif = true
+          GROUP BY b.id, b.nom, b.description, b.slug, b.logo_url
+          ORDER BY RANDOM()
+          LIMIT 5
+        `);
+        if (rows.length) {
+          b = rows[Math.floor(Math.random() * rows.length)];
+          nbProduits = Number(b.nb_produits || 0);
+        }
+      } catch (_) {}
+
+      if (b) {
         const lien = b.slug ? `https://nopalou.com/boutique/${b.slug}` : 'https://nopalou.com/boutiques';
         const gabarits = [
-          `🏪 DÉCOUVREZ NOS BOUTIQUES EN LIGNE !\n\n${b.nom}${b.description ? ` — ${b.description.slice(0, 80)}` : ''}\n\n✅ ${b.nb_produits} produit(s) disponibles\n✅ Commandez directement sur WhatsApp\n✅ Livraison à Dakar et dans les régions\n\n👉 Visitez la boutique sur nopalou.com\n\n#Nopalou #Boutique #Shopping #Dakar #Sénégal`,
-          `🛍️ SHOPPING EN LIGNE AU SÉNÉGAL\n\nNopalou héberge des dizaines de boutiques locales vérifiées.\n\nDécouvrez ${b.nom} et ses ${b.nb_produits} produits disponibles dès maintenant.\n\n✅ Commande directe par WhatsApp\n✅ Prix transparents\n✅ Vendeurs vérifiés\n\n👉 nopalou.com/boutiques\n\n#Nopalou #BoutiqueLocale #Dakar #Sénégal #Shopping`,
-          `💚 SOUTENEZ LES COMMERÇANTS LOCAUX\n\n${b.nom} est l'une des boutiques partenaires de Nopalou.\n\n🏪 ${b.nb_produits} produit(s) en ligne\n📲 Commandez via WhatsApp en 1 clic\n🚚 Livraison à domicile possible\n\nRetrouvez toutes nos boutiques sur nopalou.com/boutiques\n\n#CommerceLocal #Dakar #Sénégal #Nopalou #Shopping`,
+          `🏪 DÉCOUVREZ NOS BOUTIQUES EN LIGNE !\n\n${b.nom}${b.description ? ` — ${b.description.slice(0, 80)}` : ''}\n\n✅ ${nbProduits > 0 ? nbProduits + ' produit(s) disponibles' : 'Boutique vérifiée sur Nopalou'}\n✅ Commandez directement sur WhatsApp\n✅ Livraison à Dakar et dans les régions\n\n👉 Visitez la boutique sur nopalou.com\n\n#Nopalou #Boutique #Shopping #Dakar #Sénégal`,
+          `🛍️ SHOPPING EN LIGNE AU SÉNÉGAL\n\nNopalou héberge des dizaines de boutiques locales vérifiées.\n\nDécouvrez ${b.nom} et ses produits disponibles dès maintenant.\n\n✅ Commande directe par WhatsApp\n✅ Prix transparents\n✅ Vendeurs vérifiés\n\n👉 nopalou.com/boutiques\n\n#Nopalou #BoutiqueLocale #Dakar #Sénégal #Shopping`,
+          `💚 SOUTENEZ LES COMMERÇANTS LOCAUX\n\n${b.nom} est l'une des boutiques partenaires de Nopalou.\n\n🏪 Catalogue en ligne\n📲 Commandez via WhatsApp en 1 clic\n🚚 Livraison à domicile possible\n\nRetrouvez toutes nos boutiques sur nopalou.com/boutiques\n\n#CommerceLocal #Dakar #Sénégal #Nopalou #Shopping`,
         ];
         result = {
           message: gabarits[Math.floor(Math.random() * gabarits.length)],
           image_url: b.logo_url || null,
           lien,
         };
+      } else {
+        // Fallback générique si aucune boutique en base
+        const gabarits = [
+          `🏪 DÉCOUVREZ LES BOUTIQUES PARTENAIRES NOPALOU !\n\nDes dizaines de vendeurs et commerçants sénégalais présentent leurs produits sur Nopalou.\n\n✅ Produits électroniques, mode, cosmétiques, maison\n✅ Commandes directes sur WhatsApp\n✅ Prix transparents & vendeurs vérifiés\n\n👉 Explorez les boutiques sur nopalou.com/boutiques\n\n#Nopalou #Boutiques #ShoppingDakar #Sénégal #CommerceLocal`,
+          `🛍️ VOUS CHERCHEZ UNE BOUTIQUE EN LIGNE FIABLE AU SÉNÉGAL ?\n\nSur Nopalou, découvrez les boutiques partenaires vérifiées à Dakar et dans les régions.\n\n📱 Parcourez les catalogues\n📲 Contactez le vendeur sur WhatsApp en un clic\n🚚 Faites-vous livrer chez vous\n\n👉 nopalou.com/boutiques\n\n#Nopalou #BoutiqueEnLigne #Dakar #Sénégal`,
+        ];
+        result = {
+          message: gabarits[Math.floor(Math.random() * gabarits.length)],
+          image_url: null,
+          lien: 'https://nopalou.com/boutiques',
+        };
       }
     }
 
     else if (type === 'telecom') {
-      const { rows } = await pool.query(`
-        SELECT f.nom, f.operateur, f.prix, f.data_go, f.validite_jours, f.type_forfait
-        FROM forfaits_telecom f
-        WHERE f.actif = true AND f.prix > 0
-        ORDER BY RANDOM()
-        LIMIT 5
-      `);
-      if (rows.length) {
-        const f = rows[Math.floor(Math.random() * rows.length)];
-        const data = f.data_go ? `${f.data_go} Go de data` : 'data inclus';
+      let f = null;
+      try {
+        const { rows } = await pool.query(`
+          SELECT f.nom, f.operateur, f.prix, f.data_mo, f.validite_jours, f.type
+          FROM forfaits_telecom f
+          WHERE f.actif = true AND f.prix > 0
+          ORDER BY RANDOM()
+          LIMIT 10
+        `);
+        if (rows.length) {
+          f = rows[Math.floor(Math.random() * rows.length)];
+        }
+      } catch (_) {}
+
+      if (f) {
+        const dataText = f.data_mo ? (f.data_mo >= 1024 ? `${(f.data_mo / 1024).toFixed(0)} Go de data` : `${f.data_mo} Mo de data`) : 'data inclus';
         const validite = f.validite_jours ? `valable ${f.validite_jours} jours` : '';
         const gabarits = [
-          `📱 BON PLAN TÉLÉCOM !\n\n${f.operateur} — ${f.nom}\n\n✅ ${data}${validite ? `\n⏱️ ${validite}` : ''}\n💰 ${Number(f.prix).toLocaleString('fr-FR')} FCFA\n\nNopalou compare tous les forfaits Orange, Yas, Promobile et Expresso pour vous trouver la meilleure offre.\n\n👉 nopalou.com/telecom\n\n#Telecom #Forfait #${f.operateur.replace(/\s/g,'')} #Dakar #Sénégal #Nopalou`,
-          `📡 COMPAREZ LES FORFAITS MOBILES\n\nPas sûr de choisir le bon forfait ? Nopalou compare en temps réel tous les opérateurs :\n\n📱 Orange · Yas · Promobile · Expresso\n\nExemple : ${f.operateur} propose ${f.nom} à ${Number(f.prix).toLocaleString('fr-FR')} FCFA (${data}${validite ? `, ${validite}` : ''}).\n\n👉 Trouvez votre forfait idéal sur nopalou.com/telecom\n\n#Telecom #Forfait #Dakar #Sénégal #Nopalou`,
-          `💡 ÉCONOMISEZ SUR VOTRE FORFAIT !\n\nSaviez-vous que le même budget donne des résultats très différents selon l'opérateur ?\n\nNopalou compare tous les forfaits data, voix et SMS en un clin d'œil.\n\n📱 Offre repérée : ${f.operateur} — ${f.nom} (${data}) à ${Number(f.prix).toLocaleString('fr-FR')} FCFA\n\n👉 nopalou.com/telecom\n\n#Telecom #Forfait #Internet #Dakar #Sénégal #Nopalou`,
+          `📱 BON PLAN TÉLÉCOM !\n\n${f.operateur} — ${f.nom}\n\n✅ ${dataText}${validite ? `\n⏱️ ${validite}` : ''}\n💰 ${Number(f.prix).toLocaleString('fr-FR')} FCFA\n\nNopalou compare tous les forfaits Orange, Yas, Promobile et Expresso pour vous trouver la meilleure offre.\n\n👉 nopalou.com/telecom\n\n#Telecom #Forfait #${f.operateur.replace(/\s/g,'')} #Dakar #Sénégal #Nopalou`,
+          `📡 COMPAREZ LES FORFAITS MOBILES\n\nPas sûr de choisir le bon forfait ? Nopalou compare en temps réel tous les opérateurs :\n\n📱 Orange · Yas · Promobile · Expresso\n\nExemple : ${f.operateur} propose ${f.nom} à ${Number(f.prix).toLocaleString('fr-FR')} FCFA (${dataText}${validite ? `, ${validite}` : ''}).\n\n👉 Trouvez votre forfait idéal sur nopalou.com/telecom\n\n#Telecom #Forfait #Dakar #Sénégal #Nopalou`,
+          `💡 ÉCONOMISEZ SUR VOTRE FORFAIT !\n\nSaviez-vous que le même budget donne des résultats très différents selon l'opérateur ?\n\nNopalou compare tous les forfaits data, voix et SMS en un clin d'œil.\n\n📱 Offre repérée : ${f.operateur} — ${f.nom} (${dataText}) à ${Number(f.prix).toLocaleString('fr-FR')} FCFA\n\n👉 nopalou.com/telecom\n\n#Telecom #Forfait #Internet #Dakar #Sénégal #Nopalou`,
         ];
         result = {
           message: gabarits[Math.floor(Math.random() * gabarits.length)],
@@ -335,8 +360,12 @@ router.get('/generer/:type', async (req, res) => {
         };
       } else {
         // Gabarit générique si aucun forfait en base
+        const gabarits = [
+          `📱 COMPAREZ TOUS LES FORFAITS MOBILES AU SÉNÉGAL\n\nOrange, Yas, Promobile, Expresso — Nopalou compare en temps réel les meilleures offres data, voix et SMS.\n\n✅ Comparaison gratuite\n✅ Mis à jour en continu\n✅ Trouvez le meilleur rapport qualité-prix\n\n👉 nopalou.com/telecom\n\n#Telecom #Forfait #Mobile #Dakar #Sénégal #Nopalou`,
+          `📶 FORFAIT INTERNET : NE PAYEZ PAS PLUS CHER !\n\nComparez le prix au Go entre les différents opérateurs au Sénégal avant de recharger.\n\n📊 Comparez Orange, Yas, Promobile et Expresso en 1 clic.\n\n👉 nopalou.com/telecom\n\n#Telecom #Data #Internet #Dakar #Sénégal #Nopalou`,
+        ];
         result = {
-          message: `📱 COMPAREZ TOUS LES FORFAITS MOBILES AU SÉNÉGAL\n\nOrange, Yas, Promobile, Expresso — Nopalou compare en temps réel les meilleures offres data, voix et SMS.\n\n✅ Comparaison gratuite\n✅ Mis à jour en continu\n✅ Trouvez le meilleur rapport qualité-prix\n\n👉 nopalou.com/telecom\n\n#Telecom #Forfait #Mobile #Dakar #Sénégal #Nopalou`,
+          message: gabarits[Math.floor(Math.random() * gabarits.length)],
           image_url: null,
           lien: 'https://nopalou.com/telecom',
         };
