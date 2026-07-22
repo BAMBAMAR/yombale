@@ -25,13 +25,13 @@ const STEPS = [
   {
     icon: '🛒', couleur: '#7c3aed',
     titre: '3. Passation de commande sur le site web',
-    texte: "Ajoutez vos articles au panier Nopalou. Renseignez votre adresse de livraison à Dakar ou dans les régions, puis validez votre commande directement en ligne.",
-    ctas: [{ label: 'Voir mon panier →', href: '/panier', couleur: '#7c3aed', bg: '#faf5ff' }],
+    texte: "Naviguez sur la boutique de votre choix. Sélectionnez vos articles, renseignez votre adresse de livraison à Dakar ou dans les régions, puis validez votre commande.",
+    ctas: [{ label: 'Se connecter / S\'inscrire →', href: '/connexion', couleur: '#7c3aed', bg: '#faf5ff' }],
   },
   {
     icon: '📲', couleur: '#25D366',
     titre: '4. Commande directe & Chat WhatsApp avec le marchand',
-    texte: "Vous préférez discuter avec le vendeur ? Cliquez sur <strong>\"Commander via WhatsApp\"</strong>. Votre panier complet et vos articles sont automatiquement pré-remplis dans votre message WhatsApp vers le marchand.",
+    texte: "Vous préférez discuter avec le vendeur ? Cliquez sur <strong>\"Commander via WhatsApp\"</strong>. Votre message est pré-rempli avec les articles choisis pour un échange direct.",
     ctas: [
       { label: 'Découvrir l\'assistant WhatsApp →', href: '/assistant-whatsapp', couleur: '#25D366', bg: '#f0fdf4' },
       { label: 'Discuter sur WhatsApp →', href: 'https://wa.me/221708717942?text=menu', couleur: '#25D366', bg: '#f0fdf4' },
@@ -40,23 +40,23 @@ const STEPS = [
   {
     icon: '🚚', couleur: '#059669',
     titre: '5. Modes de livraison & Suivi en temps réel',
-    texte: "Recevez votre colis à domicile ou au bureau. Suivez l'avancement de votre livraison en entrant votre référence (ex: PAY-12345) sur le site ou en l'envoyant par message à l'assistant WhatsApp.",
+    texte: "Recevez votre colis à domicile ou au bureau. Suivez l'avancement de votre livraison depuis votre espace compte ou en envoyant votre référence de commande au Chatbot WhatsApp.",
     ctas: [
-      { label: 'Suivre ma commande →', href: '/compte/commandes', couleur: '#059669', bg: '#f0fdf4' },
+      { label: 'Mon Espace Compte →', href: '/compte', couleur: '#059669', bg: '#f0fdf4' },
     ],
   },
   {
     icon: '🔔', couleur: '#f59e0b',
     titre: '6. Alertes de baisse de prix',
-    texte: "Un produit est trop cher ? Cliquez sur \"Créer une alerte prix\". Saisissez votre budget cible. Vous serez averti automatiquement par email ou WhatsApp dès que le prix baisse.",
-    ctas: [],
+    texte: "Un produit est trop cher ? Cliquez sur \"Créer une alerte prix\". Saisissez votre budget cible. Vous serez averti automatiquement dès que le prix baisse.",
+    ctas: [{ label: 'Mes alertes prix →', href: '/mes-alertes', couleur: '#f59e0b', bg: '#fffbeb' }],
   },
   {
     icon: '💼', couleur: '#C75B00',
     titre: '7. Espace Marchand & Programme Apporteur',
     texte: "Vous êtes vendeur ? Ouvrez votre boutique en ligne Nopalou et synchronisez vos ventes avec WhatsApp. Vous pouvez aussi devenir apporteur d'affaires et toucher 10% de commission récurrente sur les boutiques recrutées.",
     ctas: [
-      { label: 'Devenir marchand →', href: '/compte/boutique', couleur: '#C75B00', bg: '#fff7ed' },
+      { label: 'Ouvrir une boutique / Compte →', href: '/inscription', couleur: '#C75B00', bg: '#fff7ed' },
       { label: 'Devenir apporteur →', href: '/compte/apporteur', couleur: '#C75B00', bg: '#fff7ed' },
     ],
   },
