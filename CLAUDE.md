@@ -749,11 +749,12 @@ Cache mémoire 5 min — fichier : `backend/lib/settingsCache.js`.
 | **`/admin/whatsapp`** | **Nouveau** — statut Meta, test envoi, sessions chatbot, toggle chatbot |
 | **`/admin/apporteurs`** | **Nouveau (4 juillet)** — config programme (taux, seuil, toggle), liste apporteurs, règlement des commissions, attribution manuelle boutique↔apporteur |
 
-#### Next.js 14 — sécurité
+#### Next.js 14 — sécurité & guides
 - httpOnly cookies JWT (`nopalou_session`) — plus de localStorage
 - CSP nonce sans `unsafe-inline`
 - DAL avec `verifySession()` + `getOptionalSession()` via React `cache()`
 - Middleware de protection des routes
+- Guide d'emploi interactif (`/guide-emploi`) remis à jour couvrant le parcours complet (Recherche, Comparaison, Panier Web, Panier WhatsApp & Livraison) et Kit communication marketing admin (`/admin/communication`)
 
 ### Ce qui reste à faire (mis à jour 3 juillet 2026 — voir aussi `docs/LANCEMENT-CHECKLIST.md` pour le suivi détaillé)
 

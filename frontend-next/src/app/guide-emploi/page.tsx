@@ -12,69 +12,53 @@ export const metadata: Metadata = {
 const STEPS = [
   {
     icon: '🔍', couleur: '#1d4ed8',
-    titre: 'Comparer les prix des produits',
-    texte: 'Tapez un produit dans la barre de recherche (ex : "Samsung Galaxy A55", "climatiseur 18 000 BTU"). Nopalou compare les prix chez tous les marchands partenaires et met en avant la meilleure offre.',
-    ctas: [{ label: 'Rechercher →', href: '/', couleur: '#1d4ed8', bg: '#eff6ff' }],
-  },
-  {
-    icon: '🏆', couleur: '#ea580c',
-    titre: "Guide d'achat intelligent",
-    texte: "Vous ne savez pas lequel choisir ? Indiquez votre budget et vos priorités. Nopalou calcule un score personnalisé et classe les produits selon votre profil d'achat.",
-    ctas: [{ label: 'Lancer le guide →', href: '/guide-achat', couleur: '#ea580c', bg: '#fff7ed' }],
-  },
-  {
-    icon: '🏡', couleur: '#059669',
-    titre: 'Trouver un logement',
-    texte: "Parcourez les annonces immobilières (appartements, villas, studios, chambres…). Filtrez par type, ville, quartier et budget. Le Guide immobilier présente les annonces les plus compatibles avec votre projet.",
-    ctas: [
-      { label: 'Voir les annonces →', href: '/immo', couleur: '#059669', bg: '#f0fdf4' },
-      { label: 'Guide immobilier →', href: '/guide-immo', couleur: '#059669', bg: '#f0fdf4' },
-    ],
-  },
-  {
-    icon: '📶', couleur: '#7c3aed',
-    titre: 'Choisir un forfait télécom',
-    texte: 'Comparez tous les forfaits mobiles Orange, Free, Expresso et Wave : data, appels, SMS, prix. Le Guide forfait analyse votre usage et vous recommande les meilleures offres.',
-    ctas: [{ label: 'Guide forfait →', href: '/guide-forfait', couleur: '#7c3aed', bg: '#faf5ff' }],
+    titre: '1. Rechercher des produits ou annonces',
+    texte: 'Tapez un produit dans la barre de recherche (ex : "Samsung Galaxy A55", "climatiseur Haier"). Nopalou compare les prix chez tous les marchands partenaires et boutiques en ligne au Sénégal.',
+    ctas: [{ label: 'Rechercher un produit →', href: '/', couleur: '#1d4ed8', bg: '#eff6ff' }],
   },
   {
     icon: '⚖️', couleur: '#0891b2',
-    titre: 'Comparer côte à côte',
-    texte: "Cliquez ⚖ sur 2 à 3 produits ou annonces pour les ajouter à votre sélection. Un bandeau apparaît en bas. Cliquez \"Comparer\" pour voir un tableau détaillé avec les différences surlignées.",
-    ctas: [],
+    titre: '2. Comparer & Sélectionner les meilleurs prix',
+    texte: "Cliquez sur ⚖ sur plusieurs produits pour les ajouter au comparateur côte à côte, ou consultez les fiches détaillées pour vérifier la disponibilité et les garanties.",
+    ctas: [{ label: 'Guide d\'achat intelligent →', href: '/guide-achat', couleur: '#ea580c', bg: '#fff7ed' }],
   },
   {
-    icon: '❤️', couleur: '#ef4444',
-    titre: 'Sauvegarder dans les favoris',
-    texte: 'Cliquez ❤ sur un produit ou une annonce pour le sauvegarder. Retrouvez tous vos favoris dans la page Favoris — sans inscription requise.',
-    ctas: [{ label: 'Mes favoris →', href: '/favoris', couleur: '#ef4444', bg: '#fef2f2' }],
+    icon: '🛒', couleur: '#7c3aed',
+    titre: '3. Passation de commande sur le site web',
+    texte: "Ajoutez vos articles au panier Nopalou. Renseignez votre adresse de livraison à Dakar ou dans les régions, puis validez votre commande directement en ligne.",
+    ctas: [{ label: 'Voir mon panier →', href: '/panier', couleur: '#7c3aed', bg: '#faf5ff' }],
   },
   {
-    icon: '🔔', couleur: '#f59e0b',
-    titre: 'Alertes prix',
-    texte: "Sur la fiche d'un produit, cliquez \"Créer une alerte prix\". Saisissez votre budget cible et votre email. Vous serez notifié automatiquement dès que le prix passe sous votre seuil.",
-    ctas: [],
-  },
-  {
-    icon: '📢', couleur: '#059669',
-    titre: 'Publier une annonce',
-    texte: "Vous louez ou vendez un bien ? Vous voulez vendre un article ? Cliquez \"+ Déposer\" dans la barre de navigation. Votre annonce sera visible après validation.",
-    ctas: [{ label: 'Publier une annonce →', href: '/deposer-annonce', couleur: '#059669', bg: '#f0fdf4' }],
-  },
-  {
-    icon: '💬', couleur: '#25D366',
-    titre: 'Discuter avec l\'assistant WhatsApp',
-    texte: "Recherchez un produit, consultez les annonces immo ou créez une alerte de prix directement depuis WhatsApp, sans installer d'application. Envoyez simplement \"menu\" au numéro Nopalou.",
+    icon: '📲', couleur: '#25D366',
+    titre: '4. Commande directe & Chat WhatsApp avec le marchand',
+    texte: "Vous préférez discuter avec le vendeur ? Cliquez sur <strong>\"Commander via WhatsApp\"</strong>. Votre panier complet et vos articles sont automatiquement pré-remplis dans votre message WhatsApp vers le marchand.",
     ctas: [
-      { label: 'Découvrir l\'assistant →', href: '/assistant-whatsapp', couleur: '#25D366', bg: '#f0fdf4' },
+      { label: 'Découvrir l\'assistant WhatsApp →', href: '/assistant-whatsapp', couleur: '#25D366', bg: '#f0fdf4' },
       { label: 'Discuter sur WhatsApp →', href: 'https://wa.me/221708717942?text=menu', couleur: '#25D366', bg: '#f0fdf4' },
     ],
   },
   {
+    icon: '🚚', couleur: '#059669',
+    titre: '5. Modes de livraison & Suivi en temps réel',
+    texte: "Recevez votre colis à domicile ou au bureau. Suivez l'avancement de votre livraison en entrant votre référence (ex: PAY-12345) sur le site ou en l'envoyant par message à l'assistant WhatsApp.",
+    ctas: [
+      { label: 'Suivre ma commande →', href: '/compte/commandes', couleur: '#059669', bg: '#f0fdf4' },
+    ],
+  },
+  {
+    icon: '🔔', couleur: '#f59e0b',
+    titre: '6. Alertes de baisse de prix',
+    texte: "Un produit est trop cher ? Cliquez sur \"Créer une alerte prix\". Saisissez votre budget cible. Vous serez averti automatiquement par email ou WhatsApp dès que le prix baisse.",
+    ctas: [],
+  },
+  {
     icon: '💼', couleur: '#C75B00',
-    titre: 'Devenir apporteur d\'affaires',
-    texte: "Vous connaissez des commerçants, agences immo ou vendeurs ? Partagez votre lien personnel et touchez une commission chaque mois sur les abonnements des boutiques que vous recrutez — sans investissement, sans engagement.",
-    ctas: [{ label: 'Devenir apporteur →', href: '/compte/apporteur', couleur: '#C75B00', bg: '#fff7ed' }],
+    titre: '7. Espace Marchand & Programme Apporteur',
+    texte: "Vous êtes vendeur ? Ouvrez votre boutique en ligne Nopalou et synchronisez vos ventes avec WhatsApp. Vous pouvez aussi devenir apporteur d'affaires et toucher 10% de commission récurrente sur les boutiques recrutées.",
+    ctas: [
+      { label: 'Devenir marchand →', href: '/compte/boutique', couleur: '#C75B00', bg: '#fff7ed' },
+      { label: 'Devenir apporteur →', href: '/compte/apporteur', couleur: '#C75B00', bg: '#fff7ed' },
+    ],
   },
 ]
 
