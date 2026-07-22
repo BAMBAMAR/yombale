@@ -40,9 +40,9 @@ const STEPS = [
   {
     icon: '🚚', couleur: '#059669',
     titre: '5. Modes de livraison & Suivi en temps réel',
-    texte: "Recevez votre colis à domicile ou au bureau. Suivez l'avancement de votre livraison depuis votre espace compte ou en envoyant votre référence de commande au Chatbot WhatsApp.",
+    texte: "Recevez votre colis à domicile ou au bureau. Pour suivre votre livraison, envoyez votre référence de commande (ex : PAY-12345) directement par message à l'Assistant WhatsApp Nopalou — disponible 24h/24.",
     ctas: [
-      { label: 'Mon Espace Compte →', href: '/compte', couleur: '#059669', bg: '#f0fdf4' },
+      { label: 'Suivre via WhatsApp →', href: 'https://wa.me/221708717942?text=suivi', couleur: '#25D366', bg: '#f0fdf4' },
     ],
   },
   {
