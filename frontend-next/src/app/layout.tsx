@@ -126,6 +126,11 @@ export default async function RootLayout({
         />
       </head>
       <body>
+        {/* Lien d'évitement pour la navigation au clavier (WCAG 2.4.1) */}
+        <a href="#app-main" className="skip-link">
+          Aller au contenu principal
+        </a>
+
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-GD7365PKTS"
           strategy="afterInteractive"
@@ -139,37 +144,59 @@ export default async function RootLayout({
             gtag('config', 'G-GD7365PKTS');
           `}
         </Script>
-        <nav className="navbar">
-          <a href="/" className="logo"><Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority /><span className="logo-name" data-suffix="lou">Nopa</span></a>
-          <div className="navbar-links">
-            <a href="/" className="navbar-link">Produits</a>
-            <a href="/immo" className="navbar-link">Immobilier</a>
-            <a href="/telecom" className="navbar-link">Télécom</a>
-            <a href="/annonces" className="navbar-link">Annonces</a>
-            <a href="/boutiques" className="navbar-link">Boutiques</a>
-            <NavbarGuides />
-          </div>
-          <NavbarSearch />
-          <div className="navbar-actions">
-            <a href="/deposer-annonce" className="navbar-deposer">
-              + Publier
-            </a>
-            {session ? (
-              <NavbarActions nom={session.nom ?? session.email ?? 'Mon compte'} />
-            ) : (
-              <>
-                <a href="/connexion" className="navbar-link">Connexion</a>
-                <a href="/inscription" className="navbar-inscription">S&apos;inscrire</a>
-              </>
-            )}
-          </div>
-          <MobileNav
-            isLoggedIn={!!session}
-            nom={session?.nom ?? session?.email ?? undefined}
-          />
-        </nav>
+        <Script id="ripple-handler" strategy="afterInteractive" nonce={nonce}>
+          {`
+            document.addEventListener('click', function(e) {
+              const target = e.target.closest('button, .chip, .pcard, .nav-user, .navbar-link, .btn-primary');
+              if (!target) return;
+              const rect = target.getBoundingClientRect();
+              const circle = document.createElement('span');
+              const diameter = Math.max(rect.width, rect.height);
+              const radius = diameter / 2;
+              circle.style.width = circle.style.height = diameter + 'px';
+              circle.style.left = (e.clientX - rect.left - radius) + 'px';
+              circle.style.top = (e.clientY - rect.top - radius) + 'px';
+              circle.classList.add('ripple');
+              const existing = target.getElementsByClassName('ripple')[0];
+              if (existing) existing.remove();
+              target.appendChild(circle);
+            });
+          `}
+        </Script>
 
-        <main>{children}</main>
+        <header role="banner">
+          <nav className="navbar" aria-label="Navigation principale">
+            <a href="/" className="logo"><Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority /><span className="logo-name" data-suffix="lou">Nopa</span></a>
+            <div className="navbar-links" role="menubar">
+              <a href="/" className="navbar-link" role="menuitem">Produits</a>
+              <a href="/immo" className="navbar-link" role="menuitem">Immobilier</a>
+              <a href="/telecom" className="navbar-link" role="menuitem">Télécom</a>
+              <a href="/annonces" className="navbar-link" role="menuitem">Annonces</a>
+              <a href="/boutiques" className="navbar-link" role="menuitem">Boutiques</a>
+              <NavbarGuides />
+            </div>
+            <NavbarSearch />
+            <div className="navbar-actions">
+              <a href="/deposer-annonce" className="navbar-deposer" aria-label="Publier une nouvelle annonce">
+                + Publier
+              </a>
+              {session ? (
+                <NavbarActions nom={session.nom ?? session.email ?? 'Mon compte'} />
+              ) : (
+                <>
+                  <a href="/connexion" className="navbar-link">Connexion</a>
+                  <a href="/inscription" className="navbar-inscription">S&apos;inscrire</a>
+                </>
+              )}
+            </div>
+            <MobileNav
+              isLoggedIn={!!session}
+              nom={session?.nom ?? session?.email ?? undefined}
+            />
+          </nav>
+        </header>
+
+        <main id="app-main" tabIndex={-1}>{children}</main>
 
         <BottomBars />
         <RegisterSW />

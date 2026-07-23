@@ -131,7 +131,7 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
         disabled={!!blocage}
         className={`card-action-btn${cmp ? ' active' : ''}`}
         title={blocage ?? (cmp ? 'Retirer de la comparaison' : 'Comparer')}
-        aria-label="Comparer"
+        aria-label={cmp ? `Retirer ${nom} de la comparaison` : `Ajouter ${nom} à la comparaison`}
         aria-disabled={!!blocage}
         style={blocage ? { opacity: 0.35, cursor: 'not-allowed' } : undefined}
       >
@@ -141,7 +141,7 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
         onClick={toggleFav}
         className={`card-action-btn card-action-btn--fav${fav ? ' active' : ''}${favAnim ? ' card-action-btn--pop' : ''}`}
         title={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-        aria-label="Favoris"
+        aria-label={fav ? `Retirer ${nom} des favoris` : `Ajouter ${nom} aux favoris`}
       >
         ♥
       </button>

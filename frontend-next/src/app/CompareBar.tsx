@@ -49,7 +49,7 @@ export default function CompareBar() {
   }
 
   return (
-    <div className="compare-bar">
+    <div className="compare-bar" role="region" aria-label="Barre d'actions de comparaison">
       <span className="compare-bar-label">⚖ Comparaison</span>
 
       <div className="compare-bar-items">

@@ -46,7 +46,13 @@ function DashboardView({ boutiqueId }: { boutiqueId: string }) {
     getDashboard(boutiqueId).then(d => { setData(d); setLoading(false) })
   }, [boutiqueId])
 
-  if (loading) return <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p>
+  if (loading) return (
+    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }} aria-busy="true" aria-label="Chargement du tableau de bord comptable">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="skeleton" style={{ height: 86, flex: 1, minWidth: 140, borderRadius: 12 }} />
+      ))}
+    </div>
+  )
   if (!data)   return <p style={{ color: '#dc2626', fontSize: 14 }}>Impossible de charger le tableau de bord.</p>
 
   const evol = data.ca_mois_precedent > 0

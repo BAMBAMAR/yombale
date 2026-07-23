@@ -582,7 +582,96 @@ footer {
   .dash-body-grid > div:first-child { border-right: none; border-bottom: 1px solid #f1f5f9; }
 }
 
-/* ── ACCESSIBILITÉ ─────────────────────────────────────────── */
+/* ── ACCESSIBILITÉ & ERGONOMIE (WCAG 2.1 AA) ──────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 20px;
+  background: var(--blue2);
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  z-index: 9999;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  transition: top 0.2s ease-in-out;
+}
+.skip-link:focus {
+  top: 10px;
+  outline: 3px solid #fbbf24;
+  outline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--blue2) !important;
+  outline-offset: 2px !important;
+  border-radius: 6px;
+}
+
+/* ── MICRO-INTERACTIONS DYNAMIQUES & EFFET RIPPLE ───────────── */
+button, .chip, .pcard, .nav-user {
+  position: relative;
+  overflow: hidden;
+}
+
+span.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple-effect 500ms cubic-bezier(0.2, 0.8, 0.4, 1);
+  background-color: rgba(37, 99, 235, 0.22);
+  pointer-events: none;
+}
+@keyframes ripple-effect {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ── CHARGEMENT SQUELETTE (SKELETON SHIMMER) ──────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite linear;
+  border-radius: 8px;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Micro-animations au touch/hover */
+.pcard {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+.pcard:hover {
+  transform: translateY(-4px) scale(1.008);
+}
+.pcard:active {
+  transform: scale(0.98);
+}
+
+.chip {
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.chip:active {
+  transform: scale(0.95);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -590,4 +679,6 @@ footer {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  span.ripple { display: none !important; }
 }
+

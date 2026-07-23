@@ -294,7 +294,11 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
       </div>
 
       {loading ? (
-        <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} aria-busy="true" aria-label="Chargement des commandes en cours">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="skeleton" style={{ height: 72, borderRadius: 12 }} />
+          ))}
+        </div>
       ) : commandes.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db' }}>
           <p style={{ fontSize: 32, marginBottom: 12 }}>📋</p>

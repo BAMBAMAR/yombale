@@ -30,9 +30,9 @@ export default async function CompteLayout({ children }: { children: React.React
     <>
       {!emailVerifie && <BannerEmailNonVerifie />}
       <div className="account-layout">
-        <aside className="account-sidebar">
+        <aside className="account-sidebar" aria-label="Panneau de gestion du compte">
           <div className="account-sidebar-identity">
-            <div className="account-avatar">{initiale}</div>
+            <div className="account-avatar" aria-hidden="true">{initiale}</div>
             <div>
               <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{nom}</p>
               <p style={{ margin: 0, fontSize: 12, color: 'var(--text3)' }}>{session.email}</p>

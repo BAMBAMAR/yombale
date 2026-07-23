@@ -34,7 +34,7 @@ export default function AccountNavLinks() {
   const pathname = usePathname()
 
   return (
-    <>
+    <nav aria-label="Navigation de l'espace compte utilisateur">
       {GROUPES.map(groupe => (
         <div key={groupe.label} className="account-nav-group">
           <p className="account-nav-group-label">{groupe.label}</p>
@@ -46,8 +46,9 @@ export default function AccountNavLinks() {
                   key={lien.href}
                   href={lien.href}
                   className={`account-nav-link${actif ? ' account-nav-link--active' : ''}`}
+                  aria-current={actif ? 'page' : undefined}
                 >
-                  <span>{lien.emoji}</span>
+                  <span aria-hidden="true">{lien.emoji}</span>
                   <span>{lien.label}</span>
                 </Link>
               )
@@ -55,6 +56,6 @@ export default function AccountNavLinks() {
           </div>
         </div>
       ))}
-    </>
+    </nav>
   )
 }

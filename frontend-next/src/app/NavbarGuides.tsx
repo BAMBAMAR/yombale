@@ -21,12 +21,15 @@ export default function NavbarGuides() {
         className="navbar-guides-btn"
         onClick={() => setOpen(v => !v)}
         aria-expanded={open}
+        aria-haspopup="true"
+        aria-controls="navbar-guides-dropdown"
+        aria-label="Guides d'achat et assistants Nopalou"
       >
         📚 Guides {open ? '▲' : '▼'}
       </button>
 
       {open && (
-        <div className="navbar-guides-dropdown" role="menu">
+        <div id="navbar-guides-dropdown" className="navbar-guides-dropdown" role="menu" aria-label="Sous-menu des guides">
           <Link href="/guide-achat" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>
             <span>🏆</span>
             <span>

@@ -94,15 +94,24 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
         }); })()}
       </div>
 
+      {loading && (
+        <div className="grid-produits" aria-busy="true" aria-label="Chargement des produits supplémentaires">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="card-produit skeleton" style={{ height: 260, opacity: 0.8 }} />
+          ))}
+        </div>
+      )}
+
       {restants > 0 && (
         <div className="voir-plus-wrap">
           <button
             className="voir-plus-btn"
             onClick={voirPlus}
             disabled={loading}
+            aria-label={`Charger les ${restants.toLocaleString('fr-SN')} produits suivants`}
           >
             {loading
-              ? '⏳ Chargement…'
+              ? '⏳ Chargement des offres…'
               : `⬇ Voir plus (${restants.toLocaleString('fr-SN')} restant${restants > 1 ? 's' : ''})`}
           </button>
         </div>

@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=15">
+  <link rel="stylesheet" href="/style.css?v=16">
 
   <script type="application/ld+json">
   {
@@ -46,110 +46,118 @@
   </script>
 </head>
 <body>
-  <nav id="navbar">
-    <div class="logo" onclick="goHome()">Nopalou <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" width="22" height="15" style="vertical-align:middle;border-radius:2px;flex-shrink:0;margin-left:2px" aria-label="Sénégal"><rect width="1" height="2" fill="#00853F"/><rect x="1" width="1" height="2" fill="#FDEF42"/><rect x="2" width="1" height="2" fill="#E31B23"/><polygon points="1.5,0.78 1.55,0.93 1.71,0.93 1.59,1.03 1.63,1.18 1.5,1.09 1.37,1.18 1.41,1.03 1.29,0.93 1.45,0.93" fill="#00853F"/></svg></div>
-    <div class="nav-center">
-      <button onclick="goHome()">Accueil</button>
-      <button onclick="loadPromos()">Promos</button>
-      <div style="position:relative" id="nav-guides-wrap">
-        <button onclick="toggleNavGuides()" id="nav-btn-guides" aria-haspopup="true" aria-expanded="false"
-          style="display:flex;align-items:center;gap:5px;background:none;border:none;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;color:#475569;cursor:pointer;white-space:nowrap">
-          📚 Guides <span id="nav-guides-arrow" style="font-size:10px;display:inline-block;transition:transform .2s">▾</span>
-        </button>
-        <div id="nav-guides-dropdown" role="menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.14);min-width:252px;z-index:502;overflow:hidden;padding:6px 0">
-          <button onclick="ouvrirGuideAchat();closeNavGuides()" role="menuitem"
-            style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:11px 16px;font-size:13px;cursor:pointer;text-align:left"
-            onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
-            <span style="font-size:20px;flex-shrink:0">🏆</span>
-            <div><div style="font-weight:700;color:#1e293b">Guide d'achat intelligent</div><div style="font-size:11px;color:#94a3b8">Classement personnalisé de produits</div></div>
+  <!-- Lien d'accès rapide pour la navigation au clavier (WCAG 2.4.1) -->
+  <a href="#app" class="skip-link">Aller au contenu principal</a>
+
+  <header role="banner">
+    <nav id="navbar" aria-label="Navigation principale">
+      <div class="logo" role="button" tabindex="0" onclick="goHome()" onkeydown="if(event.key==='Enter'||event.key===' ')goHome()" aria-label="Nopalou — Retour à l'accueil">
+        Nopalou <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" width="22" height="15" style="vertical-align:middle;border-radius:2px;flex-shrink:0;margin-left:2px" aria-hidden="true"><rect width="1" height="2" fill="#00853F"/><rect x="1" width="1" height="2" fill="#FDEF42"/><rect x="2" width="1" height="2" fill="#E31B23"/><polygon points="1.5,0.78 1.55,0.93 1.71,0.93 1.59,1.03 1.63,1.18 1.5,1.09 1.37,1.18 1.41,1.03 1.29,0.93 1.45,0.93" fill="#00853F"/></svg>
+      </div>
+      <div class="nav-center" role="menubar">
+        <button onclick="goHome()" role="menuitem" aria-label="Page d'accueil">Accueil</button>
+        <button onclick="loadPromos()" role="menuitem" aria-label="Consulter les promotions">Promos</button>
+        <div style="position:relative" id="nav-guides-wrap">
+          <button onclick="toggleNavGuides()" id="nav-btn-guides" aria-haspopup="true" aria-expanded="false" aria-controls="nav-guides-dropdown" aria-label="Menu des guides d'achat"
+            style="display:flex;align-items:center;gap:5px;background:none;border:none;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;color:#334155;cursor:pointer;white-space:nowrap">
+            📚 Guides <span id="nav-guides-arrow" style="font-size:10px;display:inline-block;transition:transform .2s" aria-hidden="true">▾</span>
           </button>
-          <button onclick="ouvrirWizardForfait();closeNavGuides()" role="menuitem"
-            style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:11px 16px;font-size:13px;cursor:pointer;text-align:left"
-            onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
-            <span style="font-size:20px;flex-shrink:0">🎯</span>
-            <div><div style="font-weight:700;color:#1e293b">Guide d'achat forfait</div><div style="font-size:11px;color:#94a3b8">Trouver le meilleur forfait télécom</div></div>
-          </button>
-          <button onclick="ouvrirWizardImmo();closeNavGuides()" role="menuitem"
-            style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:11px 16px;font-size:13px;cursor:pointer;text-align:left"
-            onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
-            <span style="font-size:20px;flex-shrink:0">🏡</span>
-            <div><div style="font-weight:700;color:#1e293b">Guide immobilier</div><div style="font-size:11px;color:#94a3b8">Trouver mon logement idéal</div></div>
-          </button>
-          <div style="height:1px;background:#f1f5f9;margin:4px 8px"></div>
-          <button onclick="ouvrirGuideEmploi();closeNavGuides()" role="menuitem"
-            style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:11px 16px;font-size:13px;cursor:pointer;text-align:left"
-            onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
-            <span style="font-size:20px;flex-shrink:0">📖</span>
-            <div><div style="font-weight:700;color:#1e293b">Guide d'emploi</div><div style="font-size:11px;color:#94a3b8">Comment utiliser Nopalou</div></div>
-          </button>
+          <div id="nav-guides-dropdown" role="menu" aria-label="Liste des guides disponibles" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.14);min-width:252px;z-index:502;overflow:hidden;padding:6px 0">
+            <button onclick="ouvrirGuideAchat();closeNavGuides()" role="menuitem"
+              style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:11px 16px;font-size:13px;cursor:pointer;text-align:left"
+              onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+              <span style="font-size:20px;flex-shrink:0" aria-hidden="true">🏆</span>
+              <div><div style="font-weight:700;color:#1e293b">Guide d'achat intelligent</div><div style="font-size:11px;color:#64748b">Classement personnalisé de produits</div></div>
+            </button>
+            <button onclick="ouvrirWizardForfait();closeNavGuides()" role="menuitem"
+              style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:11px 16px;font-size:13px;cursor:pointer;text-align:left"
+              onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+              <span style="font-size:20px;flex-shrink:0" aria-hidden="true">🎯</span>
+              <div><div style="font-weight:700;color:#1e293b">Guide d'achat forfait</div><div style="font-size:11px;color:#64748b">Trouver le meilleur forfait télécom</div></div>
+            </button>
+            <button onclick="ouvrirWizardImmo();closeNavGuides()" role="menuitem"
+              style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:11px 16px;font-size:13px;cursor:pointer;text-align:left"
+              onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+              <span style="font-size:20px;flex-shrink:0" aria-hidden="true">🏡</span>
+              <div><div style="font-weight:700;color:#1e293b">Guide immobilier</div><div style="font-size:11px;color:#64748b">Trouver mon logement idéal</div></div>
+            </button>
+            <div style="height:1px;background:#f1f5f9;margin:4px 8px" role="separator"></div>
+            <button onclick="ouvrirGuideEmploi();closeNavGuides()" role="menuitem"
+              style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:11px 16px;font-size:13px;cursor:pointer;text-align:left"
+              onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+              <span style="font-size:20px;flex-shrink:0" aria-hidden="true">📖</span>
+              <div><div style="font-weight:700;color:#1e293b">Guide d'emploi</div><div style="font-size:11px;color:#64748b">Comment utiliser Nopalou</div></div>
+            </button>
+          </div>
+        </div>
+        <button id="nav-btn-comparer" onclick="ouvrirComparaisonNav()" style="display:none;background:#f97316;color:#fff;border-radius:8px;padding:6px 14px;border:none;font-weight:700;cursor:pointer" aria-label="Ouvrir l'outil de comparaison de produits">⚖ Comparer (<span id="nav-compare-count">0</span>)</button>
+        <button id="nav-btn-vider" onclick="viderComparaison()" style="display:none;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer" title="Vider la sélection" aria-label="Vider la sélection de comparaison">✕ Vider</button>
+        <button onclick="afficherFavoris()" id="nav-btn-favoris" style="background:none;border:none;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;color:#475569;cursor:pointer;display:none" title="Mes favoris" aria-label="Consulter mes favoris">❤ <span id="nav-favoris-count">0</span></button>
+      </div>
+      <button class="nav-hamburger" onclick="toggleNavMenu()" aria-label="Ouvrir le menu de navigation principal" aria-expanded="false">☰</button>
+      <div class="nav-right">
+        <label for="city-sel" class="sr-only">Sélectionner la ville</label>
+        <select id="city-sel" onchange="changeVille(this.value)" title="Ville (filtre Immobilier)" aria-label="Filtrer par ville">
+          <option value="Dakar">Dakar</option>
+          <option value="Thiès">Thiès</option>
+          <option value="Saint-Louis">Saint-Louis</option>
+          <option value="Ziguinchor">Ziguinchor</option>
+          <option value="Kaolack">Kaolack</option>
+        </select>
+        <div style="position:relative">
+          <div class="nav-user" role="button" tabindex="0" onclick="showAccount()" onkeydown="if(event.key==='Enter'||event.key===' ')showAccount()" aria-label="Mon compte utilisateur">
+            <span id="nav-avatar" aria-hidden="true">?</span>
+            <span id="nav-username">Connexion</span>
+          </div>
+          <div id="account-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:170px;z-index:500;overflow:hidden" role="menu" aria-label="Menu compte"></div>
         </div>
       </div>
-      <button id="nav-btn-comparer" onclick="ouvrirComparaisonNav()" style="display:none;background:#f97316;color:#fff;border-radius:8px;padding:6px 14px;border:none;font-weight:700;cursor:pointer">⚖ Comparer (<span id="nav-compare-count">0</span>)</button>
-      <button id="nav-btn-vider" onclick="viderComparaison()" style="display:none;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer" title="Vider la sélection">✕ Vider</button>
-      <button onclick="afficherFavoris()" id="nav-btn-favoris" style="background:none;border:none;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;color:#64748b;cursor:pointer;display:none" title="Mes favoris">❤ <span id="nav-favoris-count">0</span></button>
-    </div>
-    <button class="nav-hamburger" onclick="toggleNavMenu()" aria-label="Menu de navigation">☰</button>
-    <div class="nav-right">
-      <select id="city-sel" onchange="changeVille(this.value)" title="Ville (filtre Immobilier)">
-        <option value="Dakar">Dakar</option>
-        <option value="Thiès">Thiès</option>
-        <option value="Saint-Louis">Saint-Louis</option>
-        <option value="Ziguinchor">Ziguinchor</option>
-        <option value="Kaolack">Kaolack</option>
-      </select>
-      <div style="position:relative">
-        <div class="nav-user" onclick="showAccount()">
-          <span id="nav-avatar">?</span>
-          <span id="nav-username">Connexion</span>
-        </div>
-        <div id="account-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:170px;z-index:500;overflow:hidden"></div>
-      </div>
-    </div>
-  </nav>
+    </nav>
+  </header>
 
-  <div id="email-banner" style="display:none"></div>
+  <div id="email-banner" style="display:none" role="region" aria-label="Notification d'information"></div>
 
-  <main id="app">
-    <div class="loader"><div class="spin"></div><p>Chargement...</p></div>
+  <main id="app" tabindex="-1">
+    <div class="loader" role="status" aria-live="polite"><div class="spin" aria-hidden="true"></div><p>Chargement des offres en cours...</p></div>
   </main>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
 
   <!-- Barre favoris sticky (bas d'écran) -->
-  <div id="fav-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:299;
+  <div id="fav-bar" role="region" aria-label="Barre d'actions rapides des favoris" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:299;
     background:#fff;border-top:2.5px solid #ef4444;box-shadow:0 -4px 24px rgba(0,0,0,.10);
     padding:10px 5%;align-items:center;gap:12px;flex-wrap:wrap">
-    <span style="font-size:12px;font-weight:800;color:#ef4444;white-space:nowrap;flex-shrink:0">❤ Favoris</span>
+    <span style="font-size:12px;font-weight:800;color:#dc2626;white-space:nowrap;flex-shrink:0">❤ Favoris</span>
     <div id="fav-bar-items" style="flex:1;display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;min-width:0;padding:2px 0"></div>
     <div style="display:flex;gap:8px;flex-shrink:0">
       <button onclick="afficherFavoris()"
-        style="padding:8px 18px;background:#ef4444;color:#fff;border:none;border-radius:9px;
-               font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+        style="padding:8px 18px;background:#dc2626;color:#fff;border:none;border-radius:9px;
+               font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap" aria-label="Voir la liste complète des favoris">
         ❤ Voir (<span id="fav-bar-count">0</span>)
       </button>
       <button onclick="viderFavoris()"
-        style="padding:8px 14px;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;
-               border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+        style="padding:8px 14px;background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;
+               border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap" aria-label="Vider la liste des favoris">
         ✕
       </button>
     </div>
   </div>
 
   <!-- Barre de comparaison sticky (bas d'écran) -->
-  <div id="compare-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;
-    background:#fff;border-top:2.5px solid #f97316;box-shadow:0 -4px 24px rgba(0,0,0,.13);
+  <div id="compare-bar" role="region" aria-label="Barre d'actions de comparaison" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;
+    background:#fff;border-top:2.5px solid #ea580c;box-shadow:0 -4px 24px rgba(0,0,0,.13);
     padding:10px 5%;align-items:center;gap:12px;flex-wrap:wrap">
-    <span style="font-size:12px;font-weight:800;color:#f97316;white-space:nowrap;flex-shrink:0">⚖ Sélection</span>
+    <span style="font-size:12px;font-weight:800;color:#ea580c;white-space:nowrap;flex-shrink:0">⚖ Sélection</span>
     <div id="compare-bar-items" style="flex:1;display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;min-width:0;padding:2px 0"></div>
     <div style="display:flex;gap:8px;flex-shrink:0">
       <button id="compare-bar-btn" onclick="ouvrirComparaisonNav()"
-        style="padding:8px 18px;background:#f97316;color:#fff;border:none;border-radius:9px;
-               font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+        style="padding:8px 18px;background:#ea580c;color:#fff;border:none;border-radius:9px;
+               font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap" aria-label="Lancer la comparaison des éléments sélectionnés">
         ⚖ Comparer (0)
       </button>
       <button onclick="viderComparaison()"
-        style="padding:8px 14px;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;
-               border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+        style="padding:8px 14px;background:#fff7ed;color:#ea580c;border:1.5px solid #ffedd5;
+               border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap" aria-label="Vider la sélection de comparaison">
         ✕ Vider
       </button>
     </div>
@@ -157,12 +165,26 @@
 
   <script src="/app.js?v=46" defer></script>
   <script>
-    // Désenregistrer l'ancien Service Worker pour forcer le rechargement des assets
+    // Ripple Effect pour interactions tactiles et visuelles instantanées (WCAG & Ergonomie)
+    document.addEventListener('click', function(e) {
+      const target = e.target.closest('button, .chip, .pcard, .nav-user');
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      const circle = document.createElement('span');
+      const diameter = Math.max(rect.width, rect.height);
+      const radius = diameter / 2;
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${e.clientX - rect.left - radius}px`;
+      circle.style.top = `${e.clientY - rect.top - radius}px`;
+      circle.classList.add('ripple');
+      const existing = target.getElementsByClassName('ripple')[0];
+      if (existing) existing.remove();
+      target.appendChild(circle);
+    });
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(regs) {
-        regs.forEach(function(reg) {
-          reg.update(); // forcer vérification de mise à jour
-        });
+        regs.forEach(function(reg) { reg.update(); });
       });
       navigator.serviceWorker.register('/service-worker.js')
         .then(function() { console.log('SW OK'); })

@@ -29,7 +29,7 @@ export default function FavBar() {
   }
 
   return (
-    <div className="fav-bar">
+    <div className="fav-bar" role="region" aria-label="Barre d'actions des favoris">
       <span className="fav-bar-label">❤ Favoris</span>
       <span className="fav-bar-count">
         {count} produit{count > 1 ? 's' : ''} sauvegardé{count > 1 ? 's' : ''}
