@@ -40,22 +40,27 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/compte', req.nextUrl))
   }
 
-  // ── 2. CSP avec nonce (sans unsafe-inline) ───────────────────
+  // ── 2. CSP compatible Next.js App Router ─────────────────────
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
 
-  const csp = [
+  const cspDirectives = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://www.googletagmanager.com${isDev ? " 'unsafe-eval'" : ''}`,
-    `style-src 'self' 'unsafe-inline'`,
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com`,
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     "img-src 'self' blob: data: https:",
-    "font-src 'self'",
+    "font-src 'self' https://fonts.gstatic.com data:",
     `connect-src 'self' ${process.env.BACKEND_URL ?? 'http://localhost:3000'} ${process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:3000'} https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "upgrade-insecure-requests",
-  ].join('; ')
+  ]
+
+  if (!isDev) {
+    cspDirectives.push("upgrade-insecure-requests")
+  }
+
+  const csp = cspDirectives.join('; ')
 
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-nonce', nonce)
@@ -66,6 +71,10 @@ export async function middleware(req: NextRequest) {
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  if (!isDev) {
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+  }
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
 
   return response
 }

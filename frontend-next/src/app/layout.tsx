@@ -106,6 +106,63 @@ const ORG_JSON_LD = {
   },
 }
 
+const SITE_NAV_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Navigation Principale Nopalou',
+  itemListElement: [
+    {
+      '@type': 'SiteNavigationElement',
+      position: 1,
+      name: 'Téléphones & Smartphones',
+      description: 'Comparez les prix des téléphones Samsung, iPhone, Xiaomi à Dakar',
+      url: 'https://nopalou.com/categorie/smartphones',
+    },
+    {
+      '@type': 'SiteNavigationElement',
+      position: 2,
+      name: 'Informatique & Laptops',
+      description: 'Ordinateurs portables, MacBooks et imprimantes au meilleur prix au Sénégal',
+      url: 'https://nopalou.com/categorie/informatique',
+    },
+    {
+      '@type': 'SiteNavigationElement',
+      position: 3,
+      name: 'TV & Électroménager',
+      description: 'Téléviseurs Smart TV, climatiseurs, réfrigérateurs et machines à laver à Dakar',
+      url: 'https://nopalou.com/categorie/tv-electro',
+    },
+    {
+      '@type': 'SiteNavigationElement',
+      position: 4,
+      name: 'Immobilier Sénégal',
+      description: 'Locations d\'appartements, chambres et terrains à vendre à Dakar',
+      url: 'https://nopalou.com/immo',
+    },
+    {
+      '@type': 'SiteNavigationElement',
+      position: 5,
+      name: 'Forfaits Télécom',
+      description: 'Comparateur de forfaits internet et pass Orange, Free, Expresso',
+      url: 'https://nopalou.com/telecom',
+    },
+    {
+      '@type': 'SiteNavigationElement',
+      position: 6,
+      name: 'Annonces Classifiées',
+      description: 'Petites annonces d\'achats et ventes de particuliers et professionnels',
+      url: 'https://nopalou.com/annonces',
+    },
+    {
+      '@type': 'SiteNavigationElement',
+      position: 7,
+      name: 'Boutiques Partenaires',
+      description: 'Découvrez les boutiques certifiées et vendeurs pro au Sénégal',
+      url: 'https://nopalou.com/boutiques',
+    },
+  ],
+};
+
 export default async function RootLayout({
   children,
 }: {
@@ -123,6 +180,10 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSON_LD) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_NAV_JSON_LD) }}
         />
       </head>
       <body>
