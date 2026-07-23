@@ -24,7 +24,7 @@ const { scraperImmo } = require('../services/scraper-immo-facebook');
 
 const dryRun    = process.argv.includes('--dry-run');
 const tout      = process.argv.includes('--tout');
-const maxGroupes = tout ? 16 : 5;
+const maxGroupes = tout ? 999 : 5;
 
 // Résumé texte écrit à part (pas dans le log complet) — lu par
 // scraper-facebook-auto.bat pour construire la notification Windows de fin d'exécution.

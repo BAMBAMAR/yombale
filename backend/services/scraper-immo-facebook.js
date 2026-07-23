@@ -75,7 +75,12 @@ const GROUPES = [
   { id: '276857303027165',   label: 'Tout vendre et tout acheter au Senegal' },
   { id: '670553284135014',   label: 'Thies ventes et achats en ligne' },
   { id: 'saintlouisachats',  label: 'Achats et ventes a Saint-Louis' },
+  // Pages publiques (type:'page' → URL /pageid, pas /groups/)
   { id: 'ndeyeyacineseckfaye', label: 'Ndeye Yacine Seck Faye (Offres Emploi)', type: 'page' },
+  // Groupes emploi/recrutement au Sénégal (Nouveaux fournis)
+  { id: '1989058224662026',  label: 'Emploi 1' },
+  { id: '234254775016841',   label: 'Emploi 2' },
+  { id: '519668123858499',   label: 'Emploi 3' },
 ];
 
 const VILLES = ['Dakar', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor',
@@ -83,13 +88,19 @@ const VILLES = ['Dakar', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor',
 
 // Catégories connues (categories.slug en DB) + mots-clés associés, ordre = priorité de match
 const CATEGORIES_MOTS = [
+  { slug: 'emploi',      mots: ['recrutement', 'recrute', 'offre d\'emploi', 'offres d\'emploi', 'offre d emploi',
+                                 'stage', 'stagiaire', 'cherche emploi', 'cherche un emploi', 'postuler', 'poste de',
+                                 'avis de recrutement', 'besoin de', 'souhaite recruter', 'cv', 'embauche', 'job',
+                                 'appel a candidature', 'appel à candidature', 'profil recherche', 'profil recherché',
+                                 'recherche d\'un', 'recherche une', 'recherche un', 'technicien', 'chauffeur', 
+                                 'nounou', 'menagere', 'ménagère', 'gardien', 'serveuse', 'gérante', 'gerante', 'caissiere'] },
   { slug: 'immo',        mots: ['loue', 'location', 'à louer', 'a louer', 'appartement', 'villa', 'studio',
                                  'chambre à louer', 'chambre a louer', 'chambre', 'maison à louer', 'maison', 'bureau',
                                  'terrain', 'duplex', 'immeuble', 'titre foncier', 'bail', 'caution', 'parcelle',
                                  'bâtiment', 'batiment', 'meublé', 'meuble', 'magasin', 'entrepôt', 'entrepot',
                                  'f2', 'f3', 'f4', 'f5', 'salle de bain', 'fond de commerce', 'residence', 'résidence'] },
   { slug: 'smartphones', mots: ['iphone', 'samsung', 'xiaomi', 'redmi', 'tecno', 'infinix', 'huawei',
-                                 'smartphone', 'telephone', 'téléphone', 'portable', 'android', 'galaxy',
+                                 'smartphone', 'portable', 'android', 'galaxy',
                                  'pro max', 'pixel', 'ipad', 'tablette', 'gb', 'go ram', 'oppo', 'realme'] },
   { slug: 'informatique', mots: ['ordinateur', 'laptop', 'pc portable', 'macbook', 'imprimante',
                                   'clavier', 'souris', 'disque dur', 'ram', 'processeur', 'ecran pc', 'écran pc'] },
@@ -107,10 +118,6 @@ const CATEGORIES_MOTS = [
   { slug: 'jeux',        mots: ['playstation', 'ps4', 'ps5', 'xbox', 'manette', 'console de jeux', 'nintendo'] },
   { slug: 'maison',      mots: ['meuble', 'canape', 'canapé', 'matelas', 'table a manger',
                                  'table à manger', 'lit', 'armoire', 'tapis', 'rideaux', 'fauteuil', 'salon'] },
-  { slug: 'emploi',      mots: ['recrutement', 'recrute', 'offre d\'emploi', 'offres d\'emploi', 'offre d emploi',
-                                 'stage', 'stagiaire', 'cherche emploi', 'cherche un emploi', 'postuler', 'poste de',
-                                 'avis de recrutement', 'besoin de', 'souhaite recruter', 'cv', 'embauche', 'job',
-                                 'appel a candidature', 'appel à candidature', 'profil recherche', 'profil recherché'] },
 ];
 
 // Doit matcher au moins 1 mot-clé d'une catégorie ET avoir un signal de vente (prix, contact...)
@@ -219,15 +226,19 @@ function texteEstPauvre(texte) {
 // Un même post est souvent republié tel quel dans plusieurs groupes Facebook — ref_externe
 // (spécifique à un post dans un groupe donné) ne peut pas détecter ces doublons inter-groupes.
 // Le numéro de téléphone extrait est en revanche stable d'une republication à l'autre :
-// on ignore l'insertion si ce numéro a déjà une annonce Facebook des 7 derniers jours (fenêtre
-// courte pour ne pas bloquer un vendeur qui republie légitimement un article différent plus tard).
+// Fenêtre réduite à 24h (au lieu de 7 jours) pour permettre à un même vendeur d'être capturé
+// dans plusieurs groupes différents — un vendeur sérieux republie souvent dans 3-5 groupes
+// le même jour, la fenêtre 7j bloquait toutes ces republications comme doublons.
 async function upsertAnnonceClassifiee(a) {
-  const { rows } = await pool.query(`
-    SELECT 1 FROM annonces_classifiees
-    WHERE contact_tel = $1 AND source LIKE 'facebook-%' AND created_at > NOW() - INTERVAL '7 days'
-    LIMIT 1
-  `, [a.contact_tel]);
-  if (rows.length > 0) return { doublon: true };
+  // On ne dédoublonne pas par téléphone si c'est la valeur de repli pour les offres d'emploi
+  if (a.contact_tel !== 'Voir sur Facebook') {
+    const { rows } = await pool.query(`
+      SELECT 1 FROM annonces_classifiees
+      WHERE contact_tel = $1 AND source = $2 AND created_at > NOW() - INTERVAL '24 hours'
+      LIMIT 1
+    `, [a.contact_tel, a.source]);
+    if (rows.length > 0) return { doublon: true };
+  }
 
   await pool.query(`
     INSERT INTO annonces_classifiees
@@ -338,82 +349,68 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
         // prend ~17s en local — constaté en observant des timeouts systématiques en prod alors
         // que la même page charge sans souci en local.
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(4000);
 
-        // Scroller pour charger plus de posts (15 fois — avec 6, seulement ~15-25 posts
-        // étaient visibles par groupe sur des fils qui en contiennent des milliers, ce qui
-        // limitait fortement le nombre d'annonces trouvées malgré un groupe actif)
+        // Scroller pour charger plus de posts.
+        // Pages publiques : attente plus longue entre scrolls (React charge différemment des groupes)
+        const scrollPause = groupe.type === 'page' ? 3000 : 2500;
         for (let i = 0; i < 15; i++) {
           await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-          await page.waitForTimeout(2500);
+          await page.waitForTimeout(scrollPause);
         }
 
-        // Déplier les posts tronqués ("Voir plus") AVANT l'extraction : le texte au-delà du
-        // bouton n'existe pas dans le DOM tant qu'on ne clique pas dessus (contrairement au
-        // nettoyage regex du texte ci-dessous, qui ne fait que retirer le libellé du bouton
-        // sans révéler le contenu masqué). Beaucoup d'annonces immo mettent justement le
-        // numéro de téléphone juste après cette coupure — sans ce clic, elles étaient
-        // définitivement perdues. Playwright (pas page.evaluate + .click() DOM) car Facebook
-        // attache ses handlers React aux événements de pointeur réels, pas juste au clic
-        // JS brut. Boucle bornée (20 max) pour ne pas tourner indéfiniment si de nouveaux
-        // boutons apparaissent après chaque clic (React peut réinsérer le feed).
-        const boutonVoirPlus = page.locator('[role="feed"] div[role="button"], [role="feed"] span[role="button"]')
-          .filter({ hasText: /(?:voir plus|en voir plus|see more)/i });
-        for (let i = 0; i < 20; i++) {
-          const n = await boutonVoirPlus.count();
-          if (n === 0) break;
-          try {
-            await boutonVoirPlus.first().click({ timeout: 3000 });
-            await page.waitForTimeout(400);
-          } catch {
-            break; // élément détaché/non cliquable — pas bloquant, on garde ce qui est déplié
+        // Déplier tous les posts tronqués ("Voir plus") directement en JS in-page
+        await page.evaluate(() => {
+          const btns = Array.from(document.querySelectorAll('div[role="button"], span[role="button"], div[action="go"]'))
+            .filter(el => /(?:voir plus|en voir plus|see more)/i.test(el.innerText || ''));
+          for (const b of btns) {
+            try { b.click(); } catch {}
           }
-        }
+        });
+        await page.waitForTimeout(1000);
 
-        // Extraire les posts depuis le fil (`[role="feed"]`). Chaque enfant direct qui contient
-        // un lien /user/ est un post top-level (les commentaires n'ont pas ce lien). Le texte
-        // brut (`innerText`) contient deux types de bruit injectés par Facebook contre le
-        // scraping : le mot "Facebook" répété (alt-text des vignettes photo) et des horodatages
-        // obfusqués en tokens 1-2 caractères espacés — les deux sont filtrés ci-dessous.
-        // Identifiant stable du post : Facebook n'expose plus d'ID /posts/N dans ce rendu ; on
-        // récupère plutôt `set=pcb.<id>` depuis un lien photo (même id pour toutes les photos
-        // d'un même post).
-        // Détecte une session invalidée ou un blocage côté serveur Facebook, sous 4 formes
-        // constatées en réel, aucune ne redirigeant vers /login :
-        //  1. Mur de connexion sur l'URL du groupe (formulaire de mot de passe visible).
-        //     ⚠️ PIÈGE VÉCU : Facebook sert parfois quand même un [role="feed"] non vide (aperçu
-        //     public limité, 2-3 éléments d'interface, aucun vrai post) à côté du formulaire de
-        //     connexion — vérifié en réel avec un diagnostic dédié (feedChildCount:3 alors que
-        //     hasPasswordField:true). Donc ce check doit tourner AVANT/INDÉPENDAMMENT du test
-        //     sur l'absence de feed, jamais seulement en repli quand le feed est absent.
-        //  2. Redirection vers /sorry.php ou /checkpoint (page de blocage/vérification
-        //     générique de Facebook — observée après des runs répétés automatisés).
-        //  3. [role="feed"] absent sans qu'aucun des deux cas ci-dessus ne soit détectable
-        //     (repli générique — Facebook peut servir une page vide sans marqueur connu).
-        // Sans cette détection, le scraper termine silencieusement avec scrapes:0/erreurs:0
-        // sur tous les groupes, indiscernable d'un groupe réellement vide.
+        // Détection blocage / session invalide
         const urlBlocage = page.url().includes('/sorry.php') || page.url().includes('/checkpoint');
-        const { murConnexion, feedAbsent } = await page.evaluate(() => ({
+        const { murConnexion, feedAbsent } = await page.evaluate((isPage) => ({
           murConnexion: !!document.querySelector('input[name="pass"], [data-testid="royal_pass"]'),
-          feedAbsent: !document.querySelector('[role="feed"]'),
-        }));
-        if (urlBlocage || murConnexion || feedAbsent) {
+          // Les pages publiques peuvent ne pas avoir [role="feed"] mais afficher les posts
+          // dans un conteneur différent — on ne bloque que si AUCUN contenu article n'est présent.
+          feedAbsent: isPage
+            ? !document.querySelector('[role="feed"], [role="main"] article, [role="main"] [data-pagelet]')
+            : !document.querySelector('[role="feed"]'),
+        }), groupe.type === 'page');
+        if (urlBlocage || murConnexion) {
+          // Blocage de session confirmé (sorry.php, checkpoint, mur login) :
+          // inutile de continuer, chaque groupe suivant échouerait aussi.
           const raison = urlBlocage
             ? `page de blocage Facebook détectée (${page.url().split('?')[0]})`
-            : murConnexion
-              ? 'mur de connexion détecté'
-              : 'aucun contenu de groupe chargé (cause inconnue)';
-          // Inutile de continuer sur les groupes suivants : la session/le compte est
-          // vraisemblablement bloqué pour toute la durée du run, chaque groupe échouerait pareil.
-          stats.erreurs.push(`${groupe.label}: Session Facebook invalidée par le serveur (${raison}) — relancez : node backend/scripts/fb-login-setup.js`);
+            : 'mur de connexion détecté';
+          stats.erreurs.push(`${groupe.label}: Session Facebook invalidée (${raison}) — relancez : node backend/scripts/fb-login-setup.js`);
           break;
         }
+        if (feedAbsent) {
+          // Groupe privé, inexistant, ou layout différent — on passe au suivant sans
+          // arrêter le run (ça peut être juste un groupe privé parmi d'autres valides).
+          console.warn(`[FB-SCRAPER] ${groupe.label}: aucun fil détecté, groupe ignoré`);
+          stats.erreurs.push(`${groupe.label}: aucun contenu chargé (groupe privé ou ID invalide)`);
+          continue;
+        }
 
-        const posts = await page.evaluate(() => {
-          const feedRoot = document.querySelector('[role="feed"]');
-          if (!feedRoot) return [];
+        const posts = await page.evaluate((isPage) => {
+          // Pour les pages publiques, les posts peuvent être dans des articles hors [role="feed"]
+          let feedRoot = document.querySelector('[role="feed"]');
+          let feedChildren;
+          if (feedRoot) {
+            feedChildren = Array.from(feedRoot.children);
+          } else if (isPage) {
+            // Fallback pages publiques : chercher les articles dans [role="main"]
+            const main = document.querySelector('[role="main"]');
+            feedChildren = main ? Array.from(main.querySelectorAll('article, [data-pagelet] > div > div')) : [];
+          } else {
+            return [];
+          }
           const items = [];
-          for (const el of Array.from(feedRoot.children)) {
+          for (const el of feedChildren) {
             const userLien = el.querySelector('a[href*="/user/"], a[href*="/profile.php"], a[href*="/people/"], a[href*="/groups/"], a[role="link"]');
             const photoLien = el.querySelector('a[href*="set=pcb."], a[href*="/posts/"], a[href*="/permalink/"]');
             if (!userLien && !photoLien) continue; // pas un post top-level identifiable
@@ -466,7 +463,7 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
             vus.add(cle);
             return true;
           });
-        });
+        }, groupe.type === 'page');
 
         for (const post of posts) {
           stats.scrapes++;
@@ -483,18 +480,23 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
             if (texteOcr) texte = `${texte} ${texteOcr}`.trim();
           }
 
-          const categorie_slug = detecterCategorie(texte) || 'divers';
+          let categorie_slug = detecterCategorie(texte) || 'divers';
+          // Force emploi ONLY for ndeyeyacineseckfaye
+          if (groupe.id === 'ndeyeyacineseckfaye') categorie_slug = 'emploi';
+
           const tel = parseTelephoneFB(texte);
+          
+          // Dérogation pour l'emploi UNIQUEMENT sur la page Yacine : s'il n'y a pas de téléphone, on met "Voir sur Facebook"
+          const estEmploiYacine = categorie_slug === 'emploi' && groupe.id === 'ndeyeyacineseckfaye';
+          const telFinal = tel || (estEmploiYacine ? 'Voir sur Facebook' : null);
+
           // Un numéro de téléphone réel + une catégorie détectée sont déjà le signal le plus
           // fort qu'il s'agit d'une vraie annonce — le style local ("45 mille x 3", "prend un
           // homme") omet souvent tout mot de SIGNAUX_VENTE (pas de "prix"/"vends"/"disponible"
           // explicite), donc ce filtre ne s'applique qu'en repli si aucun numéro n'est trouvé.
-          if (!tel && !estAnnoncePotentielle(texte)) { stats.ignores++; continue; }
-          // Sans numéro extrait, l'annonce n'est pas exploitable pour un acheteur (le repli
-          // "Voir sur Facebook" laissait passer trop de faux positifs — bruit d'obfuscation
-          // Facebook non filtré, posts tronqués sans coordonnées réelles) : on l'ignore plutôt
-          // que de l'insérer avec un contact non fonctionnel.
-          if (!tel) { stats.ignores++; continue; }
+          if (!telFinal && !estAnnoncePotentielle(texte)) { stats.ignores++; continue; }
+          // Sans numéro extrait (et hors dérogation Emploi), l'annonce n'est pas exploitable
+          if (!telFinal) { stats.ignores++; continue; }
 
           // Le dernier segment "·" est en général le corps de l'annonce, mais peut parfois
           // être un fragment résiduel (date de republication type "12 juil") sur les posts
@@ -514,14 +516,14 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
 
           const annonce = {
             categorie_slug,
-            titre,
+            titre: titre || 'Annonce',
             description: texte.slice(0, 2000),
             prix,
             ville,
-            contact_tel: tel,
+            contact_tel: telFinal,
             photos:      post.imgs,
-            source:      `facebook-${groupe.id}`,
-            ref_externe,
+            source:      groupe.type === 'page' ? `facebook-${groupe.id}` : `facebook-group-${groupe.id}`,
+            ref_externe: ref_externe,
             url_source:  post.href || url,
           };
 

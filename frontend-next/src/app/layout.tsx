@@ -195,7 +195,7 @@ export default async function RootLayout({
               </div>
             </div>
 
-            <div className="footer-links" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className="footer-links">
               {/* Colonne 2 — Catégories */}
               <div className="footer-col">
                 <p className="footer-col-titre">Catégories</p>

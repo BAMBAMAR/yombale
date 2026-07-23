@@ -8377,3 +8377,60 @@ button:focus-visible,
     padding: 10px 12px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Nopalou — Audit & Optimisations Mobile
+   ════════════════════════════════════════════════════════════════ */
+
+/* 1. Grille Mes Alertes (2 colonnes desktop, 1 colonne mobile) */
+.mes-alertes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+@media (max-width: 768px) {
+  .mes-alertes-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+/* 2. Empêcher le zoom automatique indésirable iOS Safari sur les inputs (<16px) */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea,
+  .navbar-search-input {
+    font-size: 16px !important;
+  }
+}
+
+/* 3. Conteneur de tableau responsive à défilement fluide */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 16px;
+}
+
+/* 4. Footer mobile : 1 colonne sur écran très étroit (<400px) */
+@media (max-width: 400px) {
+  .footer-links {
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+  }
+}
+
+/* 5. Sécurité padding-bottom du conteneur principal pour BottomBars */
+@media (max-width: 480px) {
+  .page-container {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+}
+
