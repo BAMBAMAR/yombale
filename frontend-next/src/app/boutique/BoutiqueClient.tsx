@@ -1363,76 +1363,73 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
   onManage: () => void
 }) {
   const sponsorActif = boutique.sponsorise && boutique.sponsor_jusqu_au && new Date(boutique.sponsor_jusqu_au) > new Date()
-  const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#e5e7eb'
 
   return (
-    <div className="bq-card">
-      {/* Bande colorée plan */}
-      <div style={{ height: 4, background: planColor }} />
-
-      <div className="bq-card-body">
-        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+    <div className="bq-card-premium">
+      <div style={{ padding: '22px 24px' }}>
+        <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start' }}>
           {/* Logo */}
           {boutique.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={boutique.logo_url} alt={boutique.nom}
-              style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 12, flexShrink: 0, border: '1px solid #f0f0f0' }} />
+              style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 14, flexShrink: 0, border: '1.5px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }} />
           ) : (
-            <div style={{ width: 72, height: 72, borderRadius: 12, background: 'linear-gradient(135deg,#f0f4ff,#e0e7ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0 }}>
+            <div style={{ width: 72, height: 72, borderRadius: 14, background: 'linear-gradient(135deg, #fff3e8 0%, #fde8d7 100%)', border: '1.5px solid #f8d7be', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, flexShrink: 0 }}>
               🏪
             </div>
           )}
 
           {/* Infos */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontWeight: 700, fontSize: 17, margin: 0, color: '#111' }}>{boutique.nom}</h2>
-                {planActif === 'business' && <span style={{ fontSize: 11, background: '#1e3a5f', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700, letterSpacing: '.02em' }}>💼 Business</span>}
-                {planActif === 'pro'      && <span style={{ fontSize: 11, background: '#C75B00', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>⭐ Pro</span>}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontWeight: 800, fontSize: 18, margin: 0, color: 'var(--navy)' }}>{boutique.nom}</h2>
+                {planActif === 'business' && <span style={{ fontSize: 11, background: 'var(--navy)', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700, letterSpacing: '.02em' }}>💼 Business</span>}
+                {planActif === 'pro'      && <span style={{ fontSize: 11, background: 'var(--accent)', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>⭐ Pro</span>}
                 {sponsorActif            && <span style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>Mis en avant</span>}
               </div>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, flexShrink: 0, color: boutique.actif ? '#16a34a' : '#9ca3af', background: boutique.actif ? '#dcfce7' : '#f1f5f9' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20, flexShrink: 0, color: boutique.actif ? '#0a5c36' : '#6b7280', background: boutique.actif ? '#e6f4ec' : '#f1f5f9', border: `1px solid ${boutique.actif ? '#b7e4ca' : '#e2e8f0'}` }}>
                 {boutique.actif ? '● Active' : '○ Inactive'}
               </span>
             </div>
 
             {boutique.description && (
-              <p style={{ fontSize: 13, color: '#6b7280', margin: '6px 0 4px', lineHeight: 1.5 }}>{boutique.description}</p>
+              <p style={{ fontSize: 13, color: 'var(--text2)', margin: '0 0 8px', lineHeight: 1.5 }}>{boutique.description}</p>
             )}
-            <p style={{ fontSize: 12, color: '#9ca3af', margin: '4px 0 0', display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
-              {[boutique.categorie, boutique.ville, boutique.telephone].filter(Boolean).map((v, i) => (
-                <span key={i}>{v}</span>
-              ))}
-            </p>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+              {boutique.categorie && <span className="bq-meta-badge">🏷️ {boutique.categorie}</span>}
+              {boutique.ville && <span className="bq-meta-badge">📍 {boutique.ville}</span>}
+              {boutique.telephone && <span className="bq-meta-badge">📞 {boutique.telephone}</span>}
+            </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="bq-card-actions">
+        <div style={{ display: 'flex', gap: 10, marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)', flexWrap: 'wrap', alignItems: 'center' }}>
           <button onClick={onManage} style={{
-            fontSize: 13, color: '#fff', background: '#C75B00', border: 'none',
-            borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontWeight: 700,
-            boxShadow: '0 1px 4px rgba(199,91,0,.3)',
+            fontSize: 13, color: '#fff', background: 'var(--accent)', border: 'none',
+            borderRadius: 9, padding: '9px 20px', cursor: 'pointer', fontWeight: 700,
+            boxShadow: '0 2px 8px rgba(199,91,0,0.25)', transition: 'transform 0.15s ease',
           }}>
             Gérer la boutique →
           </button>
           <button onClick={onEdit} style={{
-            fontSize: 13, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe',
-            borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 600,
+            fontSize: 13, color: 'var(--navy)', background: '#f5efe9', border: '1px solid #e5d8cc',
+            borderRadius: 9, padding: '9px 16px', cursor: 'pointer', fontWeight: 600,
           }}>
             Modifier
           </button>
           <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer" style={{
-            fontSize: 13, color: '#374151', background: '#f8fafc', border: '1px solid #e5e7eb',
-            borderRadius: 8, padding: '8px 16px', fontWeight: 600, textDecoration: 'none',
+            fontSize: 13, color: 'var(--text1)', background: '#ffffff', border: '1px solid var(--border)',
+            borderRadius: 9, padding: '9px 16px', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4,
           }}>
             Voir ↗
           </a>
           {onSponsoring && (
             <button onClick={onSponsoring} style={{
               fontSize: 13, color: '#92400e', background: '#fffbeb', border: '1px solid #fcd34d',
-              borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 600, marginLeft: 'auto',
+              borderRadius: 9, padding: '9px 16px', cursor: 'pointer', fontWeight: 600, marginLeft: 'auto',
             }}>
               ⭐ Mettre en avant
             </button>
@@ -1440,15 +1437,16 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
           {onPayerManuel && (
             <button onClick={onPayerManuel} style={{
               fontSize: 13, color: '#92400e', background: '#fff', border: '1px solid #fcd34d',
-              borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 600,
+              borderRadius: 9, padding: '9px 16px', cursor: 'pointer', fontWeight: 600,
               marginLeft: onSponsoring ? undefined : 'auto',
             }}>
               🧾 Payer
             </button>
           )}
           <button onClick={onDelete} style={{
-            fontSize: 13, color: '#dc2626', background: 'none', border: '1px solid #fecaca',
-            borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
+            fontSize: 13, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca',
+            borderRadius: 9, padding: '9px 14px', cursor: 'pointer', fontWeight: 600,
+            marginLeft: (!onSponsoring && !onPayerManuel) ? 'auto' : undefined,
           }}>
             Supprimer
           </button>
@@ -1691,18 +1689,32 @@ export default function BoutiqueClient({
 
   // Vue liste
   return (
-    <div style={{ maxWidth: 860, margin: '40px auto', padding: '0 24px' }}>
+    <div style={{ maxWidth: 880, margin: '32px auto', padding: '0 20px 80px' }}>
+      {/* Navigation fil d'Ariane & Retour Compte */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        <Link href="/compte" className="btn-back-account" aria-label="Retourner à l'espace mon compte">
+          ← Mon compte
+        </Link>
+        <span style={{ fontSize: 12, color: 'var(--text3)' }}>/</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>Ma boutique</span>
+      </div>
+
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 14 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 24, margin: 0, color: '#111' }}>Ma boutique</h1>
-          <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 4 }}>{boutiques.length}/3 boutique{boutiques.length > 1 ? 's' : ''}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 26, fontWeight: 800, margin: 0, color: 'var(--navy)' }}>Ma boutique</h1>
+            <span style={{ fontSize: 12, fontWeight: 700, background: '#f0e8df', color: 'var(--navy)', border: '1px solid #e2d5c7', padding: '3px 10px', borderRadius: 20 }}>
+              {boutiques.length} / 3 boutique{boutiques.length > 1 ? 's' : ''}
+            </span>
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--text2)', marginTop: 6, margin: 0 }}>Gérez vos points de vente, catalogue produits, ventes et comptabilité.</p>
         </div>
         {canCreate && (
           <button onClick={() => setMode('create')} style={{
-            padding: '10px 20px', background: '#1d4ed8', color: '#fff',
+            padding: '11px 22px', background: 'var(--accent)', color: '#fff',
             border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(29,78,216,.25)',
+            boxShadow: '0 4px 14px rgba(199,91,0,0.25)', transition: 'all 0.15s ease',
           }}>
             + Créer une boutique
           </button>
