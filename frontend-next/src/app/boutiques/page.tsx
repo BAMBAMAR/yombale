@@ -4,6 +4,7 @@ import { apiFetch } from '@/lib/api'
 import BoutiquesSearch from './BoutiquesSearch'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Boutiques partenaires au Sénégal',

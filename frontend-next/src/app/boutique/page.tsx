@@ -4,6 +4,7 @@ import { verifySession } from '@/lib/dal'
 import BoutiqueClient from './BoutiqueClient'
 
 export const metadata: Metadata = { title: 'Ma boutique' }
+export const dynamic = 'force-dynamic'
 
 interface Boutique {
   id: string
