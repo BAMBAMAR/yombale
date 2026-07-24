@@ -2,7 +2,7 @@ import 'server-only'
 import { SignJWT } from 'jose'
 import { verifySession } from './dal'
 
-const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:3000'
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.BACKEND_URL ?? 'http://127.0.0.1:3000'
 
 export interface ActionState {
   error?: string
@@ -22,10 +22,17 @@ export async function backendFetch(
 
   const headers = new Headers(options.headers)
   headers.set('Authorization', `Bearer ${token}`)
-  // Ne pas forcer Content-Type si body est FormData (le browser gère le boundary)
   if (!(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json')
   }
 
-  return fetch(`${API}${path}`, { ...options, headers })
+  const primaryUrl = `${API}${path}`
+  try {
+    return await fetch(primaryUrl, { ...options, headers })
+  } catch {
+    const fallbackUrl = primaryUrl.includes('127.0.0.1')
+      ? primaryUrl.replace('127.0.0.1', 'localhost')
+      : primaryUrl.replace('localhost', '127.0.0.1')
+    return await fetch(fallbackUrl, { ...options, headers })
+  }
 }
