@@ -87,7 +87,16 @@ export default async function HomePage({
     if (tri)       params.set('tri',       tri)
     if (sousType)  params.set('sousType',  sousType)
 
-    const r = await fetch(`${BACKEND}/api/produits?${params}`, { cache: 'no-store', headers: SSR_HEADERS })
+    const url = `${BACKEND}/api/produits?${params}`
+    let r: Response
+    try {
+      r = await fetch(url, { cache: 'no-store', headers: SSR_HEADERS })
+    } catch {
+      const fallbackUrl = url.includes('127.0.0.1')
+        ? url.replace('127.0.0.1', 'localhost')
+        : url.replace('localhost', '127.0.0.1')
+      r = await fetch(fallbackUrl, { cache: 'no-store', headers: SSR_HEADERS })
+    }
     if (!r.ok) throw new Error(`API produits → ${r.status}`)
     const data: ApiResponse | Produit[] = await r.json()
     if (Array.isArray(data)) {
