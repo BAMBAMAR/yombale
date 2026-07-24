@@ -134,17 +134,23 @@ Aucun chantier n'est actuellement identifié comme prioritaire — le dernier ch
 
 ---
 
-## État du projet (24 juillet 2026 — Correction de Bugs Espace Boutique)
+## État du projet (24 juillet 2026 — Correction Espace Boutique & Importation par Lot)
+**Statut :** *En attente de push sur main*
 
-Déclencheur : L'utilisateur a signalé plusieurs bugs sur l'espace de gestion de la boutique : "création de caissier ne passe pas", "modification du PIN impossible", "Pas d'action Administrateurs Web", formulaire débordant sur petit écran, et une erreur 500 sur l'API `/admins`.
+Déclencheur : L'utilisateur a signalé plusieurs bugs sur l'espace de gestion de la boutique ("création de caissier ne passe pas", "modification du PIN impossible", "Pas d'action Administrateurs Web", formulaire débordant sur petit écran, et une erreur 500 sur l'API `/admins`). De plus, il a demandé l'enrichissement de la fonctionnalité **Importation par Lot (Batch Intake)** avec des centaines de produits par catégorie et une harmonisation globale des catégories.
 
-**Correctifs apportés :**
+**1. Harmonisation des Catégories et Importation par Lot :**
+- **Centralisation des catégories** : Création de `frontend-next/src/lib/categories.ts` comme source de vérité unique pour les catégories (Alimentation, Téléphonie, Mode, etc.) afin de garantir la cohérence dans tout le site, y compris pour les boutiques mixtes.
+- **Enrichissement du catalogue standard** : Création d'un fichier `backend/data/catalogues-standards.json` généré via un script métier, contenant environ 980 produits répartis dans les 9 catégories principales du marché sénégalais (ex: Riz, Sucre, Ciment, Téléphones, etc.).
+- **Optimisation Backend** : La route d'importation par lot (`/catalogues-standards`) a été optimisée pour lire directement ce fichier JSON statique au lieu d'exécuter des requêtes lourdes, garantissant une réponse rapide et stable.
+
+**2. Correctifs Espace Boutique :**
 - **Support des slugs pour l'accès boutique** : La fonction `checkBoutiqueAccess` a été modifiée pour supporter la validation d'accès via `UUID` OU `slug`. Auparavant, les requêtes `POST /caissiers` et `PUT /caissiers/:caissierId` échouaient silencieusement ou généraient des erreurs SQL si le client envoyait le slug de la boutique plutôt que son UUID, empêchant toute création ou mise à jour de caissier.
 - **Responsivité du formulaire Caissier** : Conversion d'une grille CSS figée (`1fr 1fr`) vers une grille réactive (`repeat(auto-fit, minmax(200px, 1fr))`) dans `BoutiqueCaissiers.tsx` pour empêcher le débordement horizontal masquant le bouton de validation sur mobile.
 - **Erreur 500 API `/admins`** : Correction de la requête SQL dans `GET /api/boutiques/:id/admins` qui pointait par erreur vers un paramètre ambigu. L'ID interne extrait après validation de l'autorisation (`bq.id`) est maintenant utilisé explicitement, fiabilisant l'affichage de la liste.
 - **UX Administrateurs** : Ajout du label explicite **"Intouchable"** au lieu d'une case d'action vide pour le compte "propriétaire" dans `BoutiqueAdmins.tsx`, clarifiant le fait qu'un propriétaire ne peut pas se retirer lui-même.
 
-**Point d'attention (Dette technique)** : Les erreurs SQL rapportées (`column u.prenom does not exist`) étaient un artefact d'anciens logs de nodemon ou d'anciennes requêtes. Le code actuel a été vérifié et tourne proprement sur la base de production (Render).
+**Point d'attention (Dette technique)** : Les erreurs SQL rapportées (`column u.prenom does not exist`) au cours du débogage étaient un artefact d'anciens logs de nodemon ou d'anciennes requêtes. Le code actuel a été vérifié et tourne proprement sur la base de production (Render).
 
 ---
 
