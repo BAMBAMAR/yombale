@@ -3,7 +3,7 @@ const SSR_SECRET = process.env.SSR_SECRET || '';
 
 export async function apiFetch<T>(path: string): Promise<T> {
   const primaryUrl = `${BACKEND}/api${path}`;
-  const headers = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {};
+  const headers: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {};
   let res: Response;
   try {
     res = await fetch(primaryUrl, { next: { revalidate: 300 }, headers });
