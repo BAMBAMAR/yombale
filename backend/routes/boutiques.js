@@ -960,6 +960,9 @@ router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (r
     if (!Array.isArray(produits) || produits.length === 0) {
       return res.status(400).json({ error: 'La liste des produits à ajouter est vide' });
     }
+    if (produits.length > 50) {
+      return res.status(400).json({ error: 'La limite est de 50 produits par importation pour préserver la stabilité du système.' });
+    }
 
     const client = await pool.connect();
     try {

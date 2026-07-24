@@ -184,6 +184,12 @@ export default function BatchImportModal({
       }))
     }
 
+    const MAX_IMPORT = 50;
+    if (payload.length > MAX_IMPORT) {
+      setError(`Vous ne pouvez importer que ${MAX_IMPORT} produits à la fois. Vous en avez sélectionné ${payload.length}.`)
+      return
+    }
+
     setError(null)
     setSubmitting(true)
 
