@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useTransition, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage } from './actions'
@@ -12,20 +12,11 @@ import { fcfa, lienBoutiqueWhatsapp } from '@/lib/format'
 import type { ActionState } from '@/lib/backend-fetch'
 import ModalPaiementManuel from '@/components/ModalPaiementManuel'
 import BoutonPartager from '@/components/BoutonPartager'
+import BatchImportModal from './BatchImportModal'
+import BoutiqueAdmins from './BoutiqueAdmins'
+import BoutiqueCaissiers from './BoutiqueCaissiers'
 
-const CATEGORIES = [
-  { value: 'smartphones',  label: 'Smartphones' },
-  { value: 'informatique', label: 'Informatique' },
-  { value: 'tv-electro',   label: 'TV & Électro' },
-  { value: 'mode',         label: 'Mode' },
-  { value: 'maison',       label: 'Maison' },
-  { value: 'auto-moto',    label: 'Auto & Moto' },
-  { value: 'jeux',         label: 'Jeux' },
-  { value: 'services',     label: 'Services' },
-  { value: 'alimentation', label: 'Alimentation' },
-  { value: 'beaute',       label: 'Beauté' },
-  { value: 'autre',        label: 'Autre' },
-]
+import { CATEGORIES, PRODUIT_CATEGORIES } from '@/lib/categories'
 
 interface Boutique {
   id: string
@@ -541,19 +532,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
 
 // ── Formulaire produit ────────────────────────────────────────────────────────
 
-const PRODUIT_CATEGORIES = [
-  { value: 'smartphones',  label: '📱 Téléphone / Smartphone' },
-  { value: 'informatique', label: '💻 Informatique' },
-  { value: 'tv-electro',   label: '📺 TV & Électroménager' },
-  { value: 'mode',         label: '👗 Mode & Vêtements' },
-  { value: 'maison',       label: '🏠 Maison & Décoration' },
-  { value: 'auto-moto',    label: '🚗 Auto & Moto' },
-  { value: 'jeux',         label: '🎮 Jeux & Consoles' },
-  { value: 'alimentation', label: '🍚 Alimentation' },
-  { value: 'beaute',       label: '💄 Beauté & Soins' },
-  { value: 'services',     label: '🛠 Services' },
-  { value: 'autre',        label: '📦 Autre' },
-]
+// PRODUIT_CATEGORIES is imported from '@/lib/categories'
 
 const NOMS_PAR_DEFAUT: Record<string, string> = {
   'smartphones':  'Smartphone — à modifier',
@@ -1106,6 +1085,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<'list' | { creating: 'rapide' | 'detaille' } | { editing: Produit }>('list')
+  const [showBatchModal, setShowBatchModal] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [rechercheTexte, setRechercheTexte] = useState('')
@@ -1182,11 +1162,29 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
 
   return (
     <div>
+      {showBatchModal && (
+        <BatchImportModal
+          boutiqueId={boutique.id}
+          onClose={() => setShowBatchModal(false)}
+          onSuccess={() => loadProduits()}
+        />
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
           {produits.length} produit{produits.length !== 1 ? 's' : ''} / {quota} max
         </p>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setShowBatchModal(true)}
+            style={{
+              background: '#059669', color: '#fff', border: 'none', borderRadius: 8,
+              padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+            }}
+          >
+            📦 Ajout par Batch (Catalogue)
+          </button>
           <button
             onClick={() => setMode({ creating: 'rapide' })}
             style={{
@@ -1291,14 +1289,15 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                     {p.en_stock ? 'En stock' : 'Rupture'}
                   </span>
                   <span
-                    title={p.whatsapp_sync_statut === 'echec' ? (p.whatsapp_sync_erreur || 'Échec de synchronisation') : undefined}
+                    title="Statut de synchronisation avec l'assistant et le catalogue WhatsApp Business"
                     style={{
-                      fontSize: 11, padding: '1px 6px', borderRadius: 20, fontWeight: 700,
-                      background: p.whatsapp_sync_statut === 'synchronise' ? '#dcfce7' : p.whatsapp_sync_statut === 'echec' ? '#fee2e2' : '#f1f5f9',
-                      color: p.whatsapp_sync_statut === 'synchronise' ? '#16a34a' : p.whatsapp_sync_statut === 'echec' ? '#dc2626' : '#64748b',
+                      fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 700,
+                      background: p.whatsapp_sync_statut === 'synchronise' || !p.whatsapp_sync_statut ? '#dcfce7' : p.whatsapp_sync_statut === 'echec' ? '#fee2e2' : '#eff6ff',
+                      color: p.whatsapp_sync_statut === 'synchronise' || !p.whatsapp_sync_statut ? '#166534' : p.whatsapp_sync_statut === 'echec' ? '#991b1b' : '#1d4ed8',
+                      border: p.whatsapp_sync_statut === 'synchronise' || !p.whatsapp_sync_statut ? '1px solid #bbf7d0' : p.whatsapp_sync_statut === 'echec' ? '1px solid #fecaca' : '1px solid #bfdbfe',
                     }}
                   >
-                    {p.whatsapp_sync_statut === 'synchronise' ? '✓ Sur WhatsApp' : p.whatsapp_sync_statut === 'echec' ? '✗ Échec' : '⏳ En attente'}
+                    {p.whatsapp_sync_statut === 'echec' ? '❌ Échec WhatsApp' : p.whatsapp_sync_statut === 'en_attente' ? '⏳ Synchro WhatsApp' : '💬 Actif sur WhatsApp'}
                   </span>
                   {p.nom.endsWith('— à modifier') && (
                     <span style={{
@@ -1388,6 +1387,20 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
                 {planActif === 'pro'      && <span style={{ fontSize: 11, background: 'var(--accent)', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>⭐ Pro</span>}
                 {sponsorActif            && <span style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>Mis en avant</span>}
               </div>
+              <button onClick={onManage} style={{
+                fontSize: 13, color: '#fff', background: 'var(--accent)', border: 'none',
+                borderRadius: 9, padding: '9px 18px', cursor: 'pointer', fontWeight: 700,
+                boxShadow: '0 2px 8px rgba(199,91,0,0.25)', transition: 'transform 0.15s ease',
+              }}>
+                Gérer la boutique →
+              </button>
+              <a href="/boutique/caisse" style={{
+                fontSize: 13, color: '#fff', background: '#16a34a', border: 'none',
+                borderRadius: 9, padding: '9px 18px', fontWeight: 800, textDecoration: 'none',
+                display: 'inline-flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 8px rgba(22,163,74,0.25)',
+              }}>
+                🛒 Caisse POS →
+              </a>
               <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20, flexShrink: 0, color: boutique.actif ? '#0a5c36' : '#6b7280', background: boutique.actif ? '#e6f4ec' : '#f1f5f9', border: `1px solid ${boutique.actif ? '#b7e4ca' : '#e2e8f0'}` }}>
                 {boutique.actif ? '● Active' : '○ Inactive'}
               </span>
@@ -1458,13 +1471,15 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
 
 // ── Vue de gestion d'une boutique — layout sidebar ────────────────────────────
 
-const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing'; icon: string; label: string }[] = [
+const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'admins' | 'caissiers'; icon: string; label: string }[] = [
   { key: 'produits',   icon: '🛍',  label: 'Catalogue' },
   { key: 'commandes',  icon: '📋',  label: 'Commandes' },
   { key: 'compta',     icon: '💰',  label: 'Comptabilité' },
   { key: 'analytics',  icon: '📊',  label: 'Analytics' },
   { key: 'infos',      icon: '⚙️', label: 'Paramètres' },
   { key: 'marketing',  icon: '📣',  label: 'Marketing' },
+  { key: 'admins',     icon: '👥',  label: 'Administrateurs' },
+  { key: 'caissiers',  icon: '🏪',  label: 'Caissiers POS' },
 ]
 
 function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
@@ -1474,7 +1489,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
   onEdit: () => void
   prixPro: number
 }) {
-  const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing'>('produits')
+  const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'admins' | 'caissiers'>('produits')
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
@@ -1564,7 +1579,11 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
         </nav>
 
         {/* Liens rapides */}
-        <div style={{ padding: '12px 8px', borderTop: '1px solid #f3f4f6' }}>
+        <div style={{ padding: '12px 8px', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <a href="/boutique/caisse"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#16a34a', textDecoration: 'none', borderRadius: 6, fontWeight: 700, background: '#f0fdf4' }}>
+            🛒 Caisse POS (Physique) ↗
+          </a>
           <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer"
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#6b7280', textDecoration: 'none', borderRadius: 6 }}>
             Voir la boutique ↗
@@ -1597,6 +1616,8 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
           </div>
         )}
         {tab === 'marketing' && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} planActif={planActif} />}
+        {tab === 'admins'    && <BoutiqueAdmins boutiqueId={boutique.id} />}
+        {tab === 'caissiers' && <BoutiqueCaissiers boutiqueId={boutique.id} />}
       </main>
     </div>
     </>
@@ -1628,6 +1649,18 @@ export default function BoutiqueClient({
   const [manuelBoutiqueId, setManuelBoutiqueId] = useState<string | null>(null)
   const [, startSponsoring] = useTransition()
   const router = useRouter()
+
+  const searchParams = useSearchParams()
+  const manageId = searchParams.get('manage') || searchParams.get('id')
+
+  useEffect(() => {
+    if (manageId && boutiques.length > 0) {
+      const targetBoutique = boutiques.find(b => b.id === manageId || b.slug === manageId)
+      if (targetBoutique) {
+        setMode({ managing: targetBoutique })
+      }
+    }
+  }, [manageId, boutiques])
 
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const waveActif    = settings.paiement_wave !== 'false'
@@ -1710,15 +1743,24 @@ export default function BoutiqueClient({
           </div>
           <p style={{ fontSize: 13, color: 'var(--text2)', marginTop: 6, margin: 0 }}>Gérez vos points de vente, catalogue produits, ventes et comptabilité.</p>
         </div>
-        {canCreate && (
-          <button onClick={() => setMode('create')} style={{
-            padding: '11px 22px', background: 'var(--accent)', color: '#fff',
-            border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(199,91,0,0.25)', transition: 'all 0.15s ease',
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <Link href="/boutique/caisse" style={{
+            padding: '11px 20px', background: '#16a34a', color: '#fff',
+            borderRadius: 10, fontSize: 14, fontWeight: 800, textDecoration: 'none',
+            boxShadow: '0 4px 14px rgba(22,163,74,0.25)', display: 'inline-flex', alignItems: 'center', gap: 6,
           }}>
-            + Créer une boutique
-          </button>
-        )}
+            🛒 Ouvrir ma Caisse POS →
+          </Link>
+          {canCreate && (
+            <button onClick={() => setMode('create')} style={{
+              padding: '11px 22px', background: 'var(--accent)', color: '#fff',
+              border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(199,91,0,0.25)', transition: 'all 0.15s ease',
+            }}>
+              + Créer une boutique
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Messages */}

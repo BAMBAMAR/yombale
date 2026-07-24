@@ -7,6 +7,7 @@ import {
   updateStock,
 } from './actions'
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
+import { exportToCSV, printPDFReport } from '@/lib/export'
 
 interface Zone    { id: string; nom: string; prix: number }
 interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string; justificatif_url: string | null }
@@ -357,15 +358,55 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
 
   const methodeLabel: Record<string, string> = { cash: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', virement: 'Virement' }
 
+  function exportVentesCSV() {
+    const headers = ['Référence', 'Produit/Service', 'Quantité', 'Prix Unitaire (FCFA)', 'Livraison (FCFA)', 'Total (FCFA)', 'Client', 'Mode Paiement', 'Date']
+    const rows = ventes.map(v => [
+      v.reference || v.id.slice(0, 8),
+      v.nom_produit,
+      v.quantite,
+      v.prix_unitaire,
+      v.frais_livraison,
+      v.montant_total,
+      v.client_nom || 'Client Anonyme',
+      methodeLabel[v.methode_paiement] || v.methode_paiement,
+      fmtDateHeure(v.created_at)
+    ])
+    exportToCSV(`ventes_boutique_${boutiqueId}`, headers, rows)
+  }
+
+  function exportVentesPDF() {
+    const headers = ['Réf.', 'Produit', 'Qte', 'Prix Unit.', 'Total', 'Client', 'Date']
+    const rows = ventes.map(v => [
+      v.reference || v.id.slice(0, 8),
+      v.nom_produit,
+      v.quantite,
+      `${v.prix_unitaire.toLocaleString('fr-FR')} FCFA`,
+      `${v.montant_total.toLocaleString('fr-FR')} FCFA`,
+      v.client_nom || 'Client Anonyme',
+      fmtDateHeure(v.created_at)
+    ])
+    const totalCA = ventes.reduce((s, v) => s + Number(v.montant_total), 0)
+    const summaryHtml = `
+      <div class="summary">
+        <h3 style="margin:0 0 6px;">Bilan des Ventes</h3>
+        <p style="margin:0; font-size:14px; font-weight:bold; color:#16a34a;">Total Ventes Enregistrées : ${totalCA.toLocaleString('fr-FR')} FCFA (${ventes.length} transactions)</p>
+      </div>
+    `
+    printPDFReport('Registre & Bilan des Ventes', `Boutique ${boutiqueId}`, headers, rows, summaryHtml)
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {editingVente && <EditVenteModal vente={editingVente} boutiqueId={boutiqueId} onClose={() => setEditingVente(null)} onDone={load} />}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{ventes.length} vente{ventes.length !== 1 ? 's' : ''} enregistrée{ventes.length !== 1 ? 's' : ''}</p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <a href={`/boutique/ventes/export/${boutiqueId}`} style={{ fontSize: 12, color: '#374151', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 6, padding: '5px 12px', textDecoration: 'none' }}>
-            ↓ CSV
-          </a>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={exportVentesCSV} style={{ fontSize: 12, color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
+            📥 Excel (CSV)
+          </button>
+          <button onClick={exportVentesPDF} style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
+            📄 Imprimer PDF
+          </button>
           <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 13, background: '#C75B00', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer' }}>
             + Déclarer une vente
           </button>
@@ -586,13 +627,49 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
   const total = depenses.reduce((s, d) => s + Number(d.montant), 0)
   const now = new Date(); const mois = `${MOIS_NOMS[now.getMonth()]} ${now.getFullYear()}`
 
+  function exportDepensesCSV() {
+    const headers = ['Date', 'Catégorie', 'Description', 'Montant (FCFA)']
+    const rows = depenses.map(d => [
+      d.date_depense,
+      d.categorie.toUpperCase(),
+      d.description || '—',
+      d.montant
+    ])
+    exportToCSV(`depenses_boutique_${boutiqueId}`, headers, rows)
+  }
+
+  function exportDepensesPDF() {
+    const headers = ['Date', 'Catégorie', 'Description', 'Montant']
+    const rows = depenses.map(d => [
+      d.date_depense,
+      d.categorie.toUpperCase(),
+      d.description || '—',
+      `${Number(d.montant).toLocaleString('fr-FR')} FCFA`
+    ])
+    const summaryHtml = `
+      <div class="summary">
+        <h3 style="margin:0 0 6px;">Registre des Dépenses</h3>
+        <p style="margin:0; font-size:14px; font-weight:bold; color:#dc2626;">Total Dépenses : ${total.toLocaleString('fr-FR')} FCFA (${depenses.length} entrées)</p>
+      </div>
+    `
+    printPDFReport('Registre des Dépenses', `Boutique ${boutiqueId}`, headers, rows, summaryHtml)
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Total affiché : <strong style={{ color: '#dc2626' }}>{fcfa(total)}</strong></p>
-        <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 13, background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer' }}>
-          + Ajouter une dépense
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={exportDepensesCSV} style={{ fontSize: 12, color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
+            📥 Excel (CSV)
+          </button>
+          <button onClick={exportDepensesPDF} style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
+            📄 Imprimer PDF
+          </button>
+          <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 13, background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer' }}>
+            + Ajouter une dépense
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -685,6 +762,30 @@ function StockView({ boutiqueId }: { boutiqueId: string }) {
     })
   }
 
+  function exportStockCSV() {
+    const headers = ['ID Produit', 'Nom Produit', 'Prix (FCFA)', 'Quantité en Stock', 'Statut Stock']
+    const rows = produits.map(p => [
+      p.id,
+      p.nom,
+      p.prix || 0,
+      p.stock_quantite ?? 'Non suivi',
+      p.stock_quantite === null ? 'Non suivi' : p.stock_quantite <= 3 ? 'STOCK BAS' : 'DISPONIBLE'
+    ])
+    exportToCSV(`inventaire_stock_${boutiqueId}`, headers, rows)
+  }
+
+  function exportStockPDF() {
+    const headers = ['ID', 'Nom Produit', 'Prix', 'Stock Restant', 'Statut']
+    const rows = produits.map(p => [
+      p.id.slice(0, 8),
+      p.nom,
+      p.prix ? `${p.prix.toLocaleString('fr-FR')} FCFA` : '—',
+      p.stock_quantite ?? 'Non suivi',
+      p.stock_quantite === null ? 'Non suivi' : p.stock_quantite <= 3 ? '⚠️ BAS' : '✅ OK'
+    ])
+    printPDFReport('Inventaire État des Stocks', `Boutique ${boutiqueId}`, headers, rows)
+  }
+
   if (loading) return <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p>
 
   if (produits.length === 0) return (
@@ -694,7 +795,19 @@ function StockView({ boutiqueId }: { boutiqueId: string }) {
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Inventaire ({produits.length} références)</p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={exportStockCSV} style={{ fontSize: 12, color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
+            📥 Excel (CSV)
+          </button>
+          <button onClick={exportStockPDF} style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
+            📄 Imprimer PDF
+          </button>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {produits.map(p => (
         <div key={p.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <p style={{ margin: 0, fontSize: 14, fontWeight: 600, flex: 1, minWidth: 0 }}>{p.nom}</p>
@@ -727,6 +840,7 @@ function StockView({ boutiqueId }: { boutiqueId: string }) {
           )}
         </div>
       ))}
+      </div>
     </div>
   )
 }

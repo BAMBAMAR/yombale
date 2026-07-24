@@ -9,6 +9,42 @@ function checkUUID(req, res, next) {
   next();
 }
 
+// GET /api/produits/instantanee — Auto-complétion instantanée visuelle (Typeahead)
+router.get('/instantanee', async (req, res) => {
+  try {
+    const q = req.query.q ? String(req.query.q).trim() : '';
+    if (!q || q.length < 2) {
+      return res.json({ success: true, produits: [], boutiques: [] });
+    }
+
+    const term = `%${q}%`;
+
+    // 1. Produits marchands
+    const prodsRes = await pool.query(
+      `SELECT p.id, p.nom, p.prix, p.images, p.categorie, p.boutique_id, b.nom as boutique_nom, b.slug as boutique_slug
+       FROM boutique_produits p
+       JOIN boutiques b ON b.id = p.boutique_id
+       WHERE (p.nom ILIKE $1 OR p.categorie ILIKE $1) AND b.actif = true
+       ORDER BY p.created_at DESC LIMIT 5`,
+      [term]
+    );
+
+    // 2. Boutiques marchandes
+    const bqRes = await pool.query(
+      `SELECT id, nom, logo_url, ville, slug, categorie
+       FROM boutiques
+       WHERE (nom ILIKE $1 OR description ILIKE $1 OR ville ILIKE $1) AND actif = true
+       LIMIT 3`,
+      [term]
+    );
+
+    res.json({ success: true, produits: prodsRes.rows, boutiques: bqRes.rows });
+  } catch (err) {
+    console.error('[PRODUITS INSTANTANEE ERR]', err);
+    res.status(500).json({ error: 'Erreur recherche instantanée' });
+  }
+});
+
 // GET /api/produits
 router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
   try {
@@ -496,4 +532,45 @@ router.post('/', adminSecretOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/produits/instantanee — Auto-complétion instantanée visuelle (Typeahead)
+router.get('/instantanee', async (req, res) => {
+  try {
+    const q = req.query.q ? String(req.query.q).trim() : '';
+    if (!q || q.length < 2) {
+      return res.json({ produits: [], boutiques: [] });
+    }
+
+    const term = `%${q}%`;
+
+    // 1. Produits marchands
+    const prodsRes = await pool.query(
+      `SELECT p.id, p.nom, p.prix, p.images, p.categorie, p.boutique_id, b.nom as boutique_nom, b.slug as boutique_slug
+       FROM boutique_produits p
+       JOIN boutiques b ON b.id = p.boutique_id
+       WHERE (p.nom ILIKE $1 OR p.categorie ILIKE $1) AND b.actif = true
+       ORDER BY p.created_at DESC LIMIT 5`,
+      [term]
+    );
+
+    // 2. Boutiques marchandes
+    const bqRes = await pool.query(
+      `SELECT id, nom, logo_url, ville, slug, categorie
+       FROM boutiques
+       WHERE (nom ILIKE $1 OR description ILIKE $1 OR ville ILIKE $1) AND actif = true
+       LIMIT 3`,
+      [term]
+    );
+
+    res.json({
+      success: true,
+      produits: prodsRes.rows,
+      boutiques: bqRes.rows,
+    });
+  } catch (err) {
+    console.error('[INSTANTANEE SEARCH ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 module.exports = router;
+

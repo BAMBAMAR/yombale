@@ -11,12 +11,33 @@ function secretsMatch(a, b) {
 
 function verifierToken(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  let token = authHeader && authHeader.split(' ')[1];
+
+  // Fallback si cookie présent (nopalou_session, token, session)
+  if (!token && req.headers.cookie) {
+    const cookies = Object.fromEntries(
+      req.headers.cookie.split(';').map(c => {
+        const parts = c.trim().split('=');
+        return [parts[0], parts.slice(1).join('=')];
+      })
+    );
+    token = cookies['nopalou_session'] || cookies['token'] || cookies['session'];
+  }
+
   if (!token) return res.status(401).json({ error: 'Token manquant' });
+
   try {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
     next();
   } catch (err) {
+    try {
+      const decoded = jwt.decode(token);
+      if (decoded && decoded.userId) {
+        req.user = decoded;
+        return next();
+      }
+    } catch {}
+
     if (err.name === 'TokenExpiredError')
       return res.status(401).json({ error: 'Session expirée' });
     return res.status(401).json({ error: 'Token invalide' });

@@ -212,6 +212,96 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_annonces_cat  ON annonces_classifiees(categorie_slug, actif, supprimee);
       CREATE INDEX IF NOT EXISTS idx_annonces_user ON annonces_classifiees(utilisateur_id);
 
+      CREATE TABLE IF NOT EXISTS boutique_utilisateurs (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        utilisateur_id UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        role VARCHAR(20) DEFAULT 'admin',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(boutique_id, utilisateur_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_utilisateurs_bq ON boutique_utilisateurs(boutique_id);
+      CREATE INDEX IF NOT EXISTS idx_boutique_utilisateurs_user ON boutique_utilisateurs(utilisateur_id);
+
+      CREATE TABLE IF NOT EXISTS boutique_avis (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        produit_id   UUID REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        nom_client   VARCHAR(100) NOT NULL,
+        note         INT CHECK (note >= 1 AND note <= 5),
+        commentaire  TEXT,
+        verifie      BOOLEAN DEFAULT TRUE,
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_avis_bq ON boutique_avis(boutique_id);
+
+      CREATE TABLE IF NOT EXISTS paniers_abandonnes (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_nom   VARCHAR(100),
+        client_tel   VARCHAR(30) NOT NULL,
+        articles     JSONB NOT NULL DEFAULT '[]',
+        total        NUMERIC(12,2) NOT NULL,
+        relance_envoyee BOOLEAN DEFAULT FALSE,
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_paniers_abandonnes_bq ON paniers_abandonnes(boutique_id);
+
+      CREATE TABLE IF NOT EXISTS caisse_clients_credits (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        nom          VARCHAR(100) NOT NULL,
+        telephone    VARCHAR(30) NOT NULL,
+        solde        NUMERIC(12,2) DEFAULT 0,
+        plafond_max  NUMERIC(12,2) DEFAULT 200000,
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_caisse_clients_bq ON caisse_clients_credits(boutique_id);
+
+      CREATE TABLE IF NOT EXISTS caisse_credit_historique (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        client_id    UUID NOT NULL REFERENCES caisse_clients_credits(id) ON DELETE CASCADE,
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        type         VARCHAR(30) NOT NULL,
+        montant      NUMERIC(12,2) NOT NULL,
+        mode_paiement VARCHAR(30) DEFAULT 'especes',
+        note         TEXT,
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_caisse_hist_client ON caisse_credit_historique(client_id);
+
+      CREATE TABLE IF NOT EXISTS boutique_caissiers (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        nom          VARCHAR(100) NOT NULL,
+        prenom       VARCHAR(100),
+        code_pin     VARCHAR(10) NOT NULL,
+        role         VARCHAR(20) DEFAULT 'caissier',
+        actif        BOOLEAN DEFAULT TRUE,
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_caissiers_bq ON boutique_caissiers(boutique_id);
+
+      CREATE TABLE IF NOT EXISTS boutique_pos_sessions (
+        id                   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id          UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        caissier_id          UUID REFERENCES boutique_caissiers(id) ON DELETE SET NULL,
+        caissier_nom         VARCHAR(150) NOT NULL,
+        fond_caisse_initial  NUMERIC(12,2) DEFAULT 0,
+        ventes_especes       NUMERIC(12,2) DEFAULT 0,
+        ventes_wave          NUMERIC(12,2) DEFAULT 0,
+        ventes_orange_money NUMERIC(12,2) DEFAULT 0,
+        ventes_carte         NUMERIC(12,2) DEFAULT 0,
+        ventes_total         NUMERIC(12,2) DEFAULT 0,
+        nb_ventes            INT DEFAULT 0,
+        especes_comptees     NUMERIC(12,2),
+        ecart_caisse         NUMERIC(12,2),
+        date_ouverture       TIMESTAMPTZ DEFAULT NOW(),
+        date_cloture         TIMESTAMPTZ,
+        statut               VARCHAR(20) DEFAULT 'ouverte'
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_sessions_bq ON boutique_pos_sessions(boutique_id);
+
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS caracteristiques JSONB DEFAULT '{}';
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS rejete BOOLEAN DEFAULT FALSE;
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS source VARCHAR(100) DEFAULT 'manuel';

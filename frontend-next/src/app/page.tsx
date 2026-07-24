@@ -22,16 +22,14 @@ export const metadata: Metadata = {
   ],
 }
 
-const CATEGORIES = [
-  { slug: 'smartphones',  label: 'Téléphones',        emoji: '📱' },
-  { slug: 'informatique', label: 'Informatique',       emoji: '💻' },
-  { slug: 'tv-electro',   label: 'TV & Électro',       emoji: '📺' },
-  { slug: 'mode',         label: 'Mode',               emoji: '👗' },
-  { slug: 'maison',       label: 'Maison',             emoji: '🏠' },
-  { slug: 'auto-moto',    label: 'Auto & Moto',        emoji: '🚗' },
-  { slug: 'jeux',         label: 'Jeux',               emoji: '🎮' },
-  { slug: 'telecom',      label: 'Télécom & Forfaits', emoji: '📡' },
-]
+import { CATEGORIES as LIB_CATEGORIES } from '@/lib/categories'
+
+const CATEGORIES = LIB_CATEGORIES.map(c => ({
+  slug: c.value,
+  label: c.label.replace(/^.*? /, ''), // Remove emoji
+  emoji: c.label.split(' ')[0]
+}))
+CATEGORIES.push({ slug: 'telecom', label: 'Télécom & Forfaits', emoji: '📡' })
 
 const BUDGETS = [
   { label: '< 5 000',    prixMax: '5000'   },

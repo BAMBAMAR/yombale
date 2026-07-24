@@ -16,16 +16,19 @@ const limiterGeneral = rateLimit({
   windowMs: 15 * 60 * 1000, max: 200,
   keyGenerator: realIp,
   message: { error: 'Trop de requêtes — réessayez dans 15 min' },
-  standardHeaders: true
+  standardHeaders: true,
+  skip: (req) => process.env.NODE_ENV !== 'production' || isSsrRequest(req),
 });
 
 // Bloque les user-agents de scripts nus connus (bots, scrapers)
 // Laisse passer les requêtes SSR Next.js identifiées par X-SSR-Token
 function blockScraperUA(req, res, next) {
-  if (isSsrRequest(req)) return next() // SSR Next.js authentifié → toujours laisser passer
+  if (process.env.NODE_ENV !== 'production') return next()
+  if (isSsrRequest(req)) return next()
+  const ip = realIp(req)
+  if (INTERNAL_IPS.has(ip) || isPrivateIp(ip)) return next()
   const ua = (req.headers['user-agent'] || '').toLowerCase().trim()
   const blocked = ['python-requests', 'python-httpx', 'go-http-client', 'java/', 'okhttp']
-  // "node" exact ou "node/xx.x" → bot (Next.js SSR est identifié par X-SSR-Token ci-dessus)
   const isNodeBot = !ua || ua === 'node' || /^node\/\d/.test(ua)
   if (isNodeBot || blocked.some(b => ua === b || ua.startsWith(b))) {
     return res.status(429).json({ error: 'Accès automatisé non autorisé' })
@@ -76,6 +79,7 @@ const limiterBulk = rateLimit({
   message: { error: 'Trop de requêtes — créez un compte gratuit pour un accès illimité' },
   standardHeaders: true,
   skip: (req) => {
+    if (process.env.NODE_ENV !== 'production') return true
     if (req.user) return true
     if (isSsrRequest(req)) return true
     const ip = realIp(req)

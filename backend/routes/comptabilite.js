@@ -638,7 +638,7 @@ router.patch(
       );
       if (!commande) return res.status(404).json({ error: 'Commande introuvable' });
 
-      // Calculer et enregistrer la commission si la commande passe à "livree"
+      // Alimenter la Comptabilité et la commission si la commande passe à "livree"
       if (req.body.statut === 'livree' && commande.montant_total > 0) {
         const { rows: [b] } = await pool.query('SELECT commission_rate FROM boutiques WHERE id=$1', [req.params.boutiqueId]);
         if (b?.commission_rate > 0) {
@@ -647,6 +647,27 @@ router.patch(
             'UPDATE commandes_boutique SET montant_commission=$1 WHERE id=$2',
             [commission, commande.id]
           ).catch(() => {});
+        }
+
+        try {
+          await pool.query(
+            `INSERT INTO ventes (reference, boutique_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, client_telephone, methode_paiement, created_at)
+             VALUES ($1, $2, $3, $4, $5, 0, $6, $7, $8, $9, NOW())
+             ON CONFLICT DO NOTHING`,
+            [
+              commande.reference || `CMD-${commande.id.slice(0,6)}`,
+              req.params.boutiqueId,
+              commande.nom_produit || 'Commande Web',
+              commande.quantite || 1,
+              commande.prix_unitaire || commande.montant_total,
+              commande.montant_total,
+              commande.client_nom || 'Client Web',
+              commande.client_telephone || null,
+              commande.mode_paiement || 'cash'
+            ]
+          );
+        } catch (eComptaCmd) {
+          console.error('[CMD LIVREE COMPTA ERR]', eComptaCmd.message);
         }
       }
 

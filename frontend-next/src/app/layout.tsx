@@ -34,6 +34,7 @@ import BottomBars from './BottomBars';
 import RegisterSW from './RegisterSW';
 import FavToast from './FavToast';
 import VerifyEmailToast from './VerifyEmailToast';
+import { CartProvider } from '@/context/CartContext';
 import { Suspense } from 'react';
 
 const inter = Inter({
@@ -187,6 +188,7 @@ export default async function RootLayout({
         />
       </head>
       <body>
+        <CartProvider>
         {/* Lien d'évitement pour la navigation au clavier (WCAG 2.4.1) */}
         <a href="#app-main" className="skip-link">
           Aller au contenu principal
@@ -362,6 +364,7 @@ export default async function RootLayout({
             <p>© 2026 Nopalou — Une marque de SKYROAD - SARL. Dakar, Sénégal. Tous droits réservés.</p>
           </div>
         </footer>
+        </CartProvider>
       </body>
     </html>
   );

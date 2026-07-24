@@ -2,6 +2,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import { listCommandes, updateStatutCommande } from './actions'
 import { fmtDateHeure } from '@/lib/format'
+import { exportToCSV, printPDFReport } from '@/lib/export'
 
 interface Commande {
   id: string; reference: string; nom_produit: string; quantite: number
@@ -249,35 +250,177 @@ const FILTRE_STATUTS = [
   { key: 'annulee', label: 'Annulées' },
 ]
 
+interface PanierAbandonne {
+  id: string
+  client_nom: string | null
+  client_tel: string
+  articles: { nom: string; quantite: number; prix: number }[]
+  total: number
+  relance_envoyee: boolean
+  created_at: string
+}
+
 export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
   const [commandes, setCommandes] = useState<Commande[]>([])
+  const [paniersAbandonnes, setPaniersAbandonnes] = useState<PanierAbandonne[]>([])
   const [loading, setLoading] = useState(true)
   const [filtre, setFiltre] = useState('')
+  const [filtreCanal, setFiltreCanal] = useState<'tous' | 'web' | 'caisse'>('tous')
+
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
   async function load() {
     setLoading(true)
-    const data = await listCommandes(boutiqueId, filtre)
-    setCommandes(data)
+    if (filtre === 'abandonne') {
+      try {
+        const res = await fetch(`/api/compta-proxy/${boutiqueId}/paniers-abandonnes`)
+        if (!res.ok) {
+          const directRes = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/paniers-abandonnes`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('nopalou_token') || ''}` }
+          })
+          const data = await directRes.json()
+          setPaniersAbandonnes(data.paniers || [])
+        } else {
+          const data = await res.json()
+          setPaniersAbandonnes(data.paniers || [])
+        }
+      } catch {
+        setPaniersAbandonnes([])
+      }
+    } else {
+      const data = await listCommandes(boutiqueId, filtre)
+      setCommandes(data)
+    }
     setLoading(false)
   }
 
   useEffect(() => { load() }, [boutiqueId, filtre])
+
+  const commandesFiltrees = commandes.filter(c => {
+    if (filtreCanal === 'caisse') return c.reference?.startsWith('POS') || c.source === 'pos_caisse'
+    if (filtreCanal === 'web') return !c.reference?.startsWith('POS') && c.source !== 'pos_caisse'
+    return true
+  })
+
+  async function relancerWhatsApp(cartId: string) {
+    try {
+      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/paniers-abandonnes/${cartId}/relancer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('nopalou_token') || ''}`
+        }
+      })
+      const data = await res.json()
+      if (data.lienWhatsapp) {
+        window.open(data.lienWhatsapp, '_blank')
+        load()
+      }
+    } catch {
+      alert('Impossible de générer le lien de relance WhatsApp')
+    }
+  }
 
   const stats = {
     en_attente: commandes.filter(c => c.statut === 'en_attente').length,
     total: commandes.length,
   }
 
+  function exportCommandesCSV() {
+    const headers = ['Référence', 'Produit', 'Quantité', 'Prix Unit (FCFA)', 'Livraison (FCFA)', 'Total (FCFA)', 'Client', 'Téléphone', 'Statut', 'Source', 'Date']
+    const rows = commandesFiltrees.map(c => [
+      c.reference || `CMD-${c.id.slice(0, 6)}`,
+      c.nom_produit,
+      c.quantite,
+      c.prix_unitaire,
+      c.frais_livraison,
+      c.montant_total,
+      c.client_nom,
+      c.client_telephone,
+      c.statut.toUpperCase(),
+      c.source || 'web',
+      fmtDateHeure(c.created_at)
+    ])
+    exportToCSV(`commandes_boutique_${boutiqueId}`, headers, rows)
+  }
+
+  function exportCommandesPDF() {
+    const headers = ['Réf.', 'Produit', 'Qte', 'Total', 'Client', 'Tel', 'Statut', 'Date']
+    const rows = commandesFiltrees.map(c => [
+      c.reference || `CMD-${c.id.slice(0, 6)}`,
+      c.nom_produit,
+      c.quantite,
+      `${Number(c.montant_total).toLocaleString('fr-FR')} FCFA`,
+      c.client_nom,
+      c.client_telephone,
+      statutLabel(c.statut),
+      fmtDateHeure(c.created_at)
+    ])
+    const totalM = commandesFiltrees.reduce((s, c) => s + Number(c.montant_total), 0)
+    const summaryHtml = `
+      <div class="summary">
+        <h3 style="margin:0 0 6px;">Registre des Commandes Clients</h3>
+        <p style="margin:0; font-size:14px; font-weight:bold; color:#C75B00;">Total : ${totalM.toLocaleString('fr-FR')} FCFA (${commandesFiltrees.length} commandes)</p>
+      </div>
+    `
+    printPDFReport('Journal des Commandes Clients', `Boutique ${boutiqueId}`, headers, rows, summaryHtml)
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Stats rapides */}
-      {stats.en_attente > 0 && (
+      {stats.en_attente > 0 && filtre !== 'abandonne' && (
         <div style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 10, padding: '10px 16px', fontSize: 13, color: '#92400e', fontWeight: 600 }}>
           ⏳ {stats.en_attente} commande{stats.en_attente > 1 ? 's' : ''} en attente de confirmation
         </div>
       )}
 
-      {/* Filtres statut */}
+      {/* Sélecteur de canal & Exports */}
+      {filtre !== 'abandonne' && (
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '8px 12px', borderRadius: 12, border: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginRight: 4 }}>Source :</span>
+            <button onClick={() => setFiltreCanal('tous')} style={{
+              padding: '4px 12px', borderRadius: 16, border: '1px solid',
+              borderColor: filtreCanal === 'tous' ? '#1e293b' : '#cbd5e1',
+              background: filtreCanal === 'tous' ? '#1e293b' : '#fff',
+              color: filtreCanal === 'tous' ? '#fff' : '#475569',
+              fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            }}>
+              Toutes les ventes ({commandes.length})
+            </button>
+            <button onClick={() => setFiltreCanal('web')} style={{
+              padding: '4px 12px', borderRadius: 16, border: '1px solid',
+              borderColor: filtreCanal === 'web' ? '#2563eb' : '#cbd5e1',
+              background: filtreCanal === 'web' ? '#eff6ff' : '#fff',
+              color: filtreCanal === 'web' ? '#1d4ed8' : '#475569',
+              fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            }}>
+              🌐 Web & WhatsApp
+            </button>
+            <button onClick={() => setFiltreCanal('caisse')} style={{
+              padding: '4px 12px', borderRadius: 16, border: '1px solid',
+              borderColor: filtreCanal === 'caisse' ? '#ea580c' : '#cbd5e1',
+              background: filtreCanal === 'caisse' ? '#fff7ed' : '#fff',
+              color: filtreCanal === 'caisse' ? '#c75b00' : '#475569',
+              fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            }}>
+              🛒 Caisse POS
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={exportCommandesCSV} style={{ fontSize: 12, color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '4px 10px', fontWeight: 700, cursor: 'pointer' }}>
+              📥 Excel (CSV)
+            </button>
+            <button onClick={exportCommandesPDF} style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '4px 10px', fontWeight: 700, cursor: 'pointer' }}>
+              📄 Imprimer PDF
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Filtres statut + Onglet Paniers Abandonnés */}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {FILTRE_STATUTS.map(f => (
           <button key={f.key} onClick={() => setFiltre(f.key)} style={{
@@ -291,6 +434,20 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
             {f.label}
           </button>
         ))}
+
+        <button
+          onClick={() => setFiltre('abandonne')}
+          style={{
+            padding: '5px 14px', borderRadius: 20, border: '1px solid',
+            borderColor: filtre === 'abandonne' ? '#dc2626' : '#fecaca',
+            background: filtre === 'abandonne' ? '#fef2f2' : '#fff',
+            color: filtre === 'abandonne' ? '#dc2626' : '#991b1b',
+            fontWeight: filtre === 'abandonne' ? 800 : 600,
+            fontSize: 12, cursor: 'pointer',
+          }}
+        >
+          📢 Paniers Abandonnés
+        </button>
       </div>
 
       {loading ? (
@@ -299,21 +456,70 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
             <div key={i} className="skeleton" style={{ height: 72, borderRadius: 12 }} />
           ))}
         </div>
-      ) : commandes.length === 0 ? (
+      ) : filtre === 'abandonne' ? (
+        /* Liste des Paniers Abandonnés */
+        paniersAbandonnes.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '48px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db' }}>
+            <p style={{ fontSize: 32, marginBottom: 12 }}>🎉</p>
+            <p style={{ color: '#6b7280', fontSize: 14, margin: 0 }}>Aucun panier abandonné pour le moment !</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {paniersAbandonnes.map(p => (
+              <div key={p.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: '#111827' }}>{p.client_nom || 'Client Anonyme'}</span>
+                    <span style={{ fontSize: 12, color: '#6b7280' }}>({p.client_tel})</span>
+                    {p.relance_envoyee && (
+                      <span style={{ fontSize: 10, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>
+                        ✓ Relance envoyée
+                      </span>
+                    )}
+                  </div>
+
+                  <p style={{ margin: '0 0 4px', fontSize: 13, color: '#4b5563' }}>
+                    Articles : {(p.articles || []).map(a => `${a.quantite}x ${a.nom}`).join(', ')}
+                  </p>
+
+                  <span style={{ fontSize: 12, color: '#9ca3af' }}>Abandonné le {new Date(p.created_at).toLocaleString('fr-FR')}</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontSize: 16, fontWeight: 900, color: '#dc2626' }}>
+                    {new Intl.NumberFormat('fr-FR').format(p.total)} FCFA
+                  </span>
+
+                  <button
+                    onClick={() => relancerWhatsApp(p.id)}
+                    style={{
+                      background: '#25D366', color: '#fff', border: 'none', borderRadius: 8,
+                      padding: '10px 16px', fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 6px rgba(37,211,102,.25)'
+                    }}
+                  >
+                    💬 Relancer sur WhatsApp (-5%) →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      ) : commandesFiltrees.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db' }}>
           <p style={{ fontSize: 32, marginBottom: 12 }}>📋</p>
           <p style={{ color: '#6b7280', fontSize: 14, margin: 0 }}>
-            {filtre ? 'Aucune commande avec ce statut.' : 'Aucune commande reçue pour l\'instant.'}
+            {filtre || filtreCanal !== 'tous' ? 'Aucune commande avec ce filtre.' : 'Aucune commande reçue pour l\'instant.'}
           </p>
           {!filtre && (
             <p style={{ color: '#9ca3af', fontSize: 12, marginTop: 8 }}>
-              Les commandes apparaîtront ici dès qu&apos;un client commande depuis votre boutique ou via WhatsApp.
+              Les commandes apparaîtront ici dès qu&apos;un client commande depuis votre boutique, la caisse POS ou via WhatsApp.
             </p>
           )}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {regrouperCommandes(commandes).map((item, i) =>
+          {regrouperCommandes(commandesFiltrees).map((item, i) =>
             Array.isArray(item)
               ? <CommandeGroupeCard key={item[0].groupe_commande ?? i} commandes={item} boutiqueId={boutiqueId} onUpdate={load} />
               : <CommandeCard key={item.id} commande={item} boutiqueId={boutiqueId} onUpdate={load} />
@@ -323,3 +529,4 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
     </div>
   )
 }
+

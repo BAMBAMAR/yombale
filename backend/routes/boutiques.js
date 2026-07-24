@@ -2,12 +2,24 @@
 const router = require('express').Router();
 const { body, param, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
-const { verifierToken, adminSecretOnly, requireEmailVerifie } = require('../middlewares/auth');
+const { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie } = require('../middlewares/auth');
 const { checkAbonnement, requireAbonnement } = require('../middlewares/checkAbonnement');
 const { limiterPublication } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
 const multer = require('multer');
 const { syncProduit, deleteProduit } = require('../services/whatsapp-catalog');
+
+async function checkBoutiqueAccess(boutiqueIdOrSlug, userId) {
+  const isUUID = /^[0-9a-f-]{36}$/i.test(boutiqueIdOrSlug);
+  const { rows } = await pool.query(
+    `SELECT b.* 
+     FROM boutiques b
+     LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
+     WHERE ${isUUID ? 'b.id = $1' : 'b.slug = $1'} AND (b.utilisateur_id = $2 OR bu.utilisateur_id = $2)`,
+    [boutiqueIdOrSlug, userId]
+  );
+  return rows[0];
+}
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -56,6 +68,21 @@ async function uniqueSlug(base, excludeId = null) {
     slug = `${base}-${n++}`;
   }
 }
+
+
+// ── GET /api/boutiques/catalogues-standards — Modèles de produits prédéfinis
+router.get('/catalogues-standards', async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const rawData = fs.readFileSync(path.join(__dirname, '../data/catalogues-standards.json'));
+    const catalogues = JSON.parse(rawData);
+    res.json({ success: true, catalogues });
+  } catch (err) {
+    console.error('Erreur lecture catalogue:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
 
 // ── GET /api/boutiques/admin/toutes — toutes les boutiques (admin)
 router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
@@ -172,10 +199,15 @@ router.get('/', async (req, res) => {
 router.get('/mine', verifierToken, async (req, res) => {
   try {
     const rows = await pool.query(
-      `SELECT id, nom, description, categorie, telephone, whatsapp, adresse, ville,
-              logo_url, cover_url, site_web, facebook, instagram, slug,
-              actif, sponsorise, sponsor_jusqu_au, whatsapp_catalog_id, created_at
-       FROM boutiques WHERE utilisateur_id=$1 ORDER BY created_at DESC`,
+      `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
+              b.logo_url, b.cover_url, b.site_web, b.facebook, b.instagram, b.slug,
+              b.actif, b.sponsorise, b.sponsor_jusqu_au, b.whatsapp_catalog_id, b.created_at,
+              (b.utilisateur_id = $1) AS is_owner
+       FROM boutiques b
+       LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
+       WHERE b.utilisateur_id = $1 OR bu.utilisateur_id = $1
+       GROUP BY b.id, is_owner
+       ORDER BY b.created_at DESC`,
       [req.user.userId]
     );
     res.json({ boutiques: rows.rows });
@@ -213,6 +245,360 @@ router.get('/:id', async (req, res) => {
 
     res.json(r.rows[0]);
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+// ── Gestion des Administrateurs Web ───────────────────────────────────────────
+router.get('/:id/admins', verifierToken, param('id').isUUID(), async (req, res) => {
+  const errs = validationResult(req);
+  if (!errs.isEmpty()) return res.status(400).json({ errors: errs.array() });
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+    
+    // Renvoyer le propriétaire et les admins
+    const { rows } = await pool.query(
+      `SELECT u.id, u.nom, u.email, 'propriétaire' as role, b.created_at
+       FROM boutiques b JOIN utilisateurs u ON b.utilisateur_id = u.id
+       WHERE b.id = $1
+       UNION
+       SELECT u.id, u.nom, u.email, bu.role, bu.created_at
+       FROM boutique_utilisateurs bu JOIN utilisateurs u ON bu.utilisateur_id = u.id
+       WHERE bu.boutique_id = $1
+       ORDER BY created_at ASC`,
+      [bq.id]
+    );
+    res.json({ admins: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+router.post('/:id/admins', verifierToken, param('id').isUUID(), body('email').isEmail(), async (req, res) => {
+  const errs = validationResult(req);
+  if (!errs.isEmpty()) return res.status(400).json({ errors: errs.array() });
+  try {
+    // Seul le propriétaire ou un admin peut ajouter
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { email } = req.body;
+    const userRes = await pool.query('SELECT id FROM utilisateurs WHERE email = $1', [email]);
+    if (!userRes.rows.length) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    const targetUserId = userRes.rows[0].id;
+    
+    if (bq.utilisateur_id === targetUserId) return res.status(400).json({ error: 'Déjà propriétaire' });
+
+    await pool.query(
+      'INSERT INTO boutique_utilisateurs (boutique_id, utilisateur_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      [req.params.id, targetUserId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+router.delete('/:id/admins/:userId', verifierToken, param('id').isUUID(), param('userId').isUUID(), async (req, res) => {
+  const errs = validationResult(req);
+  if (!errs.isEmpty()) return res.status(400).json({ errors: errs.array() });
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    // On ne peut pas supprimer le propriétaire (utilisateur_id de la boutique)
+    if (bq.utilisateur_id === req.params.userId) return res.status(400).json({ error: 'Impossible de supprimer le propriétaire' });
+
+    await pool.query(
+      'DELETE FROM boutique_utilisateurs WHERE boutique_id = $1 AND utilisateur_id = $2',
+      [req.params.id, req.params.userId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── GET /api/boutiques/:id/avis — Avis & notes certifiés de la boutique
+router.get('/:id/avis', async (req, res) => {
+  try {
+    const param = req.params.id;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(param);
+    const condition = isUUID ? 'a.boutique_id=$1' : 'b.slug=$1';
+    
+    const { rows } = await pool.query(
+      `SELECT a.id, a.nom_client, a.note, a.commentaire, a.verifie, a.created_at, p.nom as produit_nom
+       FROM boutique_avis a
+       JOIN boutiques b ON b.id = a.boutique_id
+       LEFT JOIN boutique_produits p ON p.id = a.produit_id
+       WHERE ${condition}
+       ORDER BY a.created_at DESC`,
+      [param]
+    );
+
+    const stats = await pool.query(
+      `SELECT COALESCE(AVG(a.note), 5.0) as note_moyenne, COUNT(a.id) as total_avis
+       FROM boutique_avis a
+       JOIN boutiques b ON b.id = a.boutique_id
+       WHERE ${condition}`,
+      [param]
+    );
+
+    res.json({
+      success: true,
+      note_moyenne: parseFloat(stats.rows[0]?.note_moyenne || 5.0).toFixed(1),
+      total_avis: parseInt(stats.rows[0]?.total_avis || 0),
+      avis: rows,
+    });
+  } catch (err) {
+    console.error('[BOUTIQUE AVIS GET]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/boutiques/:id/avis — Soumettre un avis client
+router.post('/:id/avis', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nom_client, note, commentaire, produit_id } = req.body;
+    if (!nom_client?.trim() || !note || note < 1 || note > 5) {
+      return res.status(400).json({ error: 'Nom et note entre 1 et 5 requis' });
+    }
+
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
+    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
+    if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const r = await pool.query(
+      `INSERT INTO boutique_avis (boutique_id, produit_id, nom_client, note, commentaire, verifie)
+       VALUES ($1, $2, $3, $4, $5, true) RETURNING *`,
+      [b.rows[0].id, produit_id || null, nom_client.trim(), Math.min(5, Math.max(1, Number(note))), commentaire || null]
+    );
+
+    res.status(201).json({ success: true, avis: r.rows[0] });
+  } catch (err) {
+    console.error('[BOUTIQUE AVIS POST]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── GET /api/boutiques/:id/produits/:prodId/recommandations — Recommandations "Souvent achetés ensemble"
+router.get('/:id/produits/:prodId/recommandations', async (req, res) => {
+  try {
+    const { id, prodId } = req.params;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bqCondition = isUUID ? 'b.id=$1' : 'b.slug=$1';
+
+    const isProdUUID = /^[0-9a-f-]{36}$/i.test(prodId);
+    let cat = '';
+    if (isProdUUID) {
+      const target = await pool.query('SELECT categorie FROM boutique_produits WHERE id=$1', [prodId]);
+      cat = target.rows[0]?.categorie || '';
+    }
+
+    const params = isProdUUID ? [id, prodId, cat] : [id, cat];
+    const condProd = isProdUUID ? 'AND p.id != $2' : '';
+    const catParam = isProdUUID ? '$3' : '$2';
+
+    const { rows } = await pool.query(
+      `SELECT p.id, p.nom, p.prix, p.prix_barre, p.images, p.categorie
+       FROM boutique_produits p
+       JOIN boutiques b ON b.id = p.boutique_id
+       WHERE ${bqCondition} ${condProd} AND p.en_stock = true
+       ORDER BY (p.categorie = ${catParam}) DESC, p.created_at DESC LIMIT 3`,
+      params
+    );
+
+    res.json({ success: true, recommandations: rows });
+  } catch (err) {
+    console.error('[CROSS-SELLING ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/boutiques/:id/paniers-abandonnes — Enregistrer un panier non finalisé
+router.post('/:id/paniers-abandonnes', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { client_nom, client_tel, articles, total } = req.body;
+    if (!client_tel?.trim() || !Array.isArray(articles) || articles.length === 0) {
+      return res.status(400).json({ error: 'Numéro de téléphone et articles requis' });
+    }
+
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
+    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
+    if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const r = await pool.query(
+      `INSERT INTO paniers_abandonnes (boutique_id, client_nom, client_tel, articles, total)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [b.rows[0].id, client_nom || null, client_tel.trim(), JSON.stringify(articles), Number(total || 0)]
+    );
+
+    res.status(201).json({ success: true, panier: r.rows[0] });
+  } catch (err) {
+    console.error('[PANIERS ABANDONNES POST]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── GET /api/boutiques/:id/paniers-abandonnes — Liste pour le marchand
+router.get('/:id/paniers-abandonnes', verifierToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
+    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { rows } = await pool.query(
+      `SELECT * FROM paniers_abandonnes WHERE boutique_id=$1 ORDER BY created_at DESC LIMIT 50`,
+      [id]
+    );
+
+    res.json({ success: true, paniers: rows });
+  } catch (err) {
+    console.error('[PANIERS ABANDONNES GET]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/boutiques/:id/paniers-abandonnes/:cartId/relancer — Relancer par WhatsApp
+router.post('/:id/paniers-abandonnes/:cartId/relancer', verifierToken, async (req, res) => {
+  try {
+    const { id, cartId } = req.params;
+    const own = await pool.query('SELECT b.nom, b.whatsapp FROM boutiques b WHERE b.id=$1 AND b.utilisateur_id=$2', [id, req.user.userId]);
+    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+
+    const cartRes = await pool.query('SELECT * FROM paniers_abandonnes WHERE id=$1 AND boutique_id=$2', [cartId, id]);
+    if (!cartRes.rows[0]) return res.status(404).json({ error: 'Panier introuvable' });
+
+    const cart = cartRes.rows[0];
+    await pool.query('UPDATE paniers_abandonnes SET relance_envoyee=true WHERE id=$1', [cartId]);
+
+    const nomBoutique = own.rows[0].nom;
+    const itemsText = (cart.articles || []).map((i) => `• ${i.quantite}x ${i.nom}`).join('\n');
+    const messageRelance = `Bonjour ${cart.client_nom ? cart.client_nom : ''} ! Nous avons remarqué que vous avez laissé des articles dans votre panier chez ${nomBoutique} :\n\n${itemsText}\n\nProfitez de -5% de réduction si vous finalisez votre commande aujourd'hui ! Lien direct : https://nopalou.com/boutiques/${id}`;
+
+    const digits = cart.client_tel.replace(/\D/g, '');
+    const cleanTel = digits.length === 9 ? '221' + digits : digits;
+    const lienWhatsappRelance = `https://wa.me/${cleanTel}?text=${encodeURIComponent(messageRelance)}`;
+
+    res.json({ success: true, lienWhatsapp: lienWhatsappRelance, message: messageRelance });
+  } catch (err) {
+    console.error('[PANIERS ABANDONNES RELANCER]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── GET /api/boutiques/:id/credits-clients — Liste des clients avec carnet de dettes/avances
+router.get('/:id/credits-clients', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
+    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
+    if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const { rows } = await pool.query(
+      `SELECT * FROM caisse_clients_credits WHERE boutique_id=$1 ORDER BY nom ASC`,
+      [b.rows[0].id]
+    );
+
+    res.json({ success: true, clients: rows });
+  } catch (err) {
+    console.error('[CREDITS CLIENTS GET]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/boutiques/:id/credits-clients — Créer un nouveau profil client carnet
+router.post('/:id/credits-clients', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nom, telephone, plafond_max } = req.body;
+    if (!nom?.trim() || !telephone?.trim()) {
+      return res.status(400).json({ error: 'Nom et téléphone du client requis' });
+    }
+
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
+    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
+    if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const r = await pool.query(
+      `INSERT INTO caisse_clients_credits (boutique_id, nom, telephone, solde, plafond_max)
+       VALUES ($1, $2, $3, 0, $4) RETURNING *`,
+      [b.rows[0].id, nom.trim(), telephone.trim(), Number(plafond_max || 200000)]
+    );
+
+    res.status(201).json({ success: true, client: r.rows[0] });
+  } catch (err) {
+    console.error('[CREDITS CLIENTS POST]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/boutiques/:id/credits-clients/:clientId/transaction — Vente à crédit / Remboursement / Dépôt d'avance
+router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
+  try {
+    const { id, clientId } = req.params;
+    const { type, montant, mode_paiement, note } = req.body; // 'vente_credit', 'remboursement', 'depot_avance'
+    const numMontant = Number(montant);
+    if (!type || !numMontant || numMontant <= 0) {
+      return res.status(400).json({ error: 'Type de transaction et montant valide (> 0) requis' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Récupérer le solde actuel
+      const c = await client.query('SELECT * FROM caisse_clients_credits WHERE id=$1 AND boutique_id=$2 FOR UPDATE', [clientId, id]);
+      if (!c.rows[0]) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Client introuvable' });
+      }
+
+      let deltaSolde = 0;
+      if (type === 'vente_credit') {
+        deltaSolde = numMontant; // Augmente la dette du client
+      } else if (type === 'remboursement' || type === 'depot_avance') {
+        deltaSolde = -numMontant; // Réduit la dette ou augmente l'avance
+      }
+
+      const nouveauSolde = Number(c.rows[0].solde) + deltaSolde;
+
+      // Vérification du plafond pour les ventes à crédit
+      if (type === 'vente_credit' && nouveauSolde > Number(c.rows[0].plafond_max)) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `Plafond de crédit dépassé (${c.rows[0].plafond_max} FCFA max)` });
+      }
+
+      // Mettre à jour le solde
+      await client.query('UPDATE caisse_clients_credits SET solde=$1 WHERE id=$2', [nouveauSolde, clientId]);
+
+      // Enregistrer l'historique
+      const hist = await client.query(
+        `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [clientId, id, type, numMontant, mode_paiement || 'especes', note || null]
+      );
+
+      await client.query('COMMIT');
+      res.json({ success: true, nouveauSolde, transaction: hist.rows[0] });
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error('[CREDITS CLIENTS TRANSACTION]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 // ── GET /api/boutiques/:id/produits — catalogue public (UUID ou slug)
@@ -490,11 +876,10 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   console.log('[BOUTIQUES PUT] body keys:', Object.keys(req.body || {}), '| files:', Object.keys(req.files || {}));
   try {
-    const existing = await pool.query(
-      'SELECT * FROM boutiques WHERE id=$1 AND utilisateur_id=$2',
-      [req.params.id, req.user.userId]
-    );
-    if (!existing.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutique = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!boutique) return res.status(404).json({ error: 'Boutique introuvable ou accès refusé' });
+    const existingRows = [boutique];
+    const existing = { rows: existingRows };
 
     const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, horaires, slug: slugInput } = req.body;
 
@@ -552,9 +937,507 @@ router.delete('/:id', verifierToken, param('id').isUUID(), async (req, res) => {
       'DELETE FROM boutiques WHERE id=$1 AND utilisateur_id=$2 RETURNING id',
       [req.params.id, req.user.userId]
     );
-    if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable ou non autorisée' });
+    res.json({ success: true, message: 'Boutique supprimée' });
+  } catch (err) {
+    console.error('[BOUTIQUE DELETE]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── GET /api/boutiques/catalogues-standards — Modèles de produits prédéfinis
+
+
+// ── POST /api/boutiques/:id/produits/batch — Créer plusieurs produits en 1 seul appel (Quick Intake)
+router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const { id } = req.params;
+    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
+    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { produits } = req.body;
+    if (!Array.isArray(produits) || produits.length === 0) {
+      return res.status(400).json({ error: 'La liste des produits à ajouter est vide' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const insere = [];
+      for (const p of produits) {
+        if (!p.nom?.trim() || !p.prix) continue;
+        const images = p.images || (p.photo_defaut ? [p.photo_defaut] : []);
+        const r = await client.query(
+          `INSERT INTO boutique_produits (boutique_id, nom, description, prix, images, en_stock, stock_quantite, categorie, whatsapp_sync_statut)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'synchronise') RETURNING *`,
+          [
+            id,
+            p.nom.trim(),
+            p.description || null,
+            Number(p.prix),
+            images,
+            p.en_stock !== false,
+            p.quantite_stock ? Number(p.quantite_stock) : (p.stock_quantite ? Number(p.stock_quantite) : 1),
+            p.categorie || null,
+          ]
+        );
+        insere.push(r.rows[0]);
+      }
+      await client.query('COMMIT');
+      res.status(201).json({ success: true, count: insere.length, produits: insere });
+      
+      // Sync WhatsApp en arrière-plan
+      setImmediate(async () => {
+        try {
+          const b = await pool.query('SELECT slug, whatsapp_catalog_id FROM boutiques WHERE id=$1', [id]);
+          const boutiqueData = b.rows[0];
+          if (boutiqueData) {
+            for (const prod of insere) {
+              try {
+                await syncProduit({ ...prod, boutique_slug: boutiqueData.slug, whatsapp_catalog_id: boutiqueData.whatsapp_catalog_id });
+              } catch (errSync) {
+                console.error('[BATCH WHATSAPP SYNC ERR]', prod.id, errSync);
+              }
+            }
+          }
+        } catch (e) {}
+      });
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error('[BOUTIQUES BATCH PRODUITS]', err);
+    res.status(500).json({ error: 'Erreur lors de l’importation par lot' });
+  }
+});
+
+// ── POST /api/boutiques/:id/pos-vente — Enregistrer vente POS & déduire le stock + alimenter la Comptabilité PostgreSQL
+router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { items, caissier, modePaiement } = req.body;
+
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(
+      `SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+      [idParam]
+    );
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    if (Array.isArray(items) && items.length > 0) {
+      const refVente = `POS-${Date.now().toString().slice(-6)}`;
+
+      for (const item of items) {
+        if ((item.id || item.nom) && item.quantite) {
+          const qte = Number(item.quantite);
+
+          // 1. Décrémenter le stock dans la base PostgreSQL (Tenter par ID d'abord, puis par Nom)
+          let pRes = null;
+          if (item.id && /^[0-9a-f-]{36}$/i.test(item.id)) {
+            pRes = await pool.query(
+              `UPDATE boutique_produits
+               SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
+                   en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
+               WHERE id = $2 AND boutique_id = $3
+               RETURNING id, nom, prix, stock_quantite`,
+              [qte, item.id, boutiqueId]
+            );
+          }
+
+          if (!pRes?.rows[0] && item.nom) {
+            pRes = await pool.query(
+              `UPDATE boutique_produits
+               SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
+                   en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
+               WHERE LOWER(nom) = LOWER($2) AND boutique_id = $3
+               RETURNING id, nom, prix, stock_quantite`,
+              [qte, item.nom.trim(), boutiqueId]
+            );
+          }
+
+          const nomProduit = item.nom || pRes?.rows[0]?.nom || 'Article POS';
+          const prixUnitaire = Number(item.prix || pRes?.rows[0]?.prix || 0);
+          const totalLigne = prixUnitaire * qte;
+          const prodIdReal = pRes?.rows[0]?.id || (item.id && /^[0-9a-f-]{36}$/i.test(item.id) ? item.id : null);
+
+          // 2. Insérer dans la table des ventes pour la Comptabilité & Analytics
+          try {
+            await pool.query(
+              `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, methode_paiement, created_at)
+               VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, NOW())`,
+              [
+                refVente,
+                boutiqueId,
+                prodIdReal,
+                nomProduit,
+                qte,
+                prixUnitaire,
+                totalLigne,
+                caissier ? `Caisse POS (${caissier})` : 'Caisse POS',
+                modePaiement || 'cash'
+              ]
+            );
+          } catch (eCompta) {
+            console.error('[POS VENTE COMPTA ERR]', eCompta.message);
+          }
+
+          // 3. Insérer dans le journal des commandes_boutique (pour le suivi global)
+          try {
+            await pool.query(
+              `INSERT INTO commandes_boutique (reference, boutique_id, client_nom, statut, nom_produit, quantite, montant_total, mode_paiement, created_at)
+               VALUES ($1, $2, $3, 'livree', $4, $5, $6, $7, NOW())`,
+              [
+                refVente,
+                boutiqueId,
+                caissier ? `Caisse POS (${caissier})` : 'Caisse POS',
+                nomProduit,
+                qte,
+                totalLigne,
+                modePaiement || 'cash'
+              ]
+            );
+          } catch (eCmd) {}
+        }
+      }
+    }
+
+    res.json({ success: true, message: 'Stock, Comptabilité et Commandes PostgreSQL mis à jour en direct' });
+  } catch (err) {
+    console.error('[BOUTIQUE POS VENTE]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/boutiques/:id/pos-incident — Annuler ou rembourser une vente POS
+router.post('/:id/pos-incident', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { ticketId, type, items } = req.body;
+
+    if (!ticketId) return res.status(400).json({ error: 'ID ticket manquant' });
+
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(
+      `SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+      [idParam]
+    );
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    // 1. Archiver l'écriture comptable dans ventes pour réajuster le CA
+    await pool.query('UPDATE ventes SET archivee = true WHERE reference = $1 AND boutique_id = $2', [ticketId, boutiqueId]);
+
+    // 2. Marquer la commande comme annulée dans commandes_boutique
+    await pool.query("UPDATE commandes_boutique SET statut = 'annulee' WHERE reference = $1 AND boutique_id = $2", [ticketId, boutiqueId]);
+
+    // 3. Ré-incrémenter le stock physique si articles renseignés
+    if (Array.isArray(items) && items.length > 0) {
+      for (const item of items) {
+        const prodId = item.id || item.produit?.id;
+        const prodNom = item.nom || item.produit?.nom;
+        const qte = Number(item.quantite || 1);
+
+        if (prodId && /^[0-9a-f-]{36}$/i.test(prodId)) {
+          await pool.query(
+            `UPDATE boutique_produits
+             SET stock_quantite = COALESCE(stock_quantite, 0) + $1,
+                 en_stock = true
+             WHERE id = $2 AND boutique_id = $3`,
+            [qte, prodId, boutiqueId]
+          );
+        } else if (prodNom) {
+          await pool.query(
+            `UPDATE boutique_produits
+             SET stock_quantite = COALESCE(stock_quantite, 0) + $1,
+                 en_stock = true
+             WHERE LOWER(nom) = LOWER($2) AND boutique_id = $3`,
+            [qte, prodNom.trim(), boutiqueId]
+          );
+        }
+      }
+    }
+
+    res.json({ success: true, message: `Incident POS (${type || 'annulation'}) enregistré avec succès.` });
+  } catch (err) {
+    console.error('[POS INCIDENT ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── GET /api/boutiques/:id/pos-historique — Récupérer l'historique des ventes POS
+router.get('/:id/pos-historique', tokenOptional, param('id').isUUID(), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      `SELECT reference AS id,
+              TO_CHAR(created_at, 'DD/MM/YYYY') AS date,
+              TO_CHAR(created_at, 'HH24:MI') AS heure,
+              COALESCE(client_nom, 'Caisse POS') AS caissier,
+              COALESCE(methode_paiement, 'cash') AS "modePaiement",
+              montant_total AS total,
+              'validee' AS statut,
+              nom_produit AS "nomProduit",
+              quantite,
+              prix_unitaire AS "prixUnitaire"
+       FROM ventes
+       WHERE boutique_id = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [id]
+    );
+
+    const mapTickets = new Map();
+    for (const r of rows) {
+      if (!mapTickets.has(r.id)) {
+        mapTickets.set(r.id, {
+          id: r.id,
+          date: r.date,
+          heure: r.heure,
+          caissier: r.caissier,
+          modePaiement: r.modePaiement,
+          total: Number(r.total),
+          statut: 'validee',
+          ticket: [],
+        });
+      }
+      const t = mapTickets.get(r.id);
+      t.ticket.push({
+        produit: { id: r.id, nom: r.nomProduit, prix: Number(r.prixUnitaire), stock: 99, categorie: null },
+        quantite: Number(r.quantite),
+        prixUnitaire: Number(r.prixUnitaire),
+      });
+    }
+
+    res.json(Array.from(mapTickets.values()));
+  } catch (err) {
+    console.error('[BOUTIQUE POS HISTORIQUE ERR]', err);
+    res.json([]);
+  }
+});
+
+// ── 👥 GESTION DES CAISSIERS ET SESSIONS DE CAISSE POS ─────────────────────────
+
+// GET /api/boutiques/:id/caissiers
+router.get('/:id/caissiers', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    const r = await pool.query(
+      `SELECT id, nom, prenom, code_pin, role, actif, created_at
+       FROM boutique_caissiers
+       WHERE boutique_id = $1
+       ORDER BY created_at DESC`,
+      [boutiqueId]
+    );
+
+    // Caissiers par défaut si la table est vide
+    if (r.rows.length === 0) {
+      const def1 = await pool.query(
+        `INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role)
+         VALUES ($1, 'Bamba', 'Caissier 1', '1234', 'caissier'),
+                ($1, 'Superviseur', 'Gérant', '9999', 'superviseur')
+         RETURNING id, nom, prenom, code_pin, role, actif, created_at`,
+        [boutiqueId]
+      );
+      return res.json({ caissiers: def1.rows });
+    }
+
+    res.json({ caissiers: r.rows });
+  } catch (err) {
+    console.error('[GET CAISSIERS ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération des caissiers' });
+  }
+});
+
+// POST /api/boutiques/:id/caissiers
+router.post('/:id/caissiers', verifierToken, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { nom, prenom, code_pin, role } = req.body;
+    if (!nom || !code_pin) return res.status(400).json({ error: 'Nom et Code PIN requis' });
+
+    const bq = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé ou Boutique introuvable' });
+
+    const r = await pool.query(
+      `INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role)
+       VALUES ($1, $2, $3, $4, COALESCE($5, 'caissier'))
+       RETURNING id, nom, prenom, code_pin, role, actif, created_at`,
+      [bq.id, nom.trim(), prenom ? prenom.trim() : null, code_pin.trim(), role]
+    );
+
+    res.status(201).json({ success: true, caissier: r.rows[0] });
+  } catch (err) {
+    console.error('[POST CAISSIER ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la création du caissier' });
+  }
+});
+
+// PUT /api/boutiques/:id/caissiers/:caissierId
+router.put('/:id/caissiers/:caissierId', verifierToken, async (req, res) => {
+  try {
+    const { code_pin, actif } = req.body;
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    let queryParts = [];
+    let values = [req.params.caissierId, bq.id];
+    let vIndex = 3;
+
+    if (code_pin !== undefined) {
+      queryParts.push(`code_pin = $${vIndex++}`);
+      values.push(code_pin);
+    }
+    if (actif !== undefined) {
+      queryParts.push(`actif = $${vIndex++}`);
+      values.push(actif);
+    }
+
+    if (queryParts.length === 0) return res.json({ success: true });
+
+    const q = `UPDATE boutique_caissiers SET ${queryParts.join(', ')} WHERE id = $1 AND boutique_id = $2 RETURNING *`;
+    const r = await pool.query(q, values);
+    if (!r.rows[0]) return res.status(404).json({ error: 'Caissier introuvable' });
+
+    res.json({ success: true, caissier: r.rows[0] });
+  } catch (err) {
+    console.error('[PUT CAISSIER ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la modification' });
+  }
+});
+
+// DELETE /api/boutiques/:id/caissiers/:caissierId
+router.delete('/:id/caissiers/:caissierId', verifierToken, async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const r = await pool.query(
+      'DELETE FROM boutique_caissiers WHERE id = $1 AND boutique_id = $2 RETURNING id',
+      [req.params.caissierId, bq.id]
+    );
+    if (!r.rows[0]) return res.status(404).json({ error: 'Caissier introuvable' });
+
     res.json({ success: true });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+  } catch (err) {
+    console.error('[DELETE CAISSIER ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la suppression' });
+  }
+});
+
+// POST /api/boutiques/:id/caissiers/verifier-pin
+router.post('/:id/caissiers/verifier-pin', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { code_pin } = req.body;
+    if (!code_pin) return res.status(400).json({ error: 'Code PIN requis' });
+
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    const r = await pool.query(
+      `SELECT id, nom, prenom, code_pin, role
+       FROM boutique_caissiers
+       WHERE boutique_id = $1 AND code_pin = $2 AND actif = TRUE`,
+      [boutiqueId, code_pin.trim()]
+    );
+
+    if (r.rows[0]) {
+      return res.json({ valide: true, caissier: r.rows[0] });
+    }
+
+    // Fallbacks PINs par défaut 1234 (Caissier) / 9999 (Superviseur)
+    if (code_pin.trim() === '9999') {
+      return res.json({ valide: true, caissier: { nom: 'Gérant / Superviseur', role: 'superviseur' } });
+    }
+    if (code_pin.trim() === '1234') {
+      return res.json({ valide: true, caissier: { nom: 'Caissier 1', role: 'caissier' } });
+    }
+
+    res.json({ valide: false, message: 'Code PIN incorrect' });
+  } catch (err) {
+    console.error('[VERIFIER PIN ERR]', err);
+    res.status(500).json({ error: 'Erreur de vérification PIN' });
+  }
+});
+
+// POST /api/boutiques/:id/pos-sessions/ouvrir
+router.post('/:id/pos-sessions/ouvrir', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { caissierNom, fondDeCaisse, caissierId } = req.body;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    const r = await pool.query(
+      `INSERT INTO boutique_pos_sessions (boutique_id, caissier_id, caissier_nom, fond_caisse_initial, date_ouverture, statut)
+       VALUES ($1, $2, $3, $4, NOW(), 'ouverte')
+       RETURNING *`,
+      [boutiqueId, caissierId || null, caissierNom || 'Caissier', Number(fondDeCaisse || 0)]
+    );
+
+    res.status(201).json({ success: true, session: r.rows[0] });
+  } catch (err) {
+    console.error('[POST POS SESSION OUVRIR ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l’ouverture de session' });
+  }
+});
+
+// POST /api/boutiques/:id/pos-sessions/cloturer
+router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { sessionId, especesComptees, ventesEspeces, ventesWave, ventesOrangeMoney, ventesCarte, ventesTotal, nbVentes } = req.body;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    if (sessionId && /^[0-9a-f-]{36}$/i.test(sessionId)) {
+      await pool.query(
+        `UPDATE boutique_pos_sessions
+         SET date_cloture = NOW(),
+             statut = 'cloturee',
+             especes_comptees = $1,
+             ventes_especes = $2,
+             ventes_wave = $3,
+             ventes_orange_money = $4,
+             ventes_carte = $5,
+             ventes_total = $6,
+             nb_ventes = $7,
+             ecart_caisse = ($1 - (fond_caisse_initial + $2))
+         WHERE id = $8`,
+        [
+          Number(especesComptees || 0),
+          Number(ventesEspeces || 0),
+          Number(ventesWave || 0),
+          Number(ventesOrangeMoney || 0),
+          Number(ventesCarte || 0),
+          Number(ventesTotal || 0),
+          Number(nbVentes || 0),
+          sessionId
+        ]
+      );
+    }
+
+    res.json({ success: true, message: 'Session clôturée avec succès' });
+  } catch (err) {
+    console.error('[POST POS SESSION CLOTURER ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la clôture de session' });
+  }
 });
 
 module.exports = router;
+

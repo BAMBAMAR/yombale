@@ -4,6 +4,10 @@ import Link from 'next/link'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import { fcfa, lienBoutiqueWhatsapp } from '@/lib/format'
 import CommanderModal from './CommanderModal'
+import AvisClients from '@/components/AvisClients'
+import DrawerCart from '@/components/DrawerCart'
+import CrossSelling from '@/components/CrossSelling'
+import { useCart } from '@/context/CartContext'
 
 export interface Produit {
   id: string
@@ -33,7 +37,21 @@ const CAT_ICONS: Record<string, string> = {
   services: '🛠', alimentation: '🥗', beaute: '💄', autre: '🏪',
 }
 
-function ProduitCard({ p, boutiqueId, onCommander }: { p: Produit; boutiqueId: string; onCommander: (p: Produit) => void }) {
+function ProduitCard({
+  p,
+  boutiqueId,
+  boutiqueNom,
+  whatsapp,
+  onCommander,
+}: {
+  p: Produit
+  boutiqueId: string
+  boutiqueNom: string
+  whatsapp?: string | null
+  onCommander: (p: Produit) => void
+}) {
+  const { addToCart } = useCart()
+  const [addedCart, setAddedCart] = useState(false)
   const img = p.images?.[0] ?? null
   const remise = p.prix && p.prix_barre && p.prix_barre > p.prix
     ? Math.round((1 - p.prix / p.prix_barre) * 100) : null
@@ -91,18 +109,24 @@ function ProduitCard({ p, boutiqueId, onCommander }: { p: Produit; boutiqueId: s
           </div>
         </div>
       </Link>
-      {/* Bouton Commander */}
+      {/* Bouton d'action standard e-commerce : Ajouter au panier */}
       <div style={{ padding: '0 12px 12px' }}>
         <button
-          onClick={() => onCommander(p)}
+          onClick={() => {
+            addToCart(boutiqueId, boutiqueNom, p, whatsapp)
+            setAddedCart(true)
+            setTimeout(() => setAddedCart(false), 1800)
+          }}
           disabled={!p.en_stock}
           style={{
-            width: '100%', padding: '8px', border: 'none', borderRadius: 8, cursor: p.en_stock ? 'pointer' : 'not-allowed',
-            background: p.en_stock ? '#C75B00' : '#e5e7eb', color: p.en_stock ? '#fff' : '#9ca3af',
-            fontWeight: 700, fontSize: 13,
+            width: '100%', padding: '9px', border: 'none', borderRadius: 8, cursor: p.en_stock ? 'pointer' : 'not-allowed',
+            background: addedCart ? '#16a34a' : (p.en_stock ? '#C75B00' : '#e5e7eb'),
+            color: p.en_stock ? '#fff' : '#9ca3af',
+            fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            transition: 'background 0.2s ease',
           }}
         >
-          {p.en_stock ? 'Commander' : 'Rupture de stock'}
+          {addedCart ? '✅ Ajouté au panier !' : (p.en_stock ? '🛒 Ajouter au panier' : 'Rupture de stock')}
         </button>
       </div>
     </div>
@@ -185,7 +209,14 @@ export default function BoutiqueDetailClient({
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
               {produits.map(p => (
-                <ProduitCard key={p.id} p={p} boutiqueId={boutique.slug || boutique.id} onCommander={setCommanderProduit} />
+                <ProduitCard
+                  key={p.id}
+                  p={p}
+                  boutiqueId={boutique.slug || boutique.id}
+                  boutiqueNom={boutique.nom}
+                  whatsapp={boutique.whatsapp || boutique.telephone}
+                  onCommander={setCommanderProduit}
+                />
               ))}
             </div>
           )}
@@ -415,17 +446,35 @@ export default function BoutiqueDetailClient({
               🤖 Voir le catalogue sur l&apos;assistant Nopalou
             </a>
           )}
+
+          {produits.length > 0 && (
+            <CrossSelling
+              boutiqueId={boutique.id}
+              boutiqueNom={boutique.nom}
+              produitActuel={produits[0]}
+              whatsapp={boutique.whatsapp}
+            />
+          )}
+
+          {/* Section Avis Clients & Étoiles */}
+          <AvisClients boutiqueId={boutique.id} />
         </div>
       )}
+
+      {/* Drawer Cart Multi-produits */}
+      <DrawerCart />
 
       {/* Modal commande */}
       {commanderProduit && (
         <CommanderModal
           boutiqueId={boutique.id}
           produit={commanderProduit}
+          whatsapp={boutique.whatsapp}
+          nomBoutique={boutique.nom}
           onClose={() => setCommanderProduit(null)}
         />
       )}
     </div>
   )
 }
+

@@ -79,7 +79,7 @@ const ALLOWED_ORIGINS = [
       : null,
   process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null,
   process.env.RENDER_EXTERNAL_URL || null,
-  ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000', 'http://localhost:8080'] : []),
+  ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:3001', 'http://localhost:3008'] : []),
 ].filter(Boolean);
 
 app.use(cors({
@@ -218,25 +218,24 @@ const PORT = process.env.PORT || 3000;
 // ── Migration automatique au démarrage ───────────────────────────
 // BUG FIX : migrate.js n'était jamais appelé → DB vide → catégories manquantes
 async function demarrerApp() {
-  try {
-    console.log('[MIGRATE] Vérification des tables...');
-    // Inline les CREATE TABLE IF NOT EXISTS essentiels (idempotent)
-    const { pool: dbPool } = require('./models/db');
-    await dbPool.query(`
-      CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-      CREATE EXTENSION IF NOT EXISTS "pg_trgm";
-    `);
-    // Appel du script migrate complet — AWAIT obligatoire
-    await require('./migrate-inline')();
-  } catch (err) {
-    console.warn('[MIGRATE] Avertissement:', err.message);
-  }
-
   const server = app.listen(PORT, () => {
     console.log(`✅ Nopalou → http://localhost:${PORT}`);
 
-    // Crons métier (alertes prix, détection anomalies) — toujours actifs,
-    // y compris sur Render où SCRAPING_DISABLED=true
+    // Exécuter la vérification des migrations de manière asynchrone non-bloquante
+    setImmediate(async () => {
+      try {
+        console.log('[MIGRATE] Vérification des tables...');
+        const { pool: dbPool } = require('./models/db');
+        await dbPool.query(`
+          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+          CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+        `);
+        await require('./migrate-inline')();
+      } catch (err) {
+        console.warn('[MIGRATE] Avertissement:', err.message);
+      }
+    });
+
     const { demarrerScraping, demarrerCronsMetier } = require('./services/scraper');
     demarrerCronsMetier();
 
