@@ -293,7 +293,7 @@ router.post('/:id/admins', verifierToken, param('id').isUUID(), body('email').is
       'INSERT INTO boutique_utilisateurs (boutique_id, utilisateur_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
       [req.params.id, targetUserId]
     );
-    res.json({ success: true });
+    res.status(201).json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erreur serveur' });
@@ -854,7 +854,7 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
       );
     } catch (_) { /* colonnes pas encore migrées — ignoré */ }
 
-    res.status(201).json({ success: true, id: newId });
+    res.status(201).json({ success: true, id: newId, boutique: { id: newId, slug } });
   } catch (err) {
     console.error('[BOUTIQUES POST]', err);
     res.status(500).json({ error: 'Erreur serveur' });
@@ -1109,7 +1109,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
       }
     }
 
-    res.json({ success: true, message: 'Stock, Comptabilité et Commandes PostgreSQL mis à jour en direct' });
+    res.status(201).json({ success: true, message: 'Stock, Comptabilité et Commandes PostgreSQL mis à jour en direct' });
   } catch (err) {
     console.error('[BOUTIQUE POS VENTE]', err);
     res.status(500).json({ error: 'Erreur serveur' });

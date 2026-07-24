@@ -1597,7 +1597,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
         <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
           <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 20, margin: 0, color: '#111' }}>
             {NAV_ITEMS.find(i => i.key === tab)?.icon}{' '}
-            {{ produits: 'Catalogue produits', commandes: 'Commandes', compta: 'Comptabilité', analytics: 'Analytics', infos: 'Paramètres boutique', marketing: 'Marketing' }[tab]}
+            {{ produits: 'Catalogue produits', commandes: 'Commandes', compta: 'Comptabilité', analytics: 'Analytics', infos: 'Paramètres boutique', marketing: 'Marketing', admins: 'Gestion des Admins', caissiers: 'Gestion des Caissiers' }[tab]}
           </h2>
           {tab === 'produits'  && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Gérez vos produits, stocks et tarifs.</p>}
           {tab === 'commandes' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Commandes reçues — web et WhatsApp. Mettez à jour les statuts.</p>}

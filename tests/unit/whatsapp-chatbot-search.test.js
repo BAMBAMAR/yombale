@@ -12,6 +12,7 @@ jest.mock('../../backend/services/whatsapp', () => ({
   sendWhatsAppCarousel: jest.fn().mockResolvedValue({}),
   sendWhatsAppInteractive: jest.fn().mockResolvedValue({}),
   sendWhatsAppButton: jest.fn().mockResolvedValue({}),
+  sendWhatsAppMenuOuFin: jest.fn().mockResolvedValue({}),
   normalisePhone: jest.fn(p => p),
   sendTyping: jest.fn().mockResolvedValue({}),
 }));

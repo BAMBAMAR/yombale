@@ -4,9 +4,9 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 10,
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: process.env.NODE_ENV === 'production' } : false,
-  connectionTimeoutMillis: 5000,
-  statement_timeout:       8000,
-  idle_in_transaction_session_timeout: 10000
+  connectionTimeoutMillis: 15000,
+  statement_timeout:       15000,
+  idle_in_transaction_session_timeout: 15000
 });
 
 pool.connect()

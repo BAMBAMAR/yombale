@@ -141,7 +141,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
     <div style={{ padding: 24 }}>
       <h2 style={{ fontSize: 20, marginBottom: 8 }}>Caissiers POS (Point de vente physique)</h2>
       <p style={{ color: 'var(--text3)', fontSize: 14, marginBottom: 24 }}>
-        Gérez les employés qui peuvent utiliser l'application de caisse physique locale. Chaque caissier a besoin d'un code PIN pour ouvrir sa session.
+        Gérez les employés qui peuvent utiliser l&apos;application de caisse physique locale. Chaque caissier a besoin d&apos;un code PIN pour ouvrir sa session.
       </p>
 
       {error && (

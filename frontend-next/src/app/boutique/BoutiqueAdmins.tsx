@@ -80,7 +80,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
     <div style={{ padding: 24 }}>
       <h2 style={{ fontSize: 20, marginBottom: 8 }}>Administrateurs Web</h2>
       <p style={{ color: 'var(--text3)', fontSize: 14, marginBottom: 24 }}>
-        Ajoutez des utilisateurs (par leur adresse email Nopalou) pour qu'ils puissent gérer votre boutique avec vous.
+        Ajoutez des utilisateurs (par leur adresse email Nopalou) pour qu&apos;ils puissent gérer votre boutique avec vous.
       </p>
 
       {error && (

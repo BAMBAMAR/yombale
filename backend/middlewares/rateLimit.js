@@ -36,9 +36,12 @@ function blockScraperUA(req, res, next) {
   next()
 }
 
+const skipInDevOrSsr = (req) => process.env.NODE_ENV !== 'production' || isSsrRequest(req);
+
 const limiterImmo = rateLimit({
   windowMs: 60 * 1000, max: 60,
   keyGenerator: realIp,
+  skip: skipInDevOrSsr,
   message: { error: 'Trop de recherches immo — attendez 1 minute' },
   standardHeaders: true,
 });
@@ -46,24 +49,28 @@ const limiterImmo = rateLimit({
 const limiterAuth = rateLimit({
   windowMs: 15 * 60 * 1000, max: 10,
   keyGenerator: realIp,
+  skip: skipInDevOrSsr,
   message: { error: 'Trop de tentatives de connexion' }
 });
 
 const limiterRecherche = rateLimit({
   windowMs: 60 * 1000, max: 60,
   keyGenerator: realIp,
+  skip: skipInDevOrSsr,
   message: { error: 'Trop de recherches — attendez 1 minute' }
 });
 
 const limiterPublication = rateLimit({
   windowMs: 60 * 60 * 1000, max: 5,
   keyGenerator: realIp,
+  skip: skipInDevOrSsr,
   message: { error: 'Trop d\'annonces publiées — réessayez dans 1 heure' }
 });
 
 const limiterEcriture = rateLimit({
   windowMs: 15 * 60 * 1000, max: 15,
   keyGenerator: realIp,
+  skip: skipInDevOrSsr,
   message: { error: 'Trop de requêtes — réessayez dans quelques minutes' }
 });
 
