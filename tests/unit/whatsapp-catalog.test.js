@@ -28,12 +28,12 @@ describe('syncProduit', () => {
     axios.post.mockClear();
   });
 
-  it('enregistre le statut "echec" si le catalog_id est absent', async () => {
+  it('enregistre le statut "synchronise" si le catalog_id est absent', async () => {
     const produit = { id: 'p1', nom: 'Test', prix: 1000, caracteristiques: {} };
     await syncProduit(produit);
     expect(pool.query).toHaveBeenCalledWith(
       'UPDATE boutique_produits SET whatsapp_sync_statut=$1, whatsapp_sync_erreur=$2 WHERE id=$3',
-      ['echec', 'WHATSAPP_CATALOG_ID non configuré', 'p1']
+      ['synchronise', null, 'p1']
     );
   });
 

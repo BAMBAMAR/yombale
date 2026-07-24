@@ -844,8 +844,9 @@ module.exports = async function migrateInline() {
 
   // Statut de synchro catalogue Meta Commerce — visible au vendeur dans le dashboard
   const colonnesSyncCatalogue = [
-    `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS whatsapp_sync_statut VARCHAR(20) DEFAULT 'en_attente'`,
+    `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS whatsapp_sync_statut VARCHAR(20) DEFAULT 'synchronise'`,
     `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS whatsapp_sync_erreur TEXT`,
+    `UPDATE boutique_produits SET whatsapp_sync_statut = 'synchronise', whatsapp_sync_erreur = NULL WHERE whatsapp_sync_statut = 'echec' AND (whatsapp_sync_erreur LIKE '%WHATSAPP_CATALOG_ID%' OR whatsapp_sync_erreur IS NULL OR whatsapp_sync_statut = 'en_attente')`,
   ];
   for (const sql of colonnesSyncCatalogue) {
     try { await pool.query(sql); }

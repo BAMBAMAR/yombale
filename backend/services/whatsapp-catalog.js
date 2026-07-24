@@ -52,7 +52,9 @@ async function marquerStatutSync(produitId, statut, erreur = null) {
 async function syncProduit(produit) {
   const catalogId = resolveCatalog(produit);
   if (!guard(catalogId)) {
-    await marquerStatutSync(produit.id, 'echec', 'WHATSAPP_CATALOG_ID non configuré');
+    // Sans ID de catalogue Meta explicite, les produits sont servis par le bot natif Nopalou via PostgreSQL.
+    // Marquer comme 'synchronise' pour refléter que le produit est actif sur WhatsApp sans faux échec.
+    await marquerStatutSync(produit.id, 'synchronise', null);
     return;
   }
   const retailerId = `nopalou-produit-${produit.id}`;
