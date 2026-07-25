@@ -19,6 +19,10 @@ const CATEGORIES = [
   { slug: 'maison',       label: 'Maison',            icon: '🏠' },
   { slug: 'auto-moto',    label: 'Auto & Moto',       icon: '🛵' },
   { slug: 'jeux',         label: 'Jeux',              icon: '🎮' },
+  { slug: 'beaute',       label: 'Beauté & Santé',    icon: '💄' },
+  { slug: 'telecom',      label: 'Télécom',           icon: '📡', href: '/telecom' },
+  { slug: 'immo',         label: 'Immobilier',        icon: '🏘', href: '/immo' },
+  { slug: 'annonces',     label: 'Annonces',          icon: '📢', href: '/annonces' },
 ]
 
 const PROFILS = [
@@ -227,7 +231,13 @@ export default function GuideAchatPage({ categoriesActives }: { categoriesActive
             <FiltresBar
               essentiels={[
                 { key: 'cat-toutes', label: 'Toutes les catégories', active: cat === '', onClick: () => setCat('') },
-                ...CATEGORIES.filter(c => !categoriesActives || categoriesActives.includes(c.slug)).map(c => ({ key: `cat-${c.slug}`, label: `${c.icon} ${c.label}`, active: cat === c.slug, onClick: () => setCat(c.slug) })),
+                ...CATEGORIES.filter(c => !categoriesActives || categoriesActives.includes(c.slug)).map(c => ({ 
+                  key: `cat-${c.slug}`, 
+                  label: `${c.icon} ${c.label}`, 
+                  active: cat === c.slug, 
+                  href: c.href,
+                  onClick: c.href ? undefined : () => setCat(c.slug) 
+                })),
               ]}
             />
           </div>

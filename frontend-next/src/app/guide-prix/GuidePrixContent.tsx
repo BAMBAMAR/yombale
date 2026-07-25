@@ -44,6 +44,9 @@ const CATEGORIES = [
   { slug: 'sport',        label: 'Sport & Fitness', icon: '⚽' },
   { slug: 'sante-beaute', label: 'Santé & Beauté',  icon: '💊' },
   { slug: 'alimentation', label: 'Alimentation',    icon: '🛒' },
+  { slug: 'telecom',      label: 'Télécom',         icon: '📡', href: '/telecom' },
+  { slug: 'immo',         label: 'Immobilier',      icon: '🏘', href: '/immo' },
+  { slug: 'annonces',     label: 'Annonces',        icon: '📢', href: '/annonces' },
 ]
 
 export default function GuidePrixPage({ categoriesActives }: { categoriesActives?: string[] | null }) {
@@ -169,12 +172,13 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
           </div>
           <FiltresBar
             essentiels={[
-              { key: 'cat-tous', label: 'Tous', active: categorie === '', onClick: () => { setCategorie(''); search() } },
+              { key: 'cat-toutes', label: 'Toutes les catégories', active: categorie === '', onClick: () => { setCategorie(''); setSearched(false); } },
               ...CATEGORIES.filter(c => !categoriesActives || categoriesActives.includes(c.slug)).map(c => ({
                 key: `cat-${c.slug}`,
                 label: `${c.icon} ${c.label}`,
                 active: categorie === c.slug,
-                onClick: () => setCategorie(c.slug),
+                href: c.href,
+                onClick: c.href ? undefined : () => { setCategorie(c.slug); setSearched(false); }
               })),
             ]}
           />
