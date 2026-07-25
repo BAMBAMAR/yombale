@@ -3,16 +3,13 @@ import { useState, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { creerAnnonce } from '@/app/actions/annonces'
 
-const CATEGORIES = [
-  { slug: 'smartphones',  label: 'Téléphone',     emoji: '📱' },
-  { slug: 'informatique', label: 'Informatique',   emoji: '💻' },
-  { slug: 'tv-electro',   label: 'TV & Électro',   emoji: '📺' },
-  { slug: 'mode',         label: 'Mode',           emoji: '👗' },
-  { slug: 'maison',       label: 'Maison',         emoji: '🏠' },
-  { slug: 'auto-moto',    label: 'Auto & Moto',    emoji: '🚗' },
-  { slug: 'jeux',         label: 'Jeux',           emoji: '🎮' },
-  { slug: 'services',     label: 'Services',       emoji: '🛠' },
-]
+import { CATEGORIES as LIB_CATEGORIES } from '@/lib/categories'
+
+const CATEGORIES = LIB_CATEGORIES.filter(c => c.value !== 'mixte').map(c => ({
+  slug: c.value,
+  label: c.label.replace(/^.*? /, ''),
+  emoji: c.label.split(' ')[0]
+}))
 
 const ETATS = ['Neuf', 'Bon état', 'Occasion', 'Pour pièces']
 const PLATEFORMES = ['PS4', 'PS5', 'Xbox One', 'Xbox Series', 'Nintendo Switch', 'PC', 'Mobile']

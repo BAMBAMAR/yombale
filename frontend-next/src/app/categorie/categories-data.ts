@@ -128,4 +128,76 @@ export const CATEGORIES: Record<string, {
       `Comparez la contenance (ml) et la concentration avant d'acheter : un « même » parfum peut exister en trois formats à des prix très différents.`,
     ],
   },
+  alimentation: {
+    label: 'Alimentation & Épicerie',
+    emoji: '🍚',
+    h1: 'Alimentation & Épicerie au Sénégal',
+    intro: 'Comparez les prix des produits alimentaires, courses et épicerie au Sénégal.',
+    description: 'Comparez les prix de l\'alimentation et épicerie au Sénégal. Trouvez les meilleures offres pour vos courses.',
+    keywords: ['alimentation Dakar', 'épicerie Sénégal', 'courses Dakar', 'prix riz Sénégal'],
+    exemples: 'Riz, huile, sucre, produits frais',
+    contenu: [
+      `Faites vos courses au meilleur prix en comparant les offres des supermarchés et boutiques en ligne au Sénégal.`,
+    ],
+  },
+  sport: {
+    label: 'Sport & Fitness',
+    emoji: '⚽',
+    h1: 'Sport & Fitness au Sénégal',
+    intro: 'Comparez les prix des équipements sportifs, vêtements de sport et accessoires fitness au Sénégal.',
+    description: 'Comparez les prix des articles de sport et fitness au Sénégal. Équipez-vous au meilleur prix.',
+    keywords: ['sport Dakar', 'fitness Sénégal', 'équipement sportif Dakar', 'musculation Sénégal'],
+    exemples: 'Haltères, tapis de course, maillots',
+    contenu: [
+      `Trouvez tout votre équipement de sport, fitness et musculation au meilleur prix au Sénégal.`,
+    ],
+  },
+  fournitures: {
+    label: 'Fournitures & Bureautique',
+    emoji: '📚',
+    h1: 'Fournitures & Bureautique au Sénégal',
+    intro: 'Comparez les prix des fournitures scolaires, de bureau et papeterie au Sénégal.',
+    description: 'Comparez les prix des fournitures de bureau et matériel scolaire au Sénégal. Équipez votre entreprise au meilleur prix.',
+    keywords: ['fournitures Dakar', 'bureautique Sénégal', 'matériel scolaire Dakar', 'papeterie Sénégal'],
+    exemples: 'Cahiers, stylos, imprimantes, papier',
+    contenu: [
+      `Équipez vos bureaux ou préparez la rentrée scolaire au meilleur prix en comparant les offres des papeteries et marchands spécialisés.`,
+    ],
+  },
+  quincaillerie: {
+    label: 'Quincaillerie & BTP',
+    emoji: '🧱',
+    h1: 'Quincaillerie & BTP au Sénégal',
+    intro: 'Comparez les prix des matériaux de construction, outils et quincaillerie au Sénégal.',
+    description: 'Comparez les prix de la quincaillerie, outillage et BTP au Sénégal. Matériaux de construction au meilleur prix.',
+    keywords: ['quincaillerie Dakar', 'BTP Sénégal', 'matériaux construction Dakar', 'outillage Sénégal'],
+    exemples: 'Ciment, fer, outils, peinture',
+    contenu: [
+      `Trouvez vos matériaux de construction et outils de quincaillerie aux meilleurs prix pour tous vos chantiers au Sénégal.`,
+    ],
+  },
+  services: {
+    label: 'Services',
+    emoji: '🛠',
+    h1: 'Services professionnels au Sénégal',
+    intro: 'Découvrez les offres de services, réparations, prestations professionnelles au Sénégal.',
+    description: 'Trouvez les meilleurs services, artisans et professionnels au Sénégal.',
+    keywords: ['services Dakar', 'artisan Sénégal', 'réparation Dakar', 'professionnels Sénégal'],
+    exemples: 'Plomberie, réparation, nettoyage',
+    contenu: [
+      `Trouvez le professionnel adapté à votre besoin en comparant les différentes offres de services disponibles au Sénégal.`,
+    ],
+  },
+  autre: {
+    label: 'Autres Produits',
+    emoji: '📦',
+    h1: 'Autres Produits au Sénégal',
+    intro: 'Explorez diverses offres et produits au Sénégal.',
+    description: 'Comparez divers produits et offres au Sénégal.',
+    keywords: ['produits Dakar', 'divers Sénégal', 'shopping Dakar'],
+    exemples: 'Divers produits',
+    contenu: [
+      `Retrouvez ici tous les produits qui ne rentrent pas dans les catégories principales, toujours aux meilleurs prix.`,
+    ],
+  }
 }
