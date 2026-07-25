@@ -195,15 +195,17 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     const baseParams  = [q||null, categorieNorm, prixMax||null, prixMin||null, limit, offset, etat || null];
 
     // Construire la condition texte selon le nombre de tokens
-    function buildQCond(operator) {
+    function buildQCond(operator, forBoutique = false) {
       if (tokens.length <= 1) {
         // Cas simple : ILIKE sur la query complète (comportement original)
+        if (forBoutique) return "($1::text IS NULL OR p.nom ILIKE '%'||$1||'%')";
         return "($1::text IS NULL OR p.nom ILIKE '%'||$1||'%' OR p.marque ILIKE '%'||$1||'%')";
       }
       // Cas multi-tokens : chaque mot doit apparaître (AND) ou n'importe lequel (OR fallback)
       // $1::text IS NULL est toujours référencé pour que PostgreSQL puisse typer $1
       const clauses = tokens.map((_, i) => {
         const pidx = 8 + i;
+        if (forBoutique) return `(p.nom ILIKE $${pidx})`;
         return `(p.nom ILIKE $${pidx} OR p.marque ILIKE $${pidx})`;
       });
       return `($1::text IS NULL OR (${clauses.join(' ' + operator + ' ')}))`;
@@ -213,22 +215,20 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     // fourni ni tri ni catégorie ni prixMin explicite.
     const prixMinDefautMixe = defautMixe && !prixMin ? 20000 : null;
 
-    function buildSQL(qCond) {
-      // La table produits a elle-même des colonnes prix_min/nb_offres (stales, non
-      // utilisées — toujours recalculées ici). p.* les inclut donc en double avec les
-      // agrégats ci-dessous ⇒ agrégats calculés sous des noms distincts en interne,
-      // ré-exposés comme prix_min/nb_offres (contrat JSON existant) seulement dans le
-      // SELECT final, pour éviter toute ambiguïté de colonne dans les sous-requêtes.
-      const base = `
-        SELECT p.*, c.nom AS categorie_nom,
+    function buildSQL(qCondScraped, qCondBoutique) {
+      const baseScraped = `
+        SELECT p.id, p.nom, p.description, p.image_url, p.marque, p.ean, p.categorie_id,
+               c.nom AS categorie_nom,
                MIN(o.prix) AS agg_prix_min,
                MAX(o.prix) AS agg_prix_max,
                COUNT(o.id) AS agg_nb_offres,
-               COALESCE(jsonb_agg(DISTINCT o.specs->>'etat') FILTER (WHERE o.specs->>'etat' IS NOT NULL), '[]'::jsonb) AS etats
+               COALESCE(jsonb_agg(DISTINCT o.specs->>'etat') FILTER (WHERE o.specs->>'etat' IS NOT NULL), '[]'::jsonb) AS etats,
+               p.created_at, p.sponsorise, p.sponsor_jusqu_au,
+               NULL::uuid AS boutique_id, NULL::text AS boutique_slug
         FROM produits p
         LEFT JOIN categories c ON c.id = p.categorie_id
         LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true AND o.quarantinee = false
-        WHERE ${qCond}
+        WHERE ${qCondScraped}
           AND ${catCondition}
           AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
           AND ($4::numeric IS NULL OR o.prix >= $4::numeric)
@@ -237,14 +237,30 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
                 WHERE o2.produit_id = p.id AND o2.stock = true AND o2.quarantinee = false AND o2.specs->>'etat' = $7
               ))
           ${sousTypeCondition}
-        GROUP BY p.id, c.nom
+        GROUP BY p.id, c.nom, p.created_at, p.sponsorise, p.sponsor_jusqu_au
         HAVING (COUNT(o.id) = 0 OR MIN(o.prix) >= 500)
           ${prixMinDefautMixe ? `AND MIN(o.prix) >= ${prixMinDefautMixe}` : ''}`;
 
-      // p.* apporte déjà id/nom/description/image_url/marque/ean/categorie_id/
-      // created_at/sponsorise/sponsor_jusqu_au/prix_min/nb_offres (stales) — on les
-      // reprend explicitement pour ne renvoyer que les colonnes utiles au frontend,
-      // avec prix_min/nb_offres pointant vers les agrégats recalculés (agg_*).
+      const baseBoutique = `
+        SELECT p.id, p.nom::text, p.description, p.images[1] AS image_url,
+               NULL::text AS marque, NULL::text AS ean, NULL::uuid AS categorie_id,
+               p.categorie::text AS categorie_nom,
+               p.prix::numeric AS agg_prix_min,
+               p.prix::numeric AS agg_prix_max,
+               1::bigint AS agg_nb_offres,
+               '["Neuf"]'::jsonb AS etats,
+               p.created_at, true AS sponsorise, NULL::timestamptz AS sponsor_jusqu_au,
+               b.id AS boutique_id, b.slug AS boutique_slug
+        FROM boutique_produits p
+        JOIN boutiques b ON b.id = p.boutique_id
+        WHERE b.actif = true AND p.en_stock = true
+          AND ${qCondBoutique}
+          AND ($2::text IS NULL OR p.categorie = $2)
+          AND ($3::numeric IS NULL OR p.prix <= $3::numeric)
+          AND ($4::numeric IS NULL OR p.prix >= $4::numeric)
+          AND ($7::text IS NULL OR $7 = 'Neuf')
+          ${sousTypeCondition}`;
+
       const colonnesFinales = `
         t.id, t.nom, t.description, t.image_url, t.marque, t.ean, t.categorie_id,
         t.created_at, t.sponsorise, t.sponsor_jusqu_au, t.categorie_nom,
@@ -253,68 +269,32 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
 
       if (!defautMixe) {
         return `
-          WITH scraped AS (
-            ${base}
-          ),
-          scraped_with_boutique AS (
-            SELECT t.*, NULL::uuid AS boutique_id, NULL::text AS boutique_slug
-            FROM scraped t
-          )
+          WITH scraped AS (${baseScraped}),
+               boutiques AS (${baseBoutique}),
+               combined AS (SELECT * FROM scraped UNION ALL SELECT * FROM boutiques)
           SELECT ${colonnesFinales}, COUNT(*) OVER() AS total_count
-          FROM scraped_with_boutique t
+          FROM combined t
           ORDER BY (t.sponsorise = true AND (t.sponsor_jusqu_au IS NULL OR t.sponsor_jusqu_au > NOW())) DESC, ${orderBy}
           LIMIT $5 OFFSET $6`;
       }
 
-      // Mode page d'accueil (aucun filtre) : Produits boutiques "Nopalou" en premier, puis meilleurs produits scrapés
       return `
-        WITH scraped AS (
-          ${base}
-        ),
-        nopalou_boutiques AS (
-          SELECT 
-            p.id, p.nom::text, p.description, 
-            p.images[1] AS image_url,
-            NULL::text AS marque, NULL::text AS ean, NULL::uuid AS categorie_id,
-            p.created_at, true AS sponsorise, NULL::timestamptz AS sponsor_jusqu_au,
-            p.categorie::text AS categorie_nom,
-            p.prix::numeric AS agg_prix_min, p.prix::numeric AS agg_prix_max, 1::bigint AS agg_nb_offres,
-            '["Neuf"]'::jsonb AS etats,
-            b.id AS boutique_id, b.slug AS boutique_slug,
-            1 AS sort_order
-          FROM boutique_produits p
-          JOIN boutiques b ON b.id = p.boutique_id
-          WHERE b.actif = true AND p.en_stock = true
-        ),
-        scraped_filtered AS (
-          SELECT 
-            t.id, t.nom::text, t.description, t.image_url, t.marque, t.ean, t.categorie_id,
-            t.created_at, t.sponsorise, t.sponsor_jusqu_au, t.categorie_nom,
-            t.agg_prix_min, t.agg_prix_max, t.agg_nb_offres, 
-            t.etats,
-            NULL::uuid AS boutique_id, NULL::text AS boutique_slug,
-            2 AS sort_order
-          FROM scraped t
-          WHERE t.agg_nb_offres >= 2 AND t.agg_prix_min > 20000
-        ),
-        scraped_others AS (
-          SELECT 
-            t.id, t.nom::text, t.description, t.image_url, t.marque, t.ean, t.categorie_id,
-            t.created_at, t.sponsorise, t.sponsor_jusqu_au, t.categorie_nom,
-            t.agg_prix_min, t.agg_prix_max, t.agg_nb_offres, 
-            t.etats,
-            NULL::uuid AS boutique_id, NULL::text AS boutique_slug,
-            3 AS sort_order
-          FROM scraped t
-          WHERE NOT (t.agg_nb_offres >= 2 AND t.agg_prix_min > 20000)
-        ),
-        combined AS (
-          SELECT * FROM nopalou_boutiques
-          UNION ALL
-          SELECT * FROM scraped_filtered
-          UNION ALL
-          SELECT * FROM scraped_others
-        )
+        WITH scraped AS (${baseScraped}),
+             boutiques AS (${baseBoutique}),
+             scraped_filtered AS (
+               SELECT t.*, 2 AS sort_order FROM scraped t WHERE t.agg_nb_offres >= 2 AND t.agg_prix_min > 20000
+             ),
+             scraped_others AS (
+               SELECT t.*, 3 AS sort_order FROM scraped t WHERE NOT (t.agg_nb_offres >= 2 AND t.agg_prix_min > 20000)
+             ),
+             boutiques_ordered AS (
+               SELECT t.*, 1 AS sort_order FROM boutiques t
+             ),
+             combined AS (
+               SELECT * FROM boutiques_ordered
+               UNION ALL SELECT * FROM scraped_filtered
+               UNION ALL SELECT * FROM scraped_others
+             )
         SELECT ${colonnesFinales}, COUNT(*) OVER() AS total_count
         FROM combined t
         ORDER BY t.sort_order ASC, t.created_at DESC
@@ -325,11 +305,11 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     const allParams = tokens.length > 1 ? [...baseParams, ...tokenParams] : baseParams;
 
     // Requête principale : tous les mots doivent apparaître (AND)
-    let result = await pool.query(buildSQL(buildQCond('AND')), allParams);
+    let result = await pool.query(buildSQL(buildQCond('AND', false), buildQCond('AND', true)), allParams);
 
     // Fallback OR : si AND retourne rien et plusieurs tokens, chercher avec n'importe quel mot
     if (result.rows.length === 0 && tokens.length > 1) {
-      result = await pool.query(buildSQL(buildQCond('OR')), allParams);
+      result = await pool.query(buildSQL(buildQCond('OR', false), buildQCond('OR', true)), allParams);
     }
 
     const total = parseInt(result.rows[0]?.total_count || 0, 10);
