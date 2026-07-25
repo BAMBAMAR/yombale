@@ -15,6 +15,8 @@ interface Produit {
   prix_max: number | null
   nb_offres: number | null
   image_url: string | null
+  boutique_id?: string
+  boutique_slug?: string
 }
 
 interface Props {
@@ -68,8 +70,13 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
           const ticketClass = estPromo
             ? ` card-produit--ticket ${promoIdx++ % 2 === 0 ? 'tilt-a' : 'tilt-b'}`
             : '';
+            
+          const linkHref = p.boutique_id 
+            ? `/boutiques/${p.boutique_slug || p.boutique_id}/produits/${p.id}` 
+            : `/produit/${p.id}`;
+            
           return (
-          <Link key={p.id} href={`/produit/${p.id}`} style={{ display: 'contents' }}>
+          <Link key={p.id} href={linkHref} style={{ display: 'contents' }}>
             <article className={`card-produit${ticketClass}`}>
               <div className="card-img">
                 {estPromo && p.prix_min && p.prix_max && (

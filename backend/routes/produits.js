@@ -248,26 +248,63 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       const colonnesFinales = `
         t.id, t.nom, t.description, t.image_url, t.marque, t.ean, t.categorie_id,
         t.created_at, t.sponsorise, t.sponsor_jusqu_au, t.categorie_nom,
-        t.agg_prix_min AS prix_min, t.agg_prix_max AS prix_max, t.agg_nb_offres AS nb_offres, t.etats`;
+        t.agg_prix_min AS prix_min, t.agg_prix_max AS prix_max, t.agg_nb_offres AS nb_offres, t.etats,
+        t.boutique_id, t.boutique_slug`;
 
       if (!defautMixe) {
         return `
+          WITH scraped AS (
+            ${base}
+          ),
+          scraped_with_boutique AS (
+            SELECT t.*, NULL::uuid AS boutique_id, NULL::text AS boutique_slug
+            FROM scraped t
+          )
           SELECT ${colonnesFinales}, COUNT(*) OVER() AS total_count
-          FROM (${base}) t
+          FROM scraped_with_boutique t
           ORDER BY (t.sponsorise = true AND (t.sponsor_jusqu_au IS NULL OR t.sponsor_jusqu_au > NOW())) DESC, ${orderBy}
           LIMIT $5 OFFSET $6`;
       }
 
-      // Mode mixé : rang du produit au sein de sa catégorie (prix croissant), puis
-      // round-robin global — un produit de chaque catégorie à tour de rôle.
+      // Mode page d'accueil (aucun filtre) : Produits boutiques "Nopalou" en premier, puis meilleurs produits scrapés
       return `
-        SELECT ${colonnesFinales.replace(/\bt\./g, 'ranked.')}, ranked.rang_categorie, COUNT(*) OVER() AS total_count
-        FROM (
-          SELECT t.*,
-                 ROW_NUMBER() OVER (PARTITION BY t.categorie_nom ORDER BY t.agg_prix_min ASC NULLS LAST) AS rang_categorie
-          FROM (${base}) t
-        ) ranked
-        ORDER BY (ranked.sponsorise = true AND (ranked.sponsor_jusqu_au IS NULL OR ranked.sponsor_jusqu_au > NOW())) DESC, ${orderBy}
+        WITH scraped AS (
+          ${base}
+        ),
+        nopalou_boutiques AS (
+          SELECT 
+            p.id, p.nom::text, p.description, 
+            p.images[1] AS image_url,
+            NULL::text AS marque, NULL::text AS ean, NULL::uuid AS categorie_id,
+            p.created_at, true AS sponsorise, NULL::timestamptz AS sponsor_jusqu_au,
+            p.categorie::text AS categorie_nom,
+            p.prix::numeric AS agg_prix_min, p.prix::numeric AS agg_prix_max, 1::bigint AS agg_nb_offres,
+            '["Neuf"]'::jsonb AS etats,
+            b.id AS boutique_id, b.slug AS boutique_slug,
+            1 AS sort_order
+          FROM boutique_produits p
+          JOIN boutiques b ON b.id = p.boutique_id
+          WHERE b.actif = true AND p.en_stock = true
+        ),
+        scraped_filtered AS (
+          SELECT 
+            t.id, t.nom::text, t.description, t.image_url, t.marque, t.ean, t.categorie_id,
+            t.created_at, t.sponsorise, t.sponsor_jusqu_au, t.categorie_nom,
+            t.agg_prix_min, t.agg_prix_max, t.agg_nb_offres, 
+            t.etats,
+            NULL::uuid AS boutique_id, NULL::text AS boutique_slug,
+            2 AS sort_order
+          FROM scraped t
+          WHERE t.agg_nb_offres >= 2 AND t.agg_prix_min > 20000
+        ),
+        combined AS (
+          SELECT * FROM nopalou_boutiques
+          UNION ALL
+          SELECT * FROM scraped_filtered
+        )
+        SELECT ${colonnesFinales}, COUNT(*) OVER() AS total_count
+        FROM combined t
+        ORDER BY t.sort_order ASC, t.created_at DESC
         LIMIT $5 OFFSET $6`;
     }
 
