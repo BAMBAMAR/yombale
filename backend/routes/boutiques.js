@@ -8,6 +8,7 @@ const { limiterPublication } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
 const multer = require('multer');
 const { syncProduit, deleteProduit } = require('../services/whatsapp-catalog');
+const cfg = require('../lib/settingsCache');
 
 async function checkBoutiqueAccess(boutiqueIdOrSlug, userId) {
   const isUUID = /^[0-9a-f-]{36}$/i.test(boutiqueIdOrSlug);
@@ -799,15 +800,15 @@ router.post('/:id/produits/:prodId/publier-annonce', verifierToken, param('id').
     if (!pReq.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
     const produit = pReq.rows[0];
 
-    const QUOTA_GRATUIT = 2;
-    const PRIX_ANNONCE = 1500;
+    const quotaGratuit = await cfg.getNum('quota_annonces_gratuit');
+    const prixAnnonce  = await cfg.getNum('prix_annonce') || 1500;
     const qReq = await pool.query(`
       SELECT
         (SELECT COUNT(*) FROM annonces_immo WHERE utilisateur_id=$1 AND supprimee=FALSE) +
         (SELECT COUNT(*) FROM annonces_classifiees WHERE utilisateur_id=$1 AND supprimee=FALSE) AS total
     `, [annonceUserId]);
     const total = parseInt(qReq.rows[0].total || 0, 10);
-    const estGratuit = total < QUOTA_GRATUIT;
+    const estGratuit = total < quotaGratuit;
 
     const telContact = boutique.telephone || boutique.user_tel || '';
     const categorie = produit.categorie || 'mixte';
@@ -833,8 +834,8 @@ router.post('/:id/produits/:prodId/publier-annonce', verifierToken, param('id').
     }
 
     res.status(201).json({
-      success: true, id: newId, besoin_paiement: true, montant: PRIX_ANNONCE,
-      message: `Quota gratuit atteint (${QUOTA_GRATUIT} annonces). Paiement de ${PRIX_ANNONCE} FCFA requis.`
+      success: true, id: newId, besoin_paiement: true, montant: prixAnnonce,
+      message: `Quota gratuit atteint (${quotaGratuit} annonces). Paiement de ${prixAnnonce} FCFA requis.`
     });
   } catch (err) {
     console.error('[PUBLIER ANNONCE]', err);

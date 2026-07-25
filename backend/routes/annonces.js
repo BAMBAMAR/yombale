@@ -7,9 +7,8 @@ const { adminSecretOnly, verifierToken, tokenOptional, requireEmailVerifie } = r
 const { limiterPublication, limiterEcriture, limiterBulk, blockScraperUA, limiterRecherche } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
 const { sendWhatsAppCarousel, sendWhatsAppTemplate } = require('../services/whatsapp');
+const cfg = require('../lib/settingsCache');
 
-const PRIX_ANNONCE  = 1500;
-const QUOTA_GRATUIT = 2;
 
 const CATS_AUTORISEES = [
   'smartphones', 'informatique', 'tv-electro', 'mode',
@@ -226,7 +225,9 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
     }
 
     const total      = await compterAnnoncesUtilisateur(userId);
-    const estGratuit = total < QUOTA_GRATUIT;
+    const quotaGratuit = await cfg.getNum('quota_annonces_gratuit');
+    const prixAnnonce  = await cfg.getNum('prix_annonce') || 1500;
+    const estGratuit = total < quotaGratuit;
 
     // Auto-modération pour les annonces gratuites
     let autoActif = false;
@@ -275,9 +276,9 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
     res.status(201).json({
       success: true, id,
       besoin_paiement: true,
-      montant: PRIX_ANNONCE,
+      montant: prixAnnonce,
       annonces_gratuites_utilisees: total,
-      message: `Quota gratuit atteint (${QUOTA_GRATUIT} annonces). Paiement de ${PRIX_ANNONCE} FCFA requis.`
+      message: `Quota gratuit atteint (${quotaGratuit} annonces). Paiement de ${prixAnnonce} FCFA requis.`
     });
   } catch (err) {
     console.error('[ANNONCES POST]', err);

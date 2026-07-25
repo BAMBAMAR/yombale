@@ -4,6 +4,7 @@ import { useState } from 'react'
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
 interface Settings {
+  quota_annonces_gratuit: string
   prix_annonce: string
   prix_sponsoring: string
   prix_boost: string
@@ -103,7 +104,8 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
         </div>
       )}
 
-      {card('💰 Prix des annonces et sponsorings', <>
+      {card('💰 Prix et quotas des annonces', <>
+        {field('quota_annonces_gratuit', 'Quota d\'annonces gratuites par compte', 'number', 'annonces')}
         {field('prix_annonce', 'Publication annonce classifiée', 'number', 'FCFA')}
         {field('prix_sponsoring', 'Mise en avant (immo / boutique / produit) — 30j', 'number', 'FCFA')}
         {field('prix_boost', 'Boost annonce urgence', 'number', 'FCFA')}

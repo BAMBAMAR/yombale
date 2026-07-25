@@ -7,6 +7,7 @@ let lastLoaded = 0;
 
 // Valeurs par défaut si la table settings est vide
 const DEFAULTS = {
+  quota_annonces_gratuit: '2',
   prix_annonce:        '1500',
   prix_sponsoring:     '5000',
   prix_boost:          '500',
