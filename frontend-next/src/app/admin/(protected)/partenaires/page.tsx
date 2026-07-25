@@ -20,7 +20,7 @@ interface Partenaire {
 
 export default async function AdminPartenairesPage() {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)!.value
+  const secret = jar.get(COOKIE)?.value ?? ''
 
   let demandes: Partenaire[] = []
   try {

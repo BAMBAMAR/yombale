@@ -22,7 +22,7 @@ export interface Forfait {
 
 export default async function AdminTelecomPage() {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)!.value
+  const secret = jar.get(COOKIE)?.value ?? ''
 
   const r = await fetch(`${BACKEND}/api/telecom?limit=200`, {
     headers: { 'X-Admin-Secret': secret },

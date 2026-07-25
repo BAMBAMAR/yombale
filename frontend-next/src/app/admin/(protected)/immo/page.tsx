@@ -19,7 +19,7 @@ async function fetchJson(url: string, headers: Record<string, string>) {
 
 export default async function AdminImmoPage() {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)!.value
+  const secret = jar.get(COOKIE)?.value ?? ''
   const headers = { 'X-Admin-Secret': secret }
 
   const [annonces, demandesSponsoring] = await Promise.all([

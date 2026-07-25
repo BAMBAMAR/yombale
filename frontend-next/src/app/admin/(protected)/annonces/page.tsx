@@ -8,7 +8,7 @@ export const metadata = { title: 'Annonces — Admin Nopalou' }
 
 export default async function AdminAnnoncesPage() {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)!.value
+  const secret = jar.get(COOKIE)?.value ?? ''
 
   const r = await fetch(`${BACKEND}/api/annonces/admin/en-attente`, {
     headers: { 'X-Admin-Secret': secret },

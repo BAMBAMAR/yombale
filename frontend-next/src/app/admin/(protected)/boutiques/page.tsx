@@ -27,7 +27,7 @@ interface Boutique {
 
 export default async function AdminBoutiquesPage() {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)!.value
+  const secret = jar.get(COOKIE)?.value ?? ''
 
   let boutiques: Boutique[] = []
   try {
