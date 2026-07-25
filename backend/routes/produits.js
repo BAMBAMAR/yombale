@@ -297,10 +297,23 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
           FROM scraped t
           WHERE t.agg_nb_offres >= 2 AND t.agg_prix_min > 20000
         ),
+        scraped_others AS (
+          SELECT 
+            t.id, t.nom::text, t.description, t.image_url, t.marque, t.ean, t.categorie_id,
+            t.created_at, t.sponsorise, t.sponsor_jusqu_au, t.categorie_nom,
+            t.agg_prix_min, t.agg_prix_max, t.agg_nb_offres, 
+            t.etats,
+            NULL::uuid AS boutique_id, NULL::text AS boutique_slug,
+            3 AS sort_order
+          FROM scraped t
+          WHERE NOT (t.agg_nb_offres >= 2 AND t.agg_prix_min > 20000)
+        ),
         combined AS (
           SELECT * FROM nopalou_boutiques
           UNION ALL
           SELECT * FROM scraped_filtered
+          UNION ALL
+          SELECT * FROM scraped_others
         )
         SELECT ${colonnesFinales}, COUNT(*) OVER() AS total_count
         FROM combined t
