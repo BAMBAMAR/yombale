@@ -225,7 +225,11 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
     }
 
     const total      = await compterAnnoncesUtilisateur(userId);
-    const quotaGratuit = await cfg.getNum('quota_annonces_gratuit');
+    const userReq    = await pool.query('SELECT quota_annonces FROM utilisateurs WHERE id=$1', [userId]);
+    const customQuota = userReq.rows[0]?.quota_annonces;
+    const quotaGratuit = (customQuota !== null && customQuota !== undefined)
+      ? customQuota
+      : await cfg.getNum('quota_annonces_gratuit');
     const prixAnnonce  = await cfg.getNum('prix_annonce') || 1500;
     const estGratuit = total < quotaGratuit;
 

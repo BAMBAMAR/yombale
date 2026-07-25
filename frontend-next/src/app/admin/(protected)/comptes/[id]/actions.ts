@@ -99,3 +99,18 @@ export async function purgerCompte(id: string): Promise<ActionState> {
     return { success: true, info: 'Compte purgé définitivement (anonymisé).' }
   } catch (e: unknown) { return { error: e instanceof Error ? e.message : 'Erreur' } }
 }
+
+export async function saveUserQuota(id: string, quota: number | null): Promise<ActionState> {
+  try {
+    const headers = await adminHeaders()
+    const res = await fetch(`${BACKEND}/api/admin/utilisateurs/${id}/quota`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ quota }),
+    })
+    const data = await res.json()
+    if (!res.ok) return { error: data.error ?? `Erreur ${res.status}` }
+    revalidatePath(`/admin/comptes/${id}`)
+    return { success: true, info: 'Quota d\'annonces mis à jour.' }
+  } catch (e: unknown) { return { error: e instanceof Error ? e.message : 'Erreur' } }
+}

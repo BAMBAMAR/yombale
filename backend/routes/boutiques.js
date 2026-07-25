@@ -800,7 +800,11 @@ router.post('/:id/produits/:prodId/publier-annonce', verifierToken, param('id').
     if (!pReq.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
     const produit = pReq.rows[0];
 
-    const quotaGratuit = await cfg.getNum('quota_annonces_gratuit');
+    const userReq    = await pool.query('SELECT quota_annonces FROM utilisateurs WHERE id=$1', [annonceUserId]);
+    const customQuota = userReq.rows[0]?.quota_annonces;
+    const quotaGratuit = (customQuota !== null && customQuota !== undefined)
+      ? customQuota
+      : await cfg.getNum('quota_annonces_gratuit');
     const prixAnnonce  = await cfg.getNum('prix_annonce') || 1500;
     const qReq = await pool.query(`
       SELECT

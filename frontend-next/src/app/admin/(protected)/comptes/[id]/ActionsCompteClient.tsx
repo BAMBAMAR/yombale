@@ -3,7 +3,7 @@ import { useState, useTransition } from 'react'
 import {
   verifierEmail, renvoyerVerification, genererLienReset,
   suspendreCompte, reactiverCompte,
-  marquerSupprime, restaurerCompte, purgerCompte,
+  marquerSupprime, restaurerCompte, purgerCompte, saveUserQuota
 } from './actions'
 
 interface Props {
@@ -12,6 +12,7 @@ interface Props {
   suspendu: boolean
   supprimeLe: string | null
   anonymiseLe: string | null
+  quotaAnnonces: number | null
 }
 
 const btnStyle = (bg: string, color: string, border: string) => ({
@@ -19,10 +20,12 @@ const btnStyle = (bg: string, color: string, border: string) => ({
   background: bg, color, border: `1px solid ${border}`, cursor: 'pointer',
 })
 
-export default function ActionsCompteClient({ id, emailVerifie, suspendu, supprimeLe, anonymiseLe }: Props) {
+export default function ActionsCompteClient({ id, emailVerifie, suspendu, supprimeLe, anonymiseLe, quotaAnnonces }: Props) {
   const [isPending, startTransition] = useTransition()
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [lienReset, setLienReset] = useState<string | null>(null)
+  const [quotaVal, setQuotaVal] = useState<string>(quotaAnnonces === null || quotaAnnonces === undefined ? '' : String(quotaAnnonces))
+  const [savingQuota, setSavingQuota] = useState(false)
 
   function flash(ok: boolean, text: string) {
     setMsg({ ok, text })
@@ -84,6 +87,44 @@ export default function ActionsCompteClient({ id, emailVerifie, suspendu, suppri
           )}
           <button disabled={isPending} onClick={() => run(() => genererLienReset(id))} style={btnStyle('#fffbeb', '#d97706', '#fde68a')}>
             🔑 Générer lien de reset
+          </button>
+        </div>
+      </div>
+
+      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 18 }}>
+        <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Quota d&apos;annonces personnalisé</h2>
+        <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
+          Laissez vide pour utiliser le quota global (hérité). Saisissez une valeur numérique (ex: 0, 5, 10) pour écraser la limite de ce compte.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <input
+            type="number"
+            min="0"
+            placeholder="Par défaut (global)"
+            value={quotaVal}
+            onChange={(e) => setQuotaVal(e.target.value)}
+            style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13, width: 180 }}
+          />
+          <button
+            disabled={savingQuota || isPending}
+            onClick={async () => {
+              setSavingQuota(true)
+              const q = quotaVal === '' ? null : parseInt(quotaVal)
+              const res = await saveUserQuota(id, q)
+              if (res.success) {
+                flash(true, res.info ?? 'Quota mis à jour.')
+              } else {
+                flash(false, res.error ?? 'Erreur.')
+              }
+              setSavingQuota(false)
+            }}
+            style={{
+              fontSize: 12, fontWeight: 700, padding: '8px 16px', borderRadius: 8,
+              background: '#0f172a', color: '#fff', border: 'none', cursor: 'pointer',
+              opacity: (savingQuota || isPending) ? 0.7 : 1
+            }}
+          >
+            {savingQuota ? 'Sauvegarde...' : 'Sauvegarder'}
           </button>
         </div>
       </div>

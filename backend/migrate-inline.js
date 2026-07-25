@@ -858,6 +858,7 @@ module.exports = async function migrateInline() {
     `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS suspendu BOOLEAN DEFAULT FALSE`,
     `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS supprime_le TIMESTAMPTZ`,
     `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS anonymise_le TIMESTAMPTZ`,
+    `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS quota_annonces INTEGER DEFAULT NULL`,
   ];
   for (const sql of colonnesGestionComptes) {
     try { await pool.query(sql); }

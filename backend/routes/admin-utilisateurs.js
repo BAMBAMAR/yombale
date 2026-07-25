@@ -54,7 +54,7 @@ router.get('/:id', adminSecretOnly, async (req, res) => {
   try {
     const { id } = req.params;
     const userRes = await pool.query(
-      `SELECT id, nom, email, telephone, ville, email_verifie, suspendu, supprime_le, anonymise_le, est_apporteur, code_apporteur, created_at
+      `SELECT id, nom, email, telephone, ville, email_verifie, suspendu, supprime_le, anonymise_le, est_apporteur, code_apporteur, quota_annonces, created_at
        FROM utilisateurs WHERE id = $1`,
       [id]
     );
@@ -204,6 +204,26 @@ router.post('/:id/purger', adminSecretOnly, async (req, res) => {
     );
     if (!purgeRes.rows[0]) return res.status(400).json({ error: 'Ce compte a déjà été purgé' });
     res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/admin/utilisateurs/:id/quota — modifie le quota personnalisé (NULL pour hériter de la config globale)
+router.put('/:id/quota', adminSecretOnly, async (req, res) => {
+  try {
+    const quota = req.body.quota === '' || req.body.quota === null || req.body.quota === undefined
+      ? null
+      : parseInt(req.body.quota);
+    
+    if (quota !== null && (isNaN(quota) || quota < 0)) {
+      return res.status(400).json({ error: 'Quota invalide' });
+    }
+
+    const { rows } = await pool.query(
+      'UPDATE utilisateurs SET quota_annonces=$1 WHERE id=$2 RETURNING id, quota_annonces',
+      [quota, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    res.json({ success: true, quota_annonces: rows[0].quota_annonces });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

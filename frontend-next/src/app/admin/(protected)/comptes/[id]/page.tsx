@@ -18,6 +18,7 @@ interface DetailResponse {
     anonymise_le: string | null
     est_apporteur: boolean
     code_apporteur: string | null
+    quota_annonces: number | null
     created_at: string
   }
   activite: {
@@ -91,6 +92,7 @@ export default async function AdminCompteDetailPage({ params }: { params: Promis
         suspendu={u.suspendu}
         supprimeLe={u.supprime_le}
         anonymiseLe={u.anonymise_le}
+        quotaAnnonces={u.quota_annonces}
       />
     </div>
   )
