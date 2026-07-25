@@ -61,9 +61,9 @@ router.get('/categories-actives', async (req, res) => {
     
     // Add other verticals if they have at least one active item
     const [immo, annonces, telecom] = await Promise.all([
-      pool.query('SELECT 1 FROM annonces_immo WHERE active = true LIMIT 1').catch(() => ({ rows: [] })),
-      pool.query('SELECT 1 FROM annonces_classifiees WHERE active = true LIMIT 1').catch(() => ({ rows: [] })),
-      pool.query('SELECT 1 FROM forfaits_telecom LIMIT 1').catch(() => ({ rows: [] }))
+      pool.query('SELECT 1 FROM annonces_immo WHERE actif = true LIMIT 1').catch(() => ({ rows: [] })),
+      pool.query('SELECT 1 FROM annonces_classifiees WHERE actif = true LIMIT 1').catch(() => ({ rows: [] })),
+      pool.query('SELECT 1 FROM forfaits_telecom WHERE actif = true LIMIT 1').catch(() => ({ rows: [] }))
     ]);
     
     if (immo.rows.length > 0) activeSlugs.push('immo');
