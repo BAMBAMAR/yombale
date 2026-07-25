@@ -831,3 +831,5 @@ Aller sur `/admin/whatsapp` â€” la checklist indique en temps rÃ©el ce qui est c
 
 - **Publication Produit en Annonce & Fix POS** (ajouté 25 juillet 2026) : Ajout du endpoint POST /api/boutiques/:id/produits/:prodId/publier-annonce pour basculer un produit en annonce classifiée avec gestion du quota gratuit. Ajout du bouton '?? Annonce' dans BoutiqueClient.tsx. Correction de l'URL NEXT_PUBLIC_BACKEND_URL de 127.0.0.1 vers localhost dans .env.local pour éviter le blocage SameSite=Lax du cookie 
 opalou_session lors des appels fetch côté client (interface Caisse/POS).
+
+- **Priorisation Accueil** (ajoutÃ© 25 juillet 2026) : Modification de l'API /api/produits pour afficher par dÃ©faut sur la page d'accueil en premier les produits des boutiques, puis les meilleurs produits scrapÃ©s (â‰¥ 2 offres et prix > 20000 FCFA), et enfin le reste. Les cartes de produits boutiques pointent vers /boutiques/[slug]/produits/[id].
