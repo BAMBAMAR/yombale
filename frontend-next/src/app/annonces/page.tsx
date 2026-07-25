@@ -131,6 +131,16 @@ export default async function AnnoncesPage({
   } = await searchParams
   const page = Math.max(1, parseInt(pageStr))
 
+  let categoriesActives: string[] | null = null
+  try {
+    const res = await fetch(`${BACKEND}/api/produits/categories-actives`, { cache: 'no-store', headers: SSR_HEADERS })
+    if (res.ok) {
+      categoriesActives = await res.json()
+    }
+  } catch (e) {}
+
+  const filteredCategories = CATEGORIES.filter(cat => !cat.slug || categoriesActives === null || categoriesActives.includes(cat.slug))
+
   const { annonces, total } = await fetchAnnonces(categorie, page, tri, q, prixMax, ville, source)
 
   const totalPages = Math.ceil(total / 24)
@@ -191,7 +201,7 @@ export default async function AnnoncesPage({
       {/* Filtres */}
       <FiltresBar
         essentiels={[
-          ...CATEGORIES.map(cat => ({
+          ...filteredCategories.map(cat => ({
             key: `cat-${cat.slug || 'toutes'}`,
             label: `${cat.emoji} ${cat.label}`,
             href: buildLink({ categorie: cat.slug, page: '' }),
@@ -310,7 +320,7 @@ export default async function AnnoncesPage({
         chipRows={[
           {
             label: 'Catégories populaires',
-            chips: CATEGORIES.filter(c => c.slug).map(c => ({ href: buildLink({ categorie: c.slug, page: '' }), emoji: c.emoji, label: c.label, small: true })),
+            chips: filteredCategories.filter(c => c.slug).map(c => ({ href: buildLink({ categorie: c.slug, page: '' }), emoji: c.emoji, label: c.label, small: true })),
           },
         ]}
         foot="Nouvelles annonces publiées chaque jour par des particuliers au Sénégal"

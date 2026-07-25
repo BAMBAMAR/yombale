@@ -62,7 +62,7 @@ function extraireSpecs(nom: string): Record<string, number> {
   return specs
 }
 
-export default function GuideAchatPage() {
+export default function GuideAchatPage({ categoriesActives }: { categoriesActives?: string[] | null }) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -227,7 +227,7 @@ export default function GuideAchatPage() {
             <FiltresBar
               essentiels={[
                 { key: 'cat-toutes', label: 'Toutes les catégories', active: cat === '', onClick: () => setCat('') },
-                ...CATEGORIES.map(c => ({ key: `cat-${c.slug}`, label: `${c.icon} ${c.label}`, active: cat === c.slug, onClick: () => setCat(c.slug) })),
+                ...CATEGORIES.filter(c => !categoriesActives || categoriesActives.includes(c.slug)).map(c => ({ key: `cat-${c.slug}`, label: `${c.icon} ${c.label}`, active: cat === c.slug, onClick: () => setCat(c.slug) })),
               ]}
             />
           </div>

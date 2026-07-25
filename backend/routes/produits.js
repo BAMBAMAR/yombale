@@ -45,6 +45,38 @@ router.get('/instantanee', async (req, res) => {
   }
 });
 
+// GET /api/produits/categories-actives
+router.get('/categories-actives', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT DISTINCT c.slug
+      FROM categories c 
+      JOIN produits p ON p.categorie_id = c.id 
+      JOIN offres o ON o.produit_id = p.id 
+      WHERE o.stock = true AND o.quarantinee = false
+      UNION
+      SELECT DISTINCT categorie as slug FROM boutique_produits WHERE en_stock = true
+    `);
+    const activeSlugs = rows.map(r => r.slug).filter(Boolean);
+    
+    // Add other verticals if they have at least one active item
+    const [immo, annonces, telecom] = await Promise.all([
+      pool.query('SELECT 1 FROM annonces_immo WHERE active = true LIMIT 1').catch(() => ({ rows: [] })),
+      pool.query('SELECT 1 FROM annonces_classifiees WHERE active = true LIMIT 1').catch(() => ({ rows: [] })),
+      pool.query('SELECT 1 FROM forfaits_telecom LIMIT 1').catch(() => ({ rows: [] }))
+    ]);
+    
+    if (immo.rows.length > 0) activeSlugs.push('immo');
+    if (annonces.rows.length > 0) activeSlugs.push('annonces');
+    if (telecom.rows.length > 0) activeSlugs.push('telecom');
+    
+    res.json(activeSlugs);
+  } catch (err) {
+    console.error('[GET /api/produits/categories-actives]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/produits
 router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
   try {

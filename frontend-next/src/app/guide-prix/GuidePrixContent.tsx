@@ -46,7 +46,7 @@ const CATEGORIES = [
   { slug: 'alimentation', label: 'Alimentation',    icon: '🛒' },
 ]
 
-export default function GuidePrixPage() {
+export default function GuidePrixPage({ categoriesActives }: { categoriesActives?: string[] | null }) {
   const [q, setQ]               = useState('')
   const [categorie, setCategorie] = useState('')
   const [results, setResults]   = useState<Produit[]>([])
@@ -170,7 +170,7 @@ export default function GuidePrixPage() {
           <FiltresBar
             essentiels={[
               { key: 'cat-tous', label: 'Tous', active: categorie === '', onClick: () => { setCategorie(''); search() } },
-              ...CATEGORIES.map(c => ({
+              ...CATEGORIES.filter(c => !categoriesActives || categoriesActives.includes(c.slug)).map(c => ({
                 key: `cat-${c.slug}`,
                 label: `${c.icon} ${c.label}`,
                 active: categorie === c.slug,

@@ -113,9 +113,17 @@ export default async function HomePage({
   const hasFiltre = q || categorie || prixMax || sousType
 
   let settings: Record<string, string> = {}
+  let categoriesActives: string[] | null = null
   try {
-    const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store', headers: SSR_HEADERS })
-    if (r.ok) settings = await r.json()
+    const [rSettings, rCat] = await Promise.all([
+      fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store', headers: SSR_HEADERS }).catch(() => null),
+      fetch(`${BACKEND}/api/produits/categories-actives`, { cache: 'no-store', headers: SSR_HEADERS }).catch(() => null)
+    ])
+    if (rSettings && rSettings.ok) settings = await rSettings.json()
+    if (rCat && rCat.ok) {
+      categoriesActives = await rCat.json()
+      // Always include 'mixte' if it's not present, or maybe it's not needed if we filter by slug
+    }
   } catch {
     // valeurs par défaut ci-dessous
   }
@@ -140,6 +148,9 @@ export default async function HomePage({
         <SearchBar defaultValue={q} />
         <div className="hero-categs">
           {CATEGORIES.map((c) => {
+            if (categoriesActives !== null && !categoriesActives.includes(c.slug)) {
+              return null;
+            }
             if (c.slug === 'telecom') {
               return (
                 <Link key={c.slug} href="/telecom" className={`categ-pill${categorie === c.slug ? ' active' : ''}`}>
@@ -157,8 +168,12 @@ export default async function HomePage({
               </Link>
             )
           })}
-          <Link href="/immo"      className="categ-pill">🏘 Immobilier</Link>
-          <Link href="/annonces"  className="categ-pill">📢 Annonces</Link>
+          {(!categoriesActives || categoriesActives.includes('immo')) && (
+            <Link href="/immo" className="categ-pill">🏘 Immobilier</Link>
+          )}
+          {(!categoriesActives || categoriesActives.includes('annonces')) && (
+            <Link href="/annonces" className="categ-pill">📢 Annonces</Link>
+          )}
         </div>
       </section>
 
