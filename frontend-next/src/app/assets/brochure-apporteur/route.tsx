@@ -13,16 +13,16 @@ const TOTAL_PAGES = 13
 
 async function getSettings() {
   const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
-  let prixPro = 5000
-  let prixBusiness = 10000
+  let prixPro = 15000
+  let prixBusiness = 35000
   let commissionBusiness = 2
   let tauxApporteur = 10
   try {
     const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' })
     if (r.ok) {
       const s = await r.json()
-      prixPro = Number(s.plan_pro_prix) || 5000
-      prixBusiness = Number(s.plan_business_prix) || 10000
+      prixPro = Number(s.plan_pro_prix) || 15000
+      prixBusiness = Number(s.plan_business_prix) || 35000
       commissionBusiness = Number(s.commission_business) || 2
       tauxApporteur = Number(s.apporteur_taux_commission) || 10
     }
@@ -173,13 +173,20 @@ function ListeEtapesNumerotees(etapes: { titre: string; detail: string }[], comp
 
 export async function GET() {
   const { prixPro, prixBusiness, commissionBusiness, tauxApporteur } = await getSettings()
-  void commissionBusiness
 
   const commissionPro = Math.round(prixPro * tauxApporteur / 100)
   const commissionBiz = Math.round(prixBusiness * tauxApporteur / 100)
 
   PALIERS[1].prixLabel = `${fcfa(prixPro)}/mois`
   PALIERS[2].prixLabel = `${fcfa(prixBusiness)}/mois`
+  PALIERS[2].items = [
+    'Tout ce qui est inclus dans Pro',
+    `Seulement ${commissionBusiness}% de commission sur les ventes`,
+    'URL dédiée nopalou.com/boutiques/votre-nom',
+    '15 annonces classées incluses par mois',
+    'Bannière mise en avant dans une page catégorie',
+    'Support prioritaire par WhatsApp',
+  ]
 
   const html = `<!doctype html>
 <html lang="fr">

@@ -5464,9 +5464,27 @@ a {
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 0 12px;
+  padding: 0 12px 24px;
   gap: 2px;
 }
+
+.admin-nav-group {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-nav-group-title {
+  display: block;
+  padding: 8px 12px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
 
 .admin-nav-link {
   display: block;

@@ -5,113 +5,172 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export const metadata: Metadata = {
   title: 'Comment utiliser Nopalou — Guide complet',
-  description: `Guide pas à pas pour utiliser Nopalou : comparer les prix au Sénégal, créer une alerte prix, publier une annonce, ouvrir une boutique et devenir apporteur d'affaires.`,
+  description: `Guides détaillés sur le parcours Acheteur (comparer, commander et suivre) et le parcours Marchand (créer sa boutique, vendre via WhatsApp et suivre ses ventes).`,
   alternates: { canonical: `${BASE}/guide-emploi` },
 }
 
-const STEPS = [
+const ACHETEUR_STEPS = [
   {
     icon: '🔍', couleur: '#1d4ed8',
-    titre: '1. Rechercher des produits ou annonces',
-    texte: 'Tapez un produit dans la barre de recherche (ex : "Samsung Galaxy A55", "climatiseur Haier"). Nopalou compare les prix chez tous les marchands partenaires et boutiques en ligne au Sénégal.',
-    ctas: [{ label: 'Rechercher un produit →', href: '/', couleur: '#1d4ed8', bg: '#eff6ff' }],
+    titre: '1. Rechercher des produits',
+    texte: 'Tapez le nom d\'un produit ou d\'un bien immo (ex : "Samsung Galaxy A55", "climatiseur Haier"). Nopalou cherche sur toutes les boutiques partenaires.',
+    ctas: [{ label: 'Rechercher →', href: '/', couleur: '#1d4ed8', bg: '#eff6ff' }],
   },
   {
     icon: '⚖️', couleur: '#0891b2',
-    titre: '2. Comparer & Sélectionner les meilleurs prix',
-    texte: "Cliquez sur ⚖ sur plusieurs produits pour les ajouter au comparateur côte à côte, ou consultez les fiches détaillées pour vérifier la disponibilité et les garanties.",
-    ctas: [{ label: 'Guide d\'achat intelligent →', href: '/guide-achat', couleur: '#ea580c', bg: '#fff7ed' }],
-  },
-  {
-    icon: '🛒', couleur: '#7c3aed',
-    titre: '3. Passation de commande sur le site web',
-    texte: "Naviguez sur la boutique de votre choix. Sélectionnez vos articles, renseignez votre adresse de livraison à Dakar ou dans les régions, puis validez votre commande.",
-    ctas: [{ label: 'Se connecter / S\'inscrire →', href: '/connexion', couleur: '#7c3aed', bg: '#faf5ff' }],
+    titre: '2. Comparer côte à côte',
+    texte: 'Cliquez sur l\'icône de comparaison ⚖ sur les produits pour comparer leurs caractéristiques et prix chez différents marchands.',
+    ctas: [{ label: 'Guide d\'achat →', href: '/guide-achat', couleur: '#0891b2', bg: '#ecfeff' }],
   },
   {
     icon: '📲', couleur: '#25D366',
-    titre: '4. Commande directe & Chat WhatsApp avec le marchand',
-    texte: "Vous préférez discuter avec le vendeur ? Cliquez sur <strong>\"Commander via WhatsApp\"</strong>. Votre message est pré-rempli avec les articles choisis pour un échange direct.",
-    ctas: [
-      { label: 'Découvrir l\'assistant WhatsApp →', href: '/assistant-whatsapp', couleur: '#25D366', bg: '#f0fdf4' },
-      { label: 'Discuter sur WhatsApp →', href: 'https://wa.me/221708717942?text=menu', couleur: '#25D366', bg: '#f0fdf4' },
-    ],
+    titre: '3. Commander sur WhatsApp',
+    texte: 'Cliquez sur "Commander via WhatsApp" depuis la fiche produit ou boutique. Le panier pré-rempli est envoyé directement au marchand.',
+    ctas: [{ label: 'Assistant WhatsApp →', href: '/assistant-whatsapp', couleur: '#25D366', bg: '#f0fdf4' }],
   },
   {
     icon: '🚚', couleur: '#059669',
-    titre: '5. Modes de livraison & Suivi en temps réel',
-    texte: "Recevez votre colis à domicile ou au bureau. Pour suivre votre livraison, envoyez votre référence de commande (ex : PAY-12345) directement par message à l'Assistant WhatsApp Nopalou — disponible 24h/24.",
-    ctas: [
-      { label: 'Suivre via WhatsApp →', href: 'https://wa.me/221708717942?text=suivi', couleur: '#25D366', bg: '#f0fdf4' },
-    ],
+    titre: '4. Modes de livraison & Suivi',
+    texte: 'Recevez votre colis chez vous. Suivez vos commandes en envoyant la référence (ex : PAY-12345) à l\'Assistant WhatsApp Nopalou.',
+    ctas: [{ label: 'Suivre via WhatsApp →', href: 'https://wa.me/221708717942?text=suivi', couleur: '#059669', bg: '#ecfdf5' }],
   },
   {
     icon: '🔔', couleur: '#f59e0b',
-    titre: '6. Alertes de baisse de prix',
-    texte: "Un produit est trop cher ? Cliquez sur \"Créer une alerte prix\". Saisissez votre budget cible. Vous serez averti automatiquement dès que le prix baisse.",
-    ctas: [{ label: 'Mes alertes prix →', href: '/mes-alertes', couleur: '#f59e0b', bg: '#fffbeb' }],
-  },
-  {
-    icon: '💼', couleur: '#C75B00',
-    titre: '7. Espace Marchand & Programme Apporteur',
-    texte: "Vous êtes vendeur ? Ouvrez votre boutique en ligne Nopalou et synchronisez vos ventes avec WhatsApp. Vous pouvez aussi devenir apporteur d'affaires et toucher 10% de commission récurrente sur les boutiques recrutées.",
-    ctas: [
-      { label: 'Ouvrir une boutique / Compte →', href: '/inscription', couleur: '#C75B00', bg: '#fff7ed' },
-      { label: 'Devenir apporteur →', href: '/compte/apporteur', couleur: '#C75B00', bg: '#fff7ed' },
-    ],
+    titre: '5. Configurer des alertes prix',
+    texte: 'Indiquez votre budget cible pour un produit. Nopalou vous envoie un message WhatsApp dès que le prix baisse.',
+    ctas: [{ label: 'Créer une alerte →', href: '/mes-alertes', couleur: '#f59e0b', bg: '#fffbeb' }],
   },
 ]
 
-export default function GuideEmploiPage() {
-  return (
-    <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 820 }}>
+function getMarchandSteps(commission: string) {
+  return [
+    {
+      icon: '🏢', couleur: '#ea580c',
+      titre: '1. Inscription & Boutique',
+      texte: 'Créez votre compte gratuit en 2 minutes. Activez votre espace Boutique en renseignant vos coordonnées et lien WhatsApp.',
+      ctas: [{ label: 'Créer ma boutique →', href: '/inscription', couleur: '#ea580c', bg: '#fff7ed' }],
+    },
+    {
+      icon: '📦', couleur: '#7c3aed',
+      titre: '2. Configurer le catalogue',
+      texte: 'Ajoutez vos produits en quelques clics : importez des photos, définissez les prix, états (neuf/occasion) et variantes.',
+      ctas: [],
+    },
+    {
+      icon: '💬', couleur: '#25D366',
+      titre: '3. Commandes sur WhatsApp',
+      texte: 'Les commandes de vos clients arrivent structurées dans votre WhatsApp. Vous finalisez directement avec le client.',
+      ctas: [],
+    },
+    {
+      icon: '📈', couleur: '#1e3a5f',
+      titre: '4. Suivi & Analytics',
+      texte: 'Consultez le nombre de vues, clics et contacts sur votre boutique depuis votre tableau de bord marchand pour optimiser vos ventes.',
+      ctas: [],
+    },
+    {
+      icon: '💼', couleur: '#C75B00',
+      titre: '5. Devenir Apporteur',
+      texte: `Partagez Nopalou autour de vous et touchez ${commission}% de commission récurrente sur les abonnements Pro/Business souscrits par vos filleuls.`,
+      ctas: [{ label: 'Devenir apporteur →', href: '/compte/apporteur', couleur: '#C75B00', bg: '#fff7ed' }],
+    },
+  ]
+}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-        <Link href="/" className="guide-back-btn" style={{ color: '#475569', borderColor: '#e2e8f0', background: '#fff' }}>
+export default async function GuideEmploiPage() {
+  const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+  let commission = '10'
+  try {
+    const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' })
+    if (r.ok) {
+      const s = await r.json()
+      commission = s.apporteur_taux_commission || '10'
+    }
+  } catch {
+    // fallback
+  }
+
+  const marchandSteps = getMarchandSteps(commission)
+
+  return (
+    <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 1000, margin: '0 auto', padding: '0 20px' }}>
+      
+      {/* Retour Accueil */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
+        <Link href="/" className="guide-back-btn" style={{ color: '#475569', borderColor: '#e2e8f0', background: '#fff', padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', textDecoration: 'none', fontSize: 14 }}>
           ← Accueil
         </Link>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)' }}>📖 Comment utiliser Nopalou</div>
-          <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Tout ce que vous pouvez faire, en quelques étapes.</div>
+          <div style={{ fontSize: 22, fontWeight: 900, color: '#1C2B4A' }}>📖 Comment fonctionne Nopalou</div>
+          <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Guides pratiques et parcours détaillés de la plateforme.</div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-        {STEPS.map((step, i) => (
-          <div key={i} className="guide-emploi-step">
-            <div className="guide-emploi-icon" style={{ background: step.couleur + '18' }}>
-              {step.icon}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="guide-emploi-titre">{step.titre}</div>
-              <div className="guide-emploi-texte" dangerouslySetInnerHTML={{ __html: step.texte }} />
-              {step.ctas.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 11 }}>
-                  {step.ctas.map(cta => {
-                    const externe = cta.href.startsWith('http')
-                    return (
-                      <Link
-                        key={cta.href}
-                        href={cta.href}
-                        target={externe ? '_blank' : undefined}
-                        rel={externe ? 'noopener noreferrer' : undefined}
-                        className="guide-emploi-cta"
-                        style={{ background: cta.bg, color: cta.couleur, borderColor: cta.couleur }}
-                      >
-                        {cta.label}
-                      </Link>
-                    )
-                  })}
+      {/* Double Colonne Parcours */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 24, marginBottom: 40 }}>
+        
+        {/* Parcours Acheteur */}
+        <div style={{ border: '1px solid #E2E8F0', borderRadius: 16, padding: 24, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1d4ed8', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            🛒 Parcours Acheteur
+          </h2>
+          <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 20px', lineHeight: 1.6 }}>
+            Comment comparer les prix, commander au meilleur tarif et suivre vos livraisons facilement.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {ACHETEUR_STEPS.map((step, i) => (
+              <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <div style={{ background: step.couleur + '12', color: step.couleur, borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', flexShrink: 0, fontSize: 18, justifyContent: 'center' }}>
+                  {step.icon}
                 </div>
-              )}
-            </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', marginBottom: 3 }}>{step.titre}</div>
+                  <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.5 }}>{step.texte}</div>
+                  {step.ctas.map(cta => (
+                    <Link key={cta.href} href={cta.href} className="guide-emploi-cta" style={{ background: cta.bg, color: cta.couleur, borderColor: cta.couleur, marginTop: 8, display: 'inline-flex', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, border: '1px solid', textDecoration: 'none' }}>
+                      {cta.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+
+        {/* Parcours Marchand */}
+        <div style={{ border: '1px solid #E2E8F0', borderRadius: 16, padding: 24, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: '#ea580c', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            🏢 Parcours Marchand
+          </h2>
+          <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 20px', lineHeight: 1.6 }}>
+            Comment ouvrir votre boutique, ajouter vos produits et encaisser des ventes via WhatsApp.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {marchandSteps.map((step, i) => (
+              <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <div style={{ background: step.couleur + '12', color: step.couleur, borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', flexShrink: 0, fontSize: 18, justifyContent: 'center' }}>
+                  {step.icon}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', marginBottom: 3 }}>{step.titre}</div>
+                  <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.5 }}>{step.texte}</div>
+                  {step.ctas.map(cta => (
+                    <Link key={cta.href} href={cta.href} className="guide-emploi-cta" style={{ background: cta.bg, color: cta.couleur, borderColor: cta.couleur, marginTop: 8, display: 'inline-flex', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, border: '1px solid', textDecoration: 'none' }}>
+                      {cta.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
 
-      <div className="guide-emploi-footer">
-        <div className="guide-emploi-footer-titre">✅ Nopalou est 100% gratuit et indépendant</div>
-        <div className="guide-emploi-footer-texte">Aucune commission sur les ventes. Les prix sont mis à jour depuis les sites marchands. Nopalou ne vend rien — il compare pour vous.</div>
+      {/* Footer Info */}
+      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 20, textAlign: 'center', marginBottom: 32 }}>
+        <div style={{ fontWeight: 800, color: '#1C2B4A', fontSize: 15, marginBottom: 4 }}>✅ Nopalou est 100% gratuit et indépendant pour les acheteurs</div>
+        <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.6 }}>Les prix et informations proviennent directement des sites marchands et boutiques locales partenaires. Nopalou compare et oriente pour vous faire économiser au quotidien.</div>
       </div>
     </div>
   )

@@ -13,6 +13,7 @@ export async function GET(
 
   const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
   let prix: number | null = null
+  let commission = 2
   if (palier.id !== 'gratuit') {
     let prixPro = 15000
     let prixBusiness = 35000
@@ -22,9 +23,15 @@ export async function GET(
         const s = await r.json()
         prixPro = Number(s.plan_pro_prix) || 15000
         prixBusiness = Number(s.plan_business_prix) || 35000
+        commission = Number(s.commission_business) || 2
       }
     } catch { /* valeurs par défaut ci-dessus */ }
     prix = palier.id === 'pro' ? prixPro : prixBusiness
+  }
+
+  const avantages = [...palier.avantages]
+  if (palier.id === 'business') {
+    avantages.splice(1, 0, `Seulement ${commission}% de commission`)
   }
 
   return new ImageResponse(
@@ -117,7 +124,7 @@ export async function GET(
 
         {/* Liste avantages */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16, padding: '48px 80px 0' }}>
-          {palier.avantages.slice(0, 6).map(a => (
+          {avantages.slice(0, 6).map(a => (
             <div key={a} style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
               <span
                 style={{

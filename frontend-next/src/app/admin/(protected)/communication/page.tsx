@@ -186,28 +186,30 @@ Plus besoin d'ouvrir une app : comparez les prix, consultez les annonces immo, l
   },
 ]
 
-const ARGUMENTAIRE_B2B = [
-  {
-    titre: 'Visibilité gratuite immédiate',
-    detail: '30 jours d\'abonnement Pro offerts aux commerçants recrutés en phase de lancement — aucun engagement, on teste avant de payer.',
-  },
-  {
-    titre: 'Pas de commission cachée',
-    detail: 'Formule Business : 2% de commission seulement, clairement affiché — contre 5 à 15% chez Jumia selon catégorie. Coinafrique/Expat-Dakar n\'ont pas de commission mais pas de vitrine boutique non plus.',
-  },
-  {
-    titre: 'WhatsApp intégré',
-    detail: 'Les commandes arrivent directement là où le commerçant travaille déjà — pas un nouvel outil à apprendre, pas de app à installer.',
-  },
-  {
-    titre: 'Analytics inclus',
-    detail: 'Vues, contacts, performance de la boutique visibles depuis /boutique/analytics — gratuit, pas d\'option payante séparée.',
-  },
-  {
-    titre: 'Aucun développement requis',
-    detail: 'Création de boutique en ligne en quelques minutes, sans compétence technique.',
-  },
-]
+function getArgumentaireB2B(commissionBusiness: number) {
+  return [
+    {
+      titre: 'Visibilité gratuite immédiate',
+      detail: '30 jours d\'abonnement Pro offerts aux commerçants recrutés en phase de lancement — aucun engagement, on teste avant de payer.',
+    },
+    {
+      titre: 'Pas de commission cachée',
+      detail: `Formule Business : ${commissionBusiness}% de commission seulement, clairement affiché — contre 5 à 15% chez Jumia selon catégorie. Coinafrique/Expat-Dakar n'ont pas de commission mais pas de vitrine boutique non plus.`,
+    },
+    {
+      titre: 'WhatsApp intégré',
+      detail: 'Les commandes arrivent directement là où le commerçant travaille déjà — pas un nouvel outil à apprendre, pas de app à installer.',
+    },
+    {
+      titre: 'Analytics inclus',
+      detail: 'Vues, contacts, performance de la boutique visibles depuis /boutique/analytics — gratuit, pas d\'option payante séparée.',
+    },
+    {
+      titre: 'Aucun développement requis',
+      detail: 'Création de boutique en ligne en quelques minutes, sans compétence technique.',
+    },
+  ]
+}
 
 function getObjections(prixPro: number, commissionBusiness: number) {
   return [
@@ -372,6 +374,7 @@ export default async function CommunicationPage() {
     // fallback aux valeurs par défaut
   }
   const objections = getObjections(prixPro, commissionBusiness)
+  const argumentaireB2B = getArgumentaireB2B(commissionBusiness)
   const apporteurTexte = getApporteurTexte(tauxApporteur)
   const apporteurExemples = getApporteurExemples(prixPro, prixBusiness, tauxApporteur)
 
@@ -501,7 +504,7 @@ export default async function CommunicationPage() {
           💼 Argumentaire commercial
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {ARGUMENTAIRE_B2B.map((a, i) => (
+          {argumentaireB2B.map((a, i) => (
             <div key={a.titre} style={{
               border: '1px solid #E2E8F0', borderRadius: 10, padding: '16px 20px',
               background: '#fff', display: 'flex', gap: 14,
@@ -585,6 +588,120 @@ export default async function CommunicationPage() {
       </section>
 
       <hr style={{ border: 'none', borderTop: '2px solid #E2E8F0', margin: '48px 0' }} />
+
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1C2B4A', marginBottom: 6 }}>
+        📈 Rentabilité & Stratégie Commerciale
+      </h1>
+      <p style={{ color: '#64748B', marginBottom: 32, fontSize: 14 }}>
+        Éléments stratégiques pour comprendre la rentabilité de Nopalou et argumenter auprès des partenaires commerciaux.
+      </p>
+
+      {/* Positionnement et Différenciation */}
+      <section style={{ marginBottom: 48 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
+          🎯 Positionnement & Forces de la plateforme
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
+          <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 18, background: '#fff' }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', margin: '0 0 6px' }}>Comparateur Intelligent 🔍</p>
+            <p style={{ fontSize: 12, color: '#64748B', margin: 0, lineHeight: 1.6 }}>
+              Centralisation de milliers de produits, annonces immobilières et offres télécom. Permet aux acheteurs de comparer avant d'acheter au Sénégal sans faire le tour de plusieurs sites.
+            </p>
+          </div>
+          <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 18, background: '#fff' }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', margin: '0 0 6px' }}>WhatsApp Natif 💬</p>
+            <p style={{ fontSize: 12, color: '#64748B', margin: 0, lineHeight: 1.6 }}>
+              Aucune application à télécharger. Tout passe par l'outil quotidien des marchands et clients (chatbot, catalogue WhatsApp et panier multi-produits direct).
+            </p>
+          </div>
+          <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 18, background: '#fff' }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', margin: '0 0 6px' }}>Tarifs Compétitifs 💰</p>
+            <p style={{ fontSize: 12, color: '#64748B', margin: 0, lineHeight: 1.6 }}>
+              Seulement {commissionBusiness}% de commission sur la formule Business (contre 5% à 15% chez Jumia). Formule Pro fixe sans aucune commission sur les ventes.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Modèle Économique & Rentabilité */}
+      <section style={{ marginBottom: 48 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
+          📊 Modèle de Rentabilité & Coûts Fixes
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, flexWrap: 'wrap' }}>
+          <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 20, background: '#F8FAFC' }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', margin: '0 0 12px' }}>Coûts Fixes Mensuels (Est.)</h3>
+            <ul style={{ fontSize: 12, color: '#64748B', paddingLeft: 18, margin: 0, lineHeight: 1.8 }}>
+              <li>Hébergement Serveur/DB : ~25$ - 50$ / mois</li>
+              <li>Stockage d'images (Cloudinary) : Gratuit (ou payant au volume)</li>
+              <li>Emails (Resend) : Gratuit jusqu'à 3000/mois</li>
+              <li>Conversations WhatsApp API (Meta) : 1000 premières gratuites/mois</li>
+            </ul>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#1C2B4A', marginTop: 14, borderTop: '1px solid #E2E8F0', paddingTop: 8 }}>
+              Coût total estimé : &lt; 100$ (~60 000 FCFA) par mois au lancement.
+            </p>
+          </div>
+          <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 20, background: '#F8FAFC' }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', margin: '0 0 12px' }}>Seuil de Rentabilité</h3>
+            <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 12px', lineHeight: 1.6 }}>
+              Le seuil de rentabilité est très bas et peut être atteint avec seulement quelques boutiques abonnées :
+            </p>
+            <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 6 }}>
+              <tbody>
+                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={{ padding: '8px', fontWeight: 600 }}>5 Boutiques Pro</td>
+                  <td style={{ padding: '8px', color: '#C75B00', fontWeight: 700 }}>{fcfa(5 * prixPro)} / mois</td>
+                </tr>
+                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={{ padding: '8px', fontWeight: 600 }}>2 Boutiques Business</td>
+                  <td style={{ padding: '8px', color: '#1C2B4A', fontWeight: 700 }}>{fcfa(2 * prixBusiness)} / mois</td>
+                </tr>
+                <tr style={{ background: '#FFF7ED' }}>
+                  <td style={{ padding: '8px', fontWeight: 800 }}>Total Estimé</td>
+                  <td style={{ padding: '8px', color: '#C75B00', fontWeight: 800 }}>{fcfa(5 * prixPro + 2 * prixBusiness)} / mois</td>
+                </tr>
+              </tbody>
+            </table>
+            <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 8, fontStyle: 'italic' }}>
+              Suffisant pour couvrir l'infra. Les annonces payantes (1500 FCFA) et boosts (500 FCFA) s'ajoutent en pur bénéfice.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Guide des parcours */}
+      <section style={{ marginBottom: 48 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
+          🔄 Les Parcours d'Utilisation
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 20, background: '#fff' }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1d4ed8', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              🛒 Parcours Acheteur
+            </h3>
+            <ol style={{ fontSize: 12, color: '#64748B', paddingLeft: 18, margin: 0, lineHeight: 1.8 }}>
+              <li><strong>Recherche & Comparaison :</strong> L'acheteur recherche un produit sur le web ou sur WhatsApp, puis compare les offres côte à côte.</li>
+              <li><strong>Sélection & Alerte :</strong> Choix de l'offre la moins chère ou configuration d'une alerte prix en cas de baisse.</li>
+              <li><strong>Validation & Commande :</strong> Achat sur le site marchand ou envoi instantané d'un panier multi-produits par WhatsApp.</li>
+              <li><strong>Suivi de Livraison :</strong> Suivi du statut de la commande directement par message WhatsApp.</li>
+            </ol>
+          </div>
+          <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 20, background: '#fff' }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#C75B00', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              🏢 Parcours Marchand
+            </h3>
+            <ol style={{ fontSize: 12, color: '#64748B', paddingLeft: 18, margin: 0, lineHeight: 1.8 }}>
+              <li><strong>Création de Boutique :</strong> Inscription gratuite en 2 minutes avec possibilité de saisir un code apporteur.</li>
+              <li><strong>Configuration du Catalogue :</strong> Ajout de produits (images, prix, variantes) visibles immédiatement.</li>
+              <li><strong>Réception des Ventes :</strong> Les commandes des clients sont envoyées pré-remplies directement sur le WhatsApp du marchand.</li>
+              <li><strong>Suivi & Analytics :</strong> Consultation des vues et clics sur le tableau de bord pour optimiser les ventes.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <hr style={{ border: 'none', borderTop: '2px solid #E2E8F0', margin: '48px 0' }} />
+
 
       <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1C2B4A', marginBottom: 6 }}>
         💼 Programme apporteur d&apos;affaires

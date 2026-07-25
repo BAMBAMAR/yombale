@@ -36,7 +36,7 @@ router.get('/public', async (req, res) => {
                   'promo_active','promo_reduction',
                   'paiement_wave','paiement_orange','paiement_manuel_actif',
                   'paiement_manuel_numero_wave','paiement_manuel_numero_om',
-                  'apporteur_taux_commission'];
+                  'apporteur_taux_commission', 'commission_business'];
     const result = {};
     for (const k of keys) result[k] = await s.get(k);
     res.json(result);
