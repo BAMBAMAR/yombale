@@ -4,10 +4,8 @@
 //
 //  ✅ Scrapables : nova.sn, kanje.sn, electroniccorp.sn,
 //                  dakarmondialtelephone.com, dakarmarket.sn, kaynoo.sn,
-//                  masterofficedeco.sn, shop.afriqmarket.com, electroluxdakar.com
-//
-//  🛡️ Cloudflare (exclus) : jiji.sn, soumari.com, promo.sn,
-//                             electromenager-dakar.com, universcosmetix.com
+//                  masterofficedeco.sn, shop.afriqmarket.com, electroluxdakar.com,
+//                  soumari.com, promo.sn, electromenager-dakar.com, universcosmetix.com
 //
 //  Stratégie par priorité :
 //  1. Auto-découverte URL shop depuis homepage
@@ -313,6 +311,10 @@ const SITES_CONFIG = [
   { id: 'masterofficedeco',    nom: 'Master Office Déco',     baseUrl: 'https://masterofficedeco.sn' },
   { id: 'afriqmarket',         nom: 'AfriQ Market',           baseUrl: 'https://shop.afriqmarket.com' },
   { id: 'electroluxdakar',     nom: 'Electrolux Dakar',       baseUrl: 'https://electroluxdakar.com' },
+  { id: 'soumari',             nom: 'Soumari',                baseUrl: 'https://soumari.com' },
+  { id: 'promosn',             nom: 'Promo.sn',               baseUrl: 'https://promo.sn' },
+  { id: 'electromenagerdakar', nom: 'Electroménager Dakar',   baseUrl: 'https://electromenager-dakar.com' },
+  { id: 'universcosmetix',     nom: 'Univers Cosmetix',       baseUrl: 'https://universcosmetix.com' }
 ];
 
 // ── DIAGNOSTIC ───────────────────────────────────────────────

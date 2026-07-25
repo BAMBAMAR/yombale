@@ -13,30 +13,13 @@ const UA = [
 const randUA = () => UA[Math.floor(Math.random() * UA.length)];
 
 const CATS = {
-  expat:       [
-    'telephones-portables-et-tablettes',
-    'informatique',
-    'tv-video-photo',
-    'electromenager',
-    'mode-et-beaute',
-    'jeux-et-jouets',
-  ],
-  jumia:       [
-    'telephones-tablettes',
-    'informatique',
-    'tv-audio-video',
-    'electromenager',
-    'mode-et-accessoires',
-    'gaming',
-  ],
-  coinafrique: [
-    'telephonie',
-    'informatique-et-multimedia',
-    'electronique',
-    'electromenager',
-    'mode-et-beaute',
-    'jeux-et-jouets',
-  ],
+  expat:     ['telephones', 'tv-home-cinema', 'ordinateurs-accessoires', 'electromenager'],
+  jumia:     ['telephone-tablette', 'electronique', 'informatique', 'electromenager'],
+  coinafrique:['telephones-et-tablettes', 'electronique-et-video', 'ordinateurs-et-accessoires', 'electromenager'],
+  auchan:    ['104-epicerie-salee', '105-epicerie-sucree', '110-petit-dejeuner', '108-boissons'],
+  kaynoo:    ['produits-hightech', 'produits-electromenager', 'beaute-bien-etre', 'mode-sacs-accessoires'],
+  decathlon: ['3745-tous-les-sports'],
+  jiji:      ['mobile-phones', 'computers-and-accessories', 'tv-and-dvd-equipment', 'home-appliances']
 };
 
 const MARQUES = ['Samsung','Apple','Xiaomi','Tecno','Infinix','Oppo','Vivo','Huawei','Nokia',
@@ -132,12 +115,6 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function nettoyerPrix(t) {
   if (!t) return 0;
   let s = (t + '').trim();
-  // Supprimer la partie décimale AVANT de retirer les non-chiffres.
-  // Règle : séparateur (,/.) suivi de 1 ou 2 chiffres = décimale → supprimer.
-  //         séparateur suivi de 3 chiffres = séparateur de milliers → garder les chiffres.
-  // Ex :  "185 000,50 F" → "185 000 F" → 185000  ✓
-  //       "1 750,00"     → "1 750"     → 1750    ✓
-  //       "185.000 F"    → inchangé   → 185000  ✓  (3 chiffres, pas de suppression)
   s = s.replace(/[,.](\d{1,2})(?=\D|$)/g, '');
   const n = parseInt(s.replace(/[^0-9]/g, ''));
   return isNaN(n) || n < 100 ? 0 : n;
@@ -146,7 +123,6 @@ function nettoyerTitre(t) { return (t||'').trim().replace(/\s+/g,' ').slice(0,25
 function extraireMarque(titre) { const t=titre.toLowerCase(); return MARQUES.find(m=>t.includes(m.toLowerCase()))||null; }
 
 let _catCache=null;
-// Forcer rechargement du cache (utile après migration au démarrage)
 function invaliderCatCache() { _catCache = null; }
 async function getCatId(titre) {
   if(!_catCache){ const {rows}=await pool.query('SELECT id,slug FROM categories'); _catCache=rows; }
@@ -181,46 +157,71 @@ async function fetchPage(url, retries=3) {
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  SCRAPER 1 — Expat-Dakar
-//  Layout observé mai 2025 :
-//  <article class="listing-item">
-//    <a class="listing-title-link" href="/telephones/...">
-//      <h3 class="listing-title">Samsung A55</h3>
-//    </a>
-//    <span class="listing-price">175 000 FCFA</span>
-//    <img class="lazy listing-item-thumbnail" data-src="...">
-//  </article>
-// ══════════════════════════════════════════════════════
-async function scraperExpatDakar(categorie='telephones-portables-et-tablettes', maxPages=2) {
+async function scraperExpatDakar(categorie='telephones', maxPages=4) {
   const resultats=[], base=`https://www.expat-dakar.com/${categorie}`;
   console.log(`\n[EXPAT] ${base}`);
   for(let page=1;page<=maxPages;page++){
     const url=page===1?base:`${base}?page=${page}`;
     try{
       const html=await fetchPage(url), $=cheerio.load(html); let found=0;
-      const essais=[
-        { c:'article.listing-item',         t:'.listing-title,.listing-title-link,h3 a,.listing-card__title', p:'.listing-price,.listing-card__price,[class*="price"]',  l:'a.listing-title-link,a[href*="/telephones/"],a[href*="/annonce/"],a[href*="/detail/"]', i:'img.listing-item-thumbnail,img[data-src],img.lazy,img[src]' },
-        { c:'.listing-card',                 t:'.listing-card__title,h3',                                      p:'.listing-card__price,[class*="price"],[class*="prix"]',   l:'a[href]', i:'img[data-src],img[src]' },
-        { c:'.classified-item,.item-listing',t:'.item-title,h3',                                               p:'.item-price,.price',                                     l:'a[href]', i:'img' },
-        { c:'article',                       t:'h3,h2,.title,[class*="title"],[class*="name"]',                p:'[class*="price"],[class*="prix"],[class*="amount"]',      l:'a[href]', i:'img[src],img[data-src]' },
-      ];
-      for(const s of essais){
-        const items=$(s.c); if(!items.length) continue;
-        items.each((_,el)=>{
-          const titre=nettoyerTitre($(el).find(s.t).first().text()||$(el).find(s.l).first().attr('title'));
-          const prix=nettoyerPrix($(el).find(s.p).first().text());
-          let href=$(el).find(s.l).first().attr('href')||'';
-          if(href&&!href.startsWith('http')) href=`https://www.expat-dakar.com${href}`;
-          const img=$(el).find(s.i).first().attr('data-src')||$(el).find(s.i).first().attr('src')||null;
-          if(titre.length>3&&prix>500){ resultats.push({titre,prix,url:href,image_url:img}); found++; }
-        });
-        if(found>0){ console.log(`[EXPAT] Page ${page}: ${found} (sélecteur "${s.c}")`); break; }
-      }
-      if(found===0){
-        const snippet=$.html().replace(/\s+/g,' ').slice(0,600);
-        console.warn(`[EXPAT] Page ${page}: 0 résultat. Début HTML: ${snippet}`);
-        break;
+      $('script[type="application/ld+json"]').each((_, el) => {
+        try {
+          const ld = JSON.parse($(el).html() || '{}');
+          const graph = ld['@graph'] || [ld];
+          for (const node of graph) {
+            if (node['@type'] === 'WebPage' && node.mainEntity && node.mainEntity['@type'] === 'ItemList') {
+              const items = node.mainEntity.itemListElement || [];
+              for (const it of items) {
+                const prod = it.item;
+                if (!prod || prod['@type'] !== 'Product') continue;
+                
+                const titre = nettoyerTitre(prod.name);
+                let prix = 0;
+                if (prod.offers && prod.offers.priceSpecification && prod.offers.priceSpecification.price) {
+                  prix = parseInt(prod.offers.priceSpecification.price, 10);
+                } else if (prod.offers && prod.offers.price) {
+                  prix = parseInt(prod.offers.price, 10);
+                }
+                
+                let href = prod.url || '';
+                if (href && !href.startsWith('http')) href = `https://www.expat-dakar.com${href}`;
+                
+                let img = null;
+                if (prod.image) {
+                  img = typeof prod.image === 'string' ? prod.image : (prod.image.url || prod.image.contentUrl);
+                }
+                
+                if (titre.length > 3 && prix > 500) {
+                  resultats.push({ titre, prix, url: href, image_url: img });
+                  found++;
+                }
+              }
+            }
+          }
+        } catch (e) {}
+      });
+      
+      if (found > 0) {
+        console.log(`[EXPAT] Page ${page}: ${found} résultats (via JSON-LD)`);
+      } else {
+        const essais=[
+          { c:'article.listing-item',         t:'.listing-title,.listing-title-link,h3 a,.listing-card__title', p:'.listing-price,.listing-card__price,[class*="price"]',  l:'a.listing-title-link,a[href*="/telephones/"],a[href*="/annonce/"],a[href*="/detail/"]', i:'img.listing-item-thumbnail,img[data-src],img.lazy,img[src]' },
+          { c:'.listing-card',                 t:'.listing-card__title,h3',                                      p:'.listing-card__price,[class*="price"],[class*="prix"]',   l:'a[href]', i:'img[data-src],img[src]' },
+          { c:'.classified-item,.item-listing',t:'.item-title,h3',                                               p:'.item-price,.price',                                     l:'a[href]', i:'img' },
+          { c:'article',                       t:'h3,h2,.title,[class*="title"],[class*="name"]',                p:'[class*="price"],[class*="prix"],[class*="amount"]',      l:'a[href]', i:'img[src],img[data-src]' },
+        ];
+        for(const s of essais){
+          const items=$(s.c); if(!items.length) continue;
+          items.each((_,el)=>{
+            const titre=nettoyerTitre($(el).find(s.t).first().text()||$(el).find(s.l).first().attr('title'));
+            const prix=nettoyerPrix($(el).find(s.p).first().text());
+            let href=$(el).find(s.l).first().attr('href')||'';
+            if(href&&!href.startsWith('http')) href=`https://www.expat-dakar.com${href}`;
+            const img=$(el).find(s.i).first().attr('data-src')||$(el).find(s.i).first().attr('src')||null;
+            if(titre.length>3&&prix>500){ resultats.push({titre,prix,url:href,image_url:img}); found++; }
+          });
+          if(found>0){ console.log(`[EXPAT] Page ${page}: ${found} (sélecteur "${s.c}")`); break; }
+        }
       }
     }catch(err){ console.error(`[EXPAT] Page ${page}:`,err.message); }
     await sleep(2000+Math.random()*1000);
@@ -228,30 +229,12 @@ async function scraperExpatDakar(categorie='telephones-portables-et-tablettes', 
   console.log(`[EXPAT] Total: ${resultats.length}`); return resultats;
 }
 
-// ══════════════════════════════════════════════════════
-//  SCRAPER 2 — Jumia Sénégal
-//
-//  Jumia tourne sur Next.js : les produits sont dans
-//  <script id="__NEXT_DATA__"> (JSON) et ne sont PAS
-//  dans le DOM statique — les sélecteurs CSS seuls échouent.
-//
-//  Stratégies par ordre de priorité :
-//   1. __NEXT_DATA__ (Next.js) — JSON complet embarqué
-//   2. JSON-LD  (<script type="application/ld+json">)
-//   3. data-gtm-* / attributs data du catalogue
-//   4. Sélecteurs CSS (fallback SSR / layout futur)
-// ══════════════════════════════════════════════════════
-
-// Extrait les produits depuis le JSON __NEXT_DATA__ de Jumia.
-// La structure peut varier entre versions Next.js — on explore récursivement.
 function _extraireProduitsNextData(obj, resultats, baseUrl, profondeur = 0) {
   if (!obj || typeof obj !== 'object' || profondeur > 8) return;
-  // Tableau de produits identifié par la présence des clés typiques Jumia
   if (Array.isArray(obj)) {
     for (const item of obj) _extraireProduitsNextData(item, resultats, baseUrl, profondeur + 1);
     return;
   }
-  // Objet produit Jumia : possède "name" + un champ prix
   const nom = obj.name || obj.title || obj.product_name;
   const prixBrut = obj.price || obj.special_price || obj.prices?.current ||
                    obj.prices?.original || obj.selling_price;
@@ -263,13 +246,13 @@ function _extraireProduitsNextData(obj, resultats, baseUrl, profondeur = 0) {
     const href = url ? (url.startsWith('http') ? url : `${baseUrl}${url}`) : baseUrl;
     if (prix > 500 && nom.length > 3) {
       resultats.push({ titre: nettoyerTitre(nom), prix, url: href, image_url: img || null });
-      return; // ne pas descendre dans les enfants d'un objet produit déjà traité
+      return;
     }
   }
   for (const val of Object.values(obj)) _extraireProduitsNextData(val, resultats, baseUrl, profondeur + 1);
 }
 
-async function scraperJumia(categorie='telephones-tablettes', maxPages=3) {
+async function scraperJumia(categorie='telephone-tablette', maxPages=5) {
   const resultats=[], base=`https://www.jumia.sn/${categorie}/`;
   console.log(`\n[JUMIA] ${base}`);
 
@@ -280,7 +263,6 @@ async function scraperJumia(categorie='telephones-tablettes', maxPages=3) {
       const html=await fetchPage(url);
       const $=cheerio.load(html);
 
-      // ── Stratégie 1 : __NEXT_DATA__ ───────────────────────────
       const nextRaw = $('#__NEXT_DATA__').html() || $('script#__NEXT_DATA__').html();
       if (nextRaw) {
         try {
@@ -292,7 +274,6 @@ async function scraperJumia(categorie='telephones-tablettes', maxPages=3) {
         } catch (e) { console.warn('[JUMIA] __NEXT_DATA__ parse error:', e.message); }
       }
 
-      // ── Stratégie 2 : JSON-LD ──────────────────────────────────
       if (found === 0) {
         $('script[type="application/ld+json"]').each((_, el) => {
           try {
@@ -313,10 +294,8 @@ async function scraperJumia(categorie='telephones-tablettes', maxPages=3) {
             }
           } catch {}
         });
-        if (found > 0) console.log(`[JUMIA] Page ${page}: ${found} via JSON-LD`);
       }
 
-      // ── Stratégie 3 : attributs data-gtm / data-* ─────────────
       if (found === 0) {
         $('[data-gtm-product],[data-product],[data-item]').each((_, el) => {
           try {
@@ -332,10 +311,8 @@ async function scraperJumia(categorie='telephones-tablettes', maxPages=3) {
             }
           } catch {}
         });
-        if (found > 0) console.log(`[JUMIA] Page ${page}: ${found} via data-gtm-product`);
       }
 
-      // ── Stratégie 4 : sélecteurs CSS (SSR / layout futur) ─────
       if (found === 0) {
         const essais=[
           { c:'article.prd',           t:'p.name,h3.name,.name',              p:'div.prc,.prc,.price--current', l:'a.core,a[href]', i:'img.img,img[data-src],img[src]' },
@@ -359,11 +336,6 @@ async function scraperJumia(categorie='telephones-tablettes', maxPages=3) {
       }
 
       if(found===0){
-        // Log les 800 premiers chars pour faciliter le diagnostic
-        const snippet=$.html().replace(/\s+/g,' ').slice(0,800);
-        console.warn(`[JUMIA] Page ${page}: 0 résultat sur toutes les stratégies.`);
-        console.warn(`[JUMIA] HTML début: ${snippet}`);
-        console.warn(`[JUMIA] __NEXT_DATA__ présent: ${!!nextRaw}, taille: ${nextRaw?.length||0}`);
         break;
       }
     }catch(err){ console.error(`[JUMIA] Page ${page}:`,err.message); }
@@ -372,19 +344,7 @@ async function scraperJumia(categorie='telephones-tablettes', maxPages=3) {
   console.log(`[JUMIA] Total: ${resultats.length}`); return resultats;
 }
 
-// ══════════════════════════════════════════════════════
-//  SCRAPER 3 — CoinAfrique Sénégal
-//  Layout observé mai 2025 :
-//  <div class="col s6">
-//    <a href="/annonce/123456">
-//      <div class="card">
-//        <p class="ad__card-price">45 000 CFA</p>
-//        <p class="ad__card-description">Samsung Galaxy A32</p>
-//      </div>
-//    </a>
-//  </div>
-// ══════════════════════════════════════════════════════
-async function scraperCoinAfrique(categorie='telephonie', maxPages=2) {
+async function scraperCoinAfrique(categorie='telephones-et-tablettes', maxPages=4) {
   const resultats=[], base=`https://sn.coinafrique.com/categorie/${categorie}`;
   console.log(`\n[COIN] ${base}`);
   for(let page=1;page<=maxPages;page++){
@@ -415,12 +375,184 @@ async function scraperCoinAfrique(categorie='telephonie', maxPages=2) {
   console.log(`[COIN] Total: ${resultats.length}`); return resultats;
 }
 
+async function scraperKaynoo(categorie='produits-hightech', maxPages=3) {
+  const resultats = [];
+  const base = `https://www.kaynoo.sn/${categorie}`;
+  console.log(`\n[KAYNOO] ${base}`);
+  for (let page = 1; page <= maxPages; page++) {
+    const url = page === 1 ? `${base}.html` : `${base}.html?p=${page}`;
+    try {
+      const html = await fetchPage(url);
+      const $ = cheerio.load(html);
+      let found = 0;
+      $('.product-item').each((_, el) => {
+        const titre = nettoyerTitre($(el).find('.product-item-name a').text());
+        const prixStr = $(el).find('.price').first().text();
+        const prix = nettoyerPrix(prixStr);
+        let href = $(el).find('.product-item-name a').attr('href') || '';
+        const img = $(el).find('.product-image-photo').attr('src') || $(el).find('.product-image-photo').attr('data-src') || null;
+        if (titre.length > 3 && prix > 500) {
+          resultats.push({ titre, prix, url: href, image_url: img });
+          found++;
+        }
+      });
+      if (found > 0) {
+        console.log(`[KAYNOO] Page ${page}: ${found} résultats`);
+      } else {
+        console.warn(`[KAYNOO] Page ${page}: 0 résultat`);
+        break;
+      }
+    } catch (err) {
+      console.error(`[KAYNOO] Page ${page}:`, err.message);
+    }
+    await sleep(2000 + Math.random() * 1000);
+  }
+  console.log(`[KAYNOO] Total: ${resultats.length}`); return resultats;
+}
+
+async function scraperAuchan(categorie='137-boissons', maxPages=3) {
+  const resultats = [];
+  const base = `https://www.auchan.sn/${categorie}`;
+  console.log(`\n[AUCHAN] ${base}`);
+  for (let page = 1; page <= maxPages; page++) {
+    const url = page === 1 ? base : `${base}?page=${page}`;
+    try {
+      const html = await fetchPage(url);
+      const $ = cheerio.load(html);
+      let found = 0;
+      $('.product-miniature, article, .item').each((_, el) => {
+        const titre = nettoyerTitre($(el).find('.product-title a, h3, h2, .name').text());
+        const prixStr = $(el).find('.product-price, .price, [itemprop="price"]').text();
+        const prix = nettoyerPrix(prixStr);
+        let href = $(el).find('.product-title a, a.thumbnail, a').attr('href') || '';
+        if (href && !href.startsWith('http')) href = `https://www.auchan.sn${href}`;
+        const img = $(el).find('img').attr('src') || $(el).find('img').attr('data-src') || null;
+        if (titre.length > 3 && prix > 500) {
+          resultats.push({ titre, prix, url: href, image_url: img });
+          found++;
+        }
+      });
+      if (found === 0) {
+        const scriptMatch = html.match(/"products":(\[.*?\]),"totals"/);
+        if (scriptMatch) {
+          try {
+            const arr = JSON.parse(scriptMatch[1]);
+            for (const prod of arr) {
+              const titre = nettoyerTitre(prod.name);
+              const prix = nettoyerPrix(prod.price);
+              const href = prod.url || '';
+              const img = prod.cover?.url || null;
+              if (titre && prix > 500) {
+                resultats.push({ titre, prix, url: href, image_url: img });
+                found++;
+              }
+            }
+          } catch(e) {}
+        }
+      }
+      if (found > 0) {
+        console.log(`[AUCHAN] Page ${page}: ${found} résultats`);
+      } else {
+        console.warn(`[AUCHAN] Page ${page}: 0 résultat`);
+        break;
+      }
+    } catch (err) {
+      console.error(`[AUCHAN] Page ${page}:`, err.message);
+    }
+    await sleep(2000 + Math.random() * 1000);
+  }
+  console.log(`[AUCHAN] Total: ${resultats.length}`); return resultats;
+}
+
 // ══════════════════════════════════════════════════════
-//  SAUVEGARDE EN BASE
+//  SCRAPER 6 — Decathlon (Next.js data-src JSON)
 // ══════════════════════════════════════════════════════
-// ── Prix médian de référence par catégorie — TTL 1h ──────────────
-const _prixMedianCache = {}; // { categorieId: { valeur, expireAt } }
-const MEDIAN_TTL_MS = 60 * 60 * 1000;
+async function scraperDecathlon(categorie = '3745-tous-les-sports', maxPages = 2) {
+  const resultats = [], base = `https://www.decathlon.sn/${categorie}`;
+  console.log(`\n[DECATHLON] ${base}`);
+  for (let page = 1; page <= maxPages; page++) {
+    const url = page === 1 ? base : `${base}?page=${page}`;
+    try {
+      const html = await fetchPage(url);
+      const $ = cheerio.load(html);
+      let found = 0;
+
+      $('script[type="application/json"][data-src]').each((_, el) => {
+        try {
+          const jsonText = $(el).html();
+          if (jsonText && jsonText.includes('"price"')) {
+            const data = JSON.parse(jsonText);
+            const items = data[0]; 
+            if (Array.isArray(items)) {
+              for (const p of items) {
+                if (p.title && p.price && p.price.amountRaw) {
+                  const titre = nettoyerTitre(p.title);
+                  const prix = parseInt(p.price.amountRaw, 10);
+                  const url = p.cardLinkUrl || '';
+                  const img = p.image ? p.image.url : null;
+                  
+                  if (titre.length > 3 && prix > 500) {
+                    resultats.push({ titre, prix, url, image_url: img });
+                    found++;
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {}
+      });
+
+      console.log(`[DECATHLON] Page ${page}: ${found} résultats`);
+      if (found === 0) break;
+    } catch (err) {
+      console.error(`[DECATHLON] Page ${page}:`, err.message);
+      break;
+    }
+    await sleep(2000);
+  }
+  console.log(`[DECATHLON] Total: ${resultats.length}`);
+  return resultats;
+}
+
+// ══════════════════════════════════════════════════════
+//  SCRAPER 7 — Jiji Sénégal
+// ══════════════════════════════════════════════════════
+async function scraperJiji(categorie = 'mobile-phones', maxPages = 4) {
+  const resultats = [], base = `https://jiji.sn/${categorie}`;
+  console.log(`\n[JIJI] ${base}`);
+  for (let page = 1; page <= maxPages; page++) {
+    const url = page === 1 ? base : `${base}?page=${page}`;
+    try {
+      const html = await fetchPage(url);
+      const $ = cheerio.load(html);
+      let found = 0;
+
+      $('.b-list-advert-base').each((_, el) => {
+        const titre = nettoyerTitre($(el).find('.qa-advert-title').text());
+        const prixTxt = $(el).find('.qa-advert-price').text();
+        const prix = nettoyerPrix(prixTxt);
+        let href = $(el).attr('href') || '';
+        if (href && !href.startsWith('http')) href = `https://jiji.sn${href}`;
+        const img = $(el).find('img').first().attr('src') || $(el).find('img').first().attr('data-src') || null;
+
+        if (titre.length > 3 && prix > 500) {
+          resultats.push({ titre, prix, url: href, image_url: img });
+          found++;
+        }
+      });
+
+      console.log(`[JIJI] Page ${page}: ${found} résultats`);
+      if (found === 0) break;
+    } catch (err) {
+      console.error(`[JIJI] Page ${page}:`, err.message);
+      break;
+    }
+    await sleep(2000);
+  }
+  console.log(`[JIJI] Total: ${resultats.length}`);
+  return resultats;
+}
+
 async function getPrixMedianCategorie(categorieId) {
   const cached = _prixMedianCache[categorieId];
   if (cached && cached.expireAt > Date.now()) return cached.valeur;
@@ -437,22 +569,11 @@ async function getPrixMedianCategorie(categorieId) {
   } catch { return null; }
 }
 
-// ── RAM/stockage explicitement labellisés (ex: "Ram 12Go - Memoire 128Go",
-// "128Go/RAM 8Go", "ROM 16Go") — cherchés en priorité car sans ambiguïté,
-// y compris quand RAM et stockage sont séparés par d'autres mots (écran, 5G…).
-// "gb" (anglicisme fréquent chez certains marchands) accepté comme "go".
 const RAM_LABEL_RE   = /\bram\s*:?\s*(\d+)\s*g[ob]\b/;
 const STOCKAGE_LABEL_RE = /\b(?:memoire|rom|stockage)\s*:?\s*(\d+)\s*g[ob]\b/;
-// Stockage en téraoctets (ex: "1To", "1 tb") — converti en Go (×1024).
 const STOCKAGE_TO_RE = /\b(\d+(?:[.,]\d+)?)\s*t[ob]\b/;
-// Motif ambigu "Xgo/gb [/ ]ram[/ ]Ygo/gb" (stockage et RAM de part et
-// d'autre du mot "ram", séparés par un espace ou un "/", ordre variable).
 const RAM_DOUBLE_RE = /(\d+)\s*g[ob]\s*[/]?\s*ram\s*[/]?\s*(\d+)\s*g[ob]/;
 
-// ── RAM (Go) déduite du titre — priorité au libellé explicite "Ram Xgo",
-// sinon motif ambigu ci-dessus : la RAM étant toujours ≤ au stockage, on
-// retient le plus petit des deux.
-// `s` doit déjà être en minuscules/normalisé (voir prixPlancher/extraireSpecs).
 function extraireRamGo(s) {
   const label = s.match(RAM_LABEL_RE);
   if (label) return parseInt(label[1]);
@@ -462,11 +583,6 @@ function extraireRamGo(s) {
   return ram ? parseInt(ram[1]) : null;
 }
 
-// ── Stockage (Go) déduit du titre — priorité au libellé explicite
-// "Memoire/ROM/Stockage Xgo", puis "XTo" (téraoctets, ×1024), sinon motif
-// double ambigu (le plus grand des deux), sinon le premier "Xgo" non suivi
-// de "ram". Exclut cartes mémoire/clés USB/SSD et tablettes enfants
-// (stockage souvent gonflé).
 function extraireStockageGo(s) {
   const label = s.match(STOCKAGE_LABEL_RE);
   const to = !label && s.match(STOCKAGE_TO_RE);
@@ -487,19 +603,11 @@ function extraireStockageGo(s) {
   return parseInt(sto[1]);
 }
 
-// ── Puissance climatiseur (BTU). `s` normalisé (voir prixPlancher/extraireSpecs).
-// N'inclut PAS le CV (voir extraireBtuAffichage) : prixPlancher utilise déjà
-// un plancher flat pour "climatiseur/split" générique qui couvre ces cas,
-// et convertir le CV ici changerait ce plancher pour des offres existantes.
 function extraireBtu(s) {
   const btu = s.match(/(\d[\d\s]*)\s*btu/);
   return btu ? parseInt(btu[1].replace(/\s/g, '')) : null;
 }
 
-// ── Puissance climatiseur pour l'affichage (specs) — BTU, ou "X,XXcv"
-// (chevaux) convertis en BTU-équivalent (1 CV clim ≈ 3500 BTU/h, conversion
-// standard du secteur). Distinct de extraireBtu (utilisé par prixPlancher)
-// pour ne pas modifier l'heuristique de correction de prix existante.
 function extraireBtuAffichage(s) {
   const btu = extraireBtu(s);
   if (btu != null) return btu;
@@ -507,33 +615,23 @@ function extraireBtuAffichage(s) {
   return cv ? Math.round(parseFloat(cv[1].replace(',', '.')) * 3500) : null;
 }
 
-// ── Capacité réfrigérateur/congélateur (litres).
 function extraireLitres(s) {
   const vol = s.match(/(\d{2,3})\s*(?:litres?|l)\b/);
   return vol ? parseInt(vol[1]) : null;
 }
 
-// ── Capacité machine à laver (kg) — exclut le kg de séchage secondaire
-// (ex: "12KG+SECH 6KG" → retient le premier nombre, capacité de lavage).
 function extraireKg(s) {
   const kg = s.match(/(\d{1,2})\s*kg\b/);
   return kg ? parseInt(kg[1]) : null;
 }
 
-// ── Prix plancher déduit du titre (taille écran, RAM, BTU, audio…) ─
-// Permet de détecter une division par 100/1000 même sur offre unique.
 function prixPlancher(titre) {
   const s = ' ' + (titre || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'') + ' ';
 
-  // ── Accessoires : pas de plancher d'appareil complet (sacoche/chargeur
-  // pour "ordinateur portable" ne coûte pas le prix d'un ordinateur) ──
   if (/\b(chargeur|cable|câble|adaptateur|support|housse|etui|étui|coque|sacoche|protection ecran|film de protection|verre trempe|batterie externe|power\s*bank|powerbank)\b/.test(s)) {
     return null;
   }
 
-  // ── Taille écran TV/PC/moniteur (pouces ou ") ──────────────────
-  // Capture les valeurs décimales (ex: "6.78 pouces") pour ne pas lire
-  // "6.78"" comme "78 pouces"
   const ecran = s.match(/(\d+(?:[.,]\d+)?)\s*(?:pouces?|["″»]|\binch)/);
   if (ecran) {
     const p = parseFloat(ecran[1].replace(',', '.'));
@@ -543,12 +641,9 @@ function prixPlancher(titre) {
     if (p >= 43) return  80_000;
     if (p >= 32) return  40_000;
     if (p >= 24) return  25_000;
-    if (p >= 13) return  20_000; // laptop/tablette
+    if (p >= 13) return  20_000;
   }
 
-  // ── Taille TV standalone (sans unité mais TV explicite) ───────
-  // Couvre "Televiseur Samsung 43 Smart" ou "TV Astech 98 Google TV"
-  // Liste blanche de tailles standard TV pour éviter les faux positifs
   if (/televiseur|television/.test(s)) {
     const tvSize = s.match(/\b(32|40|43|50|55|58|65|70|75|80|85|86|90|98|100|105)\b/);
     if (tvSize) {
@@ -561,7 +656,6 @@ function prixPlancher(titre) {
     }
   }
 
-  // ── RAM smartphone/PC ──────────────────────────────────────────
   const r = extraireRamGo(s);
   if (r != null) {
     if (r >= 12) return 150_000;
@@ -570,9 +664,6 @@ function prixPlancher(titre) {
     if (r >= 4)  return  30_000;
   }
 
-  // ── Stockage seul (≥ 128 Go) — exclut cartes mémoire/clés USB/SSD et
-  // tablettes enfants/entrée de gamme : leur stockage annoncé est souvent
-  // gonflé (marketing/microSD) alors que l'appareil reste très bon marché ──
   const st = extraireStockageGo(s);
   if (st != null) {
     if (st >= 512) return 200_000;
@@ -580,7 +671,6 @@ function prixPlancher(titre) {
     if (st >= 128) return  50_000;
   }
 
-  // ── BTU climatiseur ────────────────────────────────────────────
   const b = extraireBtu(s);
   if (b != null) {
     if (b >= 18000) return 300_000;
@@ -589,7 +679,6 @@ function prixPlancher(titre) {
     if (b >=  5000) return  80_000;
   }
 
-  // ── Réfrigérateur / congélateur (litres) ──────────────────────
   const v = /frigo|refrig|congelat/.test(s) ? extraireLitres(s) : null;
   if (v != null) {
     if (v >= 400) return 400_000;
@@ -602,9 +691,8 @@ function prixPlancher(titre) {
   if (/congelateur|congelat/.test(s))                        return 100_000;
   if (/climatiseur|split |clim\b/.test(s))                   return 100_000;
 
-  // ── Audio — modèles haut de gamme (référence exacte) ──────────
-  if (/wh.?1000xm\d/.test(s))                               return 150_000; // Sony XM3/4/5
-  if (/wh.?ch\d{3}|wh.?xb\d{3}/.test(s))                   return  30_000; // Sony entrée gamme
+  if (/wh.?1000xm\d/.test(s))                               return 150_000;
+  if (/wh.?ch\d{3}|wh.?xb\d{3}/.test(s))                   return  30_000;
   if (/airpods?\s*pro|airpods?\s*max/.test(s))              return 100_000;
   if (/airpods?\b/.test(s))                                  return  50_000;
   if (/bose\s*(quietcomfort|qc\d|700|nc\d)/.test(s))        return 150_000;
@@ -618,7 +706,6 @@ function prixPlancher(titre) {
   if (/harman kardon/.test(s))                               return  80_000;
   if (/beats\s*(studio|pro|solo|fit)/.test(s))              return  80_000;
 
-  // ── Audio — type de produit ────────────────────────────────────
   if (/casque\s*(noise.cancell|anc|sans.fil|bluetooth|actif)/.test(s)) return 30_000;
   if (/casque\s*(sony|bose|jbl|sennheiser|beats|anker)/.test(s))       return 50_000;
   if (/casque audio|casque stereo|casque hifi/.test(s))                 return 12_000;
@@ -628,44 +715,33 @@ function prixPlancher(titre) {
   if (/enceinte\s*(bluetooth|portable|sans.fil)/.test(s))              return 15_000;
   if (/enceinte\s*(hifi|home.cinema|barre.de.son)/.test(s))            return 50_000;
 
-  // ── Montre connectée ───────────────────────────────────────────
   if (/smartwatch|montre connectee|montre intelligente/.test(s))        return 15_000;
-
-  // ── Laptop / ordinateur ────────────────────────────────────────
   if (/macbook|chromebook/.test(s))                          return 200_000;
   if (/laptop|ordinateur portable|pc portable/.test(s))      return 150_000;
   if (/ordinateur de bureau|pc bureau|tour pc/.test(s))      return 100_000;
   if (/imprimante laser/.test(s))                            return  80_000;
   if (/imprimante/.test(s))                                  return  30_000;
-
-  // ── Tablette ───────────────────────────────────────────────────
   if (/ipad\b/.test(s))                                      return 150_000;
   if (/tablette\s*(android|samsung|huawei|lenovo)/.test(s))  return  60_000;
-
-  // ── Caméra / photo ─────────────────────────────────────────────
   if (/reflex|mirrorless|appareil photo/.test(s))            return 150_000;
   if (/camera\s*(ip|surveillance|360)/.test(s))              return  15_000;
 
-  // ── TV sans dimension précisée mais avec marque ───────────────
   if (/(hisense|lg|samsung|tcl|sony|philips)\s*(tv|television|tele|televiseur)/.test(s)) return 80_000;
   if (/\b(tv|tele|television)\b|televiseur/.test(s))         return  50_000;
 
-  return null; // pas de signal → pas de plancher
+  return null;
 }
 
-// ── Correction prix XOF (division par 100/1000) ───────────────────
 function corrigerPrixXOF(prix) {
   if (prix <= 0) return null;
   if (prix < 500) return null;
   return prix;
 }
 
-// Applique la correction ×100/×1000 (prix trop bas) ou ÷100/÷1000 (prix trop haut).
 function corrigerPrixParPlancher(prix, titre) {
   const plancher = prixPlancher(titre);
   if (!plancher) return prix;
 
-  // ── Correction ascendante : prix trop bas ─────────────────────
   if (prix < plancher) {
     const p100  = prix * 100;
     const p1000 = prix * 1000;
@@ -679,8 +755,6 @@ function corrigerPrixParPlancher(prix, titre) {
     }
   }
 
-  // ── Correction descendante : prix trop haut (÷100 ou ÷1000) ──
-  // Seuil : prix > plancher × 100 (clairement aberrant vers le haut)
   if (prix > plancher * 100) {
     const d100  = Math.round(prix / 100);
     const d1000 = Math.round(prix / 1000);
@@ -694,16 +768,14 @@ function corrigerPrixParPlancher(prix, titre) {
     }
   }
 
-  return prix; // aucune correction applicable
+  return prix;
 }
 
-// Extrait la taille d'écran en pouces depuis un titre (ex: "43"" → 43, "98 pouces" → 98)
 function extrairePouce(titre) {
   const m = (titre || '').match(/\b(\d{2,3})\s*(?:pouces?|"|\binch)/i);
   return m ? parseInt(m[1], 10) : null;
 }
 
-// ── Couleurs reconnues (FR + variantes EN fréquentes sur Jumia/CoinAfrique) ──
 const COULEURS = [
   { re: /\b(noir|black)\b/,        nom: 'Noir' },
   { re: /\b(blanc|white)\b/,       nom: 'Blanc' },
@@ -718,8 +790,6 @@ const COULEURS = [
   { re: /\b(jaune|yellow)\b/,      nom: 'Jaune' },
 ];
 
-// ── État de l'appareil — même vocabulaire que normaliserTitre (ligne ~794),
-// mais capture la valeur ici au lieu de la supprimer du texte.
 function extraireEtat(s) {
   if (/\breconditionn[ée]\b/.test(s)) return 'reconditionne';
   if (/\bcomme neuf\b|\boccasion\b/.test(s)) return 'occasion';
@@ -727,11 +797,6 @@ function extraireEtat(s) {
   return null;
 }
 
-// ── Specs structurées extraites du titre brut scrapé — purement informatif
-// pour l'affichage, ne touche jamais au pipeline de matching produit
-// (normaliserTitre / similarity trigram). Les attributs par catégorie
-// (BTU, litres, kg, pouces) sont conditionnés à un mot-clé de type détecté
-// dans le titre pour éviter les faux positifs entre catégories.
 function extraireSpecs(titre) {
   const s = ' ' + (titre || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'') + ' ';
   const couleur = COULEURS.find(c => c.re.test(s));
@@ -754,32 +819,23 @@ function extraireSpecs(titre) {
 async function sauvegarderProduits(items, marchandNom, siteUrl) {
   const marchandId=await getMarchandId(marchandNom,siteUrl);
   const stats={inseres:0,mis_a_jour:0,erreurs:0,filtres:0};
-  const produitsModifies = new Set(); // pour le batch update final
+  const produitsModifies = new Set();
 
   for(const item of items){
     try{
-      // ── Pré-filtre et correction prix ────────────────────────
       const prixVerifie = corrigerPrixXOF(item.prix);
       if (prixVerifie === null) {
-        console.warn('[PRIX] Rejeté (trop bas) :', item.titre, '→', item.prix, 'FCFA');
         stats.filtres++;
         continue;
       }
-      // Correction ×100/×1000 si le prix est sous le plancher du titre
-      // Ex : TV 98" à 17 325 FCFA → 1 732 500 FCFA
       item.prix = corrigerPrixParPlancher(prixVerifie, item.titre);
       let produitId;
 
-      // 1. Correspondance exacte EAN (si dispo)
       if(item.ean){
         const {rows:byEan}=await pool.query('SELECT id FROM produits WHERE ean=$1 LIMIT 1',[item.ean]);
         if(byEan.length>0){ produitId=byEan[0].id; stats.mis_a_jour++; }
       }
 
-      // 1bis. Correspondance EXACTE sur nom normalisé — couvre les titres composés
-      // uniquement de mots génériques ("Split Haier", "iPhone X") pour lesquels
-      // motsCles est vide et l'étape 2 est sautée, ainsi que les apostrophes
-      // ("J'adore EDP 100ml") que le LIKE de l'étape 2 ne matche jamais.
       if(!produitId){
         const {rows:byNom}=await pool.query(
           `SELECT id FROM produits WHERE ${sqlNomNormalise('nom')} = ${sqlNomNormalise('$1')} LIMIT 1`,
@@ -788,10 +844,8 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         if(byNom.length>0){ produitId=byNom[0].id; stats.mis_a_jour++; }
       }
 
-      // 2. Correspondance par similarité sur le nom normalisé
       if(!produitId){
         const nomNorm = normaliserTitre(item.titre);
-        // Extraire mots-clés discriminants (modèle, référence) — exclure les marques génériques
         const motsCles = nomNorm.split(/\s+/).filter(m => m.length >= 3 && !MOTS_GENERIQUES.has(m)).slice(0, 4);
         if(motsCles.length > 0){
           const {rows:fuzzy}=await pool.query(
@@ -803,20 +857,13 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
              ORDER BY sim DESC LIMIT 3`,
             [nomNorm, motsCles[0].toLowerCase(), '%' + motsCles.slice(0,2).join('%').toLowerCase() + '%']
           );
-          // Seuil 0.65 : "Galaxy Buds" vs "Galaxy A55" → ~0.61 → rejeté correctement
           if(fuzzy.length > 0 && (fuzzy[0].sim > 0.65 || _motsClesCommuns(item.titre, fuzzy[0].nom) >= 2)){
-            // Bloquer les fusions inter-marques (ex: "Split Astech 24000BTU" ne doit
-            // jamais devenir la même fiche qu'un "Split Samsung 24000BTU" — les
-            // mots-clés techniques communs (split/inverter/btu…) ne suffisent pas).
             const marqueSrc  = extraireMarque(item.titre);
             const marqueDest = extraireMarque(fuzzy[0].nom);
-            // Bloquer les regroupements inter-tailles écran (ex: TV 43" vs TV 98")
             const tailleSrc  = extrairePouce(item.titre);
             const tailleDest = extrairePouce(fuzzy[0].nom);
             if (marqueSrc && marqueDest && marqueSrc !== marqueDest) {
-              // Marques différentes → laisser créer un nouveau produit
             } else if (tailleSrc && tailleDest && Math.abs(tailleSrc - tailleDest) > 10) {
-              // Tailles incompatibles → laisser créer un nouveau produit
             } else {
               produitId = fuzzy[0].id; stats.mis_a_jour++;
             }
@@ -824,7 +871,6 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         }
       }
 
-      // 3. Aucun match → nouveau produit
       if(!produitId){
         const catId=await getCatId(item.titre);
         const {rows:n}=await pool.query(
@@ -835,14 +881,12 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       }
 
       if(item.image_url) await pool.query('UPDATE produits SET image_url=$1 WHERE id=$2 AND image_url IS NULL',[item.image_url,produitId]);
-      // Corriger la catégorie si elle est absente ou manifestement fausse
       const catDetectee = await getCatId(item.titre);
       if(catDetectee) await pool.query(
         'UPDATE produits SET categorie_id=$1 WHERE id=$2 AND (categorie_id IS NULL OR categorie_id != $1)',
         [catDetectee, produitId]
       );
 
-      // Upsert offre avec titre du marchand + specs extraites du titre brut
       const specs = extraireSpecs(item.titre);
       const {rows:offre}=await pool.query(
         `INSERT INTO offres(produit_id,marchand_id,prix,url_achat,titre_marchand,specs,scraped_at,stock)
@@ -857,12 +901,10 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       );
       if(offre.length>0) await pool.query('INSERT INTO historique_prix(offre_id,prix) VALUES($1,$2)',[offre[0].id,item.prix]);
 
-      // Accumuler pour batch update final (évite N sous-requêtes imbriquées)
       produitsModifies.add(produitId);
     }catch(err){ console.error(`[DB] "${item.titre}":`,err.message); stats.erreurs++; }
   }
 
-  // Batch update prix_min + nb_offres : 1 requête pour tous les produits modifiés
   if(produitsModifies.size > 0){
     const ids = [...produitsModifies];
     await pool.query(`
@@ -882,7 +924,6 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       [ids]
     );
 
-    // Vérifier les alertes de prix déclenchées par cette mise à jour (comptes web, via produit_id)
     const { rows: declenchees } = await pool.query(
       `SELECT a.*, p.nom AS produit_nom, p.prix_min
        FROM alertes a
@@ -892,7 +933,6 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       [ids]
     );
 
-    // Idem pour les alertes créées via le chatbot WhatsApp (sans produit_id, matching par nom)
     const { rows: declencheesWhatsapp } = await pool.query(
       `SELECT a.*, p.id AS produit_id, p.nom AS produit_nom, p.prix_min
        FROM alertes a
@@ -914,17 +954,12 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
   return stats;
 }
 
-// Compte les mots-clés DISCRIMINANTS en commun — exclut les marques et familles génériques
-// pour éviter que "samsung" + "galaxy" suffisent à fusionner Galaxy Buds avec Galaxy A55.
 function _motsClesCommuns(a, b) {
   const wordsA = new Set(a.toLowerCase().split(/\W+/).filter(w => w.length >= 3 && !MOTS_GENERIQUES.has(w)));
   const wordsB = b.toLowerCase().split(/\W+/).filter(w => w.length >= 3 && !MOTS_GENERIQUES.has(w));
   return wordsB.filter(w => wordsA.has(w)).length;
 }
 
-// Expression SQL de nom normalisé — DOIT produire le même résultat que normaliserTitre()
-// côté JS (minuscules, apostrophes/guillemets/parenthèses/crochets retirés, espaces réduits).
-// Source unique : réutilisée par backend/scripts/fusionner-doublons-produits.js — ne pas dupliquer.
 function sqlNomNormalise(col) {
   return `TRIM(LOWER(regexp_replace(regexp_replace(${col}, '[''’‘“”"()\\[\\]]', '', 'g'), '\\s+', ' ', 'g')))`;
 }
@@ -936,13 +971,10 @@ function normaliserTitre(s) {
     .replace(/\s+/g,' ').trim();
 }
 
-// ══════════════════════════════════════════════════════
-//  DIAGNOSTIC — test sans sauvegarder
-// ══════════════════════════════════════════════════════
 async function diagnosticScraper(source, categorie) {
-  const fns={expat:scraperExpatDakar,jumia:scraperJumia,coinafrique:scraperCoinAfrique};
-  const cats={expat:'telephones-portables-et-tablettes',jumia:'telephones-tablettes',coinafrique:'telephonie'};
-  if(!fns[source]) throw new Error(`Source inconnue: ${source}. Valeurs: expat, jumia, coinafrique`);
+  const fns={expat:scraperExpatDakar,jumia:scraperJumia,coinafrique:scraperCoinAfrique,decathlon:scraperDecathlon,jiji:scraperJiji};
+  const cats={expat:'telephones-portables-et-tablettes',jumia:'telephones-tablettes',coinafrique:'telephonie',decathlon:'3745-tous-les-sports',jiji:'mobile-phones'};
+  if(!fns[source]) throw new Error(`Source inconnue: ${source}. Valeurs: expat, jumia, coinafrique, decathlon, jiji`);
   const items=await fns[source](categorie||cats[source],1);
   return {
     source, categorie:categorie||cats[source],
@@ -953,36 +985,28 @@ async function diagnosticScraper(source, categorie) {
   };
 }
 
-// ══════════════════════════════════════════════════════
-//  ORCHESTRATION
-// ══════════════════════════════════════════════════════
-// Verrou global : empêche lancerScraping() et lancerScrapingNouveauxSites()
-// de tourner en même temps (chevauchement cron/setTimeout constaté comme
-// cause probable d'un dépassement mémoire sur le plan gratuit Render — deux
-// pipelines de scraping simultanés cumulent leurs tableaux en RAM).
 let scrapingEnCours = false;
 
-async function lancerScraping(sources=['expat','jumia','coinafrique']) {
+async function lancerScraping(sources=['expat','jumia','coinafrique','auchan','kaynoo','decathlon','jiji']) {
   if (scrapingEnCours) {
-    console.log('[SCRAPER] Cycle déjà en cours, requête ignorée');
     return { ignore: true };
   }
-  // Évite un chevauchement avec le scraper Facebook (navigateur headless) — les deux
-  // en même temps ont provoqué un crash mémoire constaté en prod sur le plan free.
   if (!scrapingLock.tenterAcquerir('produits')) {
-    console.log(`[SCRAPER] Verrou occupé par "${scrapingLock.actif()}", requête ignorée`);
     return { ignore: true };
   }
   scrapingEnCours = true;
   try {
     const rapport={debut:new Date(),sources:{}};
-    // BUG FIX : invalider le cache catégories pour recharger depuis la DB
     invaliderCatCache();
     console.log('\n[SCRAPER] ══════ DÉBUT ══════');
     const conf={
       expat:       {nom:'Expat-Dakar',  url:'https://www.expat-dakar.com',  cats:CATS.expat,       fn:scraperExpatDakar},
       jumia:       {nom:'Jumia Senegal',url:'https://www.jumia.sn',         cats:CATS.jumia,       fn:scraperJumia},
       coinafrique: {nom:'CoinAfrique',  url:'https://sn.coinafrique.com',   cats:CATS.coinafrique, fn:scraperCoinAfrique},
+      auchan:      {nom:'Auchan',       url:'https://www.auchan.sn',        cats:CATS.auchan,      fn:scraperAuchan},
+      kaynoo:      {nom:'Kaynoo',       url:'https://kaynoo.sn',            cats:CATS.kaynoo,      fn:scraperKaynoo},
+      decathlon:   {nom:'Decathlon',    url:'https://www.decathlon.sn',     cats:CATS.decathlon,   fn:scraperDecathlon},
+      jiji:        {nom:'Jiji',         url:'https://jiji.sn',              cats:CATS.jiji,        fn:scraperJiji},
     };
     for(const src of sources){
       const c=conf[src]; if(!c) continue;
@@ -1008,27 +1032,19 @@ async function lancerScraping(sources=['expat','jumia','coinafrique']) {
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  INTÉGRATION NOUVEAUX SITES
-// ══════════════════════════════════════════════════════
 const { scraperTousNouveauxSites, diagnosticNouveauSite } = require('./scraper-new-sites');
 
 async function lancerScrapingNouveauxSites(siteIds = null) {
   if (scrapingEnCours) {
-    console.log('[NEW-SITES] Cycle déjà en cours, requête ignorée');
     return { ignore: true };
   }
   if (!scrapingLock.tenterAcquerir('nouveaux-sites')) {
-    console.log(`[NEW-SITES] Verrou occupé par "${scrapingLock.actif()}", requête ignorée`);
     return { ignore: true };
   }
   scrapingEnCours = true;
   try {
     invaliderCatCache();
     const stats = { inseres: 0, mis_a_jour: 0, erreurs: 0, scrapes: 0 };
-
-    // Insertion en base immédiatement après chaque site (pas d'accumulation
-    // de tous les sites en mémoire — cf. commentaire dans scraper-new-sites.js)
     await scraperTousNouveauxSites(siteIds, async (config, items) => {
       if (!items.length) return;
       stats.scrapes += items.length;
@@ -1051,8 +1067,6 @@ async function lancerScrapingNouveauxSites(siteIds = null) {
   }
 }
 
-// ── Publication réseaux sociaux ────────────────────────────────────
-// Publie les posts Facebook approuvés dont la date est passée
 async function publierPostsApprouves() {
   if (!process.env.FB_PAGE_ID || !process.env.FB_PAGE_ACCESS_TOKEN) return;
   try {
@@ -1063,7 +1077,7 @@ async function publierPostsApprouves() {
        ORDER BY date_publication ASC NULLS LAST
        LIMIT 5`
     );
-    if (!rows.length) { console.log('[SOCIAL] Aucun post approuvé à publier'); return; }
+    if (!rows.length) return;
 
     const { publierPost } = require('../routes/facebook-posts');
     for (const post of rows) {
@@ -1075,8 +1089,6 @@ async function publierPostsApprouves() {
          WHERE id=$4`,
         [results.fb_id || null, results.ig_id || null, results.erreur || null, post.id]
       );
-      if (results.fb_id) console.log(`[SOCIAL] ✅ Post publié FB:${results.fb_id} IG:${results.ig_id || '-'}`);
-      else console.error('[SOCIAL] ❌', results.erreur);
     }
   } catch (err) {
     console.error('[SOCIAL] Erreur cron publication:', err.message);
@@ -1085,10 +1097,8 @@ async function publierPostsApprouves() {
 
 async function envoyerRelancesExpiration() {
   const { envoyerEmail } = require('./email');
-  const { sendWhatsAppText } = require('./whatsapp');
   const FRONTEND = process.env.FRONTEND_URL || 'https://nopalou.com';
 
-  // Sponsorings expirés il y a 7 jours (boutiques, immo, annonces boostées)
   const { rows: boutiques } = await pool.query(`
     SELECT u.email, u.nom, b.nom AS boutique_nom
     FROM boutiques b JOIN utilisateurs u ON u.id = b.utilisateur_id
@@ -1103,7 +1113,6 @@ async function envoyerRelancesExpiration() {
     }).catch(() => {});
   }
 
-  // Abonnements Pro/Business expirés il y a 7 jours
   const { rows: abonnements } = await pool.query(`
     SELECT u.email, u.nom, a.plan
     FROM abonnements a JOIN utilisateurs u ON u.id = a.utilisateur_id
@@ -1117,17 +1126,8 @@ async function envoyerRelancesExpiration() {
       html: `<p>Bonjour ${a.nom},</p><p>Votre abonnement <strong>${a.plan}</strong> a expiré. <a href="${FRONTEND}/boutique/abonnement">Renouveler →</a></p>`,
     }).catch(() => {});
   }
-
-  console.log(`[RELANCE] ${boutiques.length} boutiques + ${abonnements.length} abonnements relancés`);
 }
 
-// ══════════════════════════════════════════════════════
-//  NETTOYAGE DES OFFRES AVEC URL MORTE
-//  Une annonce CoinAfrique/Expat-Dakar expire côté marchand sans que le
-//  scraper (qui ne fait qu'ajouter/mettre à jour ce qu'il retrouve) ne le
-//  détecte jamais — l'offre restait "en stock" indéfiniment même quand
-//  /api/click menait à un lien mort chez le marchand.
-// ══════════════════════════════════════════════════════
 async function offreEstMorte(url) {
   try {
     await axios.head(url, {
@@ -1138,7 +1138,6 @@ async function offreEstMorte(url) {
     });
     return false;
   } catch {
-    // Certains sites (ex: CoinAfrique) rejettent HEAD — on retente en GET avant de conclure
     try {
       const r = await axios.get(url, {
         headers: { 'User-Agent': randUA() },
@@ -1148,8 +1147,6 @@ async function offreEstMorte(url) {
       });
       return r.status === 404 || r.status === 410;
     } catch {
-      // Timeout/DNS/refus de connexion répété : on ne peut pas conclure avec certitude
-      // (peut être un blocage anti-bot temporaire) → ne pas supprimer sur un seul échec réseau
       return false;
     }
   }
@@ -1191,16 +1188,13 @@ async function nettoyerOffresExpirees(limite = 200) {
       [ids]
     );
   }
-  console.log(`[NETTOYAGE] ${offres.length} offres vérifiées, ${mortes} retirées (URL morte)`);
   return { verifiees: offres.length, mortes };
 }
 
 async function verifierAlertsPrix() {
-  const { pool } = require('../models/db');
   const { envoyerAlertePrix } = require('./notifications');
 
   try {
-    // Alertes par produit_id (utilisateurs connectés)
     const { rows: alertesProd } = await pool.query(`
       SELECT a.*, p.nom as produit_nom, p.id as produit_id
       FROM alertes a
@@ -1218,13 +1212,10 @@ async function verifierAlertsPrix() {
       const prixActuel = offres[0]?.prix_min;
       if (prixActuel && prixActuel <= alerte.prix_cible) {
         await envoyerAlertePrix(alerte, prixActuel);
-        // Désactiver après envoi — sinon l'utilisateur serait re-notifié toutes les 15 min
         await pool.query('UPDATE alertes SET active = false WHERE id = $1', [alerte.id]);
-        console.log(`[ALERTE] ✅ ${alerte.produit_nom} déclenché (${prixActuel} FCFA)`);
       }
     }
 
-    // Alertes par produit_nom (chatbot WhatsApp, sans compte)
     const { rows: alertesChat } = await pool.query(`
       SELECT a.*, a.produit_nom
       FROM alertes a
@@ -1233,7 +1224,6 @@ async function verifierAlertsPrix() {
     `);
 
     for (const alerte of alertesChat) {
-      // Recherche par nom (ILIKE + texte brut)
       const { rows: produits } = await pool.query(`
         SELECT p.id FROM produits p
         WHERE p.nom ILIKE '%' || $1 || '%'
@@ -1251,54 +1241,57 @@ async function verifierAlertsPrix() {
       const prixActuel = offres[0]?.prix_min;
       if (prixActuel && prixActuel <= alerte.prix_cible) {
         await envoyerAlertePrix(alerte, prixActuel);
-        // Désactiver après envoi — sinon l'utilisateur serait re-notifié toutes les 15 min
         await pool.query('UPDATE alertes SET active = false WHERE id = $1', [alerte.id]);
-        console.log(`[ALERTE] ✅ ${alerte.produit_nom} (chatbot) déclenché (${prixActuel} FCFA)`);
       }
     }
-
   } catch (err) {
     console.error('[ALERTES] Erreur vérification:', err.message);
   }
 }
 
 function demarrerScraping() {
-  // Toutes les 12h pour limiter la consommation mémoire (plan gratuit Railway)
-  cron.schedule('0 */12 * * *', () => lancerScraping(['expat', 'jumia', 'coinafrique']).catch(console.error));
+  cron.schedule('0 */12 * * *', () => lancerScraping(['expat', 'jumia', 'coinafrique', 'auchan', 'kaynoo', 'decathlon', 'jiji']).catch(console.error));
   cron.schedule('0 6,18 * * *', () => lancerScrapingNouveauxSites().catch(console.error));
-  // Publication réseaux sociaux — vérifie toutes les heures les posts approuvés
   cron.schedule('0 * * * *', () => publierPostsApprouves().catch(console.error));
-  // Nettoyage WhatsApp — messages dédupliqués >7j et sessions inactives >1h, chaque jour à 3h
   cron.schedule('0 3 * * *', () => {
     const { cleanupOldMessages, resetInactiveSessions } = require('./whatsapp-chatbot');
     cleanupOldMessages().catch(err => console.error('[WHATSAPP] cleanup messages:', err.message));
     resetInactiveSessions().catch(err => console.error('[WHATSAPP] reset sessions:', err.message));
   });
-  // Relance commerciale — chaque jour à 9h UTC : email + WhatsApp aux sponsorings/abonnements expirés J-7
   cron.schedule('0 9 * * *', () => envoyerRelancesExpiration().catch(err => console.error('[RELANCE]', err.message)));
-  // Nettoyage des offres avec URL marchand morte (annonces expirées côté CoinAfrique/Expat-Dakar)
   cron.schedule('30 4 * * *', () => nettoyerOffresExpirees().catch(err => console.error('[NETTOYAGE]', err.message)));
 
-  // Premier scraping 10 min après démarrage (laisser l'app se stabiliser)
   setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 10 * 60 * 1000);
   setTimeout(() => lancerScrapingNouveauxSites().catch(console.error), 15 * 60 * 1000);
-  console.log('[SCRAPER] ✅ Cron actif — premier scraping dans 10 min, puis toutes les 12h');
-  console.log('[SOCIAL]  ✅ Cron actif — publication bons plans chaque jour à 8h UTC');
 }
 
-// Crons métier — TOUJOURS actifs, même avec SCRAPING_DISABLED=true (cas de Render).
-// Ne pas déplacer dans demarrerScraping() : les alertes prix et la détection
-// d'anomalies doivent tourner en production où le scraping est désactivé.
 function demarrerCronsMetier() {
-  // Détection des baisses de prix et envoi des alertes — toutes les 15 min
   cron.schedule('*/15 * * * *', () => verifierAlertsPrix().catch(err => console.error('[ALERTES]', err.message)));
-
-  // Détection anomalies — chaque jour à 1h UTC (Phase 6)
   const { detecterAnomalies } = require('./anomaly-detector');
   cron.schedule('0 1 * * *', () => detecterAnomalies().catch(err => console.error('[ANOMALY]', err.message)));
-
-  console.log('[ALERTES] ✅ Cron actif — vérification baisses de prix toutes les 15 min');
-  console.log('[ANOMALY] ✅ Cron actif — détection anomalies chaque jour à 1h UTC');
 }
 
-module.exports = { scraperExpatDakar, scraperJumia, scraperCoinAfrique, sauvegarderProduits, lancerScraping, lancerScrapingNouveauxSites, demarrerScraping, demarrerCronsMetier, diagnosticScraper, diagnosticNouveauSite, invaliderCatCache, prixPlancher, corrigerPrixParPlancher, nettoyerOffresExpirees, extraireSpecs, verifierAlertsPrix, detecterAnomalies: require('./anomaly-detector').detecterAnomalies, sqlNomNormalise };
+module.exports = { 
+  scraperExpatDakar, 
+  scraperJumia, 
+  scraperCoinAfrique, 
+  scraperAuchan, 
+  scraperKaynoo,
+  scraperDecathlon,
+  scraperJiji,
+  sauvegarderProduits, 
+  lancerScraping, 
+  lancerScrapingNouveauxSites, 
+  demarrerScraping, 
+  demarrerCronsMetier, 
+  diagnosticScraper, 
+  diagnosticNouveauSite, 
+  invaliderCatCache, 
+  prixPlancher, 
+  corrigerPrixParPlancher, 
+  nettoyerOffresExpirees, 
+  extraireSpecs, 
+  verifierAlertsPrix, 
+  detecterAnomalies: require('./anomaly-detector').detecterAnomalies, 
+  sqlNomNormalise 
+};

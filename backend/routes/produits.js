@@ -142,10 +142,10 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     };
 
     if (categorieNorm && !CAT_FALLBACK[categorieNorm]) {
-      return res.status(400).json({ error: 'Catégorie invalide' });
+      return res.json({ success: true, produits: [], page: +page, limit: +limit, total: 0, pages: 1 });
     }
     if (sousType && !SOUS_TYPE_MOTS[sousType]) {
-      return res.status(400).json({ error: 'Sous-type invalide' });
+      return res.json({ success: true, produits: [], page: +page, limit: +limit, total: 0, pages: 1 });
     }
 
     const fallback = categorieNorm ? (CAT_FALLBACK[categorieNorm] || []) : [];
