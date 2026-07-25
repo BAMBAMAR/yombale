@@ -3,7 +3,7 @@ import { useState, useEffect, useTransition, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
-import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage } from './actions'
+import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage, publierProduitAnnonce } from './actions'
 import Comptabilite from './Comptabilite'
 import Commandes from './Commandes'
 import AnalyticsClient from './analytics/AnalyticsClient'
@@ -1326,6 +1326,21 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                   style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
                 >
                   Modifier
+                </button>
+                <button
+                  onClick={() => {
+                    if (!confirm('Voulez-vous publier ce produit comme annonce classifiée ?')) return
+                    startTransition(async () => {
+                      const res = await publierProduitAnnonce(boutique.id, p.id)
+                      if (res.error) alert(res.error)
+                      else if (res.besoin_paiement) alert(res.message)
+                      else { setSuccessMsg(res.message || 'Publié avec succès en annonce !') }
+                    })
+                  }}
+                  title="Publier comme annonce"
+                  style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  📢 Annonce
                 </button>
                 <button
                   onClick={() => {

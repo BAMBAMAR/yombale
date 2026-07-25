@@ -775,6 +775,73 @@ router.delete('/:id/produits/:prodId', verifierToken, param('id').isUUID(), para
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
+// ── POST /api/boutiques/:id/produits/:prodId/publier-annonce — Publier un produit en annonce classifiée
+router.post('/:id/produits/:prodId/publier-annonce', verifierToken, param('id').isUUID(), param('prodId').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const { id, prodId } = req.params;
+    const userId = req.user.userId;
+
+    // Vérifier permissions (proprio ou admin/caissier)
+    const bReq = await pool.query(`
+      SELECT b.id, b.telephone, b.utilisateur_id, u.telephone as user_tel
+      FROM boutiques b
+      LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+      LEFT JOIN boutique_utilisateurs bu ON bu.boutique_id = b.id AND bu.utilisateur_id = $2
+      WHERE b.id = $1 AND (b.utilisateur_id = $2 OR bu.id IS NOT NULL)
+    `, [id, userId]);
+    if (!bReq.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+    const boutique = bReq.rows[0];
+    
+    const annonceUserId = boutique.utilisateur_id;
+
+    const pReq = await pool.query('SELECT nom, description, prix, images, categorie FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
+    if (!pReq.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+    const produit = pReq.rows[0];
+
+    const QUOTA_GRATUIT = 2;
+    const PRIX_ANNONCE = 1500;
+    const qReq = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM annonces_immo WHERE utilisateur_id=$1 AND supprimee=FALSE) +
+        (SELECT COUNT(*) FROM annonces_classifiees WHERE utilisateur_id=$1 AND supprimee=FALSE) AS total
+    `, [annonceUserId]);
+    const total = parseInt(qReq.rows[0].total || 0, 10);
+    const estGratuit = total < QUOTA_GRATUIT;
+
+    const telContact = boutique.telephone || boutique.user_tel || '';
+    const categorie = produit.categorie || 'mixte';
+    
+    const r = await pool.query(`
+      INSERT INTO annonces_classifiees
+        (utilisateur_id, categorie_slug, titre, description, prix,
+         contact_tel, photos, payee, actif)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false)
+      RETURNING id
+    `, [
+      annonceUserId, categorie, produit.nom, produit.description || '', produit.prix || 0,
+      telContact, JSON.stringify(produit.images || []), estGratuit
+    ]);
+    const newId = r.rows[0].id;
+
+    if (estGratuit) {
+      await pool.query('UPDATE annonces_classifiees SET actif=true WHERE id=$1', [newId]);
+      return res.status(201).json({
+        success: true, id: newId, besoin_paiement: false,
+        message: 'Annonce publiée et visible immédiatement !'
+      });
+    }
+
+    res.status(201).json({
+      success: true, id: newId, besoin_paiement: true, montant: PRIX_ANNONCE,
+      message: `Quota gratuit atteint (${QUOTA_GRATUIT} annonces). Paiement de ${PRIX_ANNONCE} FCFA requis.`
+    });
+  } catch (err) {
+    console.error('[PUBLIER ANNONCE]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // ── PATCH /api/boutiques/:id/produits/:prodId/partage — marquer un produit comme partagé
 router.patch('/:id/produits/:prodId/partage', verifierToken, param('id').isUUID(), param('prodId').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
