@@ -26,7 +26,30 @@ interface Settings {
 }
 
 export default function TarifsClient({ initial, secret }: { initial: Settings; secret: string }) {
-  const [form, setForm] = useState<Settings>(initial)
+  const [form, setForm] = useState<Settings>(() => {
+    const defaults: Settings = {
+      quota_annonces_gratuit: '2',
+      prix_annonce: '1500',
+      prix_sponsoring: '5000',
+      prix_boost: '500',
+      boost_duree_jours: '7',
+      plan_pro_prix: '15000',
+      plan_business_prix: '35000',
+      plan_pro_label: 'Boutique Pro',
+      plan_business_label: 'Boutique Business',
+      commission_business: '2.0',
+      paiement_wave: 'true',
+      paiement_orange: 'true',
+      promo_active: 'false',
+      promo_code: '',
+      promo_reduction: '0',
+      promo_expiry: '',
+      paiement_manuel_actif: 'true',
+      paiement_manuel_numero_wave: '',
+      paiement_manuel_numero_om: '',
+    }
+    return { ...defaults, ...initial }
+  })
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
@@ -39,7 +62,7 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input
             type={type}
-            value={form[key]}
+            value={form[key] ?? ''}
             onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
             style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 14, width: 180 }}
           />
@@ -74,7 +97,7 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
     setSaving(true)
     setMsg(null)
     try {
-      const r = await fetch(`${BACKEND}/api/settings`, {
+      const r = await fetch(`/api/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
         body: JSON.stringify(form),
