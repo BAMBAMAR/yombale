@@ -40,9 +40,10 @@ const BUDGETS = [
 ]
 
 const TRIS = [
-  { val: '',          label: '💰 Prix ↑' },
-  { val: 'populaire', label: '⭐ Populaires' },
+  { val: '',          label: '⭐ Pertinence' },
+  { val: 'prix_asc',  label: '💰 Prix ↑' },
   { val: 'prix_desc', label: 'Prix ↓' },
+  { val: 'populaire', label: '🔥 Populaires' },
   { val: 'nom_asc',   label: 'Nom A-Z' },
 ]
 
