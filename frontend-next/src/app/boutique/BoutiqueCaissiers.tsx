@@ -212,77 +212,79 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
       </div>
 
       <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 14 }}>
-          <thead>
-            <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-              <th style={{ padding: '12px 16px', fontWeight: 600 }}>Nom</th>
-              <th style={{ padding: '12px 16px', fontWeight: 600 }}>Rôle</th>
-              <th style={{ padding: '12px 16px', fontWeight: 600 }}>Code PIN</th>
-              <th style={{ padding: '12px 16px', fontWeight: 600 }}>Statut</th>
-              <th style={{ padding: '12px 16px', fontWeight: 600 }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {caissiers.map(caissier => (
-              <tr key={caissier.id} style={{ borderBottom: '1px solid #f3f4f6', opacity: caissier.actif ? 1 : 0.6 }}>
-                <td style={{ padding: '12px 16px', fontWeight: 500 }}>
-                  {caissier.prenom} {caissier.nom}
-                </td>
-                <td style={{ padding: '12px 16px' }}>
-                  <span style={{ 
-                    background: caissier.role === 'superviseur' ? '#fef3c7' : '#e0e7ff',
-                    color: caissier.role === 'superviseur' ? '#92400e' : '#3730a3',
-                    padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600 
-                  }}>
-                    {caissier.role}
-                  </span>
-                </td>
-                <td style={{ padding: '12px 16px' }}>
-                  {editingId === caissier.id ? (
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <input 
-                        type="text" 
-                        maxLength={10}
-                        value={editPin}
-                        onChange={e => setEditPin(e.target.value.replace(/\D/g, ''))}
-                        style={{ width: 80, padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 14, fontFamily: 'monospace' }}
-                      />
-                      <button onClick={() => handleSavePin(caissier.id)} disabled={savingEdit} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }}>✓</button>
-                      <button onClick={() => setEditingId(null)} style={{ background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }}>✕</button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <span style={{ fontFamily: 'monospace', letterSpacing: 2, fontSize: 16 }}>{caissier.code_pin}</span>
-                      <button onClick={() => { setEditingId(caissier.id); setEditPin(caissier.code_pin); }} style={{ background: 'none', border: 'none', color: 'var(--navy)', cursor: 'pointer', fontSize: 12, textDecoration: 'underline' }}>Modifier</button>
-                    </div>
-                  )}
-                </td>
-                <td style={{ padding: '12px 16px' }}>
-                  <button 
-                    onClick={() => handleToggleActif(caissier)}
-                    style={{ 
-                      background: caissier.actif ? '#dcfce7' : '#fef2f2', 
-                      color: caissier.actif ? '#16a34a' : '#dc2626', 
-                      border: 'none', padding: '4px 10px', borderRadius: 12, 
-                      fontWeight: 600, fontSize: 12, cursor: 'pointer' 
-                    }}
-                  >
-                    {caissier.actif ? 'Actif' : 'Inactif'}
-                  </button>
-                </td>
-                <td style={{ padding: '12px 16px' }}>
-                  <button 
-                    type="button"
-                    onClick={() => handleDelete(caissier.id)}
-                    style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 600, padding: 0 }}
-                  >
-                    Supprimer
-                  </button>
-                </td>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 14, minWidth: 550 }}>
+            <thead>
+              <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Nom</th>
+                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Rôle</th>
+                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Code PIN</th>
+                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Statut</th>
+                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {caissiers.map(caissier => (
+                <tr key={caissier.id} style={{ borderBottom: '1px solid #f3f4f6', opacity: caissier.actif ? 1 : 0.6 }}>
+                  <td style={{ padding: '12px 16px', fontWeight: 500 }}>
+                    {caissier.prenom} {caissier.nom}
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <span style={{ 
+                      background: caissier.role === 'superviseur' ? '#fef3c7' : '#e0e7ff',
+                      color: caissier.role === 'superviseur' ? '#92400e' : '#3730a3',
+                      padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600 
+                    }}>
+                      {caissier.role}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    {editingId === caissier.id ? (
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <input 
+                          type="text" 
+                          maxLength={10}
+                          value={editPin}
+                          onChange={e => setEditPin(e.target.value.replace(/\D/g, ''))}
+                          style={{ width: 80, padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 14, fontFamily: 'monospace' }}
+                        />
+                        <button onClick={() => handleSavePin(caissier.id)} disabled={savingEdit} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }}>✓</button>
+                        <button onClick={() => setEditingId(null)} style={{ background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }}>✕</button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span style={{ fontFamily: 'monospace', letterSpacing: 2, fontSize: 16 }}>{caissier.code_pin}</span>
+                        <button onClick={() => { setEditingId(caissier.id); setEditPin(caissier.code_pin); }} style={{ background: 'none', border: 'none', color: 'var(--navy)', cursor: 'pointer', fontSize: 12, textDecoration: 'underline' }}>Modifier</button>
+                      </div>
+                    )}
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <button 
+                      onClick={() => handleToggleActif(caissier)}
+                      style={{ 
+                        background: caissier.actif ? '#dcfce7' : '#fef2f2', 
+                        color: caissier.actif ? '#16a34a' : '#dc2626', 
+                        border: 'none', padding: '4px 10px', borderRadius: 12, 
+                        fontWeight: 600, fontSize: 12, cursor: 'pointer' 
+                      }}
+                    >
+                      {caissier.actif ? 'Actif' : 'Inactif'}
+                    </button>
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <button 
+                      type="button"
+                      onClick={() => handleDelete(caissier.id)}
+                      style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                    >
+                      Supprimer
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {caissiers.length === 0 && !loading && (
           <div style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>
             Aucun caissier configuré.

@@ -565,7 +565,7 @@ export default async function CommunicationPage() {
           🗺️ Plan de démarchage terrain (6 semaines — Dakar)
         </h2>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, minWidth: 600 }}>
             <thead>
               <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
                 {['Période', 'Zone', 'Cible', 'Objectif'].map(h => (
@@ -628,7 +628,7 @@ export default async function CommunicationPage() {
         <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
           📊 Modèle de Rentabilité & Coûts Fixes
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, flexWrap: 'wrap' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
           <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 20, background: '#F8FAFC' }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', margin: '0 0 12px' }}>Coûts Fixes Mensuels (Est.)</h3>
             <ul style={{ fontSize: 12, color: '#64748B', paddingLeft: 18, margin: 0, lineHeight: 1.8 }}>
@@ -674,7 +674,7 @@ export default async function CommunicationPage() {
         <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
           🔄 Les Parcours d'Utilisation
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
           <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 20, background: '#fff' }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1d4ed8', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
               🛒 Parcours Acheteur
@@ -716,7 +716,7 @@ export default async function CommunicationPage() {
           💰 Grille de commission — 10% récurrent
         </h2>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, minWidth: 600 }}>
             <thead>
               <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
                 {['Formule recrutée', 'Prix', 'Commission apporteur (10%)'].map(h => (

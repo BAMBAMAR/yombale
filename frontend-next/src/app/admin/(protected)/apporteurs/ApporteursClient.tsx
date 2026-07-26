@@ -140,7 +140,7 @@ export default function ApporteursClient({
       <div style={{ background: '#fff', borderRadius: 12, padding: 24, marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,.08)' }}>
         <h3 style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 700 }}>👥 Apporteurs ({apporteurs.length})</h3>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 500 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #f3f4f6' }}>
                 {['Nom', 'Code', 'Boutiques', 'Dû', 'Payé'].map(h => (
@@ -166,7 +166,7 @@ export default function ApporteursClient({
       <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,.08)' }}>
         <h3 style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 700 }}>💰 Commissions</h3>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 500 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #f3f4f6' }}>
                 {['Apporteur', 'Boutique', 'Montant', 'Statut', ''].map(h => (

@@ -112,46 +112,48 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
       </form>
 
       <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 14 }}>
-          <thead>
-            <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-              <th style={{ padding: '12px 16px', fontWeight: 600 }}>Nom</th>
-              <th style={{ padding: '12px 16px', fontWeight: 600 }}>Email</th>
-              <th style={{ padding: '12px 16px', fontWeight: 600 }}>Rôle</th>
-              <th style={{ padding: '12px 16px', fontWeight: 600 }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {admins.map(admin => (
-              <tr key={admin.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                <td style={{ padding: '12px 16px' }}>{admin.nom}</td>
-                <td style={{ padding: '12px 16px' }}>{admin.email}</td>
-                <td style={{ padding: '12px 16px' }}>
-                  <span style={{ 
-                    background: admin.role === 'propriétaire' ? '#fef3c7' : '#e0e7ff',
-                    color: admin.role === 'propriétaire' ? '#92400e' : '#3730a3',
-                    padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600 
-                  }}>
-                    {admin.role}
-                  </span>
-                </td>
-                <td style={{ padding: '12px 16px' }}>
-                  {admin.role !== 'propriétaire' ? (
-                    <button 
-                      type="button"
-                      onClick={() => handleDelete(admin.id)}
-                      style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 600, padding: 0 }}
-                    >
-                      Retirer
-                    </button>
-                  ) : (
-                    <span style={{ color: '#9ca3af', fontSize: 12 }}>Intouchable</span>
-                  )}
-                </td>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 14, minWidth: 500 }}>
+            <thead>
+              <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Nom</th>
+                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Email</th>
+                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Rôle</th>
+                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {admins.map(admin => (
+                <tr key={admin.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                  <td style={{ padding: '12px 16px' }}>{admin.nom}</td>
+                  <td style={{ padding: '12px 16px' }}>{admin.email}</td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <span style={{ 
+                      background: admin.role === 'propriétaire' ? '#fef3c7' : '#e0e7ff',
+                      color: admin.role === 'propriétaire' ? '#92400e' : '#3730a3',
+                      padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600 
+                    }}>
+                      {admin.role}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    {admin.role !== 'propriétaire' ? (
+                      <button 
+                        type="button"
+                        onClick={() => handleDelete(admin.id)}
+                        style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                      >
+                        Retirer
+                      </button>
+                    ) : (
+                      <span style={{ color: '#9ca3af', fontSize: 12 }}>Intouchable</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {admins.length === 0 && !loading && (
           <div style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>
             Aucun administrateur trouvé.

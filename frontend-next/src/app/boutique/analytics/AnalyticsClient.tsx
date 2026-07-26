@@ -97,8 +97,8 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
               <div style={{ padding: '14px 18px', borderBottom: '1px solid #f1f5f9', fontWeight: 700, fontSize: 14 }}>
                 Activité des 30 derniers jours
               </div>
-              <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <div style={{ maxHeight: 300, overflowY: 'auto', overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 400 }}>
                   <thead>
                     <tr style={{ background: '#f8fafc', position: 'sticky', top: 0 }}>
                       {['Date', 'Vues boutique', 'Clics tél.'].map(h => (

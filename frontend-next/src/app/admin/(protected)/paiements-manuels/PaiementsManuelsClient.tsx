@@ -78,7 +78,7 @@ export default function PaiementsManuelsClient({
           <p style={{ color: '#9ca3af', fontSize: 14 }}>Aucune déclaration en attente.</p>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 900 }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid #f3f4f6' }}>
                   {['Client', 'Référence', 'Montant', 'Méthode', 'Tél. expéditeur', 'ID transaction', 'Preuve', 'Déclaré le', ''].map(h => (

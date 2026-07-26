@@ -89,7 +89,7 @@ export default function QualiteDataPage() {
         <div className="empty">Aucune quarantine</div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 750 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #ccc' }}>
                 <th style={{ padding: '10px', textAlign: 'left' }}>Produit</th>

@@ -65,7 +65,7 @@ export default function AffiliateTrackingPage() {
         <div className="empty">Aucun clic enregistré</div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 650 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #ccc' }}>
                 <th style={{ padding: '10px', textAlign: 'left' }}>Click Ref</th>

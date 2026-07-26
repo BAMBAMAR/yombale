@@ -66,39 +66,41 @@ export default async function AdminAffiliationPage() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
         {/* Par marchand */}
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', fontWeight: 700 }}>Clics par marchand</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-            <thead>
-              <tr style={{ background: '#f8fafc' }}>
-                {['Marchand', 'Total', '30j', '7j'].map(h => (
-                  <th key={h} style={{ padding: '8px 14px', textAlign: 'left', color: '#374151', fontWeight: 600 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {parMarchand.length === 0 && (
-                <tr><td colSpan={4} style={{ padding: 24, textAlign: 'center', color: '#94a3b8' }}>Pas encore de clics trackés</td></tr>
-              )}
-              {parMarchand.map((m, i) => (
-                <tr key={m.marchand} style={{ borderTop: '1px solid #f1f5f9', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
-                  <td style={{ padding: '8px 14px', fontWeight: 600 }}>{m.marchand}</td>
-                  <td style={{ padding: '8px 14px' }}>{n(m.clics)}</td>
-                  <td style={{ padding: '8px 14px', color: '#C75B00' }}>{n(m.clics_ce_mois)}</td>
-                  <td style={{ padding: '8px 14px', color: '#64748b' }}>{n(m.clics_7j)}</td>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 400 }}>
+              <thead>
+                <tr style={{ background: '#f8fafc' }}>
+                  {['Marchand', 'Total', '30j', '7j'].map(h => (
+                    <th key={h} style={{ padding: '8px 14px', textAlign: 'left', color: '#374151', fontWeight: 600 }}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {parMarchand.length === 0 && (
+                  <tr><td colSpan={4} style={{ padding: 24, textAlign: 'center', color: '#94a3b8' }}>Pas encore de clics trackés</td></tr>
+                )}
+                {parMarchand.map((m, i) => (
+                  <tr key={m.marchand} style={{ borderTop: '1px solid #f1f5f9', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                    <td style={{ padding: '8px 14px', fontWeight: 600 }}>{m.marchand}</td>
+                    <td style={{ padding: '8px 14px' }}>{n(m.clics)}</td>
+                    <td style={{ padding: '8px 14px', color: '#C75B00' }}>{n(m.clics_ce_mois)}</td>
+                    <td style={{ padding: '8px 14px', color: '#64748b' }}>{n(m.clics_7j)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-
+ 
         {/* Par jour (30 derniers) */}
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', fontWeight: 700 }}>Clics par jour (30 derniers)</div>
-          <div style={{ maxHeight: 360, overflowY: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+          <div style={{ maxHeight: 360, overflowY: 'auto', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 280 }}>
               <thead>
                 <tr style={{ background: '#f8fafc', position: 'sticky', top: 0 }}>
                   {['Date', 'Clics'].map(h => (
