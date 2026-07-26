@@ -7894,13 +7894,14 @@ a {
   position: sticky;
   top: 76px;
   max-height: calc(100vh - 96px);
+  width: 100%;
 }
 @media (max-width: 768px) {
-  .guide-prix-liste { position: static; max-height: none; }
+  .guide-prix-liste { position: static; max-height: none; width: 100%; }
 }
 
 /* Mobile : afficher soit la liste soit le detail */
-.guide-prix-panel { display: block; }
+.guide-prix-panel { display: block; width: 100%; }
 @media (max-width: 768px) {
   .guide-prix-panel--hidden-mobile { display: none !important; }
 }
@@ -7962,6 +7963,7 @@ a {
   width: 100%;
   text-align: left;
   transition: background .12s;
+  min-width: 0;
 }
 .guide-prix-item:last-child { border-bottom: none; }
 .guide-prix-item:hover { background: #fafbfc; }
