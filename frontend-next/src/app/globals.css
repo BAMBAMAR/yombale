@@ -2362,8 +2362,7 @@ a {
   .guide-budget-row { flex-direction: column; gap: 6px; }
   .guide-budget-row .guide-field { flex: none; width: 100%; }
   .guide-results-header { flex-direction: column; align-items: flex-start; gap: 6px; }
-  .guide-results-header > div { flex-direction: column; align-items: flex-start; gap: 6px; }
-  .guide-tri-btns { flex-wrap: wrap; gap: 4px; }
+  .guide-tri-btns { display: flex; flex-direction: row; flex-wrap: wrap; gap: 4px; }
   .guide-tri-btn { font-size: 11px; padding: 4px 8px; }
   .guide-results-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .guide-result-img { height: 90px; }
