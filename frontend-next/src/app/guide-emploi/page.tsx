@@ -93,7 +93,7 @@ export default async function GuideEmploiPage() {
   const marchandSteps = getMarchandSteps(commission)
 
   return (
-    <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 1000, margin: '0 auto', padding: '0 20px' }}>
+    <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 1000, margin: '0 auto', padding: '16px 16px 40px' }}>
       
       {/* Retour Accueil */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
@@ -107,7 +107,7 @@ export default async function GuideEmploiPage() {
       </div>
 
       {/* Double Colonne Parcours */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 24, marginBottom: 40 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24, marginBottom: 40 }}>
         
         {/* Parcours Acheteur */}
         <div style={{ border: '1px solid #E2E8F0', borderRadius: 16, padding: 24, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>

@@ -2343,8 +2343,41 @@ a {
   .guide-wrap { flex-direction: column; }
   .guide-left {
     width: 100%; min-width: 0;
-    max-height: 60vh;
+    max-height: none;
+    position: static;
+    overflow-y: visible;
   }
+}
+
+@media (max-width: 600px) {
+  /* Guide achat/forfait/immo — panneau gauche mobile */
+  .guide-page { min-height: auto; }
+  .guide-left { padding: 16px 14px 20px; }
+  .guide-right { padding: 16px 12px 60px; }
+  .guide-back-btn { font-size: 11px; padding: 5px 10px; }
+  .guide-profils-grid { grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+  .guide-profil-btn { padding: 8px; }
+  .guide-profil-label { font-size: 11px; }
+  .guide-profil-desc { font-size: 9px; }
+  .guide-budget-row { flex-direction: column; gap: 6px; }
+  .guide-budget-row .guide-field { flex: none; width: 100%; }
+  .guide-results-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .guide-results-header > div { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .guide-tri-btns { flex-wrap: wrap; gap: 4px; }
+  .guide-tri-btn { font-size: 11px; padding: 4px 8px; }
+  .guide-results-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .guide-result-img { height: 90px; }
+  .guide-result-body { padding: 8px 10px 10px; }
+  .guide-result-nom { font-size: 11px; }
+  .guide-score-num { font-size: 18px; }
+  .guide-lancer-btn { padding: 12px; font-size: 13px; margin-top: 10px; }
+  .guide-cta-bas { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .guide-cta-bas-nom { max-width: 100%; white-space: normal; }
+  .guide-cta-bas-btn { width: 100%; text-align: center; }
+  /* Forfait cards */
+  .guide-forfaits-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  /* Immo grid */
+  .guide-immo-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
 }
 
 @keyframes popHeart {
@@ -3888,9 +3921,25 @@ a {
 .alerte-submit:hover:not(:disabled) { opacity: .88; }
 
 @media (max-width: 600px) {
-  .comp-th-label { width: 100px; padding: 10px 12px; }
-  .comp-th, .comp-td, .comp-td-label { padding: 10px 12px; }
-  .favs-grid { grid-template-columns: 1fr; }
+  .comp-titre { font-size: 20px; }
+  .comp-sous-titre { font-size: 13px; margin-bottom: 16px; }
+  .comp-th-label { width: 80px; padding: 8px 10px; font-size: 11px; }
+  .comp-th, .comp-td, .comp-td-label { padding: 8px 10px; }
+  .comp-prod-img { width: 60px; height: 60px; }
+  .comp-prod-nom { font-size: 12px; }
+  .comp-prix { font-size: 15px; }
+  /* Boutiques mobile */
+  .boutiques-header { flex-direction: column; gap: 8px; }
+  .boutiques-search-input { max-width: 100%; }
+  .boutiques-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .boutique-fiche { padding: 16px; gap: 14px; }
+  .boutique-fiche-logo { width: 72px; height: 72px; }
+  .boutique-fiche-nom { font-size: 18px; }
+  .boutique-annonces-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  /* Favoris mobile : 2 colonnes */
+  .favs-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .fav-card-body { padding: 10px 12px; }
+  .fav-nom { font-size: 12px; }
 }
 
 /* ── Formulaire Déposer annonce ────────────────────────────────── */
@@ -7849,6 +7898,23 @@ a {
 }
 @media (max-width: 768px) {
   .guide-prix-liste { position: static; max-height: none; }
+}
+
+@media (max-width: 600px) {
+  .guide-prix-page { padding: 0 12px 48px; }
+  .guide-prix-hero { padding: 20px 0 16px; }
+  .guide-prix-titre { font-size: 22px; }
+  .guide-prix-desc { font-size: 13px; margin-bottom: 16px; }
+  .guide-prix-search-wrap { flex-direction: column; gap: 8px; }
+  .guide-prix-search-wrap .guide-prix-input { width: 100%; }
+  .guide-prix-search-wrap .guide-prix-btn { width: 100%; }
+  .guide-prix-body { gap: 16px; }
+  .guide-prix-detail { padding: 16px; }
+  .guide-prix-fiche-titre { font-size: 15px; margin-bottom: 14px; }
+  .guide-prix-stat { min-width: 80px; padding: 10px; }
+  .guide-prix-stat-val { font-size: 15px; }
+  .guide-prix-marchand-row { flex-wrap: wrap; gap: 6px; }
+  .guide-prix-marchand-desc { max-width: 100%; }
 }
 .guide-prix-empty {
   padding: 40px 20px;
