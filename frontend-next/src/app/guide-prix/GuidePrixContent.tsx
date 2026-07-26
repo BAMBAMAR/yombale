@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
@@ -56,10 +56,12 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
   const [selected, setSelected] = useState<Detail | null>(null)
   const [loading, setLoading]   = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false)
+  const [loadingId, setLoadingId] = useState<string | null>(null)
   const [searched, setSearched] = useState(false)
   const [triPar, setTriPar] = useState<'pertinence' | 'prix_asc' | 'prix_desc' | 'nb_offres'>('pertinence')
   const [prixMinFiltre, setPrixMinFiltre] = useState('')
   const [prixMaxFiltre, setPrixMaxFiltre] = useState('')
+  const detailRef = useRef<HTMLDivElement>(null)
 
   async function search(e?: React.FormEvent) {
     e?.preventDefault()
@@ -85,7 +87,13 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
 
   async function voirDetail(produit: Produit) {
     setLoadingDetail(true)
+    setLoadingId(produit.id)
     setSelected(null)
+    // Sur mobile (< 768px), scroll immédiatement vers le panneau détail
+    const isMobile = window.innerWidth < 768
+    if (isMobile && detailRef.current) {
+      detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
     try {
       const [offresRes, histoRes] = await Promise.allSettled([
         fetch(`/api/produits/${produit.id}/offres`),
@@ -133,7 +141,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
         prixMoyen,
       })
     } catch { /* show error gracefully */ }
-    finally { setLoadingDetail(false) }
+    finally { setLoadingDetail(false); setLoadingId(null) }
   }
 
   const _v = selected?.historique && selected.historique.length >= 2
@@ -245,6 +253,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
               key={p.id}
               className={`guide-prix-item${selected?.produit.id === p.id ? ' guide-prix-item--active' : ''}`}
               onClick={() => voirDetail(p)}
+              disabled={loadingId === p.id}
             >
               <div className="guide-prix-item-img">
                 <ExternalImg src={p.image_url} alt={p.nom} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
@@ -259,16 +268,21 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
                   <span className="guide-prix-item-nb"> · {p.nb_offres} offre{p.nb_offres > 1 ? 's' : ''}</span>
                 </p>
               </div>
-              <span className="guide-prix-item-arrow">›</span>
+              <span className="guide-prix-item-arrow">
+                {loadingId === p.id ? '⏳' : '›'}
+              </span>
             </button>
             ))}
           </div>
         </div>
 
         {/* Détail */}
-        <div className="guide-prix-detail">
+        <div className="guide-prix-detail" ref={detailRef}>
           {loadingDetail && (
-            <div className="guide-prix-empty"><p>Chargement du prix…</p></div>
+            <div className="guide-prix-empty">
+              <div className="guide-spinner" style={{ margin: '0 auto 12px' }} />
+              <p>Chargement des prix…</p>
+            </div>
           )}
 
           {!loadingDetail && !selected && searched && results.length > 0 && (
