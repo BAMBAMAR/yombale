@@ -61,7 +61,8 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
   const [triPar, setTriPar] = useState<'pertinence' | 'prix_asc' | 'prix_desc' | 'nb_offres'>('pertinence')
   const [prixMinFiltre, setPrixMinFiltre] = useState('')
   const [prixMaxFiltre, setPrixMaxFiltre] = useState('')
-  const detailRef = useRef<HTMLDivElement>(null)
+  // Mobile : affiche soit la liste, soit le détail (jamais les deux)
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list')
 
   async function search(e?: React.FormEvent) {
     e?.preventDefault()
@@ -89,11 +90,8 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
     setLoadingDetail(true)
     setLoadingId(produit.id)
     setSelected(null)
-    // Sur mobile (< 768px), scroll immédiatement vers le panneau détail
-    const isMobile = window.innerWidth < 768
-    if (isMobile && detailRef.current) {
-      detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    // Sur mobile : basculer immédiatement vers la vue détail
+    setMobileView('detail')
     try {
       const [offresRes, histoRes] = await Promise.allSettled([
         fetch(`/api/produits/${produit.id}/offres`),
@@ -217,7 +215,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
 
       <div className="guide-prix-body">
         {/* Liste résultats */}
-        <div>
+        <div className={mobileView === 'detail' ? 'guide-prix-panel guide-prix-panel--hidden-mobile' : 'guide-prix-panel'}>
           {searched && results.length > 0 && (
             <div className="guide-results-header" style={{ marginBottom: 10 }}>
               <span className="guide-results-count">{results.length} résultat{results.length > 1 ? 's' : ''}</span>
@@ -277,7 +275,16 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
         </div>
 
         {/* Détail */}
-        <div className="guide-prix-detail" ref={detailRef}>
+        <div className={mobileView === 'list' ? 'guide-prix-detail guide-prix-panel--hidden-mobile' : 'guide-prix-detail'}>
+          {/* Bouton retour — visible uniquement sur mobile */}
+          {(loadingDetail || selected) && (
+            <button
+              className="guide-prix-back-btn"
+              onClick={() => { setMobileView('list'); setSelected(null); setLoadingId(null); }}
+            >
+              ← Retour aux résultats
+            </button>
+          )}
           {loadingDetail && (
             <div className="guide-prix-empty">
               <div className="guide-spinner" style={{ margin: '0 auto 12px' }} />

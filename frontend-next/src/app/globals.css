@@ -7900,6 +7900,33 @@ a {
   .guide-prix-liste { position: static; max-height: none; }
 }
 
+/* Mobile : afficher soit la liste soit le detail */
+.guide-prix-panel { display: block; }
+@media (max-width: 768px) {
+  .guide-prix-panel--hidden-mobile { display: none !important; }
+}
+
+/* Bouton retour liste → visible seulement sur mobile */
+.guide-prix-back-btn {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  margin-bottom: 14px;
+  transition: background .15s;
+}
+.guide-prix-back-btn:hover { background: var(--card); }
+@media (max-width: 768px) {
+  .guide-prix-back-btn { display: inline-flex; }
+}
+
 @media (max-width: 600px) {
   .guide-prix-page { padding: 0 12px 48px; }
   .guide-prix-hero { padding: 20px 0 16px; }
