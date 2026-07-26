@@ -49,7 +49,7 @@ export default function PageHeader({ breadcrumb, emoji, titre, compteur, cta }: 
       </div>
 
       {compteur && (
-        <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 6 }}>{compteur}</p>
+        <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 6, overflowWrap: 'break-word', wordBreak: 'break-word', maxWidth: '100%' }}>{compteur}</p>
       )}
     </div>
   )
