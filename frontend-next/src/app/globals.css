@@ -7942,6 +7942,10 @@ a {
   .guide-prix-hero { padding: 20px 0 16px; }
   .guide-prix-titre { font-size: 22px; }
   .guide-prix-desc { font-size: 13px; margin-bottom: 16px; }
+  .guide-prix-form > * {
+    width: 100%;
+    max-width: 600px;
+  }
   .guide-prix-search-wrap { flex-direction: column; gap: 8px; }
   .guide-prix-search-wrap .guide-prix-input { width: 100%; }
   .guide-prix-search-wrap .guide-prix-btn { width: 100%; }
@@ -7952,6 +7956,9 @@ a {
     justify-content: flex-start;
     gap: 6px;
     width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 1px 0 5px;
   }
   .guide-prix-form > div > .filtres-row .filter-pill {
