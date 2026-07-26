@@ -188,23 +188,21 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
               })),
             ]}
           />
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div className="guide-prix-price-filters">
             <input
               type="number"
               placeholder="Prix min"
               value={prixMinFiltre}
               onChange={e => setPrixMinFiltre(e.target.value)}
               className="guide-prix-input"
-              style={{ maxWidth: 140 }}
             />
-            <span style={{ color: 'var(--text3)' }}>—</span>
+            <span className="guide-prix-price-separator" aria-hidden="true">—</span>
             <input
               type="number"
               placeholder="Prix max"
               value={prixMaxFiltre}
               onChange={e => setPrixMaxFiltre(e.target.value)}
               className="guide-prix-input"
-              style={{ maxWidth: 140 }}
             />
             <button type="button" className="guide-prix-btn" onClick={() => search()} disabled={loading}>
               Filtrer

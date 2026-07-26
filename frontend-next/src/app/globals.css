@@ -7876,6 +7876,16 @@ a {
   white-space: nowrap;
 }
 .guide-prix-btn:disabled { opacity: .6; cursor: not-allowed; }
+.guide-prix-price-filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.guide-prix-price-filters .guide-prix-input { flex: 0 1 140px; min-width: 0; }
+.guide-prix-price-separator { color: var(--text3); }
 
 .guide-prix-body {
   display: grid;
@@ -7935,6 +7945,33 @@ a {
   .guide-prix-search-wrap { flex-direction: column; gap: 8px; }
   .guide-prix-search-wrap .guide-prix-input { width: 100%; }
   .guide-prix-search-wrap .guide-prix-btn { width: 100%; }
+  /* Les catégories restent accessibles au défilement, sans pousser le contenu
+     vers le bas ni provoquer de débordement sur les écrans étroits. */
+  .guide-prix-form > div > .filtres-row {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 6px;
+    width: 100%;
+    padding: 1px 0 5px;
+  }
+  .guide-prix-form > div > .filtres-row .filter-pill {
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    font-size: 11px;
+  }
+  .guide-prix-price-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+  }
+  .guide-prix-price-filters .guide-prix-input {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+  }
+  .guide-prix-price-separator { display: none; }
+  .guide-prix-price-filters .guide-prix-btn { grid-column: 1 / -1; width: 100%; }
   .guide-prix-body { gap: 16px; }
   .guide-prix-detail { padding: 16px; }
   .guide-prix-fiche-titre { font-size: 15px; margin-bottom: 14px; }
