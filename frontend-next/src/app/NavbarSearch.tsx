@@ -28,10 +28,6 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
   const pathname = usePathname()
   const inputRef = useRef<HTMLInputElement>(null)
   const [open, setOpen] = useState(alwaysOpen)
-
-  if (pathname === '/') {
-    return null
-  }
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<{ produits: ProduitResult[]; boutiques: BoutiqueResult[] }>({ produits: [], boutiques: [] })
   const [loading, setLoading] = useState(false)
@@ -80,6 +76,11 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
   }
 
   const hasResults = results.produits.length > 0 || results.boutiques.length > 0
+
+  // Hide search bar on homepage (hero already has its own search)
+  if (pathname === '/') {
+    return null
+  }
 
   return (
     <div style={{ position: 'relative', width: alwaysOpen ? '100%' : 'auto' }}>
