@@ -8902,20 +8902,53 @@ span.ripple {
   display: none;
 }
 
-/* Logo text group: name + tagline stacked */
-.logo-text-group {
-  display: flex;
-  flex-direction: column;
-  line-height: 1;
+/* ── Mobile icon buttons (Comparer / Favoris) ─────────────────── */
+.navbar-icon-actions {
+  display: none;
+  align-items: center;
+  gap: 4px;
 }
 
-.logo-tagline {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text2);
-  letter-spacing: 0.03em;
-  margin-top: 1px;
-  white-space: nowrap;
+.navbar-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  text-decoration: none;
+  font-size: 16px;
+  transition: background 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.navbar-icon-btn:active {
+  transform: scale(0.9);
+}
+
+.navbar-icon-btn--comparer {
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.navbar-icon-btn--comparer:hover {
+  background: #b85200;
+}
+
+.navbar-icon-btn--favoris {
+  background: #fff3ea;
+  color: var(--accent);
+}
+
+.navbar-icon-btn--favoris:hover {
+  background: #ffe8d4;
+}
+
+/* Desktop: keep text-based Comparer hidden, show Publier */
+.navbar-comparer {
+  display: none;
 }
 
 @media (max-width: 1040px) {
@@ -8941,7 +8974,7 @@ span.ripple {
 
   .navbar-top-row {
     height: auto;
-    gap: 8px;
+    gap: 6px;
   }
 
   .navbar-search-desktop {
@@ -8958,18 +8991,22 @@ span.ripple {
     font-size: 20px !important;
   }
 
-  .logo-tagline {
-    display: block !important;
-    font-size: 9px;
-    color: var(--text2);
+  /* Show icon actions, hide text-based deposer */
+  .navbar-icon-actions {
+    display: flex;
+  }
+
+  .navbar-deposer {
+    display: none !important;
+  }
+
+  .navbar-comparer {
+    display: none !important;
   }
 }
 
 @media (max-width: 480px) {
   .navbar {
     padding: 8px 3% !important;
-  }
-  .logo-name {
-    font-size: 18px !important;
   }
 }

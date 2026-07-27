@@ -233,10 +233,7 @@ export default async function RootLayout({
             <div className="navbar-top-row">
               <a href="/" className="logo" aria-label="Nopalou - Comparateur de prix au Sénégal">
                 <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
-                <div className="logo-text-group">
-                  <span className="logo-name" data-suffix="lou">Nopa</span>
-                  <span className="logo-tagline">Comparateur de prix au Sénégal</span>
-                </div>
+                <span className="logo-name" data-suffix="lou">Nopa</span>
               </a>
               <div className="navbar-links" role="menubar">
                 <a href="/" className="navbar-link" role="menuitem">Produits</a>
@@ -262,13 +259,15 @@ export default async function RootLayout({
                   </>
                 )}
               </div>
+              {/* Mobile-only icon actions */}
+              <div className="navbar-icon-actions">
+                <a href="/guide-prix" className="navbar-icon-btn navbar-icon-btn--comparer" aria-label="Comparer les prix" title="Comparer">⚖</a>
+                <a href="/favoris" className="navbar-icon-btn navbar-icon-btn--favoris" aria-label="Mes favoris" title="Favoris">❤</a>
+              </div>
               <MobileNav
                 isLoggedIn={!!session}
                 nom={session?.nom ?? session?.email ?? undefined}
               />
-            </div>
-            <div className="navbar-search-mobile">
-              <NavbarSearch alwaysOpen={true} />
             </div>
           </nav>
         </header>
