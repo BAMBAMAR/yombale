@@ -261,8 +261,10 @@ export default async function RootLayout({
               </div>
               {/* Mobile-only icon actions */}
               <div className="navbar-icon-actions">
-                <a href="/guide-prix" className="navbar-icon-btn navbar-icon-btn--comparer" aria-label="Comparer les prix" title="Comparer">⚖</a>
+                <a href="/comparaison" className="navbar-icon-btn navbar-icon-btn--comparer" aria-label="Comparer les prix" title="Comparer">⚖</a>
                 <a href="/favoris" className="navbar-icon-btn navbar-icon-btn--favoris" aria-label="Mes favoris" title="Favoris">❤</a>
+                <a href="/deposer-annonce" className="navbar-icon-btn navbar-icon-btn--publier" aria-label="Publier" title="Publier">➕</a>
+                <a href={session ? "/compte" : "/connexion"} className="navbar-icon-btn navbar-icon-btn--profil" aria-label="Profil" title="Profil">👤</a>
               </div>
               <MobileNav
                 isLoggedIn={!!session}

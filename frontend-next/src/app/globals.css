@@ -8946,6 +8946,26 @@ span.ripple {
   background: #ffe8d4;
 }
 
+.navbar-icon-btn--publier {
+  background: #e0f2fe;
+  color: var(--blue);
+  font-size: 14px;
+}
+
+.navbar-icon-btn--publier:hover {
+  background: #bae6fd;
+}
+
+.navbar-icon-btn--profil {
+  background: #f1f5f9;
+  color: var(--navy);
+  font-size: 15px;
+}
+
+.navbar-icon-btn--profil:hover {
+  background: #e2e8f0;
+}
+
 /* Desktop: keep text-based Comparer hidden, show Publier */
 .navbar-comparer {
   display: none;
