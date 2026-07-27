@@ -8926,15 +8926,14 @@ span.ripple {
   transform: scale(0.9);
 }
 
-.navbar-icon-btn--comparer {
-  background: var(--accent);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
+.navbar-icon-btn--whatsapp {
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 15px;
 }
 
-.navbar-icon-btn--comparer:hover {
-  background: #b85200;
+.navbar-icon-btn--whatsapp:hover {
+  background: #bbf7d0;
 }
 
 .navbar-icon-btn--favoris {
