@@ -88,7 +88,7 @@ export default async function FicheProduitPage(
     : []
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px 20px 48px' }}>
+    <div className="boutique-produit-page">
 
       {/* Fil d'Ariane */}
       <nav style={{ fontSize: 13, color: '#9ca3af', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -100,7 +100,7 @@ export default async function FicheProduitPage(
       </nav>
 
       {/* Layout principal */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'start' }}>
+      <div className="boutique-produit-layout">
 
         {/* ── Galerie ────────────────────────── */}
         <GalerieClient images={p.images} nom={p.nom} enStock={p.en_stock} />

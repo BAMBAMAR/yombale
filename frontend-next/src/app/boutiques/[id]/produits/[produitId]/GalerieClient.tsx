@@ -52,7 +52,7 @@ export default function GalerieClient({
                 width: 36, height: 36, borderRadius: '50%', border: 'none',
                 background: 'rgba(255,255,255,.9)', cursor: 'pointer',
                 fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0,0,0,.15)',
+                boxShadow: '0 2px 8px rgba(0,0,0,.15)', zIndex: 2,
               }}
               aria-label="Image précédente"
             >‹</button>
@@ -63,7 +63,7 @@ export default function GalerieClient({
                 width: 36, height: 36, borderRadius: '50%', border: 'none',
                 background: 'rgba(255,255,255,.9)', cursor: 'pointer',
                 fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0,0,0,.15)',
+                boxShadow: '0 2px 8px rgba(0,0,0,.15)', zIndex: 2,
               }}
               aria-label="Image suivante"
             >›</button>

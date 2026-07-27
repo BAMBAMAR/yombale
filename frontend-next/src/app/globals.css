@@ -8860,6 +8860,26 @@ span.ripple {
   padding: 4px 10px;
   border-radius: 20px;
 }
+/* ── Fiche Produit Boutique Responsiveness ─────────────────────── */
+.boutique-produit-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
 
+.boutique-produit-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
 
-
+@media (max-width: 768px) {
+  .boutique-produit-page {
+    padding: 16px 12px 32px;
+  }
+  .boutique-produit-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
