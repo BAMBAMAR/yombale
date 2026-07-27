@@ -230,33 +230,43 @@ export default async function RootLayout({
 
         <header role="banner">
           <nav className="navbar" aria-label="Navigation principale">
-            <a href="/" className="logo"><Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority /><span className="logo-name" data-suffix="lou">Nopa</span></a>
-            <div className="navbar-links" role="menubar">
-              <a href="/" className="navbar-link" role="menuitem">Produits</a>
-              <a href="/immo" className="navbar-link" role="menuitem">Immobilier</a>
-              <a href="/telecom" className="navbar-link" role="menuitem">Télécom</a>
-              <a href="/annonces" className="navbar-link" role="menuitem">Annonces</a>
-              <a href="/boutiques" className="navbar-link" role="menuitem">Boutiques</a>
-              <NavbarGuides />
-            </div>
-            <NavbarSearch />
-            <div className="navbar-actions">
-              <a href="/deposer-annonce" className="navbar-deposer" aria-label="Publier une nouvelle annonce">
-                + Publier
+            <div className="navbar-top-row">
+              <a href="/" className="logo">
+                <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
+                <span className="logo-name" data-suffix="lou">Nopa</span>
               </a>
-              {session ? (
-                <NavbarActions nom={session.nom ?? session.email ?? 'Mon compte'} />
-              ) : (
-                <>
-                  <a href="/connexion" className="navbar-link">Connexion</a>
-                  <a href="/inscription" className="navbar-inscription">S&apos;inscrire</a>
-                </>
-              )}
+              <div className="navbar-links" role="menubar">
+                <a href="/" className="navbar-link" role="menuitem">Produits</a>
+                <a href="/immo" className="navbar-link" role="menuitem">Immobilier</a>
+                <a href="/telecom" className="navbar-link" role="menuitem">Télécom</a>
+                <a href="/annonces" className="navbar-link" role="menuitem">Annonces</a>
+                <a href="/boutiques" className="navbar-link" role="menuitem">Boutiques</a>
+                <NavbarGuides />
+              </div>
+              <div className="navbar-search-desktop">
+                <NavbarSearch />
+              </div>
+              <div className="navbar-actions">
+                <a href="/deposer-annonce" className="navbar-deposer" aria-label="Publier une nouvelle annonce">
+                  + Publier
+                </a>
+                {session ? (
+                  <NavbarActions nom={session.nom ?? session.email ?? 'Mon compte'} />
+                ) : (
+                  <>
+                    <a href="/connexion" className="navbar-link">Connexion</a>
+                    <a href="/inscription" className="navbar-inscription">S&apos;inscrire</a>
+                  </>
+                )}
+              </div>
+              <MobileNav
+                isLoggedIn={!!session}
+                nom={session?.nom ?? session?.email ?? undefined}
+              />
             </div>
-            <MobileNav
-              isLoggedIn={!!session}
-              nom={session?.nom ?? session?.email ?? undefined}
-            />
+            <div className="navbar-search-mobile">
+              <NavbarSearch alwaysOpen={true} />
+            </div>
           </nav>
         </header>
 

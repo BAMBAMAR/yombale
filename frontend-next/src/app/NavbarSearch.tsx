@@ -23,16 +23,22 @@ interface BoutiqueResult {
   slug: string
 }
 
-export default function NavbarSearch() {
+export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: boolean }) {
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(alwaysOpen)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<{ produits: ProduitResult[]; boutiques: BoutiqueResult[] }>({ produits: [], boutiques: [] })
   const [loading, setLoading] = useState(false)
   const [, startTransition] = useTransition()
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
+
+  useEffect(() => {
+    if (alwaysOpen) {
+      setOpen(true)
+    }
+  }, [alwaysOpen])
 
   useEffect(() => {
     if (!query.trim() || query.length < 2) {
@@ -61,7 +67,9 @@ export default function NavbarSearch() {
     const q = query.trim() || inputRef.current?.value.trim()
     if (q) {
       startTransition(() => router.push(`/recherche?q=${encodeURIComponent(q)}`))
-      setOpen(false)
+      if (!alwaysOpen) {
+        setOpen(false)
+      }
       setQuery('')
     }
   }
@@ -69,30 +77,32 @@ export default function NavbarSearch() {
   const hasResults = results.produits.length > 0 || results.boutiques.length > 0
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', width: alwaysOpen ? '100%' : 'auto' }}>
       <form
-        className={`navbar-search${open ? ' navbar-search--open' : ''}`}
+        className={`navbar-search${(open || alwaysOpen) ? ' navbar-search--open' : ''}`}
         onSubmit={handleSubmit}
         role="search"
+        style={alwaysOpen ? { width: '100%', display: 'flex', background: 'var(--bg)', borderRadius: '10px', border: '1.5px solid var(--border)', padding: '2px 6px' } : undefined}
       >
-        {open && (
+        {(open || alwaysOpen) && (
           <input
             ref={inputRef}
             type="search"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Produits, boutiques, immo, annonces…"
+            placeholder="Rechercher des produits, boutiques, immobilier..."
             className="navbar-search-input"
-            autoFocus
+            autoFocus={alwaysOpen ? false : true}
             aria-label="Recherche globale Nopalou"
+            style={alwaysOpen ? { border: 'none', background: 'transparent', flex: 1, padding: '6px 8px', fontSize: '13px', width: '100%' } : undefined}
           />
         )}
         <button
-          type={open ? 'submit' : 'button'}
+          type={(open || alwaysOpen) ? 'submit' : 'button'}
           className="navbar-search-btn"
-          aria-label={open ? 'Lancer la recherche' : 'Ouvrir la recherche'}
-          onMouseDown={e => { if (open && !query) e.preventDefault() }}
-          onClick={() => !open && setOpen(true)}
+          aria-label={(open || alwaysOpen) ? 'Lancer la recherche' : 'Ouvrir la recherche'}
+          onMouseDown={e => { if ((open || alwaysOpen) && !query) e.preventDefault() }}
+          onClick={() => !alwaysOpen && !open && setOpen(true)}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="8"/>
@@ -105,7 +115,7 @@ export default function NavbarSearch() {
       {open && query.length >= 2 && (
         <div
           style={{
-            position: 'absolute', top: '100%', right: 0, width: 340, background: '#fff',
+            position: 'absolute', top: '100%', right: 0, left: alwaysOpen ? 0 : 'auto', width: alwaysOpen ? '100%' : 340, background: '#fff',
             borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.18)', border: '1px solid #e5e7eb',
             marginTop: 8, zIndex: 1100, overflow: 'hidden',
           }}

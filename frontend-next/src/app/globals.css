@@ -8883,3 +8883,59 @@ span.ripple {
     gap: 28px;
   }
 }
+
+/* ── Modern Premium E-commerce Header ──────────────────────────── */
+.navbar-top-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  gap: 16px;
+}
+
+.navbar-search-desktop {
+  display: block;
+}
+
+.navbar-search-mobile {
+  display: none;
+}
+
+@media (max-width: 1040px) {
+  .navbar {
+    height: auto !important;
+    padding: 10px 4% !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+  
+  .navbar-top-row {
+    height: auto;
+    gap: 8px;
+  }
+  
+  .navbar-search-desktop {
+    display: none;
+  }
+  
+  .navbar-search-mobile {
+    display: block;
+    width: 100%;
+    margin-top: 2px;
+  }
+  
+  .logo-name {
+    display: inline !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 8px 3% !important;
+  }
+  .logo-name {
+    display: none !important;
+  }
+}
