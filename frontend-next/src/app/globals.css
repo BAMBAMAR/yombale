@@ -6837,13 +6837,34 @@ a {
 }
 
 @media (max-width: 900px) {
-  .annonce-detail-layout { grid-template-columns: 1fr; }
-  .annonce-detail-sidebar { position: static; }
+  .annonce-detail-layout {
+    grid-template-columns: 1fr;
+    min-width: 0;
+    width: 100%;
+  }
+  .annonce-detail-main {
+    min-width: 0;
+    width: 100%;
+  }
+  .annonce-detail-gallery {
+    min-width: 0;
+    width: 100%;
+  }
+  .annonce-detail-thumbs {
+    max-width: 100%;
+  }
+  .annonce-detail-sidebar {
+    position: static;
+    width: 100%;
+  }
   .footer-inner { grid-template-columns: 1fr !important; }
   .footer-links { grid-template-columns: 1fr 1fr !important; }
 }
 
 @media (max-width: 600px) {
+  .annonce-detail-page {
+    padding: 16px 12px 40px;
+  }
   .annonces-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 }
 
@@ -7987,19 +8008,26 @@ a {
 
 @media (max-width: 600px) {
   .guide-prix-page { padding: 0 14px 48px; }
-  .guide-prix-hero { padding: 20px 0 16px; }
+  .guide-prix-hero { padding: 20px 0 16px; width: 100%; }
   .guide-prix-titre { font-size: 22px; }
   .guide-prix-desc { font-size: 13px; margin-bottom: 16px; }
-  .guide-prix-form > * {
+  .guide-prix-form {
     width: 100%;
     max-width: 100%;
   }
-  .guide-prix-search-wrap { flex-direction: column; gap: 8px; }
+  .guide-prix-form > * {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .guide-prix-search-wrap { flex-direction: column; gap: 8px; width: 100%; }
   .guide-prix-search-wrap .guide-prix-input { width: 100%; }
   .guide-prix-search-wrap .guide-prix-btn { width: 100%; }
   /* Les catégories : scroll horizontal avec indicateur visuel (gradient) */
   .guide-prix-form > div {
     position: relative;
+    width: 100%;
+    min-width: 0;
   }
   .guide-prix-form > div > .filtres-row {
     flex-wrap: nowrap;
@@ -8039,6 +8067,7 @@ a {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
     align-items: center;
+    width: 100%;
   }
   .guide-prix-price-filters .guide-prix-input {
     width: 100%;
@@ -8047,8 +8076,10 @@ a {
   }
   .guide-prix-price-separator { display: none; }
   .guide-prix-price-filters .guide-prix-btn { grid-column: 1 / -1; width: 100%; }
-  .guide-prix-body { gap: 16px; }
-  .guide-prix-detail { padding: 16px; }
+  .guide-prix-body { gap: 16px; min-width: 0; width: 100%; overflow: hidden; }
+  .guide-prix-panel { min-width: 0; width: 100%; }
+  .guide-prix-liste { min-width: 0; width: 100%; }
+  .guide-prix-detail { padding: 16px; min-width: 0; width: 100%; }
   .guide-prix-fiche-titre { font-size: 15px; margin-bottom: 14px; }
   .guide-prix-stat { min-width: 80px; padding: 10px; }
   .guide-prix-stat-val { font-size: 15px; }

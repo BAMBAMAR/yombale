@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { fcfa } from '@/lib/format'
+import { fcfa, decodeHtml } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
 import PageHeader from '@/components/PageHeader'
 import FiltresBar from '@/components/FiltresBar'
@@ -255,7 +255,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
                 <ExternalImg src={p.image_url} alt={p.nom} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
               </div>
               <div className="guide-prix-item-info">
-                <p className="guide-prix-item-nom">{p.nom}</p>
+                <p className="guide-prix-item-nom">{decodeHtml(p.nom)}</p>
                 <p className="guide-prix-item-prix">
                   {p.prix_max && p.prix_max !== p.prix_min
                     ? <><span className="guide-prix-item-range">{fcfa(p.prix_min)} – {fcfa(p.prix_max)}</span></>
@@ -307,7 +307,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
 
             return (
               <div className="guide-prix-fiche">
-                <h2 className="guide-prix-fiche-titre">{produit.nom}</h2>
+                <h2 className="guide-prix-fiche-titre">{decodeHtml(produit.nom)}</h2>
                 <p className="guide-prix-fiche-meta">
                   Analyse basée sur <strong>{nbMarchands} marchand{nbMarchands > 1 ? 's' : ''}</strong> au Sénégal
                   {nbExclus > 0 && <span style={{ color: 'var(--text3)', marginLeft: 6 }}>· {nbExclus} offre{nbExclus > 1 ? 's' : ''} hors fourchette exclue{nbExclus > 1 ? 's' : ''}</span>}
@@ -366,7 +366,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
                           <div className="guide-prix-marchand-info">
                             {i === 0 && <span className="guide-prix-best-badge">🏷 Moins cher</span>}
                             <span className="guide-prix-marchand-nom">{o.marchand}</span>
-                            {o.titre && <span className="guide-prix-marchand-desc">{o.titre}</span>}
+                            {o.titre && <span className="guide-prix-marchand-desc">{decodeHtml(o.titre)}</span>}
                             {o.stock === false && <span className="guide-prix-stock-badge">Rupture</span>}
                           </div>
                           <span className="guide-prix-marchand-prix">{fcfa(o.prix)}</span>

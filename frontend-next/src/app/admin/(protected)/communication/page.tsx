@@ -1,5 +1,7 @@
 import { cookies } from 'next/headers'
 import { PALIERS_BOUTIQUE } from '@/lib/fonctionnalites-data'
+import { fcfa } from '@/lib/format'
+
 
 export const metadata = { title: 'Kit communication — Admin Nopalou' }
 

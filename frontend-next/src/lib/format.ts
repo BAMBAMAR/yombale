@@ -42,3 +42,18 @@ export function lienBoutiqueWhatsapp(slug: string): string {
   const texte = encodeURIComponent(`boutique_${slug}`)
   return `https://wa.me/${numero}?text=${texte}`
 }
+
+export function decodeHtml(str: string | null | undefined): string {
+  if (!str) return ''
+  return str
+    .replace(/&rsquo;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&ldquo;/g, '"')
+    .replace(/&rdquo;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+}
+
