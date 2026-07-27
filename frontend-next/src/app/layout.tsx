@@ -232,11 +232,11 @@ export default async function RootLayout({
           <nav className="navbar" aria-label="Navigation principale">
             <div className="navbar-top-row">
               <a href="/" className="logo" aria-label="Nopalou - Comparateur de prix au Sénégal">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
+                <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
+                <div className="logo-text-group">
                   <span className="logo-name" data-suffix="lou">Nopa</span>
+                  <span className="logo-tagline">Comparateur de prix au Sénégal</span>
                 </div>
-                <span className="logo-tagline">Comparateur de prix</span>
               </a>
               <div className="navbar-links" role="menubar">
                 <a href="/" className="navbar-link" role="menuitem">Produits</a>

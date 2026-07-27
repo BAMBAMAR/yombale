@@ -8902,32 +8902,66 @@ span.ripple {
   display: none;
 }
 
+/* Logo text group: name + tagline stacked */
+.logo-text-group {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.logo-tagline {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text2);
+  letter-spacing: 0.03em;
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
 @media (max-width: 1040px) {
   .navbar {
     height: auto !important;
     padding: 10px 4% !important;
     flex-direction: column !important;
-    gap: 10px !important;
+    gap: 8px !important;
     align-items: stretch !important;
+    border-bottom: none !important;
+    box-shadow: 0 2px 8px rgba(26,22,18,0.08);
   }
-  
+
+  .navbar::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), #e8a44a, var(--accent));
+  }
+
   .navbar-top-row {
     height: auto;
     gap: 8px;
   }
-  
+
   .navbar-search-desktop {
     display: none;
   }
-  
+
   .navbar-search-mobile {
     display: block;
     width: 100%;
-    margin-top: 2px;
   }
-  
+
   .logo-name {
     display: inline !important;
+    font-size: 20px !important;
+  }
+
+  .logo-tagline {
+    display: block !important;
+    font-size: 9px;
+    color: var(--text2);
   }
 }
 
@@ -8936,31 +8970,6 @@ span.ripple {
     padding: 8px 3% !important;
   }
   .logo-name {
-    display: none !important;
-  }
-}
-
-/* Logo tagline highlighting identity (Comparateur de prix) */
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo-tagline {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--accent);
-  border-left: 1.5px solid var(--border);
-  padding-left: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  line-height: 1.2;
-  margin-top: 2px;
-}
-
-@media (max-width: 1040px) {
-  .logo-tagline {
-    display: none;
+    font-size: 18px !important;
   }
 }
