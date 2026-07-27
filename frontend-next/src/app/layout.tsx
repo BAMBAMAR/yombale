@@ -231,9 +231,12 @@ export default async function RootLayout({
         <header role="banner">
           <nav className="navbar" aria-label="Navigation principale">
             <div className="navbar-top-row">
-              <a href="/" className="logo">
-                <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
-                <span className="logo-name" data-suffix="lou">Nopa</span>
+              <a href="/" className="logo" aria-label="Nopalou - Comparateur de prix au Sénégal">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
+                  <span className="logo-name" data-suffix="lou">Nopa</span>
+                </div>
+                <span className="logo-tagline">Comparateur de prix</span>
               </a>
               <div className="navbar-links" role="menubar">
                 <a href="/" className="navbar-link" role="menuitem">Produits</a>

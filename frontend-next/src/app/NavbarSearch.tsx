@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useRef, useState, useEffect, useTransition } from 'react'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
@@ -25,8 +25,13 @@ interface BoutiqueResult {
 
 export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: boolean }) {
   const router = useRouter()
+  const pathname = usePathname()
   const inputRef = useRef<HTMLInputElement>(null)
   const [open, setOpen] = useState(alwaysOpen)
+
+  if (pathname === '/') {
+    return null
+  }
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<{ produits: ProduitResult[]; boutiques: BoutiqueResult[] }>({ produits: [], boutiques: [] })
   const [loading, setLoading] = useState(false)
