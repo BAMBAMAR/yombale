@@ -3,7 +3,7 @@ import { useState, useEffect, useTransition, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
-import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage, publierProduitAnnonce, getBoutiqueProduits } from './actions'
+import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage, publierProduitAnnonce, getBoutiqueProduits, updateStock } from './actions'
 import Comptabilite from './Comptabilite'
 import Commandes from './Commandes'
 import AnalyticsClient from './analytics/AnalyticsClient'
@@ -54,6 +54,7 @@ interface Produit {
   prix_barre: number | null
   images: string[]
   en_stock: boolean
+  stock_quantite: number | null
   categorie: string | null
   caracteristiques: Record<string, string> | null
   variantes: Variante[] | null
@@ -1091,6 +1092,22 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
   const [filtreStatut, setFiltreStatut] = useState<'tous' | 'synchronise' | 'en_attente' | 'echec' | 'jamais_partage'>(filtreInitial ?? 'tous')
   const [filtreCategorie, setFiltreCategorie] = useState<string>('toutes')
   const [, startTransition] = useTransition()
+  const [editingStockId, setEditingStockId] = useState<string | null>(null)
+  const [stockInputVal, setStockInputVal] = useState<string>('')
+
+  async function saveStock(produitId: string) {
+    const val = Number(stockInputVal)
+    if (isNaN(val) || val < 0) return
+    startTransition(async () => {
+      const res = await updateStock(boutique.id, produitId, val)
+      if (res.error) {
+        alert(res.error)
+      } else {
+        setEditingStockId(null)
+        loadProduits()
+      }
+    })
+  }
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
@@ -1286,6 +1303,46 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                   }}>
                     {p.en_stock ? 'En stock' : 'Rupture'}
                   </span>
+
+                  {editingStockId === p.id ? (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
+                      <input
+                        type="number"
+                        value={stockInputVal}
+                        onChange={e => setStockInputVal(e.target.value)}
+                        style={{ width: 60, padding: '2px 6px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 11, height: 20 }}
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => saveStock(p.id)}
+                        style={{ padding: '2px 6px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 700 }}
+                      >
+                        OK
+                      </button>
+                      <button
+                        onClick={() => setEditingStockId(null)}
+                        style={{ padding: '2px 6px', background: '#9ca3af', color: '#fff', border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 700 }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEditingStockId(p.id)
+                        setStockInputVal(String(p.stock_quantite ?? 0))
+                      }}
+                      style={{
+                        fontSize: 11, padding: '2px 8px', borderRadius: 20,
+                        background: '#f1f5f9', color: '#475569', fontWeight: 700, cursor: 'pointer',
+                        border: '1px solid #e2e8f0', display: 'inline-flex', alignItems: 'center', gap: 4
+                      }}
+                      title="Modifier la quantité en stock"
+                    >
+                      📦 Stock : {p.stock_quantite ?? 0} ✏️
+                    </span>
+                  )}
                   <span
                     title="Statut de synchronisation avec l'assistant et le catalogue WhatsApp Business"
                     style={{

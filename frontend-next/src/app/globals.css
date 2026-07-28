@@ -8652,6 +8652,11 @@ button:focus-visible,
   border-right: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
+  position: sticky;
+  top: 100px;
+  align-self: flex-start;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
 }
 
 .bq-sidebar-header {
