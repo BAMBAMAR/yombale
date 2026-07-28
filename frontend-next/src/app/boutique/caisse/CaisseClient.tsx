@@ -1761,15 +1761,9 @@ export default function CaisseClient() {
 
             <div style={{ marginBottom: 14, marginTop: 14 }}>
               <label style={{ fontSize: 12, color: '#334155', display: 'block', marginBottom: 4, fontWeight: 700 }}>Caissier Connecté</label>
-              <select
-                value={caissierNom}
-                onChange={e => setCaissierNom(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#f8fafc', color: '#0f172a', fontSize: 14, fontWeight: 700 }}
-              >
-                <option value="Caissier 1 (Bamba)">👤 Caissier 1 (Bamba)</option>
-                <option value="Caissier 2 (Aminata)">👤 Caissier 2 (Aminata)</option>
-                <option value="Superviseur / Gérant">👑 Gérant / Superviseur</option>
-              </select>
+              <div style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#f8fafc', color: '#0f172a', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>👤</span> {caissierNom}
+              </div>
             </div>
 
             <div style={{ marginBottom: 16 }}>

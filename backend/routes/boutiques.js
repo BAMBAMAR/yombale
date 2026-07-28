@@ -1110,6 +1110,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
 
     if (Array.isArray(items) && items.length > 0) {
       const refVente = `POS-${Date.now().toString().slice(-6)}`;
+      let totalTicket = 0;
 
       for (const item of items) {
         if ((item.id || item.nom) && item.quantite) {
@@ -1142,6 +1143,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           const nomProduit = item.nom || pRes?.rows[0]?.nom || 'Article POS';
           const prixUnitaire = Number(item.prix || pRes?.rows[0]?.prix || 0);
           const totalLigne = prixUnitaire * qte;
+          totalTicket += totalLigne;
           const prodIdReal = pRes?.rows[0]?.id || (item.id && /^[0-9a-f-]{36}$/i.test(item.id) ? item.id : null);
 
           // 2. Insérer dans la table des ventes pour la Comptabilité & Analytics
@@ -1182,6 +1184,39 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
             );
           } catch (eCmd) {}
         }
+      }
+
+      // Mettre à jour la session active de caisse de la boutique si elle existe
+      try {
+        const activeSessionRes = await pool.query(
+          `SELECT id FROM boutique_pos_sessions WHERE boutique_id = $1 AND statut = 'ouverte' ORDER BY date_ouverture DESC LIMIT 1`,
+          [boutiqueId]
+        );
+        if (activeSessionRes.rows[0]) {
+          const activeSessionId = activeSessionRes.rows[0].id;
+          const mode = (modePaiement || 'cash').toLowerCase();
+          
+          await pool.query(
+            `UPDATE boutique_pos_sessions
+             SET ventes_total = COALESCE(ventes_total, 0) + $1,
+                 ventes_especes = COALESCE(ventes_especes, 0) + $2,
+                 ventes_wave = COALESCE(ventes_wave, 0) + $3,
+                 ventes_orange_money = COALESCE(ventes_orange_money, 0) + $4,
+                 ventes_carte = COALESCE(ventes_carte, 0) + $5,
+                 nb_ventes = COALESCE(nb_ventes, 0) + 1
+             WHERE id = $6`,
+            [
+              totalTicket,
+              mode === 'cash' || mode === 'especes' || mode === 'espece' ? totalTicket : 0,
+              mode === 'wave' ? totalTicket : 0,
+              mode === 'orange_money' || mode === 'orange' ? totalTicket : 0,
+              mode === 'carte' ? totalTicket : 0,
+              activeSessionId
+            ]
+          );
+        }
+      } catch (eSessionUpdate) {
+        console.error('[POS VENTE SESSION UPDATE ERR]', eSessionUpdate.message);
       }
     }
 
