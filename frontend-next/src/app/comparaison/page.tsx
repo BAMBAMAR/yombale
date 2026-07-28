@@ -13,7 +13,7 @@ interface Produit {
   id: string
   nom: string
   marque: string | null
-  categorie: string | null
+  categorie_nom?: string | null
   prix_min: number | null
   prix_max: number | null
   image_url: string | null
@@ -45,8 +45,8 @@ interface ProduitAvecOffres {
 }
 
 const SPECS = [
-  { key: 'categorie',  label: 'Catégorie' },
-  { key: 'marque',     label: 'Marque' },
+  { key: 'categorie_nom',  label: 'Catégorie' },
+  { key: 'marque',         label: 'Marque' },
 ]
 
 export default async function ComparaisonPage({
@@ -112,12 +112,148 @@ export default async function ComparaisonPage({
     return bestIdx
   })()
 
+  // Calculs pour le Verdict Dynamique Nopalou
+  const infos = items.map(({ produit, offres }) => {
+    const valides = offres.filter(o => o.prix && o.prix > 0)
+    const minPrice = valides.length ? Math.min(...valides.map(o => o.prix!)) : null
+    const moinsChere = valides.length ? valides.reduce((a, b) => (a.prix! <= b.prix! ? a : b)) : null
+    return {
+      produit,
+      offres,
+      minPrice,
+      moinsChere,
+      specs: moinsChere?.specs || null
+    }
+  })
+
+  const avecPrix = infos.filter((inf): inf is typeof inf & { minPrice: number } => inf.minPrice !== null)
+  let budgetVerdictText: React.ReactNode = null
+  if (avecPrix.length >= 2) {
+    const sortedByPrice = [...avecPrix].sort((a, b) => a.minPrice - b.minPrice)
+    const moinsCher = sortedByPrice[0]
+    const plusCher = sortedByPrice[sortedByPrice.length - 1]
+    const diffPrix = plusCher.minPrice - moinsCher.minPrice
+    if (diffPrix > 0) {
+      const pctEconomie = Math.round((diffPrix / plusCher.minPrice) * 100)
+      budgetVerdictText = (
+        <>
+          <span className="comp-verdict-winner">{moinsCher.produit.nom}</span> est le choix le moins cher à <strong>{fcfa(moinsCher.minPrice)}</strong>. Vous économisez <strong>{fcfa(diffPrix)}</strong> (soit <strong>-{pctEconomie}%</strong>) par rapport à {plusCher.produit.nom}.
+        </>
+      )
+    } else {
+      budgetVerdictText = (
+        <>
+          Les produits comparés ont un prix de départ identique de <strong>{fcfa(moinsCher.minPrice)}</strong>.
+        </>
+      )
+    }
+  }
+
+  interface VerdictBullet {
+    icon: string
+    text: React.ReactNode
+  }
+
+  const techBullets: VerdictBullet[] = []
+  if (infos.length >= 2) {
+    infos.forEach((infA) => {
+      infos.forEach((infB) => {
+        if (infA.produit.id === infB.produit.id) return
+        if (infA.specs?.ram_go && infB.specs?.ram_go && infA.specs.ram_go > infB.specs.ram_go) {
+          techBullets.push({
+            icon: '⚡',
+            text: <><strong>{infA.produit.nom}</strong> possède plus de mémoire vive ({infA.specs.ram_go} Go RAM contre {infB.specs.ram_go} Go).</>
+          })
+        }
+        if (infA.specs?.stockage_go && infB.specs?.stockage_go && infA.specs.stockage_go > infB.specs.stockage_go) {
+          techBullets.push({
+            icon: '💾',
+            text: <><strong>{infA.produit.nom}</strong> offre plus d'espace de stockage ({infA.specs.stockage_go} Go contre {infB.specs.stockage_go} Go).</>
+          })
+        }
+        if (infA.specs?.ecran_pouces && infB.specs?.ecran_pouces && infA.specs.ecran_pouces > infB.specs.ecran_pouces) {
+          techBullets.push({
+            icon: '🖥️',
+            text: <><strong>{infA.produit.nom}</strong> a un écran plus grand ({infA.specs.ecran_pouces}″ contre {infB.specs.ecran_pouces}″).</>
+          })
+        }
+        if (infA.specs?.puissance_btu && infB.specs?.puissance_btu && infA.specs.puissance_btu > infB.specs.puissance_btu) {
+          techBullets.push({
+            icon: '❄️',
+            text: <><strong>{infA.produit.nom}</strong> est plus puissant ({infA.specs.puissance_btu.toLocaleString('fr-FR')} BTU contre {infB.specs.puissance_btu.toLocaleString('fr-FR')} BTU).</>
+          })
+        }
+        if (infA.specs?.capacite_kg && infB.specs?.capacite_kg && infA.specs.capacite_kg > infB.specs.capacite_kg) {
+          techBullets.push({
+            icon: '🧺',
+            text: <><strong>{infA.produit.nom}</strong> a une plus grande capacité de lavage ({infA.specs.capacite_kg} kg contre {infB.specs.capacite_kg} kg).</>
+          })
+        }
+        if (infA.specs?.capacite_litres && infB.specs?.capacite_litres && infA.specs.capacite_litres > infB.specs.capacite_litres) {
+          techBullets.push({
+            icon: '🥛',
+            text: <><strong>{infA.produit.nom}</strong> a un plus grand volume ({infA.specs.capacite_litres} L contre {infB.specs.capacite_litres} L).</>
+          })
+        }
+        if (infA.specs?.etat === 'neuf' && infB.specs?.etat && infB.specs.etat !== 'neuf') {
+          const etatLabel = infB.specs.etat === 'occasion' ? 'd\'occasion' : 'reconditionné'
+          techBullets.push({
+            icon: '✨',
+            text: <><strong>{infA.produit.nom}</strong> est disponible en état neuf, alors que le meilleur prix de <strong>{infB.produit.nom}</strong> est en état {etatLabel}.</>
+          })
+        }
+      })
+    })
+
+    const sortedByOffres = [...infos].sort((a, b) => b.offres.length - a.offres.length)
+    if (sortedByOffres[0].offres.length > sortedByOffres[1].offres.length + 1) {
+      techBullets.push({
+        icon: '🏪',
+        text: <><strong>{sortedByOffres[0].produit.nom}</strong> offre plus de choix de marchands ({sortedByOffres[0].offres.length} vendeurs contre {sortedByOffres[1].offres.length}).</>
+      })
+    }
+  }
+
   return (
     <div className="page-container" style={{ paddingTop: '2rem' }}>
       <h1 className="comp-titre">Comparaison de produits</h1>
       <p className="comp-sous-titre">
         Comparez côte à côte les offres disponibles au Sénégal.
       </p>
+
+      {avecPrix.length >= 2 && (
+        <div className="comp-verdict-card">
+          <div className="comp-verdict-header">
+            <span>⚖️</span> Verdict Nopalou
+          </div>
+          <div className="comp-verdict-grid">
+            {budgetVerdictText && (
+              <div className="comp-verdict-col">
+                <div className="comp-verdict-subtitle">💰 Budget</div>
+                <ul className="comp-verdict-list">
+                  <li className="comp-verdict-item">
+                    <span className="comp-verdict-bullet">🏷️</span>
+                    <span>{budgetVerdictText}</span>
+                  </li>
+                </ul>
+              </div>
+            )}
+            {techBullets.length > 0 && (
+              <div className="comp-verdict-col">
+                <div className="comp-verdict-subtitle">⚡ Avantages techniques & Offre</div>
+                <ul className="comp-verdict-list">
+                  {techBullets.slice(0, 3).map((bullet, idx) => (
+                    <li key={idx} className="comp-verdict-item">
+                      <span className="comp-verdict-bullet">{bullet.icon}</span>
+                      <span>{bullet.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="comp-table-wrap">
         <table className="comp-table">
