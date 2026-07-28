@@ -1003,7 +1003,7 @@ export default function CaisseClient() {
         alignItems: 'center',
         boxShadow: 'var(--shadow)',
         whiteSpace: 'nowrap',
-        overflowX: 'auto',
+        overflow: 'visible',
       }}>
         {/* Côté Gauche : Logo Brand + Boutique Selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
