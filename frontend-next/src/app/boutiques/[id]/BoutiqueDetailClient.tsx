@@ -8,6 +8,7 @@ import AvisClients from '@/components/AvisClients'
 import DrawerCart from '@/components/DrawerCart'
 import CrossSelling from '@/components/CrossSelling'
 import { useCart } from '@/context/CartContext'
+import CardActions from '@/app/CardActions'
 
 export interface Produit {
   id: string
@@ -62,6 +63,7 @@ function ProduitCard({
       overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.06)',
       display: 'flex', flexDirection: 'column',
       transition: 'box-shadow .15s, transform .15s',
+      position: 'relative',
     }}
       onMouseEnter={e => {
         (e.currentTarget as HTMLDivElement).style.boxShadow = '0 6px 20px rgba(0,0,0,.12)'
@@ -110,7 +112,8 @@ function ProduitCard({
         </div>
       </Link>
       {/* Bouton d'action standard e-commerce : Ajouter au panier */}
-      <div style={{ padding: '0 12px 12px' }}>
+      <div style={{ padding: '0 12px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <CardActions id={p.id} nom={p.nom} type="boutique_produit" boutiqueId={boutiqueId} />
         <button
           onClick={() => {
             addToCart(boutiqueId, boutiqueNom, p, whatsapp)

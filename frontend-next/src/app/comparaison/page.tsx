@@ -133,7 +133,7 @@ export default async function ComparaisonPage({
                   <div className="comp-prod-img">
                     <ExternalImg src={produit.image_url} alt={produit.nom} fallbackClassName="comp-img-placeholder" />
                   </div>
-                  <Link href={`/produit/${produit.id}`} className="comp-prod-nom">
+                  <Link href={(produit as any).is_boutique ? `/boutiques/${(produit as any).boutique_slug || (produit as any).boutique_id}/produits/${produit.id}` : `/produit/${produit.id}`} className="comp-prod-nom">
                     {produit.nom}
                   </Link>
                   {produit.marque && (
@@ -250,7 +250,7 @@ export default async function ComparaisonPage({
                         <div key={o.id} className="comp-mini-offre">
                           <span className="comp-mini-marchand">{o.marchand_nom ?? 'Vendeur'}</span>
                           <span className="comp-mini-prix">{fcfa(o.prix)}</span>
-                          <Link href={`/produit/${produit.id}`} className="comp-mini-btn">
+                          <Link href={(produit as any).is_boutique ? `/boutiques/${(produit as any).boutique_slug || (produit as any).boutique_id}/produits/${produit.id}` : `/produit/${produit.id}`} className="comp-mini-btn">
                             Voir
                           </Link>
                         </div>
@@ -266,7 +266,7 @@ export default async function ComparaisonPage({
               <td className="comp-td-label"></td>
               {items.map(({ produit }) => (
                 <td key={produit.id} className="comp-td">
-                  <Link href={`/produit/${produit.id}`} className="comp-fiche-btn">
+                  <Link href={(produit as any).is_boutique ? `/boutiques/${(produit as any).boutique_slug || (produit as any).boutique_id}/produits/${produit.id}` : `/produit/${produit.id}`} className="comp-fiche-btn">
                     Voir la fiche →
                   </Link>
                 </td>

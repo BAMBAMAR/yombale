@@ -9,12 +9,13 @@ import {
 interface Props {
   id: string | number
   nom: string
-  type?: 'produit' | 'immo' | 'telecom' | 'annonce'
+  type?: 'produit' | 'immo' | 'telecom' | 'annonce' | 'boutique_produit'
   categorie?: string | null   // nom DB ('Telephones') — cartes de l'accueil
   categorieSlug?: string      // slug direct — pages /categorie/[slug]
+  boutiqueId?: string
 }
 
-interface FavEntry { id: string; type: string }
+interface FavEntry { id: string; type: string; boutiqueId?: string }
 
 // nopalou_favs a historiquement stocké un tableau d'IDs bruts (produits uniquement).
 // On accepte les deux formats en lecture et on réécrit toujours au nouveau format.
@@ -25,7 +26,7 @@ function lireFavs(): FavEntry[] {
   } catch { return [] }
 }
 
-export default function CardActions({ id, nom, type = 'produit', categorie, categorieSlug }: Props) {
+export default function CardActions({ id, nom, type = 'produit', categorie, categorieSlug, boutiqueId }: Props) {
   const sid = String(id)
   const [fav, setFav]         = useState(false)
   const [favAnim, setFavAnim] = useState(false)
@@ -35,7 +36,7 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
   const pathname     = usePathname()
   const [blocage, setBlocage] = useState<string | null>(null) // null = cliquable
 
-  const monGroupe  = type === 'produit' ? infererGroupe(nom) : ''
+  const monGroupe  = (type === 'produit' || type === 'boutique_produit') ? infererGroupe(nom) : ''
   const monCatSlug = categorieSlug || (categorie ? CAT_NOM_SLUG[categorie] : '') || ''
 
   function syncFav() {
@@ -46,12 +47,16 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
   function syncCmp() {
     const list = lireCompare()
     setCmp(list.some(i => i.id === sid))
-    // Désactivation « zéro rejet » : uniquement quand une comparaison PRODUIT est active.
-    if (list.length === 0 || list[0].type !== 'produit' || list.some(i => i.id === sid)) {
+    // Désactivation « zéro rejet » : uniquement quand une comparaison PRODUIT ou BOUTIQUE_PRODUIT est active.
+    const estProduitType = type === 'produit' || type === 'boutique_produit'
+    const premierType = list[0]?.type
+    const estPremierProduitType = premierType === 'produit' || premierType === 'boutique_produit'
+    
+    if (list.length === 0 || !estPremierProduitType || list.some(i => i.id === sid)) {
       setBlocage(null)
       return
     }
-    if (type !== 'produit') {
+    if (!estProduitType) {
       setBlocage('Comparaison produits en cours — videz-la pour comparer autre chose')
       return
     }
@@ -81,7 +86,7 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
       const favs = lireFavs()
       const adding = !fav
       const next = adding
-        ? [...favs, { id: sid, type }]
+        ? [...favs, { id: sid, type, boutiqueId }]
         : favs.filter(f => !(f.id === sid && f.type === type))
       localStorage.setItem('nopalou_favs', JSON.stringify(next))
       setFav(adding)
@@ -102,7 +107,7 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
         next = list.filter(i => i.id !== sid)
       } else {
         if (list.length >= MAX_COMPARE) return // silently ignore si déjà 3
-        next = [...list, { id: sid, nom, type, groupe: monGroupe || undefined, catSlug: monCatSlug || undefined }]
+        next = [...list, { id: sid, nom, type, groupe: monGroupe || undefined, catSlug: monCatSlug || undefined, boutiqueId } as any]
       }
       localStorage.setItem('nopalou_compare', JSON.stringify(next))
       setCmp(!already)

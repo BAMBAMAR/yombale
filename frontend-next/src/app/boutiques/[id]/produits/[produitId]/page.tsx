@@ -7,6 +7,7 @@ import { fcfa } from '@/lib/format'
 import GalerieClient from './GalerieClient'
 import ProduitCTA from './ProduitCTA'
 import BoutonPartager from '@/components/BoutonPartager'
+import CardActions from '@/app/CardActions'
 
 
 interface ProduitDetail {
@@ -118,6 +119,9 @@ export default async function FicheProduitPage(
             <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 24, fontWeight: 800, margin: 0, lineHeight: 1.3 }}>
               {p.nom}
             </h1>
+            <div style={{ marginTop: 8, maxWidth: 200 }}>
+              <CardActions id={p.id} nom={p.nom} type="boutique_produit" boutiqueId={params.id} />
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
               <span style={{
                 fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 20,

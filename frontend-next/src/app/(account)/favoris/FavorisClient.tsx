@@ -4,9 +4,9 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
 
-type FavType = 'produit' | 'immo' | 'telecom' | 'annonce'
+type FavType = 'produit' | 'immo' | 'telecom' | 'annonce' | 'boutique_produit'
 
-interface FavEntry { id: string; type: FavType }
+interface FavEntry { id: string; type: FavType; boutiqueId?: string }
 
 interface FavItem {
   id: string
@@ -18,21 +18,23 @@ interface FavItem {
   href: string
 }
 
-const ENDPOINTS: Record<FavType, (id: string) => string> = {
+const ENDPOINTS: Record<FavType, (id: string, boutiqueId?: string) => string> = {
   produit: id => `/api/produits/${id}`,
   immo:    id => `/api/immo/${id}`,
   telecom: id => `/api/telecom/${id}`,
   annonce: id => `/api/annonces/${id}`,
+  boutique_produit: (id, boutiqueId) => `/api/boutiques/${boutiqueId}/produits/${id}`,
 }
 
-const HREFS: Record<FavType, (id: string) => string> = {
+const HREFS: Record<FavType, (id: string, boutiqueId?: string) => string> = {
   produit: id => `/produit/${id}`,
   immo:    id => `/immo/${id}`,
   telecom: id => `/telecom/${id}`,
   annonce: id => `/annonces/${id}`,
+  boutique_produit: (id, boutiqueId) => `/boutiques/${boutiqueId}/produits/${id}`,
 }
 
-function normaliser(type: FavType, id: string, raw: Record<string, unknown>): FavItem {
+function normaliser(type: FavType, id: string, raw: Record<string, unknown>, boutiqueId?: string): FavItem {
   const photo = Array.isArray(raw.photos) ? (raw.photos[0] as string) : null
   switch (type) {
     case 'immo':
@@ -59,6 +61,18 @@ function normaliser(type: FavType, id: string, raw: Record<string, unknown>): Fa
         image_url: photo,
         href: HREFS.annonce(id),
       }
+    case 'boutique_produit': {
+      const prod = (raw.produit || raw) as Record<string, unknown>
+      const img = Array.isArray(prod.images) ? (prod.images[0] as string) : null
+      const carac = prod.caracteristiques as Record<string, string> | null
+      return {
+        id, type, nom: prod.nom as string,
+        souscategorie: carac?.marque || (prod.boutique_nom as string) || null,
+        prix: prod.prix as number | null,
+        image_url: img,
+        href: HREFS.boutique_produit(id, boutiqueId),
+      }
+    }
     case 'produit':
     default:
       return {
@@ -89,10 +103,10 @@ export default function FavorisClient() {
     if (stored.length === 0) { setLoading(false); return }
 
     Promise.all(
-      stored.map(({ id, type }) =>
-        fetch(ENDPOINTS[type](id))
+      stored.map(({ id, type, boutiqueId }) =>
+        fetch(ENDPOINTS[type](id, boutiqueId))
           .then(r => r.ok ? r.json() : null)
-          .then(raw => raw ? normaliser(type, id, raw) : null)
+          .then(raw => raw ? normaliser(type, id, raw, boutiqueId) : null)
           .catch(() => null)
       )
     ).then(results => {

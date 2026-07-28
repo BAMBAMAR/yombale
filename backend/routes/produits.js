@@ -377,7 +377,32 @@ router.get('/:id', checkUUID, async (req, res) => {
       GROUP BY p.id, c.nom`,
       [req.params.id]
     );
-    if (!rows.length) return res.status(404).json({ error: 'Produit introuvable' });
+    if (!rows.length) {
+      const bp = await pool.query(`
+        SELECT p.id, p.nom, p.description, p.prix as prix_min, p.images, p.en_stock,
+               p.categorie as categorie_nom, b.nom AS boutique_nom, b.slug AS boutique_slug,
+               b.id AS boutique_id
+        FROM boutique_produits p
+        JOIN boutiques b ON b.id = p.boutique_id
+        WHERE p.id = $1 AND b.actif = true`,
+        [req.params.id]
+      );
+      if (!bp.rows.length) return res.status(404).json({ error: 'Produit introuvable' });
+      
+      const p = bp.rows[0];
+      return res.json({
+        id: p.id,
+        nom: p.nom,
+        description: p.description,
+        prix_min: p.prix_min,
+        image_url: p.images?.[0] || null,
+        categorie_nom: p.categorie_nom,
+        boutique_nom: p.boutique_nom,
+        boutique_slug: p.boutique_slug,
+        boutique_id: p.boutique_id,
+        is_boutique: true
+      });
+    }
     res.json(rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -397,6 +422,29 @@ router.get('/:id/offres', checkUUID, async (req, res) => {
       ORDER BY o.prix ASC`,
       [req.params.id]
     );
+
+    if (!rows.length) {
+      const bp = await pool.query(`
+        SELECT p.id, p.nom, p.prix, p.en_stock, b.nom AS boutique_nom, b.slug AS boutique_slug, b.id AS boutique_id
+        FROM boutique_produits p
+        JOIN boutiques b ON b.id = p.boutique_id
+        WHERE p.id = $1 AND b.actif = true`,
+        [req.params.id]
+      );
+      if (bp.rows.length > 0) {
+        const p = bp.rows[0];
+        return res.json([{
+          id: p.id,
+          prix: p.prix,
+          marchand_nom: p.boutique_nom,
+          site_url: `/boutiques/${p.boutique_slug || p.boutique_id}`,
+          stock: p.en_stock,
+          produit_nom: p.nom,
+          url_achat: `/boutiques/${p.boutique_slug || p.boutique_id}/produits/${p.id}`,
+          titre_affiche: p.nom
+        }]);
+      }
+    }
 
     // Détecter les prix outlier (écart > 10× ou < 10% de la médiane)
     if (rows.length >= 3) {
