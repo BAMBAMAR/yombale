@@ -360,3 +360,61 @@ export async function getBoutiqueProduits(boutiqueId: string): Promise<any[]> {
   }
 }
 
+export async function getBoutiquesMine(): Promise<any[]> {
+  try {
+    const res = await backendFetch('/api/boutiques/mine')
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.boutiques ?? []
+  } catch (err) {
+    console.error('[GET_BOUTIQUES_MINE_ERR]', err)
+    return []
+  }
+}
+
+export async function getPosHistorique(boutiqueId: string): Promise<any[]> {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/pos-historique`)
+    if (!res.ok) return []
+    const data = await res.json().catch(() => [])
+    return Array.isArray(data) ? data : []
+  } catch (err) {
+    console.error('[GET_POS_HISTORIQUE_ERR]', err)
+    return []
+  }
+}
+
+export async function creerPosVente(boutiqueId: string, body: any): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/pos-vente`, {
+      method: 'POST',
+      body: JSON.stringify(body)
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible d\'enregistrer la vente' }
+    }
+    return { success: true }
+  } catch (err) {
+    console.error('[CREER_POS_VENTE_ERR]', err)
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
+export async function declarerIncident(boutiqueId: string, body: any): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/pos-incident`, {
+      method: 'POST',
+      body: JSON.stringify(body)
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de déclarer l\'incident' }
+    }
+    return { success: true }
+  } catch (err) {
+    console.error('[DECLARER_INCIDENT_ERR]', err)
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import BatchImportModal from '@/app/boutique/BatchImportModal'
-import { getBoutiqueProduits } from '../actions'
+import { getBoutiqueProduits, getBoutiquesMine, getPosHistorique, creerPosVente, declarerIncident } from '../actions'
 
 interface ProduitCaisse {
   id: string
@@ -169,11 +169,10 @@ export default function CaisseClient() {
     async function chargerBoutiquesEtProduits() {
       try {
         setLoadingProduits(true)
-        const resBoutiques = await fetch(`${backendUrl}/api/boutiques/mine`, { credentials: 'include' })
-        const dataBoutiques = await resBoutiques.json()
-        if (dataBoutiques.boutiques && dataBoutiques.boutiques.length > 0) {
-          setBoutiques(dataBoutiques.boutiques)
-          const bId = boutiqueActiveId || dataBoutiques.boutiques[0].id
+        const mine = await getBoutiquesMine()
+        if (mine && mine.length > 0) {
+          setBoutiques(mine)
+          const bId = boutiqueActiveId || mine[0].id
           setBoutiqueActiveId(bId)
           await chargerProduitsBoutique(bId)
         } else {
@@ -212,11 +211,10 @@ export default function CaisseClient() {
       } catch {}
     }
 
-    // 2. Charger depuis l'API backend
-    fetch(`${backendUrl}/api/boutiques/${bId}/pos-historique`)
-      .then(r => r.json())
+    // 2. Charger depuis l'API backend via Action Serveur
+    getPosHistorique(bId)
       .then(dataHist => {
-        if (Array.isArray(dataHist) && dataHist.length > 0) {
+        if (dataHist && dataHist.length > 0) {
           setHistoriqueVentes(dataHist)
           localStorage.setItem(`nopalou_pos_historique_${bId}`, JSON.stringify(dataHist))
         }
@@ -520,16 +518,11 @@ export default function CaisseClient() {
 
     if (boutiqueActiveId) {
       try {
-        await fetch(`${backendUrl}/api/boutiques/${boutiqueActiveId}/pos-vente`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            items: panier.map(i => ({ id: i.produit.id, quantite: i.quantite, nom: i.produit.nom, prix: i.prixUnitaire })),
-            caissier: caissierNom,
-            modePaiement,
-            total: totalPanier,
-          }),
+        await creerPosVente(boutiqueActiveId, {
+          items: panier.map(i => ({ id: i.produit.id, quantite: i.quantite, nom: i.produit.nom, prix: i.prixUnitaire })),
+          caissier: caissierNom,
+          modePaiement,
+          total: totalPanier,
         })
       } catch (e) {
         console.error('Erreur mise à jour stock backend:', e)
@@ -622,15 +615,10 @@ export default function CaisseClient() {
       setHistoriqueVentes(prev => prev.map(v => v.id === venteId ? { ...v, statut: 'annulee', motifAnnulation: motif } : v))
 
       if (boutiqueActiveId) {
-        fetch(`${backendUrl}/api/boutiques/${boutiqueActiveId}/pos-incident`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            ticketId: targetVente.id,
-            type: 'annulation',
-            items: targetVente.ticket.map(i => ({ id: i.produit.id, quantite: i.quantite })),
-          }),
+        declarerIncident(boutiqueActiveId, {
+          ticketId: targetVente.id,
+          type: 'annulation',
+          items: targetVente.ticket.map(i => ({ id: i.produit.id, quantite: i.quantite })),
         }).catch(() => {})
       }
 
