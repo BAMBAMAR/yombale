@@ -5,6 +5,7 @@ import { fcfa } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import BatchImportModal from '@/app/boutique/BatchImportModal'
 import { getBoutiqueProduits, getBoutiquesMine, getPosHistorique, creerPosVente, declarerIncident } from '../actions'
+import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search } from 'lucide-react'
 
 interface ProduitCaisse {
   id: string
@@ -719,7 +720,7 @@ export default function CaisseClient() {
   // ── ÉCRAN DE VERROUILLAGE PIN SÉCURISÉ ─────────────────────────────────────
   if (verrouille) {
     return (
-      <div style={{ background: '#f1f5f9', color: '#0f172a', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: '#f1f5f9', color: '#0f172a', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
         <div style={{ background: '#ffffff', border: '2px solid #C75B00', borderRadius: 20, padding: 32, width: '100%', maxWidth: 400, textAlign: 'center', boxShadow: '0 20px 40px rgba(199,91,0,0.15)' }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>🔒</div>
           <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 900, color: '#0f172a' }}>Caisse POS Nopalou</h2>
@@ -788,7 +789,7 @@ export default function CaisseClient() {
   }
 
   return (
-    <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, sans-serif', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
 
       {/* Styles d'impression Thermique 80mm */}
       <style jsx global>{`
