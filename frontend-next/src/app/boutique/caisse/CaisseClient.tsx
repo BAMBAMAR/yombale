@@ -361,7 +361,7 @@ export default function CaisseClient() {
         setModalSessionOuverture(true)
       }
     } else {
-      setPinError('Code PIN incorrect. Veuillez vérifier votre saisie (Caissier: 1234, Gérant: 9999).')
+      setPinError('Code PIN incorrect. Veuillez vérifier votre saisie.')
     }
   }
 
