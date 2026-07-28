@@ -780,6 +780,44 @@ router.delete('/:id/produits/:prodId', verifierToken, param('id').isUUID(), para
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
+// ── POST /api/boutiques/:id/produits/:prodId/dupliquer — dupliquer produit
+router.post('/:id/produits/:prodId/dupliquer', verifierToken, param('id').isUUID(), param('prodId').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const { id, prodId } = req.params;
+    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
+    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+
+    const orig = await pool.query('SELECT * FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
+    if (!orig.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+    const p = orig.rows[0];
+
+    const r = await pool.query(
+      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, images, en_stock, stock_quantite, categorie, caracteristiques, variantes, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+       RETURNING *`,
+      [
+        id,
+        `${p.nom} (Copie)`,
+        p.description,
+        p.prix,
+        p.prix_barre,
+        p.images,
+        p.en_stock,
+        p.stock_quantite,
+        p.categorie,
+        p.caracteristiques,
+        p.variantes
+      ]
+    );
+
+    res.status(201).json({ success: true, produit: r.rows[0] });
+  } catch (err) {
+    console.error('[DUPLIQUER PRODUIT ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // ── POST /api/boutiques/:id/produits/:prodId/publier-annonce — Publier un produit en annonce classifiée
 router.post('/:id/produits/:prodId/publier-annonce', verifierToken, param('id').isUUID(), param('prodId').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });

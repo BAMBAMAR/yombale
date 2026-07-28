@@ -3,7 +3,7 @@ import { useState, useEffect, useTransition, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
-import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage, publierProduitAnnonce, getBoutiqueProduits, updateStock } from './actions'
+import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage, publierProduitAnnonce, getBoutiqueProduits, updateStock, duplicateProduit } from './actions'
 import Comptabilite from './Comptabilite'
 import Commandes from './Commandes'
 import AnalyticsClient from './analytics/AnalyticsClient'
@@ -1366,6 +1366,28 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
               </div>
               {/* Actions */}
               <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+                <button
+                  onClick={() => setMode({ editing: p })}
+                  style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Modifier
+                </button>
+                <button
+                  onClick={() => {
+                    if (!confirm('Voulez-vous dupliquer ce produit ?')) return
+                    startTransition(async () => {
+                      const res = await duplicateProduit(boutique.id, p.id)
+                      if (res.error) alert(res.error)
+                      else {
+                        setSuccessMsg('Produit dupliqué avec succès !')
+                        loadProduits()
+                      }
+                    })
+                  }}
+                  style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  📄 Dupliquer
+                </button>
                 <BoutonPartager
                   lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
                   message={
@@ -1376,12 +1398,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                   lienVisuel={`/assets/produit-boutique/${p.id}/story?boutiqueId=${boutique.id}`}
                   onPartage={() => { marquerProduitPartage(boutique.id, p.id).catch(() => {}) }}
                 />
-                <button
-                  onClick={() => setMode({ editing: p })}
-                  style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-                >
-                  Modifier
-                </button>
+
                 <button
                   onClick={() => {
                     if (!confirm('Voulez-vous publier ce produit comme annonce classifiée ?')) return

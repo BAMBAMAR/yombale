@@ -110,6 +110,19 @@ export async function deleteProduit(boutiqueId: string, produitId: string): Prom
   }
 }
 
+export async function duplicateProduit(boutiqueId: string, produitId: string): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/produits/${produitId}/dupliquer`, { method: 'POST' })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      return { error: data.error ?? 'Impossible de dupliquer le produit' }
+    }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
 export async function publierProduitAnnonce(boutiqueId: string, produitId: string): Promise<ActionState & { besoin_paiement?: boolean, message?: string }> {
   try {
     const res = await backendFetch(`/api/boutiques/${boutiqueId}/produits/${produitId}/publier-annonce`, { method: 'POST' })
