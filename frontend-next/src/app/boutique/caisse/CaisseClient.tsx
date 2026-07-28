@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import BatchImportModal from '@/app/boutique/BatchImportModal'
+import { getBoutiqueProduits } from '../actions'
 
 interface ProduitCaisse {
   id: string
@@ -224,10 +225,9 @@ export default function CaisseClient() {
 
     // 3. Charger le catalogue produits
     try {
-      const res = await fetch(`${backendUrl}/api/boutiques/${bId}/produits`)
-      const data = await res.json()
-      if (data.produits && Array.isArray(data.produits)) {
-        const prodsFormates: ProduitCaisse[] = data.produits.map((p: any) => ({
+      const produits = await getBoutiqueProduits(bId)
+      if (produits && Array.isArray(produits)) {
+        const prodsFormates: ProduitCaisse[] = produits.map((p: any) => ({
           id: p.id,
           nom: p.nom,
           prix: Number(p.prix),

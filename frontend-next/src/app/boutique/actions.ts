@@ -347,3 +347,16 @@ export async function updateStock(boutiqueId: string, produitId: string, stock_q
     return { error: 'Erreur de connexion au serveur' }
   }
 }
+
+export async function getBoutiqueProduits(boutiqueId: string): Promise<any[]> {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/produits`)
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.produits ?? []
+  } catch (err) {
+    console.error('[GET_BOUTIQUE_PRODUITS_ERR]', err)
+    return []
+  }
+}
+

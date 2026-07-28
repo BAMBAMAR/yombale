@@ -4,7 +4,7 @@ import {
   listZones, createZone, deleteZone,
   listVentes, declarerVente, deleteVente, updateVente,
   getDashboard, listDepenses, addDepense, deleteDepense, updateDepense,
-  updateStock,
+  updateStock, getBoutiqueProduits
 } from './actions'
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
@@ -338,7 +338,7 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
     const [v, z, p] = await Promise.all([
       listVentes(boutiqueId),
       listZones(boutiqueId),
-      fetch(`${backendUrl}/api/boutiques/${boutiqueId}/produits`).then(r => r.json()).then(d => d.produits ?? []).catch(() => []),
+      getBoutiqueProduits(boutiqueId),
     ])
     setVentes(v); setZones(z); setProduits(p)
     setLoading(false)
@@ -744,9 +744,8 @@ function StockView({ boutiqueId }: { boutiqueId: string }) {
 
   async function load() {
     setLoading(true)
-    const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/produits`).catch(() => null)
-    const data = res ? await res.json().catch(() => ({})) : {}
-    setProduits(data.produits ?? [])
+    const produits = await getBoutiqueProduits(boutiqueId)
+    setProduits(produits)
     setLoading(false)
   }
 

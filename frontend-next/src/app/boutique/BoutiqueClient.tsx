@@ -3,7 +3,7 @@ import { useState, useEffect, useTransition, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
-import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage, publierProduitAnnonce } from './actions'
+import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage, publierProduitAnnonce, getBoutiqueProduits } from './actions'
 import Comptabilite from './Comptabilite'
 import Commandes from './Commandes'
 import AnalyticsClient from './analytics/AnalyticsClient'
@@ -972,16 +972,14 @@ function MarketingBoutique({ boutique, onVoirJamaisPartages, planActif }: { bout
 
   useEffect(() => {
     let annule = false
-    fetch(`${backendUrl}/api/boutiques/${boutique.id}/produits`)
-      .then(res => res.json())
-      .then((data: { produits?: { partage_le: string | null }[] }) => {
+    getBoutiqueProduits(boutique.id)
+      .then(produits => {
         if (annule) return
-        const produits = data.produits ?? []
         setNbJamaisPartages(produits.filter(p => !p.partage_le).length)
       })
       .catch(() => { if (!annule) setNbJamaisPartages(0) })
     return () => { annule = true }
-  }, [boutique.id, backendUrl])
+  }, [boutique.id])
 
   return (
     <div>
@@ -1099,9 +1097,8 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
   async function loadProduits() {
     setLoading(true)
     try {
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutique.id}/produits`)
-      const data = await res.json()
-      setProduits(data.produits ?? [])
+      const produits = await getBoutiqueProduits(boutique.id)
+      setProduits(produits)
     } catch {
       setProduits([])
     } finally {
