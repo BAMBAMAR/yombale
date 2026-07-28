@@ -12,6 +12,7 @@ export const CATEGORIES = [
   { value: 'sport',        label: '⚽ Sport & Fitness' },
   { value: 'fournitures',  label: '📚 Fournitures & Bureautique' },
   { value: 'quincaillerie',label: '🧱 Quincaillerie & BTP' },
+  { value: 'pieces-rechange',label: '⚙️ Pièces de Rechange' },
   { value: 'services',     label: '🛠 Services' },
   { value: 'autre',        label: '📦 Autre' },
 ]

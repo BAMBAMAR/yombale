@@ -147,20 +147,47 @@ const catalogues = {
     { nom: "Peinture Emulsion Blanche 20L", desc: "Peinture murale lavable haute couvrance pour intérieur et extérieur", photo: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400" },
     { nom: "Perceuse Percuteuse 750W", desc: "Perceuse filaire avec variateur de vitesse et poignée ergonomique", photo: "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400" },
     { nom: "Ampoule LED E27 12W (Pack de 3)", desc: "Ampoules économiques longue durée lumière du jour", photo: "https://images.unsplash.com/photo-1550985616-10810253b84d?w=400" }
+  ],
+
+  "pieces-rechange": [
+    { nom: "Plaquettes de frein avant", desc: "Jeu de 4 plaquettes de frein de qualité d'origine", photo: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400" },
+    { nom: "Filtre à huile universel", desc: "Filtre à huile haute capacité pour moteurs essence et diesel", photo: "https://images.unsplash.com/photo-1607603750909-408e19413eaa?w=400" },
+    { nom: "Filtre à air moteur", desc: "Filtre à air haute performance protégeant le moteur des poussières", photo: "https://images.unsplash.com/photo-1607603750909-408e19413eaa?w=400" },
+    { nom: "Bougie d'allumage NGK (x4)", desc: "Lot de 4 bougies d'allumage pour allumage optimal et économie d'énergie", photo: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400" },
+    { nom: "Disque de frein avant (x2)", desc: "Paire de disques de frein ventilés haute performance", photo: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400" },
+    { nom: "Courroie de distribution", desc: "Courroie crantée haute résistance pour synchronisation moteur", photo: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400" },
+    { nom: "Batterie Auto 12V 75Ah", desc: "Batterie de démarrage sans entretien avec indicateur de charge", photo: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400" },
+    { nom: "Balai d'essuie-glace (Paire)", desc: "Balais d'essuie-glace flexibles pour visibilité optimale par tout temps", photo: "https://images.unsplash.com/photo-1607603750909-408e19413eaa?w=400" },
+    { nom: "Kit d'embrayage complet", desc: "Kit comprenant disque, mécanisme et butée d'embrayage", photo: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400" },
+    { nom: "Alternateur 12V", desc: "Alternateur de rechange standard pour recharge batterie", photo: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400" },
+    { nom: "Démarreur électrique", desc: "Démarreur robuste pour démarrage rapide à froid", photo: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400" },
+    { nom: "Amortisseur avant (x2)", desc: "Jeu de 2 amortisseurs hydrauliques pour confort de conduite", photo: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400" }
   ]
 };
 
 const outputData = {};
+const targetCounts = {
+  alimentation: 150,
+  smartphones: 120
+};
 
 Object.keys(catalogues).forEach(cat => {
   const items = catalogues[cat];
-  outputData[cat] = items.map((item, idx) => ({
-    id: `${cat}-${idx + 1}`,
-    nom: item.nom,
-    description: item.desc || `Produit de qualité supérieure: ${item.nom}`,
-    categorie: cat,
-    photo_defaut: item.photo
-  }));
+  const target = targetCounts[cat] || 100;
+  
+  const generated = [];
+  for (let i = 0; i < target; i++) {
+    const base = items[i % items.length];
+    const index = Math.floor(i / items.length) + 1;
+    generated.push({
+      id: `${cat}-${i + 1}`,
+      nom: index === 1 ? base.nom : `${base.nom} (${index})`,
+      description: base.desc || base.description || `Produit de qualité supérieure: ${base.nom}`,
+      categorie: cat,
+      photo_defaut: base.photo || base.photo_defaut
+    });
+  }
+  outputData[cat] = generated;
 });
 
 const outputPath = path.join(__dirname, 'data', 'catalogues-standards.json');

@@ -171,10 +171,10 @@ export default function CaisseClient() {
       try {
         setLoadingProduits(true)
         const mine = await getBoutiquesMine()
-        const activeBoutiques = mine ? mine.filter((b: any) => b.actif === true) : []
-        if (activeBoutiques.length > 0) {
-          setBoutiques(activeBoutiques)
-          const bId = boutiqueActiveId || activeBoutiques[0].id
+        const merchantBoutiques = mine || []
+        if (merchantBoutiques.length > 0) {
+          setBoutiques(merchantBoutiques)
+          const bId = boutiqueActiveId || merchantBoutiques[0].id
           setBoutiqueActiveId(bId)
           await chargerProduitsBoutique(bId)
         } else {
@@ -866,7 +866,9 @@ export default function CaisseClient() {
                 style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 13, cursor: 'pointer', outline: 'none' }}
               >
                 {boutiques.map(b => (
-                  <option key={b.id} value={b.id}>🏬 {b.nom}</option>
+                  <option key={b.id} value={b.id}>
+                    🏬 {b.nom}{!b.actif ? ' (Désactivée)' : ''}
+                  </option>
                 ))}
               </select>
             </div>
