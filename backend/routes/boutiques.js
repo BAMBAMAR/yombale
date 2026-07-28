@@ -1436,14 +1436,6 @@ router.post('/:id/caissiers/verifier-pin', tokenOptional, async (req, res) => {
       return res.json({ valide: true, caissier: r.rows[0] });
     }
 
-    // Fallbacks PINs par défaut 1234 (Caissier) / 9999 (Superviseur)
-    if (code_pin.trim() === '9999') {
-      return res.json({ valide: true, caissier: { nom: 'Gérant / Superviseur', role: 'superviseur' } });
-    }
-    if (code_pin.trim() === '1234') {
-      return res.json({ valide: true, caissier: { nom: 'Caissier 1', role: 'caissier' } });
-    }
-
     res.json({ valide: false, message: 'Code PIN incorrect' });
   } catch (err) {
     console.error('[VERIFIER PIN ERR]', err);
