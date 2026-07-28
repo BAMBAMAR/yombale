@@ -381,7 +381,7 @@ export default async function CommunicationPage() {
   const apporteurExemples = getApporteurExemples(prixPro, prixBusiness, tauxApporteur)
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
       <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1C2B4A', marginBottom: 6 }}>
         🎨 Kit de communication
       </h1>
@@ -482,7 +482,7 @@ export default async function CommunicationPage() {
                 fontSize: 13, color: '#1C2B4A', whiteSpace: 'pre-wrap',
                 background: '#F8FAFC', border: '1px solid #E2E8F0',
                 borderRadius: 8, padding: '14px', margin: 0, lineHeight: 1.7,
-                fontFamily: 'system-ui, sans-serif',
+                fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif',
               }}>
                 {p.texte}
               </pre>
@@ -555,7 +555,7 @@ export default async function CommunicationPage() {
           fontSize: 13, color: '#1C2B4A', whiteSpace: 'pre-wrap',
           background: '#F8FAFC', border: '1px solid #E2E8F0',
           borderRadius: 8, padding: '20px', margin: 0, lineHeight: 1.8,
-          fontFamily: 'system-ui, sans-serif',
+          fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif',
         }}>
           {SCRIPT_ORAL}
         </pre>
@@ -756,7 +756,7 @@ export default async function CommunicationPage() {
           fontSize: 13, color: '#1C2B4A', whiteSpace: 'pre-wrap',
           background: '#F8FAFC', border: '1px solid #E2E8F0',
           borderRadius: 8, padding: '20px', margin: 0, lineHeight: 1.8,
-          fontFamily: 'system-ui, sans-serif',
+          fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif',
         }}>
           {apporteurTexte}
         </pre>
@@ -813,7 +813,7 @@ export default async function CommunicationPage() {
           fontSize: 13, color: '#1C2B4A', whiteSpace: 'pre-wrap',
           background: '#F8FAFC', border: '1px solid #E2E8F0',
           borderRadius: 8, padding: '20px', margin: 0, lineHeight: 1.8,
-          fontFamily: 'system-ui, sans-serif',
+          fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif',
         }}>
           {CHATBOT_TEXTE}
         </pre>

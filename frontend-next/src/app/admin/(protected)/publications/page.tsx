@@ -297,7 +297,7 @@ export default function PublicationsPage() {
   }
 
   const s: Record<string, React.CSSProperties> = {
-    page:    { maxWidth: 860, margin: '0 auto', padding: '32px 20px', fontFamily: 'system-ui, sans-serif' },
+    page:    { maxWidth: 860, margin: '0 auto', padding: '32px 20px', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' },
     card:    { background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 20, marginBottom: 12 },
     label:   { fontSize: 12, fontWeight: 700, color: '#64748B', display: 'block', marginBottom: 4 },
     input:   { width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: 7, fontSize: 14, boxSizing: 'border-box' as const, marginBottom: 12 },
@@ -485,7 +485,7 @@ export default function PublicationsPage() {
             <pre style={{
               fontSize: 13, color: '#1C2B4A', whiteSpace: 'pre-wrap', background: '#F8FAFC',
               border: '1px solid #E2E8F0', borderRadius: 8, padding: '12px', margin: '0 0 10px',
-              fontFamily: 'system-ui, sans-serif', lineHeight: 1.6,
+              fontFamily: 'var(--font-inter)', lineHeight: 1.6,
             }}>{p.message}</pre>
 
             {p.date_publication && (
