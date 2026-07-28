@@ -457,11 +457,23 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               const uniqueRams = Array.from(new Set(valides.map(o => o.specs?.ram_go).filter((x): x is number => typeof x === 'number')));
               const uniqueStockages = Array.from(new Set(valides.map(o => o.specs?.stockage_go).filter((x): x is number => typeof x === 'number')));
               const uniqueEtats = Array.from(new Set(valides.map(o => o.specs?.etat).filter(Boolean))) as string[];
+              const uniqueBtus = Array.from(new Set(valides.map(o => o.specs?.puissance_btu).filter((x): x is number => typeof x === 'number')));
+              const uniqueLitres = Array.from(new Set(valides.map(o => o.specs?.capacite_litres).filter((x): x is number => typeof x === 'number')));
+              const uniqueKgs = Array.from(new Set(valides.map(o => o.specs?.capacite_kg).filter((x): x is number => typeof x === 'number')));
+              const uniquePouces = Array.from(new Set(valides.map(o => o.specs?.ecran_pouces).filter((x): x is number => typeof x === 'number')));
 
               const bestSpecs = best?.specs;
-              const configBestText = bestSpecs && (bestSpecs.stockage_go || bestSpecs.ram_go || bestSpecs.etat)
-                ? ` (${bestSpecs.etat === 'neuf' ? 'Neuf' : bestSpecs.etat === 'occasion' ? 'Occasion' : 'Reconditionné'}${bestSpecs.ram_go ? `, ${bestSpecs.ram_go} Go RAM` : ''}${bestSpecs.stockage_go ? `, ${bestSpecs.stockage_go} Go` : ''})`
-                : '';
+              const configBestParts: string[] = [];
+              if (bestSpecs) {
+                if (bestSpecs.etat) configBestParts.push(bestSpecs.etat === 'neuf' ? 'Neuf' : bestSpecs.etat === 'occasion' ? 'Occasion' : 'Reconditionné');
+                if (bestSpecs.ram_go) configBestParts.push(`${bestSpecs.ram_go} Go RAM`);
+                if (bestSpecs.stockage_go) configBestParts.push(`${bestSpecs.stockage_go} Go`);
+                if (bestSpecs.puissance_btu) configBestParts.push(`${bestSpecs.puissance_btu.toLocaleString('fr-FR')} BTU`);
+                if (bestSpecs.capacite_litres) configBestParts.push(`${bestSpecs.capacite_litres} L`);
+                if (bestSpecs.capacite_kg) configBestParts.push(`${bestSpecs.capacite_kg} Kg`);
+                if (bestSpecs.ecran_pouces) configBestParts.push(`${bestSpecs.ecran_pouces}″`);
+              }
+              const configBestText = configBestParts.length > 0 ? ` (${configBestParts.join(', ')})` : '';
 
               const budgetBullets: React.ReactNode[] = [];
               const techBullets: React.ReactNode[] = [];
@@ -507,10 +519,14 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               }
 
               // Specs & Variants synthesis
-              if (uniqueStockages.length > 0 || uniqueRams.length > 0 || uniqueEtats.length > 0) {
+              if (uniqueStockages.length > 0 || uniqueRams.length > 0 || uniqueEtats.length > 0 || uniqueBtus.length > 0 || uniqueLitres.length > 0 || uniqueKgs.length > 0 || uniquePouces.length > 0) {
                 const variantDetails: string[] = [];
                 if (uniqueStockages.length > 0) variantDetails.push(`${uniqueStockages.sort((a,b)=>a-b).join(' Go / ')} Go`);
                 if (uniqueRams.length > 0) variantDetails.push(`${uniqueRams.sort((a,b)=>a-b).join(' Go / ')} Go RAM`);
+                if (uniqueBtus.length > 0) variantDetails.push(`${uniqueBtus.sort((a,b)=>a-b).map(b => b.toLocaleString('fr-FR')).join(' / ')} BTU`);
+                if (uniqueLitres.length > 0) variantDetails.push(`${uniqueLitres.sort((a,b)=>a-b).join(' / ')} L`);
+                if (uniqueKgs.length > 0) variantDetails.push(`${uniqueKgs.sort((a,b)=>a-b).join(' / ')} Kg`);
+                if (uniquePouces.length > 0) variantDetails.push(`${uniquePouces.sort((a,b)=>a-b).join(' / ')}″`);
                 
                 const etatsLabel = uniqueEtats.map(e => e === 'neuf' ? 'Neuf' : e === 'occasion' ? 'Occasion' : 'Reconditionné').join(', ');
                 if (etatsLabel) variantDetails.push(etatsLabel);
