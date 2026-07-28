@@ -1443,6 +1443,30 @@ router.post('/:id/caissiers/verifier-pin', tokenOptional, async (req, res) => {
   }
 });
 
+// GET /api/boutiques/:id/pos-sessions/active
+router.get('/:id/pos-sessions/active', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    // Récupérer la session ouverte pour cette boutique
+    const r = await pool.query(
+      `SELECT * FROM boutique_pos_sessions 
+       WHERE boutique_id = $1 AND statut = 'ouverte'
+       ORDER BY date_ouverture DESC LIMIT 1`,
+      [boutiqueId]
+    );
+
+    res.json({ session: r.rows[0] || null });
+  } catch (err) {
+    console.error('[GET ACTIVE SESSION ERR]', err);
+    res.status(500).json({ error: 'Erreur de récupération de la session active' });
+  }
+});
+
 // POST /api/boutiques/:id/pos-sessions/ouvrir
 router.post('/:id/pos-sessions/ouvrir', tokenOptional, async (req, res) => {
   try {

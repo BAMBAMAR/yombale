@@ -92,6 +92,9 @@ export default function CaisseClient() {
   // ── État Session & Caissier ──────────────────────────────────────────────────
   const [caissierNom, setCaissierNom] = useState<string>('Caissier 1 (Bamba)')
   const [session, setSession] = useState<SessionCaisse | null>(null)
+  const [caissiersList, setCaissiersList] = useState<any[]>([])
+  const [caissierSelectionneId, setCaissierSelectionneId] = useState<string>('')
+  const [conflitSessionMessage, setConflitSessionMessage] = useState<string | null>(null)
   const [modalSessionOuverture, setModalSessionOuverture] = useState<boolean>(false)
   const [modalClotureZ, setModalClotureZ] = useState<boolean>(false)
   const [modalHistorique, setModalHistorique] = useState<boolean>(false)
@@ -190,9 +193,58 @@ export default function CaisseClient() {
     chargerBoutiquesEtProduits()
   }, [])
 
+  async function chargerCaissiersEtSession(bId: string) {
+    try {
+      const resCaissiers = await fetch(`/api/boutiques/${bId}/caissiers`);
+      if (resCaissiers.ok) {
+        const data = await resCaissiers.json();
+        if (data.caissiers && Array.isArray(data.caissiers)) {
+          const actifs = data.caissiers.filter((c: any) => c.actif !== false);
+          setCaissiersList(actifs);
+          if (actifs.length > 0) {
+            setCaissierSelectionneId(actifs[0].id);
+            setCaissierNom(`${actifs[0].prenom} ${actifs[0].nom}`);
+          }
+        }
+      }
+
+      const resSession = await fetch(`/api/boutiques/${bId}/pos-sessions/active`);
+      if (resSession.ok) {
+        const data = await resSession.json();
+        if (data.session) {
+          const dbSession = data.session;
+          const fmtSession: SessionCaisse = {
+            id: dbSession.id,
+            dateOuverture: new Date(dbSession.date_ouverture).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            fondDeCaisse: Number(dbSession.fond_caisse_initial || 0),
+            caissierNom: dbSession.caissier_nom,
+            statut: 'ouverte',
+            ventes: {
+              total: Number(dbSession.ventes_total || 0),
+              especes: Number(dbSession.ventes_especes || 0),
+              wave: Number(dbSession.ventes_wave || 0),
+              orangeMoney: Number(dbSession.ventes_orange_money || 0),
+              carte: Number(dbSession.ventes_carte || 0),
+              mixte: 0,
+              nbVentes: Number(dbSession.nb_ventes || 0)
+            }
+          };
+          setSession(fmtSession);
+        } else {
+          setSession(null);
+        }
+      } else {
+        setSession(null);
+      }
+    } catch (err) {
+      console.error('[chargerCaissiersEtSession err]', err);
+    }
+  }
+
   async function chargerProduitsBoutique(bId: string) {
     if (!bId) return
     setLoadingProduits(true)
+    chargerCaissiersEtSession(bId)
 
     // 1. Restaurer immédiatement depuis LocalStorage si présent
     const localHist = localStorage.getItem(`nopalou_pos_historique_${bId}`)
@@ -346,7 +398,8 @@ export default function CaisseClient() {
   }
 
   function validerSuperviseurPin() {
-    if (pinSuperviseurSaisi === pinSuperviseur) {
+    const hasSuperviseurPin = caissiersList.some(c => (c.role === 'superviseur' || c.role === 'admin') && c.code_pin === pinSuperviseurSaisi);
+    if (pinSuperviseurSaisi === pinSuperviseur || hasSuperviseurPin) {
       setModalSuperviseur(false)
       if (superviseurAction) superviseurAction()
     } else {
@@ -356,16 +409,40 @@ export default function CaisseClient() {
 
   // ── Authentification et Déverrouillage par Rôle ─────────────────────────────
   function deverrouillerPin() {
-    if (codePinSaisi === pinSuperviseur || codePinSaisi === pinCaissier) {
-      setRoleActif(codePinSaisi === pinSuperviseur ? 'superviseur' : 'caissier')
+    const caissier = caissiersList.find(c => c.id === caissierSelectionneId)
+    const isValide = caissier 
+      ? codePinSaisi === caissier.code_pin 
+      : (codePinSaisi === pinCaissier || codePinSaisi === pinSuperviseur);
+      
+    if (isValide) {
+      const isSuper = caissier 
+        ? (caissier.role === 'superviseur' || caissier.role === 'admin')
+        : codePinSaisi === pinSuperviseur;
+        
+      setRoleActif(isSuper ? 'superviseur' : 'caissier')
+      
+      const realNom = caissier 
+        ? `${caissier.prenom} ${caissier.nom}`
+        : (codePinSaisi === pinSuperviseur ? 'Gérant / Superviseur' : 'Caissier 1 (Bamba)');
+        
+      setCaissierNom(realNom)
+      
+      // GESTION DU CONFLIT DE SESSION
+      if (session && session.caissierNom !== realNom && !isSuper) {
+        setConflitSessionMessage(`Une session de caisse est déjà ouverte pour un autre caissier (${session.caissierNom}). Veuillez lui demander de clôturer sa session.`);
+      } else {
+        setConflitSessionMessage(null);
+      }
+
       setVerrouille(false)
       setCodePinSaisi('')
       setPinError(null)
-      if (!session) {
+      if (!session && (!conflitSessionMessage || isSuper)) {
         setModalSessionOuverture(true)
       }
     } else {
       setPinError('Code PIN incorrect. Veuillez vérifier votre saisie.')
+      setCodePinSaisi('')
     }
   }
 
@@ -403,16 +480,42 @@ export default function CaisseClient() {
   }
 
   // ── Actions Caisse & Vente POS (CONTRÔLE STRICT DU STOCK DISPONIBLE !) ───────
-  function ouvrirSession() {
+  async function ouvrirSession() {
     const fond = Number(fondDeCaisseSaisi) || 0
-    setSession({
-      id: `SES-${Date.now().toString().slice(-6)}`,
-      dateOuverture: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      fondDeCaisse: fond,
-      caissierNom,
-      statut: 'ouverte',
-      ventes: { total: 0, especes: 0, wave: 0, orangeMoney: 0, carte: 0, mixte: 0, nbVentes: 0 },
-    })
+    try {
+      const res = await fetch(`/api/boutiques/${boutiqueActiveId}/pos-sessions/ouvrir`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          caissierNom,
+          caissierId: caissierSelectionneId || null,
+          fondDeCaisse: fond
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.session) {
+        setSession({
+          id: data.session.id,
+          dateOuverture: new Date(data.session.date_ouverture).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          fondDeCaisse: fond,
+          caissierNom,
+          statut: 'ouverte',
+          ventes: { total: 0, especes: 0, wave: 0, orangeMoney: 0, carte: 0, mixte: 0, nbVentes: 0 },
+        });
+      } else {
+        throw new Error();
+      }
+    } catch {
+      // Fallback local
+      setSession({
+        id: `SES-${Date.now().toString().slice(-6)}`,
+        dateOuverture: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        fondDeCaisse: fond,
+        caissierNom,
+        statut: 'ouverte',
+        ventes: { total: 0, especes: 0, wave: 0, orangeMoney: 0, carte: 0, mixte: 0, nbVentes: 0 },
+      });
+    }
     setModalSessionOuverture(false)
   }
 
@@ -732,13 +835,27 @@ export default function CaisseClient() {
           <div style={{ marginBottom: 16 }}>
             <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6, textAlign: 'left' }}>IDENTIFICATION CAISSIER</label>
             <select
-              value={caissierNom}
-              onChange={e => setCaissierNom(e.target.value)}
+              value={caissierSelectionneId}
+              onChange={e => {
+                const cid = e.target.value;
+                setCaissierSelectionneId(cid);
+                const c = caissiersList.find(x => x.id === cid);
+                if (c) setCaissierNom(`${c.prenom} ${c.nom}`);
+              }}
               style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #cbd5e1', background: '#f8fafc', color: '#0f172a', fontSize: 14, fontWeight: 700 }}
             >
-              <option value="Caissier 1 (Bamba)">👤 Caissier 1 (Bamba)</option>
-              <option value="Caissier 2 (Aminata)">👤 Caissier 2 (Aminata)</option>
-              <option value="Superviseur / Gérant">👑 Gérant / Superviseur</option>
+              {caissiersList.length > 0 ? (
+                caissiersList.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.role === 'superviseur' || c.role === 'admin' ? '👑' : '👤'} {c.prenom} {c.nom}
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="">👤 Caissier par défaut</option>
+                  <option value="9999">👑 Gérant / Superviseur</option>
+                </>
+              )}
             </select>
           </div>
 
@@ -795,6 +912,28 @@ export default function CaisseClient() {
 
   return (
     <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
+
+      {conflitSessionMessage && (
+        <div className="no-print" style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#ffffff', borderRadius: 16, padding: 32, width: '100%', maxWidth: 460, textAlign: 'center', border: '2px solid #dc2626', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
+            <h2 style={{ margin: 0, fontSize: 18, color: '#dc2626', fontWeight: 900 }}>Conflit de Session POS</h2>
+            <p style={{ marginTop: 12, fontSize: 14, color: '#475569', lineHeight: 1.6 }}>{conflitSessionMessage}</p>
+            
+            <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button
+                onClick={() => {
+                  setVerrouille(true);
+                  setConflitSessionMessage(null);
+                }}
+                style={{ width: '100%', padding: '12px', background: '#475569', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}
+              >
+                ↩ Changer de Caissier / Verrouiller
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Styles d'impression Thermique 80mm */}
       <style jsx global>{`
@@ -1729,10 +1868,30 @@ export default function CaisseClient() {
                 Annuler
               </button>
               <button
-                onClick={() => {
+                onClick={async () => {
                   exporterCloturePDF()
+                  const espComptees = Number(especesComptees) || 0
+                  try {
+                    await fetch(`/api/boutiques/${boutiqueActiveId}/pos-sessions/cloturer`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        sessionId: session.id,
+                        especesComptees: espComptees,
+                        ventesEspeces: session.ventes.especes,
+                        ventesWave: session.ventes.wave,
+                        ventesOrangeMoney: session.ventes.orangeMoney,
+                        ventesCarte: session.ventes.carte,
+                        ventesTotal: session.ventes.total,
+                        nbVentes: session.ventes.nbVentes
+                      })
+                    });
+                  } catch (e) {
+                    console.error('Erreur cloture backend:', e);
+                  }
                   alert('Session de caisse fermée avec succès ! Rapport imprimé.')
                   setSession(null)
+                  setEspecesComptees('')
                   setModalClotureZ(false)
                 }}
                 style={{ flex: 1, padding: '12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}
