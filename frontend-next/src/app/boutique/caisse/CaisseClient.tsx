@@ -791,6 +791,8 @@ export default function CaisseClient() {
     )
   }
 
+  const boutiqueActive = boutiques.find(b => b.id === boutiqueActiveId)
+
   return (
     <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
 
@@ -802,23 +804,29 @@ export default function CaisseClient() {
           }
         }
         @media print {
-          body {
+          html, body {
             background: #ffffff !important;
             color: #000000 !important;
             margin: 0 !important;
             padding: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
           }
-          body * {
-            visibility: hidden !important;
+          .caisse-header,
+          .caisse-main-layout,
+          .btn-premium,
+          button,
+          input,
+          select {
+            display: none !important;
           }
           .ticket-print-container, .ticket-print-container * {
             visibility: visible !important;
           }
           .ticket-print-container {
             display: block !important;
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
+            position: static !important;
             width: 80mm !important;
             font-family: 'Courier New', Courier, monospace !important;
             font-size: 12px !important;
@@ -826,13 +834,15 @@ export default function CaisseClient() {
             color: #000000 !important;
             background: #ffffff !important;
             padding: 10px !important;
+            margin: 0 auto !important;
             box-sizing: border-box !important;
+            page-break-inside: avoid !important;
           }
         }
       `}</style>
 
       {/* En-tête RE-DESIGNÉ & ULTRA-CLEAN NOPALOU POS */}
-      <header style={{
+      <header className="caisse-header" style={{
         background: '#ffffff',
         borderBottom: '1px solid var(--border)',
         padding: '10px 20px',
@@ -1312,9 +1322,14 @@ export default function CaisseClient() {
       {derniereVente && (
         <div className="ticket-print-container">
           <div style={{ textAlign: 'center', borderBottom: '1px dashed #000', paddingBottom: 6, marginBottom: 8 }}>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 'bold' }}>NOPALOU POS — SUPÉRETTE</h3>
-            <p style={{ margin: '2px 0 0', fontSize: 10 }}>Boutique N° {boutiqueActiveId || 'DFD'}</p>
-            <p style={{ margin: '2px 0 0', fontSize: 10 }}>Ticket N° {derniereVente.id}</p>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 'bold', textTransform: 'uppercase' }}>
+              {boutiqueActive ? boutiqueActive.nom : 'NOPALOU POS'}
+            </h3>
+            {boutiqueActive?.adresse && <p style={{ margin: '2px 0 0', fontSize: 10 }}>{boutiqueActive.adresse}</p>}
+            {boutiqueActive?.telephone && <p style={{ margin: '2px 0 0', fontSize: 10 }}>Tél : {boutiqueActive.telephone}</p>}
+            <p style={{ margin: '4px 0 0', fontSize: 10, borderTop: '1px dotted #000', paddingTop: 4 }}>
+              Ticket N° {derniereVente.id}
+            </p>
             <p style={{ margin: '2px 0 0', fontSize: 10 }}>Date : {derniereVente.date} à {derniereVente.heure}</p>
             <p style={{ margin: '2px 0 0', fontSize: 10 }}>Caissier : {derniereVente.caissier}</p>
           </div>
