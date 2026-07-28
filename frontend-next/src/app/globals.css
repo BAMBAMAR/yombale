@@ -9207,3 +9207,125 @@ span.ripple {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   NOPALOU — Modern Design System Additions (Premium UI)
+   ════════════════════════════════════════════════════════════════ */
+
+.btn-premium {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.btn-premium:hover {
+  transform: translateY(-1px);
+}
+
+.btn-premium:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-premium-primary {
+  background-color: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(199, 91, 0, 0.15);
+}
+
+.btn-premium-primary:hover {
+  background-color: #b05000;
+  box-shadow: 0 6px 16px rgba(199, 91, 0, 0.25);
+}
+
+.btn-premium-secondary {
+  background-color: transparent;
+  color: var(--text1);
+  border: 1.5px solid var(--border);
+}
+
+.btn-premium-secondary:hover {
+  background-color: rgba(26, 22, 18, 0.03);
+  border-color: var(--text2);
+}
+
+.btn-premium-success {
+  background-color: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);
+}
+
+.btn-premium-success:hover {
+  background-color: #118037;
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.25);
+}
+
+.btn-premium-danger {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.btn-premium-danger:hover {
+  background-color: #fee2e2;
+}
+
+.card-premium {
+  background-color: var(--card);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.card-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow2);
+}
+
+.badge-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #f5ece3;
+  color: var(--text1);
+  border: 1px solid rgba(26, 22, 18, 0.05);
+}
+
+.img-ratio-1-1 {
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  width: 100%;
+}
+
+.input-premium {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background-color: #ffffff;
+  color: var(--text1);
+  transition: all 0.15s ease;
+}
+
+.input-premium:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(199, 91, 0, 0.15);
+}
+
+

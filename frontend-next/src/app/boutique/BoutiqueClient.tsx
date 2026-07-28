@@ -15,6 +15,7 @@ import BoutonPartager from '@/components/BoutonPartager'
 import BatchImportModal from './BatchImportModal'
 import BoutiqueAdmins from './BoutiqueAdmins'
 import BoutiqueCaissiers from './BoutiqueCaissiers'
+import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2 } from 'lucide-react'
 
 import { CATEGORIES, PRODUIT_CATEGORIES } from '@/lib/categories'
 
@@ -1379,103 +1380,84 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
   const sponsorActif = boutique.sponsorise && boutique.sponsor_jusqu_au && new Date(boutique.sponsor_jusqu_au) > new Date()
 
   return (
-    <div className="bq-card-premium">
-      <div style={{ padding: '22px 24px' }}>
-        <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start' }}>
+    <div className="card-premium" style={{ marginBottom: 20 }}>
+      <div style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           {/* Logo */}
           {boutique.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={boutique.logo_url} alt={boutique.nom}
-              style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 14, flexShrink: 0, border: '1.5px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }} />
+              style={{ width: 68, height: 68, objectFit: 'cover', borderRadius: 12, flexShrink: 0, border: '1px solid var(--border)' }} />
           ) : (
-            <div style={{ width: 72, height: 72, borderRadius: 14, background: 'linear-gradient(135deg, #fff3e8 0%, #fde8d7 100%)', border: '1.5px solid #f8d7be', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, flexShrink: 0 }}>
-              🏪
+            <div style={{ width: 68, height: 68, borderRadius: 12, background: 'linear-gradient(135deg, #fff8f2 0%, #fdf0e6 100%)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Store size={32} style={{ color: 'var(--accent)' }} />
             </div>
           )}
 
           {/* Infos */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 6 }}>
+          <div style={{ flex: 1, minWidth: 260 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontWeight: 800, fontSize: 18, margin: 0, color: 'var(--navy)' }}>{boutique.nom}</h2>
-                {planActif === 'business' && <span style={{ fontSize: 11, background: 'var(--navy)', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700, letterSpacing: '.02em' }}>💼 Business</span>}
-                {planActif === 'pro'      && <span style={{ fontSize: 11, background: 'var(--accent)', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>⭐ Pro</span>}
-                {sponsorActif            && <span style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>Mis en avant</span>}
+                <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontWeight: 800, fontSize: 19, margin: 0, color: 'var(--navy)' }}>{boutique.nom}</h2>
+                {planActif === 'business' && <span className="badge-premium" style={{ background: 'var(--navy)', color: '#fff' }}>💼 Business</span>}
+                {planActif === 'pro'      && <span className="badge-premium" style={{ background: 'var(--accent)', color: '#fff' }}>⭐ Pro</span>}
+                {sponsorActif            && <span className="badge-premium" style={{ background: '#fffbeb', color: '#92400e', borderColor: '#fcd34d' }}>Mis en avant</span>}
               </div>
-              <button onClick={onManage} style={{
-                fontSize: 13, color: '#fff', background: 'var(--accent)', border: 'none',
-                borderRadius: 9, padding: '9px 18px', cursor: 'pointer', fontWeight: 700,
-                boxShadow: '0 2px 8px rgba(199,91,0,0.25)', transition: 'transform 0.15s ease',
-              }}>
-                Gérer la boutique →
-              </button>
-              <a href="/boutique/caisse" style={{
-                fontSize: 13, color: '#fff', background: '#16a34a', border: 'none',
-                borderRadius: 9, padding: '9px 18px', fontWeight: 800, textDecoration: 'none',
-                display: 'inline-flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 8px rgba(22,163,74,0.25)',
-              }}>
-                🛒 Caisse POS →
-              </a>
-              <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20, flexShrink: 0, color: boutique.actif ? '#0a5c36' : '#6b7280', background: boutique.actif ? '#e6f4ec' : '#f1f5f9', border: `1px solid ${boutique.actif ? '#b7e4ca' : '#e2e8f0'}` }}>
-                {boutique.actif ? '● Active' : '○ Inactive'}
+              <span className="badge-premium" style={{ color: boutique.actif ? '#16a34a' : 'var(--text3)', background: boutique.actif ? '#f0fdf4' : '#f9fafb', borderColor: boutique.actif ? '#bbf7d0' : 'var(--border)' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: boutique.actif ? '#16a34a' : 'var(--text3)', display: 'inline-block', marginRight: 6 }}></span>
+                {boutique.actif ? 'Active' : 'Inactive'}
               </span>
             </div>
 
             {boutique.description && (
-              <p style={{ fontSize: 13, color: 'var(--text2)', margin: '0 0 8px', lineHeight: 1.5 }}>{boutique.description}</p>
+              <p style={{ fontSize: 13, color: 'var(--text2)', margin: '0 0 12px', lineHeight: 1.5 }}>{boutique.description}</p>
             )}
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-              {boutique.categorie && <span className="bq-meta-badge">🏷️ {boutique.categorie}</span>}
-              {boutique.ville && <span className="bq-meta-badge">📍 {boutique.ville}</span>}
-              {boutique.telephone && <span className="bq-meta-badge">📞 {boutique.telephone}</span>}
+              {boutique.categorie && (
+                <span className="badge-premium">
+                  <Tag size={13} style={{ color: 'var(--text2)' }} /> {boutique.categorie}
+                </span>
+              )}
+              {boutique.ville && (
+                <span className="badge-premium">
+                  <MapPin size={13} style={{ color: 'var(--text2)' }} /> {boutique.ville}
+                </span>
+              )}
+              {boutique.telephone && (
+                <span className="badge-premium">
+                  <Phone size={13} style={{ color: 'var(--text2)' }} /> {boutique.telephone}
+                </span>
+              )}
             </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: 10, marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)', flexWrap: 'wrap', alignItems: 'center' }}>
-          <button onClick={onManage} style={{
-            fontSize: 13, color: '#fff', background: 'var(--accent)', border: 'none',
-            borderRadius: 9, padding: '9px 20px', cursor: 'pointer', fontWeight: 700,
-            boxShadow: '0 2px 8px rgba(199,91,0,0.25)', transition: 'transform 0.15s ease',
-          }}>
+        <div style={{ display: 'flex', gap: 10, marginTop: 22, paddingTop: 18, borderTop: '1px solid var(--border)', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button onClick={onManage} className="btn-premium btn-premium-primary" style={{ padding: '9px 18px', fontSize: 13 }}>
             Gérer la boutique →
           </button>
-          <button onClick={onEdit} style={{
-            fontSize: 13, color: 'var(--navy)', background: '#f5efe9', border: '1px solid #e5d8cc',
-            borderRadius: 9, padding: '9px 16px', cursor: 'pointer', fontWeight: 600,
-          }}>
+          <a href="/boutique/caisse" className="btn-premium btn-premium-success" style={{ padding: '9px 18px', fontSize: 13 }}>
+            <Monitor size={15} /> Caisse POS
+          </a>
+          <button onClick={onEdit} className="btn-premium btn-premium-secondary" style={{ padding: '9px 16px', fontSize: 13 }}>
             Modifier
           </button>
-          <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer" style={{
-            fontSize: 13, color: 'var(--text1)', background: '#ffffff', border: '1px solid var(--border)',
-            borderRadius: 9, padding: '9px 16px', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4,
-          }}>
-            Voir ↗
+          <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer" className="btn-premium btn-premium-secondary" style={{ padding: '9px 16px', fontSize: 13 }}>
+            Voir <Eye size={14} />
           </a>
           {onSponsoring && (
-            <button onClick={onSponsoring} style={{
-              fontSize: 13, color: '#92400e', background: '#fffbeb', border: '1px solid #fcd34d',
-              borderRadius: 9, padding: '9px 16px', cursor: 'pointer', fontWeight: 600, marginLeft: 'auto',
-            }}>
-              ⭐ Mettre en avant
+            <button onClick={onSponsoring} className="btn-premium btn-premium-secondary" style={{ padding: '9px 16px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#fffbeb', marginLeft: 'auto' }}>
+              Mettre en avant
             </button>
           )}
           {onPayerManuel && (
-            <button onClick={onPayerManuel} style={{
-              fontSize: 13, color: '#92400e', background: '#fff', border: '1px solid #fcd34d',
-              borderRadius: 9, padding: '9px 16px', cursor: 'pointer', fontWeight: 600,
-              marginLeft: onSponsoring ? undefined : 'auto',
-            }}>
-              🧾 Payer
+            <button onClick={onPayerManuel} className="btn-premium btn-premium-secondary" style={{ padding: '9px 16px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#ffffff', marginLeft: onSponsoring ? undefined : 'auto' }}>
+              Payer
             </button>
           )}
-          <button onClick={onDelete} style={{
-            fontSize: 13, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca',
-            borderRadius: 9, padding: '9px 14px', cursor: 'pointer', fontWeight: 600,
-            marginLeft: (!onSponsoring && !onPayerManuel) ? 'auto' : undefined,
-          }}>
+          <button onClick={onDelete} className="btn-premium btn-premium-danger" style={{ padding: '9px 16px', fontSize: 13, marginLeft: (!onSponsoring && !onPayerManuel) ? 'auto' : undefined }}>
             Supprimer
           </button>
         </div>
@@ -1740,8 +1722,8 @@ export default function BoutiqueClient({
     <div style={{ maxWidth: 880, margin: '32px auto', padding: '0 20px 80px' }}>
       {/* Navigation fil d'Ariane & Retour Compte */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-        <Link href="/compte" className="btn-back-account" aria-label="Retourner à l'espace mon compte">
-          ← Mon compte
+        <Link href="/compte" className="btn-back-account" aria-label="Retourner à l'espace mon compte" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <ArrowLeft size={16} /> Mon compte
         </Link>
         <span style={{ fontSize: 12, color: 'var(--text3)' }}>/</span>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>Ma boutique</span>
@@ -1752,27 +1734,19 @@ export default function BoutiqueClient({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 26, fontWeight: 800, margin: 0, color: 'var(--navy)' }}>Ma boutique</h1>
-            <span style={{ fontSize: 12, fontWeight: 700, background: '#f0e8df', color: 'var(--navy)', border: '1px solid #e2d5c7', padding: '3px 10px', borderRadius: 20 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, background: '#f5ece3', color: 'var(--navy)', border: '1px solid var(--border)', padding: '3px 10px', borderRadius: 20 }}>
               {boutiques.length} / 3 boutique{boutiques.length > 1 ? 's' : ''}
             </span>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text2)', marginTop: 6, margin: 0 }}>Gérez vos points de vente, catalogue produits, ventes et comptabilité.</p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Link href="/boutique/caisse" style={{
-            padding: '11px 20px', background: '#16a34a', color: '#fff',
-            borderRadius: 10, fontSize: 14, fontWeight: 800, textDecoration: 'none',
-            boxShadow: '0 4px 14px rgba(22,163,74,0.25)', display: 'inline-flex', alignItems: 'center', gap: 6,
-          }}>
-            🛒 Ouvrir ma Caisse POS →
+          <Link href="/boutique/caisse" className="btn-premium btn-premium-secondary" style={{ border: '1.5px solid var(--border)' }}>
+            <Monitor size={16} /> Ouvrir ma Caisse POS
           </Link>
           {canCreate && (
-            <button onClick={() => setMode('create')} style={{
-              padding: '11px 22px', background: 'var(--accent)', color: '#fff',
-              border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(199,91,0,0.25)', transition: 'all 0.15s ease',
-            }}>
-              + Créer une boutique
+            <button onClick={() => setMode('create')} className="btn-premium btn-premium-primary">
+              <PlusCircle size={16} /> Créer une boutique
             </button>
           )}
         </div>

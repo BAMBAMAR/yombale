@@ -9,6 +9,7 @@ import DrawerCart from '@/components/DrawerCart'
 import CrossSelling from '@/components/CrossSelling'
 import { useCart } from '@/context/CartContext'
 import CardActions from '@/app/CardActions'
+import { ShoppingCart, Star, Share2, Tag, Info, Phone, MessageCircle, HelpCircle } from 'lucide-react'
 
 export interface Produit {
   id: string
@@ -58,29 +59,18 @@ function ProduitCard({
     ? Math.round((1 - p.prix / p.prix_barre) * 100) : null
 
   return (
-    <div style={{
-      background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12,
-      overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.06)',
-      display: 'flex', flexDirection: 'column',
-      transition: 'box-shadow .15s, transform .15s',
-      position: 'relative',
-    }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 6px 20px rgba(0,0,0,.12)'
-        ;(e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,.06)'
-        ;(e.currentTarget as HTMLDivElement).style.transform = ''
-      }}
-    >
+    <div className="card-premium" style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <Link href={`/boutiques/${boutiqueId}/produits/${p.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-        <div style={{ width: '100%', paddingTop: '75%', position: 'relative', background: '#f8fafc' }}>
+        <div style={{ width: '100%', aspectRatio: '1/1', position: 'relative', background: '#f8fafc', overflow: 'hidden' }}>
           {img
             // eslint-disable-next-line @next/next/no-img-element
             ? <img src={cloudinaryHQ(img, { width: 400 })} alt={p.nom}
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-            : <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>📦</span>
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
+                loading="lazy"
+                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+              />
+            : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', color: 'var(--text3)' }}><ShoppingCart size={32} /></div>
           }
           {!p.en_stock && (
             <span style={{ position: 'absolute', top: 8, right: 8, background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
@@ -93,26 +83,26 @@ function ProduitCard({
             </span>
           )}
         </div>
-        <div style={{ padding: '12px 12px 8px', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <p style={{ fontWeight: 700, fontSize: 14, margin: 0, lineHeight: 1.3 }}>{p.nom}</p>
+        <div style={{ padding: '14px', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <p style={{ fontWeight: 700, fontSize: 14, margin: 0, lineHeight: 1.4, color: 'var(--navy)' }}>{p.nom}</p>
           {p.caracteristiques?.marque && (
-            <p style={{ fontSize: 11, color: '#9ca3af', margin: 0, fontWeight: 600 }}>{p.caracteristiques.marque}</p>
+            <p style={{ fontSize: 11, color: 'var(--text3)', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{p.caracteristiques.marque}</p>
           )}
           {p.description && (
-            <p style={{ fontSize: 12, color: '#6b7280', margin: 0, lineHeight: 1.4,
+            <p style={{ fontSize: 12, color: 'var(--text2)', margin: '4px 0 0', lineHeight: 1.4,
               overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
               {p.description}
             </p>
           )}
-          <div style={{ paddingTop: 6, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            {p.prix && <span style={{ fontWeight: 800, fontSize: 15, color: '#C75B00' }}>{fcfa(p.prix)}</span>}
-            {p.prix_barre && <span style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'line-through' }}>{fcfa(p.prix_barre)}</span>}
-            {!p.prix && <span style={{ fontSize: 13, color: '#6b7280' }}>Prix à négocier</span>}
+          <div style={{ paddingTop: 8, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            {p.prix && <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--accent)' }}>{fcfa(p.prix)}</span>}
+            {p.prix_barre && <span style={{ fontSize: 12, color: 'var(--text3)', textDecoration: 'line-through' }}>{fcfa(p.prix_barre)}</span>}
+            {!p.prix && <span style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 600 }}>Prix à négocier</span>}
           </div>
         </div>
       </Link>
-      {/* Bouton d'action standard e-commerce : Ajouter au panier */}
-      <div style={{ padding: '0 12px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Action standard : Ajouter au panier */}
+      <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <CardActions id={p.id} nom={p.nom} type="boutique_produit" boutiqueId={boutiqueId} />
         <button
           onClick={() => {
@@ -121,15 +111,10 @@ function ProduitCard({
             setTimeout(() => setAddedCart(false), 1800)
           }}
           disabled={!p.en_stock}
-          style={{
-            width: '100%', padding: '9px', border: 'none', borderRadius: 8, cursor: p.en_stock ? 'pointer' : 'not-allowed',
-            background: addedCart ? '#16a34a' : (p.en_stock ? '#C75B00' : '#e5e7eb'),
-            color: p.en_stock ? '#fff' : '#9ca3af',
-            fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            transition: 'background 0.2s ease',
-          }}
+          className={`btn-premium ${addedCart ? 'btn-premium-success' : 'btn-premium-primary'}`}
+          style={{ width: '100%', padding: '9px', fontSize: 13, opacity: p.en_stock ? 1 : 0.6 }}
         >
-          {addedCart ? '✅ Ajouté au panier !' : (p.en_stock ? '🛒 Ajouter au panier' : 'Rupture de stock')}
+          {addedCart ? '✅ Ajouté !' : (p.en_stock ? <><ShoppingCart size={15} /> Ajouter au panier</> : 'Rupture de stock')}
         </button>
       </div>
     </div>

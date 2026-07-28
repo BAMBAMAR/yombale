@@ -9,6 +9,7 @@ import AlertePrix from '@/app/AlertePrix';
 import TrackRecent from './TrackRecent';
 import SponsoringProduitBtn from './SponsoringProduitBtn';
 import SimilRow from '@/components/SimilRow';
+import { TrendingDown, TrendingUp, Tag, ShoppingCart, Award, Sparkles, AlertCircle } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -481,8 +482,8 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               // Best offer detail
               if (prixMin && best) {
                 budgetBullets.push(
-                  <li key="best-price" className="comp-verdict-item">
-                    <span className="comp-verdict-bullet">🏷️</span>
+                  <li key="best-price" className="comp-verdict-item" style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <Tag size={16} style={{ color: 'var(--accent)', marginTop: 2, flexShrink: 0 }} />
                     <span>
                       Meilleur prix de <strong>{fcfa(prixMin)}</strong> chez <strong>{best.marchand_nom ?? 'Vendeur'}</strong>{configBestText}.
                     </span>
@@ -494,8 +495,8 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               if (economie && prixMax && prixMin !== null && prixMax > prixMin) {
                 const pct = Math.round((economie / prixMax) * 100);
                 budgetBullets.push(
-                  <li key="savings" className="comp-verdict-item">
-                    <span className="comp-verdict-bullet">💰</span>
+                  <li key="savings" className="comp-verdict-item" style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <Sparkles size={16} style={{ color: 'var(--price)', marginTop: 2, flexShrink: 0 }} />
                     <span>
                       Jusqu'à <strong>{fcfa(economie)} d'économie</strong> (-{pct}%) possibles en choisissant le meilleur vendeur.
                     </span>
@@ -506,11 +507,13 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               // Price trend
               if (priceVariation !== 0) {
                 const direction = priceVariation < 0 ? 'baissé' : 'augmenté';
-                const trendIcon = priceVariation < 0 ? '📉' : '📈';
+                const trendIcon = priceVariation < 0
+                  ? <TrendingDown size={16} style={{ color: 'var(--price)', marginTop: 2, flexShrink: 0 }} />
+                  : <TrendingUp size={16} style={{ color: 'var(--accent)', marginTop: 2, flexShrink: 0 }} />;
                 const color = priceVariation < 0 ? 'var(--price)' : 'inherit';
                 budgetBullets.push(
-                  <li key="trend" className="comp-verdict-item">
-                    <span className="comp-verdict-bullet">{trendIcon}</span>
+                  <li key="trend" className="comp-verdict-item" style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    {trendIcon}
                     <span>
                       Tendance : Le prix le plus bas a <strong style={{ color }}>{direction} de {Math.abs(priceVariation).toFixed(1)}%</strong> sur les {chartPts.length} derniers jours.
                     </span>
@@ -532,8 +535,8 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                 if (etatsLabel) variantDetails.push(etatsLabel);
 
                 techBullets.push(
-                  <li key="variants" className="comp-verdict-item">
-                    <span className="comp-verdict-bullet">💾</span>
+                  <li key="variants" className="comp-verdict-item" style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <Award size={16} style={{ color: 'var(--navy)', marginTop: 2, flexShrink: 0 }} />
                     <span>
                       Variantes disponibles : <strong>{variantDetails.join(' · ')}</strong>.
                     </span>
@@ -544,9 +547,9 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               if (budgetBullets.length === 0 && techBullets.length === 0) return null;
 
               return (
-                <div className="comp-verdict-card" style={{ marginTop: 20 }}>
-                  <div className="comp-verdict-header">
-                    <span>⚖️</span> Verdict & Conseils d'Achat Nopalou
+                <div className="comp-verdict-card" style={{ marginTop: 20, borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden' }}>
+                  <div className="comp-verdict-header" style={{ display: 'flex', alignItems: 'center', background: '#fcfaf7', borderBottom: '1px solid var(--border)', padding: '12px 16px', fontWeight: 700, color: 'var(--navy)' }}>
+                    <AlertCircle size={18} style={{ color: 'var(--navy)', marginRight: 8 }} /> Verdict & Conseils d'Achat Nopalou
                   </div>
                   <div className="comp-verdict-grid">
                     {budgetBullets.length > 0 && (
