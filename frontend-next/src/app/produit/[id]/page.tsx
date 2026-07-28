@@ -88,6 +88,25 @@ function icon(nom: string | null) {
   return MARCHAND_ICONS[nom] ?? '🏪'
 }
 
+function parseSpecsFromName(name: string) {
+  const nameLower = name.toLowerCase()
+  const storageMatch = nameLower.match(/(\d+)\s*(go|gb|tb|to)(?!\s*ram)/i)
+  const ramMatch = nameLower.match(/(\d+)\s*(go|gb)\s*ram/i)
+  const btuMatch = nameLower.match(/(\d+)\s*btu/i)
+  const litresMatch = nameLower.match(/(\d+)\s*(litres|l)(?!\w)/i)
+  const kgMatch = nameLower.match(/(\d+)\s*kg/i)
+  const ecranMatch = nameLower.match(/(\d+)\s*(pouces|"|”)/i)
+
+  return {
+    stockage_go: storageMatch ? parseInt(storageMatch[1]) : null,
+    ram_go: ramMatch ? parseInt(ramMatch[1]) : null,
+    puissance_btu: btuMatch ? parseInt(btuMatch[1]) : null,
+    capacite_litres: litresMatch ? parseInt(litresMatch[1]) : null,
+    capacite_kg: kgMatch ? parseInt(kgMatch[1]) : null,
+    ecran_pouces: ecranMatch ? parseInt(ecranMatch[1]) : null,
+  }
+}
+
 // ── Composant Graphique Historique (SVG pur, server-rendered) ──────
 
 function HistoriqueChart({ data }: { data: HistoriquePoint[] }) {
@@ -462,6 +481,128 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               </div>
             )}
 
+            {/* ── Verdict Nopalou ── */}
+            {valides.length > 0 && (() => {
+              // Calculate variation from history
+              const chartPts = historique.map(d => ({
+                jour: d.jour,
+                min: parseFloat(d.prix_min),
+              })).filter(p => p.min > 0);
+              
+              const priceVariation = chartPts.length >= 2 && chartPts[0].min > 0
+                ? ((chartPts[chartPts.length - 1].min - chartPts[0].min) / chartPts[0].min) * 100
+                : 0;
+
+              // Collect unique specs across active offers
+              const uniqueRams = Array.from(new Set(valides.map(o => o.specs?.ram_go).filter((x): x is number => typeof x === 'number')));
+              const uniqueStockages = Array.from(new Set(valides.map(o => o.specs?.stockage_go).filter((x): x is number => typeof x === 'number')));
+              const uniqueEtats = Array.from(new Set(valides.map(o => o.specs?.etat).filter(Boolean))) as string[];
+
+              const bestSpecs = best?.specs;
+              const configBestText = bestSpecs && (bestSpecs.stockage_go || bestSpecs.ram_go || bestSpecs.etat)
+                ? ` (${bestSpecs.etat === 'neuf' ? 'Neuf' : bestSpecs.etat === 'occasion' ? 'Occasion' : 'Reconditionné'}${bestSpecs.ram_go ? `, ${bestSpecs.ram_go} Go RAM` : ''}${bestSpecs.stockage_go ? `, ${bestSpecs.stockage_go} Go` : ''})`
+                : '';
+
+              const budgetBullets: React.ReactNode[] = [];
+              const techBullets: React.ReactNode[] = [];
+
+              // Best offer detail
+              if (prixMin && best) {
+                budgetBullets.push(
+                  <li key="best-price" className="comp-verdict-item">
+                    <span className="comp-verdict-bullet">🏷️</span>
+                    <span>
+                      Meilleur prix de <strong>{fcfa(prixMin)}</strong> chez <strong>{best.marchand_nom ?? 'Vendeur'}</strong>{configBestText}.
+                    </span>
+                  </li>
+                );
+              }
+
+              // Potential savings
+              if (economie && prixMax && prixMax > prixMin) {
+                const pct = Math.round((economie / prixMax) * 100);
+                budgetBullets.push(
+                  <li key="savings" className="comp-verdict-item">
+                    <span className="comp-verdict-bullet">💰</span>
+                    <span>
+                      Jusqu'à <strong>{fcfa(economie)} d'économie</strong> (-{pct}%) possibles en choisissant le meilleur vendeur.
+                    </span>
+                  </li>
+                );
+              }
+
+              // Price trend
+              if (priceVariation !== 0) {
+                const direction = priceVariation < 0 ? 'baissé' : 'augmenté';
+                const trendIcon = priceVariation < 0 ? '📉' : '📈';
+                const color = priceVariation < 0 ? 'var(--price)' : 'inherit';
+                budgetBullets.push(
+                  <li key="trend" className="comp-verdict-item">
+                    <span className="comp-verdict-bullet">{trendIcon}</span>
+                    <span>
+                      Tendance : Le prix le plus bas a <strong style={{ color }}>{direction} de {Math.abs(priceVariation).toFixed(1)}%</strong> sur les {chartPts.length} derniers jours.
+                    </span>
+                  </li>
+                );
+              }
+
+              // Specs & Variants synthesis
+              if (uniqueStockages.length > 0 || uniqueRams.length > 0 || uniqueEtats.length > 0) {
+                const variantDetails: string[] = [];
+                if (uniqueStockages.length > 0) variantDetails.push(`${uniqueStockages.sort((a,b)=>a-b).join(' Go / ')} Go`);
+                if (uniqueRams.length > 0) variantDetails.push(`${uniqueRams.sort((a,b)=>a-b).join(' Go / ')} Go RAM`);
+                
+                const etatsLabel = uniqueEtats.map(e => e === 'neuf' ? 'Neuf' : e === 'occasion' ? 'Occasion' : 'Reconditionné').join(', ');
+                if (etatsLabel) variantDetails.push(etatsLabel);
+
+                techBullets.push(
+                  <li key="variants" className="comp-verdict-item">
+                    <span className="comp-verdict-bullet">💾</span>
+                    <span>
+                      Variantes disponibles : <strong>{variantDetails.join(' · ')}</strong>.
+                    </span>
+                  </li>
+                );
+              }
+
+              // Alternative conseil
+              if (existeMoinsCher && meilleurSimilaire) {
+                const diffSimil = (prixMin !== null && meilleurSimilaire.px !== null) ? prixMin - meilleurSimilaire.px : 0;
+                techBullets.push(
+                  <li key="alternative" className="comp-verdict-item">
+                    <span className="comp-verdict-bullet">✨</span>
+                    <span>
+                      Alternative : <Link href={`/produit/${meilleurSimilaire.id}`} style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'underline' }}>{meilleurSimilaire.nom}</Link> est proposé moins cher dès <strong>{fcfa(meilleurSimilaire.px)}</strong> (soit <strong>-{fcfa(diffSimil)}</strong> de moins).
+                    </span>
+                  </li>
+                );
+              }
+
+              if (budgetBullets.length === 0 && techBullets.length === 0) return null;
+
+              return (
+                <div className="comp-verdict-card" style={{ marginTop: 20 }}>
+                  <div className="comp-verdict-header">
+                    <span>⚖️</span> Verdict Nopalou
+                  </div>
+                  <div className="comp-verdict-grid">
+                    {budgetBullets.length > 0 && (
+                      <div className="comp-verdict-col">
+                        <div className="comp-verdict-subtitle">💰 Budget & Évolution</div>
+                        <ul className="comp-verdict-list">{budgetBullets}</ul>
+                      </div>
+                    )}
+                    {techBullets.length > 0 && (
+                      <div className="comp-verdict-col">
+                        <div className="comp-verdict-subtitle">⚡ Caractéristiques & Choix</div>
+                        <ul className="comp-verdict-list">{techBullets}</ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Description */}
             {produit.description && (
               <p className="fiche-desc">{produit.description}</p>
@@ -621,6 +762,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               px: prixMin,
               nb: valides.length,
               courant: true,
+              specs: best?.specs || null,
             },
             ...proches.map(p => ({
               id: p.id,
@@ -629,6 +771,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               px: p.prix_min ? parseFloat(p.prix_min) : null,
               nb: p.nb_offres ? parseInt(p.nb_offres) : 0,
               courant: false,
+              specs: null,
             })),
           ].sort((a, b) => (a.px ?? 999999) - (b.px ?? 999999))
 
@@ -650,6 +793,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                 <thead>
                   <tr>
                     <th>Produit</th>
+                    <th>Caractéristiques</th>
                     <th>Prix le plus bas</th>
                     <th>Offres</th>
                     <th>vs ce produit</th>
@@ -662,6 +806,10 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                       ? Math.round((l.px - prixMin) / prixMin * 100)
                       : null
                     const isBest = idx === 0
+
+                    const parsedSpecs = l.specs || parseSpecsFromName(l.nom);
+                    const hasSpecs = !!(parsedSpecs.stockage_go || parsedSpecs.ram_go || parsedSpecs.ecran_pouces || parsedSpecs.puissance_btu || parsedSpecs.capacite_litres || parsedSpecs.capacite_kg);
+
                     return (
                       <SimilRow key={l.id} id={l.id} basePath="/produit" courant={l.courant}>
                         <td>
@@ -674,6 +822,20 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                               {l.courant && <span className="simil-courant-badge">Ce produit</span>}
                             </div>
                           </div>
+                        </td>
+                        <td>
+                          {hasSpecs ? (
+                            <div className="offre-specs" style={{ justifyContent: 'flex-start', flexWrap: 'wrap', gap: 4 }}>
+                              {parsedSpecs.ecran_pouces && <span className="offre-spec-badge">{parsedSpecs.ecran_pouces}″</span>}
+                              {parsedSpecs.ram_go && <span className="offre-spec-badge">{parsedSpecs.ram_go} Go RAM</span>}
+                              {parsedSpecs.stockage_go && <span className="offre-spec-badge">{parsedSpecs.stockage_go} Go</span>}
+                              {parsedSpecs.puissance_btu && <span className="offre-spec-badge">{parsedSpecs.puissance_btu.toLocaleString('fr-FR')} BTU</span>}
+                              {parsedSpecs.capacite_litres && <span className="offre-spec-badge">{parsedSpecs.capacite_litres} L</span>}
+                              {parsedSpecs.capacite_kg && <span className="offre-spec-badge">{parsedSpecs.capacite_kg} Kg</span>}
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--text3)' }}>—</span>
+                          )}
                         </td>
                         <td>
                           <span className={`simil-prix-val${isBest ? ' simil-prix-val--best' : ''}`}>
