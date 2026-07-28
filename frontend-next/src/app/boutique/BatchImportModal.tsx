@@ -363,6 +363,7 @@ export default function BatchImportModal({
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
                 {templatesCategories.filter(t => {
+                  if (t.nom.includes('(')) return false
                   if (!rechercheCatalogue.trim()) return true
                   const q = rechercheCatalogue.toLowerCase().trim()
                   return t.nom.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)

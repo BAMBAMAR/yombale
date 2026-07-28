@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import BatchImportModal from '@/app/boutique/BatchImportModal'
+import { CATEGORIES } from '@/lib/categories'
 import { getBoutiqueProduits, getBoutiquesMine, getPosHistorique, creerPosVente, declarerIncident } from '../actions'
 import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store } from 'lucide-react'
 
@@ -1011,13 +1012,30 @@ export default function CaisseClient() {
           {/* Filtre Catégories */}
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
             {[
-              { id: 'tous', label: 'Tous les articles' },
-              { id: 'alimentation', label: '🥗 Alimentation' },
-              { id: 'smartphones', label: '📱 Téléphonie' },
-              { id: 'mode', label: '👗 Mode' },
-              { id: 'tv-electro', label: '📺 Électro' },
-              { id: 'beaute', label: '💄 Beauté' },
-              { id: 'quincaillerie', label: '🧱 Quincaillerie' },
+              { id: 'tous', label: '✨ Tous les articles' },
+              ...CATEGORIES.filter(c => c.value !== 'mixte').map(c => {
+                const cleanLabels: Record<string, string> = {
+                  smartphones: '📱 Téléphonie',
+                  informatique: '💻 Informatique',
+                  'tv-electro': '📺 Électro',
+                  mode: '👗 Mode',
+                  maison: '🏠 Maison',
+                  'auto-moto': '🚗 Auto-Moto',
+                  jeux: '🎮 Jeux',
+                  alimentation: '🍚 Alimentation',
+                  beaute: '💄 Beauté',
+                  sport: '⚽ Sport',
+                  fournitures: '📚 Fournitures',
+                  quincaillerie: '🧱 Quincaillerie',
+                  'pieces-rechange': '⚙️ Rechanges',
+                  services: '🛠 Services',
+                  autre: '📦 Autre'
+                };
+                return {
+                  id: c.value,
+                  label: cleanLabels[c.value] || c.label
+                };
+              })
             ].map(c => (
               <button
                 key={c.id}
