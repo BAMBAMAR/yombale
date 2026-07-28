@@ -821,6 +821,15 @@ router.post('/:id/produits/:prodId/dupliquer', verifierToken, param('id').isUUID
     );
 
     res.status(201).json({ success: true, produit: r.rows[0] });
+
+    // Déclencher la synchronisation WhatsApp pour le produit dupliqué
+    const produitDuplique = r.rows[0];
+    setImmediate(async () => {
+      try {
+        const b = await pool.query('SELECT slug, whatsapp_catalog_id FROM boutiques WHERE id=$1', [id]);
+        await syncProduit({ ...produitDuplique, boutique_slug: b.rows[0]?.slug, whatsapp_catalog_id: b.rows[0]?.whatsapp_catalog_id });
+      } catch {}
+    });
   } catch (err) {
     console.error('[DUPLIQUER PRODUIT ERR]', err);
     res.status(500).json({ error: 'Erreur serveur' });
