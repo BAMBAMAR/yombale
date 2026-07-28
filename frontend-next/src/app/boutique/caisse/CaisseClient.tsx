@@ -5,7 +5,7 @@ import { fcfa } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import BatchImportModal from '@/app/boutique/BatchImportModal'
 import { getBoutiqueProduits, getBoutiquesMine, getPosHistorique, creerPosVente, declarerIncident } from '../actions'
-import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search } from 'lucide-react'
+import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store } from 'lucide-react'
 
 interface ProduitCaisse {
   id: string
@@ -831,28 +831,28 @@ export default function CaisseClient() {
       {/* En-tête RE-DESIGNÉ & ULTRA-CLEAN NOPALOU POS */}
       <header style={{
         background: '#ffffff',
-        borderBottom: '1px solid #e2e8f0',
+        borderBottom: '1px solid var(--border)',
         padding: '10px 20px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+        boxShadow: 'var(--shadow)',
         whiteSpace: 'nowrap',
         overflowX: 'auto',
       }}>
         {/* Côté Gauche : Logo Brand + Boutique Selector + Role */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'} style={{ color: '#0f172a', textDecoration: 'none', fontSize: 13, fontWeight: 800, background: '#fff7ed', padding: '7px 14px', borderRadius: 8, border: '1px solid #fed7aa', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            🏪 Menu Boutique
+          <Link href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'} className="btn-premium btn-premium-secondary" style={{ padding: '6px 12px', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <ArrowLeft size={14} /> Menu Boutique
           </Link>
 
-          <div style={{ height: 24, width: 1, background: '#cbd5e1' }} />
+          <div style={{ height: 20, width: 1, background: 'var(--border)' }} />
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)', color: '#fff', padding: '6px 10px', borderRadius: 8, fontWeight: 900, fontSize: 14 }}>
-              🛒 POS
+            <div style={{ background: 'var(--accent)', color: '#fff', padding: '5px 10px', borderRadius: 8, fontWeight: 800, fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <Store size={14} /> POS
             </div>
-            <span style={{ fontSize: 16, fontWeight: 900, color: '#0f172a' }}>Nopalou</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--navy)' }}>Nopalou</span>
           </div>
 
           {/* Sélecteur de Boutique Marchand */}
@@ -861,7 +861,7 @@ export default function CaisseClient() {
               <select
                 value={boutiqueActiveId}
                 onChange={e => changerBoutiqueActive(e.target.value)}
-                style={{ padding: '7px 12px 7px 32px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#f8fafc', color: '#0f172a', fontWeight: 800, fontSize: 13, cursor: 'pointer', appearance: 'auto' }}
+                style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 13, cursor: 'pointer', outline: 'none' }}
               >
                 {boutiques.map(b => (
                   <option key={b.id} value={b.id}>🏬 {b.nom}</option>
@@ -871,8 +871,9 @@ export default function CaisseClient() {
           )}
 
           {/* Badge Rôle Actif */}
-          <span style={{ fontSize: 11, fontWeight: 800, background: roleActif === 'superviseur' ? '#fef08a' : '#e0f2fe', color: roleActif === 'superviseur' ? '#854d0e' : '#0369a1', padding: '5px 12px', borderRadius: 20, border: roleActif === 'superviseur' ? '1px solid #fde047' : '1px solid #bae6fd' }}>
-            {roleActif === 'superviseur' ? '👑 Gérant' : '👤 Caissier'}
+          <span className="badge-premium" style={{ color: roleActif === 'superviseur' ? '#b45309' : '#0369a1', background: roleActif === 'superviseur' ? '#fffbeb' : '#f0f9ff', borderColor: roleActif === 'superviseur' ? '#fde047' : '#bae6fd' }}>
+            <User size={13} style={{ color: roleActif === 'superviseur' ? '#b45309' : '#0369a1' }} />
+            {roleActif === 'superviseur' ? 'Gérant' : 'Caissier'}
           </span>
         </div>
 
@@ -882,56 +883,62 @@ export default function CaisseClient() {
           <button
             onClick={ouvrirConfigPin}
             title="Modifier les codes PIN secrets (Gérant)"
-            style={{ background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', borderRadius: 8, padding: '7px 12px', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            className="btn-premium btn-premium-secondary"
+            style={{ padding: '6px 12px', fontSize: 12, border: '1.5px solid var(--border)' }}
           >
-            ⚙️ PINs
+            <Settings size={14} /> PINs
           </button>
 
           {/* Importer produits Batch */}
           <button
             onClick={() => setModalImportBatch(true)}
-            style={{ background: '#f8fafc', color: '#C75B00', border: '1px solid #fed7aa', borderRadius: 8, padding: '7px 12px', fontWeight: 800, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            className="btn-premium btn-premium-secondary"
+            style={{ padding: '6px 12px', fontSize: 12, border: '1.5px solid var(--border)' }}
           >
-            📦 Import
+            <Download size={14} /> Import
           </button>
 
           {/* Historique */}
           <button
             onClick={() => setModalHistorique(true)}
-            style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, padding: '7px 12px', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            className="btn-premium btn-premium-secondary"
+            style={{ padding: '6px 12px', fontSize: 12, border: '1.5px solid var(--border)' }}
           >
-            📜 Historique ({historiqueVentes.length})
+            <History size={14} /> Historique ({historiqueVentes.length})
           </button>
 
           {/* Carnet Crédits */}
           <button
             onClick={() => setModalCarnet(true)}
-            style={{ background: '#f5f3ff', color: '#6d28d9', border: '1px solid #ddd6fe', borderRadius: 8, padding: '7px 12px', fontWeight: 800, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            className="btn-premium btn-premium-secondary"
+            style={{ padding: '6px 12px', fontSize: 12, border: '1.5px solid var(--border)' }}
           >
-            📒 Carnet ({clientsCredits.length})
+            <Book size={14} /> Carnet ({clientsCredits.length})
           </button>
 
           {/* Session de caisse Status & Controls */}
           {session ? (
-            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '6px 12px', borderRadius: 8, fontSize: 12, color: '#166534', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16a34a' }} />
+            <span className="badge-premium" style={{ color: '#16a34a', background: '#f0fdf4', borderColor: '#bbf7d0', padding: '6px 12px' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#16a34a', display: 'inline-block' }} />
               Session Ouverte
-            </div>
+            </span>
           ) : (
             <button
               onClick={() => setModalSessionOuverture(true)}
-              style={{ background: '#16a34a', color: '#ffffff', border: 'none', borderRadius: 8, padding: '7px 14px', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}
+              className="btn-premium btn-premium-success"
+              style={{ padding: '6px 12px', fontSize: 12 }}
             >
-              🔓 Ouvrir Session
+              <Unlock size={14} /> Ouvrir Session
             </button>
           )}
 
           {session && (
             <button
               onClick={() => setModalClotureZ(true)}
-              style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, padding: '7px 12px', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}
+              className="btn-premium btn-premium-danger"
+              style={{ padding: '6px 12px', fontSize: 12 }}
             >
-              🔒 Clôture Z
+              <Lock size={13} /> Clôture Z
             </button>
           )}
 
@@ -939,9 +946,10 @@ export default function CaisseClient() {
           <button
             onClick={() => setVerrouille(true)}
             title="Verrouiller la caisse"
-            style={{ background: '#0f172a', color: '#ffffff', border: 'none', borderRadius: 8, padding: '7px 12px', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+            className="btn-premium"
+            style={{ background: 'var(--navy)', color: '#ffffff', padding: '6px 12px', fontSize: 12 }}
           >
-            🔒 Verrouiller
+            <Lock size={13} /> Verrouiller
           </button>
         </div>
       </header>
