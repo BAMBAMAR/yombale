@@ -95,6 +95,7 @@ export default function CaisseClient() {
   const [caissiersList, setCaissiersList] = useState<any[]>([])
   const [caissierSelectionneId, setCaissierSelectionneId] = useState<string>('')
   const [conflitSessionMessage, setConflitSessionMessage] = useState<string | null>(null)
+  const [menuOutilsOuvert, setMenuOutilsOuvert] = useState<boolean>(false)
   const [modalSessionOuverture, setModalSessionOuverture] = useState<boolean>(false)
   const [modalClotureZ, setModalClotureZ] = useState<boolean>(false)
   const [modalHistorique, setModalHistorique] = useState<boolean>(false)
@@ -307,6 +308,9 @@ export default function CaisseClient() {
     setBoutiqueActiveId(newBId)
     chargerProduitsBoutique(newBId)
     viderPanier()
+    setVerrouille(true)
+    setSession(null)
+    setConflitSessionMessage(null)
   }
 
   // ── Listener Douchette Code-barres USB/Bluetooth ────────────────────────────
@@ -937,6 +941,9 @@ export default function CaisseClient() {
 
       {/* Styles d'impression Thermique 80mm */}
       <style jsx global>{`
+        .hover-bg-slate:hover {
+          background-color: #f1f5f9 !important;
+        }
         @media screen {
           .ticket-print-container {
             display: none !important;
@@ -998,7 +1005,7 @@ export default function CaisseClient() {
         whiteSpace: 'nowrap',
         overflowX: 'auto',
       }}>
-        {/* Côté Gauche : Logo Brand + Boutique Selector + Role */}
+        {/* Côté Gauche : Logo Brand + Boutique Selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'} className="btn-premium btn-premium-secondary" style={{ padding: '6px 12px', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <ArrowLeft size={14} /> Menu Boutique
@@ -1029,59 +1036,102 @@ export default function CaisseClient() {
               </select>
             </div>
           )}
-
-          {/* Badge Rôle Actif */}
-          <span className="badge-premium" style={{ color: roleActif === 'superviseur' ? '#b45309' : '#0369a1', background: roleActif === 'superviseur' ? '#fffbeb' : '#f0f9ff', borderColor: roleActif === 'superviseur' ? '#fde047' : '#bae6fd' }}>
-            <User size={13} style={{ color: roleActif === 'superviseur' ? '#b45309' : '#0369a1' }} />
-            {roleActif === 'superviseur' ? 'Gérant' : 'Caissier'}
-          </span>
         </div>
 
-        {/* Côté Droit : Actions & Sessions avec Boutons Compacts et Propres */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Modif PINs Gérant */}
-          <button
-            onClick={ouvrirConfigPin}
-            title="Modifier les codes PIN secrets (Gérant)"
-            className="btn-premium btn-premium-secondary"
-            style={{ padding: '6px 12px', fontSize: 12, border: '1.5px solid var(--border)' }}
-          >
-            <Settings size={14} /> PINs
-          </button>
+        {/* Côté Droit : Espace Caissier + Outils Dropdown + Session Action */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Menu Dropdown Outils */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setMenuOutilsOuvert(!menuOutilsOuvert)}
+              className="btn-premium btn-premium-secondary"
+              style={{ padding: '6px 12px', fontSize: 13, border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              🔧 Outils ▾
+            </button>
+            {menuOutilsOuvert && (
+              <div style={{
+                position: 'absolute', right: 0, top: 'calc(100% + 6px)', background: '#ffffff',
+                border: '1px solid #e2e8f0', borderRadius: 12, padding: 8, zIndex: 1000,
+                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+                display: 'flex', flexDirection: 'column', gap: 4, minWidth: 170
+              }}>
+                <button
+                  onClick={() => { setModalImportBatch(true); setMenuOutilsOuvert(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 6 }}
+                  className="hover-bg-slate"
+                >
+                  <Download size={14} /> Importer Lot
+                </button>
+                <button
+                  onClick={() => { setModalHistorique(true); setMenuOutilsOuvert(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 6 }}
+                  className="hover-bg-slate"
+                >
+                  <History size={14} /> Historique ({historiqueVentes.length})
+                </button>
+                <button
+                  onClick={() => { setModalCarnet(true); setMenuOutilsOuvert(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 6 }}
+                  className="hover-bg-slate"
+                >
+                  <Book size={14} /> Carnet ({clientsCredits.length})
+                </button>
+                <button
+                  onClick={() => { ouvrirConfigPin(); setMenuOutilsOuvert(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 6 }}
+                  className="hover-bg-slate"
+                >
+                  <Settings size={14} /> Config PINs
+                </button>
+              </div>
+            )}
+          </div>
 
-          {/* Importer produits Batch */}
-          <button
-            onClick={() => setModalImportBatch(true)}
-            className="btn-premium btn-premium-secondary"
-            style={{ padding: '6px 12px', fontSize: 12, border: '1.5px solid var(--border)' }}
-          >
-            <Download size={14} /> Import
-          </button>
+          {/* Espace Caissier Card */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: '#f8fafc', border: '1px solid #e2e8f0',
+            borderRadius: 12, padding: '4px 10px 4px 12px', height: 36
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b' }}>
+                  {roleActif === 'superviseur' ? '👑 Gérant' : '👤 Caissier'} :
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>{caissierNom}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: session ? '#16a34a' : '#ef4444', display: 'inline-block' }} />
+                <span style={{ fontSize: 10, fontWeight: 700, color: session ? '#16a34a' : '#ef4444' }}>
+                  {session ? `Session active` : 'Caisse fermée'}
+                </span>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setVerrouille(true)}
+              title="Verrouiller la caisse"
+              style={{
+                background: '#e2e8f0', color: '#475569', border: 'none',
+                borderRadius: 8, width: 26, height: 26, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Lock size={12} />
+            </button>
+          </div>
 
-          {/* Historique */}
-          <button
-            onClick={() => setModalHistorique(true)}
-            className="btn-premium btn-premium-secondary"
-            style={{ padding: '6px 12px', fontSize: 12, border: '1.5px solid var(--border)' }}
-          >
-            <History size={14} /> Historique ({historiqueVentes.length})
-          </button>
-
-          {/* Carnet Crédits */}
-          <button
-            onClick={() => setModalCarnet(true)}
-            className="btn-premium btn-premium-secondary"
-            style={{ padding: '6px 12px', fontSize: 12, border: '1.5px solid var(--border)' }}
-          >
-            <Book size={14} /> Carnet ({clientsCredits.length})
-          </button>
-
-          {/* Session de caisse Status & Controls */}
+          {/* Session Action Button */}
           {session ? (
-            <span className="badge-premium" style={{ color: '#16a34a', background: '#f0fdf4', borderColor: '#bbf7d0', padding: '6px 12px' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#16a34a', display: 'inline-block' }} />
-              Session Ouverte
-            </span>
+            <button
+              onClick={() => setModalClotureZ(true)}
+              className="btn-premium btn-premium-danger"
+              style={{ padding: '6px 12px', fontSize: 12 }}
+            >
+              <Lock size={13} /> Clôture Z
+            </button>
           ) : (
             <button
               onClick={() => setModalSessionOuverture(true)}
@@ -1091,26 +1141,6 @@ export default function CaisseClient() {
               <Unlock size={14} /> Ouvrir Session
             </button>
           )}
-
-          {session && (
-            <button
-              onClick={() => setModalClotureZ(true)}
-              className="btn-premium btn-premium-danger"
-              style={{ padding: '6px 12px', fontSize: 12 }}
-            >
-              <Lock size={13} /> Clôture Z
-            </button>
-          )}
-
-          {/* Bouton Verrouiller Caisse */}
-          <button
-            onClick={() => setVerrouille(true)}
-            title="Verrouiller la caisse"
-            className="btn-premium"
-            style={{ background: 'var(--navy)', color: '#ffffff', padding: '6px 12px', fontSize: 12 }}
-          >
-            <Lock size={13} /> Verrouiller
-          </button>
         </div>
       </header>
 
