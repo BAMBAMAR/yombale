@@ -9171,3 +9171,39 @@ span.ripple {
     padding: 8px 3% !important;
   }
 }
+
+/* Responsive Account Layout Fixes */
+.account-mobile-header {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Si on est sur une sous-page du compte, on masque la sidebar pour afficher immédiatement le contenu */
+  .account-sidebar--sub {
+    display: none !important;
+  }
+
+  /* Si on est sur /compte, on masque les liens de navigation de la sidebar pour éviter les doublons avec les cartes */
+  .account-sidebar--main .account-sidebar-nav-wrapper {
+    display: none !important;
+  }
+
+  /* Affichage du bouton de retour sur les sous-pages sur mobile */
+  .account-mobile-header {
+    display: block;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .account-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+}
+

@@ -1,6 +1,7 @@
 import { getOptionalSession } from '@/lib/dal'
 import { backendAuthFetch } from '@/lib/backendFetch'
-import AccountNavLinks from './AccountNavLinks'
+import AccountSidebarClient from './AccountSidebarClient'
+import AccountMobileHeader from './AccountMobileHeader'
 import BannerEmailNonVerifie from './BannerEmailNonVerifie'
 
 // Toutes les routes de ce groupe sauf /favoris sont dans PROTECTED_ROUTES
@@ -30,17 +31,15 @@ export default async function CompteLayout({ children }: { children: React.React
     <>
       {!emailVerifie && <BannerEmailNonVerifie />}
       <div className="account-layout">
-        <aside className="account-sidebar" aria-label="Panneau de gestion du compte">
-          <div className="account-sidebar-identity">
-            <div className="account-avatar" aria-hidden="true">{initiale}</div>
-            <div>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{nom}</p>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--text3)' }}>{session.email}</p>
-            </div>
-          </div>
-          <AccountNavLinks />
-        </aside>
-        <main className="account-main">{children}</main>
+        <AccountSidebarClient
+          nom={nom}
+          email={session.email ?? null}
+          initiale={initiale}
+        />
+        <main className="account-main">
+          <AccountMobileHeader />
+          {children}
+        </main>
       </div>
     </>
   )

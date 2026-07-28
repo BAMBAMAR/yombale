@@ -602,32 +602,35 @@ router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
   }
 });
 
-// ── GET /api/boutiques/:id/produits — catalogue public (UUID ou slug)
-router.get('/:id/produits', async (req, res) => {
+// ── GET /api/boutiques/:id/produits — catalogue public ou privé marchand
+router.get('/:id/produits', tokenOptional, async (req, res) => {
   try {
     const param = req.params.id;
     const isUUID = /^[0-9a-f-]{36}$/i.test(param);
     const condition = isUUID ? 'p.boutique_id=$1' : 'b.slug=$1';
+    const userId = req.user?.userId || null;
     const { rows } = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes,
               p.whatsapp_sync_statut, p.whatsapp_sync_erreur, p.partage_le
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
-       WHERE ${condition} AND b.actif=true
+       LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
+       WHERE ${condition} AND (b.actif=true OR b.utilisateur_id=$2 OR bu.utilisateur_id=$2)
        ORDER BY p.ordre ASC, p.created_at DESC`,
-      [param]
+      [param, userId]
     );
     res.json({ produits: rows });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-// ── GET /api/boutiques/:id/produits/:prodId — fiche produit publique (UUID ou slug)
-router.get('/:id/produits/:prodId', param('prodId').isUUID(), async (req, res) => {
+// ── GET /api/boutiques/:id/produits/:prodId — fiche produit publique ou privée marchand
+router.get('/:id/produits/:prodId', tokenOptional, param('prodId').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const idParam = req.params.id;
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const boutiqueCondition = isUUID ? 'b.id=$2' : 'b.slug=$2';
+    const userId = req.user?.userId || null;
     const { rows } = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock,
               p.categorie, p.caracteristiques, p.variantes, p.ordre, p.created_at,
@@ -636,8 +639,9 @@ router.get('/:id/produits/:prodId', param('prodId').isUUID(), async (req, res) =
               b.logo_url AS boutique_logo, b.actif AS boutique_actif
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
-       WHERE p.id=$1 AND ${boutiqueCondition} AND b.actif=true`,
-      [req.params.prodId, idParam]
+       LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
+       WHERE p.id=$1 AND ${boutiqueCondition} AND (b.actif=true OR b.utilisateur_id=$3 OR bu.utilisateur_id=$3)`,
+      [req.params.prodId, idParam, userId]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
     res.json({ produit: rows[0] });
