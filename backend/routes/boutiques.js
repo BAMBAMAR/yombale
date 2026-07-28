@@ -785,6 +785,7 @@ router.post('/:id/produits/:prodId/dupliquer', verifierToken, param('id').isUUID
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { id, prodId } = req.params;
+    const { nom, prix, stock_quantite } = req.body;
     const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
     if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
 
@@ -792,22 +793,30 @@ router.post('/:id/produits/:prodId/dupliquer', verifierToken, param('id').isUUID
     if (!orig.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
     const p = orig.rows[0];
 
+    const finalNom = nom ? nom.trim() : `${p.nom} (Copie)`;
+    const finalPrix = prix !== undefined && prix !== '' ? Number(prix) : p.prix;
+    const finalStock = stock_quantite !== undefined && stock_quantite !== '' ? Number(stock_quantite) : p.stock_quantite;
+
+    // S'assurer de sérialiser proprement les colonnes JSON/JSONB
+    const finalCarac = typeof p.caracteristiques === 'string' ? p.caracteristiques : JSON.stringify(p.caracteristiques || {});
+    const finalVar = typeof p.variantes === 'string' ? p.variantes : JSON.stringify(p.variantes || []);
+
     const r = await pool.query(
       `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, images, en_stock, stock_quantite, categorie, caracteristiques, variantes, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
        RETURNING *`,
       [
         id,
-        `${p.nom} (Copie)`,
+        finalNom,
         p.description,
-        p.prix,
+        finalPrix,
         p.prix_barre,
         p.images,
         p.en_stock,
-        p.stock_quantite,
+        finalStock,
         p.categorie,
-        p.caracteristiques,
-        p.variantes
+        finalCarac,
+        finalVar
       ]
     );
 

@@ -110,9 +110,16 @@ export async function deleteProduit(boutiqueId: string, produitId: string): Prom
   }
 }
 
-export async function duplicateProduit(boutiqueId: string, produitId: string): Promise<ActionState> {
+export async function duplicateProduit(
+  boutiqueId: string,
+  produitId: string,
+  data?: { nom?: string; prix?: number; stock_quantite?: number }
+): Promise<ActionState> {
   try {
-    const res = await backendFetch(`/api/boutiques/${boutiqueId}/produits/${produitId}/dupliquer`, { method: 'POST' })
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/produits/${produitId}/dupliquer`, {
+      method: 'POST',
+      body: JSON.stringify(data || {})
+    })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
       return { error: data.error ?? 'Impossible de dupliquer le produit' }

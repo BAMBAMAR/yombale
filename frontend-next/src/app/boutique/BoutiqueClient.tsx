@@ -1094,6 +1094,10 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
   const [, startTransition] = useTransition()
   const [editingStockId, setEditingStockId] = useState<string | null>(null)
   const [stockInputVal, setStockInputVal] = useState<string>('')
+  const [produitADupliquer, setProduitADupliquer] = useState<Produit | null>(null)
+  const [dupNom, setDupNom] = useState<string>('')
+  const [dupPrix, setDupPrix] = useState<string>('')
+  const [dupStock, setDupStock] = useState<string>('')
 
   async function saveStock(produitId: string) {
     const val = Number(stockInputVal)
@@ -1183,6 +1187,82 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
           onClose={() => setShowBatchModal(false)}
           onSuccess={() => loadProduits()}
         />
+      )}
+
+      {produitADupliquer && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 440, border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <h2 style={{ margin: '0 0 6px', fontSize: 18, color: '#0f172a', fontWeight: 800 }}>📄 Dupliquer le produit</h2>
+            <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748b' }}>Personnalisez le nouveau produit avant de le créer.</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>Nom du produit</label>
+                <input
+                  type="text"
+                  value={dupNom}
+                  onChange={e => setDupNom(e.target.value)}
+                  style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, color: '#0f172a', boxSizing: 'border-box' }}
+                  placeholder="Ex: Sac de Ciment Sococim (Copie)"
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>Prix unitaire (FCFA)</label>
+                  <input
+                    type="number"
+                    value={dupPrix}
+                    onChange={e => setDupPrix(e.target.value)}
+                    style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, color: '#0f172a', boxSizing: 'border-box' }}
+                    placeholder="Ex: 3500"
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>Stock initial</label>
+                  <input
+                    type="number"
+                    value={dupStock}
+                    onChange={e => setDupStock(e.target.value)}
+                    style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, color: '#0f172a', boxSizing: 'border-box' }}
+                    placeholder="Ex: 10"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setProduitADupliquer(null)}
+                style={{ flex: 1, padding: '10px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  if (!dupNom.trim()) return alert('Le nom est requis')
+                  startTransition(async () => {
+                    const res = await duplicateProduit(boutique.id, produitADupliquer.id, {
+                      nom: dupNom,
+                      prix: dupPrix !== '' ? Number(dupPrix) : undefined,
+                      stock_quantite: dupStock !== '' ? Number(dupStock) : undefined
+                    })
+                    if (res.error) alert(res.error)
+                    else {
+                      setSuccessMsg('Produit dupliqué avec succès !')
+                      setProduitADupliquer(null)
+                      loadProduits()
+                    }
+                  })
+                }}
+                style={{ flex: 1.5, padding: '10px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 800, cursor: 'pointer' }}
+              >
+                🚀 Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
@@ -1374,15 +1454,10 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                 </button>
                 <button
                   onClick={() => {
-                    if (!confirm('Voulez-vous dupliquer ce produit ?')) return
-                    startTransition(async () => {
-                      const res = await duplicateProduit(boutique.id, p.id)
-                      if (res.error) alert(res.error)
-                      else {
-                        setSuccessMsg('Produit dupliqué avec succès !')
-                        loadProduits()
-                      }
-                    })
+                    setProduitADupliquer(p)
+                    setDupNom(`${p.nom} (Copie)`)
+                    setDupPrix(p.prix?.toString() || '')
+                    setDupStock(p.stock_quantite?.toString() || '')
                   }}
                   style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
                 >
