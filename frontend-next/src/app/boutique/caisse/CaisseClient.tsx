@@ -813,6 +813,12 @@ export default function CaisseClient() {
             min-height: 0 !important;
             overflow: visible !important;
           }
+          header,
+          footer,
+          nav,
+          .site-header,
+          .site-footer,
+          .navbar-icon-actions,
           .caisse-header,
           .caisse-main-layout,
           .btn-premium,
@@ -1052,6 +1058,7 @@ export default function CaisseClient() {
                 onClick={() => setCategorieFiltre(c.id)}
                 style={{
                   padding: '8px 16px', borderRadius: 20, whiteSpace: 'nowrap',
+                  flexShrink: 0,
                   background: categorieFiltre === c.id ? '#C75B00' : '#ffffff',
                   color: categorieFiltre === c.id ? '#ffffff' : '#475569',
                   fontWeight: categorieFiltre === c.id ? 800 : 600, fontSize: 13, cursor: 'pointer',
