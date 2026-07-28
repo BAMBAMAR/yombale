@@ -958,7 +958,7 @@ export default function CaisseClient() {
       </header>
 
       {/* Main Grid Caisse */}
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 440px', gap: 0, overflow: 'hidden' }}>
+      <div className="caisse-main-layout">
 
         {/* Côté Gauche : Recherche & Catalogue Produits Réel avec Décrémentation Dynamique du Stock */}
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}>
