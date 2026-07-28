@@ -519,7 +519,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               }
 
               // Potential savings
-              if (economie && prixMax && prixMax > prixMin) {
+              if (economie && prixMax && prixMin !== null && prixMax > prixMin) {
                 const pct = Math.round((economie / prixMax) * 100);
                 budgetBullets.push(
                   <li key="savings" className="comp-verdict-item">
