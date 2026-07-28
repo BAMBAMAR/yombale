@@ -396,23 +396,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
           )
         })()}
 
-        {/* Bandeau "meilleur choix" — pousse vers l'alternative la moins chère si elle existe */}
-        {existeMoinsCher && meilleurSimilaire && (
-          <Link href={`/produit/${meilleurSimilaire.id}`} className="meilleur-choix-banner">
-            <div className="meilleur-choix-img">
-              <ExternalImg src={meilleurSimilaire.image_url} alt={meilleurSimilaire.nom} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </div>
-            <div className="meilleur-choix-info">
-              <span className="meilleur-choix-label">✨ Meilleur choix pour vous</span>
-              <span className="meilleur-choix-nom">{meilleurSimilaire.nom}</span>
-              <span className="meilleur-choix-prix">
-                {fcfa(meilleurSimilaire.px)}
-                {prixMin && <span className="meilleur-choix-eco"> · -{Math.round((prixMin - meilleurSimilaire.px) / prixMin * 100)}%</span>}
-              </span>
-            </div>
-            <span className="meilleur-choix-cta">Voir ce produit →</span>
-          </Link>
-        )}
+
 
         <div className="fiche-grid">
           {/* ── Colonne principale ──────────────────────────────── */}
@@ -455,31 +439,7 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               </div>
             </div>
 
-            {/* ── Grille métriques clés — alignée sur forfait-fiche-specs ── */}
-            {valides.length > 0 && (
-              <div className="forfait-fiche-specs">
-                <div className="forfait-fiche-spec">
-                  <span className="forfait-fiche-spec-val">{valides.length}</span>
-                  <span className="forfait-fiche-spec-lbl">🏪 Marchands</span>
-                </div>
-                <div className="forfait-fiche-spec">
-                  <span className="forfait-fiche-spec-val">{fcfa(prixMin)}</span>
-                  <span className="forfait-fiche-spec-lbl">💰 Prix le plus bas</span>
-                </div>
-                {prixMax && prixMax !== prixMin && (
-                  <div className="forfait-fiche-spec">
-                    <span className="forfait-fiche-spec-val">{fcfa(prixMax)}</span>
-                    <span className="forfait-fiche-spec-lbl">📈 Prix le plus haut</span>
-                  </div>
-                )}
-                {economie && (
-                  <div className="forfait-fiche-spec">
-                    <span className="forfait-fiche-spec-val">{fcfa(economie)}</span>
-                    <span className="forfait-fiche-spec-lbl">💸 Économie possible</span>
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {/* ── Verdict Nopalou ── */}
             {valides.length > 0 && (() => {
@@ -565,25 +525,12 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                 );
               }
 
-              // Alternative conseil
-              if (existeMoinsCher && meilleurSimilaire) {
-                const diffSimil = (prixMin !== null && meilleurSimilaire.px !== null) ? prixMin - meilleurSimilaire.px : 0;
-                techBullets.push(
-                  <li key="alternative" className="comp-verdict-item">
-                    <span className="comp-verdict-bullet">✨</span>
-                    <span>
-                      Alternative : <Link href={`/produit/${meilleurSimilaire.id}`} style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'underline' }}>{meilleurSimilaire.nom}</Link> est proposé moins cher dès <strong>{fcfa(meilleurSimilaire.px)}</strong> (soit <strong>-{fcfa(diffSimil)}</strong> de moins).
-                    </span>
-                  </li>
-                );
-              }
-
               if (budgetBullets.length === 0 && techBullets.length === 0) return null;
 
               return (
                 <div className="comp-verdict-card" style={{ marginTop: 20 }}>
                   <div className="comp-verdict-header">
-                    <span>⚖️</span> Verdict Nopalou
+                    <span>⚖️</span> Verdict & Conseils d'Achat Nopalou
                   </div>
                   <div className="comp-verdict-grid">
                     {budgetBullets.length > 0 && (
@@ -599,6 +546,25 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
                       </div>
                     )}
                   </div>
+
+                  {/* Option A: Golden highlight box for cheaper alternative */}
+                  {existeMoinsCher && meilleurSimilaire && (
+                    <div className="comp-verdict-alternative-box">
+                      <div className="comp-verdict-alternative-img">
+                        <ExternalImg src={meilleurSimilaire.image_url} alt={meilleurSimilaire.nom} />
+                      </div>
+                      <div className="comp-verdict-alternative-info">
+                        <span className="comp-verdict-alternative-title">✨ Alternative moins chère conseillée</span>
+                        Le modèle similaire <strong>{meilleurSimilaire.nom}</strong> est disponible à partir de <strong>{fcfa(meilleurSimilaire.px)}</strong>
+                        {prixMin && (
+                          <span> (soit <strong>-{Math.round((prixMin - meilleurSimilaire.px) / prixMin * 100)}%</strong> d'économie).</span>
+                        )}
+                      </div>
+                      <Link href={`/produit/${meilleurSimilaire.id}`} className="comp-verdict-alternative-cta">
+                        Voir l'alternative →
+                      </Link>
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -705,14 +671,6 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
               <div className="sidebar-ligne">
                 <span>Prix le plus bas</span>
                 <strong>{fcfa(prixMin)}</strong>
-              </div>
-              <div className="sidebar-ligne">
-                <span>Prix le plus haut</span>
-                <strong>{fcfa(prixMax)}</strong>
-              </div>
-              <div className="sidebar-ligne">
-                <span>Marchands</span>
-                <strong>{valides.length}</strong>
               </div>
               {best && (
                 <div className="sidebar-best-label">
