@@ -171,12 +171,14 @@ export default function CaisseClient() {
       try {
         setLoadingProduits(true)
         const mine = await getBoutiquesMine()
-        if (mine && mine.length > 0) {
-          setBoutiques(mine)
-          const bId = boutiqueActiveId || mine[0].id
+        const activeBoutiques = mine ? mine.filter((b: any) => b.actif === true) : []
+        if (activeBoutiques.length > 0) {
+          setBoutiques(activeBoutiques)
+          const bId = boutiqueActiveId || activeBoutiques[0].id
           setBoutiqueActiveId(bId)
           await chargerProduitsBoutique(bId)
         } else {
+          setBoutiques([])
           setLoadingProduits(false)
         }
       } catch (e) {
