@@ -9,7 +9,7 @@ import DrawerCart from '@/components/DrawerCart'
 import CrossSelling from '@/components/CrossSelling'
 import { useCart } from '@/context/CartContext'
 import CardActions from '@/app/CardActions'
-import { ShoppingCart, Star, Share2, Tag, Info, Phone, MessageCircle, HelpCircle, Clock, Facebook, Instagram, MapPin, Globe } from 'lucide-react'
+import { ShoppingCart, Star, Share2, Tag, Info, Phone, MessageCircle, HelpCircle, Clock, Facebook, Instagram, MapPin, Globe, Sparkles } from 'lucide-react'
 
 export interface Produit {
   id: string
