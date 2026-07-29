@@ -997,144 +997,154 @@ export default function CaisseClient() {
       <header className="caisse-header no-print" style={{
         background: '#ffffff',
         borderBottom: '1px solid var(--border)',
-        padding: '10px 20px',
+        padding: '8px 14px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         boxShadow: 'var(--shadow)',
         overflow: 'visible',
-        flexWrap: 'wrap',
-        gap: 8,
+        gap: 6,
+        minHeight: 50,
+        flexShrink: 0,
       }}>
-        {/* Côté Gauche : Logo Brand + Boutique Selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <Link href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'} className="btn-premium btn-premium-secondary" style={{ padding: '6px 10px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <ArrowLeft size={13} /> Boutique
+        {/* Côté Gauche : Retour + POS badge + Boutique selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
+          {/* Bouton retour — icône seule sur mobile */}
+          <Link
+            href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'}
+            className="btn-premium btn-premium-secondary caisse-btn-retour"
+            style={{ padding: '5px 8px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0 }}
+          >
+            <ArrowLeft size={13} />
+            <span className="caisse-label-desktop">Boutique</span>
           </Link>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ background: 'var(--accent)', color: '#fff', padding: '4px 8px', borderRadius: 7, fontWeight: 800, fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-              <Store size={12} /> POS
-            </div>
-            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy)' }}>Nopalou</span>
+          {/* Badge POS */}
+          <div style={{ background: 'var(--accent)', color: '#fff', padding: '4px 7px', borderRadius: 6, fontWeight: 800, fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+            <Store size={11} /> POS
           </div>
 
-          {/* Sélecteur de Boutique Marchand */}
+          {/* Sélecteur de boutique — masqué sur très petit écran */}
           {boutiques.length > 0 && (
             <select
               value={boutiqueActiveId}
               onChange={e => changerBoutiqueActive(e.target.value)}
-              style={{ padding: '5px 8px', borderRadius: 7, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 12, cursor: 'pointer', outline: 'none', maxWidth: 160 }}
+              className="caisse-boutique-select"
+              style={{ padding: '4px 6px', borderRadius: 6, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 11, cursor: 'pointer', outline: 'none', maxWidth: 130, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
             >
               {boutiques.map(b => (
                 <option key={b.id} value={b.id}>
-                  🏬 {b.nom}{!b.actif ? ' (Off)' : ''}
+                  {b.nom}{!b.actif ? ' (Off)' : ''}
                 </option>
               ))}
             </select>
           )}
         </div>
 
-        {/* Côté Droit : Espace Caissier + Outils Dropdown + Session Action */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        {/* Côté Droit : Caissier + Outils + Session — groupé compact */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+
+          {/* Espace Caissier — compact */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: '#f8fafc', border: '1px solid #e2e8f0',
+            borderRadius: 8, padding: '3px 7px 3px 8px',
+          }}>
+            <span style={{ fontSize: 13 }}>{roleActif === 'superviseur' ? '👑' : '👤'}</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#0f172a', maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{caissierNom}</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: session ? '#16a34a' : '#ef4444', lineHeight: 1.2 }}>
+                {session ? '● Active' : '● Fermée'}
+              </span>
+            </div>
+            <button
+              onClick={() => setVerrouille(true)}
+              title="Verrouiller"
+              style={{ background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 5, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            >
+              <Lock size={10} />
+            </button>
+          </div>
+
           {/* Menu Dropdown Outils */}
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setMenuOutilsOuvert(!menuOutilsOuvert)}
               className="btn-premium btn-premium-secondary"
-              style={{ padding: '5px 10px', fontSize: 12, border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: 4 }}
+              style={{ padding: '5px 8px', fontSize: 11, border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}
             >
-              🔧 Outils ▾
+              🔧<span className="caisse-label-desktop"> Outils</span> ▾
             </button>
             {menuOutilsOuvert && (
-              <div style={{
-                position: 'absolute', right: 0, top: 'calc(100% + 6px)', background: '#ffffff',
-                border: '1px solid #e2e8f0', borderRadius: 12, padding: 8, zIndex: 9999,
-                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.15), 0 4px 6px -2px rgba(0,0,0,0.08)',
-                display: 'flex', flexDirection: 'column', gap: 4, minWidth: 170
-              }}>
-                <button
-                  onClick={() => { setModalImportBatch(true); setMenuOutilsOuvert(false); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 6 }}
-                  className="hover-bg-slate"
-                >
-                  <Download size={14} /> Importer Lot
-                </button>
-                <button
-                  onClick={() => { setModalHistorique(true); setMenuOutilsOuvert(false); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 6 }}
-                  className="hover-bg-slate"
-                >
-                  <History size={14} /> Historique ({historiqueVentes.length})
-                </button>
-                <button
-                  onClick={() => { setModalCarnet(true); setMenuOutilsOuvert(false); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 6 }}
-                  className="hover-bg-slate"
-                >
-                  <Book size={14} /> Carnet ({clientsCredits.length})
-                </button>
-                <button
-                  onClick={() => { ouvrirConfigPin(); setMenuOutilsOuvert(false); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 6 }}
-                  className="hover-bg-slate"
-                >
-                  <Settings size={14} /> Config PINs
-                </button>
-              </div>
+              <>
+                {/* Overlay pour fermer en cliquant dehors */}
+                <div
+                  onClick={() => setMenuOutilsOuvert(false)}
+                  style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                />
+                <div style={{
+                  position: 'fixed',
+                  top: 58,
+                  right: 14,
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 12,
+                  padding: 8,
+                  zIndex: 9999,
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                  minWidth: 185,
+                }}>
+                  <div style={{ padding: '4px 12px 6px', borderBottom: '1px solid #f1f5f9', marginBottom: 2 }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outils caisse</span>
+                  </div>
+                  <button
+                    onClick={() => { setModalImportBatch(true); setMenuOutilsOuvert(false); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
+                  >
+                    <Download size={14} /> Importer Lot
+                  </button>
+                  <button
+                    onClick={() => { setModalHistorique(true); setMenuOutilsOuvert(false); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
+                  >
+                    <History size={14} /> Historique ({historiqueVentes.length})
+                  </button>
+                  <button
+                    onClick={() => { setModalCarnet(true); setMenuOutilsOuvert(false); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
+                  >
+                    <Book size={14} /> Carnet ({clientsCredits.length})
+                  </button>
+                  <button
+                    onClick={() => { ouvrirConfigPin(); setMenuOutilsOuvert(false); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
+                  >
+                    <Settings size={14} /> Config PINs
+                  </button>
+                </div>
+              </>
             )}
           </div>
 
-          {/* Espace Caissier Card */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            background: '#f8fafc', border: '1px solid #e2e8f0',
-            borderRadius: 10, padding: '4px 8px 4px 10px'
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                <span style={{ fontSize: 10, fontWeight: 800, color: '#64748b' }}>
-                  {roleActif === 'superviseur' ? '👑' : '👤'}
-                </span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: '#0f172a', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{caissierNom}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 1 }}>
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: session ? '#16a34a' : '#ef4444', display: 'inline-block' }} />
-                <span style={{ fontSize: 9, fontWeight: 700, color: session ? '#16a34a' : '#ef4444' }}>
-                  {session ? 'Active' : 'Fermée'}
-                </span>
-              </div>
-            </div>
-            
-            <button
-              onClick={() => setVerrouille(true)}
-              title="Verrouiller"
-              style={{
-                background: '#e2e8f0', color: '#475569', border: 'none',
-                borderRadius: 7, width: 24, height: 24, display: 'flex',
-                alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              }}
-            >
-              <Lock size={11} />
-            </button>
-          </div>
-
-          {/* Session Action Button */}
+          {/* Bouton Session/Clôture */}
           {session ? (
             <button
               onClick={() => setModalClotureZ(true)}
               className="btn-premium btn-premium-danger"
-              style={{ padding: '5px 10px', fontSize: 12 }}
+              style={{ padding: '5px 9px', fontSize: 11, flexShrink: 0 }}
             >
-              <Lock size={12} /> Clôture Z
+              <Lock size={11} /> <span className="caisse-label-desktop">Clôture Z</span>
             </button>
           ) : (
             <button
               onClick={() => setModalSessionOuverture(true)}
               className="btn-premium btn-premium-success"
-              style={{ padding: '5px 10px', fontSize: 12 }}
+              style={{ padding: '5px 9px', fontSize: 11, flexShrink: 0 }}
             >
-              <Unlock size={13} /> Session
+              <Unlock size={11} /> <span className="caisse-label-desktop">Session</span>
             </button>
           )}
         </div>

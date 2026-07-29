@@ -9354,9 +9354,26 @@ span.ripple {
    ════════════════════════════════════════════════════════ */
 
 /* ── Caisse POS : En-tête ── */
-.caisse-header {
-  flex-wrap: wrap !important;
-  gap: 8px !important;
+/* Labels masqués sur mobile (icônes seules) */
+.caisse-label-desktop {
+  display: inline;
+}
+
+/* Sélecteur de boutique : visible sur tablette+ */
+.caisse-boutique-select {
+  display: block;
+}
+
+@media (max-width: 640px) {
+  /* Sur petit écran : masquer les labels texte dans le header */
+  .caisse-label-desktop {
+    display: none;
+  }
+
+  /* Masquer le select boutique sur très petit écran (moins d'espace) */
+  .caisse-boutique-select {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
