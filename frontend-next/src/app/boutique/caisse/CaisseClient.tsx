@@ -6,7 +6,7 @@ import { exportToCSV, printPDFReport } from '@/lib/export'
 import BatchImportModal from '@/app/boutique/BatchImportModal'
 import { CATEGORIES } from '@/lib/categories'
 import { getBoutiqueProduits, getBoutiquesMine, getPosHistorique, creerPosVente, declarerIncident } from '../actions'
-import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store } from 'lucide-react'
+import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store, Camera, MessageCircle, Printer } from 'lucide-react'
 
 interface ProduitCaisse {
   id: string
@@ -291,6 +291,154 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
   const [clientCreditIdPOS, setClientCreditIdPOS] = useState<string>('')
   const [creditDateEcheancePOS, setCreditDateEcheancePOS] = useState<string>('')
   const [creditNotePOS, setCreditNotePOS] = useState<string>('')
+
+  // ── Scanner Caméra Smartphone & Format Ticket Thermique ESC/POS ─────────────
+  const [modalScannerCamera, setModalScannerCamera] = useState<boolean>(false)
+  const [scannerCameraStatus, setScannerCameraStatus] = useState<string>('Initialisation...')
+  const [formatTicketThermique, setFormatTicketThermique] = useState<'80mm' | '58mm'>('80mm')
+  const videoScannerRef = useRef<HTMLVideoElement | null>(null)
+  const cameraStreamRef = useRef<MediaStream | null>(null)
+
+  function envoyerRelanceWhatsApp(c: any) {
+    if (!c.telephone) return
+    const numClean = c.telephone.replace(/\D/g, '')
+    const phone = numClean.startsWith('221') ? numClean : `221${numClean}`
+    const bqNom = boutiques.find(b => b.id === boutiqueActiveId)?.nom || 'Notre Boutique'
+    const soldeText = c.solde > 0 ? `votre solde de dette est de ${fcfa(c.solde)}` : `votre solde d'avance est de ${fcfa(Math.abs(c.solde))}`
+    const message = `Bonjour ${c.nom}, concernant votre carnet de crédit chez ${bqNom} : ${soldeText}. Merci de nous contacter pour le règlement !`
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
+  }
+
+  async function demarrerScannerCamera() {
+    setModalScannerCamera(true)
+    setScannerCameraStatus('Demande d’accès à la caméra du téléphone…')
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      })
+      cameraStreamRef.current = stream
+      if (videoScannerRef.current) {
+        videoScannerRef.current.srcObject = stream
+        videoScannerRef.current.play()
+      }
+      setScannerCameraStatus('📷 Caméra active ! Placez le code-barres devant l’objectif')
+      demarrerDetectionCodeBarre()
+    } catch (err) {
+      console.error('Erreur accès caméra:', err)
+      setScannerCameraStatus('❌ Impossible d’accéder à la caméra. Saisissez le code directement.')
+    }
+  }
+
+  function arreterScannerCamera() {
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach(track => track.stop())
+      cameraStreamRef.current = null
+    }
+    setModalScannerCamera(false)
+  }
+
+  function demarrerDetectionCodeBarre() {
+    if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+      try {
+        const detector = new (window as any).BarcodeDetector({ formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a'] })
+        const timer = setInterval(async () => {
+          if (videoScannerRef.current && videoScannerRef.current.readyState === 4) {
+            try {
+              const codes = await detector.detect(videoScannerRef.current)
+              if (codes && codes.length > 0) {
+                const scannedVal = codes[0].rawValue
+                if (scannedVal) {
+                  clearInterval(timer)
+                  traiterCodeBarreCamera(scannedVal)
+                }
+              }
+            } catch (e) {}
+          }
+        }, 400)
+      } catch (e) {}
+    }
+  }
+
+  function traiterCodeBarreCamera(code: string) {
+    const pFound = produits.find(p => p.code_barre === code || p.id === code)
+    if (pFound) {
+      ajouterAuPanier(pFound)
+      alert(`✅ Produit scanné et ajouté : ${pFound.nom} (${fcfa(pFound.prix)})`)
+      arreterScannerCamera()
+    } else {
+      setRecherche(code)
+      setScannerCameraStatus(`Code scanné : ${code} (Recherche filtrée)`)
+    }
+  }
+
+  function imprimerTicketThermique(vente: any) {
+    if (!vente) return
+    const windowPrint = window.open('', '_blank', 'width=400,height=600')
+    if (!windowPrint) {
+      window.print()
+      return
+    }
+    const widthMm = formatTicketThermique === '58mm' ? '58mm' : '80mm'
+    const bqNom = boutiques.find(b => b.id === boutiqueActiveId)?.nom || 'NOPALOU BOUTIQUE'
+    const itemsHtml = (vente.ticket || vente.items || []).map((i: any) => `
+      <tr style="border-bottom: 1px dashed #ccc;">
+        <td style="padding: 4px 0; text-align: left;">${i.quantite || 1}x ${i.produit?.nom || i.nom}</td>
+        <td style="padding: 4px 0; text-align: right; font-weight: bold;">${fcfa((i.prixUnitaire || i.prix || 0) * (i.quantite || 1))}</td>
+      </tr>
+    `).join('')
+
+    windowPrint.document.write(`
+      <html>
+        <head>
+          <title>Ticket de Caisse ESC/POS</title>
+          <style>
+            @page { size: ${widthMm} auto; margin: 0; }
+            body { width: ${widthMm}; margin: 0 auto; padding: 6px; font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #000; }
+            .center { text-align: center; }
+            .right { text-align: right; }
+            .bold { font-weight: bold; }
+            .divider { border-top: 1px dashed #000; margin: 6px 0; }
+            table { width: 100%; border-collapse: collapse; font-size: 11px; }
+          </style>
+        </head>
+        <body>
+          <div class="center bold" style="font-size: 14px; text-transform: uppercase;">${bqNom}</div>
+          <div class="center" style="font-size: 10px; margin-top: 2px;">Ticket #${vente.id} • ${vente.date || new Date().toLocaleDateString('fr-FR')}</div>
+          <div class="center" style="font-size: 10px;">Caissier: ${vente.caissier || caissierNom}</div>
+          <div class="divider"></div>
+          <table>
+            <thead>
+              <tr style="border-bottom: 1px solid #000;">
+                <th style="text-align: left;">Article</th>
+                <th style="text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+          <div class="divider"></div>
+          <div style="display: flex; justify-content: space-between;" class="bold">
+            <span>TOTAL NET :</span>
+            <span>${fcfa(vente.total)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 4px;">
+            <span>Mode Règlement:</span>
+            <span>${(vente.modePaiement || vente.mode || 'ESPECES').toUpperCase()}</span>
+          </div>
+          <div class="divider"></div>
+          <div class="center bold" style="margin-top: 8px;">MERCI DE VOTRE VISITE !</div>
+          <div class="center" style="font-size: 9px; margin-top: 2px;">Logiciel de Caisse Nopalou POS</div>
+        </body>
+      </html>
+    `)
+    windowPrint.document.close()
+    windowPrint.focus()
+    setTimeout(() => {
+      windowPrint.print()
+      windowPrint.close()
+    }, 250)
+  }
 
   // ── Historique des opérations & Incidents ────────────────────────────────────
   const [historiqueVentes, setHistoriqueVentes] = useState<VenteHistorique[]>([])
@@ -1390,8 +1538,8 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
             </div>
           )}
 
-          {/* Barre de Recherche Code-Barres & Nom */}
-          <div style={{ display: 'flex', gap: 12 }}>
+          {/* Barre de Recherche Code-Barres & Nom + Scanner Caméra */}
+          <div style={{ display: 'flex', gap: 10 }}>
             <div style={{ flex: 1, position: 'relative' }}>
               <input
                 type="text"
@@ -1405,6 +1553,19 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
                 }}
               />
             </div>
+
+            <button
+              onClick={demarrerScannerCamera}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px', borderRadius: 10,
+                background: '#1e3a5f', color: '#ffffff', border: 'none', fontWeight: 800, fontSize: 13,
+                cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(30,58,95,0.25)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Camera size={18} />
+              <span>📷 Scanner Caméra</span>
+            </button>
           </div>
 
           {/* Filtre Catégories */}
@@ -1962,7 +2123,15 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
                 <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 800 }}>📜 Historique des Opérations & Incidents de Caisse</h2>
                 <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>Journal des encaissements, annulations et remboursements.</p>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <select
+                  value={formatTicketThermique}
+                  onChange={e => setFormatTicketThermique(e.target.value as any)}
+                  style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 12, fontWeight: 700, background: '#ffffff', color: '#0f172a' }}
+                >
+                  <option value="80mm">🖨️ Format 80mm (Standard)</option>
+                  <option value="58mm">🖨️ Format 58mm (Poche)</option>
+                </select>
                 <button
                   onClick={exporterHistoriqueCSV}
                   style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
@@ -2017,24 +2186,10 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
                         </button>
                       )}
                       <button
-                        onClick={() => {
-                          setDerniereVente({
-                            id: v.id,
-                            date: v.date,
-                            heure: v.heure,
-                            total: v.total,
-                            remise: 0,
-                            recu: v.total,
-                            monnaie: 0,
-                            ticket: v.ticket,
-                            mode: v.modePaiement.toUpperCase(),
-                            caissier: v.caissier,
-                          })
-                          setTimeout(() => window.print(), 300)
-                        }}
-                        style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                        onClick={() => imprimerTicketThermique(v)}
+                        style={{ background: '#0f172a', color: '#ffffff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                       >
-                        🖨 Ticket
+                        <Printer size={12} /> Ticket Thermique
                       </button>
                     </div>
                   </div>
@@ -2191,6 +2346,31 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
                 Clôturer la session
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modale Scanner Code-Barres par Caméra Smartphone */}
+      {modalScannerCamera && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.8)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 440, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)', textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Camera size={20} style={{ color: '#C75B00' }} /> Scanner Code-Barres (Caméra)
+              </h3>
+              <button onClick={arreterScannerCamera} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <div style={{ position: 'relative', width: '100%', height: 260, borderRadius: 14, overflow: 'hidden', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <video ref={videoScannerRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 30, border: '2px dashed #22c55e', borderRadius: 12, pointerEvents: 'none', boxShadow: '0 0 0 9999px rgba(0,0,0,0.3)' }} />
+            </div>
+
+            <p style={{ margin: 0, fontSize: 13, color: '#475569', fontWeight: 700 }}>{scannerCameraStatus}</p>
+
+            <button onClick={arreterScannerCamera} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 10, padding: 12, fontWeight: 800, cursor: 'pointer' }}>
+              Fermer le scanner
+            </button>
           </div>
         </div>
       )}
@@ -2381,7 +2561,14 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
                             </span>
                           </div>
 
-                          <div style={{ display: 'flex', gap: 6 }}>
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                            <button
+                              onClick={() => envoyerRelanceWhatsApp(c)}
+                              style={{ background: '#25d366', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 10px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                              title="Envoyer un rappel de solde automatique sur WhatsApp"
+                            >
+                              <MessageCircle size={14} /> WA Relance
+                            </button>
                             <button
                               onClick={() => {
                                 setClientCarnetSelectionne(c)
@@ -2424,13 +2611,20 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontSize: 11, color: '#64748b', display: 'block' }}>Solde Actuel</span>
                       <span style={{ fontSize: 18, fontWeight: 900, color: clientCarnetSelectionne.solde > 0 ? '#dc2626' : clientCarnetSelectionne.solde < 0 ? '#16a34a' : '#64748b' }}>
                         {clientCarnetSelectionne.solde > 0 ? `Dette: ${fcfa(clientCarnetSelectionne.solde)}` : clientCarnetSelectionne.solde < 0 ? `Avance: ${fcfa(Math.abs(clientCarnetSelectionne.solde))}` : '0 FCFA'}
                       </span>
                     </div>
+
+                    <button
+                      onClick={() => envoyerRelanceWhatsApp(clientCarnetSelectionne)}
+                      style={{ background: '#25d366', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    >
+                      <MessageCircle size={15} /> WhatsApp Relance
+                    </button>
 
                     <button
                       onClick={() => {
