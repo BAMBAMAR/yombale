@@ -68,16 +68,17 @@ export default async function CategoriePage({
   searchParams,
 }: {
   params: { slug: string }
-  searchParams: { page?: string; prixMax?: string; tri?: string; sousType?: string; q?: string }
+  searchParams: Promise<{ page?: string; prixMax?: string; tri?: string; sousType?: string; q?: string }> | { page?: string; prixMax?: string; tri?: string; sousType?: string; q?: string }
 }) {
   const cat = CATEGORIES[params.slug]
   if (!cat) notFound()
 
-  const page   = searchParams.page   ?? '1'
-  const prixMax = searchParams.prixMax ?? ''
-  const tri    = searchParams.tri    ?? 'pertinence'
-  const sousType = searchParams.sousType ?? ''
-  const q      = searchParams.q      ?? ''
+  const sp = await Promise.resolve(searchParams)
+  const page   = sp?.page   ?? '1'
+  const prixMax = sp?.prixMax ?? ''
+  const tri    = sp?.tri    ?? 'pertinence'
+  const sousType = sp?.sousType ?? ''
+  const q      = sp?.q      ?? ''
 
   const qs = new URLSearchParams({ limit: '24', page, categorie: params.slug })
   if (prixMax) qs.set('prixMax', prixMax)

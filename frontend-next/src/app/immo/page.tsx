@@ -94,7 +94,19 @@ const VILLES_SN = ['Dakar', 'Pikine', 'Guédiawaye', 'Rufisque', 'Thiès', 'Mbou
 export default async function ImmoPage({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
+    transaction?: string
+    type_bien?: string
+    tri?: string
+    prixMax?: string
+    ville?: string
+    quartier?: string
+    surfaceMin?: string
+    nbPieces?: string
+    nbChambres?: string
+    meuble?: string
+    page?: string
+  }> | {
     transaction?: string
     type_bien?: string
     tri?: string
@@ -108,17 +120,18 @@ export default async function ImmoPage({
     page?: string
   }
 }) {
-  const transaction = searchParams.transaction ?? 'location'
-  const type_bien   = searchParams.type_bien   ?? ''
-  const tri         = searchParams.tri         ?? 'recent'
-  const prixMax     = searchParams.prixMax     ?? ''
-  const ville       = searchParams.ville       ?? ''
-  const quartier    = searchParams.quartier    ?? ''
-  const surfaceMin  = searchParams.surfaceMin  ?? ''
-  const nbPieces    = searchParams.nbPieces    ?? ''
-  const nbChambres  = searchParams.nbChambres  ?? ''
-  const meuble      = searchParams.meuble      ?? ''
-  const page        = searchParams.page        ?? '1'
+  const sp = await Promise.resolve(searchParams)
+  const transaction = sp?.transaction ?? 'location'
+  const type_bien   = sp?.type_bien   ?? ''
+  const tri         = sp?.tri         ?? 'recent'
+  const prixMax     = sp?.prixMax     ?? ''
+  const ville       = sp?.ville       ?? ''
+  const quartier    = sp?.quartier    ?? ''
+  const surfaceMin  = sp?.surfaceMin  ?? ''
+  const nbPieces    = sp?.nbPieces    ?? ''
+  const nbChambres  = sp?.nbChambres  ?? ''
+  const meuble      = sp?.meuble      ?? ''
+  const page        = sp?.page        ?? '1'
 
   const qs = new URLSearchParams()
   qs.set('limit', '24')

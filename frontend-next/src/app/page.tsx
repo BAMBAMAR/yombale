@@ -67,14 +67,15 @@ interface ApiResponse {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: { q?: string; categorie?: string; prixMax?: string; page?: string; tri?: string; sousType?: string }
+  searchParams: Promise<{ q?: string; categorie?: string; prixMax?: string; page?: string; tri?: string; sousType?: string }> | { q?: string; categorie?: string; prixMax?: string; page?: string; tri?: string; sousType?: string }
 }) {
-  const q         = searchParams.q         ?? ''
-  const categorie = searchParams.categorie ?? ''
-  const prixMax   = searchParams.prixMax   ?? ''
-  const page      = searchParams.page      ?? '1'
-  const tri       = searchParams.tri       ?? ''
-  const sousType  = searchParams.sousType  ?? ''
+  const sp        = await Promise.resolve(searchParams)
+  const q         = sp?.q         ?? ''
+  const categorie = sp?.categorie ?? ''
+  const prixMax   = sp?.prixMax   ?? ''
+  const page      = sp?.page      ?? '1'
+  const tri       = sp?.tri       ?? ''
+  const sousType  = sp?.sousType  ?? ''
 
   let produits: Produit[] = []
   let total               = 0

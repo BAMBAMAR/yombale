@@ -41,9 +41,10 @@ interface TelecomResponse {
 export default async function TelecomPage({
   searchParams,
 }: {
-  searchParams: { operateur?: string; type?: string; tri?: string; page?: string }
+  searchParams: Promise<{ operateur?: string; type?: string; tri?: string; page?: string }> | { operateur?: string; type?: string; tri?: string; page?: string }
 }) {
-  const { operateur = '', type = '', tri = '', page = '1' } = searchParams
+  const sp = await Promise.resolve(searchParams)
+  const { operateur = '', type = '', tri = '', page = '1' } = sp || {}
 
   const qs = new URLSearchParams()
   qs.set('limit', '100')

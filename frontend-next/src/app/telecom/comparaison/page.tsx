@@ -56,9 +56,10 @@ function scoreMixte(f: Forfait): number {
 export default async function TelecomComparaisonPage({
   searchParams,
 }: {
-  searchParams: { ids?: string }
+  searchParams: Promise<{ ids?: string }> | { ids?: string }
 }) {
-  const ids = (searchParams.ids ?? '')
+  const sp = await Promise.resolve(searchParams)
+  const ids = (sp?.ids ?? '')
     .split(',').map(s => s.trim()).filter(Boolean).slice(0, 3)
 
   if (ids.length < 2) {
