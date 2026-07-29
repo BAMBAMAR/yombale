@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Toujours répondre et communiquer en français dans ce projet, y compris dans les nouvelles sessions — quelle que soit la langue du message de l'utilisateur. Les noms de fichiers, le code, les identifiants et les commandes restent en anglais/tels quels ; seule la communication (texte de réponse, résumés, questions) est en français.
 
+## Directive de Déploiement & Documentation
+
+**RÈGLE ABSOLUE** : Après chaque déploiement ou push git (`git push origin main`) exécuté avec succès et sans aucune erreur, l'assistant AI DOIT **systématiquement mettre à jour le fichier `CLAUDE.md`** avec le résumé des réalisations techniques, migrations SQL et nouveautés avant de clôturer son intervention.
+
 ## Project Overview
 
 **Nopalou** — a Senegalese price comparison platform covering products, real estate (immo), and telecom offers. The project has two frontends:
