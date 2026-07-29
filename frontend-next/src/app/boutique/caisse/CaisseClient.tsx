@@ -61,7 +61,129 @@ interface TicketEnAttente {
   panier: LignePanier[]
 }
 
-export default function CaisseClient() {
+export default function CaisseClient({ planActif }: { planActif?: string | null }) {
+  if (planActif !== 'pro' && planActif !== 'business') {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#f8fafc',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 16px',
+        fontFamily: 'system-ui, -apple-system, sans-serif'
+      }}>
+        <div style={{
+          maxWidth: 580,
+          width: '100%',
+          background: '#ffffff',
+          borderRadius: 24,
+          padding: '40px 32px',
+          boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.1)',
+          border: '1px solid #e2e8f0',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            background: '#fff7ed',
+            border: '2px solid #ffedd5',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#c75b00',
+            marginBottom: 20
+          }}>
+            <Lock size={36} />
+          </div>
+
+          <div style={{
+            display: 'inline-block',
+            background: '#fff7ed',
+            color: '#c75b00',
+            fontWeight: 700,
+            fontSize: 12,
+            padding: '4px 12px',
+            borderRadius: 20,
+            marginBottom: 12,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em'
+          }}>
+            🔒 Fonctionnalité Réservée aux Abonnés
+          </div>
+
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', margin: '0 0 12px' }}>
+            Caisse Enregistreuse POS Verrouillée
+          </h1>
+
+          <p style={{ fontSize: 15, color: '#64748b', lineHeight: 1.6, margin: '0 0 28px' }}>
+            L&apos;accès à la caisse enregistreuse et au point de vente physique est réservé aux boutiques disposant d&apos;un abonnement <strong>Pro</strong> ou <strong>Business</strong> actif.
+          </p>
+
+          <div style={{
+            background: '#f8fafc',
+            borderRadius: 16,
+            padding: 20,
+            textAlign: 'left',
+            marginBottom: 32,
+            border: '1px solid #f1f5f9'
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Fonctionnalités débloquées avec l&apos;abonnement :
+            </div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14, color: '#475569' }}>
+              <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ color: '#16a34a', fontWeight: 800 }}>✓</span> Encaissement rapide Espèces, Wave, Orange Money &amp; Carte
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ color: '#16a34a', fontWeight: 800 }}>✓</span> Impression de tickets de caisse &amp; reçus thermiques
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ color: '#16a34a', fontWeight: 800 }}>✓</span> Ouvertures, clôtures Z et gestion des écarts de caisse
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ color: '#16a34a', fontWeight: 800 }}>✓</span> Gestion multi-caissiers avec codes PIN sécurisés
+              </li>
+            </ul>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <Link
+              href="/boutique/abonnement"
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '14px 20px',
+                borderRadius: 12,
+                background: 'linear-gradient(135deg, #c75b00 0%, #ea580c 100%)',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: 15,
+                textDecoration: 'none',
+                boxShadow: '0 4px 12px rgba(199, 91, 0, 0.25)'
+              }}
+            >
+              Passer à la Boutique Pro (15 000 FCFA/mois)
+            </Link>
+            <Link
+              href="/boutique"
+              style={{
+                display: 'block',
+                color: '#64748b',
+                fontSize: 14,
+                fontWeight: 600,
+                textDecoration: 'none',
+                padding: '8px'
+              }}
+            >
+              ← Retour au tableau de bord boutique
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
   // ── Charte Graphique Nopalou Thème Lumineux ─────────────────────────────────
 
   // ── État Boutiques du Marchand & Synchronisation Catalogue ───────────────────

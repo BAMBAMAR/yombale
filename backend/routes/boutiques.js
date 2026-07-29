@@ -1558,6 +1558,19 @@ router.get('/:id/pos-sessions/active', tokenOptional, async (req, res) => {
   }
 });
 
+// Helper pour vérifier si la boutique a un abonnement Pro/Business actif
+async function verifierAbonnementCaisse(boutiqueId) {
+  const { rows } = await pool.query(
+    `SELECT a.plan
+     FROM abonnements a
+     JOIN boutiques b ON b.utilisateur_id = a.utilisateur_id
+     WHERE b.id = $1 AND a.statut = 'actif' AND a.fin > NOW()
+     LIMIT 1`,
+    [boutiqueId]
+  );
+  return rows[0]?.plan || null;
+}
+
 // POST /api/boutiques/:id/pos-sessions/ouvrir
 router.post('/:id/pos-sessions/ouvrir', tokenOptional, async (req, res) => {
   try {
@@ -1567,6 +1580,11 @@ router.post('/:id/pos-sessions/ouvrir', tokenOptional, async (req, res) => {
     const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
     const boutiqueId = bRes.rows[0].id;
+
+    const plan = await verifierAbonnementCaisse(boutiqueId);
+    if (!plan) {
+      return res.status(403).json({ error: 'Un abonnement Pro ou Business actif est requis pour ouvrir la caisse POS.' });
+    }
 
     const r = await pool.query(
       `INSERT INTO boutique_pos_sessions (boutique_id, caissier_id, caissier_nom, fond_caisse_initial, date_ouverture, statut)

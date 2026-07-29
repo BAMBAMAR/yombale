@@ -70,6 +70,7 @@ export const PALIERS_BOUTIQUE: PalierBoutique[] = [
       'Placement prioritaire dans /boutiques',
       'Badge "Vendeur Pro" sur toutes vos annonces',
       'Catalogue produits avec photos et prix',
+      'Accès à la Caisse Enregistreuse POS (Vente magasin)',
       '5 annonces classées incluses/mois',
       'Tableau de bord analytics (vues, clics)',
       'Statistiques des prix concurrents',
@@ -81,6 +82,7 @@ export const PALIERS_BOUTIQUE: PalierBoutique[] = [
     couleur: '#1e3a5f',
     avantages: [
       'Tout ce qui est inclus dans Pro',
+      'Accès Caisse POS multi-caissiers & clôtures Z',
       'URL dédiée /boutiques/[votre-nom]',
       '15 annonces classées incluses/mois',
       'Bannière dans 1 page catégorie',
