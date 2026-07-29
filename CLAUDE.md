@@ -134,6 +134,32 @@ Aucun chantier n'est actuellement identifié comme prioritaire — le dernier ch
 
 ---
 
+## État du projet (29 juillet 2026 — Refonte Boutiques, Abonnements, Panier Mobile & bloc SEO)
+**Statut :** *Mergé et pushé sur main*
+
+Déclencheur : Demandes de l'utilisateur concernant la visibilité des abonnements (3, 6 et 12 mois), la taille et la réactivité du panier sur mobile, l'élargissement de l'affichage des boutiques, la dynamisation des notes et filtres, la refonte du bloc SEO homepage et la modernisation des onglets de boutique.
+
+**1. Abonnements Multi-Durées (3, 6, 12 Mois) & Paiement :**
+- **Correctif d'affichage** : Rétablissement de la visibilité des formules d'abonnements 3, 6 et 12 mois avec application automatique des taux de réduction (10% pour 3M, 15% pour 6M, 25% pour 12M).
+- **Intégration Wave / Orange Money** : Sécurisation de la création des sessions de paiement, de la facturation et du renouvellement automatique des droits en base de données.
+
+**2. Optimisation Ergonomique du Panier Mobile (Bottom Sheet) :**
+- **Refonte mobile** : Remplacement du panneau latéral mobile par une **Bottom Sheet rétractable (style Apple Pay / Shopify Mobile)**. Le panier s'ouvre proprement sur la partie inférieure de l'écran sans masquer toute la page et permet une fermeture facile par glissement/clic extérieur.
+
+**3. Dynamisation & Élargissement des Boutiques (`/boutiques`) :**
+- **Élargissement de la mise en page** : Remplacement de la contrainte de largeur étroite (`900px`) par un conteneur aéré à **`1350px - 1440px`**.
+- **Calcul dynamique des notes** : Remplacement de la note fixe par un calcul PostgreSQL en temps réel via une sous-requête `LATERAL JOIN` sur `boutique_avis` (`AVG(note)` et `COUNT(*)`).
+- **Filtres par Villes et Catégories réelles** : Les filtres de l'annuaire se construisent dynamiquement (`SELECT DISTINCT`) selon les boutiques actives enregistrées en base de données.
+
+**4. Refonte du Bloc SEO & Comparateur Homepage :**
+- **Design Premium** : Modernisation complète de `.seo-card` dans `globals.css` avec une typographie `Archivo` épurée, une ligne dégradée supérieure, un fond blanc relief avec ombre portée douce et des puces de catégories interactives animées au survol.
+
+**5. Onglet "À propos & Contact" & Navigation Segmentée (Style Shopify Pro / Amazon) :**
+- **Enrichissement de l'onglet Infos** : Affichage dynamique des réseaux sociaux (Instagram, Facebook, Site Web), des cartes de contact avec boutons d'actions directes (`Appeler`, `Discuter sur WhatsApp Pro`) et surlignage du jour actuel dans les horaires.
+- **Barre d'onglets segmentée** : Suppression des symboles parasites (ℹ, accents bruts) et refonte en un contrôle segmenté par capsules (`Catalogue produits`, `Annonces`, `Infos & Contact`) avec compteurs d'articles intégrés.
+
+---
+
 ## État du projet (24 juillet 2026 — Correction Espace Boutique & Importation par Lot)
 **Statut :** *En attente de push sur main*
 
@@ -829,7 +855,7 @@ Aller sur `/admin/whatsapp` — la checklist indique en temps réel ce qui est c
 **Colonne sur `boutiques`** : `apporteur_id UUID` (FK `utilisateurs.id`, ON DELETE SET NULL).
 **Colonne sur `abonnements`** : index unique partiel sur `commande_ref` (ajouté 4 juillet 2026 — corrige un bug de double-commission sur replay webhook Wave/Orange ; `ON CONFLICT (commande_ref) DO NOTHING` s'appuie dessus).
 
-- **Publication Produit en Annonce & Fix POS** (ajout� 25 juillet 2026) : Ajout du endpoint POST /api/boutiques/:id/produits/:prodId/publier-annonce pour basculer un produit en annonce classifi�e avec gestion du quota gratuit. Ajout du bouton '?? Annonce' dans BoutiqueClient.tsx. Correction de l'URL NEXT_PUBLIC_BACKEND_URL de 127.0.0.1 vers localhost dans .env.local pour �viter le blocage SameSite=Lax du cookie 
-opalou_session lors des appels fetch c�t� client (interface Caisse/POS).
+- **Publication Produit en Annonce & Fix POS** (ajout 25 juillet 2026) : Ajout du endpoint POST /api/boutiques/:id/produits/:prodId/publier-annonce pour basculer un produit en annonce classifie avec gestion du quota gratuit. Ajout du bouton '?? Annonce' dans BoutiqueClient.tsx. Correction de l'URL NEXT_PUBLIC_BACKEND_URL de 127.0.0.1 vers localhost dans .env.local pour viter le blocage SameSite=Lax du cookie 
+opalou_session lors des appels fetch ct client (interface Caisse/POS).
 
 - **Priorisation Accueil** (ajouté 25 juillet 2026) : Modification de l'API /api/produits pour afficher par défaut sur la page d'accueil en premier les produits des boutiques, puis les meilleurs produits scrapés (≥ 2 offres et prix > 20000 FCFA), et enfin le reste. Les cartes de produits boutiques pointent vers /boutiques/[slug]/produits/[id].
