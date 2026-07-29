@@ -1265,38 +1265,41 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+      <div className="bq-catalogue-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
           {produits.length} produit{produits.length !== 1 ? 's' : ''} / {quota} max
         </p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button
             onClick={() => setShowBatchModal(true)}
+            className="bq-catalogue-btn"
             style={{
               background: '#059669', color: '#fff', border: 'none', borderRadius: 8,
-              padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
               display: 'inline-flex', alignItems: 'center', gap: 4,
             }}
           >
-            📦 Ajout par Batch (Catalogue)
+            📦 Batch
           </button>
           <button
             onClick={() => setMode({ creating: 'rapide' })}
+            className="bq-catalogue-btn"
             style={{
               background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8,
-              padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
             }}
           >
-            ⚡ Ajout rapide
+            ⚡ Rapide
           </button>
           <button
             onClick={() => setMode({ creating: 'detaille' })}
+            className="bq-catalogue-btn"
             style={{
               background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8,
-              padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
             }}
           >
-            Ajout détaillé
+            + Détaillé
           </button>
         </div>
       </div>

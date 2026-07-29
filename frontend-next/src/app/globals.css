@@ -8756,16 +8756,19 @@ button:focus-visible,
   .bq-manage-layout {
     flex-direction: column;
     border-radius: 12px;
+    overflow: visible; /* Permettre aux dropdowns de dépasser */
   }
 
   .bq-sidebar {
     width: 100%;
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
+    position: static; /* Annuler sticky sur mobile */
+    max-height: none;
   }
 
   .bq-sidebar-header {
-    padding: 14px 14px 10px;
+    padding: 12px 14px 10px;
   }
 
   .bq-nav {
@@ -8776,7 +8779,9 @@ button:focus-visible,
     padding: 8px 10px;
     flex: none;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  .bq-nav::-webkit-scrollbar { display: none; }
 
   .bq-nav-item {
     flex-shrink: 0;
@@ -8788,6 +8793,7 @@ button:focus-visible,
     border-bottom: 3px solid transparent;
     font-size: 11px;
     text-align: center;
+    white-space: nowrap;
   }
 
   .bq-nav-item.active {
@@ -8799,8 +8805,19 @@ button:focus-visible,
     margin-left: 4px;
   }
 
+  /* ── bq-main : padding réduit sur mobile ── */
   .bq-main {
-    padding: 18px 16px;
+    padding: 14px 12px;
+    overflow-x: hidden;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Forcer tous les enfants directs de bq-main à ne pas dépasser */
+  .bq-main > * {
+    max-width: 100%;
+    min-width: 0;
   }
 
   .bq-form-grid-2 {
@@ -8808,14 +8825,75 @@ button:focus-visible,
   }
 
   .bq-card-body {
-    padding: 16px 16px;
+    padding: 14px 12px;
   }
 
   .bq-produit-row {
     flex-wrap: wrap;
-    padding: 10px 12px;
+    padding: 10px 10px;
+    gap: 8px;
+  }
+
+  /* ── Boutons d'action du catalogue (Batch, Rapide, Détaillé) ── */
+  .bq-main [style*="justifyContent: 'space-between'"],
+  .bq-main [style*="justify-content: space-between"] {
+    flex-wrap: wrap !important;
   }
 }
+
+/* Extra petits écrans < 400px */
+@media (max-width: 400px) {
+  .bq-main {
+    padding: 10px 8px;
+  }
+
+  .bq-nav-item {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+}
+
+/* ── Boutons catalogue produits ── */
+.bq-catalogue-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bq-catalogue-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Sur mobile : chaque bouton prend toute la largeur disponible */
+@media (max-width: 480px) {
+  .bq-catalogue-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bq-catalogue-actions > div {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 6px !important;
+  }
+
+  .bq-catalogue-btn {
+    text-align: center;
+    justify-content: center;
+    font-size: 11px !important;
+    padding: 7px 4px !important;
+  }
+
+  /* Actions produit (Modifier, Dupliquer, etc.) */
+  .produit-actions {
+    width: 100%;
+    justify-content: flex-start !important;
+  }
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    Nopalou — Audit & Optimisations Mobile
