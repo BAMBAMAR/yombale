@@ -67,6 +67,7 @@ export async function activerPlanTest(
     const data = await res.json()
     if (!res.ok) return { error: data.error ?? `Erreur ${res.status}` }
     revalidatePath('/admin/abonnements')
+    revalidatePath('/admin/boutiques')
     return { success: true, info: `Plan ${plan.toUpperCase()} activé pour ${email} (${jours} jours)` }
   } catch {
     return { error: 'Erreur de connexion au backend' }

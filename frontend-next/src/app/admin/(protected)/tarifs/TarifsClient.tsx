@@ -13,6 +13,9 @@ interface Settings {
   plan_business_prix: string
   plan_pro_label: string
   plan_business_label: string
+  reduc_3_mois: string
+  reduc_6_mois: string
+  reduc_12_mois: string
   commission_business: string
   paiement_wave: string
   paiement_orange: string
@@ -33,10 +36,13 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
       prix_sponsoring: '5000',
       prix_boost: '500',
       boost_duree_jours: '7',
-      plan_pro_prix: '15000',
-      plan_business_prix: '35000',
+      plan_pro_prix: '5000',
+      plan_business_prix: '10000',
       plan_pro_label: 'Boutique Pro',
       plan_business_label: 'Boutique Business',
+      reduc_3_mois: '10',
+      reduc_6_mois: '15',
+      reduc_12_mois: '25',
       commission_business: '2.0',
       paiement_wave: 'true',
       paiement_orange: 'true',
@@ -137,10 +143,16 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
 
       {card('📦 Plans d\'abonnement boutiques', <>
         {field('plan_pro_label', 'Nom plan Pro', 'text')}
-        {field('plan_pro_prix', 'Prix plan Pro', 'number', 'FCFA/mois')}
+        {field('plan_pro_prix', 'Prix plan Pro (mensuel)', 'number', 'FCFA/mois')}
         {field('plan_business_label', 'Nom plan Business', 'text')}
-        {field('plan_business_prix', 'Prix plan Business', 'number', 'FCFA/mois')}
+        {field('plan_business_prix', 'Prix plan Business (mensuel)', 'number', 'FCFA/mois')}
         {field('commission_business', 'Commission plan Business', 'number', '%')}
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px dashed #e5e7eb' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 12 }}>🏷️ Réductions multi-durées engagées :</div>
+          {field('reduc_3_mois', 'Réduction engagement 3 Mois', 'number', '%')}
+          {field('reduc_6_mois', 'Réduction engagement 6 Mois', 'number', '%')}
+          {field('reduc_12_mois', 'Réduction engagement 12 Mois (1 an)', 'number', '%')}
+        </div>
       </>)}
 
       {card('💳 Méthodes de paiement', <>

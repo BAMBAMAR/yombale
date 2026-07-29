@@ -33,6 +33,7 @@ router.get('/public', async (req, res) => {
   try {
     const keys = ['prix_annonce','prix_sponsoring','prix_boost','boost_duree_jours',
                   'plan_pro_prix','plan_business_prix','plan_pro_label','plan_business_label',
+                  'reduc_3_mois','reduc_6_mois','reduc_12_mois',
                   'promo_active','promo_reduction',
                   'paiement_wave','paiement_orange','paiement_manuel_actif',
                   'paiement_manuel_numero_wave','paiement_manuel_numero_om',

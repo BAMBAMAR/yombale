@@ -1,7 +1,8 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { modererBoutique, activerSponsoringBoutique } from '@/app/actions/admin'
+import { activerPlanTest } from '../abonnements/actions'
 
 interface Boutique {
   id: string
@@ -32,7 +33,185 @@ function isSponsorActif(b: Boutique) {
   return new Date(b.sponsor_jusqu_au) > new Date()
 }
 
-function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () => void }) {
+function ModalGestionMarchand({ boutique, onClose, onRefresh }: { boutique: Boutique; onClose: () => void; onRefresh: () => void }) {
+  const [pending, startTransition] = useTransition()
+  const [planSelect, setPlanSelect] = useState<'pro' | 'business'>(boutique.plan_actif || 'pro')
+  const [joursSelect, setJoursSelect] = useState<number>(30)
+  const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const sponsorActif = isSponsorActif(boutique)
+
+  async function handleActiverPlan() {
+    if (!boutique.proprietaire_email) {
+      setMsg({ type: 'err', text: 'Email propriétaire manquant' })
+      return
+    }
+    setMsg(null)
+    startTransition(async () => {
+      const fd = new FormData()
+      fd.append('email', boutique.proprietaire_email!)
+      fd.append('plan', planSelect)
+      fd.append('jours', String(joursSelect))
+
+      const res = await activerPlanTest({}, fd)
+      if (res.error) {
+        setMsg({ type: 'err', text: res.error })
+      } else {
+        setMsg({ type: 'ok', text: res.info || 'Plan activé avec succès !' })
+        setTimeout(() => {
+          onRefresh()
+          onClose()
+        }, 1200)
+      }
+    })
+  }
+
+  function handleToggleSponsor() {
+    startTransition(async () => {
+      await activerSponsoringBoutique(boutique.id, !sponsorActif)
+      onRefresh()
+      onClose()
+    })
+  }
+
+  function handleToggleActif() {
+    startTransition(async () => {
+      await modererBoutique(boutique.id, !boutique.actif)
+      onRefresh()
+      onClose()
+    })
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(15, 23, 42, 0.65)',
+      backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+    }}>
+      <div style={{
+        background: '#fff', borderRadius: 20, width: '100%', maxWidth: 540,
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden',
+        border: '1px solid #e2e8f0', fontFamily: 'system-ui, sans-serif'
+      }}>
+        {/* Header Modal */}
+        <div style={{
+          background: boutique.plan_actif === 'business' ? '#1e3a5f' : boutique.plan_actif === 'pro' ? '#C75B00' : '#0f172a',
+          color: '#fff', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 28 }}>🏪</span>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>{boutique.nom}</h3>
+              <p style={{ margin: 0, fontSize: 12, opacity: 0.85 }}>
+                👤 {boutique.proprietaire_nom || 'Propriétaire'} ({boutique.proprietaire_email || 'sans email'})
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer' }}>✕</button>
+        </div>
+
+        <div style={{ padding: 24, maxHeight: '80vh', overflowY: 'auto' }}>
+          {msg && (
+            <div style={{
+              padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: 13, fontWeight: 600,
+              background: msg.type === 'ok' ? '#dcfce7' : '#fee2e2',
+              color: msg.type === 'ok' ? '#166534' : '#991b1b'
+            }}>
+              {msg.text}
+            </div>
+          )}
+
+          {/* Section Plan & Attribution */}
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 18, marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
+              ⭐ Activation / Changement d&apos;Abonnement
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Formule :</label>
+                <select
+                  value={planSelect}
+                  onChange={e => setPlanSelect(e.target.value as 'pro' | 'business')}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 600 }}
+                >
+                  <option value="pro">🟠 Pro (5 000 FCFA/mois)</option>
+                  <option value="business">🔵 Business (10 000 FCFA/mois)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Durée engagée :</label>
+                <select
+                  value={joursSelect}
+                  onChange={e => setJoursSelect(Number(e.target.value))}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 600 }}
+                >
+                  <option value={30}>1 Mois (30j)</option>
+                  <option value={90}>3 Mois (90j — 10% reduc)</option>
+                  <option value={180}>6 Mois (180j — 15% reduc)</option>
+                  <option value={365}>12 Mois (365j — 25% reduc)</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              onClick={handleActiverPlan}
+              disabled={pending}
+              style={{
+                width: '100%', padding: '10px 0', borderRadius: 10, border: 'none',
+                background: planSelect === 'business' ? '#1e3a5f' : '#C75B00',
+                color: '#fff', fontWeight: 700, fontSize: 14, cursor: pending ? 'wait' : 'pointer'
+              }}
+            >
+              {pending ? 'Application…' : `Activer le Plan ${planSelect.toUpperCase()} (${joursSelect}j)`}
+            </button>
+          </div>
+
+          {/* Fonctionnalités associées */}
+          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 16, marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: '#475569', marginBottom: 8 }}>
+              💡 Fonctionnalités débloquées avec {planSelect.toUpperCase()} :
+            </div>
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#64748b', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <li>Badge Vendeur {planSelect === 'business' ? 'Business' : 'Pro'} & placement prioritaire</li>
+              <li>Accès complet à la Caisse Enregistreuse POS (Magasin)</li>
+              <li>{planSelect === 'business' ? '15 annonces offertes/mois + URL dédiée + Commission 2%' : '5 annonces offertes/mois'}</li>
+            </ul>
+          </div>
+
+          {/* Actions Modération & Sponsoring */}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={handleToggleSponsor}
+              disabled={pending}
+              style={{
+                flex: 1, padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 700,
+                border: sponsorActif ? '1px solid #fcd34d' : 'none',
+                background: sponsorActif ? '#fffbeb' : '#D97706',
+                color: sponsorActif ? '#92400e' : '#fff', cursor: 'pointer'
+              }}
+            >
+              {sponsorActif ? '✕ Retirer Sponsor' : '⭐ Sponsoriser 30j'}
+            </button>
+
+            <button
+              onClick={handleToggleActif}
+              disabled={pending}
+              style={{
+                flex: 1, padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 700, border: 'none',
+                background: boutique.actif ? '#fee2e2' : '#dcfce7',
+                color: boutique.actif ? '#991b1b' : '#166534', cursor: 'pointer'
+              }}
+            >
+              {boutique.actif ? '🔴 Désactiver Boutique' : '🟢 Réactiver Boutique'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BoutiqueRow({ boutique, onAction, onOpenGestion }: { boutique: Boutique; onAction: () => void; onOpenGestion: (b: Boutique) => void }) {
   const [pending, startTransition] = useTransition()
   const sponsorActif = isSponsorActif(boutique)
 
@@ -119,19 +298,15 @@ function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () 
       </div>
 
       {/* Actions */}
-      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 130 }}>
+      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 140 }}>
         <button
-          onClick={handleToggleSponsor}
-          disabled={pending}
-          className="admin-btn"
+          onClick={() => onOpenGestion(boutique)}
           style={{
-            background: sponsorActif ? '#fffbeb' : '#D97706',
-            color: sponsorActif ? '#92400e' : '#fff',
-            border: sponsorActif ? '1px solid #fcd34d' : 'none',
-            fontSize: 11, padding: '5px 10px',
+            background: '#1e3a5f', color: '#fff', border: 'none',
+            borderRadius: 6, fontSize: 11, padding: '6px 10px', fontWeight: 700, cursor: 'pointer'
           }}
         >
-          {pending ? '…' : sponsorActif ? '✕ Retirer sponsor' : '⭐ Sponsoriser 30j'}
+          ⚙️ Gérer le marchand
         </button>
         <div style={{ display: 'flex', gap: 6 }}>
           <a
@@ -158,6 +333,7 @@ function BoutiqueRow({ boutique, onAction }: { boutique: Boutique; onAction: () 
 
 export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutique[] }) {
   const [, startTransition] = useTransition()
+  const [selectedBoutique, setSelectedBoutique] = useState<Boutique | null>(null)
 
   function refresh() {
     startTransition(() => { window.location.reload() })
@@ -184,7 +360,7 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
           </p>
           <div className="admin-annonces-list">
             {abonnees.map(b => (
-              <BoutiqueRow key={b.id} boutique={b} onAction={refresh} />
+              <BoutiqueRow key={b.id} boutique={b} onAction={refresh} onOpenGestion={setSelectedBoutique} />
             ))}
           </div>
         </section>
@@ -198,7 +374,7 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
           </h2>
           <div className="admin-annonces-list">
             {sponsorisees.map(b => (
-              <BoutiqueRow key={b.id} boutique={b} onAction={refresh} />
+              <BoutiqueRow key={b.id} boutique={b} onAction={refresh} onOpenGestion={setSelectedBoutique} />
             ))}
           </div>
         </section>
@@ -211,10 +387,18 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
         </h2>
         <div className="admin-annonces-list">
           {autres.map(b => (
-            <BoutiqueRow key={b.id} boutique={b} onAction={refresh} />
+            <BoutiqueRow key={b.id} boutique={b} onAction={refresh} onOpenGestion={setSelectedBoutique} />
           ))}
         </div>
       </section>
+
+      {selectedBoutique && (
+        <ModalGestionMarchand
+          boutique={selectedBoutique}
+          onClose={() => setSelectedBoutique(null)}
+          onRefresh={refresh}
+        />
+      )}
     </div>
   )
 }
