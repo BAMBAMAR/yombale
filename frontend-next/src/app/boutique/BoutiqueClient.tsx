@@ -1445,7 +1445,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                 </div>
               </div>
               {/* Actions */}
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+              <div className="produit-actions" style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => setMode({ editing: p })}
                   style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}

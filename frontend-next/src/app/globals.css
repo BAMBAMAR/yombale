@@ -9348,5 +9348,135 @@ span.ripple {
   }
 }
 
+/* ════════════════════════════════════════════════════════
+   RESPONSIVE MOBILE — Toutes les pages modifiées
+   Breakpoints : 768px (tablette) et 480px (mobile)
+   ════════════════════════════════════════════════════════ */
+
+/* ── Caisse POS : En-tête ── */
+.caisse-header {
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+@media (max-width: 768px) {
+  /* Header POS : masquer le label texte "Nopalou" et adapter */
+  .caisse-header {
+    padding: 8px 12px !important;
+    justify-content: space-between !important;
+    overflow: visible !important;
+    position: relative;
+  }
+
+  /* Caisse layout : catalogue en premier, ticket en dessous */
+  .caisse-main-layout {
+    grid-template-columns: 1fr !important;
+    overflow-y: auto;
+  }
+
+  /* Boutons POS : taille réduite */
+  .btn-premium {
+    font-size: 11px !important;
+    padding: 5px 8px !important;
+  }
+
+  /* Badges */
+  .badge-premium {
+    font-size: 10px !important;
+    padding: 3px 7px !important;
+  }
+
+  /* Page boutique (dashboard marchand) : tabs en scroll horizontal */
+  .boutique-tabs-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap !important;
+  }
+
+  /* Cartes produit : grille adaptative */
+  .produits-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Formulaire produit : max-width full */
+  .produit-form-wrapper {
+    max-width: 100% !important;
+    padding: 16px !important;
+  }
+
+  /* Modales : plein écran sur mobile */
+  .modal-overlay > div {
+    max-width: calc(100vw - 32px) !important;
+    max-height: 92vh !important;
+    overflow-y: auto;
+  }
+
+  /* Stats et chiffres : 2 colonnes */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Tableaux : scroll horizontal */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Input de recherche caisse */
+  .caisse-search-input {
+    font-size: 14px !important;
+  }
+
+  /* Ticket de caisse : full width */
+  .ticket-section {
+    border-left: none !important;
+    border-top: 1px solid #e2e8f0;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Très petit écran : réduire encore les paddings */
+  .caisse-header {
+    padding: 6px 10px !important;
+  }
+
+  /* Produits : 1 seule colonne */
+  .produits-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stats : 1 colonne */
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Boutons d'action produit : wrap */
+  .produit-actions {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+
+  /* Filtres catégorie caisse : scroll horizontal */
+  .caisse-categories-bar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Boutons de paiement : 2x2 */
+  .paiement-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Formulaires modales : champs full width */
+  .dup-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
 
 

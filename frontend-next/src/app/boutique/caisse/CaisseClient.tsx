@@ -993,8 +993,8 @@ export default function CaisseClient() {
         }
       `}</style>
 
-      {/* En-tête RE-DESIGNÉ & ULTRA-CLEAN NOPALOU POS */}
-      <header className="caisse-header" style={{
+      {/* En-tête MOBILE-FIRST NOPALOU POS */}
+      <header className="caisse-header no-print" style={{
         background: '#ffffff',
         borderBottom: '1px solid var(--border)',
         padding: '10px 20px',
@@ -1002,58 +1002,55 @@ export default function CaisseClient() {
         justifyContent: 'space-between',
         alignItems: 'center',
         boxShadow: 'var(--shadow)',
-        whiteSpace: 'nowrap',
         overflow: 'visible',
+        flexWrap: 'wrap',
+        gap: 8,
       }}>
         {/* Côté Gauche : Logo Brand + Boutique Selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'} className="btn-premium btn-premium-secondary" style={{ padding: '6px 12px', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <ArrowLeft size={14} /> Menu Boutique
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Link href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'} className="btn-premium btn-premium-secondary" style={{ padding: '6px 10px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <ArrowLeft size={13} /> Boutique
           </Link>
 
-          <div style={{ height: 20, width: 1, background: 'var(--border)' }} />
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ background: 'var(--accent)', color: '#fff', padding: '5px 10px', borderRadius: 8, fontWeight: 800, fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <Store size={14} /> POS
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ background: 'var(--accent)', color: '#fff', padding: '4px 8px', borderRadius: 7, fontWeight: 800, fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+              <Store size={12} /> POS
             </div>
-            <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--navy)' }}>Nopalou</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy)' }}>Nopalou</span>
           </div>
 
           {/* Sélecteur de Boutique Marchand */}
           {boutiques.length > 0 && (
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <select
-                value={boutiqueActiveId}
-                onChange={e => changerBoutiqueActive(e.target.value)}
-                style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 13, cursor: 'pointer', outline: 'none' }}
-              >
-                {boutiques.map(b => (
-                  <option key={b.id} value={b.id}>
-                    🏬 {b.nom}{!b.actif ? ' (Désactivée)' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={boutiqueActiveId}
+              onChange={e => changerBoutiqueActive(e.target.value)}
+              style={{ padding: '5px 8px', borderRadius: 7, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 12, cursor: 'pointer', outline: 'none', maxWidth: 160 }}
+            >
+              {boutiques.map(b => (
+                <option key={b.id} value={b.id}>
+                  🏬 {b.nom}{!b.actif ? ' (Off)' : ''}
+                </option>
+              ))}
+            </select>
           )}
         </div>
 
         {/* Côté Droit : Espace Caissier + Outils Dropdown + Session Action */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {/* Menu Dropdown Outils */}
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setMenuOutilsOuvert(!menuOutilsOuvert)}
               className="btn-premium btn-premium-secondary"
-              style={{ padding: '6px 12px', fontSize: 13, border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{ padding: '5px 10px', fontSize: 12, border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: 4 }}
             >
               🔧 Outils ▾
             </button>
             {menuOutilsOuvert && (
               <div style={{
                 position: 'absolute', right: 0, top: 'calc(100% + 6px)', background: '#ffffff',
-                border: '1px solid #e2e8f0', borderRadius: 12, padding: 8, zIndex: 1000,
-                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+                border: '1px solid #e2e8f0', borderRadius: 12, padding: 8, zIndex: 9999,
+                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.15), 0 4px 6px -2px rgba(0,0,0,0.08)',
                 display: 'flex', flexDirection: 'column', gap: 4, minWidth: 170
               }}>
                 <button
@@ -1090,36 +1087,35 @@ export default function CaisseClient() {
 
           {/* Espace Caissier Card */}
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
+            display: 'flex', alignItems: 'center', gap: 8,
             background: '#f8fafc', border: '1px solid #e2e8f0',
-            borderRadius: 12, padding: '4px 10px 4px 12px', height: 36
+            borderRadius: 10, padding: '4px 8px 4px 10px'
           }}>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b' }}>
-                  {roleActif === 'superviseur' ? '👑 Gérant' : '👤 Caissier'} :
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ fontSize: 10, fontWeight: 800, color: '#64748b' }}>
+                  {roleActif === 'superviseur' ? '👑' : '👤'}
                 </span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>{caissierNom}</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#0f172a', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{caissierNom}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: session ? '#16a34a' : '#ef4444', display: 'inline-block' }} />
-                <span style={{ fontSize: 10, fontWeight: 700, color: session ? '#16a34a' : '#ef4444' }}>
-                  {session ? `Session active` : 'Caisse fermée'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 1 }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: session ? '#16a34a' : '#ef4444', display: 'inline-block' }} />
+                <span style={{ fontSize: 9, fontWeight: 700, color: session ? '#16a34a' : '#ef4444' }}>
+                  {session ? 'Active' : 'Fermée'}
                 </span>
               </div>
             </div>
             
             <button
               onClick={() => setVerrouille(true)}
-              title="Verrouiller la caisse"
+              title="Verrouiller"
               style={{
                 background: '#e2e8f0', color: '#475569', border: 'none',
-                borderRadius: 8, width: 26, height: 26, display: 'flex',
+                borderRadius: 7, width: 24, height: 24, display: 'flex',
                 alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                transition: 'all 0.15s ease'
               }}
             >
-              <Lock size={12} />
+              <Lock size={11} />
             </button>
           </div>
 
@@ -1128,17 +1124,17 @@ export default function CaisseClient() {
             <button
               onClick={() => setModalClotureZ(true)}
               className="btn-premium btn-premium-danger"
-              style={{ padding: '6px 12px', fontSize: 12 }}
+              style={{ padding: '5px 10px', fontSize: 12 }}
             >
-              <Lock size={13} /> Clôture Z
+              <Lock size={12} /> Clôture Z
             </button>
           ) : (
             <button
               onClick={() => setModalSessionOuverture(true)}
               className="btn-premium btn-premium-success"
-              style={{ padding: '6px 12px', fontSize: 12 }}
+              style={{ padding: '5px 10px', fontSize: 12 }}
             >
-              <Unlock size={14} /> Ouvrir Session
+              <Unlock size={13} /> Session
             </button>
           )}
         </div>
@@ -1262,7 +1258,7 @@ export default function CaisseClient() {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
+            <div className="produits-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
               {produitsFiltres.map(p => {
                 // Déduire la quantité déjà placée dans le panier en direct
                 const qteAuPanier = panier.find(i => i.produit.id === p.id)?.quantite || 0
@@ -1305,7 +1301,7 @@ export default function CaisseClient() {
         </div>
 
         {/* Côté Droit : Ticket Panier & Encaissement POS */}
-        <div style={{ background: '#ffffff', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="ticket-section" style={{ background: '#ffffff', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>🛒 Ticket en cours</h2>
 
@@ -1386,7 +1382,7 @@ export default function CaisseClient() {
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+            <div className="paiement-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
               {[
                 { id: 'especes', label: '💵 Espèces' },
                 { id: 'wave', label: '🌊 Wave' },
