@@ -260,13 +260,37 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
     detailMixte?: { especes: number; autreMode: string; autreMontant: number }
   } | null>(null)
 
-  const [clientsCredits, setClientsCredits] = useState<{ id: string; nom: string; telephone: string; solde: number; plafond_max: number }[]>([
-    { id: 'cli-1', nom: 'Moustapha Ndiaye', telephone: '77 123 45 67', solde: 15000, plafond_max: 200000 },
-    { id: 'cli-2', nom: 'Fatou Diop', telephone: '78 987 65 43', solde: -5000, plafond_max: 150000 },
-  ])
+  // ── Carnet de Crédit & Dettes Clients Avancé ─────────────────────────────────
+  const [clientsCredits, setClientsCredits] = useState<{ id: string; nom: string; telephone: string; adresse?: string | null; solde: number; plafond_max: number; note_client?: string | null; created_at?: string }[]>([])
   const [modalCarnet, setModalCarnet] = useState<boolean>(false)
+  const [rechercheClientCarnet, setRechercheClientCarnet] = useState<string>('')
+  
+  // Nouveau client form
   const [nouveauClientNom, setNouveauClientNom] = useState<string>('')
   const [nouveauClientTel, setNouveauClientTel] = useState<string>('')
+  const [nouveauClientAdresse, setNouveauClientAdresse] = useState<string>('')
+  const [nouveauClientPlafond, setNouveauClientPlafond] = useState<string>('200000')
+  const [nouveauClientNote, setNouveauClientNote] = useState<string>('')
+  const [afficherFormNouveauClient, setAfficherFormNouveauClient] = useState<boolean>(false)
+
+  // Client sélectionné & historique détaillé
+  const [clientCarnetSelectionne, setClientCarnetSelectionne] = useState<any | null>(null)
+  const [historiqueClientSelectionne, setHistoriqueClientSelectionne] = useState<any[]>([])
+  const [loadingHistoriqueClient, setLoadingHistoriqueClient] = useState<boolean>(false)
+
+  // Transaction manuelle dans le carnet (Remboursement / Crédit direct)
+  const [modalTransCarnet, setModalTransCarnet] = useState<boolean>(false)
+  const [typeTransCarnet, setTypeTransCarnet] = useState<'remboursement' | 'vente_credit' | 'depot_avance'>('remboursement')
+  const [montantTransCarnet, setMontantTransCarnet] = useState<string>('')
+  const [modePaiementTransCarnet, setModePaiementTransCarnet] = useState<string>('especes')
+  const [noteTransCarnet, setNoteTransCarnet] = useState<string>('')
+  const [dateEcheanceTransCarnet, setDateEcheanceTransCarnet] = useState<string>('')
+  const [produitsTransCarnet, setProduitsTransCarnet] = useState<string>('')
+
+  // Saisie Crédit lors de l'encaissement POS
+  const [clientCreditIdPOS, setClientCreditIdPOS] = useState<string>('')
+  const [creditDateEcheancePOS, setCreditDateEcheancePOS] = useState<string>('')
+  const [creditNotePOS, setCreditNotePOS] = useState<string>('')
 
   // ── Historique des opérations & Incidents ────────────────────────────────────
   const [historiqueVentes, setHistoriqueVentes] = useState<VenteHistorique[]>([])
@@ -304,6 +328,7 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
           const bId = boutiqueActiveId || merchantBoutiques[0].id
           setBoutiqueActiveId(bId)
           await chargerProduitsBoutique(bId)
+          await chargerClientsCredits(bId)
         } else {
           setBoutiques([])
           setLoadingProduits(false)
@@ -315,6 +340,35 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
     }
     chargerBoutiquesEtProduits()
   }, [])
+
+  async function chargerClientsCredits(bId: string) {
+    if (!bId) return
+    try {
+      const res = await fetch(`/api/boutiques/${bId}/credits-clients`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.clients) setClientsCredits(data.clients)
+      }
+    } catch (e) {
+      console.error('Erreur chargement carnet credits:', e)
+    }
+  }
+
+  async function chargerHistoriqueClientSelectionne(clientId: string) {
+    if (!boutiqueActiveId || !clientId) return
+    try {
+      setLoadingHistoriqueClient(true)
+      const res = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientId}/historique`)
+      if (res.ok) {
+        const data = await res.json()
+        setHistoriqueClientSelectionne(data.historique || [])
+      }
+    } catch (e) {
+      console.error('Erreur chargement historique client:', e)
+    } finally {
+      setLoadingHistoriqueClient(false)
+    }
+  }
 
   async function chargerCaissiersEtSession(bId: string) {
     try {
@@ -748,6 +802,37 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
     }
 
     setHistoriqueVentes(prev => [nouvelleVenteHist, ...prev])
+
+    if (modePaiement === 'credit_client') {
+      if (!clientCreditIdPOS) {
+        alert('Veuillez sélectionner un client dans le carnet pour valider la vente à crédit.')
+        return
+      }
+      if (boutiqueActiveId) {
+        try {
+          const resCredit = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientCreditIdPOS}/transaction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'vente_credit',
+              montant: totalPanier,
+              produits: panier.map(i => ({ nom: i.produit.nom, quantite: i.quantite, prix: i.prixUnitaire })),
+              date_echeance: creditDateEcheancePOS || null,
+              note: creditNotePOS || 'Vente caisse POS à crédit',
+              mode_paiement: 'credit',
+            })
+          })
+          if (!resCredit.ok) {
+            const dataErr = await resCredit.json()
+            alert(dataErr.error || 'Erreur lors de l’enregistrement de la vente à crédit dans le carnet.')
+            return
+          }
+          await chargerClientsCredits(boutiqueActiveId)
+        } catch (e) {
+          console.error('Erreur enregistrement vente crédit carnet:', e)
+        }
+      }
+    }
 
     if (boutiqueActiveId) {
       try {
@@ -1557,7 +1642,7 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
               </div>
             )}
 
-            {/* Paiement Mixte Partagé */}
+            {/* Saisie Paiement Mixte Partagé */}
             {modePaiement === 'mixte' && totalPanier > 0 && (
               <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: '#c2410c' }}>🔀 Répartition Paiement Mixte</p>
@@ -1591,6 +1676,61 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
                   <span style={{ color: '#9a3412' }}>Reste en {secondModeMixte.toUpperCase()} :</span>
                   <span style={{ fontWeight: 900, color: '#0284c7' }}>{fcfa(resteAPayerMixte)}</span>
                 </div>
+              </div>
+            )}
+
+            {/* Saisie Vente à Crédit / Carnet Client */}
+            {modePaiement === 'credit_client' && totalPanier > 0 && (
+              <div style={{ background: '#fdf2f8', border: '1px solid #fbcfe8', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: '#9d174d' }}>📒 Client à débiter dans le carnet</span>
+                  <button
+                    type="button"
+                    onClick={() => { setModalCarnet(true); setAfficherFormNouveauClient(true); }}
+                    style={{ background: '#9d174d', color: '#fff', border: 'none', borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    + Nouveau Client
+                  </button>
+                </div>
+
+                <select
+                  value={clientCreditIdPOS}
+                  onChange={e => setClientCreditIdPOS(e.target.value)}
+                  style={{ width: '100%', padding: '8px', borderRadius: 8, border: '1px solid #f472b6', background: '#fff', fontSize: 13, fontWeight: 700, color: '#0f172a' }}
+                >
+                  <option value="">-- Choisir un client du carnet --</option>
+                  {clientsCredits.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.nom} ({c.telephone}) — Solde: {c.solde > 0 ? `Dette: ${fcfa(c.solde)}` : c.solde < 0 ? `Avance: ${fcfa(Math.abs(c.solde))}` : '0 FCFA'}
+                    </option>
+                  ))}
+                </select>
+
+                {clientCreditIdPOS && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: 10, fontWeight: 700, color: '#9d174d', display: 'block', marginBottom: 2 }}>Promesse / Échéance</label>
+                        <input
+                          type="date"
+                          value={creditDateEcheancePOS}
+                          onChange={e => setCreditDateEcheancePOS(e.target.value)}
+                          style={{ width: '100%', padding: '6px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: 10, fontWeight: 700, color: '#9d174d', display: 'block', marginBottom: 2 }}>Note / Justification</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Pris par son fils Papa Sow..."
+                          value={creditNotePOS}
+                          onChange={e => setCreditNotePOS(e.target.value)}
+                          style={{ width: '100%', padding: '6px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -2055,84 +2195,474 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
         </div>
       )}
 
-      {/* Modale Carnet de Crédits Clients */}
+      {/* Modale Carnet de Crédits Clients Avancé */}
       {modalCarnet && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 640, border: '1px solid #e2e8f0', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 800 }}>📒 Carnet de Crédits & Prêts Clients</h2>
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>Suivi des carnets de dette et avances des clients de quartier.</p>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 860, border: '1px solid #e2e8f0', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)' }}>
+            
+            {/* En-tête Carnet */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, borderBottom: '1px solid #f1f5f9', paddingBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fff7f0', border: '1px solid #ffedd5', color: '#C75B00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                  📒
+                </div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 19, color: '#0f172a', fontWeight: 900 }}>Carnet de Crédits & Dettes Clients</h2>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>Gestion complète des crédits de quartier, articles pris, remboursements et échéances.</p>
+                </div>
               </div>
-              <button onClick={() => setModalCarnet(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
+              <button onClick={() => { setModalCarnet(false); setClientCarnetSelectionne(null); }} style={{ background: '#f1f5f9', border: 'none', color: '#64748b', borderRadius: '50%', width: 32, height: 32, fontSize: 18, fontWeight: 700, cursor: 'pointer' }}>✕</button>
             </div>
 
-            {/* Ajouter un client */}
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 14, marginBottom: 16, display: 'flex', gap: 10, alignItems: 'center' }}>
+            {/* Statistiques Globales du Carnet */}
+            {(() => {
+              const detteTotale = clientsCredits.reduce((acc, c) => acc + (c.solde > 0 ? Number(c.solde) : 0), 0)
+              const avanceTotale = clientsCredits.reduce((acc, c) => acc + (c.solde < 0 ? Math.abs(Number(c.solde)) : 0), 0)
+
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 18 }}>
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: 12, borderRadius: 12 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: '#991b1b', textTransform: 'uppercase', letterSpacing: '.05em' }}>Total Dettes Clients</span>
+                    <p style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 900, color: '#dc2626' }}>{fcfa(detteTotale)}</p>
+                  </div>
+                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: 12, borderRadius: 12 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '.05em' }}>Total Avances Reçues</span>
+                    <p style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 900, color: '#16a34a' }}>{fcfa(avanceTotale)}</p>
+                  </div>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: 12, borderRadius: 12 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Clients du Carnet</span>
+                    <p style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 900, color: '#0f172a' }}>{clientsCredits.length} Clients</p>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* Barre de Recherche & Bouton Créer Client */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center' }}>
               <input
                 type="text"
-                placeholder="Nom du client (ex: Ousmane Sow)"
-                value={nouveauClientNom}
-                onChange={e => setNouveauClientNom(e.target.value)}
-                style={{ flex: 1, padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: 13 }}
-              />
-              <input
-                type="text"
-                placeholder="Téléphone (ex: 77 000 00 00)"
-                value={nouveauClientTel}
-                onChange={e => setNouveauClientTel(e.target.value)}
-                style={{ flex: 1, padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: 13 }}
+                placeholder="🔍 Rechercher un client par nom, téléphone ou quartier..."
+                value={rechercheClientCarnet}
+                onChange={e => setRechercheClientCarnet(e.target.value)}
+                style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, background: '#f8fafc', outline: 'none' }}
               />
               <button
-                onClick={() => {
-                  if (nouveauClientNom.trim() && nouveauClientTel.trim()) {
-                    setClientsCredits(prev => [
-                      ...prev,
-                      { id: `cli-${Date.now()}`, nom: nouveauClientNom.trim(), telephone: nouveauClientTel.trim(), solde: 0, plafond_max: 200000 }
-                    ])
-                    setNouveauClientNom('')
-                    setNouveauClientTel('')
-                  }
-                }}
-                style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                onClick={() => setAfficherFormNouveauClient(!afficherFormNouveauClient)}
+                style={{ background: afficherFormNouveauClient ? '#64748b' : '#C75B00', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
               >
-                + Ajouter Client
+                {afficherFormNouveauClient ? 'Fermer Formulaire' : '+ Nouveau Client'}
               </button>
             </div>
 
-            {/* Liste des clients & balances */}
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {clientsCredits.map(c => (
-                <div key={c.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Formulaire d'ajout de Client */}
+            {afficherFormNouveauClient && (
+              <div style={{ background: '#fff7f0', border: '1px solid #ffedd5', borderRadius: 14, padding: 16, marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#C75B00' }}>👤 Créer une nouvelle fiche client carnet</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                  <input
+                    type="text"
+                    placeholder="Nom complet *"
+                    value={nouveauClientNom}
+                    onChange={e => setNouveauClientNom(e.target.value)}
+                    style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Téléphone (ex: 77 000 00 00) *"
+                    value={nouveauClientTel}
+                    onChange={e => setNouveauClientTel(e.target.value)}
+                    style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Adresse / Quartier (ex: Medina Rue 10)"
+                    value={nouveauClientAdresse}
+                    onChange={e => setNouveauClientAdresse(e.target.value)}
+                    style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Plafond max (ex: 200000)"
+                    value={nouveauClientPlafond}
+                    onChange={e => setNouveauClientPlafond(e.target.value)}
+                    style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Note / Remarque (ex: Voisine d'en face, confiance 100%)"
+                  value={nouveauClientNote}
+                  onChange={e => setNouveauClientNote(e.target.value)}
+                  style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                />
+                <button
+                  onClick={async () => {
+                    if (!nouveauClientNom.trim() || !nouveauClientTel.trim()) {
+                      alert('Veuillez remplir au moins le nom et le téléphone.')
+                      return
+                    }
+                    if (boutiqueActiveId) {
+                      try {
+                        const res = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            nom: nouveauClientNom,
+                            telephone: nouveauClientTel,
+                            adresse: nouveauClientAdresse,
+                            plafond_max: nouveauClientPlafond,
+                            note_client: nouveauClientNote,
+                          })
+                        })
+                        if (res.ok) {
+                          await chargerClientsCredits(boutiqueActiveId)
+                          setNouveauClientNom('')
+                          setNouveauClientTel('')
+                          setNouveauClientAdresse('')
+                          setNouveauClientNote('')
+                          setAfficherFormNouveauClient(false)
+                        } else {
+                          const errData = await res.json()
+                          alert(errData.error || 'Erreur lors de la création du client.')
+                        }
+                      } catch (e) {
+                        console.error('Erreur ajout client credit:', e)
+                      }
+                    }
+                  }}
+                  style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontWeight: 800, fontSize: 13, cursor: 'pointer', alignSelf: 'flex-start' }}
+                >
+                  ✓ Enregistrer le Client
+                </button>
+              </div>
+            )}
+
+            {/* Vue Principale : Liste ou Fiche Client */}
+            {!clientCarnetSelectionne ? (
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {clientsCredits
+                  .filter(c => {
+                    if (!rechercheClientCarnet.trim()) return true
+                    const q = rechercheClientCarnet.toLowerCase()
+                    return (
+                      c.nom.toLowerCase().includes(q) ||
+                      c.telephone.includes(q) ||
+                      (c.adresse && c.adresse.toLowerCase().includes(q))
+                    )
+                  })
+                  .map(c => {
+                    const ratioDette = Math.min(100, Math.max(0, (Number(c.solde) / Number(c.plafond_max)) * 100))
+
+                    return (
+                      <div key={c.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <p style={{ margin: 0, fontWeight: 900, fontSize: 15, color: '#0f172a' }}>{c.nom}</p>
+                            {c.adresse && <span style={{ fontSize: 11, background: '#e2e8f0', color: '#475569', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>📍 {c.adresse}</span>}
+                          </div>
+                          <p style={{ margin: '4px 0 0', fontSize: 12, color: '#64748b' }}>
+                            📞 {c.telephone} • Plafond: {fcfa(c.plafond_max)}
+                          </p>
+                          {c.note_client && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94a3b8', fontStyle: 'italic' }}>Note: {c.note_client}</p>}
+
+                          {/* Barre de ratio de dette par rapport au plafond */}
+                          {c.solde > 0 && (
+                            <div style={{ marginTop: 6, width: 180, height: 5, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                              <div style={{ width: `${ratioDette}%`, height: '100%', background: ratioDette > 85 ? '#dc2626' : '#f59e0b', borderRadius: 3 }} />
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: 11, color: '#64748b', display: 'block', fontWeight: 600 }}>Solde du carnet</span>
+                            <span style={{ fontSize: 16, fontWeight: 900, color: c.solde > 0 ? '#dc2626' : c.solde < 0 ? '#16a34a' : '#64748b' }}>
+                              {c.solde > 0 ? `Dette: ${fcfa(c.solde)}` : c.solde < 0 ? `Avance: ${fcfa(Math.abs(c.solde))}` : '0 FCFA'}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button
+                              onClick={() => {
+                                setClientCarnetSelectionne(c)
+                                chargerHistoriqueClientSelectionne(c.id)
+                              }}
+                              style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                            >
+                              📜 Fiche & Historique
+                            </button>
+                            <button
+                              onClick={() => {
+                                setClientCarnetSelectionne(c)
+                                setTypeTransCarnet('remboursement')
+                                setMontantTransCarnet('')
+                                setNoteTransCarnet('')
+                                setModalTransCarnet(true)
+                              }}
+                              style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                            >
+                              💵 Rembourser
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+            ) : (
+              /* Fiche & Historique Détaillé du Client */
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* En-tête Fiche Client */}
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <div>
-                    <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: '#0f172a' }}>{c.nom}</p>
-                    <span style={{ fontSize: 12, color: '#64748b' }}>📞 {c.telephone} • Plafond: {fcfa(c.plafond_max)}</span>
+                    <button onClick={() => setClientCarnetSelectionne(null)} style={{ background: 'none', border: 'none', color: '#1e3a5f', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginBottom: 4 }}>
+                      ← Retour à la liste des clients
+                    </button>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>{clientCarnetSelectionne.nom}</h3>
+                    <p style={{ margin: '2px 0 0', fontSize: 13, color: '#64748b' }}>
+                      📞 {clientCarnetSelectionne.telephone} {clientCarnetSelectionne.adresse && `• 📍 ${clientCarnetSelectionne.adresse}`}
+                    </p>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: 11, color: '#64748b', display: 'block' }}>Solde Carnet</span>
-                      <span style={{ fontSize: 15, fontWeight: 900, color: c.solde > 0 ? '#dc2626' : c.solde < 0 ? '#16a34a' : '#64748b' }}>
-                        {c.solde > 0 ? `Dette: ${fcfa(c.solde)}` : c.solde < 0 ? `Avance: ${fcfa(Math.abs(c.solde))}` : '0 FCFA (Solder)'}
+                      <span style={{ fontSize: 11, color: '#64748b', display: 'block' }}>Solde Actuel</span>
+                      <span style={{ fontSize: 18, fontWeight: 900, color: clientCarnetSelectionne.solde > 0 ? '#dc2626' : clientCarnetSelectionne.solde < 0 ? '#16a34a' : '#64748b' }}>
+                        {clientCarnetSelectionne.solde > 0 ? `Dette: ${fcfa(clientCarnetSelectionne.solde)}` : clientCarnetSelectionne.solde < 0 ? `Avance: ${fcfa(Math.abs(clientCarnetSelectionne.solde))}` : '0 FCFA'}
                       </span>
                     </div>
 
                     <button
                       onClick={() => {
-                        const recu = prompt(`Montant du remboursement de dette pour ${c.nom} (FCFA) :`)
-                        const num = Number(recu)
-                        if (num > 0) {
-                          setClientsCredits(prev => prev.map(item => item.id === c.id ? { ...item, solde: item.solde - num } : item))
-                          alert(`Remboursement de ${fcfa(num)} enregistré pour ${c.nom} !`)
-                        }
+                        setTypeTransCarnet('remboursement')
+                        setMontantTransCarnet('')
+                        setNoteTransCarnet('')
+                        setModalTransCarnet(true)
                       }}
-                      style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                      style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                     >
                       💵 Encaisser Remboursement
                     </button>
+                    <button
+                      onClick={() => {
+                        setTypeTransCarnet('vente_credit')
+                        setMontantTransCarnet('')
+                        setNoteTransCarnet('')
+                        setDateEcheanceTransCarnet('')
+                        setProduitsTransCarnet('')
+                        setModalTransCarnet(true)
+                      }}
+                      style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      + Nouveau Crédit Manuel
+                    </button>
                   </div>
                 </div>
-              ))}
+
+                {/* Historique des Transactions */}
+                <div>
+                  <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 800, color: '#334155' }}>
+                    📜 Historique des crédits, remboursements et articles pris
+                  </h4>
+
+                  {loadingHistoriqueClient ? (
+                    <div style={{ padding: 30, textAlign: 'center', color: '#64748b', fontSize: 13 }}>Chargement de l'historique…</div>
+                  ) : historiqueClientSelectionne.length === 0 ? (
+                    <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 12, padding: 30, textAlign: 'center', color: '#64748b', fontSize: 13 }}>
+                      Aucune transaction enregistrée pour le moment.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {historiqueClientSelectionne.map((t: any) => {
+                        const isCredit = t.type === 'vente_credit'
+                        const isRemb = t.type === 'remboursement'
+                        let prodsList: any[] = []
+                        try {
+                          prodsList = typeof t.produits === 'string' ? JSON.parse(t.produits) : (t.produits || [])
+                        } catch {}
+
+                        return (
+                          <div key={t.id} style={{ background: '#ffffff', border: isCredit ? '1px solid #fecaca' : isRemb ? '1px solid #bbf7d0' : '1px solid #e2e8f0', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{
+                                  fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 12,
+                                  background: isCredit ? '#fef2f2' : isRemb ? '#f0fdf4' : '#eff6ff',
+                                  color: isCredit ? '#991b1b' : isRemb ? '#166534' : '#1d4ed8',
+                                }}>
+                                  {isCredit ? '🔴 VENTE À CRÉDIT' : isRemb ? '🟢 REMBOURSEMENT' : '🔵 DÉPÔT AVANCE'}
+                                </span>
+                                <span style={{ fontSize: 12, color: '#64748b' }}>
+                                  {new Date(t.created_at).toLocaleDateString('fr-FR')} à {new Date(t.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+
+                              <span style={{ fontSize: 16, fontWeight: 900, color: isCredit ? '#dc2626' : '#16a34a' }}>
+                                {isCredit ? `+ ${fcfa(t.montant)}` : `- ${fcfa(t.montant)}`}
+                              </span>
+                            </div>
+
+                            {/* Mode de règlement & Justification / Note */}
+                            <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#475569', flexWrap: 'wrap' }}>
+                              {t.mode_paiement && <span>Mode: <strong>{t.mode_paiement.toUpperCase()}</strong></span>}
+                              {t.date_echeance && (
+                                <span style={{ color: '#c2410c', fontWeight: 700 }}>
+                                  📅 Promesse d'échéance: {new Date(t.date_echeance).toLocaleDateString('fr-FR')}
+                                </span>
+                              )}
+                              {t.note && <span style={{ fontStyle: 'italic', color: '#64748b' }}>Note: &quot;{t.note}&quot;</span>}
+                            </div>
+
+                            {/* Détail des produits pris */}
+                            {prodsList && prodsList.length > 0 && (
+                              <div style={{ background: '#f8fafc', borderRadius: 8, padding: '8px 12px', border: '1px solid #f1f5f9', marginTop: 4 }}>
+                                <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, color: '#334155' }}>🛒 Articles & Produits pris :</p>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                  {prodsList.map((prod: any, pIdx: number) => (
+                                    <div key={pIdx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#475569' }}>
+                                      <span>• {prod.quantite}x {prod.nom}</span>
+                                      <span style={{ fontWeight: 700 }}>{fcfa((prod.prix || 0) * (prod.quantite || 1))}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modale d'enregistrement de Transaction Carnet (Remboursement / Crédit Manuel) */}
+      {modalTransCarnet && clientCarnetSelectionne && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', zIndex: 1050, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480, border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ margin: 0, fontSize: 16, color: '#0f172a', fontWeight: 900 }}>
+                {typeTransCarnet === 'remboursement' ? '💵 Encaisser un Remboursement' : '📝 Enregistrer un Crédit'}
+              </h3>
+              <button onClick={() => setModalTransCarnet(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 18, cursor: 'pointer' }}>✕</button>
+            </div>
+            <p style={{ margin: '0 0 14px', fontSize: 12, color: '#64748b' }}>Client: <strong>{clientCarnetSelectionne.nom}</strong> ({clientCarnetSelectionne.telephone})</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Montant (FCFA) *</label>
+                <input
+                  type="number"
+                  placeholder="Ex: 10000"
+                  value={montantTransCarnet}
+                  onChange={e => setMontantTransCarnet(e.target.value)}
+                  style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, fontWeight: 800, boxSizing: 'border-box' }}
+                />
+              </div>
+
+              {typeTransCarnet === 'remboursement' && (
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Mode de Paiement Reçu</label>
+                  <select
+                    value={modePaiementTransCarnet}
+                    onChange={e => setModePaiementTransCarnet(e.target.value)}
+                    style={{ width: '100%', padding: '9px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                  >
+                    <option value="especes">💵 Espèces Cash</option>
+                    <option value="wave">🌊 Wave Senegal</option>
+                    <option value="orange_money">🍊 Orange Money</option>
+                  </select>
+                </div>
+              )}
+
+              {typeTransCarnet === 'vente_credit' && (
+                <>
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Produits / Articles pris</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: 2x Sac de riz 25kg, 3L Huile..."
+                      value={produitsTransCarnet}
+                      onChange={e => setProduitsTransCarnet(e.target.value)}
+                      style={{ width: '100%', padding: '9px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Date d'échéance / Promesse de paiement</label>
+                    <input
+                      type="date"
+                      value={dateEcheanceTransCarnet}
+                      onChange={e => setDateEcheanceTransCarnet(e.target.value)}
+                      style={{ width: '100%', padding: '9px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Note / Remarque / Justification</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Remboursement partiel par sa femme, etc."
+                  value={noteTransCarnet}
+                  onChange={e => setNoteTransCarnet(e.target.value)}
+                  style={{ width: '100%', padding: '9px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                <button onClick={() => setModalTransCarnet(false)} style={{ flex: 1, padding: '10px', background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+                  Annuler
+                </button>
+                <button
+                  onClick={async () => {
+                    const num = Number(montantTransCarnet)
+                    if (!num || num <= 0) {
+                      alert('Veuillez saisir un montant valide.')
+                      return
+                    }
+                    if (boutiqueActiveId && clientCarnetSelectionne) {
+                      try {
+                        const prodsArr = typeTransCarnet === 'vente_credit' && produitsTransCarnet.trim()
+                          ? [{ nom: produitsTransCarnet.trim(), quantite: 1, prix: num }]
+                          : []
+
+                        const res = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientCarnetSelectionne.id}/transaction`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            type: typeTransCarnet,
+                            montant: num,
+                            mode_paiement: modePaiementTransCarnet,
+                            note: noteTransCarnet || null,
+                            date_echeance: dateEcheanceTransCarnet || null,
+                            produits: prodsArr,
+                          })
+                        })
+
+                        if (res.ok) {
+                          const dataTrans = await res.json()
+                          setClientCarnetSelectionne((prev: any) => prev ? { ...prev, solde: dataTrans.nouveauSolde } : null)
+                          await chargerClientsCredits(boutiqueActiveId)
+                          await chargerHistoriqueClientSelectionne(clientCarnetSelectionne.id)
+                          setModalTransCarnet(false)
+                        } else {
+                          const errData = await res.json()
+                          alert(errData.error || 'Erreur lors de l’enregistrement.')
+                        }
+                      } catch (e) {
+                        console.error('Erreur transaction carnet:', e)
+                      }
+                    }
+                  }}
+                  style={{ flex: 1, padding: '10px', background: typeTransCarnet === 'remboursement' ? '#16a34a' : '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 900, cursor: 'pointer' }}
+                >
+                  ✓ Enregistrer
+                </button>
+              </div>
             </div>
           </div>
         </div>

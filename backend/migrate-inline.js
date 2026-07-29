@@ -258,6 +258,9 @@ module.exports = async function migrateInline() {
       );
       CREATE INDEX IF NOT EXISTS idx_caisse_clients_bq ON caisse_clients_credits(boutique_id);
 
+      ALTER TABLE caisse_clients_credits ADD COLUMN IF NOT EXISTS adresse VARCHAR(255);
+      ALTER TABLE caisse_clients_credits ADD COLUMN IF NOT EXISTS note_client TEXT;
+
       CREATE TABLE IF NOT EXISTS caisse_credit_historique (
         id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         client_id    UUID NOT NULL REFERENCES caisse_clients_credits(id) ON DELETE CASCADE,
@@ -269,6 +272,9 @@ module.exports = async function migrateInline() {
         created_at   TIMESTAMPTZ DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_caisse_hist_client ON caisse_credit_historique(client_id);
+
+      ALTER TABLE caisse_credit_historique ADD COLUMN IF NOT EXISTS produits JSONB DEFAULT '[]';
+      ALTER TABLE caisse_credit_historique ADD COLUMN IF NOT EXISTS date_echeance DATE;
 
       CREATE TABLE IF NOT EXISTS boutique_caissiers (
         id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

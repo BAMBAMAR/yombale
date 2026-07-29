@@ -532,11 +532,32 @@ router.get('/:id/credits-clients', async (req, res) => {
   }
 });
 
+// ── GET /api/boutiques/:id/credits-clients/:clientId/historique — Historique détaillé d'un client
+router.get('/:id/credits-clients/:clientId/historique', async (req, res) => {
+  try {
+    const { id, clientId } = req.params;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
+    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
+    if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const { rows } = await pool.query(
+      `SELECT * FROM caisse_credit_historique WHERE client_id=$1 AND boutique_id=$2 ORDER BY created_at DESC`,
+      [clientId, b.rows[0].id]
+    );
+
+    res.json({ success: true, historique: rows });
+  } catch (err) {
+    console.error('[CREDITS HISTORIQUE GET]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // ── POST /api/boutiques/:id/credits-clients — Créer un nouveau profil client carnet
 router.post('/:id/credits-clients', async (req, res) => {
   try {
     const { id } = req.params;
-    const { nom, telephone, plafond_max } = req.body;
+    const { nom, telephone, adresse, plafond_max, note_client } = req.body;
     if (!nom?.trim() || !telephone?.trim()) {
       return res.status(400).json({ error: 'Nom et téléphone du client requis' });
     }
@@ -547,9 +568,9 @@ router.post('/:id/credits-clients', async (req, res) => {
     if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
 
     const r = await pool.query(
-      `INSERT INTO caisse_clients_credits (boutique_id, nom, telephone, solde, plafond_max)
-       VALUES ($1, $2, $3, 0, $4) RETURNING *`,
-      [b.rows[0].id, nom.trim(), telephone.trim(), Number(plafond_max || 200000)]
+      `INSERT INTO caisse_clients_credits (boutique_id, nom, telephone, adresse, plafond_max, note_client, solde)
+       VALUES ($1, $2, $3, $4, $5, $6, 0) RETURNING *`,
+      [b.rows[0].id, nom.trim(), telephone.trim(), adresse?.trim() || null, Number(plafond_max || 200000), note_client?.trim() || null]
     );
 
     res.status(201).json({ success: true, client: r.rows[0] });
@@ -563,18 +584,24 @@ router.post('/:id/credits-clients', async (req, res) => {
 router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
   try {
     const { id, clientId } = req.params;
-    const { type, montant, mode_paiement, note } = req.body; // 'vente_credit', 'remboursement', 'depot_avance'
+    const { type, montant, mode_paiement, note, produits, date_echeance } = req.body; // 'vente_credit', 'remboursement', 'depot_avance'
     const numMontant = Number(montant);
     if (!type || !numMontant || numMontant <= 0) {
       return res.status(400).json({ error: 'Type de transaction et montant valide (> 0) requis' });
     }
+
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
+    const bqRes = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
+    if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const bqId = bqRes.rows[0].id;
 
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
 
       // Récupérer le solde actuel
-      const c = await client.query('SELECT * FROM caisse_clients_credits WHERE id=$1 AND boutique_id=$2 FOR UPDATE', [clientId, id]);
+      const c = await client.query('SELECT * FROM caisse_clients_credits WHERE id=$1 AND boutique_id=$2 FOR UPDATE', [clientId, bqId]);
       if (!c.rows[0]) {
         await client.query('ROLLBACK');
         return res.status(404).json({ error: 'Client introuvable' });
@@ -598,11 +625,11 @@ router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
       // Mettre à jour le solde
       await client.query('UPDATE caisse_clients_credits SET solde=$1 WHERE id=$2', [nouveauSolde, clientId]);
 
-      // Enregistrer l'historique
+      // Enregistrer l'historique détaillé avec produits et date d'échéance
       const hist = await client.query(
-        `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [clientId, id, type, numMontant, mode_paiement || 'especes', note || null]
+        `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, date_echeance)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        [clientId, bqId, type, numMontant, mode_paiement || 'especes', note || null, JSON.stringify(produits || []), date_echeance || null]
       );
 
       await client.query('COMMIT');
