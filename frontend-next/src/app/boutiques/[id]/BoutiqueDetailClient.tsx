@@ -544,7 +544,7 @@ export default function BoutiqueDetailClient({
             <div style={{
               display: viewMode === 'grid' ? 'grid' : 'flex',
               flexDirection: viewMode === 'grid' ? undefined : 'column',
-              gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(190px, 1fr))' : undefined,
+              gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(140px, 1fr))' : undefined,
               gap: 16,
             }}>
               {produitsFiltres.map((p: Produit) => (

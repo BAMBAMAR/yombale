@@ -67,7 +67,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     boutiqueId: string,
     boutiqueNom: string,
     produit: { id: string; nom: string; prix: number | null; images?: string[] },
-    whatsapp?: string | null
+    whatsapp?: string | null,
+    autoOpen: boolean = false
   ) {
     const prix = produit.prix || 0
     setCarts(prev => {
@@ -98,7 +99,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     })
 
     setActiveBoutiqueId(boutiqueId)
-    setIsCartOpen(true)
+    if (autoOpen) {
+      setIsCartOpen(true)
+    }
   }
 
   function removeFromCart(boutiqueId: string, productId: string) {

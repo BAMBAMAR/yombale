@@ -79,7 +79,7 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
     : null
 
   return (
-    <div className="page-container" style={{ paddingTop: 0, paddingBottom: '3rem' }}>
+    <div className="page-container" style={{ maxWidth: 1440, paddingTop: 0, paddingBottom: '3rem' }}>
 
       {/* Cover photo */}
       <div style={{

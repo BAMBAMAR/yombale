@@ -127,33 +127,86 @@ export default function DrawerCart() {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', justifyContent: 'flex-end', background: 'rgba(0,0,0,0.5)' }} onClick={closeCart}>
-      <div
-        style={{
-          width: '100%', maxWidth: 460, background: '#fff', height: '100%',
-          display: 'flex', flexDirection: 'column', boxShadow: '-10px 0 30px rgba(0,0,0,0.2)',
-          animation: 'slideLeft 0.25s ease-out',
-        }}
-        onClick={e => e.stopPropagation()}
-      >
+    <div className="drawer-cart-overlay" onClick={closeCart}>
+      <div className="drawer-cart-container" onClick={e => e.stopPropagation()}>
         <style jsx global>{`
+          .drawer-cart-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            justify-content: flex-end;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+          }
+          .drawer-cart-container {
+            width: 100%;
+            max-width: 450px;
+            background: #fff;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.25);
+            animation: slideLeft 0.25s ease-out;
+          }
+          .mobile-cart-handle {
+            display: none;
+          }
           @keyframes slideLeft {
             from { transform: translateX(100%); }
             to { transform: translateX(0); }
           }
+          @media (max-width: 640px) {
+            .drawer-cart-overlay {
+              align-items: flex-end;
+            }
+            .drawer-cart-container {
+              max-width: 100%;
+              height: auto;
+              max-height: 85vh;
+              border-top-left-radius: 24px;
+              border-top-right-radius: 24px;
+              animation: slideUp 0.25s ease-out;
+            }
+            .mobile-cart-handle {
+              display: block;
+              width: 40px;
+              height: 5px;
+              border-radius: 3px;
+              background: #cbd5e1;
+              margin: 8px auto 4px;
+            }
+            @keyframes slideUp {
+              from { transform: translateY(100%); }
+              to { transform: translateY(0); }
+            }
+          }
         `}</style>
 
         {/* Header Drawer */}
-        <div style={{ padding: '18px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fafafa' }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 17, color: '#111827', fontWeight: 800 }}>
-              🛒 Panier — {activeCart.boutiqueNom}
-            </h2>
-            <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>
-              {items.length} article{items.length > 1 ? 's' : ''} sélectionné{items.length > 1 ? 's' : ''}
-            </p>
+        <div style={{ padding: '14px 20px 16px', borderBottom: '1px solid #e5e7eb', background: '#fafafa', borderTopLeftRadius: 'inherit', borderTopRightRadius: 'inherit' }}>
+          <div className="mobile-cart-handle" />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 17, color: '#111827', fontWeight: 800 }}>
+                🛒 Panier — {activeCart.boutiqueNom}
+              </h2>
+              <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>
+                {items.length} article{items.length > 1 ? 's' : ''} sélectionné{items.length > 1 ? 's' : ''}
+              </p>
+            </div>
+            <button
+              onClick={closeCart}
+              style={{
+                width: 32, height: 32, borderRadius: '50%', background: '#e2e8f0',
+                border: 'none', fontSize: 16, cursor: 'pointer', color: '#475569',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800,
+              }}
+              title="Fermer le panier"
+            >
+              ✕
+            </button>
           </div>
-          <button onClick={closeCart} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#9ca3af' }}>✕</button>
         </div>
 
         {/* Contenu principal Scrollable (Articles + Formulaires) */}

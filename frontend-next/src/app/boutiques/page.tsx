@@ -130,7 +130,7 @@ export default async function BoutiquesPage({
   }
 
   return (
-    <div className="page-container" style={{ paddingTop: '1.5rem', paddingBottom: '4rem' }}>
+    <div className="page-container" style={{ maxWidth: 1440, paddingTop: '1.5rem', paddingBottom: '4rem' }}>
       
       {/* HERO BANNER BOUTIQUES */}
       <div style={{

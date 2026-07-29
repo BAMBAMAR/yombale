@@ -129,7 +129,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
         </p>
 
         <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10,
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8,
           background: '#f1f5f9', padding: 6, borderRadius: 16, border: '1px solid #e2e8f0',
         }}>
           {DUREES.map(d => {
