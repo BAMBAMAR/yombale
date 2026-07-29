@@ -127,7 +127,7 @@ async function appliquerPaiementReussi(reference, montant, methode) {
       const abonnementRow = await pool.query(
         `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
          VALUES ($1,$2,'actif',$3,$4,$5)
-         ON CONFLICT (commande_ref) DO NOTHING
+         ON CONFLICT (commande_ref) WHERE commande_ref IS NOT NULL DO NOTHING
          RETURNING id`,
         [userId, plan, PRIX[plan], fin, ref]
       );
