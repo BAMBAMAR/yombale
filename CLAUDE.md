@@ -97,6 +97,11 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 - **Historique & Fiche Client** : Visualisation complète du grand livre de compte par client (historique des opérations, remboursements Cash/Wave/OM, crédits directs).
 - **Promesse d'Échéance & Justifications** : Prise en compte de la date d'échéance convenue, du quartier/adresse du client et des remarques/justifications sur chaque transaction.
 
+**7. Scanner Caméra Smartphone, Relance WhatsApp & Format Ticket Thermique ESC/POS (58mm/80mm) :**
+- **Scanner Code-Barres par Caméra Smartphone (`📷 Scanner Caméra`)** : Activation de l'appareil photo du smartphone/tablette avec détection en temps réel des codes-barres (`BarcodeDetector` API) et ajout direct au panier.
+- **Relance Automatique WhatsApp (`💬 WA Relance`)** : Envoi en 1 clic d'un message WhatsApp personnalisé au client de quartier avec le solde exact de son carnet et la promesse d'échéance.
+- **Impression Ticket Thermique ESC/POS (`🖨️ 58mm / 80mm`)** : Support universel des imprimantes thermiques Bluetooth portables (58mm) et de caisse (80mm) avec mise en page condensée.
+
 ---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
