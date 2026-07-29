@@ -380,7 +380,9 @@ export default function BoutiqueDetailClient({
           📋 Annonces {annonces.length > 0 && `(${annonces.length})`}
         </button>
         <button style={tabStyle(tab === 'infos')} onClick={() => setTab('infos')}>
-          ℹ À propos & Contact
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <Info size={15} /> À propos & Contact
+          </span>
         </button>
       </div>
 
@@ -597,75 +599,129 @@ export default function BoutiqueDetailClient({
         </div>
       )}
 
-      {/* Onglet Infos */}
+      {/* Onglet Infos & Contact */}
       {tab === 'infos' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {boutique.description && (
-            <div style={{
-              background: 'linear-gradient(135deg, #fffcf9, #fff7f0)',
-              border: '1px solid var(--border)', borderRadius: 14, padding: '20px 24px',
-            }}>
-              <p style={{ fontWeight: 800, margin: '0 0 10px', fontSize: 13, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '.06em', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Info size={16} /> À propos
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Bloc À Propos */}
+          <div style={{
+            background: '#fff',
+            border: '1px solid #e5e7eb', borderRadius: 16, padding: '24px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+              <p style={{ fontWeight: 900, margin: 0, fontSize: 15, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '.06em', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Info size={18} /> À propos de {boutique.nom}
               </p>
-              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: 'var(--text2)' }}>{boutique.description}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '4px 12px', borderRadius: 20 }}>
+                <Check size={14} style={{ color: '#16a34a', strokeWidth: 3 }} />
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#15803d' }}>Vendeur Vérifié Nopalou</span>
+              </div>
             </div>
-          )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
-            <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: '22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <p style={{ fontWeight: 800, margin: 0, fontSize: 14, color: 'var(--navy)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Phone size={16} /> Contact
+            <p style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.7, color: '#334155' }}>
+              {boutique.description || `Bienvenue sur la boutique officielle de ${boutique.nom} sur Nopalou. Retrouvez tout notre catalogue de produits au Sénégal, comparez nos prix et contactez-nous directement.`}
+            </p>
+
+            {/* Réseaux Sociaux & Site Web */}
+            {(boutique.instagram || boutique.facebook || boutique.site_web) && (
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
+                {boutique.instagram && (
+                  <a href={boutique.instagram.startsWith('http') ? boutique.instagram : `https://instagram.com/${boutique.instagram}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fdf2f8', border: '1px solid #fbcfe8', padding: '6px 14px', borderRadius: 20, color: '#db2777', fontSize: 12, fontWeight: 700 }}>
+                      <span>📸 Instagram</span>
+                    </div>
+                  </a>
+                )}
+                {boutique.facebook && (
+                  <a href={boutique.facebook.startsWith('http') ? boutique.facebook : `https://facebook.com/${boutique.facebook}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eff6ff', border: '1px solid #bfdbfe', padding: '6px 14px', borderRadius: 20, color: '#1d4ed8', fontSize: 12, fontWeight: 700 }}>
+                      <span>📘 Facebook</span>
+                    </div>
+                  </a>
+                )}
+                {boutique.site_web && (
+                  <a href={boutique.site_web.startsWith('http') ? boutique.site_web : `https://${boutique.site_web}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#f8fafc', border: '1px solid #cbd5e1', padding: '6px 14px', borderRadius: 20, color: '#334155', fontSize: 12, fontWeight: 700 }}>
+                      <Globe size={14} /> Site Web Officiel
+                    </div>
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+            {/* Carte Contact & Adresse */}
+            <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
+              <p style={{ fontWeight: 900, margin: 0, fontSize: 15, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Phone size={18} style={{ color: '#C75B00' }} /> Coordonnées & Contact
               </p>
 
               {boutique.adresse && (
-                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <MapPin size={18} style={{ color: 'var(--text3)', marginTop: 2, flexShrink: 0 }} />
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#f8fafc', padding: '12px 14px', borderRadius: 12, border: '1px solid #f1f5f9' }}>
+                  <MapPin size={20} style={{ color: '#C75B00', marginTop: 2, flexShrink: 0 }} />
                   <div>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text1)' }}>{boutique.adresse}</p>
-                    <p style={{ margin: 0, fontSize: 12, color: 'var(--text3)' }}>{boutique.ville}</p>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>{boutique.adresse}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b', fontWeight: 600 }}>📍 Ville : {boutique.ville}</p>
                   </div>
                 </div>
               )}
 
               {boutique.telephone && (
                 <a href={`tel:${boutique.telephone}`} style={{ textDecoration: 'none' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#eff6ff', borderRadius: 10, padding: '10px 14px', border: '1px solid #dbeafe' }}>
-                    <Phone size={18} style={{ color: '#1d4ed8' }} />
-                    <div>
-                      <p style={{ margin: 0, fontSize: 10, color: '#2563eb', fontWeight: 700, letterSpacing: '0.05em' }}>TÉLÉPHONE</p>
-                      <p style={{ margin: 0, fontSize: 14, color: '#1d4ed8', fontWeight: 700 }}>{boutique.telephone}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#eff6ff', borderRadius: 12, padding: '12px 16px', border: '1px solid #dbeafe', transition: 'transform 0.15s ease' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <Phone size={20} style={{ color: '#1d4ed8' }} />
+                      <div>
+                        <p style={{ margin: 0, fontSize: 11, color: '#2563eb', fontWeight: 800, letterSpacing: '0.05em' }}>TÉLÉPHONE DIRECT</p>
+                        <p style={{ margin: 0, fontSize: 15, color: '#1d4ed8', fontWeight: 900 }}>{boutique.telephone}</p>
+                      </div>
                     </div>
+                    <span style={{ fontSize: 12, background: '#1d4ed8', color: '#fff', padding: '4px 10px', borderRadius: 20, fontWeight: 800 }}>Appeler</span>
                   </div>
                 </a>
               )}
 
               {boutique.whatsapp && (
                 <a href={`https://wa.me/${boutique.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#f0fdf4', borderRadius: 10, padding: '10px 14px', border: '1px solid #dcfce7' }}>
-                    <MessageCircle size={18} style={{ color: '#16a34a' }} />
-                    <div>
-                      <p style={{ margin: 0, fontSize: 10, color: '#16a34a', fontWeight: 700, letterSpacing: '0.05em' }}>WHATSAPP</p>
-                      <p style={{ margin: 0, fontSize: 14, color: '#15803d', fontWeight: 700 }}>{boutique.whatsapp}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f0fdf4', borderRadius: 12, padding: '12px 16px', border: '1px solid #dcfce7', transition: 'transform 0.15s ease' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <MessageCircle size={20} style={{ color: '#16a34a' }} />
+                      <div>
+                        <p style={{ margin: 0, fontSize: 11, color: '#16a34a', fontWeight: 800, letterSpacing: '0.05em' }}>WHATSAPP PRO</p>
+                        <p style={{ margin: 0, fontSize: 15, color: '#15803d', fontWeight: 900 }}>{boutique.whatsapp}</p>
+                      </div>
                     </div>
+                    <span style={{ fontSize: 12, background: '#25d366', color: '#fff', padding: '4px 10px', borderRadius: 20, fontWeight: 800 }}>Discuter</span>
                   </div>
                 </a>
               )}
             </div>
 
+            {/* Carte Horaires */}
             {boutique.horaires && Object.keys(boutique.horaires).length > 0 && (
-              <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: '22px' }}>
-                <p style={{ fontWeight: 800, margin: '0 0 14px', fontSize: 14, color: 'var(--navy)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Clock size={16} /> Horaires d&apos;ouverture
+              <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '24px', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
+                <p style={{ fontWeight: 900, margin: '0 0 16px', fontSize: 15, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Clock size={18} style={{ color: '#2563eb' }} /> Horaires d&apos;ouverture
                 </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {horairesKeys.map((key, i) => {
                     const val = boutique.horaires?.[key]
                     if (!val) return null
+                    const isToday = new Date().getDay() === (i === 6 ? 0 : i + 1)
                     return (
-                      <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: 8, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text1)' }}>{JOURS[i]}</span>
-                        <span style={{ fontSize: 13, color: '#16a34a', fontWeight: 700 }}>{val}</span>
+                      <div key={key} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '9px 14px', borderRadius: 10,
+                        background: isToday ? '#fff7f0' : '#f8fafc',
+                        border: isToday ? '1.5px solid #ffedd5' : '1px solid #f1f5f9',
+                      }}>
+                        <span style={{ fontSize: 13, fontWeight: isToday ? 900 : 700, color: isToday ? '#C75B00' : '#334155' }}>
+                          {JOURS[i]} {isToday && '(Aujourd\'hui)'}
+                        </span>
+                        <span style={{ fontSize: 13, color: val.toLowerCase().includes('fermé') ? '#dc2626' : '#16a34a', fontWeight: 800 }}>
+                          {val}
+                        </span>
                       </div>
                     )
                   })}
