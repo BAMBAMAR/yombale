@@ -107,7 +107,7 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
         padding: '0 20px 20px', marginBottom: 24,
         position: 'relative', zIndex: 5,
       }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+        <div style={{ maxWidth: 1350, margin: '0 auto' }}>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', marginTop: -44 }}>
             {/* Logo */}
             <div style={{
@@ -191,7 +191,7 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
       </div>
 
       {/* Contenu avec onglets */}
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 20px' }}>
+      <div style={{ maxWidth: 1350, margin: '0 auto', padding: '0 20px' }}>
         <BoutiqueDetailClient
           boutique={{
             id: b.id,
