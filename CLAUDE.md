@@ -106,6 +106,11 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 - **Relance Automatique WhatsApp (`💬 WA Relance`)** : Envoi en 1 clic d'un message WhatsApp personnalisé au client de quartier avec le solde exact de son carnet et la promesse d'échéance.
 - **Impression Ticket Thermique ESC/POS (`🖨️ 58mm / 80mm`)** : Support universel des imprimantes thermiques Bluetooth portables (58mm) et de caisse (80mm) avec mise en page condensée.
 
+**8. Génération & Impression d'Étiquettes Code-Barres EAN-13 sur les Produits :**
+- **Ajout d'un EAN-13 Fabricant** : Saisie/scan manuel d'un code EAN-13 existant pour tout produit.
+- **Génération Automatique de Code-Barres EAN-13** : Pour les articles artisanaux/locaux sans emballage, génération automatique d'un numéro EAN-13 valide avec clé de contrôle Modulo 10 (préfixe `200`).
+- **Impression d'Étiquettes (`🏷️ EAN`)** : Bouton d'impression au format sticker (50mm x 30mm) avec nom du magasin, nom du produit, prix en FCFA et visuel du code-barres EAN-13 scannable.
+
 ---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
