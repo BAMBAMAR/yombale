@@ -29,6 +29,8 @@ interface Boutique {
   sponsorise: boolean
   sponsor_jusqu_au: string | null
   plan_actif: 'pro' | 'business' | null
+  note_moyenne?: number | string
+  total_avis?: number
   created_at: string
 }
 
@@ -388,7 +390,9 @@ export default async function BoutiquesPage({
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fef3c7', padding: '3px 8px', borderRadius: 12, border: '1px solid #fde68a' }}>
                       <Star size={12} style={{ color: '#d97706', fill: '#d97706' }} />
-                      <span style={{ fontSize: 11, fontWeight: 800, color: '#92400e' }}>4.8 / 5</span>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: '#92400e' }}>
+                        {Number(b.note_moyenne || 5.0).toFixed(1)} / 5 {b.total_avis && b.total_avis > 0 ? `(${b.total_avis})` : ''}
+                      </span>
                     </div>
                   </div>
 

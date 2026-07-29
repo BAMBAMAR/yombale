@@ -176,15 +176,20 @@ router.get('/', async (req, res) => {
     const where = 'WHERE ' + conds.join(' AND ');
     const [rows, cnt] = await Promise.all([
       pool.query(
-        `SELECT b.id, b.slug, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
-                b.logo_url, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
-                a.plan AS plan_actif
+        `SELECT b.id, b.slug, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
+                b.logo_url, b.cover_url, b.horaires, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
+                a.plan AS plan_actif,
+                COALESCE(ROUND(av.note_avg::numeric, 1), 5.0) AS note_moyenne,
+                COALESCE(av.total_cnt, 0) AS total_avis
          FROM boutiques b
          LEFT JOIN LATERAL (
            SELECT plan FROM abonnements
            WHERE utilisateur_id = b.utilisateur_id AND statut='actif' AND fin > NOW()
            ORDER BY fin DESC LIMIT 1
          ) a ON true
+         LEFT JOIN LATERAL (
+           SELECT AVG(note) as note_avg, COUNT(*) as total_cnt FROM boutique_avis WHERE boutique_id = b.id
+         ) av ON true
          ${where}
          ORDER BY ${orderBy}
          LIMIT $${vals.length+1} OFFSET $${vals.length+2}`,
