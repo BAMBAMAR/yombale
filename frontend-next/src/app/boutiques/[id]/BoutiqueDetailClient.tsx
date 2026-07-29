@@ -371,18 +371,75 @@ export default function BoutiqueDetailClient({
         </div>
       )}
 
-      {/* Onglets principaux */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, overflowX: 'auto' }}>
-        <button style={tabStyle(tab === 'produits')} onClick={() => setTab('produits')}>
-          🛍 Catalogue {produits.length > 0 && `(${produits.length})`}
+      {/* 🧭 NAVIGATION PAR ONGLETS MODERNE (STYLE SHOPIFY / AMAZON PRO) */}
+      <div style={{
+        display: 'flex', gap: 6, padding: 6, background: '#f1f5f9', borderRadius: 16,
+        marginBottom: 24, overflowX: 'auto', border: '1px solid #e2e8f0', scrollbarWidth: 'none',
+      }}>
+        <button
+          onClick={() => setTab('produits')}
+          style={{
+            flex: '1 1 auto', minWidth: 140, padding: '11px 20px', borderRadius: 12, border: 'none',
+            background: tab === 'produits' ? '#fff' : 'transparent',
+            color: tab === 'produits' ? '#C75B00' : '#64748b',
+            fontWeight: tab === 'produits' ? 900 : 600, fontSize: 14, cursor: 'pointer',
+            boxShadow: tab === 'produits' ? '0 4px 12px rgba(0,0,0,0.06)' : 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            transition: 'all 0.15s ease', whiteSpace: 'nowrap',
+          }}
+        >
+          <Tag size={17} style={{ color: tab === 'produits' ? '#C75B00' : '#94a3b8' }} />
+          <span>Catalogue produits</span>
+          {produits.length > 0 && (
+            <span style={{
+              background: tab === 'produits' ? '#fff7f0' : '#e2e8f0',
+              color: tab === 'produits' ? '#C75B00' : '#475569',
+              padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 800,
+            }}>
+              {produits.length}
+            </span>
+          )}
         </button>
-        <button style={tabStyle(tab === 'annonces')} onClick={() => setTab('annonces')}>
-          📋 Annonces {annonces.length > 0 && `(${annonces.length})`}
-        </button>
-        <button style={tabStyle(tab === 'infos')} onClick={() => setTab('infos')}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <Info size={15} /> À propos & Contact
-          </span>
+
+        {annonces.length > 0 && (
+          <button
+            onClick={() => setTab('annonces')}
+            style={{
+              flex: '1 1 auto', minWidth: 140, padding: '11px 20px', borderRadius: 12, border: 'none',
+              background: tab === 'annonces' ? '#fff' : 'transparent',
+              color: tab === 'annonces' ? '#1e3a5f' : '#64748b',
+              fontWeight: tab === 'annonces' ? 900 : 600, fontSize: 14, cursor: 'pointer',
+              boxShadow: tab === 'annonces' ? '0 4px 12px rgba(0,0,0,0.06)' : 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'all 0.15s ease', whiteSpace: 'nowrap',
+            }}
+          >
+            <Sparkles size={17} style={{ color: tab === 'annonces' ? '#1e3a5f' : '#94a3b8' }} />
+            <span>Annonces</span>
+            <span style={{
+              background: tab === 'annonces' ? '#eff6ff' : '#e2e8f0',
+              color: tab === 'annonces' ? '#1d4ed8' : '#475569',
+              padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 800,
+            }}>
+              {annonces.length}
+            </span>
+          </button>
+        )}
+
+        <button
+          onClick={() => setTab('infos')}
+          style={{
+            flex: '1 1 auto', minWidth: 140, padding: '11px 20px', borderRadius: 12, border: 'none',
+            background: tab === 'infos' ? '#fff' : 'transparent',
+            color: tab === 'infos' ? '#0f172a' : '#64748b',
+            fontWeight: tab === 'infos' ? 900 : 600, fontSize: 14, cursor: 'pointer',
+            boxShadow: tab === 'infos' ? '0 4px 12px rgba(0,0,0,0.06)' : 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            transition: 'all 0.15s ease', whiteSpace: 'nowrap',
+          }}
+        >
+          <Info size={17} style={{ color: tab === 'infos' ? '#0f172a' : '#94a3b8' }} />
+          <span>Infos & Contact</span>
         </button>
       </div>
 
