@@ -276,6 +276,8 @@ module.exports = async function migrateInline() {
       ALTER TABLE caisse_credit_historique ADD COLUMN IF NOT EXISTS produits JSONB DEFAULT '[]';
       ALTER TABLE caisse_credit_historique ADD COLUMN IF NOT EXISTS date_echeance DATE;
 
+      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS code_barre VARCHAR(100);
+
       CREATE TABLE IF NOT EXISTS boutique_caissiers (
         id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,

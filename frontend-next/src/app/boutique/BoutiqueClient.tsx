@@ -737,6 +737,19 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         </div>
       )}
 
+      {/* Code-Barres EAN-13 */}
+      {!modeRapide && (
+        <div>
+          <label style={labelStyle}>Code-Barres EAN-13 (Optionnel)</label>
+          <input
+            name="code_barre"
+            defaultValue={(produit as any)?.code_barre}
+            style={inputStyle}
+            placeholder="Ex: 600123456789 (Scannez à la douchette ou tapez)"
+          />
+        </div>
+      )}
+
       {/* Caractéristiques dynamiques par catégorie */}
       {hasCaracFields && (
         <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '14px 16px' }}>

@@ -711,7 +711,7 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
       }
     }
 
-    const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques, variantes } = req.body;
+    const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
     if (!nom?.trim()) return res.status(400).json({ error: 'Nom requis' });
 
     let images = [];
@@ -735,10 +735,10 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
     }
 
     const r = await pool.query(
-      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, images, en_stock, categorie, caracteristiques, variantes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, images, en_stock, categorie, caracteristiques, variantes, code_barre)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
       [id, nom.trim(), description||null, prix||null, prix_barre||null,
-       images, en_stock !== 'false', categorie||null, caracJson, JSON.stringify(variantesJson)]
+       images, en_stock !== 'false', categorie||null, caracJson, JSON.stringify(variantesJson), code_barre||null]
     );
     res.status(201).json({ success: true, produit: r.rows[0] });
     // Sync catalogue Meta — hors du try/catch pour éviter double-réponse
@@ -766,7 +766,7 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     const existing = await pool.query('SELECT * FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
     if (!existing.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
 
-    const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques, variantes } = req.body;
+    const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
     let images = existing.rows[0].images;
     if (req.files && req.files.length) {
       images = [];
@@ -790,11 +790,11 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
 
     const r = await pool.query(
       `UPDATE boutique_produits SET nom=$1, description=$2, prix=$3, prix_barre=$4,
-       images=$5, en_stock=$6, categorie=$7, caracteristiques=$8, variantes=$9, updated_at=NOW()
-       WHERE id=$10 AND boutique_id=$11 RETURNING *`,
+       images=$5, en_stock=$6, categorie=$7, caracteristiques=$8, variantes=$9, code_barre=$10, updated_at=NOW()
+       WHERE id=$11 AND boutique_id=$12 RETURNING *`,
       [nom||existing.rows[0].nom, description||null, prix||null, prix_barre||null,
        images, en_stock !== 'false', categorie||existing.rows[0].categorie||null,
-       caracJson, JSON.stringify(variantesJson), prodId, id]
+       caracJson, JSON.stringify(variantesJson), code_barre!==undefined ? code_barre : existing.rows[0].code_barre, prodId, id]
     );
     res.json({ success: true, produit: r.rows[0] });
     const produitMaj = r.rows[0];
