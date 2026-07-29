@@ -187,7 +187,7 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
   // ── Charte Graphique Nopalou Thème Lumineux ─────────────────────────────────
 
   // ── État Boutiques du Marchand & Synchronisation Catalogue ───────────────────
-  const [boutiques, setBoutiques] = useState<{ id: string; nom: string }[]>([])
+  const [boutiques, setBoutiques] = useState<{ id: string; nom: string; actif?: boolean; adresse?: string | null; telephone?: string | null }[]>([])
   const [boutiqueActiveId, setBoutiqueActiveId] = useState<string>('')
   const [loadingProduits, setLoadingProduits] = useState<boolean>(true)
   const [modalImportBatch, setModalImportBatch] = useState<boolean>(false)
