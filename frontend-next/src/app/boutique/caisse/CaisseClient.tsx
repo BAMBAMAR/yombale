@@ -440,6 +440,56 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
     }, 250)
   }
 
+  function genererImprimerEtiquetteCodeBarre(e: React.MouseEvent, p: ProduitCaisse) {
+    e.stopPropagation()
+    let cb = p.code_barre
+    if (!cb || cb === 'N/A') {
+      const prefixe = "200"
+      const corps = Math.floor(100000000 + Math.random() * 900000000).toString()
+      const base12 = prefixe + corps
+      let somme = 0
+      for (let i = 0; i < 12; i++) {
+        const val = parseInt(base12[i], 10)
+        somme += (i % 2 === 0) ? val : val * 3
+      }
+      const check = (10 - (somme % 10)) % 10
+      cb = base12 + check
+
+      setProduits(prev => prev.map(item => item.id === p.id ? { ...item, code_barre: cb } : item))
+    }
+
+    const windowPrint = window.open('', '_blank', 'width=400,height=300')
+    if (!windowPrint) return
+
+    const bqNom = boutiques.find(b => b.id === boutiqueActiveId)?.nom || 'NOPALOU BOUTIQUE'
+
+    windowPrint.document.write(`
+      <html>
+        <head>
+          <title>Étiquette Code-Barres EAN - ${p.nom}</title>
+          <style>
+            @page { size: 50mm 30mm; margin: 0; }
+            body { width: 50mm; height: 30mm; margin: 0 auto; padding: 4px; font-family: Arial, sans-serif; text-align: center; box-sizing: border-box; }
+            .store { font-size: 8px; font-weight: bold; text-transform: uppercase; color: #475569; }
+            .nom { font-size: 10px; font-weight: bold; margin: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .prix { font-size: 12px; font-weight: 900; color: #000; margin-bottom: 2px; }
+            .code-text { font-size: 10px; font-weight: bold; font-family: monospace; letter-spacing: 2px; margin-top: 4px; border-top: 1px dashed #000; padding-top: 2px; }
+          </style>
+        </head>
+        <body>
+          <div class="store">${bqNom}</div>
+          <div class="nom">${p.nom}</div>
+          <div class="prix">${fcfa(p.prix)}</div>
+          <div class="code-text">║▌║█║▌│║▌║▌█ <br/>${cb}</div>
+          <script>
+            setTimeout(() => { window.print(); window.close(); }, 300);
+          </script>
+        </body>
+      </html>
+    `)
+    windowPrint.document.close()
+  }
+
   // ── Historique des opérations & Incidents ────────────────────────────────────
   const [historiqueVentes, setHistoriqueVentes] = useState<VenteHistorique[]>([])
 
@@ -1655,8 +1705,17 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
                     }}
                   >
                     <div>
-                      <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: '#0f172a', lineHeight: 1.3 }}>{p.nom}</p>
-                      <p style={{ margin: 0, fontSize: 10, color: '#64748b' }}>CB: {p.code_barre || 'N/A'}</p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 4 }}>
+                        <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 700, color: '#0f172a', lineHeight: 1.3 }}>{p.nom}</p>
+                        <button
+                          onClick={e => genererImprimerEtiquetteCodeBarre(e, p)}
+                          title="Imprimer ou Générer une étiquette code-barres EAN-13"
+                          style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 4, padding: '2px 5px', fontSize: 10, cursor: 'pointer', color: '#475569', fontWeight: 700 }}
+                        >
+                          🏷️ EAN
+                        </button>
+                      </div>
+                      <p style={{ margin: 0, fontSize: 10, color: '#64748b' }}>CB: {p.code_barre || 'Générer EAN'}</p>
                     </div>
 
                     <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
