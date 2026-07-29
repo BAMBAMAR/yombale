@@ -102,11 +102,25 @@ export default async function BoutiquesPage({
 
   let boutiques: Boutique[] = []
   let total = 0
+  let villesDisponibles: string[] = []
+  let categoriesActivesSlugs: string[] = []
+
   try {
-    const data = await apiFetch<{ boutiques: Boutique[]; total: number }>(`/boutiques?${qs}`)
+    const data = await apiFetch<{ boutiques: Boutique[]; total: number; villes?: string[]; categories?: string[] }>(`/boutiques?${qs}`)
     boutiques = data?.boutiques ?? []
     total = data?.total ?? 0
+    villesDisponibles = data?.villes ?? []
+    categoriesActivesSlugs = data?.categories ?? []
   } catch {}
+
+  const villesAffichage = villesDisponibles.length > 0 ? villesDisponibles : VILLES
+
+  // Filtrer les catégories pour afficher uniquement celles avec des boutiques actives (garder 'Toutes les boutiques')
+  const categoriesAffichage = CATEGORIES_BOUTIQUE.filter(c => {
+    if (!c.slug) return true
+    if (categoriesActivesSlugs.length === 0) return true
+    return categoriesActivesSlugs.includes(c.slug)
+  })
 
   let boutiquesFiltrees = boutiques
   if (plan === 'business') {
@@ -201,9 +215,9 @@ export default async function BoutiquesPage({
           <BoutiquesSearch currentQ={q} currentVille={ville} currentCat={cat} />
         </div>
 
-        {/* Catégories Scrollables */}
+        {/* Catégories Scrollables Dynamiques */}
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
-          {CATEGORIES_BOUTIQUE.map(c => {
+          {categoriesAffichage.map(c => {
             const isSelected = (cat === c.slug) || (!cat && c.slug === '')
             return (
               <Link
@@ -227,12 +241,12 @@ export default async function BoutiquesPage({
           })}
         </div>
 
-        {/* Filtres par Ville, Formule & Tri */}
+        {/* Filtres par Ville Dynamique, Formule & Tri */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', background: '#fff', padding: '14px 18px', borderRadius: 14, border: '1px solid #e5e7eb' }}>
           
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ville :</span>
-            {VILLES.map(v => (
+            {villesAffichage.map(v => (
               <Link
                 key={v}
                 href={buildLink({ ville: ville === v ? '' : v, page: '1' })}

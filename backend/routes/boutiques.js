@@ -174,7 +174,7 @@ router.get('/', async (req, res) => {
                      b.created_at DESC`;
 
     const where = 'WHERE ' + conds.join(' AND ');
-    const [rows, cnt] = await Promise.all([
+    const [rows, cnt, villesRes, catsRes] = await Promise.all([
       pool.query(
         `SELECT b.id, b.slug, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
                 b.logo_url, b.cover_url, b.horaires, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
@@ -196,8 +196,20 @@ router.get('/', async (req, res) => {
         [...vals, lim, offset]
       ),
       pool.query(`SELECT COUNT(*) FROM boutiques ${where}`, vals),
+      pool.query(`SELECT DISTINCT ville FROM boutiques WHERE actif=true AND ville IS NOT NULL AND ville != '' ORDER BY ville ASC`),
+      pool.query(`SELECT DISTINCT categorie FROM boutiques WHERE actif=true AND categorie IS NOT NULL AND categorie != '' ORDER BY categorie ASC`),
     ]);
-    res.json({ boutiques: rows.rows, total: parseInt(cnt.rows[0].count), page: parseInt(page) });
+
+    const villes = villesRes.rows.map(r => r.ville).filter(Boolean);
+    const categories = catsRes.rows.map(r => r.categorie).filter(Boolean);
+
+    res.json({
+      boutiques: rows.rows,
+      total: parseInt(cnt.rows[0].count),
+      page: parseInt(page),
+      villes,
+      categories,
+    });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
