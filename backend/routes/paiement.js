@@ -43,8 +43,15 @@ async function montantAttendu(reference, montantDeclare) {
   if (reference.startsWith('boost_')) return prix.boost;
   if (reference.startsWith('immo_') || reference.startsWith('bout_') || reference.startsWith('prod_')) return prix.sponsoring;
   if (reference.startsWith('abmt_')) {
-    const plan = reference.split('_')[2];
-    return { pro: prix.pro, business: prix.business }[plan] ?? montantDeclare;
+    const parts = reference.split('_');
+    const plan = parts[2];
+    const dureeMois = parseInt(parts[3] || '1', 10) || 1;
+    const prixMensuel = { pro: prix.pro, business: prix.business }[plan] ?? montantDeclare;
+    let remise = 0;
+    if (dureeMois === 3) remise = 0.10;
+    else if (dureeMois === 6) remise = 0.15;
+    else if (dureeMois === 12) remise = 0.25;
+    return Math.round((prixMensuel * dureeMois) * (1 - remise));
   }
   return montantDeclare;
 }
@@ -115,15 +122,16 @@ async function appliquerPaiementReussi(reference, montant, methode) {
       );
     }
   }
-  // Abonnement Boutique Pro/Business : ref = abmt_userId_plan
+  // Abonnement Boutique Pro/Business : ref = abmt_userId_plan ou abmt_userId_plan_duree
   if (ref && ref.startsWith('abmt_')) {
     const parts = ref.split('_');
     const userId = parts[1];
     const plan   = parts[2];
+    const dureeMois = parseInt(parts[3] || '1', 10) || 1;
     const pxAbmt = await getPrix();
     const PRIX   = { pro: pxAbmt.pro, business: pxAbmt.business };
     if (userId && plan && PRIX[plan]) {
-      const fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const fin = new Date(Date.now() + dureeMois * 30 * 24 * 60 * 60 * 1000).toISOString();
       const abonnementRow = await pool.query(
         `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
          VALUES ($1,$2,'actif',$3,$4,$5)

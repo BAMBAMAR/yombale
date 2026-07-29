@@ -125,7 +125,7 @@ export async function initierWaveProduitSponsoring(produit_id: string): Promise<
   }
 }
 
-export async function initierWaveAbonnement(plan: 'pro' | 'business'): Promise<PaiementResult> {
+export async function initierWaveAbonnement(plan: 'pro' | 'business', duree_mois: number = 1): Promise<PaiementResult> {
   const session = await getOptionalSession()
   if (!session) return { ok: false, error: 'Connexion requise' }
 
@@ -134,7 +134,7 @@ export async function initierWaveAbonnement(plan: 'pro' | 'business'): Promise<P
     const res = await fetch(`${BACKEND}/api/abonnements/initier`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ plan }),
+      body: JSON.stringify({ plan, duree_mois }),
     })
     const body = await res.json()
     if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }

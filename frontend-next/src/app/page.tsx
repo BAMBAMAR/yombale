@@ -128,8 +128,8 @@ export default async function HomePage({
   } catch {
     // valeurs par défaut ci-dessous
   }
-  const prixPro      = Number(settings.plan_pro_prix) || 15000
-  const prixBusiness = Number(settings.plan_business_prix) || 35000
+  const prixPro      = Number(settings.plan_pro_prix) || 5000
+  const prixBusiness = Number(settings.plan_business_prix) || 10000
   const waveActif    = settings.paiement_wave !== 'false'
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const modePaiementLabel = waveActif && manuelActif
@@ -373,28 +373,40 @@ export default async function HomePage({
       {/* ── Tarifs Boutique Pro / Business ──────────────────────── */}
       {!hasFiltre && (
         <section style={{ maxWidth: 1200, margin: '32px auto 0', padding: '0 20px' }}>
-          <div style={{ textAlign: 'center', marginBottom: 20 }}>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy)', margin: '0 0 8px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--navy)', margin: '0 0 8px' }}>
               Ouvrez votre boutique en ligne
             </h2>
-            <p style={{ color: '#64748b', fontSize: 15, margin: 0 }}>
+            <p style={{ color: '#64748b', fontSize: 15, margin: '0 0 16px' }}>
               Vendez directement sur Nopalou — catalogue produits, analytics, placement prioritaire.
             </p>
+            
+            {/* Badges de Réduction Durée */}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Durées disponibles :</span>
+              <span style={{ background: '#f1f5f9', color: '#334155', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, border: '1px solid #cbd5e1' }}>1 mois</span>
+              <span style={{ background: '#fff7f0', color: '#C75B00', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, border: '1px solid #ffedd5' }}>3 mois (-10%)</span>
+              <span style={{ background: '#fff7f0', color: '#C75B00', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, border: '1px solid #ffedd5' }}>6 mois (-15%)</span>
+              <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 800, border: '1px solid #bbf7d0' }}>🔥 12 mois (-25% / 3 mois offerts)</span>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
             {/* Plan Pro */}
             <div style={{
-              border: '2px solid #C75B00', borderRadius: 12, padding: '22px 20px',
-              background: '#fff', position: 'relative',
+              border: '2px solid #C75B00', borderRadius: 16, padding: '24px 20px',
+              background: '#fff', position: 'relative', boxShadow: '0 4px 16px rgba(199,91,0,0.08)',
             }}>
               <span style={{
                 position: 'absolute', top: -12, left: 20,
                 background: '#C75B00', color: '#fff',
-                fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20, letterSpacing: '.04em',
+                fontSize: 11, fontWeight: 800, padding: '3px 12px', borderRadius: 20, letterSpacing: '.04em',
               }}>BOUTIQUE PRO</span>
-              <p style={{ fontSize: 30, fontWeight: 800, margin: '8px 0 2px', color: '#C75B00' }}>
-                {prixPro.toLocaleString('fr-FR')} <span style={{ fontSize: 14, fontWeight: 400, color: '#64748b' }}>FCFA/mois</span>
+              <p style={{ fontSize: 32, fontWeight: 900, margin: '8px 0 2px', color: '#C75B00' }}>
+                {prixPro.toLocaleString('fr-FR')} <span style={{ fontSize: 14, fontWeight: 500, color: '#64748b' }}>FCFA/mois</span>
+              </p>
+              <p style={{ fontSize: 12, color: '#16a34a', fontWeight: 700, marginBottom: 12 }}>
+                Jusqu&apos;à -25% en engagement 12 mois
               </p>
               <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>{modePaiementLabel}</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 9 }}>
@@ -413,25 +425,28 @@ export default async function HomePage({
               <Link href="/boutique/abonnement" style={{
                 display: 'block', textAlign: 'center',
                 background: '#C75B00', color: '#fff',
-                padding: '11px 0', borderRadius: 10,
-                fontWeight: 700, fontSize: 14, textDecoration: 'none',
+                padding: '12px 0', borderRadius: 10,
+                fontWeight: 800, fontSize: 14, textDecoration: 'none',
               }}>
-                Démarrer en Pro
+                Choisir la formule Pro →
               </Link>
             </div>
 
             {/* Plan Business */}
             <div style={{
-              border: '2px solid #1e3a5f', borderRadius: 12, padding: '22px 20px',
-              background: '#f8fafc', position: 'relative',
+              border: '2px solid #1e3a5f', borderRadius: 16, padding: '24px 20px',
+              background: '#f8fafc', position: 'relative', boxShadow: '0 4px 16px rgba(30,58,95,0.08)',
             }}>
               <span style={{
                 position: 'absolute', top: -12, left: 20,
                 background: '#1e3a5f', color: '#fff',
-                fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20, letterSpacing: '.04em',
+                fontSize: 11, fontWeight: 800, padding: '3px 12px', borderRadius: 20, letterSpacing: '.04em',
               }}>BOUTIQUE BUSINESS</span>
-              <p style={{ fontSize: 30, fontWeight: 800, margin: '8px 0 2px', color: '#1e3a5f' }}>
-                {prixBusiness.toLocaleString('fr-FR')} <span style={{ fontSize: 14, fontWeight: 400, color: '#64748b' }}>FCFA/mois</span>
+              <p style={{ fontSize: 32, fontWeight: 900, margin: '8px 0 2px', color: '#1e3a5f' }}>
+                {prixBusiness.toLocaleString('fr-FR')} <span style={{ fontSize: 14, fontWeight: 500, color: '#64748b' }}>FCFA/mois</span>
+              </p>
+              <p style={{ fontSize: 12, color: '#16a34a', fontWeight: 700, marginBottom: 12 }}>
+                Jusqu&apos;à -25% en engagement 12 mois
               </p>
               <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>{modePaiementLabel}</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 9 }}>
@@ -450,10 +465,10 @@ export default async function HomePage({
               <Link href="/boutique/abonnement" style={{
                 display: 'block', textAlign: 'center',
                 background: '#1e3a5f', color: '#fff',
-                padding: '11px 0', borderRadius: 10,
-                fontWeight: 700, fontSize: 14, textDecoration: 'none',
+                padding: '12px 0', borderRadius: 10,
+                fontWeight: 800, fontSize: 14, textDecoration: 'none',
               }}>
-                Démarrer en Business
+                Choisir la formule Business →
               </Link>
             </div>
           </div>

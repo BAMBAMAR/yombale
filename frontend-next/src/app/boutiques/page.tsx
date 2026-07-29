@@ -82,14 +82,15 @@ function estOuvertActuellement(horaires?: Record<string, string> | null): { ouve
 export default async function BoutiquesPage({
   searchParams,
 }: {
-  searchParams: { ville?: string; q?: string; cat?: string; page?: string; tri?: string; plan?: string }
+  searchParams: Promise<{ ville?: string; q?: string; cat?: string; page?: string; tri?: string; plan?: string }> | { ville?: string; q?: string; cat?: string; page?: string; tri?: string; plan?: string }
 }) {
-  const ville = searchParams.ville ?? ''
-  const q = searchParams.q ?? ''
-  const cat = searchParams.cat ?? ''
-  const page = searchParams.page ?? '1'
-  const tri = searchParams.tri ?? ''
-  const plan = searchParams.plan ?? ''
+  const sp = await Promise.resolve(searchParams)
+  const ville = sp?.ville ?? ''
+  const q = sp?.q ?? ''
+  const cat = sp?.cat ?? ''
+  const page = sp?.page ?? '1'
+  const tri = sp?.tri ?? ''
+  const plan = sp?.plan ?? ''
 
   const qs = new URLSearchParams({ limit: '24', page })
   if (ville) qs.set('ville', ville)
@@ -101,8 +102,8 @@ export default async function BoutiquesPage({
   let total = 0
   try {
     const data = await apiFetch<{ boutiques: Boutique[]; total: number }>(`/boutiques?${qs}`)
-    boutiques = data.boutiques ?? []
-    total = data.total ?? 0
+    boutiques = data?.boutiques ?? []
+    total = data?.total ?? 0
   } catch {}
 
   let boutiquesFiltrees = boutiques
@@ -272,22 +273,22 @@ export default async function BoutiquesPage({
             </Link>
           </div>
 
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280' }}>Trier :</span>
-            <select
-              value={tri}
-              onChange={e => {
-                const link = buildLink({ tri: e.target.value, page: '1' })
-                window.location.href = link
-              }}
-              style={{
-                padding: '5px 10px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 12, fontWeight: 600, background: '#fff',
-              }}
-            >
-              {TRIS.map(t => (
-                <option key={t.val || 'defaut'} value={t.val}>{t.label}</option>
-              ))}
-            </select>
+            {TRIS.map(t => (
+              <Link
+                key={t.val || 'defaut'}
+                href={buildLink({ tri: t.val, page: '1' })}
+                style={{
+                  padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                  background: tri === t.val ? '#1e293b' : '#f8fafc',
+                  color: tri === t.val ? '#fff' : '#4b5563',
+                  border: tri === t.val ? '1px solid #1e293b' : '1px solid #e2e8f0',
+                }}
+              >
+                {t.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

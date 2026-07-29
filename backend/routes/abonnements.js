@@ -33,7 +33,8 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
       return res.status(403).json({ error: 'Paiement Wave temporairement indisponible' });
     }
     const userId = req.user.userId;
-    const { plan } = req.body;
+    const { plan, duree_mois = 1 } = req.body;
+    const duree = [1, 3, 6, 12].includes(Number(duree_mois)) ? Number(duree_mois) : 1;
     const PLANS = await getPlans();
     if (!PLANS[plan]) return res.status(400).json({ error: 'Plan invalide (pro ou business)' });
 
@@ -44,13 +45,20 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
     );
     if (existing.rows[0]) return res.status(409).json({ error: 'Abonnement actif existant' });
 
-    const { prix, label } = PLANS[plan];
-    const clientRef = `abmt_${userId}_${plan}`;
+    const { prix: prixMensuel, label } = PLANS[plan];
+
+    let remise = 0;
+    if (duree === 3) remise = 0.10;      // -10% pour 3 mois
+    else if (duree === 6) remise = 0.15; // -15% pour 6 mois
+    else if (duree === 12) remise = 0.25; // -25% pour 12 mois (1 an)
+
+    const prixTotal = Math.round((prixMensuel * duree) * (1 - remise));
+    const clientRef = `abmt_${userId}_${plan}_${duree}`;
 
     const session = await axios.post(
       'https://api.wave.com/v1/checkout/sessions',
       {
-        amount:           prix,
+        amount:           prixTotal,
         currency:         'XOF',
         success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${plan}&type=abonnement`,
         error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
@@ -58,7 +66,7 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
       },
       { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
     );
-    res.json({ wave_url: session.data.wave_launch_url, session_id: session.data.id, plan, label, prix });
+    res.json({ wave_url: session.data.wave_launch_url, session_id: session.data.id, plan, label, prix: prixTotal, duree });
   } catch (err) {
     const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Erreur Wave';
     console.error('[ABONNEMENTS INITIER]', msg);
