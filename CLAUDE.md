@@ -92,7 +92,12 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 
 ### Backend (`.env`)
 | Variable | Purpose |
-|---|---|
+|**6. Refonte du Carnet de Crédits & Dettes Client en Caisse POS :**
+- **Saisie détaillée des produits pris** : Intégration de la sauvegarde automatique de la liste exacte des articles et des quantités pris à crédit lors de l'encaissement (`produits` JSONB en base de données).
+- **Historique & Fiche Client** : Visualisation complète du grand livre de compte par client (historique des opérations, remboursements Cash/Wave/OM, crédits directs).
+- **Promesse d'Échéance & Justifications** : Prise en compte de la date d'échéance convenue, du quartier/adresse du client et des remarques/justifications sur chaque transaction.
+
+---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
 | `ADMIN_SECRET` | Guards `/admin*.html` pages and `/api/*/admin` routes |
