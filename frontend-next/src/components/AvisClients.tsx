@@ -67,7 +67,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur lors de l’envoi de l’avis')
 
-      setSuccessMsg('Thank you! Votre avis a été publié avec succès ⭐')
+      setSuccessMsg('Merci ! Votre avis a été publié avec succès ⭐')
       setNomClient('')
       setCommentaire('')
       loadAvis()

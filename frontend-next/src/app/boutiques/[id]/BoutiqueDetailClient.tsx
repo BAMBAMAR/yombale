@@ -717,7 +717,7 @@ export default function BoutiqueDetailClient({
                         border: isToday ? '1.5px solid #ffedd5' : '1px solid #f1f5f9',
                       }}>
                         <span style={{ fontSize: 13, fontWeight: isToday ? 900 : 700, color: isToday ? '#C75B00' : '#334155' }}>
-                          {JOURS[i]} {isToday && '(Aujourd\'hui)'}
+                          {JOURS[i]} {isToday && " — Aujourd'hui"}
                         </span>
                         <span style={{ fontSize: 13, color: val.toLowerCase().includes('fermé') ? '#dc2626' : '#16a34a', fontWeight: 800 }}>
                           {val}
