@@ -28,8 +28,8 @@ async function getPrix() {
     sponsoring:    sponsoring || 5000,
     boost:         boost    || 500,
     boostJours:    boostJours || 7,
-    pro:           pro      || 15000,
-    business:      business || 35000,
+    pro:           pro      || 5000,
+    business:      business || 10000,
     commissionBiz: commissionBiz || 2.0,
     promo:         promoActive ? promoReduc : 0,
   };

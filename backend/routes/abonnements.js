@@ -7,8 +7,8 @@ const cfg = require('../lib/settingsCache');
 
 async function getPlans() {
   return {
-    pro:      { prix: await cfg.getNum('plan_pro_prix')      || 15000, label: await cfg.get('plan_pro_label')      || 'Boutique Pro' },
-    business: { prix: await cfg.getNum('plan_business_prix') || 35000, label: await cfg.get('plan_business_label') || 'Boutique Business' },
+    pro:      { prix: await cfg.getNum('plan_pro_prix')      || 5000, label: await cfg.get('plan_pro_label')      || 'Boutique Pro' },
+    business: { prix: await cfg.getNum('plan_business_prix') || 10000, label: await cfg.get('plan_business_label') || 'Boutique Business' },
   };
 }
 

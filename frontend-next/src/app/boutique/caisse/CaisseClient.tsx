@@ -164,7 +164,7 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
                 boxShadow: '0 4px 12px rgba(199, 91, 0, 0.25)'
               }}
             >
-              Passer à la Boutique Pro (15 000 FCFA/mois)
+              Passer à la Boutique Pro (5 000 FCFA/mois)
             </Link>
             <Link
               href="/boutique"

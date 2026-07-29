@@ -5,8 +5,8 @@ import ModalPaiementManuel from '@/components/ModalPaiementManuel'
 import { PALIERS_BOUTIQUE } from '@/lib/fonctionnalites-data'
 
 const PLANS_DEFAUT = {
-  pro: 15000,
-  business: 35000,
+  pro: 5000,
+  business: 10000,
 }
 
 const PLANS_INFO = PALIERS_BOUTIQUE.filter((p): p is typeof PALIERS_BOUTIQUE[number] & { id: 'pro' | 'business' } =>
