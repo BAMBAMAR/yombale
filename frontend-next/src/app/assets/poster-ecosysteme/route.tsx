@@ -2,31 +2,15 @@ import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
 
-// Font loader function for high sharpness typography
-async function getCustomFont() {
-  try {
-    const res = await fetch('https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf')
-    if (res.ok) {
-      return await res.arrayBuffer()
-    }
-  } catch {
-    // fallback
-  }
-  return null
-}
-
 // Master Poster All-In-One — Visuel Lumineux Haute Définition
 export async function GET() {
-  const fontData = await getCustomFont()
-  const fontOptions = fontData ? [{ name: 'Inter', data: fontData, style: 'normal' as const, weight: 700 as const }] : []
-
   return new ImageResponse(
     (
       <div style={{
         width: 1200, height: 1600,
         display: 'flex', flexDirection: 'column',
         background: 'linear-gradient(160deg, #F8FAFC 0%, #F1F5F9 40%, #FFF7ED 100%)',
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
         position: 'relative',
         color: '#0F172A',
         padding: 48,
@@ -195,6 +179,6 @@ export async function GET() {
 
       </div>
     ),
-    { width: 1200, height: 1600, fonts: fontOptions }
+    { width: 1200, height: 1600 }
   )
 }

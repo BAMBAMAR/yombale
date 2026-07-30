@@ -2,30 +2,15 @@ import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
 
-async function getCustomFont() {
-  try {
-    const res = await fetch('https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf')
-    if (res.ok) {
-      return await res.arrayBuffer()
-    }
-  } catch {
-    // fallback
-  }
-  return null
-}
-
 // Visuel Dédié Pilier 3 — Apporteur d'Affaires 20% (Bright & Sharp)
 export async function GET() {
-  const fontData = await getCustomFont()
-  const fontOptions = fontData ? [{ name: 'Inter', data: fontData, style: 'normal' as const, weight: 700 as const }] : []
-
   return new ImageResponse(
     (
       <div style={{
         width: 1080, height: 1350,
         display: 'flex', flexDirection: 'column',
         background: 'linear-gradient(160deg, #F3E8FF 0%, #FFFFFF 50%, #FAF5FF 100%)',
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
         position: 'relative', color: '#0F172A',
         padding: 48, boxSizing: 'border-box',
         overflow: 'hidden',
@@ -164,6 +149,6 @@ export async function GET() {
 
       </div>
     ),
-    { width: 1080, height: 1350, fonts: fontOptions }
+    { width: 1080, height: 1350 }
   )
 }
