@@ -15,6 +15,7 @@ export default function DemoClient({
   // State variables
   const [activeRole, setActiveRole] = useState<'acheteur' | 'marchand' | 'apporteur'>(initialRole);
   const [activeStep, setActiveStep] = useState<number>(1);
+  const [activeGuideTab, setActiveGuideTab] = useState<string>('compte');
   const [referralCode, setReferralCode] = useState<string>(initialRef);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
@@ -56,7 +57,6 @@ export default function DemoClient({
   const commissionMensuelle = Math.round(caTotalGenerer * TAUX_COMMISSION);
   const commissionAnnuelle = commissionMensuelle * 12;
 
-  // POS calculation
   const totalPosCart = posCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
   const handleAddCreditEntry = () => {
@@ -102,58 +102,53 @@ export default function DemoClient({
   return (
     <div style={{
       fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif',
-      background: '#0B132B',
-      color: '#F8FAFC',
+      background: '#F8FAFC',
+      color: '#0F172A',
       minHeight: '100vh',
-      padding: '24px 16px 60px 16px',
+      padding: '20px 16px 60px 16px',
     }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 40 }}>
 
         {/* ───────────────────────────────────────────────────────────── */}
-        {/* HERO DE PRESENTATION                                          */}
+        {/* HERO DE PRESENTATION (MODERNE & LUMINEUX)                      */}
         {/* ───────────────────────────────────────────────────────────── */}
         <section style={{
-          background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
           borderRadius: 24,
           padding: '40px 24px',
           border: '1px solid #334155',
           textAlign: 'center',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+          boxShadow: '0 12px 30px rgba(15, 23, 42, 0.2)',
           position: 'relative',
           overflow: 'hidden',
+          color: '#FFFFFF'
         }}>
-          <div style={{
-            position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)',
-            width: 400, height: 400, background: 'rgba(199, 91, 0, 0.15)',
-            filter: 'blur(80px)', borderRadius: '50%', pointerEvents: 'none'
-          }} />
-
           <div style={{ position: 'relative', zIndex: 1, maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
             
             {/* Badges */}
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
-              <span style={{ background: 'rgba(199, 91, 0, 0.15)', color: '#FF8C00', border: '1px solid rgba(199, 91, 0, 0.3)', padding: '6px 14px', borderRadius: 50, fontSize: 12, fontWeight: 700 }}>
+              <span style={{ background: '#C75B00', color: '#FFF', padding: '6px 14px', borderRadius: 50, fontSize: 12, fontWeight: 700 }}>
                 ⚡ Démo Commerciale Interactive
               </span>
-              <span style={{ background: 'rgba(13, 148, 136, 0.15)', color: '#2DD4BF', border: '1px solid rgba(13, 148, 136, 0.3)', padding: '6px 14px', borderRadius: 50, fontSize: 12, fontWeight: 700 }}>
+              <span style={{ background: 'rgba(45, 212, 191, 0.2)', color: '#2DD4BF', border: '1px solid #2DD4BF', padding: '6px 14px', borderRadius: 50, fontSize: 12, fontWeight: 700 }}>
                 🛡️ Nopalou vs Concurrence
               </span>
-              <span style={{ background: 'rgba(217, 119, 6, 0.15)', color: '#FBBF24', border: '1px solid rgba(217, 119, 6, 0.3)', padding: '6px 14px', borderRadius: 50, fontSize: 12, fontWeight: 700 }}>
+              <span style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#FBBF24', border: '1px solid #FBBF24', padding: '6px 14px', borderRadius: 50, fontSize: 12, fontWeight: 700 }}>
                 💳 Wave &amp; Orange Money Ready
               </span>
             </div>
 
             {/* Title */}
-            <h1 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 900, lineHeight: 1.2, color: '#FFFFFF', margin: 0 }}>
+            <h1 style={{ fontSize: 'clamp(28px, 4vw, 46px)', fontWeight: 900, lineHeight: 1.2, color: '#FFFFFF', margin: 0 }}>
               L&apos;Écosystème Digital Tout-en-Un <br />
-              <span style={{ background: 'linear-gradient(90deg, #C75B00, #F59E0B, #2DD4BF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span style={{ background: 'linear-gradient(90deg, #FF8C00, #F59E0B, #2DD4BF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 Pour Acheter, Vendre &amp; Entreprendre au Sénégal
               </span>
             </h1>
 
-            <p style={{ fontSize: 'clamp(14px, 2vw, 17px)', color: '#94A3B8', maxWidth: 750, margin: '0 auto', lineHeight: 1.6 }}>
-              Nopalou combine un <strong style={{ color: '#FFF' }}>Super-Comparateur de prix</strong>, un{' '}
-              <strong style={{ color: '#FFF' }}>Logiciel de Caisse POS tactile</strong> avec carnet de crédits client, un{' '}
+            <p style={{ fontSize: 'clamp(14px, 2vw, 17px)', color: '#E2E8F0', maxWidth: 780, margin: '0 auto', lineHeight: 1.6 }}>
+              Nopalou combine un <strong style={{ color: '#FF8C00' }}>Super-Comparateur de prix</strong>, un{' '}
+              <strong style={{ color: '#FFF' }}>Logiciel de Caisse POS tactile</strong> avec gestion du carnet de crédits/dettes client, un{' '}
               <strong style={{ color: '#FFF' }}>Bot WhatsApp IA</strong> et un <strong style={{ color: '#2DD4BF' }}>Programme Apporteur 10% récurrent</strong>.
             </p>
 
@@ -161,55 +156,297 @@ export default function DemoClient({
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 14, paddingTop: 10 }}>
               <button
                 onClick={() => {
-                  const el = document.getElementById('simulateur-section');
+                  const el = document.getElementById('guide-etape-par-etape');
                   el?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 style={{
                   background: 'linear-gradient(90deg, #C75B00, #EA580C)',
                   color: '#FFFFFF', border: 'none', padding: '14px 28px',
                   borderRadius: 14, fontWeight: 800, fontSize: 15, cursor: 'pointer',
-                  boxShadow: '0 8px 20px rgba(199, 91, 0, 0.35)',
+                  boxShadow: '0 8px 20px rgba(199, 91, 0, 0.4)',
                   display: 'flex', alignItems: 'center', gap: 8
                 }}
               >
-                <span>🎮 Tester le Simulateur Live</span>
+                <span>📘 Voir le Guide Étape par Étape</span>
               </button>
 
               <button
                 onClick={() => setShowShareModal(true)}
                 style={{
-                  background: '#334155', color: '#F8FAFC', border: '1px solid #475569',
-                  padding: '14px 24px', borderRadius: 14, fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                  background: '#FFFFFF', color: '#0F172A', border: 'none',
+                  padding: '14px 24px', borderRadius: 14, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                   display: 'flex', alignItems: 'center', gap: 8
                 }}
               >
-                <span>🔗 Obtenir mon Lien Commercial / Apporteur</span>
+                <span>🔗 Lien Commercial / Apporteur</span>
               </button>
             </div>
 
-            {/* Stat Pills */}
+          </div>
+        </section>
+
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* GUIDE ÉTAPE PAR ÉTAPE (UTILISATION PAS-À-PAS CLAIRE)          */}
+        {/* ───────────────────────────────────────────────────────────── */}
+        <section id="guide-etape-par-etape" style={{ display: 'flex', flexDirection: 'column', gap: 20, scrollMarginTop: 30 }}>
+          <div style={{ textAlign: 'center' }}>
+            <span style={{ background: '#FFF7ED', color: '#C75B00', border: '1px solid #FFEDD5', padding: '4px 14px', borderRadius: 20, fontSize: 12, fontWeight: 800 }}>
+              📘 MODE D&apos;EMPLOI &amp; PROCESSUS COMPLET
+            </span>
+            <h2 style={{ fontSize: 'clamp(24px, 3vw, 34px)', fontWeight: 900, color: '#0F172A', margin: '8px 0 6px 0' }}>
+              Comment utiliser Nopalou étape par étape ?
+            </h2>
+            <p style={{ fontSize: 15, color: '#475569', margin: 0, maxWidth: 700, marginLeft: 'auto', marginRight: 'auto' }}>
+              Un guide clair pour démarrer immédiatement : de la création de compte à la caisse POS et aux commissions.
+            </p>
+          </div>
+
+          {/* Guide Tabs Selector */}
+          <div style={{
+            display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, justifyContent: 'flex-start'
+          }}>
+            {[
+              { id: 'compte', label: '1. Créer un Compte', icon: '👤' },
+              { id: 'boutique', label: '2. Créer une Boutique', icon: '🏪' },
+              { id: 'catalogue', label: '3. Ajouter des Produits', icon: '📦' },
+              { id: 'caisse', label: '4. Utiliser la Caisse POS', icon: '💻' },
+              { id: 'credit', label: '5. Carnet de Crédits', icon: '📝' },
+              { id: 'bot', label: '6. Bot WhatsApp', icon: '🤖' },
+              { id: 'apporteur', label: '7. Gagner des Commissions', icon: '💼' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveGuideTab(tab.id)}
+                style={{
+                  background: activeGuideTab === tab.id ? '#C75B00' : '#FFFFFF',
+                  color: activeGuideTab === tab.id ? '#FFFFFF' : '#334155',
+                  border: activeGuideTab === tab.id ? '1px solid #C75B00' : '1px solid #E2E8F0',
+                  padding: '10px 16px', borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                  whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6,
+                  boxShadow: activeGuideTab === tab.id ? '0 4px 12px rgba(199, 91, 0, 0.25)' : '0 2px 4px rgba(0,0,0,0.03)'
+                }}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Guide Tab Content Card */}
+          <div style={{
+            background: '#FFFFFF', borderRadius: 20, border: '1.5px solid #E2E8F0', padding: '28px 24px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: 16
+          }}>
+            {activeGuideTab === 'compte' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#FFF7ED', color: '#C75B00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 20 }}>1</div>
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0 }}>Étape 1 : Créer son Compte Nopalou (Gratuit &amp; Rapide)</h3>
+                </div>
+                <p style={{ fontSize: 14, color: '#334155', lineHeight: 1.6, margin: 0 }}>
+                  L&apos;inscription sur Nopalou prend moins d&apos;une minute. Que vous soyez acheteur, commerçant ou apporteurs d&apos;affaires, un seul compte vous donne accès à tout l&apos;écosystème.
+                </p>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: 13 }}>
+                  <div><strong>1. Saisie des infos :</strong> Entrez votre Nom, Adresse Email et Numéro WhatsApp.</div>
+                  <div><strong>2. Sécurisation :</strong> Définissez un mot de passe sécurisé.</div>
+                  <div><strong>3. Accès immédiat :</strong> Accédez à votre tableau de bord personnel.</div>
+                </div>
+              </div>
+            )}
+
+            {activeGuideTab === 'boutique' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#CCFBF1', color: '#0D9488', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 20 }}>2</div>
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0 }}>Étape 2 : Créer sa Boutique en Ligne en 2 Minutes</h3>
+                </div>
+                <p style={{ fontSize: 14, color: '#334155', lineHeight: 1.6, margin: 0 }}>
+                  Rendez-vous dans la rubrique <strong>/boutique</strong> pour enregistrer votre commerce et bénéficier d&apos;une visibilité immédiate auprès de milliers d&apos;acheteurs.
+                </p>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: 13 }}>
+                  <div><strong>1. Nom &amp; Adresse :</strong> Indiquez le nom de votre magasin et sa localisation (ex: Dakar, Sandaga, Thiès).</div>
+                  <div><strong>2. Code Apporteur :</strong> Saisissez le code de la personne qui vous a recommandé Nopalou (si applicable).</div>
+                  <div><strong>3. Formule :</strong> Choisissez entre la formule Gratuite, Pro (15 000 FCFA/m) ou Business (35 000 FCFA/m).</div>
+                </div>
+              </div>
+            )}
+
+            {activeGuideTab === 'catalogue' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#FEF3C7', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 20 }}>3</div>
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0 }}>Étape 3 : Remplir et Gérer son Catalogue Produits</h3>
+                </div>
+                <p style={{ fontSize: 14, color: '#334155', lineHeight: 1.6, margin: 0 }}>
+                  Publiez vos articles en quelques clics avec des photos attrayantes, la gestion des stocks et la numérisation des codes-barres.
+                </p>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: 13 }}>
+                  <div><strong>1. Photos &amp; Prix :</strong> Ajoutez jusqu&apos;à 5 photos par produit avec votre prix de vente.</div>
+                  <div><strong>2. Code-Barres EAN :</strong> Scannez ou saisissez le code-barres pour une gestion de stock en caisse POS.</div>
+                  <div><strong>3. Publication 1-clic :</strong> Vos produits deviennent instantanément visibles sur le comparateur Nopalou.</div>
+                </div>
+              </div>
+            )}
+
+            {activeGuideTab === 'caisse' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#E0F2FE', color: '#0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 20 }}>4</div>
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0 }}>Étape 4 : Utiliser la Caisse Enregistreuse Tactile POS</h3>
+                </div>
+                <p style={{ fontSize: 14, color: '#334155', lineHeight: 1.6, margin: 0 }}>
+                  Transformez n&apos;importe quelle tablette ou smartphone en caisse magasin enregistreuse pour encaisser vos clients en magasin.
+                </p>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: 13 }}>
+                  <div><strong>1. Sélection des articles :</strong> Touchez les produits ou scannez leurs codes-barres pour constituer le panier.</div>
+                  <div><strong>2. Mode de paiement :</strong> Encaissez en Espèces, Wave ou Orange Money.</div>
+                  <div><strong>3. Reçu Digital :</strong> Envoyez le reçu de vente directement sur le WhatsApp du client.</div>
+                </div>
+              </div>
+            )}
+
+            {activeGuideTab === 'credit' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#FEF3C7', color: '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 20 }}>5</div>
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0 }}>Étape 5 : Gérer le Carnet de Crédits &amp; Dettes Client (Plus d&apos;impayés !)</h3>
+                </div>
+                <p style={{ fontSize: 14, color: '#334155', lineHeight: 1.6, margin: 0 }}>
+                  Ne perdez plus d&apos;argent avec le cahier papier. Enregistrez la liste exacte des articles pris à crédit par un client et suivez les remboursement.
+                </p>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: 13 }}>
+                  <div><strong>1. Saisie du crédit :</strong> Sélectionnez les articles pris à crédit et le nom du client.</div>
+                  <div><strong>2. Calcul du solde :</strong> La dette totale et l&apos;historique sont automatiquement sauvegardés en base de données.</div>
+                  <div><strong>3. Relance 1-Click :</strong> Cliquez sur &quot;Relancer sur WhatsApp&quot; pour envoyer un rappel courtois pré-rempli au client.</div>
+                </div>
+              </div>
+            )}
+
+            {activeGuideTab === 'bot' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#D1FAE5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 20 }}>6</div>
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0 }}>Étape 6 : Activer le Bot WhatsApp Commercial 24/7</h3>
+                </div>
+                <p style={{ fontSize: 14, color: '#334155', lineHeight: 1.6, margin: 0 }}>
+                  Votre boutique est connectée à l&apos;Assistant IA Nopalou. Vos clients peuvent vous poser des questions et passer commande 24h/24.
+                </p>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: 13 }}>
+                  <div><strong>1. Réponses auto :</strong> Le bot répond aux questions de prix, stock et horaires.</div>
+                  <div><strong>2. Prise de commande :</strong> Le client compose son panier et paye par Wave ou OM sur WhatsApp.</div>
+                  <div><strong>3. Notification marchand :</strong> Vous recevez le détail de la commande directement sur votre téléphone.</div>
+                </div>
+              </div>
+            )}
+
+            {activeGuideTab === 'apporteur' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#F3E8FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 20 }}>7</div>
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0 }}>Étape 7 : Devenir Apporteur d&apos;Affaires (10% de Commission Mensuelle)</h3>
+                </div>
+                <p style={{ fontSize: 14, color: '#334155', lineHeight: 1.6, margin: 0 }}>
+                  Recommandez Nopalou aux commerçants de votre réseau et percevez 10% sur chaque abonnement mensuel renouvelé.
+                </p>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: 13 }}>
+                  <div><strong>1. Activez votre code :</strong> Générez votre code unique sur nopalou.com/compte/apporteur.</div>
+                  <div><strong>2. Partagez votre lien :</strong> Envoyez votre lien aux commerçants pour qu&apos;ils créent leur boutique.</div>
+                  <div><strong>3. Retrait Wave/OM :</strong> Percevez vos commissions mensuelles récurrentes directement sur Wave ou Orange Money.</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* CATALOGUE DES FONCTIONNALITES COMPLETES (DESIGN CLAIR & LUMINEUX) */}
+        {/* ───────────────────────────────────────────────────────────── */}
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ textAlign: 'center' }}>
+            <span style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE', padding: '4px 14px', borderRadius: 20, fontSize: 12, fontWeight: 800 }}>
+              ✨ SUITE COMPLÈTE NOPALOU
+            </span>
+            <h2 style={{ fontSize: 'clamp(24px, 3vw, 34px)', fontWeight: 900, color: '#0F172A', margin: '8px 0 4px 0' }}>
+              Les 6 Fonctionnalités Essentielles
+            </h2>
+            <p style={{ fontSize: 15, color: '#475569', margin: 0 }}>
+              Une suite logicielle moderne, claire et adaptée au commerce au Sénégal.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+            {/* Card 1 */}
             <div style={{
-              display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-              gap: 12, marginTop: 24, paddingTop: 20, borderTop: '1px solid #334155'
+              background: '#FFFFFF', padding: 24, borderRadius: 20, border: '1px solid #E2E8F0',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: 12
             }}>
-              <div style={{ background: '#0F172A', padding: 14, borderRadius: 14, border: '1px solid #1E293B', textAlign: 'left' }}>
-                <div style={{ fontSize: 24, fontWeight: 900, color: '#C75B00' }}>35%</div>
-                <div style={{ fontSize: 11, color: '#94A3B8' }}>Économie moyenne acheteur</div>
-              </div>
-              <div style={{ background: '#0F172A', padding: 14, borderRadius: 14, border: '1px solid #1E293B', textAlign: 'left' }}>
-                <div style={{ fontSize: 24, fontWeight: 900, color: '#2DD4BF' }}>0 Impayé</div>
-                <div style={{ fontSize: 11, color: '#94A3B8' }}>Suivi Caisse POS &amp; Crédits</div>
-              </div>
-              <div style={{ background: '#0F172A', padding: 14, borderRadius: 14, border: '1px solid #1E293B', textAlign: 'left' }}>
-                <div style={{ fontSize: 24, fontWeight: 900, color: '#F59E0B' }}>24/7</div>
-                <div style={{ fontSize: 11, color: '#94A3B8' }}>Assistant WhatsApp IA</div>
-              </div>
-              <div style={{ background: '#0F172A', padding: 14, borderRadius: 14, border: '1px solid #1E293B', textAlign: 'left' }}>
-                <div style={{ fontSize: 24, fontWeight: 900, color: '#10B981' }}>10% à Vie</div>
-                <div style={{ fontSize: 11, color: '#94A3B8' }}>Commission Apporteur récurrente</div>
-              </div>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#FFF7ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>🔍</div>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: 0 }}>1. Super-Comparateur de Prix</h3>
+              <p style={{ fontSize: 13, color: '#475569', margin: 0, lineHeight: 1.6 }}>
+                Moteur de recherche intelligent comparant simultanément les produits de consommation, logements immobiliers et pass télécoms Orange, Free &amp; Expresso.
+              </p>
             </div>
 
+            {/* Card 2 */}
+            <div style={{
+              background: '#FFFFFF', padding: 24, borderRadius: 20, border: '1px solid #E2E8F0',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: 12
+            }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#CCFBF1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>🏬</div>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: 0 }}>2. Caisse Enregistreuse POS Tactile</h3>
+              <p style={{ fontSize: 13, color: '#475569', margin: 0, lineHeight: 1.6 }}>
+                Interface tactile pour tablette/téléphone permettant d&apos;encaisser en magasin (Wave, OM, Espèces), de scanner les codes-barres et d&apos;émettre des reçus digitaux.
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div style={{
+              background: '#FFFFFF', padding: 24, borderRadius: 20, border: '1px solid #E2E8F0',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: 12
+            }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>📝</div>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: 0 }}>3. Carnet de Crédits &amp; Dettes Client</h3>
+              <p style={{ fontSize: 13, color: '#475569', margin: 0, lineHeight: 1.6 }}>
+                Enregistrement détaillé des articles pris à crédit par client, calcul automatique des reliquats et bouton de relance automatique WhatsApp en 1-clic.
+              </p>
+            </div>
+
+            {/* Card 4 */}
+            <div style={{
+              background: '#FFFFFF', padding: 24, borderRadius: 20, border: '1px solid #E2E8F0',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: 12
+            }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>🤖</div>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: 0 }}>4. Assistant Bot Commercial WhatsApp</h3>
+              <p style={{ fontSize: 13, color: '#475569', margin: 0, lineHeight: 1.6 }}>
+                Chatbot connecté 24/7 à votre boutique pour répondre automatiquement aux questions des clients et enregistrer les commandes par Wave/OM.
+              </p>
+            </div>
+
+            {/* Card 5 */}
+            <div style={{
+              background: '#FFFFFF', padding: 24, borderRadius: 20, border: '1px solid #E2E8F0',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: 12
+            }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#F3E8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>💼</div>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: 0 }}>5. Programme Apporteur 10% Récurrent</h3>
+              <p style={{ fontSize: 13, color: '#475569', margin: 0, lineHeight: 1.6 }}>
+                Programme d&apos;affiliation rémunérant les apporteurs d&apos;affaires à hauteur de 10% mensuel récurrent sur chaque abonnement commerçant souscrit.
+              </p>
+            </div>
+
+            {/* Card 6 */}
+            <div style={{
+              background: '#FFFFFF', padding: 24, borderRadius: 20, border: '1px solid #E2E8F0',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: 12
+            }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>🎨</div>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: 0 }}>6. Générateur de Visuels &amp; Flyers</h3>
+              <p style={{ fontSize: 13, color: '#475569', margin: 0, lineHeight: 1.6 }}>
+                Kit de communication prêt-à-l&apos;emploi générant des flyers professionnels pour promouvoir votre boutique sur WhatsApp, Instagram et Facebook.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -218,20 +455,20 @@ export default function DemoClient({
         {/* ───────────────────────────────────────────────────────────── */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ textAlign: 'center' }}>
-            <h2 style={{ fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: 800, color: '#FFFFFF', margin: '0 0 6px 0' }}>
+            <h2 style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0' }}>
               Pourquoi Nopalou surpasse la concurrence ?
             </h2>
-            <p style={{ fontSize: 14, color: '#94A3B8', margin: 0 }}>
+            <p style={{ fontSize: 14, color: '#475569', margin: 0 }}>
               Comparaison objective entre Nopalou et les méthodes e-commerce ou manuelles classiques.
             </p>
           </div>
 
-          <div style={{ overflowX: 'auto', borderRadius: 16, border: '1px solid #334155', background: '#0F172A' }}>
+          <div style={{ overflowX: 'auto', borderRadius: 18, border: '1.5px solid #E2E8F0', background: '#FFFFFF', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13, minWidth: 650 }}>
               <thead>
-                <tr style={{ background: '#020617', borderBottom: '1px solid #334155', textTransform: 'uppercase', fontSize: 11, color: '#94A3B8' }}>
+                <tr style={{ background: '#F8FAFC', borderBottom: '1.5px solid #E2E8F0', textTransform: 'uppercase', fontSize: 11, color: '#475569' }}>
                   <th style={{ padding: '16px' }}>Fonctionnalité / Solution</th>
-                  <th style={{ padding: '16px', background: 'rgba(199, 91, 0, 0.15)', color: '#FF8C00', fontWeight: 800, textAlign: 'center' }}>
+                  <th style={{ padding: '16px', background: '#FFF7ED', color: '#C75B00', fontWeight: 800, textAlign: 'center' }}>
                     🚀 Nopalou Tout-en-Un
                   </th>
                   <th style={{ padding: '16px', textAlign: 'center' }}>E-Commerce Classique</th>
@@ -239,41 +476,41 @@ export default function DemoClient({
                   <th style={{ padding: '16px', textAlign: 'center' }}>WhatsApp Manuel</th>
                 </tr>
               </thead>
-              <tbody style={{ color: '#CBD5E1' }}>
-                <tr style={{ borderBottom: '1px solid #1E293B' }}>
-                  <td style={{ padding: '14px', fontWeight: 700, color: '#FFF' }}>🔍 Comparateur de prix multi-marchands</td>
-                  <td style={{ padding: '14px', textAlign: 'center', background: 'rgba(199, 91, 0, 0.05)', color: '#10B981', fontWeight: 800 }}>✅ Oui (Produits, Immo, Telecom)</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#EF4444' }}>❌ Vendeurs isolés</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#64748B' }}>— Non concerné</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#EF4444' }}>❌ Aucun comparateur</td>
+              <tbody style={{ color: '#334155' }}>
+                <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                  <td style={{ padding: '14px', fontWeight: 700, color: '#0F172A' }}>🔍 Comparateur de prix multi-marchands</td>
+                  <td style={{ padding: '14px', textAlign: 'center', background: '#FFF7ED', color: '#059669', fontWeight: 800 }}>✅ Oui (Produits, Immo, Telecom)</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#DC2626' }}>❌ Vendeurs isolés</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#94A3B8' }}>— Non concerné</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#DC2626' }}>❌ Aucun comparateur</td>
                 </tr>
-                <tr style={{ borderBottom: '1px solid #1E293B' }}>
-                  <td style={{ padding: '14px', fontWeight: 700, color: '#FFF' }}>🏪 Caisse POS &amp; Carnet Crédits/Dettes</td>
-                  <td style={{ padding: '14px', textAlign: 'center', background: 'rgba(199, 91, 0, 0.05)', color: '#10B981', fontWeight: 800 }}>✅ Intégré + Relance WhatsApp 1-clic</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#EF4444' }}>❌ Pas de Caisse magasin</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#F59E0B' }}>⚠️ Cahier à risque d&apos;oubli</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#EF4444' }}>❌ Saisie manuelle pénible</td>
+                <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                  <td style={{ padding: '14px', fontWeight: 700, color: '#0F172A' }}>🏪 Caisse POS &amp; Carnet Crédits/Dettes</td>
+                  <td style={{ padding: '14px', textAlign: 'center', background: '#FFF7ED', color: '#059669', fontWeight: 800 }}>✅ Intégré + Relance WhatsApp 1-clic</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#DC2626' }}>❌ Pas de Caisse magasin</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#D97706' }}>⚠️ Cahier à risque d&apos;oubli</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#DC2626' }}>❌ Saisie manuelle pénible</td>
                 </tr>
-                <tr style={{ borderBottom: '1px solid #1E293B' }}>
-                  <td style={{ padding: '14px', fontWeight: 700, color: '#FFF' }}>🤖 Assistant Bot WhatsApp Commercial 24/7</td>
-                  <td style={{ padding: '14px', textAlign: 'center', background: 'rgba(199, 91, 0, 0.05)', color: '#10B981', fontWeight: 800 }}>✅ Commandes &amp; Réponses auto</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#EF4444' }}>❌ Pas d&apos;Assistant IA</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#EF4444' }}>❌ Aucun</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#F59E0B' }}>⚠️ Réponses lentes</td>
+                <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                  <td style={{ padding: '14px', fontWeight: 700, color: '#0F172A' }}>🤖 Assistant Bot WhatsApp Commercial 24/7</td>
+                  <td style={{ padding: '14px', textAlign: 'center', background: '#FFF7ED', color: '#059669', fontWeight: 800 }}>✅ Commandes &amp; Réponses auto</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#DC2626' }}>❌ Pas d&apos;Assistant IA</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#DC2626' }}>❌ Aucun</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#D97706' }}>⚠️ Réponses lentes</td>
                 </tr>
-                <tr style={{ borderBottom: '1px solid #1E293B' }}>
-                  <td style={{ padding: '14px', fontWeight: 700, color: '#FFF' }}>💼 Commission Récurrente Apporteur (10%)</td>
-                  <td style={{ padding: '14px', textAlign: 'center', background: 'rgba(199, 91, 0, 0.05)', color: '#10B981', fontWeight: 800 }}>✅ Revenu passif mensuel à vie</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#EF4444' }}>❌ Inexistant</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#64748B' }}>— Aucun</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#64748B' }}>— Aucun</td>
+                <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                  <td style={{ padding: '14px', fontWeight: 700, color: '#0F172A' }}>💼 Commission Récurrente Apporteur (10%)</td>
+                  <td style={{ padding: '14px', textAlign: 'center', background: '#FFF7ED', color: '#059669', fontWeight: 800 }}>✅ Revenu passif mensuel à vie</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#DC2626' }}>❌ Inexistant</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#94A3B8' }}>— Aucun</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#94A3B8' }}>— Aucun</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '14px', fontWeight: 700, color: '#FFF' }}>💳 Paiements Wave &amp; Orange Money</td>
-                  <td style={{ padding: '14px', textAlign: 'center', background: 'rgba(199, 91, 0, 0.05)', color: '#10B981', fontWeight: 800 }}>✅ Natif &amp; Instantané</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#F59E0B' }}>⚠️ Variable</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#EF4444' }}>❌ Espèces uniquement</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#F59E0B' }}>⚠️ Envoi de capture manuel</td>
+                  <td style={{ padding: '14px', fontWeight: 700, color: '#0F172A' }}>💳 Paiements Wave &amp; Orange Money</td>
+                  <td style={{ padding: '14px', textAlign: 'center', background: '#FFF7ED', color: '#059669', fontWeight: 800 }}>✅ Natif &amp; Instantané</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#D97706' }}>⚠️ Variable</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#DC2626' }}>❌ Espèces uniquement</td>
+                  <td style={{ padding: '14px', textAlign: 'center', color: '#D97706' }}>⚠️ Envoi de capture manuel</td>
                 </tr>
               </tbody>
             </table>
@@ -283,15 +520,15 @@ export default function DemoClient({
         {/* ───────────────────────────────────────────────────────────── */}
         {/* SIMULATEUR LIVE À 3 PARCOURS                                 */}
         {/* ───────────────────────────────────────────────────────────── */}
-        <section id="simulateur-section" style={{ display: 'flex', flexDirection: 'column', gap: 20, scrollMarginTop: 40 }}>
-          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span style={{ alignSelf: 'center', background: 'rgba(199, 91, 0, 0.15)', color: '#FF8C00', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
-              🕹️ SIMULATEUR INTERACTIF
+        <section id="simulateur-section" style={{ display: 'flex', flexDirection: 'column', gap: 20, scrollMarginTop: 30 }}>
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ alignSelf: 'center', background: '#FFF7ED', color: '#C75B00', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
+              🕹️ SIMULATEUR D&apos;ÉCRAN EN DIRECT
             </span>
-            <h2 style={{ fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
-              Choisissez un parcours et testez en direct
+            <h2 style={{ fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: 900, color: '#0F172A', margin: 0 }}>
+              Testez l&apos;interface selon votre profil
             </h2>
-            <p style={{ fontSize: 14, color: '#94A3B8', margin: 0 }}>
+            <p style={{ fontSize: 14, color: '#475569', margin: 0 }}>
               Sélectionnez un rôle pour simuler l&apos;interface exacte Nopalou étape par étape.
             </p>
           </div>
@@ -299,48 +536,49 @@ export default function DemoClient({
           {/* Role Switcher Tabs */}
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 10, background: '#0F172A', padding: 8, borderRadius: 16, border: '1px solid #334155'
+            gap: 10, background: '#FFFFFF', padding: 8, borderRadius: 18, border: '1.5px solid #E2E8F0',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
           }}>
             <button
               onClick={() => handleRoleChange('acheteur')}
               style={{
-                background: activeRole === 'acheteur' ? 'linear-gradient(90deg, #C75B00, #EA580C)' : 'transparent',
-                color: activeRole === 'acheteur' ? '#FFF' : '#94A3B8',
-                border: 'none', padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
-                fontWeight: 700, fontSize: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
+                background: activeRole === 'acheteur' ? 'linear-gradient(90deg, #C75B00, #EA580C)' : '#F8FAFC',
+                color: activeRole === 'acheteur' ? '#FFF' : '#475569',
+                border: activeRole === 'acheteur' ? 'none' : '1px solid #E2E8F0', padding: '14px 16px', borderRadius: 14, cursor: 'pointer',
+                fontWeight: 800, fontSize: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
               }}
             >
               <span style={{ fontSize: 20 }}>🛒</span>
               <span>1. Parcours Acheteur Malin</span>
-              <span style={{ fontSize: 11, opacity: 0.8, fontWeight: 400 }}>Comparateur, Alertes &amp; WhatsApp</span>
+              <span style={{ fontSize: 11, opacity: activeRole === 'acheteur' ? 0.9 : 0.7, fontWeight: 400 }}>Comparateur &amp; WhatsApp</span>
             </button>
 
             <button
               onClick={() => handleRoleChange('marchand')}
               style={{
-                background: activeRole === 'marchand' ? 'linear-gradient(90deg, #0D9488, #10B981)' : 'transparent',
-                color: activeRole === 'marchand' ? '#FFF' : '#94A3B8',
-                border: 'none', padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
-                fontWeight: 700, fontSize: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
+                background: activeRole === 'marchand' ? 'linear-gradient(90deg, #0D9488, #10B981)' : '#F8FAFC',
+                color: activeRole === 'marchand' ? '#FFF' : '#475569',
+                border: activeRole === 'marchand' ? 'none' : '1px solid #E2E8F0', padding: '14px 16px', borderRadius: 14, cursor: 'pointer',
+                fontWeight: 800, fontSize: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
               }}
             >
               <span style={{ fontSize: 20 }}>🏪</span>
               <span>2. Parcours Marchand POS</span>
-              <span style={{ fontSize: 11, opacity: 0.8, fontWeight: 400 }}>Caisse POS &amp; Carnet Dettes</span>
+              <span style={{ fontSize: 11, opacity: activeRole === 'marchand' ? 0.9 : 0.7, fontWeight: 400 }}>Caisse POS &amp; Carnet Dettes</span>
             </button>
 
             <button
               onClick={() => handleRoleChange('apporteur')}
               style={{
-                background: activeRole === 'apporteur' ? 'linear-gradient(90deg, #7C3AED, #6366F1)' : 'transparent',
-                color: activeRole === 'apporteur' ? '#FFF' : '#94A3B8',
-                border: 'none', padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
-                fontWeight: 700, fontSize: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
+                background: activeRole === 'apporteur' ? 'linear-gradient(90deg, #7C3AED, #6366F1)' : '#F8FAFC',
+                color: activeRole === 'apporteur' ? '#FFF' : '#475569',
+                border: activeRole === 'apporteur' ? 'none' : '1px solid #E2E8F0', padding: '14px 16px', borderRadius: 14, cursor: 'pointer',
+                fontWeight: 800, fontSize: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
               }}
             >
               <span style={{ fontSize: 20 }}>💼</span>
               <span>3. Parcours Apporteur d&apos;Affaires</span>
-              <span style={{ fontSize: 11, opacity: 0.8, fontWeight: 400 }}>Affiliation &amp; Commissions 10%</span>
+              <span style={{ fontSize: 11, opacity: activeRole === 'apporteur' ? 0.9 : 0.7, fontWeight: 400 }}>Affiliation &amp; Commissions 10%</span>
             </button>
           </div>
 
@@ -351,16 +589,16 @@ export default function DemoClient({
                 key={step}
                 onClick={() => setActiveStep(step)}
                 style={{
-                  background: activeStep === step ? '#1E293B' : '#0F172A',
-                  color: activeStep === step ? '#FFF' : '#94A3B8',
-                  border: activeStep === step ? '1px solid #C75B00' : '1px solid #334155',
+                  background: activeStep === step ? '#0F172A' : '#FFFFFF',
+                  color: activeStep === step ? '#FFF' : '#475569',
+                  border: activeStep === step ? '1px solid #0F172A' : '1px solid #CBD5E1',
                   padding: '8px 16px', borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 8
                 }}
               >
                 <span style={{
-                  width: 20, height: 20, borderRadius: '50%', background: activeStep === step ? '#C75B00' : '#334155',
-                  color: '#FFF', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11
+                  width: 20, height: 20, borderRadius: '50%', background: activeStep === step ? '#C75B00' : '#E2E8F0',
+                  color: activeStep === step ? '#FFF' : '#475569', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11
                 }}>
                   {step}
                 </span>
@@ -381,7 +619,7 @@ export default function DemoClient({
 
           {/* SIMULATOR SCREEN FRAME */}
           <div style={{
-            borderRadius: 20, border: '1.5px solid #334155', background: '#0F172A', overflow: 'hidden', boxShadow: '0 12px 30px rgba(0,0,0,0.5)'
+            borderRadius: 20, border: '1.5px solid #E2E8F0', background: '#0F172A', overflow: 'hidden', boxShadow: '0 12px 30px rgba(15,23,42,0.15)', color: '#FFFFFF'
           }}>
             {/* Window header */}
             <div style={{ background: '#020617', padding: '12px 16px', borderBottom: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -454,7 +692,7 @@ export default function DemoClient({
                             <span>📱 Pass Orange vs Free</span>
                             <span style={{ color: '#FF8C00', fontSize: 11 }}>Top Offre</span>
                           </div>
-                          <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', justifyBetween: 'space-between', alignItems: 'center' }}>
+                          <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
                               <div style={{ fontWeight: 700, fontSize: 13 }}>Orange Pass Max 15 GB</div>
                               <div style={{ fontSize: 11, color: '#94A3B8' }}>Validité 30 jours</div>
@@ -468,7 +706,7 @@ export default function DemoClient({
                             <span>🏠 Immobilier Mermoz</span>
                             <span style={{ color: '#2DD4BF', fontSize: 11 }}>Bailleur Certifié</span>
                           </div>
-                          <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', justifyBetween: 'space-between', alignItems: 'center' }}>
+                          <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
                               <div style={{ fontWeight: 700, fontSize: 13 }}>Appartement F3 Standing</div>
                               <div style={{ fontSize: 11, color: '#94A3B8' }}>Mermoz Pyrotechnie</div>
@@ -721,56 +959,56 @@ export default function DemoClient({
         {/* CALCULATEUR DE GAINS APPORTEUR                                */}
         {/* ───────────────────────────────────────────────────────────── */}
         <section style={{
-          background: 'linear-gradient(135deg, #1E293B, #0F172A)',
-          borderRadius: 24, padding: '32px 24px', border: '1px solid #334155',
-          display: 'flex', flexDirection: 'column', gap: 24
+          background: '#FFFFFF',
+          borderRadius: 24, padding: '32px 24px', border: '1.5px solid #E2E8F0',
+          display: 'flex', flexDirection: 'column', gap: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.03)'
         }}>
           <div style={{ textAlign: 'center' }}>
-            <span style={{ background: 'rgba(45, 212, 191, 0.15)', color: '#2DD4BF', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+            <span style={{ background: '#CCFBF1', color: '#0D9488', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
               🧮 SIMULATEUR DE REVENUS PASSIFS
             </span>
-            <h2 style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 800, color: '#FFF', margin: '8px 0 4px 0' }}>
+            <h2 style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 900, color: '#0F172A', margin: '8px 0 4px 0' }}>
               Combien pouvez-vous gagner en tant qu&apos;Apporteur ?
             </h2>
-            <p style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>
+            <p style={{ fontSize: 14, color: '#475569', margin: 0 }}>
               Déplacez les curseurs pour calculer vos commissions récurrentes mensuelles.
             </p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, alignItems: 'center' }}>
             {/* Sliders */}
-            <div style={{ background: '#020617', padding: 20, borderRadius: 16, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ background: '#F8FAFC', padding: 20, borderRadius: 16, border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#FFF', marginBottom: 6 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#0F172A', marginBottom: 6 }}>
                   <span>Boutiques Pro (15 000 FCFA/m) :</span>
-                  <strong style={{ color: '#FF8C00' }}>{nbBoutiquesPro} boutiques</strong>
+                  <strong style={{ color: '#C75B00' }}>{nbBoutiquesPro} boutiques</strong>
                 </div>
                 <input
                   type="range" min="0" max="50" value={nbBoutiquesPro}
                   onChange={(e) => setNbBoutiquesPro(Number(e.target.value))}
                   style={{ width: '100%', cursor: 'pointer' }}
                 />
-                <div style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>Commission 10% = 1 500 FCFA / boutique / mois</div>
+                <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Commission 10% = 1 500 FCFA / boutique / mois</div>
               </div>
 
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#FFF', marginBottom: 6 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#0F172A', marginBottom: 6 }}>
                   <span>Boutiques Business (35 000 FCFA/m) :</span>
-                  <strong style={{ color: '#2DD4BF' }}>{nbBoutiquesBusiness} boutiques</strong>
+                  <strong style={{ color: '#0D9488' }}>{nbBoutiquesBusiness} boutiques</strong>
                 </div>
                 <input
                   type="range" min="0" max="30" value={nbBoutiquesBusiness}
                   onChange={(e) => setNbBoutiquesBusiness(Number(e.target.value))}
                   style={{ width: '100%', cursor: 'pointer' }}
                 />
-                <div style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>Commission 10% = 3 500 FCFA / boutique / mois</div>
+                <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Commission 10% = 3 500 FCFA / boutique / mois</div>
               </div>
             </div>
 
             {/* Results Box */}
             <div style={{
-              background: '#020617', padding: 24, borderRadius: 16, border: '1px solid #334155',
-              textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14
+              background: '#0F172A', padding: 24, borderRadius: 16, border: '1px solid #1E293B',
+              textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14, color: '#FFFFFF'
             }}>
               <div>
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' }}>Vos Commissions Mensuelles Récurrentes</span>
@@ -779,7 +1017,7 @@ export default function DemoClient({
                 </div>
               </div>
 
-              <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, fontSize: 12, color: '#CBD5E1' }}>
+              <div style={{ background: '#1E293B', padding: 12, borderRadius: 10, fontSize: 12, color: '#CBD5E1' }}>
                 Chaque année : <strong style={{ color: '#F59E0B' }}>{commissionAnnuelle.toLocaleString()} FCFA</strong> de revenus passifs récurrents.
               </div>
 
@@ -797,70 +1035,6 @@ export default function DemoClient({
           </div>
         </section>
 
-        {/* ───────────────────────────────────────────────────────────── */}
-        {/* CATALOGUE DES FONCTIONNALITES COMPLETES                       */}
-        {/* ───────────────────────────────────────────────────────────── */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ textAlign: 'center' }}>
-            <h2 style={{ fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: 800, color: '#FFF', margin: '0 0 4px 0' }}>
-              Toutes les fonctionnalités Nopalou
-            </h2>
-            <p style={{ fontSize: 14, color: '#94A3B8', margin: 0 }}>
-              Suite logicielle complète conçue sur-mesure pour le marché africain.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
-            <div style={{ background: '#0F172A', padding: 20, borderRadius: 16, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 28 }}>🔍</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#FFF', margin: 0 }}>Super-Comparateur Tri-Secteurs</h3>
-              <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, lineHeight: 1.5 }}>
-                Agrégateur de prix pour produits de consommation, logements immo et pass télécoms Orange, Free &amp; Expresso.
-              </p>
-            </div>
-
-            <div style={{ background: '#0F172A', padding: 20, borderRadius: 16, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 28 }}>🏬</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#FFF', margin: 0 }}>Caisse Enregistreuse POS Tactile</h3>
-              <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, lineHeight: 1.5 }}>
-                Gestion de caisse magasin sur tablette avec encaissement rapide, reçu digital WhatsApp et rapport Z quotidien.
-              </p>
-            </div>
-
-            <div style={{ background: '#0F172A', padding: 20, borderRadius: 16, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 28 }}>📝</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#FFF', margin: 0 }}>Carnet de Crédits &amp; Dettes Client</h3>
-              <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, lineHeight: 1.5 }}>
-                Suivi des ventes à crédit par client, calcul des soldes dus et relances courtoises automatiques sur WhatsApp en 1-clic.
-              </p>
-            </div>
-
-            <div style={{ background: '#0F172A', padding: 20, borderRadius: 16, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 28 }}>🤖</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#FFF', margin: 0 }}>Bot WhatsApp Commercial 24/7</h3>
-              <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, lineHeight: 1.5 }}>
-                Chatbot connecté 24/7 au catalogue boutique pour traiter les recherches et commandes de manière autonome.
-              </p>
-            </div>
-
-            <div style={{ background: '#0F172A', padding: 20, borderRadius: 16, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 28 }}>💼</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#FFF', margin: 0 }}>Programme Apporteur 10% Récurrent</h3>
-              <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, lineHeight: 1.5 }}>
-                Revenu passif mensuel à vie versé via Wave ou Orange Money pour chaque boutique affiliée.
-              </p>
-            </div>
-
-            <div style={{ background: '#0F172A', padding: 20, borderRadius: 16, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 28 }}>🎨</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#FFF', margin: 0 }}>Générateur de Visuels &amp; Flyers</h3>
-              <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, lineHeight: 1.5 }}>
-                Kit marketing avec visuels professionnels prêt-à-partager sur Instagram, Facebook et WhatsApp Status.
-              </p>
-            </div>
-          </div>
-        </section>
-
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
@@ -872,36 +1046,36 @@ export default function DemoClient({
           backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
         }}>
           <div style={{
-            background: '#0F172A', border: '1px solid #334155', borderRadius: 20, padding: 24,
-            maxWidth: 480, width: '100%', display: 'flex', flexDirection: 'column', gap: 16, position: 'relative'
+            background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 20, padding: 24,
+            maxWidth: 480, width: '100%', display: 'flex', flexDirection: 'column', gap: 16, position: 'relative', color: '#0F172A'
           }}>
             <button
               onClick={() => setShowShareModal(false)}
-              style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', border: 'none', color: '#94A3B8', fontSize: 18, cursor: 'pointer' }}
+              style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', border: 'none', color: '#64748B', fontSize: 18, cursor: 'pointer' }}
             >
               ✕
             </button>
 
             <div>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: '#FFF', margin: '0 0 4px 0' }}>🔗 Lien Commercial Partageable</h3>
-              <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: '0 0 4px 0' }}>🔗 Lien Commercial Partageable</h3>
+              <p style={{ fontSize: 12, color: '#475569', margin: 0 }}>
                 Saisissez votre code apporteur pour que les visites soient rattachées à votre profil.
               </p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#CBD5E1', display: 'block', marginBottom: 4 }}>VOTRE CODE APPORTEUR / VENDEUR :</label>
+                <label style={{ fontSize: 11, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>VOTRE CODE APPORTEUR / VENDEUR :</label>
                 <input
                   type="text" placeholder="Ex: APPORT-77" value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                  style={{ width: '100%', background: '#020617', border: '1px solid #334155', borderRadius: 8, padding: '10px 12px', color: '#FFF', fontFamily: 'monospace', textTransform: 'uppercase' }}
+                  style={{ width: '100%', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 8, padding: '10px 12px', color: '#0F172A', fontFamily: 'monospace', textTransform: 'uppercase' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#CBD5E1', display: 'block', marginBottom: 4 }}>LIEN GÉNÉRÉ :</label>
-                <div style={{ background: '#020617', border: '1px solid #1E293B', padding: 10, borderRadius: 8, fontFamily: 'monospace', fontSize: 11, color: '#2DD4BF', wordBreak: 'break-all' }}>
+                <label style={{ fontSize: 11, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>LIEN GÉNÉRÉ :</label>
+                <div style={{ background: '#F1F5F9', border: '1px solid #E2E8F0', padding: 10, borderRadius: 8, fontFamily: 'monospace', fontSize: 11, color: '#0D9488', wordBreak: 'break-all' }}>
                   {shareableUrl}
                 </div>
               </div>
@@ -910,7 +1084,7 @@ export default function DemoClient({
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 onClick={handleCopyLink}
-                style={{ flex: 1, background: '#1E293B', color: '#FFF', border: '1px solid #334155', padding: 12, borderRadius: 10, fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
+                style={{ flex: 1, background: '#F1F5F9', color: '#0F172A', border: '1px solid #CBD5E1', padding: 12, borderRadius: 10, fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
               >
                 {copiedLink ? '✅ Lien Copié !' : '📋 Copier le Lien'}
               </button>
