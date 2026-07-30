@@ -122,6 +122,10 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 - **Mode Pairage Sans Fil (`📱 Douchette Smartphone`)** : Bouton sur l'ordinateur générant un code de session unique (`sessionScannerId`) et un lien direct à ouvrir sur le smartphone (envoi WhatsApp en 1 clic).
 - **Synchronisation Instantanée PC-Smartphone** : Tout article dont le code-barres est scanné par la caméra du téléphone est transmis en temps réel (< 100ms) et ajouté directement au panier de l'ordinateur avec bip sonore !
 
+**12. Boutons Scan Caméra & Générer EAN-13 sur les Produits du Catalogue (`BoutiqueClient.tsx`) :**
+- **Formulaire de Saisie (`ProduitForm`)** : Ajout des boutons d'action rapide `🎲 Générer EAN` (génère un code EAN-13 GS1 valide selon l'algorithme Modulo 10) et `📷 Scanner` (ouvre le scanner caméra dédié au produit).
+- **Liste & Fiches des Produits du Catalogue** : Affichage d'un badge dynamique `🏷️ CB: [code]` ou `⚠️ Sans EAN-13` avec bouton direct `🏷️ Scan / EAN` pour éditer ou attribuer un code-barres en 1 clic.
+
 ---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
