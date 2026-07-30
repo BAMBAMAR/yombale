@@ -233,6 +233,9 @@ Déclencheur : Demande de l'utilisateur de lister toutes les fonctionnalités du
 - **Mise à jour des Visuels Réseaux & Supports Terrain** : Alignement du flyer A5 de démarchage (`flyer-demarchage/route.tsx`), du poster écosystème (`poster-ecosysteme/route.tsx`), de la couverture Facebook (`cover-facebook/route.tsx`), et du kit apporteur (`/admin/communication`).
 - **Bannissement Global du Chargement Dynamique de Polices (Site & Satori)** : Suppression et interdiction définitive de tout `fetch`, `@import` ou téléchargement réseau de polices externes (ex: TTF/WOFF depuis `cdn.jsdelivr.net` ou CDN tiers) sur l'ensemble de l'application (`frontend-next`, routes `ImageResponse`, styles, API). Utilisation exclusive des piles de polices système natives et `var(--font-inter)` pour des performances instantanées sans dépendance réseau.
 
+**8. Correction du Menu Déroulant Actions Produit (`BoutiqueClient.tsx`) :**
+- **Ergonomie & Affichage** : Positionnement ajusté à droite (`right: 0`, `bottom: calc(100% + 6px)`, `whiteSpace: nowrap`, `width: max-content`) pour le menu d'actions secondaires (`Actions ▾`) du catalogue produit. Le popup ne se fait plus tronquer sur le bord droit de l'écran/conteneur.
+
 ---
 
 ## État du projet (29 juillet 2026 — Refonte Boutiques, Abonnements, Panier Mobile & bloc SEO)

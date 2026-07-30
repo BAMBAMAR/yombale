@@ -1624,13 +1624,13 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                         style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
                       />
                       <div style={{
-                        position: 'absolute', left: 0, bottom: 36, background: '#ffffff', border: '1px solid #cbd5e1',
+                        position: 'absolute', right: 0, bottom: 'calc(100% + 6px)', background: '#ffffff', border: '1px solid #cbd5e1',
                         borderRadius: 10, padding: 6, zIndex: 9999, boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                        display: 'flex', flexDirection: 'column', gap: 4, minWidth: 180, maxWidth: 'calc(100vw - 32px)'
+                        display: 'flex', flexDirection: 'column', gap: 4, minWidth: 210, width: 'max-content', maxWidth: 'calc(100vw - 32px)'
                       }}>
                         <button
                           onClick={() => { setMenuActionsOuvertId(null); setMode({ editing: p }); }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left' }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
                         >
                           🏷️ Scan / EAN
                         </button>
@@ -1671,7 +1671,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                             `);
                             printWin.document.close();
                           }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'none', border: 'none', color: '#0284c7', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left' }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#0284c7', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
                         >
                           🖨️ Imprimer Étiquette
                         </button>
@@ -1683,7 +1683,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                             setDupPrix(p.prix?.toString() || '');
                             setDupStock(p.stock_quantite?.toString() || '');
                           }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left' }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
                         >
                           📄 Dupliquer le produit
                         </button>
@@ -1698,7 +1698,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                               else { setSuccessMsg(res.message || 'Publié avec succès en annonce !'); }
                             });
                           }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'none', border: 'none', color: '#b45309', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left' }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#b45309', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
                         >
                           📢 Publier en Annonce
                         </button>
@@ -1714,7 +1714,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                               else { setSuccessMsg('Produit supprimé.'); loadProduits(); }
                             });
                           }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 700, cursor: 'pointer', borderRadius: 6, textAlign: 'left' }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 700, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
                         >
                           🗑️ Supprimer
                         </button>
