@@ -1541,6 +1541,49 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                   </button>
 
                   <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const ean = (p as any).code_barre || '200123456789'
+                      const printWin = window.open('', '_blank', 'width=450,height=400')
+                      if (!printWin) return
+                      printWin.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                          <title>Étiquette ${p.nom}</title>
+                          <style>
+                            @page { size: 50mm 30mm; margin: 0; }
+                            body { font-family: Arial, sans-serif; margin: 0; padding: 4px 6px; text-align: center; width: 50mm; height: 30mm; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+                            .title { font-size: 10px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46mm; margin-bottom: 2px; }
+                            .price { font-size: 12px; font-weight: 900; color: #000; margin-bottom: 2px; }
+                            .barcode-num { font-family: monospace; font-size: 11px; font-weight: bold; letter-spacing: 2px; }
+                            .barcode-lines { display: flex; justify-content: center; align-items: flex-end; height: 12mm; gap: 1.5px; margin: 2px 0; }
+                            .bar { background: #000; height: 100%; }
+                          </style>
+                        </head>
+                        <body>
+                          <div class="title">${p.nom}</div>
+                          <div class="price">${p.prix ? `${new Intl.NumberFormat('fr-FR').format(p.prix)} FCFA` : ''}</div>
+                          <div class="barcode-lines">
+                            ${ean.split('').map((char: string) => {
+                              const width = (parseInt(char, 10) % 3) + 1.5
+                              return `<div class="bar" style="width: ${width}px;"></div>`
+                            }).join('')}
+                          </div>
+                          <div class="barcode-num">${ean}</div>
+                          <script>window.onload = () => { window.print(); window.close(); }</script>
+                        </body>
+                        </html>
+                      `)
+                      printWin.document.close()
+                    }}
+                    style={{ background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                    title="Imprimer l'étiquette sticker code-barres (50mm x 30mm)"
+                  >
+                    🖨️ Étiquette
+                  </button>
+
+                  <button
                     onClick={() => setMode({ editing: p })}
                     style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                   >
