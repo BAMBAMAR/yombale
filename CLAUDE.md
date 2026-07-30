@@ -126,6 +126,11 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 - **Formulaire de Saisie (`ProduitForm`)** : Ajout des boutons d'action rapide `🎲 Générer EAN` (génère un code EAN-13 GS1 valide selon l'algorithme Modulo 10) et `📷 Scanner` (ouvre le scanner caméra dédié au produit).
 - **Liste & Fiches des Produits du Catalogue** : Affichage d'un badge dynamique `🏷️ CB: [code]` ou `⚠️ Sans EAN-13` avec bouton direct `🏷️ Scan / EAN` pour éditer ou attribuer un code-barres en 1 clic.
 
+**13. Refonte Ergonomique & Responsive des Cartes Produit (`BoutiqueClient.tsx`) :**
+- **Disposition Mobile & Desktop 2 Niveaux (`bq-produit-card`)** :
+  1. *Partie Supérieure* : Image 60x60, Nom, Prix FCFA mis en avant, et badges proprements alignés sur une seule ligne (`Stock`, `Code-Barres EAN`, `WhatsApp`).
+  2. *Barre d'Actions Inférieure Séparée* : Séparation visuelle avec ligne de partage fine. Regroupement des actions principales (`🏷️ Scan / EAN`, `✏️ Modifier`, `📄 Copier`) et des options secondaires (`Partager`, `📢 Annonce`, `🗑️ Supprimer`) sans aucun chevauchement sur smartphone.
+
 ---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
