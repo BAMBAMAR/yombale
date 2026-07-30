@@ -244,6 +244,10 @@ Déclencheur : Demande de l'utilisateur de lister toutes les fonctionnalités du
 - **Élimination des Fetches de Polices/Symboles Satori** : Suppression des symboles unicode spéciaux (`→`) dans les routes d'images `ImageResponse` (`chatbot-whatsapp`, `produit/[id]/opengraph-image.tsx`) qui déclenchaient des tentatives d'installation de polices réseau lentes et des blocages serveur de 45 secondes (`UND_ERR_CONNECT_TIMEOUT`).
 - **Timeouts Réseau Contrôlés (6s max)** : Ajout systématique de `signal: AbortSignal.timeout(6000)` dans `api.ts`, `backendFetch.ts`, et `backend-fetch.ts` pour libérer immédiatement le thread si le serveur backend Render met du temps à se réveiller (`socket hang up`), éliminant ainsi la lenteur du site.
 
+**11. Visuel Dédié Écosystème WhatsApp Meta 24/7 (`/assets/chatbot-whatsapp`) :**
+- **Création du Visuel Maître WhatsApp (1080 × 1350 px HD)** : Visuel lumineux haute netteté aux couleurs Nopalou & WhatsApp (`#25D366`, `#C75B00`, `#1C2B4A`) regroupant l'intégralité des 4 verticales WhatsApp (Assistant Chatbot IA Acheteur 24/7, Panier & Commande 1-Clic sans App, Carnet Dettes Client & Relance WA 1-Clic Caisse POS, Notifications Ventes & Partage 1-Clic).
+- **Intégration Kit Admin** : Ajout du visuel dans l'outil Kit Communication Admin (`/admin/communication`).
+
 ---
 
 ## État du projet (29 juillet 2026 — Refonte Boutiques, Abonnements, Panier Mobile & bloc SEO)

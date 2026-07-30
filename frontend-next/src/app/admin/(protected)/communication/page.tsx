@@ -31,6 +31,12 @@ const VISUELS = [
     usage: 'Recrutement Apporteurs 20%',
   },
   {
+    titre: '💬 Visuel Dédié Écosystème WhatsApp Meta 24/7 (Tout-en-Un)',
+    desc: '1080 × 1350 px HD — 4 Fonctions WhatsApp : Assistant IA Acheteur, Panier & Commande 1-Clic, Carnet Dettes POS Client WA, Notifications Ventes Marchands',
+    url: '/assets/chatbot-whatsapp',
+    usage: 'WhatsApp Meta · Acheteurs & Marchands',
+  },
+  {
     titre: 'Photo de couverture Facebook',
     desc: '1640 × 624 px — À uploader sur votre Page Facebook',
     url: '/assets/cover-facebook',
