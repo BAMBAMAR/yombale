@@ -224,9 +224,13 @@ Déclencheur : Demande de l'utilisateur de lister toutes les fonctionnalités du
 - **Ergonomie & Parcours Utilisateur** : Déplacement stratégique des barres de filtres (*Budget*, *Tri*, *Bouton Effacer*) directement au-dessus du compteur de résultats et de la grille de produits `ProduitsListe`.
 
 **7. Revue & Alignement Général des Visuels Marketing (`/assets/...`) :**
+- **3 Visuels Séparés Dédiés par Pilier** :
+  - **Pilier 1 (Acheteur & Consommateur)** (`/assets/pilier-acheteur`) : 1080 × 1350 px — Super-Comparateur Multi-Marchands, Chatbot WhatsApp Meta 24/7, Alertes Prix & Immo, Comparatif Côte-à-Côte.
+  - **Pilier 2 (Marchand & Caisse POS)** (`/assets/pilier-marchand`) : 1080 × 1350 px — Caisse Enregistreuse POS Tactile, 3 Scanners (Caméra, Cloud Sync <100ms, USB), Stickers EAN-13 GS1 Modulo 10, Carnet Dettes WhatsApp 1-Clic, Multi-Caissiers PIN.
+  - **Pilier 3 (Apporteur d'Affaires 20%)** (`/assets/pilier-apporteur`) : 1080 × 1350 px — Commissions Récurrentes 20% mensuelles à vie (Wave/OM), Brochure PDF 13 Pages, 0 FCFA d'investissement.
 - **Harmonisation Taux Commission (20%)** : Correction de tous les résidus de taux obsolètes (10%) dans le flyer Apporteur (`apporteur-affaires/route.tsx`) et la brochure PDF 13 pages (`brochure-apporteur/route.tsx`).
 - **Enrichissement Fonctionnalités Dernières Versions** : Intégration systématique des nouvelles fonctionnalités (Caisse Enregistreuse POS Tactile, 3 Scanners smartphone/cloud/USB, Stickers Codes-barres EAN-13 GS1 Modulo 10, Carnet de Dettes Client + Relance WhatsApp 1-Clic, Multi-caissiers PIN, Lien Démo POS commercial 1-Clic `nopalou.com/demo`).
-- **Mise à jour des Visuels Rseaux & Supports Terrain** : Alignement du flyer A5 de démarchage (`flyer-demarchage/route.tsx`), du poster écosystème (`poster-ecosysteme/route.tsx`), de la couverture Facebook (`cover-facebook/route.tsx`), et du kit apporteur.
+- **Mise à jour des Visuels Réseaux & Supports Terrain** : Alignement du flyer A5 de démarchage (`flyer-demarchage/route.tsx`), du poster écosystème (`poster-ecosysteme/route.tsx`), de la couverture Facebook (`cover-facebook/route.tsx`), et du kit apporteur (`/admin/communication`).
 
 ---
 

@@ -13,6 +13,24 @@ const VISUELS = [
     usage: 'Master Marketing · Présentation Globale',
   },
   {
+    titre: '🛒 Visuel Dédié Pilier 1 : Acheteur & Consommateur',
+    desc: '1080 × 1350 px HD — Super-Comparateur Multi-Marchands, Chatbot WhatsApp Meta 24/7, Alertes Prix & Immo, Comparatif Côte-à-Côte',
+    url: '/assets/pilier-acheteur',
+    usage: 'Acheteurs · Comparateur',
+  },
+  {
+    titre: '🏪 Visuel Dédié Pilier 2 : Marchand & Caisse POS Magasin',
+    desc: '1080 × 1350 px HD — Caisse Enregistreuse POS Tactile, 3 Scanners (Caméra, Cloud <100ms, USB), Stickers EAN-13, Carnet Dettes WhatsApp 1-Clic, Multi-Caissiers PIN',
+    url: '/assets/pilier-marchand',
+    usage: 'Marchands · Solution POS Magasin',
+  },
+  {
+    titre: '💼 Visuel Dédié Pilier 3 : Apporteur d\'Affaires & Parrainage 20%',
+    desc: '1080 × 1350 px HD — Commissions Récurrentes 20% mensuelles à vie (Wave/OM), Brochure PDF 13 Pages, 0 FCFA d\'investissement',
+    url: '/assets/pilier-apporteur',
+    usage: 'Recrutement Apporteurs 20%',
+  },
+  {
     titre: 'Photo de couverture Facebook',
     desc: '1640 × 624 px — À uploader sur votre Page Facebook',
     url: '/assets/cover-facebook',
