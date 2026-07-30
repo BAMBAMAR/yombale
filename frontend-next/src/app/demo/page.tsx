@@ -52,7 +52,7 @@ export default async function DemoPage({ searchParams }: DemoPageProps) {
     plan_business_prix: '35000',
     plan_pro_label: 'Boutique Pro',
     plan_business_label: 'Boutique Business',
-    apporteur_taux_commission: '10',
+    apporteur_taux_commission: '20',
     paiement_wave: 'true',
     paiement_orange: 'true',
   };

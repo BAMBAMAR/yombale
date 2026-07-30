@@ -211,6 +211,10 @@ Déclencheur : Demande de l'utilisateur de lister toutes les fonctionnalités du
 - **Navbar Header** : Ajout du badge coloré `NOUVEAU` et surlignage orange sur le lien `🚀 Démo Commerciale`.
 - **Page Boutiques (`/boutiques`)** : Ajout du bouton d'action marchand *"🏪 Vous êtes commerçant ? Tester la Démo POS →"* dans le banner hero.
 
+**4. Harmonisation du Taux de Commission (20%) & Normalisation Typographique :**
+- **Mise à jour du taux par défaut** : Passage du taux de commission des apporteurs à **20%** par défaut dans les paramètres backend (`settingsCache.js`), la démo (`DemoClient.tsx`, `demo/page.tsx`), les visuels réseaux sociaux (`apporteur-affaires/route.tsx`) et la brochure PDF (`brochure-apporteur/route.tsx`).
+- **Correction typographique globale (`globals.css`)** : Réinitialisation explicite de `font-family: var(--font-inter)` sur `button, input, select, textarea` afin de garantir un rendu visuel harmonieux et réactif sur tous les navigateurs (iOS, Android, Windows, Mac).
+
 ---
 
 ## État du projet (29 juillet 2026 — Refonte Boutiques, Abonnements, Panier Mobile & bloc SEO)

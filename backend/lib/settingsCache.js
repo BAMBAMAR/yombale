@@ -32,7 +32,7 @@ const DEFAULTS = {
   whatsapp_enabled:    'true',
   whatsapp_chatbot:    'true',
   apporteur_actif:            'true',
-  apporteur_taux_commission:  '10',
+  apporteur_taux_commission:  '20',
   apporteur_seuil_paiement:   '3000',
   apporteur_cookie_jours:     '30',
 };

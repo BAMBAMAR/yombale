@@ -146,7 +146,7 @@ export default function ShowcaseTabs() {
                 💼 Gagnez des commissions récurrentes en parrainant des boutiques
               </h3>
               <p style={{ fontSize: 14, color: '#CBD5E1', lineHeight: 1.6, margin: 0 }}>
-                Démarchez les commerçants de votre secteur et touchez 10% à 25% de commission mensuelle récurrente sur tous leurs abonnements. Aucun investissement requis.
+                Démarchez les commerçants de votre secteur et touchez 20% de commission mensuelle récurrente sur tous leurs abonnements. Aucun investissement requis.
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, fontSize: 13, color: '#94A3B8' }}>
                 <div style={{ background: '#0F172A', padding: 12, borderRadius: 8 }}>💰 <strong>Commissions récurrentes :</strong> Perçues chaque mois sur Wave / OM</div>

@@ -66,7 +66,7 @@ export async function GET() {
             fontSize: 88, fontWeight: 900, color: '#fff',
             textAlign: 'center', margin: '0 0 8px', lineHeight: 1,
           }}>
-            10%
+            20%
           </p>
           <p style={{
             fontSize: 32, fontWeight: 800, color: '#fff',
@@ -81,7 +81,7 @@ export async function GET() {
           }}>
             Présentez Nopalou aux commerçants de votre réseau.<br />
             Chaque boutique Pro ou Business que vous recrutez<br />
-            vous rapporte 10% de son abonnement, chaque mois.
+            vous rapporte 20% de son abonnement, chaque mois.
           </p>
 
           <div style={{

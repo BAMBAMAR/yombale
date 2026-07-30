@@ -16,7 +16,7 @@ async function getSettings() {
   let prixPro = 15000
   let prixBusiness = 35000
   let commissionBusiness = 2
-  let tauxApporteur = 10
+  let tauxApporteur = 20
   try {
     const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' })
     if (r.ok) {
@@ -24,7 +24,7 @@ async function getSettings() {
       prixPro = Number(s.plan_pro_prix) || 15000
       prixBusiness = Number(s.plan_business_prix) || 35000
       commissionBusiness = Number(s.commission_business) || 2
-      tauxApporteur = Number(s.apporteur_taux_commission) || 10
+      tauxApporteur = Number(s.apporteur_taux_commission) || 20
     }
   } catch {
     // valeurs de repli
