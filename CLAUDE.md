@@ -115,6 +115,9 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 - **Formulaire d'Ajout/Modification de Produit (`ProduitForm`)** : Ajout du champ dédié `Code-Barres EAN-13 (Optionnel)` permettant au marchand de saisir directement ou de scanner à la douchette le code EAN d'un article.
 - **Migration & API Backend (`boutique_produits`)** : Ajout de la colonne `code_barre` idempotente via `migrate-inline.js` et persistance dans PostgreSQL lors des requêtes `POST` et `PUT /api/boutiques/:id/produits`.
 
+**10. Modèle d'Inventaire Excel/CSV Téléchargeable (`BatchImportModal`) :**
+- **Bouton de Téléchargement Direct (`📥 Télécharger le modèle exemple`)** : Génération et téléchargement instantané du modèle CSV/Excel pré-formaté (`modele_import_catalogue_nopalou.csv`) incluant l'encodage UTF-8 BOM pour une ouverture parfaite dans Excel avec les colonnes : `Nom du Produit`, `Prix FCFA`, `Quantité Stock`, `Catégorie` et `Code-Barres EAN-13`.
+
 ---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
