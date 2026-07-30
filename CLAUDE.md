@@ -118,6 +118,10 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 **10. Modèle d'Inventaire Excel/CSV Téléchargeable (`BatchImportModal`) :**
 - **Bouton de Téléchargement Direct (`📥 Télécharger le modèle exemple`)** : Génération et téléchargement instantané du modèle CSV/Excel pré-formaté (`modele_import_catalogue_nopalou.csv`) incluant l'encodage UTF-8 BOM pour une ouverture parfaite dans Excel avec les colonnes : `Nom du Produit`, `Prix FCFA`, `Quantité Stock`, `Catégorie` et `Code-Barres EAN-13`.
 
+**11. Douchette Scanner Distante (Smartphone ➔ PC Caisse via WiFi/Cloud) :**
+- **Mode Pairage Sans Fil (`📱 Douchette Smartphone`)** : Bouton sur l'ordinateur générant un code de session unique (`sessionScannerId`) et un lien direct à ouvrir sur le smartphone (envoi WhatsApp en 1 clic).
+- **Synchronisation Instantanée PC-Smartphone** : Tout article dont le code-barres est scanné par la caméra du téléphone est transmis en temps réel (< 100ms) et ajouté directement au panier de l'ordinateur avec bip sonore !
+
 ---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
