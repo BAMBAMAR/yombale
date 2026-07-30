@@ -78,6 +78,7 @@ export default function BoutonPartager({ lien, message, lienVisuel, onPartage }:
             🖼 Télécharger le visuel
           </a>
         </div>
+        </>
       )}
     </div>
   )
