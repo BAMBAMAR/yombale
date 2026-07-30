@@ -850,7 +850,6 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
           <label style={labelStyle}>Code-Barres EAN-13 (Optionnel)</label>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <input
-              name="code_barre"
               value={codeBarreForm}
               onChange={e => setCodeBarreForm(e.target.value)}
               style={{ ...inputStyle, flex: 1 }}

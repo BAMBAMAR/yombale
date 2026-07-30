@@ -734,11 +734,14 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
       } catch {}
     }
 
+    const rawCodeBarrePost = Array.isArray(code_barre) ? code_barre[0] : code_barre;
+    const codeBarrePostVal = rawCodeBarrePost && typeof rawCodeBarrePost === 'string' && rawCodeBarrePost.trim() ? rawCodeBarrePost.trim() : null;
+
     const r = await pool.query(
       `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, images, en_stock, categorie, caracteristiques, variantes, code_barre)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
       [id, nom.trim(), description||null, prix||null, prix_barre||null,
-       images, en_stock !== 'false', categorie||null, caracJson, JSON.stringify(variantesJson), code_barre||null]
+       images, en_stock !== 'false', categorie||null, caracJson, JSON.stringify(variantesJson), codeBarrePostVal]
     );
     res.status(201).json({ success: true, produit: r.rows[0] });
     // Sync catalogue Meta — hors du try/catch pour éviter double-réponse
@@ -788,7 +791,8 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
       } catch {}
     }
 
-    const codeBarreVal = code_barre !== undefined ? (code_barre && code_barre.trim() ? code_barre.trim() : null) : existing.rows[0].code_barre;
+    const rawCodeBarre = Array.isArray(code_barre) ? code_barre[0] : code_barre;
+    const codeBarreVal = rawCodeBarre !== undefined ? (rawCodeBarre && typeof rawCodeBarre === 'string' && rawCodeBarre.trim() ? rawCodeBarre.trim() : null) : existing.rows[0].code_barre;
 
     const r = await pool.query(
       `UPDATE boutique_produits SET nom=$1, description=$2, prix=$3, prix_barre=$4,
@@ -806,7 +810,10 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
         await syncProduit({ ...produitMaj, boutique_slug: b.rows[0]?.slug, whatsapp_catalog_id: b.rows[0]?.whatsapp_catalog_id });
       } catch {}
     });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+  } catch (err) {
+    console.error('[BOUTIQUES PRODUIT PUT ERREUR]', err);
+    res.status(500).json({ error: 'Erreur serveur lors de la modification' });
+  }
 });
 
 // ── DELETE /api/boutiques/:id/produits/:prodId — supprimer produit
