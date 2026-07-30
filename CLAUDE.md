@@ -138,6 +138,10 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 - **Rendu Vectoriel HD sans dépendance externe** : Génération exacte des barres noires et espaces selon la norme GS1 (Guards gauche `101`, centre `01010`, droite `101` et parités L/G/R).
 - **Rendu d'Impression 50mm x 30mm** : Résolution du problème d'affichage sur les stickers imprimés. Les barres graphiques vectorielles noires s'affichent avec une netteté parfaite sur toutes les imprimantes thermiques (Bluetooth, USB, Zebra, Xprinter).
 
+**16. Correction de la Persistance `code_barre` & Tests Automatisés Globaux :**
+- **Persistance Systématique du Code-Barres à la Modification (`BoutiqueClient.tsx` & `routes/boutiques.js`)** : Ajout d'un `useEffect` de synchronisation dynamique et d'un champ masqué `<input type="hidden" name="code_barre">` garantissant la transmission systématique de la valeur `codeBarreForm` lors des soumissions de formulaires `PUT`. Nettoyage de la condition backend `$10` (`codeBarreVal`).
+- **Suite de Tests Automatiques Validée (100% Succès)** : Validation automatisée des 5 fonctionnalités majeures (Algorithme Modulo 10, Générateur Vectoriel SVG, Queue Douchette Distante, Parser Modèle CSV et Enregistrement Produit).
+
 ---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
