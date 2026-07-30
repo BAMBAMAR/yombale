@@ -1467,167 +1467,144 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {produitsFiltres.map(p => (
-            <div key={p.id} className="bq-produit-row">
-              {/* Image */}
-              <div style={{ width: 56, height: 56, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {p.images?.[0]
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={p.images[0]} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: 24 }}>📦</span>
-                }
-              </div>
-              {/* Infos */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{p.nom}</p>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2, flexWrap: 'wrap' }}>
-                  {p.prix && <span style={{ fontSize: 13, color: '#C75B00', fontWeight: 700 }}>{fcfa(p.prix)}</span>}
-                  {p.prix_barre && <span style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'line-through' }}>{fcfa(p.prix_barre)}</span>}
-                  <span style={{
-                    fontSize: 11, padding: '1px 6px', borderRadius: 20,
-                    background: p.en_stock ? '#dcfce7' : '#fee2e2',
-                    color: p.en_stock ? '#16a34a' : '#dc2626', fontWeight: 700,
-                  }}>
-                    {p.en_stock ? 'En stock' : 'Rupture'}
-                  </span>
+            <div key={p.id} className="bq-produit-card" style={{
+              background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14,
+              padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.03)', transition: 'all 0.15s ease'
+            }}>
+              {/* Ligne Supérieure : Image + Nom + Prix + Badges */}
+              <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                {/* Image */}
+                <div style={{ width: 60, height: 60, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: '#f8fafc', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {p.images?.[0]
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={p.images[0]} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <span style={{ fontSize: 26 }}>📦</span>
+                  }
+                </div>
 
-                  {editingStockId === p.id ? (
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
-                      <input
-                        type="number"
-                        value={stockInputVal}
-                        onChange={e => setStockInputVal(e.target.value)}
-                        style={{ width: 60, padding: '2px 6px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 11, height: 20 }}
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => saveStock(p.id)}
-                        style={{ padding: '2px 6px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 700 }}
+                {/* Informations */}
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
+                    <h4 style={{ margin: 0, fontWeight: 800, fontSize: 15, color: '#0f172a', lineHeight: '1.25' }}>{p.nom}</h4>
+                    {p.prix && <span style={{ fontSize: 15, color: '#C75B00', fontWeight: 900, whiteSpace: 'nowrap' }}>{fcfa(p.prix)}</span>}
+                  </div>
+
+                  {/* Rangée des Badges (Stock, Code-Barres, WhatsApp) */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 2 }}>
+                    {/* Stock */}
+                    {editingStockId === p.id ? (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
+                        <input
+                          type="number"
+                          value={stockInputVal}
+                          onChange={e => setStockInputVal(e.target.value)}
+                          style={{ width: 60, padding: '2px 6px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 11, height: 22 }}
+                          autoFocus
+                        />
+                        <button onClick={() => saveStock(p.id)} style={{ padding: '2px 8px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 700 }}>OK</button>
+                        <button onClick={() => setEditingStockId(null)} style={{ padding: '2px 8px', background: '#9ca3af', color: '#fff', border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 700 }}>✕</button>
+                      </div>
+                    ) : (
+                      <span
+                        onClick={(e) => { e.stopPropagation(); setEditingStockId(p.id); setStockInputVal(String(p.stock_quantite ?? 0)) }}
+                        style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: p.en_stock ? '#f0fdf4' : '#fef2f2', color: p.en_stock ? '#15803d' : '#dc2626', fontWeight: 800, cursor: 'pointer', border: p.en_stock ? '1px solid #bbf7d0' : '1px solid #fecaca' }}
+                        title="Cliquez pour modifier le stock"
                       >
-                        OK
-                      </button>
-                      <button
-                        onClick={() => setEditingStockId(null)}
-                        style={{ padding: '2px 6px', background: '#9ca3af', color: '#fff', border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 700 }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <span
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setEditingStockId(p.id)
-                        setStockInputVal(String(p.stock_quantite ?? 0))
-                      }}
-                      style={{
-                        fontSize: 11, padding: '2px 8px', borderRadius: 20,
-                        background: '#f1f5f9', color: '#475569', fontWeight: 700, cursor: 'pointer',
-                        border: '1px solid #e2e8f0', display: 'inline-flex', alignItems: 'center', gap: 4
-                      }}
-                      title="Modifier la quantité en stock"
-                    >
-                      📦 Stock : {p.stock_quantite ?? 0} ✏️
+                        📦 Stock: {p.stock_quantite ?? 0} ✏️
+                      </span>
+                    )}
+
+                    {/* Code-barres EAN */}
+                    <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: (p as any).code_barre ? '#f0f9ff' : '#fff7ed', color: (p as any).code_barre ? '#0369a1' : '#c2410c', border: (p as any).code_barre ? '1px solid #bae6fd' : '1px solid #fed7aa' }}>
+                      {(p as any).code_barre ? `🏷️ CB: ${(p as any).code_barre}` : '⚠️ Sans EAN'}
                     </span>
-                  )}
-                  <span
-                    title="Code-barres EAN-13 du produit"
-                    style={{
-                      fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 700,
-                      background: (p as any).code_barre ? '#f0f9ff' : '#fff7ed',
-                      color: (p as any).code_barre ? '#0369a1' : '#c2410c',
-                      border: (p as any).code_barre ? '1px solid #bae6fd' : '1px solid #fed7aa',
-                      display: 'inline-flex', alignItems: 'center', gap: 4
-                    }}
-                  >
-                    {(p as any).code_barre ? `🏷️ CB: ${(p as any).code_barre}` : '⚠️ Sans EAN-13'}
-                  </span>
-                  <span
-                    title="Statut de synchronisation avec l'assistant et le catalogue WhatsApp Business"
-                    style={{
-                      fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 700,
-                      background: p.whatsapp_sync_statut === 'synchronise' || !p.whatsapp_sync_statut ? '#dcfce7' : p.whatsapp_sync_statut === 'echec' ? '#fee2e2' : '#eff6ff',
-                      color: p.whatsapp_sync_statut === 'synchronise' || !p.whatsapp_sync_statut ? '#166534' : p.whatsapp_sync_statut === 'echec' ? '#991b1b' : '#1d4ed8',
-                      border: p.whatsapp_sync_statut === 'synchronise' || !p.whatsapp_sync_statut ? '1px solid #bbf7d0' : p.whatsapp_sync_statut === 'echec' ? '1px solid #fecaca' : '1px solid #bfdbfe',
-                    }}
-                  >
-                    {p.whatsapp_sync_statut === 'echec' ? '❌ Échec WhatsApp' : p.whatsapp_sync_statut === 'en_attente' ? '⏳ Synchro WhatsApp' : '💬 Actif sur WhatsApp'}
-                  </span>
-                  {p.nom.endsWith('— à modifier') && (
-                    <span style={{
-                      fontSize: 11, padding: '1px 6px', borderRadius: 20,
-                      background: '#fef3c7', color: '#b45309', fontWeight: 700,
-                    }}>
-                      ✏️ À compléter
+
+                    {/* WhatsApp */}
+                    <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: p.whatsapp_sync_statut === 'synchronise' || !p.whatsapp_sync_statut ? '#f0fdf4' : '#fef2f2', color: p.whatsapp_sync_statut === 'synchronise' || !p.whatsapp_sync_statut ? '#166534' : '#991b1b', border: '1px solid #e2e8f0' }}>
+                      💬 {p.whatsapp_sync_statut === 'echec' ? 'Échec WhatsApp' : 'WhatsApp'}
                     </span>
-                  )}
+                  </div>
                 </div>
               </div>
-              {/* Actions */}
-              <div className="produit-actions" style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => setMode({ editing: p })}
-                  style={{ background: '#f5f3ff', color: '#6d28d9', border: '1px solid #ddd6fe', borderRadius: 6, padding: '5px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                  title="Générer, scanner ou modifier le code-barres EAN-13"
-                >
-                  🏷️ Scan / EAN
-                </button>
-                <button
-                  onClick={() => setMode({ editing: p })}
-                  style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-                >
-                  Modifier
-                </button>
-                <button
-                  onClick={() => {
-                    setProduitADupliquer(p)
-                    setDupNom(`${p.nom} (Copie)`)
-                    setDupPrix(p.prix?.toString() || '')
-                    setDupStock(p.stock_quantite?.toString() || '')
-                  }}
-                  style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-                >
-                  📄 Dupliquer
-                </button>
-                <BoutonPartager
-                  lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
-                  message={
-                    p.prix_barre && p.prix && p.prix_barre > p.prix
-                      ? `🔥 ${p.nom} en promo : ${fcfa(p.prix)} au lieu de ${fcfa(p.prix_barre)} !\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`
-                      : `${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`
-                  }
-                  lienVisuel={`/assets/produit-boutique/${p.id}/story?boutiqueId=${boutique.id}`}
-                  onPartage={() => { marquerProduitPartage(boutique.id, p.id).catch(() => {}) }}
-                />
 
-                <button
-                  onClick={() => {
-                    if (!confirm('Voulez-vous publier ce produit comme annonce classifiée ?')) return
-                    startTransition(async () => {
-                      const res = await publierProduitAnnonce(boutique.id, p.id)
-                      if (res.error) alert(res.error)
-                      else if (res.besoin_paiement) alert(res.message)
-                      else { setSuccessMsg(res.message || 'Publié avec succès en annonce !') }
-                    })
-                  }}
-                  title="Publier comme annonce"
-                  style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-                >
-                  📢 Annonce
-                </button>
-                <button
-                  onClick={() => {
-                    if (!confirm('Supprimer ce produit ?')) return
-                    setDeleteError(null)
-                    startTransition(async () => {
-                      const res = await deleteProduit(boutique.id, p.id)
-                      if (res.error) setDeleteError(res.error)
-                      else { setSuccessMsg('Produit supprimé.'); loadProduits() }
-                    })
-                  }}
-                  style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, padding: '5px 12px', fontSize: 12, cursor: 'pointer' }}
-                >
-                  ✕
-                </button>
+              {/* Rangée d'Actions Inférieure (Propre & Responsive) */}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: 10, flexWrap: 'wrap' }}>
+                {/* Actions Principales */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', flex: 1 }}>
+                  <button
+                    onClick={() => setMode({ editing: p })}
+                    style={{ background: '#7c3aed', color: '#ffffff', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                    title="Générer ou scanner le code-barres EAN-13"
+                  >
+                    🏷️ Scan / EAN
+                  </button>
+
+                  <button
+                    onClick={() => setMode({ editing: p })}
+                    style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    ✏️ Modifier
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setProduitADupliquer(p)
+                      setDupNom(`${p.nom} (Copie)`)
+                      setDupPrix(p.prix?.toString() || '')
+                      setDupStock(p.stock_quantite?.toString() || '')
+                    }}
+                    style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 8, padding: '6px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    📄 Dupliquer
+                  </button>
+                </div>
+
+                {/* Options Secondaires (Partage, Annonce, Suppression) */}
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <BoutonPartager
+                    lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
+                    message={
+                      p.prix_barre && p.prix && p.prix_barre > p.prix
+                        ? `🔥 ${p.nom} en promo : ${fcfa(p.prix)} au lieu de ${fcfa(p.prix_barre)} !\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`
+                        : `${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`
+                    }
+                    lienVisuel={`/assets/produit-boutique/${p.id}/story?boutiqueId=${boutique.id}`}
+                    onPartage={() => { marquerProduitPartage(boutique.id, p.id).catch(() => {}) }}
+                  />
+
+                  <button
+                    onClick={() => {
+                      if (!confirm('Publier ce produit comme annonce classifiée ?')) return
+                      startTransition(async () => {
+                        const res = await publierProduitAnnonce(boutique.id, p.id)
+                        if (res.error) alert(res.error)
+                        else if (res.besoin_paiement) alert(res.message)
+                        else { setSuccessMsg(res.message || 'Publié avec succès en annonce !') }
+                      })
+                    }}
+                    title="Publier comme annonce"
+                    style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a', borderRadius: 8, padding: '6px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    📢 Annonce
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (!confirm('Supprimer ce produit ?')) return
+                      setDeleteError(null)
+                      startTransition(async () => {
+                        const res = await deleteProduit(boutique.id, p.id)
+                        if (res.error) setDeleteError(res.error)
+                        else { setSuccessMsg('Produit supprimé.'); loadProduits() }
+                      })
+                    }}
+                    style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, padding: '6px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 800 }}
+                    title="Supprimer le produit"
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
             </div>
           ))}
