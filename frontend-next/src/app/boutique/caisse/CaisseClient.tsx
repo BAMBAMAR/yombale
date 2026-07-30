@@ -1609,8 +1609,8 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
             </div>
           )}
 
-          {/* Barre de Recherche Code-Barres & Nom + Scanner Caméra */}
-          <div style={{ display: 'flex', gap: 10 }}>
+          {/* Barre de Recherche Code-Barres & Nom + Scanner Caméra (Responsive Mobile 2 Lignes) */}
+          <div className="caisse-search-row">
             <div style={{ flex: 1, position: 'relative' }}>
               <input
                 type="text"
@@ -1625,35 +1625,37 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
               />
             </div>
 
-            <button
-              onClick={demarrerScannerCamera}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px', borderRadius: 10,
-                background: '#1e3a5f', color: '#ffffff', border: 'none', fontWeight: 800, fontSize: 13,
-                cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(30,58,95,0.25)',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <Camera size={18} />
-              <span>📷 Scanner Caméra</span>
-            </button>
+            <div className="caisse-search-row-btns">
+              <button
+                onClick={demarrerScannerCamera}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px', borderRadius: 10,
+                  background: '#1e3a5f', color: '#ffffff', border: 'none', fontWeight: 800, fontSize: 13,
+                  cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(30,58,95,0.25)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <Camera size={18} />
+                <span>📷 Scanner Caméra</span>
+              </button>
 
-            <button
-              onClick={() => setModalPairageSmartphone(true)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px', borderRadius: 10,
-                background: '#0284c7', color: '#ffffff', border: 'none', fontWeight: 800, fontSize: 13,
-                cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(2,132,199,0.25)',
-                transition: 'all 0.15s ease',
-              }}
-              title="Connecter la caméra de votre smartphone comme douchette sans fil pour votre PC"
-            >
-              <span>📱 Douchette Smartphone</span>
-            </button>
+              <button
+                onClick={() => setModalPairageSmartphone(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px', borderRadius: 10,
+                  background: '#0284c7', color: '#ffffff', border: 'none', fontWeight: 800, fontSize: 13,
+                  cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(2,132,199,0.25)',
+                  transition: 'all 0.15s ease',
+                }}
+                title="Connecter la caméra de votre smartphone comme douchette sans fil pour votre PC"
+              >
+                <span>📱 Douchette Smartphone</span>
+              </button>
+            </div>
           </div>
 
-          {/* Filtre Catégories */}
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+          {/* Filtre Catégories (Fluidité Tactile & Scroll Sans Coupure) */}
+          <div className="nopalou-scroll-tabs caisse-categories-bar" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
             {[
               { id: 'tous', label: '✨ Tous les articles' },
               ...CATEGORIES.filter(c => c.value !== 'mixte').map(c => {

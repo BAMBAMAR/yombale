@@ -31,7 +31,7 @@ const CAT_DEPENSES = ['loyer', 'stock', 'transport', 'salaires', 'marketing', 'f
 
 function KpiCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 20px', flex: 1, minWidth: 140 }}>
+    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '14px 16px', flex: '1 1 120px', minWidth: 120, boxSizing: 'border-box' }}>
       <p style={{ margin: '0 0 4px', fontSize: 12, color: '#6b7280', fontWeight: 600 }}>{label}</p>
       <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: color ?? '#111' }}>{value}</p>
       {sub && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9ca3af' }}>{sub}</p>}
@@ -863,7 +863,7 @@ export default function Comptabilite({ boutiqueId }: { boutiqueId: string }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, overflowX: 'auto' }}>
+      <div className="nopalou-scroll-tabs" style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
         {tabBtn('dashboard', '📊 Tableau de bord')}
         {tabBtn('ventes',    '💰 Ventes')}
         {tabBtn('depenses',  '📉 Dépenses')}

@@ -371,18 +371,19 @@ export default function BoutiqueDetailClient({
         </div>
       )}
 
-      {/* 🧭 NAVIGATION PAR ONGLETS MODERNE (STYLE SHOPIFY / AMAZON PRO) */}
-      <div style={{
+      {/* 🧭 NAVIGATION PAR ONGLETS MODERNE (FLUIDE & RESPONSIVE MOBILE) */}
+      <div className="nopalou-scroll-tabs" style={{
         display: 'flex', gap: 6, padding: 6, background: '#f1f5f9', borderRadius: 16,
         marginBottom: 24, overflowX: 'auto', border: '1px solid #e2e8f0', scrollbarWidth: 'none',
+        WebkitOverflowScrolling: 'touch'
       }}>
         <button
           onClick={() => setTab('produits')}
           style={{
-            flex: '1 1 auto', minWidth: 140, padding: '11px 20px', borderRadius: 12, border: 'none',
+            flex: '1 0 auto', minWidth: 110, padding: '10px 14px', borderRadius: 12, border: 'none',
             background: tab === 'produits' ? '#fff' : 'transparent',
             color: tab === 'produits' ? '#C75B00' : '#64748b',
-            fontWeight: tab === 'produits' ? 900 : 600, fontSize: 14, cursor: 'pointer',
+            fontWeight: tab === 'produits' ? 900 : 600, fontSize: 13, cursor: 'pointer',
             boxShadow: tab === 'produits' ? '0 4px 12px rgba(0,0,0,0.06)' : 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             transition: 'all 0.15s ease', whiteSpace: 'nowrap',
@@ -405,10 +406,10 @@ export default function BoutiqueDetailClient({
           <button
             onClick={() => setTab('annonces')}
             style={{
-              flex: '1 1 auto', minWidth: 140, padding: '11px 20px', borderRadius: 12, border: 'none',
+              flex: '1 0 auto', minWidth: 110, padding: '10px 14px', borderRadius: 12, border: 'none',
               background: tab === 'annonces' ? '#fff' : 'transparent',
               color: tab === 'annonces' ? '#1e3a5f' : '#64748b',
-              fontWeight: tab === 'annonces' ? 900 : 600, fontSize: 14, cursor: 'pointer',
+              fontWeight: tab === 'annonces' ? 900 : 600, fontSize: 13, cursor: 'pointer',
               boxShadow: tab === 'annonces' ? '0 4px 12px rgba(0,0,0,0.06)' : 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               transition: 'all 0.15s ease', whiteSpace: 'nowrap',
@@ -429,10 +430,10 @@ export default function BoutiqueDetailClient({
         <button
           onClick={() => setTab('infos')}
           style={{
-            flex: '1 1 auto', minWidth: 140, padding: '11px 20px', borderRadius: 12, border: 'none',
+            flex: '1 0 auto', minWidth: 110, padding: '10px 14px', borderRadius: 12, border: 'none',
             background: tab === 'infos' ? '#fff' : 'transparent',
             color: tab === 'infos' ? '#0f172a' : '#64748b',
-            fontWeight: tab === 'infos' ? 900 : 600, fontSize: 14, cursor: 'pointer',
+            fontWeight: tab === 'infos' ? 900 : 600, fontSize: 13, cursor: 'pointer',
             boxShadow: tab === 'infos' ? '0 4px 12px rgba(0,0,0,0.06)' : 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             transition: 'all 0.15s ease', whiteSpace: 'nowrap',

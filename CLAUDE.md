@@ -927,3 +927,11 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
   6. Calculateur interactif de commissions récurrentes mensuelles/annuelles pour apporteurs.
   7. Générateur de lien commercial partageable avec code apporteur personnalisé & bouton de partage rapide WhatsApp.
   8. Ajout du lien direct vers `/demo` dans le menu déroulant Header (`NavbarGuides.tsx`).
+
+- **Correction et Optimisation Responsive des Menus & Boutons Mobiles** (ajouté 30 juillet 2026) :
+  1. **Refonte des Actions Produits (`BoutiqueClient.tsx`)** : Remplacement de l'accumulation de 7 boutons d'action visibles par 2 actions principales (`✏️ Modifier`, `📢 Partager`) et un menu déroulant compact `Actions ▾` (Scan EAN, Imprimer Étiquette, Dupliquer, Annonce, Supprimer), supprimant tout encombrement et débordement de texte sur mobile.
+  2. **Correction du Header & Recherche Caisse POS (`CaisseClient.tsx`)** : Restructuration de la rangée de recherche et des boutons scanner (`📷 Scanner Caméra`, `📱 Douchette Smartphone`) en 2 lignes distinctes sur mobile (≤ 640px) avec boutons à 50% de largeur pour une lisibilité du texte à 100%. Fluidification du défilement tactile des badges de catégories.
+  3. **Fluidification des Onglets Comptabilité (`Comptabilite.tsx`)** : Intégration du scroll tactile `.nopalou-scroll-tabs` (`-webkit-overflow-scrolling: touch`) et ajustement réactif des cartes KPI pour éviter toute coupure d'affichage sur écran mobile.
+  4. **Onglets Boutique Publique (`BoutiqueDetailClient.tsx`)** : Remplacement du `minWidth: 140` rigide par un dimensionnement réactif fluide (`flex: 1 0 auto`, `minWidth: 110`) évitant la troncature du texte (*"Catalogue produits"*).
+  5. **Correctif Carte Dorée d'Alternative (`produit/[id]/page.tsx` & `globals.css`)** : Passage de `.comp-verdict-alternative-box` en disposition verticale (`flex-direction: column`) sur mobile (≤ 640px) avec le bouton CTA `"Voir l'alternative →"` à 100% de largeur, éliminant les débordements sur le bord droit de la carte.
+

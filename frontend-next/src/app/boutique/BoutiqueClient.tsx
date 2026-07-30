@@ -1254,6 +1254,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
   const [dupNom, setDupNom] = useState<string>('')
   const [dupPrix, setDupPrix] = useState<string>('')
   const [dupStock, setDupStock] = useState<string>('')
+  const [menuActionsOuvertId, setMenuActionsOuvertId] = useState<string | null>(null)
 
   async function saveStock(produitId: string) {
     const val = Number(stockInputVal)
@@ -1581,82 +1582,17 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                 </div>
               </div>
 
-              {/* Rangée d'Actions Inférieure (Propre & Responsive) */}
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: 10, flexWrap: 'wrap' }}>
-                {/* Actions Principales */}
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', flex: 1 }}>
+              {/* Rangée d'Actions Inférieure (Propre, Épurée & 100% Responsive) */}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: 10, position: 'relative' }}>
+                {/* Actions Principales (Modifier & Partager) */}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                   <button
                     onClick={() => setMode({ editing: p })}
-                    style={{ background: '#7c3aed', color: '#ffffff', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                    title="Générer ou scanner le code-barres EAN-13"
-                  >
-                    🏷️ Scan / EAN
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      const ean = (p as any).code_barre || '2001234567891'
-                      const svgBarcode = genererSVGCodeBarresEAN13(ean)
-                      const printWin = window.open('', '_blank', 'width=480,height=400')
-                      if (!printWin) return
-                      printWin.document.write(`
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                          <title>Étiquette ${p.nom}</title>
-                          <style>
-                            @page { size: 50mm 30mm; margin: 0; }
-                            body {
-                              font-family: Arial, sans-serif; margin: 0; padding: 4px 6px;
-                              text-align: center; width: 50mm; height: 30mm; box-sizing: border-box;
-                              display: flex; flex-direction: column; justify-content: center; align-items: center;
-                            }
-                            .title { font-size: 11px; font-weight: 800; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46mm; margin-bottom: 2px; }
-                            .price { font-size: 13px; font-weight: 900; color: #000; margin-bottom: 4px; }
-                            .barcode-num { font-family: monospace; font-size: 12px; font-weight: bold; letter-spacing: 2px; margin-top: 2px; }
-                            svg { display: block; margin: 0 auto; max-width: 44mm; height: auto; }
-                          </style>
-                        </head>
-                        <body>
-                          <div class="title">${p.nom}</div>
-                          <div class="price">${p.prix ? `${new Intl.NumberFormat('fr-FR').format(p.prix)} FCFA` : ''}</div>
-                          <div class="barcode-svg">${svgBarcode}</div>
-                          <div class="barcode-num">${ean}</div>
-                          <script>window.onload = () => { window.print(); window.close(); }</script>
-                        </body>
-                        </html>
-                      `)
-                      printWin.document.close()
-                    }}
-                    style={{ background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                    title="Imprimer l'étiquette sticker code-barres (50mm x 30mm)"
-                  >
-                    🖨️ Étiquette
-                  </button>
-
-                  <button
-                    onClick={() => setMode({ editing: p })}
-                    style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                    style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                   >
                     ✏️ Modifier
                   </button>
 
-                  <button
-                    onClick={() => {
-                      setProduitADupliquer(p)
-                      setDupNom(`${p.nom} (Copie)`)
-                      setDupPrix(p.prix?.toString() || '')
-                      setDupStock(p.stock_quantite?.toString() || '')
-                    }}
-                    style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 8, padding: '6px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    📄 Dupliquer
-                  </button>
-                </div>
-
-                {/* Options Secondaires (Partage, Annonce, Suppression) */}
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                   <BoutonPartager
                     lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
                     message={
@@ -1667,38 +1603,124 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                     lienVisuel={`/assets/produit-boutique/${p.id}/story?boutiqueId=${boutique.id}`}
                     onPartage={() => { marquerProduitPartage(boutique.id, p.id).catch(() => {}) }}
                   />
+                </div>
 
+                {/* Menu Déroulant Actions Secondaires */}
+                <div style={{ position: 'relative' }}>
                   <button
-                    onClick={() => {
-                      if (!confirm('Publier ce produit comme annonce classifiée ?')) return
-                      startTransition(async () => {
-                        const res = await publierProduitAnnonce(boutique.id, p.id)
-                        if (res.error) alert(res.error)
-                        else if (res.besoin_paiement) alert(res.message)
-                        else { setSuccessMsg(res.message || 'Publié avec succès en annonce !') }
-                      })
+                    onClick={() => setMenuActionsOuvertId(menuActionsOuvertId === p.id ? null : p.id)}
+                    style={{
+                      background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', borderRadius: 8,
+                      padding: '6px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4
                     }}
-                    title="Publier comme annonce"
-                    style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a', borderRadius: 8, padding: '6px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                   >
-                    📢 Annonce
+                    <span>Actions</span> ▾
                   </button>
 
-                  <button
-                    onClick={() => {
-                      if (!confirm('Supprimer ce produit ?')) return
-                      setDeleteError(null)
-                      startTransition(async () => {
-                        const res = await deleteProduit(boutique.id, p.id)
-                        if (res.error) setDeleteError(res.error)
-                        else { setSuccessMsg('Produit supprimé.'); loadProduits() }
-                      })
-                    }}
-                    style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, padding: '6px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 800 }}
-                    title="Supprimer le produit"
-                  >
-                    🗑️
-                  </button>
+                  {menuActionsOuvertId === p.id && (
+                    <>
+                      <div
+                        onClick={() => setMenuActionsOuvertId(null)}
+                        style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                      />
+                      <div style={{
+                        position: 'absolute', right: 0, bottom: 36, background: '#ffffff', border: '1px solid #cbd5e1',
+                        borderRadius: 10, padding: 6, zIndex: 9999, boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                        display: 'flex', flexDirection: 'column', gap: 4, minWidth: 175
+                      }}>
+                        <button
+                          onClick={() => { setMenuActionsOuvertId(null); setMode({ editing: p }); }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left' }}
+                        >
+                          🏷️ Scan / EAN
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            setMenuActionsOuvertId(null);
+                            e.stopPropagation();
+                            const ean = (p as any).code_barre || '2001234567891';
+                            const svgBarcode = genererSVGCodeBarresEAN13(ean);
+                            const printWin = window.open('', '_blank', 'width=480,height=400');
+                            if (!printWin) return;
+                            printWin.document.write(`
+                              <!DOCTYPE html>
+                              <html>
+                              <head>
+                                <title>Étiquette ${p.nom}</title>
+                                <style>
+                                  @page { size: 50mm 30mm; margin: 0; }
+                                  body {
+                                    font-family: Arial, sans-serif; margin: 0; padding: 4px 6px;
+                                    text-align: center; width: 50mm; height: 30mm; box-sizing: border-box;
+                                    display: flex; flex-direction: column; justify-content: center; align-items: center;
+                                  }
+                                  .title { font-size: 11px; font-weight: 800; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46mm; margin-bottom: 2px; }
+                                  .price { font-size: 13px; font-weight: 900; color: #000; margin-bottom: 4px; }
+                                  .barcode-num { font-family: monospace; font-size: 12px; font-weight: bold; letter-spacing: 2px; margin-top: 2px; }
+                                  svg { display: block; margin: 0 auto; max-width: 44mm; height: auto; }
+                                </style>
+                              </head>
+                              <body>
+                                <div class="title">${p.nom}</div>
+                                <div class="price">${p.prix ? `${new Intl.NumberFormat('fr-FR').format(p.prix)} FCFA` : ''}</div>
+                                <div class="barcode-svg">${svgBarcode}</div>
+                                <div class="barcode-num">${ean}</div>
+                                <script>window.onload = () => { window.print(); window.close(); }</script>
+                              </body>
+                              </html>
+                            `);
+                            printWin.document.close();
+                          }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'none', border: 'none', color: '#0284c7', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left' }}
+                        >
+                          🖨️ Imprimer Étiquette
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMenuActionsOuvertId(null);
+                            setProduitADupliquer(p);
+                            setDupNom(`${p.nom} (Copie)`);
+                            setDupPrix(p.prix?.toString() || '');
+                            setDupStock(p.stock_quantite?.toString() || '');
+                          }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left' }}
+                        >
+                          📄 Dupliquer le produit
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMenuActionsOuvertId(null);
+                            if (!confirm('Publier ce produit comme annonce classifiée ?')) return;
+                            startTransition(async () => {
+                              const res = await publierProduitAnnonce(boutique.id, p.id);
+                              if (res.error) alert(res.error);
+                              else if (res.besoin_paiement) alert(res.message);
+                              else { setSuccessMsg(res.message || 'Publié avec succès en annonce !'); }
+                            });
+                          }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'none', border: 'none', color: '#b45309', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left' }}
+                        >
+                          📢 Publier en Annonce
+                        </button>
+                        <div style={{ height: 1, background: '#f1f5f9', margin: '2px 0' }} />
+                        <button
+                          onClick={() => {
+                            setMenuActionsOuvertId(null);
+                            if (!confirm('Supprimer ce produit ?')) return;
+                            setDeleteError(null);
+                            startTransition(async () => {
+                              const res = await deleteProduit(boutique.id, p.id);
+                              if (res.error) setDeleteError(res.error);
+                              else { setSuccessMsg('Produit supprimé.'); loadProduits(); }
+                            });
+                          }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 700, cursor: 'pointer', borderRadius: 6, textAlign: 'left' }}
+                        >
+                          🗑️ Supprimer
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
