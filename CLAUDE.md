@@ -236,6 +236,10 @@ Déclencheur : Demande de l'utilisateur de lister toutes les fonctionnalités du
 **8. Correction du Menu Déroulant Actions Produit (`BoutiqueClient.tsx`) :**
 - **Ergonomie & Affichage** : Positionnement ajusté à droite (`right: 0`, `bottom: calc(100% + 6px)`, `whiteSpace: nowrap`, `width: max-content`) pour le menu d'actions secondaires (`Actions ▾`) du catalogue produit. Le popup ne se fait plus tronquer sur le bord droit de l'écran/conteneur.
 
+**9. Refonte Graphique Nette & Alignement Charte Nopalou (`/assets/...`) :**
+- **Alignement Charte Graphique Nopalou** : Réalignement strict de tous les visuels sur les couleurs officielles Nopalou (Orange `#C75B00` & Bleu Marine `#1C2B4A`).
+- **Netteté Vectorielle & Lisibilité Optimale** : Augmentation importante de la taille des polices (titres à 52-54px, sous-titres à 22-26px, corps à 18-19px `fontWeight: 700/900`) et suppression des box-shadows flous pour éliminer tout flou de rendu et garantir une netteté cristalline sur tous les écrans.
+
 ---
 
 ## État du projet (29 juillet 2026 — Refonte Boutiques, Abonnements, Panier Mobile & bloc SEO)

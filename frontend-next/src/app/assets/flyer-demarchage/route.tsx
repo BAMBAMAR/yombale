@@ -65,7 +65,7 @@ export async function GET() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 22, color: '#C75B00', fontWeight: 900, flexShrink: 0,
               }}>✓</div>
-              <span style={{ fontSize: 28, color: '#1C2B4A', fontWeight: 600 }}>{txt}</span>
+              <span style={{ fontSize: 28, color: '#1C2B4A', fontWeight: 800 }}>{txt}</span>
             </div>
           ))}
         </div>

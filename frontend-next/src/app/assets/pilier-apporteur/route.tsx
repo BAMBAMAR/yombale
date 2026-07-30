@@ -2,126 +2,122 @@ import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
 
-// Visuel Dédié Pilier 3 — Apporteur d'Affaires 20% (Bright & Sharp)
+// Visuel Dédié Pilier 3 — Apporteur d'Affaires 20% (Nopalou Identity, Maximum Sharpness)
 export async function GET() {
   return new ImageResponse(
     (
       <div style={{
         width: 1080, height: 1350,
         display: 'flex', flexDirection: 'column',
-        background: 'linear-gradient(160deg, #F3E8FF 0%, #FFFFFF 50%, #FAF5FF 100%)',
+        background: 'linear-gradient(160deg, #FFFFFF 0%, #F8FAFC 50%, #FFF7ED 100%)',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        position: 'relative', color: '#0F172A',
-        padding: 48, boxSizing: 'border-box',
+        position: 'relative', color: '#1C2B4A',
+        padding: 56, boxSizing: 'border-box',
         overflow: 'hidden',
       }}>
-        {/* Background shapes */}
-        <div style={{
-          position: 'absolute', right: -100, top: -100,
-          width: 500, height: 500, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%)',
-          display: 'flex',
-        }} />
+        {/* Bande de couleur Nopalou en haut */}
+        <div style={{ height: 10, background: 'linear-gradient(90deg, #7C3AED 0%, #C75B00 50%, #1C2B4A 100%)', display: 'flex', position: 'absolute', top: 0, left: 0, right: 0 }} />
 
-        <div style={{ height: 8, background: '#7C3AED', display: 'flex', position: 'absolute', top: 0, left: 0, right: 0 }} />
-
-        {/* HEADER */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* HEADER BRANDING NOPALOU */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 36 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
             <div style={{
-              width: 60, height: 60, borderRadius: 16,
-              background: '#7C3AED',
+              width: 72, height: 72, borderRadius: 20,
+              background: '#C75B00',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 36, fontWeight: 900, color: '#FFF',
-              boxShadow: '0 8px 20px rgba(124,58,237,0.3)'
+              fontSize: 44, fontWeight: 900, color: '#FFFFFF',
             }}>N</div>
-            <span style={{ fontSize: 40, fontWeight: 900, color: '#0F172A' }}>
-              Nopa<span style={{ color: '#7C3AED' }}>lou</span>
+            <span style={{ fontSize: 52, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1 }}>
+              Nopa<span style={{ color: '#C75B00' }}>lou</span>
             </span>
           </div>
           <div style={{
-            background: '#F3E8FF', border: '2px solid #7C3AED',
-            borderRadius: 30, padding: '8px 22px', fontSize: 16, fontWeight: 900, color: '#7C3AED', display: 'flex',
+            background: '#F3E8FF', border: '2.5px solid #7C3AED',
+            borderRadius: 30, padding: '12px 28px', fontSize: 18, fontWeight: 900, color: '#7C3AED', display: 'flex',
           }}>
             💼 PILIER 3 : APPORTEUR 20%
           </div>
         </div>
 
         {/* HERO TITLE */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 36 }}>
-          <span style={{ background: '#7C3AED', color: '#FFF', padding: '6px 22px', borderRadius: 20, fontSize: 14, fontWeight: 900, letterSpacing: 1, marginBottom: 12, display: 'flex' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 40 }}>
+          <span style={{ background: '#7C3AED', color: '#FFFFFF', padding: '8px 24px', borderRadius: 20, fontSize: 16, fontWeight: 900, letterSpacing: 1.5, marginBottom: 14, display: 'flex' }}>
             PROGRAMME DE PARRAINAGE N°1 AU SÉNÉGAL
           </span>
-          <h1 style={{ fontSize: 48, fontWeight: 900, color: '#0F172A', margin: 0, lineHeight: 1.15 }}>
+          <h1 style={{ fontSize: 52, fontWeight: 900, color: '#1C2B4A', margin: 0, lineHeight: 1.15 }}>
             Gagnez un Revenu Récurrent Mensuel
           </h1>
-          <p style={{ fontSize: 20, color: '#6B21A8', marginTop: 10, marginBottom: 0 }}>
+          <p style={{ fontSize: 22, color: '#7C3AED', fontWeight: 900, marginTop: 12, marginBottom: 0 }}>
             Recommandez Nopalou aux commerçants et percevez 20% sur chaque abonnement
           </p>
         </div>
 
-        {/* FEATURES */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18, flex: 1 }}>
+        {/* CARDS DES FONCTIONNALITÉS HAUTE NETTETÉ */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
 
+          {/* Feature 1 */}
           <div style={{
-            background: '#FFFFFF', border: '2px solid #7C3AED', borderRadius: 20, padding: 22,
-            display: 'flex', alignItems: 'center', gap: 20, boxShadow: '0 8px 20px rgba(124,58,237,0.06)'
+            background: '#FFFFFF', border: '3px solid #7C3AED', borderRadius: 22, padding: 24,
+            display: 'flex', alignItems: 'center', gap: 22,
           }}>
             <div style={{
-              width: 64, height: 64, borderRadius: 16, background: '#F3E8FF', border: '1px solid #DDD6FE',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0
+              width: 72, height: 72, borderRadius: 20, background: '#F3E8FF', border: '2px solid #7C3AED',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
             }}>💰</div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <span style={{ fontSize: 22, fontWeight: 900, color: '#7C3AED' }}>Commissions 20% Récurrentes à Vie</span>
-              <span style={{ fontSize: 15, color: '#334155', marginTop: 4, lineHeight: 1.4 }}>
+              <span style={{ fontSize: 26, fontWeight: 900, color: '#7C3AED' }}>Commissions 20% Récurrentes à Vie</span>
+              <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>
                 Versées chaque mois directement sur votre compte Wave ou Orange Money.
               </span>
             </div>
           </div>
 
+          {/* Feature 2 */}
           <div style={{
-            background: '#FFFFFF', border: '2px solid #7C3AED', borderRadius: 20, padding: 22,
-            display: 'flex', alignItems: 'center', gap: 20, boxShadow: '0 8px 20px rgba(124,58,237,0.06)'
+            background: '#FFFFFF', border: '3px solid #C75B00', borderRadius: 22, padding: 24,
+            display: 'flex', alignItems: 'center', gap: 22,
           }}>
             <div style={{
-              width: 64, height: 64, borderRadius: 16, background: '#F3E8FF', border: '1px solid #DDD6FE',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0
+              width: 72, height: 72, borderRadius: 20, background: '#FFF7ED', border: '2px solid #C75B00',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
             }}>📄</div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <span style={{ fontSize: 22, fontWeight: 900, color: '#0F172A' }}>Brochure PDF 13 Pages &amp; Kit Commercial</span>
-              <span style={{ fontSize: 15, color: '#334155', marginTop: 4, lineHeight: 1.4 }}>
+              <span style={{ fontSize: 26, fontWeight: 900, color: '#C75B00' }}>Brochure PDF 13 Pages &amp; Kit Commercial</span>
+              <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>
                 Support de présentation terrain complet, argumentaires de vente &amp; visuels WhatsApp.
               </span>
             </div>
           </div>
 
+          {/* Feature 3 */}
           <div style={{
-            background: '#FFFFFF', border: '2px solid #7C3AED', borderRadius: 20, padding: 22,
-            display: 'flex', alignItems: 'center', gap: 20, boxShadow: '0 8px 20px rgba(124,58,237,0.06)'
+            background: '#FFFFFF', border: '3px solid #1C2B4A', borderRadius: 22, padding: 24,
+            display: 'flex', alignItems: 'center', gap: 22,
           }}>
             <div style={{
-              width: 64, height: 64, borderRadius: 16, background: '#F3E8FF', border: '1px solid #DDD6FE',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0
+              width: 72, height: 72, borderRadius: 20, background: '#F8FAFC', border: '2px solid #1C2B4A',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
             }}>📊</div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <span style={{ fontSize: 22, fontWeight: 900, color: '#7C3AED' }}>Dashboard &amp; Code Apporteur Personnel</span>
-              <span style={{ fontSize: 15, color: '#334155', marginTop: 4, lineHeight: 1.4 }}>
+              <span style={{ fontSize: 26, fontWeight: 900, color: '#1C2B4A' }}>Dashboard &amp; Code Apporteur Personnel</span>
+              <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>
                 Suivez vos commerçants parrainés et vos paiements mensuels en temps réel.
               </span>
             </div>
           </div>
 
+          {/* Feature 4 */}
           <div style={{
-            background: '#FFFFFF', border: '2px solid #EA580C', borderRadius: 20, padding: 22,
-            display: 'flex', alignItems: 'center', gap: 20, boxShadow: '0 8px 20px rgba(234,88,12,0.06)'
+            background: '#FFFFFF', border: '3px solid #7C3AED', borderRadius: 22, padding: 24,
+            display: 'flex', alignItems: 'center', gap: 22,
           }}>
             <div style={{
-              width: 64, height: 64, borderRadius: 16, background: '#FFF7ED', border: '1px solid #FFEDD5',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0
+              width: 72, height: 72, borderRadius: 20, background: '#F3E8FF', border: '2px solid #7C3AED',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
             }}>🚀</div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <span style={{ fontSize: 22, fontWeight: 900, color: '#EA580C' }}>0 FCFA d&apos;Investissement · Sans Plafond</span>
-              <span style={{ fontSize: 15, color: '#334155', marginTop: 4, lineHeight: 1.4 }}>
+              <span style={{ fontSize: 26, fontWeight: 900, color: '#7C3AED' }}>0 FCFA d&apos;Investissement · Sans Plafond</span>
+              <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>
                 Aucun frais. Recrutez sans limite et construisez votre revenu passif mensuel.
               </span>
             </div>
@@ -129,19 +125,19 @@ export async function GET() {
 
         </div>
 
-        {/* FOOTER */}
+        {/* FOOTER CTA HAUTE VISIBILITÉ */}
         <div style={{
-          background: '#7C3AED', borderRadius: 20, padding: '20px 32px', marginTop: 24,
+          background: '#1C2B4A', borderRadius: 24, padding: '24px 40px', marginTop: 24,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          boxShadow: '0 10px 25px rgba(124,58,237,0.25)'
+          border: '3px solid #7C3AED',
         }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: 24, fontWeight: 900, color: '#FFF' }}>Devenez Apporteur Nopalou dès aujourd&apos;hui</span>
-            <span style={{ fontSize: 15, color: '#FFF', opacity: 0.95 }}>Inscription 1-Clic · Paiements Wave / OM</span>
+            <span style={{ fontSize: 26, fontWeight: 900, color: '#FFFFFF' }}>Devenez Apporteur Nopalou dès aujourd&apos;hui</span>
+            <span style={{ fontSize: 17, color: '#CBD5E1', fontWeight: 700, marginTop: 4 }}>Inscription 1-Clic · Paiements Wave / OM</span>
           </div>
           <div style={{
-            background: '#FFF', color: '#4C1D95', padding: '12px 28px', borderRadius: 12,
-            fontSize: 20, fontWeight: 900, display: 'flex',
+            background: '#7C3AED', color: '#FFFFFF', padding: '16px 36px', borderRadius: 16,
+            fontSize: 24, fontWeight: 900, display: 'flex',
           }}>
             nopalou.com/apporteur
           </div>

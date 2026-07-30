@@ -2,146 +2,142 @@ import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
 
-// Visuel Dédié Pilier 1 — Acheteur & Consommateur (Bright & Sharp)
+// Visuel Dédié Pilier 1 — Acheteur & Consommateur (Nopalou Identity, Maximum Sharpness)
 export async function GET() {
   return new ImageResponse(
     (
       <div style={{
         width: 1080, height: 1350,
         display: 'flex', flexDirection: 'column',
-        background: 'linear-gradient(160deg, #FFF7ED 0%, #FFFFFF 50%, #F1F5F9 100%)',
+        background: 'linear-gradient(160deg, #FFFFFF 0%, #F8FAFC 50%, #FFF7ED 100%)',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        position: 'relative', color: '#0F172A',
-        padding: 48, boxSizing: 'border-box',
+        position: 'relative', color: '#1C2B4A',
+        padding: 56, boxSizing: 'border-box',
         overflow: 'hidden',
       }}>
-        {/* Background shapes */}
-        <div style={{
-          position: 'absolute', right: -100, top: -100,
-          width: 500, height: 500, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(234,88,12,0.12) 0%, transparent 70%)',
-          display: 'flex',
-        }} />
+        {/* Bande de couleur Nopalou en haut */}
+        <div style={{ height: 10, background: 'linear-gradient(90deg, #C75B00 0%, #1C2B4A 50%, #25D366 100%)', display: 'flex', position: 'absolute', top: 0, left: 0, right: 0 }} />
 
-        <div style={{ height: 8, background: '#EA580C', display: 'flex', position: 'absolute', top: 0, left: 0, right: 0 }} />
-
-        {/* HEADER */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* HEADER BRANDING NOPALOU */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 36 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
             <div style={{
-              width: 60, height: 60, borderRadius: 16,
-              background: '#EA580C',
+              width: 72, height: 72, borderRadius: 20,
+              background: '#C75B00',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 36, fontWeight: 900, color: '#FFF',
-              boxShadow: '0 8px 20px rgba(234,88,12,0.3)'
+              fontSize: 44, fontWeight: 900, color: '#FFFFFF',
             }}>N</div>
-            <span style={{ fontSize: 40, fontWeight: 900, color: '#0F172A' }}>
-              Nopa<span style={{ color: '#EA580C' }}>lou</span>
+            <span style={{ fontSize: 52, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1 }}>
+              Nopa<span style={{ color: '#C75B00' }}>lou</span>
             </span>
           </div>
           <div style={{
-            background: '#FFF7ED', border: '2px solid #EA580C',
-            borderRadius: 30, padding: '8px 22px', fontSize: 16, fontWeight: 900, color: '#EA580C', display: 'flex',
+            background: '#FFF7ED', border: '2.5px solid #C75B00',
+            borderRadius: 30, padding: '12px 28px', fontSize: 18, fontWeight: 900, color: '#C75B00', display: 'flex',
           }}>
             🛒 PILIER 1 : ACHETEUR
           </div>
         </div>
 
         {/* HERO TITLE */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 36 }}>
-          <span style={{ background: '#EA580C', color: '#FFF', padding: '6px 22px', borderRadius: 20, fontSize: 14, fontWeight: 900, letterSpacing: 1, marginBottom: 12, display: 'flex' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 40 }}>
+          <span style={{ background: '#C75B00', color: '#FFFFFF', padding: '8px 24px', borderRadius: 20, fontSize: 16, fontWeight: 900, letterSpacing: 1.5, marginBottom: 14, display: 'flex' }}>
             100% GRATUIT &amp; SANS INSCRIPTION
           </span>
-          <h1 style={{ fontSize: 48, fontWeight: 900, color: '#0F172A', margin: 0, lineHeight: 1.15 }}>
+          <h1 style={{ fontSize: 52, fontWeight: 900, color: '#1C2B4A', margin: 0, lineHeight: 1.15 }}>
             Achetez au Meilleur Prix au Sénégal
           </h1>
-          <p style={{ fontSize: 20, color: '#475569', marginTop: 10, marginBottom: 0 }}>
+          <p style={{ fontSize: 22, color: '#475569', fontWeight: 700, marginTop: 12, marginBottom: 0 }}>
             Comparez les grandes surfaces, boutiques spécialisées &amp; vendeurs de Dakar
           </p>
         </div>
 
-        {/* FEATURES */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18, flex: 1 }}>
+        {/* CARDS DES FONCTIONNALITÉS HAUTE NETTETÉ */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
 
+          {/* Feature 1 */}
           <div style={{
-            background: '#FFFFFF', border: '2px solid #EA580C', borderRadius: 20, padding: 22,
-            display: 'flex', alignItems: 'center', gap: 20, boxShadow: '0 8px 20px rgba(234,88,12,0.06)'
+            background: '#FFFFFF', border: '3px solid #C75B00', borderRadius: 22, padding: 24,
+            display: 'flex', alignItems: 'center', gap: 22,
           }}>
             <div style={{
-              width: 64, height: 64, borderRadius: 16, background: '#FFF7ED', border: '1px solid #FFEDD5',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0
+              width: 72, height: 72, borderRadius: 20, background: '#FFF7ED', border: '2px solid #C75B00',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
             }}>🔍</div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <span style={{ fontSize: 22, fontWeight: 900, color: '#0F172A' }}>Super-Comparateur Multi-Marchands</span>
-              <span style={{ fontSize: 15, color: '#475569', marginTop: 4, lineHeight: 1.4 }}>
-                Auchan, Carrefour, Expat-Dakar, Boutiques Nopalou Pro : trouvez quel vendeur est le moins cher.
+              <span style={{ fontSize: 26, fontWeight: 900, color: '#C75B00' }}>Super-Comparateur Multi-Marchands</span>
+              <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>
+                Auchan, Carrefour, Expat-Dakar, Boutiques Nopalou Pro : découvrez le prix le plus bas.
               </span>
             </div>
           </div>
 
+          {/* Feature 2 */}
           <div style={{
-            background: '#FFFFFF', border: '2px solid #059669', borderRadius: 20, padding: 22,
-            display: 'flex', alignItems: 'center', gap: 20, boxShadow: '0 8px 20px rgba(5,150,105,0.06)'
+            background: '#FFFFFF', border: '3px solid #25D366', borderRadius: 22, padding: 24,
+            display: 'flex', alignItems: 'center', gap: 22,
           }}>
             <div style={{
-              width: 64, height: 64, borderRadius: 16, background: '#ECFDF5', border: '1px solid #A7F3D0',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0
+              width: 72, height: 72, borderRadius: 20, background: '#F0FDF4', border: '2px solid #25D366',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
             }}>🤖</div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <span style={{ fontSize: 22, fontWeight: 900, color: '#059669' }}>Assistant Chatbot WhatsApp Meta 24/7</span>
-              <span style={{ fontSize: 15, color: '#475569', marginTop: 4, lineHeight: 1.4 }}>
+              <span style={{ fontSize: 26, fontWeight: 900, color: '#25D366' }}>Assistant Chatbot WhatsApp Meta 24/7</span>
+              <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>
                 Recherchez, comparez et commandez vos produits directement sur WhatsApp sans app.
               </span>
             </div>
           </div>
 
+          {/* Feature 3 */}
           <div style={{
-            background: '#FFFFFF', border: '2px solid #0284C7', borderRadius: 20, padding: 22,
-            display: 'flex', alignItems: 'center', gap: 20, boxShadow: '0 8px 20px rgba(2,132,199,0.06)'
+            background: '#FFFFFF', border: '3px solid #1C2B4A', borderRadius: 22, padding: 24,
+            display: 'flex', alignItems: 'center', gap: 22,
           }}>
             <div style={{
-              width: 64, height: 64, borderRadius: 16, background: '#E0F2FE', border: '1px solid #BAE6FD',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0
+              width: 72, height: 72, borderRadius: 20, background: '#F8FAFC', border: '2px solid #1C2B4A',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
             }}>🔔</div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <span style={{ fontSize: 22, fontWeight: 900, color: '#0284C7' }}>Alertes Prix &amp; Immo</span>
-              <span style={{ fontSize: 15, color: '#475569', marginTop: 4, lineHeight: 1.4 }}>
-                Alertes automatiques lors des baisses de prix + accès aux biens immobiliers vérifiés &amp; forfaits télécom.
+              <span style={{ fontSize: 26, fontWeight: 900, color: '#1C2B4A' }}>Alertes Prix &amp; Annonces Immo</span>
+              <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>
+                Alertes automatiques lors des baisses de prix + accès aux logements &amp; télécom.
               </span>
             </div>
           </div>
 
+          {/* Feature 4 */}
           <div style={{
-            background: '#FFFFFF', border: '2px solid #EA580C', borderRadius: 20, padding: 22,
-            display: 'flex', alignItems: 'center', gap: 20, boxShadow: '0 8px 20px rgba(234,88,12,0.06)'
+            background: '#FFFFFF', border: '3px solid #C75B00', borderRadius: 22, padding: 24,
+            display: 'flex', alignItems: 'center', gap: 22,
           }}>
             <div style={{
-              width: 64, height: 64, borderRadius: 16, background: '#FFF7ED', border: '1px solid #FFEDD5',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0
+              width: 72, height: 72, borderRadius: 20, background: '#FFF7ED', border: '2px solid #C75B00',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
             }}>⚖️</div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <span style={{ fontSize: 22, fontWeight: 900, color: '#0F172A' }}>Tableau Comparatif Côte à Côte</span>
-              <span style={{ fontSize: 15, color: '#475569', marginTop: 4, lineHeight: 1.4 }}>
-                Comparez jusqu&apos;à 3 produits simultanément avec fiches techniques et stocks en temps réel.
+              <span style={{ fontSize: 26, fontWeight: 900, color: '#1C2B4A' }}>Tableau Comparatif Côte à Côte</span>
+              <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>
+                Comparez jusqu&apos;à 3 produits simultanément avec fiches techniques et stocks.
               </span>
             </div>
           </div>
 
         </div>
 
-        {/* FOOTER */}
+        {/* FOOTER CTA HAUTE VISIBILITÉ */}
         <div style={{
-          background: '#EA580C', borderRadius: 20, padding: '20px 32px', marginTop: 24,
+          background: '#1C2B4A', borderRadius: 24, padding: '24px 40px', marginTop: 24,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          boxShadow: '0 10px 25px rgba(234,88,12,0.25)'
+          border: '3px solid #C75B00',
         }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: 24, fontWeight: 900, color: '#FFF' }}>Économisez sur vos achats dès maintenant</span>
-            <span style={{ fontSize: 15, color: '#FFF', opacity: 0.95 }}>100% Gratuit · Auchan · Carrefour · Boutiques Dakar</span>
+            <span style={{ fontSize: 26, fontWeight: 900, color: '#FFFFFF' }}>Économisez sur vos achats dès maintenant</span>
+            <span style={{ fontSize: 17, color: '#CBD5E1', fontWeight: 700, marginTop: 4 }}>100% Gratuit · Auchan · Carrefour · Boutiques Dakar</span>
           </div>
           <div style={{
-            background: '#FFF', color: '#0F172A', padding: '12px 28px', borderRadius: 12,
-            fontSize: 22, fontWeight: 900, display: 'flex',
+            background: '#C75B00', color: '#FFFFFF', padding: '16px 36px', borderRadius: 16,
+            fontSize: 26, fontWeight: 900, display: 'flex',
           }}>
             nopalou.com
           </div>

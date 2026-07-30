@@ -2,44 +2,36 @@ import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
 
-// Post/flyer recrutement apporteurs d'affaires — programme commission 20% récurrente (Bright & Sharp)
+// Post/flyer recrutement apporteurs d'affaires — programme commission 20% récurrente (Nopalou Identity & High Sharpness)
 export async function GET() {
   return new ImageResponse(
     (
       <div style={{
         width: 1080, height: 1080,
         display: 'flex', flexDirection: 'column',
-        background: 'linear-gradient(160deg, #F3E8FF 0%, #FFFFFF 55%, #FAF5FF 100%)',
+        background: 'linear-gradient(160deg, #FFFFFF 0%, #F8FAFC 55%, #FFF7ED 100%)',
         fontFamily: 'system-ui, -apple-system, sans-serif',
         position: 'relative',
         overflow: 'hidden',
-        padding: 48,
+        padding: 56,
         boxSizing: 'border-box',
       }}>
-        {/* Background shapes */}
-        <div style={{
-          position: 'absolute', right: -100, top: -100,
-          width: 500, height: 500, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%)',
-          display: 'flex',
-        }} />
+        {/* Top Accent Line */}
+        <div style={{ height: 10, background: 'linear-gradient(90deg, #C75B00 0%, #7C3AED 50%, #1C2B4A 100%)', display: 'flex', position: 'absolute', top: 0, left: 0, right: 0 }} />
 
-        <div style={{ height: 8, background: '#7C3AED', display: 'flex', position: 'absolute', top: 0, left: 0, right: 0 }} />
-
-        {/* Header */}
+        {/* Header Branding */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 16,
-          marginBottom: 32,
+          display: 'flex', alignItems: 'center', gap: 18,
+          marginBottom: 36,
         }}>
           <div style={{
-            width: 60, height: 60, borderRadius: 16,
-            background: '#7C3AED',
+            width: 72, height: 72, borderRadius: 20,
+            background: '#C75B00',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 34, fontWeight: 900, color: '#fff',
-            boxShadow: '0 8px 20px rgba(124,58,237,0.3)',
+            fontSize: 44, fontWeight: 900, color: '#FFFFFF',
           }}>N</div>
-          <span style={{ fontSize: 40, fontWeight: 900, color: '#0F172A' }}>
-            Nopa<span style={{ color: '#7C3AED' }}>lou</span>
+          <span style={{ fontSize: 52, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1 }}>
+            Nopa<span style={{ color: '#C75B00' }}>lou</span>
           </span>
         </div>
 
@@ -47,34 +39,34 @@ export async function GET() {
         <div style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
-          padding: '0 40px',
+          padding: '0 20px',
         }}>
           <div style={{
             background: '#F3E8FF',
-            border: '2px solid #7C3AED',
-            borderRadius: 40, padding: '10px 32px',
-            fontSize: 20, color: '#7C3AED', fontWeight: 900,
+            border: '2.5px solid #7C3AED',
+            borderRadius: 40, padding: '12px 36px',
+            fontSize: 22, color: '#7C3AED', fontWeight: 900,
             marginBottom: 24, display: 'flex',
           }}>
             💼 PROGRAMME APPORTEUR D&apos;AFFAIRES
           </div>
 
           <p style={{
-            fontSize: 100, fontWeight: 900, color: '#7C3AED',
+            fontSize: 110, fontWeight: 900, color: '#C75B00',
             textAlign: 'center', margin: '0 0 4px', lineHeight: 1,
           }}>
             20%
           </p>
           <p style={{
-            fontSize: 34, fontWeight: 900, color: '#0F172A',
+            fontSize: 38, fontWeight: 900, color: '#1C2B4A',
             textAlign: 'center', margin: '0 0 28px',
           }}>
             de commission récurrente mensuelle
           </p>
 
           <p style={{
-            fontSize: 24, color: '#475569',
-            textAlign: 'center', margin: 0, lineHeight: 1.6, maxWidth: 820, fontWeight: 600,
+            fontSize: 26, color: '#334155',
+            textAlign: 'center', margin: 0, lineHeight: 1.5, maxWidth: 860, fontWeight: 700,
           }}>
             Présentez Nopalou aux commerçants de votre réseau.<br />
             Chaque boutique Pro ou Business que vous recrutez<br />
@@ -82,12 +74,12 @@ export async function GET() {
           </p>
 
           <div style={{
-            marginTop: 44,
-            background: '#7C3AED',
-            borderRadius: 18, padding: '20px 52px',
-            fontSize: 26, fontWeight: 900, color: '#fff',
+            marginTop: 48,
+            background: '#1C2B4A',
+            border: '3px solid #C75B00',
+            borderRadius: 20, padding: '22px 56px',
+            fontSize: 28, fontWeight: 900, color: '#FFFFFF',
             display: 'flex',
-            boxShadow: '0 10px 25px rgba(124,58,237,0.3)',
           }}>
             nopalou.com/apporteur
           </div>
@@ -97,7 +89,7 @@ export async function GET() {
         <div style={{
           display: 'flex', justifyContent: 'center', alignItems: 'center',
         }}>
-          <span style={{ fontSize: 18, color: '#6B21A8', fontWeight: 800 }}>
+          <span style={{ fontSize: 20, color: '#C75B00', fontWeight: 900 }}>
             0 FCFA d&apos;Investissement · Paiement mensuel Wave / OM · Sans limite
           </span>
         </div>
