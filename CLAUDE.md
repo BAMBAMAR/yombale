@@ -219,6 +219,9 @@ Déclencheur : Demande de l'utilisateur de lister toutes les fonctionnalités du
 - **Affiche Commerciale HD (1200 × 1600 px)** : Création d'un visuel synthétique haute définition regroupant TOUTES les fonctionnalités du site en 3 blocs clairs (*Acheteur*, *Marchand POS*, *Apporteur 20%*).
 - **Intégration Kit & Espace Apporteur** : Accessible en 1 clic dans l'administration `/admin/communication` et dans l'espace apporteurs d'affaires `/compte/apporteur` pour le démarchage et les présentations.
 
+**6. Repositionnement des Filtres Produit (`page.tsx`) :**
+- **Ergonomie & Parcours Utilisateur** : Déplacement stratégique des barres de filtres (*Budget*, *Tri*, *Bouton Effacer*) directement au-dessus du compteur de résultats et de la grille de produits `ProduitsListe`.
+
 ---
 
 ## État du projet (29 juillet 2026 — Refonte Boutiques, Abonnements, Panier Mobile & bloc SEO)

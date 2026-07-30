@@ -200,76 +200,75 @@ export default async function HomePage({
         </div>
       </div>
 
-      {/* ── Budget + reset ───────────────────────────────────────── */}
-      <div className="filtres-bar">
-        <span className="filtres-label">Budget :</span>
-        {BUDGETS.map((b) => {
-          const ps = new URLSearchParams()
-          if (q)         ps.set('q',         q)
-          if (categorie) ps.set('categorie', categorie)
-          if (b.prixMax) ps.set('prixMax',   b.prixMax)
-          return (
-            <Link
-              key={b.label}
-              href={`/?${ps}`}
-              className={`budget-pill${prixMax === b.prixMax && b.prixMax ? ' active' : ''}`}
-            >
-              {b.label}
-            </Link>
-          )
-        })}
-        {hasFiltre && (
-          <Link href="/" className="budget-pill budget-pill--reset">✕ Tout effacer</Link>
-        )}
-      </div>
-
-      {/* ── Tri ──────────────────────────────────────────────────── */}
-      <div className="filtres-bar">
-        <span className="filtres-label">Trier :</span>
-        {TRIS.map((t) => {
-          const ps = new URLSearchParams()
-          if (q)         ps.set('q',         q)
-          if (categorie) ps.set('categorie', categorie)
-          if (prixMax)   ps.set('prixMax',   prixMax)
-          if (t.val)     ps.set('tri',       t.val)
-          return (
-            <Link
-              key={t.val || 'defaut'}
-              href={`/?${ps}`}
-              className={`budget-pill${tri === t.val ? ' active' : ''}`}
-            >
-              {t.label}
-            </Link>
-          )
-        })}
-      </div>
-
       {/* ── Récemment consultés ──────────────────────────────────── */}
       <RecentlyViewed />
 
       {/* ── Section Nopalou en Action (3 axes) ───────────────────── */}
       <ShowcaseTabs />
 
-      {/* ── Grille produits ──────────────────────────────────────── */}
+      {/* ── Grille produits & Filtres ───────────────────────────── */}
       {erreur ? (
         <div className="erreur-page">
           <h2>Impossible de charger les produits</h2>
           <p>{erreur}</p>
         </div>
       ) : (
-        <>
-        <CompareFilterBanner />
-        <ProduitsListe
-          key={`${q}-${categorie}-${prixMax}-${tri}-${sousType}`}
-          initialProduits={produits}
-          total={total}
-          q={q}
-          categorie={categorie}
-          prixMax={prixMax}
-          tri={tri}
-          sousType={sousType}
-        />
-        </>
+        <div style={{ marginTop: 32 }}>
+          {/* ── Barre de filtres (Budget, Tri, Effacer) ──────────── */}
+          <div className="filtres-bar" style={{ marginBottom: 12 }}>
+            <span className="filtres-label">Budget :</span>
+            {BUDGETS.map((b) => {
+              const ps = new URLSearchParams()
+              if (q)         ps.set('q',         q)
+              if (categorie) ps.set('categorie', categorie)
+              if (b.prixMax) ps.set('prixMax',   b.prixMax)
+              return (
+                <Link
+                  key={b.label}
+                  href={`/?${ps}`}
+                  className={`budget-pill${prixMax === b.prixMax && b.prixMax ? ' active' : ''}`}
+                >
+                  {b.label}
+                </Link>
+              )
+            })}
+            {hasFiltre && (
+              <Link href="/" className="budget-pill budget-pill--reset">✕ Tout effacer</Link>
+            )}
+          </div>
+
+          <div className="filtres-bar" style={{ marginBottom: 20 }}>
+            <span className="filtres-label">Trier :</span>
+            {TRIS.map((t) => {
+              const ps = new URLSearchParams()
+              if (q)         ps.set('q',         q)
+              if (categorie) ps.set('categorie', categorie)
+              if (prixMax)   ps.set('prixMax',   prixMax)
+              if (t.val)     ps.set('tri',       t.val)
+              return (
+                <Link
+                  key={t.val || 'defaut'}
+                  href={`/?${ps}`}
+                  className={`budget-pill${tri === t.val ? ' active' : ''}`}
+                >
+                  {t.label}
+                </Link>
+              )
+            })}
+          </div>
+
+          <CompareFilterBanner />
+          <ProduitsListe
+            key={`${q}-${categorie}-${prixMax}-${tri}-${sousType}`}
+            initialProduits={produits}
+            total={total}
+            q={q}
+            categorie={categorie}
+            prixMax={prixMax}
+            tri={tri}
+            sousType={sousType}
+          />
+        </div>
       )}
 
       {/* ── Comment ça marche ───────────────────────────────────── */}
