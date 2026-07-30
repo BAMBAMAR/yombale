@@ -1,17 +1,31 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+
+export interface PublicSettings {
+  plan_pro_prix?: string;
+  plan_business_prix?: string;
+  plan_pro_label?: string;
+  plan_business_label?: string;
+  apporteur_taux_commission?: string;
+  paiement_wave?: string;
+  paiement_orange?: string;
+  reduc_3_mois?: string;
+  reduc_6_mois?: string;
+  reduc_12_mois?: string;
+}
 
 interface DemoClientProps {
   initialRef?: string;
   initialRole?: 'acheteur' | 'marchand' | 'apporteur';
-  initialTab?: string;
+  initialSettings?: PublicSettings;
 }
 
 export default function DemoClient({
   initialRef = '',
   initialRole = 'acheteur',
+  initialSettings = {},
 }: DemoClientProps) {
   // State variables
   const [activeRole, setActiveRole] = useState<'acheteur' | 'marchand' | 'apporteur'>(initialRole);
@@ -20,6 +34,9 @@ export default function DemoClient({
   const [referralCode, setReferralCode] = useState<string>(initialRef);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
+
+  // Dynamic Settings State
+  const [settings, setSettings] = useState<PublicSettings>(initialSettings);
 
   // Active Tooltip / Button Explanation Modal State
   const [activeExplanation, setActiveExplanation] = useState<{ title: string; desc: string; backend: string; benefit: string } | null>(null);
@@ -43,6 +60,18 @@ export default function DemoClient({
   ]);
   const [chatInput, setChatInput] = useState('');
 
+  // Fetch dynamic settings from API on mount
+  useEffect(() => {
+    fetch('/api/settings/public')
+      .then(res => res.ok ? res.json() : null)
+      .then((data: PublicSettings | null) => {
+        if (data) {
+          setSettings(prev => ({ ...prev, ...data }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Synchronize URL query params
   const currentHost = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com';
   const shareableUrl = currentHost + '/demo?role=' + activeRole + (referralCode ? '&ref=' + referralCode : '');
@@ -52,13 +81,19 @@ export default function DemoClient({
     setActiveStep(1);
   };
 
-  // Apporteur Commission calculation formulas
-  const PRIX_PRO_MOIS = 15000;
-  const PRIX_BUSINESS_MOIS = 35000;
-  const TAUX_COMMISSION = 0.10;
+  // DYNAMIC PRICING AND COMMISSION VALUES FROM BACKEND SETTINGS
+  const prixPro = Number(settings.plan_pro_prix) || 15000;
+  const prixBusiness = Number(settings.plan_business_prix) || 35000;
+  const tauxCommissionPourcent = Number(settings.apporteur_taux_commission) || 10;
+  const tauxCommissionDecimal = tauxCommissionPourcent / 100;
+  const labelPro = settings.plan_pro_label || 'Boutique Pro';
+  const labelBusiness = settings.plan_business_label || 'Boutique Business';
 
-  const caTotalGenerer = (nbBoutiquesPro * PRIX_PRO_MOIS) + (nbBoutiquesBusiness * PRIX_BUSINESS_MOIS);
-  const commissionMensuelle = Math.round(caTotalGenerer * TAUX_COMMISSION);
+  const commissionProParUnite = Math.round(prixPro * tauxCommissionDecimal);
+  const commissionBusinessParUnite = Math.round(prixBusiness * tauxCommissionDecimal);
+
+  const caTotalGenerer = (nbBoutiquesPro * prixPro) + (nbBoutiquesBusiness * prixBusiness);
+  const commissionMensuelle = Math.round(caTotalGenerer * tauxCommissionDecimal);
   const commissionAnnuelle = commissionMensuelle * 12;
 
   const totalPosCart = posCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
@@ -104,7 +139,7 @@ export default function DemoClient({
   };
 
   const handleShareWhatsApp = () => {
-    const message = '👋 Découvre Nopalou, la plateforme tout-en-un au Sénégal ! 🚀\n\n- Comparateur de prix & Forfaits Telecom\n- Caisse enregistreuse POS & Carnet de crédits marchands\n- Assistant WhatsApp Bot 24/7\n- Programme Apporteur (10% commission récurrente)\n\nTest la démo interactive ici : ' + shareableUrl;
+    const message = '👋 Découvre Nopalou, la plateforme tout-en-un au Sénégal ! 🚀\n\n- Comparateur de prix & Forfaits Telecom\n- Caisse enregistreuse POS & Carnet de crédits marchands\n- Assistant WhatsApp Bot 24/7\n- Programme Apporteur (' + tauxCommissionPourcent + '% commission récurrente)\n\nTest la démo interactive ici : ' + shareableUrl;
     const url = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(message);
     window.open(url, '_blank');
   };
@@ -114,7 +149,7 @@ export default function DemoClient({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
         {/* Breadcrumb & Navigation Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Link
               href="/"
@@ -131,7 +166,7 @@ export default function DemoClient({
                 🚀 Démo Commerciale Interactive Nopalou
               </div>
               <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2 }}>
-                Simulateur en direct avec explications détaillées pour chaque fonctionnalité.
+                Simulateur dynamique synchronisé en temps réel avec les tarifs et paramètres du site.
               </div>
             </div>
           </div>
@@ -142,10 +177,10 @@ export default function DemoClient({
             padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: 'var(--shadow)'
           }}>
             <div style={{ fontSize: 12, color: 'var(--text1)' }}>
-              <span style={{ color: 'var(--text2)' }}>Compte démo :</span> <strong>Bamba Diallo</strong> <span style={{ color: '#059669', fontSize: 11 }}>(Marchand Pro)</span>
+              <span style={{ color: 'var(--text2)' }}>Compte démo :</span> <strong>Bamba Diallo</strong> <span style={{ color: '#059669', fontSize: 11 }}>({labelPro})</span>
             </div>
             <div style={{ background: '#ECFDF5', color: '#059669', padding: '4px 10px', borderRadius: 20, fontWeight: 800, fontSize: 12 }}>
-              💰 Commissions : 45 000 FCFA
+              💰 Taux Commission : {tauxCommissionPourcent}%
             </div>
           </div>
         </div>
@@ -196,13 +231,13 @@ export default function DemoClient({
             {/* Badges */}
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
               <span style={{ background: 'var(--accent)', color: '#FFF', padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 800 }}>
-                ⚡ Démo Commerciale Interactive
+                ⚡ Démo Commerciale Dynamique
               </span>
               <span style={{ background: 'rgba(45, 212, 191, 0.2)', color: '#2DD4BF', border: '1px solid #2DD4BF', padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
-                🛡️ Nopalou vs Concurrence
+                🛡️ Commission Apporteur : {tauxCommissionPourcent}% Récurrent
               </span>
               <span style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#FBBF24', border: '1px solid #FBBF24', padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
-                💳 Wave &amp; Orange Money Inclus
+                💳 Wave &amp; Orange Money Ready
               </span>
             </div>
 
@@ -217,7 +252,7 @@ export default function DemoClient({
             <p style={{ fontSize: 'clamp(14px, 2vw, 16px)', color: '#E2E8F0', maxWidth: 760, margin: '0 auto', lineHeight: 1.6 }}>
               Nopalou combine un <strong style={{ color: '#FF8C00' }}>Super-Comparateur de prix</strong>, un{' '}
               <strong style={{ color: '#FFF' }}>Logiciel de Caisse POS tactile</strong> avec carnet de crédits/dettes client, un{' '}
-              <strong style={{ color: '#FFF' }}>Bot WhatsApp IA</strong> et un <strong style={{ color: '#2DD4BF' }}>Programme Apporteur 10% récurrent</strong>.
+              <strong style={{ color: '#FFF' }}>Bot WhatsApp IA</strong> et un <strong style={{ color: '#2DD4BF' }}>Programme Apporteur {tauxCommissionPourcent}% récurrent</strong>.
             </p>
 
             {/* CTA Buttons */}
@@ -260,13 +295,13 @@ export default function DemoClient({
         <section id="simulateur-section" style={{ display: 'flex', flexDirection: 'column', gap: 18, scrollMarginTop: 30 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ alignSelf: 'flex-start', background: '#FFF7ED', color: 'var(--accent)', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
-              🕹️ SIMULATEUR D&apos;ÉCRAN EN DIRECT AVEC COMPTE CONNECTÉ
+              🕹️ SIMULATEUR D&apos;ÉCRAN EN DIRECT AVEC DONNÉES DYNAMIQUES
             </span>
             <h2 style={{ fontSize: 'clamp(20px, 3vw, 28px)', fontWeight: 900, color: 'var(--navy)', margin: 0 }}>
               Testez l&apos;interface &amp; cliquez sur les boutons pour comprendre leur fonctionnement
             </h2>
             <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-              Cliquez sur un rôle ci-dessous et interagissez avec les éléments simulés.
+              Tarifs et taux de commission mis à jour dynamiquement depuis le système.
             </p>
           </div>
 
@@ -315,7 +350,7 @@ export default function DemoClient({
             >
               <span style={{ fontSize: 18 }}>💼</span>
               <span>3. Parcours Apporteur d&apos;Affaires</span>
-              <span style={{ fontSize: 11, opacity: activeRole === 'apporteur' ? 0.9 : 0.7, fontWeight: 400 }}>Affiliation &amp; Commissions 10%</span>
+              <span style={{ fontSize: 11, opacity: activeRole === 'apporteur' ? 0.9 : 0.7, fontWeight: 400 }}>Commissions {tauxCommissionPourcent}% récurrentes</span>
             </button>
           </div>
 
@@ -359,7 +394,7 @@ export default function DemoClient({
             borderRadius: 12, border: '1px solid var(--border)', background: '#0F172A', overflow: 'hidden', boxShadow: 'var(--shadow2)', color: '#FFFFFF'
           }}>
             {/* Window header */}
-            <div style={{ background: '#020617', padding: '10px 14px', borderBottom: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ background: '#020617', padding: '10px 14px', borderBottom: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyBetween: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#EF4444' }} />
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#F59E0B' }} />
@@ -405,7 +440,7 @@ export default function DemoClient({
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
                           <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, border: '1px solid #10B981', position: 'relative' }}>
                             <span style={{ position: 'absolute', top: -10, right: 10, background: '#10B981', color: '#020617', padding: '2px 6px', borderRadius: 4, fontSize: 9, fontWeight: 800 }}>MEILLEUR PRIX</span>
-                            <div style={{ fontSize: 11, color: '#94A3B8' }}>Boutique Dakar Tech (Nopalou Pro)</div>
+                            <div style={{ fontSize: 11, color: '#94A3B8' }}>Boutique Dakar Tech ({labelPro})</div>
                             <div style={{ fontSize: 18, fontWeight: 900, color: '#10B981', marginTop: 4 }}>785 000 FCFA</div>
                             <div style={{ fontSize: 11, color: '#CBD5E1', marginTop: 4 }}>✅ Garantie 12m + Stock dispo</div>
                           </div>
@@ -525,7 +560,7 @@ export default function DemoClient({
                       </div>
 
                       <div style={{ background: '#020617', padding: 16, borderRadius: 14, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', borderBottom: '1px solid #1E293B', paddingBottom: 8 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1E293B', paddingBottom: 8 }}>
                           <div style={{ fontWeight: 700, color: '#FFF', fontSize: 13 }}>🏬 Caisse POS — Touba Commerce</div>
                           <span style={{ background: 'rgba(45, 212, 191, 0.15)', color: '#2DD4BF', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>CAISSE OUVERTE</span>
                         </div>
@@ -549,7 +584,7 @@ export default function DemoClient({
                           </div>
 
                           <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' }}>MODE D&apos;ENCAISSEMENT (Cliquez pour explications ❓)</span>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' }}>MODE D&apos;ENCAISSEMENT (Cliquez ❓)</span>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                               <button
                                 onClick={() => setActiveExplanation({
@@ -710,25 +745,25 @@ export default function DemoClient({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                       <div style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', padding: 12, borderRadius: 10, fontSize: 13, color: '#C7D2FE' }}>
                         <strong style={{ color: '#FFF', display: 'block', marginBottom: 2 }}>Étape 2 : Recrutez des Boutiques dans votre réseau</strong>
-                        Chaque commerçant inscrit via votre code est lié à votre compte à vie pour les commissions récurrentes.
+                        Chaque commerçant inscrit via votre code est lié à votre compte à vie pour les commissions récurrentes ({tauxCommissionPourcent}%).
                       </div>
 
                       <div style={{ background: '#020617', padding: 14, borderRadius: 12, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <div style={{ fontWeight: 700, fontSize: 12, color: '#FFF' }}>📊 Espace Suivi Apporteur (Exemple)</div>
+                        <div style={{ fontWeight: 700, fontSize: 12, color: '#FFF' }}>📊 Espace Suivi Apporteur (Exemple Dynamique)</div>
                         <div style={{ background: '#0F172A', padding: 10, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: 11, color: '#FFF' }}>Électronique Sandaga (Boutique Pro)</div>
-                            <div style={{ fontSize: 9, color: '#64748B' }}>Code : {referralCode || 'APPORT-77'}</div>
+                            <div style={{ fontWeight: 700, fontSize: 11, color: '#FFF' }}>Électronique Sandaga ({labelPro})</div>
+                            <div style={{ fontSize: 9, color: '#64748B' }}>Abonnement : {prixPro.toLocaleString()} FCFA/m</div>
                           </div>
-                          <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10B981', padding: '2px 6px', borderRadius: 4, fontWeight: 700, fontSize: 10 }}>1 500 FCFA/mois</span>
+                          <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10B981', padding: '2px 6px', borderRadius: 4, fontWeight: 700, fontSize: 10 }}>+{commissionProParUnite.toLocaleString()} FCFA/m</span>
                         </div>
 
                         <div style={{ background: '#0F172A', padding: 10, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: 11, color: '#FFF' }}>Cosmétique Touba (Boutique Business)</div>
-                            <div style={{ fontSize: 9, color: '#64748B' }}>Code : {referralCode || 'APPORT-77'}</div>
+                            <div style={{ fontWeight: 700, fontSize: 11, color: '#FFF' }}>Cosmétique Touba ({labelBusiness})</div>
+                            <div style={{ fontSize: 9, color: '#64748B' }}>Abonnement : {prixBusiness.toLocaleString()} FCFA/m</div>
                           </div>
-                          <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10B981', padding: '2px 6px', borderRadius: 4, fontWeight: 700, fontSize: 10 }}>3 500 FCFA/mois</span>
+                          <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10B981', padding: '2px 6px', borderRadius: 4, fontWeight: 700, fontSize: 10 }}>+{commissionBusinessParUnite.toLocaleString()} FCFA/m</span>
                         </div>
                       </div>
                     </div>
@@ -776,7 +811,7 @@ export default function DemoClient({
         {/* ───────────────────────────────────────────────────────────── */}
         <section id="guide-etape-par-etape" style={{ display: 'flex', flexDirection: 'column', gap: 18, scrollMarginTop: 30 }}>
           <div>
-            <span style={{ background: '#FFF7ED', color: 'var(--accent)', border: '1px solid #FFEDD5', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 800 }}>
+            <span style={{ background: '#FFF7ED', color: 'var(--accent)', border: '1px solid #FFEDD5', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
               📘 MODE D&apos;EMPLOI &amp; PROCESSUS COMPLET
             </span>
             <h2 style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 900, color: 'var(--navy)', margin: '8px 0 4px 0' }}>
@@ -852,7 +887,7 @@ export default function DemoClient({
                 <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, fontSize: 13, color: 'var(--text1)' }}>
                   <div><strong>1. Nom &amp; Adresse :</strong> Indiquez le nom de votre magasin et sa localisation (ex: Dakar, Sandaga, Thiès).</div>
                   <div><strong>2. Code Apporteur :</strong> Saisissez le code de la personne qui vous a recommandé Nopalou (si applicable).</div>
-                  <div><strong>3. Formule :</strong> Choisissez entre la formule Gratuite, Pro (15 000 FCFA/m) ou Business (35 000 FCFA/m).</div>
+                  <div><strong>3. Formule :</strong> Choisissez entre la formule Gratuite, {labelPro} ({prixPro.toLocaleString()} FCFA/m) ou {labelBusiness} ({prixBusiness.toLocaleString()} FCFA/m).</div>
                 </div>
               </div>
             )}
@@ -929,10 +964,10 @@ export default function DemoClient({
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ width: 36, height: 36, borderRadius: 8, background: '#F3E8FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18 }}>7</div>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>Étape 7 : Devenir Apporteur d&apos;Affaires (10% de Commission Mensuelle)</h3>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>Étape 7 : Devenir Apporteur d&apos;Affaires ({tauxCommissionPourcent}% de Commission Mensuelle)</h3>
                 </div>
                 <p style={{ fontSize: 14, color: 'var(--text1)', lineHeight: 1.6, margin: 0 }}>
-                  Recommandez Nopalou aux commerçants de votre réseau et percevez 10% sur chaque abonnement mensuel renouvelé.
+                  Recommandez Nopalou aux commerçants de votre réseau et percevez {tauxCommissionPourcent}% sur chaque abonnement mensuel renouvelé.
                 </p>
                 <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, fontSize: 13, color: 'var(--text1)' }}>
                   <div><strong>1. Activez votre code :</strong> Générez votre code unique sur nopalou.com/compte/apporteur.</div>
@@ -945,7 +980,7 @@ export default function DemoClient({
         </section>
 
         {/* ───────────────────────────────────────────────────────────── */}
-        {/* CALCULATEUR DE GAINS APPORTEUR                                */}
+        {/* CALCULATEUR DE GAINS APPORTEUR DYNAMIQUE                      */}
         {/* ───────────────────────────────────────────────────────────── */}
         <section style={{
           background: 'var(--card)',
@@ -954,13 +989,13 @@ export default function DemoClient({
         }}>
           <div>
             <span style={{ background: '#CCFBF1', color: '#0D9488', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
-              🧮 SIMULATEUR DE REVENUS PASSIFS
+              🧮 SIMULATEUR DE REVENUS PASSIFS DYNAMIQUE ({tauxCommissionPourcent}% COMMISSION)
             </span>
             <h2 style={{ fontSize: 'clamp(20px, 3vw, 28px)', fontWeight: 900, color: 'var(--navy)', margin: '8px 0 4px 0' }}>
               Combien pouvez-vous gagner en tant qu&apos;Apporteur ?
             </h2>
             <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-              Déplacez les curseurs pour calculer vos commissions récurrentes mensuelles.
+              Déplacez les curseurs pour calculer vos commissions récurrentes mensuelles calculées en direct.
             </p>
           </div>
 
@@ -969,7 +1004,7 @@ export default function DemoClient({
             <div style={{ background: 'var(--bg)', padding: 16, borderRadius: 10, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--navy)', marginBottom: 4 }}>
-                  <span>Boutiques Pro (15 000 FCFA/m) :</span>
+                  <span>{labelPro} ({prixPro.toLocaleString()} FCFA/m) :</span>
                   <strong style={{ color: 'var(--accent)' }}>{nbBoutiquesPro} boutiques</strong>
                 </div>
                 <input
@@ -977,12 +1012,12 @@ export default function DemoClient({
                   onChange={(e) => setNbBoutiquesPro(Number(e.target.value))}
                   style={{ width: '100%', cursor: 'pointer' }}
                 />
-                <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>Commission 10% = 1 500 FCFA / boutique / mois</div>
+                <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>Commission {tauxCommissionPourcent}% = {commissionProParUnite.toLocaleString()} FCFA / boutique / mois</div>
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--navy)', marginBottom: 4 }}>
-                  <span>Boutiques Business (35 000 FCFA/m) :</span>
+                  <span>{labelBusiness} ({prixBusiness.toLocaleString()} FCFA/m) :</span>
                   <strong style={{ color: '#0D9488' }}>{nbBoutiquesBusiness} boutiques</strong>
                 </div>
                 <input
@@ -990,7 +1025,7 @@ export default function DemoClient({
                   onChange={(e) => setNbBoutiquesBusiness(Number(e.target.value))}
                   style={{ width: '100%', cursor: 'pointer' }}
                 />
-                <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>Commission 10% = 3 500 FCFA / boutique / mois</div>
+                <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>Commission {tauxCommissionPourcent}% = {commissionBusinessParUnite.toLocaleString()} FCFA / boutique / mois</div>
               </div>
             </div>
 
