@@ -52,9 +52,11 @@ export async function GET() {
         }}>
           {[
             '30 jours d\'essai Pro offerts',
-            'Zéro commission (formule Pro)',
-            'Commandes reçues sur WhatsApp',
-            'Boutique en ligne en 5 minutes',
+            'Caisse POS Tactile (3 Scanners: Caméra, Cloud <100ms, USB)',
+            'Carnet de Dettes Client & Relance WhatsApp 1-Clic',
+            'Stickers Codes-Barres EAN-13 GS1 Modulo 10',
+            'Commandes clients reçues directement sur WhatsApp',
+            'Démo Commerciale POS en 1-clic : nopalou.com/demo',
           ].map(txt => (
             <div key={txt} style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
               <div style={{
@@ -63,7 +65,7 @@ export async function GET() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 22, color: '#C75B00', fontWeight: 900, flexShrink: 0,
               }}>✓</div>
-              <span style={{ fontSize: 30, color: '#1C2B4A', fontWeight: 600 }}>{txt}</span>
+              <span style={{ fontSize: 28, color: '#1C2B4A', fontWeight: 600 }}>{txt}</span>
             </div>
           ))}
         </div>
@@ -79,13 +81,13 @@ export async function GET() {
           display: 'flex', flexDirection: 'column', gap: 12,
         }}>
           <span style={{ fontSize: 30, color: '#fff', fontWeight: 800 }}>
-            Créez votre boutique gratuitement
+            Découvrez la Démo POS &amp; Créez votre boutique
           </span>
           <span style={{ fontSize: 34, color: '#C75B00', fontWeight: 900 }}>
-            nopalou.com/boutique
+            nopalou.com/demo · nopalou.com/boutique
           </span>
           <span style={{ fontSize: 22, color: '#94A3B8', marginTop: 8 }}>
-            Ou contactez-nous directement sur WhatsApp
+            Ou contactez-nous directement sur WhatsApp (+221 70 871 79 42)
           </span>
         </div>
       </div>

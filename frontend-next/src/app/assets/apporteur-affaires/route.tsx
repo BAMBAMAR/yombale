@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
 
-// Post/flyer recrutement apporteurs d'affaires — programme commission 10%
+// Post/flyer recrutement apporteurs d'affaires — programme commission 20% récurrente
 export async function GET() {
   return new ImageResponse(
     (

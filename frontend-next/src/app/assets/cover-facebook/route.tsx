@@ -57,7 +57,7 @@ export async function GET() {
 
         {/* Stats */}
         <div style={{ display: 'flex', gap: 60, marginTop: 48 }}>
-          {[['3 000+', 'Produits indexés'], ['9+', 'Marchands partenaires'], ['100%', 'Gratuit']].map(([n, l]) => (
+          {[['3 000+', 'Produits indexés'], ['Caisse POS', 'Pour Magasins & Scanners'], ['20%', 'Commission Apporteur']].map(([n, l]) => (
             <div key={l} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <span style={{ fontSize: 38, fontWeight: 900, color: '#C75B00' }}>{n}</span>
               <span style={{ fontSize: 16, color: '#94A3B8', marginTop: 4 }}>{l}</span>

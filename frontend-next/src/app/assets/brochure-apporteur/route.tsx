@@ -37,11 +37,11 @@ function fcfa(n: number) {
 }
 
 const VERTICALES = [
+  { emoji: '🖥️', titre: 'Caisse POS Magasin', detail: 'Caisse tactile magasin, 3 scanners (Caméra, Cloud Sync <100ms, Douchette USB), stickers codes-barres GS1 Modulo 10 et carnet de dettes client.' },
   { emoji: '📱', titre: 'Produits', detail: 'Comparez les prix de milliers de produits chez tous les marchands en ligne au Sénégal — téléphones, TV, électro, mode.' },
   { emoji: '🏠', titre: 'Immobilier', detail: 'Location et vente d\'appartements, villas, terrains — annonces vérifiées avec photos et prix.' },
   { emoji: '📶', titre: 'Télécom', detail: 'Comparez les forfaits Orange, Yas, Expresso, Promobile en un coup d\'œil.' },
-  { emoji: '🛍️', titre: 'Boutiques en ligne', detail: 'Les commerçants créent leur boutique et reçoivent leurs commandes directement sur WhatsApp.' },
-  { emoji: '📋', titre: 'Annonces classifiées', detail: 'Vente entre particuliers — véhicules, meubles, équipements.' },
+  { emoji: '🛍️', titre: 'Boutiques & WhatsApp', detail: 'Les commerçants créent leur boutique et reçoivent leurs commandes directement sur WhatsApp.' },
 ]
 
 const ETAPES_COMPTE = [
@@ -57,7 +57,7 @@ const ETAPES_BOUTIQUE = [
   { titre: 'Ajoutez le code apporteur (si recommandé)', detail: 'Un champ "Code apporteur" est proposé à la création — il est pré-rempli automatiquement si le commerçant est passé par votre lien.' },
   { titre: 'Renseignez les coordonnées de contact', detail: 'Téléphone, WhatsApp, site web et réseaux sociaux (Facebook, Instagram) si disponibles.' },
   { titre: 'Ajoutez logo et bannière', detail: 'Deux images optionnelles mais recommandées pour donner confiance aux acheteurs.' },
-  { titre: 'Ajoutez vos produits', detail: 'Nom, prix, photos (jusqu\'à 5 par produit), et éventuellement des variantes (couleur, taille…). La boutique est visible immédiatement sur nopalou.com/boutiques.' },
+  { titre: 'Activer la Caisse POS & Tester la Démo (nopalou.com/demo)', detail: 'Accès instantané à la caisse tactile, aux 3 scanners (Caméra, Cloud, USB) et au carnet de dettes.' },
 ]
 
 const PALIERS = [
@@ -78,10 +78,12 @@ const PALIERS = [
     items: [
       'Placement prioritaire dans /boutiques',
       'Badge "Vendeur Pro" sur toutes vos annonces',
+      'Caisse Enregistreuse POS Tactile (3 Scanners: Caméra, Cloud <100ms, USB)',
+      'Carnet Dettes Client & Relance WhatsApp 1-Clic',
+      'Impression Stickers Codes-Barres EAN-13 GS1 Modulo 10',
       'Catalogue produits avec photos et prix',
       '5 annonces classées incluses par mois',
-      'Tableau de bord analytics (vues, clics)',
-      'Statistiques des prix concurrents',
+      'Tableau de bord analytics & statistiques concurrents',
     ],
   },
   {
@@ -90,6 +92,7 @@ const PALIERS = [
     couleur: COULEURS.marine,
     items: [
       'Tout ce qui est inclus dans Pro',
+      'Caisse POS multi-caissiers & clôtures de caisse Z (sécurité PIN)',
       'URL dédiée nopalou.com/boutiques/votre-nom',
       '15 annonces classées incluses par mois',
       'Bannière mise en avant dans une page catégorie',
@@ -408,7 +411,7 @@ export async function GET() {
   <h2 style="font-size:14px; font-weight:700; color:${COULEURS.marine}; margin:0 0 10px;">Quoi dire à un commerçant</h2>
   <div style="border:1px solid ${COULEURS.bordure}; border-radius:10px; padding:16px 20px; background:${COULEURS.fondClair};">
     <p style="font-size:13px; color:${COULEURS.marine}; margin:0; line-height:1.7;">
-      « Je te recommande Nopalou — ça te permet d'avoir une boutique en ligne et de recevoir tes commandes directement sur WhatsApp, l'outil que tu utilises déjà. Le premier mois est gratuit, sans engagement, et il n'y a pas de commission cachée. »
+      « Je te recommande Nopalou — ça te donne une Caisse Tactile POS complète pour ton magasin (avec 3 scanners, carnet de dettes et relance WhatsApp 1-clic) ainsi qu'une boutique en ligne pour recevoir tes commandes directement sur WhatsApp. Le premier mois est gratuit ! Tu peux aussi tester la démo en 1 clic sur nopalou.com/demo. »
     </p>
   </div>
   ${PagePiedString(10)}

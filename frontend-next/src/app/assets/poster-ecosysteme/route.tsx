@@ -78,16 +78,16 @@ export async function GET() {
               </span>
               <span style={{ fontSize: 13, background: 'rgba(255,140,0,0.2)', color: '#FF8C00', padding: '4px 12px', borderRadius: 12, fontWeight: 800, display: 'flex' }}>100% GRATUIT</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, fontSize: 14, color: '#E2E8F0' }}>
-              <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: 12, fontSize: 14, color: '#E2E8F0' }}>
+              <div style={{ flex: 1, background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <strong style={{ color: '#FFF' }}>🔍 Super-Comparateur</strong>
                 <span style={{ fontSize: 12, color: '#94A3B8' }}>Auchan, Carrefour, Expat-Dakar, Boutiques Nopalou Pro.</span>
               </div>
-              <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ flex: 1, background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <strong style={{ color: '#FFF' }}>🤖 Chatbot WhatsApp Meta</strong>
                 <span style={{ fontSize: 12, color: '#94A3B8' }}>Recherche, fiches produits et commande 24/7 sur WhatsApp.</span>
               </div>
-              <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ flex: 1, background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <strong style={{ color: '#FFF' }}>🔔 Alertes Prix &amp; Immo</strong>
                 <span style={{ fontSize: 12, color: '#94A3B8' }}>Notifications baisses de prix + Forfaits télécom &amp; logements.</span>
               </div>
@@ -105,22 +105,26 @@ export async function GET() {
               </span>
               <span style={{ fontSize: 13, background: 'rgba(16,185,129,0.2)', color: '#10B981', padding: '4px 12px', borderRadius: 12, fontWeight: 800, display: 'flex' }}>SOLUTIONS POS</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 14, color: '#E2E8F0' }}>
-              <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <strong style={{ color: '#FFF' }}>🖥️ Caisse Tactile &amp; 3 Scanners</strong>
-                <span style={{ fontSize: 12, color: '#94A3B8' }}>Scan Caméra Smartphone, Douchette Cloud Sync (&lt;100ms) et USB.</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14, color: '#E2E8F0' }}>
+              <div style={{ display: 'flex', flexDirection: 'row', gap: 12 }}>
+                <div style={{ flex: 1, background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <strong style={{ color: '#FFF' }}>🖥️ Caisse Tactile &amp; 3 Scanners</strong>
+                  <span style={{ fontSize: 12, color: '#94A3B8' }}>Scan Caméra Smartphone, Douchette Cloud Sync (&lt;100ms) et USB.</span>
+                </div>
+                <div style={{ flex: 1, background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <strong style={{ color: '#FFF' }}>🏷️ Codes-Barres &amp; Stickers EAN-13</strong>
+                  <span style={{ fontSize: 12, color: '#94A3B8' }}>Générateur GS1 Modulo 10 + impression stickers 50x30mm.</span>
+                </div>
               </div>
-              <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <strong style={{ color: '#FFF' }}>🏷️ Codes-Barres &amp; Stickers EAN-13</strong>
-                <span style={{ fontSize: 12, color: '#94A3B8' }}>Générateur GS1 Modulo 10 + impression stickers 50x30mm.</span>
-              </div>
-              <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <strong style={{ color: '#FFF' }}>📓 Carnet Dettes &amp; Relance WA</strong>
-                <span style={{ fontSize: 12, color: '#94A3B8' }}>Saisie exacte des crédits + Relance WhatsApp 1-Clic avec solde.</span>
-              </div>
-              <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <strong style={{ color: '#FFF' }}>💳 Wave &amp; OM + Multi-Caissiers</strong>
-                <span style={{ fontSize: 12, color: '#94A3B8' }}>Encaissement Cash/Wave/OM + Rôles sécurisés par PIN.</span>
+              <div style={{ display: 'flex', flexDirection: 'row', gap: 12 }}>
+                <div style={{ flex: 1, background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <strong style={{ color: '#FFF' }}>📓 Carnet Dettes &amp; Relance WA</strong>
+                  <span style={{ fontSize: 12, color: '#94A3B8' }}>Saisie exacte des crédits + Relance WhatsApp 1-Clic avec solde.</span>
+                </div>
+                <div style={{ flex: 1, background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <strong style={{ color: '#FFF' }}>💳 Wave &amp; OM + Multi-Caissiers</strong>
+                  <span style={{ fontSize: 12, color: '#94A3B8' }}>Encaissement Cash/Wave/OM + Rôles sécurisés par PIN.</span>
+                </div>
               </div>
             </div>
           </div>
@@ -136,12 +140,12 @@ export async function GET() {
               </span>
               <span style={{ fontSize: 13, background: 'rgba(124,58,237,0.2)', color: '#A855F7', padding: '4px 12px', borderRadius: 12, fontWeight: 800, display: 'flex' }}>20% RÉCURRENT</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 14, color: '#E2E8F0' }}>
-              <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: 12, fontSize: 14, color: '#E2E8F0' }}>
+              <div style={{ flex: 1, background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <strong style={{ color: '#FFF' }}>💰 Commissions Récurrentes 20%</strong>
                 <span style={{ fontSize: 12, color: '#94A3B8' }}>Perçues chaque mois sur Wave / OM pour chaque boutique parrainée.</span>
               </div>
-              <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ flex: 1, background: '#0F172A', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <strong style={{ color: '#FFF' }}>📄 Brochure PDF (13 Pages) &amp; Kit</strong>
                 <span style={{ fontSize: 12, color: '#94A3B8' }}>Support de vente terrain téléchargeable + Visuels &amp; Pitchs WhatsApp.</span>
               </div>

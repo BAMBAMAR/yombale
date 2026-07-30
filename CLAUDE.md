@@ -218,9 +218,15 @@ Déclencheur : Demande de l'utilisateur de lister toutes les fonctionnalités du
 **5. Visuel Maître Unique Écosystème Global (`poster-ecosysteme/route.tsx`) :**
 - **Affiche Commerciale HD (1200 × 1600 px)** : Création d'un visuel synthétique haute définition regroupant TOUTES les fonctionnalités du site en 3 blocs clairs (*Acheteur*, *Marchand POS*, *Apporteur 20%*).
 - **Intégration Kit & Espace Apporteur** : Accessible en 1 clic dans l'administration `/admin/communication` et dans l'espace apporteurs d'affaires `/compte/apporteur` pour le démarchage et les présentations.
+- **Correction Rendu Satori (`next/og`)** : Remplacement de `display: grid` (non supporté par Satori / `@vercel/og`) par un layout Flexbox (`display: flex`) afin d'éliminer l'erreur HTTP 500 / image cassée et afficher correctement le poster sur `https://nopalou.com/assets/poster-ecosysteme`.
 
 **6. Repositionnement des Filtres Produit (`page.tsx`) :**
 - **Ergonomie & Parcours Utilisateur** : Déplacement stratégique des barres de filtres (*Budget*, *Tri*, *Bouton Effacer*) directement au-dessus du compteur de résultats et de la grille de produits `ProduitsListe`.
+
+**7. Revue & Alignement Général des Visuels Marketing (`/assets/...`) :**
+- **Harmonisation Taux Commission (20%)** : Correction de tous les résidus de taux obsolètes (10%) dans le flyer Apporteur (`apporteur-affaires/route.tsx`) et la brochure PDF 13 pages (`brochure-apporteur/route.tsx`).
+- **Enrichissement Fonctionnalités Dernières Versions** : Intégration systématique des nouvelles fonctionnalités (Caisse Enregistreuse POS Tactile, 3 Scanners smartphone/cloud/USB, Stickers Codes-barres EAN-13 GS1 Modulo 10, Carnet de Dettes Client + Relance WhatsApp 1-Clic, Multi-caissiers PIN, Lien Démo POS commercial 1-Clic `nopalou.com/demo`).
+- **Mise à jour des Visuels Rseaux & Supports Terrain** : Alignement du flyer A5 de démarchage (`flyer-demarchage/route.tsx`), du poster écosystème (`poster-ecosysteme/route.tsx`), de la couverture Facebook (`cover-facebook/route.tsx`), et du kit apporteur.
 
 ---
 
