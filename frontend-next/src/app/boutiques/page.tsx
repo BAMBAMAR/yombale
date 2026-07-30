@@ -179,6 +179,22 @@ export default async function BoutiquesPage({
             Découvrez des commerçants de confiance, parcourez leurs catalogues en ligne, comparez les prix et contactez-les directement par WhatsApp ou téléphone.
           </p>
 
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Link href="/demo?role=marchand" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fb923c', color: '#fff',
+              padding: '10px 18px', borderRadius: 10, fontWeight: 800, fontSize: 13, textDecoration: 'none',
+              boxShadow: '0 4px 12px rgba(251,146,60,0.3)',
+            }}>
+              🏪 Vous êtes commerçant ? Tester la Démo POS →
+            </Link>
+            <Link href="/boutique" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.1)', color: '#fff',
+              padding: '10px 18px', borderRadius: 10, fontWeight: 700, fontSize: 13, textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)'
+            }}>
+              ✨ Ouvrir ma Boutique Pro
+            </Link>
+          </div>
+
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.06)', padding: '8px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)' }}>
               <Store size={22} style={{ color: '#fb923c' }} />

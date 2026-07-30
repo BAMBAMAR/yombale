@@ -10,6 +10,7 @@ const SSR_HEADERS: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SE
 import ProduitsListe from './ProduitsListe'
 import RecentlyViewed from './RecentlyViewed'
 import CompareFilterBanner from '@/components/CompareFilterBanner'
+import ShowcaseTabs from './ShowcaseTabs'
 
 export const metadata: Metadata = {
   title: 'Comparateur de prix au Sénégal · Dakar',
@@ -245,6 +246,9 @@ export default async function HomePage({
 
       {/* ── Récemment consultés ──────────────────────────────────── */}
       <RecentlyViewed />
+
+      {/* ── Section Nopalou en Action (3 axes) ───────────────────── */}
+      <ShowcaseTabs />
 
       {/* ── Grille produits ──────────────────────────────────────── */}
       {erreur ? (

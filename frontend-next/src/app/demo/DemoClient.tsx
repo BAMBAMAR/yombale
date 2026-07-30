@@ -45,18 +45,26 @@ export default function DemoClient({
   const [nbBoutiquesPro, setNbBoutiquesPro] = useState<number>(10);
   const [nbBoutiquesBusiness, setNbBoutiquesBusiness] = useState<number>(5);
 
-  // Merchant Credit Simulation State (POS)
-  const [posCart] = useState<{ name: string; price: number; qty: number }[]>([
-    { name: 'Sac de Riz Parfumé 50kg', price: 22500, qty: 1 },
-    { name: 'Huile Dinor 5L', price: 7500, qty: 2 },
+  // Merchant Sandbox State
+  const [merchantTab, setMerchantTab] = useState<'catalogue' | 'pos' | 'credit' | 'analytics' | 'equipe'>('pos');
+  const [showStickerModal, setShowStickerModal] = useState<boolean>(false);
+  const [stickerProd, setStickerProd] = useState<{ nom: string; prix: number; ean: string } | null>(null);
+
+  const [showWaRelanceModal, setShowWaRelanceModal] = useState<boolean>(false);
+  const [relanceClient, setRelanceClient] = useState<{ nom: string; tel: string; solde: number; echeance: string; quartier: string } | null>(null);
+
+  const [showScanModal, setShowScanModal] = useState<boolean>(false);
+  const [showCloudScannerModal, setShowCloudScannerModal] = useState<boolean>(false);
+
+  // Merchant POS Cart state
+  const [posCart, setPosCart] = useState<{ id: string; name: string; price: number; qty: number; ean: string }[]>([
+    { id: '1', name: 'Sac de Riz Parfumé 50kg', price: 22500, qty: 1, ean: '2008492019482' },
+    { id: '2', name: 'Huile Dinor 5L', price: 7500, qty: 2, ean: '2004928104829' },
   ]);
-  const [creditClientNom, setCreditClientNom] = useState<string>('Mamadou Diallo');
-  const [creditClientTel, setCreditClientTel] = useState<string>('77 123 45 67');
-  const [creditSaveStatus, setCreditSaveStatus] = useState<'idle' | 'saved'>('idle');
 
   // WhatsApp simulation chat state
   const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'bot'; text: string; time: string }[]>([
-    { sender: 'bot', text: 'Bonjour ! Bienvenue chez Nopalou Bot 🤖. Que recherchez-vous aujourd\'hui ? (ex: Riz 50kg, iPhone 15, Forfait Orange 5Go, Appartement Mermoz)', time: '10:00' },
+    { sender: 'bot', text: 'Bonjour ! Bienvenue sur Nopalou WhatsApp 🤖. Que recherchez-vous aujourd\'hui ? (ex: Riz 50kg, iPhone 15, Forfait Orange 5Go, Appartement Mermoz)', time: '10:00' },
   ]);
   const [chatInput, setChatInput] = useState('');
 
@@ -72,7 +80,6 @@ export default function DemoClient({
       .catch(() => {});
   }, []);
 
-  // Synchronize URL query params
   const currentHost = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com';
   const shareableUrl = currentHost + '/demo?role=' + activeRole + (referralCode ? '&ref=' + referralCode : '');
 
@@ -98,17 +105,6 @@ export default function DemoClient({
 
   const totalPosCart = posCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
-  const handleAddCreditEntry = () => {
-    setCreditSaveStatus('saved');
-    setActiveExplanation({
-      title: '💾 Bouton : Enregistrer le Crédit Client (Caisse POS)',
-      desc: 'Enregistre le panier d\'articles pris à crédit par le client avec son nom et numéro de téléphone.',
-      backend: 'Une ligne JSONB contenant la liste exacte des produits et le montant est insérée dans la table PostgreSQL.',
-      benefit: 'Fini le cahier papier perdu. Vous gardez un historique 100% propre et accessible de toutes vos créances.'
-    });
-    setTimeout(() => setCreditSaveStatus('idle'), 4000);
-  };
-
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -120,10 +116,10 @@ export default function DemoClient({
     setChatInput('');
 
     setTimeout(() => {
-      let botReply = 'J\'ai trouvé 3 résultats pour "' + userMsg + '" au meilleur prix ! 🛒\n\n1. Auchan Dakar : 21 900 FCFA\n2. E-Boutique Nopalou Pro : 21 500 FCFA (En stock)\n\n👉 Souhaitez-vous recevoir le lien de commande Wave/Orange Money ?';
+      let botReply = '🛒 3 résultats trouvés pour "' + userMsg + '" au meilleur prix :\n\n1. Auchan Dakar : 21 900 FCFA\n2. Boutique Touba Express (Vendeur Pro) : 21 500 FCFA (En stock)\n\n👉 Appuyez sur [🛒 Commander] pour commander par Wave ou Orange Money !';
       
       if (userMsg.toLowerCase().includes('immo') || userMsg.toLowerCase().includes('appartement')) {
-        botReply = '🏠 2 Appartements trouvés à Mermoz & Almadies :\n• Studio meublé Mermoz : 250 000 FCFA/mois\n• F3 Almadies : 450 000 FCFA/mois\n\nContact direct bailleur vérifié sur Nopalou !';
+        botReply = '🏠 2 Appartements trouvés à Mermoz & Almadies :\n• Studio meublé Mermoz : 250 000 FCFA/mois\n• F3 Almadies : 450 000 FCFA/mois\n\nContact direct bailleur certifié sur Nopalou !';
       } else if (userMsg.toLowerCase().includes('telecom') || userMsg.toLowerCase().includes('forfait') || userMsg.toLowerCase().includes('orange')) {
         botReply = '📱 Meilleur Pass Internet actuellement :\n• Orange Pass Max 10Go / 30j : 5 000 FCFA\n• Free Sénégal Illimité Week-end : 3 000 FCFA\n\nComparez les 25 forfaits sur nopalou.com/telecom !';
       }
@@ -144,12 +140,22 @@ export default function DemoClient({
     window.open(url, '_blank');
   };
 
+  const handleSimulateScanItem = () => {
+    setShowScanModal(true);
+    setTimeout(() => {
+      setPosCart(prev => [
+        ...prev,
+        { id: String(Date.now()), name: 'Lait Bonnet Rouge 400g', price: 1200, qty: 1, ean: '2009841029412' }
+      ]);
+    }, 1500);
+  };
+
   return (
     <div className="page-container" style={{ paddingTop: '20px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
         {/* Breadcrumb & Navigation Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Link
               href="/"
@@ -177,11 +183,19 @@ export default function DemoClient({
             padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: 'var(--shadow)'
           }}>
             <div style={{ fontSize: 12, color: 'var(--text1)' }}>
-              <span style={{ color: 'var(--text2)' }}>Compte démo :</span> <strong>Bamba Diallo</strong> <span style={{ color: '#059669', fontSize: 11 }}>({labelPro})</span>
+              <span style={{ color: 'var(--text2)' }}>Compte démo :</span> <strong>Boutique Touba Express</strong> <span style={{ color: '#059669', fontSize: 11 }}>({labelPro})</span>
             </div>
-            <div style={{ background: '#ECFDF5', color: '#059669', padding: '4px 10px', borderRadius: 20, fontWeight: 800, fontSize: 12 }}>
-              💰 Taux Commission : {tauxCommissionPourcent}%
-            </div>
+            <a
+              href="/brochure-apporteur.pdf"
+              target="_blank"
+              download
+              style={{
+                background: '#ECFDF5', color: '#059669', padding: '6px 12px', borderRadius: 20,
+                fontWeight: 800, fontSize: 12, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4
+              }}
+            >
+              📄 Brochure PDF (13 p.)
+            </a>
           </div>
         </div>
 
@@ -251,15 +265,15 @@ export default function DemoClient({
 
             <p style={{ fontSize: 'clamp(14px, 2vw, 16px)', color: '#E2E8F0', maxWidth: 760, margin: '0 auto', lineHeight: 1.6 }}>
               Nopalou combine un <strong style={{ color: '#FF8C00' }}>Super-Comparateur de prix</strong>, un{' '}
-              <strong style={{ color: '#FFF' }}>Logiciel de Caisse POS tactile</strong> avec carnet de crédits/dettes client, un{' '}
-              <strong style={{ color: '#FFF' }}>Bot WhatsApp IA</strong> et un <strong style={{ color: '#2DD4BF' }}>Programme Apporteur {tauxCommissionPourcent}% récurrent</strong>.
+              <strong style={{ color: '#FFF' }}>Logiciel de Caisse POS tactile avec Scan EAN-13 &amp; Carnet de Dettes</strong>, un{' '}
+              <strong style={{ color: '#FFF' }}>Bot WhatsApp Meta Commerce</strong> et un <strong style={{ color: '#2DD4BF' }}>Programme Apporteur {tauxCommissionPourcent}% récurrent</strong>.
             </p>
 
             {/* CTA Buttons */}
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 12, paddingTop: 6 }}>
               <button
                 onClick={() => {
-                  const el = document.getElementById('guide-etape-par-etape');
+                  const el = document.getElementById('simulateur-section');
                   el?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 style={{
@@ -270,20 +284,22 @@ export default function DemoClient({
                   display: 'flex', alignItems: 'center', gap: 8
                 }}
               >
-                <span>📘 Guide Pas-à-Pas Détaillé</span>
+                <span>🕹️ Tester le Bac à Sable Interactif</span>
               </button>
 
-              <button
-                onClick={() => setShowShareModal(true)}
+              <a
+                href="/brochure-apporteur.pdf"
+                target="_blank"
+                download
                 style={{
                   background: '#FFFFFF', color: 'var(--navy)', border: 'none',
                   padding: '13px 22px', borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: 'pointer',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                  display: 'flex', alignItems: 'center', gap: 8
+                  display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none'
                 }}
               >
-                <span>🔗 Obtenir mon Lien Apporteur</span>
-              </button>
+                <span>📥 Télécharger la Brochure PDF (13 p.)</span>
+              </a>
             </div>
 
           </div>
@@ -295,13 +311,13 @@ export default function DemoClient({
         <section id="simulateur-section" style={{ display: 'flex', flexDirection: 'column', gap: 18, scrollMarginTop: 30 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ alignSelf: 'flex-start', background: '#FFF7ED', color: 'var(--accent)', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
-              🕹️ SIMULATEUR D&apos;ÉCRAN EN DIRECT AVEC DONNÉES DYNAMIQUES
+              🕹️ SIMULATEUR D&apos;ÉCRAN BAC À SABLE PAS-À-PAS
             </span>
             <h2 style={{ fontSize: 'clamp(20px, 3vw, 28px)', fontWeight: 900, color: 'var(--navy)', margin: 0 }}>
-              Testez l&apos;interface &amp; cliquez sur les boutons pour comprendre leur fonctionnement
+              Choisissez un profil pour tester l&apos;interface réelle
             </h2>
             <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-              Tarifs et taux de commission mis à jour dynamiquement depuis le système.
+              Cliquez sur les onglets et les boutons pour tester les fonctionnalités en direct.
             </p>
           </div>
 
@@ -336,7 +352,7 @@ export default function DemoClient({
             >
               <span style={{ fontSize: 18 }}>🏪</span>
               <span>2. Parcours Marchand POS</span>
-              <span style={{ fontSize: 11, opacity: activeRole === 'marchand' ? 0.9 : 0.7, fontWeight: 400 }}>Caisse POS &amp; Carnet Dettes</span>
+              <span style={{ fontSize: 11, opacity: activeRole === 'marchand' ? 0.9 : 0.7, fontWeight: 400 }}>Caisse POS, Scan EAN-13 &amp; Dettes</span>
             </button>
 
             <button
@@ -350,43 +366,8 @@ export default function DemoClient({
             >
               <span style={{ fontSize: 18 }}>💼</span>
               <span>3. Parcours Apporteur d&apos;Affaires</span>
-              <span style={{ fontSize: 11, opacity: activeRole === 'apporteur' ? 0.9 : 0.7, fontWeight: 400 }}>Commissions {tauxCommissionPourcent}% récurrentes</span>
+              <span style={{ fontSize: 11, opacity: activeRole === 'apporteur' ? 0.9 : 0.7, fontWeight: 400 }}>Commissions {tauxCommissionPourcent}% &amp; Kit Commercial</span>
             </button>
-          </div>
-
-          {/* Steps selector */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {[1, 2, 3].map((step) => (
-              <button
-                key={step}
-                onClick={() => setActiveStep(step)}
-                style={{
-                  background: activeStep === step ? 'var(--navy)' : 'var(--card)',
-                  color: activeStep === step ? '#FFF' : 'var(--text1)',
-                  border: activeStep === step ? '1px solid var(--navy)' : '1px solid var(--border)',
-                  padding: '7px 14px', borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 6
-                }}
-              >
-                <span style={{
-                  width: 18, height: 18, borderRadius: '50%', background: activeStep === step ? 'var(--accent)' : 'var(--border)',
-                  color: activeStep === step ? '#FFF' : 'var(--text1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10
-                }}>
-                  {step}
-                </span>
-                {activeRole === 'acheteur' && step === 1 && 'Comparaison Prix'}
-                {activeRole === 'acheteur' && step === 2 && 'Offres Telecom & Immo'}
-                {activeRole === 'acheteur' && step === 3 && 'Commande WhatsApp 24/7'}
-
-                {activeRole === 'marchand' && step === 1 && 'Caisse Enregistreuse POS'}
-                {activeRole === 'marchand' && step === 2 && 'Carnet Crédit & Dettes Client'}
-                {activeRole === 'marchand' && step === 3 && 'Bot WhatsApp Boutique'}
-
-                {activeRole === 'apporteur' && step === 1 && 'Lien & Code Apporteur'}
-                {activeRole === 'apporteur' && step === 2 && 'Parrainage Boutiques'}
-                {activeRole === 'apporteur' && step === 3 && 'Commissions Wave/OM'}
-              </button>
-            ))}
           </div>
 
           {/* SIMULATOR SCREEN FRAME */}
@@ -394,588 +375,283 @@ export default function DemoClient({
             borderRadius: 12, border: '1px solid var(--border)', background: '#0F172A', overflow: 'hidden', boxShadow: 'var(--shadow2)', color: '#FFFFFF'
           }}>
             {/* Window header */}
-            <div style={{ background: '#020617', padding: '10px 14px', borderBottom: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyBetween: 'space-between' }}>
+            <div style={{ background: '#020617', padding: '10px 14px', borderBottom: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#EF4444' }} />
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#F59E0B' }} />
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#10B981' }} />
                 <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#64748B', marginLeft: 8 }}>
-                  nopalou.com/demo/{activeRole}/step-{activeStep}
+                  nopalou.com/demo/{activeRole}
                 </span>
               </div>
               <span style={{ fontSize: 11, fontWeight: 700, color: '#CBD5E1', background: '#1E293B', padding: '3px 10px', borderRadius: 20 }}>
-                MODE : {activeRole.toUpperCase()} — Étape {activeStep}/3
+                MODE SIMULATION : {activeRole.toUpperCase()}
               </span>
             </div>
 
             {/* Window body */}
-            <div style={{ padding: '20px 16px', minHeight: 360 }}>
+            <div style={{ padding: '20px 16px', minHeight: 380 }}>
 
-              {/* 🛒 ACHETEUR STAGES */}
-              {activeRole === 'acheteur' && (
+              {/* 🏪 MARCHAND POS SANDBOX */}
+              {activeRole === 'marchand' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {activeStep === 1 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <div style={{ background: 'rgba(199, 91, 0, 0.1)', border: '1px solid rgba(199, 91, 0, 0.3)', padding: 12, borderRadius: 10, fontSize: 13, color: '#FFD8B5' }}>
-                        <strong style={{ color: '#FFF', display: 'block', marginBottom: 2 }}>Étape 1 : Comparateur Multi-Boutiques en direct</strong>
-                        Tapez un nom d&apos;article. Nopalou scanne Auchan, Carrefour et les e-boutiques sénégalaises pour extraire le prix le plus bas.
-                      </div>
+                  {/* Merchant Sub-tabs (100% Identical to real Boutique interface) */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', background: '#020617', padding: 6, borderRadius: 10, border: '1px solid #1E293B' }}>
+                    {[
+                      { id: 'pos', label: '🖥️ Caisse POS Tactile' },
+                      { id: 'catalogue', label: '🛍️ Produits & EAN-13' },
+                      { id: 'credit', label: '📓 Carnet Dettes Client' },
+                      { id: 'analytics', label: '📊 Analytics & Ventes' },
+                      { id: 'equipe', label: '👥 Équipe & PIN' },
+                    ].map(t => (
+                      <button
+                        key={t.id}
+                        onClick={() => setMerchantTab(t.id as any)}
+                        style={{
+                          background: merchantTab === t.id ? 'var(--accent)' : 'transparent',
+                          color: '#FFF', border: 'none', padding: '8px 12px', borderRadius: 6,
+                          fontWeight: 700, fontSize: 12, cursor: 'pointer'
+                        }}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
 
-                      <div style={{ background: '#020617', padding: 16, borderRadius: 12, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {/* TAB 1: POS CAISSE */}
+                  {merchantTab === 'pos' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      <div style={{ background: '#1E293B', padding: 12, borderRadius: 8, fontSize: 12, color: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                        <span>💡 <strong>Mode Caisse POS :</strong> Encaissez vos ventes en magasin avec 3 modes de scan.</span>
                         <div style={{ display: 'flex', gap: 8 }}>
-                          <input type="text" readOnly value="iPhone 15 Pro Max 256GB" style={{ flex: 1, background: '#0F172A', border: '1px solid #334155', padding: '8px 12px', borderRadius: 8, color: '#FFF', fontSize: 13 }} />
                           <button
-                            onClick={() => setActiveExplanation({
-                              title: '🔍 Bouton : Rechercher sur le Super-Comparateur',
-                              desc: 'Interroge les bases de données Nopalou et les sites partenaires pour trouver toutes les offres d\'un produit au Sénégal.',
-                              backend: 'Exécute une requête SQL similarity(nom) et compare les EAN et prix.',
-                              benefit: 'Permet à l\'acheteur de trouver le prix le plus bas immédiatement.'
-                            })}
-                            style={{ background: 'var(--accent)', color: '#FFF', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+                            onClick={handleSimulateScanItem}
+                            style={{ background: '#059669', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                           >
-                            Rechercher (Explication ❓)
+                            📷 Scanner Caméra
+                          </button>
+                          <button
+                            onClick={() => setShowCloudScannerModal(true)}
+                            style={{ background: '#0284C7', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                          >
+                            📱 Douchette Smartphone
                           </button>
                         </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
-                          <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, border: '1px solid #10B981', position: 'relative' }}>
-                            <span style={{ position: 'absolute', top: -10, right: 10, background: '#10B981', color: '#020617', padding: '2px 6px', borderRadius: 4, fontSize: 9, fontWeight: 800 }}>MEILLEUR PRIX</span>
-                            <div style={{ fontSize: 11, color: '#94A3B8' }}>Boutique Dakar Tech ({labelPro})</div>
-                            <div style={{ fontSize: 18, fontWeight: 900, color: '#10B981', marginTop: 4 }}>785 000 FCFA</div>
-                            <div style={{ fontSize: 11, color: '#CBD5E1', marginTop: 4 }}>✅ Garantie 12m + Stock dispo</div>
-                          </div>
-
-                          <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, border: '1px solid #1E293B' }}>
-                            <div style={{ fontSize: 11, color: '#94A3B8' }}>Auchan Sénégal</div>
-                            <div style={{ fontSize: 18, fontWeight: 900, color: '#E2E8F0', marginTop: 4 }}>820 000 FCFA</div>
-                            <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>Écart : +35 000 FCFA</div>
-                          </div>
-
-                          <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, border: '1px solid #1E293B' }}>
-                            <div style={{ fontSize: 11, color: '#94A3B8' }}>Vendeur Particulier (Annonce)</div>
-                            <div style={{ fontSize: 18, fontWeight: 900, color: '#E2E8F0', marginTop: 4 }}>800 000 FCFA</div>
-                            <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>Sans garantie officielle</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeStep === 2 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <div style={{ background: 'rgba(13, 148, 136, 0.1)', border: '1px solid rgba(13, 148, 136, 0.3)', padding: 12, borderRadius: 10, fontSize: 13, color: '#A7F3D0' }}>
-                        <strong style={{ color: '#FFF', display: 'block', marginBottom: 2 }}>Étape 2 : Comparateur Telecom &amp; Immobilier</strong>
-                        Comparez les forfaits Internet Orange/Free et dénichez des logements sans frais cachés.
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-                        <div style={{ background: '#020617', padding: 14, borderRadius: 12, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 13, color: '#FFF' }}>
-                            <span>📱 Pass Orange vs Free</span>
-                            <span style={{ color: '#FF8C00', fontSize: 11 }}>Top Offre</span>
-                          </div>
-                          <div style={{ background: '#0F172A', padding: 10, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                              <div style={{ fontWeight: 700, fontSize: 12 }}>Orange Pass Max 15 GB</div>
-                              <div style={{ fontSize: 10, color: '#94A3B8' }}>Validité 30 jours</div>
-                            </div>
-                            <div style={{ fontWeight: 900, color: '#FF8C00', fontSize: 15, marginLeft: 'auto' }}>5 000 FCFA</div>
-                          </div>
-                        </div>
-
-                        <div style={{ background: '#020617', padding: 14, borderRadius: 12, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 13, color: '#FFF' }}>
-                            <span>🏠 Immobilier Mermoz</span>
-                            <span style={{ color: '#2DD4BF', fontSize: 11 }}>Bailleur Certifié</span>
-                          </div>
-                          <div style={{ background: '#0F172A', padding: 10, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                              <div style={{ fontWeight: 700, fontSize: 12 }}>Appartement F3 Standing</div>
-                              <div style={{ fontSize: 10, color: '#94A3B8' }}>Mermoz Pyrotechnie</div>
-                            </div>
-                            <div style={{ fontWeight: 900, color: '#2DD4BF', fontSize: 15, marginLeft: 'auto' }}>300 000 FCFA/m</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeStep === 3 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: 12, borderRadius: 10, fontSize: 13, color: '#A7F3D0' }}>
-                        <strong style={{ color: '#FFF', display: 'block', marginBottom: 2 }}>Étape 3 : Assistant WhatsApp Nopalou Bot 24/7</strong>
-                        Testez le Bot ci-dessous ! Tapez un message pour simuler la réponse automatique du Chatbot.
-                      </div>
-
-                      <div style={{ background: '#020617', borderRadius: 12, border: '1px solid #1E293B', maxWidth: 500, margin: '0 auto', width: '100%', overflow: 'hidden' }}>
-                        <div style={{ background: '#064E3B', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>🤖</div>
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: 12, color: '#FFF' }}>Nopalou Assistant WhatsApp</div>
-                            <div style={{ fontSize: 10, color: '#A7F3D0' }}>En ligne 24h/24 • Réponse automatique</div>
-                          </div>
-                        </div>
-
-                        <div style={{ padding: 12, height: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 11 }}>
-                          {chatMessages.map((msg, idx) => (
-                            <div key={idx} style={{ display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
-                              <div style={{
-                                maxWidth: '85%', padding: '8px 10px', borderRadius: 10,
-                                background: msg.sender === 'user' ? '#059669' : '#1E293B',
-                                color: msg.sender === 'user' ? '#FFF' : '#E2E8F0',
-                                border: msg.sender === 'user' ? 'none' : '1px solid #334155',
-                                whiteSpace: 'pre-line'
-                              }}>
-                                <div>{msg.text}</div>
-                                <div style={{ fontSize: 8, opacity: 0.7, textAlign: 'right', marginTop: 2 }}>{msg.time}</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
+                        {/* Cart items */}
+                        <div style={{ background: '#020617', padding: 14, borderRadius: 10, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: '#FFF' }}>🛒 Panier Caisse Actuel</div>
+                          {posCart.map(it => (
+                            <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', padding: 8, borderRadius: 6, fontSize: 12 }}>
+                              <div>
+                                <div style={{ fontWeight: 700, color: '#FFF' }}>{it.name}</div>
+                                <div style={{ fontSize: 10, color: '#94A3B8' }}>EAN: {it.ean} | x{it.qty}</div>
                               </div>
+                              <div style={{ fontWeight: 800, color: '#10B981' }}>{(it.price * it.qty).toLocaleString()} FCFA</div>
                             </div>
                           ))}
                         </div>
 
-                        <form onSubmit={handleSendChat} style={{ padding: 6, background: '#0F172A', borderTop: '1px solid #1E293B', display: 'flex', gap: 6 }}>
-                          <input
-                            type="text"
-                            placeholder="Tapez (ex: Riz 50kg, iPhone, Appartement)..."
-                            value={chatInput}
-                            onChange={(e) => setChatInput(e.target.value)}
-                            style={{ flex: 1, background: '#020617', border: '1px solid #334155', borderRadius: 6, padding: '6px 10px', color: '#FFF', fontSize: 11 }}
-                          />
-                          <button type="submit" style={{ background: '#059669', color: '#FFF', border: 'none', borderRadius: 6, padding: '6px 12px', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>Envoyer</button>
-                        </form>
+                        {/* Total & Checkout */}
+                        <div style={{ background: '#020617', padding: 14, borderRadius: 10, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 10, justifyContent: 'space-between' }}>
+                          <div>
+                            <div style={{ fontSize: 11, color: '#94A3B8' }}>TOTAL À ENCAISSER :</div>
+                            <div style={{ fontSize: 26, fontWeight: 900, color: '#10B981' }}>{totalPosCart.toLocaleString()} FCFA</div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                            <button
+                              onClick={() => setActiveExplanation({
+                                title: '💶 Encaissement Cash / Espèces',
+                                desc: 'Enregistre la vente en caisse, calcule la monnaie à rendre et met à jour le stock.',
+                                backend: 'Insère la transaction dans la table comptabilite_transactions et incrémente le fond de caisse Z.',
+                                benefit: 'Rapport de clôture de caisse 100% exact à la fin de la journée.'
+                              })}
+                              style={{ background: '#10B981', color: '#020617', border: 'none', padding: 8, borderRadius: 6, fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
+                            >
+                              💵 Cash Espèces
+                            </button>
+                            <button
+                              onClick={() => setActiveExplanation({
+                                title: '🌊 Encaissement Wave / Orange Money',
+                                desc: 'Paiement sans contact Wave ou Orange Money directement sur le QR code du magasin.',
+                                backend: 'Lien direct ou Webhook API Wave/OM avec réconciliation automatique.',
+                                benefit: 'Encaissement rapide sans risque d\'erreur de monnaie.'
+                              })}
+                              style={{ background: '#0284C7', color: '#FFF', border: 'none', padding: 8, borderRadius: 6, fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
+                            >
+                              🌊 Wave / OM
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 2: CATALOGUE & EAN-13 */}
+                  {merchantTab === 'catalogue' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ background: '#1E293B', padding: 12, borderRadius: 8, fontSize: 12, color: '#E2E8F0' }}>
+                        🏷️ <strong>Gestion EAN-13 :</strong> Saisissez le code fabricant ou cliquez sur <code>🎲 Générer EAN</code> pour créer un code GS1 Modulo 10 scannable.
+                      </div>
+
+                      {[
+                        { nom: 'Sac de Riz Parfumé 50kg', prix: 22500, stock: 45, ean: '2008492019482' },
+                        { nom: 'Huile Dinor 5L', prix: 7500, stock: 120, ean: '2004928104829' },
+                        { nom: 'Sucre Cristallisé 1kg', prix: 650, stock: 200, ean: '2007849102941' },
+                      ].map((p, idx) => (
+                        <div key={idx} style={{ background: '#020617', padding: 12, borderRadius: 8, border: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                          <div>
+                            <div style={{ fontWeight: 800, color: '#FFF', fontSize: 13 }}>{p.nom}</div>
+                            <div style={{ fontSize: 11, color: '#94A3B8' }}>{p.prix.toLocaleString()} FCFA | Stock: {p.stock} | EAN: <code>{p.ean}</code></div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button
+                              onClick={() => {
+                                setStickerProd(p);
+                                setShowStickerModal(true);
+                              }}
+                              style={{ background: 'var(--accent)', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                            >
+                              🖨️ Sticker 50x30mm
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* TAB 3: CARNET DE CREDIT CLIENT */}
+                  {merchantTab === 'credit' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ background: '#1E293B', padding: 12, borderRadius: 8, fontSize: 12, color: '#E2E8F0' }}>
+                        📓 <strong>Carnet Dettes Client :</strong> Fini le cahier papier ! Suivez les impayés et relancez en 1 clic sur WhatsApp.
+                      </div>
+
+                      {[
+                        { nom: 'Mamadou Diallo', tel: '77 123 45 67', solde: 37500, echeance: '15 Août 2026', quartier: 'Medina Rue 11' },
+                        { nom: 'Awa Ndiaye', tel: '78 987 65 43', solde: 14500, echeance: '05 Août 2026', quartier: 'HLM 5' },
+                      ].map((c, idx) => (
+                        <div key={idx} style={{ background: '#020617', padding: 12, borderRadius: 8, border: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                          <div>
+                            <div style={{ fontWeight: 800, color: '#FFF', fontSize: 13 }}>👤 {c.nom} ({c.quartier})</div>
+                            <div style={{ fontSize: 11, color: '#94A3B8' }}>Tél: {c.tel} | Échéance: {c.echeance}</div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ fontWeight: 900, color: '#EF4444', fontSize: 14 }}>{c.solde.toLocaleString()} FCFA</div>
+                            <button
+                              onClick={() => {
+                                setRelanceClient(c);
+                                setShowWaRelanceModal(true);
+                              }}
+                              style={{ background: '#059669', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                            >
+                              💬 WA Relance
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* TAB 4: ANALYTICS */}
+                  {merchantTab === 'analytics' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                      <div style={{ background: '#020617', padding: 14, borderRadius: 8, border: '1px solid #1E293B' }}>
+                        <div style={{ fontSize: 11, color: '#94A3B8' }}>CA Du Jour :</div>
+                        <div style={{ fontSize: 20, fontWeight: 900, color: '#10B981', marginTop: 4 }}>145 000 FCFA</div>
+                      </div>
+                      <div style={{ background: '#020617', padding: 14, borderRadius: 8, border: '1px solid #1E293B' }}>
+                        <div style={{ fontSize: 11, color: '#94A3B8' }}>Ventes Caisse :</div>
+                        <div style={{ fontSize: 20, fontWeight: 900, color: '#38BDF8', marginTop: 4 }}>18 Transactions</div>
+                      </div>
+                      <div style={{ background: '#020617', padding: 14, borderRadius: 8, border: '1px solid #1E293B' }}>
+                        <div style={{ fontSize: 11, color: '#94A3B8' }}>Bénéfice Estime :</div>
+                        <div style={{ fontSize: 20, fontWeight: 900, color: '#F59E0B', marginTop: 4 }}>24 500 FCFA</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 5: EQUIPE */}
+                  {merchantTab === 'equipe' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
+                      <div style={{ background: '#020617', padding: 10, borderRadius: 6, display: 'flex', justifyContent: 'space-between', color: '#FFF' }}>
+                        <span>👑 Bamba Diallo (Propriétaire)</span>
+                        <span style={{ color: '#F59E0B', fontWeight: 700 }}>Intouchable</span>
+                      </div>
+                      <div style={{ background: '#020617', padding: 10, borderRadius: 6, display: 'flex', justifyContent: 'space-between', color: '#FFF' }}>
+                        <span>👤 Modou Cissé (Caissier Matin)</span>
+                        <span style={{ color: '#10B981', fontWeight: 700 }}>PIN: ****</span>
                       </div>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* 🏪 MARCHAND STAGES */}
-              {activeRole === 'marchand' && (
+              {/* 🛒 ACHETEUR STAGES */}
+              {activeRole === 'acheteur' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {activeStep === 1 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <div style={{ background: 'rgba(13, 148, 136, 0.1)', border: '1px solid rgba(13, 148, 136, 0.3)', padding: 12, borderRadius: 10, fontSize: 13, color: '#A7F3D0' }}>
-                        <strong style={{ color: '#FFF', display: 'block', marginBottom: 2 }}>Étape 1 : Caisse Tactile POS (Vente Magasin)</strong>
-                        Scannez les articles et encaissez en Espèces, Wave ou Orange Money directement depuis votre tablette.
-                      </div>
-
-                      <div style={{ background: '#020617', padding: 16, borderRadius: 14, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1E293B', paddingBottom: 8 }}>
-                          <div style={{ fontWeight: 700, color: '#FFF', fontSize: 13 }}>🏬 Caisse POS — Touba Commerce</div>
-                          <span style={{ background: 'rgba(45, 212, 191, 0.15)', color: '#2DD4BF', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>CAISSE OUVERTE</span>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-                          <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' }}>PANIER DU CLIENT</span>
-                            {posCart.map((item, i) => (
-                              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, borderBottom: '1px solid #1E293B', paddingBottom: 4 }}>
-                                <div>
-                                  <div style={{ fontWeight: 700, color: '#FFF' }}>{item.name}</div>
-                                  <div style={{ fontSize: 9, color: '#64748B' }}>{item.qty} x {item.price.toLocaleString()} FCFA</div>
-                                </div>
-                                <div style={{ fontWeight: 700, color: '#FF8C00' }}>{(item.price * item.qty).toLocaleString()} FCFA</div>
-                              </div>
-                            ))}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900, color: '#2DD4BF', fontSize: 14, paddingTop: 4 }}>
-                              <span>TOTAL :</span>
-                              <span>{totalPosCart.toLocaleString()} FCFA</span>
-                            </div>
-                          </div>
-
-                          <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' }}>MODE D&apos;ENCAISSEMENT (Cliquez ❓)</span>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                              <button
-                                onClick={() => setActiveExplanation({
-                                  title: '🌊 Bouton : Encaissement Wave Direct',
-                                  desc: 'Génère un QR Code Wave ou envoie une demande de paiement direct sur le téléphone du client.',
-                                  backend: 'Appelle l\'API Wave Business avec le montant et met à jour le statut de commande.',
-                                  benefit: 'Encaissement ultra-rapide sans manipulation d\'espèces.'
-                                })}
-                                style={{ background: '#0284C7', color: '#FFF', border: 'none', padding: 8, borderRadius: 6, fontWeight: 700, fontSize: 10, cursor: 'pointer' }}
-                              >
-                                🌊 Wave Direct
-                              </button>
-                              <button
-                                onClick={() => setActiveExplanation({
-                                  title: '🟧 Bouton : Encaissement Orange Money',
-                                  desc: 'Déclenche un push USSD Orange Money sur le mobile du client pour valider le règlement.',
-                                  backend: 'Communique avec le Webpay Orange Money et enregistre la vente.',
-                                  benefit: 'Paiement mobile instantané sécurisé.'
-                                })}
-                                style={{ background: '#EA580C', color: '#FFF', border: 'none', padding: 8, borderRadius: 6, fontWeight: 700, fontSize: 10, cursor: 'pointer' }}
-                              >
-                                🟧 Orange Money
-                              </button>
-                              <button
-                                onClick={() => setActiveExplanation({
-                                  title: '💵 Bouton : Encaissement Espèces',
-                                  desc: 'Enregistre une vente au comptant en espèces dans le registre de caisse Z.',
-                                  backend: 'Décrémente le stock en base et calcule la monnaie à rendre.',
-                                  benefit: 'Gestion de caisse physique précise sans écart en fin de journée.'
-                                })}
-                                style={{ background: '#059669', color: '#FFF', border: 'none', padding: 8, borderRadius: 6, fontWeight: 700, fontSize: 10, cursor: 'pointer' }}
-                              >
-                                💵 Espèces
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setActiveStep(2);
-                                  setActiveExplanation({
-                                    title: '📝 Bouton : Vente Pris à Crédit',
-                                    desc: 'Bascule l\'encaissement vers la fiche du Carnet de Crédits & Dettes Client.',
-                                    backend: 'Crée un enregistrement de créance lié au numéro du client.',
-                                    benefit: 'Évite les oublis de dettes et prépare les relances WhatsApp.'
-                                  });
-                                }}
-                                style={{ background: '#D97706', color: '#FFF', border: 'none', padding: 8, borderRadius: 6, fontWeight: 700, fontSize: 10, cursor: 'pointer' }}
-                              >
-                                📝 Pris à Crédit →
-                              </button>
-                            </div>
+                  <div style={{ background: '#020617', padding: 14, borderRadius: 10, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#FFF' }}>🤖 Assistant Chatbot WhatsApp Meta Commerce</div>
+                    
+                    {/* Chat simulation box */}
+                    <div style={{ background: '#0F172A', borderRadius: 8, padding: 10, maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {chatMessages.map((m, idx) => (
+                        <div key={idx} style={{ alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
+                          <div style={{
+                            background: m.sender === 'user' ? '#059669' : '#1E293B',
+                            color: '#FFF', padding: '8px 12px', borderRadius: 10, fontSize: 12, lineHeight: 1.5, whiteSpace: 'pre-wrap'
+                          }}>
+                            {m.text}
                           </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  )}
 
-                  {activeStep === 2 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <div style={{ background: 'rgba(217, 119, 6, 0.1)', border: '1px solid rgba(217, 119, 6, 0.3)', padding: 12, borderRadius: 10, fontSize: 13, color: '#FDE68A' }}>
-                        <strong style={{ color: '#FFF', display: 'block', marginBottom: 2 }}>Étape 2 : Carnet de Crédits &amp; Dettes Client (Zero Impayé !)</strong>
-                        Enregistrez les ventes à crédit et envoyez une relance courtoise sur WhatsApp en 1 clic.
-                      </div>
-
-                      <div style={{ background: '#020617', padding: 16, borderRadius: 14, border: '1px solid #1E293B', maxWidth: 480, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <div style={{ fontWeight: 700, color: '#FFF', borderBottom: '1px solid #1E293B', paddingBottom: 6, fontSize: 13 }}>
-                          📝 Fiche Crédit Client POS
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 11 }}>
-                          <div>
-                            <label style={{ color: '#94A3B8', display: 'block', marginBottom: 2 }}>Nom Client :</label>
-                            <input type="text" value={creditClientNom} onChange={(e) => setCreditClientNom(e.target.value)} style={{ width: '100%', background: '#0F172A', border: '1px solid #334155', borderRadius: 6, padding: 6, color: '#FFF' }} />
-                          </div>
-                          <div>
-                            <label style={{ color: '#94A3B8', display: 'block', marginBottom: 2 }}>Téléphone WhatsApp :</label>
-                            <input type="text" value={creditClientTel} onChange={(e) => setCreditClientTel(e.target.value)} style={{ width: '100%', background: '#0F172A', border: '1px solid #334155', borderRadius: 6, padding: 6, color: '#FFF' }} />
-                          </div>
-                        </div>
-
-                        <div style={{ background: '#0F172A', padding: 10, borderRadius: 8, fontSize: 11, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                          <div style={{ color: '#94A3B8', fontWeight: 700 }}>Articles pris à crédit (Sauvegardé en BD) :</div>
-                          <div style={{ color: '#CBD5E1' }}>• 1x Sac de Riz 50kg (22 500 FCFA)</div>
-                          <div style={{ color: '#CBD5E1' }}>• 2x Huile Dinor 5L (15 000 FCFA)</div>
-                          <div style={{ color: '#F59E0B', fontWeight: 800, marginTop: 2, fontSize: 12 }}>Dette totale : 37 500 FCFA</div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          <button onClick={handleAddCreditEntry} style={{ background: '#D97706', color: '#FFF', border: 'none', padding: '8px 14px', borderRadius: 6, fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>💾 Enregistrer Crédit</button>
-                          <button
-                            onClick={() => {
-                              setActiveExplanation({
-                                title: '💬 Bouton : Relancer le Client sur WhatsApp',
-                                desc: 'Ouvre directement une conversation WhatsApp pré-remplie avec le récapitulatif des articles et du solde dû.',
-                                backend: 'Génère l\'URL wa.me avec encodage du message personnalisé.',
-                                benefit: 'Permet de récupérer vos créances poliment et sans conflit.'
-                              });
-                              const msg = 'Bonjour ' + creditClientNom + ', rappel courtois concernant votre solde de 37 500 FCFA chez Touba Commerce. Paiement Wave/OM possible. Merci !';
-                              window.open('https://api.whatsapp.com/send?phone=' + creditClientTel.replace(/\s/g, '') + '&text=' + encodeURIComponent(msg), '_blank');
-                            }}
-                            style={{ background: '#059669', color: '#FFF', border: 'none', padding: '8px 14px', borderRadius: 6, fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
-                          >
-                            💬 Relancer sur WhatsApp
-                          </button>
-                        </div>
-
-                        {creditSaveStatus === 'saved' && (
-                          <div style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#A7F3D0', padding: 6, borderRadius: 6, fontSize: 10, fontWeight: 700, textAlign: 'center' }}>
-                            ✅ Dette enregistrée avec succès dans le Carnet POS !
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {activeStep === 3 && (
-                    <div style={{ textAlign: 'center', padding: 24, background: '#020617', borderRadius: 14, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                      <div style={{ fontSize: 36 }}>🤖</div>
-                      <h4 style={{ fontSize: 16, fontWeight: 800, color: '#FFF', margin: 0 }}>Votre Bot WhatsApp Commercial est actif !</h4>
-                      <p style={{ fontSize: 12, color: '#94A3B8', maxWidth: 420, margin: 0, lineHeight: 1.5 }}>
-                        Votre catalogue produit est synchronisé. Les clients peuvent commander 24/7 sur WhatsApp même lorsque votre boutique est fermée.
-                      </p>
-                    </div>
-                  )}
+                    <form onSubmit={handleSendChat} style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        type="text" value={chatInput} onChange={e => setChatInput(e.target.value)}
+                        placeholder="Tapez un message (ex: Riz 50kg, iPhone 15)..."
+                        style={{ flex: 1, background: '#0F172A', border: '1px solid #334155', padding: '8px 12px', borderRadius: 8, color: '#FFF', fontSize: 12 }}
+                      />
+                      <button type="submit" style={{ background: '#059669', color: '#FFF', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 800, fontSize: 12, cursor: 'pointer' }}>
+                        Envoyer
+                      </button>
+                    </form>
+                  </div>
                 </div>
               )}
 
-              {/* 💼 APPORTEUR STAGES */}
+              {/* 💼 APPORTEUR D'AFFAIRES STAGES */}
               {activeRole === 'apporteur' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {activeStep === 1 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <div style={{ background: 'rgba(124, 58, 237, 0.1)', border: '1px solid rgba(124, 58, 237, 0.3)', padding: 12, borderRadius: 10, fontSize: 13, color: '#DDD6FE' }}>
-                        <strong style={{ color: '#FFF', display: 'block', marginBottom: 2 }}>Étape 1 : Obtenez votre Code Apporteur en 1-Clic</strong>
-                        Recevez un code unique (ex: <code style={{ color: '#FBBF24' }}>APPORT-77</code>) et votre lien d&apos;affiliation personnel.
-                      </div>
+                  <div style={{ background: '#020617', padding: 14, borderRadius: 10, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#FFF' }}>💼 Kit Commercial &amp; Matériel de Démarchage</div>
+                    <div style={{ fontSize: 12, color: '#CBD5E1' }}>
+                      Téléchargez les visuels officiels et la brochure de 13 pages pour démarcher les commerçants de votre secteur.
+                    </div>
 
-                      <div style={{ background: '#020617', padding: 16, borderRadius: 14, border: '1px solid #1E293B', maxWidth: 460, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700 }}>VOTRE CODE APPORTEUR</span>
-                          <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10B981', padding: '2px 6px', borderRadius: 8, fontSize: 9, fontWeight: 800 }}>STATUT ACTIF</span>
-                        </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+                      <a
+                        href="/brochure-apporteur.pdf" target="_blank" download
+                        style={{ background: '#1E293B', border: '1px solid #334155', padding: 12, borderRadius: 8, textDecoration: 'none', color: '#FFF', display: 'flex', flexDirection: 'column', gap: 4 }}
+                      >
+                        <span style={{ fontWeight: 800, color: '#10B981', fontSize: 13 }}>📄 Brochure PDF (13 p.)</span>
+                        <span style={{ fontSize: 10, color: '#94A3B8' }}>Document complet imprimable</span>
+                      </a>
 
-                        <div style={{ background: '#0F172A', padding: 12, borderRadius: 10, border: '1px solid #F59E0B', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontFamily: 'monospace', fontSize: 18, fontWeight: 900, color: '#F59E0B' }}>{referralCode || 'APPORT-77'}</span>
-                          <button onClick={handleCopyLink} style={{ background: '#D97706', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: 6, fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>
-                            {copiedLink ? 'Copié !' : 'Copier Lien'}
-                          </button>
-                        </div>
-
-                        <div style={{ fontSize: 10, color: '#94A3B8', wordBreak: 'break-all' }}>
-                          Lien d&apos;inscription affilié : <br />
-                          <span style={{ color: '#CBD5E1', fontFamily: 'monospace' }}>{shareableUrl}</span>
-                        </div>
+                      <div style={{ background: '#1E293B', border: '1px solid #334155', padding: 12, borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontWeight: 800, color: '#38BDF8', fontSize: 13 }}>🖼️ Flyers A5 Terrain</span>
+                        <span style={{ fontSize: 10, color: '#94A3B8' }}>Pour distribuer en boutique</span>
                       </div>
                     </div>
-                  )}
-
-                  {activeStep === 2 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <div style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', padding: 12, borderRadius: 10, fontSize: 13, color: '#C7D2FE' }}>
-                        <strong style={{ color: '#FFF', display: 'block', marginBottom: 2 }}>Étape 2 : Recrutez des Boutiques dans votre réseau</strong>
-                        Chaque commerçant inscrit via votre code est lié à votre compte à vie pour les commissions récurrentes ({tauxCommissionPourcent}%).
-                      </div>
-
-                      <div style={{ background: '#020617', padding: 14, borderRadius: 12, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <div style={{ fontWeight: 700, fontSize: 12, color: '#FFF' }}>📊 Espace Suivi Apporteur (Exemple Dynamique)</div>
-                        <div style={{ background: '#0F172A', padding: 10, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: 11, color: '#FFF' }}>Électronique Sandaga ({labelPro})</div>
-                            <div style={{ fontSize: 9, color: '#64748B' }}>Abonnement : {prixPro.toLocaleString()} FCFA/m</div>
-                          </div>
-                          <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10B981', padding: '2px 6px', borderRadius: 4, fontWeight: 700, fontSize: 10 }}>+{commissionProParUnite.toLocaleString()} FCFA/m</span>
-                        </div>
-
-                        <div style={{ background: '#0F172A', padding: 10, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: 11, color: '#FFF' }}>Cosmétique Touba ({labelBusiness})</div>
-                            <div style={{ fontSize: 9, color: '#64748B' }}>Abonnement : {prixBusiness.toLocaleString()} FCFA/m</div>
-                          </div>
-                          <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10B981', padding: '2px 6px', borderRadius: 4, fontWeight: 700, fontSize: 10 }}>+{commissionBusinessParUnite.toLocaleString()} FCFA/m</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeStep === 3 && (
-                    <div style={{ textAlign: 'center', padding: 20, background: '#020617', borderRadius: 14, border: '1px solid #1E293B', maxWidth: 420, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>SOLDE CUMULÉ DISPONIBLE</div>
-                      <div style={{ fontSize: 32, fontWeight: 900, color: '#10B981' }}>45 000 FCFA</div>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                        <button
-                          onClick={() => setActiveExplanation({
-                            title: '🌊 Bouton : Retirer ses Commissions par Wave',
-                            desc: 'Déclenche le virement direct du solde de commissions apporteur vers votre numéro Wave.',
-                            backend: 'Insère une ligne dans commissions_apporteur avec statut = paye.',
-                            benefit: 'Encaissement de vos revenus passifs sans délai.'
-                          })}
-                          style={{ background: '#0284C7', color: '#FFF', border: 'none', padding: '8px 14px', borderRadius: 6, fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
-                        >
-                          🌊 Retirer Wave
-                        </button>
-                        <button
-                          onClick={() => setActiveExplanation({
-                            title: '🟧 Bouton : Retirer ses Commissions par Orange Money',
-                            desc: 'Transfère le montant cumulé vers votre compte Orange Money Sénégal.',
-                            backend: 'Effectue un payout via l\'API marchand Orange Money.',
-                            benefit: 'Flexibilité d\'encaissement selon votre opérateur préféré.'
-                          })}
-                          style={{ background: '#EA580C', color: '#FFF', border: 'none', padding: '8px 14px', borderRadius: 6, fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
-                        >
-                          🟧 Retirer Orange Money
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
               )}
 
             </div>
-          </div>
-        </section>
-
-        {/* ───────────────────────────────────────────────────────────── */}
-        {/* GUIDE ÉTAPE PAR ÉTAPE (UTILISATION PAS-À-PAS CLAIRE)          */}
-        {/* ───────────────────────────────────────────────────────────── */}
-        <section id="guide-etape-par-etape" style={{ display: 'flex', flexDirection: 'column', gap: 18, scrollMarginTop: 30 }}>
-          <div>
-            <span style={{ background: '#FFF7ED', color: 'var(--accent)', border: '1px solid #FFEDD5', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
-              📘 MODE D&apos;EMPLOI &amp; PROCESSUS COMPLET
-            </span>
-            <h2 style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 900, color: 'var(--navy)', margin: '8px 0 4px 0' }}>
-              Comment utiliser Nopalou étape par étape ?
-            </h2>
-            <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-              Un guide pas-à-pas pour démarrer immédiatement : de la création de compte à la caisse POS et aux commissions.
-            </p>
-          </div>
-
-          {/* Guide Tabs Selector */}
-          <div style={{
-            display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, justifyContent: 'flex-start'
-          }}>
-            {[
-              { id: 'compte', label: '1. Créer un Compte', icon: '👤' },
-              { id: 'boutique', label: '2. Créer une Boutique', icon: '🏪' },
-              { id: 'catalogue', label: '3. Ajouter des Produits', icon: '📦' },
-              { id: 'caisse', label: '4. Utiliser la Caisse POS', icon: '💻' },
-              { id: 'credit', label: '5. Carnet de Crédits', icon: '📝' },
-              { id: 'bot', label: '6. Bot WhatsApp', icon: '🤖' },
-              { id: 'apporteur', label: '7. Gagner des Commissions', icon: '💼' },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveGuideTab(tab.id)}
-                style={{
-                  background: activeGuideTab === tab.id ? 'var(--accent)' : 'var(--card)',
-                  color: activeGuideTab === tab.id ? '#FFFFFF' : 'var(--text1)',
-                  border: activeGuideTab === tab.id ? '1px solid var(--accent)' : '1px solid var(--border)',
-                  padding: '9px 15px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer',
-                  whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6,
-                  boxShadow: activeGuideTab === tab.id ? '0 3px 10px rgba(199, 91, 0, 0.25)' : 'var(--shadow)'
-                }}
-              >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Guide Tab Content Card */}
-          <div style={{
-            background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)', padding: '24px 20px',
-            boxShadow: 'var(--shadow)', display: 'flex', flexDirection: 'column', gap: 14
-          }}>
-            {activeGuideTab === 'compte' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#FFF7ED', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18 }}>1</div>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>Étape 1 : Créer son Compte Nopalou (Gratuit &amp; Rapide)</h3>
-                </div>
-                <p style={{ fontSize: 14, color: 'var(--text1)', lineHeight: 1.6, margin: 0 }}>
-                  L&apos;inscription sur Nopalou prend moins d&apos;une minute. Que vous soyez acheteur, commerçant ou apporteurs d&apos;affaires, un seul compte vous donne accès à tout l&apos;écosystème.
-                </p>
-                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, fontSize: 13, color: 'var(--text1)' }}>
-                  <div><strong>1. Saisie des infos :</strong> Entrez votre Nom, Adresse Email et Numéro WhatsApp.</div>
-                  <div><strong>2. Sécurisation :</strong> Définissez un mot de passe sécurisé.</div>
-                  <div><strong>3. Accès immédiat :</strong> Accédez à votre tableau de bord personnel.</div>
-                </div>
-              </div>
-            )}
-
-            {activeGuideTab === 'boutique' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#CCFBF1', color: '#0D9488', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18 }}>2</div>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>Étape 2 : Créer sa Boutique en Ligne en 2 Minutes</h3>
-                </div>
-                <p style={{ fontSize: 14, color: 'var(--text1)', lineHeight: 1.6, margin: 0 }}>
-                  Rendez-vous dans la rubrique <strong>/boutique</strong> pour enregistrer votre commerce et bénéficier d&apos;une visibilité immédiate auprès de milliers d&apos;acheteurs.
-                </p>
-                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, fontSize: 13, color: 'var(--text1)' }}>
-                  <div><strong>1. Nom &amp; Adresse :</strong> Indiquez le nom de votre magasin et sa localisation (ex: Dakar, Sandaga, Thiès).</div>
-                  <div><strong>2. Code Apporteur :</strong> Saisissez le code de la personne qui vous a recommandé Nopalou (si applicable).</div>
-                  <div><strong>3. Formule :</strong> Choisissez entre la formule Gratuite, {labelPro} ({prixPro.toLocaleString()} FCFA/m) ou {labelBusiness} ({prixBusiness.toLocaleString()} FCFA/m).</div>
-                </div>
-              </div>
-            )}
-
-            {activeGuideTab === 'catalogue' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#FEF3C7', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18 }}>3</div>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>Étape 3 : Remplir et Gérer son Catalogue Produits</h3>
-                </div>
-                <p style={{ fontSize: 14, color: 'var(--text1)', lineHeight: 1.6, margin: 0 }}>
-                  Publiez vos articles en quelques clics avec des photos attrayantes, la gestion des stocks et la numérisation des codes-barres.
-                </p>
-                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, fontSize: 13, color: 'var(--text1)' }}>
-                  <div><strong>1. Photos &amp; Prix :</strong> Ajoutez des photos de qualité avec votre prix de vente.</div>
-                  <div><strong>2. Code-Barres EAN :</strong> Scannez ou saisissez le code-barres pour la Caisse POS.</div>
-                  <div><strong>3. Publication 1-clic :</strong> Vos produits sont immédiatement visibles sur le comparateur.</div>
-                </div>
-              </div>
-            )}
-
-            {activeGuideTab === 'caisse' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#E0F2FE', color: '#0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18 }}>4</div>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>Étape 4 : Utiliser la Caisse Enregistreuse Tactile POS</h3>
-                </div>
-                <p style={{ fontSize: 14, color: 'var(--text1)', lineHeight: 1.6, margin: 0 }}>
-                  Transformez n&apos;importe quelle tablette ou smartphone en caisse magasin enregistreuse pour encaisser vos clients en magasin.
-                </p>
-                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, fontSize: 13, color: 'var(--text1)' }}>
-                  <div><strong>1. Sélection des articles :</strong> Touchez les produits ou scannez leurs codes-barres pour constituer le panier.</div>
-                  <div><strong>2. Mode de paiement :</strong> Encaissez en Espèces, Wave ou Orange Money.</div>
-                  <div><strong>3. Reçu Digital :</strong> Envoyez le reçu de vente directement sur le WhatsApp du client.</div>
-                </div>
-              </div>
-            )}
-
-            {activeGuideTab === 'credit' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#FEF3C7', color: '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18 }}>5</div>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>Étape 5 : Gérer le Carnet de Crédits &amp; Dettes Client (Plus d&apos;impayés !)</h3>
-                </div>
-                <p style={{ fontSize: 14, color: 'var(--text1)', lineHeight: 1.6, margin: 0 }}>
-                  Ne perdez plus d&apos;argent avec le cahier papier. Enregistrez la liste exacte des articles pris à crédit par un client et suivez les remboursement.
-                </p>
-                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, fontSize: 13, color: 'var(--text1)' }}>
-                  <div><strong>1. Saisie du crédit :</strong> Sélectionnez les articles pris à crédit et le nom du client.</div>
-                  <div><strong>2. Calcul du solde :</strong> La dette totale et l&apos;historique sont automatiquement sauvegardés en base de données.</div>
-                  <div><strong>3. Relance 1-Click :</strong> Cliquez sur &quot;Relancer sur WhatsApp&quot; pour envoyer un rappel courtois pré-rempli au client.</div>
-                </div>
-              </div>
-            )}
-
-            {activeGuideTab === 'bot' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#D1FAE5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18 }}>6</div>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>Étape 6 : Activer le Bot WhatsApp Commercial 24/7</h3>
-                </div>
-                <p style={{ fontSize: 14, color: 'var(--text1)', lineHeight: 1.6, margin: 0 }}>
-                  Votre boutique est connectée à l&apos;Assistant IA Nopalou. Vos clients peuvent vous poser des questions et passer commande 24h/24.
-                </p>
-                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, fontSize: 13, color: 'var(--text1)' }}>
-                  <div><strong>1. Réponses auto :</strong> Le bot répond aux questions de prix, stock et horaires.</div>
-                  <div><strong>2. Prise de commande :</strong> Le client compose son panier et paye par Wave ou OM sur WhatsApp.</div>
-                  <div><strong>3. Notification marchand :</strong> Vous recevez le détail de la commande directement sur votre téléphone.</div>
-                </div>
-              </div>
-            )}
-
-            {activeGuideTab === 'apporteur' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#F3E8FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18 }}>7</div>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>Étape 7 : Devenir Apporteur d&apos;Affaires ({tauxCommissionPourcent}% de Commission Mensuelle)</h3>
-                </div>
-                <p style={{ fontSize: 14, color: 'var(--text1)', lineHeight: 1.6, margin: 0 }}>
-                  Recommandez Nopalou aux commerçants de votre réseau et percevez {tauxCommissionPourcent}% sur chaque abonnement mensuel renouvelé.
-                </p>
-                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, fontSize: 13, color: 'var(--text1)' }}>
-                  <div><strong>1. Activez votre code :</strong> Générez votre code unique sur nopalou.com/compte/apporteur.</div>
-                  <div><strong>2. Partagez votre lien :</strong> Envoyez votre lien aux commerçants pour qu&apos;ils créent leur boutique.</div>
-                  <div><strong>3. Retrait Wave/OM :</strong> Percevez vos commissions mensuelles récurrentes directement sur Wave ou Orange Money.</div>
-                </div>
-              </div>
-            )}
           </div>
         </section>
 
@@ -1062,8 +738,108 @@ export default function DemoClient({
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* MODAL OUTIL COMMERCIAL & PARTAGE EN 1-CLIC                     */}
+      {/* MODALS DE DEMO ET STICKER EAN-13                              */}
       {/* ───────────────────────────────────────────────────────────── */}
+      {showStickerModal && stickerProd && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.8)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+        }}>
+          <div style={{ background: '#FFF', padding: 20, borderRadius: 12, maxWidth: 360, width: '100%', textAlign: 'center', color: '#111' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 10px' }}>🏷️ Sticker Thermique 50x30mm</h3>
+            <div style={{ border: '2px dashed #000', padding: 12, background: '#FFF', borderRadius: 6, display: 'inline-block', width: '100%' }}>
+              <div style={{ fontWeight: 800, fontSize: 14 }}>Boutique Touba Express</div>
+              <div style={{ fontSize: 13, fontWeight: 700, margin: '4px 0' }}>{stickerProd.nom}</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: '#059669' }}>{stickerProd.prix.toLocaleString()} FCFA</div>
+              <div style={{ fontSize: 24, letterSpacing: 4, fontFamily: 'monospace', margin: '8px 0 2px' }}>|||||||||||||||</div>
+              <div style={{ fontSize: 11, fontFamily: 'monospace' }}>{stickerProd.ean}</div>
+            </div>
+            <button
+              onClick={() => setShowStickerModal(false)}
+              style={{ marginTop: 14, background: '#111', color: '#FFF', border: 'none', padding: '8px 16px', borderRadius: 6, fontWeight: 700, cursor: 'pointer' }}
+            >
+              Fermer l&apos;Aperçu
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showWaRelanceModal && relanceClient && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.8)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+        }}>
+          <div style={{ background: '#DCF8C6', padding: 20, borderRadius: 12, maxWidth: 400, width: '100%', color: '#111' }}>
+            <h3 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 8px', color: '#075E54' }}>💬 Aperçu Message WhatsApp Relance Client</h3>
+            <div style={{ background: '#FFF', padding: 12, borderRadius: 8, fontSize: 12, lineHeight: 1.6, color: '#111' }}>
+              Bonjour *{relanceClient.nom}*,<br /><br />
+              Nous espérons que vous allez bien. Votre solde du carnet chez *Boutique Touba Express* est de *{relanceClient.solde.toLocaleString()} FCFA*.<br /><br />
+              📅 Promesse d&apos;échéance : *{relanceClient.echeance}*<br />
+              📍 Quartier : {relanceClient.quartier}<br /><br />
+              Merci de régler par Wave/OM au 77 123 45 67. Excellente journée !
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+              <button
+                onClick={() => setShowWaRelanceModal(false)}
+                style={{ flex: 1, background: '#075E54', color: '#FFF', border: 'none', padding: '8px 12px', borderRadius: 6, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Envoyer (Simulation)
+              </button>
+              <button
+                onClick={() => setShowWaRelanceModal(false)}
+                style={{ background: '#FFF', color: '#333', border: '1px solid #ccc', padding: '8px 12px', borderRadius: 6, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showScanModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+        }}>
+          <div style={{ background: '#1E293B', padding: 20, borderRadius: 12, maxWidth: 360, width: '100%', textAlign: 'center', color: '#FFF' }}>
+            <div style={{ fontSize: 32, marginBottom: 10 }}>📷</div>
+            <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>Scan Caméra Smartphone en Cours...</h3>
+            <p style={{ fontSize: 12, color: '#94A3B8' }}>Pointez le code-barres EAN-13 du produit avec votre caméra.</p>
+            <div style={{ border: '2px dashed #10B981', height: 100, margin: '14px 0', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981', fontWeight: 800 }}>
+              ⚡ DÉTECTION EAN-13 EN COURS
+            </div>
+            <button
+              onClick={() => setShowScanModal(false)}
+              style={{ background: '#EF4444', color: '#FFF', border: 'none', padding: '8px 16px', borderRadius: 6, fontWeight: 700, cursor: 'pointer' }}
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showCloudScannerModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+        }}>
+          <div style={{ background: '#1E293B', padding: 20, borderRadius: 12, maxWidth: 380, width: '100%', color: '#FFF' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>📱 Douchette Smartphone Distante (Cloud Sync)</h3>
+            <p style={{ fontSize: 12, color: '#94A3B8', margin: '0 0 10px' }}>Scannez ce QR Code avec le smartphone de votre caissier pour transformer le téléphone en douchette sans fil connectée au PC (&lt;100ms).</p>
+            <div style={{ background: '#FFF', padding: 12, borderRadius: 8, display: 'inline-block', color: '#000', fontWeight: 900, fontSize: 14 }}>
+              CODE SESSION : <code>NOPALOU-POS-8492</code>
+            </div>
+            <button
+              onClick={() => setShowCloudScannerModal(false)}
+              style={{ display: 'block', width: '100%', marginTop: 14, background: '#0284C7', color: '#FFF', border: 'none', padding: '10px', borderRadius: 6, fontWeight: 800, cursor: 'pointer' }}
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SHARE MODAL */}
       {showShareModal && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(28, 43, 74, 0.85)',

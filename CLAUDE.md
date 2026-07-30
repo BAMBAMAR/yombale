@@ -192,6 +192,27 @@ Aucun chantier n'est actuellement identifié comme prioritaire — le dernier ch
 
 ---
 
+## État du projet (30 juillet 2026 — Démo Commerciale 3 Axes, Bac à Sable POS & Kit Commercial)
+**Statut :** *Mergé et pushé sur main*
+
+Déclencheur : Demande de l'utilisateur de lister toutes les fonctionnalités du site pour l'acheteur, le marchand et l'apporteur d'affaires, et de les mettre en valeur de façon visuelle et interactive à travers une démo bac à sable pas-à-pas et des bannières sur l'ensemble du site.
+
+**1. Démo Commerciale & Bac à Sable Interactif (`DemoClient.tsx`) :**
+- **Mode Marchand POS Sandbox** : Interface 100% identique au tableau de bord réel avec 5 onglets interactifs (`Caisse POS`, `Catalogue & EAN-13`, `Carnet de Dettes`, `Analytics`, `Équipe & PIN`).
+- **3 Modes de Scan & Impresson EAN-13** : Modales d'essai pour le **Scanner Caméra Smartphone**, la **Douchette Smartphone Distante (Cloud Sync)**, le générateur EAN-13 Modulo 10 et l'aperçu vectoriel des **Stickers Thermiques 50mm x 30mm**.
+- **Carnet de Dettes Client & Relance WhatsApp 1-Clic** : Aperçu du message WhatsApp de relance pré-rempli avec le solde exact et l'échéance.
+- **Module Acheteur & Chatbot Meta Commerce** : Simulation du bot WhatsApp avec Product Cards, Panier Natif Meta et suivi de commande.
+- **Module Apporteur d'Affaires & Kit Commercial** : Simulateur de commissions récurrentes avec curseurs dynamiques, lien direct de téléchargement de la **Brochure PDF (13 p.)** et prévisualisation du kit marketing.
+
+**2. Section "Nopalou en Action" sur la Homepage (`ShowcaseTabs.tsx`) :**
+- **Présentation interactive à 3 onglets** : Composant client inséré sur la page d'accueil (`/`) présentant visuellement l'écosystème pour les Acheteurs, les Marchands et les Apporteurs d'affaires avec boutons CTA d'accès direct au simulateur et au téléchargement de la brochure.
+
+**3. Incitation Commerciale & Navigation (`NavbarGuides.tsx` & `/boutiques`) :**
+- **Navbar Header** : Ajout du badge coloré `NOUVEAU` et surlignage orange sur le lien `🚀 Démo Commerciale`.
+- **Page Boutiques (`/boutiques`)** : Ajout du bouton d'action marchand *"🏪 Vous êtes commerçant ? Tester la Démo POS →"* dans le banner hero.
+
+---
+
 ## État du projet (29 juillet 2026 — Refonte Boutiques, Abonnements, Panier Mobile & bloc SEO)
 **Statut :** *Mergé et pushé sur main*
 
