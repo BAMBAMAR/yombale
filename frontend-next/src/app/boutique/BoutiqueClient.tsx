@@ -615,6 +615,59 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   const [imagesExistantes, setImagesExistantes] = useState<string[]>(produit?.images ?? [])
   const fileRef = useRef<HTMLInputElement>(null)
 
+  const [codeBarreForm, setCodeBarreForm] = useState<string>((produit as any)?.code_barre || '')
+  const [modalFormScanner, setModalFormScanner] = useState<boolean>(false)
+  const videoFormRef = useRef<HTMLVideoElement | null>(null)
+  const streamFormRef = useRef<MediaStream | null>(null)
+
+  function genererCodeBarreForm() {
+    const prefixe = "200"
+    const corps = Math.floor(100000000 + Math.random() * 900000000).toString()
+    const base12 = prefixe + corps
+    let somme = 0
+    for (let i = 0; i < 12; i++) {
+      const val = parseInt(base12[i], 10)
+      somme += (i % 2 === 0) ? val : val * 3
+    }
+    const check = (10 - (somme % 10)) % 10
+    setCodeBarreForm(base12 + check)
+  }
+
+  async function demarrerFormScanner() {
+    setModalFormScanner(true)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      streamFormRef.current = stream
+      if (videoFormRef.current) {
+        videoFormRef.current.srcObject = stream
+        videoFormRef.current.play()
+      }
+      if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+        const detector = new (window as any).BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128', 'qr_code'] })
+        const timer = setInterval(async () => {
+          if (videoFormRef.current && videoFormRef.current.readyState === 4) {
+            try {
+              const codes = await detector.detect(videoFormRef.current)
+              if (codes && codes.length > 0 && codes[0].rawValue) {
+                clearInterval(timer)
+                setCodeBarreForm(codes[0].rawValue)
+                arreterFormScanner()
+              }
+            } catch (e) {}
+          }
+        }, 400)
+      }
+    } catch (e) {}
+  }
+
+  function arreterFormScanner() {
+    if (streamFormRef.current) {
+      streamFormRef.current.getTracks().forEach(t => t.stop())
+      streamFormRef.current = null
+    }
+    setModalFormScanner(false)
+  }
+
   function syncFileInput(files: File[]) {
     if (!fileRef.current) return
     const dt = new DataTransfer()
@@ -737,16 +790,53 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         </div>
       )}
 
-      {/* Code-Barres EAN-13 */}
+      {/* Code-Barres EAN-13 avec Scan & Génération en 1 clic */}
       {!modeRapide && (
         <div>
           <label style={labelStyle}>Code-Barres EAN-13 (Optionnel)</label>
-          <input
-            name="code_barre"
-            defaultValue={(produit as any)?.code_barre}
-            style={inputStyle}
-            placeholder="Ex: 600123456789 (Scannez à la douchette ou tapez)"
-          />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              name="code_barre"
+              value={codeBarreForm}
+              onChange={e => setCodeBarreForm(e.target.value)}
+              style={{ ...inputStyle, flex: 1 }}
+              placeholder="Ex: 600123456789 (Scannez à la douchette ou tapez)"
+            />
+            <button
+              type="button"
+              onClick={genererCodeBarreForm}
+              style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+              title="Générer un code EAN-13 valide automatiquement"
+            >
+              🎲 Générer EAN
+            </button>
+            <button
+              type="button"
+              onClick={demarrerFormScanner}
+              style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+              title="Scanner avec la caméra du smartphone/PC"
+            >
+              📷 Scanner
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modale scanner caméra dans le formulaire */}
+      {modalFormScanner && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.8)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 420, border: '1px solid #e2e8f0', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner pour le produit</h4>
+              <button onClick={arreterFormScanner} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 18, cursor: 'pointer' }}>✕</button>
+            </div>
+            <div style={{ width: '100%', height: 240, borderRadius: 12, overflow: 'hidden', background: '#000' }}>
+              <video ref={videoFormRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <button onClick={arreterFormScanner} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 8, padding: '10px', fontWeight: 800, cursor: 'pointer' }}>
+              Annuler
+            </button>
+          </div>
         </div>
       )}
 
@@ -1440,6 +1530,18 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                     </span>
                   )}
                   <span
+                    title="Code-barres EAN-13 du produit"
+                    style={{
+                      fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 700,
+                      background: (p as any).code_barre ? '#f0f9ff' : '#fff7ed',
+                      color: (p as any).code_barre ? '#0369a1' : '#c2410c',
+                      border: (p as any).code_barre ? '1px solid #bae6fd' : '1px solid #fed7aa',
+                      display: 'inline-flex', alignItems: 'center', gap: 4
+                    }}
+                  >
+                    {(p as any).code_barre ? `🏷️ CB: ${(p as any).code_barre}` : '⚠️ Sans EAN-13'}
+                  </span>
+                  <span
                     title="Statut de synchronisation avec l'assistant et le catalogue WhatsApp Business"
                     style={{
                       fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 700,
@@ -1462,6 +1564,13 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
               </div>
               {/* Actions */}
               <div className="produit-actions" style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setMode({ editing: p })}
+                  style={{ background: '#f5f3ff', color: '#6d28d9', border: '1px solid #ddd6fe', borderRadius: 6, padding: '5px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                  title="Générer, scanner ou modifier le code-barres EAN-13"
+                >
+                  🏷️ Scan / EAN
+                </button>
                 <button
                   onClick={() => setMode({ editing: p })}
                   style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
