@@ -215,6 +215,10 @@ Déclencheur : Demande de l'utilisateur de lister toutes les fonctionnalités du
 - **Mise à jour du taux par défaut** : Passage du taux de commission des apporteurs à **20%** par défaut dans les paramètres backend (`settingsCache.js`), la démo (`DemoClient.tsx`, `demo/page.tsx`), les visuels réseaux sociaux (`apporteur-affaires/route.tsx`) et la brochure PDF (`brochure-apporteur/route.tsx`).
 - **Correction typographique globale (`globals.css`)** : Réinitialisation explicite de `font-family: var(--font-inter)` sur `button, input, select, textarea` afin de garantir un rendu visuel harmonieux et réactif sur tous les navigateurs (iOS, Android, Windows, Mac).
 
+**5. Visuel Maître Unique Écosystème Global (`poster-ecosysteme/route.tsx`) :**
+- **Affiche Commerciale HD (1200 × 1600 px)** : Création d'un visuel synthétique haute définition regroupant TOUTES les fonctionnalités du site en 3 blocs clairs (*Acheteur*, *Marchand POS*, *Apporteur 20%*).
+- **Intégration Kit & Espace Apporteur** : Accessible en 1 clic dans l'administration `/admin/communication` et dans l'espace apporteurs d'affaires `/compte/apporteur` pour le démarchage et les présentations.
+
 ---
 
 ## État du projet (29 juillet 2026 — Refonte Boutiques, Abonnements, Panier Mobile & bloc SEO)

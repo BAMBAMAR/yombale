@@ -132,6 +132,16 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales: St
             🖼 Télécharger le visuel
           </a>
           <a
+            href="/assets/poster-ecosysteme"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ padding: '10px 18px', background: '#7C3AED', color: '#fff',
+              border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
+              display: 'inline-flex', alignItems: 'center' }}
+          >
+            ⭐ Poster Écosystème Tout-en-Un (HD)
+          </a>
+          <a
             href="/brochure-apporteur.pdf"
             target="_blank"
             rel="noopener noreferrer"
@@ -139,7 +149,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales: St
               border: '1px solid #1C2B4A', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
               display: 'inline-flex', alignItems: 'center' }}
           >
-            📄 Télécharger la brochure PDF
+            📄 Télécharger la brochure PDF (13 p.)
           </a>
         </div>
 

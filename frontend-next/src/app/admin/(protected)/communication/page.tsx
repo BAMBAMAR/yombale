@@ -7,6 +7,12 @@ export const metadata = { title: 'Kit communication — Admin Nopalou' }
 
 const VISUELS = [
   {
+    titre: '⭐ Poster Écosystème Global (Tout-en-Un)',
+    desc: '1200 × 1600 px HD — Visuel maître regroupant TOUTES les fonctionnalités (Acheteur, Caisse POS 3 Scanners, EAN-13, Dettes Client, Chatbot Meta, Commission 20%)',
+    url: '/assets/poster-ecosysteme',
+    usage: 'Master Marketing · Présentation Globale',
+  },
+  {
     titre: 'Photo de couverture Facebook',
     desc: '1640 × 624 px — À uploader sur votre Page Facebook',
     url: '/assets/cover-facebook',
