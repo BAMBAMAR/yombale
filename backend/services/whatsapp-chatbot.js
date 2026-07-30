@@ -417,11 +417,34 @@ async function demarrerCommande(phone, boutique, produitId) {
     await setSession(phone, 'BOUTIQUE_MENU', { boutique });
     return;
   }
-  await sendWhatsAppText(phone, `🛒 *Commande — ${produit.nom}*\n\nCombien en voulez-vous ? (tapez un nombre, ex: 1)`);
+
+  const expressLink = `${SITE}/checkout-express?produit=${produit.id}&boutique=${boutique.id}&phone=${phone}`;
+  await sendWhatsAppText(
+    phone,
+    `🛒 *Commande — ${produit.nom}*\nPrix : *${prixFmt(produit.prix)}*\n\n` +
+    `⚡ *Option 1 (Formulaire Web 1-Page Express)* :\n👉 ${expressLink}\n\n` +
+    `💬 *Option 2 (Commande WhatsApp Direct)* : Choisissez la quantité ci-dessous :`
+  );
+
+  await sendWhatsAppInteractive(
+    phone,
+    'Quantité',
+    'Sélectionnez la quantité souhaitée :',
+    [{
+      title: 'Quantité',
+      rows: [
+        { id: `qty_1_${produit.id}`, title: '1 article' },
+        { id: `qty_2_${produit.id}`, title: '2 articles' },
+        { id: `qty_3_${produit.id}`, title: '3 articles' },
+      ],
+    }]
+  ).catch(() => {});
+
   await setSession(phone, 'COMMANDE_QUANTITE', {
     boutique,
     commande: {
-      items: [{ produit_id: produit.id, nom_produit: produit.nom, prix: Number(produit.prix) || 0, quantite: null, stock_quantite: produit.stock_quantite }],
+      items: [{ produit_id: produit.id, nom_produit: produit.nom, prix: Number(produit.prix) || 0, quantite: 1, stock_quantite: produit.stock_quantite }],
+      client_telephone: phone,
     },
   });
 }
@@ -663,14 +686,37 @@ async function handleIncoming(msg) {
       await envoyerListeTelecom(phone);
       return;
     }
-    if (action === 'alert') {
+    if (action === 'alert' || interactiveId.startsWith('alert_prod_')) {
       await setSession(phone, 'ALERT_PRODUCT', { phone });
       await sendWhatsAppText(phone, '🔔 Quel produit voulez-vous surveiller ? (ex: iPhone 15, Samsung TV 55")');
       return;
     }
     if (action === 'order') {
+      const telClean = phone.replace(/\D/g, '').slice(-9);
+      try {
+        const r = await pool.query(
+          `SELECT reference, nom_produit, montant_total AS montant, statut, created_at
+           FROM commandes_boutique
+           WHERE client_telephone LIKE '%' || $1
+           ORDER BY created_at DESC LIMIT 3`,
+          [telClean]
+        );
+        if (r.rows.length > 0) {
+          const lines = r.rows.map(p => {
+            const date = new Date(p.created_at).toLocaleDateString('fr-FR');
+            return `📦 *Réf ${p.reference}* (${p.nom_produit})\nStatut : *${p.statut || 'En cours'}* — Montant : ${prixFmt(p.montant)}\nDate : ${date}`;
+          });
+          await sendWhatsAppText(phone, `📋 *Vos commandes récentes :*\n\n${lines.join('\n\n')}`);
+          await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+          await setSession(phone, 'MENU', {});
+          return;
+        }
+      } catch (err) {
+        console.error('[SUIVI COMMANDE AUTO]', err.message);
+      }
+
       await setSession(phone, 'ORDER_REF', {});
-      await sendWhatsAppText(phone, '📦 Entrez votre référence de commande (ex: PAY-12345) :');
+      await sendWhatsAppText(phone, '📦 Entrez votre référence de commande (ex: CMD-12345) :');
       return;
     }
     if (action === 'boutiques') {
@@ -691,8 +737,21 @@ async function handleIncoming(msg) {
       return;
     }
     if (action === 'support') {
-      await sendWhatsAppText(phone, '💬 *Support Nopalou*\n\nPour nous contacter :\n📧 contact@nopalou.com\n🌐 nopalou.com\n\nNous répondons sous 24h. Merci !');
-      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+      await sendWhatsAppInteractive(
+        phone,
+        'Support Nopalou',
+        '💬 *Besoin d\'aide ?*\nComment souhaitez-vous contacter l\'équipe Nopalou ?',
+        [{
+          title: 'Options',
+          rows: [
+            { id: 'supp_rappel', title: '📞 Demander un rappel', description: 'Notre équipe vous rappelle' },
+            { id: 'supp_email', title: '📧 Contact Email', description: 'contact@nopalou.com' },
+            { id: 'guide', title: 'ℹ️ Comment ça marche', description: 'Consulter le guide' },
+          ],
+        }]
+      ).catch(async () => {
+        await sendWhatsAppText(phone, '💬 *Support Nopalou*\n\nPour nous contacter :\n📧 contact@nopalou.com\n🌐 nopalou.com\n\nNous répondons sous 24h. Merci !');
+      });
       await setSession(phone, 'MENU', {});
       return;
     }
@@ -892,10 +951,12 @@ async function handleIncoming(msg) {
       await envoyerMenuBoutique(phone, boutique);
       return;
     }
-    const quantite = parseInt(text.replace(/[^\d]/g, ''), 10);
-    if (!quantite || quantite < 1) {
-      await sendWhatsAppText(phone, '⚠️ Entrez un nombre valide (ex: 1, 2, 3...).');
-      return;
+    let quantite = 1;
+    const qtyMatch = interactiveId.match(/^qty_(\d+)_/);
+    if (qtyMatch) {
+      quantite = parseInt(qtyMatch[1], 10);
+    } else {
+      quantite = parseInt(text.replace(/[^\d]/g, ''), 10) || 1;
     }
     const item = context.commande?.items?.[0];
     const stock = item?.stock_quantite;
@@ -905,7 +966,7 @@ async function handleIncoming(msg) {
     }
     await sendWhatsAppText(phone, 'Votre nom complet ?');
     const items = [{ ...item, quantite }];
-    await setSession(phone, 'COMMANDE_NOM', { boutique, commande: { ...context.commande, items } });
+    await setSession(phone, 'COMMANDE_NOM', { boutique, commande: { ...context.commande, items, client_telephone: phone } });
     return;
   }
 
@@ -921,8 +982,13 @@ async function handleIncoming(msg) {
       await sendWhatsAppText(phone, '⚠️ Entrez votre nom complet.');
       return;
     }
-    await sendWhatsAppText(phone, `Quel numéro de téléphone pour vous joindre ? (ex: ${phone})`);
-    await setSession(phone, 'COMMANDE_TELEPHONE', { boutique, commande: { ...context.commande, client_nom: text.trim() } });
+    const clientNom = text.trim();
+    // Téléphone déjà pré-rempli via msg.from -> passer directement à l'adresse de livraison
+    await sendWhatsAppText(phone, 'Votre adresse de livraison ? (quartier, ville...)');
+    await setSession(phone, 'COMMANDE_ADRESSE', {
+      boutique,
+      commande: { ...context.commande, client_nom: clientNom, client_telephone: context.commande?.client_telephone || phone }
+    });
     return;
   }
 
@@ -934,11 +1000,7 @@ async function handleIncoming(msg) {
       await envoyerMenuBoutique(phone, boutique);
       return;
     }
-    const chiffres = text.replace(/[^\d]/g, '');
-    if (chiffres.length < 6) {
-      await sendWhatsAppText(phone, '⚠️ Entrez un numéro de téléphone valide.');
-      return;
-    }
+    const chiffres = text.replace(/[^\d]/g, '') || phone;
     await sendWhatsAppText(phone, 'Votre adresse de livraison ? (quartier, ville...)');
     await setSession(phone, 'COMMANDE_ADRESSE', { boutique, commande: { ...context.commande, client_telephone: chiffres } });
     return;

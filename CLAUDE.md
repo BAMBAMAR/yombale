@@ -993,3 +993,14 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
   4. **Onglets Boutique Publique (`BoutiqueDetailClient.tsx`)** : Remplacement du `minWidth: 140` rigide par un dimensionnement réactif fluide (`flex: 1 0 auto`, `minWidth: 110`) évitant la troncature du texte (*"Catalogue produits"*).
   5. **Correctif Carte Dorée d'Alternative (`produit/[id]/page.tsx` & `globals.css`)** : Passage de `.comp-verdict-alternative-box` en disposition verticale (`flex-direction: column`) sur mobile (≤ 640px) avec le bouton CTA `"Voir l'alternative →"` à 100% de largeur, éliminant les débordements sur le bord droit de la carte.
 
+- **Optimisation Ergonomique du Chatbot WhatsApp & Checkout Express** (ajouté 30 juillet 2026) :
+  1. **Refonte Chatbot WhatsApp (`backend/services/whatsapp-chatbot.js`)** :
+     - Élimination du tunnel de 7 questions consécutives pour la commande.
+     - Intégration du pré-remplissage du numéro client via `msg.from`.
+     - Intégration de l'Option 1 (Formulaire Web 1-Page Express `/checkout-express`) et de l'Option 2 (Boutons interactifs WhatsApp de quantité `[ 1 ]`, `[ 2 ]`, `[ 3 ]`).
+     - Auto-détection des commandes actives lors du suivi (`ORDER_REF`) sans saisie de référence.
+     - Alerte baisse de prix 1-clic avec réductions pré-calculées (`-10%`, `-20%`).
+     - Boutons interactifs pour les choix de support et de forfaits télécom.
+  2. **Page Web Checkout Express 1-Page (`frontend-next/src/app/checkout-express/page.tsx`)** :
+     - Interface de validation ultra-rapide optimisée mobile avec support Wave, Orange Money et Cash à la livraison.
+
