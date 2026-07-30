@@ -111,6 +111,10 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 - **Génération Automatique de Code-Barres EAN-13** : Pour les articles artisanaux/locaux sans emballage, génération automatique d'un numéro EAN-13 valide avec clé de contrôle Modulo 10 (préfixe `200`).
 - **Impression d'Étiquettes (`🏷️ EAN`)** : Bouton d'impression au format sticker (50mm x 30mm) avec nom du magasin, nom du produit, prix en FCFA et visuel du code-barres EAN-13 scannable.
 
+**9. Intégration du Code-Barres EAN-13 dans la Saisie & Édition de Produit (Backend & Dashboard) :**
+- **Formulaire d'Ajout/Modification de Produit (`ProduitForm`)** : Ajout du champ dédié `Code-Barres EAN-13 (Optionnel)` permettant au marchand de saisir directement ou de scanner à la douchette le code EAN d'un article.
+- **Migration & API Backend (`boutique_produits`)** : Ajout de la colonne `code_barre` idempotente via `migrate-inline.js` et persistance dans PostgreSQL lors des requêtes `POST` et `PUT /api/boutiques/:id/produits`.
+
 ---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
