@@ -146,6 +146,10 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 - **Résolution du Conflit de Doublon HTML** : Élimination du second attribut `name="code_barre"` sur le champ de saisie visuel qui entraînait la transmission d'un tableau `['code1', 'code2']` par `multer`, provoquant une erreur `TypeError: code_barre.trim is not a function`.
 - **Assainissement & Sécurisation Backend (`rawCodeBarre`)** : Prise en charge explicite des tableaux et des chaînes dans le contrôleur `PUT /api/boutiques/:id/produits/:prodId` avec gestion propre du type string et journalisation `console.error` du serveur.
 
+**18. Résolution Définitive de l'Affichage de la Persistance `code_barre` (`backend/routes/boutiques.js`) :**
+- **Ajout de `p.code_barre` dans les Requêtes SQL `SELECT`** : Ajout de la colonne `p.code_barre` dans les requêtes de lecture SQL `GET /api/boutiques/:id/produits` et `GET /api/boutiques/:id/produits/:prodId`.
+- **Restauration de la Synchronisation Dashboard & Caisse** : La modification s'enregistrait correctement dans PostgreSQL mais n'était pas renvoyée par le serveur lors du rechargement de la liste par l'application frontend `loadProduits()`. Désormais, les codes-barres s'affichent instantanément à la création comme à la modification.
+
 ---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
