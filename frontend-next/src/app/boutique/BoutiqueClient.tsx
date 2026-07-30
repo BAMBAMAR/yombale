@@ -532,6 +532,54 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
   )
 }
 
+function genererSVGCodeBarresEAN13(codeStr: string): string {
+  let code = (codeStr || '2001234567890').replace(/\D/g, '')
+  if (code.length < 13) code = code.padEnd(13, '0')
+
+  const L = ["0001101","0011001","0010011","0111101","0100011","0110001","0101111","0111011","0110111","0001011"]
+  const G = ["0100111","0110011","0011011","0100001","0011101","0111001","0000101","0010001","0001001","0010111"]
+  const R = ["1110010","1100110","1101100","1000010","1011100","1001110","1010000","1000100","1001000","1110100"]
+
+  const parities = [
+    "LLLLLL", "LLGLGG", "LLGGLG", "LLGGGL", "LGLGLG",
+    "LGLGGL", "LGGLGL", "LGLGLG", "LGLGLG", "LGGLGG"
+  ]
+
+  const firstDigit = parseInt(code[0], 10) || 0
+  const parity = parities[firstDigit] || "LLLLLL"
+
+  let bin = "101" // Guard gauche
+
+  for (let i = 1; i <= 6; i++) {
+    const digit = parseInt(code[i], 10) || 0
+    bin += (parity[i - 1] === 'L') ? L[digit] : G[digit]
+  }
+
+  bin += "01010" // Guard centre
+
+  for (let i = 7; i <= 12; i++) {
+    const digit = parseInt(code[i], 10) || 0
+    bin += R[digit]
+  }
+
+  bin += "101" // Guard droite
+
+  let svgRects = ''
+  const barWidth = 2
+  const height = 45
+
+  for (let i = 0; i < bin.length; i++) {
+    if (bin[i] === '1') {
+      const isGuard = (i < 3) || (i >= 45 && i < 50) || (i >= 92)
+      const h = isGuard ? height + 6 : height
+      svgRects += `<rect x="${i * barWidth}" y="0" width="${barWidth}" height="${h}" fill="#000000" />`
+    }
+  }
+
+  const totalWidth = bin.length * barWidth
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalWidth} ${height + 8}" width="${totalWidth}" height="${height + 8}">${svgRects}</svg>`
+}
+
 // ── Formulaire produit ────────────────────────────────────────────────────────
 
 // PRODUIT_CATEGORIES is imported from '@/lib/categories'
@@ -1543,8 +1591,9 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      const ean = (p as any).code_barre || '200123456789'
-                      const printWin = window.open('', '_blank', 'width=450,height=400')
+                      const ean = (p as any).code_barre || '2001234567891'
+                      const svgBarcode = genererSVGCodeBarresEAN13(ean)
+                      const printWin = window.open('', '_blank', 'width=480,height=400')
                       if (!printWin) return
                       printWin.document.write(`
                         <!DOCTYPE html>
@@ -1553,23 +1602,21 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                           <title>Étiquette ${p.nom}</title>
                           <style>
                             @page { size: 50mm 30mm; margin: 0; }
-                            body { font-family: Arial, sans-serif; margin: 0; padding: 4px 6px; text-align: center; width: 50mm; height: 30mm; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-                            .title { font-size: 10px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46mm; margin-bottom: 2px; }
-                            .price { font-size: 12px; font-weight: 900; color: #000; margin-bottom: 2px; }
-                            .barcode-num { font-family: monospace; font-size: 11px; font-weight: bold; letter-spacing: 2px; }
-                            .barcode-lines { display: flex; justify-content: center; align-items: flex-end; height: 12mm; gap: 1.5px; margin: 2px 0; }
-                            .bar { background: #000; height: 100%; }
+                            body {
+                              font-family: Arial, sans-serif; margin: 0; padding: 4px 6px;
+                              text-align: center; width: 50mm; height: 30mm; box-sizing: border-box;
+                              display: flex; flex-direction: column; justify-content: center; align-items: center;
+                            }
+                            .title { font-size: 11px; font-weight: 800; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46mm; margin-bottom: 2px; }
+                            .price { font-size: 13px; font-weight: 900; color: #000; margin-bottom: 4px; }
+                            .barcode-num { font-family: monospace; font-size: 12px; font-weight: bold; letter-spacing: 2px; margin-top: 2px; }
+                            svg { display: block; margin: 0 auto; max-width: 44mm; height: auto; }
                           </style>
                         </head>
                         <body>
                           <div class="title">${p.nom}</div>
                           <div class="price">${p.prix ? `${new Intl.NumberFormat('fr-FR').format(p.prix)} FCFA` : ''}</div>
-                          <div class="barcode-lines">
-                            ${ean.split('').map((char: string) => {
-                              const width = (parseInt(char, 10) % 3) + 1.5
-                              return `<div class="bar" style="width: ${width}px;"></div>`
-                            }).join('')}
-                          </div>
+                          <div class="barcode-svg">${svgBarcode}</div>
                           <div class="barcode-num">${ean}</div>
                           <script>window.onload = () => { window.print(); window.close(); }</script>
                         </body>
