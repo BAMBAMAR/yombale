@@ -131,6 +131,9 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
   1. *Partie Supérieure* : Image 60x60, Nom, Prix FCFA mis en avant, et badges proprements alignés sur une seule ligne (`Stock`, `Code-Barres EAN`, `WhatsApp`).
   2. *Barre d'Actions Inférieure Séparée* : Séparation visuelle avec ligne de partage fine. Regroupement des actions principales (`🏷️ Scan / EAN`, `✏️ Modifier`, `📄 Copier`) et des options secondaires (`Partager`, `📢 Annonce`, `🗑️ Supprimer`) sans aucun chevauchement sur smartphone.
 
+**14. Bouton d'Impression d'Étiquettes Stickers Code-Barres EAN-13 (`BoutiqueClient.tsx`) :**
+- **Bouton `🖨️ Étiquette` sur chaque Carte Produit** : Génération et impression immédiate d'étiquettes/stickers thermiques au format standard 50mm x 30mm comprenant le nom du produit, le prix FCFA, les barres graphiques vectorielles et le code EAN-13 lisible par n'importe quelle douchette.
+
 ---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
