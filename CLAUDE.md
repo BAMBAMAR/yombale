@@ -142,6 +142,10 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 - **Persistance Systématique du Code-Barres à la Modification (`BoutiqueClient.tsx` & `routes/boutiques.js`)** : Ajout d'un `useEffect` de synchronisation dynamique et d'un champ masqué `<input type="hidden" name="code_barre">` garantissant la transmission systématique de la valeur `codeBarreForm` lors des soumissions de formulaires `PUT`. Nettoyage de la condition backend `$10` (`codeBarreVal`).
 - **Suite de Tests Automatiques Validée (100% Succès)** : Validation automatisée des 5 fonctionnalités majeures (Algorithme Modulo 10, Générateur Vectoriel SVG, Queue Douchette Distante, Parser Modèle CSV et Enregistrement Produit).
 
+**17. Correction de l'Erreur Serveur 500 à la Modification de Produit (`routes/boutiques.js` & `BoutiqueClient.tsx`) :**
+- **Résolution du Conflit de Doublon HTML** : Élimination du second attribut `name="code_barre"` sur le champ de saisie visuel qui entraînait la transmission d'un tableau `['code1', 'code2']` par `multer`, provoquant une erreur `TypeError: code_barre.trim is not a function`.
+- **Assainissement & Sécurisation Backend (`rawCodeBarre`)** : Prise en charge explicite des tableaux et des chaînes dans le contrôleur `PUT /api/boutiques/:id/produits/:prodId` avec gestion propre du type string et journalisation `console.error` du serveur.
+
 ---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
