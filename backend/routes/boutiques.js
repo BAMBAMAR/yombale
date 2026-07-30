@@ -654,7 +654,7 @@ router.get('/:id/produits', tokenOptional, async (req, res) => {
     const condition = isUUID ? 'p.boutique_id=$1' : 'b.slug=$1';
     const userId = req.user?.userId || null;
     const { rows } = await pool.query(
-      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes,
+      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes, p.code_barre,
               p.whatsapp_sync_statut, p.whatsapp_sync_erreur, p.partage_le
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
@@ -676,7 +676,7 @@ router.get('/:id/produits/:prodId', tokenOptional, param('prodId').isUUID(), asy
     const boutiqueCondition = isUUID ? 'b.id=$2' : 'b.slug=$2';
     const userId = req.user?.userId || null;
     const { rows } = await pool.query(
-      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock,
+      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.code_barre,
               p.categorie, p.caracteristiques, p.variantes, p.ordre, p.created_at,
               b.nom AS boutique_nom, b.telephone AS boutique_telephone,
               b.whatsapp AS boutique_whatsapp, b.ville AS boutique_ville,
