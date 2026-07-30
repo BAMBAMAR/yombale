@@ -1194,6 +1194,36 @@ router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (r
   }
 });
 
+// ── Douchette Scanner Distante (Smartphone -> PC Caisse) ───────────────────
+const remoteScannerQueue = new Map();
+
+router.post('/:id/scanner-remote', async (req, res) => {
+  const { sessionId, code } = req.body;
+  if (!sessionId || !code) return res.status(400).json({ error: 'sessionId et code requis' });
+  
+  if (!remoteScannerQueue.has(sessionId)) {
+    remoteScannerQueue.set(sessionId, []);
+  }
+  remoteScannerQueue.get(sessionId).push(code);
+
+  setTimeout(() => {
+    remoteScannerQueue.delete(sessionId);
+  }, 300000);
+
+  res.json({ success: true, message: 'Code-barres transmis à la caisse du PC' });
+});
+
+router.get('/:id/scanner-remote', async (req, res) => {
+  const { sessionId } = req.query;
+  if (!sessionId) return res.status(400).json({ error: 'sessionId requis' });
+
+  const codes = remoteScannerQueue.get(sessionId) || [];
+  if (codes.length > 0) {
+    remoteScannerQueue.set(sessionId, []);
+  }
+  res.json({ codes });
+});
+
 // ── POST /api/boutiques/:id/pos-vente — Enregistrer vente POS & déduire le stock + alimenter la Comptabilité PostgreSQL
 router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
   try {
