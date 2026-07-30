@@ -134,6 +134,10 @@ Unauthenticated users are redirected to `/connexion`; authenticated users hittin
 **14. Bouton d'Impression d'Étiquettes Stickers Code-Barres EAN-13 (`BoutiqueClient.tsx`) :**
 - **Bouton `🖨️ Étiquette` sur chaque Carte Produit** : Génération et impression immédiate d'étiquettes/stickers thermiques au format standard 50mm x 30mm comprenant le nom du produit, le prix FCFA, les barres graphiques vectorielles et le code EAN-13 lisible par n'importe quelle douchette.
 
+**15. Moteur Vectoriel SVG d'Impression d'Étiquettes Code-Barres EAN-13 (`genererSVGCodeBarresEAN13`) :**
+- **Rendu Vectoriel HD sans dépendance externe** : Génération exacte des barres noires et espaces selon la norme GS1 (Guards gauche `101`, centre `01010`, droite `101` et parités L/G/R).
+- **Rendu d'Impression 50mm x 30mm** : Résolution du problème d'affichage sur les stickers imprimés. Les barres graphiques vectorielles noires s'affichent avec une netteté parfaite sur toutes les imprimantes thermiques (Bluetooth, USB, Zebra, Xprinter).
+
 ---|---|
 | `DATABASE_URL` | PostgreSQL connection (required) |
 | `JWT_SECRET` | Signs JWT tokens — must match Next.js `JWT_SECRET` |
