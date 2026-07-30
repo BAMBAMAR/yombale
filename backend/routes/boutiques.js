@@ -788,13 +788,15 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
       } catch {}
     }
 
+    const codeBarreVal = code_barre !== undefined ? (code_barre && code_barre.trim() ? code_barre.trim() : null) : existing.rows[0].code_barre;
+
     const r = await pool.query(
       `UPDATE boutique_produits SET nom=$1, description=$2, prix=$3, prix_barre=$4,
        images=$5, en_stock=$6, categorie=$7, caracteristiques=$8, variantes=$9, code_barre=$10, updated_at=NOW()
        WHERE id=$11 AND boutique_id=$12 RETURNING *`,
       [nom||existing.rows[0].nom, description||null, prix||null, prix_barre||null,
        images, en_stock !== 'false', categorie||existing.rows[0].categorie||null,
-       caracJson, JSON.stringify(variantesJson), code_barre!==undefined ? code_barre : existing.rows[0].code_barre, prodId, id]
+       caracJson, JSON.stringify(variantesJson), codeBarreVal, prodId, id]
     );
     res.json({ success: true, produit: r.rows[0] });
     const produitMaj = r.rows[0];

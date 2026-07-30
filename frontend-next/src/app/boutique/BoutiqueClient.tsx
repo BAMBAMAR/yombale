@@ -664,6 +664,11 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [codeBarreForm, setCodeBarreForm] = useState<string>((produit as any)?.code_barre || '')
+
+  useEffect(() => {
+    setCodeBarreForm((produit as any)?.code_barre || '')
+  }, [produit])
+
   const [modalFormScanner, setModalFormScanner] = useState<boolean>(false)
   const videoFormRef = useRef<HTMLVideoElement | null>(null)
   const streamFormRef = useRef<MediaStream | null>(null)
@@ -810,8 +815,9 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         </div>
       )}
 
-      {/* Champs cachés pour caractéristiques + catégorie */}
+      {/* Champs cachés pour caractéristiques + catégorie + code-barres */}
       <input type="hidden" name="categorie" value={cat} />
+      <input type="hidden" name="code_barre" value={codeBarreForm} />
       <input type="hidden" name="caracteristiques" value={JSON.stringify(carac)} />
       <input type="hidden" name="variantes" value={JSON.stringify(variantes.filter(v => v.nom.trim() && v.valeurs.length > 0))} />
 
