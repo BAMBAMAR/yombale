@@ -35,7 +35,7 @@ export default async function DemoPage({ searchParams }: DemoPageProps) {
   const initialTab = params.tab?.toLowerCase() || 'features';
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 selection:bg-orange-500 selection:text-white font-sans pb-20">
+    <main style={{ background: '#0B132B', minHeight: '100vh', paddingBottom: '60px' }}>
       <DemoClient initialRef={initialRef} initialRole={initialRole} initialTab={initialTab} />
     </main>
   );
