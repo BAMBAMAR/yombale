@@ -51,12 +51,17 @@ export default function BoutonPartager({ lien, message, lienVisuel, onPartage }:
         ⋯
       </button>
       {ouvert && (
-        <div style={{
-          position: 'absolute', top: '110%', right: 0, zIndex: 10,
-          background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.1)', padding: 8, minWidth: 200, maxWidth: 'calc(100vw - 24px)',
-          display: 'flex', flexDirection: 'column', gap: 4,
-        }}>
+        <>
+          <div
+            onClick={() => setOuvert(false)}
+            style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+          />
+          <div style={{
+            position: 'absolute', top: '110%', right: 0, zIndex: 9999,
+            background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)', padding: 8, minWidth: 190, maxWidth: 'calc(100vw - 32px)',
+            display: 'flex', flexDirection: 'column', gap: 4,
+          }}>
           <button
             onClick={copierLien}
             style={{ padding: '8px 12px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, fontWeight: 600, cursor: 'pointer', borderRadius: 6 }}

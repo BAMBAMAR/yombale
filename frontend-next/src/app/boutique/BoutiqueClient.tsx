@@ -1624,9 +1624,9 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                         style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
                       />
                       <div style={{
-                        position: 'absolute', right: 0, bottom: 36, background: '#ffffff', border: '1px solid #cbd5e1',
+                        position: 'absolute', left: 0, bottom: 36, background: '#ffffff', border: '1px solid #cbd5e1',
                         borderRadius: 10, padding: 6, zIndex: 9999, boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                        display: 'flex', flexDirection: 'column', gap: 4, minWidth: 175
+                        display: 'flex', flexDirection: 'column', gap: 4, minWidth: 180, maxWidth: 'calc(100vw - 32px)'
                       }}>
                         <button
                           onClick={() => { setMenuActionsOuvertId(null); setMode({ editing: p }); }}
