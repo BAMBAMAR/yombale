@@ -48,6 +48,26 @@ export default function BatchImportModal({
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
+  function telechargerModeleCSV() {
+    const csvContent = "\uFEFF" + [
+      "Nom du Produit;Prix FCFA;Quantité Stock;Catégorie;Code-Barres EAN-13",
+      "Sac de Riz Parfumé 25kg;17500;50;alimentation;6001234567891",
+      "Huile Dinor 5L;9500;20;alimentation;6009876543210",
+      "Lait Bonnet Rouge En Poudre 400g;2800;35;alimentation;6005554443332",
+      "Savon Diama 200g;350;100;maison;6001112223334",
+      "Piles AA Duracell Paquet de 4;2500;15;electronique;6008887776665"
+    ].join("\n")
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'modele_import_catalogue_nopalou.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   // Lecture du fichier CSV / Excel
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -304,14 +324,29 @@ export default function BatchImportModal({
 
           {modeImport === 'fichier' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Bouton de Téléchargement du Modèle Excel / CSV */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff7ed', border: '1px solid #fed7aa', padding: '12px 16px', borderRadius: 12, flexWrap: 'wrap', gap: 10 }}>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#9a3412' }}>📥 Modèle d'Inventaire Prêt à Remplir</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#c2410c' }}>Téléchargez le modèle d'exemple au format CSV/Excel pré-formaté.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={telechargerModeleCSV}
+                  style={{ background: '#C75B00', color: '#ffffff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  📥 Télécharger le modèle exemple (.csv)
+                </button>
+              </div>
+
               {/* Zone Glisser-Déposer File Input */}
-              <div style={{ border: '2px dashed #93c5fd', background: '#eff6ff', borderRadius: 12, padding: 32, textAlign: 'center' }}>
-                <p style={{ fontSize: 32, margin: '0 0 8px' }}>📑</p>
+              <div style={{ border: '2px dashed #93c5fd', background: '#eff6ff', borderRadius: 12, padding: 24, textAlign: 'center' }}>
+                <p style={{ fontSize: 30, margin: '0 0 8px' }}>📑</p>
                 <p style={{ margin: '0 0 6px', fontWeight: 700, fontSize: 15, color: '#1e3a8a' }}>
                   Glissez-déposez votre fichier d&apos;inventaire (.csv ou .txt)
                 </p>
-                <p style={{ margin: '0 0 16px', fontSize: 13, color: '#3b82f6' }}>
-                  Format des colonnes : <strong>Nom, Prix, Quantité, Catégorie</strong>
+                <p style={{ margin: '0 0 16px', fontSize: 12, color: '#3b82f6' }}>
+                  Colonnes : <strong>Nom ; Prix ; Quantité ; Catégorie ; Code-Barres EAN</strong>
                 </p>
                 <input
                   type="file"
