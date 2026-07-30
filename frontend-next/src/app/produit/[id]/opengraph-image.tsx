@@ -93,7 +93,7 @@ export default async function OgImage({ params }: { params: { id: string } }) {
               fontSize: 18, fontWeight: 700, color: '#fff',
               display: 'flex',
             }}>
-              Comparer les prix →
+              Comparer les prix
             </div>
           </div>
         </div>

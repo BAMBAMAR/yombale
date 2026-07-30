@@ -239,7 +239,7 @@ export async function GET() {
                       marginLeft: 8,
                     }}
                   >
-                    Commander →
+                    Commander
                   </span>
                 </div>
               </div>

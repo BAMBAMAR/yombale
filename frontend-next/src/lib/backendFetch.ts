@@ -23,11 +23,11 @@ export async function backendAuthFetch(path: string, init?: RequestInit) {
 
   const primaryUrl = `${BACKEND}/api${path}`
   try {
-    return await fetch(primaryUrl, { ...init, headers })
+    return await fetch(primaryUrl, { ...init, headers, signal: init?.signal ?? AbortSignal.timeout(6000) })
   } catch {
     const fallbackUrl = primaryUrl.includes('127.0.0.1')
       ? primaryUrl.replace('127.0.0.1', 'localhost')
       : primaryUrl.replace('localhost', '127.0.0.1')
-    return await fetch(fallbackUrl, { ...init, headers })
+    return await fetch(fallbackUrl, { ...init, headers, signal: init?.signal ?? AbortSignal.timeout(6000) })
   }
 }

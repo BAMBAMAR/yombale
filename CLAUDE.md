@@ -240,6 +240,10 @@ Déclencheur : Demande de l'utilisateur de lister toutes les fonctionnalités du
 - **Alignement Charte Graphique Nopalou** : Réalignement strict de tous les visuels sur les couleurs officielles Nopalou (Orange `#C75B00` & Bleu Marine `#1C2B4A`).
 - **Netteté Vectorielle & Lisibilité Optimale** : Augmentation importante de la taille des polices (titres à 52-54px, sous-titres à 22-26px, corps à 18-19px `fontWeight: 700/900`) et suppression des box-shadows flous pour éliminer tout flou de rendu et garantir une netteté cristalline sur tous les écrans.
 
+**10. Résolution des Latences & Blocages Serveur (`ConnectTimeoutError` & `ECONNRESET`) :**
+- **Élimination des Fetches de Polices/Symboles Satori** : Suppression des symboles unicode spéciaux (`→`) dans les routes d'images `ImageResponse` (`chatbot-whatsapp`, `produit/[id]/opengraph-image.tsx`) qui déclenchaient des tentatives d'installation de polices réseau lentes et des blocages serveur de 45 secondes (`UND_ERR_CONNECT_TIMEOUT`).
+- **Timeouts Réseau Contrôlés (6s max)** : Ajout systématique de `signal: AbortSignal.timeout(6000)` dans `api.ts`, `backendFetch.ts`, et `backend-fetch.ts` pour libérer immédiatement le thread si le serveur backend Render met du temps à se réveiller (`socket hang up`), éliminant ainsi la lenteur du site.
+
 ---
 
 ## État du projet (29 juillet 2026 — Refonte Boutiques, Abonnements, Panier Mobile & bloc SEO)
