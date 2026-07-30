@@ -72,6 +72,13 @@ export default function NavbarGuides() {
               <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--text3)' }}>Comparez les prix depuis WhatsApp</span>
             </span>
           </Link>
+          <Link href="/demo" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>
+            <span>🚀</span>
+            <span>
+              <span style={{ display: 'block', fontWeight: 700 }}>Démo Commerciale</span>
+              <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--text3)' }}>Parcours interactif &amp; Comparatif</span>
+            </span>
+          </Link>
         </div>
       )}
     </div>

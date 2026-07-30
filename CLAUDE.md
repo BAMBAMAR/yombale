@@ -917,3 +917,11 @@ Aller sur `/admin/whatsapp` — la checklist indique en temps réel ce qui est c
 opalou_session lors des appels fetch ct client (interface Caisse/POS).
 
 - **Priorisation Accueil** (ajouté 25 juillet 2026) : Modification de l'API /api/produits pour afficher par défaut sur la page d'accueil en premier les produits des boutiques, puis les meilleurs produits scrapés (≥ 2 offres et prix > 20000 FCFA), et enfin le reste. Les cartes de produits boutiques pointent vers /boutiques/[slug]/produits/[id].
+
+- **Démo Commerciale Interactive & Partageable** (ajouté 30 juillet 2026) : Création de la page `/demo` (`frontend-next/src/app/demo/page.tsx` & `DemoClient.tsx`) incluant :
+  1. Matrice comparative visuelle (Nopalou vs Concurrence e-commerce, Cahier papier de crédit client POS, Vente WhatsApp manuelle).
+  2. Simulateur d'écran interactif pour 3 parcours utilisateurs clés (🛒 Acheteur malin, 🏪 Marchand POS & Carnet de crédits/dettes client, 💼 Apporteur d'affaires & commissions récurrentes 10%).
+  3. Assistant Chatbot WhatsApp simulé en direct (produits, immo, télécom).
+  4. Calculateur interactif de commissions récurrentes mensuelles/annuelles pour apporteurs et marchand ROI.
+  5. Générateur de lien commercial partageable avec code apporteur personnalisé & bouton de partage rapide WhatsApp.
+  6. Ajout du lien direct vers `/demo` dans le menu déroulant Header (`NavbarGuides.tsx`).
