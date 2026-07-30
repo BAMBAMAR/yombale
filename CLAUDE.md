@@ -231,7 +231,7 @@ Déclencheur : Demande de l'utilisateur de lister toutes les fonctionnalités du
 - **Harmonisation Taux Commission (20%)** : Correction de tous les résidus de taux obsolètes (10%) dans le flyer Apporteur (`apporteur-affaires/route.tsx`) et la brochure PDF 13 pages (`brochure-apporteur/route.tsx`).
 - **Enrichissement Fonctionnalités Dernières Versions** : Intégration systématique des nouvelles fonctionnalités (Caisse Enregistreuse POS Tactile, 3 Scanners smartphone/cloud/USB, Stickers Codes-barres EAN-13 GS1 Modulo 10, Carnet de Dettes Client + Relance WhatsApp 1-Clic, Multi-caissiers PIN, Lien Démo POS commercial 1-Clic `nopalou.com/demo`).
 - **Mise à jour des Visuels Réseaux & Supports Terrain** : Alignement du flyer A5 de démarchage (`flyer-demarchage/route.tsx`), du poster écosystème (`poster-ecosysteme/route.tsx`), de la couverture Facebook (`cover-facebook/route.tsx`), et du kit apporteur (`/admin/communication`).
-- **Bannissement du Chargement Dynamique de Polices (Satori)** : Suppression définitive de tout `fetch` de polices externes (ex: TTF `cdn.jsdelivr.net`) dans les routes `ImageResponse`. Utilisation exclusive de `system-ui, -apple-system, sans-serif` pour garantir des temps de génération instantanés et aucune dépendance réseau.
+- **Bannissement Global du Chargement Dynamique de Polices (Site & Satori)** : Suppression et interdiction définitive de tout `fetch`, `@import` ou téléchargement réseau de polices externes (ex: TTF/WOFF depuis `cdn.jsdelivr.net` ou CDN tiers) sur l'ensemble de l'application (`frontend-next`, routes `ImageResponse`, styles, API). Utilisation exclusive des piles de polices système natives et `var(--font-inter)` pour des performances instantanées sans dépendance réseau.
 
 ---
 
