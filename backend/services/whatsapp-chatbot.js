@@ -6,6 +6,7 @@ const {
   sendWhatsAppCarousel,
   sendWhatsAppProduct,
   sendWhatsAppButton,
+  sendWhatsAppButtons3,
   sendWhatsAppMenuOuFin,
   sendReadReceipt,
   normalisePhone,
@@ -154,6 +155,7 @@ async function envoyerMenuBoutique(phone, boutique) {
       {
         title: 'Catalogue',
         rows: [
+          { id: 'boutique_produits_tous', title: '🛍️ Voir les produits', description: 'Défiler les produits un par un' },
           { id: 'boutique_recherche', title: '🔍 Rechercher', description: 'Chercher un produit dans cette boutique' },
           { id: 'boutique_categorie', title: '📂 Par catégorie', description: 'Parcourir les catégories de produits' },
         ],
@@ -320,7 +322,7 @@ async function envoyerListeBoutiques(phone, secteur, excludeIds = []) {
 }
 
 // ── Fiche produit complète (boutique) ───────────────────────────────────────
-// Product Message Meta native + message texte détaillé + bouton "Commander".
+// Product Message Meta native + message texte détaillé + 3 boutons (Commander, Suivant, Rechercher).
 async function envoyerFicheProduitBoutique(phone, produit, boutique) {
   await sendWhatsAppProduct(
     phone,
@@ -330,7 +332,7 @@ async function envoyerFicheProduitBoutique(phone, produit, boutique) {
     await sendWhatsAppText(phone, `• *${produit.nom}* — ${prixFmt(produit.prix)}\n📍 *${boutique.nom}*`);
   });
 
-  const lignes = [`🏪 *${boutique.nom}*`];
+  const lignes = [];
   if (produit.description) lignes.push(produit.description);
 
   const variantes = Array.isArray(produit.variantes) ? produit.variantes : [];
@@ -351,8 +353,15 @@ async function envoyerFicheProduitBoutique(phone, produit, boutique) {
     lignes.push(produit.en_stock === false ? '❌ Rupture de stock' : '✅ En stock');
   }
 
-  await sendWhatsAppText(phone, lignes.join('\n'));
-  await sendWhatsAppButton(phone, 'Intéressé par ce produit ?', `commander_${produit.id}`, '🛒 Commander').catch(() => {});
+  if (lignes.length > 0) {
+    await sendWhatsAppText(phone, lignes.join('\n'));
+  }
+
+  await sendWhatsAppButtons3(phone, 'Que souhaitez-vous faire ?', [
+    { id: `commander_${produit.id}`, title: '🛒 Commander' },
+    { id: `prod_suivant_${produit.id}`, title: '⏩ Suivant' },
+    { id: 'boutique_recherche', title: '🔍 Rechercher' },
+  ]).catch(() => {});
 }
 
 // ── Recherche / navigation par catégorie dans une boutique précise ─────────────
@@ -364,15 +373,22 @@ async function envoyerProduitsBoutique(phone, boutique, { query, categorie, excl
            WHERE boutique_id=$1
              AND to_tsvector('french', nom || ' ' || COALESCE(description,'')) @@ plainto_tsquery('french', $2)
              AND id::text <> ALL($3::text[])
-           LIMIT 3`;
+           ORDER BY created_at DESC LIMIT 1`;
     params = [boutique.id, query, excludeIds];
-  } else {
+  } else if (categorie) {
     sql = `SELECT id, nom, description, prix, en_stock, stock_quantite, caracteristiques, variantes
            FROM boutique_produits
            WHERE boutique_id=$1 AND categorie=$2
              AND id::text <> ALL($3::text[])
-           LIMIT 3`;
+           ORDER BY created_at DESC LIMIT 1`;
     params = [boutique.id, categorie, excludeIds];
+  } else {
+    sql = `SELECT id, nom, description, prix, en_stock, stock_quantite, caracteristiques, variantes
+           FROM boutique_produits
+           WHERE boutique_id=$1
+             AND id::text <> ALL($2::text[])
+           ORDER BY created_at DESC LIMIT 1`;
+    params = [boutique.id, excludeIds];
   }
 
   const r = await pool.query(sql, params);
@@ -381,26 +397,24 @@ async function envoyerProduitsBoutique(phone, boutique, { query, categorie, excl
     await sendWhatsAppText(
       phone,
       excludeIds.length
-        ? `✅ Vous avez vu tous les produits ${query ? `pour *"${query}"*` : `de la catégorie *${categorie}*`} dans cette boutique.`
-        : `😕 Aucun produit trouvé ${query ? `pour *"${query}"*` : `dans cette catégorie`}.`
+        ? `✅ Vous avez vu tous les produits ${query ? `pour *"${query}"*` : categorie ? `de la catégorie *${categorie}*` : 'de cette boutique'}.`
+        : `😕 Aucun produit trouvé ${query ? `pour *"${query}"*` : categorie ? `dans cette catégorie` : 'dans cette boutique'}.`
     );
     await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
     await setSession(phone, 'BOUTIQUE_MENU', { boutique });
     return;
   }
 
-  for (const p of r.rows) {
-    await envoyerFicheProduitBoutique(phone, p, boutique);
-  }
+  const p = r.rows[0];
+  await envoyerFicheProduitBoutique(phone, p, boutique);
 
-  await attendre(1200);
-  await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres produits, ou :').catch(() => {});
-  await setSession(phone, 'BOUTIQUE_MENU', {
+  const updatedExcludeIds = [...excludeIds, String(p.id)];
+  await setSession(phone, 'BOUTIQUE_PRODUIT', {
     boutique,
     last: {
-      type: query ? 'boutique_search' : 'boutique_categorie',
+      type: query ? 'boutique_search' : categorie ? 'boutique_categorie' : 'boutique_tous',
       query, categorie,
-      shownIds: excludeIds.concat(r.rows.map(p => String(p.id))),
+      shownIds: updatedExcludeIds,
     },
   });
 }
@@ -843,6 +857,10 @@ async function handleIncoming(msg) {
       return;
     }
 
+    if (interactiveId === 'boutique_produits_tous') {
+      await envoyerProduitsBoutique(phone, boutique, {});
+      return;
+    }
     if (interactiveId === 'boutique_recherche') {
       await setSession(phone, 'BOUTIQUE_SEARCH_QUERY', { boutique });
       await sendWhatsAppText(phone, `🔍 Que recherchez-vous chez *${boutique.nom}* ?`);
@@ -875,8 +893,6 @@ async function handleIncoming(msg) {
       await setSession(phone, 'BOUTIQUE_MENU', { boutique });
       return;
     }
-    // "menu" n'atteint jamais ce point : intercepté plus haut par la garde globale
-    // qui ramène au menu boutique tant que context.boutique existe (voir handleIncoming).
     if (interactiveId === 'boutique_quitter') {
       await setSession(phone, 'MENU', {});
       await sendMenu(phone);
@@ -887,21 +903,48 @@ async function handleIncoming(msg) {
       await demarrerCommande(phone, boutique, commanderMatch[1]);
       return;
     }
-    if (MOTS_PLUS.includes(normaliserTexte(text))) {
-      const last = context?.last;
-      if (!last || !last.type) {
-        await sendWhatsAppText(phone, '🔍 Plus de quoi ? Dites-moi ce que vous cherchez, ou choisissez dans le menu.');
-        return;
-      }
+    if (interactiveId === 'boutique_next' || interactiveId.startsWith('prod_suivant_') || MOTS_PLUS.includes(normaliserTexte(text))) {
+      const last = context?.last || {};
       const shownIds = Array.isArray(last.shownIds) ? last.shownIds : [];
-      if (last.type === 'boutique_search') {
-        await envoyerProduitsBoutique(phone, boutique, { query: last.query, excludeIds: shownIds });
-      } else {
-        await envoyerProduitsBoutique(phone, boutique, { categorie: last.categorie, excludeIds: shownIds });
-      }
+      await envoyerProduitsBoutique(phone, boutique, { query: last.query, categorie: last.categorie, excludeIds: shownIds });
       return;
     }
     // Texte libre en BOUTIQUE_MENU = recherche directe dans cette boutique
+    await setSession(phone, 'BOUTIQUE_SEARCH_QUERY', { boutique });
+    await envoyerProduitsBoutique(phone, boutique, { query: text });
+    return;
+  }
+
+  // ── BOUTIQUE_PRODUIT → défilement 1 à 1 des fiches produit ─────────────────
+  if (state === 'BOUTIQUE_PRODUIT') {
+    const boutique = context?.boutique;
+    if (!boutique) {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    const commanderMatch = interactiveId.match(/^commander_(.+)$/);
+    if (commanderMatch) {
+      await demarrerCommande(phone, boutique, commanderMatch[1]);
+      return;
+    }
+    if (interactiveId === 'boutique_recherche') {
+      await setSession(phone, 'BOUTIQUE_SEARCH_QUERY', { boutique });
+      await sendWhatsAppText(phone, `🔍 Que recherchez-vous chez *${boutique.nom}* ?`);
+      return;
+    }
+    if (interactiveId === 'boutique_next' || interactiveId.startsWith('prod_suivant_') || MOTS_PLUS.includes(normaliserTexte(text))) {
+      const last = context?.last || {};
+      const shownIds = Array.isArray(last.shownIds) ? last.shownIds : [];
+      await envoyerProduitsBoutique(phone, boutique, { query: last.query, categorie: last.categorie, excludeIds: shownIds });
+      return;
+    }
+    if (interactiveId === 'boutique_quitter') {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    // Texte libre pendant BOUTIQUE_PRODUIT = recherche de produit dans la boutique
     await setSession(phone, 'BOUTIQUE_SEARCH_QUERY', { boutique });
     await envoyerProduitsBoutique(phone, boutique, { query: text });
     return;

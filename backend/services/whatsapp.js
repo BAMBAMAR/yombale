@@ -130,8 +130,8 @@ async function sendWhatsAppInteractive(phone, headerText, bodyText, sections) {
   });
 }
 
-// ── Bouton de réponse rapide (ex: retour au menu) ─────────────────────────────
-async function sendWhatsAppButton(phone, bodyText, buttonId, buttonTitle) {
+// ── 3 Boutons de réponse rapide ───────────────────────────────────────────────
+async function sendWhatsAppButtons3(phone, bodyText, buttons) {
   return post({
     messaging_product: 'whatsapp',
     recipient_type: 'individual',
@@ -141,12 +141,18 @@ async function sendWhatsAppButton(phone, bodyText, buttonId, buttonTitle) {
       type: 'button',
       body: { text: bodyText },
       action: {
-        buttons: [
-          { type: 'reply', reply: { id: buttonId, title: buttonTitle } },
-        ],
+        buttons: buttons.slice(0, 3).map(b => ({
+          type: 'reply',
+          reply: { id: b.id, title: b.title.slice(0, 20) },
+        })),
       },
     },
   });
+}
+
+// ── Bouton de réponse rapide (ex: retour au menu) ─────────────────────────────
+async function sendWhatsAppButton(phone, bodyText, buttonId, buttonTitle) {
+  return sendWhatsAppButtons3(phone, bodyText, [{ id: buttonId, title: buttonTitle }]);
 }
 
 // ── Bouton "Menu" + "Non merci" (fin d'action, cf. sendWhatsAppButton) ────────
@@ -281,6 +287,7 @@ module.exports = {
   sendWhatsAppCarousel,
   sendWhatsAppInteractive,
   sendWhatsAppButton,
+  sendWhatsAppButtons3,
   sendWhatsAppMenuOuFin,
   sendWhatsAppProduct,
   sendReadReceipt,
