@@ -678,8 +678,8 @@ async function handleIncoming(msg) {
   // générique et renvoient "boutique introuvable". Cette exclusion s'applique aussi
   // bien au texte libre (un client ne tape normalement pas ces ids internes à la main,
   // mais on reste défensif) qu'aux clics bouton.
-  const estIdInterne = /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next)/.test(text) ||
-    /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next)/.test(interactiveId);
+  const estIdInterne = /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste)/.test(text) ||
+    /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste)/.test(interactiveId);
   const matchBoutique = !estIdInterne &&
     (text.match(/^boutique_(.+)$/i) || interactiveId.match(/^boutique_(.+)$/i));
   if (matchBoutique) {
