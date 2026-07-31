@@ -192,6 +192,23 @@ Aucun chantier n'est actuellement identifié comme prioritaire — le dernier ch
 
 ---
 
+## État du projet (31 juillet 2026 — Ergonomie Chatbot : Affichage Produit 1-à-1 & Boutons Interactifs)
+**Statut :** *Mergé et pushé sur `origin main` (`e0eea7e`)*
+
+Déclencheur : Demandes explicites d'optimisation UX du Chatbot WhatsApp pour éviter la surcharge de messages et proposer des boutons natifs cliquables.
+
+**Réalisations & Améliorations :**
+- **Option "Voir les produits" dans le Menu Boutique** : Ajout du bouton dédié `🛍️ Voir les produits` permettant au client d'accéder au catalogue de la boutique.
+- **Affichage Produit 1-à-1** : Chaque produit s'affiche 1 par 1 pour une lisibilité parfaite sur smartphone.
+- **3 Boutons d'Action sous chaque Produit** :
+  - 🛒 **Commander** : Lance le choix de la quantité et le checkout.
+  - ⏩ **Suivant** : Affiche directement le produit suivant.
+  - 🔍 **Rechercher** : Lance la recherche d'un produit spécifique dans cette boutique.
+- **Sélection Numérique & Textuelle Boutiques** : Possibilité de choisir une boutique par son numéro (`1`, `2`, `3`) ou par son nom tapé en plus de la liste déroulante interactive.
+- **Enrichissement des Salutations** : Prise en charge des salutations courantes (`bjr`, `bonjou`, `jr`, `bsoir`, `hi`, `cc`).
+
+---
+
 ## État du projet (30 juillet 2026 — Démo Commerciale 3 Axes, Bac à Sable POS & Kit Commercial)
 **Statut :** *Mergé et pushé sur main*
 
