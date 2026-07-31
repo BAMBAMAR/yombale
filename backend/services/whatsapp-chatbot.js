@@ -609,10 +609,24 @@ async function traiterPanierMeta(phone, order) {
   }
 
   const itemsBoutique = itemsValides.filter(it => it.boutique_id === boutiqueId);
-  await sendWhatsAppText(phone, `🛒 *Panier reçu (${itemsBoutique.length} article${itemsBoutique.length > 1 ? 's' : ''})*\n\nVotre nom complet ?`);
+  const premierProduit = itemsBoutique[0];
+  const expressLink = `${SITE}/checkout-express?produit=${premierProduit.produit_id}&boutique=${boutique.id}&phone=${phone}`;
+  const totalPanier = itemsBoutique.reduce((s, it) => s + (it.prix * it.quantite), 0);
+
+  const detailArticles = itemsBoutique.map(it => `• *${it.nom_produit}* × ${it.quantite} — ${prixFmt(it.prix * it.quantite)}`).join('\n');
+  await sendWhatsAppText(
+    phone,
+    `🛒 *Panier reçu (${itemsBoutique.length} article${itemsBoutique.length > 1 ? 's' : ''})*\n\n${detailArticles}\n💰 *Total : ${prixFmt(totalPanier)}*\n\n` +
+    `⚡ *Option 1 (Formulaire Web 1-Page Express)* :\n👉 ${expressLink}\n\n` +
+    `💬 *Option 2 (Commande WhatsApp Direct)* : Tapez votre Nom et Adresse (ex: Amar, Sacré-Cœur 3) ci-dessous :`
+  );
+
   await setSession(phone, 'COMMANDE_NOM', {
     boutique,
-    commande: { items: itemsBoutique.map(({ boutique_id, ...it }) => it) },
+    commande: {
+      items: itemsBoutique.map(({ boutique_id, ...it }) => it),
+      client_telephone: phone,
+    },
   });
 }
 
