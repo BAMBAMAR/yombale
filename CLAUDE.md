@@ -199,7 +199,7 @@ Déclencheur : Optimisation pas-à-pas du Chatbot WhatsApp selon les requêtes u
 
 **Réalisations & Améliorations :**
 - **Accès Direct aux Boutiques** : Au clic sur `🏪 Boutiques`, envoi immédiat de la liste de toutes les boutiques Nopalou actives avec numérotation (`1. Nom`, `2. Nom`...), plus une option `📂 Choisir par secteur`.
-- **Correction du Slug Boutique (`estIdInterne`)** : Protection des identifiants `boutique_produits_tous` et `boutique_next` contre l'interception erronée en tant que slug de boutique ("Boutique introuvable").
+- **Correction du Slug Boutique (`estIdInterne`)** : Protection des identifiants `boutique_produits_tous`, `boutique_next` et `boutique_secteur_liste` contre l'interception erronée en tant que slug de boutique ("Boutique introuvable").
 - **Option "Voir les produits" & Défilé 1-à-1** : Bouton `🛍️ Voir les produits` dans le menu boutique, affichant les fiches produits 1 par 1 avec 3 boutons natifs (`🛒 Commander`, `⏩ Suivant`, `🔍 Rechercher`).
 - **Traitement Direct du Panier WhatsApp (`traiterPanierMeta`)** : Élimination de la question intermédiaire *"Votre nom complet ?"*. À la réception d'un panier, affichage du récapitulatif avec total et présentation des 2 options directes (WhatsApp Direct vs Formulaire 1-Page Express).
 - **Sélection Numérique & Textuelle Boutiques** : Prise en charge de la frappe d'un chiffre (`1`, `2`, `3`) ou d'un nom de boutique.
