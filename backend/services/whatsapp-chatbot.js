@@ -285,6 +285,54 @@ async function envoyerListeTelecom(phone, excludeIds = []) {
   });
 }
 
+async function envoyerToutesLesBoutiques(phone, excludeIds = []) {
+  const r = await pool.query(
+    `SELECT id, nom, slug, categorie, ville FROM boutiques
+     WHERE actif=true AND id::text <> ALL($1::text[])
+     ORDER BY created_at DESC LIMIT 10`,
+    [excludeIds]
+  );
+  if (!r.rows.length) {
+    await sendWhatsAppText(
+      phone,
+      excludeIds.length
+        ? '✅ Vous avez vu toutes les boutiques Nopalou. Tapez *menu* pour revenir.'
+        : 'Aucune boutique disponible pour le moment.'
+    );
+    await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+    await setSession(phone, 'MENU', {});
+    return;
+  }
+
+  const lines = r.rows.map((b, i) => `${i + 1}. *${b.nom}* (${b.categorie || 'commerce'}${b.ville ? ` — ${b.ville}` : ''})`);
+  await sendWhatsAppText(
+    phone,
+    `🏪 *Boutiques Nopalou :*\n\n${lines.join('\n')}\n\n` +
+    `Tapez le numéro (1, 2...), le nom d'une boutique, ou choisissez ci-dessous :`
+  );
+
+  const rows = r.rows.map(b => ({
+    id: `boutique_choisie_${b.id}`,
+    title: b.nom.slice(0, 24),
+    description: [b.categorie, b.ville].filter(Boolean).join(' — ') || undefined,
+  }));
+
+  rows.push({
+    id: 'boutique_secteur_liste',
+    title: '📂 Choisir par secteur',
+    description: 'Filtrer les boutiques par catégorie',
+  });
+
+  await sendWhatsAppInteractive(phone, 'Boutiques Nopalou', 'Cliquez sur une boutique ci-dessous :', [
+    { title: 'Boutiques Nopalou', rows },
+  ]);
+
+  await setSession(phone, 'BOUTIQUE_LISTE', {
+    boutiquesAffichees: r.rows,
+    last: { type: 'boutiques_toutes', shownIds: excludeIds.concat(r.rows.map(b => String(b.id))) },
+  });
+}
+
 async function envoyerListeBoutiques(phone, secteur, excludeIds = []) {
   const r = await pool.query(
     `SELECT id, nom, slug, ville FROM boutiques
@@ -616,8 +664,8 @@ async function handleIncoming(msg) {
   // générique et renvoient "boutique introuvable". Cette exclusion s'applique aussi
   // bien au texte libre (un client ne tape normalement pas ces ids internes à la main,
   // mais on reste défensif) qu'aux clics bouton.
-  const estIdInterne = /^boutique_(recherche|categorie|contact|quitter|choisie_)/.test(text) ||
-    /^boutique_(recherche|categorie|contact|quitter|choisie_)/.test(interactiveId);
+  const estIdInterne = /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next)/.test(text) ||
+    /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next)/.test(interactiveId);
   const matchBoutique = !estIdInterne &&
     (text.match(/^boutique_(.+)$/i) || interactiveId.match(/^boutique_(.+)$/i));
   if (matchBoutique) {
@@ -734,20 +782,7 @@ async function handleIncoming(msg) {
       return;
     }
     if (action === 'boutiques') {
-      const r = await pool.query(
-        `SELECT DISTINCT categorie FROM boutiques WHERE actif=true AND categorie IS NOT NULL ORDER BY categorie LIMIT 10`
-      );
-      if (!r.rows.length) {
-        await sendWhatsAppText(phone, 'Aucune boutique disponible pour le moment.');
-        await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
-        await setSession(phone, 'MENU', {});
-        return;
-      }
-      const rows = r.rows.map(row => ({ id: `secteur_${row.categorie}`, title: row.categorie.slice(0, 24) }));
-      await sendWhatsAppInteractive(phone, '🏪 Boutiques', 'Choisissez un secteur :', [
-        { title: 'Secteurs', rows },
-      ]);
-      await setSession(phone, 'BOUTIQUE_SECTEUR', {});
+      await envoyerToutesLesBoutiques(phone);
       return;
     }
     if (action === 'support') {
@@ -824,19 +859,60 @@ async function handleIncoming(msg) {
 
   // ── BOUTIQUE_LISTE → choix d'une boutique ou pagination ─────────────────────
   if (state === 'BOUTIQUE_LISTE') {
+    if (interactiveId === 'boutique_secteur_liste') {
+      const r = await pool.query(
+        `SELECT DISTINCT categorie FROM boutiques WHERE actif=true AND categorie IS NOT NULL ORDER BY categorie LIMIT 10`
+      );
+      if (!r.rows.length) {
+        await sendWhatsAppText(phone, 'Aucun secteur défini pour le moment.');
+        await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+        await setSession(phone, 'MENU', {});
+        return;
+      }
+      const rows = r.rows.map(row => ({ id: `secteur_${row.categorie}`, title: row.categorie.slice(0, 24) }));
+      await sendWhatsAppInteractive(phone, '🏪 Secteurs', 'Choisissez un secteur :', [
+        { title: 'Secteurs', rows },
+      ]);
+      await setSession(phone, 'BOUTIQUE_SECTEUR', {});
+      return;
+    }
+
     if (MOTS_PLUS.includes(normaliserTexte(text))) {
       const shownIds = Array.isArray(context?.last?.shownIds) ? context.last.shownIds : [];
-      await envoyerListeBoutiques(phone, context.secteur, shownIds);
+      if (context?.last?.type === 'boutiques_toutes') {
+        await envoyerToutesLesBoutiques(phone, shownIds);
+      } else {
+        await envoyerListeBoutiques(phone, context.secteur, shownIds);
+      }
       return;
     }
+
+    let targetBoutiqueId = null;
     const choixMatch = interactiveId.match(/^boutique_choisie_(.+)$/);
-    if (!choixMatch) {
-      await sendWhatsAppText(phone, 'Choisissez une boutique dans la liste ci-dessus, ou tapez *menu*.');
+    if (choixMatch) {
+      targetBoutiqueId = choixMatch[1];
+    } else if (text) {
+      const num = parseInt(text.trim(), 10);
+      const boutiques = Array.isArray(context?.boutiquesAffichees) ? context.boutiquesAffichees : [];
+      if (!isNaN(num) && num >= 1 && num <= boutiques.length) {
+        targetBoutiqueId = boutiques[num - 1].id;
+      } else {
+        const rName = await pool.query(
+          'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE nom ILIKE $1 AND actif=true LIMIT 1',
+          [`%${text.trim()}%`]
+        );
+        if (rName.rows[0]) targetBoutiqueId = rName.rows[0].id;
+      }
+    }
+
+    if (!targetBoutiqueId) {
+      await sendWhatsAppText(phone, 'Choisissez une boutique dans la liste ci-dessus, tapez son numéro (1, 2...), ou tapez *menu*.');
       return;
     }
+
     const r = await pool.query(
       'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE id=$1 AND actif=true',
-      [choixMatch[1]]
+      [targetBoutiqueId]
     );
     if (!r.rows[0]) {
       await sendWhatsAppText(phone, '😕 Cette boutique n\'est plus disponible.');
