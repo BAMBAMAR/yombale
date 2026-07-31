@@ -192,20 +192,18 @@ Aucun chantier n'est actuellement identifié comme prioritaire — le dernier ch
 
 ---
 
-## État du projet (31 juillet 2026 — Ergonomie Chatbot : Affichage Produit 1-à-1 & Boutons Interactifs)
-**Statut :** *Mergé et pushé sur `origin main` (`e0eea7e`)*
+## État du projet (31 juillet 2026 — Refonte Ergonomique Chatbot WhatsApp & Traitement Direct du Panier)
+**Statut :** *Mergé et pushé sur `origin main` (`f17e00c`)*
 
-Déclencheur : Demandes explicites d'optimisation UX du Chatbot WhatsApp pour éviter la surcharge de messages et proposer des boutons natifs cliquables.
+Déclencheur : Optimisation pas-à-pas du Chatbot WhatsApp selon les requêtes utilisateur (réduction des questions intermédiaires, liste directe des boutiques, panier WhatsApp instantané).
 
 **Réalisations & Améliorations :**
-- **Option "Voir les produits" dans le Menu Boutique** : Ajout du bouton dédié `🛍️ Voir les produits` permettant au client d'accéder au catalogue de la boutique.
-- **Affichage Produit 1-à-1** : Chaque produit s'affiche 1 par 1 pour une lisibilité parfaite sur smartphone.
-- **3 Boutons d'Action sous chaque Produit** :
-  - 🛒 **Commander** : Lance le choix de la quantité et le checkout.
-  - ⏩ **Suivant** : Affiche directement le produit suivant.
-  - 🔍 **Rechercher** : Lance la recherche d'un produit spécifique dans cette boutique.
-- **Sélection Numérique & Textuelle Boutiques** : Possibilité de choisir une boutique par son numéro (`1`, `2`, `3`) ou par son nom tapé en plus de la liste déroulante interactive.
-- **Enrichissement des Salutations** : Prise en charge des salutations courantes (`bjr`, `bonjou`, `jr`, `bsoir`, `hi`, `cc`).
+- **Accès Direct aux Boutiques** : Au clic sur `🏪 Boutiques`, envoi immédiat de la liste de toutes les boutiques Nopalou actives avec numérotation (`1. Nom`, `2. Nom`...), plus une option `📂 Choisir par secteur`.
+- **Correction du Slug Boutique (`estIdInterne`)** : Protection des identifiants `boutique_produits_tous` et `boutique_next` contre l'interception erronée en tant que slug de boutique ("Boutique introuvable").
+- **Option "Voir les produits" & Défilé 1-à-1** : Bouton `🛍️ Voir les produits` dans le menu boutique, affichant les fiches produits 1 par 1 avec 3 boutons natifs (`🛒 Commander`, `⏩ Suivant`, `🔍 Rechercher`).
+- **Traitement Direct du Panier WhatsApp (`traiterPanierMeta`)** : Élimination de la question intermédiaire *"Votre nom complet ?"*. À la réception d'un panier, affichage du récapitulatif avec total et présentation des 2 options directes (WhatsApp Direct vs Formulaire 1-Page Express).
+- **Sélection Numérique & Textuelle Boutiques** : Prise en charge de la frappe d'un chiffre (`1`, `2`, `3`) ou d'un nom de boutique.
+- **Enrichissement des Salutations** : Détection des variantes courantes (`bjr`, `bonjou`, `jr`, `bsoir`, `hi`, `cc`).
 
 ---
 
