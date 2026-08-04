@@ -245,6 +245,7 @@ router.get('/mine', verifierToken, async (req, res) => {
               b.logo_url, b.cover_url, b.site_web, b.facebook, b.instagram, b.slug,
               b.actif, b.sponsorise, b.sponsor_jusqu_au, b.whatsapp_catalog_id, b.created_at,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
+              b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.conditions_vente, b.pied_de_page_document,
               (b.utilisateur_id = $1) AS is_owner
        FROM boutiques b
        LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
@@ -270,6 +271,7 @@ router.get('/:id', async (req, res) => {
               b.logo_url, b.cover_url, b.whatsapp, b.site_web, b.facebook, b.instagram,
               b.horaires, b.slug, b.utilisateur_id, b.created_at,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
+              b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.conditions_vente, b.pied_de_page_document,
               a.plan AS plan_actif
        FROM boutiques b
        LEFT JOIN LATERAL (
@@ -1126,15 +1128,23 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
 
     // UPDATE colonnes avancées & fiscales
     try {
-      const { regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut } = req.body;
+      const { regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut,
+              rccm, ninea, forme_juridique, capital_social, compte_bancaire, conditions_vente, pied_de_page_document } = req.body;
       await pool.query(
         `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4,
          instagram=$5, horaires=$6, slug=$7,
          regime_fiscal=COALESCE($8, regime_fiscal),
          prix_tva_incluse=COALESCE($9, prix_tva_incluse),
          timbre_fiscal_applicable=COALESCE($10, timbre_fiscal_applicable),
-         tva_taux_defaut=COALESCE($11, tva_taux_defaut)
-         WHERE id=$12`,
+         tva_taux_defaut=COALESCE($11, tva_taux_defaut),
+         rccm=COALESCE($12, rccm),
+         ninea=COALESCE($13, ninea),
+         forme_juridique=COALESCE($14, forme_juridique),
+         capital_social=COALESCE($15, capital_social),
+         compte_bancaire=COALESCE($16, compte_bancaire),
+         conditions_vente=COALESCE($17, conditions_vente),
+         pied_de_page_document=COALESCE($18, pied_de_page_document)
+         WHERE id=$19`,
         [
           cover_url||null, whatsapp||null, site_web||null, facebook||null,
           instagram||null, horairesJson, newSlug,
@@ -1142,6 +1152,8 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
           prix_tva_incluse !== undefined ? (prix_tva_incluse === 'true' || prix_tva_incluse === true) : null,
           timbre_fiscal_applicable !== undefined ? (timbre_fiscal_applicable === 'true' || timbre_fiscal_applicable === true) : null,
           tva_taux_defaut !== undefined ? Number(tva_taux_defaut) : null,
+          rccm || null, ninea || null, forme_juridique || null, capital_social || null,
+          compte_bancaire || null, conditions_vente || null, pied_de_page_document || null,
           req.params.id
         ]
       );
@@ -2280,12 +2292,27 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
     doc.pipe(res);
 
-    // ── En-tête boutique ──────────────────────────────────────────────────
+    // Formatter FCFA — espace normal (pas insécable) pour compatibilité PDFKit
+    const fmtNum = (n) => {
+      const num = Number(n || 0);
+      const fixed = num % 1 === 0 ? num.toString() : num.toFixed(2);
+      const [entier, decimale] = fixed.split('.');
+      const milliers = entier.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      return decimale ? `${milliers},${decimale}` : milliers;
+    };
+
+    // ── En-tête émetteur (gauche) ───────────────────────────────────────
     const headerTop = 50;
     doc.fillColor(NAVY).fontSize(20).font('Helvetica-Bold')
        .text(boutique.nom, 50, headerTop);
     doc.fontSize(10).font('Helvetica').fillColor(GRAY);
-    let infoY = headerTop + 24;
+    let infoY = headerTop + 26;
+    if (boutique.forme_juridique) {
+      let juridique = boutique.forme_juridique;
+      if (boutique.capital_social) juridique += ` — Capital : ${boutique.capital_social}`;
+      doc.text(juridique, 50, infoY);
+      infoY += 14;
+    }
     if (boutique.adresse) {
       doc.text(boutique.adresse, 50, infoY);
       infoY += 14;
@@ -2294,31 +2321,49 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
       doc.text(`Tél : ${boutique.telephone}`, 50, infoY);
       infoY += 14;
     }
+    if (boutique.rccm) {
+      doc.text(`RCCM : ${boutique.rccm}`, 50, infoY);
+      infoY += 14;
+    }
+    if (boutique.ninea) {
+      doc.text(`NINEA : ${boutique.ninea}`, 50, infoY);
+      infoY += 14;
+    }
 
-    doc.moveTo(50, infoY + 8)
-       .lineTo(545, infoY + 8)
+    // Ligne séparatrice
+    doc.moveTo(50, infoY + 6)
+       .lineTo(545, infoY + 6)
        .strokeColor(NAVY).lineWidth(1.5).stroke();
 
     doc.moveDown(3);
 
     // ── Titre Document ───────────────────────────────────────────────────
-    const docY = doc.y + 15;
+    const docY = Math.max(doc.y + 10, infoY + 20);
     const typeFmt = document.type === 'devis' ? 'DEVIS' : document.type === 'proforma' ? 'FACTURE PROFORMA' : 'FACTURE DE VENTE';
     doc.fillColor(NAVY).fontSize(22).font('Helvetica-Bold').text(typeFmt, 50, docY);
     doc.fillColor(GRAY).fontSize(10).font('Helvetica')
        .text(`Réf : ${document.reference}`, 50, docY + 28)
        .text(`Date : ${new Date(document.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}`, 50, docY + 42);
+    if (document.date_echeance) {
+      doc.text(`Échéance : ${new Date(document.date_echeance).toLocaleDateString('fr-FR')}`, 50, docY + 56);
+    }
 
-    // Bloc client
+    // Bloc destinataire (droite)
     if (client) {
       doc.fillColor(NAVY).fontSize(11).font('Helvetica-Bold').text('Destinataire', 350, docY);
       doc.fillColor('#374151').fontSize(10).font('Helvetica')
          .text(client.nom, 350, docY + 16);
+      let clientInfoY = docY + 30;
       if (client.telephone) {
-        doc.text(`Tél : ${client.telephone}`, 350, docY + 30);
+        doc.text(`Tél : ${client.telephone}`, 350, clientInfoY);
+        clientInfoY += 14;
       }
       if (client.adresse) {
-        doc.text(client.adresse, 350, docY + 44);
+        doc.text(client.adresse, 350, clientInfoY);
+        clientInfoY += 14;
+      }
+      if (client.ninea) {
+        doc.text(`NINEA : ${client.ninea}`, 350, clientInfoY);
       }
     } else {
       doc.fillColor(NAVY).fontSize(11).font('Helvetica-Bold').text('Destinataire', 350, docY);
@@ -2329,7 +2374,7 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
     doc.moveDown(4);
 
     // ── Tableau des items ──────────────────────────────────────────────────
-    const tableTop = doc.y + 20;
+    const tableTop = Math.max(doc.y + 15, docY + 75);
     const col = { desc: 50, qty: 310, pu: 370, total: 450 };
 
     doc.rect(50, tableTop, 495, 24).fill(NAVY);
@@ -2341,16 +2386,6 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
 
     let currentY = tableTop + 24;
     const itemsList = Array.isArray(document.items) ? document.items : JSON.parse(document.items || '[]');
-
-    // Formatter FCFA — utilise un espace normal au lieu de l'espace insécable (U+202F/U+00A0)
-    // que toLocaleString('fr-FR') produit et que PDFKit rend comme "/"
-    const fmtNum = (n) => {
-      const num = Number(n || 0);
-      const fixed = num % 1 === 0 ? num.toString() : num.toFixed(2);
-      const [entier, decimale] = fixed.split('.');
-      const milliers = entier.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-      return decimale ? `${milliers},${decimale}` : milliers;
-    };
 
     itemsList.forEach((item, idx) => {
       const bg = idx % 2 === 0 ? '#f8fafc' : '#ffffff';
@@ -2401,22 +2436,58 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
       currentY += 16;
     }
 
-    // Net à payer
+    // Net à payer (mis en évidence)
+    currentY += 4;
+    doc.rect(totalX - 5, currentY - 3, labelW + valueW + 10, 22).fill('#f0f4f8');
     doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(12).text('Net à payer :', totalX, currentY, { width: labelW });
     doc.text(`${fmtNum(document.net_a_payer)} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
+    currentY += 30;
 
-    // Mentions légales si non assujetti
-    if (boutique.regime_fiscal === 'non_assujetti') {
-      currentY += 40;
-      doc.fillColor(GRAY).fontSize(8).font('Helvetica-Oblique')
-         .text("TVA non applicable - article 286 du Code Général des Impôts (CGI) du Sénégal.", 50, currentY, { align: 'center', width: 495 });
+    // ── Notes du document ─────────────────────────────────────────────────
+    if (document.notes) {
+      doc.fillColor('#374151').fontSize(9).font('Helvetica-Bold').text('Notes :', 50, currentY);
+      doc.font('Helvetica').fillColor(GRAY).text(document.notes, 50, currentY + 12, { width: 495 });
+      currentY = doc.y + 15;
     }
 
-    // Notes
-    if (document.notes) {
-      currentY += 40;
-      doc.fillColor('#374151').fontSize(9).font('Helvetica-Bold').text('Notes / Conditions :', 50, currentY);
-      doc.font('Helvetica').fillColor(GRAY).text(document.notes, 50, currentY + 12, { width: 495 });
+    // ── Coordonnées bancaires ─────────────────────────────────────────────
+    if (boutique.compte_bancaire) {
+      doc.moveTo(50, currentY).lineTo(545, currentY).strokeColor('#e5e7eb').lineWidth(0.5).stroke();
+      currentY += 10;
+      doc.fillColor(NAVY).fontSize(9).font('Helvetica-Bold').text('Coordonnées bancaires pour règlement :', 50, currentY);
+      currentY += 13;
+      doc.fillColor(GRAY).fontSize(8).font('Helvetica').text(boutique.compte_bancaire, 50, currentY, { width: 495 });
+      currentY = doc.y + 10;
+    }
+
+    // ── Conditions de vente ───────────────────────────────────────────────
+    if (boutique.conditions_vente) {
+      // Vérifier si on déborde de la page, sinon ajouter une nouvelle page
+      if (currentY > 680) {
+        doc.addPage();
+        currentY = 50;
+      }
+      doc.moveTo(50, currentY).lineTo(545, currentY).strokeColor('#e5e7eb').lineWidth(0.5).stroke();
+      currentY += 10;
+      doc.fillColor(NAVY).fontSize(8).font('Helvetica-Bold').text('Conditions Générales de Vente :', 50, currentY);
+      currentY += 11;
+      doc.fillColor(GRAY).fontSize(7).font('Helvetica').text(boutique.conditions_vente, 50, currentY, { width: 495, lineGap: 2 });
+      currentY = doc.y + 10;
+    }
+
+    // ── Mentions légales TVA ──────────────────────────────────────────────
+    if (boutique.regime_fiscal === 'non_assujetti') {
+      if (currentY > 720) { doc.addPage(); currentY = 50; }
+      doc.fillColor(GRAY).fontSize(8).font('Helvetica-Oblique')
+         .text("TVA non applicable - article 286 du Code Général des Impôts (CGI) du Sénégal.", 50, currentY, { align: 'center', width: 495 });
+      currentY = doc.y + 8;
+    }
+
+    // ── Pied de page personnalisé ─────────────────────────────────────────
+    if (boutique.pied_de_page_document) {
+      if (currentY > 740) { doc.addPage(); currentY = 50; }
+      doc.fillColor('#9ca3af').fontSize(8).font('Helvetica-Oblique')
+         .text(boutique.pied_de_page_document, 50, currentY, { align: 'center', width: 495 });
     }
 
     doc.end();

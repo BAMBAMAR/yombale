@@ -876,13 +876,20 @@ module.exports = async function migrateInline() {
 
   // --- NOUVELLES FONCTIONNALITÉS POS (Fiscalité, Documents, Fournisseurs) ---
   try {
-    // 1. Boutiques et produits
+    // 1. Boutiques et produits + Infos légales OHADA
     await pool.query(`
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS regime_fiscal VARCHAR(30) DEFAULT 'reel';
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS prix_tva_incluse BOOLEAN DEFAULT TRUE;
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS timbre_fiscal_applicable BOOLEAN DEFAULT FALSE;
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS tva_taux_defaut NUMERIC(5,2) DEFAULT 18.00;
       ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS tva_taux NUMERIC(5,2) DEFAULT NULL;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS rccm VARCHAR(50);
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS ninea VARCHAR(50);
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS forme_juridique VARCHAR(50);
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS capital_social VARCHAR(50);
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS compte_bancaire TEXT;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS conditions_vente TEXT;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS pied_de_page_document TEXT;
     `);
 
     // 2. Clients (NINEA et exonérations)
