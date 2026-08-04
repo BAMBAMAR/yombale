@@ -1044,6 +1044,7 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - Suivi des fiches fournisseurs (contact, adresse) et des bons de commande d'approvisionnement.
     - Bouton de réception de stock augmentant automatiquement les inventaires et créant une ligne de dépense comptable.
     - **Correction Redirection Enregistrement** : Remplacement de `onEdit` par `router.refresh()` dans `BoutiqueClient.tsx` pour les onglets `fiscalite` et `infos`. L'utilisateur reste désormais dans la boutique sur l'onglet actif après l'enregistrement au lieu d'être redirigé vers la liste des boutiques.
+    - **Conditions Générales de Vente** : affichées au grand format sur les **Devis & Proformas**, et remplacées par une mention de réserve de propriété & règlement condensée (1 ligne) sur les **Factures de vente** pour garantir un rendu propre sur **1 seule page A4**.
     - **Correction Caractères Parasites `Đ` PDF** : Implémentation de `cleanText()` dans `backend/routes/boutiques.js` qui supprime les sauts de ligne Windows `\r` (CRLF) des zones de texte (`conditions_vente`, `compte_bancaire`, `notes`, `pied_de_page_document`) pour éviter l'impression de caractères parasites `Đ` dans PDFKit.
   - **Support Hors-ligne Caisse POS (Offline Mode)** :
     - Intégration de la base IndexedDB locale (`db-offline.ts`) pour la caisse.
