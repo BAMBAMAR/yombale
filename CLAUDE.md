@@ -1063,7 +1063,22 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - Ajout d'un bouton `✏️ Modifier` sur chaque fournisseur dans `GestionFournisseurs.tsx`, ouvrant la modale pré-remplie en mode édition et appelant le Server Action `modifierFournisseur` existant.
     - Le formulaire de la modale fournisseur est désormais dynamique : le titre, le bouton de soumission et l'action serveur s'adaptent entre création et modification.
     - Remplacement du tableau HTML (`<table>`) par des cartes responsives (`<div>`) pour les fournisseurs, avec icônes contact (📞, ✉️, 📍), garantissant un affichage correct sur mobile et desktop.
-
-
-
+  - **Informations Légales OHADA & Standards PDF Professionnels** :
+    - **Migration BDD** : Ajout de 7 nouvelles colonnes à la table `boutiques` : `rccm`, `ninea`, `forme_juridique`, `capital_social`, `compte_bancaire`, `conditions_vente`, `pied_de_page_document`.
+    - **Backend** : Route PUT `/:id` étendue pour sauvegarder les 7 nouveaux champs. Routes GET `/mine` et GET `/:idOrSlug` étendues pour les inclure dans le SELECT.
+    - **Frontend `ParametresFiscalite.tsx`** : Refonte complète du composant avec 4 sections :
+      1. 📊 Configuration Fiscale (régime, TVA, timbre fiscal — existant)
+      2. 📋 Identité Juridique (RCCM, NINEA, forme juridique, capital social — **nouveau**)
+      3. 🏦 Coordonnées Bancaires (textarea pour IBAN/RIB/SWIFT — **nouveau**)
+      4. 📄 Conditions Générales de Vente (textarea + bouton modèle OHADA pré-rempli — **nouveau**)
+    - **PDF aux standards OHADA** : Refonte complète de la génération PDF (`GET /api/boutiques/:id/documents/:docId/pdf`) :
+      - En-tête émetteur complet : nom, forme juridique + capital, adresse, téléphone, RCCM, NINEA
+      - Bloc destinataire avec NINEA client si professionnel
+      - Date d'échéance affichée si renseignée
+      - Net à payer mis en évidence (bandeau coloré)
+      - Coordonnées bancaires pour règlement en bas de facture
+      - Conditions Générales de Vente (avec saut de page automatique si débordement)
+      - Mentions légales TVA non applicable si non assujetti
+      - Pied de page personnalisé configurable
+    - **Correction prix PDF** : Les prix unitaires dans le tableau articles utilisent désormais `item.prix_unitaire` (au lieu de `item.prix` qui retournait 0). Le formatage des nombres utilise un formateur custom `fmtNum()` au lieu de `toLocaleString('fr-FR')` qui produisait des `/` dans PDFKit à cause des espaces insécables Unicode.
 
