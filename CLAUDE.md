@@ -1043,6 +1043,8 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - Création d'un onglet "Fournisseurs & Stock" dans le Dashboard Marchand.
     - Suivi des fiches fournisseurs (contact, adresse) et des bons de commande d'approvisionnement.
     - Bouton de réception de stock augmentant automatiquement les inventaires et créant une ligne de dépense comptable.
+    - **Correction Redirection Enregistrement** : Remplacement de `onEdit` par `router.refresh()` dans `BoutiqueClient.tsx` pour les onglets `fiscalite` et `infos`. L'utilisateur reste désormais dans la boutique sur l'onglet actif après l'enregistrement au lieu d'être redirigé vers la liste des boutiques.
+    - **Correction Caractères Parasites `Đ` PDF** : Implémentation de `cleanText()` dans `backend/routes/boutiques.js` qui supprime les sauts de ligne Windows `\r` (CRLF) des zones de texte (`conditions_vente`, `compte_bancaire`, `notes`, `pied_de_page_document`) pour éviter l'impression de caractères parasites `Đ` dans PDFKit.
   - **Support Hors-ligne Caisse POS (Offline Mode)** :
     - Intégration de la base IndexedDB locale (`db-offline.ts`) pour la caisse.
     - Sauvegarde automatique en cache local du catalogue produits et des clients pour continuer à vendre même en cas de coupure internet.
