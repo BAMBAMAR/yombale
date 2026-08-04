@@ -8757,7 +8757,6 @@ button:focus-visible,
   background: #f8fafc;
   border-radius: 16px;
   border: 1px solid #e5e7eb;
-  overflow: hidden;
 }
 
 .bq-sidebar {

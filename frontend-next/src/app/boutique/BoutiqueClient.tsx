@@ -1627,7 +1627,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                         style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
                       />
                       <div style={{
-                        position: 'absolute', left: 0, right: 'auto', bottom: 'calc(100% + 6px)', background: '#ffffff', border: '1px solid #cbd5e1',
+                        position: 'absolute', right: 0, left: 'auto', bottom: 'calc(100% + 6px)', background: '#ffffff', border: '1px solid #cbd5e1',
                         borderRadius: 10, padding: 6, zIndex: 9999, boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
                         display: 'flex', flexDirection: 'column', gap: 4, minWidth: 200, maxWidth: 'calc(100vw - 32px)'
                       }}>
@@ -2100,7 +2100,7 @@ export default function BoutiqueClient({
   // Mode gestion — layout pleine largeur avec sidebar
   if (typeof mode === 'object' && 'managing' in mode) {
     return (
-      <div style={{ maxWidth: 1100, margin: '32px auto', padding: '0 24px' }}>
+      <div style={{ maxWidth: 1360, margin: '32px auto', padding: '0 24px' }}>
         <BoutiqueManage
           boutique={mode.managing}
           planActif={planActif ?? null}
