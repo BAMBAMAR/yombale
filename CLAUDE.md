@@ -1050,5 +1050,11 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - Indicateur dynamique clignotant `🟢 EN LIGNE` / `⚠️ HORS-LIGNE` dans l'en-tête de la caisse POS.
   - **Validation & Compilation globale** :
     - Correction des typages et vérification de la compilation TypeScript de l'ensemble du projet frontend (`npx tsc --noEmit` validé avec succès).
+  - **Impression PDF & Affichage des Documents** :
+    - Ajout de l'endpoint `GET /api/boutiques/:id/documents/:docId/pdf` pour générer un PDF A4 stylisé (Facture, Devis, Proforma) avec en-tête de boutique, détails clients, tableau d'articles et totaux de taxes.
+    - Ajout du bouton d'action `🖨️ PDF` dans l'interface de gestion des documents pour ouvrir ou télécharger la facture en 1 clic.
+    - Correction de l'affichage des montants HT/TVA/TTC qui s'affichaient sous forme de tiret (`—`) dû à une divergence de noms de colonnes (`total_ht` au lieu de `montant_ht`).
+    - Nettoyage du nom de client affiché (`client.nom` au lieu de `client.prenom client.nom` qui provoquait un affichage `undefined nom_client`).
+
 
 
