@@ -1995,7 +1995,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
         {tab === 'analytics' && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
         {tab === 'infos'    && (
           <div style={{ maxWidth: 580 }}>
-            <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={onEdit} />
+            <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={() => router.refresh()} />
           </div>
         )}
         {tab === 'marketing' && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} planActif={planActif} />}
@@ -2003,7 +2003,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
         {tab === 'caissiers' && <BoutiqueCaissiers boutiqueId={boutique.id} />}
         {tab === 'documents' && <GestionDocuments boutiqueId={boutique.id} />}
         {tab === 'fournisseurs' && <GestionFournisseurs boutiqueId={boutique.id} />}
-        {tab === 'fiscalite' && <ParametresFiscalite boutique={boutique} onUpdate={onEdit} />}
+        {tab === 'fiscalite' && <ParametresFiscalite boutique={boutique} onUpdate={() => router.refresh()} />}
       </main>
     </div>
     </>
@@ -2040,7 +2040,12 @@ export default function BoutiqueClient({
   const manageId = searchParams.get('manage') || searchParams.get('id')
 
   useEffect(() => {
-    if (manageId && boutiques.length > 0) {
+    if (typeof mode === 'object' && 'managing' in mode) {
+      const targetBoutique = boutiques.find(b => b.id === mode.managing.id)
+      if (targetBoutique) {
+        setMode({ managing: targetBoutique })
+      }
+    } else if (manageId && boutiques.length > 0) {
       const targetBoutique = boutiques.find(b => b.id === manageId || b.slug === manageId)
       if (targetBoutique) {
         setMode({ managing: targetBoutique })

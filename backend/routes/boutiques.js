@@ -2292,6 +2292,9 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
     doc.pipe(res);
 
+    // Helper de nettoyage de texte (nettoie les \r de Windows qui créent des "Đ" parasite dans PDFKit)
+    const cleanText = (str) => String(str || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+
     // Formatter FCFA — espace normal (pas insécable) pour compatibilité PDFKit
     const fmtNum = (n) => {
       const num = Number(n || 0);
@@ -2446,7 +2449,7 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
     // ── Notes du document ─────────────────────────────────────────────────
     if (document.notes) {
       doc.fillColor('#374151').fontSize(9).font('Helvetica-Bold').text('Notes :', 50, currentY);
-      doc.font('Helvetica').fillColor(GRAY).text(document.notes, 50, currentY + 12, { width: 495 });
+      doc.font('Helvetica').fillColor(GRAY).text(cleanText(document.notes), 50, currentY + 12, { width: 495 });
       currentY = doc.y + 15;
     }
 
@@ -2456,7 +2459,7 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
       currentY += 10;
       doc.fillColor(NAVY).fontSize(9).font('Helvetica-Bold').text('Coordonnées bancaires pour règlement :', 50, currentY);
       currentY += 13;
-      doc.fillColor(GRAY).fontSize(8).font('Helvetica').text(boutique.compte_bancaire, 50, currentY, { width: 495 });
+      doc.fillColor(GRAY).fontSize(8).font('Helvetica').text(cleanText(boutique.compte_bancaire), 50, currentY, { width: 495 });
       currentY = doc.y + 10;
     }
 
@@ -2471,7 +2474,7 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
       currentY += 10;
       doc.fillColor(NAVY).fontSize(8).font('Helvetica-Bold').text('Conditions Générales de Vente :', 50, currentY);
       currentY += 11;
-      doc.fillColor(GRAY).fontSize(7).font('Helvetica').text(boutique.conditions_vente, 50, currentY, { width: 495, lineGap: 2 });
+      doc.fillColor(GRAY).fontSize(7).font('Helvetica').text(cleanText(boutique.conditions_vente), 50, currentY, { width: 495, lineGap: 2 });
       currentY = doc.y + 10;
     }
 
@@ -2487,7 +2490,7 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
     if (boutique.pied_de_page_document) {
       if (currentY > 740) { doc.addPage(); currentY = 50; }
       doc.fillColor('#9ca3af').fontSize(8).font('Helvetica-Oblique')
-         .text(boutique.pied_de_page_document, 50, currentY, { align: 'center', width: 495 });
+         .text(cleanText(boutique.pied_de_page_document), 50, currentY, { align: 'center', width: 495 });
     }
 
     doc.end();
