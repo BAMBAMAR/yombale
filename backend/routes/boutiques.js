@@ -40,7 +40,31 @@ const uploadProduitPhotos = multer({
   },
 });
 
-const CATS = ['smartphones','informatique','tv-electro','mode','maison','auto-moto','jeux','services','alimentation','beaute','autre'];
+const CATS = [
+  'mixte',
+  'smartphones',
+  'informatique',
+  'tv-electro',
+  'mode',
+  'maison',
+  'auto-moto',
+  'jeux',
+  'alimentation',
+  'beaute',
+  'sport',
+  'fournitures',
+  'quincaillerie',
+  'pieces-rechange',
+  'bijouterie',
+  'maraichage',
+  'elevage',
+  'produits-agricoles',
+  'solaire-energie',
+  'sante-pharma',
+  'bebe-enfants',
+  'services',
+  'autre'
+];
 const MAX_BOUTIQUES = 3;
 const QUOTA_PRODUITS = { pro: 50, business: Infinity };
 

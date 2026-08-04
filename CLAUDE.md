@@ -1019,3 +1019,15 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
   2. **Page Web Checkout Express 1-Page (`frontend-next/src/app/checkout-express/page.tsx`)** :
      - Interface de validation ultra-rapide optimisée mobile avec support Wave, Orange Money et Cash à la livraison.
 
+- **Correction du Filtre d'Importation par Lot (Batch Import)** (ajouté 4 août 2026) :
+  - **Correction du bug d'exclusion des parenthèses dans `BatchImportModal.tsx`** : Le filtre d'affichage des modèles du catalogue standard excluait à tort tous les produits contenant une parenthèse `(` pour éliminer les doublons numérotés (ex: ` (2)`). Remplacement par la regex `/\s\(\d+\)$/.test(t.nom)` pour ne cibler et masquer que les doublons chiffrés. Cela restaure la visibilité des produits légitimes contenant des conditionnements entre parenthèses, tels que :
+    - `Bouillon Jumbo Poulet (60 cubes)`
+    - `Bouillon Jumbo Crevette (60 cubes)`
+    - `Thé Lipton Yellow Label (100 sachets)`
+    - `Thé Vert Flecha 8147 (250g)`
+    - `Eau Kirène 1.5L (Pack de 6)`
+
+- **Expansion à 20 Catégories & 100+ Produits par Catégorie** (ajouté 4 août 2026) :
+  - **Ajout de 7 nouvelles catégories** : Intégration de la bijouterie (`bijouterie`), du maraîchage (`maraichage`), de l'élevage (`elevage`), des produits agricoles (`produits-agricoles`), de l'énergie solaire (`solaire-energie`), de la santé/pharmacie (`sante-pharma`) et des articles bébé (`bebe-enfants`) dans `backend/routes/boutiques.js` (`CATS`) et `frontend-next/src/lib/categories.ts` (`CATEGORIES`).
+  - **Régénération du Catalogue Standard** : Mise à jour de `backend/generate-catalog.js` avec de nouveaux produits types ciblés pour le Sénégal (moutons Ladoum, sacs d'oignons Mbane, mil, solaire, etc.) et configuration d'un minimum de 100 produits par catégorie. Le fichier `catalogues-standards.json` contient désormais 2 070 articles répartis sur 20 catégories actives.
+

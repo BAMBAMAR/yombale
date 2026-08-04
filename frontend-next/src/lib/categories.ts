@@ -13,6 +13,13 @@ export const CATEGORIES = [
   { value: 'fournitures',  label: '📚 Fournitures & Bureautique' },
   { value: 'quincaillerie',label: '🧱 Quincaillerie & BTP' },
   { value: 'pieces-rechange',label: '⚙️ Pièces de Rechange' },
+  { value: 'bijouterie',   label: '💎 Bijouterie & Horlogerie' },
+  { value: 'maraichage',   label: '🥕 Maraîchage & Fruits/Légumes' },
+  { value: 'elevage',      label: '🐑 Élevage & Aliments Bétail' },
+  { value: 'produits-agricoles', label: '🌾 Produits Agricoles & Intrants' },
+  { value: 'solaire-energie', label: '☀️ Solaire & Énergie' },
+  { value: 'sante-pharma',  label: '💊 Santé & Pharmacie' },
+  { value: 'bebe-enfants',  label: '👶 Bébé & Enfants' },
   { value: 'services',     label: '🛠 Services' },
   { value: 'autre',        label: '📦 Autre' },
 ]

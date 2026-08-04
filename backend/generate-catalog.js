@@ -162,6 +162,97 @@ const catalogues = {
     { nom: "Alternateur 12V", desc: "Alternateur de rechange standard pour recharge batterie", photo: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400" },
     { nom: "Démarreur électrique", desc: "Démarreur robuste pour démarrage rapide à froid", photo: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400" },
     { nom: "Amortisseur avant (x2)", desc: "Jeu de 2 amortisseurs hydrauliques pour confort de conduite", photo: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400" }
+  ],
+
+  bijouterie: [
+    { nom: "Collier en Or 18K", desc: "Collier en or jaune 18 carats de fabrication artisanale sénégalaise", photo: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400" },
+    { nom: "Bracelet en Argent Filigrane", desc: "Bracelet traditionnel en argent filigrane fait main à Saint-Louis", photo: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400" },
+    { nom: "Bague Solitaire Or & Diamant", desc: "Bague de fiançailles en or blanc sertie d'un diamant étincelant", photo: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400" },
+    { nom: "Boucles d'Oreilles Or Traditionnelles", desc: "Boucles d'oreilles pendantes en or ciselé pour cérémonies (Magal/Gamou)", photo: "https://images.unsplash.com/photo-1635767798638-3e25273a8236?w=400" },
+    { nom: "Montre Homme Seiko Automatique", desc: "Montre automatique étanche avec bracelet en acier inoxydable", photo: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400" },
+    { nom: "Montre Femme Casio Classique", desc: "Montre quartz fine dorée style vintage", photo: "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=400" },
+    { nom: "Gourmette en Argent pour Homme", desc: "Gourmette maille serrée en argent massif avec plaque", photo: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400" },
+    { nom: "Pendentif Carte du Sénégal Or", desc: "Pendentif en or représentant les contours du Sénégal", photo: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400" },
+    { nom: "Bague Chevalière Argent Homme", desc: "Chevalière sculptée en argent massif avec onyx noir", photo: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400" },
+    { nom: "Chaîne de Cheville en Or 18K", desc: "Chaîne de cheville fine en or ornée de petits grelots traditionnels", photo: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400" }
+  ],
+
+  maraichage: [
+    { nom: "Sac d'Oignons Locaux 25kg", desc: "Sac d'oignons frais produits dans la zone du fleuve (Mbane)", photo: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400" },
+    { nom: "Sac de Pommes de Terre Locaux 25kg", desc: "Pommes de terre fraîches de production locale (Niayes)", photo: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400" },
+    { nom: "Caisse de Tomates Cerises 10kg", desc: "Tomates fraîches juteuses idéales pour vos salades et sauces", photo: "https://images.unsplash.com/photo-1595855759920-86582396756a?w=400" },
+    { nom: "Sac de Carottes Locales 20kg", desc: "Carottes fraîches et croquantes récoltées localement", photo: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400" },
+    { nom: "Caisse d'Aubergines Amères (Diakhatou) 10kg", desc: "Aubergines locales indispensables pour le riz au poisson traditionnel", photo: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=400" },
+    { nom: "Panier de Piments Verts 5kg", desc: "Piments verts parfumés et moyennement piquants", photo: "https://images.unsplash.com/photo-1588252306573-689159099c7b?w=400" },
+    { nom: "Panier de Gombos Frais 5kg", desc: "Gombos tendres et frais pour sauce Kandia", photo: "https://images.unsplash.com/photo-1627917849646-6df7d17469a4?w=400" },
+    { nom: "Caisse de Mangues Kent (Casamance) 15kg", desc: "Mangues Kent charnues, sucrées et sans fibres de Casamance", photo: "https://images.unsplash.com/photo-1553279768-865429fa0078?w=400" },
+    { nom: "Caisse de Papayes Locales 10kg", desc: "Papayes mûres et sucrées cultivées au Sénégal", photo: "https://images.unsplash.com/photo-1618228373037-9aa2a0ec4c8b?w=400" },
+    { nom: "Sac de Choux Pommés 25kg", desc: "Choux frais bien formés pour accompagnements", photo: "https://images.unsplash.com/photo-1592394541731-8cc5d076aa5f?w=400" }
+  ],
+
+  elevage: [
+    { nom: "Mouton Bélier de race Ladoum", desc: "Superbe bélier Ladoum avec une excellente conformation et morphologie", photo: "https://images.unsplash.com/photo-1484557052118-f32bd25b45b5?w=400" },
+    { nom: "Mouton Bélier Touabire (Tabaski)", desc: "Mouton blanc de race Touabire, idéal pour la fête de la Tabaski", photo: "https://images.unsplash.com/photo-1484557052118-f32bd25b45b5?w=400" },
+    { nom: "Chèvre Locale (Génisse)", desc: "Chèvre laitière de race locale pour élevage ou viande", photo: "https://images.unsplash.com/photo-1524024414332-a5e2f83cf8b7?w=400" },
+    { nom: "Sac d'Aliment Bétail (Rumi) 50kg", desc: "Aliment complet pour l'engraissement des moutons et boeufs", photo: "https://images.unsplash.com/photo-1536402443044-a0774a3f4e24?w=400" },
+    { nom: "Sac de Tourteau d'Arachide 25kg", desc: "Complément protéique de qualité supérieure pour le bétail", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
+    { nom: "Botte de Foin de Luzerne Séchée", desc: "Foin nutritif riche en fibres et minéraux pour l'élevage", photo: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=400" },
+    { nom: "Abreuvoir Automatique Volaille 5L", desc: "Abreuvoir en plastique robuste avec système de suspension", photo: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400" },
+    { nom: "Mangeoire Métallique pour Moutons 1.5m", desc: "Mangeoire robuste suspendue pour limiter le gaspillage d'aliments", photo: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=400" },
+    { nom: "Lot de 50 Poussins d'un jour (Chair)", desc: "Poussins de chair vaccinés, vigoureux et prêts pour le démarrage", photo: "https://images.unsplash.com/photo-1606857521015-7f9fcf423740?w=400" },
+    { nom: "Poule Pondeuse Isa Brown (Adulte)", desc: "Poule pondeuse productive vaccinée, proche de l'entrée en ponte", photo: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=400" }
+  ],
+
+  "produits-agricoles": [
+    { nom: "Sac de Riz Paddy Local 50kg", desc: "Riz local brut non décortiqué de la vallée du fleuve Sénégal", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
+    { nom: "Sac de Mil Grain (Millet) 50kg", desc: "Millet local en grain propre pour couscous (Thiakry, Souna)", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
+    { nom: "Sac de Maïs Grain Jaune 50kg", desc: "Maïs sec en grains pour alimentation humaine ou animale", photo: "https://images.unsplash.com/photo-1551754625-702b7b51b3c9?w=400" },
+    { nom: "Sac d'Arachides Décortiquées 40kg", desc: "Graines d'arachide de qualité pour extraction d'huile ou pâte (mafé)", photo: "https://images.unsplash.com/photo-1567894510008-724444444444?w=400" },
+    { nom: "Sac de Sorgho Local 50kg", desc: "Sorgho rouge/blanc riche en nutriments pour la bouillie", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
+    { nom: "Sac d'Engrais NPK (15-15-15) 50kg", desc: "Engrais minéral complet pour la fertilisation des cultures", photo: "https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=400" },
+    { nom: "Sac d'Engrais Urée 46% 50kg", desc: "Apport d'azote à haute concentration pour la croissance des plantes", photo: "https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=400" },
+    { nom: "Semences de Riz Certifiées 20kg", desc: "Semences de riz à haut rendement adaptées à la culture irriguée", photo: "https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=400" },
+    { nom: "Pulvérisateur Agricole à Dos 16L", desc: "Pulvérisateur manuel robuste pour traitements phytosanitaires", photo: "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400" },
+    { nom: "Semoir Manuel Monorang", desc: "Semoir mécanique rotatif pour maïs, mil et arachide", photo: "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400" }
+  ],
+
+  "solaire-energie": [
+    { nom: "Panneau Solaire Monocristallin 150W", desc: "Panneau solaire silicium haute performance 12V", photo: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=400" },
+    { nom: "Batterie Solaire Gel 12V 100Ah", desc: "Batterie décharge lente étanche idéale pour kits solaires", photo: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400" },
+    { nom: "Régulateur de Charge PWM 30A 12V/24V", desc: "Régulateur de tension intelligent avec double port USB", photo: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400" },
+    { nom: "Convertisseur Pur Sinus 12V-220V 1000W", desc: "Onduleur haute fréquence transformant le 12V en courant stable 220V", photo: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400" },
+    { nom: "Projecteur Solaire LED 100W", desc: "Éclairage extérieur autonome étanche IP67 avec panneau séparé", photo: "https://images.unsplash.com/photo-1550985616-10810253b84d?w=400" },
+    { nom: "Kit Solaire Domestique 3 Ampoules", desc: "Kit portable comprenant panneau, batterie, 3 ampoules LED et chargeur téléphone", photo: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=400" },
+    { nom: "Ampoule LED DC 12V 9W", desc: "Ampoule LED basse consommation se branchant directement sur batterie 12V", photo: "https://images.unsplash.com/photo-1550985616-10810253b84d?w=400" },
+    { nom: "Câble Solaire Double Isolation 4mm² (10m)", desc: "Paire de câbles rouge/noir avec connecteurs MC4 pré-montés", photo: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400" },
+    { nom: "Ventilateur Rechargeable Solaire DC 12V", desc: "Ventilateur sur pied avec batterie intégrée et port de charge solaire", photo: "https://images.unsplash.com/photo-1618941716939-553df3c6c276?w=400" },
+    { nom: "Lampe Solaire de Poche Rechargeable", desc: "Lampe torche avec panneau solaire intégré et manivelle de secours", photo: "https://images.unsplash.com/photo-1550985616-10810253b84d?w=400" }
+  ],
+
+  "sante-pharma": [
+    { nom: "Boîte de Paracétamol 500mg (16 comprimés)", desc: "Antalgique et antipyrotique classique pour douleurs et fièvres", photo: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400" },
+    { nom: "Thermomètre Médical Digital", desc: "Thermomètre électronique rapide avec signal sonore de fin", photo: "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400" },
+    { nom: "Boîte de 50 Masques Chirurgicaux", desc: "Masques de protection 3 plis à haute filtration avec élastiques", photo: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400" },
+    { nom: "Gel Hydroalcoolique 500ml", desc: "Solution désinfectante pour les mains avec pompe distributrice", photo: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=400" },
+    { nom: "Tensiomètre Électronique Bras", desc: "Appareil automatique pour mesurer la tension artérielle à domicile", photo: "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400" },
+    { nom: "Boîte de 100 Pansements Adhésifs", desc: "Pansements de tailles assorties résistants à l'eau", photo: "https://images.unsplash.com/photo-1603398938378-e54eab446dde?w=400" },
+    { nom: "Alcool Chirurgical 70% 250ml", desc: "Solution antiseptique pour la désinfection de la peau saine", photo: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=400" },
+    { nom: "Boîte de 10 Compresses Stériles 10x10cm", desc: "Compresses de gaze hydrophile pour le soin des plaies", photo: "https://images.unsplash.com/photo-1603398938378-e54eab446dde?w=400" },
+    { nom: "Vitamine C 1000mg Éfervescente", desc: "Complément pour réduire la fatigue et stimuler le système immunitaire", photo: "https://images.unsplash.com/photo-1616679911721-eff6e9eefa2a?w=400" },
+    { nom: "Sirop contre la toux aux plantes 150ml", desc: "Sirop adoucissant pour soulager la toux sèche et grasse", photo: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=400" }
+  ],
+
+  "bebe-enfants": [
+    { nom: "Paquet de Couches Bébé (T4 - Maxi)", desc: "Couches absorbantes anti-fuites pour bébés de 7 à 18kg", photo: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400" },
+    { nom: "Lait de Croissance en Poudre 800g", desc: "Lait infantile enrichi pour enfants de 1 à 3 ans", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
+    { nom: "Lingettes Nettoyantes Bébé (72 pièces)", desc: "Lingettes hypoallergéniques sans alcool pour peaux sensibles", photo: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400" },
+    { nom: "Biberon Anti-Colique en Verre 240ml", desc: "Biberon avec tétine en silicone débit moyen", photo: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400" },
+    { nom: "Poussette Canne Ultra-Légère", desc: "Poussette pliable compacte idéale pour les déplacements en ville", photo: "https://images.unsplash.com/photo-1591088398332-8a7791972843?w=400" },
+    { nom: "Shampoing Doux Bébé 500ml", desc: "Shampoing hypoallergénique qui ne pique pas les yeux", photo: "https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=400" },
+    { nom: "Sucette Silicone avec Attache (0-6m)", desc: "Sucette physiologique favorisant le bon développement buccal", photo: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400" },
+    { nom: "Set de Jouets d'Éveil Bébé (5 Pcs)", desc: "Ensemble de hochets colorés et anneaux de dentition", photo: "https://images.unsplash.com/photo-1536640717-470545604d5d?w=400" },
+    { nom: "Poudre de Toilette Bébé 200g", desc: "Talc protecteur pour prévenir les rougeurs et irritations", photo: "https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=400" },
+    { nom: "Lit Parapluie Pliable avec Sac", desc: "Lit de voyage pliable avec matelas fin intégré et côtés en filet", photo: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400" }
   ]
 };
 
