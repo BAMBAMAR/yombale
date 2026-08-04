@@ -224,10 +224,10 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                         {doc.type.toUpperCase()}
                       </span>
                     </td>
-                    <td style={{ padding: 12 }}>{client ? `${client.prenom} ${client.nom}` : 'Passant (Anonyme)'}</td>
-                    <td style={{ padding: 12 }}>{fcfa(doc.montant_ht)}</td>
-                    <td style={{ padding: 12 }}>{fcfa(doc.montant_tva)}</td>
-                    <td style={{ padding: 12, fontWeight: 700 }}>{fcfa(doc.montant_ttc)}</td>
+                    <td style={{ padding: 12 }}>{client ? client.nom : 'Passant (Anonyme)'}</td>
+                    <td style={{ padding: 12 }}>{fcfa(doc.total_ht)}</td>
+                    <td style={{ padding: 12 }}>{fcfa(doc.total_tva)}</td>
+                    <td style={{ padding: 12, fontWeight: 700 }}>{fcfa(doc.total_ttc)}</td>
                     <td style={{ padding: 12 }}>
                       <span style={{
                         padding: '3px 6px', borderRadius: 4, fontSize: 11, fontWeight: 700,
@@ -237,7 +237,15 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                         {doc.statut.toUpperCase()}
                       </span>
                     </td>
-                    <td style={{ padding: 12, display: 'flex', gap: 6 }}>
+                    <td style={{ padding: 12, display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <a
+                        href={`/api/boutiques/${boutiqueId}/documents/${doc.id}/pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ padding: '4px 8px', borderRadius: 6, background: '#1e3a5f', color: '#ffffff', textDecoration: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-block' }}
+                      >
+                        🖨️ PDF
+                      </a>
                       {(doc.type === 'devis' || doc.type === 'proforma') && (
                         <button
                           onClick={() => handleConvertirEnFacture(doc.id, doc.reference)}

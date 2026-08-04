@@ -2213,6 +2213,170 @@ router.put('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID
   }
 });
 
+// ── GET /api/boutiques/:id/documents/:docId/pdf — Générer le PDF A4 du document (Facture, Devis, Proforma)
+router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
+  try {
+    const boutiqueId = req.params.id;
+    const docId = req.params.docId;
+
+    const bRes = await pool.query('SELECT * FROM boutiques WHERE id=$1', [boutiqueId]);
+    const boutique = bRes.rows[0];
+    if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const dRes = await pool.query('SELECT * FROM caisse_documents WHERE id=$1 AND boutique_id=$2', [docId, boutiqueId]);
+    const document = dRes.rows[0];
+    if (!document) return res.status(404).json({ error: 'Document introuvable' });
+
+    let client = null;
+    if (document.client_id) {
+      const cRes = await pool.query('SELECT * FROM caisse_clients_credits WHERE id=$1', [document.client_id]);
+      client = cRes.rows[0] || null;
+    }
+
+    const PDFDocument = require('pdfkit');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${document.type}-${document.reference}.pdf"`);
+
+    const NAVY  = '#1e3a5f';
+    const ORANGE = '#C75B00';
+    const GRAY  = '#6b7280';
+    const doc = new PDFDocument({ margin: 50, size: 'A4' });
+    doc.pipe(res);
+
+    // ── En-tête boutique ──────────────────────────────────────────────────
+    const headerTop = 50;
+    doc.fillColor(NAVY).fontSize(20).font('Helvetica-Bold')
+       .text(boutique.nom, 50, headerTop);
+    doc.fontSize(10).font('Helvetica').fillColor(GRAY);
+    let infoY = headerTop + 24;
+    if (boutique.adresse) {
+      doc.text(boutique.adresse, 50, infoY);
+      infoY += 14;
+    }
+    if (boutique.telephone) {
+      doc.text(`Tél : ${boutique.telephone}`, 50, infoY);
+      infoY += 14;
+    }
+
+    doc.moveTo(50, infoY + 8)
+       .lineTo(545, infoY + 8)
+       .strokeColor(NAVY).lineWidth(1.5).stroke();
+
+    doc.moveDown(3);
+
+    // ── Titre Document ───────────────────────────────────────────────────
+    const docY = doc.y + 15;
+    const typeFmt = document.type === 'devis' ? 'DEVIS' : document.type === 'proforma' ? 'FACTURE PROFORMA' : 'FACTURE DE VENTE';
+    doc.fillColor(NAVY).fontSize(22).font('Helvetica-Bold').text(typeFmt, 50, docY);
+    doc.fillColor(GRAY).fontSize(10).font('Helvetica')
+       .text(`Réf : ${document.reference}`, 50, docY + 28)
+       .text(`Date : ${new Date(document.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}`, 50, docY + 42);
+
+    // Bloc client
+    if (client) {
+      doc.fillColor(NAVY).fontSize(11).font('Helvetica-Bold').text('Destinataire', 350, docY);
+      doc.fillColor('#374151').fontSize(10).font('Helvetica')
+         .text(client.nom, 350, docY + 16);
+      if (client.telephone) {
+        doc.text(`Tél : ${client.telephone}`, 350, docY + 30);
+      }
+      if (client.adresse) {
+        doc.text(client.adresse, 350, docY + 44);
+      }
+    } else {
+      doc.fillColor(NAVY).fontSize(11).font('Helvetica-Bold').text('Destinataire', 350, docY);
+      doc.fillColor('#374151').fontSize(10).font('Helvetica')
+         .text('Client Passant (Anonyme)', 350, docY + 16);
+    }
+
+    doc.moveDown(4);
+
+    // ── Tableau des items ──────────────────────────────────────────────────
+    const tableTop = doc.y + 20;
+    const col = { desc: 50, qty: 310, pu: 370, total: 450 };
+
+    doc.rect(50, tableTop, 495, 24).fill(NAVY);
+    doc.fillColor('#fff').fontSize(10).font('Helvetica-Bold');
+    doc.text('Désignation',       col.desc + 6, tableTop + 7, { width: 250 });
+    doc.text('Qté',              col.qty,       tableTop + 7, { width: 50, align: 'right' });
+    doc.text('P.U. (FCFA)',      col.pu,        tableTop + 7, { width: 70, align: 'right' });
+    doc.text('Total (FCFA)',     col.total,     tableTop + 7, { width: 90, align: 'right' });
+
+    let currentY = tableTop + 24;
+    const itemsList = Array.isArray(document.items) ? document.items : JSON.parse(document.items || '[]');
+
+    itemsList.forEach((item, idx) => {
+      const bg = idx % 2 === 0 ? '#f8fafc' : '#ffffff';
+      doc.rect(50, currentY, 495, 28).fill(bg);
+      doc.fillColor('#111').fontSize(10).font('Helvetica');
+      doc.text(item.nom || 'Article', col.desc + 6, currentY + 9, { width: 250 });
+      doc.text(String(item.quantite || 1), col.qty, currentY + 9, { width: 50, align: 'right' });
+      doc.text(Number(item.prix || 0).toLocaleString('fr-FR'), col.pu, currentY + 9, { width: 70, align: 'right' });
+      doc.text((Number(item.prix || 0) * Number(item.quantite || 1)).toLocaleString('fr-FR'), col.total, currentY + 9, { width: 90, align: 'right' });
+      currentY += 28;
+    });
+
+    doc.moveTo(50, currentY).lineTo(545, currentY).strokeColor('#e5e7eb').lineWidth(1).stroke();
+    currentY += 15;
+
+    // ── Totaux & Taxes ────────────────────────────────────────────────────
+    const totalX = 330;
+    const labelW = 110;
+    const valueW = 100;
+
+    doc.fontSize(10).font('Helvetica');
+    
+    // Total HT
+    doc.fillColor(GRAY).text('Total Hors Taxes :', totalX, currentY, { width: labelW });
+    doc.fillColor('#111').font('Helvetica-Bold').text(`${Number(document.total_ht || 0).toLocaleString('fr-FR')} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
+    currentY += 16;
+
+    // Total TVA
+    if (Number(document.total_tva || 0) > 0) {
+      doc.fillColor(GRAY).font('Helvetica').text('TVA :', totalX, currentY, { width: labelW });
+      doc.fillColor('#111').font('Helvetica-Bold').text(`${Number(document.total_tva || 0).toLocaleString('fr-FR')} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
+      currentY += 16;
+    }
+
+    // Timbre Fiscal
+    if (Number(document.timbre_fiscal || 0) > 0) {
+      doc.fillColor(GRAY).font('Helvetica').text('Timbre Fiscal (1%) :', totalX, currentY, { width: labelW });
+      doc.fillColor('#111').font('Helvetica-Bold').text(`${Number(document.timbre_fiscal || 0).toLocaleString('fr-FR')} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
+      currentY += 16;
+    }
+
+    // Retenue BRS
+    if (Number(document.retenue_brs || 0) > 0) {
+      doc.fillColor(GRAY).font('Helvetica').text('Retenue BRS :', totalX, currentY, { width: labelW });
+      doc.fillColor('#111').font('Helvetica-Bold').text(`-${Number(document.retenue_brs || 0).toLocaleString('fr-FR')} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
+      currentY += 16;
+    }
+
+    // Net à payer
+    doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(12).text('Net à payer :', totalX, currentY, { width: labelW });
+    doc.text(`${Number(document.net_a_payer || 0).toLocaleString('fr-FR')} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
+
+    // Mentions légales si non assujetti
+    if (boutique.regime_fiscal === 'non_assujetti') {
+      currentY += 40;
+      doc.fillColor(GRAY).fontSize(8).font('Helvetica-Oblique')
+         .text("TVA non applicable - article 286 du Code Général des Impôts (CGI) du Sénégal.", 50, currentY, { align: 'center', width: 495 });
+    }
+
+    // Notes
+    if (document.notes) {
+      currentY += 40;
+      doc.fillColor('#374151').fontSize(9).font('Helvetica-Bold').text('Notes / Conditions :', 50, currentY);
+      doc.font('Helvetica').fillColor(GRAY).text(document.notes, 50, currentY + 12, { width: 495 });
+    }
+
+    doc.end();
+  } catch (err) {
+    console.error('[GET DOCUMENT PDF ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la génération du PDF' });
+  }
+});
+
 router.delete('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID(), param('cId').isUUID(), async (req, res) => {
   try {
     await pool.query(`DELETE FROM bons_commande_fournisseur WHERE id = $1 AND boutique_id = $2`, [req.params.cId, req.params.id]);
@@ -2223,4 +2387,5 @@ router.delete('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isU
 });
 
 module.exports = router;
+
 
