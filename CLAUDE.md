@@ -1068,6 +1068,10 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - Ajout d'un bouton `✏️ Modifier` sur chaque fournisseur dans `GestionFournisseurs.tsx`, ouvrant la modale pré-remplie en mode édition et appelant le Server Action `modifierFournisseur` existant.
     - Le formulaire de la modale fournisseur est désormais dynamique : le titre, le bouton de soumission et l'action serveur s'adaptent entre création et modification.
     - Remplacement du tableau HTML (`<table>`) par des cartes responsives (`<div>`) pour les fournisseurs, avec icônes contact (📞, ✉️, 📍), garantissant un affichage correct sur mobile et desktop.
+    - **Correction Tableau Achats / Bons de commande** :
+      - Correction du bogue `Invalid Date` : lecture de `created_at` / `date_livraison` au lieu de `date_commande` qui était indéfinie.
+      - Correction du bogue `Total Achat` qui affichait un tiret (`—`) : lecture de `montant_total` retourné par la base SQL au lieu de `total_achat`.
+      - Correction du bouton `📥 Réceptionner` et des badges de statut pour supporter indifféremment les valeurs de statut `'recu'` et `'recue'`.
   - **Informations Légales OHADA & Standards PDF Professionnels** :
     - **Migration BDD** : Ajout de 7 nouvelles colonnes à la table `boutiques` : `rccm`, `ninea`, `forme_juridique`, `capital_social`, `compte_bancaire`, `conditions_vente`, `pied_de_page_document`.
     - **Backend** : Route PUT `/:id` étendue pour sauvegarder les 7 nouveaux champs. Routes GET `/mine` et GET `/:idOrSlug` étendues pour les inclure dans le SELECT.
