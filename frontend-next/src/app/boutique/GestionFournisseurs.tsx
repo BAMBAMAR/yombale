@@ -25,6 +25,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   const [modalCMDOuvert, setModalCMDOuvert] = useState<boolean>(false)
 
   // Form Fournisseur State
+  const [fouEditId, setFouEditId] = useState<string | null>(null)
   const [fouNom, setFouNom] = useState<string>('')
   const [fouTel, setFouTel] = useState<string>('')
   const [fouEmail, setFouEmail] = useState<string>('')
@@ -60,23 +61,30 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
     chargerDonnees()
   }, [boutiqueId])
 
-  const handleCreerFournisseur = async (e: React.FormEvent) => {
+  const handleSoumettreFormFournisseur = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!fouNom) return
 
     try {
       setIsSubmitting(true)
-      const res = await creerFournisseur(boutiqueId, {
+      const payload = {
         nom: fouNom,
         telephone: fouTel,
         email: fouEmail,
         adresse: fouAdr
-      })
+      }
+
+      let res: any
+      if (fouEditId) {
+        res = await modifierFournisseur(boutiqueId, fouEditId, payload)
+      } else {
+        res = await creerFournisseur(boutiqueId, payload)
+      }
 
       if (res.error) {
         alert(res.error)
       } else {
-        alert('Fournisseur ajouté avec succès !')
+        alert(fouEditId ? 'Fournisseur modifié avec succès !' : 'Fournisseur ajouté avec succès !')
         setModalFOUOuvert(false)
         resetFouForm()
         chargerDonnees()
@@ -86,6 +94,15 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const ouvrirEditionFournisseur = (f: any) => {
+    setFouEditId(f.id)
+    setFouNom(f.nom || '')
+    setFouTel(f.telephone || '')
+    setFouEmail(f.email || '')
+    setFouAdr(f.adresse || '')
+    setModalFOUOuvert(true)
   }
 
   const handleCreerCommande = async (e: React.FormEvent) => {
@@ -162,6 +179,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   }
 
   const resetFouForm = () => {
+    setFouEditId(null)
     setFouNom('')
     setFouTel('')
     setFouEmail('')
@@ -222,7 +240,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               onClick={() => { resetFouForm(); setModalFOUOuvert(true); }}
               style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
             >
-              ➕ Ajouter Fournisseur
+              ➕ Ajouter
             </button>
           </div>
 
@@ -233,36 +251,36 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               👤 Aucun fournisseur enregistré pour le moment.
             </div>
           ) : (
-            <div style={{ overflowX: 'auto', background: '#ffffff', borderRadius: 12, border: '1px solid #e5e7eb' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>
-                    <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Nom</th>
-                    <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Téléphone</th>
-                    <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Email</th>
-                    <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Adresse</th>
-                    <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fournisseurs.map((f: any) => (
-                    <tr key={f.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                      <td style={{ padding: 12, fontWeight: 700, color: '#111827' }}>{f.nom}</td>
-                      <td style={{ padding: 12 }}>{f.telephone || '-'}</td>
-                      <td style={{ padding: 12 }}>{f.email || '-'}</td>
-                      <td style={{ padding: 12 }}>{f.adresse || '-'}</td>
-                      <td style={{ padding: 12 }}>
-                        <button
-                          onClick={() => handleSupprimerFournisseur(f.id, f.nom)}
-                          style={{ padding: '4px 8px', borderRadius: 6, background: '#ef4444', color: '#ffffff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                        >
-                          🗑️ Supprimer
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {fournisseurs.map((f: any) => (
+                <div key={f.id} style={{ background: '#ffffff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 6 }}>{f.nom}</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px', fontSize: 13, color: '#6b7280' }}>
+                        {f.telephone && <span>📞 {f.telephone}</span>}
+                        {f.email && <span>✉️ {f.email}</span>}
+                        {f.adresse && <span>📍 {f.adresse}</span>}
+                        {!f.telephone && !f.email && !f.adresse && <span style={{ fontStyle: 'italic' }}>Aucune info de contact</span>}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                      <button
+                        onClick={() => ouvrirEditionFournisseur(f)}
+                        style={{ padding: '5px 10px', borderRadius: 6, background: '#f0f9ff', color: '#0284c7', border: '1px solid #bae6fd', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        ✏️ Modifier
+                      </button>
+                      <button
+                        onClick={() => handleSupprimerFournisseur(f.id, f.nom)}
+                        style={{ padding: '5px 10px', borderRadius: 6, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </>
@@ -339,8 +357,8 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
       {modalFOUOuvert && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
           <div style={{ background: '#ffffff', borderRadius: 12, padding: 24, width: '100%', maxWidth: 500 }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700 }}>Ajouter un fournisseur</h3>
-            <form onSubmit={handleCreerFournisseur} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700 }}>{fouEditId ? 'Modifier le fournisseur' : 'Ajouter un fournisseur'}</h3>
+            <form onSubmit={handleSoumettreFormFournisseur} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Nom / Raison Sociale *</label>
                 <input required value={fouNom} onChange={e => setFouNom(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }} placeholder="Ex: ETS Diouf & Frères" />
@@ -363,7 +381,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                   Annuler
                 </button>
                 <button type="submit" disabled={isSubmitting} style={{ padding: '8px 16px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, cursor: 'pointer' }}>
-                  {isSubmitting ? 'Ajout en cours...' : 'Ajouter'}
+                  {isSubmitting ? (fouEditId ? 'Modification...' : 'Ajout en cours...') : (fouEditId ? 'Enregistrer' : 'Ajouter')}
                 </button>
               </div>
             </form>
