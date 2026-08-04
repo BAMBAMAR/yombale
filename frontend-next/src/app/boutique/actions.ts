@@ -609,6 +609,22 @@ export async function recevoirCommandeFournisseur(boutiqueId: string, cmdId: str
   }
 }
 
+export async function supprimerCommandeFournisseur(boutiqueId: string, cmdId: string): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/commandes-fournisseurs/${cmdId}`, {
+      method: 'DELETE'
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de supprimer la commande fournisseur' }
+    }
+    return { success: true }
+  } catch (err) {
+    console.error('[SUPPRIMER_COMMANDE_FOURNISSEUR_ERR]', err)
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
 export async function verifierBonAchat(boutiqueId: string, code: string): Promise<any> {
   try {
     const res = await backendFetch(`/api/boutiques/${boutiqueId}/bons-achat/${code}`)

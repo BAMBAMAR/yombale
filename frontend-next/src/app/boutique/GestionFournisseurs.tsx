@@ -9,6 +9,7 @@ import {
   getCommandesFournisseurs,
   creerCommandeFournisseur,
   recevoirCommandeFournisseur,
+  supprimerCommandeFournisseur,
   getBoutiqueProduits
 } from './actions'
 import { fcfa } from '@/lib/format'
@@ -23,6 +24,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   // Modals state
   const [modalFOUOuvert, setModalFOUOuvert] = useState<boolean>(false)
   const [modalCMDOuvert, setModalCMDOuvert] = useState<boolean>(false)
+  const [cmdDetailsModal, setCmdDetailsModal] = useState<any | null>(null)
 
   // Form Fournisseur State
   const [fouEditId, setFouEditId] = useState<string | null>(null)
@@ -156,6 +158,21 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
         alert(res.error)
       } else {
         alert('Commande réceptionnée et stocks mis à jour !')
+        chargerDonnees()
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleSupprimerCommande = async (cmdId: string, ref: string) => {
+    if (!confirm(`Supprimer la commande d'achat ${ref} ?`)) return
+    try {
+      const res = await supprimerCommandeFournisseur(boutiqueId, cmdId)
+      if (res.error) {
+        alert(res.error)
+      } else {
+        alert('Commande supprimée avec succès !')
         chargerDonnees()
       }
     } catch (err) {
@@ -338,14 +355,29 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                           </span>
                         </td>
                         <td style={{ padding: 12 }}>
-                          {!isRecue && (
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                            {!isRecue && (
+                              <button
+                                onClick={() => handleRecevoirCommande(cmd.id)}
+                                style={{ padding: '5px 10px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                              >
+                                📥 Réceptionner
+                              </button>
+                            )}
                             <button
-                              onClick={() => handleRecevoirCommande(cmd.id)}
-                              style={{ padding: '6px 12px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                              onClick={() => setCmdDetailsModal(cmd)}
+                              style={{ padding: '5px 10px', borderRadius: 6, background: '#f0f9ff', color: '#0284c7', border: '1px solid #bae6fd', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                             >
-                              📥 Réceptionner
+                              👁️ Détails
                             </button>
-                          )}
+                            <button
+                              onClick={() => handleSupprimerCommande(cmd.id, cmd.reference)}
+                              style={{ padding: '5px 10px', borderRadius: 6, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                              title="Supprimer la commande"
+                            >
+                              🗑️
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -466,6 +498,103 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Détails Commande Stock */}
+      {cmdDetailsModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#ffffff', borderRadius: 12, padding: 24, width: '100%', maxWidth: 650, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #e5e7eb', paddingBottom: 12 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>
+                  Bon de Commande : {cmdDetailsModal.reference}
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>
+                  Fournisseur : <strong>{fournisseurs.find(f => f.id === cmdDetailsModal.fournisseur_id)?.nom || 'Inconnu'}</strong>
+                </p>
+              </div>
+              <button
+                onClick={() => setCmdDetailsModal(null)}
+                style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#6b7280' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Informations synthétiques */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 16, background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Statut</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: (cmdDetailsModal.statut === 'recu' || cmdDetailsModal.statut === 'recue') ? '#065f46' : '#9a3412' }}>
+                  {(cmdDetailsModal.statut === 'recu' || cmdDetailsModal.statut === 'recue') ? '✅ REÇUE' : '⏳ EN ATTENTE'}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Date de création</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>
+                  {new Date(cmdDetailsModal.created_at || cmdDetailsModal.date_commande || Date.now()).toLocaleDateString('fr-FR')}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Montant Total</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#047857' }}>
+                  {fcfa(cmdDetailsModal.montant_total ?? cmdDetailsModal.total_achat ?? 0)}
+                </div>
+              </div>
+            </div>
+
+            {/* Tableau des articles commandés */}
+            <h4 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 10px', color: '#1f2937' }}>Détail des articles commandés</h4>
+            <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden', marginBottom: 20 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>
+                    <th style={{ padding: 10, color: '#374151', fontWeight: 700 }}>Article</th>
+                    <th style={{ padding: 10, color: '#374151', fontWeight: 700, textAlign: 'right' }}>Quantité</th>
+                    <th style={{ padding: 10, color: '#374151', fontWeight: 700, textAlign: 'right' }}>P.U. Achat</th>
+                    <th style={{ padding: 10, color: '#374151', fontWeight: 700, textAlign: 'right' }}>Total Ligne</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(typeof cmdDetailsModal.items === 'string' ? JSON.parse(cmdDetailsModal.items || '[]') : (cmdDetailsModal.items || [])).map((item: any, idx: number) => {
+                    const pObj = produits.find(p => p.id === item.id || p.id === item.produitId)
+                    const nomArt = item.nom || pObj?.nom || 'Article inconnu'
+                    const qteArt = Number(item.quantite || 1)
+                    const puArt = Number(item.prix_achat || item.prixAchat || item.prix || 0)
+                    return (
+                      <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                        <td style={{ padding: 10, fontWeight: 600 }}>{nomArt}</td>
+                        <td style={{ padding: 10, textAlign: 'right', fontWeight: 700 }}>{qteArt}</td>
+                        <td style={{ padding: 10, textAlign: 'right' }}>{fcfa(puArt)}</td>
+                        <td style={{ padding: 10, textAlign: 'right', fontWeight: 700 }}>{fcfa(puArt * qteArt)}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              {!(cmdDetailsModal.statut === 'recu' || cmdDetailsModal.statut === 'recue') && (
+                <button
+                  onClick={() => {
+                    setCmdDetailsModal(null)
+                    handleRecevoirCommande(cmdDetailsModal.id)
+                  }}
+                  style={{ padding: '8px 16px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  📥 Réceptionner maintenant
+                </button>
+              )}
+              <button
+                onClick={() => setCmdDetailsModal(null)}
+                style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', cursor: 'pointer' }}
+              >
+                Fermer
+              </button>
+            </div>
           </div>
         </div>
       )}
