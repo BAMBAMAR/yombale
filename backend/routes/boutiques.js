@@ -2342,14 +2342,26 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
     let currentY = tableTop + 24;
     const itemsList = Array.isArray(document.items) ? document.items : JSON.parse(document.items || '[]');
 
+    // Formatter FCFA — utilise un espace normal au lieu de l'espace insécable (U+202F/U+00A0)
+    // que toLocaleString('fr-FR') produit et que PDFKit rend comme "/"
+    const fmtNum = (n) => {
+      const num = Number(n || 0);
+      const fixed = num % 1 === 0 ? num.toString() : num.toFixed(2);
+      const [entier, decimale] = fixed.split('.');
+      const milliers = entier.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      return decimale ? `${milliers},${decimale}` : milliers;
+    };
+
     itemsList.forEach((item, idx) => {
       const bg = idx % 2 === 0 ? '#f8fafc' : '#ffffff';
       doc.rect(50, currentY, 495, 28).fill(bg);
       doc.fillColor('#111').fontSize(10).font('Helvetica');
+      const puItem = Number(item.prix_unitaire || item.prix || 0);
+      const qteItem = Number(item.quantite || 1);
       doc.text(item.nom || 'Article', col.desc + 6, currentY + 9, { width: 250 });
-      doc.text(String(item.quantite || 1), col.qty, currentY + 9, { width: 50, align: 'right' });
-      doc.text(Number(item.prix || 0).toLocaleString('fr-FR'), col.pu, currentY + 9, { width: 70, align: 'right' });
-      doc.text((Number(item.prix || 0) * Number(item.quantite || 1)).toLocaleString('fr-FR'), col.total, currentY + 9, { width: 90, align: 'right' });
+      doc.text(String(qteItem), col.qty, currentY + 9, { width: 50, align: 'right' });
+      doc.text(fmtNum(puItem), col.pu, currentY + 9, { width: 70, align: 'right' });
+      doc.text(fmtNum(puItem * qteItem), col.total, currentY + 9, { width: 90, align: 'right' });
       currentY += 28;
     });
 
@@ -2365,33 +2377,33 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
     
     // Total HT
     doc.fillColor(GRAY).text('Total Hors Taxes :', totalX, currentY, { width: labelW });
-    doc.fillColor('#111').font('Helvetica-Bold').text(`${Number(document.total_ht || 0).toLocaleString('fr-FR')} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
+    doc.fillColor('#111').font('Helvetica-Bold').text(`${fmtNum(document.total_ht)} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
     currentY += 16;
 
     // Total TVA
     if (Number(document.total_tva || 0) > 0) {
       doc.fillColor(GRAY).font('Helvetica').text('TVA :', totalX, currentY, { width: labelW });
-      doc.fillColor('#111').font('Helvetica-Bold').text(`${Number(document.total_tva || 0).toLocaleString('fr-FR')} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
+      doc.fillColor('#111').font('Helvetica-Bold').text(`${fmtNum(document.total_tva)} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
       currentY += 16;
     }
 
     // Timbre Fiscal
     if (Number(document.timbre_fiscal || 0) > 0) {
       doc.fillColor(GRAY).font('Helvetica').text('Timbre Fiscal (1%) :', totalX, currentY, { width: labelW });
-      doc.fillColor('#111').font('Helvetica-Bold').text(`${Number(document.timbre_fiscal || 0).toLocaleString('fr-FR')} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
+      doc.fillColor('#111').font('Helvetica-Bold').text(`${fmtNum(document.timbre_fiscal)} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
       currentY += 16;
     }
 
     // Retenue BRS
     if (Number(document.retenue_brs || 0) > 0) {
       doc.fillColor(GRAY).font('Helvetica').text('Retenue BRS :', totalX, currentY, { width: labelW });
-      doc.fillColor('#111').font('Helvetica-Bold').text(`-${Number(document.retenue_brs || 0).toLocaleString('fr-FR')} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
+      doc.fillColor('#111').font('Helvetica-Bold').text(`-${fmtNum(document.retenue_brs)} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
       currentY += 16;
     }
 
     // Net à payer
     doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(12).text('Net à payer :', totalX, currentY, { width: labelW });
-    doc.text(`${Number(document.net_a_payer || 0).toLocaleString('fr-FR')} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
+    doc.text(`${fmtNum(document.net_a_payer)} FCFA`, totalX + labelW, currentY, { width: valueW, align: 'right' });
 
     // Mentions légales si non assujetti
     if (boutique.regime_fiscal === 'non_assujetti') {
