@@ -968,7 +968,9 @@ module.exports = async function migrateInline() {
         created_at      TIMESTAMPTZ DEFAULT NOW(),
         updated_at      TIMESTAMPTZ DEFAULT NOW()
       );
-      CREATE INDEX IF NOT EXISTS idx_cmd_fourn_bq ON bons_commande_fournisseur(boutique_id);
+      ALTER TABLE bons_commande_fournisseur ADD COLUMN IF NOT EXISTS justificatif_url TEXT;
+      ALTER TABLE depenses ADD COLUMN IF NOT EXISTS justificatif_url TEXT;
+      ALTER TABLE depenses ADD COLUMN IF NOT EXISTS bon_commande_id UUID;
     `);
 
     console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs OK');

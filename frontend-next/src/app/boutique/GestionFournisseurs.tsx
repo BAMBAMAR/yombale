@@ -8,6 +8,7 @@ import {
   supprimerFournisseur,
   getCommandesFournisseurs,
   creerCommandeFournisseur,
+  modifierCommandeFournisseur,
   recevoirCommandeFournisseur,
   supprimerCommandeFournisseur,
   getBoutiqueProduits
@@ -34,7 +35,9 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   const [fouAdr, setFouAdr] = useState<string>('')
 
   // Form Commande State
+  const [cmdEditId, setCmdEditId] = useState<string | null>(null)
   const [cmdFournisseurId, setCmdFournisseurId] = useState<string>('')
+  const [cmdJustificatifUrl, setCmdJustificatifUrl] = useState<string>('')
   const [cmdLignes, setCmdLignes] = useState<Array<{ produitId: string; quantite: number; prixAchat: number }>>([])
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
@@ -130,15 +133,20 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
         }
       })
 
-      const res = await creerCommandeFournisseur(boutiqueId, {
+      const payload = {
         fournisseur_id: cmdFournisseurId,
-        items: itemsFormates
-      })
+        items: itemsFormates,
+        justificatif_url: cmdJustificatifUrl || null
+      }
+
+      const res = cmdEditId
+        ? await modifierCommandeFournisseur(boutiqueId, cmdEditId, payload)
+        : await creerCommandeFournisseur(boutiqueId, payload)
 
       if (res.error) {
         alert(res.error)
       } else {
-        alert('Bon de commande créé avec succès !')
+        alert(cmdEditId ? 'Bon de commande modifié avec succès !' : 'Bon de commande créé avec succès !')
         setModalCMDOuvert(false)
         resetCmdForm()
         chargerDonnees()
@@ -204,8 +212,23 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   }
 
   const resetCmdForm = () => {
+    setCmdEditId(null)
     setCmdFournisseurId('')
+    setCmdJustificatifUrl('')
     setCmdLignes([])
+  }
+
+  const ouvrirEditionCommande = (cmd: any) => {
+    setCmdEditId(cmd.id)
+    setCmdFournisseurId(cmd.fournisseur_id || '')
+    setCmdJustificatifUrl(cmd.justificatif_url || '')
+    const items = typeof cmd.items === 'string' ? JSON.parse(cmd.items || '[]') : (cmd.items || [])
+    setCmdLignes(items.map((i: any) => ({
+      produitId: i.id || i.produitId || '',
+      quantite: Number(i.quantite || 1),
+      prixAchat: Number(i.prix_achat || i.prixAchat || i.prix || 0)
+    })))
+    setModalCMDOuvert(true)
   }
 
   const handleAjouterLigneCmd = () => {
@@ -364,6 +387,14 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                                 📥 Réceptionner
                               </button>
                             )}
+                            {!isRecue && (
+                              <button
+                                onClick={() => ouvrirEditionCommande(cmd)}
+                                style={{ padding: '5px 10px', borderRadius: 6, background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                              >
+                                ✏️ Modifier
+                              </button>
+                            )}
                             <button
                               onClick={() => setCmdDetailsModal(cmd)}
                               style={{ padding: '5px 10px', borderRadius: 6, background: '#f0f9ff', color: '#0284c7', border: '1px solid #bae6fd', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
@@ -429,7 +460,9 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
       {modalCMDOuvert && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
           <div style={{ background: '#ffffff', borderRadius: 12, padding: 24, width: '100%', maxWidth: 700, maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700 }}>Nouveau bon de commande d’achat</h3>
+            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700 }}>
+              {cmdEditId ? 'Modifier le bon de commande d’achat' : 'Nouveau bon de commande d’achat'}
+            </h3>
             <form onSubmit={handleCreerCommande} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Sélectionner le fournisseur *</label>
@@ -439,6 +472,18 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                     <option key={f.id} value={f.id}>{f.nom}</option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Document justificatif (URL de la facture / reçu d'achat)</label>
+                <input
+                  type="text"
+                  value={cmdJustificatifUrl}
+                  onChange={e => setCmdJustificatifUrl(e.target.value)}
+                  style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }}
+                  placeholder="Ex: https://... (lien de la facture fournisseur / reçu d'achat)"
+                />
+                <p style={{ fontSize: 11, color: '#6b7280', margin: '2px 0 0' }}>Le document sera automatiquement joint à la dépense comptable lors de la réception.</p>
               </div>
 
               {/* Lignes d’achats */}
@@ -494,7 +539,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                   Annuler
                 </button>
                 <button type="submit" disabled={isSubmitting} style={{ padding: '8px 16px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, cursor: 'pointer' }}>
-                  {isSubmitting ? 'Création...' : 'Créer Bon de Commande'}
+                  {isSubmitting ? (cmdEditId ? 'Modification...' : 'Création...') : (cmdEditId ? 'Enregistrer les modifications' : 'Créer Bon de Commande')}
                 </button>
               </div>
             </form>
@@ -543,6 +588,14 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                   {fcfa(cmdDetailsModal.montant_total ?? cmdDetailsModal.total_achat ?? 0)}
                 </div>
               </div>
+              {cmdDetailsModal.justificatif_url && (
+                <div>
+                  <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Pièce Justificative</div>
+                  <a href={cmdDetailsModal.justificatif_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 700, color: '#0284c7', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    📎 Voir le justificatif ↗
+                  </a>
+                </div>
+              )}
             </div>
 
             {/* Tableau des articles commandés */}

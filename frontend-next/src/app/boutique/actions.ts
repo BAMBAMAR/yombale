@@ -592,6 +592,23 @@ export async function creerCommandeFournisseur(boutiqueId: string, body: any): P
   }
 }
 
+export async function modifierCommandeFournisseur(boutiqueId: string, cmdId: string, body: any): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/commandes-fournisseurs/${cmdId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body)
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de modifier la commande fournisseur' }
+    }
+    return { success: true }
+  } catch (err) {
+    console.error('[MODIFIER_COMMANDE_FOURNISSEUR_ERR]', err)
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
 export async function recevoirCommandeFournisseur(boutiqueId: string, cmdId: string, body: any): Promise<ActionState> {
   try {
     const res = await backendFetch(`/api/boutiques/${boutiqueId}/commandes-fournisseurs/${cmdId}`, {

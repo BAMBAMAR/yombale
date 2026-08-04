@@ -2194,15 +2194,15 @@ router.get('/:id/commandes-fournisseurs', tokenOptional, param('id').isUUID(), a
 
 router.post('/:id/commandes-fournisseurs', tokenOptional, param('id').isUUID(), async (req, res) => {
   try {
-    const { fournisseur_id, items, date_livraison } = req.body;
+    const { fournisseur_id, items, date_livraison, justificatif_url } = req.body;
     const itemsArray = Array.isArray(items) ? items : [];
-    const total = itemsArray.reduce((acc, item) => acc + (Number(item.prix_achat || 0) * Number(item.quantite || 1)), 0);
+    const total = itemsArray.reduce((acc, item) => acc + (Number(item.prix_achat || item.prixAchat || 0) * Number(item.quantite || 1)), 0);
     const reference = `CMD-FOURN-${Date.now().toString().slice(-8)}`;
 
     const r = await pool.query(
-      `INSERT INTO bons_commande_fournisseur (boutique_id, fournisseur_id, reference, items, montant_total, date_livraison)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [req.params.id, fournisseur_id, reference, JSON.stringify(itemsArray), total, date_livraison || null]
+      `INSERT INTO bons_commande_fournisseur (boutique_id, fournisseur_id, reference, items, montant_total, date_livraison, justificatif_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [req.params.id, fournisseur_id, reference, JSON.stringify(itemsArray), total, date_livraison || null, justificatif_url || null]
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {
@@ -2213,7 +2213,7 @@ router.post('/:id/commandes-fournisseurs', tokenOptional, param('id').isUUID(), 
 
 router.put('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID(), param('cId').isUUID(), async (req, res) => {
   try {
-    const { statut, date_livraison } = req.body;
+    const { statut, date_livraison, fournisseur_id, items, justificatif_url } = req.body;
     const { id: boutiqueId, cId } = req.params;
 
     const cmdRes = await pool.query(`SELECT * FROM bons_commande_fournisseur WHERE id=$1 AND boutique_id=$2`, [cId, boutiqueId]);
@@ -2221,10 +2221,28 @@ router.put('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID
     const cmd = cmdRes.rows[0];
 
     const currentStatut = cmd.statut;
+    const itemsArray = items !== undefined ? (Array.isArray(items) ? items : []) : null;
+    const total = itemsArray ? itemsArray.reduce((acc, item) => acc + (Number(item.prix_achat || item.prixAchat || 0) * Number(item.quantite || 1)), 0) : Number(cmd.montant_total);
 
     await pool.query(
-      `UPDATE bons_commande_fournisseur SET statut = $1, date_livraison = $2, updated_at = NOW() WHERE id = $3`,
-      [statut || currentStatut, date_livraison || cmd.date_livraison, cId]
+      `UPDATE bons_commande_fournisseur
+       SET statut = COALESCE($1, statut),
+           date_livraison = COALESCE($2, date_livraison),
+           fournisseur_id = COALESCE($3, fournisseur_id),
+           items = COALESCE($4, items),
+           montant_total = $5,
+           justificatif_url = COALESCE($6, justificatif_url),
+           updated_at = NOW()
+       WHERE id = $7`,
+      [
+        statut || null,
+        date_livraison || null,
+        fournisseur_id || null,
+        itemsArray ? JSON.stringify(itemsArray) : null,
+        total,
+        justificatif_url || null,
+        cId
+      ]
     );
 
     const isTargetRecu = statut === 'recu' || statut === 'recue';
@@ -2232,8 +2250,8 @@ router.put('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID
 
     // Stock & dépenses automatiques si reçue
     if (!isAlreadyRecu && isTargetRecu) {
-      const items = typeof cmd.items === 'string' ? JSON.parse(cmd.items) : cmd.items;
-      for (const item of items) {
+      const activeItems = itemsArray || (typeof cmd.items === 'string' ? JSON.parse(cmd.items) : cmd.items);
+      for (const item of activeItems) {
         if (item.id) {
           await pool.query(
             `UPDATE boutique_produits
@@ -2251,10 +2269,11 @@ router.put('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID
         }
       }
 
+      const justUrl = justificatif_url || cmd.justificatif_url || null;
       await pool.query(
-        `INSERT INTO depenses (boutique_id, montant, categorie, description, date_depense)
-         VALUES ($1, $2, 'achat_marchandises', $3, CURRENT_DATE)`,
-        [boutiqueId, cmd.montant_total, `Achat fournisseur réf: ${cmd.reference}`]
+        `INSERT INTO depenses (boutique_id, montant, categorie, description, date_depense, justificatif_url, bon_commande_id)
+         VALUES ($1, $2, 'achat_marchandises', $3, CURRENT_DATE, $4, $5)`,
+        [boutiqueId, total, `Achat fournisseur réf: ${cmd.reference}`, justUrl, cId]
       );
     }
 
