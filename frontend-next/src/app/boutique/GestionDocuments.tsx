@@ -36,7 +36,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
       }
 
       // Charger catalogue pour le formulaire
-      const resProds = await fetch(`/api/comptabilite/${boutiqueId}/produits`)
+      const resProds = await fetch(`/api/boutiques/${boutiqueId}/produits`)
       if (resProds.ok) {
         const dProds = await resProds.json()
         setProduits(dProds.produits || dProds || [])
