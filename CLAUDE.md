@@ -1057,6 +1057,12 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - Nettoyage du nom de client affiché (`client.nom` au lieu de `client.prenom client.nom` qui provoquait un affichage `undefined nom_client`).
     - Ajout d'un bouton `✏️ Modifier` dans l'onglet des documents clients permettant d'ouvrir la modale de modification pré-remplie avec le type de document, le client associé, la liste des articles (avec qte et prix unit.) et les notes.
     - Mise à jour de la route backend PUT pour recalculer automatiquement les taxes, le timbre fiscal, et sauvegarder les modifications d'articles en base de données.
+  - **Correction affichage mobile du menu Actions produit** :
+    - Le dropdown `Actions ▾` des cartes produit dans le dashboard marchand (`BoutiqueClient.tsx`) débordait à gauche sur mobile en raison du positionnement `right: 0`. Corrigé avec `left: 0; right: auto` pour que le menu s'aligne côté gauche du bouton et reste dans le viewport.
+  - **Édition des Fournisseurs + Affichage responsive** :
+    - Ajout d'un bouton `✏️ Modifier` sur chaque fournisseur dans `GestionFournisseurs.tsx`, ouvrant la modale pré-remplie en mode édition et appelant le Server Action `modifierFournisseur` existant.
+    - Le formulaire de la modale fournisseur est désormais dynamique : le titre, le bouton de soumission et l'action serveur s'adaptent entre création et modification.
+    - Remplacement du tableau HTML (`<table>`) par des cartes responsives (`<div>`) pour les fournisseurs, avec icônes contact (📞, ✉️, 📍), garantissant un affichage correct sur mobile et desktop.
 
 
 
