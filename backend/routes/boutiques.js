@@ -244,6 +244,7 @@ router.get('/mine', verifierToken, async (req, res) => {
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
               b.logo_url, b.cover_url, b.site_web, b.facebook, b.instagram, b.slug,
               b.actif, b.sponsorise, b.sponsor_jusqu_au, b.whatsapp_catalog_id, b.created_at,
+              b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
               (b.utilisateur_id = $1) AS is_owner
        FROM boutiques b
        LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
@@ -268,6 +269,7 @@ router.get('/:id', async (req, res) => {
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
               b.logo_url, b.cover_url, b.whatsapp, b.site_web, b.facebook, b.instagram,
               b.horaires, b.slug, b.utilisateur_id, b.created_at,
+              b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
               a.plan AS plan_actif
        FROM boutiques b
        LEFT JOIN LATERAL (
@@ -1122,15 +1124,30 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
       newSlug = await uniqueSlug(slugBase, req.params.id);
     }
 
-    // UPDATE colonnes avancées (best-effort après migration)
+    // UPDATE colonnes avancées & fiscales
     try {
+      const { regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut } = req.body;
       await pool.query(
         `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4,
-         instagram=$5, horaires=$6, slug=$7 WHERE id=$8`,
-        [cover_url||null, whatsapp||null, site_web||null, facebook||null,
-         instagram||null, horairesJson, newSlug, req.params.id]
+         instagram=$5, horaires=$6, slug=$7,
+         regime_fiscal=COALESCE($8, regime_fiscal),
+         prix_tva_incluse=COALESCE($9, prix_tva_incluse),
+         timbre_fiscal_applicable=COALESCE($10, timbre_fiscal_applicable),
+         tva_taux_defaut=COALESCE($11, tva_taux_defaut)
+         WHERE id=$12`,
+        [
+          cover_url||null, whatsapp||null, site_web||null, facebook||null,
+          instagram||null, horairesJson, newSlug,
+          regime_fiscal || null,
+          prix_tva_incluse !== undefined ? (prix_tva_incluse === 'true' || prix_tva_incluse === true) : null,
+          timbre_fiscal_applicable !== undefined ? (timbre_fiscal_applicable === 'true' || timbre_fiscal_applicable === true) : null,
+          tva_taux_defaut !== undefined ? Number(tva_taux_defaut) : null,
+          req.params.id
+        ]
       );
-    } catch (_) { /* colonnes pas encore migrées — ignoré */ }
+    } catch (e) {
+      console.error('[BOUTIQUES PUT ADVANCED ERR]', e.message);
+    }
     res.json({ success: true, slug: newSlug });
   } catch (err) {
     console.error('[BOUTIQUES PUT]', err);
@@ -1261,95 +1278,134 @@ router.get('/:id/scanner-remote', async (req, res) => {
 router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const { items, caissier, modePaiement } = req.body;
+    const { items, caissier, modePaiement, client_id } = req.body;
 
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const bRes = await pool.query(
-      `SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+      `SELECT id, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
       [idParam]
     );
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
+    const boutique = bRes.rows[0];
+    const boutiqueId = boutique.id;
+
+    let client = null;
+    if (client_id && /^[0-9a-f-]{36}$/i.test(client_id)) {
+      const cRes = await pool.query(`SELECT id, nom, telephone, exonere_tva FROM caisse_clients_credits WHERE id=$1`, [client_id]);
+      client = cRes.rows[0] || null;
+    }
 
     if (Array.isArray(items) && items.length > 0) {
       const refVente = `POS-${Date.now().toString().slice(-6)}`;
-      let totalTicket = 0;
+      
+      // Calcul fiscalité globale
+      const calculation = calculerFiscaliteDocument(boutique, client, items);
 
-      for (const item of items) {
-        if ((item.id || item.nom) && item.quantite) {
-          const qte = Number(item.quantite);
-
-          // 1. Décrémenter le stock dans la base PostgreSQL (Tenter par ID d'abord, puis par Nom)
-          let pRes = null;
-          if (item.id && /^[0-9a-f-]{36}$/i.test(item.id)) {
-            pRes = await pool.query(
-              `UPDATE boutique_produits
-               SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
-                   en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
-               WHERE id = $2 AND boutique_id = $3
-               RETURNING id, nom, prix, stock_quantite`,
-              [qte, item.id, boutiqueId]
-            );
-          }
-
-          if (!pRes?.rows[0] && item.nom) {
-            pRes = await pool.query(
-              `UPDATE boutique_produits
-               SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
-                   en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
-               WHERE LOWER(nom) = LOWER($2) AND boutique_id = $3
-               RETURNING id, nom, prix, stock_quantite`,
-              [qte, item.nom.trim(), boutiqueId]
-            );
-          }
-
-          const nomProduit = item.nom || pRes?.rows[0]?.nom || 'Article POS';
-          const prixUnitaire = Number(item.prix || pRes?.rows[0]?.prix || 0);
-          const totalLigne = prixUnitaire * qte;
-          totalTicket += totalLigne;
-          const prodIdReal = pRes?.rows[0]?.id || (item.id && /^[0-9a-f-]{36}$/i.test(item.id) ? item.id : null);
-
-          // 2. Insérer dans la table des ventes pour la Comptabilité & Analytics
-          try {
-            await pool.query(
-              `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, methode_paiement, created_at)
-               VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, NOW())`,
-              [
-                refVente,
-                boutiqueId,
-                prodIdReal,
-                nomProduit,
-                qte,
-                prixUnitaire,
-                totalLigne,
-                caissier ? `Caisse POS (${caissier})` : 'Caisse POS',
-                modePaiement || 'cash'
-              ]
-            );
-          } catch (eCompta) {
-            console.error('[POS VENTE COMPTA ERR]', eCompta.message);
-          }
-
-          // 3. Insérer dans le journal des commandes_boutique (pour le suivi global)
-          try {
-            await pool.query(
-              `INSERT INTO commandes_boutique (reference, boutique_id, client_nom, statut, nom_produit, quantite, montant_total, mode_paiement, created_at)
-               VALUES ($1, $2, $3, 'livree', $4, $5, $6, $7, NOW())`,
-              [
-                refVente,
-                boutiqueId,
-                caissier ? `Caisse POS (${caissier})` : 'Caisse POS',
-                nomProduit,
-                qte,
-                totalLigne,
-                modePaiement || 'cash'
-              ]
-            );
-          } catch (eCmd) {}
-        }
+      // Calcul timbre fiscal
+      let timbre = 0;
+      if (boutique.timbre_fiscal_applicable && (modePaiement === 'cash' || modePaiement === 'especes')) {
+        timbre = Number((calculation.total_ttc * 0.01).toFixed(2));
+        if (timbre > 5000) timbre = 5000;
       }
 
-      // Mettre à jour la session active de caisse de la boutique si elle existe
+      // Calcul BRS
+      let retenueBRS = 0;
+      if (req.body.appliquer_brs) {
+        retenueBRS = Number((calculation.total_ht * 0.01).toFixed(2));
+      }
+
+      const netAPayer = calculation.total_ttc + timbre - retenueBRS;
+
+      for (const item of calculation.items) {
+        const qte = Number(item.quantite || 1);
+
+        // 1. Décrémenter le stock dans la base PostgreSQL
+        let pRes = null;
+        if (item.id && /^[0-9a-f-]{36}$/i.test(item.id)) {
+          pRes = await pool.query(
+            `UPDATE boutique_produits
+             SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
+                 en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
+             WHERE id = $2 AND boutique_id = $3
+             RETURNING id, nom, prix, stock_quantite`,
+            [qte, item.id, boutiqueId]
+          );
+        }
+
+        if (!pRes?.rows[0] && item.nom) {
+          pRes = await pool.query(
+            `UPDATE boutique_produits
+             SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
+                 en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
+             WHERE LOWER(nom) = LOWER($2) AND boutique_id = $3
+             RETURNING id, nom, prix, stock_quantite`,
+            [qte, item.nom.trim(), boutiqueId]
+          );
+        }
+
+        const nomProduit = item.nom || pRes?.rows[0]?.nom || 'Article POS';
+        const prixUnitaire = Number(item.prix_unitaire || pRes?.rows[0]?.prix || 0);
+        const totalLigne = prixUnitaire * qte;
+        const prodIdReal = pRes?.rows[0]?.id || (item.id && /^[0-9a-f-]{36}$/i.test(item.id) ? item.id : null);
+
+        // 2. Insérer dans la table des ventes pour la Comptabilité & Analytics
+        try {
+          await pool.query(
+            `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, methode_paiement, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, NOW())`,
+            [
+              refVente,
+              boutiqueId,
+              prodIdReal,
+              nomProduit,
+              qte,
+              prixUnitaire,
+              totalLigne,
+              caissier ? `Caisse POS (${caissier})` : 'Caisse POS',
+              modePaiement || 'cash'
+            ]
+          );
+        } catch (eCompta) {
+          console.error('[POS VENTE COMPTA ERR]', eCompta.message);
+        }
+
+        // 3. Insérer dans le journal des commandes_boutique
+        try {
+          await pool.query(
+            `INSERT INTO commandes_boutique (reference, boutique_id, client_nom, statut, nom_produit, quantite, montant_total, mode_paiement, created_at)
+             VALUES ($1, $2, $3, 'livree', $4, $5, $6, $7, NOW())`,
+            [
+              refVente,
+              boutiqueId,
+              caissier ? `Caisse POS (${caissier})` : 'Caisse POS',
+              nomProduit,
+              qte,
+              totalLigne,
+              modePaiement || 'cash'
+            ]
+          );
+        } catch (eCmd) {}
+      }
+
+      // 4. Insérer dans caisse_documents (Facture Payée)
+      try {
+        await pool.query(
+          `INSERT INTO caisse_documents (
+            boutique_id, client_id, caissier_id, type, reference, statut,
+            total_ht, total_tva, timbre_fiscal, retenue_brs, total_ttc, net_a_payer,
+            mode_paiement, notes, items, created_at, updated_at
+          ) VALUES ($1, $2, null, 'facture', $3, 'paye', $4, $5, $6, $7, $8, $9, $10, 'Vente directe caisse POS', $11, NOW(), NOW())`,
+          [
+            boutiqueId, client_id || null, refVente,
+            calculation.total_ht, calculation.total_tva, timbre, retenueBRS, calculation.total_ttc, netAPayer,
+            modePaiement || 'cash', JSON.stringify(calculation.items)
+          ]
+        );
+      } catch (eDoc) {
+        console.error('[POS VENTE INSERT CAISSE DOC ERR]', eDoc.message);
+      }
+
+      // 5. Mettre à jour la session active de caisse de la boutique si elle existe
       try {
         const activeSessionRes = await pool.query(
           `SELECT id FROM boutique_pos_sessions WHERE boutique_id = $1 AND statut = 'ouverte' ORDER BY date_ouverture DESC LIMIT 1`,
@@ -1369,11 +1425,11 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
                  nb_ventes = COALESCE(nb_ventes, 0) + 1
              WHERE id = $6`,
             [
-              totalTicket,
-              mode === 'cash' || mode === 'especes' || mode === 'espece' ? totalTicket : 0,
-              mode === 'wave' ? totalTicket : 0,
-              mode === 'orange_money' || mode === 'orange' ? totalTicket : 0,
-              mode === 'carte' ? totalTicket : 0,
+              calculation.total_ttc,
+              mode === 'cash' || mode === 'especes' || mode === 'espece' ? calculation.total_ttc : 0,
+              mode === 'wave' ? calculation.total_ttc : 0,
+              mode === 'orange_money' || mode === 'orange' ? calculation.total_ttc : 0,
+              mode === 'carte' ? calculation.total_ttc : 0,
               activeSessionId
             ]
           );
@@ -1383,7 +1439,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
       }
     }
 
-    res.status(201).json({ success: true, message: 'Stock, Comptabilité et Commandes PostgreSQL mis à jour en direct' });
+    res.status(201).json({ success: true, message: 'Stock, Comptabilité et Facture POS sauvegardés' });
   } catch (err) {
     console.error('[BOUTIQUE POS VENTE]', err);
     res.status(500).json({ error: 'Erreur serveur' });
@@ -1747,6 +1803,422 @@ router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
   } catch (err) {
     console.error('[POST POS SESSION CLOTURER ERR]', err);
     res.status(500).json({ error: 'Erreur lors de la clôture de session' });
+  }
+});
+
+// --- HELPER CALCUL FISCALITÉ ---
+function calculerFiscaliteDocument(boutique, client, items) {
+  const regime = boutique.regime_fiscal || 'reel';
+  const tvaIncluse = boutique.prix_tva_incluse !== false;
+  const tvaDefaut = Number(boutique.tva_taux_defaut ?? 18.00);
+  
+  let totalHT = 0;
+  let totalTVA = 0;
+  
+  const processedItems = items.map(item => {
+    const qte = Number(item.quantite || 1);
+    const prix = Number(item.prix || 0);
+    const itemTvaTaux = item.tva_taux !== undefined && item.tva_taux !== null ? Number(item.tva_taux) : tvaDefaut;
+    
+    let HT = 0;
+    let TVA = 0;
+    let TTC = 0;
+    
+    if (regime === 'non_assujetti' || regime === 'exonere' || (client && client.exonere_tva)) {
+      TTC = prix;
+      HT = prix;
+      TVA = 0;
+    } else {
+      if (tvaIncluse) {
+        TTC = prix;
+        HT = TTC / (1 + (itemTvaTaux / 100));
+        TVA = TTC - HT;
+      } else {
+        HT = prix;
+        TVA = HT * (itemTvaTaux / 100);
+        TTC = HT + TVA;
+      }
+    }
+    
+    totalHT += HT * qte;
+    totalTVA += TVA * qte;
+    
+    return {
+      id: item.id || null,
+      nom: item.nom,
+      quantite: qte,
+      prix_unitaire: prix,
+      prix_ht: Number(HT.toFixed(2)),
+      tva_taux: itemTvaTaux,
+      tva_montant: Number(TVA.toFixed(2)),
+      total_ligne: Number((TTC * qte).toFixed(2))
+    };
+  });
+  
+  const totalTTC = totalHT + totalTVA;
+  
+  return {
+    items: processedItems,
+    total_ht: Number(totalHT.toFixed(2)),
+    total_tva: Number(totalTVA.toFixed(2)),
+    total_ttc: Number(totalTTC.toFixed(2))
+  };
+}
+
+// ── GET /api/boutiques/:id/documents — Lister les documents
+router.get('/:id/documents', tokenOptional, param('id').isUUID(), async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { type } = req.query; // 'devis', 'proforma', 'bon_commande_client', 'facture'
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    let query = `
+      SELECT d.*, c.nom as client_nom, c.telephone as client_telephone
+      FROM caisse_documents d
+      LEFT JOIN caisse_clients_credits c ON d.client_id = c.id
+      WHERE d.boutique_id = $1
+    `;
+    const params = [boutiqueId];
+
+    if (type) {
+      params.push(type);
+      query += ` AND d.type = $2`;
+    }
+    query += ` ORDER BY d.created_at DESC LIMIT 200`;
+
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('[GET DOCUMENTS ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/boutiques/:id/documents — Créer un document (devis, proforma, facture)
+router.post('/:id/documents', tokenOptional, param('id').isUUID(), async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { type, client_id, caissier_id, statut, items, mode_paiement, date_echeance, notes } = req.body;
+    
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(
+      `SELECT id, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+      [idParam]
+    );
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutique = bRes.rows[0];
+    const boutiqueId = boutique.id;
+
+    let client = null;
+    if (client_id && /^[0-9a-f-]{36}$/i.test(client_id)) {
+      const cRes = await pool.query(`SELECT id, nom, telephone, exonere_tva FROM caisse_clients_credits WHERE id=$1`, [client_id]);
+      client = cRes.rows[0] || null;
+    }
+
+    const calculation = calculerFiscaliteDocument(boutique, client, items || []);
+
+    // Calcul timbre fiscal (1% max 5000 FCFA, disons 1% du TTC si payé en cash)
+    let timbre = 0;
+    if (boutique.timbre_fiscal_applicable && (mode_paiement === 'cash' || mode_paiement === 'especes')) {
+      timbre = Number((calculation.total_ttc * 0.01).toFixed(2));
+      if (timbre > 5000) timbre = 5000;
+    }
+
+    // Calcul BRS
+    let retenueBRS = 0;
+    if (req.body.appliquer_brs) {
+      retenueBRS = Number((calculation.total_ht * 0.01).toFixed(2));
+    }
+
+    const netAPayer = calculation.total_ttc + timbre - retenueBRS;
+
+    const prefix = type === 'devis' ? 'DEV' : type === 'proforma' ? 'PRO' : type === 'bon_commande_client' ? 'CMD' : 'FAC';
+    const reference = `${prefix}-${Date.now().toString().slice(-8)}`;
+
+    const r = await pool.query(
+      `INSERT INTO caisse_documents (
+        boutique_id, client_id, caissier_id, type, reference, statut,
+        total_ht, total_tva, timbre_fiscal, retenue_brs, total_ttc, net_a_payer,
+        mode_paiement, date_echeance, notes, items, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
+      RETURNING *`,
+      [
+        boutiqueId, client_id || null, caissier_id || null, type, reference, statut || 'brouillon',
+        calculation.total_ht, calculation.total_tva, timbre, retenueBRS, calculation.total_ttc, netAPayer,
+        mode_paiement || 'cash', date_echeance || null, notes || null, JSON.stringify(calculation.items)
+      ]
+    );
+
+    // Si c'est une facture validée/payée, déduire le stock
+    if (type === 'facture' && (statut === 'paye' || statut === 'valide')) {
+      for (const item of calculation.items) {
+        if (item.id) {
+          await pool.query(
+            `UPDATE boutique_produits SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 0) - $1) WHERE id = $2`,
+            [Number(item.quantite), item.id]
+          );
+        }
+      }
+    }
+
+    res.status(201).json(r.rows[0]);
+  } catch (err) {
+    console.error('[POST CAISSE DOCUMENT ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── PUT /api/boutiques/:id/documents/:docId — Modifier ou valider
+router.put('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
+  try {
+    const { id: boutiqueId, docId } = req.params;
+    const { statut, type, mode_paiement, date_echeance, notes } = req.body;
+
+    const docRes = await pool.query(`SELECT * FROM caisse_documents WHERE id=$1 AND boutique_id=$2`, [docId, boutiqueId]);
+    if (!docRes.rows[0]) return res.status(404).json({ error: 'Document introuvable' });
+    const oldDoc = docRes.rows[0];
+
+    const newType = type || oldDoc.type;
+    const newStatut = statut || oldDoc.statut;
+
+    await pool.query(
+      `UPDATE caisse_documents
+       SET type = $1, statut = $2, mode_paiement = $3, date_echeance = $4, notes = $5, updated_at = NOW()
+       WHERE id = $6`,
+      [newType, newStatut, mode_paiement || oldDoc.mode_paiement, date_echeance || oldDoc.date_echeance, notes || oldDoc.notes, docId]
+    );
+
+    // Déduire les stocks si transition vers Facture Validée/Payée
+    const oldIsBilling = oldDoc.type === 'facture' && (oldDoc.statut === 'paye' || oldDoc.statut === 'valide');
+    const newIsBilling = newType === 'facture' && (newStatut === 'paye' || newStatut === 'valide');
+
+    if (!oldIsBilling && newIsBilling) {
+      const items = typeof oldDoc.items === 'string' ? JSON.parse(oldDoc.items) : oldDoc.items;
+      for (const item of items) {
+        if (item.id) {
+          await pool.query(
+            `UPDATE boutique_produits SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 0) - $1) WHERE id = $2`,
+            [Number(item.quantite), item.id]
+          );
+        }
+      }
+    }
+
+    res.json({ success: true, message: 'Document mis à jour avec succès' });
+  } catch (err) {
+    console.error('[PUT DOCUMENT ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── DELETE /api/boutiques/:id/documents/:docId — Annuler/Supprimer
+router.delete('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
+  try {
+    const { id: boutiqueId, docId } = req.params;
+    const docRes = await pool.query(`SELECT id, type, statut, items FROM caisse_documents WHERE id=$1 AND boutique_id=$2`, [docId, boutiqueId]);
+    if (!docRes.rows[0]) return res.status(404).json({ error: 'Document introuvable' });
+    const doc = docRes.rows[0];
+
+    // Remettre le stock si la facture était validée/payée
+    if (doc.type === 'facture' && (doc.statut === 'paye' || doc.statut === 'valide')) {
+      const items = typeof doc.items === 'string' ? JSON.parse(doc.items) : doc.items;
+      for (const item of items) {
+        if (item.id) {
+          await pool.query(
+            `UPDATE boutique_produits SET stock_quantite = COALESCE(stock_quantite, 0) + $1 WHERE id = $2`,
+            [Number(item.quantite), item.id]
+          );
+        }
+      }
+    }
+
+    await pool.query(`DELETE FROM caisse_documents WHERE id = $1`, [docId]);
+    res.json({ success: true, message: 'Document supprimé et stocks réajustés' });
+  } catch (err) {
+    console.error('[DELETE DOCUMENT ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── GET /api/boutiques/:id/bons-achat/:code — Vérifier avoir
+router.get('/:id/bons-achat/:code', tokenOptional, param('id').isUUID(), async (req, res) => {
+  try {
+    const { id: boutiqueId, code } = req.params;
+    const r = await pool.query(
+      `SELECT * FROM caisse_bons_achat WHERE boutique_id=$1 AND code=$2 AND actif=true AND (date_expiration IS NULL OR date_expiration >= CURRENT_DATE)`,
+      [boutiqueId, code.trim()]
+    );
+    if (!r.rows[0]) return res.status(404).json({ error: 'Bon d’achat invalide ou expiré' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    console.error('[GET BON ACHAT ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/boutiques/:id/bons-achat — Émettre avoir
+router.post('/:id/bons-achat', tokenOptional, param('id').isUUID(), async (req, res) => {
+  try {
+    const { id: boutiqueId } = req.params;
+    const { client_id, valeur, code, date_expiration } = req.body;
+
+    const uniqueCode = code || `AVOIR-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+    const r = await pool.query(
+      `INSERT INTO caisse_bons_achat (boutique_id, client_id, code, valeur_initiale, solde_restant, date_expiration)
+       VALUES ($1, $2, $3, $4, $4, $5) RETURNING *`,
+      [boutiqueId, client_id || null, uniqueCode, Number(valeur), date_expiration || null]
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (err) {
+    console.error('[POST BON ACHAT ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── CRUD Fournisseurs
+router.get('/:id/fournisseurs', tokenOptional, param('id').isUUID(), async (req, res) => {
+  try {
+    const { rows } = await pool.query(`SELECT * FROM fournisseurs WHERE boutique_id = $1 ORDER BY nom ASC`, [req.params.id]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+router.post('/:id/fournisseurs', tokenOptional, param('id').isUUID(), async (req, res) => {
+  try {
+    const { nom, telephone, email, adresse, ninea } = req.body;
+    const r = await pool.query(
+      `INSERT INTO fournisseurs (boutique_id, nom, telephone, email, adresse, ninea)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [req.params.id, nom, telephone || null, email || null, adresse || null, ninea || null]
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+router.put('/:id/fournisseurs/:fId', tokenOptional, param('id').isUUID(), param('fId').isUUID(), async (req, res) => {
+  try {
+    const { nom, telephone, email, adresse, ninea, solde_du } = req.body;
+    await pool.query(
+      `UPDATE fournisseurs
+       SET nom = $1, telephone = $2, email = $3, adresse = $4, ninea = $5, solde_du = $6
+       WHERE id = $7 AND boutique_id = $8`,
+      [nom, telephone, email, adresse, ninea, solde_du !== undefined ? Number(solde_du) : 0, req.params.fId, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+router.delete('/:id/fournisseurs/:fId', tokenOptional, param('id').isUUID(), param('fId').isUUID(), async (req, res) => {
+  try {
+    await pool.query(`DELETE FROM fournisseurs WHERE id = $1 AND boutique_id = $2`, [req.params.fId, req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── CRUD Commandes Fournisseurs
+router.get('/:id/commandes-fournisseurs', tokenOptional, param('id').isUUID(), async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT c.*, f.nom as fournisseur_nom
+       FROM bons_commande_fournisseur c
+       JOIN fournisseurs f ON c.fournisseur_id = f.id
+       WHERE c.boutique_id = $1 ORDER BY c.created_at DESC`,
+      [req.params.id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+router.post('/:id/commandes-fournisseurs', tokenOptional, param('id').isUUID(), async (req, res) => {
+  try {
+    const { fournisseur_id, items, date_livraison } = req.body;
+    const itemsArray = Array.isArray(items) ? items : [];
+    const total = itemsArray.reduce((acc, item) => acc + (Number(item.prix_achat || 0) * Number(item.quantite || 1)), 0);
+    const reference = `CMD-FOURN-${Date.now().toString().slice(-8)}`;
+
+    const r = await pool.query(
+      `INSERT INTO bons_commande_fournisseur (boutique_id, fournisseur_id, reference, items, montant_total, date_livraison)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [req.params.id, fournisseur_id, reference, JSON.stringify(itemsArray), total, date_livraison || null]
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (err) {
+    console.error('[POST CMD FOURN ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+router.put('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID(), param('cId').isUUID(), async (req, res) => {
+  try {
+    const { statut, date_livraison } = req.body;
+    const { id: boutiqueId, cId } = req.params;
+
+    const cmdRes = await pool.query(`SELECT * FROM bons_commande_fournisseur WHERE id=$1 AND boutique_id=$2`, [cId, boutiqueId]);
+    if (!cmdRes.rows[0]) return res.status(404).json({ error: 'Commande introuvable' });
+    const cmd = cmdRes.rows[0];
+
+    const currentStatut = cmd.statut;
+
+    await pool.query(
+      `UPDATE bons_commande_fournisseur SET statut = $1, date_livraison = $2, updated_at = NOW() WHERE id = $3`,
+      [statut || currentStatut, date_livraison || cmd.date_livraison, cId]
+    );
+
+    // Stock & dépenses automatiques si reçue
+    if (currentStatut !== 'recu' && statut === 'recu') {
+      const items = typeof cmd.items === 'string' ? JSON.parse(cmd.items) : cmd.items;
+      for (const item of items) {
+        if (item.id) {
+          await pool.query(
+            `UPDATE boutique_produits
+             SET stock_quantite = COALESCE(stock_quantite, 0) + $1, en_stock = true
+             WHERE id = $2 AND boutique_id = $3`,
+            [Number(item.quantite), item.id, boutiqueId]
+          );
+        } else if (item.nom) {
+          await pool.query(
+            `UPDATE boutique_produits
+             SET stock_quantite = COALESCE(stock_quantite, 0) + $1, en_stock = true
+             WHERE LOWER(nom) = LOWER($2) AND boutique_id = $3`,
+            [Number(item.quantite), item.nom.trim(), boutiqueId]
+          );
+        }
+      }
+
+      await pool.query(
+        `INSERT INTO depenses (boutique_id, montant, categorie, description, date_depense)
+         VALUES ($1, $2, 'achat_marchandises', $3, CURRENT_DATE)`,
+        [boutiqueId, cmd.montant_total, `Achat fournisseur réf: ${cmd.reference}`]
+      );
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[PUT CMD FOURN ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+router.delete('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID(), param('cId').isUUID(), async (req, res) => {
+  try {
+    await pool.query(`DELETE FROM bons_commande_fournisseur WHERE id = $1 AND boutique_id = $2`, [req.params.cId, req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 

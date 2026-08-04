@@ -5,8 +5,17 @@ import { fcfa } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import BatchImportModal from '@/app/boutique/BatchImportModal'
 import { CATEGORIES } from '@/lib/categories'
-import { getBoutiqueProduits, getBoutiquesMine, getPosHistorique, creerPosVente, declarerIncident } from '../actions'
+import { getBoutiqueProduits, getBoutiquesMine, getPosHistorique, creerPosVente, declarerIncident, creerBoutiqueDocument } from '../actions'
 import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store, Camera, MessageCircle, Printer } from 'lucide-react'
+import {
+  sauvegarderProduitsLocaux,
+  obtenirProduitsLocaux,
+  sauvegarderClientsLocaux,
+  obtenirClientsLocaux,
+  ajouterVenteHorsLigne,
+  obtenirVentesHorsLigne,
+  viderVentesHorsLigne
+} from '@/lib/db-offline'
 
 interface ProduitCaisse {
   id: string
@@ -187,7 +196,7 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
   // ── Charte Graphique Nopalou Thème Lumineux ─────────────────────────────────
 
   // ── État Boutiques du Marchand & Synchronisation Catalogue ───────────────────
-  const [boutiques, setBoutiques] = useState<{ id: string; nom: string; actif?: boolean; adresse?: string | null; telephone?: string | null }[]>([])
+  const [boutiques, setBoutiques] = useState<{ id: string; nom: string; regime_fiscal?: string; prix_tva_incluse?: boolean; timbre_fiscal_applicable?: boolean; tva_taux_defaut?: number; actif?: boolean; adresse?: string | null; telephone?: string | null }[]>([])
   const [boutiqueActiveId, setBoutiqueActiveId] = useState<string>('')
   const [loadingProduits, setLoadingProduits] = useState<boolean>(true)
   const [modalImportBatch, setModalImportBatch] = useState<boolean>(false)
@@ -196,6 +205,81 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
   const [verrouille, setVerrouille] = useState<boolean>(true)
   const [codePinSaisi, setCodePinSaisi] = useState<string>('')
   const [pinError, setPinError] = useState<string | null>(null)
+
+  // --- ÉTAT OFFLINE & SYNC ---
+  const [offlineModeActive, setOfflineModeActive] = useState<boolean>(false)
+  const [syncingOffline, setSyncingOffline] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setOfflineModeActive(!navigator.onLine)
+      
+      const goOnline = () => {
+        setOfflineModeActive(false)
+        declencherSyncOffline()
+      }
+      const goOffline = () => {
+        setOfflineModeActive(true)
+      }
+
+      window.addEventListener('online', goOnline)
+      window.addEventListener('offline', goOffline)
+
+      if (navigator.onLine) {
+        declencherSyncOffline()
+      }
+
+      return () => {
+        window.removeEventListener('online', goOnline)
+        window.removeEventListener('offline', goOffline)
+      }
+    }
+  }, [boutiqueActiveId])
+
+  async function declencherSyncOffline() {
+    if (!boutiqueActiveId || syncingOffline || !navigator.onLine) return
+    try {
+      setSyncingOffline(true)
+      const ventesQueue = await obtenirVentesHorsLigne()
+      if (ventesQueue.length === 0) {
+        setSyncingOffline(false)
+        return
+      }
+
+      console.log(`[OFFLINE SYNC] Tentative de synchronisation de ${ventesQueue.length} vente(s)...`)
+      let successCount = 0
+      
+      for (const vente of ventesQueue) {
+        if (vente.boutique_id !== boutiqueActiveId) continue
+        try {
+          const res = await creerPosVente(vente.boutique_id, {
+            items: vente.items,
+            caissier: vente.caissier,
+            modePaiement: vente.modePaiement,
+            client_id: vente.client_id,
+            total: vente.total
+          })
+          if (res.success) {
+            successCount++
+          }
+        } catch (eErr) {
+          console.error('Erreur synchro vente offline:', eErr)
+        }
+      }
+
+      if (successCount > 0) {
+        await viderVentesHorsLigne()
+        const hist = await getPosHistorique(boutiqueActiveId)
+        if (hist && hist.length > 0) {
+          setHistoriqueVentes(hist)
+        }
+      }
+    } catch (err) {
+      console.error('Erreur synchronisation offline:', err)
+    } finally {
+      setSyncingOffline(false)
+    }
+  }
   
   // Rôle Actif de la Session ('caissier' ou 'superviseur')
   const [roleActif, setRoleActif] = useState<'caissier' | 'superviseur'>('caissier')
@@ -261,7 +345,7 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
   } | null>(null)
 
   // ── Carnet de Crédit & Dettes Clients Avancé ─────────────────────────────────
-  const [clientsCredits, setClientsCredits] = useState<{ id: string; nom: string; telephone: string; adresse?: string | null; solde: number; plafond_max: number; note_client?: string | null; created_at?: string }[]>([])
+  const [clientsCredits, setClientsCredits] = useState<{ id: string; nom: string; prenom?: string; telephone: string; adresse?: string | null; solde: number; plafond_max: number; note_client?: string | null; created_at?: string; exonere_tva?: boolean }[]>([])
   const [modalCarnet, setModalCarnet] = useState<boolean>(false)
   const [rechercheClientCarnet, setRechercheClientCarnet] = useState<string>('')
   
@@ -566,10 +650,18 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
       const res = await fetch(`/api/boutiques/${bId}/credits-clients`)
       if (res.ok) {
         const data = await res.json()
-        if (data.clients) setClientsCredits(data.clients)
+        if (data.clients) {
+          setClientsCredits(data.clients)
+          sauvegarderClientsLocaux(data.clients).catch(() => {})
+        }
+      } else {
+        const cached = await obtenirClientsLocaux().catch(() => [])
+        if (cached && cached.length > 0) setClientsCredits(cached)
       }
     } catch (e) {
       console.error('Erreur chargement carnet credits:', e)
+      const cached = await obtenirClientsLocaux().catch(() => [])
+      if (cached && cached.length > 0) setClientsCredits(cached)
     }
   }
 
@@ -688,12 +780,23 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
         }))
         setProduits(prodsFormates)
         localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify(prodsFormates))
-      } else if (!localProds) {
-        setProduits([])
+        sauvegarderProduitsLocaux(prodsFormates).catch(() => {})
+      } else {
+        const cached = await obtenirProduitsLocaux().catch(() => [])
+        if (cached && cached.length > 0) {
+          setProduits(cached)
+        } else if (!localProds) {
+          setProduits([])
+        }
       }
     } catch (e) {
       console.error('Erreur chargement produits caisse:', e)
-      if (!localProds) setProduits([])
+      const cached = await obtenirProduitsLocaux().catch(() => [])
+      if (cached && cached.length > 0) {
+        setProduits(cached)
+      } else if (!localProds) {
+        setProduits([])
+      }
     } finally {
       setLoadingProduits(false)
     }
@@ -983,18 +1086,107 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
     setRemisePourcentage(0)
   }
 
+  const boutiqueActive = boutiques.find(b => b.id === boutiqueActiveId)
+  const regimeFiscal = boutiqueActive?.regime_fiscal || 'reel'
+  const prixTvaIncluse = boutiqueActive?.prix_tva_incluse !== false
+  const tvaDefaut = Number(boutiqueActive?.tva_taux_defaut ?? 18.00)
+  const timbreFiscalApplicable = boutiqueActive?.timbre_fiscal_applicable || false
+
+  const clientSelectionne = clientsCredits.find(c => c.id === clientCreditIdPOS)
+  const estExonereClient = clientSelectionne?.exonere_tva || false
+
+  let totalHT = 0
+  let totalTVA = 0
+
+  const panierCalcule = panier.map(item => {
+    const itemTvaTaux = tvaDefaut
+    let ht = 0
+    let tva = 0
+    let ttc = 0
+
+    if (regimeFiscal === 'non_assujetti' || regimeFiscal === 'exonere' || estExonereClient) {
+      ttc = item.prixUnitaire
+      ht = item.prixUnitaire
+      tva = 0
+    } else {
+      if (prixTvaIncluse) {
+        ttc = item.prixUnitaire
+        ht = ttc / (1 + (itemTvaTaux / 100))
+        tva = ttc - ht
+      } else {
+        ht = item.prixUnitaire
+        tva = ht * (itemTvaTaux / 100)
+        ttc = ht + tva
+      }
+    }
+
+    totalHT += ht * item.quantite
+    totalTVA += tva * item.quantite
+
+    return {
+      ...item,
+      prixHT: ht,
+      prixTTC: ttc,
+      tvaMontant: tva * item.quantite
+    }
+  })
+
   const sousTotalPanier = panier.reduce((acc, item) => acc + (item.prixUnitaire * item.quantite), 0)
   const montantRemise = Math.round((sousTotalPanier * remisePourcentage) / 100)
-  const totalPanier = Math.max(0, sousTotalPanier - montantRemise)
+  
+  const totalPanierCalculatedRaw = regimeFiscal === 'non_assujetti' || regimeFiscal === 'exonere' || estExonereClient
+    ? sousTotalPanier
+    : (prixTvaIncluse ? sousTotalPanier : totalHT + totalTVA)
+
+  const totalPanier = Math.max(0, totalPanierCalculatedRaw - montantRemise)
+
+  let timbreFiscal = 0
+  if (timbreFiscalApplicable && modePaiement === 'especes') {
+    timbreFiscal = Math.min(5000, Number((totalPanier * 0.01).toFixed(2)))
+  }
+
+  const netAPayer = totalPanier + timbreFiscal
 
   const especesMixteNum = Number(montantEspecesMixte) || 0
-  const resteAPayerMixte = Math.max(0, totalPanier - especesMixteNum)
+  const resteAPayerMixte = Math.max(0, netAPayer - especesMixteNum)
 
-  const recu = Number(montantRecu) || totalPanier
-  const monnaieARendre = Math.max(0, recu - totalPanier)
+  const recu = Number(montantRecu) || netAPayer
+  const monnaieARendre = Math.max(0, recu - netAPayer)
+
+  async function enregistrerDocumentCaisse(typeDocument: 'devis' | 'proforma') {
+    if (netAPayer === 0) return
+    if (!session) {
+      setModalSessionOuverture(true)
+      return
+    }
+
+    try {
+      const res = await creerBoutiqueDocument(boutiqueActiveId, {
+        type: typeDocument,
+        client_id: clientCreditIdPOS || null,
+        caissier_id: caissierSelectionneId || null,
+        statut: 'brouillon',
+        items: panier.map(i => ({ id: i.produit.id, quantite: i.quantite, nom: i.produit.nom, prix: i.prixUnitaire })),
+        mode_paiement: modePaiement,
+        date_echeance: creditDateEcheancePOS || null,
+        notes: `${typeDocument.toUpperCase()} créé depuis la caisse POS`
+      })
+
+      if (res.error) {
+        alert(res.error)
+        return
+      }
+
+      alert(`${typeDocument.toUpperCase()} créé avec succès ! Réf : ${res.reference}`)
+      viderPanier()
+    } catch (err) {
+      console.error(`Erreur création ${typeDocument}:`, err)
+      alert(`Erreur lors de la création du ${typeDocument}`)
+    }
+  }
 
   async function encaisserVente() {
-    if (totalPanier === 0) return
+    if (netAPayer === 0) return
     if (!session) {
       setModalSessionOuverture(true)
       return
@@ -1010,7 +1202,7 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
       heure: heureStr,
       caissier: caissierNom,
       modePaiement,
-      total: totalPanier,
+      total: netAPayer,
       statut: 'validee',
       detailPaiementMixte: modePaiement === 'mixte' ? {
         especes: especesMixteNum,
@@ -1034,7 +1226,7 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               type: 'vente_credit',
-              montant: totalPanier,
+              montant: netAPayer,
               produits: panier.map(i => ({ nom: i.produit.nom, quantite: i.quantite, prix: i.prixUnitaire })),
               date_echeance: creditDateEcheancePOS || null,
               note: creditNotePOS || 'Vente caisse POS à crédit',
@@ -1054,33 +1246,68 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
     }
 
     if (boutiqueActiveId) {
-      try {
-        await creerPosVente(boutiqueActiveId, {
-          items: panier.map(i => ({ id: i.produit.id, quantite: i.quantite, nom: i.produit.nom, prix: i.prixUnitaire })),
-          caissier: caissierNom,
-          modePaiement,
-          total: totalPanier,
-        })
-      } catch (e) {
-        console.error('Erreur mise à jour stock backend:', e)
+      const payloadVente = {
+        items: panier.map(i => ({ id: i.produit.id, quantite: i.quantite, nom: i.produit.nom, prix: i.prixUnitaire })),
+        caissier: caissierNom,
+        modePaiement,
+        client_id: clientCreditIdPOS || null,
+        total: netAPayer,
+      }
+
+      if (!navigator.onLine || offlineModeActive) {
+        try {
+          const temporaryId = `OFFLINE-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`
+          await ajouterVenteHorsLigne({
+            id_temporaire: temporaryId,
+            boutique_id: boutiqueActiveId,
+            items: payloadVente.items,
+            caissier: payloadVente.caissier,
+            modePaiement: payloadVente.modePaiement,
+            client_id: payloadVente.client_id,
+            total: payloadVente.total,
+            date: new Date().toISOString()
+          })
+          console.log('[OFFLINE] Vente sauvegardée localement dans IndexedDB.')
+        } catch (eOff) {
+          console.error('Erreur stockage local vente:', eOff)
+        }
+      } else {
+        try {
+          await creerPosVente(boutiqueActiveId, payloadVente)
+        } catch (e) {
+          console.error('Erreur mise à jour stock backend direct:', e)
+          try {
+            const temporaryId = `OFFLINE-ERR-${Date.now()}`
+            await ajouterVenteHorsLigne({
+              id_temporaire: temporaryId,
+              boutique_id: boutiqueActiveId,
+              items: payloadVente.items,
+              caissier: payloadVente.caissier,
+              modePaiement: payloadVente.modePaiement,
+              client_id: payloadVente.client_id,
+              total: payloadVente.total,
+              date: new Date().toISOString()
+            })
+          } catch (eOff2) {}
+        }
       }
     }
 
     setSession(prev => {
       if (!prev) return null
       const stats = { ...prev.ventes }
-      stats.total += totalPanier
+      stats.total += netAPayer
       stats.nbVentes += 1
-      if (modePaiement === 'especes') stats.especes += totalPanier
-      if (modePaiement === 'wave') stats.wave += totalPanier
-      if (modePaiement === 'orange_money') stats.orangeMoney += totalPanier
-      if (modePaiement === 'carte') stats.carte += totalPanier
+      if (modePaiement === 'especes') stats.especes += netAPayer
+      if (modePaiement === 'wave') stats.wave += netAPayer
+      if (modePaiement === 'orange_money') stats.orangeMoney += netAPayer
+      if (modePaiement === 'carte') stats.carte += netAPayer
       if (modePaiement === 'mixte') {
         stats.especes += especesMixteNum
         if (secondModeMixte === 'wave') stats.wave += resteAPayerMixte
         if (secondModeMixte === 'orange_money') stats.orangeMoney += resteAPayerMixte
         if (secondModeMixte === 'carte') stats.carte += resteAPayerMixte
-        stats.mixte += totalPanier
+        stats.mixte += netAPayer
       }
       return { ...prev, ventes: stats }
     })
@@ -1338,7 +1565,7 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
     )
   }
 
-  const boutiqueActive = boutiques.find(b => b.id === boutiqueActiveId)
+
 
   return (
     <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
@@ -1448,6 +1675,23 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
           {/* Badge POS */}
           <div style={{ background: 'var(--accent)', color: '#fff', padding: '4px 7px', borderRadius: 6, fontWeight: 800, fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
             <Store size={11} /> POS
+          </div>
+
+          {/* Badge de Connexion Offline / Online */}
+          <div style={{
+            background: offlineModeActive ? '#dc2626' : '#16a34a',
+            color: '#fff',
+            padding: '4px 7px',
+            borderRadius: 6,
+            fontWeight: 800,
+            fontSize: 10,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 2,
+            flexShrink: 0,
+            animation: offlineModeActive ? 'pulse 1.5s infinite' : 'none'
+          }}>
+            {offlineModeActive ? '⚠️ HORS-LIGNE' : '🟢 EN LIGNE'}
           </div>
 
           {/* Sélecteur de boutique — masqué sur très petit écran */}
@@ -1990,26 +2234,81 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
               </div>
             )}
 
-            {/* Récapitulatif Total & Remise */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8 }}>
+            {/* Récapitulatif Total & Taxes */}
+            <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, marginBottom: 12, border: '1px solid #e2e8f0', fontSize: 13, color: '#475569', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {regimeFiscal === 'reel' && !estExonereClient && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Total HT</span>
+                    <span>{fcfa(totalHT)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>TVA ({tvaDefaut}%)</span>
+                    <span>{fcfa(totalTVA)}</span>
+                  </div>
+                </>
+              )}
+              {regimeFiscal === 'non_assujetti' && (
+                <div style={{ fontSize: 11, color: '#64748b', fontStyle: 'italic', textAlign: 'center', marginBottom: 4 }}>
+                  TVA non applicable - Art. 286 du CGI
+                </div>
+              )}
+              {timbreFiscal > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#b45309' }}>
+                  <span>Timbre Fiscal (1% cash)</span>
+                  <span>{fcfa(timbreFiscal)}</span>
+                </div>
+              )}
+              {remisePourcentage > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#dc2626' }}>
+                  <span>Remise ({remisePourcentage}%)</span>
+                  <span>-{fcfa(montantRemise)}</span>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, marginBottom: 12 }}>
               <div>
-                <span style={{ fontSize: 13, color: '#475569', display: 'block' }}>Total à payer</span>
-                {remisePourcentage > 0 && (
-                  <span style={{ fontSize: 11, color: '#dc2626' }}>Remise: -{fcfa(montantRemise)} ({remisePourcentage}%)</span>
-                )}
+                <span style={{ fontSize: 13, color: '#475569', display: 'block', fontWeight: 600 }}>Net à payer</span>
               </div>
-              <span style={{ fontSize: 24, fontWeight: 900, color: '#C75B00' }}>{fcfa(totalPanier)}</span>
+              <span style={{ fontSize: 24, fontWeight: 900, color: '#C75B00' }}>{fcfa(netAPayer)}</span>
+            </div>
+
+            {/* Actions Devis / Proforma / Encaisser */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <button
+                onClick={() => enregistrerDocumentCaisse('devis')}
+                disabled={netAPayer === 0}
+                style={{
+                  flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1',
+                  background: '#ffffff', color: netAPayer > 0 ? '#475569' : '#94a3b8',
+                  fontWeight: 700, fontSize: 12, cursor: netAPayer > 0 ? 'pointer' : 'not-allowed'
+                }}
+              >
+                📄 DEVIS
+              </button>
+              <button
+                onClick={() => enregistrerDocumentCaisse('proforma')}
+                disabled={netAPayer === 0}
+                style={{
+                  flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1',
+                  background: '#ffffff', color: netAPayer > 0 ? '#475569' : '#94a3b8',
+                  fontWeight: 700, fontSize: 12, cursor: netAPayer > 0 ? 'pointer' : 'not-allowed'
+                }}
+              >
+                📄 PROFORMA
+              </button>
             </div>
 
             <button
               onClick={encaisserVente}
-              disabled={totalPanier === 0}
+              disabled={netAPayer === 0}
               style={{
                 width: '100%', padding: '14px', borderRadius: 10, border: 'none',
-                background: totalPanier > 0 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#cbd5e1',
-                color: totalPanier > 0 ? '#fff' : '#64748b',
-                fontWeight: 900, fontSize: 16, cursor: totalPanier > 0 ? 'pointer' : 'not-allowed',
-                boxShadow: totalPanier > 0 ? '0 4px 14px rgba(16,185,129,0.3)' : 'none',
+                background: netAPayer > 0 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#cbd5e1',
+                color: netAPayer > 0 ? '#fff' : '#64748b',
+                fontWeight: 900, fontSize: 16, cursor: netAPayer > 0 ? 'pointer' : 'not-allowed',
+                boxShadow: netAPayer > 0 ? '0 4px 14px rgba(16,185,129,0.3)' : 'none',
               }}
             >
               ⚡ ENCAISSER ET TICKET (80mm) →

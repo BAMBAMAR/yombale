@@ -15,6 +15,9 @@ import BoutonPartager from '@/components/BoutonPartager'
 import BatchImportModal from './BatchImportModal'
 import BoutiqueAdmins from './BoutiqueAdmins'
 import BoutiqueCaissiers from './BoutiqueCaissiers'
+import ParametresFiscalite from './ParametresFiscalite'
+import GestionDocuments from './GestionDocuments'
+import GestionFournisseurs from './GestionFournisseurs'
 import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2 } from 'lucide-react'
 
 import { CATEGORIES, PRODUIT_CATEGORIES } from '@/lib/categories'
@@ -1833,10 +1836,13 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
 
 // ── Vue de gestion d'une boutique — layout sidebar ────────────────────────────
 
-const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'admins' | 'caissiers'; icon: string; label: string }[] = [
+const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite'; icon: string; label: string }[] = [
   { key: 'produits',   icon: '🛍',  label: 'Catalogue' },
   { key: 'commandes',  icon: '📋',  label: 'Commandes' },
   { key: 'compta',     icon: '💰',  label: 'Comptabilité' },
+  { key: 'documents',  icon: '📄',  label: 'Factures & Devis' },
+  { key: 'fournisseurs',icon: '📦',  label: 'Fournisseurs & Stock' },
+  { key: 'fiscalite',  icon: '⚖️',  label: 'Fiscalité Caisse' },
   { key: 'analytics',  icon: '📊',  label: 'Analytics' },
   { key: 'infos',      icon: '⚙️', label: 'Paramètres' },
   { key: 'marketing',  icon: '📣',  label: 'Marketing' },
@@ -1851,7 +1857,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
   onEdit: () => void
   prixPro: number
 }) {
-  const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'admins' | 'caissiers'>('produits')
+  const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite'>('produits')
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
@@ -1959,13 +1965,28 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
         <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
           <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 20, margin: 0, color: '#111' }}>
             {NAV_ITEMS.find(i => i.key === tab)?.icon}{' '}
-            {{ produits: 'Catalogue produits', commandes: 'Commandes', compta: 'Comptabilité', analytics: 'Analytics', infos: 'Paramètres boutique', marketing: 'Marketing', admins: 'Gestion des Admins', caissiers: 'Gestion des Caissiers' }[tab]}
+            {{ 
+              produits: 'Catalogue produits', 
+              commandes: 'Commandes', 
+              compta: 'Comptabilité', 
+              analytics: 'Analytics', 
+              infos: 'Paramètres boutique', 
+              marketing: 'Marketing', 
+              admins: 'Gestion des Admins', 
+              caissiers: 'Gestion des Caissiers',
+              documents: 'Documents Clients (Factures, Devis, Proformas)',
+              fournisseurs: 'Fournisseurs & Réapprovisionnement',
+              fiscalite: 'Configuration Fiscalité & Taxes'
+            }[tab]}
           </h2>
           {tab === 'produits'  && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Gérez vos produits, stocks et tarifs.</p>}
           {tab === 'commandes' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Commandes reçues — web et WhatsApp. Mettez à jour les statuts.</p>}
           {tab === 'compta'    && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Ventes, dépenses, stock et zones de livraison.</p>}
           {tab === 'analytics' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Vues, clics et performances de votre boutique.</p>}
           {tab === 'infos'     && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Modifiez les informations, contacts et photos.</p>}
+          {tab === 'documents' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Visualisez, créez et éditez les factures, devis et proformas de vos clients.</p>}
+          {tab === 'fournisseurs' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Gérez vos fournisseurs et vos commandes de réapprovisionnement de stock.</p>}
+          {tab === 'fiscalite' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Configurez le régime de TVA de votre commerce et la fiscalité de la caisse POS.</p>}
         </div>
 
         {tab === 'produits'  && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
@@ -1980,6 +2001,9 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
         {tab === 'marketing' && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} planActif={planActif} />}
         {tab === 'admins'    && <BoutiqueAdmins boutiqueId={boutique.id} />}
         {tab === 'caissiers' && <BoutiqueCaissiers boutiqueId={boutique.id} />}
+        {tab === 'documents' && <GestionDocuments boutiqueId={boutique.id} />}
+        {tab === 'fournisseurs' && <GestionFournisseurs boutiqueId={boutique.id} />}
+        {tab === 'fiscalite' && <ParametresFiscalite boutique={boutique} onUpdate={onEdit} />}
       </main>
     </div>
     </>

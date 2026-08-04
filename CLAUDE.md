@@ -1029,5 +1029,26 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
 
 - **Expansion à 20 Catégories & 100+ Produits par Catégorie** (ajouté 4 août 2026) :
   - **Ajout de 7 nouvelles catégories** : Intégration de la bijouterie (`bijouterie`), du maraîchage (`maraichage`), de l'élevage (`elevage`), des produits agricoles (`produits-agricoles`), de l'énergie solaire (`solaire-energie`), de la santé/pharmacie (`sante-pharma`) et des articles bébé (`bebe-enfants`) dans `backend/routes/boutiques.js` (`CATS`) et `frontend-next/src/lib/categories.ts` (`CATEGORIES`).
-  - **Régénération du Catalogue Standard** : Mise à jour de `backend/generate-catalog.js` avec de nouveaux produits types ciblés pour le Sénégal (moutons Ladoum, sacs d'oignons Mbane, mil, solaire, etc.) et configuration d'un minimum de 100 produits par catégorie. Le fichier `catalogues-standards.json` contient désormais 2 070 articles répartis sur 20 catégories actives.
+  - **Régénération du Catalogue Standard** : Mise à jour de `backend/generate-catalog.js` with de nouveaux produits types ciblés pour le Sénégal (moutons Ladoum, sacs d'oignons Mbane, mil, solaire, etc.) et configuration d'un minimum de 100 produits par catégorie. Le fichier `catalogues-standards.json` contient désormais 2 070 articles répartis sur 20 catégories actives.
+
+- **Intégration de la Fiscalité, des Documents clients, des Fournisseurs et du mode Hors-ligne (POS)** (ajouté 4 août 2026) :
+  - **Gestion de la Fiscalité locale (Sénégal/UEMOA)** :
+    - Configuration du régime fiscal de la boutique (CGU/Non assujetti, Réel avec TVA 18%, Exonéré).
+    - Mode de calcul du catalogue (HT vs TTC) et application automatique du timbre fiscal de 1% sur les ventes réglées en espèces (cash, plafonné à 5000 FCFA).
+    - Affichage du détail fiscal complet (Total HT, TVA, Timbre fiscal) dans le panier de la caisse POS.
+  - **Grand Livre de Documents Clients** :
+    - Enregistrement rapide des transactions sous forme de Devis, Proformas ou Factures depuis la caisse POS.
+    - Création d'un onglet "Factures & Devis" dans le Dashboard Marchand pour lister, filtrer, créer manuellement ou convertir en 1 clic un Devis/Proforma en Facture.
+  - **Gestion des Fournisseurs et Commandes d'achats** :
+    - Création d'un onglet "Fournisseurs & Stock" dans le Dashboard Marchand.
+    - Suivi des fiches fournisseurs (contact, adresse) et des bons de commande d'approvisionnement.
+    - Bouton de réception de stock augmentant automatiquement les inventaires et créant une ligne de dépense comptable.
+  - **Support Hors-ligne Caisse POS (Offline Mode)** :
+    - Intégration de la base IndexedDB locale (`db-offline.ts`) pour la caisse.
+    - Sauvegarde automatique en cache local du catalogue produits et des clients pour continuer à vendre même en cas de coupure internet.
+    - File d'attente locale de synchronisation des ventes en arrière-plan réinjectant automatiquement les transactions dès le retour de la connexion internet.
+    - Indicateur dynamique clignotant `🟢 EN LIGNE` / `⚠️ HORS-LIGNE` dans l'en-tête de la caisse POS.
+  - **Validation & Compilation globale** :
+    - Correction des typages et vérification de la compilation TypeScript de l'ensemble du projet frontend (`npx tsc --noEmit` validé avec succès).
+
 

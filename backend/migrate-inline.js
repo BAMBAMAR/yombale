@@ -874,5 +874,100 @@ module.exports = async function migrateInline() {
   }
   console.log('[MIGRATE] ✅ Colonnes gestion comptes (suspendu/supprime_le/anonymise_le) OK');
 
+  // --- NOUVELLES FONCTIONNALITÉS POS (Fiscalité, Documents, Fournisseurs) ---
+  try {
+    // 1. Boutiques et produits
+    await pool.query(`
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS regime_fiscal VARCHAR(30) DEFAULT 'reel';
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS prix_tva_incluse BOOLEAN DEFAULT TRUE;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS timbre_fiscal_applicable BOOLEAN DEFAULT FALSE;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS tva_taux_defaut NUMERIC(5,2) DEFAULT 18.00;
+      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS tva_taux NUMERIC(5,2) DEFAULT NULL;
+    `);
+
+    // 2. Clients (NINEA et exonérations)
+    await pool.query(`
+      ALTER TABLE caisse_clients_credits ADD COLUMN IF NOT EXISTS ninea VARCHAR(50);
+      ALTER TABLE caisse_clients_credits ADD COLUMN IF NOT EXISTS exonere_tva BOOLEAN DEFAULT FALSE;
+      ALTER TABLE caisse_clients_credits ADD COLUMN IF NOT EXISTS attestation_exonoration_ref VARCHAR(100);
+    `);
+
+    // 3. Documents commerciaux de vente
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS caisse_documents (
+        id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id         UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_id           UUID REFERENCES caisse_clients_credits(id) ON DELETE SET NULL,
+        caissier_id         UUID REFERENCES boutique_caissiers(id) ON DELETE SET NULL,
+        type                VARCHAR(30) NOT NULL, -- 'devis', 'proforma', 'bon_commande_client', 'facture'
+        reference           VARCHAR(50) UNIQUE NOT NULL,
+        statut              VARCHAR(30) NOT NULL DEFAULT 'brouillon', -- 'brouillon', 'valide', 'paye', 'annule'
+        total_ht            NUMERIC(12,2) NOT NULL DEFAULT 0,
+        total_tva           NUMERIC(12,2) NOT NULL DEFAULT 0,
+        timbre_fiscal       NUMERIC(12,2) NOT NULL DEFAULT 0,
+        retenue_brs         NUMERIC(12,2) NOT NULL DEFAULT 0,
+        total_ttc           NUMERIC(12,2) NOT NULL DEFAULT 0,
+        net_a_payer         NUMERIC(12,2) NOT NULL DEFAULT 0,
+        mode_paiement       VARCHAR(30) DEFAULT 'cash',
+        date_echeance       DATE,
+        notes               TEXT,
+        items               JSONB NOT NULL DEFAULT '[]',
+        created_at          TIMESTAMPTZ DEFAULT NOW(),
+        updated_at          TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_caisse_docs_bq ON caisse_documents(boutique_id, type, created_at DESC);
+    `);
+
+    // 4. Bons d'achat (Avoirs)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS caisse_bons_achat (
+        id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id      UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_id        UUID REFERENCES caisse_clients_credits(id) ON DELETE SET NULL,
+        code             VARCHAR(50) UNIQUE NOT NULL,
+        valeur_initiale  NUMERIC(12,2) NOT NULL,
+        solde_restant    NUMERIC(12,2) NOT NULL,
+        date_expiration  DATE,
+        actif            BOOLEAN DEFAULT TRUE,
+        created_at       TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_bons_achat_code ON caisse_bons_achat(code);
+    `);
+
+    // 5. Fournisseurs et commandes d'achats
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS fournisseurs (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        nom         VARCHAR(200) NOT NULL,
+        telephone   VARCHAR(30),
+        email       VARCHAR(255),
+        adresse     VARCHAR(300),
+        ninea       VARCHAR(50),
+        solde_du    NUMERIC(12,2) DEFAULT 0,
+        created_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_fournisseurs_bq ON fournisseurs(boutique_id);
+
+      CREATE TABLE IF NOT EXISTS bons_commande_fournisseur (
+        id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id     UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        fournisseur_id  UUID NOT NULL REFERENCES fournisseurs(id) ON DELETE CASCADE,
+        reference       VARCHAR(50) UNIQUE NOT NULL,
+        statut          VARCHAR(30) NOT NULL DEFAULT 'brouillon', -- 'brouillon', 'envoye', 'recu', 'annule'
+        items           JSONB NOT NULL DEFAULT '[]',
+        montant_total   NUMERIC(12,2) NOT NULL DEFAULT 0,
+        date_livraison  DATE,
+        created_at      TIMESTAMPTZ DEFAULT NOW(),
+        updated_at      TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_cmd_fourn_bq ON bons_commande_fournisseur(boutique_id);
+    `);
+
+    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs OK');
+  } catch (err) {
+    console.warn('[MIGRATE] POS Avancé échec:', err.message);
+  }
+
   try { await pool.end(); } catch (_) {}
 };
