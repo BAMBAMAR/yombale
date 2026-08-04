@@ -1975,7 +1975,7 @@ router.post('/:id/documents', tokenOptional, param('id').isUUID(), async (req, r
 router.put('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
   try {
     const { id: boutiqueId, docId } = req.params;
-    const { statut, type, mode_paiement, date_echeance, notes } = req.body;
+    const { statut, type, client_id, caissier_id, items, mode_paiement, date_echeance, notes } = req.body;
 
     const docRes = await pool.query(`SELECT * FROM caisse_documents WHERE id=$1 AND boutique_id=$2`, [docId, boutiqueId]);
     if (!docRes.rows[0]) return res.status(404).json({ error: 'Document introuvable' });
@@ -1983,12 +1983,50 @@ router.put('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('
 
     const newType = type || oldDoc.type;
     const newStatut = statut || oldDoc.statut;
+    const newClientId = client_id !== undefined ? client_id : oldDoc.client_id;
+    const newItems = items !== undefined ? items : (typeof oldDoc.items === 'string' ? JSON.parse(oldDoc.items) : oldDoc.items);
+
+    // Get boutique details for calculation
+    const bRes = await pool.query(
+      `SELECT id, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut FROM boutiques WHERE id=$1`,
+      [boutiqueId]
+    );
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutique = bRes.rows[0];
+
+    let client = null;
+    if (newClientId && /^[0-9a-f-]{36}$/i.test(newClientId)) {
+      const cRes = await pool.query(`SELECT id, nom, telephone, exonere_tva FROM caisse_clients_credits WHERE id=$1`, [newClientId]);
+      client = cRes.rows[0] || null;
+    }
+
+    const calculation = calculerFiscaliteDocument(boutique, client, newItems || []);
+
+    let timbre = 0;
+    const currentModePaiement = mode_paiement || oldDoc.mode_paiement;
+    if (boutique.timbre_fiscal_applicable && (currentModePaiement === 'cash' || currentModePaiement === 'especes')) {
+      timbre = Number((calculation.total_ttc * 0.01).toFixed(2));
+      if (timbre > 5000) timbre = 5000;
+    }
+
+    let retenueBRS = 0;
+    if (req.body.appliquer_brs !== undefined ? req.body.appliquer_brs : (oldDoc.retenue_brs > 0)) {
+      retenueBRS = Number((calculation.total_ht * 0.01).toFixed(2));
+    }
+
+    const netAPayer = calculation.total_ttc + timbre - retenueBRS;
 
     await pool.query(
       `UPDATE caisse_documents
-       SET type = $1, statut = $2, mode_paiement = $3, date_echeance = $4, notes = $5, updated_at = NOW()
-       WHERE id = $6`,
-      [newType, newStatut, mode_paiement || oldDoc.mode_paiement, date_echeance || oldDoc.date_echeance, notes || oldDoc.notes, docId]
+       SET type = $1, statut = $2, client_id = $3, caissier_id = $4, mode_paiement = $5, date_echeance = $6, notes = $7,
+           total_ht = $8, total_tva = $9, timbre_fiscal = $10, retenue_brs = $11, total_ttc = $12, net_a_payer = $13,
+           items = $14, updated_at = NOW()
+       WHERE id = $15`,
+      [
+        newType, newStatut, newClientId || null, caissier_id || oldDoc.caissier_id, currentModePaiement, date_echeance || oldDoc.date_echeance, notes || oldDoc.notes,
+        calculation.total_ht, calculation.total_tva, timbre, retenueBRS, calculation.total_ttc, netAPayer,
+        JSON.stringify(calculation.items), docId
+      ]
     );
 
     // Déduire les stocks si transition vers Facture Validée/Payée
@@ -1996,8 +2034,7 @@ router.put('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('
     const newIsBilling = newType === 'facture' && (newStatut === 'paye' || newStatut === 'valide');
 
     if (!oldIsBilling && newIsBilling) {
-      const items = typeof oldDoc.items === 'string' ? JSON.parse(oldDoc.items) : oldDoc.items;
-      for (const item of items) {
+      for (const item of calculation.items) {
         if (item.id) {
           await pool.query(
             `UPDATE boutique_produits SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 0) - $1) WHERE id = $2`,

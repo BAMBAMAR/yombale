@@ -21,6 +21,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
 
   // Actions states
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  const [documentEnEdition, setDocumentEnEdition] = useState<any | null>(null)
 
   const chargerDonnees = async () => {
     try {
@@ -49,7 +50,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     chargerDonnees()
   }, [boutiqueId])
 
-  const handleCreerDocument = async (e: React.FormEvent) => {
+  const handleSoumettreDocument = async (e: React.FormEvent) => {
     e.preventDefault()
     if (lignesSelectionnees.length === 0) {
       alert('Veuillez ajouter au moins un produit au document.')
@@ -77,17 +78,29 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
         items: itemsFormates
       }
 
-      const res = await creerBoutiqueDocument(boutiqueId, payload)
-      if (res.error) {
-        alert(res.error)
+      if (documentEnEdition) {
+        const res = await modifierBoutiqueDocument(boutiqueId, documentEnEdition.id, payload)
+        if (res.error) {
+          alert(res.error)
+        } else {
+          alert(`Document ${documentEnEdition.reference} modifié avec succès !`)
+          setModalOuvert(false)
+          resetForm()
+          chargerDonnees()
+        }
       } else {
-        alert(`Document ${res.reference} créé avec succès !`)
-        setModalOuvert(false)
-        resetForm()
-        chargerDonnees()
+        const res = await creerBoutiqueDocument(boutiqueId, payload)
+        if (res.error) {
+          alert(res.error)
+        } else {
+          alert(`Document ${res.reference} créé avec succès !`)
+          setModalOuvert(false)
+          resetForm()
+          chargerDonnees()
+        }
       }
     } catch (err) {
-      console.error('Erreur creation document:', err)
+      console.error('Erreur soumission document:', err)
     } finally {
       setIsSubmitting(false)
     }
@@ -99,6 +112,23 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     setStatutDoc('brouillon')
     setNoteDoc('')
     setLignesSelectionnees([])
+  }
+
+  const handleOuvrirEdition = (doc: any) => {
+    setDocumentEnEdition(doc)
+    setTypeDoc(doc.type)
+    setClientIdSelected(doc.client_id || '')
+    setStatutDoc(doc.statut)
+    setNoteDoc(doc.notes || '')
+    
+    const parsedItems = typeof doc.items === 'string' ? JSON.parse(doc.items) : doc.items
+    const lines = (parsedItems || []).map((item: any) => ({
+      produitId: item.id || '',
+      quantite: item.quantite || 1,
+      prix: item.prix || 0
+    }))
+    setLignesSelectionnees(lines)
+    setModalOuvert(true)
   }
 
   const handleAjouterLigne = () => {
@@ -181,7 +211,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
           ))}
         </div>
         <button
-          onClick={() => { resetForm(); setModalOuvert(true); }}
+          onClick={() => { setDocumentEnEdition(null); resetForm(); setModalOuvert(true); }}
           style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
         >
           ➕ Nouveau Document
@@ -246,6 +276,12 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                       >
                         🖨️ PDF
                       </a>
+                      <button
+                        onClick={() => handleOuvrirEdition(doc)}
+                        style={{ padding: '4px 8px', borderRadius: 6, background: '#eab308', color: '#ffffff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        ✏️ Modifier
+                      </button>
                       {(doc.type === 'devis' || doc.type === 'proforma') && (
                         <button
                           onClick={() => handleConvertirEnFacture(doc.id, doc.reference)}
@@ -273,8 +309,10 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
       {modalOuvert && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
           <div style={{ background: '#ffffff', borderRadius: 12, padding: 24, width: '100%', maxWidth: 700, maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700 }}>Créer un nouveau document</h3>
-            <form onSubmit={handleCreerDocument} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700 }}>
+              {documentEnEdition ? `Modifier le document ${documentEnEdition.reference}` : 'Créer un nouveau document'}
+            </h3>
+            <form onSubmit={handleSoumettreDocument} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Type de document</label>
@@ -368,7 +406,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                   Annuler
                 </button>
                 <button type="submit" disabled={isSubmitting} style={{ padding: '8px 16px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, cursor: 'pointer' }}>
-                  {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
+                  {isSubmitting ? 'Enregistrement...' : documentEnEdition ? 'Sauvegarder' : 'Créer'}
                 </button>
               </div>
             </form>
