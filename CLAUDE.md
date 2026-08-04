@@ -1055,6 +1055,9 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - Ajout du bouton d'action `🖨️ PDF` dans l'interface de gestion des documents pour ouvrir ou télécharger la facture en 1 clic.
     - Correction de l'affichage des montants HT/TVA/TTC qui s'affichaient sous forme de tiret (`—`) dû à une divergence de noms de colonnes (`total_ht` au lieu de `montant_ht`).
     - Nettoyage du nom de client affiché (`client.nom` au lieu de `client.prenom client.nom` qui provoquait un affichage `undefined nom_client`).
+    - Ajout d'un bouton `✏️ Modifier` dans l'onglet des documents clients permettant d'ouvrir la modale de modification pré-remplie avec le type de document, le client associé, la liste des articles (avec qte et prix unit.) et les notes.
+    - Mise à jour de la route backend PUT pour recalculer automatiquement les taxes, le timbre fiscal, et sauvegarder les modifications d'articles en base de données.
+
 
 
 
