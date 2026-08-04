@@ -1861,6 +1861,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
+  const router = useRouter()
   const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#6b7280'
 
   // Polling toutes les 30s pour détecter nouvelles commandes en attente
