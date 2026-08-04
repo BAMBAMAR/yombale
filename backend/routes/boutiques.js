@@ -2463,10 +2463,12 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
       currentY = doc.y + 10;
     }
 
-    // ── Conditions de vente ───────────────────────────────────────────────
-    if (boutique.conditions_vente) {
-      // Vérifier si on déborde de la page, sinon ajouter une nouvelle page
-      if (currentY > 680) {
+    // ── Conditions de vente & Mentions de règlement ─────────────────────────
+    const isDevisOuProforma = document.type === 'devis' || document.type === 'proforma';
+
+    if (isDevisOuProforma && boutique.conditions_vente) {
+      // Pour les Devis & Proformas : Affichage complet des CGV
+      if (currentY > 670) {
         doc.addPage();
         currentY = 50;
       }
@@ -2476,6 +2478,17 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
       currentY += 11;
       doc.fillColor(GRAY).fontSize(7).font('Helvetica').text(cleanText(boutique.conditions_vente), 50, currentY, { width: 495, lineGap: 2 });
       currentY = doc.y + 10;
+    } else {
+      // Pour les Factures de vente : Condensé légal (1 seule page A4)
+      if (currentY > 730) {
+        doc.addPage();
+        currentY = 50;
+      }
+      doc.moveTo(50, currentY).lineTo(545, currentY).strokeColor('#e5e7eb').lineWidth(0.5).stroke();
+      currentY += 8;
+      doc.fillColor(GRAY).fontSize(7.5).font('Helvetica-Oblique')
+         .text("Règlement à réception. Réserve de propriété : les marchandises restent la propriété du vendeur jusqu'au paiement intégral du prix.", 50, currentY, { width: 495, align: 'center' });
+      currentY = doc.y + 8;
     }
 
     // ── Mentions légales TVA ──────────────────────────────────────────────
