@@ -2284,6 +2284,23 @@ router.put('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID
   }
 });
 
+// ── POST /api/boutiques/:id/upload-justificatif — Téléverser une pièce justificative (Facture / Reçu PDF ou image)
+const uploadJustificatifAchat = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
+
+router.post('/:id/upload-justificatif', tokenOptional, param('id').isUUID(), uploadJustificatifAchat.single('justificatif'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Fichier manquant' });
+    const url = await uploadBuffer(req.file.buffer, 'justificatifs_achats');
+    res.json({ url });
+  } catch (err) {
+    console.error('[UPLOAD JUSTIFICATIF ERR]', err);
+    res.status(500).json({ error: 'Erreur lors du téléchargement du fichier' });
+  }
+});
+
 // ── GET /api/boutiques/:id/documents/:docId/pdf — Générer le PDF A4 du document (Facture, Devis, Proforma)
 router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
   try {

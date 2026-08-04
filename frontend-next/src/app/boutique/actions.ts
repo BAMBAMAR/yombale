@@ -642,6 +642,23 @@ export async function supprimerCommandeFournisseur(boutiqueId: string, cmdId: st
   }
 }
 
+export async function uploadJustificatifAchat(boutiqueId: string, formData: FormData): Promise<{ url?: string; error?: string }> {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/upload-justificatif`, {
+      method: 'POST',
+      body: formData
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Erreur lors du téléchargement du fichier' }
+    }
+    return await res.json()
+  } catch (err) {
+    console.error('[UPLOAD_JUSTIFICATIF_ERR]', err)
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
 export async function verifierBonAchat(boutiqueId: string, code: string): Promise<any> {
   try {
     const res = await backendFetch(`/api/boutiques/${boutiqueId}/bons-achat/${code}`)

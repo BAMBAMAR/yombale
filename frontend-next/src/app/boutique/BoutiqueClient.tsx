@@ -1866,6 +1866,15 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
 
   // Polling toutes les 30s pour détecter nouvelles commandes en attente
   useEffect(() => {
+    if (boutique?.id && typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      if (url.searchParams.get('manage') !== boutique.id) {
+        url.searchParams.set('manage', boutique.id)
+        window.history.replaceState(null, '', url.toString())
+      }
+    }
+  }, [boutique?.id])
+  useEffect(() => {
     let lastCount = -1
     async function check() {
       try {
@@ -2104,7 +2113,15 @@ export default function BoutiqueClient({
         <BoutiqueManage
           boutique={mode.managing}
           planActif={planActif ?? null}
-          onBack={() => setMode('list')}
+          onBack={() => {
+            if (typeof window !== 'undefined') {
+              const url = new URL(window.location.href)
+              url.searchParams.delete('manage')
+              url.searchParams.delete('id')
+              window.history.replaceState(null, '', url.pathname)
+            }
+            setMode('list')
+          }}
           onEdit={() => { setSuccessMsg('✅ Boutique modifiée !'); setMode('list'); router.refresh() }}
           prixPro={prixPro}
         />

@@ -11,6 +11,7 @@ import {
   modifierCommandeFournisseur,
   recevoirCommandeFournisseur,
   supprimerCommandeFournisseur,
+  uploadJustificatifAchat,
   getBoutiqueProduits
 } from './actions'
 import { fcfa } from '@/lib/format'
@@ -26,6 +27,9 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   const [modalFOUOuvert, setModalFOUOuvert] = useState<boolean>(false)
   const [modalCMDOuvert, setModalCMDOuvert] = useState<boolean>(false)
   const [cmdDetailsModal, setCmdDetailsModal] = useState<any | null>(null)
+  const [modalRecevoirCmd, setModalRecevoirCmd] = useState<any | null>(null)
+  const [receptionJustificatifUrl, setReceptionJustificatifUrl] = useState<string>('')
+  const [uploadingFile, setUploadingFile] = useState<boolean>(false)
 
   // Form Fournisseur State
   const [fouEditId, setFouEditId] = useState<string | null>(null)
@@ -158,18 +162,55 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
     }
   }
 
-  const handleRecevoirCommande = async (cmdId: string) => {
-    if (!confirm('La réception de cette commande augmentera le stock des produits et créera une dépense comptable. Confirmer ?')) return
+  const ouvrirModalReception = (cmd: any) => {
+    setModalRecevoirCmd(cmd)
+    setReceptionJustificatifUrl(cmd.justificatif_url || '')
+  }
+
+  const handleConfirmerReception = async () => {
+    if (!modalRecevoirCmd) return
     try {
-      const res = await recevoirCommandeFournisseur(boutiqueId, cmdId, { statut: 'recue' })
+      setIsSubmitting(true)
+      const res = await recevoirCommandeFournisseur(boutiqueId, modalRecevoirCmd.id, {
+        statut: 'recue',
+        justificatif_url: receptionJustificatifUrl || null
+      })
       if (res.error) {
         alert(res.error)
       } else {
         alert('Commande réceptionnée et stocks mis à jour !')
+        setModalRecevoirCmd(null)
+        setCmdDetailsModal(null)
         chargerDonnees()
       }
     } catch (err) {
       console.error(err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleUploadFileCommande = async (e: React.ChangeEvent<HTMLInputElement>, isReception: boolean = false) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      setUploadingFile(true)
+      const fd = new FormData()
+      fd.append('justificatif', file)
+      const res = await uploadJustificatifAchat(boutiqueId, fd)
+      if (res.error) alert(res.error)
+      else if (res.url) {
+        if (isReception) {
+          setReceptionJustificatifUrl(res.url)
+        } else {
+          setCmdJustificatifUrl(res.url)
+        }
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Erreur lors du téléchargement du fichier')
+    } finally {
+      setUploadingFile(false)
     }
   }
 
@@ -381,7 +422,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                             {!isRecue && (
                               <button
-                                onClick={() => handleRecevoirCommande(cmd.id)}
+                                onClick={() => ouvrirModalReception(cmd)}
                                 style={{ padding: '5px 10px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                               >
                                 📥 Réceptionner
@@ -475,15 +516,31 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Document justificatif (URL de la facture / reçu d'achat)</label>
-                <input
-                  type="text"
-                  value={cmdJustificatifUrl}
-                  onChange={e => setCmdJustificatifUrl(e.target.value)}
-                  style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }}
-                  placeholder="Ex: https://... (lien de la facture fournisseur / reçu d'achat)"
-                />
-                <p style={{ fontSize: 11, color: '#6b7280', margin: '2px 0 0' }}>Le document sera automatiquement joint à la dépense comptable lors de la réception.</p>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+                  📎 Document justificatif (Facture / Reçu PDF ou photo)
+                </label>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => handleUploadFileCommande(e, false)}
+                    style={{ fontSize: 13 }}
+                    disabled={uploadingFile}
+                  />
+                  {uploadingFile && <span style={{ fontSize: 12, color: '#0284c7', fontWeight: 600 }}>⏳ Envoi du fichier...</span>}
+                </div>
+                {cmdJustificatifUrl && (
+                  <div style={{ marginTop: 8, padding: '6px 10px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, fontSize: 12, color: '#166534', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span>✅ Document justificatif attaché</span>
+                    <a href={cmdJustificatifUrl} target="_blank" rel="noreferrer" style={{ color: '#0284c7', fontWeight: 700, textDecoration: 'none' }}>
+                      👁️ Consulter ↗
+                    </a>
+                    <button type="button" onClick={() => setCmdJustificatifUrl('')} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 700, marginLeft: 'auto' }}>
+                      ✕ Supprimer
+                    </button>
+                  </div>
+                )}
+                <p style={{ fontSize: 11, color: '#6b7280', margin: '4px 0 0' }}>Le document sera automatiquement rattaché à la dépense comptable lors de la réception.</p>
               </div>
 
               {/* Lignes d’achats */}
@@ -494,6 +551,14 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                     ➕ Ajouter article
                   </button>
                 </div>
+
+                {cmdLignes.length > 0 && (
+                  <div style={{ display: 'flex', gap: 8, fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6, paddingRight: 40 }}>
+                    <div style={{ flex: 2 }}>Désignation Produit *</div>
+                    <div style={{ width: 80 }}>Quantité *</div>
+                    <div style={{ width: 120 }}>Prix Achat Unit. (FCFA) *</div>
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {cmdLignes.map((ligne, idx) => (
@@ -633,8 +698,9 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               {!(cmdDetailsModal.statut === 'recu' || cmdDetailsModal.statut === 'recue') && (
                 <button
                   onClick={() => {
+                    const target = cmdDetailsModal
                     setCmdDetailsModal(null)
-                    handleRecevoirCommande(cmdDetailsModal.id)
+                    ouvrirModalReception(target)
                   }}
                   style={{ padding: '8px 16px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, cursor: 'pointer' }}
                 >
@@ -646,6 +712,65 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                 style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', cursor: 'pointer' }}
               >
                 Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Réception de Commande Stock */}
+      {modalRecevoirCmd && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#ffffff', borderRadius: 12, padding: 24, width: '100%', maxWidth: 550, maxHeight: '90vh', overflowY: 'auto' }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: 18, fontWeight: 700, color: '#111827' }}>
+              Réceptionner la commande {modalRecevoirCmd.reference}
+            </h3>
+            <p style={{ fontSize: 13, color: '#4b5563', margin: '0 0 16px', lineHeight: 1.5 }}>
+              La confirmation de cette réception augmentera automatiquement les quantités en stock de vos produits et générera une dépense comptable d'achat de <strong>{fcfa(modalRecevoirCmd.montant_total ?? modalRecevoirCmd.total_achat ?? 0)}</strong>.
+            </p>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: '#374151' }}>
+                📎 Pièce justificative de réception (Facture fournisseur / Bon de livraison PDF ou photo)
+              </label>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => handleUploadFileCommande(e, true)}
+                  style={{ fontSize: 13 }}
+                  disabled={uploadingFile}
+                />
+                {uploadingFile && <span style={{ fontSize: 12, color: '#0284c7', fontWeight: 600 }}>⏳ Envoi du fichier...</span>}
+              </div>
+              {receptionJustificatifUrl && (
+                <div style={{ marginTop: 8, padding: '6px 10px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, fontSize: 12, color: '#166534', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>✅ Justificatif de réception attaché</span>
+                  <a href={receptionJustificatifUrl} target="_blank" rel="noreferrer" style={{ color: '#0284c7', fontWeight: 700, textDecoration: 'none' }}>
+                    👁️ Consulter ↗
+                  </a>
+                  <button type="button" onClick={() => setReceptionJustificatifUrl('')} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 700, marginLeft: 'auto' }}>
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, borderTop: '1px solid #e5e7eb', paddingTop: 16 }}>
+              <button
+                type="button"
+                onClick={() => setModalRecevoirCmd(null)}
+                style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', cursor: 'pointer' }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmerReception}
+                disabled={isSubmitting}
+                style={{ padding: '8px 16px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+              >
+                {isSubmitting ? 'Réception en cours...' : '✅ Confirmer la Réception'}
               </button>
             </div>
           </div>
