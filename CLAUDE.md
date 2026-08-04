@@ -1072,6 +1072,7 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
       - Correction du bogue `Invalid Date` : lecture de `created_at` / `date_livraison` au lieu de `date_commande` qui était indéfinie.
       - Correction du bogue `Total Achat` qui affichait un tiret (`—`) : lecture de `montant_total` retourné par la base SQL au lieu de `total_achat`.
       - Correction du bouton `📥 Réceptionner` et des badges de statut pour supporter indifféremment les valeurs de statut `'recu'` et `'recue'`.
+      - Ajout d'une colonne d'Actions complète dans le tableau des bons de commande fournisseur : bouton `📥 Réceptionner` (pour commandes en attente), bouton `👁️ Détails` (ouvre une modale synthétique avec le détail complet des articles, quantitées et prix d'achat), et bouton `🗑️ Supprimer` (avec confirmation et appel au Server Action `supprimerCommandeFournisseur`).
   - **Informations Légales OHADA & Standards PDF Professionnels** :
     - **Migration BDD** : Ajout de 7 nouvelles colonnes à la table `boutiques` : `rccm`, `ninea`, `forme_juridique`, `capital_social`, `compte_bancaire`, `conditions_vente`, `pied_de_page_document`.
     - **Backend** : Route PUT `/:id` étendue pour sauvegarder les 7 nouveaux champs. Routes GET `/mine` et GET `/:idOrSlug` étendues pour les inclure dans le SELECT.
