@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getBoutiqueDocuments, creerBoutiqueDocument, modifierBoutiqueDocument, supprimerBoutiqueDocument } from './actions'
+import { getBoutiqueDocuments, creerBoutiqueDocument, modifierBoutiqueDocument, supprimerBoutiqueDocument, getBoutiqueProduits } from './actions'
 import { fcfa } from '@/lib/format'
 
 export default function GestionDocuments({ boutiqueId }: { boutiqueId: string }) {
@@ -36,11 +36,8 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
       }
 
       // Charger catalogue pour le formulaire
-      const resProds = await fetch(`/api/boutiques/${boutiqueId}/produits`)
-      if (resProds.ok) {
-        const dProds = await resProds.json()
-        setProduits(dProds.produits || dProds || [])
-      }
+      const prods = await getBoutiqueProduits(boutiqueId)
+      setProduits(prods || [])
     } catch (err) {
       console.error('Erreur chargement documents:', err)
     } finally {

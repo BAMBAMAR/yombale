@@ -8,7 +8,8 @@ import {
   supprimerFournisseur,
   getCommandesFournisseurs,
   creerCommandeFournisseur,
-  recevoirCommandeFournisseur
+  recevoirCommandeFournisseur,
+  getBoutiqueProduits
 } from './actions'
 import { fcfa } from '@/lib/format'
 
@@ -46,11 +47,8 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
       setCommandes(cmds)
 
       // Catalogue pour le formulaire d'achat
-      const resProds = await fetch(`/api/boutiques/${boutiqueId}/produits`)
-      if (resProds.ok) {
-        const dProds = await resProds.json()
-        setProduits(dProds.produits || dProds || [])
-      }
+      const prods = await getBoutiqueProduits(boutiqueId)
+      setProduits(prods || [])
     } catch (err) {
       console.error('Erreur chargement donnees fournisseurs:', err)
     } finally {
