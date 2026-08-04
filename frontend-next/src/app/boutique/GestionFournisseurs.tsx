@@ -318,26 +318,30 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                 <tbody>
                   {commandes.map((cmd: any) => {
                     const fou = fournisseurs.find(f => f.id === cmd.fournisseur_id)
+                    const totalVal = Number(cmd.montant_total ?? cmd.total_achat ?? 0)
+                    const rawDate = cmd.created_at || cmd.date_commande || cmd.date_livraison
+                    const dateFmt = rawDate ? new Date(rawDate).toLocaleDateString('fr-FR') : '—'
+                    const isRecue = cmd.statut === 'recu' || cmd.statut === 'recue'
                     return (
                       <tr key={cmd.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
                         <td style={{ padding: 12, fontWeight: 700 }}>{cmd.reference}</td>
                         <td style={{ padding: 12 }}>{fou ? fou.nom : 'Inconnu'}</td>
-                        <td style={{ padding: 12, fontWeight: 700 }}>{fcfa(cmd.total_achat)}</td>
-                        <td style={{ padding: 12 }}>{new Date(cmd.date_commande).toLocaleDateString('fr-FR')}</td>
+                        <td style={{ padding: 12, fontWeight: 700 }}>{fcfa(totalVal)}</td>
+                        <td style={{ padding: 12 }}>{dateFmt}</td>
                         <td style={{ padding: 12 }}>
                           <span style={{
-                            padding: '3px 6px', borderRadius: 4, fontSize: 11, fontWeight: 700,
-                            background: cmd.statut === 'recue' ? '#d1fae5' : '#fee2e2',
-                            color: cmd.statut === 'recue' ? '#065f46' : '#9a3412'
+                            padding: '4px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800,
+                            background: isRecue ? '#d1fae5' : '#fee2e2',
+                            color: isRecue ? '#065f46' : '#9a3412'
                           }}>
-                            {cmd.statut === 'recue' ? 'REÇUE' : 'EN ATTENTE'}
+                            {isRecue ? 'REÇUE' : 'EN ATTENTE'}
                           </span>
                         </td>
                         <td style={{ padding: 12 }}>
-                          {cmd.statut === 'brouillon' && (
+                          {!isRecue && (
                             <button
                               onClick={() => handleRecevoirCommande(cmd.id)}
-                              style={{ padding: '4px 8px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                              style={{ padding: '6px 12px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                             >
                               📥 Réceptionner
                             </button>

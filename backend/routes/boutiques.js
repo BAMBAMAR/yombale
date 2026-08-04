@@ -2227,8 +2227,11 @@ router.put('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID
       [statut || currentStatut, date_livraison || cmd.date_livraison, cId]
     );
 
+    const isTargetRecu = statut === 'recu' || statut === 'recue';
+    const isAlreadyRecu = currentStatut === 'recu' || currentStatut === 'recue';
+
     // Stock & dépenses automatiques si reçue
-    if (currentStatut !== 'recu' && statut === 'recu') {
+    if (!isAlreadyRecu && isTargetRecu) {
       const items = typeof cmd.items === 'string' ? JSON.parse(cmd.items) : cmd.items;
       for (const item of items) {
         if (item.id) {
