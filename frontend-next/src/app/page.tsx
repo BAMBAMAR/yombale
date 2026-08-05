@@ -322,15 +322,6 @@ export default async function HomePage({
         <RecentlyViewed />
       </main>
 
-            </div>
-          </div>
-
-          <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', marginTop: 16 }}>
-            Pas de débit automatique · Renouvellement manuel · {modePaiementLabel}
-          </p>
-        </section>
-      )}
-
       {/* ── Bloc SEO ─────────────────────────────────────────────── */}
       {!hasFiltre && (
         <section style={{ maxWidth: 1200, margin: '24px auto 24px', padding: '0 20px' }}>
