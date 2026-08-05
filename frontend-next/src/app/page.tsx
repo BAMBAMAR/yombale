@@ -359,18 +359,27 @@ export default async function HomePage({
             </div>
           </div>
 
-          {/* Bloc Top Marques & Réassurance (Droite - Desktop) pour exploiter l'espace vide utilement */}
-          <div className="hidden-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 300px', alignItems: 'flex-end', justifyContent: 'center' }}>
-            <div className="filtres-bar" style={{ margin: 0, gap: 8, background: 'transparent', border: 'none', padding: 0, boxShadow: 'none' }}>
-              <span className="filtres-label" style={{ minWidth: 'auto', color: '#64748b' }}>Top Marques :</span>
-              <Link href="/?q=apple" className="budget-pill" style={{ opacity: 0.9 }}>Apple</Link>
-              <Link href="/?q=samsung" className="budget-pill" style={{ opacity: 0.9 }}>Samsung</Link>
-              <Link href="/?q=xiaomi" className="budget-pill" style={{ opacity: 0.9 }}>Xiaomi</Link>
+          {/* Bloc Top Marques & Actions (Droite - Desktop) */}
+          <div className="hidden-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 300px', alignItems: 'flex-end' }}>
+            {/* Ligne 1 : Alignée parfaitement avec Budget et État */}
+            <div className="filtres-bar" style={{ margin: 0 }}>
+              <span className="filtres-label">Top Marques :</span>
+              <Link href="/?q=apple" className="budget-pill">Apple</Link>
+              <Link href="/?q=samsung" className="budget-pill">Samsung</Link>
+              <Link href="/?q=xiaomi" className="budget-pill">Xiaomi</Link>
             </div>
             
-            <Link href="/boutiques" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#C75B00', textDecoration: 'none', background: '#fff7ed', padding: '6px 14px', borderRadius: 30, border: '1px solid #fed7aa', transition: 'all 0.2s' }}>
-              <span>🛡️</span> Découvrir nos 100+ vendeurs vérifiés →
-            </Link>
+            {/* Ligne 2 : Alignée parfaitement avec Trier et Tendances */}
+            <div className="filtres-bar" style={{ margin: 0, gap: 8 }}>
+              {(q || categorie || prixMax || sousType) ? (
+                <Link href="/" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2' }}>
+                  <span>✖</span> Effacer filtres
+                </Link>
+              ) : null}
+              <Link href="/boutiques" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#16a34a', borderColor: '#dcfce7', background: '#f0fdf4' }}>
+                <span>🛡️</span> Boutiques vérifiées
+              </Link>
+            </div>
           </div>
         </div>
 
