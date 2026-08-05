@@ -1086,6 +1086,9 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
           - Recherche globale : la saisie dans la barre de recherche interroge désormais les **2 070 produits modèles** sur **toutes les catégories simultanément**.
           - Mappage d'alias : correction de l'incohérence des clés de catégories (ex: `electronique` regroupe désormais `smartphones`, `informatique`, `electronique` et `high-tech`).
           - Ajout de l'onglet **`📁 Tous les produits`** au début pour parcourir l'ensemble du catalogue standard sans restriction.
+        - **Enrichissement des Produits Modèles Alimentation (`generate-catalog.js`)** :
+          - Ajout de **100 produits alimentaires uniques et réels** du marché sénégalais et ouest-africain (diversités de riz, laits, cafés, huiles, épices, poissons séchés Kethiakh/Guedj/Yeet, bouillons, eaux, haricots, farines, condiments, jusPressea, boissons).
+          - Suppression des doublons artificiels numérotés (`(2)`, `(3)`) pour un catalogue 100% propre de **255 produits distincts au total**.
       - **Correction Persistance des Cases à Cocher Fiscales (`ParametresFiscalite.tsx` & `boutiques.js`)** :
         - Diagnostic : le navigateur envoyait la valeur natif HTML `'on'` pour les cases cochées au lieu de `'true'`, tandis que le backend échouait la comparaison `'on' === 'true'` (sauvegardait `false`). Décocher envoyait `undefined`, ce qui conservait la valeur précédente sans pouvoir la passer à `false`.
         - Correction : Ajout d'inputs cachés explicites `<input type="hidden" name="prix_tva_incluse" value={prixTvaIncluse ? 'true' : 'false'} />` et gestion du state React. Côté backend, intégration d'une fonction `parseBoolVal` et d'une clause `CASE WHEN $9::boolean IS NOT NULL THEN $9::boolean ELSE ... END` garantissant la persistance exacte et immédiate des deux options.
