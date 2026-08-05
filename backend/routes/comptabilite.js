@@ -7,6 +7,7 @@ const multer = require('multer');
 const { pool } = require('../models/db');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
 const { uploadBuffer } = require('../services/cloudinary');
+const { enregistrerAuditLog } = require('../lib/auditLogger');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -922,11 +923,33 @@ router.patch(
     try {
       const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
       if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+
+      // Récupérer ancien stock & nom du produit
+      const oldRes = await pool.query(
+        `SELECT id, nom, stock_quantite FROM boutique_produits WHERE id=$1 AND boutique_id=$2`,
+        [req.params.produitId, req.params.boutiqueId]
+      );
+      if (!oldRes.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+      const pOld = oldRes.rows[0];
+      const ancienStock = pOld.stock_quantite ?? 0;
+      const nouveauStock = parseInt(req.body.stock_quantite, 10);
+
       const { rows } = await pool.query(
         `UPDATE boutique_produits SET stock_quantite=$1 WHERE id=$2 AND boutique_id=$3 RETURNING id, nom, stock_quantite`,
-        [req.body.stock_quantite, req.params.produitId, req.params.boutiqueId]
+        [nouveauStock, req.params.produitId, req.params.boutiqueId]
       );
-      if (!rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+
+      // Log d'audit de modification de stock
+      enregistrerAuditLog(
+        req.params.boutiqueId,
+        req.user.userId,
+        req.user.nom || 'Marchand',
+        'produit_modifie',
+        `Ajustement du stock de "${pOld.nom}" : ${ancienStock} ➔ ${nouveauStock}`,
+        { produit_id: req.params.produitId, ancien_stock: ancienStock, nouveau_stock: nouveauStock },
+        req
+      );
+
       res.json(rows[0]);
     } catch (err) {
       res.status(500).json({ error: 'Erreur serveur' });

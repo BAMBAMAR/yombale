@@ -9,6 +9,7 @@ const { uploadBuffer } = require('../services/cloudinary');
 const multer = require('multer');
 const { syncProduit, deleteProduit } = require('../services/whatsapp-catalog');
 const cfg = require('../lib/settingsCache');
+const { enregistrerAuditLog } = require('../lib/auditLogger');
 
 async function checkBoutiqueAccess(boutiqueIdOrSlug, userId) {
   const isUUID = /^[0-9a-f-]{36}$/i.test(boutiqueIdOrSlug);
@@ -246,6 +247,7 @@ router.get('/mine', verifierToken, async (req, res) => {
               b.actif, b.sponsorise, b.sponsor_jusqu_au, b.whatsapp_catalog_id, b.created_at,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
               b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.conditions_vente, b.pied_de_page_document,
+              COALESCE(b.caisse_token, b.id::text) AS caisse_token,
               (b.utilisateur_id = $1) AS is_owner
        FROM boutiques b
        LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
@@ -272,6 +274,7 @@ router.get('/:id', async (req, res) => {
               b.horaires, b.slug, b.utilisateur_id, b.created_at,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
               b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.conditions_vente, b.pied_de_page_document,
+              COALESCE(b.caisse_token, b.id::text) AS caisse_token,
               a.plan AS plan_actif
        FROM boutiques b
        LEFT JOIN LATERAL (
@@ -772,6 +775,9 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
        images, en_stock !== 'false', categorie||null, caracJson, JSON.stringify(variantesJson), codeBarrePostVal]
     );
     res.status(201).json({ success: true, produit: r.rows[0] });
+    // Audit Log Creation
+    enregistrerAuditLog(id, req.user.userId, req.user.nom || 'Marchand', 'produit_cree', `Création du produit "${r.rows[0].nom}"`, { produit_id: r.rows[0].id, prix: r.rows[0].prix }, req);
+
     // Sync catalogue Meta — hors du try/catch pour éviter double-réponse
     const produitCree = r.rows[0];
     setImmediate(async () => {
@@ -831,6 +837,10 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
        caracJson, JSON.stringify(variantesJson), codeBarreVal, prodId, id]
     );
     res.json({ success: true, produit: r.rows[0] });
+    
+    // Audit Log Modification
+    enregistrerAuditLog(id, req.user.userId, req.user.nom || 'Marchand', 'produit_modifie', `Modification du produit "${r.rows[0].nom}"`, { produit_id: prodId, stock_quantite: r.rows[0].stock_quantite }, req);
+
     const produitMaj = r.rows[0];
     setImmediate(async () => {
       try {
@@ -852,8 +862,12 @@ router.delete('/:id/produits/:prodId', verifierToken, param('id').isUUID(), para
     const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
     if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
 
-    const r = await pool.query('DELETE FROM boutique_produits WHERE id=$1 AND boutique_id=$2 RETURNING id', [prodId, id]);
+    const r = await pool.query('DELETE FROM boutique_produits WHERE id=$1 AND boutique_id=$2 RETURNING id, nom', [prodId, id]);
     if (!r.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
+
+    // Audit Log Deletion
+    enregistrerAuditLog(id, req.user.userId, req.user.nom || 'Marchand', 'produit_supprime', `Suppression du produit "${r.rows[0].nom || prodId}"`, { produit_id: prodId }, req);
+
     pool.query('SELECT whatsapp_catalog_id FROM boutiques WHERE id=$1', [id])
       .then(b => deleteProduit(prodId, b.rows[0]?.whatsapp_catalog_id))
       .catch(() => {});
@@ -2570,19 +2584,6 @@ router.delete('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isU
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
-
-async function enregistrerAuditLog(boutiqueId, utilisateurId, auteurNom, typeAction, description, metadonnees = {}, req = null) {
-  try {
-    const ip = req ? (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '') : '';
-    await pool.query(
-      `INSERT INTO boutique_logs (boutique_id, utilisateur_id, auteur_nom, type_action, description, metadonnees, ip_adresse)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [boutiqueId, utilisateurId || null, auteurNom || 'Système', typeAction, description, JSON.stringify(metadonnees), ip]
-    );
-  } catch (err) {
-    console.error('[AUDIT LOG ERR]', err);
-  }
-}
 
 // ── ROUTE AUDIT LOGS ─────────────────────────────────────────────────────────
 

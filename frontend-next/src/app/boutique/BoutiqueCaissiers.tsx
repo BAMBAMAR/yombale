@@ -139,14 +139,19 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
   const [copie, setCopie] = useState(false)
 
   useEffect(() => {
+    if (!boutiqueId) return
     fetch(`/api/boutiques/${boutiqueId}`)
       .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.boutique?.caisse_token) setCaisseToken(data.boutique.caisse_token) })
-      .catch(() => {})
+      .then(data => {
+        const token = data?.caisse_token || data?.boutique?.caisse_token || boutiqueId
+        setCaisseToken(token)
+      })
+      .catch(() => setCaisseToken(boutiqueId))
   }, [boutiqueId])
 
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com'
-  const terminalUrl = caisseToken ? `${siteUrl}/boutique/caisse?token=${caisseToken}` : ''
+  const activeToken = caisseToken || boutiqueId
+  const terminalUrl = `${siteUrl}/boutique/caisse?token=${activeToken}`
 
   if (loading && caissiers.length === 0) return <div style={{ padding: 40, textAlign: 'center' }}>Chargement...</div>
 
