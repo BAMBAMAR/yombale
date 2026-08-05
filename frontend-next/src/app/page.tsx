@@ -140,7 +140,7 @@ export default async function HomePage({
       <section style={{
         background: 'linear-gradient(135deg, #ffffff 0%, #fffdfa 50%, #fff7ed 100%)',
         borderBottom: '1px solid #fed7aa',
-        padding: '32px 20px 24px',
+        padding: '24px 20px 16px',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden',
@@ -149,10 +149,10 @@ export default async function HomePage({
         <div style={{ maxWidth: 1440, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 40, position: 'relative', zIndex: 2 }}>
           
           {/* COLONNE GAUCHE (Desktop seulement) */}
-          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: '#fff', padding: 20, borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-            <div style={{ fontSize: 24, marginBottom: 8 }}>💬</div>
-            <h3 style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', marginBottom: 4 }}>Commandez sur WhatsApp</h3>
-            <p style={{ fontSize: 12, color: '#64748b', margin: 0, lineHeight: 1.5 }}>Trouvez le produit et passez commande directement au vendeur en un clic. Suivez votre livraison en direct.</p>
+          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: '#fff', padding: 16, borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+            <div style={{ fontSize: 20, marginBottom: 6 }}>💬</div>
+            <h3 style={{ fontSize: 13, fontWeight: 900, color: '#0f172a', marginBottom: 4 }}>Commandez sur WhatsApp</h3>
+            <p style={{ fontSize: 11, color: '#64748b', margin: 0, lineHeight: 1.4 }}>Trouvez le produit et passez commande directement au vendeur en un clic. Suivez votre livraison en direct.</p>
             <span style={{ display: 'inline-block', marginTop: 12, fontSize: 12, fontWeight: 700, color: '#C75B00' }}>En savoir plus →</span>
           </div>
 
@@ -161,39 +161,39 @@ export default async function HomePage({
           
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: '#fff7ed', color: '#c75b00', padding: '6px 16px', borderRadius: 30,
-            fontSize: 12, fontWeight: 800, marginBottom: 16, border: '1px solid #ffedd5',
+            background: '#fff7ed', color: '#c75b00', padding: '4px 14px', borderRadius: 30,
+            fontSize: 11, fontWeight: 800, marginBottom: 8, border: '1px solid #ffedd5',
           }}>
             <span>✨ Comparateur N°1 de prix & vendeurs au Sénégal</span>
           </div>
 
-          <h1 style={{ fontSize: 'clamp(28px, 4.5vw, 42px)', fontWeight: 900, color: '#0f172a', margin: '0 0 14px', lineHeight: 1.25, letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 900, color: '#0f172a', margin: '0 0 10px', lineHeight: 1.2, letterSpacing: '-0.02em' }}>
             Comparez les prix & trouvez les meilleurs vendeurs au <span style={{ color: '#C75B00' }}>Sénégal</span>
           </h1>
 
-          <p style={{ fontSize: 16, color: '#475569', margin: '0 auto 28px', maxWidth: 640, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 15, color: '#475569', margin: '0 auto 16px', maxWidth: 640, lineHeight: 1.5 }}>
             Accédez instantanément à des milliers de produits, téléphones, électroménager et boutiques vérifiées à Dakar et dans toutes les régions.
           </p>
 
           {/* BARRE DE RECHERCHE PRINCIPALE */}
-          <div style={{ maxWidth: 640, margin: '0 auto 24px' }}>
+          <div style={{ maxWidth: 640, margin: '0 auto' }}>
             <SearchBar defaultValue={q} />
           </div>
 
           </div>
 
           {/* COLONNE DROITE (Desktop seulement) */}
-          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)', padding: 20, borderRadius: 16, color: '#fff', boxShadow: '0 8px 24px rgba(199,91,0,0.2)' }}>
-            <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.2)', padding: '4px 12px', borderRadius: 12, fontSize: 11, fontWeight: 800, marginBottom: 12 }}>🚀 NOUVEAU</div>
-            <h3 style={{ fontSize: 16, fontWeight: 900, marginBottom: 6 }}>Boutique Taf Taf</h3>
-            <p style={{ fontSize: 12, opacity: 0.9, margin: '0 0 16px', lineHeight: 1.5 }}>Créez votre boutique complète en 30 secondes chrono pour {prixTafTaf} FCFA !</p>
-            <Link href="/creer-boutique" style={{ display: 'block', textAlign: 'center', background: '#fff', color: '#C75B00', fontWeight: 800, fontSize: 12, padding: '8px', borderRadius: 8, textDecoration: 'none' }}>Créer ma vitrine →</Link>
+          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)', padding: 16, borderRadius: 16, color: '#fff', boxShadow: '0 8px 24px rgba(199,91,0,0.2)' }}>
+            <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.2)', padding: '2px 10px', borderRadius: 12, fontSize: 10, fontWeight: 800, marginBottom: 8 }}>🚀 NOUVEAU</div>
+            <h3 style={{ fontSize: 15, fontWeight: 900, marginBottom: 4 }}>Boutique Taf Taf</h3>
+            <p style={{ fontSize: 11, opacity: 0.9, margin: '0 0 12px', lineHeight: 1.4 }}>Créez votre boutique complète en 30 secondes chrono pour {prixTafTaf} FCFA !</p>
+            <Link href="/creer-boutique" style={{ display: 'block', textAlign: 'center', background: '#fff', color: '#C75B00', fontWeight: 800, fontSize: 12, padding: '6px', borderRadius: 8, textDecoration: 'none' }}>Créer ma vitrine →</Link>
           </div>
 
         </div>
 
         {/* CATÉGORIES EN PILULES FLUIDES (Pleine largeur, sous la grille 3-colonnes) */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 1000, margin: '24px auto 0', position: 'relative', zIndex: 2 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 1000, margin: '16px auto 0', position: 'relative', zIndex: 2 }}>
           {CATEGORIES.map((c) => {
             if (categoriesActives !== null && !categoriesActives.includes(c.slug) && c.slug !== 'telecom') {
               return null;
@@ -268,9 +268,11 @@ export default async function HomePage({
           </div>
         )}
 
-        {/* ── BARRE DE FILTRES (BUDGET & TRI) ────────────────────── */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-          <div className="filtres-bar" style={{ margin: 0 }}>
+        {/* ── BARRE DE FILTRES (BUDGET & TRI) & PROMO DROITE ────────────────────── */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, marginBottom: 24 }}>
+          {/* Bloc filtres (Gauche) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 500px' }}>
+            <div className="filtres-bar" style={{ margin: 0 }}>
             <span className="filtres-label">Budget :</span>
             {BUDGETS.map((b) => {
               const ps = new URLSearchParams()
@@ -306,7 +308,18 @@ export default async function HomePage({
                   {t.label}
                 </Link>
               )
+              )
             })}
+          </div>
+          </div>
+
+          {/* Encart Promo Droite (Desktop seulement) pour exploiter l'espace vide */}
+          <div className="hero-side-card" style={{ flex: '0 0 320px', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', padding: '16px 20px', borderRadius: 12, color: '#fff', boxShadow: '0 4px 12px rgba(15,23,42,0.1)' }}>
+             <h4 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 8 }}>
+               <span style={{ fontSize: 16 }}>⚡</span> Développez vos ventes
+             </h4>
+             <p style={{ margin: '0 0 12px', fontSize: 12, opacity: 0.8, lineHeight: 1.4 }}>Rejoignez les meilleurs vendeurs. Créez votre vitrine pro complète en 30 secondes.</p>
+             <Link href="/creer-boutique" style={{ display: 'block', background: '#C75B00', color: '#fff', padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 800, textDecoration: 'none', textAlign: 'center' }}>Vendre sur Nopalou →</Link>
           </div>
         </div>
 
