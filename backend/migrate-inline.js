@@ -1,5 +1,5 @@
 // backend/migrate-inline.js
-// Migration idempotente appelée au démarrage de app.js (ne ferme PAS le pool)
+// Migration idempotente appelée au démarrage de app.js (ne ferme PAS le pool principal)
 // BUG FIX : l'ancienne migrate.js appelait pool.end() ce qui cassait tout
 const { Pool } = require('pg');
 require('dotenv').config();
@@ -8,6 +8,9 @@ module.exports = async function migrateInline() {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
+    max: 2,                           // Limiter à 2 connexions pour la migration
+    connectionTimeoutMillis: 30000,   // 30s pour Render.com
+    idleTimeoutMillis: 5000,          // Fermer les connexions idle rapidement
   });
   try {
     await pool.query(`
@@ -579,7 +582,7 @@ module.exports = async function migrateInline() {
       CREATE TABLE IF NOT EXISTS abonnements (
         id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         utilisateur_id UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
-        plan           VARCHAR(20) NOT NULL CHECK (plan IN ('pro', 'business')),
+        plan           VARCHAR(20) NOT NULL CHECK (plan IN ('gratuit', 'decouverte', 'taf_taf', 'pro', 'business', 'immo')),
         statut         VARCHAR(20) DEFAULT 'actif' CHECK (statut IN ('actif', 'expire', 'annule')),
         prix_mensuel   NUMERIC(10,2) NOT NULL,
         debut          TIMESTAMPTZ DEFAULT NOW(),
@@ -590,6 +593,13 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_abonnements_user   ON abonnements(utilisateur_id, statut);
       CREATE INDEX IF NOT EXISTS idx_abonnements_fin    ON abonnements(fin) WHERE statut = 'actif';
     `);
+    
+    // Update existing constraint for older databases
+    await pool.query(`
+      ALTER TABLE abonnements DROP CONSTRAINT IF EXISTS abonnements_plan_check;
+      ALTER TABLE abonnements ADD CONSTRAINT abonnements_plan_check CHECK (plan IN ('gratuit', 'decouverte', 'taf_taf', 'pro', 'business', 'immo'));
+    `);
+    
     console.log('[MIGRATE] ✅ Table abonnements OK');
   } catch (e) { console.warn('[MIGRATE] abonnements:', e.message); }
 
@@ -663,6 +673,7 @@ module.exports = async function migrateInline() {
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS instagram TEXT`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS horaires JSONB DEFAULT '{}'`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS slug VARCHAR(100)`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS couleur_theme VARCHAR(50) DEFAULT '#1e3a5f'`,
   ];
   for (const sql of colonnesBoutiqueAvancees) {
     try { await pool.query(sql); }

@@ -192,6 +192,22 @@ Aucun chantier n'est actuellement identifié comme prioritaire — le dernier ch
 
 ---
 
+## État du projet (05 août 2026 — Intégration Boutiques Taf Taf)
+**Statut :** *Fonctionnalité en production*
+
+Déclencheur : Demande de l'utilisateur d'ajouter un accès rapide "Boutique Taf Taf" dans le menu principal et de résoudre les erreurs bloquantes lors de la création d'une boutique.
+
+**Réalisations & Corrections :**
+- **Menu Principal (Navbar)** : Ajout d'un bouton fixe "⚡ Créer ma Boutique Taf Taf" dans le composant `layout.tsx` à côté du bouton "Publier" (bureau) et sous forme d'icône (mobile).
+- **Mise en page (UI)** : Ajout de la contrainte CSS `white-space: nowrap` sur les boutons du menu (Publier, Guides) pour empêcher les sauts de ligne inesthétiques sur de petits écrans.
+- **Base de données (Migration)** :
+  - **Correction Colonne Manquante** : Ajout de la colonne `couleur_theme (VARCHAR(50))` à la table `boutiques` dans `migrate-inline.js` pour éviter l'erreur `couleur_theme does not exist`.
+  - **Correction Contrainte d'Abonnement** : Mise à jour du `CHECK CONSTRAINT` `abonnements_plan_check` de la table `abonnements` pour autoriser les forfaits `'taf_taf'` et `'decouverte'` en plus des forfaits existants, évitant l'erreur `violates check constraint "abonnements_plan_check"` lors du provisionnement initial des boutiques.
+  - **Essai Gratuit Standardisé** : Ajout de la création automatique du plan "découverte" (1 mois d'essai gratuit) pour les boutiques standards (`POST /api/boutiques`), s'alignant sur le fonctionnement des boutiques Taf Taf.
+- **Test E2E** : Vérification réussie (Code HTTP 200, JWT retourné) du workflow backend via l'API `POST /api/boutiques/taf-taf`.
+
+---
+
 ## État du projet (31 juillet 2026 — Refonte Ergonomique Chatbot WhatsApp & Traitement Direct du Panier)
 **Statut :** *Mergé et pushé sur `origin main` (`f17e00c`)*
 
@@ -1115,6 +1131,20 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
         - **Dictionnaire Photo Haute Fidélité** : Enrichissement complet des règles et mots-clés de `getPhotoForProduct(nom, cat)` pour couvrir 100% des sous-types (sauces, condiments, fruits, légumes, boissons, consoles, manettes, jeux vidéo, accessoires PC/TPV, pièces auto, matériel médical, outillage BTP, etc.).
         - **Zéro Fallback Non Souhaité & Zéro Incohérence** : Validation automatisée confirmant **0 produit hors catégorie** et **100% de concordance photo/produit** sur les 2 010 articles du catalogue standard.
         - **Correction Condiments & Sauces** : Remplacement de la photo de bol de chips par des visuels HD spécifiques (bouteilles de Ketchup rouges HD pour *Ketchup Heinz/Amora*, pot de sauce mayonnaise onctueuse pour *Mayonnaise Calvé/Lesieur* & *Moutarde Amora*, bouteille de sauce pimentée avec piments frais pour *Sauce Piment Extra Forte* & *Harissa*, et épices/cubes d'assaisonnement pour *Bouillons Jumbo/Maggi/Knorr*).
+        - **Restriction Stricte par Forfait dans le Dashboard (`BoutiqueClient.tsx` & `globals.css`)** :
+        - Isolation stricte des accès entre **Taf Taf (Découverte)**, **Pro** et **Business**.
+        - Correctif d'affichage & lisibilité : Élargissement de la barre latérale de navigation (`.bq-sidebar`) de `220px` à **`280px`**, taille de police ajustée à `12.5px`, et marges optimisées pour garantir l'affichage complet à 100% de TOUS les intitulés de menus (`Stock & Fournisseurs`, `Équipe & Accès`, `Factures & Devis`, etc.) sans aucun point de suspension `...`.
+        - Badges `🔒 Pro` et `🔒 Business` formatés sans aucun tronquage (`whiteSpace: nowrap`, `flexShrink: 0`, `marginLeft: 'auto'`).
+        - Le bouton rapide **`🛒 Caisse POS (Physique)`** affiche désormais le badge `🔒 Pro` et redirige vers la mise à niveau d'abonnement lorsque le plan actif n'est pas Pro ou Business.
+        - **Baguette Magique / Import Rapide par Lien (`/api/boutiques/magic-import/route.ts` & `boutiques.js`)** :
+          - Création de la route proxy Next.js dédiée `/api/boutiques/magic-import/route.ts` avec fallback résilient si aucune session active.
+          - Amélioration de l'extraction HTML en direct (métadonnées `og:title`, `og:description`, `og:image`) et ajout d'un parser d'URL intelligent pour AliExpress, SHEIN, Amazon.
+          - Remplissage automatique et réactif des champs (Nom, Prix estimé, Description) ainsi que de **l'aperçu photo instantané** dans la zone de téléversement (`setImagesExistantes(data.images)`), débloquant automatiquement la soumission du formulaire et transmettant l'URL de l'image au backend (`POST /api/boutiques/:id/produits`).
+        - **Refonte Visuelle des Cartes & Bannières (`frontend-next/src/app/boutiques/page.tsx` & `globals.css`)** :
+          - **Design System E-Commerce Premium Luminosité** (inspiré des standards mondiaux Shopify/Apple/Stripe) : Suppression des aplats bleus nuit très sombres (`#1C2B4A` / `#1e293b`) au profit de dégradés perle/blanc ultra-lumineux et aérés (`linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)`).
+          - **Bannières Boutiques** : 6 dégradés pastel rafraîchissants (Sky, Purple, Mint, Amber, Rose, Slate Light) pour une esthétique claire et vivante.
+          - **Suppression des bordures jaunes/orange fluo kitsch** (`border: '2px solid #fdba74'`) : Remplacement par un liseré ambre ultra-subtil (`#fde68a`) et une douce ombre portée dorée (`boxShadow: '0 10px 25px -4px rgba(245,158,11,0.15)'`) pour les boutiques Pro/Business/Sponsorisées.
+          - **Avatar Initiale Stylisé** (ex: **B** pour *Bana la Rose*, **A** pour *AMAR TECHNO*) sur fond bleu ciel doux (`#e0f2fe`) avec typographie bleue vive haute définition (`#0284c7`).
         - **Diagnostic Exhaustif & Correction de 5 URLs Incohérentes Confirmées** : Audit visuel systématique des 112 URLs Unsplash uniques. Identification et remplacement de 5 URLs dont le contenu visuel réel ne correspondait pas du tout aux produits assignés :
           1. **Huile Moteur** (Total/Shell/Mobil) : Ferrari rouge → bidon d'huile moteur (`photo-1635784065399`)
           2. **Onduleur APC** (650VA/1000VA/1500VA) : gradient abstrait coloré → salle serveur/rack informatique (`photo-1558494949`)
@@ -1126,3 +1156,32 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
           1. **Création du script `backend/scripts/fetch-photos.js`** : Script automatisé avec dictionnaire de traduction (FR→EN) conçu pour requêter l'API Unsplash, gérer intelligemment les limites de taux (rate limit), et générer itérativement un fichier `photo-mapping.json` couvrant les 879 produits distincts du catalogue.
           2. **Mise à jour de `backend/generate-catalog.js`** : Le générateur charge désormais `photo-mapping.json` en priorité. S'il y a correspondance pour le nom de base d'un produit, il utilise l'URL spécifique ; sinon, il applique les règles sémantiques par mots-clés préexistantes (fallback robuste garanti).
         - **Enrichissement Manuel (Option Sans Clé API)** : Pour éviter la dépendance à une clé API tout en maximisant la fidélité visuelle, ajout de dizaines de règles manuelles ultra-spécifiques dans `generate-catalog.js` (ex: photos HD distinctes pour les pilules, les sirops, les tensiomètres, les masques, les vêtements pour bébés, les couches, etc.), portant le système hybride à une précision optimale sans appel réseau externe.
+
+  - **Authentification WhatsApp OTP & Inscription / Connexion Flivides** :
+    - **Back-end (`backend/routes/auth.js`)** : Ajout des routes `/whatsapp-otp-send`, `/whatsapp-otp-verify`, `/whatsapp-otp-login` et `/whatsapp-otp-register`. Support complet de l'inscription et la connexion sans mot de passe via WhatsApp OTP. Logging du code OTP en console pour faciliter le débogage dev sans API Meta. Correction du matching SQL des numéros de téléphone (support simultané des formats `+221...`, `221...` et 9 chiffres bruts) pour éviter les erreurs "Aucun compte associé à ce numéro" lors de la connexion.
+    - **Front-end (`frontend-next`)** : 
+      - Integration de la bascule "Email / WhatsApp" dans `ConnexionForm.tsx` et `InscriptionForm.tsx`.
+      - Fix critique du helper `setAuthCookieAction` dans `src/app/actions/auth.ts` : il décode désormais proprement le token JWT retourné par le backend pour extraire `userId` et instancier correctement la session `nopalou_session`. Cela résout le bug où le tableau de bord de la boutique ne s'ouvrait pas après l'inscription/connexion WhatsApp.
+      - Prise en charge et distinction claire des 3 niveaux d'abonnements dans `BoutiqueClient.tsx` :
+        - 💼 **Business** (`#1e3a5f`)
+        - ⭐ **Pro** (`#C75B00`)
+        - ⚡ **Taf Taf / Découverte** (`#16a34a`, vert émeraude avec label `⚡ Taf Taf (1 mois offert)`)
+        - **Gratuit** (`#6b7280`)
+      - **Gating de fonctionnalités & Parcours de Transition de Plan** :
+        - Marquage des sous-menus restreints (`minPlan: 'pro'` ou `minPlan: 'business'`) avec badges `🔒 Pro` et `🔒 Business` dans la navigation latérale.
+        - Écran de blocage pédagogique avec bouton d'incitation à la mise à niveau (`Faire évoluer mon offre →`) vers la page `/boutique/abonnement` lorsqu'un utilisateur accède à une fonction supérieure à son plan actuel.
+        - Gestion de la transition fluide (Upgrade / Downgrade / Prolongation) sur la page `/boutique/abonnement`.
+        - **Choix de forfait à la création rapide (`/creer-boutique`)** : Sélection par défaut du forfait **⚡ Boutique Taf Taf (1 mois offert)** à l'étape finale avec possibilité explicite pour l'utilisateur de choisir directement **Pro** ou **Business** avant le lancement.
+      - **En-tête & Recherche Globale (`layout.tsx`, `NavbarActions.tsx` & `NavbarSearch.tsx`)** : 
+        - Recherche sous forme d'icône compacte `🔍` (comme à l'origine) pour libérer et optimiser l'espace horizontal.
+        - Suppression des doublons de menus et forçage de `whiteSpace: 'nowrap'` pour empêcher le retour à la ligne des textes.
+        - Bouton direct **`🏪 Ma Boutique`** maintenu dans les actions de droite avec affichage propre du profil (`👤 NomUtilisateur`).
+      - **Restriction Stricte par Forfait dans le Dashboard (`BoutiqueClient.tsx`)** :
+        - Isolation stricte des accès entre **Taf Taf (Découverte)**, **Pro** et **Business**.
+        - Correctif d'affichage : Badges `🔒 Pro` et `🔒 Business` formatés sans aucun tronquage (`whiteSpace: nowrap`, `flexShrink: 0`).
+        - Le bouton rapide **`🛒 Caisse POS (Physique)`** affiche désormais le badge `🔒 Pro` et redirige vers la mise à niveau d'abonnement lorsque le plan actif n'est pas Pro ou Business.
+      - **Chargement du Catalogue Standard & Import Batch (`BatchImportModal.tsx` & `route.ts`)** :
+        - Création de la route Next.js dédiée `/api/boutiques/catalogues-standards/route.ts` faisant le relais sécurisé avec le backend Express.
+        - Résolution définitive de l'erreur `Impossible de charger le catalogue standard` lors de l'ouverture de l'import par lot.
+        - Validation du chargement à 100% des 20 catégories de produits modèles prédéfinis.
+

@@ -132,7 +132,7 @@ export default function BatchImportModal({
   }
 
   useEffect(() => {
-    fetch(`${backendUrl}/api/boutiques/catalogues-standards`)
+    fetch('/api/boutiques/catalogues-standards')
       .then(res => res.json())
       .then(data => {
         if (data.catalogues) {
@@ -147,11 +147,13 @@ export default function BatchImportModal({
             }
           })
           setSaisies(initialSaisies)
+        } else if (data.error) {
+          setError(data.error)
         }
       })
       .catch(() => setError('Impossible de charger le catalogue standard'))
       .finally(() => setLoading(false))
-  }, [backendUrl])
+  }, [])
 
   const categoryAliases: Record<string, string[]> = {
     electronique: ['smartphones', 'informatique', 'electronique', 'high-tech'],

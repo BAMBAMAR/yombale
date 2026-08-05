@@ -104,10 +104,12 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
           <span style={{ fontSize: 28 }}>🎉</span>
           <div>
             <strong style={{ fontSize: 16, color: '#14532d' }}>
-              Abonnement Boutique {planActif.plan === 'pro' ? 'Pro' : 'Business'} Actif
+              Formule Boutique {planActif.plan === 'business' ? 'Business' : planActif.plan === 'pro' ? 'Pro' : planActif.plan === 'decouverte' || planActif.plan === 'taf_taf' ? '⚡ Taf Taf (1 mois offert)' : 'Active'}
             </strong>
             <p style={{ margin: '2px 0 0', color: '#15803d', fontSize: 14 }}>
-              Votre plan est valide jusqu&apos;au <strong>{finDate}</strong>.
+              {(planActif.plan === 'decouverte' || planActif.plan === 'taf_taf') 
+                ? <>Vous profitez actuellement de votre mois d'essai gratuit. Il expire le <strong>{finDate}</strong>. Passez au plan Pro ou Business pour continuer sans interruption.</>
+                : <>Votre plan est valide jusqu&apos;au <strong>{finDate}</strong>.</>}
             </p>
           </div>
         </div>

@@ -4,6 +4,8 @@ const jwt    = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { envoyerEmail } = require('../services/email');
+const { sendWhatsAppText, normalisePhone } = require('../services/whatsapp');
+const crypto = require('crypto');
 const { limiterAuth } = require('../middlewares/rateLimit');
 const { verifierToken } = require('../middlewares/auth');
 
@@ -219,6 +221,211 @@ router.get('/statut', verifierToken, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
     res.json({ email_verifie: rows[0].email_verifie === true });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+const otps = new Map();
+
+// POST /api/auth/whatsapp-otp-send - Envoyer un code OTP via WhatsApp
+router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
+  try {
+    let { telephone } = req.body;
+    telephone = normalisePhone(telephone);
+    if (!telephone) return res.status(400).json({ error: 'Numéro invalide' });
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+    otps.set(telephone, { code, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min
+    console.log(`[OTP] Code généré pour ${telephone} : ${code}`); // Pour aider le dev
+    
+    await sendWhatsAppText(telephone, `Nopalou - Votre code de vérification est : *${code}*.\nCe code expire dans 10 minutes.`);
+    res.json({ success: true, message: 'Code envoyé' });
+  } catch (err) {
+    console.error('[OTP SEND]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// POST /api/auth/whatsapp-otp-verify - Vérifier le code OTP
+router.post('/whatsapp-otp-verify', limiterAuth, async (req, res) => {
+  try {
+    let { telephone, code } = req.body;
+    telephone = normalisePhone(telephone);
+    
+    const data = otps.get(telephone);
+    if (!data) return res.status(400).json({ error: 'Aucun code trouvé ou expiré' });
+    if (Date.now() > data.expiresAt) {
+      otps.delete(telephone);
+      return res.status(400).json({ error: 'Code expiré' });
+    }
+    if (data.code !== code) return res.status(400).json({ error: 'Code incorrect' });
+
+    otps.delete(telephone);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[OTP VERIFY]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// POST /api/auth/whatsapp-otp-login - Vérifier l'OTP et se connecter
+router.post('/whatsapp-otp-login', limiterAuth, async (req, res) => {
+  try {
+    let { telephone, code } = req.body;
+    telephone = normalisePhone(telephone);
+    
+    const data = otps.get(telephone);
+    if (!data) return res.status(400).json({ error: 'Aucun code trouvé ou expiré' });
+    if (Date.now() > data.expiresAt) {
+      otps.delete(telephone);
+      return res.status(400).json({ error: 'Code expiré' });
+    }
+    if (data.code !== code) return res.status(400).json({ error: 'Code incorrect' });
+
+    otps.delete(telephone);
+    
+    // Trouver l'utilisateur (compatible avec formats +221, 221 et 9 chiffres)
+    const cleanPhone = normalisePhone(telephone);
+    const withPlus = '+' + cleanPhone;
+    const raw9Digits = cleanPhone.startsWith('221') ? cleanPhone.slice(3) : cleanPhone;
+
+    const { rows } = await pool.query(
+      `SELECT id, nom, email, email_verifie, suspendu, supprime_le, telephone 
+       FROM utilisateurs 
+       WHERE telephone=$1 OR telephone=$2 OR telephone=$3 OR REPLACE(telephone, '+', '')=$1`,
+      [cleanPhone, withPlus, raw9Digits]
+    );
+    
+    if (!rows.length) return res.status(404).json({ error: 'Aucun compte associé à ce numéro' });
+    
+    const user = rows[0];
+    if (user.suspendu) return res.status(403).json({ error: 'Compte suspendu' });
+    if (user.supprime_le) return res.status(403).json({ error: 'Compte en cours de suppression' });
+    
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    
+    res.json({ success: true, user, token });
+  } catch (err) {
+    console.error('[OTP LOGIN]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// POST /api/auth/whatsapp-otp-register - Vérifier l'OTP et s'inscrire
+router.post('/whatsapp-otp-register', limiterAuth, async (req, res) => {
+  try {
+    let { telephone, code, nom } = req.body;
+    telephone = normalisePhone(telephone);
+    
+    const data = otps.get(telephone);
+    if (!data) return res.status(400).json({ error: 'Aucun code trouvé ou expiré' });
+    if (Date.now() > data.expiresAt) {
+      otps.delete(telephone);
+      return res.status(400).json({ error: 'Code expiré' });
+    }
+    if (data.code !== code) return res.status(400).json({ error: 'Code incorrect' });
+
+    otps.delete(telephone);
+    
+    // Vérifier si l'utilisateur existe déjà (compatible formats +221, 221 et 9 chiffres)
+    const cleanPhone = normalisePhone(telephone);
+    const withPlus = '+' + cleanPhone;
+    const raw9Digits = cleanPhone.startsWith('221') ? cleanPhone.slice(3) : cleanPhone;
+
+    const exist = await pool.query(
+      `SELECT id FROM utilisateurs WHERE telephone=$1 OR telephone=$2 OR telephone=$3 OR REPLACE(telephone, '+', '')=$1`,
+      [cleanPhone, withPlus, raw9Digits]
+    );
+    if (exist.rows.length) return res.status(409).json({ error: 'Un compte existe déjà avec ce numéro WhatsApp. Veuillez vous connecter.' });
+    
+    const email = `${telephone}@whatsapp.nopalou.com`;
+    const plainPassword = require('crypto').randomBytes(16).toString('hex');
+    const bcrypt = require('bcryptjs');
+    const hash = await bcrypt.hash(plainPassword, 12);
+    
+    const insertRes = await pool.query(
+      'INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie) VALUES ($1, $2, $3, $4, true) RETURNING id, nom, email, telephone',
+      [nom, email, hash, telephone]
+    );
+    const user = insertRes.rows[0];
+    
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    
+    res.status(201).json({ success: true, user, token });
+  } catch (err) {
+    console.error('[OTP REGISTER]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// POST /api/auth/whatsapp-login - Demander un lien magique via WhatsApp
+router.post('/whatsapp-login', limiterAuth, async (req, res) => {
+  try {
+    let { telephone, nom } = req.body;
+    if (!telephone) return res.status(400).json({ error: 'Numéro de téléphone requis' });
+    
+    telephone = normalisePhone(telephone);
+    if (telephone.length < 9) return res.status(400).json({ error: 'Numéro invalide' });
+
+    const { rows } = await pool.query('SELECT id, nom, email FROM utilisateurs WHERE telephone=$1', [telephone]);
+    let user;
+    
+    if (rows.length) {
+      user = rows[0];
+    } else {
+      const dummyEmail = `${telephone}@whatsapp.nopalou.com`;
+      const randomPassword = crypto.randomBytes(16).toString('hex');
+      const hash = await bcrypt.hash(randomPassword, 12);
+      
+      const insertRes = await pool.query(
+        'INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie) VALUES ($1, $2, $3, $4, true) RETURNING id, nom, email',
+        [nom || 'Utilisateur WhatsApp', dummyEmail, hash, telephone]
+      );
+      user = insertRes.rows[0];
+    }
+
+    const magicToken = jwt.sign({ userId: user.id, type: 'magic' }, process.env.JWT_SECRET, { expiresIn: '15m' });
+    const magicLink = `${FRONTEND_URL}/connexion/magique?token=${magicToken}`;
+    
+    await sendWhatsAppText(telephone, `👋 Bonjour !\\n\\nVoici votre lien de connexion magique à Nopalou.\\nCliquez ici pour accéder à votre compte sans mot de passe :\\n\\n👉 ${magicLink}\\n\\nCe lien est valide 15 minutes.`);
+    
+    res.json({ success: true, message: 'Lien magique envoyé sur WhatsApp' });
+  } catch (err) {
+    console.error('[AUTH WHATSAPP]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/magic-login - Échanger le token magique contre un token de session
+router.post('/magic-login', limiterAuth, async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: 'Token manquant' });
+    
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      return res.status(400).json({ error: 'Lien magique invalide ou expiré' });
+    }
+    
+    if (payload.type !== 'magic') return res.status(400).json({ error: 'Type de token invalide' });
+
+    const { rows } = await pool.query(
+      'SELECT id, nom, email, email_verifie, suspendu, supprime_le, telephone FROM utilisateurs WHERE id=$1',
+      [payload.userId]
+    );
+    
+    if (!rows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    const user = rows[0];
+    if (user.suspendu) return res.status(403).json({ error: 'Compte suspendu.' });
+    if (user.supprime_le) return res.status(403).json({ error: 'Compte en cours de suppression.' });
+
+    const sessionToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({ user, token: sessionToken });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

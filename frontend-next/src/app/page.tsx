@@ -142,13 +142,43 @@ export default async function HomePage({
 
   return (
     <>
-      {/* ── Hero ─────────────────────────────────────────────────── */}
+      {/* Hero Dual (Acheteur / Vendeur) */}
       <section className="hero-home">
-        <h1>Comparateur de prix au <span>Sénégal</span></h1>
-        <p className="hero-sub">
-          Trouvez le prix le moins cher à Dakar et dans tout le Sénégal — téléphones, TV, électroménager et plus
-        </p>
-        <SearchBar defaultValue={q} />
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'center', textAlign: 'left', padding: '40px 20px', maxWidth: 1200, margin: '0 auto' }}>
+          {/* Acheteurs */}
+          <div style={{ flex: '1 1 400px', background: '#fff', padding: '32px 24px', borderRadius: 24, boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
+            <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--navy)', margin: '0 0 12px', lineHeight: 1.2 }}>
+              Trouvez le meilleur prix au <span style={{ color: '#C75B00' }}>Sénégal</span>
+            </h1>
+            <p style={{ color: '#64748b', fontSize: 16, margin: '0 0 24px' }}>
+              Comparez les téléphones, TV et immobilier parmi des milliers d'annonces.
+            </p>
+            <SearchBar defaultValue={q} />
+          </div>
+
+          {/* Vendeurs / Taf Taf */}
+          <div style={{ flex: '1 1 400px', background: 'var(--navy)', padding: '32px 24px', borderRadius: 24, color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 10px 40px rgba(30,58,95,0.4)' }}>
+            <h2 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 12px', lineHeight: 1.2 }}>
+              Créez votre Boutique <span style={{ color: '#25D366' }}>Taf Taf</span> ⚡
+            </h2>
+            <p style={{ color: '#cbd5e1', fontSize: 16, margin: '0 0 24px', lineHeight: 1.5 }}>
+              Votre fournisseur est sur AliExpress ou à Dubaï ? Vendez en ligne en 30 secondes, sans mot de passe. <br/>
+              <strong style={{ color: '#fff' }}>🎁 1er mois 100% gratuit !</strong>
+            </p>
+            <form action="/creer-boutique" method="GET" style={{ display: 'flex', gap: 8, width: '100%', maxWidth: 500 }}>
+              <input 
+                type="text" 
+                name="nom"
+                placeholder="Ex: Cosmétiques Dakar..." 
+                required
+                style={{ flex: 1, padding: '16px 20px', borderRadius: 12, border: 'none', fontSize: 16, outline: 'none', minWidth: 0 }}
+              />
+              <button type="submit" style={{ background: '#25D366', color: '#1e3a5f', border: 'none', padding: '0 24px', borderRadius: 12, fontWeight: 800, fontSize: 16, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                Go 🚀
+              </button>
+            </form>
+          </div>
+        </div>
         <div className="hero-categs">
           {CATEGORIES.map((c) => {
             if (categoriesActives !== null && !categoriesActives.includes(c.slug)) {
@@ -409,7 +439,10 @@ export default async function HomePage({
               <p style={{ fontSize: 32, fontWeight: 900, margin: '8px 0 2px', color: '#C75B00' }}>
                 {prixPro.toLocaleString('fr-FR')} <span style={{ fontSize: 14, fontWeight: 500, color: '#64748b' }}>FCFA/mois</span>
               </p>
-              <p style={{ fontSize: 12, color: '#16a34a', fontWeight: 700, marginBottom: 12 }}>
+              <p style={{ fontSize: 13, color: '#16a34a', fontWeight: 800, marginBottom: 4 }}>
+                🎁 1er mois 100% gratuit !
+              </p>
+              <p style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginBottom: 12 }}>
                 Jusqu&apos;à -25% en engagement 12 mois
               </p>
               <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>{modePaiementLabel}</p>
@@ -449,7 +482,10 @@ export default async function HomePage({
               <p style={{ fontSize: 32, fontWeight: 900, margin: '8px 0 2px', color: '#1e3a5f' }}>
                 {prixBusiness.toLocaleString('fr-FR')} <span style={{ fontSize: 14, fontWeight: 500, color: '#64748b' }}>FCFA/mois</span>
               </p>
-              <p style={{ fontSize: 12, color: '#16a34a', fontWeight: 700, marginBottom: 12 }}>
+              <p style={{ fontSize: 13, color: '#16a34a', fontWeight: 800, marginBottom: 4 }}>
+                🎁 1er mois 100% gratuit !
+              </p>
+              <p style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginBottom: 12 }}>
                 Jusqu&apos;à -25% en engagement 12 mois
               </p>
               <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>{modePaiementLabel}</p>

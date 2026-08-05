@@ -77,18 +77,19 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
 
   const hasResults = results.produits.length > 0 || results.boutiques.length > 0
 
-  // Hide search bar on homepage (hero already has its own search)
-  if (pathname === '/') {
-    return null
-  }
+  // Always show search bar on all pages
 
   return (
-    <div style={{ position: 'relative', width: alwaysOpen ? '100%' : 'auto' }}>
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
       <form
         className={`navbar-search${(open || alwaysOpen) ? ' navbar-search--open' : ''}`}
         onSubmit={handleSubmit}
         role="search"
-        style={alwaysOpen ? { width: '100%', display: 'flex', background: 'var(--bg)', borderRadius: '10px', border: '1.5px solid var(--border)', padding: '2px 6px' } : undefined}
+        style={
+          open || alwaysOpen
+            ? { display: 'flex', alignItems: 'center', background: '#f8fafc', borderRadius: '10px', border: '1.5px solid #cbd5e1', padding: '2px 8px', width: '220px' }
+            : { display: 'flex', alignItems: 'center' }
+        }
       >
         {(open || alwaysOpen) && (
           <input
@@ -96,19 +97,45 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
             type="search"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Rechercher des produits, boutiques, immobilier..."
+            placeholder="Rechercher..."
             className="navbar-search-input"
-            autoFocus={alwaysOpen ? false : true}
+            autoFocus
             aria-label="Recherche globale Nopalou"
-            style={alwaysOpen ? { border: 'none', background: 'transparent', flex: 1, padding: '6px 8px', fontSize: '13px', width: '100%' } : undefined}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              flex: 1,
+              padding: '6px 8px',
+              fontSize: '13px',
+              outline: 'none',
+              width: '100%',
+              color: '#0f172a'
+            }}
           />
         )}
         <button
           type={(open || alwaysOpen) ? 'submit' : 'button'}
           className="navbar-search-btn"
           aria-label={(open || alwaysOpen) ? 'Lancer la recherche' : 'Ouvrir la recherche'}
-          onMouseDown={e => { if ((open || alwaysOpen) && !query) e.preventDefault() }}
-          onClick={() => !alwaysOpen && !open && setOpen(true)}
+          onClick={() => {
+            if (!alwaysOpen && !open) {
+              setOpen(true)
+              setTimeout(() => inputRef.current?.focus(), 50)
+            }
+          }}
+          style={{
+            background: (open || alwaysOpen) ? 'none' : '#f1f5f9',
+            border: (open || alwaysOpen) ? 'none' : '1px solid #cbd5e1',
+            borderRadius: '10px',
+            width: 36,
+            height: 36,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: '#475569',
+            flexShrink: 0
+          }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="8"/>

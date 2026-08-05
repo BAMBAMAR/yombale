@@ -41,7 +41,7 @@ export default async function BoutiquePage({
   const session = await verifySession()
 
   let boutiques: Boutique[] = []
-  let planActif: 'pro' | 'business' | null = null
+  let planActif: string | null = null
 
   await Promise.all([
     backendFetch('/api/boutiques/mine')
@@ -50,7 +50,7 @@ export default async function BoutiquePage({
       .catch(() => {}),
     backendFetch('/api/abonnements/mon-plan')
       .then(r => r.ok ? r.json() : null)
-      .then((d: { abonnement: PlanActif | null } | null) => { if (d?.abonnement) planActif = d.abonnement.plan })
+      .then((d: { abonnement: { plan: string } | null } | null) => { if (d?.abonnement) planActif = d.abonnement.plan })
       .catch(() => {}),
   ])
 

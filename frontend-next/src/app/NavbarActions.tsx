@@ -7,31 +7,38 @@ interface Props {
 
 export default function NavbarActions({ nom }: Props) {
   return (
-    <div className="navbar-actions-compte" style={{ alignItems: 'center', gap: '8px' }}>
+    <div className="navbar-actions-compte" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
       <a
         href="/compte"
         style={{
-          padding: '7px 14px',
+          padding: '6px 12px',
           borderRadius: '8px',
           fontSize: '13px',
-          fontWeight: 600,
-          color: 'var(--text2)',
+          fontWeight: 700,
+          color: 'var(--navy)',
+          background: '#f1f5f9',
+          whiteSpace: 'nowrap',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          textDecoration: 'none'
         }}
       >
-        {nom}
+        👤 {nom}
       </a>
-      <form action={logout}>
+      <form action={logout} style={{ margin: 0 }}>
         <button
           type="submit"
           style={{
-            padding: '7px 14px',
+            padding: '6px 10px',
             borderRadius: '8px',
             fontSize: '13px',
             fontWeight: 600,
-            color: 'var(--red)',
+            color: '#dc2626',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
+            whiteSpace: 'nowrap'
           }}
         >
           Déconnexion

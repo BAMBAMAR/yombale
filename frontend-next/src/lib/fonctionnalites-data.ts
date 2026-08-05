@@ -6,7 +6,7 @@ export interface FonctionnalitePlateforme {
 }
 
 export interface PalierBoutique {
-  id: 'gratuit' | 'pro' | 'business'
+  id: 'decouverte' | 'gratuit' | 'pro' | 'business'
   label: string
   couleur: string
   avantages: string[]
@@ -60,6 +60,17 @@ export const PALIERS_BOUTIQUE: PalierBoutique[] = [
       'Page boutique visible sur /boutiques',
       'Coordonnées et lien WhatsApp affichés',
       'Jusqu\'à 2 annonces classées incluses',
+    ],
+  },
+  {
+    id: 'decouverte',
+    label: 'Boutique Taf Taf',
+    couleur: '#25D366',
+    avantages: [
+      'Boutique en ligne avec vos produits',
+      'Commandes et panier avec paiement Wave/OM',
+      'Import magique AliExpress',
+      'Lien WhatsApp de commande directe',
     ],
   },
   {

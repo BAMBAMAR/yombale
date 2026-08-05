@@ -2,7 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
-import { signup, type AuthState } from '@/app/actions/auth'
+import { signup, type AuthState, setAuthCookieAction } from '@/app/actions/auth'
+import { useRouter } from 'next/navigation'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -39,6 +40,17 @@ export default function InscriptionForm() {
   const [clientError, setClientError] = useState('')
   const formRef = useRef<HTMLFormElement>(null)
 
+  const [signupMethod, setSignupMethod] = useState<'email' | 'whatsapp'>('email')
+  
+  const [nom, setNom] = useState('')
+  const [telephone, setTelephone] = useState('')
+  const [code, setCode] = useState('')
+  const [stepWhatsapp, setStepWhatsapp] = useState<'form' | 'code'>('form')
+  const [loadingWa, setLoadingWa] = useState(false)
+  const [errorWa, setErrorWa] = useState('')
+
+  const router = useRouter()
+
   const strength = getPasswordStrength(password)
   const confirmOk = confirm.length > 0 && confirm === password
   const confirmErr = confirm.length > 0 && confirm !== password
@@ -52,134 +64,283 @@ export default function InscriptionForm() {
     }
   }
 
+  const handleSendWaCode = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!nom.trim()) { setErrorWa('Veuillez entrer votre nom.'); return; }
+    if (telephone.length < 9) { setErrorWa('Numéro WhatsApp invalide.'); return; }
+    setErrorWa('')
+    setLoadingWa(true)
+    try {
+      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+      const res = await fetch(`${BACKEND}/api/auth/whatsapp-otp-send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telephone })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de l\'envoi du code')
+      setStepWhatsapp('code')
+    } catch (err: any) {
+      setErrorWa(err.message)
+    } finally {
+      setLoadingWa(false)
+    }
+  }
+
+  const handleVerifyWaCode = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (code.length < 4) { setErrorWa('Code invalide.'); return; }
+    setErrorWa('')
+    setLoadingWa(true)
+    try {
+      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+      const res = await fetch(`${BACKEND}/api/auth/whatsapp-otp-register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telephone, code, nom })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de l\'inscription')
+      
+      if (data.token) {
+        await setAuthCookieAction(data.token)
+        router.push('/compte')
+      }
+    } catch (err: any) {
+      setErrorWa(err.message)
+      setLoadingWa(false)
+    }
+  }
+
   const displayError = clientError || state.error
 
   return (
-    <form ref={formRef} action={action} onSubmit={handleSubmit} className="auth-form">
-      {displayError && (
-        <div className="auth-error" role="alert">
-          <span className="auth-error-icon">⚠</span>
-          {displayError}
-        </div>
-      )}
-
-      {/* Nom */}
-      <div className="auth-field">
-        <label htmlFor="nom" className="auth-label">Nom complet</label>
-        <div className="auth-input-wrap">
-          <span className="auth-input-icon">👤</span>
-          <input
-            id="nom"
-            name="nom"
-            type="text"
-            autoComplete="name"
-            required
-            placeholder="Mamadou Diallo"
-            className="auth-input auth-input--icon"
-          />
-        </div>
+    <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, background: '#f1f5f9', padding: 4, borderRadius: 12 }}>
+        <button 
+          type="button" 
+          onClick={() => setSignupMethod('email')}
+          style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: signupMethod === 'email' ? '#fff' : 'transparent', color: signupMethod === 'email' ? '#0f172a' : '#64748b', fontWeight: 600, boxShadow: signupMethod === 'email' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer' }}
+        >
+          Email
+        </button>
+        <button 
+          type="button" 
+          onClick={() => setSignupMethod('whatsapp')}
+          style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: signupMethod === 'whatsapp' ? '#fff' : 'transparent', color: signupMethod === 'whatsapp' ? '#0f172a' : '#64748b', fontWeight: 600, boxShadow: signupMethod === 'whatsapp' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer' }}
+        >
+          WhatsApp
+        </button>
       </div>
 
-      {/* Email */}
-      <div className="auth-field">
-        <label htmlFor="email" className="auth-label">Adresse email</label>
-        <div className="auth-input-wrap">
-          <span className="auth-input-icon">✉</span>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            placeholder="vous@exemple.com"
-            className="auth-input auth-input--icon"
-          />
-        </div>
-      </div>
-
-      {/* Mot de passe */}
-      <div className="auth-field">
-        <label htmlFor="password" className="auth-label">Mot de passe</label>
-        <div className="auth-input-wrap">
-          <span className="auth-input-icon">🔒</span>
-          <input
-            id="password"
-            name="password"
-            type={showPwd ? 'text' : 'password'}
-            autoComplete="new-password"
-            required
-            minLength={8}
-            placeholder="8 caractères minimum"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            className="auth-input auth-input--icon auth-input--eye"
-          />
-          <button type="button" className="auth-eye-btn" onClick={() => setShowPwd(v => !v)}
-            aria-label={showPwd ? 'Masquer' : 'Afficher'}>
-            {showPwd ? '🙈' : '👁'}
-          </button>
-        </div>
-
-        {/* Indicateur de force */}
-        {password.length > 0 && (
-          <div className="auth-strength">
-            <div className="auth-strength-bars">
-              {[1, 2, 3, 4, 5].map(i => (
-                <div
-                  key={i}
-                  className="auth-strength-bar"
-                  style={{ background: i <= strength.score ? strength.color : '#E8DDD2' }}
-                />
-              ))}
+      {signupMethod === 'email' ? (
+        <form ref={formRef} action={action} onSubmit={handleSubmit} className="auth-form">
+          {displayError && (
+            <div className="auth-error" role="alert">
+              <span className="auth-error-icon">⚠</span>
+              {displayError}
             </div>
-            <span className="auth-strength-label" style={{ color: strength.color }}>
-              {strength.label}
-            </span>
+          )}
+
+          {/* Nom */}
+          <div className="auth-field">
+            <label htmlFor="nom" className="auth-label">Nom complet</label>
+            <div className="auth-input-wrap">
+              <span className="auth-input-icon">👤</span>
+              <input
+                id="nom"
+                name="nom"
+                type="text"
+                autoComplete="name"
+                required
+                placeholder="Mamadou Diallo"
+                className="auth-input auth-input--icon"
+              />
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* Confirmation mot de passe */}
-      <div className="auth-field">
-        <label htmlFor="confirm" className="auth-label">
-          Confirmer le mot de passe
-          {confirmOk  && <span className="auth-confirm-ok"> ✓ Identiques</span>}
-          {confirmErr && <span className="auth-confirm-err"> ✗ Différents</span>}
-        </label>
-        <div className="auth-input-wrap">
-          <span className="auth-input-icon">🔒</span>
-          <input
-            id="confirm"
-            name="confirm"
-            type={showConfirm ? 'text' : 'password'}
-            autoComplete="new-password"
-            required
-            placeholder="Répétez votre mot de passe"
-            value={confirm}
-            onChange={e => setConfirm(e.target.value)}
-            className={`auth-input auth-input--icon auth-input--eye${confirmErr ? ' auth-input--error' : confirmOk ? ' auth-input--ok' : ''}`}
-          />
-          <button type="button" className="auth-eye-btn" onClick={() => setShowConfirm(v => !v)}
-            aria-label={showConfirm ? 'Masquer' : 'Afficher'}>
-            {showConfirm ? '🙈' : '👁'}
+          {/* Email */}
+          <div className="auth-field">
+            <label htmlFor="email" className="auth-label">Adresse email</label>
+            <div className="auth-input-wrap">
+              <span className="auth-input-icon">✉</span>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                placeholder="vous@exemple.com"
+                className="auth-input auth-input--icon"
+              />
+            </div>
+          </div>
+
+          {/* Mot de passe */}
+          <div className="auth-field">
+            <label htmlFor="password" className="auth-label">Mot de passe</label>
+            <div className="auth-input-wrap">
+              <span className="auth-input-icon">🔒</span>
+              <input
+                id="password"
+                name="password"
+                type={showPwd ? 'text' : 'password'}
+                autoComplete="new-password"
+                required
+                minLength={8}
+                placeholder="8 caractères minimum"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="auth-input auth-input--icon auth-input--eye"
+              />
+              <button type="button" className="auth-eye-btn" onClick={() => setShowPwd(v => !v)}
+                aria-label={showPwd ? 'Masquer' : 'Afficher'}>
+                {showPwd ? '🙈' : '👁'}
+              </button>
+            </div>
+
+            {/* Indicateur de force */}
+            {password.length > 0 && (
+              <div className="auth-strength">
+                <div className="auth-strength-bars">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div
+                      key={i}
+                      className="auth-strength-bar"
+                      style={{ background: i <= strength.score ? strength.color : '#E8DDD2' }}
+                    />
+                  ))}
+                </div>
+                <span className="auth-strength-label" style={{ color: strength.color }}>
+                  {strength.label}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Confirmation mot de passe */}
+          <div className="auth-field">
+            <label htmlFor="confirm" className="auth-label">
+              Confirmer le mot de passe
+              {confirmOk  && <span className="auth-confirm-ok"> ✓ Identiques</span>}
+              {confirmErr && <span className="auth-confirm-err"> ✗ Différents</span>}
+            </label>
+            <div className="auth-input-wrap">
+              <span className="auth-input-icon">🔒</span>
+              <input
+                id="confirm"
+                name="confirm"
+                type={showConfirm ? 'text' : 'password'}
+                autoComplete="new-password"
+                required
+                placeholder="Répétez votre mot de passe"
+                value={confirm}
+                onChange={e => setConfirm(e.target.value)}
+                className={`auth-input auth-input--icon auth-input--eye${confirmErr ? ' auth-input--error' : confirmOk ? ' auth-input--ok' : ''}`}
+              />
+              <button type="button" className="auth-eye-btn" onClick={() => setShowConfirm(v => !v)}
+                aria-label={showConfirm ? 'Masquer' : 'Afficher'}>
+                {showConfirm ? '🙈' : '👁'}
+              </button>
+            </div>
+          </div>
+
+          {/* CGU */}
+          <p className="auth-cgu">
+            En créant un compte, vous acceptez nos{' '}
+            <a href="/cgu" className="auth-link">CGU</a>
+            {' '}et notre{' '}
+            <a href="/confidentialite" className="auth-link">politique de confidentialité</a>.
+          </p>
+
+          <SubmitButton />
+        </form>
+      ) : (
+        <form onSubmit={stepWhatsapp === 'form' ? handleSendWaCode : handleVerifyWaCode} className="auth-form">
+          {errorWa && (
+            <div className="auth-error" role="alert">
+              <span className="auth-error-icon">⚠</span>
+              {errorWa}
+            </div>
+          )}
+
+          {stepWhatsapp === 'form' ? (
+            <>
+              <div className="auth-field">
+                <label htmlFor="nom_wa" className="auth-label">Nom complet</label>
+                <div className="auth-input-wrap">
+                  <span className="auth-input-icon">👤</span>
+                  <input
+                    id="nom_wa"
+                    type="text"
+                    required
+                    value={nom}
+                    onChange={e => setNom(e.target.value)}
+                    placeholder="Mamadou Diallo"
+                    className="auth-input auth-input--icon"
+                  />
+                </div>
+              </div>
+              
+              <div className="auth-field">
+                <label htmlFor="telephone" className="auth-label">Numéro WhatsApp</label>
+                <div className="auth-input-wrap">
+                  <span className="auth-input-icon">📱</span>
+                  <input
+                    id="telephone"
+                    type="tel"
+                    required
+                    value={telephone}
+                    onChange={e => setTelephone(e.target.value)}
+                    placeholder="Ex: 77 123 45 67"
+                    className="auth-input auth-input--icon"
+                  />
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="auth-field">
+              <label htmlFor="code" className="auth-label">Code reçu sur WhatsApp</label>
+              <div className="auth-input-wrap">
+                <span className="auth-input-icon">💬</span>
+                <input
+                  id="code"
+                  type="text"
+                  required
+                  value={code}
+                  onChange={e => setCode(e.target.value)}
+                  placeholder="123456"
+                  maxLength={6}
+                  className="auth-input auth-input--icon"
+                  autoFocus
+                  style={{ letterSpacing: '2px' }}
+                />
+              </div>
+              <button type="button" onClick={() => setStepWhatsapp('form')} style={{ background: 'none', border: 'none', color: '#64748b', marginTop: 12, cursor: 'pointer', fontSize: 14 }}>
+                ← Modifier mes infos
+              </button>
+            </div>
+          )}
+
+          <p className="auth-cgu">
+            En créant un compte, vous acceptez nos{' '}
+            <a href="/cgu" className="auth-link">CGU</a>
+            {' '}et notre{' '}
+            <a href="/confidentialite" className="auth-link">politique de confidentialité</a>.
+          </p>
+
+          <button type="submit" disabled={loadingWa} className={`auth-submit-btn${loadingWa ? ' auth-submit-btn--pending' : ''}`} style={{ background: '#25D366' }}>
+            {loadingWa ? (
+              <><span className="auth-spinner" />Veuillez patienter…</>
+            ) : stepWhatsapp === 'form' ? 'Recevoir un code WhatsApp' : 'Vérifier et créer mon compte'}
           </button>
-        </div>
-      </div>
-
-      {/* CGU */}
-      <p className="auth-cgu">
-        En créant un compte, vous acceptez nos{' '}
-        <a href="/cgu" className="auth-link">CGU</a>
-        {' '}et notre{' '}
-        <a href="/confidentialite" className="auth-link">politique de confidentialité</a>.
-      </p>
-
-      <SubmitButton />
+        </form>
+      )}
 
       <p className="auth-switch">
         Déjà un compte ?{' '}
         <a href="/connexion" className="auth-link">Se connecter</a>
       </p>
-    </form>
+    </div>
   )
 }

@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { backendFetch } from '@/lib/backend-fetch'
 import { verifySession } from '@/lib/dal'
 import CaisseClient from './CaisseClient'
@@ -30,6 +31,12 @@ export default async function CaissePage({
       }
     } catch {
       planActif = null
+    }
+
+    // ── Vérification du plan : Caisse POS réservée aux formules Pro & Business
+    const isPro = planActif === 'pro' || planActif === 'business'
+    if (!isPro) {
+      redirect('/boutique?tab=caisse&locked=true')
     }
   }
 

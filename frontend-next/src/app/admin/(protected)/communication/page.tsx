@@ -330,8 +330,9 @@ Aucun investissement, aucun engagement de votre part. Paiement mensuel par Wave 
 📲 Contact : [votre numéro WhatsApp]`
 }
 
-function getApporteurExemples(prixPro: number, prixBusiness: number, tauxApporteur: number) {
+function getApporteurExemples(prixDecouverte: number, prixPro: number, prixBusiness: number, tauxApporteur: number) {
   return [
+    { formule: 'Boutique Taf Taf', prix: `${prixDecouverte.toLocaleString('fr-FR')} FCFA/mois`, commission: `${Math.round(prixDecouverte * tauxApporteur / 100).toLocaleString('fr-FR')} FCFA/mois par boutique` },
     { formule: 'Boutique Pro', prix: `${prixPro.toLocaleString('fr-FR')} FCFA/mois`, commission: `${Math.round(prixPro * tauxApporteur / 100).toLocaleString('fr-FR')} FCFA/mois par boutique` },
     { formule: 'Boutique Business', prix: `${prixBusiness.toLocaleString('fr-FR')} FCFA/mois`, commission: `${Math.round(prixBusiness * tauxApporteur / 100).toLocaleString('fr-FR')} FCFA/mois par boutique` },
   ]
@@ -389,6 +390,7 @@ export default async function CommunicationPage() {
   const jar    = await cookies()
   const secret = jar.get('nopalou_admin')?.value ?? ''
 
+  let prixDecouverte = 2500
   let prixPro = 15000
   let prixBusiness = 35000
   let commissionBusiness = 2
@@ -397,6 +399,7 @@ export default async function CommunicationPage() {
     const r = await fetch(`${BACKEND}/api/settings`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' })
     if (r.ok) {
       const s = await r.json()
+      prixDecouverte = Number(s.plan_decouverte_prix) || 2500
       prixPro = Number(s.plan_pro_prix) || 15000
       prixBusiness = Number(s.plan_business_prix) || 35000
       commissionBusiness = Number(s.commission_business) || 2
@@ -408,7 +411,7 @@ export default async function CommunicationPage() {
   const objections = getObjections(prixPro, commissionBusiness)
   const argumentaireB2B = getArgumentaireB2B(commissionBusiness)
   const apporteurTexte = getApporteurTexte(tauxApporteur)
-  const apporteurExemples = getApporteurExemples(prixPro, prixBusiness, tauxApporteur)
+  const apporteurExemples = getApporteurExemples(prixDecouverte, prixPro, prixBusiness, tauxApporteur)
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>

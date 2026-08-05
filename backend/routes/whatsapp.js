@@ -60,6 +60,9 @@ router.post('/webhook', verifyHmac, async (req, res) => {
 
   if (entry.statuses) {
     console.log('[WHATSAPP] Statut livraison:', entry.statuses[0].status);
+    if (entry.statuses[0].errors) {
+      console.log('[WHATSAPP] Erreur de livraison:', JSON.stringify(entry.statuses[0].errors, null, 2));
+    }
   }
 });
 

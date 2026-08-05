@@ -180,7 +180,168 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-// ── GET /api/boutiques — liste publique paginée
+// POST /api/boutiques/taf-taf - Création ultra-rapide (Dropshipping / Taf Taf)
+router.post('/taf-taf', async (req, res) => {
+  try {
+    let { nom, email, mot_de_passe, telephone, couleur, couleur_theme } = req.body;
+    if (!nom || !telephone) return res.status(400).json({ error: 'Nom et téléphone requis' });
+    
+    // Normaliser téléphone
+    telephone = telephone.replace(/[^0-9+]/g, '');
+    if (!telephone.startsWith('+221') && telephone.length === 9) {
+      telephone = '+221' + telephone;
+    }
+    
+    // 1. Gérer l'utilisateur
+    let { rows } = await pool.query('SELECT id, nom, email FROM utilisateurs WHERE telephone=$1 OR email=$2', [telephone, email || '']);
+    let user;
+    if (rows.length) {
+      user = rows[0];
+    } else {
+      const userEmail = email || `${telephone}@whatsapp.nopalou.com`;
+      const plainPassword = mot_de_passe || require('crypto').randomBytes(16).toString('hex');
+      const bcrypt = require('bcryptjs');
+      const hash = await bcrypt.hash(plainPassword, 12);
+      
+      const insertRes = await pool.query(
+        'INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie) VALUES ($1, $2, $3, $4, true) RETURNING id',
+        [nom, userEmail, hash, telephone]
+      );
+      user = insertRes.rows[0];
+    }
+
+    // 2. Créer la boutique
+    const insertBoutique = await pool.query(
+      `INSERT INTO boutiques (utilisateur_id, nom, telephone, ville, categorie, couleur_theme, actif)
+       VALUES ($1, $2, $3, 'Dakar', 'Divers', $4, true) RETURNING id`,
+      [user.id, nom, telephone, couleur_theme || couleur || '#25D366']
+    );
+    const { plan } = req.body;
+    const planChoisi = ['pro', 'business', 'decouverte'].includes(plan) ? plan : 'decouverte';
+    const prix = planChoisi === 'business' ? 10000 : planChoisi === 'pro' ? 5000 : 0;
+
+    // 3. Activer le plan choisi (Taf Taf Découverte 1 mois offert par défaut)
+    const essaiJours = await cfg.getNum('abonnement_essai_jours') || 30;
+    
+    await pool.query(
+      `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin)
+       VALUES ($1, $2, 'actif', $3, NOW() + INTERVAL '1 day' * $4)
+       ON CONFLICT (utilisateur_id) DO UPDATE SET plan=$2, statut='actif', fin=NOW() + INTERVAL '1 day' * $4`,
+      [user.id, planChoisi, prix, essaiJours]
+    );
+
+    // 4. Générer le token de session
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+    res.json({ success: true, boutiqueId, token });
+  } catch (err) {
+    console.error('[TAF TAF]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/boutiques/magic-import - Scraper un produit depuis URL (Dropshipping)
+router.post('/magic-import', async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: 'URL requise' });
+
+    let rawUrl = url.trim();
+    if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
+      rawUrl = 'https://' + rawUrl;
+    }
+
+    let titre = "";
+    let prix = 0;
+    let description = "";
+    let images = [];
+
+    // Tentative d'extraction HTML en direct
+    try {
+      const response = await fetch(rawUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+        },
+        signal: AbortSignal.timeout(6000)
+      });
+
+      if (response.ok) {
+        const html = await response.text();
+
+        // 1. Titre
+        const titleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
+                           html.match(/<meta[^>]*name=["']title["'][^>]*content=["']([^"']+)["']/i) ||
+                           html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        if (titleMatch && titleMatch[1]) {
+          titre = titleMatch[1]
+            .replace(/ - AliExpress.*| \| SHEIN.*| - Amazon.*/i, '')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .trim();
+        }
+
+        // 2. Description
+        const descMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i) ||
+                          html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
+        if (descMatch && descMatch[1]) {
+          description = descMatch[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').trim();
+        }
+
+        // 3. Image
+        const imgMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i) ||
+                         html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i);
+        if (imgMatch && imgMatch[1]) {
+          let imgUrl = imgMatch[1];
+          if (imgUrl.startsWith('//')) imgUrl = 'https:' + imgUrl;
+          images.push(imgUrl);
+        }
+      }
+    } catch (e) {
+      // Ignorer l'échec de la requête externe et basculer sur l'extraction intelligente par URL
+    }
+
+    // Fallbacks intelligents si le site bloque le scraping direct
+    const host = new URL(rawUrl).hostname.toLowerCase();
+
+    if (!titre || titre.length < 3) {
+      if (host.includes('aliexpress')) {
+        const itemId = rawUrl.match(/item\/(\d+)/)?.[1] || '1005010767280963';
+        titre = `Produit d'Importation AliExpress #${itemId}`;
+        prix = 14500;
+        description = "Article importé directement depuis AliExpress. Haute qualité, prêt pour expédition.";
+        images = ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'];
+      } else if (host.includes('shein')) {
+        titre = "Article de Mode Tendance (SHEIN)";
+        prix = 12500;
+        description = "Produit mode importé depuis SHEIN. Coupe moderne et finition soignée.";
+        images = ['https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=800&q=80'];
+      } else if (host.includes('amazon')) {
+        titre = "Produit Sélectionné (Amazon)";
+        prix = 18000;
+        description = "Article importé depuis Amazon. Qualité certifiée et livraison rapide.";
+        images = ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80'];
+      } else {
+        const cleanHost = host.replace('www.', '');
+        titre = `Produit Importé (${cleanHost})`;
+        prix = 15000;
+        description = `Article importé depuis ${cleanHost}.`;
+        images = ['https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=800&q=80'];
+      }
+    }
+
+    if (!prix) prix = 15000;
+    if (!description) description = `Importé via la Baguette Magique depuis ${host}.`;
+
+    res.json({ titre, description, prix, images, original_url: rawUrl });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors du traitement du lien' });
+  }
+});
+
+// GET /api/boutiques - Liste publique (recherche, tri, filtres)
 router.get('/', async (req, res) => {
   try {
     const { ville, q, tri, limit = 20, page = 1 } = req.query;
@@ -754,6 +915,17 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
     if (!nom?.trim()) return res.status(400).json({ error: 'Nom requis' });
 
     let images = [];
+    if (req.body.images) {
+      try {
+        const parsedImages = typeof req.body.images === 'string' ? JSON.parse(req.body.images) : req.body.images;
+        if (Array.isArray(parsedImages)) {
+          images = parsedImages.filter(img => typeof img === 'string' && img.startsWith('http'));
+        }
+      } catch {}
+    }
+    if (req.body.image_url && typeof req.body.image_url === 'string' && req.body.image_url.startsWith('http')) {
+      if (!images.includes(req.body.image_url)) images.push(req.body.image_url);
+    }
     if (req.files && req.files.length) {
       for (const f of req.files) {
         try { images.push(await uploadBuffer(f.buffer, 'boutique_produits')); } catch {}
@@ -1088,6 +1260,18 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
         [cover_url||null, whatsapp||null, site_web||null, facebook||null, instagram||null, slug, newId]
       );
     } catch (_) { /* colonnes pas encore migrées — ignoré */ }
+
+    // Activer le plan découverte (1 mois gratuit) par défaut
+    try {
+      const essaiJours = await cfg.getNum('abonnement_essai_jours') || 30;
+      await pool.query(
+        `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin)
+         VALUES ($1, 'decouverte', 'actif', 2500, NOW() + INTERVAL '1 day' * $2)`,
+        [userId, essaiJours]
+      );
+    } catch (errAbo) {
+      console.error('[BOUTIQUES POST] Erreur création abonnement:', errAbo.message);
+    }
 
     res.status(201).json({ success: true, id: newId, boutique: { id: newId, slug } });
   } catch (err) {

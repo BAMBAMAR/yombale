@@ -235,7 +235,7 @@ export default async function RootLayout({
                 <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
                 <span className="logo-name" data-suffix="lou">Nopa</span>
               </a>
-              <div className="navbar-links" role="menubar">
+              <div className="navbar-links" role="menubar" style={{ whiteSpace: 'nowrap' }}>
                 <a href="/" className="navbar-link" role="menuitem">Produits</a>
                 <a href="/immo" className="navbar-link" role="menuitem">Immobilier</a>
                 <a href="/telecom" className="navbar-link" role="menuitem">Télécom</a>
@@ -247,7 +247,16 @@ export default async function RootLayout({
                 <NavbarSearch />
               </div>
               <div className="navbar-actions">
-                <a href="/deposer-annonce" className="navbar-deposer" aria-label="Publier une nouvelle annonce">
+                {session ? (
+                  <a href="/boutique" className="navbar-maboutique" aria-label="Accéder à ma boutique" style={{ background: 'var(--navy)', color: '#fff', padding: '8px 14px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+                    🏪 Ma Boutique
+                  </a>
+                ) : (
+                  <a href="/creer-boutique" className="navbar-taftaf" aria-label="Créer Boutique Taf Taf" style={{ background: '#E8F5E9', color: '#166534', border: '1px solid #22c55e', padding: '8px 16px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'all 0.2s' }}>
+                    ⚡ Boutique Taf Taf
+                  </a>
+                )}
+                <a href="/deposer-annonce" className="navbar-deposer" aria-label="Publier une nouvelle annonce" style={{ whiteSpace: 'nowrap' }}>
                   + Publier
                 </a>
                 {session ? (
@@ -263,6 +272,7 @@ export default async function RootLayout({
               <div className="navbar-icon-actions">
                 <a href="/assistant-whatsapp" className="navbar-icon-btn navbar-icon-btn--whatsapp" aria-label="Assistant WhatsApp" title="Assistant WhatsApp">💬</a>
                 <a href="/favoris" className="navbar-icon-btn navbar-icon-btn--favoris" aria-label="Mes favoris" title="Favoris">❤</a>
+                <a href="/creer-boutique" className="navbar-icon-btn" aria-label="Boutique Taf Taf" title="Taf Taf" style={{ color: '#25D366' }}>⚡</a>
                 <a href="/deposer-annonce" className="navbar-icon-btn navbar-icon-btn--publier" aria-label="Publier" title="Publier">➕</a>
                 <a href={session ? "/compte" : "/connexion"} className="navbar-icon-btn navbar-icon-btn--profil" aria-label="Profil" title="Profil">👤</a>
               </div>

@@ -819,7 +819,53 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         </div>
       )}
 
-      {/* Champs cachés pour caractéristiques + catégorie + code-barres */}
+      {!produit && (
+        <div style={{ background: '#f0fdf4', padding: 16, borderRadius: 12, border: '1px dashed #4ade80', marginBottom: 10 }}>
+          <label style={{ fontSize: 13, fontWeight: 800, color: '#166534', display: 'block', marginBottom: 8 }}>
+            🌟 Baguette Magique (Import Rapide)
+          </label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input id="magic-url" type="url" placeholder="Collez le lien AliExpress, Shein, Amazon..." style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid #bbf7d0', fontSize: 14, outline: 'none' }} />
+            <button type="button" onClick={async (e) => {
+              const btn = e.currentTarget;
+              const inputEl = document.getElementById('magic-url') as HTMLInputElement;
+              const url = inputEl?.value?.trim();
+              if (!url) return;
+              btn.innerText = '⏳ Analyse...';
+              btn.disabled = true;
+              try {
+                const res = await fetch('/api/boutiques/magic-import', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ url }) });
+                if (res.ok) {
+                  const data = await res.json();
+                  const nomInput = document.querySelector('input[name="nom"]') as HTMLInputElement;
+                  const prixInput = document.querySelector('input[name="prix"]') as HTMLInputElement;
+                  const descInput = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
+                  if (nomInput && data.titre) nomInput.value = data.titre;
+                  if (prixInput && data.prix > 0) prixInput.value = data.prix;
+                  if (descInput && data.description) descInput.value = data.description;
+                  if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+                    setImagesExistantes(data.images);
+                  }
+                  btn.innerText = '✅ Importé !';
+                } else {
+                  btn.innerText = '❌ Lien invalide';
+                }
+              } catch(e) {
+                btn.innerText = '❌ Erreur réseau';
+              } finally {
+                btn.disabled = false;
+                setTimeout(() => { btn.innerText = 'Importer' }, 2500);
+              }
+            }} style={{ background: '#166534', color: '#fff', border: 'none', padding: '0 18px', borderRadius: 8, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              Importer
+            </button>
+          </div>
+          <p style={{ fontSize: 11, color: '#15803d', margin: '6px 0 0' }}>Récupère automatiquement le titre, le prix estimé, la description et les photos depuis le lien collé.</p>
+        </div>
+      )}
+
+      {/* Champs cachés pour caractéristiques + catégorie + code-barres + images */}
+      <input type="hidden" name="images" value={JSON.stringify(imagesExistantes)} />
       <input type="hidden" name="categorie" value={cat} />
       <input type="hidden" name="code_barre" value={codeBarreForm} />
       <input type="hidden" name="caracteristiques" value={JSON.stringify(carac)} />
@@ -1770,6 +1816,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
                 <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontWeight: 800, fontSize: 19, margin: 0, color: 'var(--navy)' }}>{boutique.nom}</h2>
                 {planActif === 'business' && <span className="badge-premium" style={{ background: 'var(--navy)', color: '#fff' }}>💼 Business</span>}
                 {planActif === 'pro'      && <span className="badge-premium" style={{ background: 'var(--accent)', color: '#fff' }}>⭐ Pro</span>}
+                {(planActif === 'decouverte' || planActif === 'taf_taf') && <span className="badge-premium" style={{ background: '#25D366', color: '#1C2B4A' }}>⚡ Taf Taf</span>}
                 {sponsorActif            && <span className="badge-premium" style={{ background: '#fffbeb', color: '#92400e', borderColor: '#fcd34d' }}>Mis en avant</span>}
               </div>
               <span className="badge-premium" style={{ color: boutique.actif ? '#16a34a' : 'var(--text3)', background: boutique.actif ? '#f0fdf4' : '#f9fafb', borderColor: boutique.actif ? '#bbf7d0' : 'var(--border)' }}>
@@ -1948,8 +1995,8 @@ function BoutiqueDashboard({
             <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Formule Boutique</span>
             <span style={{ fontSize: 20 }}>⭐</span>
           </div>
-          <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#64748b' }}>
-            {planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : 'Gratuit'}
+          <p style={{ margin: 0, fontSize: 17, fontWeight: 800, color: planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : planActif === 'decouverte' || planActif === 'taf_taf' ? '#16a34a' : '#64748b' }}>
+            {planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'Taf Taf (1 mois offert)' : 'Gratuit'}
           </p>
           <Link href="/boutique/abonnement" style={{ color: '#1d4ed8', fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'inline-block', marginTop: 10 }}>
             Gérer mon offre →
@@ -2010,9 +2057,16 @@ function BoutiqueDashboard({
   )
 }
 
+interface NavItem {
+  key: ManageTab
+  icon: string
+  label: string
+  minPlan?: 'pro' | 'business'
+}
+
 interface NavGroup {
   title: string
-  items: { key: ManageTab; icon: string; label: string }[]
+  items: NavItem[]
 }
 
 const NAV_GROUPS: NavGroup[] = [
@@ -2021,48 +2075,64 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { key: 'dashboard',   icon: '🏠', label: 'Vue d’ensemble' },
       { key: 'commandes',   icon: '📋', label: 'Commandes & Livraisons' },
-      { key: 'documents',   icon: '📄', label: 'Factures & Devis' },
+      { key: 'documents',   icon: '📄', label: 'Factures & Devis', minPlan: 'pro' },
     ],
   },
   {
     title: 'Catalogue & Stocks',
     items: [
       { key: 'produits',     icon: '🛍️', label: 'Catalogue' },
-      { key: 'fournisseurs', icon: '📦', label: 'Stock & Fournisseurs' },
+      { key: 'fournisseurs', icon: '📦', label: 'Stock & Fournisseurs', minPlan: 'pro' },
     ],
   },
   {
     title: 'Finance & Rapports',
     items: [
-      { key: 'compta',      icon: '💰', label: 'Comptabilité' },
-      { key: 'fiscalite',   icon: '⚖️', label: 'Fiscalité Caisse' },
-      { key: 'analytics',   icon: '📊', label: 'Analytics' },
+      { key: 'compta',      icon: '💰', label: 'Comptabilité', minPlan: 'pro' },
+      { key: 'fiscalite',   icon: '⚖️', label: 'Fiscalité Caisse', minPlan: 'pro' },
+      { key: 'analytics',   icon: '📊', label: 'Analytics', minPlan: 'pro' },
     ],
   },
   {
     title: 'Paramètres & Équipe',
     items: [
-      { key: 'equipe',      icon: '👥', label: 'Équipe & Accès' },
-      { key: 'journal',     icon: '📜', label: 'Journal d’Audit' },
+      { key: 'equipe',      icon: '👥', label: 'Équipe & Accès', minPlan: 'business' },
+      { key: 'journal',     icon: '📜', label: 'Journal d’Audit', minPlan: 'business' },
       { key: 'marketing',   icon: '📣', label: 'Marketing' },
       { key: 'infos',       icon: '⚙️', label: 'Paramètres' },
     ],
   },
 ]
 
-function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
+function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialTab: initialTabProp }: {
   boutique: Boutique
   planActif: 'pro' | 'business' | null
   onBack: () => void
   onEdit: () => void
   prixPro: number
+  initialTab?: string
 }) {
-  const [tab, setTab] = useState<ManageTab>('dashboard')
+  const validTabs: ManageTab[] = ['dashboard','produits','commandes','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal']
+  const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
+
+  const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
   const router = useRouter()
-  const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#6b7280'
+  const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : planActif === 'decouverte' || planActif === 'taf_taf' ? '#16a34a' : '#6b7280'
+  const planLabel = planActif === 'business' ? '💼 Business' : planActif === 'pro' ? '⭐ Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? '⚡ Taf Taf' : 'Gratuit'
+
+  const isAllowed = (minPlan?: 'pro' | 'business') => {
+    if (!minPlan) return true
+    if (planActif === 'business') return true
+    if (minPlan === 'pro' && planActif === 'pro') return true
+    return false
+  }
+
+  const allNavItems = NAV_GROUPS.flatMap(g => g.items)
+  const currentNavItem = allNavItems.find(i => i.key === tab)
+  const tabAllowed = isAllowed(currentNavItem?.minPlan)
 
   // Polling toutes les 30s pour détecter nouvelles commandes en attente
   useEffect(() => {
@@ -2157,7 +2227,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
             )}
             <div style={{ minWidth: 0 }}>
               <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{boutique.nom}</p>
-              {planActif && <span style={{ fontSize: 10, color: planColor, fontWeight: 700 }}>{planActif === 'business' ? '💼 Business' : '⭐ Pro'}</span>}
+              {planActif && <span style={{ fontSize: 10, color: planColor, fontWeight: 700 }}>{planLabel}</span>}
             </div>
           </div>
         </div>
@@ -2167,29 +2237,52 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
           {NAV_GROUPS.map((group, gIdx) => (
             <div key={gIdx} className="bq-nav-group">
               <div className="bq-nav-group-title">{group.title}</div>
-              {group.items.map(item => (
-                <button
-                  key={item.key}
-                  onClick={() => { setTab(item.key); if (item.key === 'commandes') setNbEnAttente(0) }}
-                  className={`bq-nav-item${tab === item.key ? ' active' : ''}`}
-                >
-                  <span style={{ fontSize: 16 }}>{item.icon}</span>
-                  {item.label}
-                  {item.key === 'commandes' && nbEnAttente > 0 && (
-                    <span className="bq-nav-badge">{nbEnAttente}</span>
-                  )}
-                </button>
-              ))}
+              {group.items.map(item => {
+                const allowed = isAllowed(item.minPlan)
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => { setTab(item.key); if (item.key === 'commandes') setNbEnAttente(0) }}
+                    className={`bq-nav-item${tab === item.key ? ' active' : ''}`}
+                    style={{ opacity: allowed ? 1 : 0.9, display: 'flex', alignItems: 'center', width: '100%', gap: 6, padding: '8px 8px' }}
+                  >
+                    <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
+                    <span style={{ textAlign: 'left', whiteSpace: 'nowrap', fontSize: 12.5, fontWeight: tab === item.key ? 700 : 500, flex: 1, minWidth: 0 }}>
+                      {item.label}
+                    </span>
+                    {!allowed && (
+                      <span style={{ fontSize: 9, background: item.minPlan === 'business' ? '#1e3a5f' : '#C75B00', color: '#fff', padding: '2px 5px', borderRadius: 4, fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 'auto' }}>
+                        🔒 {item.minPlan === 'business' ? 'Business' : 'Pro'}
+                      </span>
+                    )}
+                    {allowed && item.key === 'commandes' && nbEnAttente > 0 && (
+                      <span className="bq-nav-badge">{nbEnAttente}</span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           ))}
         </nav>
 
         {/* Liens rapides */}
-        <div style={{ padding: '12px 8px', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <a href="/boutique/caisse"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#16a34a', textDecoration: 'none', borderRadius: 6, fontWeight: 700, background: '#f0fdf4' }}>
-            🛒 Caisse POS (Physique) ↗
-          </a>
+        <div style={{ padding: '12px 8px', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {isAllowed('pro') ? (
+            <a href="/boutique/caisse"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', fontSize: 12, color: '#16a34a', textDecoration: 'none', borderRadius: 6, fontWeight: 700, background: '#f0fdf4' }}>
+              <span>🛒 Caisse POS (Physique) ↗</span>
+            </a>
+          ) : (
+            <a href="/boutique/abonnement"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', fontSize: 12, color: '#475569', textDecoration: 'none', borderRadius: 6, fontWeight: 700, background: '#f8fafc', border: '1px dashed #cbd5e1' }}
+              title="La Caisse POS (Physique) nécessite la formule Pro ou Business"
+            >
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>🛒 Caisse POS (Physique)</span>
+              <span style={{ fontSize: 9, background: '#C75B00', color: '#fff', padding: '2px 6px', borderRadius: 4, fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 4 }}>
+                🔒 Pro
+              </span>
+            </a>
+          )}
           <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer"
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#6b7280', textDecoration: 'none', borderRadius: 6 }}>
             Voir la boutique ↗
@@ -2207,24 +2300,46 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>{currentTabInfo.desc}</p>
         </div>
 
-        {tab === 'dashboard'   && <BoutiqueDashboard boutique={boutique} planActif={planActif} nbEnAttente={nbEnAttente} onNavigate={setTab} />}
-        {tab === 'produits'    && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
-        {tab === 'commandes'   && <Commandes boutiqueId={boutique.id} />}
-        {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} />}
-        {tab === 'analytics'   && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
-        {tab === 'infos'       && (
-          <div style={{ maxWidth: 580 }}>
-            <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={() => router.refresh()} />
+        {!tabAllowed ? (
+          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 20, padding: '40px 24px', textAlign: 'center', maxWidth: 560, margin: '40px auto', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+            <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0f172a', margin: '0 0 8px' }}>
+              Fonctionnalité réservée au Plan {currentNavItem?.minPlan === 'business' ? 'Business' : 'Pro'}
+            </h3>
+            <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
+              {currentNavItem?.minPlan === 'business' 
+                ? "La gestion de l'équipe (Multi-caissiers, Admins) et le Journal d'Audit sont réservés aux abonnés de la formule Business."
+                : "Les factures PDF, la gestion de stock, la comptabilité et les analytics avancés nécessitent la formule Pro ou Business."}
+            </p>
+            <a 
+              href="/boutique/abonnement"
+              style={{ display: 'inline-block', background: currentNavItem?.minPlan === 'business' ? '#1e3a5f' : '#C75B00', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 14px rgba(0,0,0,0.15)' }}
+            >
+              Faire évoluer mon offre →
+            </a>
           </div>
+        ) : (
+          <>
+            {tab === 'dashboard'   && <BoutiqueDashboard boutique={boutique} planActif={planActif} nbEnAttente={nbEnAttente} onNavigate={setTab} />}
+            {tab === 'produits'    && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
+            {tab === 'commandes'   && <Commandes boutiqueId={boutique.id} />}
+            {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} />}
+            {tab === 'analytics'   && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
+            {tab === 'infos'       && (
+              <div style={{ maxWidth: 580 }}>
+                <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={() => router.refresh()} />
+              </div>
+            )}
+            {tab === 'marketing'   && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} planActif={planActif} />}
+            {tab === 'equipe'      && <BoutiqueEquipe boutiqueId={boutique.id} />}
+            {tab === 'admins'      && <BoutiqueAdmins boutiqueId={boutique.id} />}
+            {tab === 'caissiers'   && <BoutiqueCaissiers boutiqueId={boutique.id} />}
+            {tab === 'documents'   && <GestionDocuments boutiqueId={boutique.id} />}
+            {tab === 'fournisseurs' && <GestionFournisseurs boutiqueId={boutique.id} />}
+            {tab === 'fiscalite'   && <ParametresFiscalite boutique={boutique} onUpdate={() => router.refresh()} />}
+            {tab === 'journal'     && <BoutiqueLogs boutiqueId={boutique.id} />}
+          </>
         )}
-        {tab === 'marketing'   && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} planActif={planActif} />}
-        {tab === 'equipe'      && <BoutiqueEquipe boutiqueId={boutique.id} />}
-        {tab === 'admins'      && <BoutiqueAdmins boutiqueId={boutique.id} />}
-        {tab === 'caissiers'   && <BoutiqueCaissiers boutiqueId={boutique.id} />}
-        {tab === 'documents'   && <GestionDocuments boutiqueId={boutique.id} />}
-        {tab === 'fournisseurs' && <GestionFournisseurs boutiqueId={boutique.id} />}
-        {tab === 'fiscalite'   && <ParametresFiscalite boutique={boutique} onUpdate={() => router.refresh()} />}
-        {tab === 'journal'     && <BoutiqueLogs boutiqueId={boutique.id} />}
       </main>
     </div>
     </>
@@ -2259,6 +2374,8 @@ export default function BoutiqueClient({
 
   const searchParams = useSearchParams()
   const manageId = searchParams.get('manage') || searchParams.get('id')
+  const tabParam = searchParams.get('tab')
+  const lockedParam = searchParams.get('locked')
 
   useEffect(() => {
     if (typeof mode === 'object' && 'managing' in mode) {
@@ -2271,8 +2388,12 @@ export default function BoutiqueClient({
       if (targetBoutique) {
         setMode({ managing: targetBoutique })
       }
+    } else if ((tabParam || lockedParam) && boutiques.length > 0) {
+      // Redirection depuis une page verrouillée (ex: /boutique/analytics → /boutique?tab=analytics&locked=true)
+      // Entrer en mode gestion avec la première boutique pour afficher l'écran de verrouillage
+      setMode({ managing: boutiques[0] })
     }
-  }, [manageId, boutiques])
+  }, [manageId, tabParam, lockedParam, boutiques])
 
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const waveActif    = settings.paiement_wave !== 'false'
@@ -2324,11 +2445,14 @@ export default function BoutiqueClient({
         <BoutiqueManage
           boutique={mode.managing}
           planActif={planActif ?? null}
+          initialTab={tabParam ?? undefined}
           onBack={() => {
             if (typeof window !== 'undefined') {
               const url = new URL(window.location.href)
               url.searchParams.delete('manage')
               url.searchParams.delete('id')
+              url.searchParams.delete('tab')
+              url.searchParams.delete('locked')
               window.history.replaceState(null, '', url.pathname)
             }
             setMode('list')

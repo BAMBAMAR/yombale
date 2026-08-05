@@ -113,3 +113,35 @@ export interface AuthState {
   error?: string
   message?: string
 }
+
+export async function setAuthCookieAction(input: any) {
+  let userId = ''
+  let nom = ''
+  let email = ''
+
+  if (typeof input === 'string') {
+    const parts = input.split('.')
+    if (parts.length === 3) {
+      try {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'))
+        userId = payload.userId || payload.id || ''
+        nom = payload.nom || ''
+        email = payload.email || ''
+      } catch (e) {
+        console.error('[setAuthCookieAction] Error parsing token:', e)
+      }
+    }
+  } else if (input && typeof input === 'object') {
+    userId = input.id || input.userId || ''
+    nom = input.nom || ''
+    email = input.email || ''
+  }
+
+  if (userId) {
+    await createSession({ userId, nom, email })
+  } else {
+    console.error('[setAuthCookieAction] Impossible de créer la session, userId manquant:', input)
+  }
+}
+
+

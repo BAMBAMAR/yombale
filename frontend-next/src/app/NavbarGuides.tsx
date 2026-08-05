@@ -24,6 +24,7 @@ export default function NavbarGuides() {
         aria-haspopup="true"
         aria-controls="navbar-guides-dropdown"
         aria-label="Guides d'achat et assistants Nopalou"
+        style={{ whiteSpace: 'nowrap' }}
       >
         📚 Guides {open ? '▲' : '▼'}
       </button>

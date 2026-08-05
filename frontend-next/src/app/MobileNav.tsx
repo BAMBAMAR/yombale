@@ -75,6 +75,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
 
           {isLoggedIn ? (
             <>
+              <a href="/boutique" className="mobile-nav-link" style={{ fontWeight: 800, color: 'var(--accent)' }} onClick={close}>🏪 Ma boutique (Gestion)</a>
               <a href="/compte" className="mobile-nav-link" onClick={close}>👤 {nom ?? 'Mon compte'}</a>
               <a href="/mes-annonces" className="mobile-nav-link" onClick={close}>📋 Mes annonces</a>
               <a href="/mes-annonces-immo" className="mobile-nav-link" onClick={close}>🏠 Mes biens immo</a>
