@@ -1115,5 +1115,6 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
         - **Dictionnaire Photo Haute Fidélité** : Enrichissement complet des règles et mots-clés de `getPhotoForProduct(nom, cat)` pour couvrir 100% des sous-types (sauces, condiments, fruits, légumes, boissons, consoles, manettes, jeux vidéo, accessoires PC/TPV, pièces auto, matériel médical, outillage BTP, etc.).
         - **Zéro Fallback Non Souhaité & Zéro Incohérence** : Validation automatisée confirmant **0 produit hors catégorie** et **100% de concordance photo/produit** sur les 2 010 articles du catalogue standard.
         - **Correction Condiments & Sauces** : Remplacement de la photo de bol de chips par des visuels HD spécifiques (bouteilles de Ketchup rouges HD pour *Ketchup Heinz/Amora*, pot de sauce mayonnaise onctueuse pour *Mayonnaise Calvé/Lesieur* & *Moutarde Amora*, bouteille de sauce pimentée avec piments frais pour *Sauce Piment Extra Forte* & *Harissa*, et épices/cubes d'assaisonnement pour *Bouillons Jumbo/Maggi/Knorr*).
+        - **Diagnostic Exhaustif & Onduleurs** : Diagnostic complet des règles de fallback. Séparation nette des Onduleurs APC (batterie secours UPS HD) et des routeurs réseau.
 
 

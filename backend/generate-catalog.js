@@ -54,7 +54,7 @@ function getPhotoForProduct(nom, cat) {
     if (n.includes("scanner") || n.includes("douchette") || n.includes("code-barres") || n.includes("tpv") || n.includes("tiroir") || n.includes("afficheur")) return "https://images.unsplash.com/photo-1556742049-0a67daf4005a?w=400";
     if (n.includes("écran") || n.includes("moniteur")) return "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400";
     if (n.includes("disque") || n.includes("ssd") || n.includes("clé usb") || n.includes("ram")) return "https://images.unsplash.com/photo-1531492746076-161ca9bcad58?w=400";
-    if (n.includes("onduleur") || n.includes("apc")) return "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400";
+    if (n.includes("onduleur") || n.includes("apc")) return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400";
     if (n.includes("sac")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400";
     return "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400";
   }
