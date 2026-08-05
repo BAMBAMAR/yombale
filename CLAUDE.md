@@ -1082,6 +1082,10 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
         - **Correction du parsing de prix CSV** : Suppression de la regex `replace(/\D/g, '')` qui corrompait les montants avec décimales (ex: `15000.00` devenait `1500000`). Remplacée par `parsePrixString()` pour supporter tous les formats (virgules, points, espaces, devises).
         - **Découpage automatique par sous-lots (Chunking)** : Traitement automatique des fichiers CSV/Excel de plus de 50 produits en sous-lots successifs de 50 articles. Permet d'importer des fichiers de plusieurs centaines ou milliers de produits sans blocage ni erreur 400.
         - **Correction backend (`boutiques.js`)** : Retrait du filtre strict `!p.prix` qui éliminait les articles à prix zéro ou décimaux, et hausse de la limite maximale par requête backend à 500 articles.
+        - **Recherche globale multi-catégories & Mappage d'alias (`BatchImportModal.tsx`)** :
+          - Recherche globale : la saisie dans la barre de recherche interroge désormais les **2 070 produits modèles** sur **toutes les catégories simultanément**.
+          - Mappage d'alias : correction de l'incohérence des clés de catégories (ex: `electronique` regroupe désormais `smartphones`, `informatique`, `electronique` et `high-tech`).
+          - Ajout de l'onglet **`📁 Tous les produits`** au début pour parcourir l'ensemble du catalogue standard sans restriction.
   - **Informations Légales OHADA & Standards PDF Professionnels** :
     - **Migration BDD** : Ajout de 7 nouvelles colonnes à la table `boutiques` : `rccm`, `ninea`, `forme_juridique`, `capital_social`, `compte_bancaire`, `conditions_vente`, `pied_de_page_document`.
     - **Backend** : Route PUT `/:id` étendue pour sauvegarder les 7 nouveaux champs. Routes GET `/mine` et GET `/:idOrSlug` étendues pour les inclure dans le SELECT.
