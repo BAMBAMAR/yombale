@@ -167,64 +167,64 @@ export default async function BoutiquesPage({
           pointerEvents: 'none',
         }} />
 
-        <div style={{ position: 'relative', zIndex: 2, maxWidth: 820 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '6px 14px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 14, border: '1px solid #ffedd5' }}>
-            <Sparkles size={14} style={{ color: '#C75B00' }} />
-            <span>Hub officiel des vendeurs vérifiés Nopalou</span>
+        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 40 }}>
+          
+          {/* COLONNE GAUCHE : Textes et Call to Action */}
+          <div style={{ maxWidth: 640 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '6px 14px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 14, border: '1px solid #ffedd5' }}>
+              <Sparkles size={14} style={{ color: '#C75B00' }} />
+              <span>Hub officiel des vendeurs vérifiés Nopalou</span>
+            </div>
+
+            <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 36, fontWeight: 900, margin: '0 0 16px', lineHeight: 1.2, color: '#0f172a' }}>
+              Boutiques & Vendeurs Pro au <span style={{ color: '#C75B00' }}>Sénégal</span>
+            </h1>
+
+            <p style={{ fontSize: 16, color: '#475569', margin: '0 0 28px', lineHeight: 1.6 }}>
+              Découvrez des commerçants de confiance, parcourez leurs catalogues en ligne, comparez les prix et contactez-les directement par WhatsApp ou téléphone.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Link href="/boutique" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8, background: '#C75B00', color: '#fff',
+                padding: '12px 24px', borderRadius: 12, fontWeight: 800, fontSize: 14, textDecoration: 'none',
+                boxShadow: '0 4px 16px rgba(199,91,0,0.25)', transition: 'transform 0.2s',
+              }}>
+                ✨ Ouvrir ma Boutique Pro →
+              </Link>
+              <Link href="/demo?role=marchand" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8, background: '#ffffff', color: '#0f172a',
+                padding: '12px 24px', borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: 'none', border: '1px solid #cbd5e1',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+              }}>
+                🏪 Tester la Démo POS
+              </Link>
+            </div>
           </div>
 
-          <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 32, fontWeight: 900, margin: '0 0 10px', lineHeight: 1.2, color: '#0f172a' }}>
-            Boutiques & Vendeurs Pro au <span style={{ color: '#C75B00' }}>Sénégal</span>
-          </h1>
-
-          <p style={{ fontSize: 15, color: '#475569', margin: '0 0 24px', lineHeight: 1.6, maxWidth: 680 }}>
-            Découvrez des commerçants de confiance, parcourez leurs catalogues en ligne, comparez les prix et contactez-les directement par WhatsApp ou téléphone.
-          </p>
-
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
-            <Link href="/demo?role=marchand" style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8, background: '#C75B00', color: '#fff',
-              padding: '10px 18px', borderRadius: 10, fontWeight: 800, fontSize: 13, textDecoration: 'none',
-              boxShadow: '0 4px 12px rgba(199,91,0,0.22)',
-            }}>
-              🏪 Vous êtes commerçant ? Tester la Démo POS →
-            </Link>
-            <Link href="/boutique" style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8, background: '#ffffff', color: '#0f172a',
-              padding: '10px 18px', borderRadius: 10, fontWeight: 700, fontSize: 13, textDecoration: 'none', border: '1px solid #cbd5e1',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-            }}>
-              ✨ Ouvrir ma Boutique Pro
-            </Link>
-          </div>
-
-          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#ffffff', padding: '8px 16px', borderRadius: 12, border: '1px solid #fed7aa', boxShadow: '0 2px 6px rgba(199,91,0,0.05)' }}>
-              <Store size={22} style={{ color: '#C75B00' }} />
+          {/* COLONNE DROITE : Statistiques et Réassurance */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 280px', maxWidth: 340 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: '#ffffff', padding: '16px 20px', borderRadius: 16, border: '1px solid #fed7aa', boxShadow: '0 4px 12px rgba(199,91,0,0.06)' }}>
+              <div style={{ background: '#fff7ed', padding: 12, borderRadius: 12 }}>
+                <Store size={28} style={{ color: '#C75B00' }} />
+              </div>
               <div>
-                <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>{total > 0 ? total : '100+'}</p>
-                <p style={{ margin: 0, fontSize: 11, color: '#64748b' }}>Boutiques actives</p>
+                <p style={{ margin: 0, fontSize: 24, fontWeight: 900, color: '#0f172a' }}>{total > 0 ? total : '100+'}</p>
+                <p style={{ margin: 0, fontSize: 13, color: '#64748b', fontWeight: 600 }}>Boutiques actives</p>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#ffffff', padding: '8px 16px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-              <ShieldCheck size={22} style={{ color: '#16a34a' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: '#ffffff', padding: '16px 20px', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
+              <div style={{ background: '#f0fdf4', padding: 12, borderRadius: 12 }}>
+                <ShieldCheck size={28} style={{ color: '#16a34a' }} />
+              </div>
               <div>
-                <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>100%</p>
-                <p style={{ margin: 0, fontSize: 11, color: '#64748b' }}>Vendeurs Vérifiés</p>
+                <p style={{ margin: 0, fontSize: 24, fontWeight: 900, color: '#0f172a' }}>100%</p>
+                <p style={{ margin: 0, fontSize: 13, color: '#64748b', fontWeight: 600 }}>Vendeurs Vérifiés</p>
               </div>
             </div>
-
-            <Link href="/boutique" style={{
-              marginLeft: 'auto',
-              background: '#C75B00', color: '#fff', padding: '12px 22px', borderRadius: 12,
-              textDecoration: 'none', fontWeight: 800, fontSize: 14, display: 'inline-flex', alignItems: 'center', gap: 8,
-              boxShadow: '0 4px 16px rgba(199,91,0,0.25)', transition: 'transform 0.2s',
-            }}>
-              <span>🏪 Créer ma boutique</span>
-              <ArrowRight size={16} />
-            </Link>
           </div>
+
         </div>
       </div>
 
