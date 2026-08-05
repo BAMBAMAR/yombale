@@ -1122,5 +1122,6 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
           4. **Mayonnaise/Moutarde** (Calvé/Lesieur/Amora) : boudin coréen sunda → pot de condiments/mayo (`photo-1528750717929`)
           5. **Huile alimentaire** (Dinor/Niani/Lesieur) : olives sombres (nature morte) → bouteille d'huile de cuisine dorée (`photo-1620706857370`)
         - **Réordonnancement Priorités Mots-clés** : Déplacement du match `sardines/thon/conserves` avant `huile/beurre` pour éviter que "Sardines Titus à l'Huile" ne soit matchée par le mot "huile".
-
-
+        - **Nouvelle Architecture de Mapping Photographique Extensible (112 → 879 photos)** : 
+          1. **Création du script `backend/scripts/fetch-photos.js`** : Script automatisé avec dictionnaire de traduction (FR→EN) conçu pour requêter l'API Unsplash, gérer intelligemment les limites de taux (rate limit), et générer itérativement un fichier `photo-mapping.json` couvrant les 879 produits distincts du catalogue.
+          2. **Mise à jour de `backend/generate-catalog.js`** : Le générateur charge désormais `photo-mapping.json` en priorité. S'il y a correspondance pour le nom de base d'un produit, il utilise l'URL spécifique ; sinon, il applique les règles sémantiques par mots-clés préexistantes (fallback robuste garanti).
