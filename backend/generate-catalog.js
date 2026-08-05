@@ -57,13 +57,13 @@ function getPhotoForProduct(nom, cat) {
   // 4. TV & ÉLECTROMÉNAGER
   if (cat === "tv-electro") {
     if (n.includes("tv") || n.includes("téléviseur")) return "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400";
-    if (n.includes("climatiseur") || n.includes("split") || n.includes("armoire")) return "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400";
+    if (n.includes("climatiseur") || n.includes("split") || n.includes("armoire")) return "https://images.unsplash.com/photo-1631545804899-c90a18eb5245?w=400";
     if (n.includes("ventilateur")) return "https://images.unsplash.com/photo-1618941716939-553df3c6c276?w=400";
     if (n.includes("réfrigérateur") || n.includes("frigo")) return "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400";
     if (n.includes("congélateur")) return "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=400";
     if (n.includes("micro-ondes") || n.includes("four") || n.includes("plaque") || n.includes("cuisinière") || n.includes("airfryer") || n.includes("friteuse")) return "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400";
     if (n.includes("blender") || n.includes("mixeur") || n.includes("robot") || n.includes("hachoir") || n.includes("centrifugeuse") || n.includes("presse-agrumes") || n.includes("moulin")) return "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400";
-    if (n.includes("fer") || n.includes("centrale") || n.includes("defroisseur")) return "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400";
+    if (n.includes("fer") || n.includes("centrale") || n.includes("defroisseur")) return "https://images.unsplash.com/photo-1604335399105-a0c585fd810d?w=400";
     if (n.includes("machine à laver") || n.includes("lave-linge") || n.includes("sèche-linge")) return "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=400";
     if (n.includes("bouilloire") || n.includes("cafetière") || n.includes("espresso") || n.includes("grille-pain") || n.includes("chauffe-eau")) return "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400";
     return "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400";
@@ -199,10 +199,10 @@ function getPhotoForProduct(nom, cat) {
 
   // 18. BÉBÉ & ENFANTS
   if (cat === "bebe-enfants") {
-    if (n.includes("couches") || n.includes("lingettes")) return "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400";
+    if (n.includes("couches") || n.includes("lingettes")) return "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400";
     if (n.includes("lait")) return "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400";
-    if (n.includes("biberon") || n.includes("sucette") || n.includes("poussette") || n.includes("lit") || n.includes("jouets") || n.includes("transat") || n.includes("siège auto")) return "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400";
-    return "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400";
+    if (n.includes("biberon") || n.includes("sucette") || n.includes("poussette") || n.includes("lit") || n.includes("jouets") || n.includes("transat") || n.includes("siège auto")) return "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400";
+    return "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400";
   }
 
   return "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400";
