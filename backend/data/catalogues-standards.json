@@ -30,629 +30,657 @@
     },
     {
       "id": "alimentation-5",
+      "nom": "Riz Parfumé Jasmine 25kg",
+      "description": "Riz parfumé grain long de Thaïlande",
+      "categorie": "alimentation",
+      "photo_defaut": "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400"
+    },
+    {
+      "id": "alimentation-6",
+      "nom": "Riz Basmati Indien 5kg",
+      "description": "Riz basmati de luxe pour biryani et pilaf",
+      "categorie": "alimentation",
+      "photo_defaut": "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400"
+    },
+    {
+      "id": "alimentation-7",
       "nom": "Lait Nido 400g",
       "description": "Lait entier en poudre enrichi en vitamines et minéraux",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400"
     },
     {
-      "id": "alimentation-6",
+      "id": "alimentation-8",
       "nom": "Lait Nido 900g",
       "description": "Grand format de lait entier en poudre Nido",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400"
     },
     {
-      "id": "alimentation-7",
+      "id": "alimentation-9",
       "nom": "Lait Nido 2.5kg (Format Familial)",
       "description": "Boîte géante 2.5kg de lait entier en poudre Nido",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400"
     },
     {
-      "id": "alimentation-8",
+      "id": "alimentation-10",
       "nom": "Lait Gloria 160g",
       "description": "Lait concentré non sucré onctueux pour le café ou thé",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400"
     },
     {
-      "id": "alimentation-9",
+      "id": "alimentation-11",
       "nom": "Lait Peak en Poudre 400g",
       "description": "Lait en poudre instantané riche et crémeux",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400"
     },
     {
-      "id": "alimentation-10",
+      "id": "alimentation-12",
+      "nom": "Lait Peak 900g",
+      "description": "Format économique lait en poudre Peak",
+      "categorie": "alimentation",
+      "photo_defaut": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400"
+    },
+    {
+      "id": "alimentation-13",
       "nom": "Lait Concentré Sucré Nestlé 397g",
       "description": "Boîte de lait concentré sucré onctueux pour desserts et tasses",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400"
     },
     {
-      "id": "alimentation-11",
+      "id": "alimentation-14",
+      "nom": "Lait Caillé Naturel 1L",
+      "description": "Lait caillé pasteurisé riche et rafraîchissant",
+      "categorie": "alimentation",
+      "photo_defaut": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400"
+    },
+    {
+      "id": "alimentation-15",
       "nom": "Café Touba Moulé 250g",
       "description": "Café moulu traditionnel sénégalais épicé au piment noir (Jar)",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400"
     },
     {
-      "id": "alimentation-12",
+      "id": "alimentation-16",
       "nom": "Café Touba Moulé 500g",
       "description": "Grand format de café Touba moulu traditionnel",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400"
     },
     {
-      "id": "alimentation-13",
+      "id": "alimentation-17",
       "nom": "Café Nescafé Classic 200g",
       "description": "Bocal de café soluble 100% pur café",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400"
     },
     {
-      "id": "alimentation-14",
+      "id": "alimentation-18",
       "nom": "Café Nescafé 3 en 1 (Sachet de 10)",
       "description": "Pack de 10 sachets de café sucré avec crèmerie",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400"
     },
     {
-      "id": "alimentation-15",
+      "id": "alimentation-19",
       "nom": "Bouillon Jumbo Poulet (60 cubes)",
       "description": "Boîte de 60 cubes d'assaisonnement saveur poulet",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400"
     },
     {
-      "id": "alimentation-16",
+      "id": "alimentation-20",
       "nom": "Bouillon Jumbo Crevette (60 cubes)",
       "description": "Boîte de 60 cubes d'assaisonnement saveur crevette",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400"
     },
     {
-      "id": "alimentation-17",
+      "id": "alimentation-21",
       "nom": "Bouillon Jumbo Oignon (60 cubes)",
       "description": "Boîte de 60 cubes d'assaisonnement saveur oignon",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400"
     },
     {
-      "id": "alimentation-18",
+      "id": "alimentation-22",
       "nom": "Bouillon Maggi Arôme 200ml",
       "description": "Flacon d'arôme liquide Maggi pour assaisonner tous vos plats",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400"
     },
     {
-      "id": "alimentation-19",
+      "id": "alimentation-23",
       "nom": "Bouillon Knorr Bœuf (48 cubes)",
       "description": "Cubes d'assaisonnement au goût riche de bœuf mijoté",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400"
     },
     {
-      "id": "alimentation-20",
+      "id": "alimentation-24",
       "nom": "Huile Dinor 5L",
       "description": "Huile végétale raffinée 100% pure pour friture et cuisson",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400"
     },
     {
-      "id": "alimentation-21",
+      "id": "alimentation-25",
       "nom": "Huile Niani 1L",
       "description": "Bouteille 1L d'huile de tournesol raffinée",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400"
     },
     {
-      "id": "alimentation-22",
+      "id": "alimentation-26",
       "nom": "Huile Lesieur Tournesol 5L",
       "description": "Bouteille 5L d'huile de tournesol pure",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400"
     },
     {
-      "id": "alimentation-23",
+      "id": "alimentation-27",
       "nom": "Huile de Palme Rouge 1L",
       "description": "Huile de palme rouge naturelle artisanale pour soupe Kandia",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400"
     },
     {
-      "id": "alimentation-24",
+      "id": "alimentation-28",
       "nom": "Sucre en Poudre Mimran 1kg",
       "description": "Sucre blanc raffiné pur canne en sachet 1kg",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1622484210800-885108920194?w=400"
     },
     {
-      "id": "alimentation-25",
+      "id": "alimentation-29",
       "nom": "Sucre en Morceaux CSS 1kg",
       "description": "Boîte de 1kg de sucre blanc en morceaux",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1581006852262-e4307cf6283a?w=400"
     },
     {
-      "id": "alimentation-26",
+      "id": "alimentation-30",
       "nom": "Sucre Roux Pur Canne 1kg",
       "description": "Sucre roux de canne non raffiné pour boissons et pâtisseries",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1622484210800-885108920194?w=400"
     },
     {
-      "id": "alimentation-27",
+      "id": "alimentation-31",
       "nom": "Thé Lipton Yellow Label (100 sachets)",
       "description": "Boîte de 100 sachets de thé noir intense",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400"
     },
     {
-      "id": "alimentation-28",
+      "id": "alimentation-32",
       "nom": "Thé Vert Flecha 8147 (250g)",
       "description": "Véritable thé vert de Chine pour la préparation de l'Ataya",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400"
     },
     {
-      "id": "alimentation-29",
+      "id": "alimentation-33",
       "nom": "Thé Vert Achoura (250g)",
       "description": "Thé vert de qualité supérieure pour les 3 trois trois de l'Ataya",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400"
     },
     {
-      "id": "alimentation-30",
+      "id": "alimentation-34",
       "nom": "Jus Pressea Mangue 1L",
       "description": "Brique 1L de jus de mangue sénégalais rafraîchissant",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400"
     },
     {
-      "id": "alimentation-31",
+      "id": "alimentation-35",
       "nom": "Jus Pressea Orange 1L",
       "description": "Jus d'orange en brique 1L d'origine naturelle",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400"
     },
     {
-      "id": "alimentation-32",
+      "id": "alimentation-36",
       "nom": "Jus Pressea Ananas-Gingembre 1L",
       "description": "Jus mélangé ananas et gingembre piquant",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400"
     },
     {
-      "id": "alimentation-33",
+      "id": "alimentation-37",
       "nom": "Nectar de Bissap Kirène 1L",
       "description": "Jus d'hibiscus naturel pasteurisé en brique 1L",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400"
     },
     {
-      "id": "alimentation-34",
+      "id": "alimentation-38",
       "nom": "Eau Kirène 1.5L (Pack de 6)",
       "description": "Pack de 6 bouteilles d'eau minérale naturelle Kirène",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=400"
     },
     {
-      "id": "alimentation-35",
+      "id": "alimentation-39",
       "nom": "Eau Kirène Bidon 5L",
       "description": "Grand bidon 5L d'eau minérale naturelle",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1560023907-5f313c875300?w=400"
     },
     {
-      "id": "alimentation-36",
+      "id": "alimentation-40",
       "nom": "Eau Oulmès Pétillante 1L",
       "description": "Bouteille d'eau gazeuse pétillante rafraîchissante",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=400"
     },
     {
-      "id": "alimentation-37",
+      "id": "alimentation-41",
       "nom": "Eau Casamançaise 1.5L (Pack de 6)",
       "description": "Pack de 6 bouteilles d'eau minérale de Casamance",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=400"
     },
     {
-      "id": "alimentation-38",
+      "id": "alimentation-42",
       "nom": "Canette Gazelle 33cl",
       "description": "Boisson rafraîchissante locale 33cl",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400"
     },
     {
-      "id": "alimentation-39",
+      "id": "alimentation-43",
       "nom": "Canette Coca-Cola 33cl (Pack de 6)",
       "description": "Boissons gazeuses Coca-Cola rafraîchissantes 33cl",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400"
     },
     {
-      "id": "alimentation-40",
+      "id": "alimentation-44",
       "nom": "Canette Fanta Orange 33cl",
       "description": "Soda fruité saveur orange en canette 33cl",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400"
     },
     {
-      "id": "alimentation-41",
+      "id": "alimentation-45",
       "nom": "Energy Drink Cody's 250ml",
       "description": "Boisson énergisante à la taurine et vitamines",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400"
     },
     {
-      "id": "alimentation-42",
+      "id": "alimentation-46",
       "nom": "Thiakry Frais 500g",
       "description": "Dessert traditionnel à base de couscous de millet et lait caillé",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1541518763669-27fef04b14da?w=400"
     },
     {
-      "id": "alimentation-43",
+      "id": "alimentation-47",
       "nom": "Araw de Petit Millet 1kg",
       "description": "Granulés de millet traditionnel pour préparation de Lakh ou Ngalakh",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"
     },
     {
-      "id": "alimentation-44",
+      "id": "alimentation-48",
       "nom": "Couscous de Millet (Souna) 1kg",
       "description": "Couscous fin de millet roulé à la main",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"
     },
     {
-      "id": "alimentation-45",
+      "id": "alimentation-49",
       "nom": "Sankhal de Millet 1kg",
       "description": "Millet concassé pour bouillies traditionnelles et lakh",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"
     },
     {
-      "id": "alimentation-46",
+      "id": "alimentation-50",
       "nom": "Sirop de Bissap 1L",
       "description": "Concentré naturel d'hibiscus fait maison",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400"
     },
     {
-      "id": "alimentation-47",
+      "id": "alimentation-51",
       "nom": "Sirop de Bouye 1L",
       "description": "Concentré de pain de singe (fruit du baobab)",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1570831739435-660143a4e5d5?w=400"
     },
     {
-      "id": "alimentation-48",
+      "id": "alimentation-52",
       "nom": "Sirop de Gingembre (Gnamakoudji) 1L",
       "description": "Sirop de gingembre frais piquant et tonifiant",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400"
     },
     {
-      "id": "alimentation-49",
+      "id": "alimentation-53",
       "nom": "Fleurs de Bissap Séchées 500g",
       "description": "Fleurs d'hibiscus rouges séchées pour jus et infusions",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400"
     },
     {
-      "id": "alimentation-50",
+      "id": "alimentation-54",
       "nom": "Poudre de Bouye (Baobab) 500g",
       "description": "Poudre 100% naturelle de fruit du baobab riche en vitamine C",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1570831739435-660143a4e5d5?w=400"
     },
     {
-      "id": "alimentation-51",
+      "id": "alimentation-55",
       "nom": "Moutarde Amora 265g",
       "description": "Pot de moutarde forte de Dijon",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400"
     },
     {
-      "id": "alimentation-52",
+      "id": "alimentation-56",
       "nom": "Mayonnaise Lesieur 475g",
       "description": "Bocal de mayonnaise onctueuse aux œufs frais",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=400"
     },
     {
-      "id": "alimentation-53",
+      "id": "alimentation-57",
       "nom": "Mayonnaise Calvé 450g",
       "description": "Mayonnaise crémeuse idéale pour salades et sandwichs",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=400"
     },
     {
-      "id": "alimentation-54",
+      "id": "alimentation-58",
       "nom": "Ketchup Amora Flacon 500g",
       "description": "Ketchup à la tomate de qualité en flacon souple",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400"
     },
     {
-      "id": "alimentation-55",
+      "id": "alimentation-59",
       "nom": "Sauce Piment Extra Forte 200g",
       "description": "Sauce pimentée au piment habanero piquant",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400"
     },
     {
-      "id": "alimentation-56",
+      "id": "alimentation-60",
       "nom": "Pâtes Spaghetti Panzani 500g",
       "description": "Pâtes de qualité 100% blé dur",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400"
     },
     {
-      "id": "alimentation-57",
+      "id": "alimentation-61",
       "nom": "Pâtes Spaghetti Rawsan 500g",
       "description": "Spaghettis dorés blé dur cuisson rapide",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400"
     },
     {
-      "id": "alimentation-58",
+      "id": "alimentation-62",
       "nom": "Macaroni Panzani 500g",
       "description": "Macaronis coudés blé dur pour gratins et sauces",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400"
     },
     {
-      "id": "alimentation-59",
+      "id": "alimentation-63",
       "nom": "Coquillettes Rawsan 500g",
       "description": "Pâtes coquillettes fondantes et rapides",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400"
     },
     {
-      "id": "alimentation-60",
+      "id": "alimentation-64",
       "nom": "Vermicelles Rawsan 500g",
       "description": "Vermicelles fins pour soupe et seffa",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400"
     },
     {
-      "id": "alimentation-61",
+      "id": "alimentation-65",
       "nom": "Couscous Blé Dari 1kg",
       "description": "Couscous moyen de blé dur de tradition marocaine",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400"
     },
     {
-      "id": "alimentation-62",
+      "id": "alimentation-66",
       "nom": "Farine de Blé 1kg",
       "description": "Farine type 55 idéale pour pâtisseries et beignets",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400"
     },
     {
-      "id": "alimentation-63",
+      "id": "alimentation-67",
       "nom": "Farine de Maïs Jaune 1kg",
       "description": "Farine de maïs fin pour bouillie et polenta",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400"
     },
     {
-      "id": "alimentation-64",
+      "id": "alimentation-68",
       "nom": "Chocolat à tartiner Nutella 400g",
       "description": "Pâte à tartiner aux noisettes et au cacao",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400"
     },
     {
-      "id": "alimentation-65",
+      "id": "alimentation-69",
       "nom": "Chocolat en Poudre Milo 400g",
       "description": "Boisson chocolatée maltée enrichie en vitamines",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400"
     },
     {
-      "id": "alimentation-66",
+      "id": "alimentation-70",
       "nom": "Chocolat en Poudre Nesquik 400g",
       "description": "Poudre chocolatée pour le petit déjeuner des enfants",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400"
     },
     {
-      "id": "alimentation-67",
+      "id": "alimentation-71",
       "nom": "Flocons d'Avoine Quaker Oats 500g",
       "description": "Flocons d'avoine complets pour porridge sain",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"
     },
     {
-      "id": "alimentation-68",
+      "id": "alimentation-72",
       "nom": "Sac d'Oignons 25kg",
       "description": "Sac d'oignons locaux frais de la vallée",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400"
     },
     {
-      "id": "alimentation-69",
+      "id": "alimentation-73",
       "nom": "Sac d'Oignons Importés 25kg",
       "description": "Sac d'oignons jaunes calibrés pour conservation longue",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400"
     },
     {
-      "id": "alimentation-70",
+      "id": "alimentation-74",
       "nom": "Sac de Pommes de Terre 25kg",
       "description": "Sac de pommes de terre de qualité supérieure",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400"
     },
     {
-      "id": "alimentation-71",
+      "id": "alimentation-75",
       "nom": "Sac d'Ail Frais 5kg",
       "description": "Têtes d'ail frais parfumées en filet 5kg",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400"
     },
     {
-      "id": "alimentation-72",
+      "id": "alimentation-76",
       "nom": "Sac de Gingembre Frais 5kg",
       "description": "Racines de gingembre piquant frais 5kg",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400"
     },
     {
-      "id": "alimentation-73",
+      "id": "alimentation-77",
       "nom": "Pâte d'Arachide Mafé 1kg",
       "description": "Pâte d'arachide grillée pure sans additif pour sauce Mafé",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1567894510008-724444444444?w=400"
     },
     {
-      "id": "alimentation-74",
+      "id": "alimentation-78",
       "nom": "Kethiakh (Poisson Salé Séché) 1kg",
       "description": "Poisson fumé salé traditionnel pour plats sénégalais",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400"
     },
     {
-      "id": "alimentation-75",
+      "id": "alimentation-79",
       "nom": "Guedj (Poisson Séché Artisanal) 500g",
       "description": "Poisson séché fermenté pour assaisonner Thiebou Dienn",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400"
     },
     {
-      "id": "alimentation-76",
+      "id": "alimentation-80",
       "nom": "Yeet (Mollusque Séché) 250g",
       "description": "Mollusque séché aromatique traditionnel",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400"
     },
     {
-      "id": "alimentation-77",
+      "id": "alimentation-81",
       "nom": "Crevettes Séchées Moulières 200g",
       "description": "Petites crevettes séchées salées pour assaisonnement",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400"
     },
     {
-      "id": "alimentation-78",
+      "id": "alimentation-82",
       "nom": "Sardines Titus à l'Huile (Boîte 125g)",
       "description": "Boîte de sardines à l'huile végétale riche en Oméga-3",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400"
     },
     {
-      "id": "alimentation-79",
+      "id": "alimentation-83",
       "nom": "Thon Entier au Naturel 160g",
       "description": "Boîte de thon entier égoutté pour salades",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400"
     },
     {
-      "id": "alimentation-80",
+      "id": "alimentation-84",
       "nom": "Corned Beef Hereford 340g",
       "description": "Boîte de conserve de bœuf assaisonné",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400"
     },
     {
-      "id": "alimentation-81",
+      "id": "alimentation-85",
       "nom": "Fromage La Vache Qui Rit (24 portions)",
       "description": "Boîte rondelle de 24 portions de fromage fondu",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400"
     },
     {
-      "id": "alimentation-82",
+      "id": "alimentation-86",
       "nom": "Beurre Président Plaquette 250g",
       "description": "Plaquette de beurre doux pasteurisé 82% MG",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=400"
     },
     {
-      "id": "alimentation-83",
+      "id": "alimentation-87",
       "nom": "Haricots Rouges Secs 1kg",
       "description": "Haricots rouges secs de qualité pour mijotés",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"
     },
     {
-      "id": "alimentation-84",
+      "id": "alimentation-88",
       "nom": "Haricots Blancs Cornilles 1kg",
       "description": "Haricots niebé locaux pour thiébou niebé",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"
     },
     {
-      "id": "alimentation-85",
+      "id": "alimentation-89",
       "nom": "Lentilles Brunes 1kg",
       "description": "Lentilles sèches riches en fer et protéines",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"
     },
     {
-      "id": "alimentation-86",
+      "id": "alimentation-90",
       "nom": "Pois Chiches Secs 1kg",
       "description": "Pois chiches secs pour houmous et couscous",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"
     },
     {
-      "id": "alimentation-87",
+      "id": "alimentation-91",
       "nom": "Poivre Noir de Penja Moulu 100g",
       "description": "Poivre noir moulu intense et parfumé",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400"
     },
     {
-      "id": "alimentation-88",
+      "id": "alimentation-92",
       "nom": "Piment Rouge Séché Moulu 100g",
       "description": "Piment fort en poudre pur pur",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400"
     },
     {
-      "id": "alimentation-89",
+      "id": "alimentation-93",
       "nom": "Gros Sel de Kaolack Sac 25kg",
       "description": "Sac de gros sel marins iodé de Kaolack",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"
     },
     {
-      "id": "alimentation-90",
+      "id": "alimentation-94",
       "nom": "Sel Fin de Table Iodé 1kg",
       "description": "Sachet de sel fin iodé pour la cuisine de tous les jours",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"
     },
     {
-      "id": "alimentation-91",
+      "id": "alimentation-95",
       "nom": "Vinaigre Blanc d'Alcool 1L",
       "description": "Bouteille 1L de vinaigre d'alcool blanc 8%",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400"
     },
     {
-      "id": "alimentation-92",
+      "id": "alimentation-96",
       "nom": "Biscuits Vitalis Petit Beurre 200g",
       "description": "Paquet de biscuits dorés croquants au beurre",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400"
     },
     {
-      "id": "alimentation-93",
+      "id": "alimentation-97",
       "nom": "Pack de 6 Paquets Oreo 154g",
       "description": "Biscuits enrobés de crème vanille intense",
       "categorie": "alimentation",
       "photo_defaut": "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400"
     },
     {
-      "id": "alimentation-94",
+      "id": "alimentation-98",
       "nom": "Sac de Bonbons Menthe/Fruit 1kg",
       "description": "Mélange de bonbons acidulés pour comptoir de caisse",
       "categorie": "alimentation",
@@ -662,143 +690,395 @@
   "smartphones": [
     {
       "id": "smartphones-1",
+      "nom": "iPhone 11 64Go",
+      "description": "Apple iPhone 11 double appareil photo 12 Mpx et puce A13 Bionic",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=400"
+    },
+    {
+      "id": "smartphones-2",
+      "nom": "iPhone 12 128Go",
+      "description": "Apple iPhone 12 écran Super Retina XDR OLED et connectivité 5G",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=400"
+    },
+    {
+      "id": "smartphones-3",
       "nom": "iPhone 13 128Go",
       "description": "Apple iPhone 13 avec écran Super Retina XDR 6.1 pouces et puce A15 Bionic",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=400"
     },
     {
-      "id": "smartphones-2",
+      "id": "smartphones-4",
       "nom": "iPhone 14 128Go",
       "description": "Apple iPhone 14 avec détection des accidents et autonomie renforcée",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1663499482523-1c0c1bae4ce1?w=400"
     },
     {
-      "id": "smartphones-3",
+      "id": "smartphones-5",
+      "nom": "iPhone 14 Pro Max 256Go",
+      "description": "Dynamic Island, écran Always-On et capteur photo principal 48 Mpx",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1663499482523-1c0c1bae4ce1?w=400"
+    },
+    {
+      "id": "smartphones-6",
+      "nom": "iPhone 15 128Go",
+      "description": "Port USB-C universal, Dynamic Island et caméra 48 Mpx",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400"
+    },
+    {
+      "id": "smartphones-7",
       "nom": "iPhone 15 Pro Max 256Go",
       "description": "Design en titane, puce A17 Pro, bouton Action et appareil photo 48 Mpx",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400"
     },
     {
-      "id": "smartphones-4",
-      "nom": "Samsung Galaxy S23 Ultra 256Go",
-      "description": "Capteur 200 Mpx, S-Pen intégré et processeur Snapdragon 8 Gen 2",
-      "categorie": "smartphones",
-      "photo_defaut": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400"
-    },
-    {
-      "id": "smartphones-5",
-      "nom": "Samsung Galaxy A54 5G 128Go",
-      "description": "Écran Super AMOLED 120Hz, triple capteur photo et résistance IP67",
+      "id": "smartphones-8",
+      "nom": "Samsung Galaxy A04 32Go",
+      "description": "Smartphone accessible avec écran 6.5 pouces HD+ et batterie 5000 mAh",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400"
     },
     {
-      "id": "smartphones-6",
+      "id": "smartphones-9",
       "nom": "Samsung Galaxy A14 64Go",
       "description": "Grand écran 6.6 pouces FHD+, triple caméra 50 Mpx et batterie 5000 mAh",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400"
     },
     {
-      "id": "smartphones-7",
+      "id": "smartphones-10",
+      "nom": "Samsung Galaxy A24 128Go",
+      "description": "Écran Super AMOLED 90Hz, processeur octacœur et triple caméra OIS",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400"
+    },
+    {
+      "id": "smartphones-11",
+      "nom": "Samsung Galaxy A34 5G 128Go",
+      "description": "Résistant à l'eau IP67, écran 120Hz Super AMOLED et batterie 2 jours",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400"
+    },
+    {
+      "id": "smartphones-12",
+      "nom": "Samsung Galaxy A54 5G 128Go",
+      "description": "Écran Super AMOLED 120Hz, triple capteur photo et résistance IP67",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400"
+    },
+    {
+      "id": "smartphones-13",
+      "nom": "Samsung Galaxy S22 Ultra 256Go",
+      "description": "Puce 4nm, stylet S-Pen intégré et zoom optique 10x",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400"
+    },
+    {
+      "id": "smartphones-14",
+      "nom": "Samsung Galaxy S23 Ultra 256Go",
+      "description": "Capteur 200 Mpx, S-Pen intégré et processeur Snapdragon 8 Gen 2",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400"
+    },
+    {
+      "id": "smartphones-15",
+      "nom": "Samsung Galaxy S24 Ultra 512Go",
+      "description": "Galaxy AI intégré, cadre en titane et téléobjectif 50 Mpx",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400"
+    },
+    {
+      "id": "smartphones-16",
+      "nom": "Samsung Galaxy Z Flip 5 256Go",
+      "description": "Smartphone pliant ultra-compact avec grand écran externe",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400"
+    },
+    {
+      "id": "smartphones-17",
+      "nom": "Redmi 12C 64Go",
+      "description": "Grand écran 6.71 pouces et processeur MediaTek Helio G85",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400"
+    },
+    {
+      "id": "smartphones-18",
+      "nom": "Redmi Note 12 128Go",
+      "description": "Écran AMOLED 120Hz et batterie 5000 mAh avec charge 33W",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400"
+    },
+    {
+      "id": "smartphones-19",
       "nom": "Redmi Note 12 Pro 128Go",
       "description": "Écran AMOLED 120Hz, charge rapide 67W et appareil photo 50 Mpx",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400"
     },
     {
-      "id": "smartphones-8",
+      "id": "smartphones-20",
       "nom": "Redmi Note 13 256Go",
       "description": "Écran AMOLED FHD+ 120Hz, caméra 108 Mpx et processeur rapide",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400"
     },
     {
-      "id": "smartphones-9",
+      "id": "smartphones-21",
+      "nom": "Redmi Note 13 Pro+ 5G 512Go",
+      "description": "Écran incurvé 1.5K 120Hz, caméra 200 Mpx et charge HyperCharge 120W",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400"
+    },
+    {
+      "id": "smartphones-22",
+      "nom": "Tecno Pop 7 64Go",
+      "description": "Smartphone d'entrée de gamme avec écran 6.6\" et batterie 5000mAh",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400"
+    },
+    {
+      "id": "smartphones-23",
       "nom": "Tecno Spark 10 Pro 256Go",
       "description": "Caméra selfie 32 Mpx avec flash ajustable et 16Go de RAM extension",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400"
     },
     {
-      "id": "smartphones-10",
+      "id": "smartphones-24",
       "nom": "Tecno Camon 20 Pro 256Go",
       "description": "Capteur photo 64 Mpx RGBW, écran AMOLED et charge rapide 33W",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400"
     },
     {
-      "id": "smartphones-11",
+      "id": "smartphones-25",
+      "nom": "Tecno Phantom X2 Pro 256Go",
+      "description": "Objectif portrait rétractable 50 Mpx et puce Dimensity 9000",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400"
+    },
+    {
+      "id": "smartphones-26",
+      "nom": "Infinix Smart 7 64Go",
+      "description": "Batterie géante 5000 mAh et extension de mémoire RAM virtuelle",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1546054454-aa26e2b734c7?w=400"
+    },
+    {
+      "id": "smartphones-27",
       "nom": "Infinix Hot 30 128Go",
       "description": "Écran 90Hz FHD+, batterie 5000mAh et processeur Gaming",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1546054454-aa26e2b734c7?w=400"
     },
     {
-      "id": "smartphones-12",
+      "id": "smartphones-28",
       "nom": "Infinix Note 30 Pro 256Go",
       "description": "Charge rapide 68W + charge sans fil 15W, haut-parleurs JBL",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1546054454-aa26e2b734c7?w=400"
     },
     {
-      "id": "smartphones-13",
+      "id": "smartphones-29",
+      "nom": "Oppo A78 128Go",
+      "description": "Charge 67W SUPERVOOC, écran AMOLED 90Hz et haut-parleurs stéréo",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400"
+    },
+    {
+      "id": "smartphones-30",
+      "nom": "Realme C55 128Go",
+      "description": "Mini Capsule dynamique et appareil photo principal 64 Mpx",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400"
+    },
+    {
+      "id": "smartphones-31",
+      "nom": "Apple AirPods 2",
+      "description": "Écouteurs sans fil avec boîtier de charge et basculement automatique",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400"
+    },
+    {
+      "id": "smartphones-32",
+      "nom": "Apple AirPods 3",
+      "description": "Écouteurs avec audio spatial personnalisé et résistance à la transpiration",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400"
+    },
+    {
+      "id": "smartphones-33",
       "nom": "Apple AirPods Pro (2ème Gén)",
       "description": "Écouteurs sans fil avec Réduction Active du Bruit et audio spatial",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400"
     },
     {
-      "id": "smartphones-14",
+      "id": "smartphones-34",
+      "nom": "Apple AirPods Max Casque Bluetooth",
+      "description": "Casque circum-auriculaire haute fidélité avec réduction de bruit",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400"
+    },
+    {
+      "id": "smartphones-35",
+      "nom": "Samsung Galaxy Buds FE",
+      "description": "Écouteurs avec réduction active du bruit et maintien ergonomique",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400"
+    },
+    {
+      "id": "smartphones-36",
       "nom": "Samsung Galaxy Buds2 Pro",
       "description": "Écouteurs sans fil Hi-Fi 24 bits et réduction de bruit active",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400"
     },
     {
-      "id": "smartphones-15",
+      "id": "smartphones-37",
+      "nom": "JBL Tune 510BT Casque Sans Fil",
+      "description": "Casque Bluetooth supra-aural avec son JBL Pure Bass (40h autonomie)",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400"
+    },
+    {
+      "id": "smartphones-38",
+      "nom": "JBL Wave 200TWS Écouteurs",
+      "description": "Écouteurs boutons sans fil avec basses profondes et 20h d'autonomie",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400"
+    },
+    {
+      "id": "smartphones-39",
+      "nom": "Enceinte Bluetooth JBL GO 3",
+      "description": "Enceinte étanche IP67 portable ultra-compacte",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400"
+    },
+    {
+      "id": "smartphones-40",
+      "nom": "Enceinte Bluetooth JBL Charge 5",
+      "description": "Enceinte puissante étanche avec batterie Powerbank intégrée",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400"
+    },
+    {
+      "id": "smartphones-41",
       "nom": "Chargeur Rapide USB-C 20W",
       "description": "Adaptateur secteur rapide compatible iPhone et Android",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400"
     },
     {
-      "id": "smartphones-16",
+      "id": "smartphones-42",
+      "nom": "Chargeur Samsung 25W USB-C Super Fast",
+      "description": "Chargeur mural rapide d'origine Samsung",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400"
+    },
+    {
+      "id": "smartphones-43",
+      "nom": "Chargeur Anker 65W GaN Multi-ports",
+      "description": "Chargeur ultra-rapide GaN pour téléphone, tablette et ordinateur portable",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400"
+    },
+    {
+      "id": "smartphones-44",
+      "nom": "Câble USB-C vers Lightning 1m",
+      "description": "Câble tressé renforcé charge rapide iPhone",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400"
+    },
+    {
+      "id": "smartphones-45",
+      "nom": "Câble Type-C vers Type-C 100W 2m",
+      "description": "Câble de charge rapide Power Delivery nylon tressé",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400"
+    },
+    {
+      "id": "smartphones-46",
+      "nom": "Power Bank Remax 10000mAh",
+      "description": "Batterie externe compacte double sortie USB",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1609592807986-77e8a939f7d4?w=400"
+    },
+    {
+      "id": "smartphones-47",
       "nom": "Power Bank Remax 20000mAh",
       "description": "Batterie externe haute capacité avec double sortie USB",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1609592807986-77e8a939f7d4?w=400"
     },
     {
-      "id": "smartphones-17",
+      "id": "smartphones-48",
+      "nom": "Power Bank Anker 26800mAh",
+      "description": "Batterie externe géante avec 3 ports de charge rapide",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1609592807986-77e8a939f7d4?w=400"
+    },
+    {
+      "id": "smartphones-49",
       "nom": "Support Téléphone Voiture MagSafe",
       "description": "Support voiture magnétique avec fixation grille d'aération",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400"
     },
     {
-      "id": "smartphones-18",
+      "id": "smartphones-50",
       "nom": "Montre Connectée Apple Watch S9",
       "description": "Boîtier en aluminium avec nouveau geste Toucher deux fois",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400"
     },
     {
-      "id": "smartphones-19",
+      "id": "smartphones-51",
+      "nom": "Montre Connectée Samsung Galaxy Watch 6",
+      "description": "Suivi de santé avancé et analyse de la composition corporelle",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400"
+    },
+    {
+      "id": "smartphones-52",
       "nom": "Ring Light Trépied 26cm pour Selfie",
       "description": "Éclairage annulaire LED avec trépied téléscopique et support smartphone",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400"
     },
     {
-      "id": "smartphones-20",
+      "id": "smartphones-53",
+      "nom": "Carte Mémoire MicroSD Sandisk 64Go",
+      "description": "Carte mémoire haute vitesse classe 10 pour photos et vidéos",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1600541519443-96c14617b7ba?w=400"
+    },
+    {
+      "id": "smartphones-54",
       "nom": "Carte Mémoire MicroSD Sandisk 128Go",
       "description": "Carte mémoire haute vitesse avec adaptateur SD inclus",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1600541519443-96c14617b7ba?w=400"
+    },
+    {
+      "id": "smartphones-55",
+      "nom": "Verre Trempé Protecteur Universel iPhone",
+      "description": "Protection d'écran dureté 9H anti-rayures et anti-traces",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400"
+    },
+    {
+      "id": "smartphones-56",
+      "nom": "Coque Transparente Antichoc Magsafe iPhone",
+      "description": "Coque silicone transparente avec aimants intégrés",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400"
     }
   ],
   "informatique": [
@@ -811,104 +1091,244 @@
     },
     {
       "id": "informatique-2",
+      "nom": "MacBook Pro 16\" M3 Max 1To",
+      "description": "Performance extrême pour développeurs et créateurs vidéo",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400"
+    },
+    {
+      "id": "informatique-3",
       "nom": "MacBook Air 13\" M1 256Go",
       "description": "Superpuissant, ultramobile et autonomie jusqu'à 18 heures",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=400"
     },
     {
-      "id": "informatique-3",
+      "id": "informatique-4",
+      "nom": "MacBook Air 15\" M2 512Go",
+      "description": "Grand écran Retina 15 pouces dans un châssis ultra-fin",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=400"
+    },
+    {
+      "id": "informatique-5",
       "nom": "HP EliteBook 840 G8 i7",
       "description": "Intel Core i7, 16Go RAM, 512Go SSD, châssis aluminium robuste",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400"
     },
     {
-      "id": "informatique-4",
+      "id": "informatique-6",
+      "nom": "HP ProBook 450 G9 i5",
+      "description": "Intel Core i5 12ème gén, 16Go RAM, 512Go SSD, pavé numérique",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400"
+    },
+    {
+      "id": "informatique-7",
+      "nom": "HP Pavilion 15 i5 Touch",
+      "description": "Écran tactile Full HD 15.6\", 8Go RAM, 256Go SSD",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400"
+    },
+    {
+      "id": "informatique-8",
       "nom": "Dell Latitude 5420 i5",
       "description": "Intel Core i5, 8Go RAM, 256Go SSD, écran 14 pouces FHD",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400"
     },
     {
-      "id": "informatique-5",
+      "id": "informatique-9",
+      "nom": "Dell Inspiron 3520 i3",
+      "description": "Intel Core i3 12ème gén, 8Go RAM, 256Go SSD, écran 120Hz",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400"
+    },
+    {
+      "id": "informatique-10",
+      "nom": "Dell XPS 13 Plus i7",
+      "description": "Écran 3.5K OLED tactile, 32Go RAM, design futuriste en verre",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400"
+    },
+    {
+      "id": "informatique-11",
       "nom": "Lenovo ThinkPad T14 i7",
       "description": "Performance professionnelle éprouvée avec clavier étanche ergonomique",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400"
     },
     {
-      "id": "informatique-6",
+      "id": "informatique-12",
+      "nom": "Lenovo IdeaPad Slim 3 Ryzen 5",
+      "description": "AMD Ryzen 5, 8Go RAM, 512Go SSD, fin et léger",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400"
+    },
+    {
+      "id": "informatique-13",
+      "nom": "Asus ZenBook 14 OLED i7",
+      "description": "Écran OLED 2.8K, 16Go RAM, autonomie longue durée",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400"
+    },
+    {
+      "id": "informatique-14",
+      "nom": "Asus ROG Strix Gamer i7 RTX 4060",
+      "description": "PC portable Gamer avec carte graphique dédiée 8Go",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=400"
+    },
+    {
+      "id": "informatique-15",
       "nom": "Clavier Sans Fil Logitech K380",
       "description": "Clavier Bluetooth multi-dispositif ultra-compact",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400"
     },
     {
-      "id": "informatique-7",
+      "id": "informatique-16",
+      "nom": "Clavier Mécanique Gamer RGB",
+      "description": "Switches mécaniques bleus réactifs avec rétroéclairage RGB",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400"
+    },
+    {
+      "id": "informatique-17",
       "nom": "Souris Bluetooth Logitech MX Master 3S",
       "description": "Souris ergonomique haute précision avec défilement ultra-rapide",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=400"
     },
     {
-      "id": "informatique-8",
+      "id": "informatique-18",
+      "nom": "Souris Sans Fil Logitech M185",
+      "description": "Souris USB sans fil simple et fiable avec pile 12 mois",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=400"
+    },
+    {
+      "id": "informatique-19",
       "nom": "Disque Dur Externe WD 1To",
       "description": "Stockage portable USB 3.0 sécurisé et rapide",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1531492746076-161ca9bcad58?w=400"
     },
     {
-      "id": "informatique-9",
+      "id": "informatique-20",
+      "nom": "Disque Dur Externe Seagate 2To",
+      "description": "Grande capacité de sauvegarde pour documents et vidéos",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1531492746076-161ca9bcad58?w=400"
+    },
+    {
+      "id": "informatique-21",
+      "nom": "Disque SSD Externe Samsung T7 1To",
+      "description": "SSD externe ultra-rapide jusqu'à 1050 Mo/s boîtier aluminium",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1531492746076-161ca9bcad58?w=400"
+    },
+    {
+      "id": "informatique-22",
       "nom": "Clé USB SanDisk 64Go",
       "description": "Clé USB 3.0 rétractable haute vitesse",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1600541519443-96c14617b7ba?w=400"
     },
     {
-      "id": "informatique-10",
+      "id": "informatique-23",
+      "nom": "Clé USB SanDisk Dual Drive 128Go (Type-C / USB)",
+      "description": "Double connectique smartphone et ordinateur",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1600541519443-96c14617b7ba?w=400"
+    },
+    {
+      "id": "informatique-24",
       "nom": "Écran PC Dell 24\" Full HD",
       "description": "Moniteur IPS 1080p réglable en hauteur avec antireflet",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400"
     },
     {
-      "id": "informatique-11",
+      "id": "informatique-25",
+      "nom": "Écran PC Samsung 27\" Incurvé 75Hz",
+      "description": "Écran incurvé immersif idéal pour travail et multimédia",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400"
+    },
+    {
+      "id": "informatique-26",
       "nom": "Onduleur APC 650VA",
       "description": "Protection contre les coupures et surtensions électriques",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400"
     },
     {
-      "id": "informatique-12",
+      "id": "informatique-27",
+      "nom": "Onduleur APC 1500VA avec Écran LCD",
+      "description": "Onduleur haute puissance avec autonomie prolongée",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400"
+    },
+    {
+      "id": "informatique-28",
       "nom": "Imprimante HP DeskJet 2710",
       "description": "Imprimante multifonction WiFi impression, numérisation et copie",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400"
     },
     {
-      "id": "informatique-13",
+      "id": "informatique-29",
+      "nom": "Imprimante Epson EcoTank L3250",
+      "description": "Imprimante à réservoirs rechargeables sans cartouche économique",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400"
+    },
+    {
+      "id": "informatique-30",
+      "nom": "Imprimante Laser Canon LBP6030w",
+      "description": "Imprimante laser monochrome rapide et compacte",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400"
+    },
+    {
+      "id": "informatique-31",
       "nom": "Imprimante Thermique Caisse 80mm USB/Ethernet",
       "description": "Imprimante de tickets de caisse rapide à coupe automatique",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400"
     },
     {
-      "id": "informatique-14",
+      "id": "informatique-32",
       "nom": "Scanner Douchette Code-Barres 1D/2D USB",
       "description": "Lecteur optique laser de codes-barres et QR codes avec socle",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400"
     },
     {
-      "id": "informatique-15",
+      "id": "informatique-33",
+      "nom": "Scanner Omnidirectionnel Fixe de Caisse 2D",
+      "description": "Lecteur de caisse de comptoir rapide multi-faisceaux",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400"
+    },
+    {
+      "id": "informatique-34",
       "nom": "Routeur 4G WiFi Huawei avec Carte SIM",
       "description": "Routeur portable 4G LTE partageant le réseau jusqu'à 32 appareils",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400"
     },
     {
-      "id": "informatique-16",
+      "id": "informatique-35",
+      "nom": "Webcam Logitech C920 HD Pro 1080p",
+      "description": "Webcam de visioconférence avec micro stéréo intégré",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400"
+    },
+    {
+      "id": "informatique-36",
       "nom": "Sac à Dos Homme Imperméable PC 15.6\"",
       "description": "Sac à dos d'affaires rembourré avec port de charge USB externe",
       "categorie": "informatique",
@@ -939,85 +1359,155 @@
     },
     {
       "id": "tv-electro-4",
+      "nom": "TV Hisense 65\" 4K QLED Smart",
+      "description": "Technologie Quantum Dot, Dolby Vision et Sound Système",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=400"
+    },
+    {
+      "id": "tv-electro-5",
       "nom": "Climatiseur Split 9000 BTU",
       "description": "Climatiseur silencieux à haute efficacité énergétique",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400"
     },
     {
-      "id": "tv-electro-5",
+      "id": "tv-electro-6",
       "nom": "Climatiseur Split 12000 BTU Inverter",
       "description": "Climatiseur froid économique avec technologie Inverter",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400"
     },
     {
-      "id": "tv-electro-6",
+      "id": "tv-electro-7",
+      "nom": "Climatiseur Armoire 24000 BTU",
+      "description": "Climatiseur colonne puissant pour grand salon ou bureau",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400"
+    },
+    {
+      "id": "tv-electro-8",
       "nom": "Réfrigérateur Midea 250L",
       "description": "Réfrigérateur double porte avec compartiment congélateur rapide",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400"
     },
     {
-      "id": "tv-electro-7",
+      "id": "tv-electro-9",
       "nom": "Réfrigérateur Side-by-Side Samsung 500L",
       "description": "Réfrigérateur américain double porte avec distributeur d'eau",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400"
     },
     {
-      "id": "tv-electro-8",
+      "id": "tv-electro-10",
+      "nom": "Réfrigérateur Combinaison LG No Frost 340L",
+      "description": "Froid ventilé intégral sans givre avec tiroir fraîcheur",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400"
+    },
+    {
+      "id": "tv-electro-11",
       "nom": "Congélateur Horizontal 200L",
       "description": "Congélateur coffre à faible consommation d'énergie",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=400"
     },
     {
-      "id": "tv-electro-9",
+      "id": "tv-electro-12",
+      "nom": "Congélateur Coffre Midea 350L",
+      "description": "Grand volume de congélation avec paniers suspendus",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=400"
+    },
+    {
+      "id": "tv-electro-13",
       "nom": "Micro-ondes Moulinex 20L",
       "description": "Four à micro-ondes compact 700W avec fonction décongélation",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400"
     },
     {
-      "id": "tv-electro-10",
+      "id": "tv-electro-14",
+      "nom": "Four Électrique Grill 45L",
+      "description": "Four posable avec tournebroche et chaleur tournante",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400"
+    },
+    {
+      "id": "tv-electro-15",
       "nom": "Mixeur Blender Kenwood 1.5L",
       "description": "Bol en verre incassable avec moulin à épices inclus",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400"
     },
     {
-      "id": "tv-electro-11",
+      "id": "tv-electro-16",
+      "nom": "Robot Pâtissier Multifonction Moulinex 800W",
+      "description": "Pétrin, fouet et batteur inox avec bol 4.8L",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400"
+    },
+    {
+      "id": "tv-electro-17",
       "nom": "Friteuse Sans Huile AirFryer 4.5L",
       "description": "Cuisson saine et croustillante à l'air chaud avec 8 programmes",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400"
     },
     {
-      "id": "tv-electro-12",
+      "id": "tv-electro-18",
       "nom": "Fer à Repasser à Vapeur Calor",
       "description": "Semelle en céramique anti-adhésive avec système anti-calcaire",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400"
     },
     {
-      "id": "tv-electro-13",
+      "id": "tv-electro-19",
+      "nom": "Centrale à Vapeur Philips 2400W",
+      "description": "Repassage ultra-rapide avec jet de vapeur haute pression",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400"
+    },
+    {
+      "id": "tv-electro-20",
       "nom": "Machine à Laver Frontale 8kg",
       "description": "Lave-linge automatique avec programme lavage rapide 15 min",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=400"
     },
     {
-      "id": "tv-electro-14",
+      "id": "tv-electro-21",
+      "nom": "Machine à Laver Semi-Automatique 10kg",
+      "description": "Lave-linge double bac avec essoreuse intégrée",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=400"
+    },
+    {
+      "id": "tv-electro-22",
       "nom": "Bouilloire Électrique Inox 1.8L",
       "description": "Bouilloire rapide arrêt automatique et socle 360°",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400"
     },
     {
-      "id": "tv-electro-15",
+      "id": "tv-electro-23",
+      "nom": "Plaque à Induction Portative 2000W",
+      "description": "Plaque vitrocéramique de cuisson rapide avec écran tactile",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400"
+    },
+    {
+      "id": "tv-electro-24",
       "nom": "Ventilateur sur Pied Orientable",
       "description": "Ventilateur silencieux 3 vitesses avec oscillation automatique",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1618941716939-553df3c6c276?w=400"
+    },
+    {
+      "id": "tv-electro-25",
+      "nom": "Ventilateur Rechargeable avec Télécommande",
+      "description": "Ventilateur avec batterie intégrée fonctionnant pendant les coupures",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1618941716939-553df3c6c276?w=400"
     }
@@ -1032,94 +1522,164 @@
     },
     {
       "id": "mode-2",
+      "nom": "T-shirt Blanc Uni Coton Premium",
+      "description": "T-shirt col V coupe moderne",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400"
+    },
+    {
+      "id": "mode-3",
+      "nom": "Polo Homme Coton Piqué",
+      "description": "Polo classique avec col boutonné",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400"
+    },
+    {
+      "id": "mode-4",
       "nom": "Chemise Homme Blanche Slim Fit",
       "description": "Chemise élégante coupe ajustée idéale pour le bureau ou cérémonies",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400"
     },
     {
-      "id": "mode-3",
+      "id": "mode-5",
+      "nom": "Chemise Homme Manches Courtes Motifs Wax",
+      "description": "Chemise décontractée en tissu Wax coloré",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400"
+    },
+    {
+      "id": "mode-6",
       "nom": "Pantalon Jean Levi's 501",
       "description": "Jean classique coupe droite indémodable",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1542272604-780c36856842?w=400"
     },
     {
-      "id": "mode-4",
+      "id": "mode-7",
+      "nom": "Pantalon Chino Homme Beige",
+      "description": "Pantalon chino stretch confortable",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1542272604-780c36856842?w=400"
+    },
+    {
+      "id": "mode-8",
       "nom": "Robe de Soirée Élégante",
       "description": "Robe longue chic pour événements et fêtes",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400"
     },
     {
-      "id": "mode-5",
+      "id": "mode-9",
+      "nom": "Robe Courte d'Été Fleurie",
+      "description": "Robe légère et fraîche en viscose",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400"
+    },
+    {
+      "id": "mode-10",
       "nom": "Ensemble Bazin Riche Getzner",
       "description": "Bazin de qualité supérieure teinté artisanalement",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400"
     },
     {
-      "id": "mode-6",
+      "id": "mode-11",
       "nom": "Tissu Wax Hollandais (6 Yards)",
       "description": "Véritable pagne Wax aux motifs colorés traditionnels",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400"
     },
     {
-      "id": "mode-7",
+      "id": "mode-12",
       "nom": "Djellaba Homme Brodée Traditionnelle",
       "description": "Tenue traditionnelle élégante brodée pour prières et fêtes",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400"
     },
     {
-      "id": "mode-8",
+      "id": "mode-13",
       "nom": "Boubou Traditionnel 3 Pièces",
       "description": "Grand boubou brodé haut de gamme pour cérémonies",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400"
     },
     {
-      "id": "mode-9",
+      "id": "mode-14",
       "nom": "Chaussures en Cuir Marron Homme",
       "description": "Mocassins en cuir véritable cousus main",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400"
     },
     {
-      "id": "mode-10",
+      "id": "mode-15",
       "nom": "Baskets Nike Air Force 1",
       "description": "Sneakers iconiques blanches confortables au quotidien",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400"
     },
     {
-      "id": "mode-11",
+      "id": "mode-16",
       "nom": "Baskets Adidas Stan Smith",
       "description": "Baskets en cuir blanc au design épuré",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400"
     },
     {
-      "id": "mode-12",
+      "id": "mode-17",
+      "nom": "Sandales Cuir Artisanales Homme",
+      "description": "Sandales souples faites main en cuir véritable",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400"
+    },
+    {
+      "id": "mode-18",
       "nom": "Sac à Main Cuir Véritable Femme",
       "description": "Sac élégant avec bandoulière amovible et finitions dorées",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400"
     },
     {
-      "id": "mode-13",
+      "id": "mode-19",
+      "nom": "Pochette de Soirée Dorée",
+      "description": "Petite pochette chic pour mariages et soirées",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400"
+    },
+    {
+      "id": "mode-20",
+      "nom": "Portefeuille Cuir Homme",
+      "description": "Portefeuille multi-cartes avec compartiment billets",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1627123424574-724758594e93?w=400"
+    },
+    {
+      "id": "mode-21",
+      "nom": "Ceinture Homme en Cuir Noir",
+      "description": "Ceinture réversible boucle métallique",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1627123424574-724758594e93?w=400"
+    },
+    {
+      "id": "mode-22",
       "nom": "Parfum Sauvage Dior 100ml",
       "description": "Eau de parfum fraîche et boisée pour homme",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400"
     },
     {
-      "id": "mode-14",
+      "id": "mode-23",
       "nom": "Parfum Bleu de Chanel 100ml",
       "description": "Fragrance aromatique intense et raffinée",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400"
+    },
+    {
+      "id": "mode-24",
+      "nom": "Lunettes de Soleil Ray-Ban Aviator",
+      "description": "Lunettes monture dorée verres solaires polarisés",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400"
     }
   ],
   "maison": [
@@ -1192,6 +1752,34 @@
       "description": "Verres transparents élégants et solides",
       "categorie": "maison",
       "photo_defaut": "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=400"
+    },
+    {
+      "id": "maison-11",
+      "nom": "Ménagère Couverts 24 Pièces Inox",
+      "description": "Couteaux, fourchettes, cuillères à soupe et à café",
+      "categorie": "maison",
+      "photo_defaut": "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=400"
+    },
+    {
+      "id": "maison-12",
+      "nom": "Seau de Ménage avec Balai Serpillière Essoreuse",
+      "description": "Kit de nettoyage de sol rotatif 360° microfibre",
+      "categorie": "maison",
+      "photo_defaut": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400"
+    },
+    {
+      "id": "maison-13",
+      "nom": "Poubelle à Pédale Inox 30L",
+      "description": "Poubelle de cuisine avec fermeture ralentie",
+      "categorie": "maison",
+      "photo_defaut": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400"
+    },
+    {
+      "id": "maison-14",
+      "nom": "Horloge Murale Géante Silencieuse 40cm",
+      "description": "Horloge moderne à grands chiffres",
+      "categorie": "maison",
+      "photo_defaut": "https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=400"
     }
   ],
   "auto-moto": [
@@ -1204,24 +1792,73 @@
     },
     {
       "id": "auto-moto-2",
+      "nom": "Huile Moteur Total 10W40 5L",
+      "description": "Huile semi-synthétique pour protection moteur optimale",
+      "categorie": "auto-moto",
+      "photo_defaut": "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=400"
+    },
+    {
+      "id": "auto-moto-3",
       "nom": "Batterie Voiture Varta 12V 70Ah",
       "description": "Batterie sans entretien à fort pouvoir de démarrage",
       "categorie": "auto-moto",
       "photo_defaut": "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400"
     },
     {
-      "id": "auto-moto-3",
+      "id": "auto-moto-4",
+      "nom": "Batterie Voiture Fulmen 12V 60Ah",
+      "description": "Batterie fiable pour citadines et berlines",
+      "categorie": "auto-moto",
+      "photo_defaut": "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400"
+    },
+    {
+      "id": "auto-moto-5",
       "nom": "Pneu Michelin 205/55 R16",
       "description": "Pneu été offrant une excellente adhérence et longévité",
       "categorie": "auto-moto",
       "photo_defaut": "https://images.unsplash.com/photo-1578844251758-2f71da64c96f?w=400"
     },
     {
-      "id": "auto-moto-4",
+      "id": "auto-moto-6",
+      "nom": "Pneu Bridgestone 195/65 R15",
+      "description": "Pneu tourisme haute résistance aux crevasses",
+      "categorie": "auto-moto",
+      "photo_defaut": "https://images.unsplash.com/photo-1578844251758-2f71da64c96f?w=400"
+    },
+    {
+      "id": "auto-moto-7",
       "nom": "Casque Moto Intégral Homologué",
       "description": "Casque avec visière anti-rayures et ventilation dynamique",
       "categorie": "auto-moto",
       "photo_defaut": "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400"
+    },
+    {
+      "id": "auto-moto-8",
+      "nom": "Gants de Moto en Cuir Renforcé",
+      "description": "Gants de protection avec coques de sécurité",
+      "categorie": "auto-moto",
+      "photo_defaut": "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400"
+    },
+    {
+      "id": "auto-moto-9",
+      "nom": "Compresseur d'Air 12V Portable Auto",
+      "description": "Gonfleur de pneu électrique à branchement allume-cigare",
+      "categorie": "auto-moto",
+      "photo_defaut": "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=400"
+    },
+    {
+      "id": "auto-moto-10",
+      "nom": "Cric Hydraulique 2 Tonnes",
+      "description": "Cric bouteille compact pour levage voiture",
+      "categorie": "auto-moto",
+      "photo_defaut": "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=400"
+    },
+    {
+      "id": "auto-moto-11",
+      "nom": "Extincteur Auto Poudre 1kg",
+      "description": "Extincteur d'urgence obligatoire avec manomètre",
+      "categorie": "auto-moto",
+      "photo_defaut": "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=400"
     }
   ],
   "jeux": [
@@ -1234,24 +1871,59 @@
     },
     {
       "id": "jeux-2",
+      "nom": "Console PS4 Slim 1To",
+      "description": "Console PlayStation 4 avec manette DualShock 4",
+      "categorie": "jeux",
+      "photo_defaut": "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400"
+    },
+    {
+      "id": "jeux-3",
       "nom": "Manette Sans Fil DualSense PS5",
       "description": "Manette officielle avec retour haptique et gâchettes adaptatives",
       "categorie": "jeux",
       "photo_defaut": "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=400"
     },
     {
-      "id": "jeux-3",
+      "id": "jeux-4",
       "nom": "Console Nintendo Switch OLED",
       "description": "Console avec écran OLED 7 pouces et support ajustable",
       "categorie": "jeux",
       "photo_defaut": "https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=400"
     },
     {
-      "id": "jeux-4",
+      "id": "jeux-5",
       "nom": "Jeu PS5 EA Sports FC 24",
       "description": "Le jeu de simulation de football ultime avec HyperMotionV",
       "categorie": "jeux",
       "photo_defaut": "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400"
+    },
+    {
+      "id": "jeux-6",
+      "nom": "Jeu PS5 Marvel's Spider-Man 2",
+      "description": "Aventure épique avec Peter Parker et Miles Morales",
+      "categorie": "jeux",
+      "photo_defaut": "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400"
+    },
+    {
+      "id": "jeux-7",
+      "nom": "Jeu PS5 God of War Ragnarök",
+      "description": "Voyage mythologique scandinave avec Kratos et Atreus",
+      "categorie": "jeux",
+      "photo_defaut": "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400"
+    },
+    {
+      "id": "jeux-8",
+      "nom": "Casque Gamer HyperX Cloud II",
+      "description": "Son surround 7.1 avec micro à réduction de bruit",
+      "categorie": "jeux",
+      "photo_defaut": "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400"
+    },
+    {
+      "id": "jeux-9",
+      "nom": "Chaise Gamer Ergonomique RGB",
+      "description": "Fauteuil de jeu avec coussin lombaire et accoudoirs réglables",
+      "categorie": "jeux",
+      "photo_defaut": "https://images.unsplash.com/photo-1580481072645-022f9a6d8310?w=400"
     }
   ],
   "beaute": [
@@ -1282,6 +1954,62 @@
       "description": "Eau de parfum élégante et moderne pour femme",
       "categorie": "beaute",
       "photo_defaut": "https://images.unsplash.com/photo-1541643600914-78b084683601?w=400"
+    },
+    {
+      "id": "beaute-5",
+      "nom": "Beurre de Karité Pur 100% Bio 250g",
+      "description": "Soin nourrissant corps et cheveux sans produit chimique",
+      "categorie": "beaute",
+      "photo_defaut": "https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=400"
+    },
+    {
+      "id": "beaute-6",
+      "nom": "Huile d'Argan Pure du Maroc 100ml",
+      "description": "Soin régénérant anti-âge corps et ongles",
+      "categorie": "beaute",
+      "photo_defaut": "https://images.unsplash.com/photo-1608248597309-843c08b8b09b?w=400"
+    },
+    {
+      "id": "beaute-7",
+      "nom": "Shampoing Sans Sulfate Cantu 400ml",
+      "description": "Shampoing nettoyant doux pour cheveux frisés et crépus",
+      "categorie": "beaute",
+      "photo_defaut": "https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=400"
+    },
+    {
+      "id": "beaute-8",
+      "nom": "Sérum Visage Vitamine C 30ml",
+      "description": "Sérum éclat anti-taches et coup de boost collagène",
+      "categorie": "beaute",
+      "photo_defaut": "https://images.unsplash.com/photo-1608248597309-843c08b8b09b?w=400"
+    },
+    {
+      "id": "beaute-9",
+      "nom": "Rouge à Lèvres Matte Maybelline Superstay",
+      "description": "Rouge à lèvres longue tenue sans transfert 16h",
+      "categorie": "beaute",
+      "photo_defaut": "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400"
+    },
+    {
+      "id": "beaute-10",
+      "nom": "Sèche-Cheveux Professionnel 2200W",
+      "description": "Sèche-cheveux ionique séchage ultra-rapide avec concentrateur",
+      "categorie": "beaute",
+      "photo_defaut": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400"
+    },
+    {
+      "id": "beaute-11",
+      "nom": "Fer à Lisser BaByliss Titan Ceramic",
+      "description": "Lisseur plaques flottantes chauffe rapide 230°C",
+      "categorie": "beaute",
+      "photo_defaut": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400"
+    },
+    {
+      "id": "beaute-12",
+      "nom": "Tondeuse à Barbe Panasonic Rechargeable",
+      "description": "Tondeuse étanche lavable avec 20 hauteurs de coupe",
+      "categorie": "beaute",
+      "photo_defaut": "https://images.unsplash.com/photo-1621607512214-68297480165e?w=400"
     }
   ],
   "sport": [
@@ -1294,24 +2022,52 @@
     },
     {
       "id": "sport-2",
-      "nom": "Crampons Nike Mercurial",
+      "nom": "Maillot Sénégal Extérieur Vert Puma",
+      "description": "Maillot extérieur des Lions de la Teranga",
+      "categorie": "sport",
+      "photo_defaut": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=400"
+    },
+    {
+      "id": "sport-3",
+      "nom": "Crampons Nike Mercurial Vapor",
       "description": "Chaussures de football pour terrain sec offrant vitesse et contrôle",
       "categorie": "sport",
       "photo_defaut": "https://images.unsplash.com/photo-1511886929837-354d827aae26?w=400"
     },
     {
-      "id": "sport-3",
+      "id": "sport-4",
       "nom": "Ballon de Football Size 5",
       "description": "Ballon de match résistant cousu à la main",
       "categorie": "sport",
       "photo_defaut": "https://images.unsplash.com/photo-1614632537197-38a17061c2bd?w=400"
     },
     {
-      "id": "sport-4",
+      "id": "sport-5",
       "nom": "Tapis de Yoga Antidérapant 6mm",
       "description": "Tapis de gym et yoga avec sangle de transport incluse",
       "categorie": "sport",
       "photo_defaut": "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=400"
+    },
+    {
+      "id": "sport-6",
+      "nom": "Paire d'Haltères en Fonte 5kg",
+      "description": "Haltères d'entraînement musculation revêtement néoprène",
+      "categorie": "sport",
+      "photo_defaut": "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=400"
+    },
+    {
+      "id": "sport-7",
+      "nom": "Kit 5 Élastiques de Musculation Fitness",
+      "description": "Bandes de résistance avec poignées et fixation porte",
+      "categorie": "sport",
+      "photo_defaut": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400"
+    },
+    {
+      "id": "sport-8",
+      "nom": "Gourde Inox Isotherme 750ml",
+      "description": "Bouteille de sport réutilisable gardant le froid 24h",
+      "categorie": "sport",
+      "photo_defaut": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400"
     }
   ],
   "fournitures": [
@@ -1324,24 +2080,66 @@
     },
     {
       "id": "fournitures-2",
+      "nom": "Cahier Petit Format 96 Pages",
+      "description": "Cahier de brouillon ou devoirs 17x22cm",
+      "categorie": "fournitures",
+      "photo_defaut": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400"
+    },
+    {
+      "id": "fournitures-3",
       "nom": "Boîte de 50 Stylos BIC Bleu",
       "description": "Stylos bille pointe moyenne 1.0mm écriture fluide",
       "categorie": "fournitures",
       "photo_defaut": "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=400"
     },
     {
-      "id": "fournitures-3",
+      "id": "fournitures-4",
+      "nom": "Boîte de 50 Stylos BIC Noir",
+      "description": "Stylos bille pointe moyenne noirs",
+      "categorie": "fournitures",
+      "photo_defaut": "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=400"
+    },
+    {
+      "id": "fournitures-5",
       "nom": "Rame de Papier A4 80g (500 Feuilles)",
       "description": "Papier blanc haute blancheur pour impression laser et jet d'encre",
       "categorie": "fournitures",
       "photo_defaut": "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400"
     },
     {
-      "id": "fournitures-4",
+      "id": "fournitures-6",
       "nom": "Calculatrice Casio fx-991ES Plus",
       "description": "Calculatrice scientifique 417 fonctions avec écran naturel",
       "categorie": "fournitures",
       "photo_defaut": "https://images.unsplash.com/photo-1611125832047-1d7ad1e8e48a?w=400"
+    },
+    {
+      "id": "fournitures-7",
+      "nom": "Sac à Dos Scolaire Ergonomique",
+      "description": "Cartable résistant 3 compartiments avec bretelles matelassées",
+      "categorie": "fournitures",
+      "photo_defaut": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400"
+    },
+    {
+      "id": "fournitures-8",
+      "nom": "Boîte Crayons de Couleur Maped (24 Pcs)",
+      "description": "Crayons de couleur résistants bois certifié FSC",
+      "categorie": "fournitures",
+      "photo_defaut": "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=400"
+    },
+    {
+      "id": "fournitures-9",
+      "nom": "Correcteur Blanc Tipp-Ex Flacon 20ml",
+      "description": "Correcteur liquide séchage rapide avec pinceau applicateur",
+      "categorie": "fournitures",
+      "photo_defaut": "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=400"
+    },
+    {
+      "id": "fournitures-10",
+      "nom": "Surligneurs Stabilo Boss (Pack de 4)",
+      "description": "Assortiment de 4 surligneurs fluojaune, vert, rose, orange",
+      "categorie": "fournitures",
+      "photo_defaut": "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=400"
     }
   ],
   "quincaillerie": [
@@ -1354,30 +2152,72 @@
     },
     {
       "id": "quincaillerie-2",
+      "nom": "Sac de Ciment Dangote 50kg 42.5N",
+      "description": "Ciment haute performance pour dalles et béton armé",
+      "categorie": "quincaillerie",
+      "photo_defaut": "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400"
+    },
+    {
+      "id": "quincaillerie-3",
       "nom": "Peinture Emulsion Blanche 20L",
       "description": "Peinture murale lavable haute couvrance pour intérieur et extérieur",
       "categorie": "quincaillerie",
       "photo_defaut": "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400"
     },
     {
-      "id": "quincaillerie-3",
-      "nom": "Perceuse Percuteuse 750W",
+      "id": "quincaillerie-4",
+      "nom": "Peinture Glycéro Laque 5L",
+      "description": "Peinture brillante résitante pour portes et ferrures",
+      "categorie": "quincaillerie",
+      "photo_defaut": "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400"
+    },
+    {
+      "id": "quincaillerie-5",
+      "nom": "Perceuse Percuteuse Bosch 750W",
       "description": "Perceuse filaire avec variateur de vitesse et poignée ergonomique",
       "categorie": "quincaillerie",
       "photo_defaut": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400"
     },
     {
-      "id": "quincaillerie-4",
+      "id": "quincaillerie-6",
+      "nom": "Meuleuse d'Angle Makute 115mm 850W",
+      "description": "Disqueuse portative pour découpe métaux et carrelage",
+      "categorie": "quincaillerie",
+      "photo_defaut": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400"
+    },
+    {
+      "id": "quincaillerie-7",
+      "nom": "Coffret Clés à Douille 94 Pièces",
+      "description": "Valise complète cliquets 1/4\" et 1/2\" acier chrome vanadium",
+      "categorie": "quincaillerie",
+      "photo_defaut": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400"
+    },
+    {
+      "id": "quincaillerie-8",
+      "nom": "Marteau d'Arpenteur 500g Manche Fibre",
+      "description": "Marteau de charpentier avec arrache-clou",
+      "categorie": "quincaillerie",
+      "photo_defaut": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400"
+    },
+    {
+      "id": "quincaillerie-9",
       "nom": "Ampoule LED E27 12W (Pack de 3)",
       "description": "Ampoules économiques longue durée lumière du jour",
       "categorie": "quincaillerie",
       "photo_defaut": "https://images.unsplash.com/photo-1550985616-10810253b84d?w=400"
+    },
+    {
+      "id": "quincaillerie-10",
+      "nom": "Rallonge Électrique 10m 4 Prises",
+      "description": "Bloc multiprise câble renforcé avec interrupteur lumineux",
+      "categorie": "quincaillerie",
+      "photo_defaut": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400"
     }
   ],
   "pieces-rechange": [
     {
       "id": "pieces-rechange-1",
-      "nom": "Plaquettes de frein avant",
+      "nom": "Plaquettes de frein avant (Jeu de 4)",
       "description": "Jeu de 4 plaquettes de frein de qualité d'origine",
       "categorie": "pieces-rechange",
       "photo_defaut": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400"
@@ -1398,62 +2238,69 @@
     },
     {
       "id": "pieces-rechange-4",
+      "nom": "Filtre à Carburant Gazole",
+      "description": "Filtre à gazole décanteur d'eau pour protection injecteurs",
+      "categorie": "pieces-rechange",
+      "photo_defaut": "https://images.unsplash.com/photo-1607603750909-408e19413eaa?w=400"
+    },
+    {
+      "id": "pieces-rechange-5",
       "nom": "Bougie d'allumage NGK (x4)",
       "description": "Lot de 4 bougies d'allumage pour allumage optimal et économie d'énergie",
       "categorie": "pieces-rechange",
       "photo_defaut": "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400"
     },
     {
-      "id": "pieces-rechange-5",
+      "id": "pieces-rechange-6",
       "nom": "Disque de frein avant (x2)",
       "description": "Paire de disques de frein ventilés haute performance",
       "categorie": "pieces-rechange",
       "photo_defaut": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400"
     },
     {
-      "id": "pieces-rechange-6",
+      "id": "pieces-rechange-7",
       "nom": "Courroie de distribution",
       "description": "Courroie crantée haute résistance pour synchronisation moteur",
       "categorie": "pieces-rechange",
       "photo_defaut": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400"
     },
     {
-      "id": "pieces-rechange-7",
+      "id": "pieces-rechange-8",
       "nom": "Batterie Auto 12V 75Ah",
       "description": "Batterie de démarrage sans entretien avec indicateur de charge",
       "categorie": "pieces-rechange",
       "photo_defaut": "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400"
     },
     {
-      "id": "pieces-rechange-8",
+      "id": "pieces-rechange-9",
       "nom": "Balai d'essuie-glace (Paire)",
       "description": "Balais d'essuie-glace flexibles pour visibilité optimale par tout temps",
       "categorie": "pieces-rechange",
       "photo_defaut": "https://images.unsplash.com/photo-1607603750909-408e19413eaa?w=400"
     },
     {
-      "id": "pieces-rechange-9",
+      "id": "pieces-rechange-10",
       "nom": "Kit d'embrayage complet",
       "description": "Kit comprenant disque, mécanisme et butée d'embrayage",
       "categorie": "pieces-rechange",
       "photo_defaut": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400"
     },
     {
-      "id": "pieces-rechange-10",
+      "id": "pieces-rechange-11",
       "nom": "Alternateur 12V",
       "description": "Alternateur de rechange standard pour recharge batterie",
       "categorie": "pieces-rechange",
       "photo_defaut": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400"
     },
     {
-      "id": "pieces-rechange-11",
+      "id": "pieces-rechange-12",
       "nom": "Démarreur électrique",
       "description": "Démarreur robuste pour démarrage rapide à froid",
       "categorie": "pieces-rechange",
       "photo_defaut": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400"
     },
     {
-      "id": "pieces-rechange-12",
+      "id": "pieces-rechange-13",
       "nom": "Amortisseur avant (x2)",
       "description": "Jeu de 2 amortisseurs hydrauliques pour confort de conduite",
       "categorie": "pieces-rechange",
