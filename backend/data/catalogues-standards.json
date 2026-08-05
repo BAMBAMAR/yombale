@@ -697,66 +697,108 @@
     },
     {
       "id": "smartphones-6",
+      "nom": "Samsung Galaxy A14 64Go",
+      "description": "Grand écran 6.6 pouces FHD+, triple caméra 50 Mpx et batterie 5000 mAh",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400"
+    },
+    {
+      "id": "smartphones-7",
       "nom": "Redmi Note 12 Pro 128Go",
       "description": "Écran AMOLED 120Hz, charge rapide 67W et appareil photo 50 Mpx",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400"
     },
     {
-      "id": "smartphones-7",
+      "id": "smartphones-8",
+      "nom": "Redmi Note 13 256Go",
+      "description": "Écran AMOLED FHD+ 120Hz, caméra 108 Mpx et processeur rapide",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400"
+    },
+    {
+      "id": "smartphones-9",
       "nom": "Tecno Spark 10 Pro 256Go",
       "description": "Caméra selfie 32 Mpx avec flash ajustable et 16Go de RAM extension",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400"
     },
     {
-      "id": "smartphones-8",
+      "id": "smartphones-10",
+      "nom": "Tecno Camon 20 Pro 256Go",
+      "description": "Capteur photo 64 Mpx RGBW, écran AMOLED et charge rapide 33W",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400"
+    },
+    {
+      "id": "smartphones-11",
       "nom": "Infinix Hot 30 128Go",
       "description": "Écran 90Hz FHD+, batterie 5000mAh et processeur Gaming",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1546054454-aa26e2b734c7?w=400"
     },
     {
-      "id": "smartphones-9",
+      "id": "smartphones-12",
+      "nom": "Infinix Note 30 Pro 256Go",
+      "description": "Charge rapide 68W + charge sans fil 15W, haut-parleurs JBL",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1546054454-aa26e2b734c7?w=400"
+    },
+    {
+      "id": "smartphones-13",
       "nom": "Apple AirPods Pro (2ème Gén)",
       "description": "Écouteurs sans fil avec Réduction Active du Bruit et audio spatial",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400"
     },
     {
-      "id": "smartphones-10",
+      "id": "smartphones-14",
       "nom": "Samsung Galaxy Buds2 Pro",
       "description": "Écouteurs sans fil Hi-Fi 24 bits et réduction de bruit active",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400"
     },
     {
-      "id": "smartphones-11",
+      "id": "smartphones-15",
       "nom": "Chargeur Rapide USB-C 20W",
       "description": "Adaptateur secteur rapide compatible iPhone et Android",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400"
     },
     {
-      "id": "smartphones-12",
+      "id": "smartphones-16",
       "nom": "Power Bank Remax 20000mAh",
       "description": "Batterie externe haute capacité avec double sortie USB",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1609592807986-77e8a939f7d4?w=400"
     },
     {
-      "id": "smartphones-13",
-      "nom": "Support Téléphone Voiture",
+      "id": "smartphones-17",
+      "nom": "Support Téléphone Voiture MagSafe",
       "description": "Support voiture magnétique avec fixation grille d'aération",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400"
     },
     {
-      "id": "smartphones-14",
+      "id": "smartphones-18",
       "nom": "Montre Connectée Apple Watch S9",
       "description": "Boîtier en aluminium avec nouveau geste Toucher deux fois",
       "categorie": "smartphones",
       "photo_defaut": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400"
+    },
+    {
+      "id": "smartphones-19",
+      "nom": "Ring Light Trépied 26cm pour Selfie",
+      "description": "Éclairage annulaire LED avec trépied téléscopique et support smartphone",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400"
+    },
+    {
+      "id": "smartphones-20",
+      "nom": "Carte Mémoire MicroSD Sandisk 128Go",
+      "description": "Carte mémoire haute vitesse avec adaptateur SD inclus",
+      "categorie": "smartphones",
+      "photo_defaut": "https://images.unsplash.com/photo-1600541519443-96c14617b7ba?w=400"
     }
   ],
   "informatique": [
@@ -846,10 +888,31 @@
     },
     {
       "id": "informatique-13",
-      "nom": "Routeur WiFi TP-Link N300",
-      "description": "Routeur sans fil 300 Mbps avec antennes à haut gain",
+      "nom": "Imprimante Thermique Caisse 80mm USB/Ethernet",
+      "description": "Imprimante de tickets de caisse rapide à coupe automatique",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400"
+    },
+    {
+      "id": "informatique-14",
+      "nom": "Scanner Douchette Code-Barres 1D/2D USB",
+      "description": "Lecteur optique laser de codes-barres et QR codes avec socle",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400"
+    },
+    {
+      "id": "informatique-15",
+      "nom": "Routeur 4G WiFi Huawei avec Carte SIM",
+      "description": "Routeur portable 4G LTE partageant le réseau jusqu'à 32 appareils",
       "categorie": "informatique",
       "photo_defaut": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400"
+    },
+    {
+      "id": "informatique-16",
+      "nom": "Sac à Dos Homme Imperméable PC 15.6\"",
+      "description": "Sac à dos d'affaires rembourré avec port de charge USB externe",
+      "categorie": "informatique",
+      "photo_defaut": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400"
     }
   ],
   "tv-electro": [
@@ -869,55 +932,90 @@
     },
     {
       "id": "tv-electro-3",
+      "nom": "TV Smart TCL 32\" Android HD",
+      "description": "Téléviseur connecté avec Google Assistant et Chromecast intégré",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400"
+    },
+    {
+      "id": "tv-electro-4",
       "nom": "Climatiseur Split 9000 BTU",
       "description": "Climatiseur silencieux à haute efficacité énergétique",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400"
     },
     {
-      "id": "tv-electro-4",
+      "id": "tv-electro-5",
+      "nom": "Climatiseur Split 12000 BTU Inverter",
+      "description": "Climatiseur froid économique avec technologie Inverter",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400"
+    },
+    {
+      "id": "tv-electro-6",
       "nom": "Réfrigérateur Midea 250L",
       "description": "Réfrigérateur double porte avec compartiment congélateur rapide",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400"
     },
     {
-      "id": "tv-electro-5",
+      "id": "tv-electro-7",
+      "nom": "Réfrigérateur Side-by-Side Samsung 500L",
+      "description": "Réfrigérateur américain double porte avec distributeur d'eau",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400"
+    },
+    {
+      "id": "tv-electro-8",
       "nom": "Congélateur Horizontal 200L",
       "description": "Congélateur coffre à faible consommation d'énergie",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=400"
     },
     {
-      "id": "tv-electro-6",
+      "id": "tv-electro-9",
       "nom": "Micro-ondes Moulinex 20L",
       "description": "Four à micro-ondes compact 700W avec fonction décongélation",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400"
     },
     {
-      "id": "tv-electro-7",
+      "id": "tv-electro-10",
       "nom": "Mixeur Blender Kenwood 1.5L",
       "description": "Bol en verre incassable avec moulin à épices inclus",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400"
     },
     {
-      "id": "tv-electro-8",
+      "id": "tv-electro-11",
+      "nom": "Friteuse Sans Huile AirFryer 4.5L",
+      "description": "Cuisson saine et croustillante à l'air chaud avec 8 programmes",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400"
+    },
+    {
+      "id": "tv-electro-12",
       "nom": "Fer à Repasser à Vapeur Calor",
       "description": "Semelle en céramique anti-adhésive avec système anti-calcaire",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400"
     },
     {
-      "id": "tv-electro-9",
+      "id": "tv-electro-13",
       "nom": "Machine à Laver Frontale 8kg",
       "description": "Lave-linge automatique avec programme lavage rapide 15 min",
       "categorie": "tv-electro",
       "photo_defaut": "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=400"
     },
     {
-      "id": "tv-electro-10",
+      "id": "tv-electro-14",
+      "nom": "Bouilloire Électrique Inox 1.8L",
+      "description": "Bouilloire rapide arrêt automatique et socle 360°",
+      "categorie": "tv-electro",
+      "photo_defaut": "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400"
+    },
+    {
+      "id": "tv-electro-15",
       "nom": "Ventilateur sur Pied Orientable",
       "description": "Ventilateur silencieux 3 vitesses avec oscillation automatique",
       "categorie": "tv-electro",
@@ -969,29 +1067,57 @@
     },
     {
       "id": "mode-7",
+      "nom": "Djellaba Homme Brodée Traditionnelle",
+      "description": "Tenue traditionnelle élégante brodée pour prières et fêtes",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400"
+    },
+    {
+      "id": "mode-8",
+      "nom": "Boubou Traditionnel 3 Pièces",
+      "description": "Grand boubou brodé haut de gamme pour cérémonies",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400"
+    },
+    {
+      "id": "mode-9",
       "nom": "Chaussures en Cuir Marron Homme",
       "description": "Mocassins en cuir véritable cousus main",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400"
     },
     {
-      "id": "mode-8",
+      "id": "mode-10",
       "nom": "Baskets Nike Air Force 1",
       "description": "Sneakers iconiques blanches confortables au quotidien",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400"
     },
     {
-      "id": "mode-9",
+      "id": "mode-11",
+      "nom": "Baskets Adidas Stan Smith",
+      "description": "Baskets en cuir blanc au design épuré",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400"
+    },
+    {
+      "id": "mode-12",
       "nom": "Sac à Main Cuir Véritable Femme",
       "description": "Sac élégant avec bandoulière amovible et finitions dorées",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400"
     },
     {
-      "id": "mode-10",
+      "id": "mode-13",
       "nom": "Parfum Sauvage Dior 100ml",
       "description": "Eau de parfum fraîche et boisée pour homme",
+      "categorie": "mode",
+      "photo_defaut": "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400"
+    },
+    {
+      "id": "mode-14",
+      "nom": "Parfum Bleu de Chanel 100ml",
+      "description": "Fragrance aromatique intense et raffinée",
       "categorie": "mode",
       "photo_defaut": "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400"
     }
@@ -1048,8 +1174,22 @@
     },
     {
       "id": "maison-8",
+      "nom": "Marmite à Pression Inox 8L",
+      "description": "Autocuiseur rapide de grande capacité pour mijotés",
+      "categorie": "maison",
+      "photo_defaut": "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=400"
+    },
+    {
+      "id": "maison-9",
       "nom": "Service d'Assiettes Porcelaine (18 Pcs)",
       "description": "Ensemble complet comprenant assiettes creuses, plates et dessert",
+      "categorie": "maison",
+      "photo_defaut": "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=400"
+    },
+    {
+      "id": "maison-10",
+      "nom": "Pack de 6 Verres à Eau en Cristal",
+      "description": "Verres transparents élégants et solides",
       "categorie": "maison",
       "photo_defaut": "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=400"
     }

@@ -105,15 +105,21 @@ const catalogues = {
     { nom: "iPhone 15 Pro Max 256Go", desc: "Design en titane, puce A17 Pro, bouton Action et appareil photo 48 Mpx", photo: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400" },
     { nom: "Samsung Galaxy S23 Ultra 256Go", desc: "Capteur 200 Mpx, S-Pen intégré et processeur Snapdragon 8 Gen 2", photo: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400" },
     { nom: "Samsung Galaxy A54 5G 128Go", desc: "Écran Super AMOLED 120Hz, triple capteur photo et résistance IP67", photo: "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400" },
+    { nom: "Samsung Galaxy A14 64Go", desc: "Grand écran 6.6 pouces FHD+, triple caméra 50 Mpx et batterie 5000 mAh", photo: "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400" },
     { nom: "Redmi Note 12 Pro 128Go", desc: "Écran AMOLED 120Hz, charge rapide 67W et appareil photo 50 Mpx", photo: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400" },
+    { nom: "Redmi Note 13 256Go", desc: "Écran AMOLED FHD+ 120Hz, caméra 108 Mpx et processeur rapide", photo: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400" },
     { nom: "Tecno Spark 10 Pro 256Go", desc: "Caméra selfie 32 Mpx avec flash ajustable et 16Go de RAM extension", photo: "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400" },
+    { nom: "Tecno Camon 20 Pro 256Go", desc: "Capteur photo 64 Mpx RGBW, écran AMOLED et charge rapide 33W", photo: "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400" },
     { nom: "Infinix Hot 30 128Go", desc: "Écran 90Hz FHD+, batterie 5000mAh et processeur Gaming", photo: "https://images.unsplash.com/photo-1546054454-aa26e2b734c7?w=400" },
+    { nom: "Infinix Note 30 Pro 256Go", desc: "Charge rapide 68W + charge sans fil 15W, haut-parleurs JBL", photo: "https://images.unsplash.com/photo-1546054454-aa26e2b734c7?w=400" },
     { nom: "Apple AirPods Pro (2ème Gén)", desc: "Écouteurs sans fil avec Réduction Active du Bruit et audio spatial", photo: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400" },
     { nom: "Samsung Galaxy Buds2 Pro", desc: "Écouteurs sans fil Hi-Fi 24 bits et réduction de bruit active", photo: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400" },
     { nom: "Chargeur Rapide USB-C 20W", desc: "Adaptateur secteur rapide compatible iPhone et Android", photo: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400" },
     { nom: "Power Bank Remax 20000mAh", desc: "Batterie externe haute capacité avec double sortie USB", photo: "https://images.unsplash.com/photo-1609592807986-77e8a939f7d4?w=400" },
-    { nom: "Support Téléphone Voiture", desc: "Support voiture magnétique avec fixation grille d'aération", photo: "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400" },
-    { nom: "Montre Connectée Apple Watch S9", desc: "Boîtier en aluminium avec nouveau geste Toucher deux fois", photo: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400" }
+    { nom: "Support Téléphone Voiture MagSafe", desc: "Support voiture magnétique avec fixation grille d'aération", photo: "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400" },
+    { nom: "Montre Connectée Apple Watch S9", desc: "Boîtier en aluminium avec nouveau geste Toucher deux fois", photo: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400" },
+    { nom: "Ring Light Trépied 26cm pour Selfie", desc: "Éclairage annulaire LED avec trépied téléscopique et support smartphone", photo: "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400" },
+    { nom: "Carte Mémoire MicroSD Sandisk 128Go", desc: "Carte mémoire haute vitesse avec adaptateur SD inclus", photo: "https://images.unsplash.com/photo-1600541519443-96c14617b7ba?w=400" }
   ],
 
   informatique: [
@@ -129,19 +135,27 @@ const catalogues = {
     { nom: "Écran PC Dell 24\" Full HD", desc: "Moniteur IPS 1080p réglable en hauteur avec antireflet", photo: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400" },
     { nom: "Onduleur APC 650VA", desc: "Protection contre les coupures et surtensions électriques", photo: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400" },
     { nom: "Imprimante HP DeskJet 2710", desc: "Imprimante multifonction WiFi impression, numérisation et copie", photo: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400" },
-    { nom: "Routeur WiFi TP-Link N300", desc: "Routeur sans fil 300 Mbps avec antennes à haut gain", photo: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400" }
+    { nom: "Imprimante Thermique Caisse 80mm USB/Ethernet", desc: "Imprimante de tickets de caisse rapide à coupe automatique", photo: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400" },
+    { nom: "Scanner Douchette Code-Barres 1D/2D USB", desc: "Lecteur optique laser de codes-barres et QR codes avec socle", photo: "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400" },
+    { nom: "Routeur 4G WiFi Huawei avec Carte SIM", desc: "Routeur portable 4G LTE partageant le réseau jusqu'à 32 appareils", photo: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400" },
+    { nom: "Sac à Dos Homme Imperméable PC 15.6\"", desc: "Sac à dos d'affaires rembourré avec port de charge USB externe", photo: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400" }
   ],
 
   "tv-electro": [
     { nom: "TV LED Samsung 43\" Smart Full HD", desc: "Smart TV avec HDR, Wi-Fi intégré et applications Netflix/YouTube", photo: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400" },
     { nom: "TV LG 55\" 4K UHD Smart", desc: "Écran 4K avec processeur α5 AI et Thinq AI", photo: "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=400" },
+    { nom: "TV Smart TCL 32\" Android HD", desc: "Téléviseur connecté avec Google Assistant et Chromecast intégré", photo: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400" },
     { nom: "Climatiseur Split 9000 BTU", desc: "Climatiseur silencieux à haute efficacité énergétique", photo: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400" },
+    { nom: "Climatiseur Split 12000 BTU Inverter", desc: "Climatiseur froid économique avec technologie Inverter", photo: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400" },
     { nom: "Réfrigérateur Midea 250L", desc: "Réfrigérateur double porte avec compartiment congélateur rapide", photo: "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400" },
+    { nom: "Réfrigérateur Side-by-Side Samsung 500L", desc: "Réfrigérateur américain double porte avec distributeur d'eau", photo: "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400" },
     { nom: "Congélateur Horizontal 200L", desc: "Congélateur coffre à faible consommation d'énergie", photo: "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=400" },
     { nom: "Micro-ondes Moulinex 20L", desc: "Four à micro-ondes compact 700W avec fonction décongélation", photo: "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400" },
     { nom: "Mixeur Blender Kenwood 1.5L", desc: "Bol en verre incassable avec moulin à épices inclus", photo: "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400" },
+    { nom: "Friteuse Sans Huile AirFryer 4.5L", desc: "Cuisson saine et croustillante à l'air chaud avec 8 programmes", photo: "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400" },
     { nom: "Fer à Repasser à Vapeur Calor", desc: "Semelle en céramique anti-adhésive avec système anti-calcaire", photo: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400" },
     { nom: "Machine à Laver Frontale 8kg", desc: "Lave-linge automatique avec programme lavage rapide 15 min", photo: "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=400" },
+    { nom: "Bouilloire Électrique Inox 1.8L", desc: "Bouilloire rapide arrêt automatique et socle 360°", photo: "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400" },
     { nom: "Ventilateur sur Pied Orientable", desc: "Ventilateur silencieux 3 vitesses avec oscillation automatique", photo: "https://images.unsplash.com/photo-1618941716939-553df3c6c276?w=400" }
   ],
 
@@ -152,10 +166,14 @@ const catalogues = {
     { nom: "Robe de Soirée Élégante", desc: "Robe longue chic pour événements et fêtes", photo: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400" },
     { nom: "Ensemble Bazin Riche Getzner", desc: "Bazin de qualité supérieure teinté artisanalement", photo: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400" },
     { nom: "Tissu Wax Hollandais (6 Yards)", desc: "Véritable pagne Wax aux motifs colorés traditionnels", photo: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400" },
+    { nom: "Djellaba Homme Brodée Traditionnelle", desc: "Tenue traditionnelle élégante brodée pour prières et fêtes", photo: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400" },
+    { nom: "Boubou Traditionnel 3 Pièces", desc: "Grand boubou brodé haut de gamme pour cérémonies", photo: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400" },
     { nom: "Chaussures en Cuir Marron Homme", desc: "Mocassins en cuir véritable cousus main", photo: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400" },
     { nom: "Baskets Nike Air Force 1", desc: "Sneakers iconiques blanches confortables au quotidien", photo: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400" },
+    { nom: "Baskets Adidas Stan Smith", desc: "Baskets en cuir blanc au design épuré", photo: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400" },
     { nom: "Sac à Main Cuir Véritable Femme", desc: "Sac élégant avec bandoulière amovible et finitions dorées", photo: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400" },
-    { nom: "Parfum Sauvage Dior 100ml", desc: "Eau de parfum fraîche et boisée pour homme", photo: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400" }
+    { nom: "Parfum Sauvage Dior 100ml", desc: "Eau de parfum fraîche et boisée pour homme", photo: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400" },
+    { nom: "Parfum Bleu de Chanel 100ml", desc: "Fragrance aromatique intense et raffinée", photo: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400" }
   ],
 
   maison: [
@@ -166,7 +184,9 @@ const catalogues = {
     { nom: "Matelas Orthopédique 2 Places", desc: "Matelas ferme à ressorts ensachés 160x200cm", photo: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400" },
     { nom: "Canapé Angle Convertible 5 Places", desc: "Grand canapé d'angle avec coffre de rangement intégré", photo: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400" },
     { nom: "Poêle Antiadhésive Tefal 28cm", desc: "Poêle avec revêtement titane et indicateur Thermo-Signal", photo: "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=400" },
-    { nom: "Service d'Assiettes Porcelaine (18 Pcs)", desc: "Ensemble complet comprenant assiettes creuses, plates et dessert", photo: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=400" }
+    { nom: "Marmite à Pression Inox 8L", desc: "Autocuiseur rapide de grande capacité pour mijotés", photo: "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=400" },
+    { nom: "Service d'Assiettes Porcelaine (18 Pcs)", desc: "Ensemble complet comprenant assiettes creuses, plates et dessert", photo: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=400" },
+    { nom: "Pack de 6 Verres à Eau en Cristal", desc: "Verres transparents élégants et solides", photo: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=400" }
   ],
 
   "auto-moto": [
