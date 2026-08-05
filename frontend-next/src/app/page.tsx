@@ -138,7 +138,7 @@ export default async function HomePage({
     ? 'Paiement via Wave ou manuel'
     : waveActif
     ? 'Paiement via Wave'
-    : 'Paiement manuel disponible'
+    : 'Paiement manuel disponible';
 
   return (
     <>
