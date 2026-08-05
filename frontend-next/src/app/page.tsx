@@ -343,19 +343,19 @@ export default async function HomePage({
           </div>
 
           {/* Bloc Filtres Avancés & Tendances (Milieu - Desktop) */}
-          <div className="hidden-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 300px', borderLeft: '1px solid #e2e8f0', paddingLeft: 24 }}>
-            <div className="filtres-bar" style={{ margin: 0, border: 'none', padding: 0, background: 'transparent', boxShadow: 'none', gap: 6 }}>
-              <span className="filtres-label" style={{ minWidth: 'auto', marginRight: 4 }}>État :</span>
-              <span className="budget-pill active" style={{ cursor: 'pointer', padding: '4px 12px', fontSize: 12 }}>Tout</span>
-              <span className="budget-pill" style={{ cursor: 'pointer', opacity: 0.8, padding: '4px 12px', fontSize: 12 }}>Neuf</span>
-              <span className="budget-pill" style={{ cursor: 'pointer', opacity: 0.8, padding: '4px 12px', fontSize: 12 }}>Occasion</span>
+          <div className="hidden-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 300px' }}>
+            <div className="filtres-bar" style={{ margin: 0 }}>
+              <span className="filtres-label">État :</span>
+              <span className="budget-pill active" style={{ cursor: 'pointer' }}>Tout</span>
+              <span className="budget-pill" style={{ cursor: 'pointer', opacity: 0.8 }}>Neuf</span>
+              <span className="budget-pill" style={{ cursor: 'pointer', opacity: 0.8 }}>Occasion</span>
             </div>
             
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: '#C75B00' }}>🔥 Tendances :</span>
-              <Link href="/?q=iphone" style={{ fontSize: 11, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', padding: '4px 10px', borderRadius: 12, textDecoration: 'none', fontWeight: 600, transition: 'all 0.2s' }}>iPhone 15</Link>
-              <Link href="/?q=climatiseur" style={{ fontSize: 11, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', padding: '4px 10px', borderRadius: 12, textDecoration: 'none', fontWeight: 600, transition: 'all 0.2s' }}>Climatiseurs</Link>
-              <Link href="/?q=samsung" style={{ fontSize: 11, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', padding: '4px 10px', borderRadius: 12, textDecoration: 'none', fontWeight: 600, transition: 'all 0.2s' }}>Samsung S24</Link>
+            <div className="filtres-bar" style={{ margin: 0, gap: 8 }}>
+              <span className="filtres-label" style={{ color: '#C75B00' }}>🔥 Tendances :</span>
+              <Link href="/?q=iphone" className="budget-pill">iPhone 15</Link>
+              <Link href="/?q=climatiseur" className="budget-pill">Climatiseurs</Link>
+              <Link href="/?q=samsung" className="budget-pill">Samsung S24</Link>
             </div>
           </div>
 
