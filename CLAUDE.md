@@ -1160,6 +1160,10 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
             - **Boutique Taf Taf (1 mois offert)** (Gratuit 30j puis 5.000 FCFA/m) : Baguette Magique Ali/SHEIN, conversion Produit → Annonce en 1-clic, Catalogue Web & WhatsApp.
             - **Vendeur Pro (15.000 FCFA/m)** : **Caisse POS enregistreuse tactile**, **Scan EAN-13 par caméra**, **Impression d'étiquettes stickers 50x30mm**, **Carnet de Crédits Client & Relance 1-clic**, **Factures & Devis PDF**.
             - **Business VIP (35.000 FCFA/m)** : **Multi-caissiers & droits d'équipe**, **Analytics CA & Marges nettes**, **Bannière sponsorisée prioritaire**.
+          - **Nouvelle Section Spéciale "Nopalou × WhatsApp Ecosystem" (`ShowcaseTabs.tsx`)** :
+            - **Acheteurs** : Panier Web & Commande WhatsApp 1-Clic, Connexion sans mot de passe OTP WhatsApp, Bot Assistant IA Comparateur `+221 70 871 79 42`, Alertes gratuites de baisse de prix sur WhatsApp.
+            - **Commerçants** : Notifications instantanées de commandes pré-remplies, Relance d'impayés en 1 clic depuis la Caisse POS, Envoi direct de Factures & Devis PDF, Support VIP WhatsApp 7j/7.
+            - **Apporteurs** : Partage 1-clic de lien de parrainage sur statut et groupes WhatsApp, Notifications de commissions récurrentes par messagerie.
           - **Suppression des sections de bas de page dupliquées et mal alignées** : Alignement parfait et navigation ultra-fluide.
         - **Diagnostic Exhaustif & Correction de 5 URLs Incohérentes Confirmées** : Audit visuel systématique des 112 URLs Unsplash uniques. Identification et remplacement de 5 URLs dont le contenu visuel réel ne correspondait pas du tout aux produits assignés :
           1. **Huile Moteur** (Total/Shell/Mobil) : Ferrari rouge → bidon d'huile moteur (`photo-1635784065399`)
