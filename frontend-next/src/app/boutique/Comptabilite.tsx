@@ -734,7 +734,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
 
 // ── Stock ─────────────────────────────────────────────────────────────────────
 
-function StockView({ boutiqueId }: { boutiqueId: string }) {
+export function StockView({ boutiqueId }: { boutiqueId: string }) {
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<string | null>(null)
@@ -847,7 +847,7 @@ function StockView({ boutiqueId }: { boutiqueId: string }) {
 // ── Composant principal ───────────────────────────────────────────────────────
 
 export default function Comptabilite({ boutiqueId }: { boutiqueId: string }) {
-  const [tab, setTab] = useState<'dashboard' | 'ventes' | 'depenses' | 'stock' | 'zones'>('dashboard')
+  const [tab, setTab] = useState<'dashboard' | 'ventes' | 'depenses'>('dashboard')
 
   const tabBtn = (t: typeof tab, label: string) => (
     <button type="button" onClick={() => setTab(t)} style={{
@@ -867,22 +867,18 @@ export default function Comptabilite({ boutiqueId }: { boutiqueId: string }) {
         {tabBtn('dashboard', '📊 Tableau de bord')}
         {tabBtn('ventes',    '💰 Ventes')}
         {tabBtn('depenses',  '📉 Dépenses')}
-        {tabBtn('stock',     '📦 Stock')}
-        {tabBtn('zones',     '🚚 Livraison')}
       </div>
 
       {tab === 'dashboard' && <DashboardView boutiqueId={boutiqueId} />}
       {tab === 'ventes'    && <VentesView    boutiqueId={boutiqueId} />}
       {tab === 'depenses'  && <DepensesView  boutiqueId={boutiqueId} />}
-      {tab === 'stock'     && <StockView     boutiqueId={boutiqueId} />}
-      {tab === 'zones'     && <ZonesView     boutiqueId={boutiqueId} />}
     </div>
   )
 }
 
 // ── Zones de livraison ────────────────────────────────────────────────────────
 
-function ZonesView({ boutiqueId }: { boutiqueId: string }) {
+export function ZonesView({ boutiqueId }: { boutiqueId: string }) {
   const [zones, setZones] = useState<Zone[]>([])
   const [loading, setLoading] = useState(true)
   const [nom, setNom] = useState('')

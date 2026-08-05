@@ -2014,6 +2014,16 @@ router.post('/:id/documents', tokenOptional, param('id').isUUID(), async (req, r
       }
     }
 
+    enregistrerAuditLog(
+      boutiqueId,
+      req.user?.userId || null,
+      req.user?.nom || null,
+      'document_cree',
+      `Création du document ${r.rows[0].type.toUpperCase()} #${r.rows[0].reference} (${r.rows[0].total_ttc} FCFA)`,
+      { reference: r.rows[0].reference, type: r.rows[0].type, total_ttc: r.rows[0].total_ttc, statut: r.rows[0].statut },
+      req
+    );
+
     res.status(201).json(r.rows[0]);
   } catch (err) {
     console.error('[POST CAISSE DOCUMENT ERR]', err);
@@ -2094,6 +2104,16 @@ router.put('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('
       }
     }
 
+    enregistrerAuditLog(
+      boutiqueId,
+      req.user?.userId || null,
+      req.user?.nom || null,
+      'document_modifie',
+      `Modification du document ${newType.toUpperCase()} #${oldDoc.reference} (Statut: ${newStatut})`,
+      { reference: oldDoc.reference, type: newType, statut: newStatut },
+      req
+    );
+
     res.json({ success: true, message: 'Document mis à jour avec succès' });
   } catch (err) {
     console.error('[PUT DOCUMENT ERR]', err);
@@ -2105,7 +2125,7 @@ router.put('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('
 router.delete('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
   try {
     const { id: boutiqueId, docId } = req.params;
-    const docRes = await pool.query(`SELECT id, type, statut, items FROM caisse_documents WHERE id=$1 AND boutique_id=$2`, [docId, boutiqueId]);
+    const docRes = await pool.query(`SELECT id, reference, type, statut, items FROM caisse_documents WHERE id=$1 AND boutique_id=$2`, [docId, boutiqueId]);
     if (!docRes.rows[0]) return res.status(404).json({ error: 'Document introuvable' });
     const doc = docRes.rows[0];
 
@@ -2123,6 +2143,17 @@ router.delete('/:id/documents/:docId', tokenOptional, param('id').isUUID(), para
     }
 
     await pool.query(`DELETE FROM caisse_documents WHERE id = $1`, [docId]);
+
+    enregistrerAuditLog(
+      boutiqueId,
+      req.user?.userId || null,
+      req.user?.nom || null,
+      'document_supprime',
+      `Suppression du document ${doc.type.toUpperCase()} #${doc.reference || doc.id}`,
+      { reference: doc.reference, type: doc.type, statut: doc.statut },
+      req
+    );
+
     res.json({ success: true, message: 'Document supprimé et stocks réajustés' });
   } catch (err) {
     console.error('[DELETE DOCUMENT ERR]', err);
@@ -2184,6 +2215,9 @@ router.post('/:id/fournisseurs', tokenOptional, param('id').isUUID(), async (req
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [req.params.id, nom, telephone || null, email || null, adresse || null, ninea || null]
     );
+
+    enregistrerAuditLog(req.params.id, req.user?.userId || null, req.user?.nom || null, 'fournisseur_cree', `Création du fournisseur "${nom}"`, { nom, telephone, email }, req);
+
     res.status(201).json(r.rows[0]);
   } catch (err) {
     res.status(500).json({ error: 'Erreur serveur' });
@@ -2199,6 +2233,9 @@ router.put('/:id/fournisseurs/:fId', tokenOptional, param('id').isUUID(), param(
        WHERE id = $7 AND boutique_id = $8`,
       [nom, telephone, email, adresse, ninea, solde_du !== undefined ? Number(solde_du) : 0, req.params.fId, req.params.id]
     );
+
+    enregistrerAuditLog(req.params.id, req.user?.userId || null, req.user?.nom || null, 'fournisseur_modifie', `Modification du fournisseur "${nom}"`, { nom, solde_du }, req);
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Erreur serveur' });
@@ -2208,6 +2245,9 @@ router.put('/:id/fournisseurs/:fId', tokenOptional, param('id').isUUID(), param(
 router.delete('/:id/fournisseurs/:fId', tokenOptional, param('id').isUUID(), param('fId').isUUID(), async (req, res) => {
   try {
     await pool.query(`DELETE FROM fournisseurs WHERE id = $1 AND boutique_id = $2`, [req.params.fId, req.params.id]);
+
+    enregistrerAuditLog(req.params.id, req.user?.userId || null, req.user?.nom || null, 'fournisseur_supprime', `Suppression du fournisseur #${req.params.fId}`, {}, req);
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Erreur serveur' });
@@ -2242,6 +2282,9 @@ router.post('/:id/commandes-fournisseurs', tokenOptional, param('id').isUUID(), 
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       [req.params.id, fournisseur_id, reference, JSON.stringify(itemsArray), total, date_livraison || null, justificatif_url || null]
     );
+
+    enregistrerAuditLog(req.params.id, req.user?.userId || null, req.user?.nom || null, 'commande_fournisseur_creee', `Création d'un bon de commande fournisseur #${reference} (${total} FCFA)`, { reference, montant: total }, req);
+
     res.status(201).json(r.rows[0]);
   } catch (err) {
     console.error('[POST CMD FOURN ERR]', err);
@@ -2601,6 +2644,57 @@ router.delete('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isU
 
 // ── ROUTE AUDIT LOGS ─────────────────────────────────────────────────────────
 
+// GET /api/boutiques/:id/logs/export.csv
+router.get('/:id/logs/export.csv', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id, nom FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutique = bRes.rows[0];
+
+    const { type, q } = req.query;
+    let queryParts = ['boutique_id = $1'];
+    let values = [boutique.id];
+    let vIndex = 2;
+
+    if (type && type !== 'tous') {
+      queryParts.push(`type_action = $${vIndex++}`);
+      values.push(type);
+    }
+    if (q) {
+      queryParts.push(`(auteur_nom ILIKE $${vIndex} OR description ILIKE $${vIndex})`);
+      values.push(`%${q}%`);
+      vIndex++;
+    }
+
+    const r = await pool.query(
+      `SELECT created_at, auteur_nom, type_action, description, metadonnees, ip_adresse
+       FROM boutique_logs
+       WHERE ${queryParts.join(' AND ')}
+       ORDER BY created_at DESC
+       LIMIT 2000`,
+      values
+    );
+
+    let csv = '\uFEFFDate;Heure;Auteur;Type d\'action;Description;IP\n';
+    r.rows.forEach(l => {
+      const d = new Date(l.created_at);
+      const dateStr = d.toLocaleDateString('fr-FR');
+      const heureStr = d.toLocaleTimeString('fr-FR');
+      const descClean = (l.description || '').replace(/;/g, ',').replace(/\n/g, ' ');
+      csv += `${dateStr};${heureStr};"${l.auteur_nom}";"${l.type_action}";"${descClean}";"${l.ip_adresse || ''}"\n`;
+    });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename=journal_audit_${boutique.nom.replace(/[^a-z0-9]/gi, '_')}.csv`);
+    res.status(200).send(csv);
+  } catch (err) {
+    console.error('[EXPORT LOGS CSV ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l\'exportation CSV' });
+  }
+});
+
 // GET /api/boutiques/:id/logs
 router.get('/:id/logs', tokenOptional, async (req, res) => {
   try {
@@ -2637,42 +2731,6 @@ router.get('/:id/logs', tokenOptional, async (req, res) => {
   } catch (err) {
     console.error('[GET LOGS ERR]', err);
     res.status(500).json({ error: 'Erreur de chargement des logs' });
-  }
-});
-
-// GET /api/boutiques/:id/logs/export.csv
-router.get('/:id/logs/export.csv', tokenOptional, async (req, res) => {
-  try {
-    const idParam = req.params.id;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id, nom FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
-    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutique = bRes.rows[0];
-
-    const r = await pool.query(
-      `SELECT created_at, auteur_nom, type_action, description, metadonnees, ip_adresse
-       FROM boutique_logs
-       WHERE boutique_id = $1
-       ORDER BY created_at DESC
-       LIMIT 1000`,
-      [boutique.id]
-    );
-
-    let csv = '\uFEFFDate;Heure;Auteur;Type d\'action;Description;IP\n';
-    r.rows.forEach(l => {
-      const d = new Date(l.created_at);
-      const dateStr = d.toLocaleDateString('fr-FR');
-      const heureStr = d.toLocaleTimeString('fr-FR');
-      const descClean = (l.description || '').replace(/;/g, ',').replace(/\n/g, ' ');
-      csv += `${dateStr};${heureStr};"${l.auteur_nom}";"${l.type_action}";"${descClean}";"${l.ip_adresse || ''}"\n`;
-    });
-
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename=journal_audit_${boutique.nom.replace(/[^a-z0-9]/gi, '_')}.csv`);
-    res.status(200).send(csv);
-  } catch (err) {
-    console.error('[EXPORT LOGS CSV ERR]', err);
-    res.status(500).json({ error: 'Erreur lors de l\'exportation CSV' });
   }
 });
 

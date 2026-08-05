@@ -105,6 +105,9 @@ router.post(
         'INSERT INTO zones_livraison (boutique_id, nom, prix) VALUES ($1,$2,$3) RETURNING *',
         [req.params.boutiqueId, req.body.nom, req.body.prix]
       );
+
+      enregistrerAuditLog(req.params.boutiqueId, req.user?.userId || null, req.user?.nom || null, 'zone_livraison_creee', `Création de la zone de livraison "${req.body.nom}" (${req.body.prix} FCFA)`, { nom: req.body.nom, prix: req.body.prix }, req);
+
       res.status(201).json(rows[0]);
     } catch (err) {
       res.status(500).json({ error: 'Erreur serveur' });
@@ -123,6 +126,9 @@ router.delete(
       const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
       if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
       await pool.query('DELETE FROM zones_livraison WHERE id=$1 AND boutique_id=$2', [req.params.zoneId, req.params.boutiqueId]);
+
+      enregistrerAuditLog(req.params.boutiqueId, req.user?.userId || null, req.user?.nom || null, 'zone_livraison_supprimee', `Suppression de la zone de livraison #${req.params.zoneId}`, {}, req);
+
       res.json({ message: 'Zone supprimée' });
     } catch (err) {
       res.status(500).json({ error: 'Erreur serveur' });
@@ -792,6 +798,9 @@ router.post(
          VALUES ($1,$2,$3,$4,$5) RETURNING *`,
         [req.params.boutiqueId, montant, categorie, description || null, date_depense || new Date().toISOString().slice(0,10)]
       );
+
+      enregistrerAuditLog(req.params.boutiqueId, req.user?.userId || null, req.user?.nom || null, 'depense_creee', `Saisie d'une dépense de ${montant} FCFA (${categorie})`, { montant, categorie, description }, req);
+
       res.status(201).json(rows[0]);
     } catch (err) {
       res.status(500).json({ error: 'Erreur serveur' });
@@ -829,6 +838,9 @@ router.put(
           req.params.depenseId, req.params.boutiqueId,
         ]
       );
+
+      enregistrerAuditLog(req.params.boutiqueId, req.user?.userId || null, req.user?.nom || null, 'depense_modifiee', `Modification d'une dépense (#${req.params.depenseId})`, { montant, categorie }, req);
+
       res.json(rows[0]);
     } catch (err) {
       res.status(500).json({ error: 'Erreur serveur' });
@@ -847,6 +859,9 @@ router.delete(
       const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
       if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
       await pool.query('UPDATE depenses SET archivee=true WHERE id=$1 AND boutique_id=$2', [req.params.depenseId, req.params.boutiqueId]);
+
+      enregistrerAuditLog(req.params.boutiqueId, req.user?.userId || null, req.user?.nom || null, 'depense_supprimee', `Archivage / Suppression d'une dépense (#${req.params.depenseId})`, {}, req);
+
       res.json({ message: 'Dépense archivée' });
     } catch (err) {
       res.status(500).json({ error: 'Erreur serveur' });

@@ -3,6 +3,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { listCommandes, updateStatutCommande } from './actions'
 import { fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
+import { ZonesView } from './Comptabilite'
 
 interface Commande {
   id: string; reference: string; nom_produit: string; quantite: number
@@ -261,6 +262,7 @@ interface PanierAbandonne {
 }
 
 export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
+  const [subTab, setSubTab] = useState<'commandes' | 'zones'>('commandes')
   const [commandes, setCommandes] = useState<Commande[]>([])
   const [paniersAbandonnes, setPaniersAbandonnes] = useState<PanierAbandonne[]>([])
   const [loading, setLoading] = useState(true)
@@ -368,7 +370,33 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Stats rapides */}
+      {/* Sub Tabs */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', gap: 16, paddingBottom: 4 }}>
+        <button
+          onClick={() => setSubTab('commandes')}
+          style={{
+            background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'commandes' ? 700 : 500,
+            color: subTab === 'commandes' ? '#C75B00' : '#475569', borderBottom: subTab === 'commandes' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
+          }}
+        >
+          📋 Commandes Clients
+        </button>
+        <button
+          onClick={() => setSubTab('zones')}
+          style={{
+            background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'zones' ? 700 : 500,
+            color: subTab === 'zones' ? '#C75B00' : '#475569', borderBottom: subTab === 'zones' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
+          }}
+        >
+          🚚 Zones & Frais de Livraison
+        </button>
+      </div>
+
+      {subTab === 'zones' ? (
+        <ZonesView boutiqueId={boutiqueId} />
+      ) : (
+        <>
+          {/* Stats rapides */}
       {stats.en_attente > 0 && filtre !== 'abandonne' && (
         <div style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 10, padding: '10px 16px', fontSize: 13, color: '#92400e', fontWeight: 600 }}>
           ⏳ {stats.en_attente} commande{stats.en_attente > 1 ? 's' : ''} en attente de confirmation
@@ -525,6 +553,8 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
               : <CommandeCard key={item.id} commande={item} boutiqueId={boutiqueId} onUpdate={load} />
           )}
         </div>
+      )}
+        </>
       )}
     </div>
   )

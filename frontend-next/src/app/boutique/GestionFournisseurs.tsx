@@ -15,9 +15,10 @@ import {
   getBoutiqueProduits
 } from './actions'
 import { fcfa } from '@/lib/format'
+import { StockView } from './Comptabilite'
 
 export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string }) {
-  const [subTab, setSubTab] = useState<'fournisseurs' | 'commandes'>('fournisseurs')
+  const [subTab, setSubTab] = useState<'stock' | 'fournisseurs' | 'commandes'>('stock')
   const [fournisseurs, setFournisseurs] = useState<any[]>([])
   const [commandes, setCommandes] = useState<any[]>([])
   const [produits, setProduits] = useState<any[]>([])
@@ -299,6 +300,15 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
       {/* Sub Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', gap: 16, paddingBottom: 4 }}>
         <button
+          onClick={() => setSubTab('stock')}
+          style={{
+            background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'stock' ? 700 : 500,
+            color: subTab === 'stock' ? '#C75B00' : '#475569', borderBottom: subTab === 'stock' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
+          }}
+        >
+          📦 Stock Physique
+        </button>
+        <button
           onClick={() => setSubTab('fournisseurs')}
           style={{
             background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'fournisseurs' ? 700 : 500,
@@ -318,7 +328,9 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
         </button>
       </div>
 
-      {subTab === 'fournisseurs' ? (
+      {subTab === 'stock' && <StockView boutiqueId={boutiqueId} />}
+
+      {subTab === 'fournisseurs' && (
         <>
           {/* Outils & Recherche Fournisseur */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
@@ -392,7 +404,9 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
           )
         })()}
         </>
-      ) : (
+      )}
+
+      {subTab === 'commandes' && (
         <>
           {/* Outils, Recherche & Filtres Bons de Commande */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
