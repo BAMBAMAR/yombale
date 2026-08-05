@@ -44,13 +44,24 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
 
   const [downloadingCsv, setDownloadingCsv] = useState(false)
 
-  async function handleExportCSV(e: React.MouseEvent) {
+  function handleExportCSV(e: React.MouseEvent) {
     e.preventDefault()
+    if (logs.length === 0) {
+      alert('Aucun événement à exporter dans le journal d\'audit.')
+      return
+    }
     setDownloadingCsv(true)
     try {
-      const res = await fetch(`/api/boutiques/${boutiqueId}/logs/export.csv`)
-      if (!res.ok) throw new Error('Impossible de générer le fichier CSV')
-      const blob = await res.blob()
+      let csv = '\uFEFFDate;Heure;Auteur;Type d\'action;Description;IP\n'
+      logs.forEach(l => {
+        const d = new Date(l.created_at)
+        const dateStr = d.toLocaleDateString('fr-FR')
+        const heureStr = d.toLocaleTimeString('fr-FR')
+        const descClean = (l.description || '').replace(/;/g, ',').replace(/\n/g, ' ')
+        csv += `${dateStr};${heureStr};"${l.auteur_nom}";"${l.type_action}";"${descClean}";"${l.ip_adresse || ''}"\n`
+      })
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -60,7 +71,7 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } catch (err: any) {
-      alert(err.message || 'Erreur d\'exportation CSV')
+      alert(err.message || 'Erreur lors de la génération du CSV')
     } finally {
       setDownloadingCsv(false)
     }

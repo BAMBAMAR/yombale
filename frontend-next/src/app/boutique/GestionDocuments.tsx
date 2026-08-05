@@ -115,7 +115,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     setClientIdSelected('')
     setStatutDoc('brouillon')
     setNoteDoc('')
-    setLignesSelectionnees([])
+    setLignesSelectionnees([{ produitId: '', quantite: 1, prix: 0 }])
   }
 
   const handleOuvrirEdition = (doc: any) => {
@@ -126,12 +126,22 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     setNoteDoc(doc.notes || '')
     
     const parsedItems = typeof doc.items === 'string' ? JSON.parse(doc.items) : doc.items
-    const lines = (parsedItems || []).map((item: any) => ({
-      produitId: item.id || '',
-      quantite: item.quantite || 1,
-      prix: item.prix || 0
-    }))
-    setLignesSelectionnees(lines)
+    const lines = (parsedItems || []).map((item: any) => {
+      let pId = item.id || item.produit_id || item.produitId || ''
+      if (!pId || !produits.some(p => p.id === pId)) {
+        if (item.nom) {
+          const foundByName = produits.find(p => p.nom?.toLowerCase() === item.nom?.toLowerCase())
+          if (foundByName) pId = foundByName.id
+        }
+      }
+      const unitPrice = Number(item.prix_unitaire ?? item.prix ?? item.prix_unitaire_ht ?? 0)
+      return {
+        produitId: pId,
+        quantite: Number(item.quantite || 1),
+        prix: unitPrice
+      }
+    })
+    setLignesSelectionnees(lines.length > 0 ? lines : [{ produitId: '', quantite: 1, prix: 0 }])
     setModalOuvert(true)
   }
 
