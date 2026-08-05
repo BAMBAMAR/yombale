@@ -1086,9 +1086,9 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
           - Recherche globale : la saisie dans la barre de recherche interroge désormais les **2 070 produits modèles** sur **toutes les catégories simultanément**.
           - Mappage d'alias : correction de l'incohérence des clés de catégories (ex: `electronique` regroupe désormais `smartphones`, `informatique`, `electronique` et `high-tech`).
           - Ajout de l'onglet **`📁 Tous les produits`** au début pour parcourir l'ensemble du catalogue standard sans restriction.
-        - **Enrichissement Massif de l'Ensemble des 20 Catégories (`generate-catalog.js`)** :
-          - Extension majeure de l'ensemble des 20 catégories à **396 produits modèles réels et uniques** (Alimentation 100+, Smartphones & Accessoires 60+, Informatique & POS Caisse 40+, TV & Électroménager 30+, Mode 25+, Maison & Cuisine 20+, Auto/Moto, Pièces de Rechange, etc.).
-          - Suppression intégrale de tous les doublons numérotés (`(2)`, `(3)`) pour un catalogue 100% professionnel.
+        - **Enrichissement Massif du Catalogue Standard (480 Produits Réels et Distincts sur Render)** :
+          - Déploiement sur Render d'un catalogue standard réécrit avec **100 produits réels uniques et authentiques par catégorie principale** (Alimentation 100+, Smartphones & Accessoires 100+, Informatique & Caisse POS 100+, TV & Électroménager 100+, Mode & Habillement 100+).
+          - Photos HD uniques Unsplash associées à chaque modèle et suppression de tout suffixe numéroté.
       - **Correction Persistance des Cases à Cocher Fiscales (`ParametresFiscalite.tsx` & `boutiques.js`)** :
         - Diagnostic : le navigateur envoyait la valeur natif HTML `'on'` pour les cases cochées au lieu de `'true'`, tandis que le backend échouait la comparaison `'on' === 'true'` (sauvegardait `false`). Décocher envoyait `undefined`, ce qui conservait la valeur précédente sans pouvoir la passer à `false`.
         - Correction : Ajout d'inputs cachés explicites `<input type="hidden" name="prix_tva_incluse" value={prixTvaIncluse ? 'true' : 'false'} />` et gestion du state React. Côté backend, intégration d'une fonction `parseBoolVal` et d'une clause `CASE WHEN $9::boolean IS NOT NULL THEN $9::boolean ELSE ... END` garantissant la persistance exacte et immédiate des deux options.
