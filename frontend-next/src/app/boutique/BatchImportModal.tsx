@@ -91,12 +91,20 @@ export default function BatchImportModal({
           const cols = lines[i].split(/[,;\t]/).map(c => c.trim().replace(/^["']|["']$/g, ''))
           if (cols.length >= 2 && cols[0]) {
             const nom = cols[0]
-            const prix = Number(cols[1].replace(/\D/g, '')) || 0
+            let cleanedPrix = cols[1].replace(/FCFA|CFA|EUR|\$|[\s\xa0]/gi, '').trim()
+            if (cleanedPrix.includes(',') && cleanedPrix.includes('.')) {
+              cleanedPrix = cleanedPrix.replace(/\./g, '').replace(',', '.')
+            } else if (cleanedPrix.includes(',')) {
+              cleanedPrix = cleanedPrix.replace(',', '.')
+            }
+            const prixNum = parseFloat(cleanedPrix)
+            const prix = isNaN(prixNum) ? 0 : Math.round(prixNum)
+
             const quantite = cols[2] ? Number(cols[2]) || 1 : 10
             const categorie = cols[3] || 'alimentation'
             const code_barre = cols[4] || undefined
 
-            if (nom && prix > 0) {
+            if (nom) {
               parsed.push({
                 id: `csv-${i}`,
                 nom,
@@ -169,7 +177,7 @@ export default function BatchImportModal({
   }
 
   const produitsAEnvoyer = modeImport === 'catalogue'
-    ? Object.values(saisies).filter(s => s.selectionne && Number(s.prix) > 0)
+    ? Object.values(saisies).filter(s => s.selectionne && Number(s.prix) >= 0)
     : []
 
   async function validerBatch() {
@@ -177,7 +185,7 @@ export default function BatchImportModal({
 
     if (modeImport === 'catalogue') {
       if (produitsAEnvoyer.length === 0) {
-        setError('Veuillez sélectionner au moins 1 produit avec un prix valide (> 0 FCFA)')
+        setError('Veuillez sélectionner au moins 1 produit avec un prix valide')
         return
       }
       payload = produitsAEnvoyer.map(s => ({
@@ -204,26 +212,28 @@ export default function BatchImportModal({
       }))
     }
 
-    const MAX_IMPORT = 50;
-    if (payload.length > MAX_IMPORT) {
-      setError(`Vous ne pouvez importer que ${MAX_IMPORT} produits à la fois. Vous en avez sélectionné ${payload.length}.`)
-      return
-    }
-
     setError(null)
     setSubmitting(true)
 
-    try {
-      const res = await fetch(`/api/boutiques/${boutiqueId}/produits/batch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ produits: payload }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur lors de l’importation')
+    const CHUNK_SIZE = 50
+    let totalImported = 0
 
-      setSuccessMsg(`🎉 ${data.count} produits ajoutés avec succès à votre boutique !`)
+    try {
+      for (let i = 0; i < payload.length; i += CHUNK_SIZE) {
+        const chunk = payload.slice(i, i + CHUNK_SIZE)
+        setSuccessMsg(`Importation en cours... (${Math.min(i + CHUNK_SIZE, payload.length)} / ${payload.length} produits)`)
+        const res = await fetch(`/api/boutiques/${boutiqueId}/produits/batch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ produits: chunk }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Erreur lors de l’importation')
+        totalImported += (data.count || chunk.length)
+      }
+
+      setSuccessMsg(`🎉 ${totalImported} produit(s) ajouté(s) avec succès à votre boutique !`)
       setTimeout(() => {
         onSuccess()
         onClose()

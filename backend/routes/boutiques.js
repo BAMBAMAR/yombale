@@ -1198,8 +1198,8 @@ router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (r
     if (!Array.isArray(produits) || produits.length === 0) {
       return res.status(400).json({ error: 'La liste des produits à ajouter est vide' });
     }
-    if (produits.length > 50) {
-      return res.status(400).json({ error: 'La limite est de 50 produits par importation pour préserver la stabilité du système.' });
+    if (produits.length > 500) {
+      return res.status(400).json({ error: 'La limite est de 500 produits par requête.' });
     }
 
     const client = await pool.connect();
@@ -1207,8 +1207,12 @@ router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (r
       await client.query('BEGIN');
       const insere = [];
       for (const p of produits) {
-        if (!p.nom?.trim() || !p.prix) continue;
+        if (!p.nom?.trim() || p.prix === undefined || p.prix === null || isNaN(Number(p.prix))) continue;
         const images = p.images || (p.photo_defaut ? [p.photo_defaut] : []);
+        const stockQty = p.quantite_stock !== undefined && p.quantite_stock !== null
+          ? Number(p.quantite_stock)
+          : (p.stock_quantite !== undefined && p.stock_quantite !== null ? Number(p.stock_quantite) : 1);
+
         const r = await client.query(
           `INSERT INTO boutique_produits (boutique_id, nom, description, prix, images, en_stock, stock_quantite, categorie, whatsapp_sync_statut)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'synchronise') RETURNING *`,
@@ -1219,7 +1223,7 @@ router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (r
             Number(p.prix),
             images,
             p.en_stock !== false,
-            p.quantite_stock ? Number(p.quantite_stock) : (p.stock_quantite ? Number(p.stock_quantite) : 1),
+            stockQty,
             p.categorie || null,
           ]
         );
