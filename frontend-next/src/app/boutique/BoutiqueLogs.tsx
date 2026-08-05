@@ -42,6 +42,30 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
     fetchLogs()
   }, [boutiqueId, filtreType])
 
+  const [downloadingCsv, setDownloadingCsv] = useState(false)
+
+  async function handleExportCSV(e: React.MouseEvent) {
+    e.preventDefault()
+    setDownloadingCsv(true)
+    try {
+      const res = await fetch(`/api/boutiques/${boutiqueId}/logs/export.csv`)
+      if (!res.ok) throw new Error('Impossible de générer le fichier CSV')
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `journal_audit_${new Date().toISOString().slice(0, 10)}.csv`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (err: any) {
+      alert(err.message || 'Erreur d\'exportation CSV')
+    } finally {
+      setDownloadingCsv(false)
+    }
+  }
+
   function getBadgeColor(type: string) {
     if (type.includes('produit')) return { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' }
     if (type.includes('vente') || type.includes('pos')) return { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' }
@@ -63,10 +87,9 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
           </p>
         </div>
 
-        <a
-          href={`/api/boutiques/${boutiqueId}/logs/export.csv`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={handleExportCSV}
+          disabled={downloadingCsv}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -77,12 +100,13 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
             color: '#ffffff',
             fontWeight: 700,
             fontSize: 13,
-            textDecoration: 'none',
+            border: 'none',
+            cursor: downloadingCsv ? 'wait' : 'pointer',
             boxShadow: '0 2px 8px rgba(30, 58, 95, 0.2)'
           }}
         >
-          <Download size={16} /> Exporter le Journal (CSV / Excel)
-        </a>
+          <Download size={16} /> {downloadingCsv ? 'Génération du CSV...' : 'Exporter le Journal (CSV / Excel)'}
+        </button>
       </div>
 
       {/* Barre de recherche et filtres */}

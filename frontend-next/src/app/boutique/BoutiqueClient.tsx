@@ -2020,7 +2020,7 @@ const NAV_GROUPS: NavGroup[] = [
     title: 'Ventes & Clients',
     items: [
       { key: 'dashboard',   icon: '🏠', label: 'Vue d’ensemble' },
-      { key: 'commandes',   icon: '📋', label: 'Commandes' },
+      { key: 'commandes',   icon: '📋', label: 'Commandes & Livraisons' },
       { key: 'documents',   icon: '📄', label: 'Factures & Devis' },
     ],
   },
@@ -2028,7 +2028,7 @@ const NAV_GROUPS: NavGroup[] = [
     title: 'Catalogue & Stocks',
     items: [
       { key: 'produits',     icon: '🛍️', label: 'Catalogue' },
-      { key: 'fournisseurs', icon: '📦', label: 'Fournisseurs & Stock' },
+      { key: 'fournisseurs', icon: '📦', label: 'Stock & Fournisseurs' },
     ],
   },
   {

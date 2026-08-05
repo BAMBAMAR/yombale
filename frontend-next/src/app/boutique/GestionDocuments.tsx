@@ -298,35 +298,37 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                         {doc.statut.toUpperCase()}
                       </span>
                     </td>
-                    <td style={{ padding: 12, display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <a
-                        href={`/api/boutiques/${boutiqueId}/documents/${doc.id}/pdf`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ padding: '4px 8px', borderRadius: 6, background: '#1e3a5f', color: '#ffffff', textDecoration: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-block' }}
+                    <td style={{ padding: 12 }}>
+                      <select
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === 'pdf') window.open(`/api/boutiques/${boutiqueId}/documents/${doc.id}/pdf`, '_blank');
+                          else if (val === 'edit') handleOuvrirEdition(doc);
+                          else if (val === 'convert') handleConvertirEnFacture(doc.id, doc.reference);
+                          else if (val === 'delete') handleSupprimerDocument(doc.id, doc.reference);
+                          e.target.value = '';
+                        }}
+                        defaultValue=""
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: 8,
+                          border: '1px solid #cbd5e1',
+                          background: '#f8fafc',
+                          color: '#0f172a',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          outline: 'none'
+                        }}
                       >
-                        🖨️ PDF
-                      </a>
-                      <button
-                        onClick={() => handleOuvrirEdition(doc)}
-                        style={{ padding: '4px 8px', borderRadius: 6, background: '#eab308', color: '#ffffff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        ✏️ Modifier
-                      </button>
-                      {(doc.type === 'devis' || doc.type === 'proforma') && (
-                        <button
-                          onClick={() => handleConvertirEnFacture(doc.id, doc.reference)}
-                          style={{ padding: '4px 8px', borderRadius: 6, background: '#3b82f6', color: '#ffffff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                        >
-                          🔄 Facturer
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleSupprimerDocument(doc.id, doc.reference)}
-                        style={{ padding: '4px 8px', borderRadius: 6, background: '#ef4444', color: '#ffffff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        🗑️ Supprimer
-                      </button>
+                        <option value="" disabled>⚡ Actions ▾</option>
+                        <option value="pdf">🖨️ Télécharger / Imprimer PDF</option>
+                        <option value="edit">✏️ Modifier le document</option>
+                        {(doc.type === 'devis' || doc.type === 'proforma') && (
+                          <option value="convert">🔄 Convertir en Facture</option>
+                        )}
+                        <option value="delete">🗑️ Supprimer</option>
+                      </select>
                     </td>
                   </tr>
                 )
