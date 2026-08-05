@@ -342,6 +342,10 @@ router.post('/:id/admins', verifierToken, param('id').isUUID(), body('email').is
       'INSERT INTO boutique_utilisateurs (boutique_id, utilisateur_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
       [req.params.id, targetUserId]
     );
+
+    // Audit log
+    enregistrerAuditLog(req.params.id, req.user.userId, req.user.nom || 'Marchand', 'admin_ajoute', `Ajout d'un administrateur web (${email})`, { target_user_id: targetUserId, email }, req);
+
     res.status(201).json({ success: true });
   } catch (err) {
     console.error(err);
@@ -363,6 +367,10 @@ router.delete('/:id/admins/:userId', verifierToken, param('id').isUUID(), param(
       'DELETE FROM boutique_utilisateurs WHERE boutique_id = $1 AND utilisateur_id = $2',
       [req.params.id, req.params.userId]
     );
+
+    // Audit log
+    enregistrerAuditLog(req.params.id, req.user.userId, req.user.nom || 'Marchand', 'admin_supprime', `Retrait d'un administrateur web (${req.params.userId})`, { target_user_id: req.params.userId }, req);
+
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -1644,6 +1652,8 @@ router.post('/:id/caissiers', verifierToken, async (req, res) => {
       [bq.id, nom.trim(), prenom ? prenom.trim() : null, code_pin.trim(), role]
     );
 
+    enregistrerAuditLog(bq.id, req.user.userId, req.user.nom || 'Marchand', 'caissier_cree', `Création du caissier POS "${r.rows[0].prenom || ''} ${r.rows[0].nom}".trim()`, { caissier_id: r.rows[0].id, role: r.rows[0].role }, req);
+
     res.status(201).json({ success: true, caissier: r.rows[0] });
   } catch (err) {
     console.error('[POST CAISSIER ERR]', err);
@@ -1677,6 +1687,8 @@ router.put('/:id/caissiers/:caissierId', verifierToken, async (req, res) => {
     const r = await pool.query(q, values);
     if (!r.rows[0]) return res.status(404).json({ error: 'Caissier introuvable' });
 
+    enregistrerAuditLog(bq.id, req.user.userId, req.user.nom || 'Marchand', 'caissier_modifie', `Modification du caissier POS "${r.rows[0].nom}"`, { caissier_id: req.params.caissierId }, req);
+
     res.json({ success: true, caissier: r.rows[0] });
   } catch (err) {
     console.error('[PUT CAISSIER ERR]', err);
@@ -1695,6 +1707,8 @@ router.delete('/:id/caissiers/:caissierId', verifierToken, async (req, res) => {
       [req.params.caissierId, bq.id]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Caissier introuvable' });
+
+    enregistrerAuditLog(bq.id, req.user.userId, req.user.nom || 'Marchand', 'caissier_supprime', `Suppression du caissier POS #${req.params.caissierId}`, { caissier_id: req.params.caissierId }, req);
 
     res.json({ success: true });
   } catch (err) {
