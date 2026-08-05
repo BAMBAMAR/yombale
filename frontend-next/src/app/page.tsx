@@ -134,11 +134,12 @@ export default async function HomePage({
   const prixBusiness = Number(settings.plan_business_prix) || 10000
   const waveActif    = settings.paiement_wave !== 'false'
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
-  const modePaiementLabel = waveActif && manuelActif
-    ? 'Paiement via Wave ou manuel'
-    : waveActif
-    ? 'Paiement via Wave'
-    : 'Paiement manuel disponible';
+  let modePaiementLabel = 'Paiement manuel disponible'
+  if (waveActif && manuelActif) {
+    modePaiementLabel = 'Paiement via Wave ou manuel'
+  } else if (waveActif) {
+    modePaiementLabel = 'Paiement via Wave'
+  }
 
   return (
     <>
