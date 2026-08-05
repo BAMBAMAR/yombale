@@ -359,13 +359,18 @@ export default async function HomePage({
             </div>
           </div>
 
-          {/* Encart Promo Droite (Desktop seulement) pour exploiter l'espace vide */}
-          <div className="hero-side-card" style={{ flex: '0 0 320px', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', padding: '16px 20px', borderRadius: 12, color: '#fff', boxShadow: '0 4px 12px rgba(15,23,42,0.1)' }}>
-             <h4 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 8 }}>
-               <span style={{ fontSize: 16 }}>⚡</span> Développez vos ventes
-             </h4>
-             <p style={{ margin: '0 0 12px', fontSize: 12, opacity: 0.8, lineHeight: 1.4 }}>Rejoignez les meilleurs vendeurs. Créez votre vitrine pro complète en 30 secondes.</p>
-             <Link href="/creer-boutique" style={{ display: 'block', background: '#C75B00', color: '#fff', padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 800, textDecoration: 'none', textAlign: 'center' }}>Vendre sur Nopalou →</Link>
+          {/* Bloc Top Marques & Réassurance (Droite - Desktop) pour exploiter l'espace vide utilement */}
+          <div className="hidden-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 300px', alignItems: 'flex-end', justifyContent: 'center' }}>
+            <div className="filtres-bar" style={{ margin: 0, gap: 8, background: 'transparent', border: 'none', padding: 0, boxShadow: 'none' }}>
+              <span className="filtres-label" style={{ minWidth: 'auto', color: '#64748b' }}>Top Marques :</span>
+              <Link href="/?q=apple" className="budget-pill" style={{ opacity: 0.9 }}>Apple</Link>
+              <Link href="/?q=samsung" className="budget-pill" style={{ opacity: 0.9 }}>Samsung</Link>
+              <Link href="/?q=xiaomi" className="budget-pill" style={{ opacity: 0.9 }}>Xiaomi</Link>
+            </div>
+            
+            <Link href="/boutiques" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#C75B00', textDecoration: 'none', background: '#fff7ed', padding: '6px 14px', borderRadius: 30, border: '1px solid #fed7aa', transition: 'all 0.2s' }}>
+              <span>🛡️</span> Découvrir nos 100+ vendeurs vérifiés →
+            </Link>
           </div>
         </div>
 
@@ -390,11 +395,11 @@ export default async function HomePage({
 
       {/* ── Bloc SEO (MODERNISÉ, SANS BOÎTE) ─────────────────────────────────────────────── */}
       {!hasFiltre && (
-        <section style={{ maxWidth: 1000, margin: '60px auto 40px', padding: '0 20px' }}>
+        <section style={{ maxWidth: 1280, margin: '24px auto 32px', padding: '0 20px' }}>
           
           {/* En-tête de section épuré */}
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <span style={{ display: 'inline-block', background: '#fff7ed', color: '#C75B00', padding: '6px 16px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 16, border: '1px solid #fed7aa' }}>
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <span style={{ display: 'inline-block', background: '#fff7ed', color: '#C75B00', padding: '6px 16px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 12, border: '1px solid #fed7aa' }}>
               6800+ produits · mis à jour toutes les 6h
             </span>
             <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 32, fontWeight: 900, color: '#0f172a', margin: 0, lineHeight: 1.2 }}>
