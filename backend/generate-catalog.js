@@ -66,7 +66,94 @@ function getPhotoForProduct(nom, cat) {
   if (n.includes("casquette") || n.includes("chapeau")) return "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400";
   if (cat === "mode") return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400";
 
-  // ALIMENTATION
+  // MAISON
+  if (n.includes("drap") || n.includes("couverture") || n.includes("oreiller") || n.includes("taie") || n.includes("matelas")) return "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400";
+  if (n.includes("tapis")) return "https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=400";
+  if (n.includes("canapé") || n.includes("fauteuil") || n.includes("table") || n.includes("chaise")) return "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400";
+  if (n.includes("poêle") || n.includes("marmite") || n.includes("casserole") || n.includes("faitout") || n.includes("assiette") || n.includes("verre") || n.includes("couvert")) return "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=400";
+  if (n.includes("seau") || n.includes("poubelle") || n.includes("balai") || n.includes("horloge") || n.includes("miroir")) return "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400";
+  if (cat === "maison") return "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=400";
+
+  // AUTO-MOTO
+  if (n.includes("huile")) return "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=400";
+  if (n.includes("batterie")) return "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400";
+  if (n.includes("pneu")) return "https://images.unsplash.com/photo-1578844251758-2f71da64c96f?w=400";
+  if (n.includes("casque") || n.includes("gants") || n.includes("moto")) return "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400";
+  if (cat === "auto-moto") return "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=400";
+
+  // JEUX & CONSOLES
+  if (n.includes("ps5") || n.includes("ps4") || n.includes("switch") || n.includes("xbox") || n.includes("console")) return "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400";
+  if (n.includes("manette")) return "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=400";
+  if (n.includes("jeu")) return "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400";
+  if (cat === "jeux") return "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400";
+
+  // BEAUTE
+  if (n.includes("lotion") || n.includes("crème") || n.includes("lait") || n.includes("savon") || n.includes("gel douche")) return "https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=400";
+  if (n.includes("parfum")) return "https://images.unsplash.com/photo-1541643600914-78b084683601?w=400";
+  if (n.includes("shampoing") || n.includes("huile") || n.includes("sérum")) return "https://images.unsplash.com/photo-1608248597309-843c08b8b09b?w=400";
+  if (n.includes("rouge") || n.includes("mascara") || n.includes("fond de teint") || n.includes("vernis")) return "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400";
+  if (n.includes("sèche-cheveux") || n.includes("lisseur") || n.includes("tondeuse")) return "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400";
+  if (cat === "beaute") return "https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=400";
+
+  // SPORT
+  if (n.includes("maillot")) return "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=400";
+  if (n.includes("crampons")) return "https://images.unsplash.com/photo-1511886929837-354d827aae26?w=400";
+  if (n.includes("ballon")) return "https://images.unsplash.com/photo-1614632537197-38a17061c2bd?w=400";
+  if (cat === "sport") return "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400";
+
+  // FOURNITURES
+  if (n.includes("cahier")) return "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400";
+  if (n.includes("stylo") || n.includes("crayon") || n.includes("tipp-ex") || n.includes("surligneur")) return "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=400";
+  if (n.includes("papier") || n.includes("rame")) return "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400";
+  if (n.includes("calculatrice")) return "https://images.unsplash.com/photo-1611125832047-1d7ad1e8e48a?w=400";
+  if (cat === "fournitures") return "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400";
+
+  // QUINCAILLERIE & BTP
+  if (n.includes("ciment") || n.includes("peinture")) return "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400";
+  if (n.includes("perceuse") || n.includes("meuleuse") || n.includes("marteau") || n.includes("clé") || n.includes("tournevis")) return "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400";
+  if (n.includes("ampoule") || n.includes("rallonge") || n.includes("prise")) return "https://images.unsplash.com/photo-1550985616-10810253b84d?w=400";
+  if (cat === "quincaillerie") return "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400";
+
+  // PIÈCES DE RECHANGE
+  if (n.includes("plaquettes") || n.includes("disque") || n.includes("frein")) return "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400";
+  if (n.includes("filtre")) return "https://images.unsplash.com/photo-1607603750909-408e19413eaa?w=400";
+  if (n.includes("batterie")) return "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400";
+  if (cat === "pieces-rechange") return "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400";
+
+  // BIJOUTERIE
+  if (n.includes("collier") || n.includes("pendentif")) return "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400";
+  if (n.includes("bracelet") || n.includes("gourmette") || n.includes("chaîne")) return "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400";
+  if (n.includes("bague") || n.includes("chevalière")) return "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400";
+  if (n.includes("boucles")) return "https://images.unsplash.com/photo-1635767798638-3e25273a8236?w=400";
+  if (n.includes("montre")) return "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400";
+  if (cat === "bijouterie") return "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400";
+
+  // MARAÎCHAGE & ÉLEVAGE & PRODUITS AGRICOLES
+  if (n.includes("oignon") || n.includes("ail") || n.includes("carotte") || n.includes("tomate") || n.includes("diakhatou") || n.includes("piment") || n.includes("gombo") || n.includes("mangue") || n.includes("papaye") || n.includes("chou")) return "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400";
+  if (n.includes("mouton") || n.includes("bélier") || n.includes("chèvre") || n.includes("bœuf")) return "https://images.unsplash.com/photo-1484557052118-f32bd25b45b5?w=400";
+  if (n.includes("aliment") || n.includes("tourteau") || n.includes("foin")) return "https://images.unsplash.com/photo-1536402443044-a0774a3f4e24?w=400";
+  if (n.includes("poussin") || n.includes("poule")) return "https://images.unsplash.com/photo-1606857521015-7f9fcf423740?w=400";
+  if (n.includes("engrais") || n.includes("urée") || n.includes("semence") || n.includes("pulvérisateur")) return "https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=400";
+  if (cat === "maraichage" || cat === "elevage" || cat === "produits-agricoles") return "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400";
+
+  // SOLAIRE & ENERGIE
+  if (n.includes("panneau")) return "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=400";
+  if (n.includes("batterie")) return "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400";
+  if (n.includes("projecteur") || n.includes("ampoule") || n.includes("lampe")) return "https://images.unsplash.com/photo-1550985616-10810253b84d?w=400";
+  if (cat === "solaire-energie") return "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=400";
+
+  // SANTE & PHARMA
+  if (n.includes("paracétamol") || n.includes("vitamine") || n.includes("sirop")) return "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400";
+  if (n.includes("thermomètre") || n.includes("tensiomètre")) return "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400";
+  if (n.includes("masque") || n.includes("gel") || n.includes("alcool") || n.includes("pansement") || n.includes("compresse")) return "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=400";
+  if (cat === "sante-pharma") return "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400";
+
+  // BEBE & ENFANTS
+  if (n.includes("couches") || n.includes("lingettes")) return "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400";
+  if (n.includes("biberon") || n.includes("sucette") || n.includes("poussette") || n.includes("lit") || n.includes("jouets")) return "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400";
+  if (cat === "bebe-enfants") return "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400";
+
+  // ALIMENTATION DEFAULT
   if (n.includes("riz")) return "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400";
   if (n.includes("lait")) return "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400";
   if (n.includes("café") || n.includes("thé") || n.includes("infusion")) return "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400";
@@ -76,250 +163,136 @@ function getPhotoForProduct(nom, cat) {
   if (n.includes("jus") || n.includes("eau") || n.includes("canette") || n.includes("coca") || n.includes("fanta") || n.includes("sprite") || n.includes("energy")) return "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400";
   if (n.includes("pâtes") || n.includes("spaghetti") || n.includes("macaroni") || n.includes("coquillettes") || n.includes("vermicelles") || n.includes("couscous") || n.includes("farine")) return "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400";
   if (n.includes("oignon") || n.includes("pommes de terre") || n.includes("ail") || n.includes("gingembre") || n.includes("arachide")) return "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400";
-  if (n.includes("poisson") || n.includes("kethiakh") || n.includes("guedj") || n.includes("yeet") || n.includes("sardines") || n.includes("thon") || n.includes("beef")) return "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400";
 
   return "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400";
 }
 
-// 1. ALIMENTATION
-const alimentationBase = [
-  // Riz (12)
-  { nom: "Riz brisé Sadia 25kg" },
-  { nom: "Riz parfumé Dinor 5kg" },
-  { nom: "Riz brisé Royal 50kg" },
-  { nom: "Riz local de la Vallée 25kg" },
-  { nom: "Riz Parfumé Jasmine 25kg" },
-  { nom: "Riz Basmati Indien 5kg" },
-  { nom: "Riz Parfumé Lion 25kg" },
-  { nom: "Riz Cargo Complet 5kg" },
-  { nom: "Riz étuvé local 25kg" },
-  { nom: "Sac de Riz Thaï 50kg" },
-  { nom: "Riz Brisé 100% Parfum Elephant 25kg" },
-  { nom: "Riz Long Grain Blanc 10kg" },
-
-  // Laits & Laitiers (12)
-  { nom: "Lait Nido 400g" },
-  { nom: "Lait Nido 900g" },
-  { nom: "Lait Nido 2.5kg (Format Familial)" },
-  { nom: "Lait Gloria 160g" },
-  { nom: "Lait Peak en Poudre 400g" },
-  { nom: "Lait Peak 900g" },
-  { nom: "Lait Concentré Sucré Nestlé 397g" },
-  { nom: "Lait Caillé Naturel 1L" },
-  { nom: "Lait UHT Candia 1L (Pack de 6)" },
-  { nom: "Lait de Coco 400ml" },
-  { nom: "Lait Bonnet Rouge 400g" },
-  { nom: "Lait Vitalait UHT 1L" },
-
-  // Cafés, Thés (12)
-  { nom: "Café Touba Moulé 250g" },
-  { nom: "Café Touba Moulé 500g" },
-  { nom: "Café Nescafé Classic 200g" },
-  { nom: "Café Nescafé 3 en 1 (Sachet de 10)" },
-  { nom: "Café Carte Noire 250g Moulu" },
-  { nom: "Café en Grains Espresso 1kg" },
-  { nom: "Thé Lipton Yellow Label (100 sachets)" },
-  { nom: "Thé Vert Flecha 8147 (250g)" },
-  { nom: "Thé Vert Achoura (250g)" },
-  { nom: "Thé Vert Lord (250g)" },
-  { nom: "Infusion Menthe Poivrée (20 sachets)" },
-  { nom: "Infusion Verveine Bio (20 sachets)" },
-
-  // Bouillons, Condiments, Sauces (18)
-  { nom: "Bouillon Jumbo Poulet (60 cubes)" },
-  { nom: "Bouillon Jumbo Crevette (60 cubes)" },
-  { nom: "Bouillon Jumbo Oignon (60 cubes)" },
-  { nom: "Bouillon Jumbo Bœuf (60 cubes)" },
-  { nom: "Bouillon Maggi Arôme 200ml" },
-  { nom: "Bouillon Maggi Poulet (60 cubes)" },
-  { nom: "Bouillon Knorr Bœuf (48 cubes)" },
-  { nom: "Moutarde Amora 265g" },
-  { nom: "Moutarde Maille 200g" },
-  { nom: "Mayonnaise Lesieur 475g" },
-  { nom: "Mayonnaise Calvé 450g" },
-  { nom: "Ketchup Amora Flacon 500g" },
-  { nom: "Ketchup Heinz 400g" },
-  { nom: "Sauce Piment Extra Forte 200g" },
-  { nom: "Harissa en Tube 150g" },
-  { nom: "Vinaigre Blanc d'Alcool 1L" },
-  { nom: "Vinaigre de Cidre Bio 500ml" },
-  { nom: "Sauce Soja Claire 250ml" },
-
-  // Huiles (10)
-  { nom: "Huile Dinor 5L" },
-  { nom: "Huile Niani 1L" },
-  { nom: "Huile Lesieur Tournesol 5L" },
-  { nom: "Huile de Palme Rouge 1L" },
-  { nom: "Huile d'Arachide Locale 1L" },
-  { nom: "Huile d'Olive Extra Vierge 750ml" },
-  { nom: "Beurre Président Plaquette 250g" },
-  { nom: "Margarine Planta 500g" },
-  { nom: "Huile de Sésame Pur 250ml" },
-  { nom: "Huile de Mais 2L" },
-
-  // Sucres & Produits Sucrés (10)
-  { nom: "Sucre en Poudre Mimran 1kg" },
-  { nom: "Sucre en Morceaux CSS 1kg" },
-  { nom: "Sucre Roux Pur Canne 1kg" },
-  { nom: "Sucre Vanillé Alsa (Sachet de 10)" },
-  { nom: "Miel Pur Naturel 500g" },
-  { nom: "Chocolat à tartiner Nutella 400g" },
-  { nom: "Chocolat en Poudre Milo 400g" },
-  { nom: "Chocolat en Poudre Nesquik 400g" },
-  { nom: "Confiture de Fraise St Mamet 350g" },
-  { nom: "Confiture d'Abricot 350g" },
-
-  // Boissons & Jus (14)
-  { nom: "Jus Pressea Mangue 1L" },
-  { nom: "Jus Pressea Orange 1L" },
-  { nom: "Jus Pressea Ananas-Gingembre 1L" },
-  { nom: "Nectar de Bissap Kirène 1L" },
-  { nom: "Eau Kirène 1.5L (Pack de 6)" },
-  { nom: "Eau Kirène Bidon 5L" },
-  { nom: "Eau Oulmès Pétillante 1L" },
-  { nom: "Eau Casamançaise 1.5L (Pack de 6)" },
-  { nom: "Canette Gazelle 33cl" },
-  { nom: "Canette Coca-Cola 33cl (Pack de 6)" },
-  { nom: "Canette Fanta Orange 33cl" },
-  { nom: "Canette Sprite 33cl" },
-  { nom: "Energy Drink Cody's 250ml" },
-  { nom: "Energy Drink Monster 500ml" },
-
-  // Céréales Locales & Desserts (9)
-  { nom: "Thiakry Frais 500g" },
-  { nom: "Araw de Petit Millet 1kg" },
-  { nom: "Couscous de Millet (Souna) 1kg" },
-  { nom: "Sankhal de Millet 1kg" },
-  { nom: "Sirop de Bissap 1L" },
-  { nom: "Sirop de Bouye 1L" },
-  { nom: "Sirop de Gingembre (Gnamakoudji) 1L" },
-  { nom: "Fleurs de Bissap Séchées 500g" },
-  { nom: "Poudre de Bouye (Baobab) 500g" },
-
-  // Conserves & Poissons (13)
-  { nom: "Sac d'Oignons 25kg" },
-  { nom: "Sac d'Oignons Importés 25kg" },
-  { nom: "Sac de Pommes de Terre 25kg" },
-  { nom: "Sac d'Ail Frais 5kg" },
-  { nom: "Sac de Gingembre Frais 5kg" },
-  { nom: "Pâte d'Arachide Mafé 1kg" },
-  { nom: "Kethiakh (Poisson Salé Séché) 1kg" },
-  { nom: "Guedj (Poisson Séché Artisanal) 500g" },
-  { nom: "Yeet (Mollusque Séché) 250g" },
-  { nom: "Crevettes Séchées Moulières 200g" },
-  { nom: "Sardines Titus à l'Huile (Boîte 125g)" },
-  { nom: "Thon Entier au Naturel 160g" },
-  { nom: "Corned Beef Hereford 340g" }
-];
-
-// 2. SMARTPHONES & ACCESSORIES
-const smartphonesNames = [
-  "iPhone 8 64Go", "iPhone 8 Plus 64Go", "iPhone X 64Go", "iPhone XR 128Go", "iPhone XS Max 256Go",
-  "iPhone 11 64Go", "iPhone 11 Pro 128Go", "iPhone 11 Pro Max 256Go", "iPhone 12 Mini 64Go", "iPhone 12 128Go",
-  "iPhone 12 Pro 128Go", "iPhone 12 Pro Max 256Go", "iPhone 13 Mini 128Go", "iPhone 13 128Go", "iPhone 13 Pro 256Go",
-  "iPhone 13 Pro Max 256Go", "iPhone 14 128Go", "iPhone 14 Plus 128Go", "iPhone 14 Pro 256Go", "iPhone 14 Pro Max 256Go",
-  "iPhone 15 128Go", "iPhone 15 Plus 256Go", "iPhone 15 Pro 256Go", "iPhone 15 Pro Max 256Go", "iPhone 15 Pro Max 512Go",
-  "Samsung Galaxy A03 32Go", "Samsung Galaxy A04 32Go", "Samsung Galaxy A05 64Go", "Samsung Galaxy A13 64Go", "Samsung Galaxy A14 64Go",
-  "Samsung Galaxy A23 128Go", "Samsung Galaxy A24 128Go", "Samsung Galaxy A33 5G", "Samsung Galaxy A34 5G 128Go", "Samsung Galaxy A53 5G",
-  "Samsung Galaxy A54 5G 128Go", "Samsung Galaxy A73 5G", "Samsung Galaxy S20 FE 128Go", "Samsung Galaxy S21 5G", "Samsung Galaxy S21 Ultra 256Go",
-  "Samsung Galaxy S22 5G", "Samsung Galaxy S22+ 256Go", "Samsung Galaxy S22 Ultra 256Go", "Samsung Galaxy S23 128Go", "Samsung Galaxy S23 Ultra 256Go",
-  "Samsung Galaxy S24 Ultra 512Go", "Samsung Galaxy Z Flip 4", "Samsung Galaxy Z Flip 5 256Go", "Samsung Galaxy Z Fold 5 512Go", "Redmi 10A 32Go",
-  "Redmi 12C 64Go", "Redmi 12 128Go", "Redmi Note 11 128Go", "Redmi Note 12 128Go", "Redmi Note 12 Pro 128Go",
-  "Redmi Note 13 256Go", "Redmi Note 13 Pro 5G", "Redmi Note 13 Pro+ 5G 512Go", "Poco X5 Pro 5G", "Xiaomi 13T Pro 512Go",
-  "Tecno Pop 7 64Go", "Tecno Spark 9 64Go", "Tecno Spark 10 128Go", "Tecno Spark 10 Pro 256Go", "Tecno Camon 19 128Go",
-  "Tecno Camon 20 256Go", "Tecno Camon 20 Pro 256Go", "Tecno Camon 20 Premier", "Tecno Pova 5 Pro", "Tecno Phantom X2 Pro 256Go",
-  "Infinix Smart 7 64Go", "Infinix Smart 8 64Go", "Infinix Hot 20 128Go", "Infinix Hot 30 128Go", "Infinix Hot 30i 128Go",
-  "Infinix Note 12 128Go", "Infinix Note 30 128Go", "Infinix Note 30 Pro 256Go", "Infinix Note 30 VIP", "Infinix Zero 30 5G",
-  "Oppo A17 64Go", "Oppo A58 128Go", "Oppo A78 128Go", "Realme C33 64Go", "Realme C55 128Go",
-  "Apple AirPods 2", "Apple AirPods 3", "Apple AirPods Pro (2ème Gén)", "Apple AirPods Max", "Samsung Galaxy Buds FE",
-  "Samsung Galaxy Buds2 Pro", "JBL Tune 510BT Casque", "JBL Wave 200TWS Écouteurs", "Enceinte JBL GO 3", "Enceinte JBL Charge 5",
-  "Chargeur Rapide USB-C 20W", "Chargeur Samsung 25W USB-C", "Power Bank Remax 20000mAh", "Support Téléphone Voiture MagSafe", "Carte Mémoire MicroSD Sandisk 128Go"
-];
-
-// 3. INFORMATIQUE & CAISSE POS
-const informatiqueNames = [
-  "MacBook Air 13\" M1 256Go", "MacBook Air 13\" M2 256Go", "MacBook Air 15\" M2 512Go", "MacBook Pro 14\" M2 512Go", "MacBook Pro 16\" M3 Max 1To",
-  "HP 250 G8 i3 8Go", "HP 255 G8 Ryzen 3", "HP Pavilion 15 i5 Touch", "HP ProBook 440 G9 i5", "HP ProBook 450 G9 i7",
-  "HP EliteBook 830 G8 i5", "HP EliteBook 840 G8 i7", "HP EliteBook 850 G8 i7", "HP Envy x360 15", "HP Omen 16 Gamer RTX 4060",
-  "Dell Vostro 3510 i3", "Dell Inspiron 3520 i5", "Dell Latitude 3420 i5", "Dell Latitude 5420 i5 256Go", "Dell Latitude 5530 i7",
-  "Dell Latitude 7420 i7", "Dell XPS 13 i7 16Go", "Dell XPS 15 i9 32Go", "Dell G15 Gamer RTX 3050", "Lenovo V15 i3 8Go",
-  "Lenovo IdeaPad 3 Ryzen 5", "Lenovo IdeaPad Slim 5 i7", "Lenovo ThinkPad L14 i5", "Lenovo ThinkPad T14 i7", "Lenovo ThinkPad X1 Carbon",
-  "Lenovo Legion 5 Gamer RTX 4060", "Asus Vivobook 15 i5", "Asus ZenBook 14 OLED i7", "Asus ROG Strix G16 RTX 4070", "Acer Aspire 3 i3",
-  "Acer Nitro 5 Gamer RTX 3060", "Imprimante Thermique Caisse 80mm USB/Ethernet", "Imprimante Thermique Caisse 58mm Bluetooth", "Tiroir Caisse Métallique Automatique", "Scanner Douchette Code-Barres 1D USB",
-  "Scanner Douchette Code-Barres 2D QR USB", "Scanner Omnidirectionnel Fixe de Caisse 2D", "Écran TPV Tactile 15\" Caisse All-in-One", "Afficheur Client 2 Lignes VFD Caisse", "Imprimante HP DeskJet 2710",
-  "Imprimante HP LaserJet M111w", "Imprimante HP Smart Tank 515", "Imprimante Epson EcoTank L3250", "Imprimante Epson EcoTank L4260", "Imprimante Canon PIXMA TS3340",
-  "Imprimante Canon Laser LBP6030w", "Imprimante Brother Laser HL-L2350DW", "Scanner A4 Flatbed Canon CanoScan", "Écran PC Dell 22\" FHD", "Écran PC Dell 24\" IPS Full HD",
-  "Écran PC Dell 27\" 4K", "Écran PC Samsung 24\" Incurvé", "Écran PC LG 27\" UltraFine", "Écran PC HP 24f FHD", "Écran PC Gamer Asus 24\" 165Hz",
-  "Disque Dur Externe WD Elements 1To", "Disque Dur Externe WD My Passport 2To", "Disque Dur Externe Seagate 4To", "Disque SSD Externe Samsung T7 500Go", "Disque SSD Externe Samsung T7 1To",
-  "Disque SSD Externe SanDisk Extreme 1To", "Clé USB SanDisk 32Go", "Clé USB SanDisk 64Go", "Clé USB SanDisk 128Go", "Clé USB SanDisk Dual Type-C 128Go",
-  "Barrette RAM PC Portable DDR4 8Go", "Barrette RAM PC Portable DDR4 16Go", "Disque SSD NVMe M.2 512Go", "Disque SSD NVMe M.2 1To", "Clavier Filaire Logitech K120 USB",
-  "Clavier Sans Fil Logitech K380", "Clavier Mécanique Gamer RGB", "Souris Filaire Logitech M90", "Souris Sans Fil Logitech M185", "Souris Bluetooth Logitech MX Master 3S",
-  "Onduleur APC 650VA", "Onduleur APC 1000VA LCD", "Onduleur APC 1500VA LCD", "Routeur WiFi TP-Link N300", "Routeur 4G WiFi Huawei avec SIM",
-  "Tapis de Souris Ergonomique repose-poignet", "Webcam Logitech C920 HD Pro 1080p", "Casque Micro USB Jabra Visioconférence", "Hub USB-C 7 en 1 Aluminium", "Sac à Dos PC Portable 15.6\" Imperméable"
-];
-
-// 4. TV & ÉLECTROMÉNAGER
-const electroNames = [
-  "TV LED Samsung 32\" HD", "TV LED Samsung 43\" Smart Full HD", "TV LED Samsung 50\" 4K Crystal UHD", "TV LED Samsung 55\" 4K QLED", "TV LED Samsung 65\" 4K Neo QLED",
-  "TV LED Samsung 75\" 4K UHD", "TV LED LG 32\" HD", "TV LED LG 43\" Smart Full HD", "TV LED LG 55\" 4K UHD Smart", "TV LED LG 65\" OLED 4K Smart",
-  "TV Smart TCL 32\" Android HD", "TV Smart TCL 43\" Full HD", "TV Smart TCL 55\" 4K QLED", "TV Smart TCL 65\" 4K Google TV", "TV Hisense 32\" HD Smart",
-  "TV Hisense 43\" Smart FHD", "TV Hisense 55\" 4K UHD", "TV Hisense 65\" 4K QLED", "TV Midea 32\" HD LED", "TV Nasco 43\" Smart FHD",
-  "Climatiseur Split Midea 9000 BTU", "Climatiseur Split Midea 12000 BTU Inverter", "Climatiseur Split Midea 18000 BTU Inverter", "Climatiseur Split Midea 24000 BTU", "Climatiseur Split Samsung 12000 BTU",
-  "Climatiseur Split LG Dual Inverter 12000 BTU", "Climatiseur Armoire 24000 BTU", "Climatiseur Armoire 48000 BTU", "Ventilateur sur Pied Orientable 16\"", "Ventilateur sur Pied Métallique 18\"",
-  "Ventilateur Rechargeable 16\" avec Télécommande", "Ventilateur de Plafond 56\" 3 Pales", "Humidificateur d'air ultrasonique 4L", "Réfrigérateur Midea 150L 1 Porte", "Réfrigérateur Midea 250L 2 Portes",
-  "Réfrigérateur Side-by-Side Midea 500L", "Réfrigérateur Samsung 200L Double Porte", "Réfrigérateur Samsung NoFrost 300L", "Réfrigérateur Side-by-Side Samsung 550L", "Réfrigérateur LG Combinaison NoFrost 340L",
-  "Réfrigérateur Hisense 220L Double Porte", "Congélateur Horizontal Midea 100L", "Congélateur Horizontal Midea 200L", "Congélateur Horizontal Midea 300L", "Congélateur Coffre Midea 400L",
-  "Congélateur Vertical 6 Tiroirs NoFrost", "Cave à Vin 18 Bouteilles", "Micro-ondes Moulinex 20L", "Micro-ondes Samsung 23L Grill", "Four Électrique Posable 35L",
-  "Four Électrique 45L Tournebroche", "Four Encastrable Inox 60cm", "Plaque à Gaz 4 Feux Inox", "Plaque Mixte Gaz/Induction 4 Feux", "Plaque à Induction Portative 2000W",
-  "Cuisinière à Gaz 50x50 4 Feux", "Cuisinière 60x60 avec Four Inox", "Friteuse Sans Huile AirFryer 4.5L", "Friteuse Sans Huile AirFryer XXL 7L", "Friteuse Électrique à Huile 3L",
-  "Mixeur Blender Kenwood 1.5L", "Blender Moulinex Faciclic 1.75L", "Robot Pâtissier Moulinex 800W", "Robot Culinaire Multifonction Philips 750W", "Hachoir à Viande Électrique 1500W",
-  "Presse-Agrumes Électrique 100W", "Centrifugeuse Fruits & Légumes 800W", "Extracteur de Jus à Froid", "Batteur Électrique 5 Vitesses", "Moulin à Café Électrique",
-  "Fer à Repasser à Vapeur Calor 2000W", "Fer à Repasser Tefal 2400W", "Centrale à Vapeur Philips 2400W", "Defroisseur Vapeur Vertical", "Machine à Laver Frontale Midea 7kg",
-  "Machine à Laver Frontale Midea 9kg", "Machine à Laver LG 8kg Inverter", "Machine à Laver Samsung 9kg AddWash", "Machine à Laver Semi-Automatique 8kg", "Machine Semi-Automatique Double Bac 12kg",
-  "Sèche-Linge à Condensation 8kg", "Aspirateur Sans Sac Moulinex 1800W", "Aspirateur Balai Sans Fil 2 en 1", "Bouilloire Électrique Inox 1.8L", "Cafetière Électrique à Filtre 12 Tasses",
-  "Machine à Café Espresso DeLonghi", "Grille-Pain 2 Fentes Inox", "Machine à Gaufres et Croque-Monsieur", "Chauffe-Eau Électrique 50L", "Chauffe-Eau Gaz 10L Instantané"
-];
-
-// 5. MODE & HABILLEMENT
-const modeNames = [
-  "T-shirt Coton Noir Col Rond", "T-shirt Coton Blanc Uni", "Polo Homme Coton Piqué Noir", "Polo Homme Coton Piqué Bleu Marine", "Chemise Homme Blanche Slim Fit",
-  "Chemise Homme Bleue Ciel Bureau", "Chemise Manches Courtes Motifs Wax", "Chemise Homme en Lin Beige", "Pantalon Jean Levi's 501 Straight", "Pantalon Jean Levi's 511 Slim",
-  "Pantalon Chino Beige Homme", "Pantalon Chino Noir Homme", "Pantalon de Costume Noir", "Short Jean Homme Décontracté", "Short de Sport Respirant",
-  "Costume Homme 2 Pièces Noir", "Costume Homme Bleu Nuit Ajusté", "Veste Blazer Homme Chic", "Veste en Cuir Noir Homme", "Veste en Jeans Levi's Classic",
-  "Ensemble Survêtement Nike Tech Fleece", "Ensemble Survêtement Adidas 3 Bandes", "Ensemble Bazin Riche Getzner Homme", "Djellaba Brodée Traditionnelle Homme", "Boubou Traditionnel 3 Pièces Brodé",
-  "Grand Boubou Bazin Cérémonie", "Robe de Soirée Élégante Longue", "Robe Courte Fleurie d'Été", "Robe Droite Professionnelle Chic", "Robe Wax Traditionnelle",
-  "Tissu Wax Hollandais (6 Yards)", "Tissu Bazin Riche Gagné (5m)", "Ensemble Tailleur Pantalon Femme", "Blouse en Soie Blanche Col V", "Jupe Crayon Noire Bureau",
-  "Jupe Longue Plissée Soleil", "Jean Femme Taille Haute Slim", "Legging Noir Opaque Confort", "Gilet Cardigan Maille Douce", "Manteau Court Laine Femme",
-  "Ensemble Kimono Satin Imprimé", "Kaftan Marocain Brodé Or", "Tenue Traditionnelle Taille Basse", "Mocassins Cuir Marron Homme", "Mocassins Cuir Noir Cousus Main",
-  "Chaussures Richelieu Cuir Noir", "Baskets Nike Air Force 1 Blanches", "Baskets Adidas Stan Smith Cuir", "Baskets Puma Suede Classic", "Baskets Air Jordan 1 Retro High",
-  "Sandales Cuir Artisanales Homme", "Claquettes Nike Victori One", "Baskets Running Asics Gel", "Escarpins Cuir Noir Femme (Talon 8cm)", "Sandales à Talons Dorées Soirée",
-  "Ballerines Cuir Souple Femme", "Baskets Compensées Femme Trendy", "Bottines en Cuir Marron Femme", "Sac à Main Cuir Véritable Femme Noir", "Sac Cabas Cuir Marron Grand Format",
-  "Sac Bandoulière Compact Cuir", "Pochette de Soirée Dorée Chic", "Sac à Dos Femme Cuir Élégant", "Sac Banane Cuir Tendance", "Sac de Voyage Cuir 50cm",
-  "Portefeuille Cuir Homme Multi-cartes", "Porte-Cartes Cuir Slim Minimaliste", "Ceinture Cuir Noir Homme", "Ceinture Cuir Marron Homme", "Ceinture Femme Boucle Dorée",
-  "Parfum Sauvage Dior 100ml", "Parfum Bleu de Chanel 100ml", "Parfum Terre d'Hermès 100ml", "Parfum One Million Paco Rabanne 100ml", "Parfum La Vie Est Belle LANCOME 75ml",
-  "Parfum Coco Mademoiselle Chanel 50ml", "Parfum Black Opium YSL 90ml", "Lunettes de Soleil Ray-Ban Aviator", "Lunettes de Soleil Ray-Ban Wayfarer", "Montre Homme Seiko Automatique Acier",
-  "Montre Homme Fossil Cuir Marron", "Montre Femme Casio Vintage Dorée", "Montre Femme Michael Kors Dorée", "Casquette Nike Dri-FIT", "Chapeau Fedora Laine Noir",
-  "Écharpe Cashmere Unissexe", "Foulard Soie Motifs Elegants", "Parure Bijoux Fantaisie Dorée", "Gants Cuir Homme Hiver", "Chaussettes Coton Sport (Pack de 3)"
-];
-
+// 20 ALL CATEGORIES POPULATED
 const cataloguesRaw = {
-  alimentation: alimentationBase.map(item => ({ nom: item.nom, cat: "alimentation" })),
-  smartphones: smartphonesNames.map(nom => ({ nom: nom, cat: "smartphones" })),
-  informatique: informatiqueNames.map(nom => ({ nom: nom, cat: "informatique" })),
-  "tv-electro": electroNames.map(nom => ({ nom: nom, cat: "tv-electro" })),
-  mode: modeNames.map(nom => ({ nom: nom, cat: "mode" }))
+  alimentation: [
+    "Riz brisé Sadia 25kg", "Riz parfumé Dinor 5kg", "Riz brisé Royal 50kg", "Riz local de la Vallée 25kg", "Riz Parfumé Jasmine 25kg", "Riz Basmati Indien 5kg", "Riz Parfumé Lion 25kg", "Riz Cargo Complet 5kg", "Riz étuvé local 25kg", "Sac de Riz Thaï 50kg", "Riz Brisé 100% Parfum Elephant 25kg", "Riz Long Grain Blanc 10kg",
+    "Lait Nido 400g", "Lait Nido 900g", "Lait Nido 2.5kg (Format Familial)", "Lait Gloria 160g", "Lait Peak en Poudre 400g", "Lait Peak 900g", "Lait Concentré Sucré Nestlé 397g", "Lait Caillé Naturel 1L", "Lait UHT Candia 1L (Pack de 6)", "Lait de Coco 400ml", "Lait Bonnet Rouge 400g", "Lait Vitalait UHT 1L",
+    "Café Touba Moulé 250g", "Café Touba Moulé 500g", "Café Nescafé Classic 200g", "Café Nescafé 3 en 1 (Sachet de 10)", "Café Carte Noire 250g Moulu", "Café en Grains Espresso 1kg", "Thé Lipton Yellow Label (100 sachets)", "Thé Vert Flecha 8147 (250g)", "Thé Vert Achoura (250g)", "Thé Vert Lord (250g)", "Infusion Menthe Poivrée (20 sachets)", "Infusion Verveine Bio (20 sachets)",
+    "Bouillon Jumbo Poulet (60 cubes)", "Bouillon Jumbo Crevette (60 cubes)", "Bouillon Jumbo Oignon (60 cubes)", "Bouillon Jumbo Bœuf (60 cubes)", "Bouillon Maggi Arôme 200ml", "Bouillon Maggi Poulet (60 cubes)", "Bouillon Knorr Bœuf (48 cubes)", "Moutarde Amora 265g", "Moutarde Maille 200g", "Mayonnaise Lesieur 475g", "Mayonnaise Calvé 450g", "Ketchup Amora Flacon 500g", "Ketchup Heinz 400g", "Sauce Piment Extra Forte 200g", "Harissa en Tube 150g", "Vinaigre Blanc d'Alcool 1L", "Vinaigre de Cidre Bio 500ml", "Sauce Soja Claire 250ml",
+    "Huile Dinor 5L", "Huile Niani 1L", "Huile Lesieur Tournesol 5L", "Huile de Palme Rouge 1L", "Huile d'Arachide Locale 1L", "Huile d'Olive Extra Vierge 750ml", "Beurre Président Plaquette 250g", "Margarine Planta 500g", "Huile de Sésame Pur 250ml", "Huile de Mais 2L",
+    "Sucre en Poudre Mimran 1kg", "Sucre en Morceaux CSS 1kg", "Sucre Roux Pur Canne 1kg", "Sucre Vanillé Alsa (Sachet de 10)", "Miel Pur Naturel 500g", "Chocolat à tartiner Nutella 400g", "Chocolat en Poudre Milo 400g", "Chocolat en Poudre Nesquik 400g", "Confiture de Fraise St Mamet 350g", "Confiture d'Abricot 350g",
+    "Jus Pressea Mangue 1L", "Jus Pressea Orange 1L", "Jus Pressea Ananas-Gingembre 1L", "Nectar de Bissap Kirène 1L", "Eau Kirène 1.5L (Pack de 6)", "Eau Kirène Bidon 5L", "Eau Oulmès Pétillante 1L", "Eau Casamançaise 1.5L (Pack de 6)", "Canette Gazelle 33cl", "Canette Coca-Cola 33cl (Pack de 6)", "Canette Fanta Orange 33cl", "Canette Sprite 33cl", "Energy Drink Cody's 250ml", "Energy Drink Monster 500ml",
+    "Thiakry Frais 500g", "Araw de Petit Millet 1kg", "Couscous de Millet (Souna) 1kg", "Sankhal de Millet 1kg", "Sirop de Bissap 1L", "Sirop de Bouye 1L", "Sirop de Gingembre (Gnamakoudji) 1L", "Fleurs de Bissap Séchées 500g", "Poudre de Bouye (Baobab) 500g",
+    "Sac d'Oignons 25kg", "Sac d'Oignons Importés 25kg", "Sac de Pommes de Terre 25kg", "Sac d'Ail Frais 5kg", "Sac de Gingembre Frais 5kg", "Pâte d'Arachide Mafé 1kg", "Kethiakh (Poisson Salé Séché) 1kg", "Guedj (Poisson Séché Artisanal) 500g", "Yeet (Mollusque Séché) 250g", "Crevettes Séchées Moulières 200g", "Sardines Titus à l'Huile (Boîte 125g)", "Thon Entier au Naturel 160g", "Corned Beef Hereford 340g"
+  ],
+
+  smartphones: [
+    "iPhone 8 64Go", "iPhone 8 Plus 64Go", "iPhone X 64Go", "iPhone XR 128Go", "iPhone XS Max 256Go", "iPhone 11 64Go", "iPhone 11 Pro 128Go", "iPhone 11 Pro Max 256Go", "iPhone 12 Mini 64Go", "iPhone 12 128Go", "iPhone 12 Pro 128Go", "iPhone 12 Pro Max 256Go", "iPhone 13 Mini 128Go", "iPhone 13 128Go", "iPhone 13 Pro 256Go", "iPhone 13 Pro Max 256Go", "iPhone 14 128Go", "iPhone 14 Plus 128Go", "iPhone 14 Pro 256Go", "iPhone 14 Pro Max 256Go", "iPhone 15 128Go", "iPhone 15 Plus 256Go", "iPhone 15 Pro 256Go", "iPhone 15 Pro Max 256Go", "iPhone 15 Pro Max 512Go",
+    "Samsung Galaxy A03 32Go", "Samsung Galaxy A04 32Go", "Samsung Galaxy A05 64Go", "Samsung Galaxy A13 64Go", "Samsung Galaxy A14 64Go", "Samsung Galaxy A23 128Go", "Samsung Galaxy A24 128Go", "Samsung Galaxy A33 5G", "Samsung Galaxy A34 5G 128Go", "Samsung Galaxy A53 5G", "Samsung Galaxy A54 5G 128Go", "Samsung Galaxy A73 5G", "Samsung Galaxy S20 FE 128Go", "Samsung Galaxy S21 5G", "Samsung Galaxy S21 Ultra 256Go", "Samsung Galaxy S22 5G", "Samsung Galaxy S22+ 256Go", "Samsung Galaxy S22 Ultra 256Go", "Samsung Galaxy S23 128Go", "Samsung Galaxy S23 Ultra 256Go", "Samsung Galaxy S24 Ultra 512Go", "Samsung Galaxy Z Flip 4", "Samsung Galaxy Z Flip 5 256Go", "Samsung Galaxy Z Fold 5 512Go",
+    "Redmi 10A 32Go", "Redmi 12C 64Go", "Redmi 12 128Go", "Redmi Note 11 128Go", "Redmi Note 12 128Go", "Redmi Note 12 Pro 128Go", "Redmi Note 13 256Go", "Redmi Note 13 Pro 5G", "Redmi Note 13 Pro+ 5G 512Go", "Poco X5 Pro 5G", "Xiaomi 13T Pro 512Go",
+    "Tecno Pop 7 64Go", "Tecno Spark 9 64Go", "Tecno Spark 10 128Go", "Tecno Spark 10 Pro 256Go", "Tecno Camon 19 128Go", "Tecno Camon 20 256Go", "Tecno Camon 20 Pro 256Go", "Tecno Camon 20 Premier", "Tecno Pova 5 Pro", "Tecno Phantom X2 Pro 256Go",
+    "Infinix Smart 7 64Go", "Infinix Smart 8 64Go", "Infinix Hot 20 128Go", "Infinix Hot 30 128Go", "Infinix Hot 30i 128Go", "Infinix Note 12 128Go", "Infinix Note 30 128Go", "Infinix Note 30 Pro 256Go", "Infinix Note 30 VIP", "Infinix Zero 30 5G",
+    "Oppo A17 64Go", "Oppo A58 128Go", "Oppo A78 128Go", "Realme C33 64Go", "Realme C55 128Go",
+    "Apple AirPods 2", "Apple AirPods 3", "Apple AirPods Pro (2ème Gén)", "Apple AirPods Max", "Samsung Galaxy Buds FE", "Samsung Galaxy Buds2 Pro", "JBL Tune 510BT Casque", "JBL Wave 200TWS Écouteurs", "Enceinte JBL GO 3", "Enceinte JBL Charge 5", "Chargeur Rapide USB-C 20W", "Chargeur Samsung 25W USB-C", "Power Bank Remax 20000mAh", "Support Téléphone Voiture MagSafe", "Carte Mémoire MicroSD Sandisk 128Go"
+  ],
+
+  informatique: [
+    "MacBook Air 13\" M1 256Go", "MacBook Air 13\" M2 256Go", "MacBook Air 15\" M2 512Go", "MacBook Pro 14\" M2 512Go", "MacBook Pro 16\" M3 Max 1To",
+    "HP 250 G8 i3 8Go", "HP 255 G8 Ryzen 3", "HP Pavilion 15 i5 Touch", "HP ProBook 440 G9 i5", "HP ProBook 450 G9 i7", "HP EliteBook 830 G8 i5", "HP EliteBook 840 G8 i7", "HP EliteBook 850 G8 i7", "HP Envy x360 15", "HP Omen 16 Gamer RTX 4060",
+    "Dell Vostro 3510 i3", "Dell Inspiron 3520 i5", "Dell Latitude 3420 i5", "Dell Latitude 5420 i5 256Go", "Dell Latitude 5530 i7", "Dell Latitude 7420 i7", "Dell XPS 13 i7 16Go", "Dell XPS 15 i9 32Go", "Dell G15 Gamer RTX 3050",
+    "Lenovo V15 i3 8Go", "Lenovo IdeaPad 3 Ryzen 5", "Lenovo IdeaPad Slim 5 i7", "Lenovo ThinkPad L14 i5", "Lenovo ThinkPad T14 i7", "Lenovo ThinkPad X1 Carbon", "Lenovo Legion 5 Gamer RTX 4060",
+    "Asus Vivobook 15 i5", "Asus ZenBook 14 OLED i7", "Asus ROG Strix G16 RTX 4070", "Acer Aspire 3 i3", "Acer Nitro 5 Gamer RTX 3060",
+    "Imprimante Thermique Caisse 80mm USB/Ethernet", "Imprimante Thermique Caisse 58mm Bluetooth", "Tiroir Caisse Métallique Automatique", "Scanner Douchette Code-Barres 1D USB", "Scanner Douchette Code-Barres 2D QR USB", "Scanner Omnidirectionnel Fixe de Caisse 2D", "Écran TPV Tactile 15\" Caisse All-in-One", "Afficheur Client 2 Lignes VFD Caisse",
+    "Imprimante HP DeskJet 2710", "Imprimante HP LaserJet M111w", "Imprimante HP Smart Tank 515", "Imprimante Epson EcoTank L3250", "Imprimante Epson EcoTank L4260", "Imprimante Canon PIXMA TS3340", "Imprimante Canon Laser LBP6030w", "Imprimante Brother Laser HL-L2350DW", "Scanner A4 Flatbed Canon CanoScan",
+    "Écran PC Dell 22\" FHD", "Écran PC Dell 24\" IPS Full HD", "Écran PC Dell 27\" 4K", "Écran PC Samsung 24\" Incurvé", "Écran PC LG 27\" UltraFine", "Écran PC HP 24f FHD", "Écran PC Gamer Asus 24\" 165Hz",
+    "Disque Dur Externe WD Elements 1To", "Disque Dur Externe WD My Passport 2To", "Disque Dur Externe Seagate 4To", "Disque SSD Externe Samsung T7 500Go", "Disque SSD Externe Samsung T7 1To", "Disque SSD Externe SanDisk Extreme 1To", "Clé USB SanDisk 32Go", "Clé USB SanDisk 64Go", "Clé USB SanDisk 128Go", "Clé USB SanDisk Dual Type-C 128Go",
+    "Barrette RAM PC Portable DDR4 8Go", "Barrette RAM PC Portable DDR4 16Go", "Disque SSD NVMe M.2 512Go", "Disque SSD NVMe M.2 1To", "Clavier Filaire Logitech K120 USB", "Clavier Sans Fil Logitech K380", "Clavier Mécanique Gamer RGB", "Souris Filaire Logitech M90", "Souris Sans Fil Logitech M185", "Souris Bluetooth Logitech MX Master 3S",
+    "Onduleur APC 650VA", "Onduleur APC 1000VA LCD", "Onduleur APC 1500VA LCD", "Routeur WiFi TP-Link N300", "Routeur 4G WiFi Huawei avec SIM", "Tapis de Souris Ergonomique repose-poignet", "Webcam Logitech C920 HD Pro 1080p", "Casque Micro USB Jabra Visioconférence", "Hub USB-C 7 en 1 Aluminium", "Sac à Dos PC Portable 15.6\" Imperméable"
+  ],
+
+  "tv-electro": [
+    "TV LED Samsung 32\" HD", "TV LED Samsung 43\" Smart Full HD", "TV LED Samsung 50\" 4K Crystal UHD", "TV LED Samsung 55\" 4K QLED", "TV LED Samsung 65\" 4K Neo QLED", "TV LED Samsung 75\" 4K UHD", "TV LED LG 32\" HD", "TV LED LG 43\" Smart Full HD", "TV LED LG 55\" 4K UHD Smart", "TV LED LG 65\" OLED 4K Smart", "TV Smart TCL 32\" Android HD", "TV Smart TCL 43\" Full HD", "TV Smart TCL 55\" 4K QLED", "TV Smart TCL 65\" 4K Google TV", "TV Hisense 32\" HD Smart", "TV Hisense 43\" Smart FHD", "TV Hisense 55\" 4K UHD", "TV Hisense 65\" 4K QLED", "TV Midea 32\" HD LED", "TV Nasco 43\" Smart FHD",
+    "Climatiseur Split Midea 9000 BTU", "Climatiseur Split Midea 12000 BTU Inverter", "Climatiseur Split Midea 18000 BTU Inverter", "Climatiseur Split Midea 24000 BTU", "Climatiseur Split Samsung 12000 BTU", "Climatiseur Split LG Dual Inverter 12000 BTU", "Climatiseur Armoire 24000 BTU", "Climatiseur Armoire 48000 BTU", "Ventilateur sur Pied Orientable 16\"", "Ventilateur sur Pied Métallique 18\"", "Ventilateur Rechargeable 16\" avec Télécommande", "Ventilateur de Plafond 56\" 3 Pales", "Humidificateur d'air ultrasonique 4L",
+    "Réfrigérateur Midea 150L 1 Porte", "Réfrigérateur Midea 250L 2 Portes", "Réfrigérateur Side-by-Side Midea 500L", "Réfrigérateur Samsung 200L Double Porte", "Réfrigérateur Samsung NoFrost 300L", "Réfrigérateur Side-by-Side Samsung 550L", "Réfrigérateur LG Combinaison NoFrost 340L", "Réfrigérateur Hisense 220L Double Porte", "Congélateur Horizontal Midea 100L", "Congélateur Horizontal Midea 200L", "Congélateur Horizontal Midea 300L", "Congélateur Coffre Midea 400L", "Congélateur Vertical 6 Tiroirs NoFrost", "Cave à Vin 18 Bouteilles",
+    "Micro-ondes Moulinex 20L", "Micro-ondes Samsung 23L Grill", "Four Électrique Posable 35L", "Four Électrique 45L Tournebroche", "Four Encastrable Inox 60cm", "Plaque à Gaz 4 Feux Inox", "Plaque Mixte Gaz/Induction 4 Feux", "Plaque à Induction Portative 2000W", "Cuisinière à Gaz 50x50 4 Feux", "Cuisinière 60x60 avec Four Inox", "Friteuse Sans Huile AirFryer 4.5L", "Friteuse Sans Huile AirFryer XXL 7L", "Friteuse Électrique à Huile 3L",
+    "Mixeur Blender Kenwood 1.5L", "Blender Moulinex Faciclic 1.75L", "Robot Pâtissier Moulinex 800W", "Robot Culinaire Multifonction Philips 750W", "Hachoir à Viande Électrique 1500W", "Presse-Agrumes Électrique 100W", "Centrifugeuse Fruits & Légumes 800W", "Extracteur de Jus à Froid", "Batteur Électrique 5 Vitesses", "Moulin à Café Électrique",
+    "Fer à Repasser à Vapeur Calor 2000W", "Fer à Repasser Tefal 2400W", "Centrale à Vapeur Philips 2400W", "Defroisseur Vapeur Vertical", "Machine à Laver Frontale Midea 7kg", "Machine à Laver Frontale Midea 9kg", "Machine à Laver LG 8kg Inverter", "Machine à Laver Samsung 9kg AddWash", "Machine à Laver Semi-Automatique 8kg", "Machine Semi-Automatique Double Bac 12kg", "Sèche-Linge à Condensation 8kg", "Aspirateur Sans Sac Moulinex 1800W", "Aspirateur Balai Sans Fil 2 en 1", "Bouilloire Électrique Inox 1.8L", "Cafetière Électrique à Filtre 12 Tasses", "Machine à Café Espresso DeLonghi", "Grille-Pain 2 Fentes Inox", "Machine à Gaufres et Croque-Monsieur", "Chauffe-Eau Électrique 50L", "Chauffe-Eau Gaz 10L Instantané"
+  ],
+
+  mode: [
+    "T-shirt Coton Noir Col Rond", "T-shirt Coton Blanc Uni", "Polo Homme Coton Piqué Noir", "Polo Homme Coton Piqué Bleu Marine", "Chemise Homme Blanche Slim Fit", "Chemise Homme Bleue Ciel Bureau", "Chemise Manches Courtes Motifs Wax", "Chemise Homme en Lin Beige", "Pantalon Jean Levi's 501 Straight", "Pantalon Jean Levi's 511 Slim", "Pantalon Chino Beige Homme", "Pantalon Chino Noir Homme", "Pantalon de Costume Noir", "Short Jean Homme Décontracté", "Short de Sport Respirant", "Costume Homme 2 Pièces Noir", "Costume Homme Bleu Nuit Ajusté", "Veste Blazer Homme Chic", "Veste en Cuir Noir Homme", "Veste en Jeans Levi's Classic", "Ensemble Survêtement Nike Tech Fleece", "Ensemble Survêtement Adidas 3 Bandes", "Ensemble Bazin Riche Getzner Homme", "Djellaba Brodée Traditionnelle Homme", "Boubou Traditionnel 3 Pièces Brodé", "Grand Boubou Bazin Cérémonie",
+    "Robe de Soirée Élégante Longue", "Robe Courte Fleurie d'Été", "Robe Droite Professionnelle Chic", "Robe Wax Traditionnelle", "Tissu Wax Hollandais (6 Yards)", "Tissu Bazin Riche Gagné (5m)", "Ensemble Tailleur Pantalon Femme", "Blouse en Soie Blanche Col V", "Jupe Crayon Noire Bureau", "Jupe Longue Plissée Soleil", "Jean Femme Taille Haute Slim", "Legging Noir Opaque Confort", "Gilet Cardigan Maille Douce", "Manteau Court Laine Femme", "Ensemble Kimono Satin Imprimé", "Kaftan Marocain Brodé Or", "Tenue Traditionnelle Taille Basse",
+    "Mocassins Cuir Marron Homme", "Mocassins Cuir Noir Cousus Main", "Chaussures Richelieu Cuir Noir", "Baskets Nike Air Force 1 Blanches", "Baskets Adidas Stan Smith Cuir", "Baskets Puma Suede Classic", "Baskets Air Jordan 1 Retro High", "Sandales Cuir Artisanales Homme", "Claquettes Nike Victori One", "Baskets Running Asics Gel", "Escarpins Cuir Noir Femme (Talon 8cm)", "Sandales à Talons Dorées Soirée", "Ballerines Cuir Souple Femme", "Baskets Compensées Femme Trendy", "Bottines en Cuir Marron Femme",
+    "Sac à Main Cuir Véritable Femme Noir", "Sac Cabas Cuir Marron Grand Format", "Sac Bandoulière Compact Cuir", "Pochette de Soirée Dorée Chic", "Sac à Dos Femme Cuir Élégant", "Sac Banane Cuir Tendance", "Sac de Voyage Cuir 50cm", "Portefeuille Cuir Homme Multi-cartes", "Porte-Cartes Cuir Slim Minimaliste", "Ceinture Cuir Noir Homme", "Ceinture Cuir Marron Homme", "Ceinture Femme Boucle Dorée",
+    "Parfum Sauvage Dior 100ml", "Parfum Bleu de Chanel 100ml", "Parfum Terre d'Hermès 100ml", "Parfum One Million Paco Rabanne 100ml", "Parfum La Vie Est Belle LANCOME 75ml", "Parfum Coco Mademoiselle Chanel 50ml", "Parfum Black Opium YSL 90ml", "Lunettes de Soleil Ray-Ban Aviator", "Lunettes de Soleil Ray-Ban Wayfarer", "Montre Homme Seiko Automatique Acier", "Montre Homme Fossil Cuir Marron", "Montre Femme Casio Vintage Dorée", "Montre Femme Michael Kors Dorée", "Casquette Nike Dri-FIT", "Chapeau Fedora Laine Noir", "Écharpe Cashmere Unissexe", "Foulard Soie Motifs Elegants", "Parure Bijoux Fantaisie Dorée", "Gants Cuir Homme Hiver", "Chaussettes Coton Sport (Pack de 3)"
+  ],
+
+  maison: [
+    "Drap de Lit 2 Places + 2 Taies", "Taie d'Oreiller Orthopédique", "Couverture Douillette 200x240cm", "Tapis de Salon Moderne 160x230cm", "Matelas Orthopédique 2 Places", "Canapé Angle Convertible 5 Places", "Poêle Antiadhésive Tefal 28cm", "Marmite à Pression Inox 8L", "Service d'Assiettes Porcelaine (18 Pcs)", "Pack de 6 Verres à Eau en Cristal", "Ménagère Couverts 24 Pièces Inox", "Seau de Ménage avec Balai Serpillière Essoreuse", "Poubelle à Pédale Inox 30L", "Horloge Murale Géante Silencieuse 40cm", "Miroir Rétro-éclairé LED Salle de Bain", "Table à Manger 6 Places avec Chaises", "Casserole Inox 20cm avec Couvercle", "Faitout Inox 5 Pièces", "Portant à Vêtements Métallique Double"
+  ],
+
+  "auto-moto": [
+    "Huile Moteur Total 5W40 5L", "Huile Moteur Total 10W40 5L", "Batterie Voiture Varta 12V 70Ah", "Batterie Voiture Fulmen 12V 60Ah", "Pneu Michelin 205/55 R16", "Pneu Bridgestone 195/65 R15", "Casque Moto Intégral Homologué", "Gants de Moto en Cuir Renforcé", "Compresseur d'Air 12V Portable Auto", "Cric Hydraulique 2 Tonnes", "Extincteur Auto Poudre 1kg", "Support Téléphone Voiture", "Housse de Siège Universelle Auto", "Nettoyant Injecteurs Moteur 500ml"
+  ],
+
+  jeux: [
+    "Console Sony PlayStation 5 Standard", "Console PS4 Slim 1To", "Manette Sans Fil DualSense PS5", "Console Nintendo Switch OLED", "Jeu PS5 EA Sports FC 24", "Jeu PS5 Marvel's Spider-Man 2", "Jeu PS5 God of War Ragnarök", "Casque Gamer HyperX Cloud II", "Chaise Gamer Ergonomique RGB", "Volant de Course Logitech G29", "Console Xbox Series X 1To", "Jeu Nintendo Switch Mario Kart 8 Deluxe"
+  ],
+
+  beaute: [
+    "Lotion Corporelle Nivea 400ml", "Savon Noir Africain Artisanal", "Gel Douche Refreshing Dove 500ml", "Parfum Chanel Coco Mademoiselle 50ml", "Beurre de Karité Pur 100% Bio 250g", "Huile d'Argan Pure du Maroc 100ml", "Shampoing Sans Sulfate Cantu 400ml", "Sérum Visage Vitamine C 30ml", "Rouge à Lèvres Matte Maybelline Superstay", "Sèche-Cheveux Professionnel 2200W", "Fer à Lisser BaByliss Titan Ceramic", "Tondeuse à Barbe Panasonic Rechargeable", "Fond de Teint Maybelline Fit Me", "Mascara Lash Sensational Maybelline", "Vernis à Ongles OPI Rouge"
+  ],
+
+  sport: [
+    "Maillot Sénégal Domicile Puma", "Maillot Sénégal Extérieur Vert Puma", "Crampons Nike Mercurial Vapor", "Ballon de Football Size 5", "Tapis de Yoga Antidérapant 6mm", "Paire d'Haltères en Fonte 5kg", "Kit 5 Élastiques de Musculation Fitness", "Gourde Inox Isotherme 750ml", "Protège-Tibias Nike Football", "Corde à Sauter Rapide avec Roulements", "Gants de Boxe 12oz"
+  ],
+
+  fournitures: [
+    "Cahier Grand Format 200 Pages", "Cahier Petit Format 96 Pages", "Boîte de 50 Stylos BIC Bleu", "Boîte de 50 Stylos BIC Noir", "Rame de Papier A4 80g (500 Feuilles)", "Calculatrice Casio fx-991ES Plus", "Sac à Dos Scolaire Ergonomique", "Boîte Crayons de Couleur Maped (24 Pcs)", "Correcteur Blanc Tipp-Ex Flacon 20ml", "Surligneurs Stabilo Boss (Pack de 4)", "Classeur A4 à Levier 80mm", "Règle Graduée 30cm Inox"
+  ],
+
+  quincaillerie: [
+    "Sac de Ciment Sococim 50kg", "Sac de Ciment Dangote 50kg 42.5N", "Peinture Emulsion Blanche 20L", "Peinture Glycéro Laque 5L", "Perceuse Percuteuse Bosch 750W", "Meuleuse d'Angle Makute 115mm 850W", "Coffret Clés à Douille 94 Pièces", "Marteau d'Arpenteur 500g Manche Fibre", "Ampoule LED E27 12W (Pack de 3)", "Rallonge Électrique 10m 4 Prises", "Niveau à Bulle Aluminium 60cm", "Mètre Ruban 5m Professionnel"
+  ],
+
+  "pieces-rechange": [
+    "Plaquettes de frein avant (Jeu de 4)", "Filtre à huile universel", "Filtre à air moteur", "Filtre à Carburant Gazole", "Bougie d'allumage NGK (x4)", "Disque de frein avant (x2)", "Courroie de distribution", "Batterie Auto 12V 75Ah", "Balais d'essuie-glace (Paire)", "Kit d'embrayage complet", "Alternateur 12V", "Démarreur électrique", "Amortisseur avant (x2)"
+  ],
+
+  bijouterie: [
+    "Collier en Or 18K", "Bracelet en Argent Filigrane", "Bague Solitaire Or & Diamant", "Boucles d'Oreilles Or Traditionnelles", "Montre Homme Seiko Automatique", "Montre Femme Casio Classique", "Gourmette en Argent pour Homme", "Pendentif Carte du Sénégal Or", "Bague Chevalière Argent Homme", "Chaîne de Cheville en Or 18K"
+  ],
+
+  maraichage: [
+    "Sac d'Oignons Locaux 25kg", "Sac de Pommes de Terre Locaux 25kg", "Caisse de Tomates Cerises 10kg", "Sac de Carottes Locales 20kg", "Caisse d'Aubergines Amères (Diakhatou) 10kg", "Panier de Piments Verts 5kg", "Panier de Gombos Frais 5kg", "Caisse de Mangues Kent (Casamance) 15kg", "Caisse de Papayes Locales 10kg", "Sac de Choux Pommés 25kg"
+  ],
+
+  elevage: [
+    "Mouton Bélier de race Ladoum", "Mouton Bélier Touabire (Tabaski)", "Chèvre Locale (Génisse)", "Sac d'Aliment Bétail (Rumi) 50kg", "Sac de Tourteau d'Arachide 25kg", "Botte de Foin de Luzerne Séchée", "Abreuvoir Automatique Volaille 5L", "Mangeoire Métallique pour Moutons 1.5m", "Lot de 50 Poussins d'un jour (Chair)", "Poule Pondeuse Isa Brown (Adulte)"
+  ],
+
+  "produits-agricoles": [
+    "Sac de Riz Paddy Local 50kg", "Sac de Mil Grain (Millet) 50kg", "Sac de Maïs Grain Jaune 50kg", "Sac d'Arachides Décortiquées 40kg", "Sac de Sorgho Local 50kg", "Sac d'Engrais NPK (15-15-15) 50kg", "Sac d'Engrais Urée 46% 50kg", "Semences de Riz Certifiées 20kg", "Pulvérisateur Agricole à Dos 16L", "Semoir Manuel Monorang"
+  ],
+
+  "solaire-energie": [
+    "Panneau Solaire Monocristallin 150W", "Batterie Solaire Gel 12V 100Ah", "Régulateur de Charge PWM 30A 12V/24V", "Convertisseur Pur Sinus 12V-220V 1000W", "Projecteur Solaire LED 100W", "Kit Solaire Domestique 3 Ampoules", "Ampoule LED DC 12V 9W", "Câble Solaire Double Isolation 4mm² (10m)", "Ventilateur Rechargeable Solaire DC 12V", "Lampe Solaire de Poche Rechargeable"
+  ],
+
+  "sante-pharma": [
+    "Boîte de Paracétamol 500mg (16 comprimés)", "Thermomètre Médical Digital", "Boîte de 50 Masques Chirurgicaux", "Gel Hydroalcoolique 500ml", "Tensiomètre Électronique Bras", "Boîte de 100 Pansements Adhésifs", "Alcool Chirurgical 70% 250ml", "Boîte de 10 Compresses Stériles 10x10cm", "Vitamine C 1000mg Éfervescente", "Sirop contre la toux aux plantes 150ml"
+  ],
+
+  "bebe-enfants": [
+    "Paquet de Couches Bébé (T4 - Maxi)", "Lait de Croissance en Poudre 800g", "Lingettes Nettoyantes Bébé (72 pièces)", "Biberon Anti-Colique en Verre 240ml", "Poussette Canne Ultra-Légère", "Shampoing Doux Bébé 500ml", "Sucette Silicone avec Attache (0-6m)", "Set de Jouets d'Éveil Bébé (5 Pcs)", "Poudre de Toilette Bébé 200g", "Lit Parapluie Pliable avec Sac"
+  ]
 };
 
 const outputData = {};
 
 Object.keys(cataloguesRaw).forEach(cat => {
   const items = cataloguesRaw[cat];
-  outputData[cat] = items.map((base, i) => ({
+  outputData[cat] = items.map((nom, i) => ({
     id: `${cat}-${i + 1}`,
-    nom: base.nom,
-    description: `Produit authentique de qualité supérieure: ${base.nom}`,
+    nom: nom,
+    description: `Produit authentique de qualité supérieure: ${nom}`,
     categorie: cat,
-    photo_defaut: getPhotoForProduct(base.nom, cat)
+    photo_defaut: getPhotoForProduct(nom, cat)
   }));
 });
 
