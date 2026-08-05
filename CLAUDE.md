@@ -1150,6 +1150,11 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
             - `/connexion` & `/inscription` (`ConnexionForm.tsx`, `InscriptionForm.tsx`) : Harmonisation des onglets de basculement Email/WhatsApp vers l'Orange Ambre Nopalou (`#C75B00`).
             - `/creer-boutique` (`creer-boutique/page.tsx`) : Harmonisation de la barre de progression à 4 étapes, des titres (`#0f172a`), du bouton d'action principal et de la formule présélectionnée en Orange Ambre Nopalou (`#C75B00`).
             - `/annonces` & `/comparaison` (`PageHeader.tsx`, `comparaison/page.tsx`, `globals.css`) : Titres unifiés en Ardoise Sombre Chic (`#0f172a`) et cartes de verdict rehaussées d'un dégradé chaleureux ambre doux (`#fff7ed`).
+        - **Refonte Globale & Épurée de la Page d'Accueil (`frontend-next/src/app/page.tsx`)** :
+          - **Suppression de la pollution visuelle et des cartes encombrantes** ("Acheteurs" / "Vendeurs" séparées) : Remplacement par un Hero unique, lumineux et moderne avec fond ambre doux (`#fff7ed`).
+          - **Rapprochement Recherche → Catégories → Produits** : Intégration directe des 20 catégories sous forme de pilules d'action sous la barre de recherche principale.
+          - **Nouveau Bandeau de Feedback de Recherche Instantané (`SearchFeedbackBanner`)** : Affichage d'une bannière de confirmation claire (`🔎 X produits trouvés pour "mots-clés" — Catégorie : XYZ`) avec bouton d'annulation en 1 clic dès qu'un filtre est actif.
+          - **Accès Direct aux Produits** : La grille de produits est disposée directement sous la zone de recherche sans aucun bloc parasite au milieu.
         - **Diagnostic Exhaustif & Correction de 5 URLs Incohérentes Confirmées** : Audit visuel systématique des 112 URLs Unsplash uniques. Identification et remplacement de 5 URLs dont le contenu visuel réel ne correspondait pas du tout aux produits assignés :
           1. **Huile Moteur** (Total/Shell/Mobil) : Ferrari rouge → bidon d'huile moteur (`photo-1635784065399`)
           2. **Onduleur APC** (650VA/1000VA/1500VA) : gradient abstrait coloré → salle serveur/rack informatique (`photo-1558494949`)

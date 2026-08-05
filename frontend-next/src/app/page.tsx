@@ -142,110 +142,118 @@ export default async function HomePage({
 
   return (
     <>
-      {/* Hero Dual (Acheteur / Vendeur) */}
-      <section className="hero-home">
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'center', textAlign: 'left', padding: '40px 20px', maxWidth: 1200, margin: '0 auto' }}>
-          {/* Acheteurs */}
-          <div style={{ flex: '1 1 400px', background: '#fff', padding: '32px 24px', borderRadius: 24, boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
-            <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--navy)', margin: '0 0 12px', lineHeight: 1.2 }}>
-              Trouvez le meilleur prix au <span style={{ color: '#C75B00' }}>Sénégal</span>
-            </h1>
-            <p style={{ color: '#64748b', fontSize: 16, margin: '0 0 24px' }}>
-              Comparez les téléphones, TV et immobilier parmi des milliers d'annonces.
-            </p>
+      {/* ── HERO HOME ÉPURÉ & MODERNE (NOPALOU BRAND SYSTEM) ────────── */}
+      <section style={{
+        background: 'linear-gradient(135deg, #ffffff 0%, #fffdfa 50%, #fff7ed 100%)',
+        borderBottom: '1px solid #fed7aa',
+        padding: '48px 20px 36px',
+        textAlign: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', position: 'relative', zIndex: 2 }}>
+          
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: '#fff7ed', color: '#c75b00', padding: '6px 16px', borderRadius: 30,
+            fontSize: 12, fontWeight: 800, marginBottom: 16, border: '1px solid #ffedd5',
+          }}>
+            <span>✨ Comparateur N°1 de prix & vendeurs au Sénégal</span>
+          </div>
+
+          <h1 style={{ fontSize: 'clamp(28px, 4.5vw, 42px)', fontWeight: 900, color: '#0f172a', margin: '0 0 14px', lineHeight: 1.25, letterSpacing: '-0.02em' }}>
+            Comparez les prix & trouvez les meilleurs vendeurs au <span style={{ color: '#C75B00' }}>Sénégal</span>
+          </h1>
+
+          <p style={{ fontSize: 16, color: '#475569', margin: '0 auto 28px', maxWidth: 640, lineHeight: 1.6 }}>
+            Accédez instantanément à des milliers de produits, téléphones, électroménager et boutiques vérifiées à Dakar et dans toutes les régions.
+          </p>
+
+          {/* BARRE DE RECHERCHE PRINCIPALE */}
+          <div style={{ maxWidth: 640, margin: '0 auto 24px' }}>
             <SearchBar defaultValue={q} />
           </div>
 
-          {/* Vendeurs / Taf Taf */}
-          <div style={{ flex: '1 1 400px', background: 'var(--navy)', padding: '32px 24px', borderRadius: 24, color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 10px 40px rgba(30,58,95,0.4)' }}>
-            <h2 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 12px', lineHeight: 1.2 }}>
-              Créez votre Boutique <span style={{ color: '#25D366' }}>Taf Taf</span> ⚡
-            </h2>
-            <p style={{ color: '#cbd5e1', fontSize: 16, margin: '0 0 24px', lineHeight: 1.5 }}>
-              Votre fournisseur est sur AliExpress ou à Dubaï ? Vendez en ligne en 30 secondes, sans mot de passe. <br/>
-              <strong style={{ color: '#fff' }}>🎁 1er mois 100% gratuit !</strong>
-            </p>
-            <form action="/creer-boutique" method="GET" style={{ display: 'flex', gap: 8, width: '100%', maxWidth: 500 }}>
-              <input 
-                type="text" 
-                name="nom"
-                placeholder="Ex: Cosmétiques Dakar..." 
-                required
-                style={{ flex: 1, padding: '16px 20px', borderRadius: 12, border: 'none', fontSize: 16, outline: 'none', minWidth: 0 }}
-              />
-              <button type="submit" style={{ background: '#25D366', color: '#1e3a5f', border: 'none', padding: '0 24px', borderRadius: 12, fontWeight: 800, fontSize: 16, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                Go 🚀
-              </button>
-            </form>
-          </div>
-        </div>
-        <div className="hero-categs">
-          {CATEGORIES.map((c) => {
-            if (categoriesActives !== null && !categoriesActives.includes(c.slug)) {
-              return null;
-            }
-            if (c.slug === 'telecom') {
+          {/* CATÉGORIES EN PILULES FLUIDES DIRECTEMENT INCLUSES */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 960, margin: '0 auto' }}>
+            {CATEGORIES.map((c) => {
+              if (categoriesActives !== null && !categoriesActives.includes(c.slug) && c.slug !== 'telecom') {
+                return null;
+              }
+              const isSelected = categorie === c.slug
+              if (c.slug === 'telecom') {
+                return (
+                  <Link key={c.slug} href="/telecom" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+                  }}>
+                    <span>{c.emoji}</span> <span>{c.label}</span>
+                  </Link>
+                )
+              }
               return (
-                <Link key={c.slug} href="/telecom" className={`categ-pill${categorie === c.slug ? ' active' : ''}`}>
-                  {c.emoji} {c.label}
+                <Link
+                  key={c.slug}
+                  href={isSelected ? '/' : `/?categorie=${c.slug}`}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13,
+                    fontWeight: isSelected ? 800 : 600, textDecoration: 'none',
+                    background: isSelected ? '#C75B00' : '#fff',
+                    color: isSelected ? '#fff' : '#334155',
+                    border: isSelected ? '1px solid #C75B00' : '1px solid #e2e8f0',
+                    boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : '0 2px 4px rgba(0,0,0,0.03)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span>{c.emoji}</span> <span>{c.label}</span>
                 </Link>
               )
-            }
-            return (
-              <Link
-                key={c.slug}
-                href={categorie === c.slug ? '/' : `/?categorie=${c.slug}`}
-                className={`categ-pill${categorie === c.slug ? ' active' : ''}`}
-              >
-                {c.emoji} {c.label}
-              </Link>
-            )
-          })}
-          {(!categoriesActives || categoriesActives.includes('immo')) && (
-            <Link href="/immo" className="categ-pill">🏘 Immobilier</Link>
-          )}
-          {(!categoriesActives || categoriesActives.includes('annonces')) && (
-            <Link href="/annonces" className="categ-pill">📢 Annonces</Link>
-          )}
+            })}
+          </div>
         </div>
       </section>
 
-      {/* ── Stats ────────────────────────────────────────────────── */}
-      <div className="stats-strip">
-        <div className="stat-item">
-          <span className="stat-num">9+</span>
-          <span className="stat-lbl">Sites partenaires</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-num">3 000+</span>
-          <span className="stat-lbl">Produits indexés</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-num">100%</span>
-          <span className="stat-lbl">Gratuit</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-num">Dakar</span>
-          <span className="stat-lbl">&amp; partout au Sénégal</span>
-        </div>
-      </div>
+      {/* ── CONTENU PRINCIPAL & RÉSULTATS DIRECTS ──────────────────── */}
+      <main className="page-container" style={{ maxWidth: 1440, paddingTop: '1.5rem', paddingBottom: '4rem' }}>
+        
+        {/* BANDEAU FEEDBACK RECHERCHE & CONFIRMATION DES RÉSULTATS */}
+        {hasFiltre && (
+          <div style={{
+            background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 16,
+            padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 16, flexWrap: 'wrap', boxShadow: '0 4px 12px rgba(199,91,0,0.06)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 20 }}>🔎</span>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: '#0f172a' }}>
+                  {total > 0 ? `${total} produit${total > 1 ? 's' : ''} trouvé${total > 1 ? 's' : ''}` : 'Aucun produit trouvé'}
+                  {q ? ` pour "${q}"` : ''}
+                  {categorie ? ` — Catégorie : ${CATEGORIES.find(c => c.slug === categorie)?.label || categorie}` : ''}
+                </h3>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
+                  Résultats actualisés en temps réel.
+                </p>
+              </div>
+            </div>
 
-      {/* ── Récemment consultés ──────────────────────────────────── */}
-      <RecentlyViewed />
+            <Link
+              href="/"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, background: '#ffffff', color: '#dc2626',
+                border: '1px solid #fca5a5', padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 800,
+                textDecoration: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+              }}
+            >
+              <span>Réinitialiser les filtres</span>
+              <span>✕</span>
+            </Link>
+          </div>
+        )}
 
-      {/* ── Section Nopalou en Action (3 axes) ───────────────────── */}
-      <ShowcaseTabs />
-
-      {/* ── Grille produits & Filtres ───────────────────────────── */}
-      {erreur ? (
-        <div className="erreur-page">
-          <h2>Impossible de charger les produits</h2>
-          <p>{erreur}</p>
-        </div>
-      ) : (
-        <div style={{ marginTop: 32 }}>
-          {/* ── Barre de filtres (Budget, Tri, Effacer) ──────────── */}
-          <div className="filtres-bar" style={{ marginBottom: 12 }}>
+        {/* ── BARRE DE FILTRES (BUDGET & TRI) ────────────────────── */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+          <div className="filtres-bar" style={{ margin: 0 }}>
             <span className="filtres-label">Budget :</span>
             {BUDGETS.map((b) => {
               const ps = new URLSearchParams()
@@ -262,12 +270,9 @@ export default async function HomePage({
                 </Link>
               )
             })}
-            {hasFiltre && (
-              <Link href="/" className="budget-pill budget-pill--reset">✕ Tout effacer</Link>
-            )}
           </div>
 
-          <div className="filtres-bar" style={{ marginBottom: 20 }}>
+          <div className="filtres-bar" style={{ margin: 0 }}>
             <span className="filtres-label">Trier :</span>
             {TRIS.map((t) => {
               const ps = new URLSearchParams()
@@ -286,20 +291,27 @@ export default async function HomePage({
               )
             })}
           </div>
-
-          <CompareFilterBanner />
-          <ProduitsListe
-            key={`${q}-${categorie}-${prixMax}-${tri}-${sousType}`}
-            initialProduits={produits}
-            total={total}
-            q={q}
-            categorie={categorie}
-            prixMax={prixMax}
-            tri={tri}
-            sousType={sousType}
-          />
         </div>
-      )}
+
+        {/* GRILLE DES PRODUITS IMMÉDIATE */}
+        <CompareFilterBanner />
+        <ProduitsListe
+          key={`${q}-${categorie}-${prixMax}-${tri}-${sousType}`}
+          initialProduits={produits}
+          total={total}
+          q={q}
+          categorie={categorie}
+          prixMax={prixMax}
+          tri={tri}
+          sousType={sousType}
+        />
+
+        {/* SECTION BOUTIQUES & MARCHANDS EN BAS DE PAGE */}
+        <ShowcaseTabs />
+
+        {/* PRODUITS RÉCEMMENT CONSULTÉS */}
+        <RecentlyViewed />
+      </main>
 
       {/* ── Comment ça marche ───────────────────────────────────── */}
       {!hasFiltre && (
