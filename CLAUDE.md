@@ -1086,6 +1086,9 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
           - Recherche globale : la saisie dans la barre de recherche interroge désormais les **2 070 produits modèles** sur **toutes les catégories simultanément**.
           - Mappage d'alias : correction de l'incohérence des clés de catégories (ex: `electronique` regroupe désormais `smartphones`, `informatique`, `electronique` et `high-tech`).
           - Ajout de l'onglet **`📁 Tous les produits`** au début pour parcourir l'ensemble du catalogue standard sans restriction.
+      - **Correction Persistance des Cases à Cocher Fiscales (`ParametresFiscalite.tsx` & `boutiques.js`)** :
+        - Diagnostic : le navigateur envoyait la valeur natif HTML `'on'` pour les cases cochées au lieu de `'true'`, tandis que le backend échouait la comparaison `'on' === 'true'` (sauvegardait `false`). Décocher envoyait `undefined`, ce qui conservait la valeur précédente sans pouvoir la passer à `false`.
+        - Correction : Ajout d'inputs cachés explicites `<input type="hidden" name="prix_tva_incluse" value={prixTvaIncluse ? 'true' : 'false'} />` et gestion du state React. Côté backend, intégration d'une fonction `parseBoolVal` et d'une clause `CASE WHEN $9::boolean IS NOT NULL THEN $9::boolean ELSE ... END` garantissant la persistance exacte et immédiate des deux options.
   - **Informations Légales OHADA & Standards PDF Professionnels** :
     - **Migration BDD** : Ajout de 7 nouvelles colonnes à la table `boutiques` : `rccm`, `ninea`, `forme_juridique`, `capital_social`, `compte_bancaire`, `conditions_vente`, `pied_de_page_document`.
     - **Backend** : Route PUT `/:id` étendue pour sauvegarder les 7 nouveaux champs. Routes GET `/mine` et GET `/:idOrSlug` étendues pour les inclure dans le SELECT.
