@@ -1836,18 +1836,216 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
 
 // ── Vue de gestion d'une boutique — layout sidebar ────────────────────────────
 
-const NAV_ITEMS: { key: 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite'; icon: string; label: string }[] = [
-  { key: 'produits',   icon: '🛍',  label: 'Catalogue' },
-  { key: 'commandes',  icon: '📋',  label: 'Commandes' },
-  { key: 'compta',     icon: '💰',  label: 'Comptabilité' },
-  { key: 'documents',  icon: '📄',  label: 'Factures & Devis' },
-  { key: 'fournisseurs',icon: '📦',  label: 'Fournisseurs & Stock' },
-  { key: 'fiscalite',  icon: '⚖️',  label: 'Fiscalité Caisse' },
-  { key: 'analytics',  icon: '📊',  label: 'Analytics' },
-  { key: 'infos',      icon: '⚙️', label: 'Paramètres' },
-  { key: 'marketing',  icon: '📣',  label: 'Marketing' },
-  { key: 'admins',     icon: '👥',  label: 'Administrateurs' },
-  { key: 'caissiers',  icon: '🏪',  label: 'Caissiers POS' },
+function BoutiqueEquipe({ boutiqueId }: { boutiqueId: string }) {
+  const [subTab, setSubTab] = useState<'admins' | 'caissiers'>('admins')
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 24, borderBottom: '1px solid #e5e7eb', paddingBottom: 12 }}>
+        <button
+          onClick={() => setSubTab('admins')}
+          style={{
+            padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            border: subTab === 'admins' ? '2px solid #C75B00' : '1px solid #d1d5db',
+            background: subTab === 'admins' ? '#fff7f0' : '#fff',
+            color: subTab === 'admins' ? '#C75B00' : '#374151',
+          }}
+        >
+          👥 Administrateurs
+        </button>
+        <button
+          onClick={() => setSubTab('caissiers')}
+          style={{
+            padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            border: subTab === 'caissiers' ? '2px solid #C75B00' : '1px solid #d1d5db',
+            background: subTab === 'caissiers' ? '#fff7f0' : '#fff',
+            color: subTab === 'caissiers' ? '#C75B00' : '#374151',
+          }}
+        >
+          🏪 Caissiers POS
+        </button>
+      </div>
+
+      {subTab === 'admins' ? (
+        <BoutiqueAdmins boutiqueId={boutiqueId} />
+      ) : (
+        <BoutiqueCaissiers boutiqueId={boutiqueId} />
+      )}
+    </div>
+  )
+}
+
+type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite'
+
+function BoutiqueDashboard({
+  boutique,
+  planActif,
+  nbEnAttente,
+  onNavigate,
+}: {
+  boutique: Boutique
+  planActif: 'pro' | 'business' | null
+  nbEnAttente: number
+  onNavigate: (tab: ManageTab) => void
+}) {
+  const [produitsCount, setProduitsCount] = useState<number | null>(null)
+  const [stockAlertsCount, setStockAlertsCount] = useState<number | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    getBoutiqueProduits(boutique.id)
+      .then(produits => {
+        if (!active) return
+        setProduitsCount(produits.length)
+        const alerts = produits.filter(p => !p.en_stock || (p.stock_quantite !== null && p.stock_quantite <= 3))
+        setStockAlertsCount(alerts.length)
+      })
+      .catch(() => {})
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [boutique.id])
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Grille de statistiques clés */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Commandes en attente</span>
+            <span style={{ fontSize: 20 }}>📋</span>
+          </div>
+          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: nbEnAttente > 0 ? '#C75B00' : '#0f172a' }}>{nbEnAttente}</p>
+          <button onClick={() => onNavigate('commandes')} style={{ background: 'none', border: 'none', color: '#C75B00', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10 }}>
+            Voir les commandes →
+          </button>
+        </div>
+
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Catalogue Produits</span>
+            <span style={{ fontSize: 20 }}>🛍️</span>
+          </div>
+          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#0f172a' }}>{loading ? '...' : (produitsCount ?? 0)}</p>
+          <button onClick={() => onNavigate('produits')} style={{ background: 'none', border: 'none', color: '#1d4ed8', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10 }}>
+            Gérer le catalogue →
+          </button>
+        </div>
+
+        <div style={{ background: stockAlertsCount && stockAlertsCount > 0 ? '#fffbeb' : '#f8fafc', border: stockAlertsCount && stockAlertsCount > 0 ? '1px solid #fcd34d' : '1px solid #e2e8f0', borderRadius: 14, padding: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : '#64748b' }}>Alertes Stock</span>
+            <span style={{ fontSize: 20 }}>⚠️</span>
+          </div>
+          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : '#0f172a' }}>{loading ? '...' : (stockAlertsCount ?? 0)}</p>
+          <button onClick={() => onNavigate('fournisseurs')} style={{ background: 'none', border: 'none', color: '#b45309', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10 }}>
+            Réapprovisionner →
+          </button>
+        </div>
+
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Formule Boutique</span>
+            <span style={{ fontSize: 20 }}>⭐</span>
+          </div>
+          <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : '#64748b' }}>
+            {planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : 'Gratuit'}
+          </p>
+          <Link href="/boutique/abonnement" style={{ color: '#1d4ed8', fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'inline-block', marginTop: 10 }}>
+            Gérer mon offre →
+          </Link>
+        </div>
+      </div>
+
+      {/* Raccourcis d'action rapide */}
+      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 20 }}>
+        <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 800, color: '#0f172a' }}>⚡ Raccourcis & Actions Rapides</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+          <button
+            onClick={() => onNavigate('produits')}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#f0fdf4', border: '1px solid #bbf7d0', cursor: 'pointer', textAlign: 'left' }}
+          >
+            <span style={{ fontSize: 24 }}>➕</span>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#166534' }}>Ajouter un produit</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#15803d' }}>Photos, prix & détails</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigate('documents')}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#eff6ff', border: '1px solid #bfdbfe', cursor: 'pointer', textAlign: 'left' }}
+          >
+            <span style={{ fontSize: 24 }}>📄</span>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#1e40af' }}>Créer une facture/devis</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#1d4ed8' }}>Document client PDF</p>
+            </div>
+          </button>
+
+          <a
+            href="/boutique/caisse"
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#faf5ff', border: '1px solid #e9d5ff', textDecoration: 'none' }}
+          >
+            <span style={{ fontSize: 24 }}>🛒</span>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#6b21a8' }}>Ouvrir Caisse POS</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7e22ce' }}>Vente sur place</p>
+            </div>
+          </a>
+
+          <button
+            onClick={() => onNavigate('marketing')}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#fff7ed', border: '1px solid #ffedd5', cursor: 'pointer', textAlign: 'left' }}
+          >
+            <span style={{ fontSize: 24 }}>📣</span>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#9a3412' }}>Partager la boutique</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#c2410c' }}>Lien WhatsApp & réseaux</p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface NavGroup {
+  title: string
+  items: { key: ManageTab; icon: string; label: string }[]
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    title: 'Ventes & Clients',
+    items: [
+      { key: 'dashboard',   icon: '🏠', label: 'Vue d’ensemble' },
+      { key: 'commandes',   icon: '📋', label: 'Commandes' },
+      { key: 'documents',   icon: '📄', label: 'Factures & Devis' },
+    ],
+  },
+  {
+    title: 'Catalogue & Stocks',
+    items: [
+      { key: 'produits',     icon: '🛍️', label: 'Catalogue' },
+      { key: 'fournisseurs', icon: '📦', label: 'Fournisseurs & Stock' },
+    ],
+  },
+  {
+    title: 'Finance & Rapports',
+    items: [
+      { key: 'compta',      icon: '💰', label: 'Comptabilité' },
+      { key: 'fiscalite',   icon: '⚖️', label: 'Fiscalité Caisse' },
+      { key: 'analytics',   icon: '📊', label: 'Analytics' },
+    ],
+  },
+  {
+    title: 'Paramètres & Équipe',
+    items: [
+      { key: 'equipe',      icon: '👥', label: 'Équipe & Accès' },
+      { key: 'marketing',   icon: '📣', label: 'Marketing' },
+      { key: 'infos',       icon: '⚙️', label: 'Paramètres' },
+    ],
+  },
 ]
 
 function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
@@ -1857,7 +2055,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
   onEdit: () => void
   prixPro: number
 }) {
-  const [tab, setTab] = useState<'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite'>('produits')
+  const [tab, setTab] = useState<ManageTab>('dashboard')
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
@@ -1894,6 +2092,24 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
     const id = setInterval(check, 30_000)
     return () => clearInterval(id)
   }, [boutique.id])
+
+  const tabInfoMap: Record<ManageTab, { title: string; icon: string; desc: string }> = {
+    dashboard:   { icon: '🏠', title: 'Vue d’ensemble', desc: 'Synthèse de votre activité, commandes et indicateurs clés.' },
+    produits:    { icon: '🛍️', title: 'Catalogue produits', desc: 'Gérez vos produits, stocks et tarifs.' },
+    commandes:   { icon: '📋', title: 'Commandes', desc: 'Commandes reçues — web et WhatsApp. Mettez à jour les statuts.' },
+    compta:      { icon: '💰', title: 'Comptabilité', desc: 'Ventes, dépenses, stock et zones de livraison.' },
+    analytics:   { icon: '📊', title: 'Analytics', desc: 'Vues, clics et performances de votre boutique.' },
+    infos:       { icon: '⚙️', title: 'Paramètres boutique', desc: 'Modifiez les informations, contacts et photos.' },
+    marketing:   { icon: '📣', title: 'Marketing', desc: 'Partagez votre catalogue et augmentez vos ventes.' },
+    equipe:      { icon: '👥', title: 'Gestion de l’Équipe (Admins & Caissiers)', desc: 'Gérez les administrateurs de la boutique et les caissiers du point de vente.' },
+    admins:      { icon: '👥', title: 'Gestion des Admins', desc: 'Gérez les administrateurs.' },
+    caissiers:   { icon: '🏪', title: 'Gestion des Caissiers', desc: 'Gérez les caissiers.' },
+    documents:   { icon: '📄', title: 'Documents Clients (Factures, Devis, Proformas)', desc: 'Visualisez, créez et éditez les factures, devis et proformas de vos clients.' },
+    fournisseurs: { icon: '📦', title: 'Fournisseurs & Réapprovisionnement', desc: 'Gérez vos fournisseurs et vos commandes de réapprovisionnement de stock.' },
+    fiscalite:   { icon: '⚖️', title: 'Configuration Fiscalité & Taxes', desc: 'Configurez le régime de TVA de votre commerce et la fiscalité de la caisse POS.' },
+  }
+
+  const currentTabInfo = tabInfoMap[tab] ?? tabInfoMap.dashboard
 
   return (
     <>
@@ -1943,16 +2159,25 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
           </div>
         </div>
 
-        {/* Nav */}
+        {/* Nav par Groupes */}
         <nav className="bq-nav">
-          {NAV_ITEMS.map(item => (
-            <button key={item.key} onClick={() => { setTab(item.key); if (item.key === 'commandes') setNbEnAttente(0) }} className={`bq-nav-item${tab === item.key ? ' active' : ''}`}>
-              <span style={{ fontSize: 16 }}>{item.icon}</span>
-              {item.label}
-              {item.key === 'commandes' && nbEnAttente > 0 && (
-                <span className="bq-nav-badge">{nbEnAttente}</span>
-              )}
-            </button>
+          {NAV_GROUPS.map((group, gIdx) => (
+            <div key={gIdx} className="bq-nav-group">
+              <div className="bq-nav-group-title">{group.title}</div>
+              {group.items.map(item => (
+                <button
+                  key={item.key}
+                  onClick={() => { setTab(item.key); if (item.key === 'commandes') setNbEnAttente(0) }}
+                  className={`bq-nav-item${tab === item.key ? ' active' : ''}`}
+                >
+                  <span style={{ fontSize: 16 }}>{item.icon}</span>
+                  {item.label}
+                  {item.key === 'commandes' && nbEnAttente > 0 && (
+                    <span className="bq-nav-badge">{nbEnAttente}</span>
+                  )}
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
 
@@ -1974,46 +2199,28 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
         {/* Titre de section */}
         <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
           <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 20, margin: 0, color: '#111' }}>
-            {NAV_ITEMS.find(i => i.key === tab)?.icon}{' '}
-            {{ 
-              produits: 'Catalogue produits', 
-              commandes: 'Commandes', 
-              compta: 'Comptabilité', 
-              analytics: 'Analytics', 
-              infos: 'Paramètres boutique', 
-              marketing: 'Marketing', 
-              admins: 'Gestion des Admins', 
-              caissiers: 'Gestion des Caissiers',
-              documents: 'Documents Clients (Factures, Devis, Proformas)',
-              fournisseurs: 'Fournisseurs & Réapprovisionnement',
-              fiscalite: 'Configuration Fiscalité & Taxes'
-            }[tab]}
+            {currentTabInfo.icon} {currentTabInfo.title}
           </h2>
-          {tab === 'produits'  && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Gérez vos produits, stocks et tarifs.</p>}
-          {tab === 'commandes' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Commandes reçues — web et WhatsApp. Mettez à jour les statuts.</p>}
-          {tab === 'compta'    && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Ventes, dépenses, stock et zones de livraison.</p>}
-          {tab === 'analytics' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Vues, clics et performances de votre boutique.</p>}
-          {tab === 'infos'     && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Modifiez les informations, contacts et photos.</p>}
-          {tab === 'documents' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Visualisez, créez et éditez les factures, devis et proformas de vos clients.</p>}
-          {tab === 'fournisseurs' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Gérez vos fournisseurs et vos commandes de réapprovisionnement de stock.</p>}
-          {tab === 'fiscalite' && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Configurez le régime de TVA de votre commerce et la fiscalité de la caisse POS.</p>}
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>{currentTabInfo.desc}</p>
         </div>
 
-        {tab === 'produits'  && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
-        {tab === 'commandes' && <Commandes boutiqueId={boutique.id} />}
-        {tab === 'compta'    && <Comptabilite boutiqueId={boutique.id} />}
-        {tab === 'analytics' && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
-        {tab === 'infos'    && (
+        {tab === 'dashboard'   && <BoutiqueDashboard boutique={boutique} planActif={planActif} nbEnAttente={nbEnAttente} onNavigate={setTab} />}
+        {tab === 'produits'    && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
+        {tab === 'commandes'   && <Commandes boutiqueId={boutique.id} />}
+        {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} />}
+        {tab === 'analytics'   && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
+        {tab === 'infos'       && (
           <div style={{ maxWidth: 580 }}>
             <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={() => router.refresh()} />
           </div>
         )}
-        {tab === 'marketing' && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} planActif={planActif} />}
-        {tab === 'admins'    && <BoutiqueAdmins boutiqueId={boutique.id} />}
-        {tab === 'caissiers' && <BoutiqueCaissiers boutiqueId={boutique.id} />}
-        {tab === 'documents' && <GestionDocuments boutiqueId={boutique.id} />}
+        {tab === 'marketing'   && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} planActif={planActif} />}
+        {tab === 'equipe'      && <BoutiqueEquipe boutiqueId={boutique.id} />}
+        {tab === 'admins'      && <BoutiqueAdmins boutiqueId={boutique.id} />}
+        {tab === 'caissiers'   && <BoutiqueCaissiers boutiqueId={boutique.id} />}
+        {tab === 'documents'   && <GestionDocuments boutiqueId={boutique.id} />}
         {tab === 'fournisseurs' && <GestionFournisseurs boutiqueId={boutique.id} />}
-        {tab === 'fiscalite' && <ParametresFiscalite boutique={boutique} onUpdate={() => router.refresh()} />}
+        {tab === 'fiscalite'   && <ParametresFiscalite boutique={boutique} onUpdate={() => router.refresh()} />}
       </main>
     </div>
     </>

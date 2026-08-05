@@ -8783,6 +8783,20 @@ button:focus-visible,
   flex: 1;
 }
 
+.bq-nav-group {
+  margin-bottom: 14px;
+}
+
+.bq-nav-group-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  padding: 6px 12px 4px;
+  margin: 0;
+}
+
 .bq-nav-item {
   width: 100%;
   display: flex;
