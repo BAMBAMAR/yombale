@@ -5,36 +5,98 @@ const catalogues = {
   alimentation: [
     { nom: "Riz brisé Sadia 25kg", desc: "Riz brisé de qualité supérieure, idéal pour le Ceebu Jën", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
     { nom: "Riz parfumé Dinor 5kg", desc: "Riz parfumé grain long, arôme naturel intense", photo: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400" },
+    { nom: "Riz brisé Royal 50kg", desc: "Riz 100% brisé parfumé en sac de 50kg pour grande consommation", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
+    { nom: "Riz local de la Vallée 25kg", desc: "Riz local décortiqué frais de la région de Saint-Louis", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
     { nom: "Lait Nido 400g", desc: "Lait entier en poudre enrichi en vitamines et minéraux", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
     { nom: "Lait Nido 900g", desc: "Grand format de lait entier en poudre Nido", photo: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400" },
+    { nom: "Lait Nido 2.5kg (Format Familial)", desc: "Boîte géante 2.5kg de lait entier en poudre Nido", photo: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400" },
     { nom: "Lait Gloria 160g", desc: "Lait concentré non sucré onctueux pour le café ou thé", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
+    { nom: "Lait Peak en Poudre 400g", desc: "Lait en poudre instantané riche et crémeux", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
+    { nom: "Lait Concentré Sucré Nestlé 397g", desc: "Boîte de lait concentré sucré onctueux pour desserts et tasses", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
     { nom: "Café Touba Moulé 250g", desc: "Café moulu traditionnel sénégalais épicé au piment noir (Jar)", photo: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400" },
     { nom: "Café Touba Moulé 500g", desc: "Grand format de café Touba moulu traditionnel", photo: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400" },
+    { nom: "Café Nescafé Classic 200g", desc: "Bocal de café soluble 100% pur café", photo: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400" },
+    { nom: "Café Nescafé 3 en 1 (Sachet de 10)", desc: "Pack de 10 sachets de café sucré avec crèmerie", photo: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400" },
     { nom: "Bouillon Jumbo Poulet (60 cubes)", desc: "Boîte de 60 cubes d'assaisonnement saveur poulet", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
     { nom: "Bouillon Jumbo Crevette (60 cubes)", desc: "Boîte de 60 cubes d'assaisonnement saveur crevette", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
+    { nom: "Bouillon Jumbo Oignon (60 cubes)", desc: "Boîte de 60 cubes d'assaisonnement saveur oignon", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
     { nom: "Bouillon Maggi Arôme 200ml", desc: "Flacon d'arôme liquide Maggi pour assaisonner tous vos plats", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
+    { nom: "Bouillon Knorr Bœuf (48 cubes)", desc: "Cubes d'assaisonnement au goût riche de bœuf mijoté", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
     { nom: "Huile Dinor 5L", desc: "Huile végétale raffinée 100% pure pour friture et cuisson", photo: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400" },
     { nom: "Huile Niani 1L", desc: "Bouteille 1L d'huile de tournesol raffinée", photo: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400" },
+    { nom: "Huile Lesieur Tournesol 5L", desc: "Bouteille 5L d'huile de tournesol pure", photo: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400" },
+    { nom: "Huile de Palme Rouge 1L", desc: "Huile de palme rouge naturelle artisanale pour soupe Kandia", photo: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400" },
     { nom: "Sucre en Poudre Mimran 1kg", desc: "Sucre blanc raffiné pur canne en sachet 1kg", photo: "https://images.unsplash.com/photo-1622484210800-885108920194?w=400" },
     { nom: "Sucre en Morceaux CSS 1kg", desc: "Boîte de 1kg de sucre blanc en morceaux", photo: "https://images.unsplash.com/photo-1581006852262-e4307cf6283a?w=400" },
+    { nom: "Sucre Roux Pur Canne 1kg", desc: "Sucre roux de canne non raffiné pour boissons et pâtisseries", photo: "https://images.unsplash.com/photo-1622484210800-885108920194?w=400" },
     { nom: "Thé Lipton Yellow Label (100 sachets)", desc: "Boîte de 100 sachets de thé noir intense", photo: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400" },
     { nom: "Thé Vert Flecha 8147 (250g)", desc: "Véritable thé vert de Chine pour la préparation de l'Ataya", photo: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400" },
+    { nom: "Thé Vert Achoura (250g)", desc: "Thé vert de qualité supérieure pour les 3 trois trois de l'Ataya", photo: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400" },
     { nom: "Jus Pressea Mangue 1L", desc: "Brique 1L de jus de mangue sénégalais rafraîchissant", photo: "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400" },
     { nom: "Jus Pressea Orange 1L", desc: "Jus d'orange en brique 1L d'origine naturelle", photo: "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400" },
+    { nom: "Jus Pressea Ananas-Gingembre 1L", desc: "Jus mélangé ananas et gingembre piquant", photo: "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400" },
+    { nom: "Nectar de Bissap Kirène 1L", desc: "Jus d'hibiscus naturel pasteurisé en brique 1L", photo: "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400" },
     { nom: "Eau Kirène 1.5L (Pack de 6)", desc: "Pack de 6 bouteilles d'eau minérale naturelle Kirène", photo: "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=400" },
     { nom: "Eau Kirène Bidon 5L", desc: "Grand bidon 5L d'eau minérale naturelle", photo: "https://images.unsplash.com/photo-1560023907-5f313c875300?w=400" },
+    { nom: "Eau Oulmès Pétillante 1L", desc: "Bouteille d'eau gazeuse pétillante rafraîchissante", photo: "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=400" },
+    { nom: "Eau Casamançaise 1.5L (Pack de 6)", desc: "Pack de 6 bouteilles d'eau minérale de Casamance", photo: "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=400" },
     { nom: "Canette Gazelle 33cl", desc: "Boisson rafraîchissante locale 33cl", photo: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400" },
+    { nom: "Canette Coca-Cola 33cl (Pack de 6)", desc: "Boissons gazeuses Coca-Cola rafraîchissantes 33cl", photo: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400" },
+    { nom: "Canette Fanta Orange 33cl", desc: "Soda fruité saveur orange en canette 33cl", photo: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400" },
+    { nom: "Energy Drink Cody's 250ml", desc: "Boisson énergisante à la taurine et vitamines", photo: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400" },
     { nom: "Thiakry Frais 500g", desc: "Dessert traditionnel à base de couscous de millet et lait caillé", photo: "https://images.unsplash.com/photo-1541518763669-27fef04b14da?w=400" },
     { nom: "Araw de Petit Millet 1kg", desc: "Granulés de millet traditionnel pour préparation de Lakh ou Ngalakh", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
+    { nom: "Couscous de Millet (Souna) 1kg", desc: "Couscous fin de millet roulé à la main", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
+    { nom: "Sankhal de Millet 1kg", desc: "Millet concassé pour bouillies traditionnelles et lakh", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
     { nom: "Sirop de Bissap 1L", desc: "Concentré naturel d'hibiscus fait maison", photo: "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400" },
     { nom: "Sirop de Bouye 1L", desc: "Concentré de pain de singe (fruit du baobab)", photo: "https://images.unsplash.com/photo-1570831739435-660143a4e5d5?w=400" },
+    { nom: "Sirop de Gingembre (Gnamakoudji) 1L", desc: "Sirop de gingembre frais piquant et tonifiant", photo: "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400" },
+    { nom: "Fleurs de Bissap Séchées 500g", desc: "Fleurs d'hibiscus rouges séchées pour jus et infusions", photo: "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400" },
+    { nom: "Poudre de Bouye (Baobab) 500g", desc: "Poudre 100% naturelle de fruit du baobab riche en vitamine C", photo: "https://images.unsplash.com/photo-1570831739435-660143a4e5d5?w=400" },
     { nom: "Moutarde Amora 265g", desc: "Pot de moutarde forte de Dijon", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
     { nom: "Mayonnaise Lesieur 475g", desc: "Bocal de mayonnaise onctueuse aux œufs frais", photo: "https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=400" },
+    { nom: "Mayonnaise Calvé 450g", desc: "Mayonnaise crémeuse idéale pour salades et sandwichs", photo: "https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=400" },
+    { nom: "Ketchup Amora Flacon 500g", desc: "Ketchup à la tomate de qualité en flacon souple", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
+    { nom: "Sauce Piment Extra Forte 200g", desc: "Sauce pimentée au piment habanero piquant", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
     { nom: "Pâtes Spaghetti Panzani 500g", desc: "Pâtes de qualité 100% blé dur", photo: "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400" },
+    { nom: "Pâtes Spaghetti Rawsan 500g", desc: "Spaghettis dorés blé dur cuisson rapide", photo: "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400" },
+    { nom: "Macaroni Panzani 500g", desc: "Macaronis coudés blé dur pour gratins et sauces", photo: "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400" },
+    { nom: "Coquillettes Rawsan 500g", desc: "Pâtes coquillettes fondantes et rapides", photo: "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400" },
+    { nom: "Vermicelles Rawsan 500g", desc: "Vermicelles fins pour soupe et seffa", photo: "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400" },
+    { nom: "Couscous Blé Dari 1kg", desc: "Couscous moyen de blé dur de tradition marocaine", photo: "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400" },
     { nom: "Farine de Blé 1kg", desc: "Farine type 55 idéale pour pâtisseries et beignets", photo: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400" },
+    { nom: "Farine de Maïs Jaune 1kg", desc: "Farine de maïs fin pour bouillie et polenta", photo: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400" },
     { nom: "Chocolat à tartiner Nutella 400g", desc: "Pâte à tartiner aux noisettes et au cacao", photo: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400" },
+    { nom: "Chocolat en Poudre Milo 400g", desc: "Boisson chocolatée maltée enrichie en vitamines", photo: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400" },
+    { nom: "Chocolat en Poudre Nesquik 400g", desc: "Poudre chocolatée pour le petit déjeuner des enfants", photo: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400" },
+    { nom: "Flocons d'Avoine Quaker Oats 500g", desc: "Flocons d'avoine complets pour porridge sain", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
     { nom: "Sac d'Oignons 25kg", desc: "Sac d'oignons locaux frais de la vallée", photo: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400" },
-    { nom: "Sac de Pommes de Terre 25kg", desc: "Sac de pommes de terre de qualité supérieure", photo: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400" }
+    { nom: "Sac d'Oignons Importés 25kg", desc: "Sac d'oignons jaunes calibrés pour conservation longue", photo: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400" },
+    { nom: "Sac de Pommes de Terre 25kg", desc: "Sac de pommes de terre de qualité supérieure", photo: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400" },
+    { nom: "Sac d'Ail Frais 5kg", desc: "Têtes d'ail frais parfumées en filet 5kg", photo: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400" },
+    { nom: "Sac de Gingembre Frais 5kg", desc: "Racines de gingembre piquant frais 5kg", photo: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400" },
+    { nom: "Pâte d'Arachide Mafé 1kg", desc: "Pâte d'arachide grillée pure sans additif pour sauce Mafé", photo: "https://images.unsplash.com/photo-1567894510008-724444444444?w=400" },
+    { nom: "Kethiakh (Poisson Salé Séché) 1kg", desc: "Poisson fumé salé traditionnel pour plats sénégalais", photo: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400" },
+    { nom: "Guedj (Poisson Séché Artisanal) 500g", desc: "Poisson séché fermenté pour assaisonner Thiebou Dienn", photo: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400" },
+    { nom: "Yeet (Mollusque Séché) 250g", desc: "Mollusque séché aromatique traditionnel", photo: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400" },
+    { nom: "Crevettes Séchées Moulières 200g", desc: "Petites crevettes séchées salées pour assaisonnement", photo: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400" },
+    { nom: "Sardines Titus à l'Huile (Boîte 125g)", desc: "Boîte de sardines à l'huile végétale riche en Oméga-3", photo: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400" },
+    { nom: "Thon Entier au Naturel 160g", desc: "Boîte de thon entier égoutté pour salades", photo: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400" },
+    { nom: "Corned Beef Hereford 340g", desc: "Boîte de conserve de bœuf assaisonné", photo: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400" },
+    { nom: "Fromage La Vache Qui Rit (24 portions)", desc: "Boîte rondelle de 24 portions de fromage fondu", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
+    { nom: "Beurre Président Plaquette 250g", desc: "Plaquette de beurre doux pasteurisé 82% MG", photo: "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=400" },
+    { nom: "Haricots Rouges Secs 1kg", desc: "Haricots rouges secs de qualité pour mijotés", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
+    { nom: "Haricots Blancs Cornilles 1kg", desc: "Haricots niebé locaux pour thiébou niebé", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
+    { nom: "Lentilles Brunes 1kg", desc: "Lentilles sèches riches en fer et protéines", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
+    { nom: "Pois Chiches Secs 1kg", desc: "Pois chiches secs pour houmous et couscous", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
+    { nom: "Poivre Noir de Penja Moulu 100g", desc: "Poivre noir moulu intense et parfumé", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
+    { nom: "Piment Rouge Séché Moulu 100g", desc: "Piment fort en poudre pur pur", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
+    { nom: "Gros Sel de Kaolack Sac 25kg", desc: "Sac de gros sel marins iodé de Kaolack", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
+    { nom: "Sel Fin de Table Iodé 1kg", desc: "Sachet de sel fin iodé pour la cuisine de tous les jours", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
+    { nom: "Vinaigre Blanc d'Alcool 1L", desc: "Bouteille 1L de vinaigre d'alcool blanc 8%", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
+    { nom: "Biscuits Vitalis Petit Beurre 200g", desc: "Paquet de biscuits dorés croquants au beurre", photo: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400" },
+    { nom: "Pack de 6 Paquets Oreo 154g", desc: "Biscuits enrobés de crème vanille intense", photo: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400" },
+    { nom: "Sac de Bonbons Menthe/Fruit 1kg", desc: "Mélange de bonbons acidulés pour comptoir de caisse", photo: "https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=400" }
   ],
 
   smartphones: [
@@ -257,30 +319,19 @@ const catalogues = {
 };
 
 const outputData = {};
-const targetCounts = {
-  alimentation: 150,
-  smartphones: 120
-};
 
 Object.keys(catalogues).forEach(cat => {
   const items = catalogues[cat];
-  const target = targetCounts[cat] || 100;
   
-  const generated = [];
-  for (let i = 0; i < target; i++) {
-    const base = items[i % items.length];
-    const index = Math.floor(i / items.length) + 1;
-    generated.push({
-      id: `${cat}-${i + 1}`,
-      nom: index === 1 ? base.nom : `${base.nom} (${index})`,
-      description: base.desc || base.description || `Produit de qualité supérieure: ${base.nom}`,
-      categorie: cat,
-      photo_defaut: base.photo || base.photo_defaut
-    });
-  }
-  outputData[cat] = generated;
+  outputData[cat] = items.map((base, i) => ({
+    id: `${cat}-${i + 1}`,
+    nom: base.nom,
+    description: base.desc || base.description || `Produit de qualité supérieure: ${base.nom}`,
+    categorie: cat,
+    photo_defaut: base.photo || base.photo_defaut
+  }));
 });
 
 const outputPath = path.join(__dirname, 'data', 'catalogues-standards.json');
 fs.writeFileSync(outputPath, JSON.stringify(outputData, null, 2), 'utf8');
-console.log(`✅ Catalogue généré avec succès dans ${outputPath} (${Object.keys(outputData).length} catégories).`);
+console.log(`✅ Catalogue généré avec succès dans ${outputPath} (${Object.keys(outputData).length} catégories, ${Object.values(outputData).flat().length} produits au total).`);
