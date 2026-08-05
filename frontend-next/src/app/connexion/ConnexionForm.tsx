@@ -80,20 +80,20 @@ export default function ConnexionForm() {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24, background: '#f1f5f9', padding: 4, borderRadius: 12 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, background: '#f8fafc', padding: 4, borderRadius: 12, border: '1px solid #e2e8f0' }}>
         <button 
           type="button" 
           onClick={() => setLoginMethod('email')}
-          style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: loginMethod === 'email' ? '#fff' : 'transparent', color: loginMethod === 'email' ? '#0f172a' : '#64748b', fontWeight: 600, boxShadow: loginMethod === 'email' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer' }}
+          style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: loginMethod === 'email' ? '#fff' : 'transparent', color: loginMethod === 'email' ? '#C75B00' : '#64748b', fontWeight: loginMethod === 'email' ? 800 : 600, boxShadow: loginMethod === 'email' ? '0 2px 6px rgba(199,91,0,0.12)' : 'none', cursor: 'pointer' }}
         >
-          Email
+          ✉ Email
         </button>
         <button 
           type="button" 
           onClick={() => setLoginMethod('whatsapp')}
-          style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: loginMethod === 'whatsapp' ? '#fff' : 'transparent', color: loginMethod === 'whatsapp' ? '#0f172a' : '#64748b', fontWeight: 600, boxShadow: loginMethod === 'whatsapp' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer' }}
+          style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: loginMethod === 'whatsapp' ? '#fff' : 'transparent', color: loginMethod === 'whatsapp' ? '#C75B00' : '#64748b', fontWeight: loginMethod === 'whatsapp' ? 800 : 600, boxShadow: loginMethod === 'whatsapp' ? '0 2px 6px rgba(199,91,0,0.12)' : 'none', cursor: 'pointer' }}
         >
-          WhatsApp
+          💬 WhatsApp
         </button>
       </div>
 

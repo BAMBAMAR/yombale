@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import BoutiquesSearch from './BoutiquesSearch'
 import { Store, ShieldCheck, MapPin, Sparkles, Star, MessageCircle, ArrowRight, Building2 } from 'lucide-react'
+import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 export const dynamic = 'force-dynamic'
@@ -148,27 +149,27 @@ export default async function BoutiquesPage({
   return (
     <div className="page-container" style={{ maxWidth: 1440, paddingTop: '1.5rem', paddingBottom: '4rem' }}>
       
-      {/* HERO BANNER BOUTIQUES — STYLE CLAIR & LUMINEUX */}
+      {/* HERO BANNER BOUTIQUES — HARMONIE NOPALOU (ORANGE AMBRE & ARDOISE) */}
       <div style={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f0f7ff 50%, #e0f2fe 100%)',
+        background: 'linear-gradient(135deg, #ffffff 0%, #fffdfa 50%, #fff7ed 100%)',
         borderRadius: 24,
         padding: '36px 32px',
         color: '#0f172a',
         marginBottom: 28,
         position: 'relative',
         overflow: 'hidden',
-        border: '1px solid #bae6fd',
-        boxShadow: '0 10px 30px rgba(14, 165, 233, 0.08)',
+        border: '1px solid #fed7aa',
+        boxShadow: '0 10px 30px rgba(199, 91, 0, 0.05)',
       }}>
         <div style={{
           position: 'absolute', right: -60, top: -60, width: 280, height: 280, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(2,132,199,0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(199,91,0,0.08) 0%, transparent 70%)',
           pointerEvents: 'none',
         }} />
 
         <div style={{ position: 'relative', zIndex: 2, maxWidth: 820 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#e0f2fe', color: '#0369a1', padding: '6px 14px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 14, border: '1px solid #bae6fd' }}>
-            <Sparkles size={14} style={{ color: '#0284c7' }} />
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '6px 14px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 14, border: '1px solid #ffedd5' }}>
+            <Sparkles size={14} style={{ color: '#C75B00' }} />
             <span>Hub officiel des vendeurs vérifiés Nopalou</span>
           </div>
 
@@ -184,7 +185,7 @@ export default async function BoutiquesPage({
             <Link href="/demo?role=marchand" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, background: '#C75B00', color: '#fff',
               padding: '10px 18px', borderRadius: 10, fontWeight: 800, fontSize: 13, textDecoration: 'none',
-              boxShadow: '0 4px 12px rgba(199,91,0,0.25)',
+              boxShadow: '0 4px 12px rgba(199,91,0,0.22)',
             }}>
               🏪 Vous êtes commerçant ? Tester la Démo POS →
             </Link>
@@ -198,8 +199,8 @@ export default async function BoutiquesPage({
           </div>
 
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#ffffff', padding: '8px 16px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-              <Store size={22} style={{ color: '#0284c7' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#ffffff', padding: '8px 16px', borderRadius: 12, border: '1px solid #fed7aa', boxShadow: '0 2px 6px rgba(199,91,0,0.05)' }}>
+              <Store size={22} style={{ color: '#C75B00' }} />
               <div>
                 <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>{total > 0 ? total : '100+'}</p>
                 <p style={{ margin: 0, fontSize: 11, color: '#64748b' }}>Boutiques actives</p>
@@ -216,9 +217,9 @@ export default async function BoutiquesPage({
 
             <Link href="/boutique" style={{
               marginLeft: 'auto',
-              background: '#0284c7', color: '#fff', padding: '12px 22px', borderRadius: 12,
+              background: '#C75B00', color: '#fff', padding: '12px 22px', borderRadius: 12,
               textDecoration: 'none', fontWeight: 800, fontSize: 14, display: 'inline-flex', alignItems: 'center', gap: 8,
-              boxShadow: '0 4px 16px rgba(2,132,199,0.3)', transition: 'transform 0.2s',
+              boxShadow: '0 4px 16px rgba(199,91,0,0.25)', transition: 'transform 0.2s',
             }}>
               <span>🏪 Créer ma boutique</span>
               <ArrowRight size={16} />
@@ -245,10 +246,10 @@ export default async function BoutiquesPage({
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '9px 16px', borderRadius: 30, fontSize: 13, fontWeight: isSelected ? 800 : 600,
                   whiteSpace: 'nowrap', textDecoration: 'none',
-                  background: isSelected ? '#0284c7' : '#fff',
+                  background: isSelected ? '#C75B00' : '#fff',
                   color: isSelected ? '#fff' : '#374151',
-                  border: isSelected ? '1px solid #0284c7' : '1px solid #e5e7eb',
-                  boxShadow: isSelected ? '0 4px 12px rgba(2,132,199,0.25)' : 'none',
+                  border: isSelected ? '1px solid #C75B00' : '1px solid #e5e7eb',
+                  boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : 'none',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -351,18 +352,8 @@ export default async function BoutiquesPage({
             const whatsappNumber = b.whatsapp || b.telephone
             const estMisEnAvant = estBusiness || estPro || sponsorActif
 
-            // Dégradés artistiques lumineux et frais pour les couvertures sans photo
-            const gradientColors = [
-              'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%)',
-              'linear-gradient(135deg, #f3e8ff 0%, #ddd6fe 50%, #c4b5fd 100%)',
-              'linear-gradient(135deg, #dcfce7 0%, #a7f3d0 50%, #6ee7b7 100%)',
-              'linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%)',
-              'linear-gradient(135deg, #ffe4e6 0%, #fecdd3 50%, #fda4af 100%)',
-              'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%)',
-            ]
-            let charCodeSum = 0
-            for (let i = 0; i < b.nom.length; i++) charCodeSum += b.nom.charCodeAt(i)
-            const defaultGradient = gradientColors[charCodeSum % gradientColors.length]
+            // Photo de couverture HD par défaut sélectionnée selon la catégorie & hash déterministe
+            const coverImageSrc = b.cover_url || getCategoryCoverPhoto(b.nom, b.categorie)
 
             // Initiales pour le logo par défaut
             const words = b.nom.trim().split(/\s+/)
@@ -383,38 +374,40 @@ export default async function BoutiquesPage({
                   position: 'relative',
                 }}
               >
-                {/* Couverture Header */}
+                {/* Couverture Header HD */}
                 <div style={{
-                  width: '100%', height: 105, background: defaultGradient,
+                  width: '100%', height: 110, background: '#f1f5f9',
                   position: 'relative', overflow: 'hidden',
                 }}>
-                  {b.cover_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={b.cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ position: 'absolute', inset: 0, opacity: 0.25, backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(15,23,42,0.15) 1px, transparent 0)', backgroundSize: '16px 16px' }} />
-                  )}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={coverImageSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
 
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.15) 100%)' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.4) 100%)' }} />
 
                   <div style={{
                     position: 'absolute', top: 10, right: 10, zIndex: 2,
-                    background: statutOuverture.ouverte ? 'rgba(22,163,74,0.92)' : 'rgba(220,38,38,0.92)',
-                    color: '#fff', backdropFilter: 'blur(6px)',
+                    background: 'rgba(255, 255, 255, 0.92)',
+                    color: '#0f172a', backdropFilter: 'blur(8px)',
                     padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800,
-                    display: 'flex', alignItems: 'center', gap: 5, boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    border: '1px solid rgba(255, 255, 255, 0.8)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
                   }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff' }} />
+                    <span style={{
+                      width: 7, height: 7, borderRadius: '50%',
+                      background: statutOuverture.ouverte ? '#16a34a' : '#94a3b8',
+                      boxShadow: statutOuverture.ouverte ? '0 0 6px rgba(22,163,74,0.5)' : 'none'
+                    }} />
                     <span>{statutOuverture.label}</span>
                   </div>
 
                   {estBusiness && (
-                    <div style={{ position: 'absolute', top: 10, left: 10, background: '#0284c7', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                    <div style={{ position: 'absolute', top: 10, left: 10, background: '#0f172a', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                       💼 Business
                     </div>
                   )}
                   {estPro && !estBusiness && (
-                    <div style={{ position: 'absolute', top: 10, left: 10, background: '#C75B00', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                    <div style={{ position: 'absolute', top: 10, left: 10, background: '#C75B00', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                       ⭐ Vendeur Pro
                     </div>
                   )}
@@ -426,7 +419,7 @@ export default async function BoutiquesPage({
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: -32, marginBottom: 10, position: 'relative', zIndex: 3 }}>
                     <div style={{
                       width: 64, height: 64, borderRadius: 14, overflow: 'hidden',
-                      border: '3px solid #fff', background: b.logo_url ? '#fff' : 'linear-gradient(135deg, #e0f2fe, #bae6fd)',
+                      border: '3px solid #fff', background: b.logo_url ? '#fff' : '#fff7ed',
                       boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
@@ -434,7 +427,7 @@ export default async function BoutiquesPage({
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={b.logo_url} alt={b.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                        <span style={{ fontSize: 22, fontWeight: 900, color: '#0284c7', letterSpacing: -0.5 }}>{initials}</span>
+                        <span style={{ fontSize: 22, fontWeight: 900, color: '#C75B00', letterSpacing: -0.5 }}>{initials}</span>
                       )}
                     </div>
 
@@ -469,7 +462,7 @@ export default async function BoutiquesPage({
                     )}
                     {b.categorie && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#f8fafc', padding: '3px 8px', borderRadius: 6, fontWeight: 600 }}>
-                        <Building2 size={12} style={{ color: '#2563eb' }} /> {b.categorie}
+                        <Building2 size={12} style={{ color: '#475569' }} /> {b.categorie}
                       </span>
                     )}
                   </div>
@@ -478,15 +471,12 @@ export default async function BoutiquesPage({
                     <Link
                       href={`/boutiques/${b.slug || b.id}`}
                       style={{
-                        textAlign: 'center', background: '#0284c7', color: '#fff',
+                        textAlign: 'center', background: '#C75B00', color: '#fff',
                         padding: '9px 14px', borderRadius: 10, textDecoration: 'none',
                         fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        boxShadow: '0 2px 8px rgba(2,132,199,0.25)',
+                        boxShadow: '0 2px 8px rgba(199,91,0,0.22)',
                       }}
                     >
-                      <span>Visiter la boutique</span>
-                      <ArrowRight size={14} />
-                    </Link>
                       <span>Visiter la boutique</span>
                       <ArrowRight size={14} />
                     </Link>

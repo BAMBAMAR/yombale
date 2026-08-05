@@ -36,7 +36,7 @@ export default function PageHeader({ breadcrumb, emoji, titre, compteur, cta }: 
       </nav>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-        <h1 style={{ fontSize: 'clamp(22px, 4vw, 30px)', fontWeight: 800, color: 'var(--navy)', lineHeight: 1.2, margin: 0 }}>
+        <h1 style={{ fontSize: 'clamp(22px, 4vw, 30px)', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, margin: 0 }}>
           {emoji ? `${emoji} ` : ''}{titre}
         </h1>
         {cta && (

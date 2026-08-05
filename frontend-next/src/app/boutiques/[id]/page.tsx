@@ -4,6 +4,7 @@ import { apiFetch } from '@/lib/api'
 import { notFound, redirect } from 'next/navigation'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import BoutiqueDetailClient, { type Produit, type Annonce } from './BoutiqueDetailClient'
+import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
 
 interface Boutique {
   id: string
@@ -81,23 +82,21 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
   return (
     <div className="page-container" style={{ maxWidth: 1440, paddingTop: 0, paddingBottom: '3rem' }}>
 
-      {/* Cover photo */}
+      {/* Cover photo HD */}
       <div style={{
-        width: '100%', height: 200, background: 'linear-gradient(135deg, #1e3a5f, #2563eb)',
+        width: '100%', height: 220, background: '#f1f5f9',
         position: 'relative', overflow: 'hidden', marginBottom: 0,
       }}>
-        {b.cover_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={cloudinaryHQ(b.cover_url, { width: 1200 })}
-            alt=""
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={b.cover_url ? cloudinaryHQ(b.cover_url, { width: 1200 }) : getCategoryCoverPhoto(b.nom, b.categorie)}
+          alt=""
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
         {/* Gradient overlay */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,.5) 100%)',
+          background: 'linear-gradient(to bottom, transparent 30%, rgba(0,0,0,.55) 100%)',
         }} />
       </div>
 

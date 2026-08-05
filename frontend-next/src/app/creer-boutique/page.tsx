@@ -101,10 +101,10 @@ export default function CreerBoutiqueWizard() {
         
         {/* Barre de progression */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 32 }}>
-          <div style={{ flex: 1, height: 6, borderRadius: 3, background: step >= 1 ? '#25D366' : '#e2e8f0' }} />
-          <div style={{ flex: 1, height: 6, borderRadius: 3, background: step >= 2 ? '#25D366' : '#e2e8f0' }} />
-          <div style={{ flex: 1, height: 6, borderRadius: 3, background: step >= 3 ? '#25D366' : '#e2e8f0' }} />
-          <div style={{ flex: 1, height: 6, borderRadius: 3, background: step >= 4 ? '#25D366' : '#e2e8f0' }} />
+          <div style={{ flex: 1, height: 6, borderRadius: 3, background: step >= 1 ? '#C75B00' : '#e2e8f0' }} />
+          <div style={{ flex: 1, height: 6, borderRadius: 3, background: step >= 2 ? '#C75B00' : '#e2e8f0' }} />
+          <div style={{ flex: 1, height: 6, borderRadius: 3, background: step >= 3 ? '#C75B00' : '#e2e8f0' }} />
+          <div style={{ flex: 1, height: 6, borderRadius: 3, background: step >= 4 ? '#C75B00' : '#e2e8f0' }} />
         </div>
 
         {error && <p style={{ color: '#ef4444', background: '#fef2f2', padding: 12, borderRadius: 8, fontSize: 14 }}>{error}</p>}
@@ -112,7 +112,7 @@ export default function CreerBoutiqueWizard() {
         <form onSubmit={step < 4 ? handleNext : handleSubmit}>
           {step === 1 && (
             <div style={{ animation: 'fadeIn 0.3s' }}>
-              <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--navy)', marginBottom: 8 }}>Quel est le nom de votre boutique ou produit ?</h1>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>Quel est le nom de votre boutique ou produit ?</h1>
               <p style={{ color: '#64748b', marginBottom: 24 }}>Vous pourrez le changer plus tard.</p>
               <input 
                 type="text" 
@@ -127,7 +127,7 @@ export default function CreerBoutiqueWizard() {
 
           {step === 2 && (
             <div style={{ animation: 'fadeIn 0.3s' }}>
-              <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--navy)', marginBottom: 8 }}>Sur quel numéro WhatsApp gérez-vous vos clients ?</h1>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>Sur quel numéro WhatsApp gérez-vous vos clients ?</h1>
               <p style={{ color: '#64748b', marginBottom: 24 }}>Ce numéro recevra directement les commandes de vos clients.</p>
               <input 
                 type="tel" 
@@ -142,7 +142,7 @@ export default function CreerBoutiqueWizard() {
 
           {step === 3 && (
             <div style={{ animation: 'fadeIn 0.3s' }}>
-              <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--navy)', marginBottom: 8 }}>Vérification de votre numéro</h1>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>Vérification de votre numéro</h1>
               <p style={{ color: '#64748b', marginBottom: 24 }}>Saisissez le code à 6 chiffres que vous venez de recevoir sur WhatsApp.</p>
               <input 
                 type="text" 
@@ -158,7 +158,7 @@ export default function CreerBoutiqueWizard() {
 
           {step === 4 && (
             <div style={{ animation: 'fadeIn 0.3s' }}>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy)', marginBottom: 6 }}>
+              <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 6 }}>
                 Choisissez votre formule & votre style
               </h1>
               <p style={{ color: '#64748b', fontSize: 13, marginBottom: 20 }}>
@@ -169,52 +169,38 @@ export default function CreerBoutiqueWizard() {
               <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#334155', marginBottom: 8 }}>
                 1. Formule d&apos;abonnement :
               </label>
-              <div style={{ display: 'grid', gap: 10, marginBottom: 24 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                 {[
-                  { id: 'decouverte', label: '⚡ Boutique Taf Taf (Découverte)', desc: 'Gratuit pendant 1 mois — Panier & WhatsApp', badge: 'Par défaut' },
-                  { id: 'pro', label: '⭐ Boutique Pro', desc: '5 000 FCFA/mois — Caisse POS, Factures PDF & Stock', badge: 'Recommandé' },
-                  { id: 'business', label: '💼 Boutique Business', desc: '10 000 FCFA/mois — Produits illimités & Multi-caissiers' },
-                ].map((p) => {
-                  const isSelected = plan === p.id
-                  return (
-                    <div
-                      key={p.id}
-                      onClick={() => setPlan(p.id as any)}
-                      style={{
-                        padding: '12px 14px',
-                        borderRadius: 12,
-                        border: `2px solid ${isSelected ? (p.id === 'decouverte' ? '#25D366' : p.id === 'pro' ? '#C75B00' : '#1e3a5f') : '#e2e8f0'}`,
-                        background: isSelected ? '#f8fafc' : '#fff',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <strong style={{ fontSize: 13, color: '#0f172a' }}>{p.label}</strong>
-                          {p.badge && (
-                            <span style={{ fontSize: 9, background: isSelected ? '#25D366' : '#e2e8f0', color: isSelected ? '#1C2B4A' : '#475569', padding: '1px 6px', borderRadius: 8, fontWeight: 800 }}>
-                              {p.badge}
-                            </span>
-                          )}
-                        </div>
-                        <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748b' }}>{p.desc}</p>
-                      </div>
-                      <input type="radio" checked={isSelected} onChange={() => {}} style={{ accentColor: '#25D366' }} />
+                  { id: 'decouverte', name: '⚡ Boutique Taf Taf (1 mois offert)', price: 'Gratuit pendant 30j puis 5.000 FCFA/mois' },
+                  { id: 'pro', name: '⭐ Vendeur Pro', price: '15.000 FCFA / mois' },
+                  { id: 'business', name: '💼 Business VIP', price: '35.000 FCFA / mois' },
+                ].map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setPlan(p.id as any)}
+                    style={{
+                      padding: '12px 14px', borderRadius: 10, textAlign: 'left',
+                      border: plan === p.id ? '2px solid #C75B00' : '1px solid #cbd5e1',
+                      background: plan === p.id ? '#fff7ed' : '#fff',
+                      cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: 13, color: '#0f172a' }}>{p.name}</div>
+                      <div style={{ fontSize: 11, color: '#64748b' }}>{p.price}</div>
                     </div>
-                  )
-                })}
+                    {plan === p.id && <span style={{ color: '#C75B00', fontWeight: 900 }}>✓</span>}
+                  </button>
+                ))}
               </div>
 
               {/* Couleur de Marque */}
               <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#334155', marginBottom: 8 }}>
-                2. Couleur de votre marque :
+                2. Couleur de votre boutique :
               </label>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                {['#25D366', '#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#1e293b'].map(c => (
+              <div style={{ display: 'flex', gap: 10 }}>
+                {['#C75B00', '#2563eb', '#16a34a', '#db2777', '#7c3aed', '#0f172a'].map(c => (
                   <button 
                     key={c}
                     type="button"
@@ -245,9 +231,9 @@ export default function CreerBoutiqueWizard() {
               type="submit" 
               disabled={loading}
               style={{ 
-                background: '#25D366', color: '#1C2B4A', border: 'none', padding: '14px 32px', borderRadius: 12, 
+                background: '#C75B00', color: '#fff', border: 'none', padding: '14px 32px', borderRadius: 12, 
                 fontWeight: 800, fontSize: 16, cursor: loading ? 'wait' : 'pointer', marginLeft: 'auto',
-                boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
+                boxShadow: '0 4px 12px rgba(199, 91, 0, 0.25)'
               }}
             >
               {loading ? 'Chargement...' : step === 4 ? 'Lancer ma boutique 🚀' : 'Continuer'}
