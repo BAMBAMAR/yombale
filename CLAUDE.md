@@ -1107,7 +1107,10 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
       - Net à payer mis en évidence (bandeau coloré)
       - Coordonnées bancaires pour règlement en bas de facture
       - Conditions Générales de Vente (avec saut de page automatique si débordement)
-      - Mentions légales TVA non applicable si non assujetti
-      - Pied de page personnalisé configurable
-    - **Correction prix PDF** : Les prix unitaires dans le tableau articles utilisent désormais `item.prix_unitaire` (au lieu de `item.prix` qui retournait 0). Le formatage des nombres utilise un formateur custom `fmtNum()` au lieu de `toLocaleString('fr-FR')` qui produisait des `/` dans PDFKit à cause des espaces insécables Unicode.
+
+      - **Audit & Correction de Cohérence Photo-Produit du Catalogue Standard (`generate-catalog.js` & `catalogues-standards.json`)** :
+        - **Diagnostic Exhaustif** : Audit des 2 010 produits du Catalogue Standard Prédéterminé. Identification de 365 incohérences visuelles (18,15% du catalogue), causées par des filtres de mots-clés globaux sans scoping par catégorie (ex: huiles alimentaires associées à des photos de vidange moteur, laits alimentaires/infantiles associés à des lotions cosmétiques, TV/frigos Samsung associés à des smartphones, batteries solaires associées à des powerbanks, etc.).
+        - **Correction & Restructuration Category-First** : Refonte de `getPhotoForProduct(nom, cat)` dans `generate-catalog.js` pour filtrer strictement par la catégorie parente `cat` en priorité avant d'évaluer les mots-clés.
+        - **Régénération & Vérification** : Régénération de `catalogues-standards.json`. Résultat : **0 incohérence restante** (100% de concordance photo/produit sur les 2 010 articles du catalogue).
+
 
