@@ -170,7 +170,7 @@ export default async function HomePage({
               </li>
             </ul>
 
-            <Link href="#whatsapp" style={{ display: 'inline-block', marginTop: 16, fontSize: 13, fontWeight: 800, color: '#25D366', textDecoration: 'none' }}>Comment ça marche ? →</Link>
+            <Link href="/assistant-whatsapp" style={{ display: 'inline-block', marginTop: 16, fontSize: 13, fontWeight: 800, color: '#25D366', textDecoration: 'none' }}>Comment ça marche ? →</Link>
           </div>
 
           {/* COLONNE CENTRALE */}
