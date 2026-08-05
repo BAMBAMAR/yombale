@@ -298,11 +298,11 @@ export default async function HomePage({
           </div>
         )}
 
-        {/* ── BARRE DE FILTRES (BUDGET & TRI) & PROMO DROITE ────────────────────── */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'flex-start', gap: 32, marginBottom: 24 }}>
-          {/* Bloc filtres (Gauche) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '0 1 auto' }}>
-            <div className="filtres-bar" style={{ margin: 0 }}>
+        {/* ── BARRE DE FILTRES ULTRA-COMPACTE ────────────────────── */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+          
+          {/* 1. Budget */}
+          <div className="filtres-bar" style={{ margin: 0, flex: '0 1 auto' }}>
             <span className="filtres-label">Budget :</span>
             {BUDGETS.map((b) => {
               const ps = new URLSearchParams()
@@ -310,18 +310,23 @@ export default async function HomePage({
               if (categorie) ps.set('categorie', categorie)
               if (b.prixMax) ps.set('prixMax',   b.prixMax)
               return (
-                <Link
-                  key={b.label}
-                  href={`/?${ps}`}
-                  className={`budget-pill${prixMax === b.prixMax && b.prixMax ? ' active' : ''}`}
-                >
+                <Link key={b.label} href={`/?${ps}`} className={`budget-pill${prixMax === b.prixMax && b.prixMax ? ' active' : ''}`}>
                   {b.label}
                 </Link>
               )
             })}
           </div>
 
-          <div className="filtres-bar" style={{ margin: 0 }}>
+          {/* 2. État */}
+          <div className="filtres-bar hidden-mobile" style={{ margin: 0, flex: '0 1 auto' }}>
+            <span className="filtres-label">État :</span>
+            <span className="budget-pill active" style={{ cursor: 'pointer' }}>Tout</span>
+            <span className="budget-pill" style={{ cursor: 'pointer', opacity: 0.8 }}>Neuf</span>
+            <span className="budget-pill" style={{ cursor: 'pointer', opacity: 0.8 }}>Occasion</span>
+          </div>
+
+          {/* 3. Trier */}
+          <div className="filtres-bar" style={{ margin: 0, flex: '0 1 auto' }}>
             <span className="filtres-label">Trier :</span>
             {TRIS.map((t) => {
               const ps = new URLSearchParams()
@@ -330,56 +335,40 @@ export default async function HomePage({
               if (prixMax)   ps.set('prixMax',   prixMax)
               if (t.val)     ps.set('tri',       t.val)
               return (
-                <Link
-                  key={t.val || 'defaut'}
-                  href={`/?${ps}`}
-                  className={`budget-pill${tri === t.val ? ' active' : ''}`}
-                >
+                <Link key={t.val || 'defaut'} href={`/?${ps}`} className={`budget-pill${tri === t.val ? ' active' : ''}`}>
                   {t.label}
                 </Link>
               )
             })}
           </div>
+
+          {/* 4. Tendances */}
+          <div className="filtres-bar hidden-mobile" style={{ margin: 0, flex: '0 1 auto' }}>
+            <span className="filtres-label" style={{ color: '#C75B00' }}>🔥 Tendances :</span>
+            <Link href="/?q=iphone" className="budget-pill">iPhone 15</Link>
+            <Link href="/?q=climatiseur" className="budget-pill">Climatiseurs</Link>
+            <Link href="/?q=samsung" className="budget-pill">Samsung S24</Link>
           </div>
 
-          {/* Bloc Filtres Avancés & Tendances (Milieu - Desktop) */}
-          <div className="hidden-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '0 1 auto' }}>
-            <div className="filtres-bar" style={{ margin: 0 }}>
-              <span className="filtres-label">État :</span>
-              <span className="budget-pill active" style={{ cursor: 'pointer' }}>Tout</span>
-              <span className="budget-pill" style={{ cursor: 'pointer', opacity: 0.8 }}>Neuf</span>
-              <span className="budget-pill" style={{ cursor: 'pointer', opacity: 0.8 }}>Occasion</span>
-            </div>
-            
-            <div className="filtres-bar" style={{ margin: 0, gap: 8 }}>
-              <span className="filtres-label" style={{ color: '#C75B00' }}>🔥 Tendances :</span>
-              <Link href="/?q=iphone" className="budget-pill">iPhone 15</Link>
-              <Link href="/?q=climatiseur" className="budget-pill">Climatiseurs</Link>
-              <Link href="/?q=samsung" className="budget-pill">Samsung S24</Link>
-            </div>
-          </div>
+          {/* Espace flexible pour pousser les actions tout à droite */}
+          <div style={{ flex: '1 1 auto' }} className="hidden-mobile" />
 
-          {/* Bloc CTA Boutique & Actions (Droite - Desktop) */}
-          <div className="hidden-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 auto', alignItems: 'flex-end', marginLeft: 'auto' }}>
-            {/* Ligne 1 : Bouton CTA Premium très mis en valeur */}
-            <div className="filtres-bar" style={{ margin: 0, border: 'none', background: 'transparent', padding: 0, gap: 12 }}>
-               <Link href="/creer-boutique" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#0f172a', color: '#fff', padding: '8px 18px', borderRadius: 30, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 12px rgba(15,23,42,0.15)' }}>
-                 <span style={{ color: '#C75B00', fontSize: 16 }}>⚡</span>
-                 Ouvrir une Boutique Pro
-               </Link>
-            </div>
-            
-            {/* Ligne 2 : Alignée parfaitement avec Trier et Tendances */}
-            <div className="filtres-bar" style={{ margin: 0, gap: 8 }}>
-              {(q || categorie || prixMax || sousType) ? (
-                <Link href="/" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2' }}>
-                  <span>✖</span> Effacer filtres
-                </Link>
-              ) : null}
-              <Link href="/boutiques" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#16a34a', borderColor: '#dcfce7', background: '#f0fdf4' }}>
-                <span>🛡️</span> Vendeurs vérifiés
+          {/* 5. Actions & Boutique */}
+          <div className="hidden-mobile" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            {(q || categorie || prixMax || sousType) ? (
+              <Link href="/" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0 }}>
+                <span>✖</span> Effacer filtres
               </Link>
-            </div>
+            ) : null}
+            
+            <Link href="/boutiques" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#16a34a', borderColor: '#dcfce7', background: '#f0fdf4', margin: 0 }}>
+              <span>🛡️</span> Vendeurs vérifiés
+            </Link>
+
+            <Link href="/creer-boutique" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#0f172a', color: '#fff', padding: '8px 16px', borderRadius: 30, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 12px rgba(15,23,42,0.15)' }}>
+              <span style={{ color: '#C75B00', fontSize: 16 }}>⚡</span>
+              Boutique Pro
+            </Link>
           </div>
         </div>
 
