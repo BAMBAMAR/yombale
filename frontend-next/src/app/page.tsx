@@ -130,6 +130,10 @@ export default async function HomePage({
   } catch {
     // valeurs par défaut ci-dessous
   }
+  const prixPro = Number(settings.plan_pro_prix) || 15000;
+  const prixBusiness = Number(settings.plan_business_prix) || 35000;
+  const prixTafTaf = Number(settings.plan_taftaf_prix) || 2500;
+
   return (
     <>
       {/* ── HERO HOME ÉPURÉ & MODERNE (NOPALOU BRAND SYSTEM) ────────── */}
@@ -141,7 +145,18 @@ export default async function HomePage({
         position: 'relative',
         overflow: 'hidden',
       }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', position: 'relative', zIndex: 2 }}>
+        {/* Layout en 3 colonnes pour utiliser l'espace Desktop (Gauche, Centre, Droite) */}
+        <div style={{ maxWidth: 1440, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 40, position: 'relative', zIndex: 2 }}>
+          
+          {/* COLONNE GAUCHE (Desktop seulement) */}
+          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: '#fff', padding: 20, borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+            <div style={{ fontSize: 24, marginBottom: 8 }}>💬</div>
+            <h3 style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', marginBottom: 4 }}>Commandez sur WhatsApp</h3>
+            <p style={{ fontSize: 12, color: '#64748b', margin: 0, lineHeight: 1.5 }}>Trouvez le produit et passez commande directement au vendeur en un clic. Suivez votre livraison en direct.</p>
+          </div>
+
+          {/* COLONNE CENTRALE */}
+          <div style={{ flex: '2 1 600px', maxWidth: 900 }}>
           
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -208,7 +223,7 @@ export default async function HomePage({
             boxShadow: '0 4px 16px rgba(15,23,42,0.15)', border: '1px solid rgba(255,255,255,0.1)'
           }}>
             <span style={{ fontSize: 13, fontWeight: 700 }}>
-              ⚡ Vous êtes commerçant ? Vendez en ligne en 30 sec <strong style={{ color: '#25D366' }}>(1er mois 100% offert)</strong>
+              ⚡ Vous êtes commerçant ? Vendez en ligne en 30 sec <strong style={{ color: '#25D366' }}>(à {prixTafTaf} FCFA)</strong>
             </span>
             <Link
               href="/creer-boutique"
@@ -220,6 +235,16 @@ export default async function HomePage({
               Créer ma Boutique Taf Taf 🚀
             </Link>
           </div>
+          </div>
+
+          {/* COLONNE DROITE (Desktop seulement) */}
+          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)', padding: 20, borderRadius: 16, color: '#fff', boxShadow: '0 8px 24px rgba(199,91,0,0.2)' }}>
+            <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.2)', padding: '4px 12px', borderRadius: 12, fontSize: 11, fontWeight: 800, marginBottom: 12 }}>🚀 NOUVEAU</div>
+            <h3 style={{ fontSize: 16, fontWeight: 900, marginBottom: 6 }}>Boutique Taf Taf</h3>
+            <p style={{ fontSize: 12, opacity: 0.9, margin: '0 0 16px', lineHeight: 1.5 }}>Créez votre boutique complète en 30 secondes chrono pour {prixTafTaf} FCFA !</p>
+            <Link href="/creer-boutique" style={{ display: 'block', textAlign: 'center', background: '#fff', color: '#C75B00', fontWeight: 800, fontSize: 12, padding: '8px', borderRadius: 8, textDecoration: 'none' }}>Créer ma vitrine →</Link>
+          </div>
+
         </div>
       </section>
 
@@ -316,7 +341,7 @@ export default async function HomePage({
           sousType={sousType}
         />
         {/* SECTION DES 3 FORMULES & TARIFS DE MARQUE */}
-        <ShowcaseTabs />
+        <ShowcaseTabs prixTafTaf={prixTafTaf} prixPro={prixPro} prixBusiness={prixBusiness} />
 
         {/* PRODUITS RÉCEMMENT CONSULTÉS */}
         <RecentlyViewed />

@@ -4,7 +4,15 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Check, Sparkles } from 'lucide-react';
 
-export default function ShowcaseTabs() {
+export default function ShowcaseTabs({ 
+  prixTafTaf = 2500, 
+  prixPro = 15000, 
+  prixBusiness = 35000 
+}: { 
+  prixTafTaf?: number; 
+  prixPro?: number; 
+  prixBusiness?: number;
+}) {
   const [duree, setDuree] = useState<'1m' | '12m'>('1m');
 
   return (
@@ -130,7 +138,7 @@ export default function ShowcaseTabs() {
             <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontSize: 32, fontWeight: 900, color: '#0f172a' }}>
-                  {duree === '12m' ? '3 750' : '5 000'}
+                  {duree === '12m' ? (prixTafTaf * 0.75).toLocaleString('fr-FR') : prixTafTaf.toLocaleString('fr-FR')}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
@@ -203,7 +211,7 @@ export default function ShowcaseTabs() {
             <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontSize: 32, fontWeight: 900, color: '#C75B00' }}>
-                  {duree === '12m' ? '11 250' : '15 000'}
+                  {duree === '12m' ? (prixPro * 0.75).toLocaleString('fr-FR') : prixPro.toLocaleString('fr-FR')}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
@@ -276,7 +284,7 @@ export default function ShowcaseTabs() {
             <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontSize: 32, fontWeight: 900, color: '#0f172a' }}>
-                  {duree === '12m' ? '26 250' : '35 000'}
+                  {duree === '12m' ? (prixBusiness * 0.75).toLocaleString('fr-FR') : prixBusiness.toLocaleString('fr-FR')}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>

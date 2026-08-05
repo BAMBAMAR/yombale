@@ -1166,7 +1166,10 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
             - **Apporteurs** : Partage 1-clic de lien de parrainage sur statut et groupes WhatsApp, Notifications de commissions récurrentes par messagerie.
           - **Nouveau Bandeau Frise du Cycle de Vente & Livraison Complète (5 Étapes)** :
             1. **🔎 Recherche** (Comparateur & WhatsApp Bot) → 2. **🛒 Commande** (Panier Web, WhatsApp & POS) → 3. **💳 Paiement** (Wave, Cash, Crédit ou Manuel) → 4. **📦 Préparation** (Gestion des statuts en direct) → 5. **🚚 Livraison** (Suivi & notification WhatsApp du client à l'expédition).
-          - **Nettoyage Syntaxe `page.tsx`** : Suppression des variables obsolètes inutilisées (`prixPro`, `prixBusiness`, `modePaiementLabel`) qui perturbaient le compilateur Next.js SWC.
+          - **Nettoyage Syntaxe `page.tsx`** : Suppression des balises JSX orphelines (`</div>`, `</section>`, `)}`) provenant de l'ancienne section tarifaire qui provoquaient l'erreur de build SWC.
+          - **Mise en Exergue de la Boutique Taf Taf (Design 3 Colonnes Desktop)** : Restructuration du Hero (`page.tsx`) pour utiliser l'espace vide à gauche (Avantage Commande WhatsApp) et à droite (Promo Boutique Taf Taf) sur grand écran, tout en restant centré sur mobile.
+          - **Prix Dynamiques depuis l'API** : Les offres affichent désormais en temps réel les prix définis dans l'Admin panel (`settings.plan_pro_prix`, `settings.plan_business_prix`, et Boutique Taf Taf à 2500 FCFA).
+          - **Nouvelles Catégories Globales** : Ajout d'Immobilier (🏢) et Petites Annonces (📢) à la base de registre `categories.ts`.
           - **Suppression des sections de bas de page dupliquées et mal alignées** : Alignement parfait et navigation ultra-fluide.
         - **Diagnostic Exhaustif & Correction de 5 URLs Incohérentes Confirmées** : Audit visuel systématique des 112 URLs Unsplash uniques. Identification et remplacement de 5 URLs dont le contenu visuel réel ne correspondait pas du tout aux produits assignés :
           1. **Huile Moteur** (Total/Shell/Mobil) : Ferrari rouge → bidon d'huile moteur (`photo-1635784065399`)

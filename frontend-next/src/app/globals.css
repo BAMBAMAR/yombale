@@ -31,6 +31,10 @@ img, video, iframe {
   .page-container { padding: 0 12px 60px; }
 }
 
+@media (max-width: 1023px) {
+  .hero-side-card { display: none !important; }
+}
+
 :root {
   /* ── Palette Nopalou — chaude, Dakar, décisive ──────────────── */
   --navy:    #1C2B4A;   /* marine sombre — logo, titres */

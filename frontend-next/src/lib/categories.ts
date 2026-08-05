@@ -21,6 +21,8 @@ export const CATEGORIES = [
   { value: 'sante-pharma',  label: '💊 Santé & Pharmacie' },
   { value: 'bebe-enfants',  label: '👶 Bébé & Enfants' },
   { value: 'services',     label: '🛠 Services' },
+  { value: 'immo',         label: '🏢 Immobilier & Terrains' },
+  { value: 'annonces',     label: '📢 Petites Annonces' },
   { value: 'autre',        label: '📦 Autre' },
 ]
 
