@@ -299,9 +299,9 @@ export default async function HomePage({
         )}
 
         {/* ── BARRE DE FILTRES (BUDGET & TRI) & PROMO DROITE ────────────────────── */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, marginBottom: 24 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'flex-start', gap: 32, marginBottom: 24 }}>
           {/* Bloc filtres (Gauche) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 500px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '0 1 auto' }}>
             <div className="filtres-bar" style={{ margin: 0 }}>
             <span className="filtres-label">Budget :</span>
             {BUDGETS.map((b) => {
@@ -343,7 +343,7 @@ export default async function HomePage({
           </div>
 
           {/* Bloc Filtres Avancés & Tendances (Milieu - Desktop) */}
-          <div className="hidden-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 300px' }}>
+          <div className="hidden-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '0 1 auto' }}>
             <div className="filtres-bar" style={{ margin: 0 }}>
               <span className="filtres-label">État :</span>
               <span className="budget-pill active" style={{ cursor: 'pointer' }}>Tout</span>
@@ -359,14 +359,14 @@ export default async function HomePage({
             </div>
           </div>
 
-          {/* Bloc Top Marques & Actions (Droite - Desktop) */}
-          <div className="hidden-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 300px', alignItems: 'flex-end' }}>
-            {/* Ligne 1 : Alignée parfaitement avec Budget et État */}
-            <div className="filtres-bar" style={{ margin: 0 }}>
-              <span className="filtres-label">Top Marques :</span>
-              <Link href="/?q=apple" className="budget-pill">Apple</Link>
-              <Link href="/?q=samsung" className="budget-pill">Samsung</Link>
-              <Link href="/?q=xiaomi" className="budget-pill">Xiaomi</Link>
+          {/* Bloc CTA Boutique & Actions (Droite - Desktop) */}
+          <div className="hidden-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 auto', alignItems: 'flex-end', marginLeft: 'auto' }}>
+            {/* Ligne 1 : Bouton CTA Premium très mis en valeur */}
+            <div className="filtres-bar" style={{ margin: 0, border: 'none', background: 'transparent', padding: 0, gap: 12 }}>
+               <Link href="/creer-boutique" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#0f172a', color: '#fff', padding: '8px 18px', borderRadius: 30, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 12px rgba(15,23,42,0.15)' }}>
+                 <span style={{ color: '#C75B00', fontSize: 16 }}>⚡</span>
+                 Ouvrir une Boutique Pro
+               </Link>
             </div>
             
             {/* Ligne 2 : Alignée parfaitement avec Trier et Tendances */}
@@ -377,7 +377,7 @@ export default async function HomePage({
                 </Link>
               ) : null}
               <Link href="/boutiques" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#16a34a', borderColor: '#dcfce7', background: '#f0fdf4' }}>
-                <span>🛡️</span> Boutiques vérifiées
+                <span>🛡️</span> Vendeurs vérifiés
               </Link>
             </div>
           </div>
