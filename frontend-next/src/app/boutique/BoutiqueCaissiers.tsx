@@ -135,6 +135,19 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
     }
   }
 
+  const [caisseToken, setCaisseToken] = useState<string | null>(null)
+  const [copie, setCopie] = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/boutiques/${boutiqueId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.boutique?.caisse_token) setCaisseToken(data.boutique.caisse_token) })
+      .catch(() => {})
+  }, [boutiqueId])
+
+  const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com'
+  const terminalUrl = caisseToken ? `${siteUrl}/boutique/caisse?token=${caisseToken}` : ''
+
   if (loading && caissiers.length === 0) return <div style={{ padding: 40, textAlign: 'center' }}>Chargement...</div>
 
   return (
@@ -143,6 +156,46 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
       <p style={{ color: 'var(--text3)', fontSize: 14, marginBottom: 24 }}>
         Gérez les employés qui peuvent utiliser l&apos;application de caisse physique locale. Chaque caissier a besoin d&apos;un code PIN pour ouvrir sa session.
       </p>
+
+      {/* Bloc Lien Terminal Caissier */}
+      <div style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '1px solid #93c5fd', borderRadius: 14, padding: 20, marginBottom: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <span style={{ fontSize: 24 }}>📱</span>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#1e40af' }}>Lien Terminal Caissier Dédié (Sans Mot de Passe Admin)</h3>
+        </div>
+        <p style={{ margin: '0 0 14px', fontSize: 13, color: '#1e3a5f', lineHeight: 1.5 }}>
+          Ouvrez ce lien une fois sur la tablette ou le PC du magasin et ajoutez-le en Favoris / Écran d&apos;accueil. Vos caissiers pourront déverrouiller leur session avec leur <strong>Code PIN (4 chiffres)</strong> sans jamais avoir accès à votre compte propriétaire ni à vos paramètres.
+        </p>
+        {terminalUrl && (
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            <input
+              type="text"
+              readOnly
+              value={terminalUrl}
+              style={{ flex: 1, minWidth: 260, padding: '10px 14px', borderRadius: 8, border: '1px solid #93c5fd', background: '#fff', fontSize: 13, fontWeight: 600, color: '#1e40af' }}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(terminalUrl)
+                setCopie(true)
+                setTimeout(() => setCopie(false), 3000)
+              }}
+              style={{ padding: '10px 18px', background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              {copie ? '✅ Lien copié !' : '📋 Copier le lien terminal'}
+            </button>
+            <a
+              href={terminalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ padding: '10px 18px', background: '#ffffff', color: '#1d4ed8', border: '1px solid #93c5fd', borderRadius: 8, fontWeight: 700, fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap' }}
+            >
+              ↗ Tester le terminal
+            </a>
+          </div>
+        )}
+      </div>
 
       {error && (
         <div style={{ background: '#fef2f2', color: '#dc2626', padding: 12, borderRadius: 8, marginBottom: 24, fontSize: 14 }}>

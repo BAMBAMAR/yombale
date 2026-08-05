@@ -10,19 +10,28 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic'
 
-export default async function CaissePage() {
-  await verifySession()
+export default async function CaissePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ token?: string }>
+}) {
+  const params = await searchParams
+  const token = params.token?.trim() || null
 
   let planActif: string | null = null
-  try {
-    const res = await backendFetch('/api/abonnements/mon-plan')
-    if (res.ok) {
-      const data = await res.json()
-      planActif = data.abonnement?.plan ?? null
+
+  if (!token) {
+    await verifySession()
+    try {
+      const res = await backendFetch('/api/abonnements/mon-plan')
+      if (res.ok) {
+        const data = await res.json()
+        planActif = data.abonnement?.plan ?? null
+      }
+    } catch {
+      planActif = null
     }
-  } catch {
-    planActif = null
   }
 
-  return <CaisseClient planActif={planActif} />
+  return <CaisseClient planActif={planActif} initialToken={token} />
 }

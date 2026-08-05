@@ -18,6 +18,7 @@ import BoutiqueCaissiers from './BoutiqueCaissiers'
 import ParametresFiscalite from './ParametresFiscalite'
 import GestionDocuments from './GestionDocuments'
 import GestionFournisseurs from './GestionFournisseurs'
+import BoutiqueLogs from './BoutiqueLogs'
 import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2 } from 'lucide-react'
 
 import { CATEGORIES, PRODUIT_CATEGORIES } from '@/lib/categories'
@@ -2042,6 +2043,7 @@ const NAV_GROUPS: NavGroup[] = [
     title: 'Paramètres & Équipe',
     items: [
       { key: 'equipe',      icon: '👥', label: 'Équipe & Accès' },
+      { key: 'journal',     icon: '📜', label: 'Journal d’Audit' },
       { key: 'marketing',   icon: '📣', label: 'Marketing' },
       { key: 'infos',       icon: '⚙️', label: 'Paramètres' },
     ],
@@ -2107,6 +2109,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
     documents:   { icon: '📄', title: 'Documents Clients (Factures, Devis, Proformas)', desc: 'Visualisez, créez et éditez les factures, devis et proformas de vos clients.' },
     fournisseurs: { icon: '📦', title: 'Fournisseurs & Réapprovisionnement', desc: 'Gérez vos fournisseurs et vos commandes de réapprovisionnement de stock.' },
     fiscalite:   { icon: '⚖️', title: 'Configuration Fiscalité & Taxes', desc: 'Configurez le régime de TVA de votre commerce et la fiscalité de la caisse POS.' },
+    journal:     { icon: '📜', title: 'Journal d’Audit & Historique des Actions', desc: 'Consultez l’historique des opérations de la boutique et exportez le registre au format CSV (Excel).' },
   }
 
   const currentTabInfo = tabInfoMap[tab] ?? tabInfoMap.dashboard
@@ -2221,6 +2224,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro }: {
         {tab === 'documents'   && <GestionDocuments boutiqueId={boutique.id} />}
         {tab === 'fournisseurs' && <GestionFournisseurs boutiqueId={boutique.id} />}
         {tab === 'fiscalite'   && <ParametresFiscalite boutique={boutique} onUpdate={() => router.refresh()} />}
+        {tab === 'journal'     && <BoutiqueLogs boutiqueId={boutique.id} />}
       </main>
     </div>
     </>

@@ -2571,6 +2571,153 @@ router.delete('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isU
   }
 });
 
+async function enregistrerAuditLog(boutiqueId, utilisateurId, auteurNom, typeAction, description, metadonnees = {}, req = null) {
+  try {
+    const ip = req ? (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '') : '';
+    await pool.query(
+      `INSERT INTO boutique_logs (boutique_id, utilisateur_id, auteur_nom, type_action, description, metadonnees, ip_adresse)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [boutiqueId, utilisateurId || null, auteurNom || 'Système', typeAction, description, JSON.stringify(metadonnees), ip]
+    );
+  } catch (err) {
+    console.error('[AUDIT LOG ERR]', err);
+  }
+}
+
+// ── ROUTE AUDIT LOGS ─────────────────────────────────────────────────────────
+
+// GET /api/boutiques/:id/logs
+router.get('/:id/logs', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    const { type, q, limit = 100 } = req.query;
+    let queryParts = ['boutique_id = $1'];
+    let values = [boutiqueId];
+    let vIndex = 2;
+
+    if (type && type !== 'tous') {
+      queryParts.push(`type_action = $${vIndex++}`);
+      values.push(type);
+    }
+    if (q) {
+      queryParts.push(`(auteur_nom ILIKE $${vIndex} OR description ILIKE $${vIndex})`);
+      values.push(`%${q}%`);
+      vIndex++;
+    }
+
+    const limitVal = Math.min(parseInt(limit, 10) || 100, 500);
+    const sql = `SELECT id, auteur_nom, type_action, description, metadonnees, ip_adresse, created_at
+                 FROM boutique_logs
+                 WHERE ${queryParts.join(' AND ')}
+                 ORDER BY created_at DESC
+                 LIMIT ${limitVal}`;
+    const r = await pool.query(sql, values);
+
+    res.json({ success: true, logs: r.rows });
+  } catch (err) {
+    console.error('[GET LOGS ERR]', err);
+    res.status(500).json({ error: 'Erreur de chargement des logs' });
+  }
+});
+
+// GET /api/boutiques/:id/logs/export.csv
+router.get('/:id/logs/export.csv', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id, nom FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutique = bRes.rows[0];
+
+    const r = await pool.query(
+      `SELECT created_at, auteur_nom, type_action, description, metadonnees, ip_adresse
+       FROM boutique_logs
+       WHERE boutique_id = $1
+       ORDER BY created_at DESC
+       LIMIT 1000`,
+      [boutique.id]
+    );
+
+    let csv = '\uFEFFDate;Heure;Auteur;Type d\'action;Description;IP\n';
+    r.rows.forEach(l => {
+      const d = new Date(l.created_at);
+      const dateStr = d.toLocaleDateString('fr-FR');
+      const heureStr = d.toLocaleTimeString('fr-FR');
+      const descClean = (l.description || '').replace(/;/g, ',').replace(/\n/g, ' ');
+      csv += `${dateStr};${heureStr};"${l.auteur_nom}";"${l.type_action}";"${descClean}";"${l.ip_adresse || ''}"\n`;
+    });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename=journal_audit_${boutique.nom.replace(/[^a-z0-9]/gi, '_')}.csv`);
+    res.status(200).send(csv);
+  } catch (err) {
+    console.error('[EXPORT LOGS CSV ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l\'exportation CSV' });
+  }
+});
+
+// ── ROUTE TERMINAL CAISSIER (ACCÈS SANS SESSION PROPRIÉTAIRE) ────────────────
+
+// GET /api/boutiques/caisse-terminal/:token
+router.get('/caisse-terminal/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    if (!token) return res.status(400).json({ error: 'Jeton requis' });
+
+    const bRes = await pool.query(
+      `SELECT id, nom, logo_url, telephone, adresse, ville, caisse_token, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut
+       FROM boutiques WHERE caisse_token = $1 AND actif = TRUE`,
+      [token]
+    );
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Terminal introuvable ou désactivé' });
+    const boutique = bRes.rows[0];
+
+    const plan = await verifierAbonnementCaisse(boutique.id);
+    if (plan !== 'pro' && plan !== 'business') {
+      return res.status(403).json({ error: 'Abonnement Pro/Business requis pour utiliser la caisse POS', besoinAbonnement: true });
+    }
+
+    const cRes = await pool.query(
+      `SELECT id, nom, prenom, code_pin, role FROM boutique_caissiers WHERE boutique_id = $1 AND actif = TRUE ORDER BY nom`,
+      [boutique.id]
+    );
+
+    res.json({
+      success: true,
+      boutique,
+      planActif: plan,
+      caissiers: cRes.rows
+    });
+  } catch (err) {
+    console.error('[GET CAISSE TERMINAL ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l\'accès au terminal' });
+  }
+});
+
+// POST /api/boutiques/:id/regenere-caisse-token
+router.post('/:id/regenere-caisse-token', verifierToken, async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const crypto = require('crypto');
+    const newToken = crypto.randomUUID();
+    await pool.query('UPDATE boutiques SET caisse_token = $1 WHERE id = $2', [newToken, bq.id]);
+
+    await enregistrerAuditLog(bq.id, req.user.userId, req.user.nom, 'token_regenere', 'Régénération de la clé de terminal caisse POS', {}, req);
+
+    res.json({ success: true, caisse_token: newToken });
+  } catch (err) {
+    console.error('[REGENERE TOKEN ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la réinitialisation de la clef' });
+  }
+});
+
 module.exports = router;
 
 

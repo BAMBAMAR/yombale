@@ -70,7 +70,9 @@ interface TicketEnAttente {
   panier: LignePanier[]
 }
 
-export default function CaisseClient({ planActif }: { planActif?: string | null }) {
+export default function CaisseClient({ planActif: planActifProp, initialToken }: { planActif?: string | null; initialToken?: string | null }) {
+  const [terminalPlan, setTerminalPlan] = useState<string | null>('pro')
+  const planActif = initialToken ? (terminalPlan || 'pro') : planActifProp
   if (planActif !== 'pro' && planActif !== 'business') {
     return (
       <div style={{
@@ -624,6 +626,22 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
     async function chargerBoutiquesEtProduits() {
       try {
         setLoadingProduits(true)
+        if (initialToken) {
+          const res = await fetch(`/api/boutiques/caisse-terminal/${initialToken}`)
+          if (res.ok) {
+            const data = await res.json()
+            if (data?.success && data?.boutique) {
+              setBoutiques([data.boutique])
+              setBoutiqueActiveId(data.boutique.id)
+              setTerminalPlan(data.planActif || 'pro')
+              if (data.caissiers) setCaissiersList(data.caissiers)
+              await chargerProduitsBoutique(data.boutique.id)
+              await chargerClientsCredits(data.boutique.id)
+              setLoadingProduits(false)
+              return
+            }
+          }
+        }
         const mine = await getBoutiquesMine()
         const merchantBoutiques = mine || []
         if (merchantBoutiques.length > 0) {
@@ -642,7 +660,7 @@ export default function CaisseClient({ planActif }: { planActif?: string | null 
       }
     }
     chargerBoutiquesEtProduits()
-  }, [])
+  }, [initialToken])
 
   async function chargerClientsCredits(bId: string) {
     if (!bId) return

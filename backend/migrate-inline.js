@@ -971,9 +971,27 @@ module.exports = async function migrateInline() {
       ALTER TABLE bons_commande_fournisseur ADD COLUMN IF NOT EXISTS justificatif_url TEXT;
       ALTER TABLE depenses ADD COLUMN IF NOT EXISTS justificatif_url TEXT;
       ALTER TABLE depenses ADD COLUMN IF NOT EXISTS bon_commande_id UUID;
+
+      -- Caisse POS Terminal Token & Audit Log
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS caisse_token VARCHAR(100);
+      UPDATE boutiques SET caisse_token = uuid_generate_v4()::text WHERE caisse_token IS NULL;
+
+      CREATE TABLE IF NOT EXISTS boutique_logs (
+        id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id     UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        utilisateur_id  UUID,
+        auteur_nom      VARCHAR(255) NOT NULL DEFAULT 'Système',
+        type_action     VARCHAR(100) NOT NULL,
+        description     TEXT NOT NULL,
+        metadonnees     JSONB DEFAULT '{}',
+        ip_adresse      VARCHAR(100),
+        created_at      TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_logs_bq ON boutique_logs(boutique_id);
+      CREATE INDEX IF NOT EXISTS idx_boutique_logs_date ON boutique_logs(created_at DESC);
     `);
 
-    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs OK');
+    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs OK');
   } catch (err) {
     console.warn('[MIGRATE] POS Avancé échec:', err.message);
   }
