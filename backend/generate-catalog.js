@@ -11,7 +11,10 @@ function getPhotoForProduct(nom, cat) {
     if (n.includes("lait")) return "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400";
     if (n.includes("café")) return "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400";
     if (n.includes("thé") || n.includes("infusion")) return "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400";
-    if (n.includes("bouillon") || n.includes("jumbo") || n.includes("maggi") || n.includes("knorr") || n.includes("moutarde") || n.includes("mayonnaise") || n.includes("ketchup") || n.includes("harissa") || n.includes("vinaigre") || n.includes("sauce")) return "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400";
+    if (n.includes("ketchup")) return "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400";
+    if (n.includes("mayonnaise") || n.includes("moutarde")) return "https://images.unsplash.com/photo-1585325701165-351af916e581?w=400";
+    if (n.includes("piment") || n.includes("harissa")) return "https://images.unsplash.com/photo-1563584880562-411a1460c3a2?w=400";
+    if (n.includes("bouillon") || n.includes("jumbo") || n.includes("maggi") || n.includes("knorr") || n.includes("vinaigre") || n.includes("sauce")) return "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400";
     if (n.includes("huile") || n.includes("beurre") || n.includes("margarine")) return "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400";
     if (n.includes("chocolat") || n.includes("nutella") || n.includes("milo") || n.includes("nesquik")) return "https://images.unsplash.com/photo-1581795669633-91ef7c9699a8?w=400";
     if (n.includes("sucre") || n.includes("miel") || n.includes("confiture")) return "https://images.unsplash.com/photo-1587132137056-bfbf0166836e?w=400";
