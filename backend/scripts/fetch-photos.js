@@ -12,12 +12,9 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-const ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
+const ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY || 'ZMuDgS1tjAJpNiNjA7XTyfdx7eecvHMDJf2dpzR8C1U';
 if (!ACCESS_KEY) {
-  console.error('❌ Variable UNSPLASH_ACCESS_KEY manquante.');
-  console.error('   1. Créez un compte sur https://unsplash.com/developers');
-  console.error('   2. Créez une application (Demo) et copiez le Access Key');
-  console.error('   3. Relancez avec: set UNSPLASH_ACCESS_KEY=votre_cle && node backend/scripts/fetch-photos.js');
+  console.error('❌ Clé Unsplash manquante.');
   process.exit(1);
 }
 
@@ -369,7 +366,9 @@ function getSearchQuery(nom, categorie) {
   // Chercher le meilleur match dans SEARCH_TERMS (du plus spécifique au plus générique)
   const sortedKeys = Object.keys(SEARCH_TERMS).sort((a, b) => b.length - a.length);
   for (const key of sortedKeys) {
-    if (n.includes(key)) {
+    // Utiliser une regex pour matcher le mot complet (évite que "parfumé" matche "parfum")
+    const regex = new RegExp('(^|[^a-zà-ÿ])' + key + '([^a-zà-ÿ]|$)', 'i');
+    if (regex.test(n)) {
       return SEARCH_TERMS[key];
     }
   }
