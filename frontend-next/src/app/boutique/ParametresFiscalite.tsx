@@ -1,7 +1,7 @@
 'use client'
 
 import { useFormState } from 'react-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { updateBoutique } from './actions'
 import type { ActionState } from '@/lib/backend-fetch'
 
@@ -30,13 +30,18 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
 
   const [regime, setRegime] = useState(boutique.regime_fiscal || 'reel')
   const [conditionsVente, setConditionsVente] = useState(boutique.conditions_vente || '')
+  const [savedMessage, setSavedMessage] = useState<string | null>(null)
+  const handledRef = useRef<any>(null)
 
   useEffect(() => {
-    if (state.success) {
-      alert('Paramètres enregistrés avec succès !')
+    if (state.success && handledRef.current !== state) {
+      handledRef.current = state
+      setSavedMessage('✅ Paramètres juridiques et fiscaux enregistrés avec succès !')
       onUpdate()
+      const t = setTimeout(() => setSavedMessage(null), 6000)
+      return () => clearTimeout(t)
     }
-  }, [state.success, onUpdate])
+  }, [state, onUpdate])
 
   return (
     <div style={{ maxWidth: 700, background: '#ffffff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
@@ -44,6 +49,12 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
         <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
           ⚖️ Paramètres Fiscalité & Infos Légales
         </h3>
+
+        {savedMessage && (
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '12px 16px', color: '#166534', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>{savedMessage}</span>
+          </div>
+        )}
         
         {state.error && (
           <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', fontSize: 14 }}>
