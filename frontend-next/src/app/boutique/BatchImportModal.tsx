@@ -153,7 +153,44 @@ export default function BatchImportModal({
       .finally(() => setLoading(false))
   }, [backendUrl])
 
-  const templatesCategories = catalogues[categorieActive] || []
+  const categoryAliases: Record<string, string[]> = {
+    electronique: ['smartphones', 'informatique', 'electronique', 'high-tech'],
+    alimentation: ['alimentation', 'epicerie', 'supermarche'],
+    maison: ['maison', 'electromenager', 'bricolage'],
+    mode: ['mode', 'vetements', 'chaussures'],
+    elevage: ['elevage', 'animaux', 'agriculture'],
+    sante: ['beaute', 'sante', 'hygiene'],
+  }
+
+  const getTemplatesForCategory = (catKey: string): TemplateProduit[] => {
+    if (catKey === 'tous') {
+      return Object.values(catalogues).flat()
+    }
+    const keysToMatch = categoryAliases[catKey] || [catKey]
+    const result: TemplateProduit[] = []
+    for (const k of keysToMatch) {
+      if (Array.isArray(catalogues[k])) {
+        result.push(...catalogues[k])
+      }
+    }
+    if (result.length === 0 && Array.isArray(catalogues[catKey])) {
+      return catalogues[catKey]
+    }
+    return result
+  }
+
+  const templatesAffiches = (() => {
+    const q = rechercheCatalogue.trim().toLowerCase()
+    if (q) {
+      const all = Object.values(catalogues).flat()
+      return all.filter(t => {
+        if (/\s\(\d+\)$/.test(t.nom)) return false
+        return t.nom.toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q)
+      })
+    }
+    const currentList = getTemplatesForCategory(categorieActive)
+    return currentList.filter(t => !/\s\(\d+\)$/.test(t.nom))
+  })()
 
   function toggleSelection(id: string) {
     setSaisies(prev => ({
@@ -298,6 +335,21 @@ export default function BatchImportModal({
             display: 'flex', gap: 10, padding: '14px 24px', overflowX: 'auto', flexShrink: 0,
             borderBottom: '1px solid #e5e7eb', background: '#fff', alignItems: 'center', minHeight: 58,
           }}>
+            <button
+              key="tous"
+              type="button"
+              onClick={() => setCategorieActive('tous')}
+              style={{
+                padding: '9px 16px', borderRadius: 20, border: 'none', whiteSpace: 'nowrap',
+                background: categorieActive === 'tous' ? '#1d4ed8' : '#f3f4f6',
+                color: categorieActive === 'tous' ? '#fff' : '#4b5563',
+                fontWeight: categorieActive === 'tous' ? 800 : 600, fontSize: 13, cursor: 'pointer',
+                flexShrink: 0, transition: 'all 0.15s ease',
+                boxShadow: categorieActive === 'tous' ? '0 4px 10px rgba(29,78,216,0.25)' : 'none',
+              }}
+            >
+              📁 Tous les produits
+            </button>
             {CATEGORIES.filter(c => c.value !== 'mixte').map(c => (
               <button
                 key={c.value}
@@ -407,12 +459,7 @@ export default function BatchImportModal({
               />
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
-                {templatesCategories.filter(t => {
-                  if (/\s\(\d+\)$/.test(t.nom)) return false
-                  if (!rechercheCatalogue.trim()) return true
-                  const q = rechercheCatalogue.toLowerCase().trim()
-                  return t.nom.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
-                }).map(t => {
+                {templatesAffiches.map(t => {
                   const item = saisies[t.id]
                   if (!item) return null
                   return (
