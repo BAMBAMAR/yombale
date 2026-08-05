@@ -1166,7 +1166,7 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
             - **Apporteurs** : Partage 1-clic de lien de parrainage sur statut et groupes WhatsApp, Notifications de commissions récurrentes par messagerie.
           - **Nouveau Bandeau Frise du Cycle de Vente & Livraison Complète (5 Étapes)** :
             1. **🔎 Recherche** (Comparateur & WhatsApp Bot) → 2. **🛒 Commande** (Panier Web, WhatsApp & POS) → 3. **💳 Paiement** (Wave, Cash, Crédit ou Manuel) → 4. **📦 Préparation** (Gestion des statuts en direct) → 5. **🚚 Livraison** (Suivi & notification WhatsApp du client à l'expédition).
-          - **Correction de Syntaxe `page.tsx`** : Remplacement de l'expression ternaire imbriquée multi-lignes par une structure `if/else` explicite pour `modePaiementLabel`.
+          - **Nettoyage Syntaxe `page.tsx`** : Suppression des variables obsolètes inutilisées (`prixPro`, `prixBusiness`, `modePaiementLabel`) qui perturbaient le compilateur Next.js SWC.
           - **Suppression des sections de bas de page dupliquées et mal alignées** : Alignement parfait et navigation ultra-fluide.
         - **Diagnostic Exhaustif & Correction de 5 URLs Incohérentes Confirmées** : Audit visuel systématique des 112 URLs Unsplash uniques. Identification et remplacement de 5 URLs dont le contenu visuel réel ne correspondait pas du tout aux produits assignés :
           1. **Huile Moteur** (Total/Shell/Mobil) : Ferrari rouge → bidon d'huile moteur (`photo-1635784065399`)

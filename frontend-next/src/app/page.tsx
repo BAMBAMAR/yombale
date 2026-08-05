@@ -130,17 +130,6 @@ export default async function HomePage({
   } catch {
     // valeurs par défaut ci-dessous
   }
-  const prixPro      = Number(settings.plan_pro_prix) || 5000
-  const prixBusiness = Number(settings.plan_business_prix) || 10000
-  const waveActif    = settings.paiement_wave !== 'false'
-  const manuelActif  = settings.paiement_manuel_actif !== 'false'
-  let modePaiementLabel = 'Paiement manuel disponible'
-  if (waveActif && manuelActif) {
-    modePaiementLabel = 'Paiement via Wave ou manuel'
-  } else if (waveActif) {
-    modePaiementLabel = 'Paiement via Wave'
-  }
-
   return (
     <>
       {/* ── HERO HOME ÉPURÉ & MODERNE (NOPALOU BRAND SYSTEM) ────────── */}
