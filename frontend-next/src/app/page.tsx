@@ -200,24 +200,24 @@ export default async function HomePage({
           </div>
 
           {/* COLONNE DROITE (Desktop seulement) */}
-          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)', padding: 20, borderRadius: 16, color: '#fff', boxShadow: '0 8px 24px rgba(199,91,0,0.2)', display: 'flex', flexDirection: 'column' }}>
-            <div><span style={{ display: 'inline-block', background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: 12, fontSize: 10, fontWeight: 800, marginBottom: 12 }}>🚀 NOUVEAU</span></div>
-            <h3 style={{ fontSize: 15, fontWeight: 900, marginBottom: 6 }}>Boutique Taf Taf</h3>
-            <p style={{ fontSize: 12, opacity: 0.9, margin: '0 0 16px', lineHeight: 1.4 }}>Créez votre boutique complète en 30 secondes chrono pour {prixTafTaf} FCFA !</p>
+          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: '#0f172a', padding: 20, borderRadius: 16, color: '#f8fafc', border: '1px solid #1e293b', boxShadow: '0 8px 24px rgba(15,23,42,0.15)', display: 'flex', flexDirection: 'column' }}>
+            <div><span style={{ display: 'inline-block', background: 'rgba(199,91,0,0.2)', color: '#fed7aa', padding: '4px 10px', borderRadius: 12, fontSize: 10, fontWeight: 800, marginBottom: 12, border: '1px solid rgba(199,91,0,0.3)' }}>🚀 NOUVEAU</span></div>
+            <h3 style={{ fontSize: 15, fontWeight: 900, marginBottom: 6, color: '#fff' }}>Boutique Taf Taf</h3>
+            <p style={{ fontSize: 12, color: '#94a3b8', margin: '0 0 16px', lineHeight: 1.4 }}>Créez votre boutique complète en 30 secondes chrono pour {prixTafTaf} FCFA !</p>
             
             <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <li style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, opacity: 0.95 }}>
-                <span style={{ color: '#fed7aa' }}>✓</span> Lien personnalisé (nopalou.com/shop)
+              <li style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, color: '#e2e8f0' }}>
+                <span style={{ color: '#C75B00' }}>✓</span> Lien personnalisé (nopalou.com/shop)
               </li>
-              <li style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, opacity: 0.95 }}>
-                <span style={{ color: '#fed7aa' }}>✓</span> Gestionnaire de commandes Web
+              <li style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, color: '#e2e8f0' }}>
+                <span style={{ color: '#C75B00' }}>✓</span> Gestionnaire de commandes Web
               </li>
-              <li style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, opacity: 0.95 }}>
-                <span style={{ color: '#fed7aa' }}>✓</span> Plus de visibilité sur Nopalou
+              <li style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, color: '#e2e8f0' }}>
+                <span style={{ color: '#C75B00' }}>✓</span> Plus de visibilité sur Nopalou
               </li>
             </ul>
 
-            <Link href="/creer-boutique" style={{ display: 'block', textAlign: 'center', background: '#fff', color: '#C75B00', fontWeight: 800, fontSize: 13, padding: '10px', borderRadius: 8, textDecoration: 'none', marginTop: 16 }}>Créer ma vitrine →</Link>
+            <Link href="/creer-boutique" style={{ display: 'block', textAlign: 'center', background: '#C75B00', color: '#fff', fontWeight: 800, fontSize: 13, padding: '10px', borderRadius: 8, textDecoration: 'none', marginTop: 16, boxShadow: '0 4px 12px rgba(199,91,0,0.2)', transition: 'background 0.2s' }}>Créer ma vitrine →</Link>
           </div>
 
         </div>

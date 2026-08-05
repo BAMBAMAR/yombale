@@ -8602,8 +8602,8 @@ a {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #C75B00 0%, #1e3a5f 50%, #16a34a 100%);
+  height: 3px;
+  background: #C75B00;
 }
 .seo-head {
   display: flex;
@@ -8627,9 +8627,9 @@ a {
   gap: 6px;
   font-size: 12px;
   font-weight: 800;
-  color: #15803d;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  color: #C75B00;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
   padding: 4px 14px;
   border-radius: 30px;
   letter-spacing: .02em;

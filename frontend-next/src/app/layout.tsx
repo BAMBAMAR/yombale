@@ -252,8 +252,8 @@ export default async function RootLayout({
                     🏪 Ma Boutique
                   </a>
                 ) : (
-                  <a href="/creer-boutique" className="navbar-taftaf" aria-label="Créer Boutique Taf Taf" style={{ background: '#E8F5E9', color: '#166534', border: '1px solid #22c55e', padding: '8px 16px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'all 0.2s' }}>
-                    ⚡ Boutique Taf Taf
+                  <a href="/creer-boutique" className="navbar-taftaf" aria-label="Créer Boutique Taf Taf" style={{ background: '#0f172a', color: '#fff', border: '1px solid #1e293b', padding: '8px 16px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(15,23,42,0.1)' }}>
+                    <span style={{ color: '#C75B00' }}>⚡</span> Boutique Taf Taf
                   </a>
                 )}
                 <a href="/deposer-annonce" className="navbar-deposer" aria-label="Publier une nouvelle annonce" style={{ whiteSpace: 'nowrap' }}>
@@ -272,7 +272,7 @@ export default async function RootLayout({
               <div className="navbar-icon-actions">
                 <a href="/assistant-whatsapp" className="navbar-icon-btn navbar-icon-btn--whatsapp" aria-label="Assistant WhatsApp" title="Assistant WhatsApp">💬</a>
                 <a href="/favoris" className="navbar-icon-btn navbar-icon-btn--favoris" aria-label="Mes favoris" title="Favoris">❤</a>
-                <a href="/creer-boutique" className="navbar-icon-btn" aria-label="Boutique Taf Taf" title="Taf Taf" style={{ color: '#25D366' }}>⚡</a>
+                <a href="/creer-boutique" className="navbar-icon-btn" aria-label="Boutique Taf Taf" title="Taf Taf" style={{ color: '#C75B00' }}>⚡</a>
                 <a href="/deposer-annonce" className="navbar-icon-btn navbar-icon-btn--publier" aria-label="Publier" title="Publier">➕</a>
                 <a href={session ? "/compte" : "/connexion"} className="navbar-icon-btn navbar-icon-btn--profil" aria-label="Profil" title="Profil">👤</a>
               </div>
