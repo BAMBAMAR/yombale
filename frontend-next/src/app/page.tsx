@@ -388,37 +388,38 @@ export default async function HomePage({
         <RecentlyViewed />
       </main>
 
-      {/* ── Bloc SEO ─────────────────────────────────────────────── */}
+      {/* ── Bloc SEO (MODERNISÉ, SANS BOÎTE) ─────────────────────────────────────────────── */}
       {!hasFiltre && (
-        <section style={{ maxWidth: 1200, margin: '24px auto 24px', padding: '0 20px' }}>
-          <div className="seo-card">
-            <div className="seo-head">
-              <h2>Le comparateur de prix N°1 au Sénégal</h2>
-              <span className="seo-tag">6800+ produits · maj / 6h</span>
-            </div>
+        <section style={{ maxWidth: 1000, margin: '60px auto 40px', padding: '0 20px' }}>
+          
+          {/* En-tête de section épuré */}
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <span style={{ display: 'inline-block', background: '#fff7ed', color: '#C75B00', padding: '6px 16px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 16, border: '1px solid #fed7aa' }}>
+              6800+ produits · mis à jour toutes les 6h
+            </span>
+            <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 32, fontWeight: 900, color: '#0f172a', margin: 0, lineHeight: 1.2 }}>
+              Le comparateur de prix N°1 au <span style={{ color: '#C75B00' }}>Sénégal</span>
+            </h2>
+          </div>
 
-            <div className="seo-cols-wrap">
-              <div className="seo-cols-grid">
-                <div className="seo-blurb">
-                  <span className="seo-icon">📊</span>
-                  <p>
-                    <strong>Nopalou</strong> est le premier comparateur de prix dédié au marché sénégalais.
-                    Vous cherchez le <strong>prix le moins cher</strong> pour un téléphone, une télévision, un réfrigérateur ou un ordinateur ?
-                    Nopalou compare en temps réel les prix de milliers de produits chez tous les grands marchands en ligne au Sénégal.
-                  </p>
-                </div>
-                <div className="seo-blurb">
-                  <span className="seo-icon">📍</span>
-                  <p>
-                    Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis, Ziguinchor ou Kaolack — trouvez le meilleur prix avant d&apos;acheter.
-                    Nos prix sont mis à jour automatiquement toutes les 6 heures depuis Jumia, Expat-Dakar, CoinAfrique et d&apos;autres marchands.
-                    Comparer les prix au Sénégal n&apos;a jamais été aussi simple : recherchez votre produit, voyez toutes les offres côte à côte, et choisissez le vendeur le moins cher. <strong>Gratuit, sans inscription, sans pub intrusive.</strong>
-                  </p>
-                </div>
-              </div>
+          {/* Grille de texte moderne */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 32, marginBottom: 48 }}>
+            <div style={{ background: '#ffffff', padding: 24, borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(15,23,42,0.03)' }}>
+              <span style={{ fontSize: 32, marginBottom: 16, display: 'block' }}>📊</span>
+              <p style={{ margin: 0, color: '#475569', fontSize: 14, lineHeight: 1.7 }}>
+                <strong>Nopalou</strong> est le premier comparateur de prix dédié au marché sénégalais. Vous cherchez le <strong>prix le moins cher</strong> pour un téléphone, une télévision, un réfrigérateur ou un ordinateur ? Nopalou compare en temps réel les prix de milliers de produits chez tous les grands marchands en ligne au Sénégal.
+              </p>
             </div>
+            
+            <div style={{ background: '#ffffff', padding: 24, borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(15,23,42,0.03)' }}>
+              <span style={{ fontSize: 32, marginBottom: 16, display: 'block' }}>📍</span>
+              <p style={{ margin: 0, color: '#475569', fontSize: 14, lineHeight: 1.7 }}>
+                Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis, Ziguinchor ou Kaolack — trouvez le meilleur prix avant d&apos;acheter. Nos prix sont mis à jour automatiquement toutes les 6 heures depuis Jumia, Expat-Dakar, CoinAfrique et d&apos;autres. <strong>Gratuit, sans inscription, sans pub.</strong>
+              </p>
+            </div>
+          </div>
 
-            <p className="chip-row-label">Comparer par catégorie</p>
+          <p className="chip-row-label">Comparer par catégorie</p>
             <div className="chip-row">
               {CATEGORIES.filter(c => c.slug !== 'telecom').map(c => (
                 <Link key={c.slug} href={`/categorie/${c.slug}`} className="chip">
@@ -447,11 +448,10 @@ export default async function HomePage({
               ))}
             </div>
 
-            <div className="seo-foot">
-              <span className="seo-dot" />
+            <div style={{ textAlign: 'center', marginTop: 40, padding: 16, background: '#f8fafc', borderRadius: 12, color: '#64748b', fontSize: 13, border: '1px solid #e2e8f0' }}>
+              <span style={{ display: 'inline-block', width: 8, height: 8, background: '#10b981', borderRadius: '50%', marginRight: 8 }} />
               Prix vérifiés automatiquement toutes les 6 heures sur tous les grands marchands sénégalais
             </div>
-          </div>
         </section>
       )}
     </>
