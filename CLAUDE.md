@@ -1115,6 +1115,12 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
         - **Dictionnaire Photo Haute Fidélité** : Enrichissement complet des règles et mots-clés de `getPhotoForProduct(nom, cat)` pour couvrir 100% des sous-types (sauces, condiments, fruits, légumes, boissons, consoles, manettes, jeux vidéo, accessoires PC/TPV, pièces auto, matériel médical, outillage BTP, etc.).
         - **Zéro Fallback Non Souhaité & Zéro Incohérence** : Validation automatisée confirmant **0 produit hors catégorie** et **100% de concordance photo/produit** sur les 2 010 articles du catalogue standard.
         - **Correction Condiments & Sauces** : Remplacement de la photo de bol de chips par des visuels HD spécifiques (bouteilles de Ketchup rouges HD pour *Ketchup Heinz/Amora*, pot de sauce mayonnaise onctueuse pour *Mayonnaise Calvé/Lesieur* & *Moutarde Amora*, bouteille de sauce pimentée avec piments frais pour *Sauce Piment Extra Forte* & *Harissa*, et épices/cubes d'assaisonnement pour *Bouillons Jumbo/Maggi/Knorr*).
-        - **Diagnostic Exhaustif & Onduleurs** : Diagnostic complet des règles de fallback. Séparation nette des Onduleurs APC (batterie secours UPS HD) et des routeurs réseau.
+        - **Diagnostic Exhaustif & Correction de 5 URLs Incohérentes Confirmées** : Audit visuel systématique des 112 URLs Unsplash uniques. Identification et remplacement de 5 URLs dont le contenu visuel réel ne correspondait pas du tout aux produits assignés :
+          1. **Huile Moteur** (Total/Shell/Mobil) : Ferrari rouge → bidon d'huile moteur (`photo-1635784065399`)
+          2. **Onduleur APC** (650VA/1000VA/1500VA) : gradient abstrait coloré → salle serveur/rack informatique (`photo-1558494949`)
+          3. **Ketchup** (Heinz/Amora) : Pikachu surpris (meme) → bouteille de ketchup rouge (`photo-1472476443507`)
+          4. **Mayonnaise/Moutarde** (Calvé/Lesieur/Amora) : boudin coréen sunda → pot de condiments/mayo (`photo-1528750717929`)
+          5. **Huile alimentaire** (Dinor/Niani/Lesieur) : olives sombres (nature morte) → bouteille d'huile de cuisine dorée (`photo-1620706857370`)
+        - **Réordonnancement Priorités Mots-clés** : Déplacement du match `sardines/thon/conserves` avant `huile/beurre` pour éviter que "Sardines Titus à l'Huile" ne soit matchée par le mot "huile".
 
 

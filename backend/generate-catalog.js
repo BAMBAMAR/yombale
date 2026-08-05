@@ -11,17 +11,17 @@ function getPhotoForProduct(nom, cat) {
     if (n.includes("lait")) return "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400";
     if (n.includes("café")) return "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400";
     if (n.includes("thé") || n.includes("infusion")) return "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400";
-    if (n.includes("ketchup")) return "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400";
-    if (n.includes("mayonnaise") || n.includes("moutarde")) return "https://images.unsplash.com/photo-1585325701165-351af916e581?w=400";
+    if (n.includes("ketchup")) return "https://images.unsplash.com/photo-1472476443507-c7a5948772fc?w=400";
+    if (n.includes("mayonnaise") || n.includes("moutarde")) return "https://images.unsplash.com/photo-1528750717929-32abb73d3bd9?w=400";
     if (n.includes("piment") || n.includes("harissa")) return "https://images.unsplash.com/photo-1563584880562-411a1460c3a2?w=400";
     if (n.includes("bouillon") || n.includes("jumbo") || n.includes("maggi") || n.includes("knorr") || n.includes("vinaigre") || n.includes("sauce")) return "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400";
-    if (n.includes("huile") || n.includes("beurre") || n.includes("margarine")) return "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400";
+    if (n.includes("sardines") || n.includes("thon") || n.includes("corned beef") || n.includes("kethiakh") || n.includes("guedj") || n.includes("yeet") || n.includes("crevettes")) return "https://images.unsplash.com/photo-1534483509719-3feaee7c30da?w=400";
+    if (n.includes("huile") || n.includes("beurre") || n.includes("margarine")) return "https://images.unsplash.com/photo-1620706857370-e1b9770e8bb1?w=400";
     if (n.includes("chocolat") || n.includes("nutella") || n.includes("milo") || n.includes("nesquik")) return "https://images.unsplash.com/photo-1581795669633-91ef7c9699a8?w=400";
     if (n.includes("sucre") || n.includes("miel") || n.includes("confiture")) return "https://images.unsplash.com/photo-1587132137056-bfbf0166836e?w=400";
     if (n.includes("jus") || n.includes("eau") || n.includes("canette") || n.includes("coca") || n.includes("fanta") || n.includes("sprite") || n.includes("energy") || n.includes("bissap") || n.includes("sirop") || n.includes("bouye") || n.includes("poudre")) return "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400";
     if (n.includes("pâtes") || n.includes("spaghetti") || n.includes("macaroni") || n.includes("coquillettes") || n.includes("vermicelles") || n.includes("couscous") || n.includes("farine") || n.includes("thiakry") || n.includes("araw") || n.includes("sankhal")) return "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400";
     if (n.includes("oignon") || n.includes("pommes de terre") || n.includes("ail") || n.includes("gingembre") || n.includes("arachide") || n.includes("mafé")) return "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400";
-    if (n.includes("sardines") || n.includes("thon") || n.includes("corned beef") || n.includes("kethiakh") || n.includes("guedj") || n.includes("yeet") || n.includes("crevettes")) return "https://images.unsplash.com/photo-1534483509719-3feaee7c30da?w=400";
     return "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400";
   }
 
@@ -54,7 +54,7 @@ function getPhotoForProduct(nom, cat) {
     if (n.includes("scanner") || n.includes("douchette") || n.includes("code-barres") || n.includes("tpv") || n.includes("tiroir") || n.includes("afficheur")) return "https://images.unsplash.com/photo-1556742049-0a67daf4005a?w=400";
     if (n.includes("écran") || n.includes("moniteur")) return "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400";
     if (n.includes("disque") || n.includes("ssd") || n.includes("clé usb") || n.includes("ram")) return "https://images.unsplash.com/photo-1531492746076-161ca9bcad58?w=400";
-    if (n.includes("onduleur") || n.includes("apc")) return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400";
+    if (n.includes("onduleur") || n.includes("apc")) return "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400";
     if (n.includes("sac")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400";
     return "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400";
   }
@@ -109,12 +109,12 @@ function getPhotoForProduct(nom, cat) {
 
   // 7. AUTO-MOTO
   if (cat === "auto-moto") {
-    if (n.includes("huile") || n.includes("liquide") || n.includes("nettoyant") || n.includes("polish")) return "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=400";
+    if (n.includes("huile") || n.includes("liquide") || n.includes("nettoyant") || n.includes("polish")) return "https://images.unsplash.com/photo-1635784065399-1b1661dff7c6?w=400";
     if (n.includes("batterie") || n.includes("câble") || n.includes("chargeur")) return "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400";
     if (n.includes("pneu") || n.includes("jante")) return "https://images.unsplash.com/photo-1578844251758-2f71da64c96f?w=400";
     if (n.includes("casque") || n.includes("gants") || n.includes("blouson") || n.includes("moto")) return "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400";
     if (n.includes("cric") || n.includes("extincteur") || n.includes("housse") || n.includes("rétroviseur") || n.includes("tapis")) return "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400";
-    return "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=400";
+    return "https://images.unsplash.com/photo-1635784065399-1b1661dff7c6?w=400";
   }
 
   // 8. JEUX & CONSOLES
