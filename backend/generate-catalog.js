@@ -219,17 +219,20 @@ function getPhotoForProduct(nom, cat) {
 
   // 17. SANTÉ & PHARMA
   if (cat === "sante-pharma") {
-    if (n.includes("paracétamol") || n.includes("doliprane") || n.includes("efferalgan") || n.includes("spasfon") || n.includes("smecta") || n.includes("advil") || n.includes("aspirine") || n.includes("vitamine") || n.includes("sirop") || n.includes("magnésium") || n.includes("comprimés")) return "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400";
+    if (n.includes("paracétamol") || n.includes("doliprane") || n.includes("efferalgan") || n.includes("spasfon")) return "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400"; // Pills
+    if (n.includes("sirop") || n.includes("magnésium") || n.includes("vitamine")) return "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400";
     if (n.includes("thermomètre") || n.includes("tensiomètre") || n.includes("oxymètre") || n.includes("glycémie")) return "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400";
-    if (n.includes("masque") || n.includes("gel") || n.includes("alcool") || n.includes("pansement") || n.includes("compresse") || n.includes("bétadine") || n.includes("préservatifs") || n.includes("test") || n.includes("eau oxygénée")) return "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=400";
-    return "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400";
+    if (n.includes("masque") || n.includes("gel") || n.includes("alcool") || n.includes("pansement")) return "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=400";
+    if (n.includes("sérum") || n.includes("test") || n.includes("soin")) return "https://images.unsplash.com/photo-1607083206968-13611e3d76db?w=400";
+    return "https://images.unsplash.com/photo-1585421514738-01798e348b17?w=400"; // General pharma fallback
   }
 
   // 18. BÉBÉ & ENFANTS
   if (cat === "bebe-enfants") {
     if (n.includes("couches") || n.includes("lingettes")) return "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400";
     if (n.includes("lait") || n.includes("céréales") || n.includes("pots")) return "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400";
-    if (n.includes("biberon") || n.includes("sucette") || n.includes("chauffe-biberon") || n.includes("stérilisateur") || n.includes("hochets") || n.includes("dentition")) return "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400";
+    if (n.includes("biberon") || n.includes("sucette") || n.includes("chauffe-biberon")) return "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400";
+    if (n.includes("vêtement") || n.includes("body") || n.includes("pyjama") || n.includes("chaussons")) return "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400"; // Baby clothes
     if (n.includes("poussette") || n.includes("lit") || n.includes("jouets") || n.includes("transat") || n.includes("siège auto")) return "https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=400";
     if (n.includes("shampoing") || n.includes("gel") || n.includes("savon") || n.includes("poudre") || n.includes("huile")) return "https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=400";
     return "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400";
