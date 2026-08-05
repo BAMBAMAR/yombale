@@ -210,6 +210,26 @@ export default async function HomePage({
               )
             })}
           </div>
+
+          {/* RACCOURCI DIRECT BOUTIQUE TAF TAF POUR LES VENDEURS */}
+          <div style={{
+            marginTop: 24, display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'center',
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '10px 22px', borderRadius: 30,
+            boxShadow: '0 4px 16px rgba(15,23,42,0.15)', border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>
+              ⚡ Vous êtes commerçant ? Vendez en ligne en 30 sec <strong style={{ color: '#25D366' }}>(1er mois 100% offert)</strong>
+            </span>
+            <Link
+              href="/creer-boutique"
+              style={{
+                background: '#C75B00', color: '#fff', padding: '6px 16px', borderRadius: 20, fontSize: 12,
+                fontWeight: 900, textDecoration: 'none', boxShadow: '0 2px 8px rgba(199,91,0,0.3)', whiteSpace: 'nowrap'
+              }}
+            >
+              Créer ma Boutique Taf Taf 🚀
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -305,223 +325,13 @@ export default async function HomePage({
           tri={tri}
           sousType={sousType}
         />
-
-        {/* SECTION BOUTIQUES & MARCHANDS EN BAS DE PAGE */}
+        {/* SECTION DES 3 FORMULES & TARIFS DE MARQUE */}
         <ShowcaseTabs />
 
         {/* PRODUITS RÉCEMMENT CONSULTÉS */}
         <RecentlyViewed />
       </main>
 
-      {/* ── Comment ça marche ───────────────────────────────────── */}
-      {!hasFiltre && (
-        <section className="home-how">
-          <h2 className="home-section-titre">Comment ça marche ?</h2>
-          <div className="home-how-grid">
-            <div className="home-how-step">
-              <div className="home-how-icon">🔍</div>
-              <div className="home-how-body">
-                <h3>Cherchez votre produit</h3>
-                <p>Tapez le nom d&apos;un produit, d&apos;une marque ou d&apos;une catégorie dans la barre de recherche.</p>
-              </div>
-            </div>
-            <div className="home-how-step">
-              <div className="home-how-icon">📊</div>
-              <div className="home-how-body">
-                <h3>Comparez les prix</h3>
-                <p>Nopalou compare automatiquement les prix chez Jumia, Expat-Dakar, CoinAfrique et plus.</p>
-              </div>
-            </div>
-            <div className="home-how-step">
-              <div className="home-how-icon">💰</div>
-              <div className="home-how-body">
-                <h3>Économisez</h3>
-                <p>Choisissez le marchand le moins cher et économisez jusqu&apos;à 40% sur vos achats.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Social proof ────────────────────────────────────────── */}
-      {!hasFiltre && (
-        <section className="home-proof">
-          <div className="home-proof-grid">
-            <div className="home-proof-item">
-              <span className="home-proof-num">50 000+</span>
-              <span className="home-proof-lbl">Comparaisons effectuées</span>
-            </div>
-            <div className="home-proof-sep" />
-            <div className="home-proof-item">
-              <span className="home-proof-num">40%</span>
-              <span className="home-proof-lbl">D&apos;économies en moyenne</span>
-            </div>
-            <div className="home-proof-sep" />
-            <div className="home-proof-item">
-              <span className="home-proof-num">6h</span>
-              <span className="home-proof-lbl">Mise à jour des prix</span>
-            </div>
-            <div className="home-proof-sep" />
-            <div className="home-proof-item">
-              <span className="home-proof-num">Dakar</span>
-              <span className="home-proof-lbl">& tout le Sénégal</span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── CTA Annonce ─────────────────────────────────────────── */}
-      {!hasFiltre && (
-        <section className="home-cta-annonce">
-          <div className="home-cta-annonce-inner">
-            <div className="home-cta-annonce-text">
-              <h2>Vendez vos articles facilement</h2>
-              <p>Publiez une annonce gratuitement et touchez des milliers d&apos;acheteurs au Sénégal.</p>
-            </div>
-            <div className="home-cta-annonce-btns">
-              <Link href="/deposer-annonce" className="home-cta-btn home-cta-btn--primary">
-                + Publier une annonce
-              </Link>
-              <Link href="/deposer-immo" className="home-cta-btn home-cta-btn--secondary">
-                🏠 Publier un bien immo
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── CTA Assistant WhatsApp ──────────────────────────────── */}
-      {!hasFiltre && (
-        <section className="home-cta-annonce">
-          <div className="home-cta-annonce-inner" style={{ background: 'linear-gradient(135deg, #f0fdf4, #fff)', borderColor: '#25D366' }}>
-            <div className="home-cta-annonce-text">
-              <h2>💬 Comparez les prix sur WhatsApp</h2>
-              <p>Recherchez un produit, suivez une annonce immo ou créez une alerte de prix, directement dans votre chat — sans app à installer.</p>
-            </div>
-            <div className="home-cta-annonce-btns">
-              <a
-                href="https://wa.me/221708717942?text=menu"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="home-cta-btn"
-                style={{ background: '#25D366', color: '#fff' }}
-              >
-                Discuter sur WhatsApp
-              </a>
-              <Link href="/assistant-whatsapp" className="home-cta-btn home-cta-btn--secondary">
-                Voir ce qu&apos;il sait faire
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Tarifs Boutique Pro / Business ──────────────────────── */}
-      {!hasFiltre && (
-        <section style={{ maxWidth: 1200, margin: '32px auto 0', padding: '0 20px' }}>
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--navy)', margin: '0 0 8px' }}>
-              Ouvrez votre boutique en ligne
-            </h2>
-            <p style={{ color: '#64748b', fontSize: 15, margin: '0 0 16px' }}>
-              Vendez directement sur Nopalou — catalogue produits, analytics, placement prioritaire.
-            </p>
-            
-            {/* Badges de Réduction Durée */}
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Durées disponibles :</span>
-              <span style={{ background: '#f1f5f9', color: '#334155', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, border: '1px solid #cbd5e1' }}>1 mois</span>
-              <span style={{ background: '#fff7f0', color: '#C75B00', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, border: '1px solid #ffedd5' }}>3 mois (-10%)</span>
-              <span style={{ background: '#fff7f0', color: '#C75B00', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, border: '1px solid #ffedd5' }}>6 mois (-15%)</span>
-              <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 800, border: '1px solid #bbf7d0' }}>🔥 12 mois (-25% / 3 mois offerts)</span>
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
-            {/* Plan Pro */}
-            <div style={{
-              border: '2px solid #C75B00', borderRadius: 16, padding: '24px 20px',
-              background: '#fff', position: 'relative', boxShadow: '0 4px 16px rgba(199,91,0,0.08)',
-            }}>
-              <span style={{
-                position: 'absolute', top: -12, left: 20,
-                background: '#C75B00', color: '#fff',
-                fontSize: 11, fontWeight: 800, padding: '3px 12px', borderRadius: 20, letterSpacing: '.04em',
-              }}>BOUTIQUE PRO</span>
-              <p style={{ fontSize: 32, fontWeight: 900, margin: '8px 0 2px', color: '#C75B00' }}>
-                {prixPro.toLocaleString('fr-FR')} <span style={{ fontSize: 14, fontWeight: 500, color: '#64748b' }}>FCFA/mois</span>
-              </p>
-              <p style={{ fontSize: 13, color: '#16a34a', fontWeight: 800, marginBottom: 4 }}>
-                🎁 1er mois 100% gratuit !
-              </p>
-              <p style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginBottom: 12 }}>
-                Jusqu&apos;à -25% en engagement 12 mois
-              </p>
-              <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>{modePaiementLabel}</p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 9 }}>
-                {[
-                  'Catalogue produits avec photos',
-                  'Placement prioritaire dans /boutiques',
-                  'Badge "Vendeur Pro" sur vos annonces',
-                  '5 annonces classées incluses/mois',
-                  'Analytics : vues & clics',
-                ].map(a => (
-                  <li key={a} style={{ fontSize: 13, display: 'flex', gap: 8 }}>
-                    <span style={{ color: '#C75B00', fontWeight: 700 }}>✓</span>{a}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/boutique/abonnement" style={{
-                display: 'block', textAlign: 'center',
-                background: '#C75B00', color: '#fff',
-                padding: '12px 0', borderRadius: 10,
-                fontWeight: 800, fontSize: 14, textDecoration: 'none',
-              }}>
-                Choisir la formule Pro →
-              </Link>
-            </div>
-
-            {/* Plan Business */}
-            <div style={{
-              border: '2px solid #1e3a5f', borderRadius: 16, padding: '24px 20px',
-              background: '#f8fafc', position: 'relative', boxShadow: '0 4px 16px rgba(30,58,95,0.08)',
-            }}>
-              <span style={{
-                position: 'absolute', top: -12, left: 20,
-                background: '#1e3a5f', color: '#fff',
-                fontSize: 11, fontWeight: 800, padding: '3px 12px', borderRadius: 20, letterSpacing: '.04em',
-              }}>BOUTIQUE BUSINESS</span>
-              <p style={{ fontSize: 32, fontWeight: 900, margin: '8px 0 2px', color: '#1e3a5f' }}>
-                {prixBusiness.toLocaleString('fr-FR')} <span style={{ fontSize: 14, fontWeight: 500, color: '#64748b' }}>FCFA/mois</span>
-              </p>
-              <p style={{ fontSize: 13, color: '#16a34a', fontWeight: 800, marginBottom: 4 }}>
-                🎁 1er mois 100% gratuit !
-              </p>
-              <p style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginBottom: 12 }}>
-                Jusqu&apos;à -25% en engagement 12 mois
-              </p>
-              <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>{modePaiementLabel}</p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 9 }}>
-                {[
-                  'Tout ce qui est inclus dans Pro',
-                  'URL dédiée /boutiques/[votre-nom]',
-                  '15 annonces classées incluses/mois',
-                  'Bannière dans 1 page catégorie',
-                  'Support prioritaire WhatsApp',
-                ].map(a => (
-                  <li key={a} style={{ fontSize: 13, display: 'flex', gap: 8 }}>
-                    <span style={{ color: '#1e3a5f', fontWeight: 700 }}>✓</span>{a}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/boutique/abonnement" style={{
-                display: 'block', textAlign: 'center',
-                background: '#1e3a5f', color: '#fff',
-                padding: '12px 0', borderRadius: 10,
-                fontWeight: 800, fontSize: 14, textDecoration: 'none',
-              }}>
-                Choisir la formule Business →
-              </Link>
             </div>
           </div>
 

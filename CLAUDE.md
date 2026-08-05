@@ -1155,6 +1155,12 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
           - **Rapprochement Recherche → Catégories → Produits** : Intégration directe des 20 catégories sous forme de pilules d'action sous la barre de recherche principale.
           - **Nouveau Bandeau de Feedback de Recherche Instantané (`SearchFeedbackBanner`)** : Affichage d'une bannière de confirmation claire (`🔎 X produits trouvés pour "mots-clés" — Catégorie : XYZ`) avec bouton d'annulation en 1 clic dès qu'un filtre est actif.
           - **Accès Direct aux Produits** : La grille de produits est disposée directement sous la zone de recherche sans aucun bloc parasite au milieu.
+          - **Réintégration du Raccourci Marchand dans le Hero** : Bandeau d'action directe sous les catégories : `⚡ Vous êtes commerçant ? Vendez en ligne en 30 sec (1er mois 100% offert) [Créer ma Boutique Taf Taf 🚀]`.
+          - **Refonte Mondiale du Tableau d'Abonnement à 3 Formules (`ShowcaseTabs.tsx`)** :
+            - **Boutique Taf Taf (1 mois offert)** (Gratuit 30j puis 5.000 FCFA/m) : Baguette Magique Ali/SHEIN, conversion Produit → Annonce en 1-clic, Catalogue Web & WhatsApp.
+            - **Vendeur Pro (15.000 FCFA/m)** : **Caisse POS enregistreuse tactile**, **Scan EAN-13 par caméra**, **Impression d'étiquettes stickers 50x30mm**, **Carnet de Crédits Client & Relance 1-clic**, **Factures & Devis PDF**.
+            - **Business VIP (35.000 FCFA/m)** : **Multi-caissiers & droits d'équipe**, **Analytics CA & Marges nettes**, **Bannière sponsorisée prioritaire**.
+          - **Suppression des sections de bas de page dupliquées et mal alignées** : Alignement parfait et navigation ultra-fluide.
         - **Diagnostic Exhaustif & Correction de 5 URLs Incohérentes Confirmées** : Audit visuel systématique des 112 URLs Unsplash uniques. Identification et remplacement de 5 URLs dont le contenu visuel réel ne correspondait pas du tout aux produits assignés :
           1. **Huile Moteur** (Total/Shell/Mobil) : Ferrari rouge → bidon d'huile moteur (`photo-1635784065399`)
           2. **Onduleur APC** (650VA/1000VA/1500VA) : gradient abstrait coloré → salle serveur/rack informatique (`photo-1558494949`)
