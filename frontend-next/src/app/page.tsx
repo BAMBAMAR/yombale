@@ -149,11 +149,24 @@ export default async function HomePage({
         <div style={{ maxWidth: 1440, margin: '0 auto', display: 'flex', alignItems: 'stretch', justifyContent: 'center', gap: 40, position: 'relative', zIndex: 2 }}>
           
           {/* COLONNE GAUCHE (Desktop seulement) */}
-          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: '#fff', padding: 16, borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontSize: 20, marginBottom: 6 }}>💬</div>
-            <h3 style={{ fontSize: 13, fontWeight: 900, color: '#0f172a', marginBottom: 4 }}>Commandez sur WhatsApp</h3>
-            <p style={{ fontSize: 11, color: '#64748b', margin: 0, lineHeight: 1.4, flex: 1 }}>Trouvez le produit et passez commande directement au vendeur en un clic. Suivez votre livraison en direct.</p>
-            <Link href="#whatsapp" style={{ display: 'inline-block', marginTop: 12, fontSize: 12, fontWeight: 700, color: '#C75B00', textDecoration: 'none' }}>En savoir plus →</Link>
+          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: '#fff', padding: 20, borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontSize: 24, marginBottom: 8 }}>💬</div>
+            <h3 style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', marginBottom: 8 }}>Commandez sur WhatsApp</h3>
+            <p style={{ fontSize: 12, color: '#64748b', margin: 0, lineHeight: 1.5, marginBottom: 16 }}>Trouvez le produit et passez commande directement au vendeur en un clic.</p>
+            
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <li style={{ fontSize: 12, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ color: '#10b981' }}>✓</span> Sans inscription
+              </li>
+              <li style={{ fontSize: 12, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ color: '#10b981' }}>✓</span> Contact direct vendeur
+              </li>
+              <li style={{ fontSize: 12, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ color: '#10b981' }}>✓</span> Suivi de livraison en temps réel
+              </li>
+            </ul>
+
+            <Link href="#whatsapp" style={{ display: 'inline-block', marginTop: 16, fontSize: 13, fontWeight: 800, color: '#C75B00', textDecoration: 'none' }}>Comment ça marche ? →</Link>
           </div>
 
           {/* COLONNE CENTRALE */}
@@ -183,11 +196,24 @@ export default async function HomePage({
           </div>
 
           {/* COLONNE DROITE (Desktop seulement) */}
-          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)', padding: 16, borderRadius: 16, color: '#fff', boxShadow: '0 8px 24px rgba(199,91,0,0.2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div><span style={{ display: 'inline-block', background: 'rgba(255,255,255,0.2)', padding: '2px 10px', borderRadius: 12, fontSize: 10, fontWeight: 800, marginBottom: 8 }}>🚀 NOUVEAU</span></div>
-            <h3 style={{ fontSize: 15, fontWeight: 900, marginBottom: 4 }}>Boutique Taf Taf</h3>
-            <p style={{ fontSize: 11, opacity: 0.9, margin: '0 0 12px', lineHeight: 1.4, flex: 1 }}>Créez votre boutique complète en 30 secondes chrono pour {prixTafTaf} FCFA !</p>
-            <Link href="/creer-boutique" style={{ display: 'block', textAlign: 'center', background: '#fff', color: '#C75B00', fontWeight: 800, fontSize: 12, padding: '6px', borderRadius: 8, textDecoration: 'none' }}>Créer ma vitrine →</Link>
+          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)', padding: 20, borderRadius: 16, color: '#fff', boxShadow: '0 8px 24px rgba(199,91,0,0.2)', display: 'flex', flexDirection: 'column' }}>
+            <div><span style={{ display: 'inline-block', background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: 12, fontSize: 10, fontWeight: 800, marginBottom: 12 }}>🚀 NOUVEAU</span></div>
+            <h3 style={{ fontSize: 15, fontWeight: 900, marginBottom: 6 }}>Boutique Taf Taf</h3>
+            <p style={{ fontSize: 12, opacity: 0.9, margin: '0 0 16px', lineHeight: 1.4 }}>Créez votre boutique complète en 30 secondes chrono pour {prixTafTaf} FCFA !</p>
+            
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <li style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, opacity: 0.95 }}>
+                <span style={{ color: '#fed7aa' }}>✓</span> Lien personnalisé (nopalou.com/shop)
+              </li>
+              <li style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, opacity: 0.95 }}>
+                <span style={{ color: '#fed7aa' }}>✓</span> Gestionnaire de commandes Web
+              </li>
+              <li style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, opacity: 0.95 }}>
+                <span style={{ color: '#fed7aa' }}>✓</span> Plus de visibilité sur Nopalou
+              </li>
+            </ul>
+
+            <Link href="/creer-boutique" style={{ display: 'block', textAlign: 'center', background: '#fff', color: '#C75B00', fontWeight: 800, fontSize: 13, padding: '10px', borderRadius: 8, textDecoration: 'none', marginTop: 16 }}>Créer ma vitrine →</Link>
           </div>
 
         </div>
