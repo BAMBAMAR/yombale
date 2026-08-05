@@ -140,7 +140,7 @@ export default async function HomePage({
       <section style={{
         background: 'linear-gradient(135deg, #ffffff 0%, #fffdfa 50%, #fff7ed 100%)',
         borderBottom: '1px solid #fed7aa',
-        padding: '48px 20px 36px',
+        padding: '32px 20px 24px',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden',
@@ -216,25 +216,6 @@ export default async function HomePage({
             })}
           </div>
 
-          {/* RACCOURCI DIRECT BOUTIQUE TAF TAF POUR LES VENDEURS */}
-          <div style={{
-            marginTop: 24, display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'center',
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '10px 22px', borderRadius: 30,
-            boxShadow: '0 4px 16px rgba(15,23,42,0.15)', border: '1px solid rgba(255,255,255,0.1)'
-          }}>
-            <span style={{ fontSize: 13, fontWeight: 700 }}>
-              ⚡ Vous êtes commerçant ? Vendez en ligne en 30 sec <strong style={{ color: '#25D366' }}>(à {prixTafTaf} FCFA)</strong>
-            </span>
-            <Link
-              href="/creer-boutique"
-              style={{
-                background: '#C75B00', color: '#fff', padding: '6px 16px', borderRadius: 20, fontSize: 12,
-                fontWeight: 900, textDecoration: 'none', boxShadow: '0 2px 8px rgba(199,91,0,0.3)', whiteSpace: 'nowrap'
-              }}
-            >
-              Créer ma Boutique Taf Taf 🚀
-            </Link>
-          </div>
           </div>
 
           {/* COLONNE DROITE (Desktop seulement) */}
