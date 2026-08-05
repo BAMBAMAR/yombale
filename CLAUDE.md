@@ -1164,6 +1164,8 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
             - **Acheteurs** : Panier Web & Commande WhatsApp 1-Clic, Connexion sans mot de passe OTP WhatsApp, Bot Assistant IA Comparateur `+221 70 871 79 42`, Alertes gratuites de baisse de prix sur WhatsApp.
             - **Commerçants** : Notifications instantanées de commandes pré-remplies, Relance d'impayés en 1 clic depuis la Caisse POS, Envoi direct de Factures & Devis PDF, Support VIP WhatsApp 7j/7.
             - **Apporteurs** : Partage 1-clic de lien de parrainage sur statut et groupes WhatsApp, Notifications de commissions récurrentes par messagerie.
+          - **Nouveau Bandeau Frise du Cycle de Vente & Livraison Complète (5 Étapes)** :
+            1. **🔎 Recherche** (Comparateur & WhatsApp Bot) → 2. **🛒 Commande** (Panier Web, WhatsApp & POS) → 3. **💳 Paiement** (Wave, Cash, Crédit ou Manuel) → 4. **📦 Préparation** (Gestion des statuts en direct) → 5. **🚚 Livraison** (Suivi & notification WhatsApp du client à l'expédition).
           - **Suppression des sections de bas de page dupliquées et mal alignées** : Alignement parfait et navigation ultra-fluide.
         - **Diagnostic Exhaustif & Correction de 5 URLs Incohérentes Confirmées** : Audit visuel systématique des 112 URLs Unsplash uniques. Identification et remplacement de 5 URLs dont le contenu visuel réel ne correspondait pas du tout aux produits assignés :
           1. **Huile Moteur** (Total/Shell/Mobil) : Ferrari rouge → bidon d'huile moteur (`photo-1635784065399`)

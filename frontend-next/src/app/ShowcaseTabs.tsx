@@ -69,6 +69,47 @@ export default function ShowcaseTabs() {
           </div>
         </div>
 
+        {/* ── FRISE DU CYCLE COMPLET : RECHERCHE → LIVRAISON ─────────── */}
+        <div style={{
+          background: '#fff7ed', borderRadius: 16, border: '1px solid #fed7aa',
+          padding: '20px 16px', textAlignment: 'center', boxShadow: '0 4px 12px rgba(199,91,0,0.05)'
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: 14 }}>
+            <span style={{ fontSize: 12, fontWeight: 900, color: '#c75b00', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              ⚡ Chaîne de Valeur Complète Vendeurs &amp; Client
+            </span>
+            <h4 style={{ margin: '4px 0 0', fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
+              De la Recherche du Produit jusqu&apos;à la Remise en Main Propre par le Livreur
+            </h4>
+          </div>
+
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12,
+            alignItems: 'center', textAlign: 'center'
+          }}>
+            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #ffedd5' }}>
+              <div style={{ fontSize: 20 }}>🔎 1. Recherche</div>
+              <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Comparateur &amp; WhatsApp Bot</div>
+            </div>
+            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #ffedd5' }}>
+              <div style={{ fontSize: 20 }}>🛒 2. Commande</div>
+              <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Panier Web, WhatsApp &amp; POS</div>
+            </div>
+            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #ffedd5' }}>
+              <div style={{ fontSize: 20 }}>💳 3. Paiement</div>
+              <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Wave, Cash, Crédit ou Manuel</div>
+            </div>
+            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #ffedd5' }}>
+              <div style={{ fontSize: 20 }}>📦 4. Préparation</div>
+              <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Gestion des statuts de stock</div>
+            </div>
+            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #ffedd5' }}>
+              <div style={{ fontSize: 20 }}>🚚 5. Livraison</div>
+              <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Suivi &amp; Alerte client WhatsApp</div>
+            </div>
+          </div>
+        </div>
+
         {/* Grille des 3 Formules Alignées */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, alignItems: 'stretch' }}>
           
@@ -118,6 +159,10 @@ export default function ShowcaseTabs() {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
                 <span><strong>🔗 Lien `/boutiques/[nom]` + QR Code :</strong> Téléchargeable pour flyers &amp; réseaux</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
+                <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
+                <span><strong>🚚 Suivi Commande &amp; Livraison WhatsApp :</strong> Alerte automatique du client à l&apos;expédition</span>
               </div>
             </div>
 
@@ -191,6 +236,10 @@ export default function ShowcaseTabs() {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
                 <span><strong>📄 Factures &amp; Devis PDF Pro :</strong> Envoi 1-clic direct sur WhatsApp avec logo</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
+                <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
+                <span><strong>📦 Suivi &amp; Préparation de Commande :</strong> Statuts en direct (Attente → Préparation → Prêt → En Livraison)</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
