@@ -44,6 +44,11 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   const [cmdJustificatifUrl, setCmdJustificatifUrl] = useState<string>('')
   const [cmdLignes, setCmdLignes] = useState<Array<{ produitId: string; quantite: number; prixAchat: number }>>([])
 
+  // Search & Filters State
+  const [rechercheFournisseur, setRechercheFournisseur] = useState<string>('')
+  const [rechercheCommande, setRechercheCommande] = useState<string>('')
+  const [filtreStatutCmd, setFiltreStatutCmd] = useState<string>('tous')
+
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
   const chargerDonnees = async () => {
@@ -315,25 +320,46 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
 
       {subTab === 'fournisseurs' ? (
         <>
-          {/* Outils Fournisseur */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          {/* Outils & Recherche Fournisseur */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+            <input
+              type="text"
+              value={rechercheFournisseur}
+              onChange={e => setRechercheFournisseur(e.target.value)}
+              placeholder="🔍 Rechercher par nom, téléphone, email, adresse..."
+              style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, minWidth: 260, flex: 1, outline: 'none' }}
+            />
             <button
               onClick={() => { resetFouForm(); setModalFOUOuvert(true); }}
-              style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+              style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
-              ➕ Ajouter
+              ➕ Ajouter Fournisseur
             </button>
           </div>
 
           {loading ? (
             <p style={{ color: '#6b7280', fontSize: 14 }}>Chargement des fournisseurs...</p>
-          ) : fournisseurs.length === 0 ? (
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
-              👤 Aucun fournisseur enregistré pour le moment.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {fournisseurs.map((f: any) => (
+          ) : (() => {
+            const qFou = rechercheFournisseur.trim().toLowerCase()
+            const fournisseursFiltrés = fournisseurs.filter((f: any) =>
+              !qFou ||
+              f.nom?.toLowerCase().includes(qFou) ||
+              f.telephone?.includes(qFou) ||
+              f.email?.toLowerCase().includes(qFou) ||
+              f.adresse?.toLowerCase().includes(qFou)
+            )
+
+            if (fournisseursFiltrés.length === 0) {
+              return (
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
+                  👤 Aucun fournisseur trouvé.
+                </div>
+              )
+            }
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {fournisseursFiltrés.map((f: any) => (
                 <div key={f.id} style={{ background: '#ffffff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -363,41 +389,74 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                 </div>
               ))}
             </div>
-          )}
+          )
+        })()}
         </>
       ) : (
         <>
-          {/* Outils Commandes */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          {/* Outils, Recherche & Filtres Bons de Commande */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 8, flex: 1, minWidth: 260, flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                value={rechercheCommande}
+                onChange={e => setRechercheCommande(e.target.value)}
+                placeholder="🔍 Rechercher par référence, fournisseur..."
+                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, flex: 1, outline: 'none' }}
+              />
+              <select
+                value={filtreStatutCmd}
+                onChange={e => setFiltreStatutCmd(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none' }}
+              >
+                <option value="tous">Touts les statuts</option>
+                <option value="attente">⏳ En attente</option>
+                <option value="recue">✅ Reçue</option>
+              </select>
+            </div>
             <button
               onClick={() => { resetCmdForm(); setModalCMDOuvert(true); }}
-              style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+              style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
-              ➕ Nouvelle Commande Stock
+              ➕ Créer Bon de Commande
             </button>
           </div>
 
           {loading ? (
-            <p style={{ color: '#6b7280', fontSize: 14 }}>Chargement des commandes...</p>
-          ) : commandes.length === 0 ? (
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
-              📝 Aucun bon de commande ou achat enregistré.
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto', background: '#ffffff', borderRadius: 12, border: '1px solid #e5e7eb' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>
-                    <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Référence</th>
-                    <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Fournisseur</th>
-                    <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Total Achat</th>
-                    <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Date</th>
-                    <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Statut</th>
-                    <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {commandes.map((cmd: any) => {
+            <p style={{ color: '#6b7280', fontSize: 14 }}>Chargement des commandes d’achats...</p>
+          ) : (() => {
+            const qCmd = rechercheCommande.trim().toLowerCase()
+            const commandesFiltrées = commandes.filter((cmd: any) => {
+              const isRecue = cmd.statut === 'recu' || cmd.statut === 'recue'
+              const matchStatut = filtreStatutCmd === 'tous' || (filtreStatutCmd === 'recue' ? isRecue : !isRecue)
+              const fouNom = (fournisseurs.find(f => f.id === cmd.fournisseur_id)?.nom || '').toLowerCase()
+              const matchSearch = !qCmd || cmd.reference?.toLowerCase().includes(qCmd) || fouNom.includes(qCmd)
+              return matchStatut && matchSearch
+            })
+
+            if (commandesFiltrées.length === 0) {
+              return (
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
+                  📝 Aucune commande d’achat trouvée.
+                </div>
+              )
+            }
+
+            return (
+              <div style={{ overflowX: 'auto', background: '#ffffff', borderRadius: 12, border: '1px solid #e5e7eb' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>
+                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Référence</th>
+                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Fournisseur</th>
+                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Total Achat</th>
+                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Date</th>
+                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Statut</th>
+                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {commandesFiltrées.map((cmd: any) => {
                     const fou = fournisseurs.find(f => f.id === cmd.fournisseur_id)
                     const totalVal = Number(cmd.montant_total ?? cmd.total_achat ?? 0)
                     const rawDate = cmd.created_at || cmd.date_commande || cmd.date_livraison
@@ -457,7 +516,8 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                 </tbody>
               </table>
             </div>
-          )}
+          )
+        })()}
         </>
       )}
 

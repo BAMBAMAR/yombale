@@ -23,6 +23,10 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [documentEnEdition, setDocumentEnEdition] = useState<any | null>(null)
 
+  // Search & Status Filter
+  const [rechercheDoc, setRechercheDoc] = useState<string>('')
+  const [statutFiltreDoc, setStatutFiltreDoc] = useState<string>('tous')
+
   const chargerDonnees = async () => {
     try {
       setLoading(true)
@@ -186,33 +190,60 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     }
   }
 
-  const documentsFiltrés = typeFiltre === 'tous' 
-    ? documents 
-    : documents.filter(d => d.type === typeFiltre)
+  const qDoc = rechercheDoc.trim().toLowerCase()
+  const documentsFiltrés = documents.filter(d => {
+    const matchType = typeFiltre === 'tous' || d.type === typeFiltre
+    const matchStatut = statutFiltreDoc === 'tous' || d.statut === statutFiltreDoc
+    const matchSearch = !qDoc ||
+      d.reference?.toLowerCase().includes(qDoc) ||
+      d.client_nom?.toLowerCase().includes(qDoc) ||
+      d.client_ninea?.toLowerCase().includes(qDoc)
+    return matchType && matchStatut && matchSearch
+  })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Barre d'outils et filtres */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {['tous', 'facture', 'devis', 'proforma'].map(t => (
-            <button
-              key={t}
-              onClick={() => setTypeFiltre(t)}
-              style={{
-                padding: '6px 12px', borderRadius: 8, border: '1px solid #e5e7eb',
-                background: typeFiltre === t ? '#1e3a5f' : '#ffffff',
-                color: typeFiltre === t ? '#ffffff' : '#475569',
-                fontWeight: 600, fontSize: 13, cursor: 'pointer', textTransform: 'capitalize'
-              }}
-            >
-              {t === 'tous' ? '📁 Tous' : t === 'facture' ? '🧾 Factures' : t === 'devis' ? '📝 Devis' : '📋 Proformas'}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', flex: 1, minWidth: 280 }}>
+          <input
+            type="text"
+            value={rechercheDoc}
+            onChange={e => setRechercheDoc(e.target.value)}
+            placeholder="🔍 Rechercher par référence, nom client..."
+            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, minWidth: 200, flex: 1, outline: 'none' }}
+          />
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+            {['tous', 'facture', 'devis', 'proforma'].map(t => (
+              <button
+                key={t}
+                onClick={() => setTypeFiltre(t)}
+                style={{
+                  padding: '6px 12px', borderRadius: 8, border: '1px solid #e5e7eb',
+                  background: typeFiltre === t ? '#1e3a5f' : '#ffffff',
+                  color: typeFiltre === t ? '#ffffff' : '#475569',
+                  fontWeight: 600, fontSize: 13, cursor: 'pointer', textTransform: 'capitalize', whiteSpace: 'nowrap'
+                }}
+              >
+                {t === 'tous' ? '📁 Tous' : t === 'facture' ? '🧾 Factures' : t === 'devis' ? '📝 Devis' : '📋 Proformas'}
+              </button>
+            ))}
+          </div>
+          <select
+            value={statutFiltreDoc}
+            onChange={e => setStatutFiltreDoc(e.target.value)}
+            style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none' }}
+          >
+            <option value="tous">Tous statuts</option>
+            <option value="brouillon">⏳ Brouillon</option>
+            <option value="valide">✅ Validé</option>
+            <option value="paye">💵 Payé</option>
+            <option value="envoye">📩 Envoyé</option>
+          </select>
         </div>
         <button
           onClick={() => { setDocumentEnEdition(null); resetForm(); setModalOuvert(true); }}
-          style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
         >
           ➕ Nouveau Document
         </button>
