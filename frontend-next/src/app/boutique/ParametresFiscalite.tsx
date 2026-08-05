@@ -30,8 +30,17 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
 
   const [regime, setRegime] = useState(boutique.regime_fiscal || 'reel')
   const [conditionsVente, setConditionsVente] = useState(boutique.conditions_vente || '')
+  const [prixTvaIncluse, setPrixTvaIncluse] = useState<boolean>(boutique.prix_tva_incluse !== false)
+  const [timbreFiscalApplicable, setTimbreFiscalApplicable] = useState<boolean>(boutique.timbre_fiscal_applicable === true)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
   const handledRef = useRef<any>(null)
+
+  useEffect(() => {
+    setRegime(boutique.regime_fiscal || 'reel')
+    setConditionsVente(boutique.conditions_vente || '')
+    setPrixTvaIncluse(boutique.prix_tva_incluse !== false)
+    setTimbreFiscalApplicable(boutique.timbre_fiscal_applicable === true)
+  }, [boutique])
 
   useEffect(() => {
     if (state.success && handledRef.current !== state) {
@@ -71,28 +80,24 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
         <input type="hidden" name="facebook" value={boutique.facebook || ''} />
         <input type="hidden" name="instagram" value={boutique.instagram || ''} />
         <input type="hidden" name="tiktok" value={(boutique as any).tiktok || ''} />
+        <input type="hidden" name="whatsapp" value={boutique.whatsapp || ''} />
 
-        {/* ══════════ SECTION 1 — FISCALITÉ ══════════ */}
+        {/* ══════════ SECTION 1 — CONFIGURATION FISCALE ══════════ */}
         <div style={sectionStyle}>
-          <h4 style={sectionTitleStyle}>📊 Configuration Fiscale</h4>
-
+          <h4 style={{ ...sectionTitleStyle, borderTop: 'none', paddingTop: 0 }}>📊 Régime & Application de la TVA</h4>
+          
           <div>
-            <label style={labelStyle}>Régime Fiscal de la Boutique</label>
+            <label style={labelStyle}>Régime fiscal de l'entreprise *</label>
             <select 
               name="regime_fiscal" 
               value={regime} 
               onChange={e => setRegime(e.target.value)}
               style={inputStyle}
             >
-              <option value="non_assujetti">Non assujetti (Mention TVA non applicable - CGU)</option>
-              <option value="reel">Réel Simplifié / Normal (TVA standard applicable)</option>
-              <option value="exonere">Exonéré (Entreprise exonérée de TVA)</option>
+              <option value="reel">Régime Réel / Général (Assujetti à la TVA 18%)</option>
+              <option value="non_assujetti">Régime de la Franche / Non Assujetti (Exonéré de TVA selon Art. 286 CGI)</option>
+              <option value="exonere">Exonération Fiscale Spécifique (Agrément Code des Investissements)</option>
             </select>
-            <p style={helpText}>
-              {regime === 'non_assujetti' && "La mention légale 'TVA non applicable - article 286 du CGI' sera ajoutée automatiquement sur vos factures."}
-              {regime === 'reel' && "La TVA sera calculée sur les lignes de ventes et les factures."}
-              {regime === 'exonere' && "Toutes les ventes sont traitées comme exonérées d'office."}
-            </p>
           </div>
 
           {regime === 'reel' && (
@@ -101,10 +106,9 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
               <input 
                 type="number" 
                 name="tva_taux_defaut" 
-                step="0.01" 
-                defaultValue={Number(boutique.tva_taux_defaut ?? 18.00)} 
-                style={inputStyle} 
-                placeholder="Ex: 18.00"
+                defaultValue={boutique.tva_taux_defaut ?? 18} 
+                step="0.1"
+                style={inputStyle}
               />
               <p style={helpText}>
                 Taux appliqué par défaut au Sénégal et dans l'UEMOA (généralement 18%).
@@ -114,42 +118,42 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
 
           {regime === 'reel' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0' }}>
+              <input type="hidden" name="prix_tva_incluse" value={prixTvaIncluse ? 'true' : 'false'} />
               <input 
                 type="checkbox" 
-                name="prix_tva_incluse" 
-                id="prix_tva_incluse"
-                defaultChecked={boutique.prix_tva_incluse !== false} 
+                id="prix_tva_incluse_cb"
+                checked={prixTvaIncluse} 
+                onChange={e => setPrixTvaIncluse(e.target.checked)}
                 style={{ width: 18, height: 18, cursor: 'pointer' }}
               />
               <div>
-                <label htmlFor="prix_tva_incluse" style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>
+                <label htmlFor="prix_tva_incluse_cb" style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>
                   Mes prix de vente en catalogue incluent déjà la TVA (Prix TTC)
                 </label>
                 <p style={{ ...helpText, margin: '2px 0 0 0' }}>
                   Si décoché, la caisse calculera les prix HT + TVA en sus.
                 </p>
               </div>
-              <input type="hidden" name="prix_tva_incluse_hidden" value="true" />
             </div>
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0' }}>
+            <input type="hidden" name="timbre_fiscal_applicable" value={timbreFiscalApplicable ? 'true' : 'false'} />
             <input 
               type="checkbox" 
-              name="timbre_fiscal_applicable" 
-              id="timbre_fiscal_applicable"
-              defaultChecked={boutique.timbre_fiscal_applicable === true} 
+              id="timbre_fiscal_applicable_cb"
+              checked={timbreFiscalApplicable}
+              onChange={e => setTimbreFiscalApplicable(e.target.checked)}
               style={{ width: 18, height: 18, cursor: 'pointer' }}
             />
             <div>
-              <label htmlFor="timbre_fiscal_applicable" style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>
+              <label htmlFor="timbre_fiscal_applicable_cb" style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>
                 Appliquer le timbre fiscal de 1% sur les règlements en espèces (Cash)
               </label>
               <p style={{ ...helpText, margin: '2px 0 0 0' }}>
                 Calcul automatique de 1% (plafonné à 5 000 FCFA) requis par la réglementation fiscale pour les paiements en cash.
               </p>
             </div>
-            <input type="hidden" name="timbre_fiscal_applicable_hidden" value="true" />
           </div>
         </div>
 

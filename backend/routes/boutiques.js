@@ -1130,12 +1130,18 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
     try {
       const { regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut,
               rccm, ninea, forme_juridique, capital_social, compte_bancaire, conditions_vente, pied_de_page_document } = req.body;
+
+      const parseBoolVal = (v) => {
+        if (v === undefined || v === null || v === '') return null;
+        return v === 'true' || v === true || v === 'on' || v === '1' || v === 1;
+      };
+
       await pool.query(
         `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4,
          instagram=$5, horaires=$6, slug=$7,
          regime_fiscal=COALESCE($8, regime_fiscal),
-         prix_tva_incluse=COALESCE($9, prix_tva_incluse),
-         timbre_fiscal_applicable=COALESCE($10, timbre_fiscal_applicable),
+         prix_tva_incluse=CASE WHEN $9::boolean IS NOT NULL THEN $9::boolean ELSE prix_tva_incluse END,
+         timbre_fiscal_applicable=CASE WHEN $10::boolean IS NOT NULL THEN $10::boolean ELSE timbre_fiscal_applicable END,
          tva_taux_defaut=COALESCE($11, tva_taux_defaut),
          rccm=COALESCE($12, rccm),
          ninea=COALESCE($13, ninea),
@@ -1149,9 +1155,9 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
           cover_url||null, whatsapp||null, site_web||null, facebook||null,
           instagram||null, horairesJson, newSlug,
           regime_fiscal || null,
-          prix_tva_incluse !== undefined ? (prix_tva_incluse === 'true' || prix_tva_incluse === true) : null,
-          timbre_fiscal_applicable !== undefined ? (timbre_fiscal_applicable === 'true' || timbre_fiscal_applicable === true) : null,
-          tva_taux_defaut !== undefined ? Number(tva_taux_defaut) : null,
+          parseBoolVal(prix_tva_incluse),
+          parseBoolVal(timbre_fiscal_applicable),
+          tva_taux_defaut !== undefined && tva_taux_defaut !== '' ? Number(tva_taux_defaut) : null,
           rccm || null, ninea || null, forme_juridique || null, capital_social || null,
           compte_bancaire || null, conditions_vente || null, pied_de_page_document || null,
           req.params.id
