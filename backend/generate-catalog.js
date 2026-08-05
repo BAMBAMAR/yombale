@@ -1,152 +1,218 @@
 const fs = require('fs');
 const path = require('path');
 
-// Helper to create category items easily
-function createItems(cat, baseList) {
-  return baseList.map((item, idx) => {
-    let name = item.nom;
-    let photo = item.photo;
-    let desc = item.desc || `Produit authentique de qualité supérieure: ${name}`;
-    return {
-      nom: name,
-      desc: desc,
-      photo: photo
-    };
-  });
+// Smart photo dictionary based on product keywords
+function getPhotoForProduct(nom, cat) {
+  const n = nom.toLowerCase();
+
+  // INFORMATIQUE & CAISSE POS
+  if (n.includes("routeur") || n.includes("wifi")) return "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400";
+  if (n.includes("tapis") || n.includes("souris")) return "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=400";
+  if (n.includes("webcam") || n.includes("camera")) return "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400";
+  if (n.includes("casque") || n.includes("micro") || n.includes("jabra")) return "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400";
+  if (n.includes("clavier")) return "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400";
+  if (n.includes("imprimante") || n.includes("epson") || n.includes("deskjet") || n.includes("laser") || n.includes("canon")) return "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400";
+  if (n.includes("scanner") || n.includes("douchette") || n.includes("code-barres") || n.includes("tpv") || n.includes("tiroir") || n.includes("afficheur")) return "https://images.unsplash.com/photo-1556742049-0a67daf4005a?w=400";
+  if (n.includes("écran") || n.includes("moniteur")) return "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400";
+  if (n.includes("disque") || n.includes("ssd") || n.includes("clé usb") || n.includes("ram")) return "https://images.unsplash.com/photo-1531492746076-161ca9bcad58?w=400";
+  if (n.includes("onduleur") || n.includes("apc")) return "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400";
+  if (n.includes("sac à dos") || n.includes("sac pc")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400";
+  if (n.includes("macbook")) return "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400";
+  if (cat === "informatique") return "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400";
+
+  // SMARTPHONES & ACCESSORIES
+  if (n.includes("iphone")) return "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=400";
+  if (n.includes("samsung") || n.includes("galaxy")) return "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400";
+  if (n.includes("redmi") || n.includes("xiaomi") || n.includes("poco")) return "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400";
+  if (n.includes("tecno") || n.includes("infinix") || n.includes("oppo") || n.includes("realme")) return "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400";
+  if (n.includes("airpods") || n.includes("buds") || n.includes("écouteur")) return "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400";
+  if (n.includes("enceinte") || n.includes("jbl")) return "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400";
+  if (n.includes("chargeur") || n.includes("câble")) return "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400";
+  if (n.includes("power bank") || n.includes("batterie")) return "https://images.unsplash.com/photo-1609592807986-77e8a939f7d4?w=400";
+  if (n.includes("montre") || n.includes("watch")) return "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400";
+  if (n.includes("ring light") || n.includes("trépied") || n.includes("support")) return "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400";
+  if (n.includes("carte mémoire") || n.includes("microsd")) return "https://images.unsplash.com/photo-1600541519443-96c14617b7ba?w=400";
+  if (cat === "smartphones") return "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400";
+
+  // TV & ÉLECTROMÉNAGER
+  if (n.includes("tv") || n.includes("téléviseur")) return "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400";
+  if (n.includes("climatiseur") || n.includes("split") || n.includes("armoire")) return "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400";
+  if (n.includes("ventilateur")) return "https://images.unsplash.com/photo-1618941716939-553df3c6c276?w=400";
+  if (n.includes("réfrigérateur") || n.includes("frigo")) return "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400";
+  if (n.includes("congélateur")) return "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=400";
+  if (n.includes("micro-ondes") || n.includes("four") || n.includes("plaque") || n.includes("cuisinière") || n.includes("airfryer") || n.includes("friteuse")) return "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400";
+  if (n.includes("blender") || n.includes("mixeur") || n.includes("robot") || n.includes("hachoir")) return "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400";
+  if (n.includes("fer") || n.includes("centrale") || n.includes("defroisseur")) return "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400";
+  if (n.includes("machine à laver") || n.includes("lave-linge") || n.includes("sèche-linge")) return "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=400";
+  if (n.includes("bouilloire") || n.includes("cafetière") || n.includes("espresso")) return "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400";
+  if (cat === "tv-electro") return "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400";
+
+  // MODE
+  if (n.includes("t-shirt")) return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400";
+  if (n.includes("polo")) return "https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=400";
+  if (n.includes("chemise")) return "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400";
+  if (n.includes("jean") || n.includes("pantalon") || n.includes("chino")) return "https://images.unsplash.com/photo-1542272604-780c36856842?w=400";
+  if (n.includes("costume") || n.includes("blazer") || n.includes("veste")) return "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400";
+  if (n.includes("bazin") || n.includes("djellaba") || n.includes("boubou") || n.includes("tissu") || n.includes("wax")) return "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400";
+  if (n.includes("robe") || n.includes("jupe") || n.includes("blouse")) return "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400";
+  if (n.includes("mocassins") || n.includes("richelieu") || n.includes("chaussures")) return "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400";
+  if (n.includes("baskets") || n.includes("sneakers") || n.includes("jordan")) return "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400";
+  if (n.includes("escarpins") || n.includes("talons") || n.includes("sandales") || n.includes("claquettes")) return "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400";
+  if (n.includes("sac à main") || n.includes("cabas") || n.includes("pochette") || n.includes("sac à dos femme") || n.includes("sac de voyage")) return "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400";
+  if (n.includes("portefeuille") || n.includes("porte-cartes") || n.includes("ceinture")) return "https://images.unsplash.com/photo-1627123424574-724758594e93?w=400";
+  if (n.includes("parfum")) return "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400";
+  if (n.includes("lunettes")) return "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400";
+  if (n.includes("montre")) return "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400";
+  if (n.includes("casquette") || n.includes("chapeau")) return "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400";
+  if (cat === "mode") return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400";
+
+  // ALIMENTATION
+  if (n.includes("riz")) return "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400";
+  if (n.includes("lait")) return "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400";
+  if (n.includes("café") || n.includes("thé") || n.includes("infusion")) return "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400";
+  if (n.includes("bouillon") || n.includes("jumbo") || n.includes("maggi") || n.includes("knorr") || n.includes("moutarde") || n.includes("mayonnaise") || n.includes("ketchup") || n.includes("piment") || n.includes("harissa") || n.includes("vinaigre")) return "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400";
+  if (n.includes("huile") || n.includes("beurre") || n.includes("margarine")) return "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400";
+  if (n.includes("sucre") || n.includes("miel") || n.includes("nutella") || n.includes("milo") || n.includes("nesquik") || n.includes("confiture")) return "https://images.unsplash.com/photo-1622484210800-885108920194?w=400";
+  if (n.includes("jus") || n.includes("eau") || n.includes("canette") || n.includes("coca") || n.includes("fanta") || n.includes("sprite") || n.includes("energy")) return "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400";
+  if (n.includes("pâtes") || n.includes("spaghetti") || n.includes("macaroni") || n.includes("coquillettes") || n.includes("vermicelles") || n.includes("couscous") || n.includes("farine")) return "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400";
+  if (n.includes("oignon") || n.includes("pommes de terre") || n.includes("ail") || n.includes("gingembre") || n.includes("arachide")) return "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400";
+  if (n.includes("poisson") || n.includes("kethiakh") || n.includes("guedj") || n.includes("yeet") || n.includes("sardines") || n.includes("thon") || n.includes("beef")) return "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400";
+
+  return "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400";
 }
 
-// 1. ALIMENTATION (100 Produits)
+// 1. ALIMENTATION
 const alimentationBase = [
   // Riz (12)
-  { nom: "Riz brisé Sadia 25kg", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
-  { nom: "Riz parfumé Dinor 5kg", photo: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400" },
-  { nom: "Riz brisé Royal 50kg", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
-  { nom: "Riz local de la Vallée 25kg", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
-  { nom: "Riz Parfumé Jasmine 25kg", photo: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400" },
-  { nom: "Riz Basmati Indien 5kg", photo: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400" },
-  { nom: "Riz Parfumé Lion 25kg", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
-  { nom: "Riz Cargo Complet 5kg", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
-  { nom: "Riz étuvé local 25kg", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
-  { nom: "Sac de Riz Thaï 50kg", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
-  { nom: "Riz Brisé 100% Parfum Elephant 25kg", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
-  { nom: "Riz Long Grain Blanc 10kg", photo: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400" },
+  { nom: "Riz brisé Sadia 25kg" },
+  { nom: "Riz parfumé Dinor 5kg" },
+  { nom: "Riz brisé Royal 50kg" },
+  { nom: "Riz local de la Vallée 25kg" },
+  { nom: "Riz Parfumé Jasmine 25kg" },
+  { nom: "Riz Basmati Indien 5kg" },
+  { nom: "Riz Parfumé Lion 25kg" },
+  { nom: "Riz Cargo Complet 5kg" },
+  { nom: "Riz étuvé local 25kg" },
+  { nom: "Sac de Riz Thaï 50kg" },
+  { nom: "Riz Brisé 100% Parfum Elephant 25kg" },
+  { nom: "Riz Long Grain Blanc 10kg" },
 
   // Laits & Laitiers (12)
-  { nom: "Lait Nido 400g", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
-  { nom: "Lait Nido 900g", photo: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400" },
-  { nom: "Lait Nido 2.5kg (Format Familial)", photo: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400" },
-  { nom: "Lait Gloria 160g", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
-  { nom: "Lait Peak en Poudre 400g", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
-  { nom: "Lait Peak 900g", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
-  { nom: "Lait Concentré Sucré Nestlé 397g", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
-  { nom: "Lait Caillé Naturel 1L", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
-  { nom: "Lait UHT Candia 1L (Pack de 6)", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
-  { nom: "Lait de Coco 400ml", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
-  { nom: "Lait Bonnet Rouge 400g", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
-  { nom: "Lait Vitalait UHT 1L", photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400" },
+  { nom: "Lait Nido 400g" },
+  { nom: "Lait Nido 900g" },
+  { nom: "Lait Nido 2.5kg (Format Familial)" },
+  { nom: "Lait Gloria 160g" },
+  { nom: "Lait Peak en Poudre 400g" },
+  { nom: "Lait Peak 900g" },
+  { nom: "Lait Concentré Sucré Nestlé 397g" },
+  { nom: "Lait Caillé Naturel 1L" },
+  { nom: "Lait UHT Candia 1L (Pack de 6)" },
+  { nom: "Lait de Coco 400ml" },
+  { nom: "Lait Bonnet Rouge 400g" },
+  { nom: "Lait Vitalait UHT 1L" },
 
   // Cafés, Thés (12)
-  { nom: "Café Touba Moulé 250g", photo: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400" },
-  { nom: "Café Touba Moulé 500g", photo: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400" },
-  { nom: "Café Nescafé Classic 200g", photo: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400" },
-  { nom: "Café Nescafé 3 en 1 (Sachet de 10)", photo: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400" },
-  { nom: "Café Carte Noire 250g Moulu", photo: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400" },
-  { nom: "Café en Grains Espresso 1kg", photo: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400" },
-  { nom: "Thé Lipton Yellow Label (100 sachets)", photo: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400" },
-  { nom: "Thé Vert Flecha 8147 (250g)", photo: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400" },
-  { nom: "Thé Vert Achoura (250g)", photo: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400" },
-  { nom: "Thé Vert Lord (250g)", photo: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400" },
-  { nom: "Infusion Menthe Poivrée (20 sachets)", photo: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400" },
-  { nom: "Infusion Verveine Bio (20 sachets)", photo: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400" },
+  { nom: "Café Touba Moulé 250g" },
+  { nom: "Café Touba Moulé 500g" },
+  { nom: "Café Nescafé Classic 200g" },
+  { nom: "Café Nescafé 3 en 1 (Sachet de 10)" },
+  { nom: "Café Carte Noire 250g Moulu" },
+  { nom: "Café en Grains Espresso 1kg" },
+  { nom: "Thé Lipton Yellow Label (100 sachets)" },
+  { nom: "Thé Vert Flecha 8147 (250g)" },
+  { nom: "Thé Vert Achoura (250g)" },
+  { nom: "Thé Vert Lord (250g)" },
+  { nom: "Infusion Menthe Poivrée (20 sachets)" },
+  { nom: "Infusion Verveine Bio (20 sachets)" },
 
   // Bouillons, Condiments, Sauces (18)
-  { nom: "Bouillon Jumbo Poulet (60 cubes)", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
-  { nom: "Bouillon Jumbo Crevette (60 cubes)", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
-  { nom: "Bouillon Jumbo Oignon (60 cubes)", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
-  { nom: "Bouillon Jumbo Bœuf (60 cubes)", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
-  { nom: "Bouillon Maggi Arôme 200ml", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
-  { nom: "Bouillon Maggi Poulet (60 cubes)", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
-  { nom: "Bouillon Knorr Bœuf (48 cubes)", photo: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400" },
-  { nom: "Moutarde Amora 265g", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
-  { nom: "Moutarde Maille 200g", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
-  { nom: "Mayonnaise Lesieur 475g", photo: "https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=400" },
-  { nom: "Mayonnaise Calvé 450g", photo: "https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=400" },
-  { nom: "Ketchup Amora Flacon 500g", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
-  { nom: "Ketchup Heinz 400g", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
-  { nom: "Sauce Piment Extra Forte 200g", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
-  { nom: "Harissa en Tube 150g", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
-  { nom: "Vinaigre Blanc d'Alcool 1L", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
-  { nom: "Vinaigre de Cidre Bio 500ml", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
-  { nom: "Sauce Soja Claire 250ml", photo: "https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400" },
+  { nom: "Bouillon Jumbo Poulet (60 cubes)" },
+  { nom: "Bouillon Jumbo Crevette (60 cubes)" },
+  { nom: "Bouillon Jumbo Oignon (60 cubes)" },
+  { nom: "Bouillon Jumbo Bœuf (60 cubes)" },
+  { nom: "Bouillon Maggi Arôme 200ml" },
+  { nom: "Bouillon Maggi Poulet (60 cubes)" },
+  { nom: "Bouillon Knorr Bœuf (48 cubes)" },
+  { nom: "Moutarde Amora 265g" },
+  { nom: "Moutarde Maille 200g" },
+  { nom: "Mayonnaise Lesieur 475g" },
+  { nom: "Mayonnaise Calvé 450g" },
+  { nom: "Ketchup Amora Flacon 500g" },
+  { nom: "Ketchup Heinz 400g" },
+  { nom: "Sauce Piment Extra Forte 200g" },
+  { nom: "Harissa en Tube 150g" },
+  { nom: "Vinaigre Blanc d'Alcool 1L" },
+  { nom: "Vinaigre de Cidre Bio 500ml" },
+  { nom: "Sauce Soja Claire 250ml" },
 
   // Huiles (10)
-  { nom: "Huile Dinor 5L", photo: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400" },
-  { nom: "Huile Niani 1L", photo: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400" },
-  { nom: "Huile Lesieur Tournesol 5L", photo: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400" },
-  { nom: "Huile de Palme Rouge 1L", photo: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400" },
-  { nom: "Huile d'Arachide Locale 1L", photo: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400" },
-  { nom: "Huile d'Olive Extra Vierge 750ml", photo: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400" },
-  { nom: "Beurre Président Plaquette 250g", photo: "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=400" },
-  { nom: "Margarine Planta 500g", photo: "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=400" },
-  { nom: "Huile de Sésame Pur 250ml", photo: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400" },
-  { nom: "Huile de Mais 2L", photo: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400" },
+  { nom: "Huile Dinor 5L" },
+  { nom: "Huile Niani 1L" },
+  { nom: "Huile Lesieur Tournesol 5L" },
+  { nom: "Huile de Palme Rouge 1L" },
+  { nom: "Huile d'Arachide Locale 1L" },
+  { nom: "Huile d'Olive Extra Vierge 750ml" },
+  { nom: "Beurre Président Plaquette 250g" },
+  { nom: "Margarine Planta 500g" },
+  { nom: "Huile de Sésame Pur 250ml" },
+  { nom: "Huile de Mais 2L" },
 
   // Sucres & Produits Sucrés (10)
-  { nom: "Sucre en Poudre Mimran 1kg", photo: "https://images.unsplash.com/photo-1622484210800-885108920194?w=400" },
-  { nom: "Sucre en Morceaux CSS 1kg", photo: "https://images.unsplash.com/photo-1581006852262-e4307cf6283a?w=400" },
-  { nom: "Sucre Roux Pur Canne 1kg", photo: "https://images.unsplash.com/photo-1622484210800-885108920194?w=400" },
-  { nom: "Sucre Vanillé Alsa (Sachet de 10)", photo: "https://images.unsplash.com/photo-1622484210800-885108920194?w=400" },
-  { nom: "Miel Pur Naturel 500g", photo: "https://images.unsplash.com/photo-1587049352847-4a222e784d38?w=400" },
-  { nom: "Chocolat à tartiner Nutella 400g", photo: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400" },
-  { nom: "Chocolat en Poudre Milo 400g", photo: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400" },
-  { nom: "Chocolat en Poudre Nesquik 400g", photo: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400" },
-  { nom: "Confiture de Fraise St Mamet 350g", photo: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400" },
-  { nom: "Confiture d'Abricot 350g", photo: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400" },
+  { nom: "Sucre en Poudre Mimran 1kg" },
+  { nom: "Sucre en Morceaux CSS 1kg" },
+  { nom: "Sucre Roux Pur Canne 1kg" },
+  { nom: "Sucre Vanillé Alsa (Sachet de 10)" },
+  { nom: "Miel Pur Naturel 500g" },
+  { nom: "Chocolat à tartiner Nutella 400g" },
+  { nom: "Chocolat en Poudre Milo 400g" },
+  { nom: "Chocolat en Poudre Nesquik 400g" },
+  { nom: "Confiture de Fraise St Mamet 350g" },
+  { nom: "Confiture d'Abricot 350g" },
 
   // Boissons & Jus (14)
-  { nom: "Jus Pressea Mangue 1L", photo: "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400" },
-  { nom: "Jus Pressea Orange 1L", photo: "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400" },
-  { nom: "Jus Pressea Ananas-Gingembre 1L", photo: "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400" },
-  { nom: "Nectar de Bissap Kirène 1L", photo: "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400" },
-  { nom: "Eau Kirène 1.5L (Pack de 6)", photo: "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=400" },
-  { nom: "Eau Kirène Bidon 5L", photo: "https://images.unsplash.com/photo-1560023907-5f313c875300?w=400" },
-  { nom: "Eau Oulmès Pétillante 1L", photo: "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=400" },
-  { nom: "Eau Casamançaise 1.5L (Pack de 6)", photo: "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=400" },
-  { nom: "Canette Gazelle 33cl", photo: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400" },
-  { nom: "Canette Coca-Cola 33cl (Pack de 6)", photo: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400" },
-  { nom: "Canette Fanta Orange 33cl", photo: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400" },
-  { nom: "Canette Sprite 33cl", photo: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400" },
-  { nom: "Energy Drink Cody's 250ml", photo: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400" },
-  { nom: "Energy Drink Monster 500ml", photo: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400" },
+  { nom: "Jus Pressea Mangue 1L" },
+  { nom: "Jus Pressea Orange 1L" },
+  { nom: "Jus Pressea Ananas-Gingembre 1L" },
+  { nom: "Nectar de Bissap Kirène 1L" },
+  { nom: "Eau Kirène 1.5L (Pack de 6)" },
+  { nom: "Eau Kirène Bidon 5L" },
+  { nom: "Eau Oulmès Pétillante 1L" },
+  { nom: "Eau Casamançaise 1.5L (Pack de 6)" },
+  { nom: "Canette Gazelle 33cl" },
+  { nom: "Canette Coca-Cola 33cl (Pack de 6)" },
+  { nom: "Canette Fanta Orange 33cl" },
+  { nom: "Canette Sprite 33cl" },
+  { nom: "Energy Drink Cody's 250ml" },
+  { nom: "Energy Drink Monster 500ml" },
 
   // Céréales Locales & Desserts (9)
-  { nom: "Thiakry Frais 500g", photo: "https://images.unsplash.com/photo-1541518763669-27fef04b14da?w=400" },
-  { nom: "Araw de Petit Millet 1kg", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
-  { nom: "Couscous de Millet (Souna) 1kg", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
-  { nom: "Sankhal de Millet 1kg", photo: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400" },
-  { nom: "Sirop de Bissap 1L", photo: "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400" },
-  { nom: "Sirop de Bouye 1L", photo: "https://images.unsplash.com/photo-1570831739435-660143a4e5d5?w=400" },
-  { nom: "Sirop de Gingembre (Gnamakoudji) 1L", photo: "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400" },
-  { nom: "Fleurs de Bissap Séchées 500g", photo: "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400" },
-  { nom: "Poudre de Bouye (Baobab) 500g", photo: "https://images.unsplash.com/photo-1570831739435-660143a4e5d5?w=400" },
+  { nom: "Thiakry Frais 500g" },
+  { nom: "Araw de Petit Millet 1kg" },
+  { nom: "Couscous de Millet (Souna) 1kg" },
+  { nom: "Sankhal de Millet 1kg" },
+  { nom: "Sirop de Bissap 1L" },
+  { nom: "Sirop de Bouye 1L" },
+  { nom: "Sirop de Gingembre (Gnamakoudji) 1L" },
+  { nom: "Fleurs de Bissap Séchées 500g" },
+  { nom: "Poudre de Bouye (Baobab) 500g" },
 
   // Conserves & Poissons (13)
-  { nom: "Sac d'Oignons 25kg", photo: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400" },
-  { nom: "Sac d'Oignons Importés 25kg", photo: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400" },
-  { nom: "Sac de Pommes de Terre 25kg", photo: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400" },
-  { nom: "Sac d'Ail Frais 5kg", photo: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400" },
-  { nom: "Sac de Gingembre Frais 5kg", photo: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=400" },
-  { nom: "Pâte d'Arachide Mafé 1kg", photo: "https://images.unsplash.com/photo-1567894510008-724444444444?w=400" },
-  { nom: "Kethiakh (Poisson Salé Séché) 1kg", photo: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400" },
-  { nom: "Guedj (Poisson Séché Artisanal) 500g", photo: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400" },
-  { nom: "Yeet (Mollusque Séché) 250g", photo: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400" },
-  { nom: "Crevettes Séchées Moulières 200g", photo: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400" },
-  { nom: "Sardines Titus à l'Huile (Boîte 125g)", photo: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400" },
-  { nom: "Thon Entier au Naturel 160g", photo: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400" },
-  { nom: "Corned Beef Hereford 340g", photo: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400" }
+  { nom: "Sac d'Oignons 25kg" },
+  { nom: "Sac d'Oignons Importés 25kg" },
+  { nom: "Sac de Pommes de Terre 25kg" },
+  { nom: "Sac d'Ail Frais 5kg" },
+  { nom: "Sac de Gingembre Frais 5kg" },
+  { nom: "Pâte d'Arachide Mafé 1kg" },
+  { nom: "Kethiakh (Poisson Salé Séché) 1kg" },
+  { nom: "Guedj (Poisson Séché Artisanal) 500g" },
+  { nom: "Yeet (Mollusque Séché) 250g" },
+  { nom: "Crevettes Séchées Moulières 200g" },
+  { nom: "Sardines Titus à l'Huile (Boîte 125g)" },
+  { nom: "Thon Entier au Naturel 160g" },
+  { nom: "Corned Beef Hereford 340g" }
 ];
 
-// 2. SMARTPHONES & ACCESSORIES (100 Produits)
+// 2. SMARTPHONES & ACCESSORIES
 const smartphonesNames = [
   "iPhone 8 64Go", "iPhone 8 Plus 64Go", "iPhone X 64Go", "iPhone XR 128Go", "iPhone XS Max 256Go",
   "iPhone 11 64Go", "iPhone 11 Pro 128Go", "iPhone 11 Pro Max 256Go", "iPhone 12 Mini 64Go", "iPhone 12 128Go",
@@ -170,7 +236,7 @@ const smartphonesNames = [
   "Chargeur Rapide USB-C 20W", "Chargeur Samsung 25W USB-C", "Power Bank Remax 20000mAh", "Support Téléphone Voiture MagSafe", "Carte Mémoire MicroSD Sandisk 128Go"
 ];
 
-// 3. INFORMATIQUE & CAISSE POS (100 Produits)
+// 3. INFORMATIQUE & CAISSE POS
 const informatiqueNames = [
   "MacBook Air 13\" M1 256Go", "MacBook Air 13\" M2 256Go", "MacBook Air 15\" M2 512Go", "MacBook Pro 14\" M2 512Go", "MacBook Pro 16\" M3 Max 1To",
   "HP 250 G8 i3 8Go", "HP 255 G8 Ryzen 3", "HP Pavilion 15 i5 Touch", "HP ProBook 440 G9 i5", "HP ProBook 450 G9 i7",
@@ -192,7 +258,7 @@ const informatiqueNames = [
   "Tapis de Souris Ergonomique repose-poignet", "Webcam Logitech C920 HD Pro 1080p", "Casque Micro USB Jabra Visioconférence", "Hub USB-C 7 en 1 Aluminium", "Sac à Dos PC Portable 15.6\" Imperméable"
 ];
 
-// 4. TV & ÉLECTROMÉNAGER (100 Produits)
+// 4. TV & ÉLECTROMÉNAGER
 const electroNames = [
   "TV LED Samsung 32\" HD", "TV LED Samsung 43\" Smart Full HD", "TV LED Samsung 50\" 4K Crystal UHD", "TV LED Samsung 55\" 4K QLED", "TV LED Samsung 65\" 4K Neo QLED",
   "TV LED Samsung 75\" 4K UHD", "TV LED LG 32\" HD", "TV LED LG 43\" Smart Full HD", "TV LED LG 55\" 4K UHD Smart", "TV LED LG 65\" OLED 4K Smart",
@@ -214,7 +280,7 @@ const electroNames = [
   "Machine à Café Espresso DeLonghi", "Grille-Pain 2 Fentes Inox", "Machine à Gaufres et Croque-Monsieur", "Chauffe-Eau Électrique 50L", "Chauffe-Eau Gaz 10L Instantané"
 ];
 
-// 5. MODE & HABILLEMENT (100 Produits)
+// 5. MODE & HABILLEMENT
 const modeNames = [
   "T-shirt Coton Noir Col Rond", "T-shirt Coton Blanc Uni", "Polo Homme Coton Piqué Noir", "Polo Homme Coton Piqué Bleu Marine", "Chemise Homme Blanche Slim Fit",
   "Chemise Homme Bleue Ciel Bureau", "Chemise Manches Courtes Motifs Wax", "Chemise Homme en Lin Beige", "Pantalon Jean Levi's 501 Straight", "Pantalon Jean Levi's 511 Slim",
@@ -236,25 +302,24 @@ const modeNames = [
   "Écharpe Cashmere Unissexe", "Foulard Soie Motifs Elegants", "Parure Bijoux Fantaisie Dorée", "Gants Cuir Homme Hiver", "Chaussettes Coton Sport (Pack de 3)"
 ];
 
-// Helper to output json
-const cataloguesOut = {
-  alimentation: alimentationBase,
-  smartphones: createItems("smartphones", smartphonesNames.map(n => ({ nom: n, photo: "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=400" }))),
-  informatique: createItems("informatique", informatiqueNames.map(n => ({ nom: n, photo: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400" }))),
-  "tv-electro": createItems("tv-electro", electroNames.map(n => ({ nom: n, photo: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400" }))),
-  mode: createItems("mode", modeNames.map(n => ({ nom: n, photo: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400" })))
+const cataloguesRaw = {
+  alimentation: alimentationBase.map(item => ({ nom: item.nom, cat: "alimentation" })),
+  smartphones: smartphonesNames.map(nom => ({ nom: nom, cat: "smartphones" })),
+  informatique: informatiqueNames.map(nom => ({ nom: nom, cat: "informatique" })),
+  "tv-electro": electroNames.map(nom => ({ nom: nom, cat: "tv-electro" })),
+  mode: modeNames.map(nom => ({ nom: nom, cat: "mode" }))
 };
 
 const outputData = {};
 
-Object.keys(cataloguesOut).forEach(cat => {
-  const items = cataloguesOut[cat];
+Object.keys(cataloguesRaw).forEach(cat => {
+  const items = cataloguesRaw[cat];
   outputData[cat] = items.map((base, i) => ({
     id: `${cat}-${i + 1}`,
     nom: base.nom,
-    description: base.desc || `Produit authentique de qualité supérieure: ${base.nom}`,
+    description: `Produit authentique de qualité supérieure: ${base.nom}`,
     categorie: cat,
-    photo_defaut: base.photo
+    photo_defaut: getPhotoForProduct(base.nom, cat)
   }));
 });
 
