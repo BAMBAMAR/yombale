@@ -88,6 +88,10 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
             </>
           ) : (
             <>
+              <div className="mobile-nav-sep" />
+              <a href="/creer-boutique" className="mobile-nav-link" style={{ fontWeight: 800, color: '#fff', background: '#0f172a', padding: '12px 20px', borderRadius: '12px', margin: '0 20px 16px', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={close}>
+                🏪 Ouvrir une Boutique Pro
+              </a>
               <a href="/connexion" className="mobile-nav-link" onClick={close}>Connexion</a>
               <a href="/inscription" className="mobile-nav-link mobile-nav-link--signup" onClick={close}>S&apos;inscrire</a>
             </>

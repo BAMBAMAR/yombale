@@ -377,6 +377,18 @@ export default async function HomePage({
               ) : null}
             </div>
           </div>
+
+          {/* LIGNE 3 : MOBILE ONLY (Bouton Boutique & Effacer) */}
+          <div className="visible-mobile-flex" style={{ display: 'none', gap: 12, width: '100%' }}>
+            {(q || categorie || prixMax || sousType) ? (
+              <Link href="/" className="budget-pill" style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0 }}>
+                <span>✖</span> Effacer
+              </Link>
+            ) : null}
+            <Link href="/creer-boutique" style={{ flex: 2, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 8, background: '#0f172a', color: '#fff', padding: '10px 20px', borderRadius: 30, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 12px rgba(15,23,42,0.15)' }}>
+              <span style={{ fontSize: 16 }}>🏪</span> Boutique Pro
+            </Link>
+          </div>
         </div>
 
         {/* GRILLE DES PRODUITS IMMÉDIATE */}

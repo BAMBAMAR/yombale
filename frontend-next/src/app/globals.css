@@ -9281,6 +9281,25 @@ span.ripple {
   gap: 4px;
 }
 
+.navbar-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 20px;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.15s;
+}
+.navbar-pill-btn:active {
+  transform: scale(0.95);
+}
+
 .navbar-icon-btn {
   display: flex;
   align-items: center;
@@ -9764,7 +9783,12 @@ span.ripple {
   }
 }
 
-
-
-
-
+/* ── Utilities Mobile ── */
+@media (max-width: 768px) {
+  .visible-mobile-flex {
+    display: flex !important;
+  }
+  .hidden-mobile {
+    display: none !important;
+  }
+}
