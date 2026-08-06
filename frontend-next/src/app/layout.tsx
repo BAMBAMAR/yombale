@@ -270,9 +270,9 @@ export default async function RootLayout({
               </div>
               {/* Mobile-only icon actions */}
               <div className="navbar-icon-actions">
+                <a href="/assistant-whatsapp" className="navbar-icon-btn navbar-icon-btn--whatsapp" aria-label="Assistant WhatsApp" title="Assistant WhatsApp">💬</a>
                 <a href="/favoris" className="navbar-icon-btn navbar-icon-btn--favoris" aria-label="Mes favoris" title="Favoris">❤</a>
                 <a href="/creer-boutique" className="navbar-pill-btn" aria-label="Boutique Taf Taf">🏪 Boutique</a>
-                <a href="/deposer-annonce" className="navbar-icon-btn navbar-icon-btn--publier" aria-label="Publier" title="Publier">➕</a>
                 <a href={session ? "/compte" : "/connexion"} className="navbar-icon-btn navbar-icon-btn--profil" aria-label="Profil" title="Profil">👤</a>
               </div>
               <MobileNav
