@@ -16,7 +16,7 @@ export default function ShowcaseTabs({
   const [duree, setDuree] = useState<'1m' | '12m'>('1m');
 
   return (
-    <section style={{
+    <section className="showcase-section" style={{
       background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)',
       borderRadius: 24,
       padding: '44px 24px',
@@ -119,7 +119,7 @@ export default function ShowcaseTabs({
         </div>
 
         {/* Grille des 3 Formules Alignées */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, alignItems: 'stretch' }}>
+        <div className="showcase-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'stretch' }}>
           
           {/* Formule 1 : Boutique Taf Taf */}
           <div style={{
