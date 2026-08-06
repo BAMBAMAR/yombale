@@ -214,7 +214,7 @@ export async function GET(request: Request) {
             borderRadius: 20,
             padding: '20px 32px',
             display: 'flex',
-            justify: 'space-between',
+            justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
