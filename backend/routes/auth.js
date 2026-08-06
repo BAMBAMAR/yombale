@@ -4,7 +4,7 @@ const jwt    = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { envoyerEmail } = require('../services/email');
-const { sendWhatsAppText, normalisePhone } = require('../services/whatsapp');
+const { sendWhatsAppText, sendWhatsAppTemplate, normalisePhone } = require('../services/whatsapp');
 const crypto = require('crypto');
 const { limiterAuth } = require('../middlewares/rateLimit');
 const { verifierToken } = require('../middlewares/auth');
@@ -226,6 +226,9 @@ router.get('/statut', verifierToken, async (req, res) => {
 const otps = new Map();
 
 // POST /api/auth/whatsapp-otp-send - Envoyer un code OTP via WhatsApp
+// Utilise un Template Meta certifié (catégorie "Authentification") pour pouvoir
+// envoyer le code même à un utilisateur qui n'a jamais écrit au bot Nopalou.
+// Si le template n'existe pas encore côté Meta, fallback sur texte libre.
 router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
   try {
     let { telephone } = req.body;
@@ -234,13 +237,28 @@ router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
 
     const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
     otps.set(telephone, { code, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min
-    console.log(`[OTP] Code généré pour ${telephone} : ${code}`); // Pour aider le dev
-    
-    await sendWhatsAppText(telephone, `Nopalou - Votre code de vérification est : *${code}*.\nCe code expire dans 10 minutes.`);
+    console.log(`[OTP] Code généré pour ${telephone} : ${code}`);
+
+    // ── Tentative 1 : Template Meta certifié (fonctionne même à froid) ──
+    try {
+      await sendWhatsAppTemplate(telephone, 'nopalou_otp_code', [
+        {
+          type: 'body',
+          parameters: [{ type: 'text', text: code }],
+        },
+      ]);
+      console.log(`[OTP] Envoyé via template nopalou_otp_code à ${telephone}`);
+    } catch (templateErr) {
+      // ── Tentative 2 : Texte libre (fonctionne si conversation < 24h) ──
+      console.warn(`[OTP] Template échoué (${templateErr.message}), fallback texte libre`);
+      await sendWhatsAppText(telephone, `Nopalou - Votre code de vérification est : *${code}*.\nCe code expire dans 10 minutes.`);
+      console.log(`[OTP] Envoyé via texte libre à ${telephone}`);
+    }
+
     res.json({ success: true, message: 'Code envoyé' });
   } catch (err) {
     console.error('[OTP SEND]', err);
-    res.status(500).json({ error: 'Erreur serveur' });
+    res.status(500).json({ error: 'Impossible d\'envoyer le code. Vérifiez votre numéro ou réessayez.' });
   }
 });
 
