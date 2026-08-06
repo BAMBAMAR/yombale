@@ -113,7 +113,7 @@ export async function GET(
         {/* Prix */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 60px 0' }}>
           <span style={{ fontSize: 56, fontWeight: 900, color: '#fff', display: 'flex' }}>
-            {prix ? `${prix.toLocaleString('fr-FR')} FCFA` : 'Gratuit'}
+            {prix ? `${prix.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} FCFA` : 'Gratuit'}
           </span>
           {prix && (
             <span style={{ fontSize: 20, color: 'rgba(255,255,255,0.6)', display: 'flex', marginTop: 6 }}>
@@ -126,15 +126,17 @@ export async function GET(
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16, padding: '48px 80px 0' }}>
           {avantages.slice(0, 6).map(a => (
             <div key={a} style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-              <span
+              <div
                 style={{
                   width: 32, height: 32, borderRadius: '50%', background: palier.couleur,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18, color: '#fff', flexShrink: 0,
+                  color: '#fff', flexShrink: 0,
                 }}
               >
-                ✓
-              </span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
               <span style={{ fontSize: 24, color: '#fff', display: 'flex', lineHeight: 1.3 }}>
                 {a}
               </span>

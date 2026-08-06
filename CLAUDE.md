@@ -1,6 +1,9 @@
 # CLAUDE.md
 
-### [2026-08-06] - Ajout de l'icône Œil (Afficher / Masquer Mot de Passe Admin)
+### [2026-08-06] - Correction des Erreurs de Rendu d'Images Kit Com (Satori / @vercel/og)
+- **Correction Glyphes & Espaces (`carre/route.tsx`, `story/route.tsx`, `flyer-demarchage/route.tsx`, `brochure-apporteur/route.tsx`)** : 
+  - Remplacement de `toLocaleString('fr-FR')` (qui générait un caractère espace incassable `\u00A0` s'affichant sous forme de rectangle noir/carré vide `` dans le moteur SVG Satori) par des espaces standard ASCII (`.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')`).
+  - Remplacement du symbole unicode `✓` (absent de la police SVG par défaut de Satori et affiché sous forme de carré vide ``) par des icônes SVG natives `<svg>` parfaitement nettes et compatibles à 100%.
 - **Connexion Admin (`AdminLoginForm.tsx`)** : Extraction du formulaire de la page `/admin/login` en composant client interactive avec un bouton icône œil (`👁️` / `🙈`) permettant d'afficher ou masquer le mot de passe secret saisi en un clic.
 - **Réinitialisation Mot de Passe (`MotDePasseOublieForm.tsx`)** : Ajout également du bouton bascule œil pour l'affichage du mot de passe dans le formulaire de réinitialisation.
 - **Fallback Backend (`app.js`)** : Ajout du bouton d'affichage du mot de passe sur le formulaire HTML d'interception d'administration d'Express.

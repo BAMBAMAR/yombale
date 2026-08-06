@@ -102,7 +102,7 @@ export async function GET(
             {palier.label.replace('Boutique ', '')}
           </span>
           <span style={{ fontSize: 44, fontWeight: 900, color: '#fff', marginTop: 24, display: 'flex' }}>
-            {prix ? `${prix.toLocaleString('fr-FR')} FCFA/mois` : 'Gratuit, sans engagement'}
+            {prix ? `${prix.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} FCFA/mois` : 'Gratuit, sans engagement'}
           </span>
         </div>
 
@@ -117,15 +117,17 @@ export async function GET(
           >
             {avantages.slice(0, 6).map(a => (
               <div key={a} style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                <span
+                <div
                   style={{
                     width: 36, height: 36, borderRadius: '50%', background: palier.couleur,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 20, color: '#fff', flexShrink: 0,
+                    color: '#fff', flexShrink: 0,
                   }}
                 >
-                  ✓
-                </span>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
                 <span style={{ fontSize: 26, color: '#1C2B4A', fontWeight: 600, display: 'flex', lineHeight: 1.3 }}>
                   {a}
                 </span>

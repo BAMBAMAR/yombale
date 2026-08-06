@@ -63,8 +63,12 @@ export async function GET() {
                 width: 40, height: 40, borderRadius: '50%',
                 background: '#FFF7ED', border: '2px solid #C75B00',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 22, color: '#C75B00', fontWeight: 900, flexShrink: 0,
-              }}>✓</div>
+                flexShrink: 0,
+              }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C75B00" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
               <span style={{ fontSize: 28, color: '#1C2B4A', fontWeight: 800 }}>{txt}</span>
             </div>
           ))}

@@ -33,7 +33,7 @@ async function getSettings() {
 }
 
 function fcfa(n: number) {
-  return `${n.toLocaleString('fr-FR')} FCFA`
+  return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} FCFA`
 }
 
 const VERTICALES = [
@@ -309,7 +309,7 @@ export async function GET() {
       <div style="padding:14px 18px; display:flex; flex-direction:column; gap:6px;">
         ${p.items.map(it => `
         <div style="display:flex; gap:8px; align-items:flex-start;">
-          <span style="color:${COULEURS.vert}; font-weight:900; font-size:12px;">✓</span>
+          <svg style="width:14px; height:14px; flex-shrink:0; margin-top:1px;" viewBox="0 0 24 24" fill="none" stroke="${COULEURS.vert}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           <span style="font-size:12px; color:${COULEURS.marine}; line-height:1.5;">${it}</span>
         </div>`).join('')}
       </div>
