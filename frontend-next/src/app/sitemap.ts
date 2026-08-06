@@ -49,6 +49,10 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   })),
+  // Boutique & Forfaits Vendeurs SEO
+  { url: `${BASE}/creer-boutique`,       changeFrequency: 'weekly', priority: 0.9 },
+  { url: `${BASE}/tarifs-boutique`,      changeFrequency: 'weekly', priority: 0.9 },
+  { url: `${BASE}/guide-creer-boutique`, changeFrequency: 'monthly', priority: 0.8 },
   // Guides
   { url: `${BASE}/guide-prix`,    changeFrequency: 'monthly', priority: 0.6 },
   { url: `${BASE}/guide-achat`,   changeFrequency: 'monthly', priority: 0.6 },

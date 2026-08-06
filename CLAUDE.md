@@ -1,5 +1,15 @@
 # CLAUDE.md
 
+### [2026-08-06] - Stratégie & Optimisation SEO : Forfaits Vendeurs, Alternatives Shopify & Sourcing (Alibaba/AliExpress)
+- **Métadonnées SSR & Données Structurées (`app/creer-boutique/layout.tsx`)** : Création d'un layout serveur SSR pour `/creer-boutique` incluant les métadonnées SEO enrichies (*"créer boutique en ligne Sénégal"*, *"lancer son commerce Dakar"*, *"faire son business Sénégal"*) et l'injection du schéma JSON-LD `Service`, `OfferCatalog` (forfaits 5 000 FCFA, 15 000 FCFA, 35 000 FCFA) et `BreadcrumbList`.
+- **Landing Page & Comparatif Tarifs (`app/tarifs-boutique/page.tsx`)** : Nouvelle page d'atterrissage SSR dédiée à la conversion des commerçants sénégalais avec :
+  - Tableau comparatif direct Nopalou vs Shopify & WooCommerce (frais, Wave/Orange Money natif, commission 0%, accès comparateur).
+  - Section Sourcing & Revente (Alibaba, AliExpress, Shein).
+  - FAQ accordéon structurée avec le schéma Google Rich Snippets `FAQPage`.
+- **Guide Éditorial SEO (`app/guide-creer-boutique/page.tsx`)** : Guide complet *"Comment Créer sa Boutique en Ligne au Sénégal en 2026"* avec schéma JSON-LD `HowTo` et `BreadcrumbList` visant la Position 0 sur Google.
+- **Sitemap XML (`app/sitemap.ts`)** : Ajout prioritaire (`0.9`) de `/creer-boutique`, `/tarifs-boutique` et `/guide-creer-boutique`.
+- **Maillage Interne & Navigation (`app/page.tsx` & `NavbarGuides.tsx`)** : Ajout des puces de recherche vendeurs et de l'entrée *"🛍️ Tarifs & Forfaits Vendeurs (1m offert)"* dans la navigation.
+
 ### [2026-08-06] - Correction du Chemin d'API Proxy FB (`KitComClient.tsx`)
 - **Fix Route Proxy (`KitComClient.tsx`)** : Remplacement de la sous-route `/admin-proxy/fb/posts` (qui renvoyait une erreur 404) par la route correcte du backend Express `/admin-proxy/fb`. Les créations de brouillons de posts depuis le Kit Com sont maintenant 100% opérationnelles.
 

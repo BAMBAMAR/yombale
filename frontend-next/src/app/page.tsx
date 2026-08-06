@@ -451,19 +451,14 @@ export default async function HomePage({
               ))}
             </div>
 
-            <p className="chip-row-label">Recherches populaires à Dakar</p>
-            <div className="chip-row">
+            <p className="chip-row-label">Solutions Vendeurs, Business &amp; Commerce au Sénégal</p>
+            <div className="chip-row" style={{ marginBottom: 24 }}>
               {[
-                { href: '/categorie/tv-electro/climatiseurs', label: 'Climatiseur prix Dakar', emoji: '❄️' },
-                { href: '/categorie/smartphones/iphone', label: 'iPhone prix Dakar', emoji: '📱' },
-                { href: '/categorie/smartphones/samsung', label: 'Samsung Galaxy prix Dakar', emoji: '📱' },
-                { href: '/categorie/tv-electro/televiseurs', label: 'TV prix Dakar', emoji: '📺' },
-                { href: '/categorie/tv-electro/refrigerateurs', label: 'Frigo prix Dakar', emoji: '🧊' },
-                { href: '/categorie/informatique/ordinateurs', label: 'Ordinateur portable prix Dakar', emoji: '💻' },
-                { href: '/immo/location-appartement-dakar', label: 'Location appartement Dakar', emoji: '🏢' },
-                { href: '/immo/location-chambre-dakar', label: 'Chambre à louer Dakar', emoji: '🛏️' },
+                { href: '/creer-boutique', label: 'Créer sa boutique en ligne (1m offert)', emoji: '🚀' },
+                { href: '/tarifs-boutique', label: 'Tarifs & Forfaits Vendeurs Sénégal', emoji: '🏷️' },
+                { href: '/guide-creer-boutique', label: 'Alternative Shopify & Sourcing Alibaba', emoji: '📦' },
               ].map(l => (
-                <Link key={l.href} href={l.href} className="chip chip-small">
+                <Link key={l.href} href={l.href} className="chip chip-small" style={{ background: '#fff7ed', border: '1px solid #fed7aa' }}>
                   <span className="chip-em">{l.emoji}</span>
                   {l.label}
                 </Link>
