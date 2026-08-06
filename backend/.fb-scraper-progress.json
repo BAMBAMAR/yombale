@@ -5,10 +5,14 @@
   "totalGroupes": 5,
   "pourcentage": 100,
   "groupeActuel": "Terminé",
-  "scrapes": 33,
-  "inseres": 9,
-  "doublons": 12,
-  "ignores": 12,
-  "erreurs": [],
-  "updatedAt": "2026-08-06T10:51:28.274Z"
+  "scrapes": 5,
+  "inseres": 2,
+  "doublons": 0,
+  "ignores": 3,
+  "erreurs": [
+    "Badou Diop (Offres Emploi): aucun contenu chargé (groupe privé ou ID invalide)",
+    "Emploi 1: page.goto: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.facebook.com/groups/1989058224662026\", waiting until \"domcontentloaded\"\u001b[22m\n",
+    "Emploi 2: page.goto: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.facebook.com/groups/234254775016841\", waiting until \"domcontentloaded\"\u001b[22m\n"
+  ],
+  "updatedAt": "2026-08-06T12:04:39.677Z"
 }

@@ -260,7 +260,7 @@ export default async function RootLayout({
                   + Publier
                 </a>
                 {session ? (
-                  <NavbarActions nom={session.nom ?? session.email ?? 'Mon compte'} />
+                  <NavbarActions nom={session.nom?.trim() || session.email?.trim() || 'Mon compte'} />
                 ) : (
                   <>
                     <a href="/connexion" className="navbar-link">Connexion</a>
