@@ -7,13 +7,16 @@ import { setAuthCookieAction } from '@/app/actions/auth'
 export default function CreerBoutiqueWizard() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const initialNom = searchParams?.get('nom') || ''
-  
+  const initialPlanParam = searchParams?.get('plan')
+  const initialPlan = ['decouverte', 'pro', 'business'].includes(initialPlanParam || '')
+    ? (initialPlanParam as 'decouverte' | 'pro' | 'business')
+    : 'decouverte'
+
   const [step, setStep] = useState(1)
   const [nom, setNom] = useState(initialNom)
   const [telephone, setTelephone] = useState('')
   const [code, setCode] = useState('')
-  const [plan, setPlan] = useState<'decouverte' | 'pro' | 'business'>('decouverte')
+  const [plan, setPlan] = useState<'decouverte' | 'pro' | 'business'>(initialPlan)
   const [couleur, setCouleur] = useState('#25D366')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
