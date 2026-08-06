@@ -56,7 +56,8 @@ export default function KitComClient({
   // Notifications Toast
   const [toast, setToast] = useState<string | null>(null)
 
-  // Générateur Promo Produit
+  // Générateur Visuels Nopalou & Formules
+  const [typeVisuel, setTypeVisuel] = useState<'forfait_pro' | 'forfait_taftaf' | 'forfait_business' | 'comparatif_paliers' | 'bon_plan'>('forfait_pro')
   const [genNom, setGenNom] = useState('iPhone 15 Pro Max 256 Go')
   const [genPrix, setGenPrix] = useState('750000')
   const [genPrixBarre, setGenPrixBarre] = useState('850000')
@@ -88,15 +89,14 @@ export default function KitComClient({
         }),
       })
       if (!res.ok) throw new Error('Erreur d\'envoi')
-      showToast('🚀 Post envoyé vers le module Publications Facebook !')
+      showToast('🚀 Post transmis au module Publications Facebook (/admin/publications) !')
     } catch {
-      showToast('⚠️ Impossible d\'envoyer le post (Vérifiez la connexion proxy FB)')
+      showToast('⚠️ Impossible d\'envoyer le post (Vérifiez le module Publications proxy FB)')
     } finally {
       setPubliEnCours(false)
     }
   }
 
-  // Textes & scripts dynamiquement personnalisés avec les infos de l'agent
   const agentPhoneFormatted = phoneAgent ? `+221 ${phoneAgent}` : '+221 70 871 79 42'
   const agentNameFormatted = nomAgent ? nomAgent : '[Votre Prénom]'
   const agentCodeFormatted = codeAgent ? codeAgent : '[VOTRE_CODE]'
@@ -127,7 +127,31 @@ Comment ça marche :
 
 📲 Contact Apporteur (${agentNameFormatted}) : ${agentPhoneFormatted}`
 
-  const generateurUrl = `/assets/produit-promo?nom=${encodeURIComponent(genNom)}&prix=${encodeURIComponent(genPrix)}&prixBarre=${encodeURIComponent(genPrixBarre)}&boutique=${encodeURIComponent(genBoutique)}${genImage ? `&image=${encodeURIComponent(genImage)}` : ''}`
+  // Construction dynamique de l'URL du visuel selon le type sélectionné
+  let generateurUrl = `/assets/produit-promo?type=${typeVisuel}`
+  if (typeVisuel === 'forfait_pro') {
+    generateurUrl += `&prix=${encodeURIComponent(prixPro.toString())}`
+  } else if (typeVisuel === 'forfait_taftaf') {
+    generateurUrl += `&prix=${encodeURIComponent(prixDecouverte.toString())}`
+  } else if (typeVisuel === 'forfait_business') {
+    generateurUrl += `&prix=${encodeURIComponent(prixBusiness.toString())}`
+  } else if (typeVisuel === 'bon_plan') {
+    generateurUrl += `&nom=${encodeURIComponent(genNom)}&prix=${encodeURIComponent(genPrix)}&prixBarre=${encodeURIComponent(genPrixBarre)}&boutique=${encodeURIComponent(genBoutique)}${genImage ? `&image=${encodeURIComponent(genImage)}` : ''}`
+  }
+
+  // Légende automatique associée au visuel
+  let legendePublication = ''
+  if (typeVisuel === 'forfait_pro') {
+    legendePublication = `🖥️ Digitalisez votre magasin avec Nopalou POS !\n\nVous gérez une boutique à Dakar ? Profitez de la Caisse Enregistreuse Tactile POS pour ${fcfa(prixPro)}/mois avec :\n✅ 3 Scanners inclus (Caméra Smartphone, Cloud Sync <100ms, Douchette USB)\n✅ Carnet de Dettes Client & Relance WhatsApp 1-Clic\n✅ Impression Stickers Codes-Barres EAN-13 GS1\n✅ 0% Commission sur vos ventes !\n\n🎁 30 jours d'essai Pro gratuits sans engagement !\n👉 Créez votre boutique sur nopalou.com/boutique`
+  } else if (typeVisuel === 'forfait_taftaf') {
+    legendePublication = `⚡ Lancez votre Vitrine Web en 30 secondes pour seulement ${fcfa(prixDecouverte)}/mois !\n\n✅ URL personnalisée nopalou.com/boutiques/votre-nom\n✅ Commandes reçues directement sur votre WhatsApp\n✅ Gestionnaire de commandes Web\n\n👉 Créez votre boutique sur nopalou.com/creer-boutique`
+  } else if (typeVisuel === 'forfait_business') {
+    legendePublication = `👑 Caisse POS Multi-Vendeurs pour Grandes Enseignes !\n\n✅ Multi-Caissiers sécurisés par code PIN\n✅ Clôtures de Caisse Z automatiques\n✅ Emplacement prioritaire catégorie sur Nopalou\n\n👉 Contactez-nous pour une démo sur nopalou.com/boutique`
+  } else if (typeVisuel === 'comparatif_paliers') {
+    legendePublication = `📊 Quelle formule Nopalou correspond à votre commerce ?\n\n1️⃣ Taf Taf (${fcfa(prixDecouverte)}/j) : Vitrine web rapide\n2️⃣ Pro (${fcfa(prixPro)}/j) : Caisse Enregistreuse POS Tactile + 3 Scanners\n3️⃣ Business (${fcfa(prixBusiness)}/j) : Multi-caissiers & Clôtures Z\n\n🎁 30 Jours d'essai gratuit sur la formule Pro !\n👉 Comparez sur nopalou.com/boutique`
+  } else {
+    legendePublication = `🔥 BON PLAN PRIX NOPALOU !\n\n📱 ${genNom}\n💰 ${fcfa(parseInt(genPrix) || 0)} (au lieu de ${fcfa(parseInt(genPrixBarre) || 0)})\n🏪 Vendeur : ${genBoutique}\n\n👉 Comparez tous les prix sur nopalou.com`
+  }
 
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
@@ -174,7 +198,7 @@ Comment ça marche :
         />
         <input
           type="text"
-          placeholder="N° WhatsApp (ex: 771234567)"
+          placeholder="N° WhatsApp (ex: 708717942)"
           value={phoneAgent}
           onChange={e => setPhoneAgent(e.target.value)}
           style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, flex: 1, minWidth: 160 }}
@@ -195,7 +219,7 @@ Comment ça marche :
           { id: 'demarchage', label: '🏪 Démarchage B2B & POS', emoji: '🏪' },
           { id: 'apporteur', label: '💼 Apporteurs d\'Affaires', emoji: '💼' },
           { id: 'whatsapp', label: '💬 Écosystème WhatsApp', emoji: '💬' },
-          { id: 'generateur', label: '⚡ Générateur Visuels Promo', emoji: '⚡' },
+          { id: 'generateur', label: '⚡ Générateur Affiches Formules', emoji: '⚡' },
         ].map(t => (
           <button
             key={t.id}
@@ -424,7 +448,7 @@ Comment ça marche :
             </pre>
           </section>
 
-          {/* 🆕 Sticker & Chevalet QR Code Caisse POS Imprimable */}
+          {/* Sticker & Chevalet QR Code Caisse POS Imprimable */}
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
               🏷️ Sticker &amp; Chevalet de Caisse POS Imprimables
@@ -566,49 +590,91 @@ Comment ça marche :
         </div>
       )}
 
-      {/* ──── ONGLET 5 : GÉNÉRATEUR VISUELS PROMO ──── */}
+      {/* ──── ONGLET 5 : GÉNÉRATEUR D'AFFICHES FORMULES & POS NOPALOU ──── */}
       {tab === 'generateur' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
-              ⚡ Générateur de Poster Réseaux Sociaux 1080×1080
+              ⚡ Générateur d&apos;Affiches Formules &amp; Paliers Nopalou (1080×1080)
             </h2>
+
+            {/* Sélecteur de type d'affiche */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 24 }}>
+              {[
+                { id: 'forfait_pro', label: '🖥️ Formule Pro (Caisse POS)', bg: '#FFF7ED', color: '#C75B00' },
+                { id: 'forfait_taftaf', label: '⚡ Formule Taf Taf (2 500 F)', bg: '#EFF6FF', color: '#1D4ED8' },
+                { id: 'forfait_business', label: '👑 Formule Business (PIN)', bg: '#FDF4FF', color: '#7E22CE' },
+                { id: 'comparatif_paliers', label: '📊 Tableau Comparatif (3 Formules)', bg: '#F0FDF4', color: '#166534' },
+                { id: 'bon_plan', label: '🔥 Bon Plan Produit Comparatif', bg: '#FEF3C7', color: '#92400E' },
+              ].map(b => (
+                <button
+                  key={b.id}
+                  onClick={() => setTypeVisuel(b.id as any)}
+                  style={{
+                    padding: '10px 16px', borderRadius: 10, border: typeVisuel === b.id ? `2px solid ${b.color}` : '1px solid #CBD5E1',
+                    background: typeVisuel === b.id ? b.bg : '#fff', color: typeVisuel === b.id ? b.color : '#64748B',
+                    fontWeight: 800, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                >
+                  {b.label}
+                </button>
+              ))}
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
               
-              {/* Formulaire Saisie */}
-              <div style={{ border: '1px solid #E2E8F0', borderRadius: 14, padding: 20, background: '#fff', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>Nom du Produit / Offre</label>
-                <input type="text" value={genNom} onChange={e => setGenNom(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }} />
+              {/* Formulaire si mode Bon Plan Produit */}
+              {typeVisuel === 'bon_plan' ? (
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: 14, padding: 20, background: '#fff', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>Nom du Produit / Offre</label>
+                  <input type="text" value={genNom} onChange={e => setGenNom(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }} />
 
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>Prix Promotionnel (FCFA)</label>
-                <input type="text" value={genPrix} onChange={e => setGenPrix(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }} />
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>Prix Promotionnel (FCFA)</label>
+                  <input type="text" value={genPrix} onChange={e => setGenPrix(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }} />
 
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>Ancien Prix Barré (FCFA)</label>
-                <input type="text" value={genPrixBarre} onChange={e => setGenPrixBarre(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }} />
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>Ancien Prix Barré (FCFA)</label>
+                  <input type="text" value={genPrixBarre} onChange={e => setGenPrixBarre(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }} />
 
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>Nom de la Boutique Vendeur</label>
-                <input type="text" value={genBoutique} onChange={e => setGenBoutique(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }} />
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>Nom de la Boutique Vendeur</label>
+                  <input type="text" value={genBoutique} onChange={e => setGenBoutique(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }} />
 
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>URL de l'image Produit (Optionnel)</label>
-                <input type="url" placeholder="https://..." value={genImage} onChange={e => setGenImage(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }} />
-              </div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>URL de l'image Produit (Optionnel)</label>
+                  <input type="url" placeholder="https://..." value={genImage} onChange={e => setGenImage(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }} />
+                </div>
+              ) : (
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: 14, padding: 20, background: '#fff', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>ℹ️ Description du Visuel Officiel</h3>
+                  <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.6, margin: 0 }}>
+                    Ce visuel officiel 1080×1080 aux couleurs de Nopalou met en avant les fonctionnalités clés de la formule choisie (Caisse Enregistreuse POS Tactile, 3 Scanners, Carnet de Dettes WA, Multi-caissiers).
+                  </p>
+                  <div style={{ background: '#F8FAFC', padding: 14, borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 12, color: '#1C2B4A', whiteSpace: 'pre-wrap' }}>
+                    {legendePublication}
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard(legendePublication, 'Légende')}
+                    style={{ padding: '8px 12px', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    📋 Copier la légende du visuel
+                  </button>
+                </div>
+              )}
 
               {/* Aperçu & Actions */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
                 <div style={{ width: '100%', maxWidth: 360, aspectRatio: '1/1', borderRadius: 16, overflow: 'hidden', border: '2px solid #C75B00', boxShadow: '0 10px 25px rgba(0,0,0,0.15)' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={generateurUrl} alt="Aperçu Visuel Promo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={generateurUrl} alt="Aperçu Visuel Formule" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 <div style={{ display: 'flex', gap: 10, width: '100%', maxWidth: 360 }}>
                   <a
                     href={generateurUrl}
-                    download={`promo-${genNom.toLowerCase().replace(/[^a-z0-9]/g, '-')}.png`}
+                    download={`affiche-nopalou-${typeVisuel}.png`}
                     style={{ flex: 1, textAlign: 'center', padding: '10px', background: '#C75B00', color: '#fff', borderRadius: 8, fontSize: 12, fontWeight: 800, textDecoration: 'none' }}
                   >
                     ⬇ Télécharger HD
                   </a>
                   <button
-                    onClick={() => handlePublierFb(`🔥 BON PLAN DU JOUR !\n\n📱 ${genNom}\n💰 ${genPrix} FCFA (au lieu de ${genPrixBarre} FCFA)\n🏪 Disponible chez ${genBoutique}\n\n👉 Comparez et commandez sur nopalou.com`, generateurUrl)}
+                    onClick={() => handlePublierFb(legendePublication, generateurUrl)}
                     disabled={publiEnCours}
                     style={{ flex: 1, padding: '10px', background: '#1877F2', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                   >

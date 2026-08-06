@@ -1,5 +1,11 @@
 # CLAUDE.md
 
+### [2026-08-06] - Refonte du Générateur de Visuels Nopalou & Formules Boutiques/POS
+- **Générateur d'Affiches Formules & Paliers (`produit-promo/route.tsx` & `KitComClient.tsx`)** :
+  - Passage d'un générateur individuel à un **Générateur Officiel Nopalou Plateforme & Comparateur**.
+  - Génération d'affiches 1080×1080 dédiées aux 4 formules : **Boutique Pro Caisse POS** (15 000 FCFA/mois, 3 Scanners, Carnet Dettes WA, Stickers EAN-13, 0% commission), **Boutique Taf Taf** (2 500 FCFA/mois), **Boutique Business Multi-Caissiers PIN** (35 000 FCFA/mois), et **Tableau Comparatif des 3 Formules**.
+  - Remplacement direct des légendes et transmission 1-clic vers les publications Facebook / Instagram (`🚀 Publier FB/IG`).
+
 ### [2026-08-06] - Mise à Jour de la Brochure Apporteur (HTML/PDF)
 - **Mise à Jour de la Brochure 13 Pages (`brochure-apporteur/route.tsx`)** : 
   - Ajout des réseaux sociaux officiels Nopalou sur la page de couverture et de contact (TikTok `@nopalou.com`, Canal WhatsApp, Facebook Page et Instagram `@nopalousn`).
