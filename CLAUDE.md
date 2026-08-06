@@ -1,5 +1,14 @@
 # CLAUDE.md
 
+### [2026-08-06] - Intégration des Forfaits Multi-Durées (1, 3, 6 & 12 mois) & Choix du Marchand
+- **Composant Sélecteur Interactif Public (`app/tarifs-boutique/TarifsPublicsSelector.tsx`)** :
+  - Création d'un sélecteur de durée interactif (1 mois, 3 mois trimestriel -10%, 6 mois semestriel -15%, 12 mois annuel -25% / 3 mois offerts).
+  - Calcul dynamique et automatique en temps réel des remises, du total facturé et de l'équivalent mensuel pour chaque formule.
+  - Transmission fluide du paramètre `duree` lors de l'inscription et du choix du marchand (`/creer-boutique?plan=...&duree=...`).
+- **Gestion des Durées en Dashboard Vendeur & Backend** :
+  - Intégration de `duree_mois` dans la route backend `POST /api/abonnements/initier` avec application automatique des taux de réduction.
+  - Support de la souscription 1, 3, 6 et 12 mois directement depuis l'espace vendeur (`/boutique/abonnement`).
+
 ### [2026-08-06] - Stratégie & Optimisation SEO : Forfaits Vendeurs, Alternatives Shopify & Sourcing (Alibaba/AliExpress)
 - **Métadonnées SSR & Données Structurées (`app/creer-boutique/layout.tsx`)** : Création d'un layout serveur SSR pour `/creer-boutique` incluant les métadonnées SEO enrichies (*"créer boutique en ligne Sénégal"*, *"lancer son commerce Dakar"*, *"faire son business Sénégal"*) et l'injection du schéma JSON-LD `Service`, `OfferCatalog` (forfaits 5 000 FCFA, 15 000 FCFA, 35 000 FCFA) et `BreadcrumbList`.
 - **Landing Page & Comparatif Tarifs (`app/tarifs-boutique/page.tsx`)** : Nouvelle page d'atterrissage SSR dédiée à la conversion des commerçants sénégalais avec :
