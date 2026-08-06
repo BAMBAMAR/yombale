@@ -199,22 +199,34 @@ Maintenant : [nouveau prix] FCFA
 #Nopalou #BaisseDeprix #BonPlan #Dakar #Sénégal`,
   },
   {
-    titre: 'Post de lancement — Assistant WhatsApp',
-    texte: `💬 Nopalou débarque sur WhatsApp !
+    titre: 'Post de lancement — Connexion WhatsApp 1-Clic (Certifiée Meta)',
+    texte: `⚡ Connectez-vous à Nopalou en 1 clic via WhatsApp !
 
-Plus besoin d'ouvrir une app : comparez les prix, consultez les annonces immo, les offres télécom et créez des alertes de prix directement dans votre chat WhatsApp.
+Plus besoin de retenir un mot de passe ! Nopalou intègre la connexion certifiée par Meta :
 
-🔍 Recherche produit en un message
-🏠 Dernières annonces immo
-📱 Offres télécom à jour
-🔔 Alertes de prix personnalisées
-📦 Suivi de commande
+🔐 Saisissez votre numéro WhatsApp
+📲 Recevez votre code sécurisé avec bouton natif "Copier le code"
+✅ Vous êtes connecté en 3 secondes !
 
-100% gratuit, disponible 24h/24, aucune inscription.
+Simple, ultra-sécurisé et instantané.
 
-👉 Envoyez "menu" au +221 70 871 79 42 ou cliquez : wa.me/221708717942
+👉 Essayez maintenant sur nopalou.com/connexion
 
-#Nopalou #WhatsApp #Dakar #Sénégal #BonPlan #Innovation`,
+#Nopalou #WhatsAppAuth #Meta #Innovation #Dakar #Sénégal #Sécurité`,
+  },
+  {
+    titre: 'Post de lancement — Nouvelle Expérience Mobile & PWA',
+    texte: `📱 La nouvelle expérience Nopalou Mobile & PWA est disponible !
+
+Profitez d'une navigation ultra-fluide pensée pour votre smartphone :
+
+⚡ Pilule Boutique & Filtres accessibles au pouce
+🚀 0 seconde de chargement (polices système et CSS optimisé)
+🏪 Accès direct aux Boutiques Pro et filtres rapides
+
+👉 Installez l'application web ou rendez-vous sur nopalou.com !
+
+#Nopalou #PWA #MobileFirst #Sénégal #Dakar #ShoppingResponsive`,
   },
 ]
 
