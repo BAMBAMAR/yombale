@@ -13,7 +13,10 @@ export default function ShowcaseTabs({
   prixPro?: number; 
   prixBusiness?: number;
 }) {
-  const [duree, setDuree] = useState<'1m' | '12m'>('1m');
+  const [duree, setDuree] = useState<1 | 3 | 6 | 12>(12);
+
+  const remise = duree === 12 ? 0.25 : duree === 6 ? 0.15 : duree === 3 ? 0.10 : 0;
+  const getPrix = (base: number) => Math.round(base * (1 - remise));
 
   return (
     <section className="showcase-section" style={{
@@ -34,46 +37,54 @@ export default function ShowcaseTabs({
             border: '1px solid #ffedd5', display: 'inline-flex', alignItems: 'center', gap: 6
           }}>
             <Sparkles size={14} style={{ color: '#C75B00' }} />
-            <span>Formules & Solutions Commerciales Nopalou</span>
+            <span>Formules &amp; Solutions Commerciales Nopalou</span>
           </div>
 
           <h2 style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 900, color: '#0f172a', margin: 0, lineHeight: 1.25 }}>
-            Propulsez vos ventes avec des outils de gestion <span style={{ color: '#C75B00' }}>puissants & simples</span>
+            Propulsez vos ventes avec des outils de gestion <span style={{ color: '#C75B00' }}>puissants &amp; simples</span>
           </h2>
 
           <p style={{ fontSize: 15, color: '#475569', margin: 0, lineHeight: 1.6 }}>
             Choisissez la formule adaptée à votre commerce. Essayez gratuitement pendant 30 jours, sans engagement.
           </p>
 
-          {/* Selector Durée */}
+          {/* Selector Durée (1, 3, 6, 12 Mois) */}
           <div style={{
-            display: 'inline-flex', alignSelf: 'center', background: '#f1f5f9', padding: 4, borderRadius: 30,
+            display: 'inline-flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6,
+            alignSelf: 'center', background: '#f1f5f9', padding: 6, borderRadius: 30,
             border: '1px solid #cbd5e1', marginTop: 10
           }}>
-            <button
-              onClick={() => setDuree('1m')}
-              style={{
-                padding: '8px 18px', borderRadius: 20, border: 'none',
-                background: duree === '1m' ? '#fff' : 'transparent',
-                color: duree === '1m' ? '#C75B00' : '#64748b',
-                fontWeight: duree === '1m' ? 800 : 600, fontSize: 13, cursor: 'pointer',
-                boxShadow: duree === '1m' ? '0 2px 6px rgba(199,91,0,0.12)' : 'none',
-              }}
-            >
-              Mensuel (30 jours offerts)
-            </button>
-            <button
-              onClick={() => setDuree('12m')}
-              style={{
-                padding: '8px 18px', borderRadius: 20, border: 'none',
-                background: duree === '12m' ? '#C75B00' : 'transparent',
-                color: duree === '12m' ? '#fff' : '#64748b',
-                fontWeight: duree === '12m' ? 800 : 600, fontSize: 13, cursor: 'pointer',
-                boxShadow: duree === '12m' ? '0 4px 12px rgba(199,91,0,0.25)' : 'none',
-              }}
-            >
-              Engagement 12 mois (-25% + 3 mois offerts 🔥)
-            </button>
+            {[
+              { m: 1, label: '1 mois (30j offerts)', badge: null },
+              { m: 3, label: '3 mois', badge: '-10%' },
+              { m: 6, label: '6 mois', badge: '-15%' },
+              { m: 12, label: '12 mois', badge: '🔥 -25% (3m offerts)' },
+            ].map(d => (
+              <button
+                key={d.m}
+                type="button"
+                onClick={() => setDuree(d.m as any)}
+                style={{
+                  padding: '8px 16px', borderRadius: 20, border: 'none',
+                  background: duree === d.m ? (d.m === 12 ? '#C75B00' : '#0f172a') : 'transparent',
+                  color: duree === d.m ? '#fff' : '#475569',
+                  fontWeight: duree === d.m ? 800 : 600, fontSize: 13, cursor: 'pointer',
+                  boxShadow: duree === d.m ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
+                  transition: 'all 0.2s ease', display: 'inline-flex', alignItems: 'center', gap: 6
+                }}
+              >
+                <span>{d.label}</span>
+                {d.badge && (
+                  <span style={{
+                    background: duree === d.m ? 'rgba(255,255,255,0.25)' : '#fed7aa',
+                    color: duree === d.m ? '#fff' : '#9a3412',
+                    fontSize: 10, fontWeight: 900, padding: '2px 6px', borderRadius: 10
+                  }}>
+                    {d.badge}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -138,13 +149,18 @@ export default function ShowcaseTabs({
             <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontSize: 32, fontWeight: 900, color: '#0f172a' }}>
-                  {duree === '12m' ? (prixTafTaf * 0.75).toLocaleString('fr-FR') : prixTafTaf.toLocaleString('fr-FR')}
+                  {getPrix(prixTafTaf).toLocaleString('fr-FR')}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
               <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>
                 🎁 1er mois 100% GRATUIT
               </p>
+              {duree > 1 && (
+                <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#C75B00' }}>
+                  Soit {(getPrix(prixTafTaf) * duree).toLocaleString('fr-FR')} FCFA pour {duree} mois
+                </p>
+              )}
             </div>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
@@ -175,7 +191,7 @@ export default function ShowcaseTabs({
             </div>
 
             <Link
-              href="/creer-boutique?plan=decouverte"
+              href={`/creer-boutique?plan=decouverte&duree=${duree}`}
               style={{
                 textAlign: 'center', background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1',
                 padding: '12px', borderRadius: 12, fontWeight: 800, fontSize: 14, textDecoration: 'none',
@@ -211,13 +227,18 @@ export default function ShowcaseTabs({
             <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontSize: 32, fontWeight: 900, color: '#C75B00' }}>
-                  {duree === '12m' ? (prixPro * 0.75).toLocaleString('fr-FR') : prixPro.toLocaleString('fr-FR')}
+                  {getPrix(prixPro).toLocaleString('fr-FR')}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
               <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>
                 🎁 1er mois 100% GRATUIT
               </p>
+              {duree > 1 && (
+                <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#C75B00' }}>
+                  Soit {(getPrix(prixPro) * duree).toLocaleString('fr-FR')} FCFA pour {duree} mois
+                </p>
+              )}
             </div>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
@@ -256,7 +277,7 @@ export default function ShowcaseTabs({
             </div>
 
             <Link
-              href="/creer-boutique?plan=pro"
+              href={`/creer-boutique?plan=pro&duree=${duree}`}
               style={{
                 textAlign: 'center', background: '#C75B00', color: '#fff',
                 padding: '13px', borderRadius: 12, fontWeight: 900, fontSize: 14, textDecoration: 'none',
@@ -284,13 +305,18 @@ export default function ShowcaseTabs({
             <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontSize: 32, fontWeight: 900, color: '#0f172a' }}>
-                  {duree === '12m' ? (prixBusiness * 0.75).toLocaleString('fr-FR') : prixBusiness.toLocaleString('fr-FR')}
+                  {getPrix(prixBusiness).toLocaleString('fr-FR')}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
               <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>
                 🎁 1er mois 100% GRATUIT
               </p>
+              {duree > 1 && (
+                <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#C75B00' }}>
+                  Soit {(getPrix(prixBusiness) * duree).toLocaleString('fr-FR')} FCFA pour {duree} mois
+                </p>
+              )}
             </div>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
@@ -317,7 +343,7 @@ export default function ShowcaseTabs({
             </div>
 
             <Link
-              href="/creer-boutique?plan=business"
+              href={`/creer-boutique?plan=business&duree=${duree}`}
               style={{
                 textAlign: 'center', background: '#0f172a', color: '#fff',
                 padding: '12px', borderRadius: 12, fontWeight: 800, fontSize: 14, textDecoration: 'none',

@@ -7,6 +7,7 @@ import { setAuthCookieAction } from '@/app/actions/auth'
 export default function CreerBoutiqueWizard() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const initialNom = searchParams?.get('nom') || ''
   const initialPlanParam = searchParams?.get('plan')
   const initialPlan = ['decouverte', 'pro', 'business'].includes(initialPlanParam || '')
     ? (initialPlanParam as 'decouverte' | 'pro' | 'business')
