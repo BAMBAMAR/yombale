@@ -1,5 +1,11 @@
 # CLAUDE.md
 
+### [2026-08-06] - Refonte des Visuels du Générateur : Fonds Clairs & Couleurs Officieuses Nopalou
+- **Refonte Design Satori (`produit-promo/route.tsx`)** : 
+  - Suppression totale des fonds sombres et des contrastes bleu foncé/bleu moyen.
+  - Adhésion stricte à la charte graphique Nopalou avec des **Fonds Clairs Haute Définition** (Fond crème doux `#FFFDF9` & blanc pur `#FFFFFF`), titres en Bleu Marine `#1C2B4A` à fort contraste, touches d'Orange Nopalou `#C75B00` et prix en Vert Nopalou `#16A34A`.
+  - Application du design fond clair sur l'ensemble des 8 types de visuels (Télécom, Immobilier, Chatbot WA, Formules Boutiques POS, Apporteurs, etc.).
+
 ### [2026-08-06] - Générateur Officiel Nopalou avec 8 Types d'Affiches Fonctionnalités
 - **Support des 8 Verticales Nopalou dans le Générateur d'Affiches (`produit-promo/route.tsx` & `KitComClient.tsx`)** :
   - 🖥️ **Formule Pro (Caisse POS Magasin)** (15 000 FCFA/mois, 3 Scanners, Carnet Dettes WA, Stickers EAN-13, 0% commission)
