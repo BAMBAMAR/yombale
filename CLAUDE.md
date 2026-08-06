@@ -1,5 +1,8 @@
 # CLAUDE.md
 
+### [2026-08-06] - Correction du Chemin d'API Proxy FB (`KitComClient.tsx`)
+- **Fix Route Proxy (`KitComClient.tsx`)** : Remplacement de la sous-route `/admin-proxy/fb/posts` (qui renvoyait une erreur 404) par la route correcte du backend Express `/admin-proxy/fb`. Les créations de brouillons de posts depuis le Kit Com sont maintenant 100% opérationnelles.
+
 ### [2026-08-06] - Refonte des Visuels du Générateur : Fonds Clairs & Couleurs Officieuses Nopalou
 - **Refonte Design Satori (`produit-promo/route.tsx`)** : 
   - Suppression totale des fonds sombres et des contrastes bleu foncé/bleu moyen.

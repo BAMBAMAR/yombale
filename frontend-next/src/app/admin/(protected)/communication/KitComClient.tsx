@@ -80,7 +80,7 @@ export default function KitComClient({
   const handlePublierFb = async (texte: string, imageUrl?: string) => {
     setPubliEnCours(true)
     try {
-      const res = await fetch('/admin-proxy/fb/posts', {
+      const res = await fetch('/admin-proxy/fb', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,10 +90,14 @@ export default function KitComClient({
           statut: 'brouillon',
         }),
       })
-      if (!res.ok) throw new Error('Erreur d\'envoi')
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || 'Erreur d\'envoi')
+      }
       showToast('🚀 Post transmis au module Publications Facebook (/admin/publications) !')
-    } catch {
-      showToast('⚠️ Impossible d\'envoyer le post (Vérifiez le module Publications proxy FB)')
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Erreur'
+      showToast(`⚠️ Impossible d'envoyer le post : ${msg}`)
     } finally {
       setPubliEnCours(false)
     }
