@@ -241,16 +241,22 @@ router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
 
     // ── Tentative 1 : Template Meta certifié (fonctionne même à froid) ──
     try {
-      await sendWhatsAppTemplate(telephone, 'nopalou_otp_code', [
+      await sendWhatsAppTemplate(telephone, 'nopalou_auth_otp', [
         {
           type: 'body',
           parameters: [{ type: 'text', text: code }],
         },
+        {
+          type: 'button',
+          sub_type: 'url',
+          index: '0',
+          parameters: [{ type: 'text', text: code }],
+        },
       ]);
-      console.log(`[OTP] Envoyé via template nopalou_otp_code à ${telephone}`);
+      console.log(`[OTP] Envoyé via template nopalou_auth_otp à ${telephone}`);
     } catch (templateErr) {
-      // ── Tentative 2 : Texte libre (fonctionne si conversation < 24h) ──
-      console.warn(`[OTP] Template échoué (${templateErr.message}), fallback texte libre`);
+      // ── Tentative 2 : Texte libre (fallback) ──
+      console.warn(`[OTP] Template nopalou_auth_otp échoué (${templateErr.message}), fallback texte libre`);
       await sendWhatsAppText(telephone, `Nopalou - Votre code de vérification est : *${code}*.\nCe code expire dans 10 minutes.`);
       console.log(`[OTP] Envoyé via texte libre à ${telephone}`);
     }
