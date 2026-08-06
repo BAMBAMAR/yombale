@@ -44,8 +44,8 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
 
   const PLANS = PLANS_INFO.map(p => {
     const prixMensuelBase = Number(settings[`plan_${p.id}_prix`]) || PLANS_DEFAUT[p.id]
-    const remise = duree >= 12 ? 0.25 : duree >= 6 ? 0.15 : duree >= 3 ? 0.10 : 0
-    const badge = duree >= 12 ? '🔥 -25% (3m offerts)' : duree >= 6 ? '-15%' : duree >= 3 ? '-10%' : null
+    const remise = duree >= 12 ? 0.25 : duree >= 6 ? 0.15 : duree >= 3 ? 0.10 : duree >= 2 ? 0.05 : 0
+    const badge = duree >= 12 ? '🔥 -25% (3m offerts)' : duree >= 6 ? '-15%' : duree >= 3 ? '-10%' : duree >= 2 ? '-5%' : null
 
     const totalBrut = prixMensuelBase * duree
     const totalApresRemise = Math.round(totalBrut * (1 - remise))

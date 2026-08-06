@@ -1,15 +1,16 @@
 # CLAUDE.md
 
-### [2026-08-06] - Intégration des Forfaits Multi-Durées (1 à 36 mois) & Saisie Sur Mesure par le Marchand
-- **Durée Librement Définie par le Marchand (1 à 36 mois)** :
-  - Ajout d'un champ de saisie libre `✏️ Durée sur mesure (nombre de mois)` sur les pages publiques (`/tarifs-boutique`, `/ShowcaseTabs`) et dans l'espace vendeur (`/boutique/abonnement`).
-  - Le marchand peut saisir n'importe quel nombre de mois (ex: 2 mois, 5 mois, 8 mois, 18 mois, 24 mois).
-  - Calcul automatique en temps réel du tarif total, de l'économie réalisée et de la remise applicable (10% dès 3m, 15% dès 6m, 25% dès 12m).
-- **Flexibilité Backend API (`backend/routes/abonnements.js`)** :
-  - Adaptation de la validation `duree_mois` pour autoriser toute durée entre 1 et 36 mois.
-  - Calcul dynamique du montant Wave Checkout et enregistrement de l'échéance exacte en base de données.
-- **Correction Wizard Création Boutique (`app/creer-boutique/page.tsx`)** :
-  - Correction de la déclaration `initialNom` et pré-sélection de la durée transmise.
+### [2026-08-06] - Intégration des Remises Dès 2 Mois (-5%) & Affichage Visuel du Total FCFA
+- **Remise Déclenché Dès 2 Mois (-5%)** :
+  - Ajout d'une réduction automatique de **5% dès 2 mois d'engagement** sur toutes les formules (*Boutique Taf Taf*, *Vendeur Pro*, *Business VIP*).
+  - Barème complet des remises : 2 mois = **-5%**, 3-5 mois = **-10%**, 6-11 mois = **-15%**, 12+ mois = **-25%**.
+- **Affichage Visuel Dynamique du Total FCFA & Badge d'Économie** :
+  - Dès qu'un marchand sélectionne ou saisit une durée (ex: 2 mois), la carte de prix affiche immédiatement :
+    1. Le tarif mensuel équivalent en FCFA (`2 375 FCFA/mois` pour la formule Taf Taf).
+    2. Le total facturé exact en FCFA (`Soit 4 750 FCFA pour 2 mois`).
+    3. Le badge vert d'économie active (`🎉 -5% de réduction (Économie: 250 FCFA)`).
+- **Mise à Jour Multiapps & Backend** :
+  - `backend/routes/abonnements.js`, `app/ShowcaseTabs.tsx`, `app/tarifs-boutique/TarifsPublicsSelector.tsx` et `app/boutique/abonnement/AbonnementClient.tsx`.
 
 ### [2026-08-06] - Stratégie & Optimisation SEO : Forfaits Vendeurs, Alternatives Shopify & Sourcing (Alibaba/AliExpress)
 - **Métadonnées SSR & Données Structurées (`app/creer-boutique/layout.tsx`)** : Création d'un layout serveur SSR pour `/creer-boutique` incluant les métadonnées SEO enrichies (*"créer boutique en ligne Sénégal"*, *"lancer son commerce Dakar"*, *"faire son business Sénégal"*) et l'injection du schéma JSON-LD `Service`, `OfferCatalog` (forfaits 5 000 FCFA, 15 000 FCFA, 35 000 FCFA) et `BreadcrumbList`.

@@ -53,6 +53,7 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
     if (duree >= 12) remise = 0.25;       // -25% dès 12 mois
     else if (duree >= 6) remise = 0.15;  // -15% dès 6 mois
     else if (duree >= 3) remise = 0.10;  // -10% dès 3 mois
+    else if (duree >= 2) remise = 0.05;  // -5% dès 2 mois
 
     const prixTotal = Math.round((prixMensuel * duree) * (1 - remise));
     const clientRef = `abmt_${userId}_${plan}_${duree}`;

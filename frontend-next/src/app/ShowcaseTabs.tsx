@@ -13,9 +13,9 @@ export default function ShowcaseTabs({
   prixPro?: number; 
   prixBusiness?: number;
 }) {
-  const [duree, setDuree] = useState<1 | 3 | 6 | 12>(12);
+  const [duree, setDuree] = useState<number>(12);
 
-  const remise = duree === 12 ? 0.25 : duree === 6 ? 0.15 : duree === 3 ? 0.10 : 0;
+  const remise = duree >= 12 ? 0.25 : duree >= 6 ? 0.15 : duree >= 3 ? 0.10 : duree >= 2 ? 0.05 : 0;
   const getPrix = (base: number) => Math.round(base * (1 - remise));
 
   return (
@@ -183,9 +183,16 @@ export default function ShowcaseTabs({
                 🎁 1er mois 100% GRATUIT
               </p>
               {duree > 1 && (
-                <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#C75B00' }}>
-                  Soit {(getPrix(prixTafTaf) * duree).toLocaleString('fr-FR')} FCFA pour {duree} mois
-                </p>
+                <div style={{ marginTop: 4 }}>
+                  <p style={{ margin: '0 0 2px', fontSize: 12, fontWeight: 800, color: '#C75B00' }}>
+                    Soit {(getPrix(prixTafTaf) * duree).toLocaleString('fr-FR')} FCFA pour {duree} mois
+                  </p>
+                  {remise > 0 && (
+                    <span style={{ display: 'inline-block', background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 8 }}>
+                      🎉 -{Math.round(remise * 100)}% de réduction (Économie: {((prixTafTaf * duree) - (getPrix(prixTafTaf) * duree)).toLocaleString('fr-FR')} FCFA)
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
@@ -261,9 +268,16 @@ export default function ShowcaseTabs({
                 🎁 1er mois 100% GRATUIT
               </p>
               {duree > 1 && (
-                <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#C75B00' }}>
-                  Soit {(getPrix(prixPro) * duree).toLocaleString('fr-FR')} FCFA pour {duree} mois
-                </p>
+                <div style={{ marginTop: 4 }}>
+                  <p style={{ margin: '0 0 2px', fontSize: 12, fontWeight: 800, color: '#C75B00' }}>
+                    Soit {(getPrix(prixPro) * duree).toLocaleString('fr-FR')} FCFA pour {duree} mois
+                  </p>
+                  {remise > 0 && (
+                    <span style={{ display: 'inline-block', background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 8 }}>
+                      🎉 -{Math.round(remise * 100)}% de réduction (Économie: {((prixPro * duree) - (getPrix(prixPro) * duree)).toLocaleString('fr-FR')} FCFA)
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
@@ -339,9 +353,16 @@ export default function ShowcaseTabs({
                 🎁 1er mois 100% GRATUIT
               </p>
               {duree > 1 && (
-                <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#C75B00' }}>
-                  Soit {(getPrix(prixBusiness) * duree).toLocaleString('fr-FR')} FCFA pour {duree} mois
-                </p>
+                <div style={{ marginTop: 4 }}>
+                  <p style={{ margin: '0 0 2px', fontSize: 12, fontWeight: 800, color: '#C75B00' }}>
+                    Soit {(getPrix(prixBusiness) * duree).toLocaleString('fr-FR')} FCFA pour {duree} mois
+                  </p>
+                  {remise > 0 && (
+                    <span style={{ display: 'inline-block', background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 8 }}>
+                      🎉 -{Math.round(remise * 100)}% de réduction (Économie: {((prixBusiness * duree) - (getPrix(prixBusiness) * duree)).toLocaleString('fr-FR')} FCFA)
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 

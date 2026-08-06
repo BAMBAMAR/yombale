@@ -212,8 +212,8 @@ export default function TarifsPublicsSelector() {
       {/* GRILLE DES CARTES DE FORFAITS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
         {PLANS_CONFIG.map((plan) => {
-          const remise = duree >= 12 ? 0.25 : duree >= 6 ? 0.15 : duree >= 3 ? 0.10 : 0
-          const badgeLabel = duree >= 12 ? '🔥 -25% (3m offerts)' : duree >= 6 ? '-15%' : duree >= 3 ? '-10%' : null
+          const remise = duree >= 12 ? 0.25 : duree >= 6 ? 0.15 : duree >= 3 ? 0.10 : duree >= 2 ? 0.05 : 0
+          const badgeLabel = duree >= 12 ? '🔥 -25% (3m offerts)' : duree >= 6 ? '-15%' : duree >= 3 ? '-10%' : duree >= 2 ? '-5%' : null
           const totalBrut = plan.prixMensuelBase * duree
           const totalApresRemise = Math.round(totalBrut * (1 - remise))
           const mensuelEquiv = Math.round(totalApresRemise / duree)
