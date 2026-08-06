@@ -24,7 +24,8 @@ export default async function CompteLayout({ children }: { children: React.React
     emailVerifie = true
   }
 
-  const nom = session.nom ?? session.email ?? 'vous'
+  const rawNom = session.nom?.trim()
+  const nom = rawNom ? rawNom : (session.email ?? 'Vous')
   const initiale = nom.charAt(0).toUpperCase()
 
   return (

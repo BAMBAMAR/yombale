@@ -1109,6 +1109,12 @@ a {
   .immo-quartier-input { width: 100%; }
 }
 
+@media (max-width: 640px) {
+  .hero-search {
+    margin-bottom: 12px;
+  }
+}
+
 /* ── Fiche immo ────────────────────────────────────────────────── */
 .fiche-immo {
   max-width: 1200px;
@@ -6958,6 +6964,15 @@ a {
 
 .footer-links {
   grid-template-columns: repeat(4, 1fr) !important;
+}
+
+/* ── Bandeau confiance footer ──────────────────────────────────── */
+.footer-trust {
+  background: transparent;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding: 16px 5%;
+  display: flex;
+  justify-content: center;
 }
 
 /* ── Pages légales (Sprint 13) ─────────────────────────────────── */

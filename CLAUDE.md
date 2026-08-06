@@ -35,6 +35,12 @@ npm run build      # Build for production
 npm run lint       # ESLint
 ```
 
+#### Dépannage Next.js (Boucle infinie / Cache corrompu)
+Si le serveur de développement Next.js se bloque dans une boucle ("tourne en rond") ou plante avec une erreur `EBUSY: resource busy or locked` après une erreur de syntaxe :
+1. Arrêtez le serveur `npm run dev` (Ctrl+C ou tuez le processus en arrière-plan).
+2. Supprimez le cache corrompu : `rm -rf .next` (ou supprimez le dossier `.next` manuellement).
+3. Relancez `npm run dev`.
+
 ### Database
 ```bash
 createdb prixmalin            # Create the database
@@ -1285,6 +1291,10 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
       - Ajout de `min-width: 0; word-break: break-word;` sur `.produit-fiche-nom` pour éviter qu'un nom de produit long ne gonfle le titre en flex.
     - **Correction des Cartes de Formules d'Abonnement de la Page d'Accueil (`ShowcaseTabs.tsx` & `globals.css`)** :
       - Ajout des classes responsive `.showcase-section` et `.showcase-cards-grid`. Passage de `minmax(320px, 1fr)` à `grid-template-columns: 1fr !important` sur mobile (< 768px) et ajustement des rembourrages (`24px 12px`) pour éliminer tout dépassement de min-width.
-    - **Règle Globale Anti-Débordement Horizontal (`globals.css`)** :
+      - **Règle Globale Anti-Débordement Horizontal (`globals.css`)** :
       - Implémentation du confinement strict `html, body { overflow-x: hidden !important; width: 100% !important; max-width: 100vw !important; }` et `.page-container, .fiche, .site-footer { width: 100% !important; max-width: 100% !important; overflow-x: hidden; }` garantissant un affichage ajusté au pixel près sur 100% des appareils mobiles (320px à 768px).
       - **Correction Erreur PostCSS Build Render (Commit `f428318`)** : Résolution de la parenthèse manquante sur la règle `@media (max-width: 640px)` dans `globals.css` (ligne 9875), débloquant le build et le déploiement automatique sur Render.
+      - **Correction du "Bandeau Confiance" du Footer (Couleur différente)** : Retrait de `background: rgba(255,255,255,.05)` sur `.footer-trust` dans `globals.css` pour unifier la couleur de fond du pied de page.
+      - **Correction de l'icône Avatar dans le Compte (Point Bleu)** : Ajout d'une valeur de repli dans `(account)/layout.tsx` pour afficher l'initiale de l'email ou "Vous" au lieu d'une icône vide si `session.nom` est vide.
+      - **Réduction de l'espace vide sous la barre de recherche (Mobile)** : Ajout d'une règle `@media (max-width: 640px) { .hero-search { margin-bottom: 12px; } }` dans `globals.css` pour réduire drastiquement l'espace vide de 44px entre la recherche et les catégories de la page d'accueil.
+      - **Correction de la boucle infinie de Next.js (Tourne en rond)** : Résolution d'un cache corrompu (EBUSY) bloquant le serveur dev local en tuant l'ancienne tâche `next dev` bloquée et en relançant le processus.
