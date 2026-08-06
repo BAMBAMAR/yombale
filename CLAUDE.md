@@ -216,8 +216,9 @@ Déclencheur : Demande de l'utilisateur d'un audit complet de l'adaptation mobil
 - **Suppression du vide massif** : Réduction du `paddingBottom` du conteneur principal (de 4rem à 0.5rem) et mise à zéro du `marginTop` de la section SEO, éliminant un trou de ~100px entre les "Produits récemment consultés" et le bloc SEO.
 
 **5. Sécurisation de l'Authentification WhatsApp (Backend) :**
-- **Template Meta Certifié** : L'envoi du code OTP dans `backend/routes/auth.js` utilise désormais `sendWhatsAppTemplate('nopalou_otp_code', ...)` en priorité (fonctionne même pour un visiteur n'ayant jamais écrit au bot), avec fallback automatique sur `sendWhatsAppText` si le template n'est pas encore validé côté Meta.
-- **Import élargi** : Ajout de `sendWhatsAppTemplate` dans les imports de `auth.js`.
+- **Template Meta Certifié Approuvé (`nopalou_auth_otp`)** : Création automatique et validation par Meta (Statut `APPROVED`, ID `1085995500661398`) du template d'authentification officiel WhatsApp avec bouton natif "Copier le code".
+- **Backend Auth (`routes/auth.js`)** : Intégration du template `nopalou_auth_otp` avec fallback sur texte libre.
+- **Variable d'Environnement** : Ajout de `WHATSAPP_BUSINESS_ACCOUNT_ID=901008702321523` dans `backend/.env`.
 
 **6. Cahier de Recette Exhaustif (UAT) :**
 - Création d'un cahier de recette complet pré-production couvrant **11 modules** et **120+ cas de test** : Page d'accueil, Authentification, Espace Compte, Dépôt d'annonce, Boutique Pro (Gestion complète), Parcours Acheteur, Assistant WhatsApp, Recherche & Filtres, Immobilier, Télécom, Technique & Conformité.
