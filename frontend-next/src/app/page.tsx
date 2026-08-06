@@ -261,7 +261,7 @@ export default async function HomePage({
       </section>
 
       {/* ── CONTENU PRINCIPAL & RÉSULTATS DIRECTS ──────────────────── */}
-      <main className="page-container" style={{ maxWidth: 1440, paddingTop: '1.5rem', paddingBottom: '4rem' }}>
+      <main className="page-container" style={{ maxWidth: 1440, paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
         
         {/* BANDEAU FEEDBACK RECHERCHE & CONFIRMATION DES RÉSULTATS */}
         {hasFiltre && (
@@ -400,7 +400,7 @@ export default async function HomePage({
 
       {/* ── Bloc SEO (MODERNISÉ, SANS BOÎTE) ─────────────────────────────────────────────── */}
       {!hasFiltre && (
-        <section style={{ maxWidth: 1280, margin: '24px auto 32px', padding: '0 20px' }}>
+        <section style={{ maxWidth: 1280, margin: '0 auto 32px', padding: '0 20px' }}>
           
           {/* En-tête de section épuré */}
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
