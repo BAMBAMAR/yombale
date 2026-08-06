@@ -192,6 +192,38 @@ Aucun chantier n'est actuellement identifié comme prioritaire — le dernier ch
 
 ---
 
+## État du projet (06 août 2026 — Audit Mobile/PWA, Refonte Navbar, WhatsApp OTP & Cahier de Recette)
+**Statut :** *Commis localement (en attente de push)*
+
+Déclencheur : Demande de l'utilisateur d'un audit complet de l'adaptation mobile/PWA, correction des espacements, repositionnement des CTA et sécurisation de l'authentification WhatsApp.
+
+**Réalisations & Corrections :**
+
+**1. Refonte de la Navbar Mobile (< 1040px) :**
+- **Pilule Boutique** : Remplacement de l'icône Desktop "⚡ Boutique Taf Taf" par une pilule mobile compacte `[🏪 Boutique]` dans l'en-tête.
+- **Icônes Mobile Optimisées** : Conservation des icônes essentielles (WhatsApp `💬`, Favoris `❤`, Profil `👤`) et retrait du bouton `➕` (Publier) pour libérer de l'espace.
+- **Fix Débordement Horizontal** : Résolution du bug de bande blanche à droite causé par la coexistence du bouton Desktop "Boutique Taf Taf" et de la pilule mobile (ajout de `hidden-mobile` sur les boutons Desktop).
+- **Fix Hamburger Tronqué** : Ajout d'un `@media (max-width: 480px)` réduisant la taille des icônes (30px au lieu de 36px) pour garantir que le bouton `☰` reste entier.
+
+**2. Menu Hamburger (MobileNav.tsx) :**
+- **CTA Non-Connecté** : Ajout d'un bouton d'action noir `[🏪 Ouvrir une Boutique Pro]` proéminent dans le tiroir latéral pour les visiteurs.
+- **CTA Connecté** : Bouton `[🏪 Ma Boutique]` pointant vers le dashboard si l'utilisateur possède déjà une boutique.
+
+**3. Zone des Filtres Mobile :**
+- **Rangée Mobile-Only** : Nouvelle ligne visible uniquement sur smartphone sous les filtres classiques, contenant `[✖ Effacer]` et `[🏪 Boutique Pro]` pour compenser les boutons Desktop cachés.
+
+**4. Correction des Espacements Verticaux :**
+- **Suppression du vide massif** : Réduction du `paddingBottom` du conteneur principal (de 4rem à 0.5rem) et mise à zéro du `marginTop` de la section SEO, éliminant un trou de ~100px entre les "Produits récemment consultés" et le bloc SEO.
+
+**5. Sécurisation de l'Authentification WhatsApp (Backend) :**
+- **Template Meta Certifié** : L'envoi du code OTP dans `backend/routes/auth.js` utilise désormais `sendWhatsAppTemplate('nopalou_otp_code', ...)` en priorité (fonctionne même pour un visiteur n'ayant jamais écrit au bot), avec fallback automatique sur `sendWhatsAppText` si le template n'est pas encore validé côté Meta.
+- **Import élargi** : Ajout de `sendWhatsAppTemplate` dans les imports de `auth.js`.
+
+**6. Cahier de Recette Exhaustif (UAT) :**
+- Création d'un cahier de recette complet pré-production couvrant **11 modules** et **120+ cas de test** : Page d'accueil, Authentification, Espace Compte, Dépôt d'annonce, Boutique Pro (Gestion complète), Parcours Acheteur, Assistant WhatsApp, Recherche & Filtres, Immobilier, Télécom, Technique & Conformité.
+
+---
+
 ## État du projet (05 août 2026 — Intégration Boutiques Taf Taf)
 **Statut :** *Fonctionnalité en production*
 
