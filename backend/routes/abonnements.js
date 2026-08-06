@@ -34,9 +34,7 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
     }
     const userId = req.user.userId;
     const { plan, duree_mois = 1 } = req.body;
-    const parsedDuree = Math.floor(Number(duree_mois));
-    const duree = (parsedDuree >= 1 && parsedDuree <= 36) ? parsedDuree : 1;
-
+    const duree = [1, 3, 6, 12].includes(Number(duree_mois)) ? Number(duree_mois) : 1;
     const PLANS = await getPlans();
     if (!PLANS[plan]) return res.status(400).json({ error: 'Plan invalide (pro ou business)' });
 
@@ -50,9 +48,9 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
     const { prix: prixMensuel, label } = PLANS[plan];
 
     let remise = 0;
-    if (duree >= 12) remise = 0.25;       // -25% dès 12 mois
-    else if (duree >= 6) remise = 0.15;  // -15% dès 6 mois
-    else if (duree >= 3) remise = 0.10;  // -10% dès 3 mois
+    if (duree === 3) remise = 0.10;      // -10% pour 3 mois
+    else if (duree === 6) remise = 0.15; // -15% pour 6 mois
+    else if (duree === 12) remise = 0.25; // -25% pour 12 mois (1 an)
 
     const prixTotal = Math.round((prixMensuel * duree) * (1 - remise));
     const clientRef = `abmt_${userId}_${plan}_${duree}`;

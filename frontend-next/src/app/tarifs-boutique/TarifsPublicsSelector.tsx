@@ -175,47 +175,13 @@ export default function TarifsPublicsSelector() {
             )
           })}
         </div>
-
-        {/* SAISIE DE DURÉE PERSONNALISÉE PAR LE MARCHAND */}
-        <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#475569' }}>
-            ✏️ Durée sur mesure (saisissez le nombre de mois) :
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input
-              type="number"
-              min={1}
-              max={36}
-              value={duree}
-              onChange={(e) => {
-                const val = Math.max(1, Math.min(36, parseInt(e.target.value, 10) || 1))
-                setDuree(val)
-              }}
-              style={{
-                width: 76,
-                padding: '6px 10px',
-                borderRadius: 10,
-                border: '2px solid #C75B00',
-                fontWeight: 900,
-                fontSize: 16,
-                textAlign: 'center',
-                outline: 'none',
-                background: '#fff7ed',
-                color: '#9a3412',
-              }}
-            />
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>mois</span>
-          </div>
-        </div>
       </div>
 
       {/* GRILLE DES CARTES DE FORFAITS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
         {PLANS_CONFIG.map((plan) => {
-          const remise = duree >= 12 ? 0.25 : duree >= 6 ? 0.15 : duree >= 3 ? 0.10 : 0
-          const badgeLabel = duree >= 12 ? '🔥 -25% (3m offerts)' : duree >= 6 ? '-15%' : duree >= 3 ? '-10%' : null
           const totalBrut = plan.prixMensuelBase * duree
-          const totalApresRemise = Math.round(totalBrut * (1 - remise))
+          const totalApresRemise = Math.round(totalBrut * (1 - optionDuree.remise))
           const mensuelEquiv = Math.round(totalApresRemise / duree)
           const economie = totalBrut - totalApresRemise
 
@@ -305,7 +271,7 @@ export default function TarifsPublicsSelector() {
                         borderRadius: 10,
                       }}
                     >
-                      🎉 Économisez {economie.toLocaleString('fr-FR')} FCFA ({badgeLabel})
+                      🎉 Économisez {economie.toLocaleString('fr-FR')} FCFA ({optionDuree.badge})
                     </div>
                   )}
                 </div>

@@ -48,7 +48,7 @@ export default function ShowcaseTabs({
             Choisissez la formule adaptée à votre commerce. Essayez gratuitement pendant 30 jours, sans engagement.
           </p>
 
-          {/* Selector Durée (1, 3, 6, 12 Mois ou Saisie Libre) */}
+          {/* Selector Durée (1, 3, 6, 12 Mois) */}
           <div style={{
             display: 'inline-flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6,
             alignSelf: 'center', background: '#f1f5f9', padding: 6, borderRadius: 30,
@@ -85,32 +85,6 @@ export default function ShowcaseTabs({
                 )}
               </button>
             ))}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}>
-              ✏️ Durée libre (nombre de mois) :
-            </span>
-            <input
-              type="number"
-              min={1}
-              max={36}
-              value={duree}
-              onChange={(e) => setDuree(Math.max(1, Math.min(36, parseInt(e.target.value, 10) || 1)) as any)}
-              style={{
-                width: 60,
-                padding: '4px 8px',
-                borderRadius: 8,
-                border: '1.5px solid #C75B00',
-                fontWeight: 900,
-                fontSize: 14,
-                textAlign: 'center',
-                outline: 'none',
-                background: '#fff7ed',
-                color: '#9a3412',
-              }}
-            />
-            <span style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>mois</span>
           </div>
         </div>
 

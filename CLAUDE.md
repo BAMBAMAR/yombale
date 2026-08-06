@@ -1,15 +1,18 @@
 # CLAUDE.md
 
-### [2026-08-06] - Intégration des Forfaits Multi-Durées (1 à 36 mois) & Saisie Sur Mesure par le Marchand
-- **Durée Librement Définie par le Marchand (1 à 36 mois)** :
-  - Ajout d'un champ de saisie libre `✏️ Durée sur mesure (nombre de mois)` sur les pages publiques (`/tarifs-boutique`, `/ShowcaseTabs`) et dans l'espace vendeur (`/boutique/abonnement`).
-  - Le marchand peut saisir n'importe quel nombre de mois (ex: 2 mois, 5 mois, 8 mois, 18 mois, 24 mois).
-  - Calcul automatique en temps réel du tarif total, de l'économie réalisée et de la remise applicable (10% dès 3m, 15% dès 6m, 25% dès 12m).
-- **Flexibilité Backend API (`backend/routes/abonnements.js`)** :
-  - Adaptation de la validation `duree_mois` pour autoriser toute durée entre 1 et 36 mois.
-  - Calcul dynamique du montant Wave Checkout et enregistrement de l'échéance exacte en base de données.
-- **Correction Wizard Création Boutique (`app/creer-boutique/page.tsx`)** :
-  - Correction de la déclaration `initialNom` et pré-sélection de la durée transmise.
+### [2026-08-06] - Intégration des Forfaits Multi-Durées (1, 3, 6 & 12 mois) & Choix du Marchand
+- **Mise à Jour de la Page d'Accueil (`app/ShowcaseTabs.tsx`)** :
+  - Intégration des 4 boutons de durée d'engagement (1 mois, 3 mois -10%, 6 mois -15%, 12 mois -25% 🔥).
+  - Calcul dynamique en temps réel des tarifs FCFA/mois et du total facturé sur la section d'accueil.
+  - Redirection automatique vers `/creer-boutique?plan=...&duree=...`.
+- **Composant Sélecteur Interactif Public (`app/tarifs-boutique/TarifsPublicsSelector.tsx`)** :
+  - Création d'un sélecteur de durée interactif (1 mois, 3 mois trimestriel -10%, 6 mois semestriel -15%, 12 mois annuel -25% / 3 mois offerts).
+  - Calcul dynamique et automatique en temps réel des remises, du total facturé et de l'équivalent mensuel pour chaque formule.
+- **Wizard Création Boutique (`app/creer-boutique/page.tsx`)** :
+  - Correction de l'erreur `initialNom is not defined` et pré-sélection exacte de la formule et de la durée transmises dans l'URL.
+- **Gestion des Durées en Dashboard Vendeur & Backend** :
+  - Intégration de `duree_mois` dans la route backend `POST /api/abonnements/initier` avec application automatique des taux de réduction.
+  - Support de la souscription 1, 3, 6 et 12 mois directement depuis l'espace vendeur (`/boutique/abonnement`).
 
 ### [2026-08-06] - Stratégie & Optimisation SEO : Forfaits Vendeurs, Alternatives Shopify & Sourcing (Alibaba/AliExpress)
 - **Métadonnées SSR & Données Structurées (`app/creer-boutique/layout.tsx`)** : Création d'un layout serveur SSR pour `/creer-boutique` incluant les métadonnées SEO enrichies (*"créer boutique en ligne Sénégal"*, *"lancer son commerce Dakar"*, *"faire son business Sénégal"*) et l'injection du schéma JSON-LD `Service`, `OfferCatalog` (forfaits 5 000 FCFA, 15 000 FCFA, 35 000 FCFA) et `BreadcrumbList`.

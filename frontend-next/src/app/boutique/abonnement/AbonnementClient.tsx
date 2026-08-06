@@ -44,11 +44,9 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
 
   const PLANS = PLANS_INFO.map(p => {
     const prixMensuelBase = Number(settings[`plan_${p.id}_prix`]) || PLANS_DEFAUT[p.id]
-    const remise = duree >= 12 ? 0.25 : duree >= 6 ? 0.15 : duree >= 3 ? 0.10 : 0
-    const badge = duree >= 12 ? '🔥 -25% (3m offerts)' : duree >= 6 ? '-15%' : duree >= 3 ? '-10%' : null
-
+    const optionDuree = DUREES.find(d => d.mois === duree) || DUREES[0]
     const totalBrut = prixMensuelBase * duree
-    const totalApresRemise = Math.round(totalBrut * (1 - remise))
+    const totalApresRemise = Math.round(totalBrut * (1 - optionDuree.remise))
     const prixMensuelEquivalent = Math.round(totalApresRemise / duree)
     const economie = totalBrut - totalApresRemise
 
@@ -58,7 +56,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
       totalApresRemise,
       prixMensuelEquivalent,
       economie,
-      remiseBadge: badge,
+      remiseBadge: optionDuree.badge,
     }
   })
 
@@ -165,38 +163,6 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
               </button>
             )
           })}
-        </div>
-
-        {/* Champ de Saisie Durée Librement Définie par le Marchand */}
-        <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#475569' }}>
-            ✏️ Ou saisissez le nombre de mois exact souhaité :
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input
-              type="number"
-              min={1}
-              max={36}
-              value={duree}
-              onChange={(e) => {
-                const val = Math.max(1, Math.min(36, parseInt(e.target.value, 10) || 1))
-                setDuree(val)
-              }}
-              style={{
-                width: 76,
-                padding: '6px 10px',
-                borderRadius: 10,
-                border: '2px solid #C75B00',
-                fontWeight: 900,
-                fontSize: 16,
-                textAlign: 'center',
-                outline: 'none',
-                background: '#fff7ed',
-                color: '#9a3412',
-              }}
-            />
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>mois</span>
-          </div>
         </div>
       </div>
 
