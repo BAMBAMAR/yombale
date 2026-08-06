@@ -9884,16 +9884,207 @@ span.ripple {
     display: flex;
     gap: 8px;
     width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 440px;
+  gap: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+  .caisse-main-layout {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   RESPONSIVE MOBILE — Toutes les pages modifiées
+   Breakpoints : 768px (tablette) et 480px (mobile)
+   ════════════════════════════════════════════════════════ */
+
+/* ── Caisse POS : En-tête ── */
+/* Labels masqués sur mobile (icônes seules) */
+.caisse-label-desktop {
+  display: inline;
+}
+
+/* Sélecteur de boutique : visible sur tablette+ */
+.caisse-boutique-select {
+  display: block;
+}
+
+@media (max-width: 640px) {
+  /* Sur petit écran : masquer les labels texte dans le header */
+  .caisse-label-desktop {
+    display: none;
+  }
+
+  /* Masquer le select boutique sur très petit écran (moins d'espace) */
+  .caisse-boutique-select {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Header POS : masquer le label texte "Nopalou" et adapter */
+  .caisse-header {
+    padding: 8px 12px !important;
+    justify-content: space-between !important;
+    overflow: visible !important;
+    position: relative;
+  }
+
+  /* Caisse layout : catalogue en premier, ticket en dessous */
+  .caisse-main-layout {
+    grid-template-columns: 1fr !important;
+    overflow-y: auto;
+  }
+
+  /* Boutons POS : taille réduite */
+  .btn-premium {
+    font-size: 11px !important;
+    padding: 5px 8px !important;
+  }
+
+  /* Badges */
+  .badge-premium {
+    font-size: 10px !important;
+    padding: 3px 7px !important;
+  }
+
+  /* Page boutique (dashboard marchand) : tabs en scroll horizontal */
+  .boutique-tabs-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap !important;
+  }
+
+  /* Cartes produit : grille adaptative */
+  .produits-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Formulaire produit : max-width full */
+  .produit-form-wrapper {
+    max-width: 100% !important;
+    padding: 16px !important;
+  }
+
+  /* Modales : plein écran sur mobile */
+  .modal-overlay > div {
+    max-width: calc(100vw - 32px) !important;
+    max-height: 92vh !important;
+    overflow-y: auto;
+  }
+
+  /* Stats et chiffres : 2 colonnes */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Tableaux : scroll horizontal */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Input de recherche caisse */
+  .caisse-search-input {
+    font-size: 14px !important;
+  }
+
+  /* Ticket de caisse : full width */
+  .ticket-section {
+    border-left: none !important;
+    border-top: 1px solid #e2e8f0;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Très petit écran : réduire encore les paddings */
+  .caisse-header {
+    padding: 6px 10px !important;
+  }
+
+  /* Produits : 1 seule colonne */
+  .produits-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stats : 1 colonne */
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Boutons d'action produit : wrap */
+  .produit-actions {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+
+  /* Filtres catégorie caisse : scroll horizontal */
+  .caisse-categories-bar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Boutons de paiement : 2x2 */
+  .paiement-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Formulaires modales : champs full width */
+  .dup-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Standardisation des menus d'onglets & scroll tactile ── */
+.nopalou-scroll-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+.nopalou-scroll-tabs::-webkit-scrollbar {
+  display: none;
+}
+.nopalou-scroll-tabs > button,
+.nopalou-scroll-tabs > a {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Caisse POS Search Row */
+.caisse-search-row {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .caisse-search-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .caisse-search-row > div:first-child {
+    width: 100%;
+  }
+  .caisse-search-row-btns {
+    display: flex;
+    gap: 8px;
+    width: 100%;
   }
   .caisse-search-row-btns > button {
     flex: 1;
     justify-content: center;
     padding: 10px 8px !important;
     font-size: 12px !important;
-  }
-}
-
-    overflow-y: auto;
   }
 }
 
