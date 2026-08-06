@@ -301,11 +301,13 @@ export default async function RootLayout({
                 <span className="footer-logo-name" data-suffix="lou">Nopa</span>
               </a>
               <p className="footer-tagline">Le premier comparateur de prix dédié au marché sénégalais — produits, immobilier, forfaits télécom.</p>
-              <div className="footer-social">
-                <a href="https://www.facebook.com/profile.php?id=61591675701726" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="footer-social-link">f</a>
-                <a href="https://twitter.com/nopalou_sn" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="footer-social-link">𝕏</a>
-                <a href="https://www.instagram.com/nopalousn/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="footer-social-link">▣</a>
-                <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="footer-social-link">💬</a>
+              <div className="footer-social" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+                <a href="https://www.tiktok.com/@nopalou.com?_r=1&_t=ZS-98f75NgDJNS" target="_blank" rel="noopener noreferrer" aria-label="TikTok" title="TikTok Officiel" className="footer-social-link">🎵</a>
+                <a href="https://whatsapp.com/channel/0029Vb8fc4bBadmW40AFKx33" target="_blank" rel="noopener noreferrer" aria-label="Canal WhatsApp" title="Canal WhatsApp Officiel" className="footer-social-link">📢</a>
+                <a href="https://www.facebook.com/profile.php?id=61591675701726" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Facebook Page" className="footer-social-link">f</a>
+                <a href="https://www.instagram.com/nopalousn/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram" className="footer-social-link">📸</a>
+                <a href="https://twitter.com/nopalou_sn" target="_blank" rel="noopener noreferrer" aria-label="Twitter / X" title="Twitter / X" className="footer-social-link">𝕏</a>
+                <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp Direct" title="WhatsApp Direct &amp; Support" className="footer-social-link">💬</a>
               </div>
             </div>
 

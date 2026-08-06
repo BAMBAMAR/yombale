@@ -470,7 +470,63 @@ export default async function HomePage({
               ))}
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: 40, padding: 16, background: '#f8fafc', borderRadius: 12, color: '#64748b', fontSize: 13, border: '1px solid #e2e8f0' }}>
+            {/* ── BANDEAU RÉSEAUX SOCIAUX OFFICIELS NOPALOU ──────────────────── */}
+            <div style={{ marginTop: 40, padding: '24px 20px', background: 'linear-gradient(135deg, #1C2B4A 0%, #0f172a 100%)', borderRadius: 16, color: '#ffffff', textAlign: 'center', boxShadow: '0 8px 24px rgba(15,27,74,0.15)' }}>
+              <span style={{ fontSize: 11, fontWeight: 900, color: '#fed7aa', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'rgba(199,91,0,0.2)', padding: '4px 12px', borderRadius: 20, border: '1px solid rgba(199,91,0,0.3)' }}>
+                📢 Communauté &amp; Bons Plans
+              </span>
+              <h3 style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', margin: '10px 0 6px' }}>
+                Rejoignez Nopalou sur vos Réseaux Préférés
+              </h3>
+              <p style={{ fontSize: 13, color: '#94a3b8', margin: '0 auto 20px', maxWidth: 540, lineHeight: 1.5 }}>
+                Suivez nos vidéos TikTok, recevez les baisses de prix en direct sur notre Canal WhatsApp et profitez des ventes flash exclusives à Dakar.
+              </p>
+
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <a
+                  href="https://www.tiktok.com/@nopalou.com?_r=1&_t=ZS-98f75NgDJNS"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: '#000000', color: '#ffffff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none', transition: 'transform 0.15s' }}
+                >
+                  <span>🎵</span> <span>TikTok (@nopalou.com)</span>
+                </a>
+                <a
+                  href="https://whatsapp.com/channel/0029Vb8fc4bBadmW40AFKx33"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: '#25D366', color: '#ffffff', border: 'none', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none', transition: 'transform 0.15s' }}
+                >
+                  <span>📢</span> <span>Canal WhatsApp</span>
+                </a>
+                <a
+                  href="https://www.facebook.com/profile.php?id=61591675701726"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: '#1877F2', color: '#ffffff', border: 'none', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}
+                >
+                  <span>📘</span> <span>Facebook</span>
+                </a>
+                <a
+                  href="https://www.instagram.com/nopalousn/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', color: '#ffffff', border: 'none', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}
+                >
+                  <span>📸</span> <span>Instagram</span>
+                </a>
+                <a
+                  href="https://twitter.com/nopalou_sn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}
+                >
+                  <span>𝕏</span> <span>Twitter</span>
+                </a>
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: 30, padding: 16, background: '#f8fafc', borderRadius: 12, color: '#64748b', fontSize: 13, border: '1px solid #e2e8f0' }}>
               <span style={{ display: 'inline-block', width: 8, height: 8, background: '#10b981', borderRadius: '50%', marginRight: 8 }} />
               Prix vérifiés automatiquement toutes les 6 heures sur tous les grands marchands sénégalais
             </div>

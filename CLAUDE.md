@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+### [2026-08-06] - Intégration des Réseaux Sociaux sur la Page d'Accueil & Footer
+- **Bandeau Réseaux Sociaux d'Accueil (`page.tsx`)** : Ajout d'une section dédiée avant le pied de page présentant les liens vers **TikTok (`@nopalou.com`)**, **Canal WhatsApp**, **Facebook Page**, **Instagram (`@nopalousn`)**, et **Twitter / X (`@nopalou_sn`)**.
+- **Pied de Page (`layout.tsx`)** : Mise à jour des icônes du footer pour inclure directement TikTok (`@nopalou.com`), le Canal WhatsApp Officiel et WhatsApp Direct.
+
 ### [2026-08-06] - Refonte & Optimisation du Kit de Communication (`/admin/communication`)
 - **Navigation par 5 Onglets Thématiques (`KitComClient.tsx`)** :
   - **Onglet 1 — 📱 Réseaux Sociaux & Contenus** : Cartes individuelles pour Facebook, Instagram, TikTok (`@nopalou.com`), Twitter/X (`@nopalou_sn`), Canal WhatsApp et Chatbot Support. Boutons **"Copier 1-Clic"** avec notification Toast, **"Télécharger HD"** direct (attribut HTML `download`), et publication **"🚀 Publier FB/IG"** / **"📢 Diffuser Canal WA"** 1-clic.
