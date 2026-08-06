@@ -197,7 +197,7 @@ export default function TarifsBoutiquePage() {
                 boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
                 display: 'flex',
                 flexDirection: 'column',
-                justify: 'space-between',
+                justifyContent: 'space-between',
               }}
             >
               <div>
@@ -254,7 +254,7 @@ export default function TarifsBoutiquePage() {
                 boxShadow: '0 12px 35px rgba(199,91,0,0.12)',
                 display: 'flex',
                 flexDirection: 'column',
-                justify: 'space-between',
+                justifyContent: 'space-between',
                 position: 'relative',
               }}
             >
@@ -330,7 +330,7 @@ export default function TarifsBoutiquePage() {
                 boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
                 display: 'flex',
                 flexDirection: 'column',
-                justify: 'space-between',
+                justifyContent: 'space-between',
               }}
             >
               <div>

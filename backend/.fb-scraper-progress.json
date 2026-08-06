@@ -1,14 +1,14 @@
 {
   "status": "completed",
   "mode": "live",
-  "groupeIndex": 10,
-  "totalGroupes": 10,
+  "groupeIndex": 1,
+  "totalGroupes": 1,
   "pourcentage": 100,
   "groupeActuel": "Terminé",
-  "scrapes": 39,
-  "inseres": 14,
-  "doublons": 15,
-  "ignores": 10,
+  "scrapes": 1,
+  "inseres": 1,
+  "doublons": 0,
+  "ignores": 0,
   "erreurs": [],
-  "updatedAt": "2026-08-06T13:04:06.770Z"
+  "updatedAt": "2026-08-06T16:22:04.301Z"
 }
