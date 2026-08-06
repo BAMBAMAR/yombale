@@ -146,7 +146,7 @@ export default async function HomePage({
         overflow: 'hidden',
       }}>
         {/* Layout en 3 colonnes pour utiliser l'espace Desktop (Gauche, Centre, Droite) */}
-        <div style={{ maxWidth: 1440, margin: '0 auto', display: 'flex', alignItems: 'stretch', justifyContent: 'center', gap: 40, position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: 1440, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 40, position: 'relative', zIndex: 2 }}>
           
           {/* COLONNE GAUCHE (Desktop seulement) */}
           <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: '#fff', padding: 20, borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
@@ -197,6 +197,43 @@ export default async function HomePage({
             <SearchBar defaultValue={q} />
           </div>
 
+          {/* CATÉGORIES EN PILULES FLUIDES (Directement sous la recherche) */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 840, margin: '14px auto 0', position: 'relative', zIndex: 2 }}>
+            {CATEGORIES.map((c) => {
+              if (categoriesActives !== null && !categoriesActives.includes(c.slug) && c.slug !== 'telecom') {
+                return null;
+              }
+              const isSelected = categorie === c.slug
+              if (c.slug === 'telecom') {
+                return (
+                  <Link key={c.slug} href="/telecom" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+                  }}>
+                    <span>{c.emoji}</span> <span>{c.label}</span>
+                  </Link>
+                )
+              }
+              return (
+                <Link
+                  key={c.slug}
+                  href={isSelected ? '/' : `/?categorie=${c.slug}`}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13,
+                    fontWeight: isSelected ? 800 : 600, textDecoration: 'none',
+                    background: isSelected ? '#C75B00' : '#fff',
+                    color: isSelected ? '#fff' : '#334155',
+                    border: isSelected ? '1px solid #C75B00' : '1px solid #e2e8f0',
+                    boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : '0 2px 4px rgba(0,0,0,0.03)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span>{c.emoji}</span> <span>{c.label}</span>
+                </Link>
+              )
+            })}
+          </div>
+
           </div>
 
           {/* COLONNE DROITE (Desktop seulement) */}
@@ -220,43 +257,6 @@ export default async function HomePage({
             <Link href="/creer-boutique" style={{ display: 'block', textAlign: 'center', background: '#C75B00', color: '#fff', fontWeight: 800, fontSize: 13, padding: '10px', borderRadius: 8, textDecoration: 'none', marginTop: 16, boxShadow: '0 4px 12px rgba(199,91,0,0.2)', transition: 'background 0.2s' }}>Créer ma vitrine →</Link>
           </div>
 
-        </div>
-
-        {/* CATÉGORIES EN PILULES FLUIDES (Pleine largeur, sous la grille 3-colonnes) */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 1000, margin: '16px auto 0', position: 'relative', zIndex: 2 }}>
-          {CATEGORIES.map((c) => {
-            if (categoriesActives !== null && !categoriesActives.includes(c.slug) && c.slug !== 'telecom') {
-              return null;
-            }
-            const isSelected = categorie === c.slug
-            if (c.slug === 'telecom') {
-              return (
-                <Link key={c.slug} href="/telecom" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                  background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
-                }}>
-                  <span>{c.emoji}</span> <span>{c.label}</span>
-                </Link>
-              )
-            }
-            return (
-              <Link
-                key={c.slug}
-                href={isSelected ? '/' : `/?categorie=${c.slug}`}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13,
-                  fontWeight: isSelected ? 800 : 600, textDecoration: 'none',
-                  background: isSelected ? '#C75B00' : '#fff',
-                  color: isSelected ? '#fff' : '#334155',
-                  border: isSelected ? '1px solid #C75B00' : '1px solid #e2e8f0',
-                  boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : '0 2px 4px rgba(0,0,0,0.03)',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span>{c.emoji}</span> <span>{c.label}</span>
-              </Link>
-            )
-          })}
         </div>
       </section>
 

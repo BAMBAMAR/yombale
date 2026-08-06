@@ -1,5 +1,10 @@
 # CLAUDE.md
 
+### [2026-08-06] - Correction Espacement Hero SearchBar & CatÃ©gories
+- **Correction UI Hero (page.tsx)** : Suppression du grand espace vide vertical entre la barre de recherche (SearchBar) et les pilules de catÃ©gories (CATEGORIES). Les catÃ©gories ont Ã©tÃ© dÃ©placÃ©es Ã  l'intÃ©rieur de la colonne centrale directement sous la barre de recherche avec 14px de marge.
+- **VÃ©rification Build** : Validation avec npm run build dans frontend-next (0 erreur).
+
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Langue
@@ -1299,10 +1304,10 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
       - **RÃ©duction de l'espace vide sous la barre de recherche (Mobile)** : Ajout d'une rÃ¨gle `@media (max-width: 640px) { .hero-search { margin-bottom: 12px; } }` dans `globals.css` pour rÃ©duire drastiquement l'espace vide de 44px entre la recherche et les catÃ©gories de la page d'accueil.
       - **Correction de la boucle infinie de Next.js (Tourne en rond)** : RÃ©solution d'un cache corrompu (EBUSY) bloquant le serveur dev local en tuant l'ancienne tÃ¢che `next dev` bloquÃ©e et en relanÃ§ant le processus.
 
-  - **Amélioration du Scraper Facebook (ackend/services/scraper-immo-facebook.js, ackend/scripts/)** :
-    - **Scraping des Offres d'Emploi** : Application de la catégorie forcée emploi sur les nouveaux groupes/pages d'emploi (Badou Diop, Emploi 1, 2, 3) pour s'assurer que les offres sont bien classées dans la catégorie emploi même sans mots clés explicites. Extension de la dérogation "Voir sur Facebook" comme numéro de téléphone par défaut pour l'ensemble de la catégorie emploi (au lieu de juste la page Ndeye Yacine).
-    - **Gestion des Profils & Timouts** : Augmentation du timeout de navigation de 60s à 90s avec un try-catch permettant de continuer le scraping si le DOM est partiellement chargé, prévenant l'interruption complète (Timeout 60000ms exceeded). Amélioration de la détection de fil d'actualité pour bien prendre en compte les profils (comme Badou Diop).
-    - **Groupes par Run** : Augmentation de la limite de groupes visités par exécution par défaut de 5 à 10 (maxGroupes dans scraper-facebook-local.js).
-    - **Correction d'Encodage** : Ajout de la configuration d'encodage UTF-8 dans lancer-scraper-facebook.ps1 ([Console]::OutputEncoding = [System.Text.Encoding]::UTF8) et scraper-facebook-auto.bat (chcp 65001 >nul) pour corriger l'affichage des caractères spéciaux (é, à, etc.) dans la console lors de l'exécution en direct.
-    - **Ordre de scraping** : Réorganisation de la liste des groupes/pages pour placer toutes les sources de type "emploi" en tête de liste, afin que le scraping commence toujours par l'emploi en début de cycle.
-  - **Filtres dynamiques des annonces** : Correction du bug qui masquait les catégories (comme "Emploi") dans les filtres de la page Annonces. La page interrogeait l'API des *produits* au lieu de celle des *annonces* pour connaître les catégories actives. Création de la route /api/annonces/categories-actives dans le backend et mise à jour de rontend-next/src/app/annonces/page.tsx.
+  - **Amï¿½lioration du Scraper Facebook (ackend/services/scraper-immo-facebook.js, ackend/scripts/)** :
+    - **Scraping des Offres d'Emploi** : Application de la catï¿½gorie forcï¿½e emploi sur les nouveaux groupes/pages d'emploi (Badou Diop, Emploi 1, 2, 3) pour s'assurer que les offres sont bien classï¿½es dans la catï¿½gorie emploi mï¿½me sans mots clï¿½s explicites. Extension de la dï¿½rogation "Voir sur Facebook" comme numï¿½ro de tï¿½lï¿½phone par dï¿½faut pour l'ensemble de la catï¿½gorie emploi (au lieu de juste la page Ndeye Yacine).
+    - **Gestion des Profils & Timouts** : Augmentation du timeout de navigation de 60s ï¿½ 90s avec un try-catch permettant de continuer le scraping si le DOM est partiellement chargï¿½, prï¿½venant l'interruption complï¿½te (Timeout 60000ms exceeded). Amï¿½lioration de la dï¿½tection de fil d'actualitï¿½ pour bien prendre en compte les profils (comme Badou Diop).
+    - **Groupes par Run** : Augmentation de la limite de groupes visitï¿½s par exï¿½cution par dï¿½faut de 5 ï¿½ 10 (maxGroupes dans scraper-facebook-local.js).
+    - **Correction d'Encodage** : Ajout de la configuration d'encodage UTF-8 dans lancer-scraper-facebook.ps1 ([Console]::OutputEncoding = [System.Text.Encoding]::UTF8) et scraper-facebook-auto.bat (chcp 65001 >nul) pour corriger l'affichage des caractï¿½res spï¿½ciaux (ï¿½, ï¿½, etc.) dans la console lors de l'exï¿½cution en direct.
+    - **Ordre de scraping** : Rï¿½organisation de la liste des groupes/pages pour placer toutes les sources de type "emploi" en tï¿½te de liste, afin que le scraping commence toujours par l'emploi en dï¿½but de cycle.
+  - **Filtres dynamiques des annonces** : Correction du bug qui masquait les catï¿½gories (comme "Emploi") dans les filtres de la page Annonces. La page interrogeait l'API des *produits* au lieu de celle des *annonces* pour connaï¿½tre les catï¿½gories actives. Crï¿½ation de la route /api/annonces/categories-actives dans le backend et mise ï¿½ jour de rontend-next/src/app/annonces/page.tsx.
