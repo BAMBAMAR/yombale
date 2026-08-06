@@ -223,6 +223,9 @@ Déclencheur : Demande de l'utilisateur d'un audit complet de l'adaptation mobil
 **6. Cahier de Recette Exhaustif (UAT) :**
 - Création d'un cahier de recette complet pré-production couvrant **11 modules** et **120+ cas de test** : Page d'accueil, Authentification, Espace Compte, Dépôt d'annonce, Boutique Pro (Gestion complète), Parcours Acheteur, Assistant WhatsApp, Recherche & Filtres, Immobilier, Télécom, Technique & Conformité.
 
+**7. Mise à Jour du Kit de Communication (Admin) :**
+- **Templates Réseaux Sociaux (`communication/page.tsx`)** : Ajout des nouveaux modèles de posts d'annonce pour la connexion WhatsApp 1-Clic certifiée Meta (avec le bouton natif "Copier le code") et pour la nouvelle expérience fluide Mobile & PWA.
+
 ---
 
 ## État du projet (05 août 2026 — Intégration Boutiques Taf Taf)
