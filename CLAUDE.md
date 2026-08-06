@@ -1262,3 +1262,21 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
         - Résolution définitive de l'erreur `Impossible de charger le catalogue standard` lors de l'ouverture de l'import par lot.
         - Validation du chargement à 100% des 20 catégories de produits modèles prédéfinis.
 
+  - **Résolution du Scraper Facebook Local (Playwright Chromium) & Source Emploi** :
+    - **Correction de l'erreur `browserType.launch: Executable doesn't exist`** : Réinstallation complète des binaires Chromium v1228 dans `node_modules/playwright-core/.local-browsers` via `$env:PLAYWRIGHT_BROWSERS_PATH="0"; npx playwright install` sur la machine locale.
+    - **Ajout de la source emploi `badou.diop.587`** : Ajout du profil/page `badou.diop.587` dans le dictionnaire `GROUPES` de `backend/services/scraper-immo-facebook.js`.
+    - **Système de Suivi de Progression en Direct (`.fb-scraper-progress.json` & API)** :
+      - Affichage en console de l'avancement groupe par groupe (`📊 [PROGRES i/N - X%] Groupe: ...`).
+      - Script PowerShell dédié `backend/scripts/lancer-scraper-facebook.ps1` avec bannière visuelle colorée et notifications Toast Windows.
+      - Refonte de `backend/scripts/scraper-facebook-auto.bat` avec `Tee-Object` : résout l'écran noir de la console lors des lancements du planificateur tout en conservant les fichiers journaux `backend/scripts/logs/fb-scraper-*.log`.
+      - Persistance de l'état en temps réel dans `backend/.fb-scraper-progress.json` (statut, pourcentage, groupe actuel, annonces retenues, erreurs).
+      - Endpoint API dédié `GET /api/scraper/facebook/progress` pour consulter le suivi en direct depuis n'importe quel client/dashboard.
+    - **Validation du Planificateur & Scraper Local** : Validation en mode `--dry-run` avec extraction de 15 annonces retenues sur 5 groupes (Prix, Catégories, Villes).
+
+  - **Refonte & Correction Responsive Mobile (`frontend-next`)** :
+    - **Correction du Débordement Horizontal de l'En-tête Navigation (`NavbarActions.tsx` & `globals.css`)** :
+      - Suppression du style inline `display: flex` dans `NavbarActions.tsx` qui outrepassait la règle CSS `@media (max-width: 1040px) { .navbar-actions-compte { display: none; } }`. Les boutons texte `👤 Nom` et `Déconnexion` s'affichaient auparavant simultanément avec la barre d'icônes mobile et le bouton hamburger, provoquant un encombrement extrême et un débordement horizontal de la page au-delà de 100vw.
+      - Création des classes CSS propres `.navbar-actions-user` et `.navbar-actions-logout` pour le bureau, avec masquage strict via `display: none !important` sur mobile.
+      - Correction de la sur-écriture de `.logo-name` sur petit écran (< 480px) : la règle globale ligne 9400 (`display: inline !important`) annulait la règle ligne 5197. Désormais, sur écrans mobiles < 480px, le nom du logo se masque proprement pour laisser place au logo N et permettre aux icônes d'action (`💬`, `❤`, `🏪 Boutique`, `👤`, `☰`) de tenir sur 100% de la largeur sans aucun décalage ni scroll horizontal sur tous les smartphones (320px+).
+    - **Optimisation de la Colonne Centrale du Hero (`page.tsx`)** :
+      - Remplacement de `flex: '2 1 600px'` par `flex: '1 1 auto', width: '100%', maxWidth: 900, minWidth: 0` dans la colonne centrale du Hero de la page d'accueil pour s'ajuster avec fluidité sur tous les écrans mobiles sans imposer une largeur de base de 600px.

@@ -174,7 +174,7 @@ export default async function HomePage({
           </div>
 
           {/* COLONNE CENTRALE */}
-          <div style={{ flex: '2 1 600px', maxWidth: 900 }}>
+          <div style={{ flex: '1 1 auto', width: '100%', maxWidth: 900, minWidth: 0 }}>
           
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,

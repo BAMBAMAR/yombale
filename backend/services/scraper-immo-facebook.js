@@ -32,7 +32,8 @@ const SESSION_FILE = path.join(__dirname, '../.fb-session.json');
 // car le scraper est relancé en local via `node backend/scripts/scraper-facebook-local.js`,
 // un nouveau process à chaque fois, donc une variable en mémoire seule repartirait toujours
 // de zéro et ne couvrirait jamais que les 5 premiers groupes.
-const STATE_FILE = path.join(__dirname, '../.fb-scraper-state.json');
+const STATE_FILE    = path.join(__dirname, '../.fb-scraper-state.json');
+const PROGRESS_FILE = path.join(__dirname, '../.fb-scraper-progress.json');
 
 function lireIndexGroupe() {
   try { return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')).dernierIndexGroupe || 0; }
@@ -42,6 +43,17 @@ function lireIndexGroupe() {
 function ecrireIndexGroupe(index) {
   try { fs.writeFileSync(STATE_FILE, JSON.stringify({ dernierIndexGroupe: index })); }
   catch (e) { console.error('[FB-SCRAPER] Impossible d\'écrire l\'état de rotation :', e.message); }
+}
+
+function sauverProgression(donnees) {
+  try {
+    fs.writeFileSync(PROGRESS_FILE, JSON.stringify({
+      ...donnees,
+      updatedAt: new Date().toISOString(),
+    }, null, 2));
+  } catch (e) {
+    console.error('[FB-SCRAPER] Impossible d\'écrire la progression :', e.message);
+  }
 }
 
 // Résout la session à utiliser : fichier local en priorité (dev), sinon la variable d'env
@@ -75,8 +87,9 @@ const GROUPES = [
   { id: '276857303027165',   label: 'Tout vendre et tout acheter au Senegal' },
   { id: '670553284135014',   label: 'Thies ventes et achats en ligne' },
   { id: 'saintlouisachats',  label: 'Achats et ventes a Saint-Louis' },
-  // Pages publiques (type:'page' → URL /pageid, pas /groups/)
+  // Pages publiques / profils (type:'page' → URL /pageid, pas /groups/)
   { id: 'ndeyeyacineseckfaye', label: 'Ndeye Yacine Seck Faye (Offres Emploi)', type: 'page' },
+  { id: 'badou.diop.587',       label: 'Badou Diop (Offres Emploi)',           type: 'page' },
   // Groupes emploi/recrutement au Sénégal (Nouveaux fournis)
   { id: '1989058224662026',  label: 'Emploi 1' },
   { id: '234254775016841',   label: 'Emploi 2' },
@@ -283,6 +296,8 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
   }
 
   const stats = { scrapes: 0, inseres: 0, doublons: 0, ignores: 0, erreurs: [], dryRun };
+  let indexCompteur = 0;
+  let groupesDuRun  = [];
   const browser = await playwright.chromium.launch({ headless: true });
 
   try {
@@ -331,14 +346,45 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
 
     // ── Parcours des groupes (fenêtre glissante, cf. maxGroupes ci-dessus) ──────
     const indexDepart = lireIndexGroupe();
-    const groupesDuRun = GROUPES.slice(indexDepart, indexDepart + maxGroupes);
+    groupesDuRun = GROUPES.slice(indexDepart, indexDepart + maxGroupes);
     const prochainIndex = groupesDuRun.length === 0 ? 0 : (indexDepart + groupesDuRun.length) % GROUPES.length;
     ecrireIndexGroupe(prochainIndex);
     console.log(`[FB-SCRAPER] ${groupesDuRun.length} groupe(s) ce run : ${groupesDuRun.map(g => g.label).join(', ')}`);
 
+    sauverProgression({
+      status: 'in_progress',
+      mode: dryRun ? 'dry-run' : 'live',
+      groupeIndex: 0,
+      totalGroupes: groupesDuRun.length,
+      pourcentage: 0,
+      groupeActuel: 'Démarrage...',
+      scrapes: 0,
+      inseres: 0,
+      doublons: 0,
+      ignores: 0,
+      erreurs: [],
+    });
+
     for (const groupe of groupesDuRun) {
+      indexCompteur++;
+      const pct = Math.round((indexCompteur / groupesDuRun.length) * 100);
       const url = groupe.type === 'page' ? `https://www.facebook.com/${groupe.id}` : `https://www.facebook.com/groups/${groupe.id}`;
-      console.log(`[FB-SCRAPER] ${groupe.type === 'page' ? 'Page' : 'Groupe'} : ${groupe.label} (${url})`);
+      console.log(`\n📊 [PROGRES ${indexCompteur}/${groupesDuRun.length} - ${pct}%] ${groupe.type === 'page' ? 'Page' : 'Groupe'} : ${groupe.label} (${url})`);
+
+      sauverProgression({
+        status: 'in_progress',
+        mode: dryRun ? 'dry-run' : 'live',
+        groupeIndex: indexCompteur,
+        totalGroupes: groupesDuRun.length,
+        pourcentage: pct,
+        groupeActuel: groupe.label,
+        groupeUrl: url,
+        scrapes: stats.scrapes,
+        inseres: stats.inseres,
+        doublons: stats.doublons,
+        ignores: stats.ignores,
+        erreurs: stats.erreurs,
+      });
 
       try {
         // 'networkidle' n'atteint jamais un état stable sur Facebook (polling/websockets
@@ -550,7 +596,21 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
     scrapingLock.relacher();
   }
 
-  console.log(`[FB-SCRAPER] Terminé — scrapes: ${stats.scrapes}, retenus: ${stats.inseres}, doublons: ${stats.doublons}, ignorés: ${stats.ignores}, erreurs: ${stats.erreurs.length}`);
+  sauverProgression({
+    status: 'completed',
+    mode: dryRun ? 'dry-run' : 'live',
+    groupeIndex: indexCompteur,
+    totalGroupes: groupesDuRun.length,
+    pourcentage: 100,
+    groupeActuel: 'Terminé',
+    scrapes: stats.scrapes,
+    inseres: stats.inseres,
+    doublons: stats.doublons,
+    ignores: stats.ignores,
+    erreurs: stats.erreurs,
+  });
+
+  console.log(`\n✅ [PROGRES 100%] Terminé — scrapes: ${stats.scrapes}, retenus: ${stats.inseres}, doublons: ${stats.doublons}, ignorés: ${stats.ignores}, erreurs: ${stats.erreurs.length}`);
   return stats;
 }
 

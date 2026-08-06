@@ -1,8 +1,25 @@
 // backend/routes/scraper.js — Route admin pour diagnostics et déclenchement manuel
 const router  = require('express').Router();
+const fs      = require('fs');
+const path    = require('path');
 const { pool } = require('../models/db');
 const { lancerScraping, lancerScrapingNouveauxSites, diagnosticScraper, diagnosticNouveauSite, corrigerPrixParPlancher, nettoyerOffresExpirees } = require('../services/scraper');
 const { adminSecretOnly: adminOnly } = require('../middlewares/auth');
+
+// ── GET /api/scraper/facebook/progress ────────────────────────
+// Retourne l'état et la progression en direct du scraper Facebook
+router.get('/facebook/progress', (req, res) => {
+  const progressFile = path.join(__dirname, '../.fb-scraper-progress.json');
+  if (!fs.existsSync(progressFile)) {
+    return res.json({ status: 'idle', message: 'Aucun scraping Facebook récent' });
+  }
+  try {
+    const data = JSON.parse(fs.readFileSync(progressFile, 'utf8'));
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: 'Fichier de progression corrompu' });
+  }
+});
 
 // ── GET /api/scraper/status ───────────────────────────────────
 // Statistiques globales : produits, offres, dernière sync par marchand
