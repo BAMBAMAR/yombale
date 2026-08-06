@@ -56,8 +56,10 @@ export default function KitComClient({
   // Notifications Toast
   const [toast, setToast] = useState<string | null>(null)
 
-  // Générateur Visuels Nopalou & Formules
-  const [typeVisuel, setTypeVisuel] = useState<'forfait_pro' | 'forfait_taftaf' | 'forfait_business' | 'comparatif_paliers' | 'bon_plan'>('forfait_pro')
+  // Générateur Visuels Nopalou (8 Types)
+  const [typeVisuel, setTypeVisuel] = useState<
+    'forfait_pro' | 'forfait_taftaf' | 'forfait_business' | 'chatbot_wa' | 'immo' | 'telecom' | 'apporteur' | 'comparatif_paliers' | 'bon_plan'
+  >('forfait_pro')
   const [genNom, setGenNom] = useState('iPhone 15 Pro Max 256 Go')
   const [genPrix, setGenPrix] = useState('750000')
   const [genPrixBarre, setGenPrixBarre] = useState('850000')
@@ -147,8 +149,16 @@ Comment ça marche :
     legendePublication = `⚡ Lancez votre Vitrine Web en 30 secondes pour seulement ${fcfa(prixDecouverte)}/mois !\n\n✅ URL personnalisée nopalou.com/boutiques/votre-nom\n✅ Commandes reçues directement sur votre WhatsApp\n✅ Gestionnaire de commandes Web\n\n👉 Créez votre boutique sur nopalou.com/creer-boutique`
   } else if (typeVisuel === 'forfait_business') {
     legendePublication = `👑 Caisse POS Multi-Vendeurs pour Grandes Enseignes !\n\n✅ Multi-Caissiers sécurisés par code PIN\n✅ Clôtures de Caisse Z automatiques\n✅ Emplacement prioritaire catégorie sur Nopalou\n\n👉 Contactez-nous pour une démo sur nopalou.com/boutique`
+  } else if (typeVisuel === 'chatbot_wa') {
+    legendePublication = `🤖 Découvrez l'Assistant Chatbot WhatsApp Meta Nopalou 24h/24 !\n\nBesoin de trouver un produit, comparer les prix ou suivre une commande au Sénégal ?\n\n💬 Envoyez "MENU" au +221 70 871 79 42 (ou wa.me/221708717942)\n\n✅ Recherche instantanée de téléphones, TV, électro & biens immo\n✅ Alertes baisse de prix envoyées sur WhatsApp\n✅ Panier multi-produits 1-clic`
+  } else if (typeVisuel === 'immo') {
+    legendePublication = `🏢 Trouvez votre appartement, villa ou terrain à Dakar sur Nopalou Immo !\n\nAnnonces vérifiées à Almadies, Mermoz, Plateau, Fann, Yoff, Saly & Petite Côte.\n\n🔑 Photos HD, coordonnées directes du bailleur sans intermédiaire masqué !\n👉 Consultez les offres sur nopalou.com/immo`
+  } else if (typeVisuel === 'telecom') {
+    legendePublication = `📡 Comparez tous les Forfaits & Pass Télécom au Sénégal !\n\nOrange, Yas (ex-Free), Expresso & Promobile — trouvez le Pass Internet, Voix & SMS le plus avantageux à Dakar !\n\n👉 Comparez les pass sur nopalou.com/telecom`
+  } else if (typeVisuel === 'apporteur') {
+    legendePublication = `💰 Devenez Apporteur d'Affaires Nopalou (${tauxApporteur}% de commission récurrente) !\n\nRecommandez Nopalou aux commerçants & agences et touchez chaque mois votre commission par Wave ou Orange Money.\n\n📄 Brochure PDF 13 pages disponible !\n👉 Activez votre compte sur nopalou.com/compte/apporteur`
   } else if (typeVisuel === 'comparatif_paliers') {
-    legendePublication = `📊 Quelle formule Nopalou correspond à votre commerce ?\n\n1️⃣ Taf Taf (${fcfa(prixDecouverte)}/j) : Vitrine web rapide\n2️⃣ Pro (${fcfa(prixPro)}/j) : Caisse Enregistreuse POS Tactile + 3 Scanners\n3️⃣ Business (${fcfa(prixBusiness)}/j) : Multi-caissiers & Clôtures Z\n\n🎁 30 Jours d'essai gratuit sur la formule Pro !\n👉 Comparez sur nopalou.com/boutique`
+    legendePublication = `📊 Quelle formule Nopalou correspond à votre commerce ?\n\n1️⃣ Taf Taf (${fcfa(prixDecouverte)}/mois) : Vitrine web rapide\n2️⃣ Pro (${fcfa(prixPro)}/mois) : Caisse Enregistreuse POS Tactile + 3 Scanners\n3️⃣ Business (${fcfa(prixBusiness)}/mois) : Multi-caissiers & Clôtures Z\n\n🎁 30 Jours d'essai gratuit sur la formule Pro !\n👉 Comparez sur nopalou.com/boutique`
   } else {
     legendePublication = `🔥 BON PLAN PRIX NOPALOU !\n\n📱 ${genNom}\n💰 ${fcfa(parseInt(genPrix) || 0)} (au lieu de ${fcfa(parseInt(genPrixBarre) || 0)})\n🏪 Vendeur : ${genBoutique}\n\n👉 Comparez tous les prix sur nopalou.com`
   }
@@ -219,7 +229,7 @@ Comment ça marche :
           { id: 'demarchage', label: '🏪 Démarchage B2B & POS', emoji: '🏪' },
           { id: 'apporteur', label: '💼 Apporteurs d\'Affaires', emoji: '💼' },
           { id: 'whatsapp', label: '💬 Écosystème WhatsApp', emoji: '💬' },
-          { id: 'generateur', label: '⚡ Générateur Affiches Formules', emoji: '⚡' },
+          { id: 'generateur', label: '⚡ Générateur Affiches Nopalou', emoji: '⚡' },
         ].map(t => (
           <button
             key={t.id}
@@ -590,12 +600,12 @@ Comment ça marche :
         </div>
       )}
 
-      {/* ──── ONGLET 5 : GÉNÉRATEUR D'AFFICHES FORMULES & POS NOPALOU ──── */}
+      {/* ──── ONGLET 5 : GÉNÉRATEUR D'AFFICHES OFFICIEL NOPALOU (8 TYPES) ──── */}
       {tab === 'generateur' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
-              ⚡ Générateur d&apos;Affiches Formules &amp; Paliers Nopalou (1080×1080)
+              ⚡ Générateur d&apos;Affiches Officiel Nopalou (8 Types de Visuels)
             </h2>
 
             {/* Sélecteur de type d'affiche */}
@@ -604,8 +614,12 @@ Comment ça marche :
                 { id: 'forfait_pro', label: '🖥️ Formule Pro (Caisse POS)', bg: '#FFF7ED', color: '#C75B00' },
                 { id: 'forfait_taftaf', label: '⚡ Formule Taf Taf (2 500 F)', bg: '#EFF6FF', color: '#1D4ED8' },
                 { id: 'forfait_business', label: '👑 Formule Business (PIN)', bg: '#FDF4FF', color: '#7E22CE' },
-                { id: 'comparatif_paliers', label: '📊 Tableau Comparatif (3 Formules)', bg: '#F0FDF4', color: '#166534' },
-                { id: 'bon_plan', label: '🔥 Bon Plan Produit Comparatif', bg: '#FEF3C7', color: '#92400E' },
+                { id: 'chatbot_wa', label: '🤖 Chatbot WhatsApp Meta 24/7', bg: '#F0FDF4', color: '#166534' },
+                { id: 'immo', label: '🏠 Immobilier Dakar & Sénégal', bg: '#EEF2FF', color: '#4338CA' },
+                { id: 'telecom', label: '📶 Pass & Forfaits Télécom', bg: '#F0F9FF', color: '#0369A1' },
+                { id: 'apporteur', label: '💰 Apporteurs d\'Affaires (20%)', bg: '#F0FDF4', color: '#15803D' },
+                { id: 'comparatif_paliers', label: '📊 Tableau Synthétique Formules', bg: '#FFF7ED', color: '#C75B00' },
+                { id: 'bon_plan', label: '🔥 Bon Plan Prix Comparatif', bg: '#FEF3C7', color: '#92400E' },
               ].map(b => (
                 <button
                   key={b.id}
@@ -645,7 +659,7 @@ Comment ça marche :
                 <div style={{ border: '1px solid #E2E8F0', borderRadius: 14, padding: 20, background: '#fff', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <h3 style={{ fontSize: 14, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>ℹ️ Description du Visuel Officiel</h3>
                   <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.6, margin: 0 }}>
-                    Ce visuel officiel 1080×1080 aux couleurs de Nopalou met en avant les fonctionnalités clés de la formule choisie (Caisse Enregistreuse POS Tactile, 3 Scanners, Carnet de Dettes WA, Multi-caissiers).
+                    Ce visuel officiel 1080×1080 aux couleurs de Nopalou met en avant les fonctionnalités clés de la thématique choisie.
                   </p>
                   <div style={{ background: '#F8FAFC', padding: 14, borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 12, color: '#1C2B4A', whiteSpace: 'pre-wrap' }}>
                     {legendePublication}

@@ -1,5 +1,17 @@
 # CLAUDE.md
 
+### [2026-08-06] - Générateur Officiel Nopalou avec 8 Types d'Affiches Fonctionnalités
+- **Support des 8 Verticales Nopalou dans le Générateur d'Affiches (`produit-promo/route.tsx` & `KitComClient.tsx`)** :
+  - 🖥️ **Formule Pro (Caisse POS Magasin)** (15 000 FCFA/mois, 3 Scanners, Carnet Dettes WA, Stickers EAN-13, 0% commission)
+  - ⚡ **Formule Taf Taf** (2 500 FCFA/mois, vitrine 30s)
+  - 👑 **Formule Business** (35 000 FCFA/mois, multi-caissiers PIN & clôtures Z)
+  - 🤖 **Chatbot WhatsApp Meta 24/7** (recherche unifiée, panier WhatsApp, alertes prix)
+  - 🏠 **Immobilier Dakar & Sénégal** (location/vente appartements, villas, terrains avec contact direct)
+  - 📶 **Forfaits & Pass Télécom** (comparateur Orange, Yas, Expresso, Promobile)
+  - 💰 **Apporteurs d'Affaires 20%** (commission récurrente mensuelle à vie Wave/OM)
+  - 📊 **Tableau Comparatif des 3 Formules** (vue synthétique côte-à-côté)
+  - 🔥 **Bon Plan Prix Comparatif** (produit le moins cher à Dakar)
+
 ### [2026-08-06] - Refonte du Générateur de Visuels Nopalou & Formules Boutiques/POS
 - **Générateur d'Affiches Formules & Paliers (`produit-promo/route.tsx` & `KitComClient.tsx`)** :
   - Passage d'un générateur individuel à un **Générateur Officiel Nopalou Plateforme & Comparateur**.

@@ -22,7 +22,251 @@ export async function GET(request: Request) {
   const prix = formatPrix(prixRaw)
   const prixBarre = formatPrix(prixBarreRaw)
 
-  // 1. VISUEL FORMULE PRO (Caisse Enregistreuse POS Tactile)
+  // 1. VISUEL CHATBOT WHATSAPP META 24/7
+  if (type === 'chatbot_wa') {
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: 1080,
+            height: 1080,
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'linear-gradient(155deg, #0B2B1B 0%, #064E3B 60%, #10B981 100%)',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            padding: 60,
+            boxSizing: 'border-box',
+            color: '#ffffff',
+            position: 'relative',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 60, height: 60, borderRadius: 14, background: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>💬</div>
+              <span style={{ fontSize: 38, fontWeight: 900, color: '#fff', display: 'flex' }}>Nopa<span style={{ color: '#25D366', display: 'flex' }}>lou</span></span>
+            </div>
+            <span style={{ background: '#25D366', padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#fff', display: 'flex' }}>
+              🤖 CHATBOT WHATSAPP META 24/7
+            </span>
+          </div>
+
+          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <h1 style={{ fontSize: 46, fontWeight: 900, margin: 0, color: '#fff', display: 'flex', lineHeight: 1.1 }}>
+              Votre Assistant d&apos;Achat Intelligent sur WhatsApp !
+            </h1>
+            <p style={{ fontSize: 22, color: '#a7f3d0', margin: 0, display: 'flex' }}>
+              Recherchez des produits, comparez les prix &amp; suivez vos commandes sans quitter WhatsApp.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 40, flex: 1 }}>
+            {[
+              { t: '🔍 Recherche Unifiée Instantanée', d: 'Tapez "iPhone 15" -> prix comparés marketplace & immo' },
+              { t: '🛍️ Panier Multi-Produits WhatsApp', d: 'Commandez directement depuis le chat' },
+              { t: '🔔 Alertes Baisse de Prix', d: 'Notifié sur WhatsApp dès que le prix baisse' },
+              { t: '📓 Carnet Dettes POS Client', d: 'Solde de crédit client envoyé par message' },
+            ].map(f => (
+              <div key={f.t} style={{ background: 'rgba(255,255,255,0.08)', border: '1.5px solid rgba(255,255,255,0.18)', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: '#ffffff', display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 16, color: '#6ee7b7', display: 'flex' }}>{f.d}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#064E3B', display: 'flex' }}>📲 Tapez &quot;MENU&quot; au +221 70 871 79 42</span>
+            <span style={{ fontSize: 24, fontWeight: 900, color: '#25D366', display: 'flex' }}>wa.me/221708717942</span>
+          </div>
+        </div>
+      ),
+      { width: 1080, height: 1080 }
+    )
+  }
+
+  // 2. VISUEL IMMOBILIER DAKAR
+  if (type === 'immo') {
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: 1080,
+            height: 1080,
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'linear-gradient(155deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%)',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            padding: 60,
+            boxSizing: 'border-box',
+            color: '#ffffff',
+            position: 'relative',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 60, height: 60, borderRadius: 14, background: '#818cf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>🏠</div>
+              <span style={{ fontSize: 38, fontWeight: 900, color: '#fff', display: 'flex' }}>Nopa<span style={{ color: '#818cf8', display: 'flex' }}>lou Immo</span></span>
+            </div>
+            <span style={{ background: '#818cf8', padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#fff', display: 'flex' }}>
+              🏢 IMMOBILIER DAKAR &amp; SÉNÉGAL
+            </span>
+          </div>
+
+          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <h1 style={{ fontSize: 46, fontWeight: 900, margin: 0, color: '#fff', display: 'flex', lineHeight: 1.1 }}>
+              Location &amp; Vente d&apos;Appartements, Villas &amp; Terrains
+            </h1>
+            <p style={{ fontSize: 22, color: '#c7d2fe', margin: 0, display: 'flex' }}>
+              Annonces vérifiées avec photos HD, localisation et contact direct bailleur/agence.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 40, flex: 1 }}>
+            {[
+              { t: '🏢 Appartements & Studios Dakar', d: 'Almadies, Mermoz, Plateau, Fann, Yoff' },
+              { t: '🏡 Villas & Maisons avec Piscine', d: 'Saly, Somone, Ngaparou, Petite Côte' },
+              { t: '📐 Terrains Titre Foncier', d: 'Diamniadio, Lac Rose, Sebikotane, Thiès' },
+              { t: '📲 Contact Direct WhatsApp Propriétaire', d: 'Zéro intermédiaire masqué · Photos HD' },
+            ].map(f => (
+              <div key={f.t} style={{ background: 'rgba(255,255,255,0.08)', border: '1.5px solid rgba(255,255,255,0.18)', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: '#ffffff', display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 16, color: '#a5b4fc', display: 'flex' }}>{f.d}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#1e1b4b', display: 'flex' }}>🔑 Trouvez votre logement aujourd&apos;hui</span>
+            <span style={{ fontSize: 24, fontWeight: 900, color: '#4338ca', display: 'flex' }}>nopalou.com/immo</span>
+          </div>
+        </div>
+      ),
+      { width: 1080, height: 1080 }
+    )
+  }
+
+  // 3. VISUEL FORFAITS TÉLÉCOM
+  if (type === 'telecom') {
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: 1080,
+            height: 1080,
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'linear-gradient(155deg, #0284c7 0%, #0369a1 60%, #0f172a 100%)',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            padding: 60,
+            boxSizing: 'border-box',
+            color: '#ffffff',
+            position: 'relative',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 60, height: 60, borderRadius: 14, background: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>📶</div>
+              <span style={{ fontSize: 38, fontWeight: 900, color: '#fff', display: 'flex' }}>Nopa<span style={{ color: '#38bdf8', display: 'flex' }}>lou Télécom</span></span>
+            </div>
+            <span style={{ background: '#38bdf8', padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#0f172a', display: 'flex' }}>
+              📡 FORFAITS &amp; PASS INTERNET
+            </span>
+          </div>
+
+          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <h1 style={{ fontSize: 46, fontWeight: 900, margin: 0, color: '#fff', display: 'flex', lineHeight: 1.1 }}>
+              Comparez les Forfaits Orange, Yas, Expresso &amp; Promobile
+            </h1>
+            <p style={{ fontSize: 22, color: '#bae6fd', margin: 0, display: 'flex' }}>
+              Trouvez le meilleur Pass Internet, Minutes &amp; SMS au Go le moins cher au Sénégal !
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 40, flex: 1 }}>
+            {[
+              { t: '🍊 Orange Sénégal', d: 'Pass Illimix, Max, Fiber &amp; Kirene' },
+              { t: '🟡 Yas Sénégal (ex-Free)', d: 'Pass Internet 4G+, Voix &amp; Roaming' },
+              { t: '🔴 Expresso Sénégal', d: 'Pass Chrono, Data &amp; International' },
+              { t: '🟢 Promobile Sénégal', d: 'Forfaits hybrides &amp; Voix/Data' },
+            ].map(f => (
+              <div key={f.t} style={{ background: 'rgba(255,255,255,0.08)', border: '1.5px solid rgba(255,255,255,0.18)', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: '#ffffff', display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 16, color: '#7dd3fc', display: 'flex' }}>{f.d}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#0369a1', display: 'flex' }}>📡 Comparez les Pass Télécom</span>
+            <span style={{ fontSize: 24, fontWeight: 900, color: '#0284c7', display: 'flex' }}>nopalou.com/telecom</span>
+          </div>
+        </div>
+      ),
+      { width: 1080, height: 1080 }
+    )
+  }
+
+  // 4. VISUEL PROGRAMME APPORTEURS 20%
+  if (type === 'apporteur') {
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: 1080,
+            height: 1080,
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'linear-gradient(155deg, #166534 0%, #14532d 60%, #052e16 100%)',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            padding: 60,
+            boxSizing: 'border-box',
+            color: '#ffffff',
+            position: 'relative',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 60, height: 60, borderRadius: 14, background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>💼</div>
+              <span style={{ fontSize: 38, fontWeight: 900, color: '#fff', display: 'flex' }}>Nopa<span style={{ color: '#22c55e', display: 'flex' }}>lou Partner</span></span>
+            </div>
+            <span style={{ background: '#22c55e', padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#fff', display: 'flex' }}>
+              💰 APPORTEURS D&apos;AFFAIRES
+            </span>
+          </div>
+
+          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <h1 style={{ fontSize: 46, fontWeight: 900, margin: 0, color: '#fff', display: 'flex', lineHeight: 1.1 }}>
+              Gagnez 20% de Commission Récurrente Chaque Mois à Vie !
+            </h1>
+            <p style={{ fontSize: 22, color: '#bbf7d0', margin: 0, display: 'flex' }}>
+              Recrutez des commerçants &amp; agences à Dakar et touchez vos gains par Wave ou Orange Money.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 40, flex: 1 }}>
+            {[
+              { t: '🏪 Boutique Pro (15 000 F/m)', d: 'Vous gagnez 3 000 FCFA / mois par boutique' },
+              { t: '👑 Boutique Business (35 000 F/m)', d: 'Vous gagnez 7 000 FCFA / mois par boutique' },
+              { t: '📄 Brochure PDF 13 p. Incluse', d: 'Support de vente complet pour démarcher' },
+              { t: '📱 Retrait Direct Wave & OM', d: 'Paiement mensuel automatique des commissions' },
+            ].map(f => (
+              <div key={f.t} style={{ background: 'rgba(255,255,255,0.08)', border: '1.5px solid rgba(255,255,255,0.18)', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: '#ffffff', display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 16, color: '#86efac', display: 'flex' }}>{f.d}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#14532d', display: 'flex' }}>💼 Devenez Apporteur d&apos;Affaires</span>
+            <span style={{ fontSize: 24, fontWeight: 900, color: '#166534', display: 'flex' }}>nopalou.com/compte/apporteur</span>
+          </div>
+        </div>
+      ),
+      { width: 1080, height: 1080 }
+    )
+  }
+
+  // 5. VISUEL FORMULE PRO (Caisse Enregistreuse POS Tactile)
   if (type === 'forfait_pro') {
     return new ImageResponse(
       (
@@ -38,10 +282,8 @@ export async function GET(request: Request) {
             boxSizing: 'border-box',
             color: '#ffffff',
             position: 'relative',
-            overflow: 'hidden',
           }}
         >
-          {/* Header Nopalou */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ width: 60, height: 60, borderRadius: 14, background: '#C75B00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
@@ -52,7 +294,6 @@ export async function GET(request: Request) {
             </span>
           </div>
 
-          {/* Titre & Prix */}
           <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <h1 style={{ fontSize: 46, fontWeight: 900, margin: 0, color: '#fff', display: 'flex', lineHeight: 1.1 }}>
               Caisse Enregistreuse POS Tactile + Boutique en Ligne
@@ -63,7 +304,6 @@ export async function GET(request: Request) {
             </div>
           </div>
 
-          {/* Grille Fonctionnalités POS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 40, flex: 1 }}>
             {[
               { t: '🖥️ Caisse Tactile Magasin & Tickets', d: 'Ventes comptoir, gestion stocks & clôtures' },
@@ -79,7 +319,6 @@ export async function GET(request: Request) {
             ))}
           </div>
 
-          {/* Footer CTA */}
           <div style={{ background: '#ffffff', borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
             <span style={{ fontSize: 22, fontWeight: 900, color: '#1C2B4A', display: 'flex' }}>🎁 30 Jours d&apos;Essai Gratuits sans carte</span>
             <span style={{ fontSize: 24, fontWeight: 900, color: '#C75B00', display: 'flex' }}>nopalou.com/boutique</span>
@@ -90,7 +329,7 @@ export async function GET(request: Request) {
     )
   }
 
-  // 2. VISUEL FORMULE TAF TAF
+  // 6. VISUEL FORMULE TAF TAF
   if (type === 'forfait_taftaf') {
     return new ImageResponse(
       (
@@ -152,7 +391,7 @@ export async function GET(request: Request) {
     )
   }
 
-  // 3. VISUEL FORMULE BUSINESS
+  // 7. VISUEL FORMULE BUSINESS
   if (type === 'forfait_business') {
     return new ImageResponse(
       (
@@ -215,7 +454,7 @@ export async function GET(request: Request) {
     )
   }
 
-  // 4. VISUEL COMPARATIF DES 3 FORMULES
+  // 8. VISUEL COMPARATIF DES 3 FORMULES
   if (type === 'comparatif_paliers') {
     return new ImageResponse(
       (
@@ -232,7 +471,6 @@ export async function GET(request: Request) {
             color: '#ffffff',
           }}
         >
-          {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 50, height: 50, borderRadius: 12, background: '#C75B00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: '#fff' }}>N</div>
@@ -243,7 +481,6 @@ export async function GET(request: Request) {
             </h1>
           </div>
 
-          {/* 3 Colonnes côte-à-côté */}
           <div style={{ display: 'flex', gap: 20, flex: 1 }}>
             
             {/* Taf Taf */}
@@ -293,7 +530,6 @@ export async function GET(request: Request) {
 
           </div>
 
-          {/* Footer */}
           <div style={{ background: '#C75B00', borderRadius: 16, padding: '16px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
             <span style={{ fontSize: 20, fontWeight: 900, color: '#fff', display: 'flex' }}>🎁 30 Jours d&apos;Essai Gratuits sans carte</span>
             <span style={{ fontSize: 22, fontWeight: 900, color: '#fff', display: 'flex' }}>nopalou.com/boutique</span>
@@ -304,7 +540,7 @@ export async function GET(request: Request) {
     )
   }
 
-  // 5. VISUEL DÉFAUT : BON PLAN DU JOUR / PRODUIT COMPARATIF NOPALOU
+  // 9. VISUEL DÉFAUT : BON PLAN DU JOUR / PRODUIT COMPARATIF NOPALOU
   return new ImageResponse(
     (
       <div
