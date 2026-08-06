@@ -448,17 +448,29 @@ export async function GET() {
   ${PagePiedString(12)}
 </div>
 
-<!-- PAGE 13 — Contact -->
+<!-- PAGE 13 — Contact & Réseaux Sociaux Officiels -->
 <div class="page" style="background: linear-gradient(160deg, ${COULEURS.marine} 0%, #0f1d35 60%, #1a1a2e 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; color:#fff; padding:60px;">
-  <p style="font-size:32px; font-weight:900; text-align:center; margin:0 0 20px;">Prêt à commencer ?</p>
-  <p style="font-size:16px; color:#CBD5E1; text-align:center; margin:0 0 40px; max-width:480px; line-height:1.7;">
-    Aucun investissement · Paiement mensuel · Sans limite de recrutement
+  <p style="font-size:32px; font-weight:900; text-align:center; margin:0 0 16px;">Prêt à commencer ?</p>
+  <p style="font-size:15px; color:#CBD5E1; text-align:center; margin:0 0 32px; max-width:520px; line-height:1.7;">
+    Aucun investissement · Paiement mensuel récurrent par Wave / OM · Sans limite de recrutement
   </p>
-  <div style="background:${COULEURS.orange}; border-radius:16px; padding:18px 44px; font-size:22px; font-weight:800; margin-bottom:20px;">
+  
+  <div style="background:${COULEURS.orange}; border-radius:16px; padding:16px 40px; font-size:20px; font-weight:800; margin-bottom:32px;">
     nopalou.com/compte/apporteur
   </div>
-  <p style="font-size:14px; color:${COULEURS.grisClair}; margin:0 0 8px;">💬 Assistant WhatsApp officiel Nopalou</p>
-  <p style="font-size:14px; color:#fff; margin:0;">wa.me/221708717942</p>
+
+  <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:16px; padding:20px 32px; text-align:center; max-width:540px; margin-bottom:24px;">
+    <p style="font-size:14px; font-weight:800; color:#fff; margin:0 0 12px;">🌐 Suivez Nopalou sur nos Réseaux Officiels</p>
+    <div style="display:flex; justify-content:center; gap:16px; font-size:12px; color:#CBD5E1; flex-wrap:wrap;">
+      <span>🎵 TikTok : <strong>@nopalou.com</strong></span>
+      <span>📢 Canal WA : <strong>nopalou.com/channel</strong></span>
+      <span>📘 Facebook : <strong>Nopalou Sénégal</strong></span>
+      <span>📸 Instagram : <strong>@nopalousn</strong></span>
+    </div>
+  </div>
+
+  <p style="font-size:13px; color:${COULEURS.grisClair}; margin:0 0 6px;">💬 Assistant &amp; Support WhatsApp Officiel</p>
+  <p style="font-size:15px; color:#25D366; font-weight:800; margin:0;">wa.me/221708717942 (+221 70 871 79 42)</p>
   ${PagePiedString(13)}
 </div>
 

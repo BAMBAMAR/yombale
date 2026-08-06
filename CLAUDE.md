@@ -1,5 +1,10 @@
 # CLAUDE.md
 
+### [2026-08-06] - Mise à Jour de la Brochure Apporteur (HTML/PDF)
+- **Mise à Jour de la Brochure 13 Pages (`brochure-apporteur/route.tsx`)** : 
+  - Ajout des réseaux sociaux officiels Nopalou sur la page de couverture et de contact (TikTok `@nopalou.com`, Canal WhatsApp, Facebook Page et Instagram `@nopalousn`).
+  - Intégration des fonctionnalités de Caisse Enregistreuse POS Tactile (3 Scanners, Carnet de Dettes Client WA, Multi-caissiers PIN).
+
 ### [2026-08-06] - Intégration des Réseaux Sociaux sur la Page d'Accueil & Footer
 - **Bandeau Réseaux Sociaux d'Accueil (`page.tsx`)** : Ajout d'une section dédiée avant le pied de page présentant les liens vers **TikTok (`@nopalou.com`)**, **Canal WhatsApp**, **Facebook Page**, **Instagram (`@nopalousn`)**, et **Twitter / X (`@nopalou_sn`)**.
 - **Pied de Page (`layout.tsx`)** : Mise à jour des icônes du footer pour inclure directement TikTok (`@nopalou.com`), le Canal WhatsApp Officiel et WhatsApp Direct.
