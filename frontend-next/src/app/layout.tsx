@@ -248,11 +248,11 @@ export default async function RootLayout({
               </div>
               <div className="navbar-actions">
                 {session ? (
-                  <a href="/boutique" className="navbar-maboutique" aria-label="Accéder à ma boutique" style={{ background: '#0f172a', color: '#fff', padding: '8px 14px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', border: '1px solid #334155' }}>
+                  <a href="/boutique" className="navbar-maboutique hidden-mobile" aria-label="Accéder à ma boutique" style={{ background: '#0f172a', color: '#fff', padding: '8px 14px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', border: '1px solid #334155' }}>
                     🏪 Ma Boutique
                   </a>
                 ) : (
-                  <a href="/creer-boutique" className="navbar-taftaf" aria-label="Créer Boutique Taf Taf" style={{ background: '#0f172a', color: '#fff', border: '1px solid #1e293b', padding: '8px 16px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(15,23,42,0.1)' }}>
+                  <a href="/creer-boutique" className="navbar-taftaf hidden-mobile" aria-label="Créer Boutique Taf Taf" style={{ background: '#0f172a', color: '#fff', border: '1px solid #1e293b', padding: '8px 16px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(15,23,42,0.1)' }}>
                     <span style={{ color: '#C75B00' }}>⚡</span> Boutique Taf Taf
                   </a>
                 )}
