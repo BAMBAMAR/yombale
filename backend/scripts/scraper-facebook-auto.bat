@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 REM Lance le scraper Facebook localement (via Windows Task Scheduler ou double-clic).
 REM Affiche la progression en direct sur la console ET sauvegarde dans backend/scripts/logs/
 

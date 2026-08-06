@@ -71,6 +71,15 @@ function resoudreSession() {
 }
 
 const GROUPES = [
+  // Pages publiques / profils (type:'page' → URL /pageid, pas /groups/)
+  { id: 'ndeyeyacineseckfaye', label: 'Ndeye Yacine Seck Faye (Offres Emploi)', type: 'page', force_categorie: 'emploi' },
+  { id: 'badou.diop.587',       label: 'Badou Diop (Offres Emploi)',           type: 'page', force_categorie: 'emploi' },
+  // Groupes emploi/recrutement au Sénégal
+  { id: '1989058224662026',  label: 'Emploi 1', force_categorie: 'emploi' },
+  { id: '234254775016841',   label: 'Emploi 2', force_categorie: 'emploi' },
+  { id: '519668123858499',   label: 'Emploi 3', force_categorie: 'emploi' },
+
+  // Autres groupes (Immo, divers)
   { id: '252740871421764',   label: 'Groupe immo 1' },
   { id: '4675042465930136',  label: 'Groupe immo 2' },
   { id: '1246400909421367',  label: 'Groupe immo 3' },
@@ -87,13 +96,6 @@ const GROUPES = [
   { id: '276857303027165',   label: 'Tout vendre et tout acheter au Senegal' },
   { id: '670553284135014',   label: 'Thies ventes et achats en ligne' },
   { id: 'saintlouisachats',  label: 'Achats et ventes a Saint-Louis' },
-  // Pages publiques / profils (type:'page' → URL /pageid, pas /groups/)
-  { id: 'ndeyeyacineseckfaye', label: 'Ndeye Yacine Seck Faye (Offres Emploi)', type: 'page' },
-  { id: 'badou.diop.587',       label: 'Badou Diop (Offres Emploi)',           type: 'page' },
-  // Groupes emploi/recrutement au Sénégal (Nouveaux fournis)
-  { id: '1989058224662026',  label: 'Emploi 1' },
-  { id: '234254775016841',   label: 'Emploi 2' },
-  { id: '519668123858499',   label: 'Emploi 3' },
 ];
 
 const VILLES = ['Dakar', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor',
@@ -394,7 +396,11 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
         // le chargement d'une page de groupe Facebook dépasse régulièrement 30s alors qu'il
         // prend ~17s en local — constaté en observant des timeouts systématiques en prod alors
         // que la même page charge sans souci en local.
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        try {
+          await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        } catch (err) {
+          console.warn(`[FB-SCRAPER] page.goto timeout sur ${url}, tentative de continuer si le DOM est partiellement chargé...`);
+        }
         await page.waitForTimeout(4000);
 
         // Scroller pour charger plus de posts.
@@ -422,7 +428,7 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
           // Les pages publiques peuvent ne pas avoir [role="feed"] mais afficher les posts
           // dans un conteneur différent — on ne bloque que si AUCUN contenu article n'est présent.
           feedAbsent: isPage
-            ? !document.querySelector('[role="feed"], [role="main"] article, [role="main"] [data-pagelet]')
+            ? !document.querySelector('[role="feed"], [role="main"] article, [role="main"] [data-pagelet], [data-pagelet*="ProfileTimeline"], [role="main"]')
             : !document.querySelector('[role="feed"]'),
         }), groupe.type === 'page');
         if (urlBlocage || murConnexion) {
@@ -449,9 +455,9 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
           if (feedRoot) {
             feedChildren = Array.from(feedRoot.children);
           } else if (isPage) {
-            // Fallback pages publiques : chercher les articles dans [role="main"]
-            const main = document.querySelector('[role="main"]');
-            feedChildren = main ? Array.from(main.querySelectorAll('article, [data-pagelet] > div > div')) : [];
+            // Fallback pages publiques : chercher les articles dans [role="main"] ou le body pour les profils
+            const main = document.querySelector('[role="main"], [data-pagelet*="ProfileTimeline"]') || document.body;
+            feedChildren = Array.from(main.querySelectorAll('article, [data-pagelet] > div > div, div[role="article"]'));
           } else {
             return [];
           }
@@ -527,14 +533,13 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
           }
 
           let categorie_slug = detecterCategorie(texte) || 'divers';
-          // Force emploi ONLY for ndeyeyacineseckfaye
-          if (groupe.id === 'ndeyeyacineseckfaye') categorie_slug = 'emploi';
+          if (groupe.force_categorie) categorie_slug = groupe.force_categorie;
 
           const tel = parseTelephoneFB(texte);
           
-          // Dérogation pour l'emploi UNIQUEMENT sur la page Yacine : s'il n'y a pas de téléphone, on met "Voir sur Facebook"
-          const estEmploiYacine = categorie_slug === 'emploi' && groupe.id === 'ndeyeyacineseckfaye';
-          const telFinal = tel || (estEmploiYacine ? 'Voir sur Facebook' : null);
+          // Dérogation pour l'emploi : s'il n'y a pas de téléphone, on met "Voir sur Facebook"
+          const estEmploi = categorie_slug === 'emploi';
+          const telFinal = tel || (estEmploi ? 'Voir sur Facebook' : null);
 
           // Un numéro de téléphone réel + une catégorie détectée sont déjà le signal le plus
           // fort qu'il s'agit d'une vraie annonce — le style local ("45 mille x 3", "prend un

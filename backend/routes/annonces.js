@@ -104,6 +104,22 @@ function autoModerer({ titre, description, contact_tel, prix }) {
   return { ok: true };
 }
 
+// ── GET /api/annonces/categories-actives
+router.get('/categories-actives', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT DISTINCT categorie_slug as slug
+      FROM annonces_classifiees
+      WHERE actif = true AND supprimee = false
+    `);
+    const activeSlugs = rows.map(r => r.slug).filter(Boolean);
+    res.json(activeSlugs);
+  } catch (err) {
+    console.error('[GET /api/annonces/categories-actives]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── GET /api/annonces — liste publique paginée
 router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
   try {

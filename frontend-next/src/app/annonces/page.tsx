@@ -133,7 +133,7 @@ export default async function AnnoncesPage({
 
   let categoriesActives: string[] | null = null
   try {
-    const res = await fetch(`${BACKEND}/api/produits/categories-actives`, { cache: 'no-store', headers: SSR_HEADERS })
+    const res = await fetch(`${BACKEND}/api/annonces/categories-actives`, { cache: 'no-store', headers: SSR_HEADERS })
     if (res.ok) {
       categoriesActives = await res.json()
     }
