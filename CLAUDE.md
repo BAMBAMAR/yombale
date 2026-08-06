@@ -1,5 +1,10 @@
 # CLAUDE.md
 
+### [2026-08-06] - Ajout de l'icône Œil (Afficher / Masquer Mot de Passe Admin)
+- **Connexion Admin (`AdminLoginForm.tsx`)** : Extraction du formulaire de la page `/admin/login` en composant client interactive avec un bouton icône œil (`👁️` / `🙈`) permettant d'afficher ou masquer le mot de passe secret saisi en un clic.
+- **Réinitialisation Mot de Passe (`MotDePasseOublieForm.tsx`)** : Ajout également du bouton bascule œil pour l'affichage du mot de passe dans le formulaire de réinitialisation.
+- **Fallback Backend (`app.js`)** : Ajout du bouton d'affichage du mot de passe sur le formulaire HTML d'interception d'administration d'Express.
+
 ### [2026-08-06] - Correction Espacement Hero SearchBar & Catégories
 - **Correction UI Hero (page.tsx)** : Suppression du grand espace vide vertical entre la barre de recherche (SearchBar) et les pilules de catégories (CATEGORIES). Les catégories ont été déplacées à l'intérieur de la colonne centrale directement sous la barre de recherche avec 14px de marge.
 - **Vérification Build** : Validation avec npm run build dans frontend-next (0 erreur).

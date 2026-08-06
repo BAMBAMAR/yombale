@@ -70,6 +70,7 @@ function FormDemande() {
 
 function FormReinit({ token }: { token: string }) {
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [err, setErr] = useState('')
@@ -113,14 +114,22 @@ function FormReinit({ token }: { token: string }) {
           <span className="auth-input-icon">🔒</span>
           <input
             id="password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             required
             minLength={6}
             placeholder="Minimum 6 caractères"
-            className="auth-input auth-input--icon"
+            className="auth-input auth-input--icon auth-input--eye"
             value={password}
             onChange={e => setPassword(e.target.value)}
           />
+          <button
+            type="button"
+            className="auth-eye-btn"
+            onClick={() => setShowPassword(v => !v)}
+            aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+          >
+            {showPassword ? '🙈' : '👁️'}
+          </button>
         </div>
       </div>
       <button type="submit" disabled={loading} className={`auth-submit-btn${loading ? ' auth-submit-btn--pending' : ''}`}>

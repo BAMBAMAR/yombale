@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { adminLogin } from '@/app/actions/admin'
+import AdminLoginForm from './AdminLoginForm'
 
 export const metadata: Metadata = {
   title: 'Connexion Admin',
@@ -35,27 +35,7 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: P
           </div>
         )}
 
-        <form action={adminLogin} className="auth-form">
-          <div className="auth-field">
-            <label htmlFor="secret" className="auth-label">Secret administrateur</label>
-            <div className="auth-input-wrap">
-              <span className="auth-input-icon">🔑</span>
-              <input
-                id="secret"
-                name="secret"
-                type="password"
-                required
-                placeholder="••••••••••••••••"
-                className="auth-input auth-input--icon"
-                autoComplete="current-password"
-              />
-            </div>
-          </div>
-
-          <button type="submit" className="auth-submit-btn">
-            Accéder au panneau admin
-          </button>
-        </form>
+        <AdminLoginForm />
 
         <p className="auth-switch" style={{ marginTop: 24 }}>
           <a href="/" className="auth-link">← Retour au site</a>

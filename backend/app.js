@@ -119,12 +119,15 @@ function adminPageGuard(req, res, next) {
       '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Accès refusé</title>' +
       '<style>body{font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#f4f5f7;margin:0;}' +
       '.box{background:#fff;border-radius:10px;padding:32px 40px;box-shadow:0 2px 8px rgba(0,0,0,.1);text-align:center;}' +
-      'h2{color:#e63946;margin-top:0}input{padding:8px 12px;border:1px solid #d8dadf;border-radius:6px;font-size:14px;width:260px;margin-bottom:12px;}' +
-      'button{padding:10px 24px;background:#ff6600;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;}</style></head>' +
+      'h2{color:#e63946;margin-top:0}input{padding:8px 36px 8px 12px;border:1px solid #d8dadf;border-radius:6px;font-size:14px;width:100%;box-sizing:border-box;}' +
+      'button.btn-go{padding:10px 24px;background:#ff6600;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-top:12px;}</style></head>' +
       '<body><div class="box"><h2>🔒 Accès admin requis</h2>' +
       '<p style="color:#64748b;margin-bottom:16px">Entrez le secret admin pour accéder à cette page.</p>' +
+      '<div style="position:relative;display:inline-block;width:260px;">' +
       '<input type="password" id="s" placeholder="Secret admin" autofocus onkeydown="if(event.key===\'Enter\')go()">' +
-      '<br><button onclick="go()">Accéder →</button>' +
+      '<button type="button" onclick="var i=document.getElementById(\'s\');if(i.type===\'password\'){i.type=\'text\';this.textContent=\'🙈\';}else{i.type=\'password\';this.textContent=\'👁️\';}" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:0;">👁️</button>' +
+      '</div>' +
+      '<br><button class="btn-go" onclick="go()">Accéder →</button>' +
       '<p id="err" style="color:#e63946;font-size:13px;min-height:18px"></p>' +
       '<script>async function go(){var s=document.getElementById("s").value;' +
       'var r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({secret:s}),credentials:"include"});' +
