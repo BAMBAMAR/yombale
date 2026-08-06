@@ -8641,6 +8641,63 @@ a {
   border-radius: 16px;
   padding: 24px;
 }
+
+@media (max-width: 800px) {
+  .logo-name {
+    display: inline;
+    font-size: 18px;
+  }
+
+  /* Show icon actions, hide text-based deposer */
+  .navbar-icon-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .navbar-deposer {
+    display: none !important;
+  }
+
+  .navbar-comparer {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .logo-name {
+    display: none !important;
+  }
+  .navbar-icon-actions {
+    gap: 4px;
+  }
+  .navbar-icon-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  .navbar-pill-btn {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .navbar {
+    padding: 6px 2% !important;
+  }
+  .navbar-top-row {
+    gap: 2px !important;
+  }
+  .navbar-icon-actions {
+    gap: 2px;
+  }
+  .navbar-pill-btn {
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+}
+
 .seo-blurb {
   display: flex;
   gap: 14px;
@@ -9039,8 +9096,62 @@ button:focus-visible,
     width: 100%;
     justify-content: flex-start !important;
   }
+
+  /* Actions pro */
+  .logo-name {
+    display: none;
+    font-size: 18px;
+  }
+
+  /* Show icon actions, hide text-based deposer */
+  .navbar-icon-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .navbar-deposer {
+    display: none !important;
+  }
+
+  .navbar-comparer {
+    display: none !important;
+  }
 }
 
+@media (max-width: 640px) {
+  .logo-name {
+    display: none !important;
+  }
+  .navbar-icon-actions {
+    gap: 4px;
+  }
+  .navbar-icon-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  .navbar-pill-btn {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .navbar {
+    padding: 6px 2% !important;
+  }
+  .navbar-top-row {
+    gap: 2px !important;
+  }
+  .navbar-icon-actions {
+    gap: 2px;
+  }
+  .navbar-pill-btn {
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+}
 
 /* ═══════════════════════════════════════════════════════════════
    Nopalou — Audit & Optimisations Mobile
@@ -9397,8 +9508,7 @@ span.ripple {
   }
 
   .logo-name {
-    display: inline !important;
-    font-size: 20px !important;
+    display: none !important;
   }
 
   /* Show icon actions, hide text-based deposer */
