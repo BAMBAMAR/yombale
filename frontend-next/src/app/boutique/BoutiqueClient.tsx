@@ -1167,7 +1167,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
 
 // ── Marketing / partage de la boutique ────────────────────────────────────────
 
-function MarketingBoutique({ boutique, onVoirJamaisPartages, planActif }: { boutique: Boutique; onVoirJamaisPartages: () => void; planActif: 'pro' | 'business' | null }) {
+function MarketingBoutique({ boutique, onVoirJamaisPartages, planActif }: { boutique: Boutique; onVoirJamaisPartages: () => void; planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
   const lienBoutique = `${siteUrl}/boutiques/${boutique.slug || boutique.id}`
   const messageBoutique = `Découvrez ${boutique.nom} sur Nopalou !\n\n${lienBoutique}`
@@ -1287,7 +1287,7 @@ function MarketingBoutique({ boutique, onVoirJamaisPartages, planActif }: { bout
 
 // ── Gestionnaire de catalogue produits ───────────────────────────────────────
 
-function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { boutique: Boutique; planActif: 'pro' | 'business' | null; prixPro: number; filtreInitial?: 'jamais_partage' }) {
+function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { boutique: Boutique; planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null; prixPro: number; filtreInitial?: 'jamais_partage' }) {
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<'list' | { creating: 'rapide' | 'detaille' } | { editing: Produit }>('list')
@@ -1785,7 +1785,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
 
 function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onPayerManuel, onManage }: {
   boutique: Boutique
-  planActif: 'pro' | 'business' | null
+  planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
   onEdit: () => void
   onDelete: () => void
   onSponsoring?: () => void
@@ -1931,7 +1931,7 @@ function BoutiqueDashboard({
   onNavigate,
 }: {
   boutique: Boutique
-  planActif: 'pro' | 'business' | null
+  planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
   nbEnAttente: number
   onNavigate: (tab: ManageTab) => void
 }) {
@@ -2106,7 +2106,7 @@ const NAV_GROUPS: NavGroup[] = [
 
 function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialTab: initialTabProp }: {
   boutique: Boutique
-  planActif: 'pro' | 'business' | null
+  planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
   onBack: () => void
   onEdit: () => void
   prixPro: number
@@ -2358,7 +2358,7 @@ export default function BoutiqueClient({
 }: {
   boutiques: Boutique[]
   canCreate: boolean
-  planActif?: 'pro' | 'business' | null
+  planActif?: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
   codeApporteurDefaut?: string
   userId: string
   settings: Record<string, string>

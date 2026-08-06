@@ -1,6 +1,13 @@
 # CLAUDE.md
 
-### [2026-08-06] - Correction des Erreurs de Rendu d'Images Kit Com (Satori / @vercel/og)
+### [2026-08-06] - Refonte & Optimisation du Kit de Communication (`/admin/communication`)
+- **Navigation par 5 Onglets Thématiques (`KitComClient.tsx`)** :
+  - **Onglet 1 — 📱 Réseaux Sociaux & Contenus** : Cartes individuelles pour Facebook, Instagram, TikTok (`@nopalou.com`), Twitter/X (`@nopalou_sn`), Canal WhatsApp et Chatbot Support. Boutons **"Copier 1-Clic"** avec notification Toast, **"Télécharger HD"** direct (attribut HTML `download`), et publication **"🚀 Publier FB/IG"** / **"📢 Diffuser Canal WA"** 1-clic.
+  - **Onglet 2 — 🏪 Démarchage B2B & POS Magasin** : 5 arguments POS (3 Scanners, Dettes WA, Multi-Caissiers PIN), Script oral (2 min) et plan Dakar (6 semaines), ainsi que le **Sticker & Chevalet de Caisse POS A5/A6 imprimable**.
+  - **Onglet 3 — 💼 Apporteurs d'Affaires** : Barre de personnalisation agent (Nom, WhatsApp, Code Apporteur) mettant à jour en temps réel l'ensemble des scripts et textes, grille de commission récurrente dynamique (20%), et lien vers la brochure PDF 13 pages.
+  - **Onglet 4 — 💬 Écosystème WhatsApp Meta** : 4 piliers du Chatbot, lien et QR Code d'essai direct `wa.me/221708717942`.
+  - **Onglet 5 — ⚡ Générateur Visuels Promo Produit** : Génération et aperçu en temps réel de visuels 1080×1080 (`/assets/produit-promo`) avec bouton d'export HD et publication automatique.
+- **Route d'Image Dynamique Produit-Promo (`/assets/produit-promo/route.tsx`)** : Route Satori/@vercel/og générant des posters réseaux sociaux 1080×1080 (Prix barré, Prix promo vert, Boutique, Photo).
 - **Correction Glyphes & Espaces (`carre/route.tsx`, `story/route.tsx`, `flyer-demarchage/route.tsx`, `brochure-apporteur/route.tsx`)** : 
   - Remplacement de `toLocaleString('fr-FR')` (qui générait un caractère espace incassable `\u00A0` s'affichant sous forme de rectangle noir/carré vide `` dans le moteur SVG Satori) par des espaces standard ASCII (`.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')`).
   - Remplacement du symbole unicode `✓` (absent de la police SVG par défaut de Satori et affiché sous forme de carré vide ``) par des icônes SVG natives `<svg>` parfaitement nettes et compatibles à 100%.

@@ -80,7 +80,7 @@ export default function ShowcaseTabs({
         {/* ── FRISE DU CYCLE COMPLET : RECHERCHE → LIVRAISON ─────────── */}
         <div style={{
           background: '#fff7ed', borderRadius: 16, border: '1px solid #fed7aa',
-          padding: '20px 16px', textAlignment: 'center', boxShadow: '0 4px 12px rgba(199,91,0,0.05)'
+          padding: '20px 16px', textAlign: 'center', boxShadow: '0 4px 12px rgba(199,91,0,0.05)'
         }}>
           <div style={{ textAlign: 'center', marginBottom: 14 }}>
             <span style={{ fontSize: 12, fontWeight: 900, color: '#c75b00', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
