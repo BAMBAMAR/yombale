@@ -148,6 +148,10 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
   - Réactivation complète des boutons de souscription Wave et Mobile Money (Orange Money/Wave) pour permettre à tous les marchands en période d'essai gratuite (`decouverte` / `taf_taf`) d'évoluer librement vers les plans Pro & Business, d'effectuer des upgrades ou de renouveler leur engagement sur 3, 6 ou 12 mois.
 - **Paramétrage Dynamique des Quotas (`backend/lib/settingsCache.js` & `backend/routes/settings.js`)** :
   - Ajout des clés configurables `max_boutiques_par_compte`, `max_boutiques_par_telephone`, `alertes_abonnement_jours_avant`, `alertes_abonnement_whatsapp` et `alertes_abonnement_email`.
+- **Supervision Superadmin du Portail Développeur API (`/admin/developer`)** :
+  - Création du dashboard Superadmin pour la supervision en temps réel de l'ensemble des clés API REST (`nopalou_sk_live_...`) et webhooks (`whsec_...`) générés par les marchands Business VIP.
+  - Ajout des routes d'administration `GET /api/boutiques/admin/developer-portal`, `DELETE /api/boutiques/admin/api-keys/:keyId` et `DELETE /api/boutiques/admin/webhooks/:webhookId` pour la modération et la révocation des accès en 1-clic.
+  - Intégration du lien `🔌 Portail Développeur API` dans la barre de navigation latérale de l'Administration Superadmin.
 - **Driver WebBluetooth ESC/POS Direct (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
   - Intégration du driver binaire WebBluetooth Direct permettant aux imprimantes thermiques Bluetooth sans fil (POS-5802, GOOJPRT, Xprinter, etc.) de se connecter en 1-clic depuis Chrome/Edge (Android & PC).
   - Envoi direct des commandes ESC/POS (format 58mm / 80mm, coupe et ouverture tiroir) sans passer par la boîte de dialogue d'impression système.

@@ -159,6 +159,50 @@ router.get('/admin/promotions', adminSecretOnly, async (req, res) => {
   }
 });
 
+// ── GET /api/boutiques/admin/developer-portal — Supervision des Clés API & Webhooks (Admin)
+router.get('/admin/developer-portal', adminSecretOnly, async (req, res) => {
+  try {
+    const keysRes = await pool.query(
+      `SELECT ak.id, ak.nom, ak.key_prefix, ak.created_at, ak.last_used_at, b.id as boutique_id, b.nom as boutique_nom, b.slug as boutique_slug
+       FROM boutique_api_keys ak
+       JOIN boutiques b ON b.id = ak.boutique_id
+       ORDER BY ak.created_at DESC
+       LIMIT 200`
+    );
+    const webhooksRes = await pool.query(
+      `SELECT wh.id, wh.url, wh.events, wh.actif, wh.created_at, b.id as boutique_id, b.nom as boutique_nom, b.slug as boutique_slug
+       FROM boutique_webhooks wh
+       JOIN boutiques b ON b.id = wh.boutique_id
+       ORDER BY wh.created_at DESC
+       LIMIT 200`
+    );
+    res.json({ keys: keysRes.rows, webhooks: webhooksRes.rows });
+  } catch (err) {
+    console.error('[GET ADMIN DEV PORTAL ERR]', err);
+    res.status(500).json({ error: 'Erreur lors du chargement du portail développeur admin' });
+  }
+});
+
+// ── DELETE /api/boutiques/admin/api-keys/:keyId — Révocation Admin d'une clé API
+router.delete('/admin/api-keys/:keyId', adminSecretOnly, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM boutique_api_keys WHERE id = $1', [req.params.keyId]);
+    res.json({ success: true, message: 'Clé API révoquée avec succès par le Superadmin.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors de la révocation de la clé API' });
+  }
+});
+
+// ── DELETE /api/boutiques/admin/webhooks/:webhookId — Suppression Admin d'un Webhook
+router.delete('/admin/webhooks/:webhookId', adminSecretOnly, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM boutique_webhooks WHERE id = $1', [req.params.webhookId]);
+    res.json({ success: true, message: 'Webhook supprimé avec succès par le Superadmin.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors de la suppression du webhook' });
+  }
+});
+
 // ── POST /api/boutiques/admin/sync-catalog — sync initiale tous les produits → Meta Commerce
 router.post('/admin/sync-catalog', adminSecretOnly, async (req, res) => {
   try {
