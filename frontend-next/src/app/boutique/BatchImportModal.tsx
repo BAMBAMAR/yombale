@@ -293,12 +293,13 @@ export default function BatchImportModal({
         background: '#fff', borderRadius: 16, width: '100%', maxWidth: 760,
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', maxHeight: '90vh',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }} onClick={e => e.stopPropagation()}>
 
         {/* En-tête avec choix de méthode */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid #e5e7eb', background: '#fafafa' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontFamily: 'var(--font-archivo), sans-serif', color: '#111827' }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#111827' }}>
               📦 Importation par Lot (Batch Intake)
             </h2>
             <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#9ca3af' }}>✕</button>

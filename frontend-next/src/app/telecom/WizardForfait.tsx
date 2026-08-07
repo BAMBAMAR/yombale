@@ -86,7 +86,7 @@ export default function WizardForfait({ onClose, operateurs }: Props) {
 
   return (
     <div className="wizard-overlay" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="wizard-panel">
+      <div className="wizard-panel" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         <button className="wizard-close" onClick={onClose} aria-label="Fermer">✕</button>
 
         {step === 1 ? (

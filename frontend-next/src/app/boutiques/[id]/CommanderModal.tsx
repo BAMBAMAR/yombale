@@ -234,12 +234,13 @@ export default function CommanderModal({
       <div style={{
         background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480,
         boxShadow: '0 20px 60px rgba(0,0,0,.2)', maxHeight: '90vh', overflowY: 'auto',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }} onClick={e => e.stopPropagation()}>
 
         {/* En-tête */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
-            <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 18, margin: 0, color: '#111827' }}>Acheter cet article</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: '#111827' }}>Acheter cet article</h2>
             <p style={{ margin: '2px 0 0', fontSize: 13, color: '#6b7280', fontWeight: 600 }}>{produit.nom} {produit.prix ? `• ${fcfa(produit.prix)}` : ''}</p>
           </div>
           <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#9ca3af', padding: 4 }}>✕</button>

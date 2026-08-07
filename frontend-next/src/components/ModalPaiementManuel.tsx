@@ -58,7 +58,7 @@ export default function ModalPaiementManuel({ reference, montant, numeroWave, nu
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 460, padding: 24 }}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 460, padding: 24, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         <h3 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 700 }}>Payer / j&apos;ai déjà payé</h3>
         <p style={{ color: '#6b7280', fontSize: 13, marginBottom: 16 }}>
           Effectuez un dépôt de <strong>{montant.toLocaleString('fr-FR')} FCFA</strong> puis déclarez-le ci-dessous.
