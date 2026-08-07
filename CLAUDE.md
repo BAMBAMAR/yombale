@@ -28,6 +28,19 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
   2. Ajouter l'URL du flux XML Nopalou dans **Meta Commerce Manager** (*Catalogues -> Importation automatique*).
   3. Taguer ses produits sur ses publications, stories et reels Instagram pour rediriger les acheteurs en 1 clic vers le checkout 1-Page Nopalou.
 
+### 🧪 4. Exécution & Assurance Qualité (Master Test Suite - 20/20 PASS)
+- **Commande de Validation Globale TDD** :
+  ```powershell
+  node node_modules/jest/bin/jest.js tests/unit/spec-master-exhaustive.test.js --forceExit
+  ```
+- **Couverture des 20 Scénarios Validés** :
+  - **Spec 01** : Bascule de mode `pure_player` vs `hybride_pos`, sélecteur admin et masquage caisse.
+  - **Spec 02** : Enregistrement de commande 1-Page, décrémentation des stocks et offres Cross-Sell.
+  - **Spec 03** : Remises %, montants fixes FCFA, seuils d'achat minimum et rejet des coupons vides.
+  - **Spec 04** : Pixels publicitaires (Meta, TikTok, GA4) et génération des flux catalogues XML/JSON.
+  - **Spec 05** : Portail Développeur, génération de clés API `nopalou_sk_live_...`, webhooks `whsec_...` et signatures HMAC-SHA256.
+  - **Spec 06** : Taux de change officiels (XOF, EUR, USD), simulation Carte Stripe acceptée et rejet des cartes déclinées.
+
 ---
 
 ### [2026-08-07] - Approche OpenSpec : Flux Catalogues Dynamiques XML/JSON & Intégration Meta / Instagram Shopping / TikTok Catalog
