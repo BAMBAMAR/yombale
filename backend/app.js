@@ -259,7 +259,9 @@ async function demarrerApp() {
   });
 }
 
-demarrerApp().catch(console.error);
+if (process.env.NODE_ENV !== 'test') {
+  demarrerApp().catch(console.error);
+}
 
 // (app exporté pour les tests)
 module.exports = app;

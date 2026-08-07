@@ -689,6 +689,24 @@ module.exports = async function migrateInline() {
   } catch (e) { console.warn('[MIGRATE] boutique slug index:', e.message); }
   console.log('[MIGRATE] ✅ Colonnes boutiques avancées OK');
 
+  // Table avis clients produits
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS boutique_avis (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        produit_id   UUID REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        client_nom   VARCHAR(150) NOT NULL,
+        note         INTEGER NOT NULL CHECK (note >= 1 AND note <= 5),
+        commentaire  TEXT NOT NULL,
+        commande_ref VARCHAR(100),
+        valide       BOOLEAN DEFAULT true,
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    console.log('[MIGRATE] ✅ Table boutique_avis OK');
+  } catch (e) { console.warn('[MIGRATE] boutique_avis:', e.message); }
+
   // Table catalogue produits boutique
   try {
     await pool.query(`

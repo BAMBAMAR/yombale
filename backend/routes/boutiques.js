@@ -3673,6 +3673,125 @@ router.post(['/paiements/stripe/simuler', '/stripe/simuler', '/:id/paiements/str
   }
 });
 
+// ── Spec Acheteur 02 : GET /api/boutiques/:id/produits/:prodId/avis — Avis publics & moyenne
+router.get('/:id/produits/:prodId/avis', async (req, res) => {
+  try {
+    const { id, prodId } = req.params;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let targetBoutiqueId = id;
+    if (!isUUID) {
+      const bqRes = await pool.query('SELECT id FROM boutiques WHERE slug = $1', [id]);
+      if (bqRes.rows[0]) targetBoutiqueId = bqRes.rows[0].id;
+    }
+
+    const { rows } = await pool.query(
+      `SELECT id, client_nom, note, commentaire, commande_ref, created_at
+       FROM boutique_avis
+       WHERE boutique_id = $1 AND (produit_id = $2 OR produit_id IS NULL) AND valide = true
+       ORDER BY created_at DESC`,
+      [targetBoutiqueId, prodId]
+    );
+
+    let noteMoyenne = 0;
+    if (rows.length > 0) {
+      const sum = rows.reduce((acc, curr) => acc + curr.note, 0);
+      noteMoyenne = Number((sum / rows.length).toFixed(1));
+    }
+
+    res.json({
+      total_avis: rows.length,
+      note_moyenne: noteMoyenne,
+      avis: rows
+    });
+  } catch (err) {
+    console.error('[GET AVIS ERR]', err);
+    res.status(500).json({ error: 'Erreur lors du chargement des avis' });
+  }
+});
+
+// ── Spec Acheteur 02 : POST /api/boutiques/:id/produits/:prodId/avis — Soumettre un avis client
+router.post('/:id/produits/:prodId/avis', async (req, res) => {
+  try {
+    const { id, prodId } = req.params;
+    const { client_nom, note, commentaire, commande_ref } = req.body;
+
+    if (!client_nom || !client_nom.trim()) {
+      return res.status(400).json({ error: 'Votre nom est requis.' });
+    }
+    if (!note || isNaN(Number(note)) || Number(note) < 1 || Number(note) > 5) {
+      return res.status(400).json({ error: 'Une note entre 1 et 5 étoiles est requise.' });
+    }
+    if (!commentaire || !commentaire.trim()) {
+      return res.status(400).json({ error: 'Votre commentaire est requis.' });
+    }
+
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let targetBoutiqueId = id;
+    if (!isUUID) {
+      const bqRes = await pool.query('SELECT id FROM boutiques WHERE slug = $1', [id]);
+      if (bqRes.rows[0]) targetBoutiqueId = bqRes.rows[0].id;
+    }
+
+    const r = await pool.query(
+      `INSERT INTO boutique_avis (boutique_id, produit_id, client_nom, note, commentaire, commande_ref)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [targetBoutiqueId, prodId, client_nom.trim(), Number(note), commentaire.trim(), commande_ref || null]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Votre avis a été publié avec succès ! Merci pour votre retour.',
+      avis: r.rows[0]
+    });
+  } catch (err) {
+    console.error('[POST AVIS ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la publication de l\'avis' });
+  }
+});
+
+// ── Spec Acheteur 04 : GET /api/boutiques/commandes/suivi — Suivi de commande dynamique
+router.get('/commandes/suivi', async (req, res) => {
+  try {
+    const { ref, tel } = req.query;
+    if (!ref && !tel) {
+      return res.status(400).json({ error: 'Veuillez fournir une référence de commande ou un numéro de téléphone.' });
+    }
+
+    let query = `
+      SELECT c.id, c.reference, c.client_nom, c.client_telephone, c.statut, c.montant_total,
+             c.methode_paiement, c.created_at, b.nom as boutique_nom, b.telephone_whatsapp as boutique_whatsapp
+      FROM commandes_express c
+      JOIN boutiques b ON b.id = c.boutique_id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (ref) {
+      params.push(`%${ref.trim()}%`);
+      query += ` AND (c.reference ILIKE $${params.length} OR c.id::text ILIKE $${params.length})`;
+    } else if (tel) {
+      params.push(`%${tel.trim()}%`);
+      query += ` AND c.client_telephone ILIKE $${params.length}`;
+    }
+
+    query += ` ORDER BY c.created_at DESC LIMIT 5`;
+
+    const { rows } = await pool.query(query, params);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Aucune commande trouvée pour ces critères.' });
+    }
+
+    res.json({
+      success: true,
+      commandes: rows
+    });
+  } catch (err) {
+    console.error('[GET SUIVI ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la recherche du suivi de commande' });
+  }
+});
+
 module.exports = router;
 
 

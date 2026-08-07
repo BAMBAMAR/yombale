@@ -43,6 +43,24 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
 
 ---
 
+### [2026-08-07] - Approche OpenSpec : Implémentation Intégrale de la Feuille de Route Acheteur Nopalou
+- **Page de Suivi de Commande en Temps Réel (`frontend-next/src/app/suivi-commande/page.tsx`)** :
+  - Route publique `/suivi-commande` permettant à l'acheteur d'entrer sa référence `CMD-2026-XXXX` ou son téléphone pour visualiser la progression de sa livraison en 4 étapes (*En attente ➔ En préparation ➔ En livraison ➔ Livrée*).
+  - Endpoint `GET /api/boutiques/commandes/suivi` avec recherche par référence ou téléphone et lien direct WhatsApp vers le livreur.
+- **Système d'Avis Clients Certifiés (1 à 5 ⭐) (`frontend-next/src/components/AvisProduitSection.tsx`)** :
+  - Module de dépose d'avis réservé aux acheteurs certifiés avec calcul en temps réel de la note moyenne.
+  - Endpoints `GET /api/boutiques/:id/produits/:prodId/avis` et `POST /api/boutiques/:id/produits/:prodId/avis`.
+  - Migration SQL idempotente (`boutique_avis`) dans `backend/migrate-inline.js`.
+- **Tableau Comparatif Multi-Plateformes (`frontend-next/src/components/TableauComparatifPrix.tsx`)** :
+  - Composant de comparaison montrant le podium des prix entre les Boutiques Nopalou directes et les offres externes agrégées (*Jumia, Expat-Dakar, CoinAfrique*) avec le badge **`🏆 Meilleur Prix`**.
+- **Badges de Réassurance & Sécurité (`frontend-next/src/components/GarantiesAcheteurBadge.tsx`)** :
+  - Composant de réassurance sous le bouton d'achat (*Satisfait ou Échangé sous 48h*, *Paiement Sécurisé Wave/OM/Carte/Cash*, *Livraison Rapide*).
+- **Validation Globale par les Tests Automatisés TDD (`tests/unit/spec-acheteur-exhaustive.test.js`)** :
+  - Suite de 6 unit tests acheteurs exécutée et validée à **100% PASS** (Avis certifiés 201, calcul de moyenne 4.5 ⭐, recherche par référence 200 et par téléphone 200).
+  - Total cumulé avec la Master Test Suite : **26 tests validés avec succès (0 échec)**.
+
+---
+
 ### [2026-08-07] - Approche OpenSpec : Flux Catalogues Dynamiques XML/JSON & Intégration Meta / Instagram Shopping / TikTok Catalog
 - **Endpoints de Flux Catalogue Dynamique (`backend/routes/boutiques.js`)** :
   - `GET /api/boutiques/:id/catalog.xml` : Génération du flux RSS 2.0 XML conforme aux spécifications Google Merchant, Meta Commerce Manager et TikTok Catalog. Permet à chaque marchand d'importer son catalogue automatiquement sur sa page Instagram/Facebook pour taguer ses produits sur ses publications, stories et reels.
