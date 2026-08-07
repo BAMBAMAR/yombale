@@ -29,6 +29,11 @@ interface Settings {
   paiement_manuel_actif: string
   paiement_manuel_numero_wave: string
   paiement_manuel_numero_om: string
+  max_boutiques_par_compte: string
+  max_boutiques_par_telephone: string
+  alertes_abonnement_jours_avant: string
+  alertes_abonnement_whatsapp: string
+  alertes_abonnement_email: string
 }
 
 export default function TarifsClient({ initial, secret }: { initial: Settings; secret: string }) {
@@ -59,6 +64,11 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
       paiement_manuel_actif: 'true',
       paiement_manuel_numero_wave: '',
       paiement_manuel_numero_om: '',
+      max_boutiques_par_compte: '3',
+      max_boutiques_par_telephone: '3',
+      alertes_abonnement_jours_avant: '7',
+      alertes_abonnement_whatsapp: 'true',
+      alertes_abonnement_email: 'true',
     }
     return { ...defaults, ...initial }
   })
@@ -84,7 +94,7 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
     )
   }
 
-  function toggle(key: 'paiement_wave' | 'paiement_orange' | 'promo_active' | 'paiement_manuel_actif', label: string) {
+  function toggle(key: 'paiement_wave' | 'paiement_orange' | 'promo_active' | 'paiement_manuel_actif' | 'alertes_abonnement_whatsapp' | 'alertes_abonnement_email', label: string) {
     const on = form[key] === 'true'
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
@@ -177,7 +187,7 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
         {field('paiement_manuel_numero_om', 'Numéro Orange Money pour dépôt', 'text')}
       </>)}
 
-      {card('🎁 Code promo', <>
+      {card('🎁 Code promo Plateforme (Abonnements)', <>
         {toggle('promo_active', 'Promotion active')}
         {field('promo_code', 'Code promo (ex: NOPALOU25)', 'text')}
         {field('promo_reduction', 'Réduction', 'number', '%')}
@@ -188,6 +198,20 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
             {form.promo_expiry ? ` jusqu'au ${form.promo_expiry}` : ''}
           </div>
         )}
+      </>)}
+
+      {card('🏬 Quotas et limites de création de boutiques', <>
+        {field('max_boutiques_par_compte', 'Nombre max de boutiques par compte utilisateur', 'number', 'boutiques')}
+        {field('max_boutiques_par_telephone', 'Nombre max de boutiques associées au même téléphone / email', 'number', 'boutiques')}
+        <p style={{ fontSize: 12, color: '#6b7280', margin: '4px 0 0' }}>
+          💡 Empêche les utilisateurs de créer plus de boutiques que la limite autorisée, même en créant plusieurs comptes avec le même numéro ou e-mail.
+        </p>
+      </>)}
+
+      {card('🔔 Alertes et relances d\'expiration de forfaits', <>
+        {field('alertes_abonnement_jours_avant', 'Délai de première alerte avant expiration', 'number', 'jours avant')}
+        {toggle('alertes_abonnement_email', 'Relance par E-mail')}
+        {toggle('alertes_abonnement_whatsapp', 'Relance par WhatsApp')}
       </>)}
 
       <button

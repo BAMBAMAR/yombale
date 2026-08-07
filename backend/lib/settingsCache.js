@@ -38,6 +38,11 @@ const DEFAULTS = {
   apporteur_taux_commission:  '20',
   apporteur_seuil_paiement:   '3000',
   apporteur_cookie_jours:     '30',
+  max_boutiques_par_compte:   '3',
+  max_boutiques_par_telephone:'3',
+  alertes_abonnement_jours_avant: '7',
+  alertes_abonnement_whatsapp: 'true',
+  alertes_abonnement_email:   'true',
 };
 
 async function loadSettings() {

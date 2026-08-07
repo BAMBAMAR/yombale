@@ -142,6 +142,19 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
   - Intégration du formulaire 1-page relié directement à `/api/boutiques/commandes/express`.
   - Intégration du composant de suggestions **Upsell / Cross-Sell (1-Clic)** permettant à l'acheteur de cocher des articles complémentaires avant d'envoyer sa commande, augmentant ainsi le panier moyen.
 
+### [2026-08-07] - Contrôle Admin des Quotas Boutiques (Tél/Email), Alertes d'Abonnement & Moteur Promo
+- **Paramétrage Dynamique des Quotas (`backend/lib/settingsCache.js` & `backend/routes/settings.js`)** :
+  - Ajout des clés configurables `max_boutiques_par_compte`, `max_boutiques_par_telephone`, `alertes_abonnement_jours_avant`, `alertes_abonnement_whatsapp` et `alertes_abonnement_email`.
+- **Contrôle Backend Anti-Contournement (`backend/routes/boutiques.js`)** :
+  - Remplacement du quota `MAX_BOUTIQUES` codé en dur par une vérification dynamique en base.
+  - Implémentation du contrôle anti-cumul vérifiant le nombre total de boutiques associées à un même numéro de téléphone ou e-mail à travers tous les comptes utilisateurs.
+  - Ajout de la route `GET /api/boutiques/admin/promotions` pour la supervision Superadmin des coupons marchands.
+- **Relances d'Abonnement Dynamiques (`backend/services/scraper.js`)** :
+  - Mise à jour du job de relance automatique pour envoyer des alertes préventives $N$ jours avant expiration selon le paramétrage admin (`alertes_abonnement_jours_avant`).
+- **Dashboard Superadmin Next.js (`frontend-next/src/app/admin/(protected)/tarifs/TarifsClient.tsx`)** :
+  - Intégration des cartes d'administration *🏬 Quotas et limites de création de boutiques* et *🔔 Alertes et relances d'expiration de forfaits*.
+  - Clarification de la distinction entre les promotions plateforme (abonnements) et les promotions marchands.
+
 ### [2026-08-06] - Approche OpenSpec : Implémentation de la Spec 01 (Mode Switcher Admin & Mode Pure Player E-Commerce)
 - **Fichier de Spécification OpenSpec 01 (`docs/specs/01-pure-player-mode.md`)** : Rédaction intégrale de la spécification OpenSpec définissant le contrat d'API, le schéma SQL et les scénarios de tests unitaires/E2E pour basculer entre `hybride_pos` (Commerce physique + Web) et `pure_player` (E-Commerce 100% Web).
 - **Migration SQL Idempotente (`backend/migrate-inline.js`)** : Ajout automatique et sécurisé de la colonne `mode_fonctionnement VARCHAR(30) DEFAULT 'hybride_pos'` à la table `boutiques`.

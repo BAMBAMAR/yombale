@@ -143,6 +143,22 @@ router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
+// ── GET /api/boutiques/admin/promotions — toutes les promotions de toutes les boutiques (admin)
+router.get('/admin/promotions', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT bp.*, b.nom AS boutique_nom, b.slug AS boutique_slug
+       FROM boutique_promotions bp
+       JOIN boutiques b ON b.id = bp.boutique_id
+       ORDER BY bp.created_at DESC
+       LIMIT 200`
+    );
+    res.json({ promotions: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur chargement des promotions' });
+  }
+});
+
 // ── POST /api/boutiques/admin/sync-catalog — sync initiale tous les produits → Meta Commerce
 router.post('/admin/sync-catalog', adminSecretOnly, async (req, res) => {
   try {
@@ -1342,13 +1358,42 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
   try {
     const userId = req.user.userId;
 
-    // Quota
-    const cnt = await pool.query('SELECT COUNT(*) FROM boutiques WHERE utilisateur_id=$1', [userId]);
-    if (parseInt(cnt.rows[0].count) >= MAX_BOUTIQUES) {
-      return res.status(400).json({ error: `Limite de ${MAX_BOUTIQUES} boutiques par compte atteinte.` });
+    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, slug: slugInput } = req.body;
+
+    // Quotas configurables (Admin)
+    const maxCompte = (await cfg.getNum('max_boutiques_par_compte')) || 3;
+    const maxTel = (await cfg.getNum('max_boutiques_par_telephone')) || 3;
+
+    // 1. Quota par compte utilisateur
+    const cntCompte = await pool.query('SELECT COUNT(*) FROM boutiques WHERE utilisateur_id=$1', [userId]);
+    if (parseInt(cntCompte.rows[0].count) >= maxCompte) {
+      return res.status(400).json({ error: `Limite de ${maxCompte} boutique(s) par compte atteinte.` });
     }
 
-    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, slug: slugInput } = req.body;
+    // 2. Quota par téléphone / email (tous comptes confondus)
+    const userRes = await pool.query('SELECT email, telephone FROM utilisateurs WHERE id=$1', [userId]);
+    const currentUser = userRes.rows[0] || {};
+    const inputTel = telephone?.trim() || currentUser.telephone?.trim();
+    const userEmail = currentUser.email?.trim();
+
+    if (inputTel || userEmail) {
+      const cntTel = await pool.query(
+        `SELECT COUNT(DISTINCT b.id)
+         FROM boutiques b
+         JOIN utilisateurs u ON b.utilisateur_id = u.id
+         WHERE (
+           ($1::text IS NOT NULL AND $1::text != '' AND (u.telephone = $1 OR b.telephone = $1))
+           OR
+           ($2::text IS NOT NULL AND $2::text != '' AND u.email = $2)
+         )`,
+        [inputTel || null, userEmail || null]
+      );
+      if (parseInt(cntTel.rows[0].count) >= maxTel) {
+        return res.status(400).json({
+          error: `Limite de ${maxTel} boutique(s) associée(s) à ce numéro de téléphone (${inputTel || 'non renseigné'}) ou e-mail atteinte.`
+        });
+      }
+    }
 
     let logo_url = null;
     if (req.files?.logo?.[0]) {
