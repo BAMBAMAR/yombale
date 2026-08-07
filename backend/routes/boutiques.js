@@ -1414,27 +1414,35 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
       return res.status(400).json({ error: `Limite de ${maxCompte} boutique(s) par compte atteinte.` });
     }
 
-    // 2. Quota par téléphone / email (tous comptes confondus)
+    // 2. Quota par téléphone / email (tous comptes confondus, normalisation 9 chiffres)
     const userRes = await pool.query('SELECT email, telephone FROM utilisateurs WHERE id=$1', [userId]);
     const currentUser = userRes.rows[0] || {};
-    const inputTel = telephone?.trim() || currentUser.telephone?.trim();
-    const userEmail = currentUser.email?.trim();
+    const inputTelRaw = telephone?.trim() || currentUser.telephone?.trim() || '';
+    const userEmailRaw = (currentUser.email || '').trim().toLowerCase();
 
-    if (inputTel || userEmail) {
+    // Normalisation : conserver uniquement les 9 derniers chiffres du téléphone
+    const cleanTel = inputTelRaw.replace(/\D/g, '').slice(-9);
+
+    if (cleanTel || userEmailRaw) {
       const cntTel = await pool.query(
         `SELECT COUNT(DISTINCT b.id)
          FROM boutiques b
          JOIN utilisateurs u ON b.utilisateur_id = u.id
          WHERE (
-           ($1::text IS NOT NULL AND $1::text != '' AND (u.telephone = $1 OR b.telephone = $1))
+           ($1::text != '' AND (
+             RIGHT(REGEXP_REPLACE(COALESCE(u.telephone, ''), '[^0-9]', '', 'g'), 9) = $1
+             OR
+             RIGHT(REGEXP_REPLACE(COALESCE(b.telephone, ''), '[^0-9]', '', 'g'), 9) = $1
+           ))
            OR
-           ($2::text IS NOT NULL AND $2::text != '' AND u.email = $2)
+           ($2::text != '' AND LOWER(COALESCE(u.email, '')) = $2)
          )`,
-        [inputTel || null, userEmail || null]
+        [cleanTel, userEmailRaw]
       );
-      if (parseInt(cntTel.rows[0].count) >= maxTel) {
+      const totalBoutiquesTrouvees = parseInt(cntTel.rows[0].count, 10);
+      if (totalBoutiquesTrouvees >= maxTel) {
         return res.status(400).json({
-          error: `Limite de ${maxTel} boutique(s) associée(s) à ce numéro de téléphone (${inputTel || 'non renseigné'}) ou e-mail atteinte.`
+          error: `Limite atteinte : ${totalBoutiquesTrouvees} boutique(s) sont déjà enregistrées avec ce numéro de téléphone (${inputTelRaw || 'non renseigné'}) ou e-mail (${userEmailRaw}). La limite autorisée par l'administration est de ${maxTel} boutique(s).`
         });
       }
     }
