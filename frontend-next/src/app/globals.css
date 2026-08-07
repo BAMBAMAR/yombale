@@ -5214,7 +5214,7 @@ a {
 
 /* ── Footer (Sprint 10) ────────────────────────────────────────── */
 .site-footer {
-  background: var(--navy);
+  background: #1C2B4A !important;
   color: #fff;
   margin-top: 64px;
 }
