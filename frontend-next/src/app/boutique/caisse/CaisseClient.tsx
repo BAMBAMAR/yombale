@@ -466,6 +466,56 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
     }
   }
 
+  const [btDeviceName, setBtDeviceName] = useState<string | null>(null)
+  const [btCharacteristic, setBtCharacteristic] = useState<any>(null)
+
+  async function connecterImprimanteBluetooth() {
+    if (typeof window === 'undefined' || !('bluetooth' in navigator)) {
+      alert("L'API WebBluetooth Direct est supportée sur Chrome et Edge (Android et PC Windows). Pour les imprimantes système, le mode Web/USB standard reste actif.")
+      return
+    }
+    try {
+      const device: any = await (navigator as any).bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [
+          '000018f0-0000-1000-8000-00805f9b34fb',
+          '00001101-0000-1000-8000-00805f9b34fb',
+          'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+          '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+        ]
+      })
+
+      const server = await device.gatt.connect()
+      const services = await server.getPrimaryServices()
+      let characteristic = null
+
+      for (const service of services) {
+        const characteristics = await service.getCharacteristics()
+        for (const c of characteristics) {
+          if (c.properties.write || c.properties.writeWithoutResponse) {
+            characteristic = c
+            break
+          }
+        }
+        if (characteristic) break
+      }
+
+      if (!characteristic) {
+        alert("Imprimante Bluetooth détectée mais canal d'écriture binaire ESC/POS non trouvé.")
+        return
+      }
+
+      setBtDeviceName(device.name || 'Imprimante POS Bluetooth')
+      setBtCharacteristic(characteristic)
+      alert(`Imprimante Bluetooth "${device.name || 'POS'}" connectée avec succès ! Les tickets s'imprimeront en 1-clic direct.`)
+    } catch (err: any) {
+      console.error('[BLUETOOTH PRINT ERR]', err)
+      if (err.name !== 'NotFoundError') {
+        alert(`Information Bluetooth : ${err.message || err}`)
+      }
+    }
+  }
+
   function traiterCodeBarreCamera(code: string) {
     const pFound = produits.find(p => p.code_barre === code || p.id === code)
     if (pFound) {
@@ -478,8 +528,48 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
     }
   }
 
-  function imprimerTicketThermique(vente: any) {
+  async function imprimerTicketThermique(vente: any) {
     if (!vente) return
+
+    // Si une imprimante Bluetooth direct est connectée via WebBluetooth
+    if (btCharacteristic) {
+      try {
+        const encoder = new TextEncoder()
+        const bqNom = boutiques.find(b => b.id === boutiqueActiveId)?.nom || 'NOPALOU BOUTIQUE'
+        const dateStr = vente.date || new Date().toLocaleDateString('fr-FR')
+        const items = vente.ticket || vente.items || []
+        
+        let text = `\x1B\x40` // Init ESC/POS
+        text += `\x1B\x61\x01\x1D\x21\x11${bqNom}\n\x1D\x21\x00`
+        text += `Ticket #${vente.id} - ${dateStr}\n`
+        text += `Caissier: ${vente.caissier || caissierNom}\n`
+        text += `--------------------------------\n\x1B\x61\x00`
+        
+        items.forEach((i: any) => {
+          const nom = (i.produit?.nom || i.nom || 'Article').substring(0, 16)
+          const qte = `${i.quantite || 1}x`
+          const tot = fcfa((i.prixUnitaire || i.prix || 0) * (i.quantite || 1))
+          text += `${qte} ${nom.padEnd(16)} ${tot.padStart(8)}\n`
+        });
+        
+        text += `--------------------------------\n\x1B\x61\x02\x1B\x45\x01`
+        text += `TOTAL NET : ${fcfa(vente.total)}\n\x1B\x45\x00\x1B\x61\x01`
+        text += `Mode: ${(vente.modePaiement || vente.mode || 'ESPECES').toUpperCase()}\n`
+        text += `--------------------------------\nMERCI DE VOTRE VISITE !\nNopalou POS - Caisse\n\n\n\n\x1D\x56\x41\x00`
+
+        const bytes = encoder.encode(text)
+        const chunkSize = 512
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          await btCharacteristic.writeValue(bytes.slice(i, i + chunkSize))
+        }
+        return
+      } catch (err: any) {
+        console.error('[BT PRINT EXEC ERR]', err)
+        alert("Impression Bluetooth directe interrompue. Ouverture du module d'impression web standard.")
+      }
+    }
+
+    // Impression Web Standard
     const windowPrint = window.open('', '_blank', 'width=400,height=600')
     if (!windowPrint) {
       window.print()
@@ -2544,6 +2634,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                   <option value="80mm">🖨️ Format 80mm (Standard)</option>
                   <option value="58mm">🖨️ Format 58mm (Poche)</option>
                 </select>
+                <button
+                  onClick={connecterImprimanteBluetooth}
+                  style={{ background: btDeviceName ? '#f0fdf4' : '#f5f3ff', color: btDeviceName ? '#166534' : '#6d28d9', border: btDeviceName ? '1px solid #bbf7d0' : '1px solid #ddd6fe', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                  title="Connecter une imprimante thermique Bluetooth direct ESC/POS"
+                >
+                  📱 Bluetooth {btDeviceName ? `(${btDeviceName})` : ''}
+                </button>
                 <button
                   onClick={exporterHistoriqueCSV}
                   style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}

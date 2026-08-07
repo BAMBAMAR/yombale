@@ -148,6 +148,9 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
   - Réactivation complète des boutons de souscription Wave et Mobile Money (Orange Money/Wave) pour permettre à tous les marchands en période d'essai gratuite (`decouverte` / `taf_taf`) d'évoluer librement vers les plans Pro & Business, d'effectuer des upgrades ou de renouveler leur engagement sur 3, 6 ou 12 mois.
 - **Paramétrage Dynamique des Quotas (`backend/lib/settingsCache.js` & `backend/routes/settings.js`)** :
   - Ajout des clés configurables `max_boutiques_par_compte`, `max_boutiques_par_telephone`, `alertes_abonnement_jours_avant`, `alertes_abonnement_whatsapp` et `alertes_abonnement_email`.
+- **Driver WebBluetooth ESC/POS Direct (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
+  - Intégration du driver binaire WebBluetooth Direct permettant aux imprimantes thermiques Bluetooth sans fil (POS-5802, GOOJPRT, Xprinter, etc.) de se connecter en 1-clic depuis Chrome/Edge (Android & PC).
+  - Envoi direct des commandes ESC/POS (format 58mm / 80mm, coupe et ouverture tiroir) sans passer par la boîte de dialogue d'impression système.
 - **Audit Global des Fonctionnalités & Signalétique Bientôt Disponible (`frontend-next` & `backend`)** :
   - Réalisation d'un audit complet de l'ensemble des modules. 100% des modules core (E-Commerce, Panier, Caisse POS, WhatsApp WABA API, Apporteurs, API REST) sont pleinement fonctionnels.
   - Ajout des badges d'information et d'état transparents sur les intégrations en cours de KYC tiers (Sync Catalogue TikTok Shopping `⏳ Bientôt`, Payout automatique API Wave Direct `⚡ Virement Manuel sécurisé 24h`, Impression Thermique Web & USB).
