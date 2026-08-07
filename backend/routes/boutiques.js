@@ -225,6 +225,14 @@ router.post('/taf-taf', async (req, res) => {
        VALUES ($1, $2, $3, 'Dakar', 'Divers', $4, true) RETURNING id`,
       [user.id, nom, telephone, couleur_theme || couleur || '#25D366']
     );
+    const boutiqueId = insertBoutique.rows[0].id;
+
+    try {
+      const slugBase = slugify(nom);
+      const slug = await uniqueSlug(slugBase, boutiqueId);
+      await pool.query('UPDATE boutiques SET slug=$1 WHERE id=$2', [slug, boutiqueId]);
+    } catch (_) {}
+
     const { plan } = req.body;
     const planChoisi = ['pro', 'business', 'decouverte'].includes(plan) ? plan : 'decouverte';
     const prix = planChoisi === 'business' ? 10000 : planChoisi === 'pro' ? 5000 : 0;
@@ -233,9 +241,13 @@ router.post('/taf-taf', async (req, res) => {
     const essaiJours = await cfg.getNum('abonnement_essai_jours') || 30;
     
     await pool.query(
+      `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
+      [user.id]
+    );
+
+    await pool.query(
       `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin)
-       VALUES ($1, $2, 'actif', $3, NOW() + INTERVAL '1 day' * $4)
-       ON CONFLICT (utilisateur_id) DO UPDATE SET plan=$2, statut='actif', fin=NOW() + INTERVAL '1 day' * $4`,
+       VALUES ($1, $2, 'actif', $3, NOW() + INTERVAL '1 day' * $4)`,
       [user.id, planChoisi, prix, essaiJours]
     );
 

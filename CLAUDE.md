@@ -43,6 +43,13 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
 
 ---
 
+### [2026-08-07] - Correction Bug Critique : Création de Boutique Taf Taf (`/api/boutiques/taf-taf`)
+- **Résolution Erreur PostgreSQL ON CONFLICT (`backend/routes/boutiques.js`)** :
+  - Correction de l'erreur `there is no unique or exclusion constraint matching the ON CONFLICT specification` sur la table `abonnements`.
+  - Remplacement du `ON CONFLICT (utilisateur_id)` invalide par une désactivation des abonnements actifs existants (`UPDATE abonnements SET statut='annule'`) suivie de l'insertion propre d'un nouvel abonnement (`INSERT INTO abonnements`).
+- **Correction Variable `boutiqueId` Manquante (`backend/routes/boutiques.js`)** :
+  - Déclaration explicite de `const boutiqueId = insertBoutique.rows[0].id;` avant le retour JSON de l'endpoint et génération/affectation automatique d'un `slug` unique via `uniqueSlug()`.
+
 ### [2026-08-07] - Approche OpenSpec : Implémentation Intégrale de la Feuille de Route Acheteur Nopalou
 - **Page de Suivi de Commande en Temps Réel (`frontend-next/src/app/suivi-commande/page.tsx`)** :
   - Route publique `/suivi-commande` permettant à l'acheteur d'entrer sa référence `CMD-2026-XXXX` ou son téléphone pour visualiser la progression de sa livraison en 4 étapes (*En attente ➔ En préparation ➔ En livraison ➔ Livrée*).
