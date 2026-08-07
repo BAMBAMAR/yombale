@@ -146,7 +146,7 @@ export default function TarifsPublicsSelector() {
   const optionDuree = dureesOptions.find((d) => d.mois === duree) || dureesOptions[0]
 
   return (
-    <div>
+    <div style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       {/* SÉLECTEUR DE DURÉE */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <p

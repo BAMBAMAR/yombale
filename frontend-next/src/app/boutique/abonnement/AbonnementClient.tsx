@@ -77,7 +77,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
   const finDate = planActif ? new Date(planActif.fin).toLocaleDateString('fr-FR') : null
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 16px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 16px', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
       {/* Header */}
       <div style={{ textAlign: 'center', maxWidth: 680, margin: '0 auto 36px' }}>
