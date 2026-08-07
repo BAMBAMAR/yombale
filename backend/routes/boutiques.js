@@ -96,6 +96,15 @@ async function uniqueSlug(base, excludeId = null) {
 }
 
 
+// ── Spec 06 : GET /api/devises/taux — Taux de conversion (route statique prioritaire)
+router.get(['/devises/taux', '/taux'], (req, res) => {
+  res.json({
+    base: 'XOF',
+    taux: { XOF: 1, EUR: 0.001524, USD: 0.001667 },
+    conversions_inverses: { '1_EUR_EN_XOF': 655.957, '1_USD_EN_XOF': 600.00 }
+  });
+});
+
 // ── GET /api/boutiques/catalogues-standards — Modèles de produits prédéfinis
 router.get('/catalogues-standards', async (req, res) => {
   try {
@@ -406,6 +415,9 @@ router.get('/mine', verifierToken, async (req, res) => {
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
               b.logo_url, b.cover_url, b.site_web, b.facebook, b.instagram, b.slug,
               b.actif, b.sponsorise, b.sponsor_jusqu_au, b.whatsapp_catalog_id, b.created_at,
+              COALESCE(b.mode_fonctionnement, 'hybride_pos') AS mode_fonctionnement,
+              COALESCE(b.devise_defaut, 'XOF') AS devise_defaut,
+              b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
               b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.conditions_vente, b.pied_de_page_document,
               COALESCE(b.caisse_token, b.id::text) AS caisse_token,
@@ -421,6 +433,108 @@ router.get('/mine', verifierToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
+// ── Spec 04/07 : GET /api/boutiques/:id/catalog.xml — Flux XML Meta Commerce Manager & TikTok Catalog
+router.get(['/:id/catalog.xml', '/:id/catalog.feed'], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let bqRes = isUUID
+      ? await pool.query('SELECT id, nom, slug, site_web FROM boutiques WHERE id = $1', [id])
+      : await pool.query('SELECT id, nom, slug, site_web FROM boutiques WHERE slug = $1', [id]);
+
+    if (!bqRes.rows[0]) return res.status(404).send('<error>Boutique introuvable</error>');
+    const bq = bqRes.rows[0];
+
+    const prods = await pool.query(
+      `SELECT id, nom, description, prix, prix_barre, images, categorie, en_stock
+       FROM boutique_produits WHERE boutique_id = $1 AND en_stock = true ORDER BY created_at DESC`,
+      [bq.id]
+    );
+
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+    const boutiqueUrl = `${baseUrl}/boutiques/${bq.slug || bq.id}`;
+
+    function escapeXml(unsafe) {
+      return (unsafe || '').replace(/[<>&'"]/g, (c) => {
+        switch (c) {
+          case '<': return '&lt;';
+          case '>': return '&gt;';
+          case '&': return '&amp;';
+          case '\'': return '&apos;';
+          case '"': return '&quot;';
+          default: return c;
+        }
+      });
+    }
+
+    let itemsXml = '';
+    for (const p of prods.rows) {
+      const pUrl = `${boutiqueUrl}?produit=${p.id}`;
+      const imgUrl = Array.isArray(p.images) && p.images[0] ? p.images[0] : `${baseUrl}/placeholder.png`;
+      const priceFormatted = `${Number(p.prix).toFixed(2)} XOF`;
+
+      itemsXml += `
+    <item>
+      <g:id>${escapeXml(p.id)}</g:id>
+      <g:title>${escapeXml(p.nom)}</g:title>
+      <g:description>${escapeXml(p.description || p.nom)}</g:description>
+      <g:link>${escapeXml(pUrl)}</g:link>
+      <g:image_link>${escapeXml(imgUrl)}</g:image_link>
+      <g:brand>${escapeXml(bq.nom)}</g:brand>
+      <g:condition>new</g:condition>
+      <g:availability>${p.en_stock ? 'in stock' : 'out of stock'}</g:availability>
+      <g:price>${priceFormatted}</g:price>
+    </item>`;
+    }
+
+    const xmlFeed = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>${escapeXml(bq.nom)} — Catalogue Nopalou</title>
+    <link>${escapeXml(boutiqueUrl)}</link>
+    <description>Flux de produits synchronisé pour Meta Commerce Manager &amp; TikTok Catalog</description>${itemsXml}
+  </channel>
+</rss>`;
+
+    res.header('Content-Type', 'application/xml; charset=utf-8');
+    res.send(xmlFeed);
+  } catch (err) {
+    console.error('[CATALOG XML ERR]', err);
+    res.status(500).send('<error>Erreur génération flux catalogue</error>');
+  }
+});
+
+// ── Spec 04/07 : GET /api/boutiques/:id/catalog.json — Flux JSON de catalogue
+router.get('/:id/catalog.json', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let bqRes = isUUID
+      ? await pool.query('SELECT id, nom, slug FROM boutiques WHERE id = $1', [id])
+      : await pool.query('SELECT id, nom, slug FROM boutiques WHERE slug = $1', [id]);
+
+    if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const bq = bqRes.rows[0];
+
+    const prods = await pool.query(
+      `SELECT id, nom, description, prix, prix_barre, images, categorie, en_stock
+       FROM boutique_produits WHERE boutique_id = $1 AND en_stock = true ORDER BY created_at DESC`,
+      [bq.id]
+    );
+
+    res.json({
+      boutique_id: bq.id,
+      boutique_nom: bq.nom,
+      slug: bq.slug,
+      total_produits: prods.rows.length,
+      produits: prods.rows
+    });
+  } catch (err) {
+    console.error('[CATALOG JSON ERR]', err);
+    res.status(500).json({ error: 'Erreur génération catalogue JSON' });
+  }
+});
+
 // ── GET /api/boutiques/:idOrSlug — fiche publique (UUID ou slug)
 router.get('/:id', async (req, res) => {
   try {
@@ -433,6 +547,8 @@ router.get('/:id', async (req, res) => {
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
               b.logo_url, b.cover_url, b.whatsapp, b.site_web, b.facebook, b.instagram,
               b.horaires, b.slug, b.utilisateur_id, b.created_at,
+              COALESCE(b.mode_fonctionnement, 'hybride_pos') AS mode_fonctionnement,
+              b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
               b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.conditions_vente, b.pied_de_page_document,
               COALESCE(b.caisse_token, b.id::text) AS caisse_token,
@@ -1254,10 +1370,11 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
 
     // UPDATE des colonnes avancées (ajoutées par migration — best-effort)
     try {
+      const mode = ['hybride_pos', 'pure_player'].includes(req.body.mode_fonctionnement) ? req.body.mode_fonctionnement : 'hybride_pos';
       await pool.query(
-        `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4, instagram=$5, slug=$6
-         WHERE id=$7`,
-        [cover_url||null, whatsapp||null, site_web||null, facebook||null, instagram||null, slug, newId]
+        `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4, instagram=$5, slug=$6, mode_fonctionnement=$7
+         WHERE id=$8`,
+        [cover_url||null, whatsapp||null, site_web||null, facebook||null, instagram||null, slug, mode, newId]
       );
     } catch (_) { /* colonnes pas encore migrées — ignoré */ }
 
@@ -1335,12 +1452,18 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
     // UPDATE colonnes avancées & fiscales
     try {
       const { regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut,
-              rccm, ninea, forme_juridique, capital_social, compte_bancaire, conditions_vente, pied_de_page_document } = req.body;
+              rccm, ninea, forme_juridique, capital_social, compte_bancaire, conditions_vente, pied_de_page_document,
+              mode_fonctionnement, meta_pixel_id, tiktok_pixel_id, ga4_id } = req.body;
 
       const parseBoolVal = (v) => {
         if (v === undefined || v === null || v === '') return null;
         return v === 'true' || v === true || v === 'on' || v === '1' || v === 1;
       };
+
+      let rawMode = mode_fonctionnement;
+      if (Array.isArray(rawMode)) rawMode = rawMode[0];
+      const validMode = ['hybride_pos', 'pure_player'].includes(rawMode) ? rawMode : null;
+      console.log('[BOUTIQUES PUT MODE]', req.params.id, 'rawMode:', rawMode, 'validMode:', validMode);
 
       await pool.query(
         `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4,
@@ -1355,8 +1478,12 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
          capital_social=COALESCE($15, capital_social),
          compte_bancaire=COALESCE($16, compte_bancaire),
          conditions_vente=COALESCE($17, conditions_vente),
-         pied_de_page_document=COALESCE($18, pied_de_page_document)
-         WHERE id=$19`,
+         pied_de_page_document=COALESCE($18, pied_de_page_document),
+         mode_fonctionnement=CASE WHEN $19::text IS NOT NULL THEN $19::text ELSE mode_fonctionnement END,
+         meta_pixel_id=COALESCE($20, meta_pixel_id),
+         tiktok_pixel_id=COALESCE($21, tiktok_pixel_id),
+         ga4_id=COALESCE($22, ga4_id)
+         WHERE id=$23`,
         [
           cover_url||null, whatsapp||null, site_web||null, facebook||null,
           instagram||null, horairesJson, newSlug,
@@ -1366,6 +1493,10 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
           tva_taux_defaut !== undefined && tva_taux_defaut !== '' ? Number(tva_taux_defaut) : null,
           rccm || null, ninea || null, forme_juridique || null, capital_social || null,
           compte_bancaire || null, conditions_vente || null, pied_de_page_document || null,
+          validMode,
+          meta_pixel_id?.trim() || null,
+          tiktok_pixel_id?.trim() || null,
+          ga4_id?.trim() || null,
           req.params.id
         ]
       );
@@ -1375,6 +1506,33 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
     res.json({ success: true, slug: newSlug });
   } catch (err) {
     console.error('[BOUTIQUES PUT]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── PUT /api/boutiques/:id/mode — Modifier le mode d'exploitation (hybride_pos vs pure_player)
+router.put('/:id/mode', verifierToken, param('id').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  const { mode_fonctionnement } = req.body;
+  if (!mode_fonctionnement || !['hybride_pos', 'pure_player'].includes(mode_fonctionnement)) {
+    return res.status(400).json({ error: "Mode d'exploitation invalide. Doit être 'hybride_pos' ou 'pure_player'." });
+  }
+  try {
+    const boutique = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!boutique) return res.status(404).json({ error: 'Boutique introuvable ou accès refusé' });
+
+    await pool.query(
+      `UPDATE boutiques SET mode_fonctionnement=$1, updated_at=NOW() WHERE id=$2`,
+      [mode_fonctionnement, req.params.id]
+    );
+
+    res.json({
+      succes: true,
+      message: "Mode d'exploitation mis à jour avec succès.",
+      mode_fonctionnement
+    });
+  } catch (err) {
+    console.error('[BOUTIQUES MODE PUT ERR]', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
@@ -2972,6 +3130,546 @@ router.post('/:id/regenere-caisse-token', verifierToken, async (req, res) => {
   } catch (err) {
     console.error('[REGENERE TOKEN ERR]', err);
     res.status(500).json({ error: 'Erreur lors de la réinitialisation de la clef' });
+  }
+});
+
+// ── Spec 02 : POST /api/boutiques/commandes/express — Checkout Web 1-Page Unifié
+router.post('/commandes/express', async (req, res) => {
+  try {
+    const { boutique_id, client_nom, client_telephone, client_adresse, methode_paiement, note, frais_livraison, articles } = req.body;
+
+    if (!boutique_id) {
+      return res.status(400).json({ error: 'Boutique introuvable ou ID requis.' });
+    }
+    if (!client_nom || !client_nom.trim() || !client_telephone || !client_telephone.trim()) {
+      return res.status(400).json({ error: 'Nom et téléphone du client requis.' });
+    }
+    if (!Array.isArray(articles) || articles.length === 0) {
+      return res.status(400).json({ error: 'Au moins un article est requis dans le panier.' });
+    }
+
+    const bqRes = await pool.query('SELECT id, nom FROM boutiques WHERE id = $1 AND actif = true', [boutique_id]);
+    if (!bqRes.rows[0]) {
+      return res.status(400).json({ error: 'Boutique introuvable.' });
+    }
+
+    const ref = 'CMD-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
+    const fraisLiv = Number(frais_livraison) || 0;
+    let totalArticles = 0;
+
+    for (const art of articles) {
+      let prix = Number(art.prix_unitaire);
+      let nomProd = art.nom_produit || 'Produit sans nom';
+
+      if (art.produit_id) {
+        const pRes = await pool.query('SELECT id, nom, prix, stock_quantite FROM boutique_produits WHERE id = $1', [art.produit_id]);
+        if (pRes.rows[0]) {
+          if (!prix || isNaN(prix)) prix = Number(pRes.rows[0].prix) || 0;
+          if (pRes.rows[0].nom) nomProd = pRes.rows[0].nom;
+
+          // Décrémentation de stock (si géré)
+          if (typeof pRes.rows[0].stock_quantite === 'number' && pRes.rows[0].stock_quantite > 0) {
+            const nvStock = Math.max(0, pRes.rows[0].stock_quantite - (Number(art.quantite) || 1));
+            await pool.query('UPDATE boutique_produits SET stock_quantite = $1 WHERE id = $2', [nvStock, art.produit_id]).catch(() => {});
+          }
+        }
+      }
+
+      const qte = Math.max(1, Number(art.quantite) || 1);
+      const totalLigne = (prix || 0) * qte;
+      totalArticles += totalLigne;
+
+      await pool.query(
+        `INSERT INTO commandes_boutique (
+          reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire,
+          montant_total, client_nom, client_telephone, client_adresse, note,
+          statut, source, methode_paiement, frais_livraison, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'en_attente', 'web', $12, $13, NOW())`,
+        [
+          ref, boutique_id, art.produit_id || null, nomProd, qte, prix || 0,
+          totalLigne, client_nom.trim(), client_telephone.trim(), client_adresse || null, note || null,
+          methode_paiement || 'wave', fraisLiv,
+        ]
+      );
+    }
+
+    const totalGeneral = totalArticles + fraisLiv;
+
+    pool.query(`INSERT INTO analytics_events (type, boutique_id) VALUES ('commande_web', $1)`, [boutique_id]).catch(() => {});
+
+    res.status(201).json({
+      succes: true,
+      reference: ref,
+      montant_total: totalGeneral,
+      statut: 'en_attente',
+      message: 'Votre commande a été enregistrée avec succès.'
+    });
+  } catch (err) {
+    console.error('[EXPRESS CHECKOUT ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l\'enregistrement de la commande' });
+  }
+});
+
+// ── Spec 02 : GET /api/boutiques/:id/produits/:prodId/cross-sell — Suggestions Upsell
+router.get('/:id/produits/:prodId/cross-sell', async (req, res) => {
+  try {
+    const { id, prodId } = req.params;
+
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let targetBoutiqueId = id;
+    if (!isUUID) {
+      const bqRes = await pool.query('SELECT id FROM boutiques WHERE slug = $1', [id]);
+      if (bqRes.rows[0]) targetBoutiqueId = bqRes.rows[0].id;
+    }
+
+    const r = await pool.query(
+      `SELECT id, nom, description, prix, prix_barre, images, categorie, en_stock
+       FROM boutique_produits
+       WHERE boutique_id = $1 AND id != $2 AND en_stock = true
+       ORDER BY ordre ASC, created_at DESC
+       LIMIT 4`,
+      [targetBoutiqueId, prodId]
+    );
+
+    res.json({ produits: r.rows });
+  } catch (err) {
+    console.error('[CROSS-SELL ERR]', err);
+    res.status(500).json({ error: 'Erreur lors du chargement des produits recommandés' });
+  }
+});
+
+// ── Spec 03 : GET /api/boutiques/:id/promotions — Liste des codes promo (Marchand)
+router.get('/:id/promotions', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const r = await pool.query(
+      `SELECT * FROM boutique_promotions WHERE boutique_id = $1 ORDER BY created_at DESC`,
+      [bq.id]
+    );
+    res.json({ promotions: r.rows });
+  } catch (err) {
+    console.error('[GET PROMOTIONS ERR]', err);
+    res.status(500).json({ error: 'Erreur lors du chargement des promotions' });
+  }
+});
+
+// ── Spec 03 : POST /api/boutiques/:id/promotions — Créer un code promo (Marchand)
+router.post('/:id/promotions', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { code, type_remise, valeur, min_achat, limite_utilisation, fin } = req.body;
+
+    if (!code || !code.trim()) {
+      return res.status(400).json({ error: 'Le code promo est obligatoire.' });
+    }
+    if (!type_remise || !['pourcentage', 'fixe', 'livraison_offerte'].includes(type_remise)) {
+      return res.status(400).json({ error: 'Type de remise invalide. Choix: pourcentage, fixe, livraison_offerte.' });
+    }
+    if (valeur === undefined || isNaN(Number(valeur)) || Number(valeur) < 0) {
+      return res.status(400).json({ error: 'La valeur de la remise doit être un nombre positif.' });
+    }
+
+    const cleanCode = code.trim().toUpperCase();
+
+    const r = await pool.query(
+      `INSERT INTO boutique_promotions (
+        boutique_id, code, type_remise, valeur, min_achat, limite_utilisation, fin
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *`,
+      [
+        bq.id, cleanCode, type_remise, Number(valeur),
+        Number(min_achat) || 0,
+        limite_utilisation ? Number(limite_utilisation) : null,
+        fin ? new Date(fin) : null
+      ]
+    );
+
+    res.status(201).json({ success: true, promotion: r.rows[0] });
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(400).json({ error: 'Un code promo portant ce nom existe déjà pour cette boutique.' });
+    }
+    console.error('[POST PROMOTION ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la création du code promo' });
+  }
+});
+
+// ── Spec 03 : DELETE /api/boutiques/:id/promotions/:promoId — Supprimer un code promo
+router.delete('/:id/promotions/:promoId', verifierToken, param('id').isUUID(), param('promoId').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    await pool.query(
+      `DELETE FROM boutique_promotions WHERE id = $1 AND boutique_id = $2`,
+      [req.params.promoId, bq.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[DELETE PROMOTION ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la suppression' });
+  }
+});
+
+// ── Spec 03 : POST /api/promotions/valider (ou /api/boutiques/:id/promotions/valider)
+router.post(['/promotions/valider', '/valider', '/:id/promotions/valider'], async (req, res) => {
+  try {
+    const boutique_id = req.params.id || req.body.boutique_id;
+    const { code, total_panier } = req.body;
+
+    if (!boutique_id) return res.status(400).json({ valide: false, error: 'Boutique ID requis' });
+    if (!code || !code.trim()) return res.status(400).json({ valide: false, error: 'Code promo requis' });
+
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(boutique_id);
+    let targetBoutiqueId = boutique_id;
+    if (!isUUID) {
+      const bqRes = await pool.query('SELECT id FROM boutiques WHERE slug = $1', [boutique_id]);
+      if (bqRes.rows[0]) targetBoutiqueId = bqRes.rows[0].id;
+    }
+
+    const total = Number(total_panier) || 0;
+    const cleanCode = code.trim().toUpperCase();
+
+    const r = await pool.query(
+      `SELECT * FROM boutique_promotions
+       WHERE boutique_id = $1 AND UPPER(code) = $2 AND actif = true`,
+      [targetBoutiqueId, cleanCode]
+    );
+
+    if (!r.rows[0]) {
+      return res.status(400).json({ valide: false, error: 'Code promo expiré ou invalide.' });
+    }
+
+    const promo = r.rows[0];
+
+    if (promo.fin && new Date(promo.fin) < new Date()) {
+      return res.status(400).json({ valide: false, error: 'Ce code promo a expiré.' });
+    }
+
+    if (promo.limite_utilisation !== null && promo.fois_utilise >= promo.limite_utilisation) {
+      return res.status(400).json({ valide: false, error: 'La limite d\'utilisation de ce code est atteinte.' });
+    }
+
+    if (promo.min_achat && total < Number(promo.min_achat)) {
+      return res.status(400).json({
+        valide: false,
+        error: `Ce code nécessite un achat minimum de ${Number(promo.min_achat).toLocaleString('fr-FR')} FCFA.`
+      });
+    }
+
+    let reduction = 0;
+    if (promo.type_remise === 'pourcentage') {
+      reduction = Math.round((total * Number(promo.valeur)) / 100);
+    } else if (promo.type_remise === 'fixe') {
+      reduction = Math.min(total, Number(promo.valeur));
+    } else if (promo.type_remise === 'livraison_offerte') {
+      reduction = Number(promo.valeur) || 0;
+    }
+
+    const nouveauTotal = Math.max(0, total - reduction);
+
+    res.json({
+      valide: true,
+      code: promo.code,
+      type_remise: promo.type_remise,
+      valeur: Number(promo.valeur),
+      montant_reduction: reduction,
+      nouveau_total: nouveauTotal,
+      message: 'Code promo appliqué avec succès !'
+    });
+  } catch (err) {
+    console.error('[PROMO VALIDATE ERR]', err);
+    res.status(500).json({ valide: false, error: 'Erreur lors de la vérification du code promo' });
+  }
+});
+
+// ── Spec 04 : PUT /api/boutiques/:id/pixels — Enregistrer les Pixel IDs (Marchand)
+router.put('/:id/pixels', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { meta_pixel_id, tiktok_pixel_id, ga4_id } = req.body;
+
+    await pool.query(
+      `UPDATE boutiques
+       SET meta_pixel_id = $1, tiktok_pixel_id = $2, ga4_id = $3, updated_at = NOW()
+       WHERE id = $4`,
+      [
+        meta_pixel_id?.trim() || null,
+        tiktok_pixel_id?.trim() || null,
+        ga4_id?.trim() || null,
+        bq.id
+      ]
+    );
+
+    res.json({
+      success: true,
+      pixels: {
+        meta_pixel_id: meta_pixel_id?.trim() || null,
+        tiktok_pixel_id: tiktok_pixel_id?.trim() || null,
+        ga4_id: ga4_id?.trim() || null
+      }
+    });
+  } catch (err) {
+    console.error('[PUT PIXELS ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la sauvegarde des pixels' });
+  }
+});
+
+// ── Spec 04 : GET /api/boutiques/:id/pixels/public — Lecture publique des pixels
+router.get('/:id/pixels/public', async (req, res) => {
+  try {
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(req.params.id);
+    const r = await pool.query(
+      `SELECT meta_pixel_id, tiktok_pixel_id, ga4_id FROM boutiques WHERE ${isUUID ? 'id = $1' : 'slug = $1'}`,
+      [req.params.id]
+    );
+
+    if (!r.rows[0]) {
+      return res.status(404).json({ error: 'Boutique introuvable' });
+    }
+
+    res.json({
+      meta_pixel_id: r.rows[0].meta_pixel_id || null,
+      tiktok_pixel_id: r.rows[0].tiktok_pixel_id || null,
+      ga4_id: r.rows[0].ga4_id || null
+    });
+  } catch (err) {
+    console.error('[GET PIXELS PUBLIC ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── Spec 05 : GET /api/boutiques/:id/api-keys — Liste des clés API marchand
+router.get('/:id/api-keys', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const r = await pool.query(
+      `SELECT id, nom, key_prefix, created_at, last_used_at FROM boutique_api_keys WHERE boutique_id = $1 ORDER BY created_at DESC`,
+      [bq.id]
+    );
+    res.json({ keys: r.rows });
+  } catch (err) {
+    console.error('[GET API KEYS ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération des clés API' });
+  }
+});
+
+// ── Spec 05 : POST /api/boutiques/:id/api-keys — Générer une clé API marchand
+router.post('/:id/api-keys', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { nom } = req.body;
+    if (!nom || !nom.trim()) {
+      return res.status(400).json({ error: 'Le nom de la clé API est requis.' });
+    }
+
+    const crypto = require('crypto');
+    const randomBytes = crypto.randomBytes(24).toString('hex');
+    const apiKey = `nopalou_sk_live_${randomBytes}`;
+    const keyPrefix = apiKey.substring(0, 19); // "nopalou_sk_live_123"
+    const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
+
+    const r = await pool.query(
+      `INSERT INTO boutique_api_keys (boutique_id, nom, key_prefix, key_hash)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, nom, key_prefix, created_at`,
+      [bq.id, nom.trim(), keyPrefix, keyHash]
+    );
+
+    res.status(201).json({
+      success: true,
+      key_id: r.rows[0].id,
+      api_key: apiKey,
+      message: 'Conservez cette clé en lieu sûr. Elle ne sera plus affichée.'
+    });
+  } catch (err) {
+    console.error('[POST API KEY ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la génération de la clé API' });
+  }
+});
+
+// ── Spec 05 : DELETE /api/boutiques/:id/api-keys/:keyId — Révoker une clé API marchand
+router.delete('/:id/api-keys/:keyId', verifierToken, param('id').isUUID(), param('keyId').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    await pool.query(
+      `DELETE FROM boutique_api_keys WHERE id = $1 AND boutique_id = $2`,
+      [req.params.keyId, bq.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[DELETE API KEY ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la révocation de la clé API' });
+  }
+});
+
+// ── Spec 05 : GET /api/boutiques/:id/webhooks — Liste des webhooks
+router.get('/:id/webhooks', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const r = await pool.query(
+      `SELECT id, url, secret, events, actif, created_at FROM boutique_webhooks WHERE boutique_id = $1 ORDER BY created_at DESC`,
+      [bq.id]
+    );
+    res.json({ webhooks: r.rows });
+  } catch (err) {
+    console.error('[GET WEBHOOKS ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération des webhooks' });
+  }
+});
+
+// ── Spec 05 : POST /api/boutiques/:id/webhooks — Créer un webhook endpoint
+router.post('/:id/webhooks', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { url, events } = req.body;
+    if (!url || !url.trim() || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+      return res.status(400).json({ error: 'Une URL de webhook valide (http:// ou https://) est requise.' });
+    }
+
+    const eventsList = Array.isArray(events) && events.length > 0 ? events : ['order.created'];
+    const crypto = require('crypto');
+    const secret = `whsec_${crypto.randomBytes(24).toString('hex')}`;
+
+    const r = await pool.query(
+      `INSERT INTO boutique_webhooks (boutique_id, url, secret, events)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [bq.id, url.trim(), secret, eventsList]
+    );
+
+    res.status(201).json({
+      success: true,
+      webhook: r.rows[0]
+    });
+  } catch (err) {
+    console.error('[POST WEBHOOK ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l\'enregistrement du webhook' });
+  }
+});
+
+// ── Spec 05 : DELETE /api/boutiques/:id/webhooks/:webhookId — Supprimer un webhook
+router.delete('/:id/webhooks/:webhookId', verifierToken, param('id').isUUID(), param('webhookId').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    await pool.query(
+      `DELETE FROM boutique_webhooks WHERE id = $1 AND boutique_id = $2`,
+      [req.params.webhookId, bq.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[DELETE WEBHOOK ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la suppression du webhook' });
+  }
+});
+
+// ── Spec 06 : GET /api/devises/taux — Taux de conversion officiels
+router.get('/devises/taux', (req, res) => {
+  res.json({
+    base: 'XOF',
+    taux: { XOF: 1, EUR: 0.001524, USD: 0.001667 },
+    conversions_inverses: { '1_EUR_EN_XOF': 655.957, '1_USD_EN_XOF': 600.00 }
+  });
+});
+router.get('/taux', (req, res) => {
+  res.json({
+    base: 'XOF',
+    taux: { XOF: 1, EUR: 0.001524, USD: 0.001667 },
+    conversions_inverses: { '1_EUR_EN_XOF': 655.957, '1_USD_EN_XOF': 600.00 }
+  });
+});
+
+// ── Spec 06 : PUT /api/boutiques/:id/devise — Devise par défaut de la boutique (Marchand)
+router.put('/:id/devise', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { devise_defaut } = req.body;
+    if (!devise_defaut || !['XOF', 'EUR', 'USD'].includes(devise_defaut.toUpperCase())) {
+      return res.status(400).json({ error: 'Devise invalide. Choix: XOF, EUR, USD.' });
+    }
+
+    const cleanDevise = devise_defaut.toUpperCase();
+
+    await pool.query(
+      `UPDATE boutiques SET devise_defaut = $1, updated_at = NOW() WHERE id = $2`,
+      [cleanDevise, bq.id]
+    );
+
+    res.json({
+      success: true,
+      devise_defaut: cleanDevise,
+      message: `Devise par défaut de la boutique mise à jour vers ${cleanDevise}.`
+    });
+  } catch (err) {
+    console.error('[PUT DEVISE ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour de la devise' });
+  }
+});
+
+// ── Spec 06 : POST /api/paiements/stripe/simuler — Simulation Carte Bancaire Stripe
+router.post(['/paiements/stripe/simuler', '/stripe/simuler', '/:id/paiements/stripe/simuler'], async (req, res) => {
+  try {
+    const boutique_id = req.params.id || req.body.boutique_id;
+    const { montant, devise, card_number, exp_month, exp_year, cvc } = req.body;
+
+    if (!montant || isNaN(Number(montant)) || Number(montant) <= 0) {
+      return res.status(400).json({ success: false, error: 'Montant invalide.' });
+    }
+    if (!card_number || !card_number.replace(/\s+/g, '').match(/^\d{13,19}$/)) {
+      return res.status(400).json({ success: false, error: 'Numéro de carte bancaire invalide.' });
+    }
+
+    const cleanCard = card_number.replace(/\s+/g, '');
+
+    // Simuler le rejet Stripe pour cartes de test d'échec (ex: 4000000000000002)
+    if (cleanCard.endsWith('0002') || cleanCard.endsWith('9999')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Votre carte a été déclinée par l\'émetteur (Carte de test d\'échec Stripe).'
+      });
+    }
+
+    const crypto = require('crypto');
+    const txnId = `txn_stripe_sim_${crypto.randomBytes(12).toString('hex')}`;
+    const cleanDevise = (devise || 'XOF').toUpperCase();
+
+    let montantXof = Number(montant);
+    if (cleanDevise === 'EUR') montantXof = Math.round(Number(montant) * 655.957);
+    else if (cleanDevise === 'USD') montantXof = Math.round(Number(montant) * 600.00);
+
+    res.json({
+      success: true,
+      transaction_id: txnId,
+      statut: 'succeeded',
+      montant_paye: Number(montant),
+      devise: cleanDevise,
+      montant_xof: montantXof,
+      mode: 'stripe_simulation',
+      message: 'Paiement par carte bancaire approuvé avec succès (Mode Simulation Stripe).'
+    });
+  } catch (err) {
+    console.error('[STRIPE SIMULATION ERR]', err);
+    res.status(500).json({ success: false, error: 'Erreur lors du traitement de la carte bancaire' });
   }
 });
 

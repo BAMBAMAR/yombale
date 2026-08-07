@@ -973,14 +973,23 @@ router.patch(
 );
 
 // GET /api/comptabilite/:boutiqueId/zones/public — zones de livraison publiques (pas d'auth)
-router.get('/:boutiqueId/zones/public', param('boutiqueId').isUUID(), async (req, res) => {
+router.get('/:boutiqueId/zones/public', async (req, res) => {
   try {
+    const bId = req.params.boutiqueId;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bId);
+    let targetBoutiqueId = bId;
+    if (!isUUID) {
+      const bqRes = await pool.query('SELECT id FROM boutiques WHERE slug = $1', [bId]);
+      if (bqRes.rows[0]) targetBoutiqueId = bqRes.rows[0].id;
+    }
+
     const { rows } = await pool.query(
       'SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC',
-      [req.params.boutiqueId]
+      [targetBoutiqueId]
     );
     res.json(rows);
   } catch (err) {
+    console.error('[ZONES PUBLIC ERR]', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });

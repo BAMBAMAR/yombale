@@ -674,6 +674,11 @@ module.exports = async function migrateInline() {
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS horaires JSONB DEFAULT '{}'`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS slug VARCHAR(100)`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS couleur_theme VARCHAR(50) DEFAULT '#1e3a5f'`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS mode_fonctionnement VARCHAR(30) DEFAULT 'hybride_pos'`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS meta_pixel_id VARCHAR(50)`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS tiktok_pixel_id VARCHAR(50)`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS ga4_id VARCHAR(50)`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS devise_defaut VARCHAR(10) DEFAULT 'XOF'`,
   ];
   for (const sql of colonnesBoutiqueAvancees) {
     try { await pool.query(sql); }
@@ -800,6 +805,59 @@ module.exports = async function migrateInline() {
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_commandes_groupe ON commandes_boutique(groupe_commande) WHERE groupe_commande IS NOT NULL`);
     console.log('[MIGRATE] ✅ Table commandes_boutique OK');
   } catch (e) { console.warn('[MIGRATE] commandes_boutique:', e.message); }
+
+  // Spec 03 : Table boutique_promotions (Codes Promo & Coupons)
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS boutique_promotions (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id        UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        code               VARCHAR(50) NOT NULL,
+        type_remise        VARCHAR(30) NOT NULL CHECK (type_remise IN ('pourcentage', 'fixe', 'livraison_offerte')),
+        valeur             NUMERIC(12,2) NOT NULL DEFAULT 0,
+        min_achat          NUMERIC(12,2) DEFAULT 0,
+        limite_utilisation INT DEFAULT NULL,
+        fois_utilise       INT DEFAULT 0,
+        actif              BOOLEAN DEFAULT TRUE,
+        debut              TIMESTAMPTZ DEFAULT NOW(),
+        fin                TIMESTAMPTZ DEFAULT NULL,
+        created_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_promotions_bq ON boutique_promotions(boutique_id, actif);
+      DO $$ BEGIN
+        CREATE UNIQUE INDEX uidx_boutique_code ON boutique_promotions(boutique_id, UPPER(code));
+      EXCEPTION WHEN others THEN NULL; END $$;
+    `);
+    console.log('[MIGRATE] ✅ Table boutique_promotions OK');
+  } catch (e) { console.warn('[MIGRATE] boutique_promotions:', e.message); }
+
+  // Spec 05 : Tables boutique_api_keys et boutique_webhooks (Developer Portal)
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS boutique_api_keys (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        nom          VARCHAR(100) NOT NULL,
+        key_prefix   VARCHAR(20) NOT NULL,
+        key_hash     VARCHAR(128) NOT NULL,
+        created_at   TIMESTAMPTZ DEFAULT NOW(),
+        last_used_at TIMESTAMPTZ
+      );
+      CREATE INDEX IF NOT EXISTS idx_api_keys_bq ON boutique_api_keys(boutique_id);
+
+      CREATE TABLE IF NOT EXISTS boutique_webhooks (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        url          VARCHAR(500) NOT NULL,
+        secret       VARCHAR(64) NOT NULL,
+        events       TEXT[] NOT NULL DEFAULT '{"order.created"}',
+        actif        BOOLEAN DEFAULT TRUE,
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_webhooks_bq ON boutique_webhooks(boutique_id, actif);
+    `);
+    console.log('[MIGRATE] ✅ Tables boutique_api_keys et boutique_webhooks OK');
+  } catch (e) { console.warn('[MIGRATE] boutique_developer_portal:', e.message); }
 
   // Dépenses boutique
   try {

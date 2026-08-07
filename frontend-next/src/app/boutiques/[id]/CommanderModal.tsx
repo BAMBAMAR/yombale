@@ -54,6 +54,14 @@ export default function CommanderModal({
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [crossSell, setCrossSell] = useState<Produit[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
+
+  const [codePromo, setCodePromo] = useState('');
+  const [promoApplique, setPromoApplique] = useState<{ code: string; reduction: number } | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
   useEffect(() => {
@@ -64,33 +72,104 @@ export default function CommanderModal({
         else setZones(DEFAULT_ZONES)
       })
       .catch(() => setZones(DEFAULT_ZONES))
-  }, [boutiqueId, backendUrl])
+
+    // Chargement des suggestions Cross-Sell
+    fetch(`${backendUrl}/api/boutiques/${boutiqueId}/produits/${produit.id}/cross-sell`)
+      .then(r => r.ok ? r.json() : { produits: [] })
+      .then(data => {
+        if (Array.isArray(data.produits)) setCrossSell(data.produits)
+      })
+      .catch(() => {})
+  }, [boutiqueId, produit.id, backendUrl])
 
   const zoneSelectionnee = zones.find(z => z.id === zoneId) || DEFAULT_ZONES[0]
   const fraisLivraison = zoneSelectionnee ? zoneSelectionnee.prix : 1500
-  const sousTotal = produit.prix ? produit.prix * quantite : null
-  const total = sousTotal !== null ? sousTotal + fraisLivraison : null
+  const sousTotalMain = produit.prix ? produit.prix * quantite : 0
+  const sousTotalAddons = Object.entries(selectedAddons).reduce((acc, [pId, qte]) => {
+    const item = crossSell.find(c => c.id === pId)
+    return acc + (item && item.prix ? item.prix * qte : 0)
+  }, 0)
+  const sousTotal = sousTotalMain + sousTotalAddons
+  const totalSansReduction = sousTotal + fraisLivraison
+  const total = Math.max(0, totalSansReduction - (promoApplique ? promoApplique.reduction : 0))
 
-  const messageWhatsappDirect = `Bonjour ${nomBoutique ? nomBoutique : 'vendeur'} ! Je suis intéressé(e) par l'article "${produit.nom}"${produit.prix ? ` (${fcfa(produit.prix)})` : ''} vu sur Yombale. Est-il disponible ?`
+  const messageWhatsappDirect = `Bonjour ${nomBoutique ? nomBoutique : 'vendeur'} ! Je suis intéressé(e) par l'article "${produit.nom}"${produit.prix ? ` (${fcfa(produit.prix)})` : ''} vu sur Nopalou. Est-il disponible ?`
+
+  function toggleAddon(pId: string) {
+    setSelectedAddons(prev => {
+      const next = { ...prev }
+      if (next[pId]) delete next[pId]
+      else next[pId] = 1
+      return next
+    })
+  }
+
+  async function appliquerCodePromo() {
+    if (!codePromo.trim()) {
+      setPromoError('⚠️ Veuillez saisir un code promo')
+      setPromoApplique(null)
+      return
+    }
+    setPromoLoading(true)
+    setPromoError(null)
+    try {
+      const res = await fetch(`${backendUrl}/api/boutiques/promotions/valider`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          boutique_id: boutiqueId,
+          code: codePromo,
+          total_panier: sousTotal
+        })
+      })
+      const data = await res.json()
+      if (!res.ok || !data.valide) {
+        setPromoError(data.error || 'Code promo invalide')
+        setPromoApplique(null)
+      } else {
+        setPromoApplique({ code: data.code, reduction: data.montant_reduction })
+      }
+    } catch {
+      setPromoError('Impossible de vérifier le code promo')
+    } finally {
+      setPromoLoading(false)
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     setLoading(true)
+
+    const articlesPayload = [
+      { produit_id: produit.id, nom_produit: produit.nom, quantite, prix_unitaire: produit.prix || 0 }
+    ]
+
+    Object.entries(selectedAddons).forEach(([pId, qte]) => {
+      const addon = crossSell.find(c => c.id === pId)
+      if (addon) {
+        articlesPayload.push({
+          produit_id: addon.id,
+          nom_produit: addon.nom,
+          quantite: qte,
+          prix_unitaire: addon.prix || 0
+        })
+      }
+    })
+
     try {
-      const res = await fetch(`${backendUrl}/api/comptabilite/${boutiqueId}/commandes`, {
+      const res = await fetch(`${backendUrl}/api/boutiques/commandes/express`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          produit_id: produit.id,
-          quantite,
+          boutique_id: boutiqueId,
           client_nom: nom,
           client_telephone: tel,
           client_adresse: adresse || undefined,
           note: note || undefined,
           methode_paiement: paiement,
-          zone_livraison_id: zoneId || undefined,
-          source: 'web',
+          frais_livraison: fraisLivraison,
+          articles: articlesPayload,
         }),
       })
       const data = await res.json()
@@ -293,13 +372,91 @@ export default function CommanderModal({
                 <textarea value={note} onChange={e => setNote(e.target.value)} style={{ ...inputStyle, resize: 'vertical' }} rows={2} placeholder="Couleur, taille, autre demande…" />
               </div>
 
+              {/* Cross-sell / Articles complémentaires */}
+              {crossSell.length > 0 && (
+                <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: 10, padding: 12 }}>
+                  <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    🔥 Ajouter un article complémentaire (1-Clic) :
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {crossSell.map(c => {
+                      const isSelected = !!selectedAddons[c.id]
+                      return (
+                        <div
+                          key={c.id}
+                          onClick={() => toggleAddon(c.id)}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '8px 12px', borderRadius: 8, border: '1px solid',
+                            borderColor: isSelected ? '#C75B00' : '#fcd34d',
+                            background: isSelected ? '#fff7ed' : '#ffffff',
+                            cursor: 'pointer', transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 16 }}>{isSelected ? '✅' : '➕'}</span>
+                            <span style={{ fontSize: 13, fontWeight: isSelected ? 700 : 500, color: '#1f2937' }}>{c.nom}</span>
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#C75B00' }}>
+                            +{c.prix ? fcfa(c.prix) : '0 FCFA'}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Code Promo */}
+              <div>
+                <label style={labelStyle}>Code Promo (optionnel)</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="text"
+                    value={codePromo}
+                    onChange={e => setCodePromo(e.target.value.toUpperCase())}
+                    style={{ ...inputStyle, textTransform: 'uppercase', flex: 1 }}
+                    placeholder="Ex: SOLDE20"
+                  />
+                  <button
+                    type="button"
+                    onClick={appliquerCodePromo}
+                    disabled={promoLoading}
+                    style={{
+                      padding: '8px 16px', borderRadius: 8, background: '#1C2B4A', color: '#fff',
+                      border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {promoLoading ? '...' : 'Appliquer'}
+                  </button>
+                </div>
+                {promoError && (
+                  <p style={{ margin: '4px 0 0', fontSize: 12, color: '#dc2626', fontWeight: 600 }}>{promoError}</p>
+                )}
+                {promoApplique && (
+                  <p style={{ margin: '4px 0 0', fontSize: 12, color: '#16a34a', fontWeight: 700 }}>
+                    ✅ Code &ldquo;{promoApplique.code}&rdquo; appliqué (-{fcfa(promoApplique.reduction)})
+                  </p>
+                )}
+              </div>
+
               {/* Récapitulatif */}
               {sousTotal !== null && (
                 <div style={{ background: '#f8fafc', borderRadius: 10, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6b7280' }}>
                     <span>{produit.nom} × {quantite}</span>
-                    <span>{fcfa(sousTotal)}</span>
+                    <span>{fcfa(sousTotalMain)}</span>
                   </div>
+                  {Object.entries(selectedAddons).map(([pId, qte]) => {
+                    const addon = crossSell.find(c => c.id === pId)
+                    if (!addon) return null
+                    return (
+                      <div key={pId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#b45309', fontWeight: 600 }}>
+                        <span>+ {addon.nom} × {qte}</span>
+                        <span>{fcfa((addon.prix || 0) * qte)}</span>
+                      </div>
+                    )
+                  })}
                   {fraisLivraison > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6b7280' }}>
                       <span>Livraison ({zoneSelectionnee?.nom})</span>

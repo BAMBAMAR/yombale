@@ -38,6 +38,10 @@ interface Boutique {
   facebook: string | null
   instagram: string | null
   slug: string | null
+  mode_fonctionnement?: 'hybride_pos' | 'pure_player'
+  meta_pixel_id?: string | null
+  tiktok_pixel_id?: string | null
+  ga4_id?: string | null
   actif: boolean
   sponsorise: boolean | null
   sponsor_jusqu_au: string | null
@@ -397,6 +401,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
 }) {
   const action = boutique ? updateBoutique.bind(null, boutique.id) : createBoutique
   const [state, formAction] = useFormState<ActionState, FormData>(action, {})
+  const [modeSelect, setModeSelect] = useState<'hybride_pos' | 'pure_player'>(boutique?.mode_fonctionnement || 'hybride_pos')
 
   useEffect(() => { if (state.success) onSuccess() }, [state.success])
 
@@ -411,6 +416,53 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
           {state.error}
         </div>
       )}
+
+      <SectionTitle>⚡ Mode d&apos;exploitation</SectionTitle>
+      <input type="hidden" name="mode_fonctionnement" value={modeSelect} />
+      <div>
+        <label style={labelStyle}>Choisissez la configuration de votre tableau de bord</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginTop: 6 }}>
+          <label style={{
+            display: 'flex', flexDirection: 'column', padding: 12, borderRadius: 8,
+            border: '2px solid ' + (modeSelect === 'hybride_pos' ? '#16a34a' : '#e5e7eb'),
+            background: modeSelect === 'hybride_pos' ? '#f0fdf4' : '#ffffff', cursor: 'pointer'
+          }}>
+            <input
+              type="radio"
+              value="hybride_pos"
+              checked={modeSelect === 'hybride_pos'}
+              onChange={() => setModeSelect('hybride_pos')}
+              style={{ display: 'none' }}
+            />
+            <span style={{ fontWeight: 800, fontSize: 13, color: '#1C2B4A', display: 'flex', alignItems: 'center', gap: 6 }}>
+              🏪 Mode Hybride (Magasin + Web)
+            </span>
+            <span style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
+              Caisse enregistreuse POS, stickers codes-barres EAN-13, carnet de dettes client et vente web.
+            </span>
+          </label>
+
+          <label style={{
+            display: 'flex', flexDirection: 'column', padding: 12, borderRadius: 8,
+            border: '2px solid ' + (modeSelect === 'pure_player' ? '#C75B00' : '#e5e7eb'),
+            background: modeSelect === 'pure_player' ? '#fff7ed' : '#ffffff', cursor: 'pointer'
+          }}>
+            <input
+              type="radio"
+              value="pure_player"
+              checked={modeSelect === 'pure_player'}
+              onChange={() => setModeSelect('pure_player')}
+              style={{ display: 'none' }}
+            />
+            <span style={{ fontWeight: 800, fontSize: 13, color: '#C75B00', display: 'flex', alignItems: 'center', gap: 6 }}>
+              ⚡ Mode Pure Player (E-Commerce Web)
+            </span>
+            <span style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
+              Interface 100% digitale axée sur les commandes web, les livraisons, le marketing et l&apos;analytics.
+            </span>
+          </label>
+        </div>
+      </div>
 
       <SectionTitle>📋 Informations</SectionTitle>
 
@@ -471,6 +523,23 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
           <label style={labelStyle}>Instagram</label>
           <input name="instagram" type="url" defaultValue={boutique?.instagram ?? ''} style={inputStyle} placeholder="https://instagram.com/…" />
         </div>
+      </div>
+
+      <SectionTitle>📊 Pixels Publicitaires & Tracking ROAS</SectionTitle>
+
+      <div className="bq-form-grid-2">
+        <div>
+          <label style={labelStyle}>Meta Facebook Pixel ID</label>
+          <input name="meta_pixel_id" defaultValue={boutique?.meta_pixel_id ?? ''} style={inputStyle} placeholder="Ex: 123456789012345" />
+        </div>
+        <div>
+          <label style={labelStyle}>TikTok Pixel ID</label>
+          <input name="tiktok_pixel_id" defaultValue={boutique?.tiktok_pixel_id ?? ''} style={inputStyle} placeholder="Ex: C1234567890ABC" />
+        </div>
+      </div>
+      <div>
+        <label style={labelStyle}>Google Analytics GA4 ID</label>
+        <input name="ga4_id" defaultValue={boutique?.ga4_id ?? ''} style={inputStyle} placeholder="Ex: G-XYZ1234567" />
       </div>
 
       <SectionTitle>🔗 Lien personnalisé</SectionTitle>
@@ -1817,6 +1886,11 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
                 {planActif === 'business' && <span className="badge-premium" style={{ background: 'var(--navy)', color: '#fff' }}>💼 Business</span>}
                 {planActif === 'pro'      && <span className="badge-premium" style={{ background: 'var(--accent)', color: '#fff' }}>⭐ Pro</span>}
                 {(planActif === 'decouverte' || planActif === 'taf_taf') && <span className="badge-premium" style={{ background: '#25D366', color: '#1C2B4A' }}>⚡ Taf Taf</span>}
+                {boutique.mode_fonctionnement === 'pure_player' ? (
+                  <span className="badge-premium" style={{ background: '#fff7ed', color: '#c75b00', borderColor: '#ffedd5' }}>⚡ Pure Player Web</span>
+                ) : (
+                  <span className="badge-premium" style={{ background: '#f0fdf4', color: '#16a34a', borderColor: '#bbf7d0' }}>🏪 Hybride POS</span>
+                )}
                 {sponsorActif            && <span className="badge-premium" style={{ background: '#fffbeb', color: '#92400e', borderColor: '#fcd34d' }}>Mis en avant</span>}
               </div>
               <span className="badge-premium" style={{ color: boutique.actif ? '#16a34a' : 'var(--text3)', background: boutique.actif ? '#f0fdf4' : '#f9fafb', borderColor: boutique.actif ? '#bbf7d0' : 'var(--border)' }}>
@@ -1854,9 +1928,11 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
           <button onClick={onManage} className="btn-premium btn-premium-primary" style={{ padding: '9px 18px', fontSize: 13 }}>
             Gérer la boutique →
           </button>
-          <a href="/boutique/caisse" className="btn-premium btn-premium-success" style={{ padding: '9px 18px', fontSize: 13 }}>
-            <Monitor size={15} /> Caisse POS
-          </a>
+          {boutique.mode_fonctionnement !== 'pure_player' && (
+            <a href="/boutique/caisse" className="btn-premium btn-premium-success" style={{ padding: '9px 18px', fontSize: 13 }}>
+              <Monitor size={15} /> Caisse POS
+            </a>
+          )}
           <button onClick={onEdit} className="btn-premium btn-premium-secondary" style={{ padding: '9px 16px', fontSize: 13 }}>
             Modifier
           </button>
@@ -2030,16 +2106,18 @@ function BoutiqueDashboard({
             </div>
           </button>
 
-          <a
-            href="/boutique/caisse"
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#faf5ff', border: '1px solid #e9d5ff', textDecoration: 'none' }}
-          >
-            <span style={{ fontSize: 24 }}>🛒</span>
-            <div>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#6b21a8' }}>Ouvrir Caisse POS</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7e22ce' }}>Vente sur place</p>
-            </div>
-          </a>
+          {boutique.mode_fonctionnement !== 'pure_player' && (
+            <a
+              href="/boutique/caisse"
+              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#faf5ff', border: '1px solid #e9d5ff', textDecoration: 'none' }}
+            >
+              <span style={{ fontSize: 24 }}>🛒</span>
+              <div>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#6b21a8' }}>Ouvrir Caisse POS</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7e22ce' }}>Vente sur place</p>
+              </div>
+            </a>
+          )}
 
           <button
             onClick={() => onNavigate('marketing')}
@@ -2267,7 +2345,11 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
 
         {/* Liens rapides */}
         <div style={{ padding: '12px 8px', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {isAllowed('pro') ? (
+          {boutique.mode_fonctionnement === 'pure_player' ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', fontSize: 12, color: '#C75B00', borderRadius: 6, fontWeight: 800, background: '#fff7ed', border: '1px solid #ffedd5' }}>
+              <span>⚡ Mode Pure Player Web</span>
+            </div>
+          ) : isAllowed('pro') ? (
             <a href="/boutique/caisse"
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', fontSize: 12, color: '#16a34a', textDecoration: 'none', borderRadius: 6, fontWeight: 700, background: '#f0fdf4' }}>
               <span>🛒 Caisse POS (Physique) ↗</span>

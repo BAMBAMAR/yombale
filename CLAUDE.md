@@ -1,5 +1,78 @@
 # CLAUDE.md
 
+### [2026-08-07] - Approche OpenSpec : Flux Catalogues Dynamiques XML/JSON & Intégration Meta / Instagram Shopping / TikTok Catalog
+- **Endpoints de Flux Catalogue Dynamique (`backend/routes/boutiques.js`)** :
+  - `GET /api/boutiques/:id/catalog.xml` : Génération du flux RSS 2.0 XML conforme aux spécifications Google Merchant, Meta Commerce Manager et TikTok Catalog. Permet à chaque marchand d'importer son catalogue automatiquement sur sa page Instagram/Facebook pour taguer ses produits sur ses publications, stories et reels.
+  - `GET /api/boutiques/:id/catalog.json` : Endpoint d'export JSON structuré pour intégration d'applications tierces.
+- **Résolution Universelle UUID & Slug** : Prise en charge transparente des identifiants UUID et des Slugs d'URL (ex: `dievo-style`, `tech-dakar`) sur l'ensemble des routes d'exportation de catalogue, de validation de coupons promo et d'offres complémentaires.
+- **Amélioration UX Formulaire de Commande (`CommanderModal.tsx`)** :
+  - Gestion explicite des requêtes de codes promo vides avec affichage instantané du message d'erreur `⚠️ Veuillez saisir un code promo`.
+  - Bouton *Appliquer* réactif à tout moment sans blocage silencieux.
+- **Master Test Run Exhaustif Validé à 100% (`tests/unit/spec-master-exhaustive.test.js`)** : 20 tests d'intégration et de cas limites exécutés et réussis avec succès (20/20 PASS).
+
+### [2026-08-07] - Approche OpenSpec : Implémentation de la Spec 06 (Multi-Devises XOF/EUR/USD & Simulation Carte Bancaire Stripe)
+- **Fichier de Spécification OpenSpec 06 (`docs/specs/06-multi-devises-stripe.md`)** : Rédaction de la spécification OpenSpec pour le support multi-devises (`XOF`, `EUR`, `USD`) avec taux de change officiels et simulation du paiement par carte bancaire Stripe.
+- **Migration SQL Idempotente (`backend/migrate-inline.js`)** : Ajout de la colonne `devise_defaut VARCHAR(10) DEFAULT 'XOF'` à la table `boutiques`.
+- **API Backend Express (`backend/routes/boutiques.js`)** :
+  - Endpoint `GET /api/devises/taux` : Retourne les taux de conversion officiels (XOF, EUR, USD).
+  - Endpoint `PUT /api/boutiques/:id/devise` : Modification de la devise par défaut de la boutique.
+  - Endpoint `POST /api/paiements/stripe/simuler` : Traitement sécurisé des paiements par Carte Bancaire en mode simulation Stripe.
+  - Correction de `GET /api/boutiques/mine` pour sélectionner `mode_fonctionnement` et `devise_defaut`.
+- **Suite de Tests Automatisés TDD (`tests/unit/spec-06-multi-devises-stripe.test.js`)** : Suite Jest validée à 100% (5/5 tests validés avec succès : taux de change 200, modification de devise 200, paiement carte accepté 200 et carte déclinée 400).
+- **Validation Globale Master Test Run** : Execution conjointe des 6 suites de tests OpenSpec (Spec 01 à Spec 06) validées à 100% sans aucune erreur.
+
+### [2026-08-06] - Approche OpenSpec : Implémentation de la Spec 05 (Webhooks & Clés API Marchands - Developer Portal)
+- **Fichier de Spécification OpenSpec 05 (`docs/specs/05-webhooks-api-keys.md`)** : Rédaction de la spécification OpenSpec décrivant les clés API marchands (`nopalou_sk_live_...`) et le système de Webhooks sécurisé par signature HMAC-SHA256 (`X-Nopalou-Signature`).
+- **Migration SQL Idempotente (`backend/migrate-inline.js`)** : Création des tables `boutique_api_keys` (avec hash SHA256) et `boutique_webhooks` (avec secrets `whsec_...`).
+- **API Backend Express (`backend/routes/boutiques.js`)** :
+  - Endpoints Clés API : `GET`, `POST`, `DELETE /api/boutiques/:id/api-keys` (Génération du préfixe `nopalou_sk_live_...`, hashage SHA256 et stockage).
+  - Endpoints Webhooks : `GET`, `POST`, `DELETE /api/boutiques/:id/webhooks` (Enregistrement d'URLs de notifications et création de secret `whsec_...`).
+- **Suite de Tests Automatisés TDD (`tests/unit/spec-05-webhooks-api-keys.test.js`)** : Suite Jest validée à 100% (5/5 tests validés avec succès : génération de clé 201, révocation 200, enregistrement webhook 201 avec secret `whsec_`, rejet d'URL invalide 400 et vérification HMAC-SHA256).
+
+### [2026-08-06] - Approche OpenSpec : Implémentation de la Spec 04 (Pixels de Tracking & Mesure ROAS : Meta, TikTok, GA4)
+- **Fichier de Spécification OpenSpec 04 (`docs/specs/04-tracking-pixels.md`)** : Rédaction de la spécification OpenSpec couvrant le paramétrage des Pixels publicitaires (Meta Facebook, TikTok et Google Analytics GA4).
+- **Migration SQL Idempotente (`backend/migrate-inline.js`)** : Ajout des colonnes `meta_pixel_id`, `tiktok_pixel_id` et `ga4_id` à la table `boutiques`.
+- **API Backend Express (`backend/routes/boutiques.js`)** :
+  - Endpoint `PUT /api/boutiques/:id/pixels` : Sauvegarde sécurisée des identifiants par le marchand.
+  - Endpoint `GET /api/boutiques/:id/pixels/public` : Récupération publique des clés de tracking pour l'injection côté navigateur.
+  - Mises à jour de `GET /api/boutiques/:id` et `PUT /api/boutiques/:id` pour retourner et sauvegarder les identifiants.
+- **Suite de Tests Automatisés TDD (`tests/unit/spec-04-pixels.test.js`)** : Suite Jest validée à 100% (4/4 tests validés avec succès : sauvegarde marchand 200, lecture publique vitrine 200, rejet 403 et 404).
+- **Composant Client Storefront Next.js (`frontend-next/src/components/TrackingPixels.tsx`)** :
+  - Création du composant de suivi déclenchant de manière asynchrone les SDKs Meta Pixel (`fbq`), TikTok (`ttq`) et GA4 (`gtag`) sans bloquer le rendu de la vitrine.
+- **Interface Vendeur Next.js (`frontend-next/src/app/boutique/BoutiqueClient.tsx`)** :
+  - Ajout de la section dédiée **📊 Pixels Publicitaires & Tracking ROAS** dans les paramètres de la boutique.
+
+### [2026-08-06] - Approche OpenSpec : Implémentation de la Spec 03 (Moteur de Promotions & Codes Promo)
+- **Fichier de Spécification OpenSpec 03 (`docs/specs/03-moteur-promotions.md`)** : Rédaction de la spécification OpenSpec pour le moteur de coupons de réduction (pourcentage, montant fixe FCFA, livraison offerte).
+- **Migration SQL Idempotente (`backend/migrate-inline.js`)** : Création de la table `boutique_promotions` (avec contrainte unique sur `boutique_id` et `UPPER(code)`).
+- **API Backend Express (`backend/routes/boutiques.js`)** :
+  - Endpoints marchands `GET`, `POST`, `DELETE /api/boutiques/:id/promotions` pour la gestion autonome des coupons de réduction.
+  - Endpoint public `POST /api/promotions/valider` : Vérification en temps réel de la validité d'un code (vérification de la date d'expiration, du quota d'utilisations et du montant d'achat minimum) avec calcul dynamique du montant de la remise.
+- **Suite de Tests Automatisés TDD (`tests/unit/spec-03-promotions.test.js`)** : Suite Jest validée à 100% (6/6 tests validés avec succès : création marchand, calcul 20% sur 25 000 FCFA = 5 000 FCFA de réduction, remise fixe, rejet pour achat minimum non atteint et code expiré/invalide).
+- **Interface Client Storefront Next.js (`frontend-next/src/app/boutiques/[id]/CommanderModal.tsx`)** :
+  - Intégration du module de saisie et de validation instantanée du Code Promo dans le tunnel d'achat avec application directe de la réduction sur le total.
+
+### [2026-08-06] - Approche OpenSpec : Implémentation de la Spec 02 (Checkout Web 1-Page Unifié & Cross-Sell Panier)
+- **Fichier de Spécification OpenSpec 02 (`docs/specs/02-checkout-unifie-upsell.md`)** : Rédaction de la spécification OpenSpec couvrant l'enregistrement de commande express 1-page sans détour WhatsApp obligatoire et le module de recommandation Cross-Sell d'articles complémentaires.
+- **API Backend Express (`backend/routes/boutiques.js`)** :
+  - Endpoint `POST /api/boutiques/commandes/express` : Validation du formulaire client, calcul automatique du total (articles + livraison), décrémentation des stocks et insertion dans `commandes_boutique` avec référence unique `CMD-2026-XXXX`.
+  - Endpoint `GET /api/boutiques/:id/produits/:prodId/cross-sell` : Algorithme de suggestion de produits complémentaires en stock dans la boutique.
+- **Suite de Tests Automatisés TDD (`tests/unit/spec-02-checkout-upsell.test.js`)** : Suite Jest validée à 100% (5/5 tests validés avec succès : commande 201 avec calcul des montants, rejet 400 pour téléphone/articles manquants, boutique introuvable 400 et récupération cross-sell 200).
+- **Interface Client Storefront Next.js (`frontend-next/src/app/boutiques/[id]/CommanderModal.tsx`)** :
+  - Intégration du formulaire 1-page relié directement à `/api/boutiques/commandes/express`.
+  - Intégration du composant de suggestions **Upsell / Cross-Sell (1-Clic)** permettant à l'acheteur de cocher des articles complémentaires avant d'envoyer sa commande, augmentant ainsi le panier moyen.
+
+### [2026-08-06] - Approche OpenSpec : Implémentation de la Spec 01 (Mode Switcher Admin & Mode Pure Player E-Commerce)
+- **Fichier de Spécification OpenSpec 01 (`docs/specs/01-pure-player-mode.md`)** : Rédaction intégrale de la spécification OpenSpec définissant le contrat d'API, le schéma SQL et les scénarios de tests unitaires/E2E pour basculer entre `hybride_pos` (Commerce physique + Web) et `pure_player` (E-Commerce 100% Web).
+- **Migration SQL Idempotente (`backend/migrate-inline.js`)** : Ajout automatique et sécurisé de la colonne `mode_fonctionnement VARCHAR(30) DEFAULT 'hybride_pos'` à la table `boutiques`.
+- **API Backend Express (`backend/routes/boutiques.js`)** :
+  - Support de `mode_fonctionnement` dans `GET /api/boutiques/:id`, `POST /api/boutiques` et `PUT /api/boutiques/:id`.
+  - Création de la sous-route `PUT /api/boutiques/:id/mode` avec validation stricte (rejet HTTP 400 si mode invalide, HTTP 404 si non autorisé).
+- **Suite de Tests Automatisés TDD (`tests/unit/spec-01-mode-switch.test.js`)** : Suite Jest validée à 100% (5/5 tests validés avec succès : mise à jour vers `pure_player`, retour vers `hybride_pos`, rejet 400 et accès 404).
+- **Interface Vendeur Next.js (`frontend-next/src/app/boutique/BoutiqueClient.tsx`)** :
+  - Intégration du sélecteur interactif Mode Switcher (`🏪 Mode Hybride POS` vs `⚡ Mode Pure Player Web`) dans le formulaire de création et modification de boutique.
+  - Affichage dynamique du badge `⚡ Pure Player Web` / `🏪 Hybride POS` et masquage automatique du bouton de Caisse POS physique lorsque le mode pure player est activé.
+
 ### [2026-08-06] - Intégration des Forfaits Multi-Durées (1, 3, 6 & 12 mois) & Choix du Marchand
 - **Mise à Jour de la Page d'Accueil (`app/ShowcaseTabs.tsx`)** :
   - Intégration des 4 boutons de durée d'engagement (1 mois, 3 mois -10%, 6 mois -15%, 12 mois -25% 🔥).
