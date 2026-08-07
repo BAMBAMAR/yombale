@@ -240,32 +240,32 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
               </ul>
 
               {/* Bouton Souscription Wave */}
-              {(waveActif || estActif) && (
+              {waveActif && (
                 <button
                   onClick={() => handleSouscrire(plan.id)}
-                  disabled={isPending || !!planActif}
+                  disabled={isPending || (estActif && duree === 1)}
                   style={{
                     width: '100%', padding: '14px 0', borderRadius: 12, border: 'none',
-                    background: planActif ? '#e2e8f0' : (plan.id === 'business' ? '#1e3a5f' : '#C75B00'),
-                    color: planActif ? '#64748b' : '#fff',
-                    fontWeight: 900, fontSize: 15, cursor: (isPending || !!planActif) ? 'default' : 'pointer',
-                    boxShadow: planActif ? 'none' : '0 4px 14px rgba(0,0,0,0.15)',
+                    background: (estActif && duree === 1) ? '#e2e8f0' : (plan.id === 'business' ? '#1e3a5f' : '#C75B00'),
+                    color: (estActif && duree === 1) ? '#64748b' : '#fff',
+                    fontWeight: 900, fontSize: 15, cursor: (isPending || (estActif && duree === 1)) ? 'default' : 'pointer',
+                    boxShadow: (estActif && duree === 1) ? 'none' : '0 4px 14px rgba(0,0,0,0.15)',
                     transition: 'transform 0.15s ease',
                   }}
                 >
-                  {estActif ? 'Plan actif' : enCours ? 'Redirection Wave…' : `Souscrire ${duree} mois (${totalAffichage} F)`}
+                  {enCours ? 'Redirection Wave…' : (estActif && duree === 1) ? 'Plan actif (en cours)' : estActif ? `Renouveler ${duree} mois (${totalAffichage} F)` : `Souscrire ${duree} mois (${totalAffichage} F)`}
                 </button>
               )}
 
               {/* Bouton Paiement Manuel (Wave / Orange Money) */}
-              {manuelActif && !estActif && (
+              {manuelActif && (
                 <button
                   onClick={() => setPlanManuel(plan.id)}
-                  disabled={isPending || !!planActif}
+                  disabled={isPending || (estActif && duree === 1)}
                   style={{
                     width: '100%', marginTop: 10, padding: '10px 0', borderRadius: 10,
                     border: '1.5px solid #cbd5e1', background: '#fff', color: '#334151',
-                    fontSize: 13, fontWeight: 700, cursor: (isPending || !!planActif) ? 'default' : 'pointer',
+                    fontSize: 13, fontWeight: 700, cursor: (isPending || (estActif && duree === 1)) ? 'default' : 'pointer',
                   }}
                 >
                   Payer via Mobile Money (OM / Wave)

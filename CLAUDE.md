@@ -142,7 +142,10 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
   - Intégration du formulaire 1-page relié directement à `/api/boutiques/commandes/express`.
   - Intégration du composant de suggestions **Upsell / Cross-Sell (1-Clic)** permettant à l'acheteur de cocher des articles complémentaires avant d'envoyer sa commande, augmentant ainsi le panier moyen.
 
-### [2026-08-07] - Contrôle Admin des Quotas Boutiques (Tél/Email), Alertes d'Abonnement & Moteur Promo
+### [2026-08-07] - Audit Complet du Paiement & Correction des Boutons d'Abonnement Inactifs
+- **Correction Majeure des Boutons de Forfait (`frontend-next/src/app/boutique/abonnement/AbonnementClient.tsx`)** :
+  - Remplacement du verrouillage abusif `disabled={isPending || !!planActif}` par un ciblage précis du plan en cours sur la durée 1 mois (`estActif && duree === 1`).
+  - Réactivation complète des boutons de souscription Wave et Mobile Money (Orange Money/Wave) pour permettre à tous les marchands en période d'essai gratuite (`decouverte` / `taf_taf`) d'évoluer librement vers les plans Pro & Business, d'effectuer des upgrades ou de renouveler leur engagement sur 3, 6 ou 12 mois.
 - **Paramétrage Dynamique des Quotas (`backend/lib/settingsCache.js` & `backend/routes/settings.js`)** :
   - Ajout des clés configurables `max_boutiques_par_compte`, `max_boutiques_par_telephone`, `alertes_abonnement_jours_avant`, `alertes_abonnement_whatsapp` et `alertes_abonnement_email`.
 - **Contrôle Backend Anti-Contournement (`backend/routes/boutiques.js`)** :
