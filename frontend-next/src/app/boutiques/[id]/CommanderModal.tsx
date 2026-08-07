@@ -77,6 +77,16 @@ export default function CommanderModal({
       })
       .catch(() => setZones(DEFAULT_ZONES))
 
+    // Chargement du pré-remplissage automatique des coordonnées (Zero-Effort Acheteur)
+    try {
+      const savedNom = localStorage.getItem('nopalou_client_nom')
+      const savedTel = localStorage.getItem('nopalou_client_tel')
+      const savedAdresse = localStorage.getItem('nopalou_client_adresse')
+      if (savedNom) setNom(savedNom)
+      if (savedTel) setTel(savedTel)
+      if (savedAdresse) setAdresse(savedAdresse)
+    } catch {}
+
     // Chargement des suggestions Cross-Sell
     fetch(`${backendUrl}/api/boutiques/${boutiqueId}/produits/${produit.id}/cross-sell`)
       .then(r => r.ok ? r.json() : { produits: [] })
@@ -200,6 +210,14 @@ export default function CommanderModal({
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Erreur lors de la commande'); setLoading(false); return }
+      
+      // Sauvegarde Zero-Effort des coordonnées client
+      try {
+        if (nom) localStorage.setItem('nopalou_client_nom', nom)
+        if (tel) localStorage.setItem('nopalou_client_tel', tel)
+        if (adresse) localStorage.setItem('nopalou_client_adresse', adresse)
+      } catch {}
+
       setSuccess(true)
     } catch {
       setError('Impossible de joindre le serveur')
