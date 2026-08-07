@@ -3586,8 +3586,8 @@ router.get('/:id/pixels/public', async (req, res) => {
   }
 });
 
-// ── Spec 05 : GET /api/boutiques/:id/api-keys — Liste des clés API marchand
-router.get('/:id/api-keys', verifierToken, param('id').isUUID(), async (req, res) => {
+// ── Spec 05 : GET /api/boutiques/:id/api-keys — Liste des clés API marchand (Business VIP uniquement)
+router.get('/:id/api-keys', verifierToken, param('id').isUUID(), checkAbonnement, requireBusiness, async (req, res) => {
   try {
     const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
     if (!bq) return res.status(403).json({ error: 'Accès refusé' });
@@ -3603,7 +3603,7 @@ router.get('/:id/api-keys', verifierToken, param('id').isUUID(), async (req, res
   }
 });
 
-// ── Spec 05 : POST /api/boutiques/:id/api-keys — Générer une clé API marchand (Business VIP requis)
+// ── Spec 05 : POST /api/boutiques/:id/api-keys — Générer une clé API marchand (Business VIP uniquement)
 router.post('/:id/api-keys', verifierToken, param('id').isUUID(), checkAbonnement, requireBusiness, async (req, res) => {
   try {
     const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
@@ -3639,8 +3639,8 @@ router.post('/:id/api-keys', verifierToken, param('id').isUUID(), checkAbonnemen
   }
 });
 
-// ── Spec 05 : DELETE /api/boutiques/:id/api-keys/:keyId — Révoker une clé API marchand
-router.delete('/:id/api-keys/:keyId', verifierToken, param('id').isUUID(), param('keyId').isUUID(), async (req, res) => {
+// ── Spec 05 : DELETE /api/boutiques/:id/api-keys/:keyId — Révoker une clé API marchand (Business VIP uniquement)
+router.delete('/:id/api-keys/:keyId', verifierToken, param('id').isUUID(), param('keyId').isUUID(), checkAbonnement, requireBusiness, async (req, res) => {
   try {
     const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
     if (!bq) return res.status(403).json({ error: 'Accès refusé' });
@@ -3656,8 +3656,8 @@ router.delete('/:id/api-keys/:keyId', verifierToken, param('id').isUUID(), param
   }
 });
 
-// ── Spec 05 : GET /api/boutiques/:id/webhooks — Liste des webhooks
-router.get('/:id/webhooks', verifierToken, param('id').isUUID(), async (req, res) => {
+// ── Spec 05 : GET /api/boutiques/:id/webhooks — Liste des webhooks (Business VIP uniquement)
+router.get('/:id/webhooks', verifierToken, param('id').isUUID(), checkAbonnement, requireBusiness, async (req, res) => {
   try {
     const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
     if (!bq) return res.status(403).json({ error: 'Accès refusé' });
@@ -3673,7 +3673,7 @@ router.get('/:id/webhooks', verifierToken, param('id').isUUID(), async (req, res
   }
 });
 
-// ── Spec 05 : POST /api/boutiques/:id/webhooks — Créer un webhook endpoint (Business VIP requis)
+// ── Spec 05 : POST /api/boutiques/:id/webhooks — Créer un webhook endpoint (Business VIP uniquement)
 router.post('/:id/webhooks', verifierToken, param('id').isUUID(), checkAbonnement, requireBusiness, async (req, res) => {
   try {
     const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
@@ -3705,8 +3705,8 @@ router.post('/:id/webhooks', verifierToken, param('id').isUUID(), checkAbonnemen
   }
 });
 
-// ── Spec 05 : DELETE /api/boutiques/:id/webhooks/:webhookId — Supprimer un webhook
-router.delete('/:id/webhooks/:webhookId', verifierToken, param('id').isUUID(), param('webhookId').isUUID(), async (req, res) => {
+// ── Spec 05 : DELETE /api/boutiques/:id/webhooks/:webhookId — Supprimer un webhook (Business VIP uniquement)
+router.delete('/:id/webhooks/:webhookId', verifierToken, param('id').isUUID(), param('webhookId').isUUID(), checkAbonnement, requireBusiness, async (req, res) => {
   try {
     const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
     if (!bq) return res.status(403).json({ error: 'Accès refusé' });
