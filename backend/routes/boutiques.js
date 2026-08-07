@@ -3,7 +3,7 @@ const router = require('express').Router();
 const { body, param, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie } = require('../middlewares/auth');
-const { checkAbonnement, requireAbonnement } = require('../middlewares/checkAbonnement');
+const { checkAbonnement, requireAbonnement, requireBusiness } = require('../middlewares/checkAbonnement');
 const { limiterPublication } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
 const multer = require('multer');
@@ -2037,8 +2037,8 @@ router.get('/:id/caissiers', tokenOptional, async (req, res) => {
   }
 });
 
-// POST /api/boutiques/:id/caissiers
-router.post('/:id/caissiers', verifierToken, async (req, res) => {
+// POST /api/boutiques/:id/caissiers — Créer caissier (Business VIP requis)
+router.post('/:id/caissiers', verifierToken, checkAbonnement, requireBusiness, async (req, res) => {
   try {
     const idParam = req.params.id;
     const { nom, prenom, code_pin, role } = req.body;
@@ -3551,8 +3551,8 @@ router.get('/:id/api-keys', verifierToken, param('id').isUUID(), async (req, res
   }
 });
 
-// ── Spec 05 : POST /api/boutiques/:id/api-keys — Générer une clé API marchand
-router.post('/:id/api-keys', verifierToken, param('id').isUUID(), async (req, res) => {
+// ── Spec 05 : POST /api/boutiques/:id/api-keys — Générer une clé API marchand (Business VIP requis)
+router.post('/:id/api-keys', verifierToken, param('id').isUUID(), checkAbonnement, requireBusiness, async (req, res) => {
   try {
     const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
     if (!bq) return res.status(403).json({ error: 'Accès refusé' });
@@ -3621,8 +3621,8 @@ router.get('/:id/webhooks', verifierToken, param('id').isUUID(), async (req, res
   }
 });
 
-// ── Spec 05 : POST /api/boutiques/:id/webhooks — Créer un webhook endpoint
-router.post('/:id/webhooks', verifierToken, param('id').isUUID(), async (req, res) => {
+// ── Spec 05 : POST /api/boutiques/:id/webhooks — Créer un webhook endpoint (Business VIP requis)
+router.post('/:id/webhooks', verifierToken, param('id').isUUID(), checkAbonnement, requireBusiness, async (req, res) => {
   try {
     const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
     if (!bq) return res.status(403).json({ error: 'Accès refusé' });

@@ -319,18 +319,30 @@ export default function ShowcaseTabs({
               )}
             </div>
 
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#0f172a', fontWeight: 700 }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
                 <span><strong>Tout ce qui est dans Vendeur Pro +</strong></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>👥 Multi-Caissiers &amp; Droits Équipe :</strong> Accès illimités vendeurs avec restriction des marges</span>
+                <span><strong>👥 Multi-Caissiers &amp; Droits Équipe :</strong> PIN caissiers, sessions Z &amp; gestion des vendeurs</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>📊 Analytics CA &amp; Marges Nettes :</strong> Graphiques en temps réel &amp; classement vendeurs</span>
+                <span><strong>🏪 Multi-Magasins &amp; Transferts :</strong> Gestion dépôts multiples &amp; mouvements stock</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
+                <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
+                <span><strong>🔌 Portail Développeur API &amp; Webhooks :</strong> Clés API REST &amp; intégration sur mesure</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
+                <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
+                <span><strong>📊 Analytics CA &amp; Marges Nettes :</strong> Calcul des bénéfices, dettes &amp; classement vendeurs</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
+                <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
+                <span><strong>🤖 WhatsApp Automation :</strong> Relances automatiques des paniers abandonnés</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />

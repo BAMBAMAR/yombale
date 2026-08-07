@@ -243,9 +243,23 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
     const total      = await compterAnnoncesUtilisateur(userId);
     const userReq    = await pool.query('SELECT quota_annonces FROM utilisateurs WHERE id=$1', [userId]);
     const customQuota = userReq.rows[0]?.quota_annonces;
-    const quotaGratuit = (customQuota !== null && customQuota !== undefined)
+
+    let quotaGratuit = (customQuota !== null && customQuota !== undefined)
       ? customQuota
       : await cfg.getNum('quota_annonces_gratuit');
+
+    // Prise en compte du plan actif de l'utilisateur (5 pour Pro, 15 pour Business VIP)
+    const aboRes = await pool.query(
+      `SELECT plan FROM abonnements WHERE utilisateur_id=$1 AND statut='actif' AND fin > NOW() ORDER BY fin DESC LIMIT 1`,
+      [userId]
+    );
+    const planActif = aboRes.rows[0]?.plan;
+    if (planActif === 'business') {
+      quotaGratuit = Math.max(quotaGratuit, 15);
+    } else if (planActif === 'pro') {
+      quotaGratuit = Math.max(quotaGratuit, 5);
+    }
+
     const prixAnnonce  = await cfg.getNum('prix_annonce') || 1500;
     const estGratuit = total < quotaGratuit;
 
