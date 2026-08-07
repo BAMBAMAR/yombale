@@ -148,6 +148,9 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
   - Réactivation complète des boutons de souscription Wave et Mobile Money (Orange Money/Wave) pour permettre à tous les marchands en période d'essai gratuite (`decouverte` / `taf_taf`) d'évoluer librement vers les plans Pro & Business, d'effectuer des upgrades ou de renouveler leur engagement sur 3, 6 ou 12 mois.
 - **Paramétrage Dynamique des Quotas (`backend/lib/settingsCache.js` & `backend/routes/settings.js`)** :
   - Ajout des clés configurables `max_boutiques_par_compte`, `max_boutiques_par_telephone`, `alertes_abonnement_jours_avant`, `alertes_abonnement_whatsapp` et `alertes_abonnement_email`.
+- **Intégration du Portail Développeur API dans l'Espace Marchand (`frontend-next/src/app/boutique/PortailDeveloppeurBoutique.tsx` & `BoutiqueClient.tsx`)** :
+  - Création du composant marchand `PortailDeveloppeurBoutique.tsx` et ajout de l'onglet **`🔌 Portail Développeur API`** dans le menu latéral de gestion de boutique sous *"Paramètres & Équipe"* (accessible sur le plan Business VIP).
+  - Permet aux marchands de générer leurs clés API REST (`nopalou_sk_live_...`), de les révoquer, et d'enregistrer leurs endpoints Webhooks avec génération du secret HMAC de signature (`whsec_...`).
 - **Supervision Superadmin du Portail Développeur API (`/admin/developer`)** :
   - Résolution de l'erreur 401 lors de la première ouverture du Portail Développeur API : transmission sécurisée de la prop `secret` lue depuis le cookie serveur `httpOnly` (`nopalou_admin`) dans le composant `page.tsx` vers `DeveloperClient.tsx` pour l'envoi du header `X-Admin-Secret`.
   - Création du dashboard Superadmin pour la supervision en temps réel de l'ensemble des clés API REST (`nopalou_sk_live_...`) et webhooks (`whsec_...`) générés par les marchands Business VIP.

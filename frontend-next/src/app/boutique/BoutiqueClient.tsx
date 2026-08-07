@@ -7,6 +7,7 @@ import { createBoutique, updateBoutique, deleteBoutique, createProduit, updatePr
 import Comptabilite from './Comptabilite'
 import Commandes from './Commandes'
 import AnalyticsClient from './analytics/AnalyticsClient'
+import PortailDeveloppeurBoutique from './PortailDeveloppeurBoutique'
 import { initierWaveBoutiqueSponsoring } from '@/app/actions/paiement'
 import { fcfa, lienBoutiqueWhatsapp } from '@/lib/format'
 import type { ActionState } from '@/lib/backend-fetch'
@@ -2003,7 +2004,7 @@ function BoutiqueEquipe({ boutiqueId }: { boutiqueId: string }) {
   )
 }
 
-type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal'
+type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer'
 
 function BoutiqueDashboard({
   boutique,
@@ -2181,6 +2182,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { key: 'equipe',      icon: '👥', label: 'Équipe & Accès', minPlan: 'business' },
       { key: 'journal',     icon: '📜', label: 'Journal d’Audit', minPlan: 'business' },
+      { key: 'developer',   icon: '🔌', label: 'Portail Développeur API', minPlan: 'business' },
       { key: 'marketing',   icon: '📣', label: 'Marketing' },
       { key: 'infos',       icon: '⚙️', label: 'Paramètres' },
     ],
@@ -2195,7 +2197,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   prixPro: number
   initialTab?: string
 }) {
-  const validTabs: ManageTab[] = ['dashboard','produits','commandes','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal']
+  const validTabs: ManageTab[] = ['dashboard','produits','commandes','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer']
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
 
   const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
@@ -2263,6 +2265,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
     fournisseurs: { icon: '📦', title: 'Fournisseurs & Réapprovisionnement', desc: 'Gérez vos fournisseurs et vos commandes de réapprovisionnement de stock.' },
     fiscalite:   { icon: '⚖️', title: 'Configuration Fiscalité & Taxes', desc: 'Configurez le régime de TVA de votre commerce et la fiscalité de la caisse POS.' },
     journal:     { icon: '📜', title: 'Journal d’Audit & Historique des Actions', desc: 'Consultez l’historique des opérations de la boutique et exportez le registre au format CSV (Excel).' },
+    developer:   { icon: '🔌', title: 'Portail Développeur API & Webhooks', desc: 'Génération de clés API REST et gestion des webhooks événements en direct (Formule Business VIP).' },
   }
 
   const currentTabInfo = tabInfoMap[tab] ?? tabInfoMap.dashboard
@@ -2425,6 +2428,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             {tab === 'fournisseurs' && <GestionFournisseurs boutiqueId={boutique.id} />}
             {tab === 'fiscalite'   && <ParametresFiscalite boutique={boutique} onUpdate={() => router.refresh()} />}
             {tab === 'journal'     && <BoutiqueLogs boutiqueId={boutique.id} />}
+            {tab === 'developer'   && <PortailDeveloppeurBoutique boutiqueId={boutique.id} planActif={planActif || 'decouverte'} />}
           </>
         )}
       </main>
