@@ -1,5 +1,35 @@
 # CLAUDE.md
 
+## 🛠️ Guide de Configuration & d'Activation Production (OpenSpec Nopalou)
+
+### 💳 1. Configuration des Paiements par Carte Bancaire Réels (Stripe Production)
+Pour passer du mode simulation actuel aux encaissements réels Stripe en production :
+1. **Création du Compte Stripe Entreprise** : S'inscrire sur [Stripe.com](https://stripe.com) et fournir les documents administratifs (RCCM, NINEA, RIB bancaire de Nopalou).
+2. **Variables d'Environnement (`backend/.env`)** :
+   ```env
+   STRIPE_SECRET_KEY=sk_live_51Nx...
+   STRIPE_PUBLISHABLE_KEY=pk_live_51Nx...
+   STRIPE_WEBHOOK_SECRET=whsec_...
+   ```
+3. **Activation du SDK Officiel Node.js** : Installer `npm install stripe` et activer `paymentIntents.create()` dans `backend/routes/boutiques.js`.
+4. **Configuration du Webhook Stripe Production** : Déclarer `https://api.nopalou.com/api/webhooks/stripe` dans le Dashboard Stripe pour valider automatiquement le virement dès l'autorisation bancaire 3D-Secure.
+
+### 🔑 2. Stratégie Commerciale & Configuration du Portail Développeur (Spec 05 - API & Webhooks)
+- **Cible Marchande** : PME, Grossistes et Marques ayant leur propre logiciel ERP/CRM (*Odoo, Sage, Dolibarr*).
+- **Modèle de Tarification & Facturation** :
+  - **Option 1 (Forfait VIP / Business)** : Réservé aux forfaits d'abonnement supérieurs (`+15 000 FCFA` à `+30 000 FCFA / mois`).
+  - **Option 2 (Add-on sur mesure)** : Facturer l'accès au module *API & Connecteurs ERP* comme une extension mensuelle.
+- **Rétention Client (Lock-in)** : La connexion de l'ERP du marchand via l'API Nopalou garantit sa fidélisation à 100% sans risque de désabonnement.
+
+### 📸 3. Configuration Instagram Shopping, Meta Commerce Manager & TikTok Catalog
+- **Lien du Flux XML Universel** : `https://nopalou.com/api/boutiques/:idOrSlug/catalog.xml`
+- **Procédure d'Activation pour le Marchand** :
+  1. Relier le compte Instagram Professionnel à sa page Facebook dans Meta Business Suite.
+  2. Ajouter l'URL du flux XML Nopalou dans **Meta Commerce Manager** (*Catalogues -> Importation automatique*).
+  3. Taguer ses produits sur ses publications, stories et reels Instagram pour rediriger les acheteurs en 1 clic vers le checkout 1-Page Nopalou.
+
+---
+
 ### [2026-08-07] - Approche OpenSpec : Flux Catalogues Dynamiques XML/JSON & Intégration Meta / Instagram Shopping / TikTok Catalog
 - **Endpoints de Flux Catalogue Dynamique (`backend/routes/boutiques.js`)** :
   - `GET /api/boutiques/:id/catalog.xml` : Génération du flux RSS 2.0 XML conforme aux spécifications Google Merchant, Meta Commerce Manager et TikTok Catalog. Permet à chaque marchand d'importer son catalogue automatiquement sur sa page Instagram/Facebook pour taguer ses produits sur ses publications, stories et reels.
