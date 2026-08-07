@@ -24,7 +24,7 @@ export interface WebhookItem {
   boutique_slug: string
 }
 
-export default function DeveloperClient() {
+export default function DeveloperClient({ secret }: { secret: string }) {
   const [keys, setKeys] = useState<ApiKeyItem[]>([])
   const [webhooks, setWebhooks] = useState<WebhookItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -32,17 +32,10 @@ export default function DeveloperClient() {
   const [messageSuccess, setMessageSuccess] = useState<string | null>(null)
   const [revokingId, setRevokingId] = useState<string | null>(null)
 
-  function getAdminSecret(): string {
-    if (typeof document === 'undefined') return ''
-    const match = document.cookie.match(/(?:^|; )nopalou_admin=([^;]*)/)
-    return match ? decodeURIComponent(match[1]) : ''
-  }
-
   const chargerDonnees = async () => {
     try {
       setLoading(true)
       setErreur(null)
-      const secret = getAdminSecret()
       const res = await fetch('/api/boutiques/admin/developer-portal', {
         headers: { 'X-Admin-Secret': secret }
       })
@@ -62,7 +55,7 @@ export default function DeveloperClient() {
 
   useEffect(() => {
     chargerDonnees()
-  }, [])
+  }, [secret])
 
   const revoquerCleApi = async (keyId: string, nomKey: string) => {
     if (!confirm(`Êtes-vous sûr de vouloir révoquer la clé API "${nomKey}" ? Cette action est irréversible.`)) {
@@ -70,7 +63,6 @@ export default function DeveloperClient() {
     }
     try {
       setRevokingId(keyId)
-      const secret = getAdminSecret()
       const res = await fetch(`/api/boutiques/admin/api-keys/${keyId}`, {
         method: 'DELETE',
         headers: { 'X-Admin-Secret': secret }
@@ -89,7 +81,6 @@ export default function DeveloperClient() {
     if (!confirm(`Supprimer le webhook "${urlWebhook}" ?`)) return
     try {
       setRevokingId(webhookId)
-      const secret = getAdminSecret()
       const res = await fetch(`/api/boutiques/admin/webhooks/${webhookId}`, {
         method: 'DELETE',
         headers: { 'X-Admin-Secret': secret }
