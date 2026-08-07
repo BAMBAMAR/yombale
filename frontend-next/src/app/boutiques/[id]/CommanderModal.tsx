@@ -62,6 +62,10 @@ export default function CommanderModal({
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
 
+  const [cardNumber, setCardNumber] = useState('4242 4242 4242 4242');
+  const [cardExp, setCardExp] = useState('12/28');
+  const [cardCvc, setCardCvc] = useState('123');
+
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
   useEffect(() => {
@@ -158,6 +162,28 @@ export default function CommanderModal({
     })
 
     try {
+      if (paiement === 'carte_bancaire') {
+        const stripeRes = await fetch(`${backendUrl}/api/boutiques/paiements/stripe/simuler`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            boutique_id: boutiqueId,
+            montant: totalGeneral,
+            devise: 'XOF',
+            card_number: cardNumber,
+            exp_month: 12,
+            exp_year: 2028,
+            cvc: cardCvc
+          })
+        })
+        const stripeData = await stripeRes.json()
+        if (!stripeRes.ok || !stripeData.success) {
+          setError(stripeData.error || 'Erreur lors du traitement de votre carte bancaire')
+          setLoading(false)
+          return
+        }
+      }
+
       const res = await fetch(`${backendUrl}/api/boutiques/commandes/express`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -346,6 +372,7 @@ export default function CommanderModal({
                     { value: 'orange_money', label: '🟠 Orange Money' },
                     { value: 'cash', label: '💵 Espèces' },
                     { value: 'virement', label: '🏦 Virement' },
+                    { value: 'carte_bancaire', label: '💳 Carte Bancaire (Visa/Mastercard)' },
                   ].map(m => (
                     <button
                       key={m.value}
@@ -364,6 +391,49 @@ export default function CommanderModal({
                     </button>
                   ))}
                 </div>
+
+                {paiement === 'carte_bancaire' && (
+                  <div style={{ marginTop: 10, background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 8, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      🔒 Paiement Sécurisé Carte Bancaire (Mode Simulation Stripe)
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 4 }}>Numéro de carte</label>
+                      <input
+                        type="text"
+                        value={cardNumber}
+                        onChange={e => setCardNumber(e.target.value)}
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, fontFamily: 'monospace' }}
+                        placeholder="4242 4242 4242 4242"
+                      />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 4 }}>Expiration (MM/AA)</label>
+                        <input
+                          type="text"
+                          value={cardExp}
+                          onChange={e => setCardExp(e.target.value)}
+                          style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, fontFamily: 'monospace' }}
+                          placeholder="12/28"
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 4 }}>CVC</label>
+                        <input
+                          type="text"
+                          value={cardCvc}
+                          onChange={e => setCardCvc(e.target.value)}
+                          style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, fontFamily: 'monospace' }}
+                          placeholder="123"
+                        />
+                      </div>
+                    </div>
+                    <p style={{ margin: 0, fontSize: 11, color: '#16a34a', fontWeight: 600 }}>
+                      Carte de test pré-remplie (4242...). Pour simuler une carte déclinée, utilisez un numéro se terminant par 0002.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Note */}
