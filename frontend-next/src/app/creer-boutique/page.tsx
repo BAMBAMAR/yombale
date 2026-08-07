@@ -25,10 +25,10 @@ export default function CreerBoutiqueWizard() {
   const [plansInfo, setPlansInfo] = useState({
     decouverte_name: '⚡ Boutique Taf Taf (1 mois offert)',
     decouverte_price: 'Gratuit pendant 30j puis 5.000 FCFA/mois',
-    pro_name: '⭐ Vendeur Pro',
-    pro_price: '15.000 FCFA / mois',
-    business_name: '💼 Business VIP',
-    business_price: '35.000 FCFA / mois'
+    pro_name: '⭐ Vendeur Pro (1 mois offert)',
+    pro_price: 'Gratuit pendant 30j puis 15.000 FCFA/mois',
+    business_name: '💼 Business VIP (1 mois offert)',
+    business_price: 'Gratuit pendant 30j puis 35.000 FCFA/mois'
   })
 
   useEffect(() => {
@@ -45,10 +45,10 @@ export default function CreerBoutiqueWizard() {
         setPlansInfo({
           decouverte_name: `⚡ ${settings.plan_decouverte_label || 'Boutique Taf Taf'} (1 mois offert)`,
           decouverte_price: `Gratuit pendant ${essaiJours}j puis ${pxDecouverte.toLocaleString('fr-FR')} FCFA/mois`,
-          pro_name: `⭐ ${settings.plan_pro_label || 'Vendeur Pro'}`,
-          pro_price: `${pxPro.toLocaleString('fr-FR')} FCFA / mois`,
-          business_name: `💼 ${settings.plan_business_label || 'Business VIP'}`,
-          business_price: `${pxBusiness.toLocaleString('fr-FR')} FCFA / mois`
+          pro_name: `⭐ ${settings.plan_pro_label || 'Vendeur Pro'} (1 mois offert)`,
+          pro_price: `Gratuit pendant ${essaiJours}j puis ${pxPro.toLocaleString('fr-FR')} FCFA/mois`,
+          business_name: `💼 ${settings.plan_business_label || 'Business VIP'} (1 mois offert)`,
+          business_price: `Gratuit pendant ${essaiJours}j puis ${pxBusiness.toLocaleString('fr-FR')} FCFA/mois`
         })
       })
       .catch(() => {})
@@ -198,7 +198,7 @@ export default function CreerBoutiqueWizard() {
                 Choisissez votre formule & votre style
               </h1>
               <p style={{ color: '#64748b', fontSize: 13, marginBottom: 20 }}>
-                Le forfait <strong>Boutique Taf Taf (1 mois offert)</strong> est sélectionné par défaut. Vous pouvez le conserver ou faire évoluer votre offre dès maintenant.
+                🎁 <strong>Le 1er mois est 100% offert sur TOUTES nos formules !</strong> Le forfait <strong>Boutique Taf Taf</strong> est sélectionné par défaut. Vous pouvez le conserver ou faire évoluer votre offre dès maintenant.
               </p>
 
               {/* Sélecteur de Plan */}

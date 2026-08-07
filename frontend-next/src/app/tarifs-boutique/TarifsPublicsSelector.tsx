@@ -65,8 +65,9 @@ const PLANS_CONFIG: PlanConfig[] = [
       'Affichage en tête des recherches à Dakar',
       'Support client prioritaire sur WhatsApp',
       'Caisse enregistreuse & Statistiques',
+      '🎁 1er mois 100% offert',
     ],
-    ctaText: 'Devenir Vendeur Pro',
+    ctaText: 'Devenir Vendeur Pro (1 mois offert)',
     ctaHref: '/creer-boutique?plan=pro',
   },
   {
@@ -82,8 +83,9 @@ const PLANS_CONFIG: PlanConfig[] = [
       'Analytics avancés & statistiques de visites',
       'Account Manager dédié 7j/7',
       'Intégration sur mesure',
+      '🎁 1er mois 100% offert',
     ],
-    ctaText: 'Rejoindre le Business VIP',
+    ctaText: 'Rejoindre le Business VIP (1 mois offert)',
     ctaHref: '/creer-boutique?plan=business',
   },
 ]

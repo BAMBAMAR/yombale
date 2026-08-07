@@ -350,7 +350,7 @@ export default function ShowcaseTabs({
                 boxShadow: '0 2px 6px rgba(0,0,0,0.1)', transition: 'all 0.15s'
               }}
             >
-              Choisir Business VIP →
+              Choisir Business VIP (1 mois offert) →
             </Link>
           </div>
 

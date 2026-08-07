@@ -47,11 +47,13 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
 - **Intégration du Forfait Boutique Taf Taf dans l'Admin (`frontend-next/src/app/admin/(protected)/tarifs/TarifsClient.tsx`)** :
   - Ajout du paramétrage complet du plan **Boutique Taf Taf** (*nom, prix mensuel en FCFA et durée de l'essai gratuit / 1er mois offert*) dans l'interface `/admin/tarifs`.
   - Mise à jour des valeurs par défaut (`plan_decouverte_prix: 5000 FCFA`, `plan_pro_prix: 15000 FCFA`, `plan_business_prix: 35000 FCFA`).
+- **Extension du 1er Mois 100% Offert à TOUTES les Formules (`creer-boutique/page.tsx`, `TarifsPublicsSelector.tsx`, `ShowcaseTabs.tsx`)** :
+  - Le premier mois gratuit (essai 30 jours) s'applique désormais explicitement sur l'ensemble des 3 forfaits (**Boutique Taf Taf**, **Vendeur Pro**, et **Business VIP**).
 - **Synchronisation Dynamique Globale du Site (`backend/routes/settings.js`, `frontend-next/src/app/tarifs-boutique/TarifsPublicsSelector.tsx`, `frontend-next/src/app/creer-boutique/page.tsx`, `ShowcaseTabs.tsx`)** :
   - L'endpoint `GET /api/settings/public` retourne désormais l'intégralité des 3 formules d'abonnement (`plan_decouverte_prix`, `plan_pro_prix`, `plan_business_prix`, leurs libellés et les durées d'essai).
   - La page des tarifs vendeurs (`/tarifs-boutique`), le wizard de création de boutique (`/creer-boutique`) et la page d'accueil (`/`) récupèrent dynamiquement les tarifs définis dans l'admin et appliquent les réductions multi-durées (-10%, -15%, -25%).
 - **Calculs Dynamiques Backend (`backend/routes/abonnements.js`, `backend/routes/paiement.js`, `backend/routes/boutiques.js`)** :
-  - Les endpoints d'inscriptions, d'abonnements et de paiements s'appuient à 100% sur le cache de configuration `settingsCache` sans aucun prix codé en dur.
+  - Les endpoints d'inscriptions, d'abonnements et de paiements s'appuient à 100% sur le cache de configuration `settingsCache` sans aucun prix codé en dur (avec 30 jours offerts par défaut sur tous les forfaits lors de la création).
 
 ### [2026-08-07] - Correction Bug Critique : Création de Boutique Taf Taf (`/api/boutiques/taf-taf`)
 - **Résolution Erreur PostgreSQL ON CONFLICT (`backend/routes/boutiques.js`)** :
