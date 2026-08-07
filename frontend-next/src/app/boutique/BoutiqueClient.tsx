@@ -533,7 +533,12 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
           <input name="meta_pixel_id" defaultValue={boutique?.meta_pixel_id ?? ''} style={inputStyle} placeholder="Ex: 123456789012345" />
         </div>
         <div>
-          <label style={labelStyle}>TikTok Pixel ID</label>
+          <label style={labelStyle}>
+            TikTok Pixel ID
+            <span style={{ fontSize: 10, background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: 4, marginLeft: 6, fontWeight: 700 }}>
+              Pixel Actif · Sync Catalogue Direct (⏳ Bientôt)
+            </span>
+          </label>
           <input name="tiktok_pixel_id" defaultValue={boutique?.tiktok_pixel_id ?? ''} style={inputStyle} placeholder="Ex: C1234567890ABC" />
         </div>
       </div>
