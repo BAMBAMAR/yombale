@@ -22,6 +22,38 @@ export default function CreerBoutiqueWizard() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const [plansInfo, setPlansInfo] = useState({
+    decouverte_name: '⚡ Boutique Taf Taf (1 mois offert)',
+    decouverte_price: 'Gratuit pendant 30j puis 5.000 FCFA/mois',
+    pro_name: '⭐ Vendeur Pro',
+    pro_price: '15.000 FCFA / mois',
+    business_name: '💼 Business VIP',
+    business_price: '35.000 FCFA / mois'
+  })
+
+  useEffect(() => {
+    const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+    fetch(`${BACKEND}/api/settings/public`)
+      .then(res => res.json())
+      .then(settings => {
+        if (!settings) return;
+        const pxDecouverte = Number(settings.plan_decouverte_prix) || 5000;
+        const pxPro = Number(settings.plan_pro_prix) || 15000;
+        const pxBusiness = Number(settings.plan_business_prix) || 35000;
+        const essaiJours = settings.abonnement_essai_jours || '30';
+
+        setPlansInfo({
+          decouverte_name: `⚡ ${settings.plan_decouverte_label || 'Boutique Taf Taf'} (1 mois offert)`,
+          decouverte_price: `Gratuit pendant ${essaiJours}j puis ${pxDecouverte.toLocaleString('fr-FR')} FCFA/mois`,
+          pro_name: `⭐ ${settings.plan_pro_label || 'Vendeur Pro'}`,
+          pro_price: `${pxPro.toLocaleString('fr-FR')} FCFA / mois`,
+          business_name: `💼 ${settings.plan_business_label || 'Business VIP'}`,
+          business_price: `${pxBusiness.toLocaleString('fr-FR')} FCFA / mois`
+        })
+      })
+      .catch(() => {})
+  }, [])
+
   const handleNext = async (e: React.FormEvent) => {
     e.preventDefault()
     if (step === 1 && !nom.trim()) { setError('Veuillez entrer un nom.'); return; }
@@ -175,9 +207,9 @@ export default function CreerBoutiqueWizard() {
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                 {[
-                  { id: 'decouverte', name: '⚡ Boutique Taf Taf (1 mois offert)', price: 'Gratuit pendant 30j puis 5.000 FCFA/mois' },
-                  { id: 'pro', name: '⭐ Vendeur Pro', price: '15.000 FCFA / mois' },
-                  { id: 'business', name: '💼 Business VIP', price: '35.000 FCFA / mois' },
+                  { id: 'decouverte', name: plansInfo.decouverte_name, price: plansInfo.decouverte_price },
+                  { id: 'pro', name: plansInfo.pro_name, price: plansInfo.pro_price },
+                  { id: 'business', name: plansInfo.business_name, price: plansInfo.business_price },
                 ].map(p => (
                   <button
                     key={p.id}

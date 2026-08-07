@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 interface DureeOption {
@@ -90,8 +90,55 @@ const PLANS_CONFIG: PlanConfig[] = [
 
 export default function TarifsPublicsSelector() {
   const [duree, setDuree] = useState<number>(12) // 12 mois par défaut
+  const [plans, setPlans] = useState<PlanConfig[]>(PLANS_CONFIG)
+  const [dureesOptions, setDureesOptions] = useState<DureeOption[]>(DUREES)
 
-  const optionDuree = DUREES.find((d) => d.mois === duree) || DUREES[0]
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'}/api/settings/public`)
+      .then(res => res.json())
+      .then(settings => {
+        if (!settings) return;
+        setPlans(prev => prev.map(p => {
+          if (p.id === 'taf_taf') {
+            return {
+              ...p,
+              nom: settings.plan_decouverte_label || p.nom,
+              prixMensuelBase: Number(settings.plan_decouverte_prix) || 5000,
+            };
+          }
+          if (p.id === 'pro') {
+            return {
+              ...p,
+              nom: settings.plan_pro_label || p.nom,
+              prixMensuelBase: Number(settings.plan_pro_prix) || 15000,
+            };
+          }
+          if (p.id === 'business') {
+            return {
+              ...p,
+              nom: settings.plan_business_label || p.nom,
+              prixMensuelBase: Number(settings.plan_business_prix) || 35000,
+            };
+          }
+          return p;
+        }));
+
+        if (settings.reduc_3_mois || settings.reduc_6_mois || settings.reduc_12_mois) {
+          const r3 = Number(settings.reduc_3_mois) / 100 || 0.10;
+          const r6 = Number(settings.reduc_6_mois) / 100 || 0.15;
+          const r12 = Number(settings.reduc_12_mois) / 100 || 0.25;
+          setDureesOptions([
+            { mois: 1, label: '1 mois', sousTitre: 'Tarif mensuel', remise: 0, badge: null },
+            { mois: 3, label: '3 mois', sousTitre: 'Trimestriel', remise: r3, badge: `-${r3 * 100}%` },
+            { mois: 6, label: '6 mois', sousTitre: 'Semestriel', remise: r6, badge: `-${r6 * 100}%` },
+            { mois: 12, label: '12 mois (1 an)', sousTitre: 'Annuel', remise: r12, badge: `🔥 -${r12 * 100}%` },
+          ]);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const optionDuree = dureesOptions.find((d) => d.mois === duree) || dureesOptions[0]
 
   return (
     <div>
@@ -124,7 +171,7 @@ export default function TarifsPublicsSelector() {
             width: '100%',
           }}
         >
-          {DUREES.map((d) => {
+          {dureesOptions.map((d) => {
             const isSelected = duree === d.mois
             return (
               <button
@@ -179,7 +226,7 @@ export default function TarifsPublicsSelector() {
 
       {/* GRILLE DES CARTES DE FORFAITS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
-        {PLANS_CONFIG.map((plan) => {
+        {plans.map((plan) => {
           const totalBrut = plan.prixMensuelBase * duree
           const totalApresRemise = Math.round(totalBrut * (1 - optionDuree.remise))
           const mensuelEquiv = Math.round(totalApresRemise / duree)

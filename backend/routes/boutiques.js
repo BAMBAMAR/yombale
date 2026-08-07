@@ -235,7 +235,10 @@ router.post('/taf-taf', async (req, res) => {
 
     const { plan } = req.body;
     const planChoisi = ['pro', 'business', 'decouverte'].includes(plan) ? plan : 'decouverte';
-    const prix = planChoisi === 'business' ? 10000 : planChoisi === 'pro' ? 5000 : 0;
+    const prixDecouverte = await cfg.getNum('plan_decouverte_prix') || 5000;
+    const prixPro = await cfg.getNum('plan_pro_prix') || 15000;
+    const prixBusiness = await cfg.getNum('plan_business_prix') || 35000;
+    const prix = planChoisi === 'business' ? prixBusiness : planChoisi === 'pro' ? prixPro : prixDecouverte;
 
     // 3. Activer le plan choisi (Taf Taf Découverte 1 mois offert par défaut)
     const essaiJours = await cfg.getNum('abonnement_essai_jours') || 30;

@@ -12,11 +12,12 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 *
 
 // Prix dynamiques — lus depuis la table settings (avec cache 5 min)
 async function getPrix() {
-  const [annonce, sponsoring, boost, boostJours, pro, business, commissionBiz, promoActive, promoReduc] = await Promise.all([
+  const [annonce, sponsoring, boost, boostJours, decouverte, pro, business, commissionBiz, promoActive, promoReduc] = await Promise.all([
     cfg.getNum('prix_annonce'),
     cfg.getNum('prix_sponsoring'),
     cfg.getNum('prix_boost'),
     cfg.getNum('boost_duree_jours'),
+    cfg.getNum('plan_decouverte_prix'),
     cfg.getNum('plan_pro_prix'),
     cfg.getNum('plan_business_prix'),
     cfg.getNum('commission_business'),
@@ -24,12 +25,13 @@ async function getPrix() {
     cfg.getNum('promo_reduction'),
   ]);
   return {
-    annonce:       annonce  || 1500,
+    annonce:       annonce    || 1500,
     sponsoring:    sponsoring || 5000,
-    boost:         boost    || 500,
+    boost:         boost      || 500,
     boostJours:    boostJours || 7,
-    pro:           pro      || 5000,
-    business:      business || 10000,
+    decouverte:    decouverte || 5000,
+    pro:           pro        || 15000,
+    business:      business   || 35000,
     commissionBiz: commissionBiz || 2.0,
     promo:         promoActive ? promoReduc : 0,
   };

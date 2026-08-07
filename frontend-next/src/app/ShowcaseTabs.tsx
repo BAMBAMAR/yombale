@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Check, Sparkles } from 'lucide-react';
 
 export default function ShowcaseTabs({ 
-  prixTafTaf = 2500, 
+  prixTafTaf = 5000, 
   prixPro = 15000, 
   prixBusiness = 35000 
 }: { 
