@@ -148,7 +148,8 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
   - Réactivation complète des boutons de souscription Wave et Mobile Money (Orange Money/Wave) pour permettre à tous les marchands en période d'essai gratuite (`decouverte` / `taf_taf`) d'évoluer librement vers les plans Pro & Business, d'effectuer des upgrades ou de renouveler leur engagement sur 3, 6 ou 12 mois.
 - **Paramétrage Dynamique des Quotas (`backend/lib/settingsCache.js` & `backend/routes/settings.js`)** :
   - Ajout des clés configurables `max_boutiques_par_compte`, `max_boutiques_par_telephone`, `alertes_abonnement_jours_avant`, `alertes_abonnement_whatsapp` et `alertes_abonnement_email`.
-- **Contrôle Backend Anti-Contournement (`backend/routes/boutiques.js`)** :
+- **Contrôle Backend Anti-Contournement & Validation Promo (`backend/routes/boutiques.js`)** :
+  - Interconnexion immédiate du toggle Admin `promo_active` et `promo_code` dans la route `/api/promotions/valider`. Dès que le Superadmin désactive les promotions dans l'administration, toute tentative d'utilisation du code promo (ex: `SOLDE20` ou `NOPALOU25`) est automatiquement bloquée et rejetée avec le message d'erreur *"Ce code promo a été désactivé par l'administration."*.
   - Remplacement du quota `MAX_BOUTIQUES` codé en dur par une vérification dynamique en base.
   - Implémentation du contrôle anti-cumul vérifiant le nombre total de boutiques associées à un même numéro de téléphone ou e-mail à travers tous les comptes utilisateurs.
   - Ajout de la route `GET /api/boutiques/admin/promotions` pour la supervision Superadmin des coupons marchands.

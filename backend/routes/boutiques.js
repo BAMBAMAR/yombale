@@ -3384,15 +3384,44 @@ router.post(['/promotions/valider', '/valider', '/:id/promotions/valider'], asyn
     if (!boutique_id) return res.status(400).json({ valide: false, error: 'Boutique ID requis' });
     if (!code || !code.trim()) return res.status(400).json({ valide: false, error: 'Code promo requis' });
 
+    const total = Number(total_panier) || 0;
+    const cleanCode = code.trim().toUpperCase();
+
+    // 1. Vérification du code promo global plateforme (Admin Settings)
+    const platformPromoActive = await cfg.getBool('promo_active');
+    const platformPromoCode = ((await cfg.get('promo_code')) || '').trim().toUpperCase();
+    const platformPromoReduc = (await cfg.getNum('promo_reduction')) || 0;
+
+    // Si l'utilisateur saisit le code promo plateforme (ex: SOLDE20 / NOPALOU25)
+    if (platformPromoCode && cleanCode === platformPromoCode) {
+      if (!platformPromoActive) {
+        return res.status(400).json({ valide: false, error: 'Ce code promo a été désactivé dans l\'administration.' });
+      }
+      const reduction = Math.round((total * platformPromoReduc) / 100);
+      const nouveauTotal = Math.max(0, total - reduction);
+      return res.json({
+        valide: true,
+        code: platformPromoCode,
+        type_remise: 'pourcentage',
+        valeur: platformPromoReduc,
+        montant_reduction: reduction,
+        nouveau_total: nouveauTotal,
+        message: 'Code promo plateforme appliqué avec succès !'
+      });
+    }
+
+    // Si la promotion globale est désactivée et qu'il n'y a pas d'autre code
+    if (cleanCode === 'SOLDE20' && !platformPromoActive) {
+      return res.status(400).json({ valide: false, error: 'Le code promo SOLDE20 a été désactivé par l\'administration.' });
+    }
+
+    // 2. Vérification dans les promotions propres à la boutique
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(boutique_id);
     let targetBoutiqueId = boutique_id;
     if (!isUUID) {
       const bqRes = await pool.query('SELECT id FROM boutiques WHERE slug = $1', [boutique_id]);
       if (bqRes.rows[0]) targetBoutiqueId = bqRes.rows[0].id;
     }
-
-    const total = Number(total_panier) || 0;
-    const cleanCode = code.trim().toUpperCase();
 
     const r = await pool.query(
       `SELECT * FROM boutique_promotions
