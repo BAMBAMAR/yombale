@@ -91,9 +91,19 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Échec de la génération de la clé API')
 
-      setCleBruteCreee(data.apiKey || data.key)
+      const rawKey = data.api_key || data.apiKey || data.key
+      setCleBruteCreee(rawKey)
       setNomNouvelleCle('')
       chargerDonnees()
+
+      if (rawKey) {
+        try {
+          await navigator.clipboard.writeText(rawKey)
+          alert(`Clé API générée et copiée automatiquement dans le presse-papier :\n\n${rawKey}\n\nConservez-la en lieu sûr !`)
+        } catch (_) {
+          alert(`Clé API générée avec succès :\n\n${rawKey}\n\nCopiez-la dans la boîte verte qui vient d'apparaître !`)
+        }
+      }
     } catch (err: any) {
       alert(`Erreur : ${err.message}`)
     } finally {
@@ -136,7 +146,8 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Échec de l\'ajout du Webhook')
 
-      setWebhookSecretCree(data.secret || data.webhookSecret)
+      const rawSecret = data.secret || data.webhook?.secret || data.webhookSecret
+      setWebhookSecretCree(rawSecret)
       setUrlWebhook('')
       chargerDonnees()
     } catch (err: any) {
