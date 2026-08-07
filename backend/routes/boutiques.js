@@ -23,6 +23,51 @@ async function checkBoutiqueAccess(boutiqueIdOrSlug, userId) {
   return rows[0];
 }
 
+async function checkBoutiqueQuotas(userId, telephoneInput, emailInput) {
+  const maxCompte = (await cfg.getNum('max_boutiques_par_compte')) || 3;
+  const maxTel = (await cfg.getNum('max_boutiques_par_telephone')) || 3;
+
+  // 1. Quota par compte utilisateur
+  if (userId) {
+    const cntCompte = await pool.query('SELECT COUNT(*) FROM boutiques WHERE utilisateur_id=$1', [userId]);
+    if (parseInt(cntCompte.rows[0].count, 10) >= maxCompte) {
+      return { allowed: false, error: `Limite de ${maxCompte} boutique(s) par compte atteinte.` };
+    }
+  }
+
+  // 2. Quota par téléphone / email (tous comptes confondus, normalisation 9 chiffres)
+  const inputTelRaw = telephoneInput?.trim() || '';
+  const userEmailRaw = (emailInput || '').trim().toLowerCase();
+  const cleanTel = inputTelRaw.replace(/\D/g, '').slice(-9);
+
+  if (cleanTel || userEmailRaw) {
+    const cntTel = await pool.query(
+      `SELECT COUNT(DISTINCT b.id)
+       FROM boutiques b
+       JOIN utilisateurs u ON b.utilisateur_id = u.id
+       WHERE (
+         ($1::text != '' AND (
+           RIGHT(REGEXP_REPLACE(COALESCE(u.telephone, ''), '[^0-9]', '', 'g'), 9) = $1
+           OR
+           RIGHT(REGEXP_REPLACE(COALESCE(b.telephone, ''), '[^0-9]', '', 'g'), 9) = $1
+         ))
+         OR
+         ($2::text != '' AND LOWER(COALESCE(u.email, '')) = $2)
+       )`,
+      [cleanTel, userEmailRaw]
+    );
+    const totalBoutiquesTrouvees = parseInt(cntTel.rows[0].count, 10);
+    if (totalBoutiquesTrouvees >= maxTel) {
+      return {
+        allowed: false,
+        error: `Limite atteinte : ${totalBoutiquesTrouvees} boutique(s) sont déjà enregistrées avec ce numéro de téléphone (${inputTelRaw || 'non renseigné'}) ou e-mail (${userEmailRaw}). La limite autorisée par l'administration est de ${maxTel} boutique(s).`
+      };
+    }
+  }
+
+  return { allowed: true };
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024, files: 2 },
@@ -203,6 +248,19 @@ router.delete('/admin/webhooks/:webhookId', adminSecretOnly, async (req, res) =>
   }
 });
 
+// ── DELETE /api/boutiques/admin/:id — Supprimer définitivement une boutique (Admin)
+router.delete('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const r = await pool.query('DELETE FROM boutiques WHERE id=$1 RETURNING id', [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    res.json({ success: true, message: 'Boutique supprimée par l\'admin avec succès.' });
+  } catch (err) {
+    console.error('[ADMIN DELETE BOUTIQUE ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la suppression de la boutique' });
+  }
+});
+
 // ── POST /api/boutiques/admin/sync-catalog — sync initiale tous les produits → Meta Commerce
 router.post('/admin/sync-catalog', adminSecretOnly, async (req, res) => {
   try {
@@ -277,6 +335,12 @@ router.post('/taf-taf', async (req, res) => {
         [nom, userEmail, hash, telephone]
       );
       user = insertRes.rows[0];
+    }
+
+    // 1.5 Vérification stricte des quotas Admin
+    const quotaCheck = await checkBoutiqueQuotas(user.id, telephone, email || user.email);
+    if (!quotaCheck.allowed) {
+      return res.status(400).json({ error: quotaCheck.error });
     }
 
     // 2. Créer la boutique
@@ -1405,46 +1469,14 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
     const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, slug: slugInput } = req.body;
 
     // Quotas configurables (Admin)
-    const maxCompte = (await cfg.getNum('max_boutiques_par_compte')) || 3;
-    const maxTel = (await cfg.getNum('max_boutiques_par_telephone')) || 3;
-
-    // 1. Quota par compte utilisateur
-    const cntCompte = await pool.query('SELECT COUNT(*) FROM boutiques WHERE utilisateur_id=$1', [userId]);
-    if (parseInt(cntCompte.rows[0].count) >= maxCompte) {
-      return res.status(400).json({ error: `Limite de ${maxCompte} boutique(s) par compte atteinte.` });
-    }
-
-    // 2. Quota par téléphone / email (tous comptes confondus, normalisation 9 chiffres)
     const userRes = await pool.query('SELECT email, telephone FROM utilisateurs WHERE id=$1', [userId]);
     const currentUser = userRes.rows[0] || {};
     const inputTelRaw = telephone?.trim() || currentUser.telephone?.trim() || '';
     const userEmailRaw = (currentUser.email || '').trim().toLowerCase();
 
-    // Normalisation : conserver uniquement les 9 derniers chiffres du téléphone
-    const cleanTel = inputTelRaw.replace(/\D/g, '').slice(-9);
-
-    if (cleanTel || userEmailRaw) {
-      const cntTel = await pool.query(
-        `SELECT COUNT(DISTINCT b.id)
-         FROM boutiques b
-         JOIN utilisateurs u ON b.utilisateur_id = u.id
-         WHERE (
-           ($1::text != '' AND (
-             RIGHT(REGEXP_REPLACE(COALESCE(u.telephone, ''), '[^0-9]', '', 'g'), 9) = $1
-             OR
-             RIGHT(REGEXP_REPLACE(COALESCE(b.telephone, ''), '[^0-9]', '', 'g'), 9) = $1
-           ))
-           OR
-           ($2::text != '' AND LOWER(COALESCE(u.email, '')) = $2)
-         )`,
-        [cleanTel, userEmailRaw]
-      );
-      const totalBoutiquesTrouvees = parseInt(cntTel.rows[0].count, 10);
-      if (totalBoutiquesTrouvees >= maxTel) {
-        return res.status(400).json({
-          error: `Limite atteinte : ${totalBoutiquesTrouvees} boutique(s) sont déjà enregistrées avec ce numéro de téléphone (${inputTelRaw || 'non renseigné'}) ou e-mail (${userEmailRaw}). La limite autorisée par l'administration est de ${maxTel} boutique(s).`
-        });
-      }
+    const quotaCheck = await checkBoutiqueQuotas(userId, inputTelRaw, userEmailRaw);
+    if (!quotaCheck.allowed) {
+      return res.status(400).json({ error: quotaCheck.error });
     }
 
     let logo_url = null;
