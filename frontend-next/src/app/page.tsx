@@ -197,8 +197,8 @@ export default async function HomePage({
             <SearchBar defaultValue={q} />
           </div>
 
-          {/* CATÉGORIES EN PILULES FLUIDES (Directement sous la recherche) */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 840, margin: '14px auto 0', position: 'relative', zIndex: 2 }}>
+          {/* CATÉGORIES EN PILULES FLUIDES (Défilement horizontal sur mobile) */}
+          <div className="hero-categories-scroll" style={{ maxWidth: 840, margin: '14px auto 0', position: 'relative', zIndex: 2 }}>
             {CATEGORIES.map((c) => {
               if (categoriesActives !== null && !categoriesActives.includes(c.slug) && c.slug !== 'telecom') {
                 return null;
@@ -208,7 +208,8 @@ export default async function HomePage({
                 return (
                   <Link key={c.slug} href="/telecom" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+                    background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                    whiteSpace: 'nowrap', flexShrink: 0
                   }}>
                     <span>{c.emoji}</span> <span>{c.label}</span>
                   </Link>
@@ -226,6 +227,7 @@ export default async function HomePage({
                     border: isSelected ? '1px solid #C75B00' : '1px solid #e2e8f0',
                     boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : '0 2px 4px rgba(0,0,0,0.03)',
                     transition: 'all 0.15s ease',
+                    whiteSpace: 'nowrap', flexShrink: 0
                   }}
                 >
                   <span>{c.emoji}</span> <span>{c.label}</span>
