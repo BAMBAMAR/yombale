@@ -5,13 +5,12 @@
   "totalGroupes": 10,
   "pourcentage": 100,
   "groupeActuel": "Terminé",
-  "scrapes": 26,
-  "inseres": 8,
-  "doublons": 8,
-  "ignores": 10,
+  "scrapes": 37,
+  "inseres": 22,
+  "doublons": 3,
+  "ignores": 12,
   "erreurs": [
-    "Emploi 1: page.evaluate: Execution context was destroyed, most likely because of a navigation",
-    "Emploi 3: aucun contenu chargé (groupe privé ou ID invalide)"
+    "Je vide je vends j'achete je livre: aucun contenu chargé (groupe privé ou ID invalide)"
   ],
-  "updatedAt": "2026-08-07T01:33:05.895Z"
+  "updatedAt": "2026-08-08T15:37:14.892Z"
 }

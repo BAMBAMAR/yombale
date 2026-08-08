@@ -44,6 +44,12 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
 
 ---
 
+### [2026-08-08] - Page d'Accueil : Mixage des Meilleures Offres et Boutiques Nopalou
+- **Refonte de l'Affichage par Défaut (`backend/routes/produits.js`)** :
+  - Modification de la requête SQL (CTE) pour la page d'accueil sans filtre (`defautMixe`).
+  - Implémentation d'un tri entrelacé (interleaved) avec `ROW_NUMBER()` pour mixer dynamiquement les "meilleures offres" du comparateur (produits scrappés avec >= 2 offres) et les "produits mis en avant" des Boutiques Nopalou.
+  - Garantie de l'équité visuelle et maintien de l'ordre chronologique de parution (`created_at DESC`) à l'intérieur de ce mixage.
+
 ### [2026-08-08] - Audit Profond & Synchronisation des Menus (Mobile, Footer, Admin)
 - **Menu Mobile Utilisateur (`frontend-next/src/app/MobileNav.tsx`)** :
   - Synchronisation de l'espace compte mobile avec la barre latérale bureau (`AccountNavLinks.tsx`). Ajout des liens manquants : `Mes alertes prix`, `Publier un bien immo`, `Apporteur d'affaires` et `Forfaits & Fonctionnalités`.
