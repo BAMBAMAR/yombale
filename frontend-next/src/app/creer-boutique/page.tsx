@@ -18,6 +18,7 @@ export default function CreerBoutiqueWizard() {
   const [telephone, setTelephone] = useState('')
   const [code, setCode] = useState('')
   const [plan, setPlan] = useState<'decouverte' | 'pro' | 'business'>(initialPlan)
+  const [categorie, setCategorie] = useState('Mode & Vêtements')
   const [couleur, setCouleur] = useState('#C75B00')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -161,7 +162,7 @@ export default function CreerBoutiqueWizard() {
       const res = await fetch(`${BACKEND}/api/boutiques/taf-taf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom, telephone, couleur, plan })
+        body: JSON.stringify({ nom, telephone, couleur, plan, categorie })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur lors de la création de la boutique.')
@@ -269,7 +270,7 @@ export default function CreerBoutiqueWizard() {
                 💬
               </div>
               <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0f172a', marginBottom: 8, letterSpacing: '-0.02em', lineHeight: 1.25 }}>
-                Votre numéro WhatsApp Business
+                Votre numéro WhatsApp
               </h1>
               <p style={{ color: '#64748b', fontSize: 15, marginBottom: 28, lineHeight: 1.5 }}>
                 Les commandes passées sur votre vitrine arriveront directement sur ce numéro WhatsApp.
@@ -414,6 +415,31 @@ export default function CreerBoutiqueWizard() {
                     </div>
                   )
                 })}
+              </div>
+
+              {/* TYPE DE BOUTIQUE */}
+              <div style={{ background: '#f8fafc', padding: '16px 20px', borderRadius: 18, border: '1px solid #e2e8f0', marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 900, color: '#0f172a', marginBottom: 10 }}>
+                  🛍️ Type de boutique :
+                </label>
+                <select 
+                  value={categorie}
+                  onChange={(e) => setCategorie(e.target.value)}
+                  style={{
+                    width: '100%', padding: '12px 16px', borderRadius: 12,
+                    border: '2px solid #cbd5e1', fontSize: 16, color: '#0f172a',
+                    fontWeight: 700, outline: 'none', background: '#ffffff',
+                    ...fontStyle
+                  }}
+                >
+                  <option value="Mode & Vêtements">Mode & Vêtements</option>
+                  <option value="Électronique & High-Tech">Électronique & High-Tech</option>
+                  <option value="Cosmétique & Beauté">Cosmétique & Beauté</option>
+                  <option value="Alimentation & Restauration">Alimentation & Restauration</option>
+                  <option value="Maison & Décoration">Maison & Décoration</option>
+                  <option value="Services">Services</option>
+                  <option value="Divers">Divers (Autre)</option>
+                </select>
               </div>
 
               {/* COULEUR THÈME DE LA BOUTIQUE */}

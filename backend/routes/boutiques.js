@@ -310,7 +310,7 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
 // POST /api/boutiques/taf-taf - Création ultra-rapide (Dropshipping / Taf Taf)
 router.post('/taf-taf', async (req, res) => {
   try {
-    let { nom, email, mot_de_passe, telephone, couleur, couleur_theme } = req.body;
+    let { nom, email, mot_de_passe, telephone, couleur, couleur_theme, categorie } = req.body;
     if (!nom || !telephone) return res.status(400).json({ error: 'Nom et téléphone requis' });
     
     // Normaliser téléphone
@@ -346,8 +346,8 @@ router.post('/taf-taf', async (req, res) => {
     // 2. Créer la boutique
     const insertBoutique = await pool.query(
       `INSERT INTO boutiques (utilisateur_id, nom, telephone, ville, categorie, couleur_theme, actif)
-       VALUES ($1, $2, $3, 'Dakar', 'Divers', $4, true) RETURNING id`,
-      [user.id, nom, telephone, couleur_theme || couleur || '#25D366']
+       VALUES ($1, $2, $3, 'Dakar', $4, $5, true) RETURNING id`,
+      [user.id, nom, telephone, categorie || 'Divers', couleur_theme || couleur || '#25D366']
     );
     const boutiqueId = insertBoutique.rows[0].id;
 
