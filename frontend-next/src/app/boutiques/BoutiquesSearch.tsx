@@ -36,7 +36,6 @@ export default function BoutiquesSearch({ currentQ, currentVille, currentCat }: 
         value={q}
         onChange={e => setQ(e.target.value)}
         placeholder="Rechercher une boutique par nom, secteur ou ville..."
-        className="boutiques-search-input"
         style={{
           width: '100%',
           paddingLeft: 60,
