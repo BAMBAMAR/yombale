@@ -281,29 +281,32 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       return `
         WITH scraped AS (${baseScraped}),
              boutiques AS (${baseBoutique}),
-             scraped_filtered AS (
-               SELECT t.*, 1 AS source_type FROM scraped t WHERE t.agg_nb_offres >= 2 AND t.agg_prix_min > 20000
+             scraped_top AS (
+               SELECT t.*, 1 AS source_type FROM scraped t WHERE t.agg_nb_offres >= 2 AND t.agg_prix_min BETWEEN 50000 AND 150000
              ),
              scraped_others AS (
-               SELECT t.*, 1 AS source_type FROM scraped t WHERE NOT (t.agg_nb_offres >= 2 AND t.agg_prix_min > 20000)
+               SELECT t.*, 1 AS source_type FROM scraped t WHERE NOT (t.agg_nb_offres >= 2 AND t.agg_prix_min BETWEEN 50000 AND 150000)
              ),
-             boutiques_ordered AS (
-               SELECT t.*, 2 AS source_type FROM boutiques t
+             boutiques_top AS (
+               SELECT t.*, 2 AS source_type FROM boutiques t WHERE t.agg_prix_min BETWEEN 50000 AND 150000
+             ),
+             boutiques_others AS (
+               SELECT t.*, 2 AS source_type FROM boutiques t WHERE NOT (t.agg_prix_min BETWEEN 50000 AND 150000)
              ),
              mixed_top AS (
-               SELECT *, 1 AS sort_group, ROW_NUMBER() OVER(PARTITION BY source_type ORDER BY created_at DESC) as mix_rank 
-               FROM (SELECT * FROM boutiques_ordered UNION ALL SELECT * FROM scraped_filtered) sub
+               SELECT *, 1 AS sort_group 
+               FROM (SELECT * FROM boutiques_top UNION ALL SELECT * FROM scraped_top) sub
              ),
              others AS (
-               SELECT *, 2 AS sort_group, ROW_NUMBER() OVER(ORDER BY created_at DESC) as mix_rank 
-               FROM scraped_others
+               SELECT *, 2 AS sort_group 
+               FROM (SELECT * FROM boutiques_others UNION ALL SELECT * FROM scraped_others) sub
              ),
              combined AS (
                SELECT * FROM mixed_top UNION ALL SELECT * FROM others
              )
         SELECT ${colonnesFinales}, COUNT(*) OVER() AS total_count
         FROM combined t
-        ORDER BY t.sort_group ASC, t.mix_rank ASC, t.source_type DESC
+        ORDER BY t.sort_group ASC, t.agg_prix_min ASC NULLS LAST, t.agg_nb_offres DESC NULLS LAST
         LIMIT $5 OFFSET $6`;
     }
 

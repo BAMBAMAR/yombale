@@ -44,11 +44,11 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
 
 ---
 
-### [2026-08-08] - Page d'Accueil : Mixage des Meilleures Offres et Boutiques Nopalou
-- **Refonte de l'Affichage par Défaut (`backend/routes/produits.js`)** :
-  - Modification de la requête SQL (CTE) pour la page d'accueil sans filtre (`defautMixe`).
-  - Implémentation d'un tri entrelacé (interleaved) avec `ROW_NUMBER()` pour mixer dynamiquement les "meilleures offres" du comparateur (produits scrappés avec >= 2 offres) et les "produits mis en avant" des Boutiques Nopalou.
-  - Garantie de l'équité visuelle et maintien de l'ordre chronologique de parution (`created_at DESC`) à l'intérieur de ce mixage.
+### [2026-08-08] - Page d'Accueil : Produits les Moins Chers (50k - 150k) et Populaire
+- **Ajustement de l'Affichage par Défaut (`backend/routes/produits.js`)** :
+  - Modification de la requête SQL (CTE) pour prioriser les produits dont le prix est compris entre **50 000 et 150 000 FCFA**.
+  - Le tri priorise désormais formellement les prix les moins chers (`agg_prix_min ASC`) puis la popularité des produits les plus achetés / recherchés (`agg_nb_offres DESC`).
+  - Ce groupe "Top" mixe toujours les offres scrappées populaires (>= 2 offres) avec les produits mis en avant des Boutiques Nopalou de la même tranche de prix, garantissant l'équité visuelle et le maintien de l'ordre chronologique de parution (`created_at DESC`) à l'intérieur de ce mixage.
 
 ### [2026-08-08] - Audit Profond & Synchronisation des Menus (Mobile, Footer, Admin)
 - **Menu Mobile Utilisateur (`frontend-next/src/app/MobileNav.tsx`)** :

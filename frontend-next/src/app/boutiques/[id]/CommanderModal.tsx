@@ -391,19 +391,23 @@ export default function CommanderModal({
                     { value: 'orange_money', label: '🟠 Orange Money' },
                     { value: 'cash', label: '💵 Espèces' },
                     { value: 'virement', label: '🏦 Virement' },
-                    { value: 'carte_bancaire', label: '💳 Carte Bancaire (Visa/Mastercard)' },
+                    { value: 'carte_bancaire', label: '💳 Carte (Bientôt)', disabled: true },
                   ].map(m => (
                     <button
                       key={m.value}
                       type="button"
-                      onClick={() => setPaiement(m.value)}
+                      disabled={m.disabled}
+                      onClick={() => !m.disabled && setPaiement(m.value)}
                       style={{
                         padding: '9px 12px', borderRadius: 8, border: '2px solid',
                         borderColor: paiement === m.value ? '#C75B00' : '#e5e7eb',
-                        background: paiement === m.value ? '#fff7f0' : '#fff',
-                        color: paiement === m.value ? '#C75B00' : '#374151',
+                        background: m.disabled ? '#f1f5f9' : (paiement === m.value ? '#fff7f0' : '#fff'),
+                        color: m.disabled ? '#94a3b8' : (paiement === m.value ? '#C75B00' : '#374151'),
                         fontWeight: paiement === m.value ? 700 : 500,
-                        fontSize: 13, cursor: 'pointer', textAlign: 'left' as const,
+                        fontSize: 13, 
+                        cursor: m.disabled ? 'not-allowed' : 'pointer', 
+                        textAlign: 'left' as const,
+                        opacity: m.disabled ? 0.6 : 1
                       }}
                     >
                       {m.label}
