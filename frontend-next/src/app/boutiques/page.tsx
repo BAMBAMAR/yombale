@@ -236,36 +236,11 @@ export default async function BoutiquesPage({
         </div>
       </div>
 
-      {/* CATEGORIES */}
-      <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {/* Catégories Scrollables Dynamiques */}
-        <div className="hero-categories-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none', justifyContent: 'center' }}>
-          {categoriesAffichage.map(c => {
-            const isSelected = (cat === c.slug) || (!cat && c.slug === '')
-            return (
-              <Link
-                key={c.slug || 'toutes'}
-                href={buildLink({ cat: c.slug, page: '1' })}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '9px 16px', borderRadius: 30, fontSize: 13, fontWeight: isSelected ? 800 : 600,
-                  whiteSpace: 'nowrap', textDecoration: 'none',
-                  background: isSelected ? '#C75B00' : '#fff',
-                  color: isSelected ? '#fff' : '#374151',
-                  border: isSelected ? '1px solid #C75B00' : '1px solid #e5e7eb',
-                  boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span>{c.icon}</span>
-                <span>{c.label}</span>
-              </Link>
-            )
-          })}
-        </div>
-
+      {/* FILTRES & CATEGORIES */}
+      <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        
         {/* Filtres par Ville Dynamique, Formule & Tri */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', background: '#fff', padding: '14px 18px', borderRadius: 14, border: '1px solid #e5e7eb' }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', background: '#fff', padding: '14px 18px', borderRadius: 14, border: '1px solid #e5e7eb' }}>
           
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ville :</span>
@@ -300,17 +275,19 @@ export default async function BoutiquesPage({
               💼 Business
             </Link>
             <Link
-              href={buildLink({ plan: plan === 'pro' ? '' : 'pro', page: '1' })}
+              href={buildLink({ verified: verified === '1' ? '' : '1', page: '1' })}
               style={{
                 padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none',
-                background: plan === 'pro' ? '#C75B00' : '#f1f5f9',
-                color: plan === 'pro' ? '#fff' : '#C75B00',
+                background: verified === '1' ? '#f0fdf4' : '#f1f5f9',
+                color: verified === '1' ? '#16a34a' : '#475569',
                 border: '1px solid #cbd5e1',
               }}
             >
               ⭐ Vendeur Pro
             </Link>
           </div>
+
+          <div style={{ flex: 1, minWidth: 20 }} />
 
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280' }}>Trier :</span>
