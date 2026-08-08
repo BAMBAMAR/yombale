@@ -2201,6 +2201,14 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
 
   const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
+  const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>(() => {
+    const defaultExpanded: Record<number, boolean> = {};
+    NAV_GROUPS.forEach((g, idx) => {
+      const hasActive = g.items.some(i => i.key === resolvedInitialTab);
+      defaultExpanded[idx] = hasActive || idx === 0; // Ouvre le premier groupe ou celui contenant l'onglet actif par défaut
+    });
+    return defaultExpanded;
+  })
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
@@ -2320,35 +2328,51 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
 
         {/* Nav par Groupes */}
         <nav className="bq-nav">
-          {NAV_GROUPS.map((group, gIdx) => (
+          {NAV_GROUPS.map((group, gIdx) => {
+            const isExpanded = expandedGroups[gIdx] ?? false;
+            return (
             <div key={gIdx} className="bq-nav-group">
-              <div className="bq-nav-group-title">{group.title}</div>
-              {group.items.map(item => {
-                const allowed = isAllowed(item.minPlan)
-                return (
-                  <button
-                    key={item.key}
-                    onClick={() => { setTab(item.key); if (item.key === 'commandes') setNbEnAttente(0) }}
-                    className={`bq-nav-item${tab === item.key ? ' active' : ''}`}
-                    style={{ opacity: allowed ? 1 : 0.9, display: 'flex', alignItems: 'center', width: '100%', gap: 6, padding: '8px 8px' }}
-                  >
-                    <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
-                    <span style={{ textAlign: 'left', whiteSpace: 'nowrap', fontSize: 12.5, fontWeight: tab === item.key ? 700 : 500, flex: 1, minWidth: 0 }}>
-                      {item.label}
-                    </span>
-                    {!allowed && (
-                      <span style={{ fontSize: 9, background: item.minPlan === 'business' ? '#1e3a5f' : '#C75B00', color: '#fff', padding: '2px 5px', borderRadius: 4, fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 'auto' }}>
-                        🔒 {item.minPlan === 'business' ? 'Business' : 'Pro'}
+              <div 
+                className="bq-nav-group-title" 
+                onClick={() => setExpandedGroups(prev => ({ ...prev, [gIdx]: !prev[gIdx] }))}
+                style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none', paddingRight: 8 }}
+              >
+                <span>{group.title}</span>
+                <span style={{ fontSize: 10, opacity: 0.5, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+              </div>
+              <div style={{ display: isExpanded ? 'block' : 'none' }}>
+                {group.items.map(item => {
+                  const allowed = isAllowed(item.minPlan)
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => { 
+                        setTab(item.key); 
+                        if (item.key === 'commandes') setNbEnAttente(0);
+                        // Sur mobile, on pourrait vouloir fermer la nav, mais ici on la laisse telle quelle
+                      }}
+                      className={`bq-nav-item${tab === item.key ? ' active' : ''}`}
+                      style={{ opacity: allowed ? 1 : 0.9, display: 'flex', alignItems: 'center', width: '100%', gap: 6, padding: '8px 8px' }}
+                    >
+                      <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
+                      <span style={{ textAlign: 'left', whiteSpace: 'nowrap', fontSize: 12.5, fontWeight: tab === item.key ? 700 : 500, flex: 1, minWidth: 0 }}>
+                        {item.label}
                       </span>
-                    )}
-                    {allowed && item.key === 'commandes' && nbEnAttente > 0 && (
-                      <span className="bq-nav-badge">{nbEnAttente}</span>
-                    )}
-                  </button>
-                )
-              })}
+                      {!allowed && (
+                        <span style={{ fontSize: 9, background: item.minPlan === 'business' ? '#1e3a5f' : '#C75B00', color: '#fff', padding: '2px 5px', borderRadius: 4, fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 'auto' }}>
+                          🔒 {item.minPlan === 'business' ? 'Business' : 'Pro'}
+                        </span>
+                      )}
+                      {allowed && item.key === 'commandes' && nbEnAttente > 0 && (
+                        <span className="bq-nav-badge">{nbEnAttente}</span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          ))}
+            )
+          })}
         </nav>
 
         {/* Liens rapides */}
