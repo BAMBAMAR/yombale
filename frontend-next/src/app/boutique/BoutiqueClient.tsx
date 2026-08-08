@@ -2557,9 +2557,9 @@ export default function BoutiqueClient({
 
   // Vue liste
   return (
-    <div style={{ maxWidth: 880, margin: '32px auto', padding: '0 20px 80px', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-      {/* Navigation Fil d'Ariane épuré */}
-      <nav aria-label="Fil d'Ariane" style={{ marginBottom: 16 }}>
+    <div style={{ maxWidth: 880, margin: '32px auto', padding: '0 20px 80px' }}>
+      {/* Navigation Fil d Ariane */}
+      <nav aria-label="Fil d Ariane" style={{ marginBottom: 16 }}>
         <ol style={{ display: 'flex', alignItems: 'center', gap: 8, listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#64748b' }}>
           <li>
             <Link href="/compte" style={{ color: '#64748b', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
