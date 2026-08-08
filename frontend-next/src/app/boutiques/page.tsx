@@ -291,20 +291,9 @@ export default async function BoutiquesPage({
 
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280' }}>Trier :</span>
-            {TRIS.map(t => (
-              <Link
-                key={t.val || 'defaut'}
-                href={buildLink({ tri: t.val, page: '1' })}
-                style={{
-                  padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none',
-                  background: tri === t.val ? '#1e293b' : '#f8fafc',
-                  color: tri === t.val ? '#fff' : '#4b5563',
-                  border: tri === t.val ? '1px solid #1e293b' : '1px solid #e2e8f0',
-                }}
-              >
-                {t.label}
-              </Link>
-            ))}
+            <Link href={buildLink({ tri: 'recommande', page: '1' })} style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none', background: tri === 'recommande' ? '#1e293b' : '#f8fafc', color: tri === 'recommande' ? '#fff' : '#4b5563', border: tri === 'recommande' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Recommandé</Link>
+            <Link href={buildLink({ tri: 'recent', page: '1' })} style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none', background: tri === 'recent' ? '#1e293b' : '#f8fafc', color: tri === 'recent' ? '#fff' : '#4b5563', border: tri === 'recent' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Plus récents</Link>
+            <Link href={buildLink({ tri: 'nom', page: '1' })} style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none', background: tri === 'nom' ? '#1e293b' : '#f8fafc', color: tri === 'nom' ? '#fff' : '#4b5563', border: tri === 'nom' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Nom A-Z</Link>
           </div>
         </div>
       </div>

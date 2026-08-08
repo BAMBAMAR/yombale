@@ -1,16 +1,14 @@
 {
   "status": "completed",
   "mode": "live",
-  "groupeIndex": 10,
-  "totalGroupes": 10,
+  "groupeIndex": 1,
+  "totalGroupes": 1,
   "pourcentage": 100,
   "groupeActuel": "Terminé",
-  "scrapes": 44,
-  "inseres": 16,
-  "doublons": 13,
-  "ignores": 15,
-  "erreurs": [
-    "Je vide je vends j'achete je livre: aucun contenu chargé (groupe privé ou ID invalide)"
-  ],
-  "updatedAt": "2026-08-08T21:34:08.860Z"
+  "scrapes": 4,
+  "inseres": 2,
+  "doublons": 1,
+  "ignores": 1,
+  "erreurs": [],
+  "updatedAt": "2026-08-08T23:16:36.861Z"
 }
