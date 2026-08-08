@@ -45,12 +45,12 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
       prix_boost: '500',
       boost_duree_jours: '7',
       plan_decouverte_label: 'Boutique Taf Taf',
-      plan_decouverte_prix: '5000',
+      plan_decouverte_prix: '2500',
       abonnement_essai_jours: '30',
-      plan_pro_label: 'Vendeur Pro',
-      plan_pro_prix: '15000',
-      plan_business_label: 'Business VIP',
-      plan_business_prix: '35000',
+      plan_pro_label: 'Boutique Pro',
+      plan_pro_prix: '5000',
+      plan_business_label: 'Boutique Business',
+      plan_business_prix: '10000',
       reduc_3_mois: '10',
       reduc_6_mois: '15',
       reduc_12_mois: '25',
@@ -162,12 +162,12 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
         {field('plan_decouverte_prix', 'Prix plan Taf Taf (mensuel)', 'number', 'FCFA/mois')}
         {field('abonnement_essai_jours', 'Durée essai gratuit / 1er mois offert', 'number', 'jours')}
         <div style={{ margin: '14px 0', borderTop: '1px dashed #e5e7eb' }} />
-        {field('plan_pro_label', 'Nom plan Vendeur Pro', 'text')}
-        {field('plan_pro_prix', 'Prix plan Vendeur Pro (mensuel)', 'number', 'FCFA/mois')}
+        {field('plan_pro_label', 'Nom plan Boutique Pro', 'text')}
+        {field('plan_pro_prix', 'Prix plan Boutique Pro (mensuel)', 'number', 'FCFA/mois')}
         <div style={{ margin: '14px 0', borderTop: '1px dashed #e5e7eb' }} />
-        {field('plan_business_label', 'Nom plan Business VIP', 'text')}
-        {field('plan_business_prix', 'Prix plan Business VIP (mensuel)', 'number', 'FCFA/mois')}
-        {field('commission_business', 'Commission plan Business VIP', 'number', '%')}
+        {field('plan_business_label', 'Nom plan Boutique Business', 'text')}
+        {field('plan_business_prix', 'Prix plan Boutique Business (mensuel)', 'number', 'FCFA/mois')}
+        {field('commission_business', 'Commission plan Boutique Business', 'number', '%')}
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px dashed #e5e7eb' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 12 }}>🏷️ Réductions multi-durées engagées :</div>
           {field('reduc_3_mois', 'Réduction engagement 3 Mois', 'number', '%')}

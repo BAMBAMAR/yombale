@@ -26,8 +26,8 @@ export default async function FonctionnalitesPage() {
   } catch {
     // valeurs par défaut ci-dessous
   }
-  const prixPro = Number(settings.plan_pro_prix) || 15000
-  const prixBusiness = Number(settings.plan_business_prix) || 35000
+  const prixPro = Number(settings.plan_pro_prix) || 5000
+  const prixBusiness = Number(settings.plan_business_prix) || 10000
   const PRIX_PAR_PALIER: Record<string, number | null> = { gratuit: null, pro: prixPro, business: prixBusiness }
 
   const palierActuelId = planActif ? planActif.plan : 'gratuit'

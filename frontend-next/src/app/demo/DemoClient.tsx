@@ -89,8 +89,8 @@ export default function DemoClient({
   };
 
   // DYNAMIC PRICING AND COMMISSION VALUES FROM BACKEND SETTINGS
-  const prixPro = Number(settings.plan_pro_prix) || 15000;
-  const prixBusiness = Number(settings.plan_business_prix) || 35000;
+  const prixPro = Number(settings.plan_pro_prix) || 5000;
+  const prixBusiness = Number(settings.plan_business_prix) || 10000;
   const tauxCommissionPourcent = Number(settings.apporteur_taux_commission) || 20;
   const tauxCommissionDecimal = tauxCommissionPourcent / 100;
   const labelPro = settings.plan_pro_label || 'Boutique Pro';

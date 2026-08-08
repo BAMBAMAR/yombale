@@ -17,7 +17,7 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
 ### 🔑 2. Stratégie Commerciale & Configuration du Portail Développeur (Spec 05 - API & Webhooks)
 - **Cible Marchande** : PME, Grossistes et Marques ayant leur propre logiciel ERP/CRM (*Odoo, Sage, Dolibarr*).
 - **Modèle de Tarification & Facturation** :
-  - **Option 1 (Forfait VIP / Business)** : Réservé aux forfaits d'abonnement supérieurs (`+15 000 FCFA` à `+30 000 FCFA / mois`).
+  - **Option 1 (Forfaits Boutique Taf Taf / Pro / Business)** : Réservé aux forfaits d'abonnement (`2 500 FCFA`, `5 000 FCFA` et `10 000 FCFA / mois`).
   - **Option 2 (Add-on sur mesure)** : Facturer l'accès au module *API & Connecteurs ERP* comme une extension mensuelle.
 - **Rétention Client (Lock-in)** : La connexion de l'ERP du marchand via l'API Nopalou garantit sa fidélisation à 100% sans risque de désabonnement.
 

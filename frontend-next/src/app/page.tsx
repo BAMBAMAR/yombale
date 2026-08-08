@@ -130,9 +130,9 @@ export default async function HomePage({
   } catch {
     // valeurs par défaut ci-dessous
   }
-  const prixPro = Number(settings.plan_pro_prix) || 15000;
-  const prixBusiness = Number(settings.plan_business_prix) || 35000;
-  const prixTafTaf = Number(settings.plan_decouverte_prix || settings.plan_taftaf_prix) || 5000;
+  const prixPro = Number(settings.plan_pro_prix) || 5000;
+  const prixBusiness = Number(settings.plan_business_prix) || 10000;
+  const prixTafTaf = Number(settings.plan_decouverte_prix || settings.plan_taftaf_prix) || 2500;
 
   return (
     <>

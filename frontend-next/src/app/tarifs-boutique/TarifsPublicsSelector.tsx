@@ -38,7 +38,7 @@ const PLANS_CONFIG: PlanConfig[] = [
     nom: 'Boutique Taf Taf',
     tag: 'Formule Populaire',
     description: 'Idéal pour débuter son commerce et vendre immédiatement sur WhatsApp.',
-    prixMensuelBase: 5000,
+    prixMensuelBase: 2500,
     populaire: true,
     features: [
       'Catalogue de produits illimité',
@@ -53,10 +53,10 @@ const PLANS_CONFIG: PlanConfig[] = [
   },
   {
     id: 'pro',
-    nom: 'Vendeur Pro',
+    nom: 'Boutique Pro',
     tag: 'Booster de Ventes',
     description: 'Pour les commerces établis voulant maximiser leur visibilité sur Nopalou.',
-    prixMensuelBase: 15000,
+    prixMensuelBase: 5000,
     recommande: true,
     features: [
       'Tout le contenu de la formule Taf Taf',
@@ -72,10 +72,10 @@ const PLANS_CONFIG: PlanConfig[] = [
   },
   {
     id: 'business',
-    nom: 'Business VIP',
+    nom: 'Boutique Business',
     tag: 'Solution Globale & Multi-Sites',
     description: 'Pour les grandes enseignes, chaînes de magasins, grossistes et marques d\'importation.',
-    prixMensuelBase: 35000,
+    prixMensuelBase: 10000,
     features: [
       'Tout le contenu de la formule Pro',
       '👥 Caisse POS Multi-Caissiers (PIN & Clôtures Z)',
@@ -108,21 +108,21 @@ export default function TarifsPublicsSelector() {
             return {
               ...p,
               nom: settings.plan_decouverte_label || p.nom,
-              prixMensuelBase: Number(settings.plan_decouverte_prix) || 5000,
+              prixMensuelBase: Number(settings.plan_decouverte_prix) || 2500,
             };
           }
           if (p.id === 'pro') {
             return {
               ...p,
               nom: settings.plan_pro_label || p.nom,
-              prixMensuelBase: Number(settings.plan_pro_prix) || 15000,
+              prixMensuelBase: Number(settings.plan_pro_prix) || 5000,
             };
           }
           if (p.id === 'business') {
             return {
               ...p,
               nom: settings.plan_business_label || p.nom,
-              prixMensuelBase: Number(settings.plan_business_prix) || 35000,
+              prixMensuelBase: Number(settings.plan_business_prix) || 10000,
             };
           }
           return p;

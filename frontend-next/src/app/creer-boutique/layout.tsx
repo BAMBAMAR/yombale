@@ -68,6 +68,22 @@ const JSON_LD_SERVICE = {
           name: 'Formule Boutique Taf Taf',
           description: 'Catalogue produits illimité, commandes WhatsApp directes, 1 mois offert.',
         },
+        price: '2500',
+        priceCurrency: 'XOF',
+        priceSpecification: {
+          '@type': 'UnitPriceSpecification',
+          price: '2500',
+          priceCurrency: 'XOF',
+          unitText: 'MONTH',
+        },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Formule Vendeur Pro',
+          description: 'Badge certifié, référencement prioritaire sur le comparateur Nopalou, support dédié.',
+        },
         price: '5000',
         priceCurrency: 'XOF',
         priceSpecification: {
@@ -81,30 +97,14 @@ const JSON_LD_SERVICE = {
         '@type': 'Offer',
         itemOffered: {
           '@type': 'Service',
-          name: 'Formule Vendeur Pro',
-          description: 'Badge certifié, référencement prioritaire sur le comparateur Nopalou, support dédié.',
-        },
-        price: '15000',
-        priceCurrency: 'XOF',
-        priceSpecification: {
-          '@type': 'UnitPriceSpecification',
-          price: '15000',
-          priceCurrency: 'XOF',
-          unitText: 'MONTH',
-        },
-      },
-      {
-        '@type': 'Offer',
-        itemOffered: {
-          '@type': 'Service',
           name: 'Formule Business VIP',
           description: 'Accompagnement VIP, campagnes marketing, analytics avancés.',
         },
-        price: '35000',
+        price: '10000',
         priceCurrency: 'XOF',
         priceSpecification: {
           '@type': 'UnitPriceSpecification',
-          price: '35000',
+          price: '10000',
           priceCurrency: 'XOF',
           unitText: 'MONTH',
         },

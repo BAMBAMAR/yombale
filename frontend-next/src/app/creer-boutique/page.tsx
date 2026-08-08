@@ -61,9 +61,9 @@ export default function CreerBoutiqueWizard() {
       .then(res => res.json())
       .then(settings => {
         if (!settings) return;
-        const pxDecouverte = Number(settings.plan_decouverte_prix) || 5000;
-        const pxPro = Number(settings.plan_pro_prix) || 15000;
-        const pxBusiness = Number(settings.plan_business_prix) || 35000;
+        const pxDecouverte = Number(settings.plan_decouverte_prix) || 2500;
+        const pxPro = Number(settings.plan_pro_prix) || 5000;
+        const pxBusiness = Number(settings.plan_business_prix) || 10000;
         const essaiJours = settings.abonnement_essai_jours || '30';
 
         setPlansConfig({

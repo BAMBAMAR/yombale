@@ -218,8 +218,8 @@ export default async function CommunicationPage() {
   const secret = jar.get('nopalou_admin')?.value ?? ''
 
   let prixDecouverte = 2500
-  let prixPro = 15000
-  let prixBusiness = 35000
+  let prixPro = 5000
+  let prixBusiness = 10000
   let commissionBusiness = 2
   let tauxApporteur = 20
 
@@ -228,8 +228,8 @@ export default async function CommunicationPage() {
     if (r.ok) {
       const s = await r.json()
       prixDecouverte = Number(s.plan_decouverte_prix) || 2500
-      prixPro = Number(s.plan_pro_prix) || 15000
-      prixBusiness = Number(s.plan_business_prix) || 35000
+      prixPro = Number(s.plan_pro_prix) || 5000
+      prixBusiness = Number(s.plan_business_prix) || 10000
       commissionBusiness = Number(s.commission_business) || 2
       tauxApporteur = Number(s.apporteur_taux_commission) || 20
     }

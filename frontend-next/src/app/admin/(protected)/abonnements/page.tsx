@@ -44,8 +44,8 @@ export default async function AdminAbonnementsPage() {
 
   let stats: Stats | null = null
   let abonnements: Abonnement[] = []
-  let prixPro = 15000
-  let prixBusiness = 35000
+  let prixPro = 5000
+  let prixBusiness = 10000
 
   try {
     const [sRes, aRes, settingsRes] = await Promise.all([
@@ -57,8 +57,8 @@ export default async function AdminAbonnementsPage() {
     if (aRes.ok) abonnements = (await aRes.json()).abonnements ?? []
     if (settingsRes.ok) {
       const s = await settingsRes.json()
-      prixPro = Number(s.plan_pro_prix) || 15000
-      prixBusiness = Number(s.plan_business_prix) || 35000
+      prixPro = Number(s.plan_pro_prix) || 5000
+      prixBusiness = Number(s.plan_business_prix) || 10000
     }
   } catch {}
 

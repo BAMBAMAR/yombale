@@ -48,8 +48,8 @@ export default async function DemoPage({ searchParams }: DemoPageProps) {
   const initialRole = (params.role?.toLowerCase() as 'acheteur' | 'marchand' | 'apporteur') || 'acheteur';
 
   let initialSettings: PublicSettings = {
-    plan_pro_prix: '15000',
-    plan_business_prix: '35000',
+    plan_pro_prix: '5000',
+    plan_business_prix: '10000',
     plan_pro_label: 'Boutique Pro',
     plan_business_label: 'Boutique Business',
     apporteur_taux_commission: '20',

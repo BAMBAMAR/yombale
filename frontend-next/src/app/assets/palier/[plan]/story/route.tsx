@@ -15,14 +15,14 @@ export async function GET(
   let prix: number | null = null
   let commission = 2
   if (palier.id !== 'gratuit') {
-    let prixPro = 15000
-    let prixBusiness = 35000
+    let prixPro = 5000
+    let prixBusiness = 10000
     try {
       const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' })
       if (r.ok) {
         const s = await r.json()
-        prixPro = Number(s.plan_pro_prix) || 15000
-        prixBusiness = Number(s.plan_business_prix) || 35000
+        prixPro = Number(s.plan_pro_prix) || 5000
+        prixBusiness = Number(s.plan_business_prix) || 10000
         commission = Number(s.commission_business) || 2
       }
     } catch { /* valeurs par défaut ci-dessus */ }
