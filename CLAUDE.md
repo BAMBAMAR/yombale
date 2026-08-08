@@ -44,6 +44,11 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
 
 ---
 
+### [2026-08-08] - Mise à Jour Complète des Tarifs Marchands (Dynamisation & Fallbacks)
+- **Alignement sur la Base de Données de Production** : Remplacement des anciennes valeurs par défaut (`5000`, `15000`, `35000`) par les véritables prix officiels (`2 500`, `5 000`, `10 000` FCFA) sur l'ensemble du frontend et du backend.
+- **Mise à Jour de la Configuration Backend (`backend/lib/settingsCache.js`, `backend/routes/abonnements.js`)** : Actualisation des fallbacks pour garantir la cohérence des prix même en l'absence de base de données locale.
+- **Nettoyage des Noms des Forfaits** : Utilisation exclusive des dénominations officielles ("Boutique Taf Taf", "Boutique Pro", "Boutique Business") dans tout le site, y compris le panneau Admin (`/admin/tarifs`) et le tunnel d'inscription.
+
 ### [2026-08-08] - Page d'Accueil : Produits les Moins Chers (50k - 150k) et Populaire
 - **Ajustement de l'Affichage par Défaut (`backend/routes/produits.js`)** :
   - Modification de la requête SQL (CTE) pour prioriser les produits dont le prix est compris entre **50 000 et 150 000 FCFA** et qui sont populaires (`agg_nb_offres >= 2`).
