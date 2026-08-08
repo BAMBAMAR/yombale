@@ -2557,7 +2557,7 @@ export default function BoutiqueClient({
 
   // Vue liste
   return (
-    <div style={{ maxWidth: 880, margin: '32px auto', padding: '0 20px 80px' }}>
+    <main style={{ maxWidth: 880, margin: '32px auto', padding: '0 20px 80px' }}>
       {/* Navigation Fil d Ariane */}
       <nav aria-label="Fil d Ariane" style={{ marginBottom: 16 }}>
         <ol style={{ display: 'flex', alignItems: 'center', gap: 8, listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#64748b' }}>
@@ -2723,6 +2723,6 @@ export default function BoutiqueClient({
           onSuccess={() => { setManuelBoutiqueId(null); router.refresh() }}
         />
       )}
-    </div>
+    </main>
   )
 }
