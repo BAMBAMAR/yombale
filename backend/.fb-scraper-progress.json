@@ -1,14 +1,15 @@
 {
-  "status": "completed",
+  "status": "in_progress",
   "mode": "live",
-  "groupeIndex": 1,
-  "totalGroupes": 1,
-  "pourcentage": 100,
-  "groupeActuel": "Terminé",
-  "scrapes": 4,
-  "inseres": 2,
-  "doublons": 1,
-  "ignores": 1,
+  "groupeIndex": 7,
+  "totalGroupes": 10,
+  "pourcentage": 70,
+  "groupeActuel": "Groupe immo 2",
+  "groupeUrl": "https://www.facebook.com/groups/4675042465930136",
+  "scrapes": 21,
+  "inseres": 16,
+  "doublons": 2,
+  "ignores": 3,
   "erreurs": [],
-  "updatedAt": "2026-08-08T23:16:36.861Z"
+  "updatedAt": "2026-08-08T23:47:23.103Z"
 }

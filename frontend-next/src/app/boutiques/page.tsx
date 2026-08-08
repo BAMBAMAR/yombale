@@ -171,7 +171,7 @@ export default async function BoutiquesPage({
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 40 }}>
             
             {/* COLONNE GAUCHE : Textes et Call to Action */}
-          <div style={{ maxWidth: 640 }}>
+          <div style={{ flex: '1 1 400px', maxWidth: 540 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '6px 14px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 14, border: '1px solid #ffedd5' }}>
               <Sparkles size={14} style={{ color: '#C75B00' }} />
               <span>Hub officiel des vendeurs vérifiés Nopalou</span>
@@ -203,8 +203,31 @@ export default async function BoutiquesPage({
             </div>
           </div>
 
+          {/* COLONNE CENTRALE : Statistiques */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 240px', maxWidth: 280 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: '#ffffff', padding: '16px 20px', borderRadius: 16, border: '1px solid #fed7aa', boxShadow: '0 4px 12px rgba(199,91,0,0.06)' }}>
+              <div style={{ background: '#fff7ed', padding: 12, borderRadius: 12 }}>
+                <Store size={28} style={{ color: '#C75B00' }} />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 24, fontWeight: 900, color: '#0f172a' }}>{total > 0 ? total : '100+'}</p>
+                <p style={{ margin: 0, fontSize: 13, color: '#64748b', fontWeight: 600 }}>Boutiques actives</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: '#ffffff', padding: '16px 20px', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
+              <div style={{ background: '#f0fdf4', padding: 12, borderRadius: 12 }}>
+                <ShieldCheck size={28} style={{ color: '#16a34a' }} />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 24, fontWeight: 900, color: '#0f172a' }}>100%</p>
+                <p style={{ margin: 0, fontSize: 13, color: '#64748b', fontWeight: 600 }}>Vendeurs Vérifiés</p>
+              </div>
+            </div>
+          </div>
+
           {/* COLONNE DROITE : Boutique Taf Taf */}
-          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: '#0f172a', padding: 20, borderRadius: 16, color: '#f8fafc', border: '1px solid #1e293b', boxShadow: '0 8px 24px rgba(15,23,42,0.15)', display: 'flex', flexDirection: 'column' }}>
+          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 280, textAlign: 'left', background: '#0f172a', padding: 20, borderRadius: 16, color: '#f8fafc', border: '1px solid #1e293b', boxShadow: '0 8px 24px rgba(15,23,42,0.15)', display: 'flex', flexDirection: 'column' }}>
             <div><span style={{ display: 'inline-block', background: 'rgba(199,91,0,0.2)', color: '#fed7aa', padding: '4px 10px', borderRadius: 12, fontSize: 10, fontWeight: 800, marginBottom: 12, border: '1px solid rgba(199,91,0,0.3)' }}>🚀 NOUVEAU</span></div>
             <h3 style={{ fontSize: 15, fontWeight: 900, marginBottom: 6, color: '#fff' }}>Boutique Taf Taf</h3>
             <p style={{ fontSize: 12, color: '#94a3b8', margin: '0 0 16px', lineHeight: 1.4 }}>Créez votre boutique complète en 30 secondes chrono pour 2 500 FCFA !</p>
