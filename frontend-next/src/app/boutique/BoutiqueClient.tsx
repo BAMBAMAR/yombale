@@ -1870,94 +1870,103 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
   const sponsorActif = boutique.sponsorise && boutique.sponsor_jusqu_au && new Date(boutique.sponsor_jusqu_au) > new Date()
 
   return (
-    <div className="card-premium" style={{ marginBottom: 20 }}>
-      <div style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          {/* Logo */}
-          {boutique.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={boutique.logo_url} alt={boutique.nom}
-              style={{ width: 68, height: 68, objectFit: 'cover', borderRadius: 12, flexShrink: 0, border: '1px solid var(--border)' }} />
-          ) : (
-            <div style={{ width: 68, height: 68, borderRadius: 12, background: 'linear-gradient(135deg, #fff8f2 0%, #fdf0e6 100%)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Store size={32} style={{ color: 'var(--accent)' }} />
-            </div>
-          )}
-
-          {/* Infos */}
-          <div style={{ flex: 1, minWidth: 260 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontWeight: 800, fontSize: 19, margin: 0, color: 'var(--navy)' }}>{boutique.nom}</h2>
-                {planActif === 'business' && <span className="badge-premium" style={{ background: 'var(--navy)', color: '#fff' }}>💼 Business</span>}
-                {planActif === 'pro'      && <span className="badge-premium" style={{ background: 'var(--accent)', color: '#fff' }}>⭐ Pro</span>}
-                {(planActif === 'decouverte' || planActif === 'taf_taf') && <span className="badge-premium" style={{ background: '#25D366', color: '#1C2B4A' }}>⚡ Taf Taf</span>}
-                {boutique.mode_fonctionnement === 'pure_player' ? (
-                  <span className="badge-premium" style={{ background: '#fff7ed', color: '#c75b00', borderColor: '#ffedd5' }}>⚡ Pure Player Web</span>
-                ) : (
-                  <span className="badge-premium" style={{ background: '#f0fdf4', color: '#16a34a', borderColor: '#bbf7d0' }}>🏪 Hybride POS</span>
-                )}
-                {sponsorActif            && <span className="badge-premium" style={{ background: '#fffbeb', color: '#92400e', borderColor: '#fcd34d' }}>Mis en avant</span>}
+    <div className="card-premium" style={{ display: 'flex', flexDirection: 'column', height: '100%', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.04)', background: '#fff', overflow: 'hidden' }}>
+      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        {/* En-tête : Logo, Nom, Statut, et Actions secondaires */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 20 }}>
+          {/* Logo et Nom */}
+          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
+            {boutique.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={boutique.logo_url} alt={boutique.nom} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 12, flexShrink: 0, border: '1px solid #e2e8f0' }} />
+            ) : (
+              <div style={{ width: 56, height: 56, borderRadius: 12, background: 'linear-gradient(135deg, #fff8f2 0%, #fdf0e6 100%)', border: '1px solid #ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Store size={28} style={{ color: '#C75B00' }} />
               </div>
-              <span className="badge-premium" style={{ color: boutique.actif ? '#16a34a' : 'var(--text3)', background: boutique.actif ? '#f0fdf4' : '#f9fafb', borderColor: boutique.actif ? '#bbf7d0' : 'var(--border)' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: boutique.actif ? '#16a34a' : 'var(--text3)', display: 'inline-block', marginRight: 6 }}></span>
-                {boutique.actif ? 'Active' : 'Inactive'}
-              </span>
-            </div>
-
-            {boutique.description && (
-              <p style={{ fontSize: 13, color: 'var(--text2)', margin: '0 0 12px', lineHeight: 1.5 }}>{boutique.description}</p>
             )}
-
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-              {boutique.categorie && (
-                <span className="badge-premium">
-                  <Tag size={13} style={{ color: 'var(--text2)' }} /> {boutique.categorie}
-                </span>
-              )}
-              {boutique.ville && (
-                <span className="badge-premium">
-                  <MapPin size={13} style={{ color: 'var(--text2)' }} /> {boutique.ville}
-                </span>
-              )}
-              {boutique.telephone && (
-                <span className="badge-premium">
-                  <Phone size={13} style={{ color: 'var(--text2)' }} /> {boutique.telephone}
-                </span>
-              )}
+            <div style={{ minWidth: 0, overflow: 'hidden' }}>
+              <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontWeight: 800, fontSize: 18, margin: '0 0 6px', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{boutique.nom}</h2>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {planActif === 'business' && <span className="badge-premium" style={{ background: '#1e3a8a', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>💼 Business</span>}
+                {planActif === 'pro'      && <span className="badge-premium" style={{ background: '#C75B00', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>⭐ Pro</span>}
+                {(planActif === 'decouverte' || planActif === 'taf_taf') && <span className="badge-premium" style={{ background: '#22c55e', color: '#064e3b', fontSize: 10, padding: '2px 6px', border: 'none' }}>⚡ Taf Taf</span>}
+                {boutique.mode_fonctionnement === 'pure_player' ? (
+                  <span className="badge-premium" style={{ background: '#fff7ed', color: '#c75b00', borderColor: '#ffedd5', fontSize: 10, padding: '2px 6px' }}>Web</span>
+                ) : (
+                  <span className="badge-premium" style={{ background: '#f0fdf4', color: '#16a34a', borderColor: '#bbf7d0', fontSize: 10, padding: '2px 6px' }}>POS</span>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Actions Secondaires (Icônes) et Statut */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flexShrink: 0 }}>
+            <span className="badge-premium" style={{ color: boutique.actif ? '#15803d' : '#64748b', background: boutique.actif ? '#f0fdf4' : '#f8fafc', borderColor: boutique.actif ? '#bbf7d0' : '#e2e8f0', fontSize: 11, padding: '2px 8px' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: boutique.actif ? '#22c55e' : '#94a3b8', display: 'inline-block', marginRight: 4 }}></span>
+              {boutique.actif ? 'Active' : 'Inactive'}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer" title="Voir la boutique" style={{ width: 32, height: 32, borderRadius: 8, background: '#f8fafc', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', transition: 'all 0.2s', border: '1px solid #e2e8f0' }}>
+                <Eye size={16} />
+              </a>
+              <button onClick={onEdit} title="Modifier" style={{ width: 32, height: 32, borderRadius: 8, background: '#f8fafc', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <Edit size={16} />
+              </button>
+              <button onClick={onDelete} title="Supprimer" style={{ width: 32, height: 32, borderRadius: 8, background: '#fef2f2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #fecaca', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <Trash2 size={16} />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: 10, marginTop: 22, paddingTop: 18, borderTop: '1px solid var(--border)', flexWrap: 'wrap', alignItems: 'center' }}>
-          <button onClick={onManage} className="btn-premium btn-premium-primary" style={{ padding: '9px 18px', fontSize: 13 }}>
-            Gérer la boutique →
-          </button>
-          {boutique.mode_fonctionnement !== 'pure_player' && (
-            <a href="/boutique/caisse" className="btn-premium btn-premium-success" style={{ padding: '9px 18px', fontSize: 13 }}>
-              <Monitor size={15} /> Caisse POS
-            </a>
+        {/* Corps de la carte */}
+        {boutique.description && (
+          <p style={{ fontSize: 13, color: '#475569', margin: '0 0 16px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{boutique.description}</p>
+        )}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 'auto' }}>
+          {boutique.categorie && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569' }}>
+              <Tag size={14} style={{ color: '#94a3b8', flexShrink: 0 }} /> <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{boutique.categorie}</span>
+            </div>
           )}
-          <button onClick={onEdit} className="btn-premium btn-premium-secondary" style={{ padding: '9px 16px', fontSize: 13 }}>
-            Modifier
-          </button>
-          <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer" className="btn-premium btn-premium-secondary" style={{ padding: '9px 16px', fontSize: 13 }}>
-            Voir <Eye size={14} />
-          </a>
-          {onSponsoring && (
-            <button onClick={onSponsoring} className="btn-premium btn-premium-secondary" style={{ padding: '9px 16px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#fffbeb', marginLeft: 'auto' }}>
-              Mettre en avant
+          {boutique.ville && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569' }}>
+              <MapPin size={14} style={{ color: '#94a3b8', flexShrink: 0 }} /> <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{boutique.ville}</span>
+            </div>
+          )}
+          {boutique.telephone && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569' }}>
+              <Phone size={14} style={{ color: '#94a3b8', flexShrink: 0 }} /> {boutique.telephone}
+            </div>
+          )}
+        </div>
+
+        {/* Actions Financières et Principales (Bas de carte) */}
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {(onSponsoring || onPayerManuel) && (
+            <div style={{ display: 'flex', gap: 10 }}>
+              {onSponsoring && (
+                <button onClick={onSponsoring} className="btn-premium" style={{ flex: 1, padding: '8px 12px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#fffbeb', fontWeight: 700 }}>
+                  🌟 Mettre en avant
+                </button>
+              )}
+              {onPayerManuel && (
+                <button onClick={onPayerManuel} className="btn-premium" style={{ flex: 1, padding: '8px 12px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#ffffff', fontWeight: 700 }}>
+                  Payer abonnement
+                </button>
+              )}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 10 }}>
+            {boutique.mode_fonctionnement !== 'pure_player' && (
+              <a href="/boutique/caisse" className="btn-premium btn-premium-success" style={{ flex: 1, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+                <Monitor size={16} /> Caisse POS
+              </a>
+            )}
+            <button onClick={onManage} className="btn-premium btn-premium-primary" style={{ flex: boutique.mode_fonctionnement !== 'pure_player' ? 1.5 : 1, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+              Gérer la boutique →
             </button>
-          )}
-          {onPayerManuel && (
-            <button onClick={onPayerManuel} className="btn-premium btn-premium-secondary" style={{ padding: '9px 16px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#ffffff', marginLeft: onSponsoring ? undefined : 'auto' }}>
-              Payer
-            </button>
-          )}
-          <button onClick={onDelete} className="btn-premium btn-premium-danger" style={{ padding: '9px 16px', fontSize: 13, marginLeft: (!onSponsoring && !onPayerManuel) ? 'auto' : undefined }}>
-            Supprimer
-          </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2583,7 +2592,7 @@ export default function BoutiqueClient({
 
   // Vue liste
   return (
-    <main style={{ maxWidth: 880, margin: '32px auto', padding: '0 20px 80px' }}>
+    <main style={{ maxWidth: 1200, margin: '32px auto', padding: '0 20px 80px' }}>
       {/* Navigation Fil d Ariane */}
       <nav aria-label="Fil d Ariane" style={{ marginBottom: 16 }}>
         <ol style={{ display: 'flex', alignItems: 'center', gap: 8, listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#64748b' }}>
@@ -2723,7 +2732,12 @@ export default function BoutiqueClient({
           </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', 
+          gap: 24,
+          alignItems: 'start'
+        }}>
           {boutiques.map(b => (
             <BoutiqueCard
               key={b.id}
