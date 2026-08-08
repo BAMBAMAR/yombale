@@ -2338,7 +2338,9 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                 style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none', paddingRight: 8 }}
               >
                 <span>{group.title}</span>
-                <span style={{ fontSize: 10, opacity: 0.5, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: '#94a3b8' }}>
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
               </div>
               <div style={{ display: isExpanded ? 'block' : 'none' }}>
                 {group.items.map(item => {
