@@ -2635,7 +2635,7 @@ export default function BoutiqueClient({
           {canCreate && (
             <button onClick={() => setMode('create')} style={{
               display: 'inline-flex',
-              align-items: 'center',
+              alignItems: 'center',
               gap: 8,
               padding: '10px 18px',
               borderRadius: 10,
