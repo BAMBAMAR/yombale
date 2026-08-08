@@ -167,9 +167,10 @@ export default async function BoutiquesPage({
           pointerEvents: 'none',
         }} />
 
-        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 40 }}>
-          
-          {/* COLONNE GAUCHE : Textes et Call to Action */}
+        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', gap: 32 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 40 }}>
+            
+            {/* COLONNE GAUCHE : Textes et Call to Action */}
           <div style={{ maxWidth: 640 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '6px 14px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 14, border: '1px solid #ffedd5' }}>
               <Sparkles size={14} style={{ color: '#C75B00' }} />
@@ -225,17 +226,20 @@ export default async function BoutiquesPage({
             </div>
           </div>
 
+          </div>
+
+          {/* BARRE DE RECHERCHE INTEGRÉE AU HERO */}
+          <div style={{ width: '100%', maxWidth: 800, margin: '10px auto 0' }}>
+            <BoutiquesSearch currentQ={q} currentVille={ville} currentCat={cat} />
+          </div>
+
         </div>
       </div>
 
-      {/* RECHERCHE & CATEGORIES */}
-      <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <BoutiquesSearch currentQ={q} currentVille={ville} currentCat={cat} />
-        </div>
-
+      {/* CATEGORIES */}
+      <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* Catégories Scrollables Dynamiques */}
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
+        <div className="hero-categories-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none', justifyContent: 'center' }}>
           {categoriesAffichage.map(c => {
             const isSelected = (cat === c.slug) || (!cat && c.slug === '')
             return (
