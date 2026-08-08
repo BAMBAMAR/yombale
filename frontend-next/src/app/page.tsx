@@ -217,7 +217,7 @@ export default async function HomePage({
               return (
                 <Link
                   key={c.slug}
-                  href={isSelected ? '/' : `/?categorie=${c.slug}`}
+                  href={isSelected ? '/#resultats' : `/?categorie=${c.slug}#resultats`}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13,
                     fontWeight: isSelected ? 800 : 600, textDecoration: 'none',
@@ -261,7 +261,7 @@ export default async function HomePage({
       </section>
 
       {/* ── CONTENU PRINCIPAL & RÉSULTATS DIRECTS ──────────────────── */}
-      <main className="page-container" style={{ maxWidth: 1440, paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
+      <main id="resultats" className="page-container" style={{ maxWidth: 1440, paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
         
         {/* BANDEAU FEEDBACK RECHERCHE & CONFIRMATION DES RÉSULTATS */}
         {hasFiltre && (
@@ -285,7 +285,7 @@ export default async function HomePage({
             </div>
 
             <Link
-              href="/"
+              href="/#resultats"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6, background: '#ffffff', color: '#dc2626',
                 border: '1px solid #fca5a5', padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 800,
@@ -312,7 +312,7 @@ export default async function HomePage({
                 if (categorie) ps.set('categorie', categorie)
                 if (b.prixMax) ps.set('prixMax',   b.prixMax)
                 return (
-                  <Link key={b.label} href={`/?${ps}`} className={`budget-pill${prixMax === b.prixMax && b.prixMax ? ' active' : ''}`}>
+                  <Link key={b.label} href={`/?${ps}#resultats`} className={`budget-pill${prixMax === b.prixMax && b.prixMax ? ' active' : ''}`}>
                     {b.label}
                   </Link>
                 )
@@ -351,7 +351,7 @@ export default async function HomePage({
                 if (prixMax)   ps.set('prixMax',   prixMax)
                 if (t.val)     ps.set('tri',       t.val)
                 return (
-                  <Link key={t.val || 'defaut'} href={`/?${ps}`} className={`budget-pill${tri === t.val ? ' active' : ''}`}>
+                  <Link key={t.val || 'defaut'} href={`/?${ps}#resultats`} className={`budget-pill${tri === t.val ? ' active' : ''}`}>
                     {t.label}
                   </Link>
                 )
@@ -361,9 +361,9 @@ export default async function HomePage({
             {/* 5. Tendances */}
             <div className="filtres-bar hidden-mobile" style={{ margin: 0 }}>
               <span className="filtres-label" style={{ color: '#C75B00' }}>🔥 Tendances :</span>
-              <Link href="/?q=iphone" className="budget-pill">iPhone 15</Link>
-              <Link href="/?q=climatiseur" className="budget-pill">Climatiseurs</Link>
-              <Link href="/?q=samsung" className="budget-pill">Samsung S24</Link>
+              <Link href="/?q=iphone#resultats" className="budget-pill">iPhone 15</Link>
+              <Link href="/?q=climatiseur#resultats" className="budget-pill">Climatiseurs</Link>
+              <Link href="/?q=samsung#resultats" className="budget-pill">Samsung S24</Link>
             </div>
 
             <div style={{ flex: '1 1 auto' }} className="hidden-mobile" />
@@ -371,7 +371,7 @@ export default async function HomePage({
             {/* Actions secondaires */}
             <div className="hidden-mobile" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               {(q || categorie || prixMax || sousType) ? (
-                <Link href="/" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0 }}>
+                <Link href="/#resultats" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0 }}>
                   <span>✖</span> Effacer filtres
                 </Link>
               ) : null}
@@ -381,7 +381,7 @@ export default async function HomePage({
           {/* LIGNE 3 : MOBILE ONLY (Bouton Boutique & Effacer) */}
           <div className="visible-mobile-flex" style={{ display: 'none', gap: 12, width: '100%' }}>
             {(q || categorie || prixMax || sousType) ? (
-              <Link href="/" className="budget-pill" style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0 }}>
+              <Link href="/#resultats" className="budget-pill" style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0 }}>
                 <span>✖</span> Effacer
               </Link>
             ) : null}

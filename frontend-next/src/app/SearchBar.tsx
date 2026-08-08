@@ -1,6 +1,23 @@
+'use client'
+import { useRouter } from 'next/navigation'
+
 export default function SearchBar({ defaultValue = '' }: { defaultValue?: string }) {
+  const router = useRouter()
+
   return (
-    <form className="hero-search" action="/" method="GET" role="search">
+    <form 
+      className="hero-search" 
+      role="search" 
+      onSubmit={(e) => {
+        e.preventDefault()
+        const q = (e.currentTarget.elements.namedItem('q') as HTMLInputElement).value
+        if (q.trim()) {
+          router.push(`/?q=${encodeURIComponent(q)}#resultats`)
+        } else {
+          router.push(`/#resultats`)
+        }
+      }}
+    >
       <input
         type="search"
         name="q"

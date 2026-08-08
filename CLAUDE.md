@@ -44,9 +44,10 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
 
 ---
 
-### [2026-08-08] - Amélioration du formulaire de création de boutique
+### [2026-08-08] - Amélioration du formulaire de création de boutique et UX de recherche
 - **Frontend (`frontend-next/src/app/creer-boutique/page.tsx`)** : Remplacement de la mention "WhatsApp Business" par "WhatsApp" pour plus de simplicité. Ajout d'un menu déroulant permettant de choisir le "Type de boutique" (catégorie) à l'étape finale de création, juste avant le choix de la couleur.
 - **Backend (`backend/routes/boutiques.js`)** : Modification de la route `POST /taf-taf` pour récupérer et insérer la `categorie` envoyée par le frontend lors de l'enregistrement en base de données, au lieu de forcer la valeur "Divers".
+- **UX de Recherche (`frontend-next/src/app/page.tsx`, `frontend-next/src/app/SearchBar.tsx`)** : Ajout d'une ancre `#resultats` sur le conteneur principal de la page d'accueil. Conversion de la barre de recherche en composant client (`next/navigation`) et modification de tous les liens (catégories, budget, tri, tendances) pour qu'ils déclenchent un défilement automatique immédiat vers les résultats lors du clic, améliorant considérablement l'expérience utilisateur sur mobile et desktop.
 
 ### [2026-08-08] - Mise à Jour Complète des Tarifs Marchands (Dynamisation & Fallbacks)
 - **Alignement sur la Base de Données de Production** : Remplacement des anciennes valeurs par défaut (`5000`, `15000`, `35000`) par les véritables prix officiels (`2 500`, `5 000`, `10 000` FCFA) sur l'ensemble du frontend et du backend.
