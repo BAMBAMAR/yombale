@@ -178,7 +178,7 @@ export default function CommanderModal({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             boutique_id: boutiqueId,
-            montant: totalGeneral,
+            montant: total,
             devise: 'XOF',
             card_number: cardNumber,
             exp_month: 12,

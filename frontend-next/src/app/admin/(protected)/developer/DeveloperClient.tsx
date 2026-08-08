@@ -152,7 +152,7 @@ export default function DeveloperClient({ secret }: { secret: string }) {
             </h2>
 
             {keys.length === 0 ? (
-              <p style={{ color: '#64748b', fontSize: 13, italic: 'true' }}>Aucune clé API REST générée pour le moment.</p>
+              <p style={{ color: '#64748b', fontSize: 13, fontStyle: 'italic' }}>Aucune clé API REST générée pour le moment.</p>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
