@@ -160,6 +160,11 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
 - **Driver WebBluetooth ESC/POS Direct (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
   - Intégration du driver binaire WebBluetooth Direct permettant aux imprimantes thermiques Bluetooth sans fil (POS-5802, GOOJPRT, Xprinter, etc.) de se connecter en 1-clic depuis Chrome/Edge (Android & PC).
   - Envoi direct des commandes ESC/POS (format 58mm / 80mm, coupe et ouverture tiroir) sans passer par la boîte de dialogue d'impression système.
+- **Refonte Visuelle & Structuration de l'En-tête de Gestion des Boutiques (`BoutiqueClient.tsx`)** :
+    - Élimination de la répétition confuse du titre et réorganisation complète de l'en-tête en une carte blanche unifiée et élégante (`background: #ffffff`, `borderRadius: 16`, ombre portée douce).
+    - **Fil d'Ariane Épuré** : Remplacement du bouton encadré confus par une navigation textuelle discrète `Mon compte / Mes boutiques`.
+    - **Pill Badge Quota Soigné** : Reformulation grammaticale du quota (`1 / 3 autorisées`) avec point de statut bleu actif `🔵`.
+    - **Alignement Parfait des Actions** : Alignement à droite des boutons d'action avec typographie haute lisibilité et hiérarchie visuelle claire (`Ouvrir ma Caisse POS` en blanc contouré et `Créer une boutique` en dégradé Nopalou Orange).
 - **Audit Global des Fonctionnalités & Signalétique Bientôt Disponible (`frontend-next` & `backend`)** :
   - Réalisation d'un audit complet de l'ensemble des modules. 100% des modules core (E-Commerce, Panier, Caisse POS, WhatsApp WABA API, Apporteurs, API REST) sont pleinement fonctionnels.
   - Ajout des badges d'information et d'état transparents sur les intégrations en cours de KYC tiers (Sync Catalogue TikTok Shopping `⏳ Bientôt`, Payout automatique API Wave Direct `⚡ Virement Manuel sécurisé 24h`, Impression Thermique Web & USB).

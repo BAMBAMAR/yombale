@@ -2557,34 +2557,99 @@ export default function BoutiqueClient({
 
   // Vue liste
   return (
-    <div style={{ maxWidth: 880, margin: '32px auto', padding: '0 20px 80px' }}>
-      {/* Navigation fil d'Ariane & Retour Compte */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-        <Link href="/compte" className="btn-back-account" aria-label="Retourner à l'espace mon compte" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <ArrowLeft size={16} /> Mon compte
-        </Link>
-        <span style={{ fontSize: 12, color: 'var(--text3)' }}>/</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>Ma boutique</span>
-      </div>
+    <div style={{ maxWidth: 880, margin: '32px auto', padding: '0 20px 80px', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      {/* Navigation Fil d'Ariane épuré */}
+      <nav aria-label="Fil d'Ariane" style={{ marginBottom: 16 }}>
+        <ol style={{ display: 'flex', alignItems: 'center', gap: 8, listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#64748b' }}>
+          <li>
+            <Link href="/compte" style={{ color: '#64748b', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <ArrowLeft size={14} /> Mon compte
+            </Link>
+          </li>
+          <li style={{ color: '#cbd5e1' }}>/</li>
+          <li style={{ fontWeight: 700, color: '#0f172a' }}>Mes boutiques</li>
+        </ol>
+      </nav>
 
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 14 }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 26, fontWeight: 800, margin: 0, color: 'var(--navy)' }}>Ma boutique</h1>
-            <span style={{ fontSize: 12, fontWeight: 700, background: '#f5ece3', color: 'var(--navy)', border: '1px solid var(--border)', padding: '3px 10px', borderRadius: 20 }}>
-              {boutiques.length} / 3 boutique{boutiques.length > 1 ? 's' : ''}
+      {/* Header Principal Harmonisé & Unifié */}
+      <div style={{
+        background: '#ffffff',
+        borderRadius: 16,
+        padding: '24px 28px',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+        marginBottom: 28,
+        display: 'flex',
+        justify-content: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 20
+      }}>
+        <div style={{ flex: '1 1 320px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+              Mes Boutiques
+            </h1>
+            <span style={{
+              fontSize: 12,
+              fontWeight: 800,
+              background: '#eff6ff',
+              color: '#1d4ed8',
+              border: '1px solid #bfdbfe',
+              padding: '3px 10px',
+              borderRadius: 20,
+              display: 'inline-flex',
+              align-items: 'center',
+              gap: 5
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#2563eb' }} />
+              {boutiques.length} / 3 autorisée{boutiques.length > 1 ? 's' : ''}
             </span>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--text2)', marginTop: 6, margin: 0 }}>Gérez vos points de vente, catalogue produits, ventes et comptabilité.</p>
+          <p style={{ fontSize: 13, color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+            Gérez vos points de vente, catalogue produits, encaissements et caisse enregistreuse POS.
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Link href="/boutique/caisse" className="btn-premium btn-premium-secondary" style={{ border: '1.5px solid var(--border)' }}>
-            <Monitor size={16} /> Ouvrir ma Caisse POS
+
+        {/* Boutons d'Action Clairs & Alignés */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Link href="/boutique/caisse" style={{
+            display: 'inline-flex',
+            align-items: 'center',
+            gap: 8,
+            padding: '10px 18px',
+            borderRadius: 10,
+            background: '#ffffff',
+            border: '1.5px solid #cbd5e1',
+            color: '#0f172a',
+            fontWeight: 700,
+            fontSize: 13,
+            textDecoration: 'none',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+            transition: 'all 0.15s ease'
+          }}>
+            <Monitor size={16} style={{ color: '#0f172a' }} />
+            <span>Ouvrir ma Caisse POS</span>
           </Link>
+
           {canCreate && (
-            <button onClick={() => setMode('create')} className="btn-premium btn-premium-primary">
-              <PlusCircle size={16} /> Créer une boutique
+            <button onClick={() => setMode('create')} style={{
+              display: 'inline-flex',
+              align-items: 'center',
+              gap: 8,
+              padding: '10px 18px',
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, #C75B00 0%, #a84c00 100%)',
+              border: 'none',
+              color: '#ffffff',
+              fontWeight: 800,
+              fontSize: 13,
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(199,91,0,0.25)',
+              transition: 'all 0.15s ease'
+            }}>
+              <PlusCircle size={16} />
+              <span>Créer une boutique</span>
             </button>
           )}
         </div>
