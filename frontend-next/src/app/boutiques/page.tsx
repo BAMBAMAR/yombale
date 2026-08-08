@@ -275,11 +275,11 @@ export default async function BoutiquesPage({
               💼 Business
             </Link>
             <Link
-              href={buildLink({ verified: verified === '1' ? '' : '1', page: '1' })}
+              href={buildLink({ plan: plan === 'pro' ? '' : 'pro', page: '1' })}
               style={{
                 padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none',
-                background: verified === '1' ? '#f0fdf4' : '#f1f5f9',
-                color: verified === '1' ? '#16a34a' : '#475569',
+                background: plan === 'pro' ? '#C75B00' : '#f1f5f9',
+                color: plan === 'pro' ? '#fff' : '#C75B00',
                 border: '1px solid #cbd5e1',
               }}
             >
