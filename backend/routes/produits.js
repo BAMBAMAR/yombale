@@ -287,26 +287,23 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
              scraped_others AS (
                SELECT t.*, 1 AS source_type FROM scraped t WHERE NOT (t.agg_nb_offres >= 2 AND t.agg_prix_min BETWEEN 50000 AND 150000)
              ),
-             boutiques_top AS (
-               SELECT t.*, 2 AS source_type FROM boutiques t WHERE t.agg_prix_min BETWEEN 50000 AND 150000
-             ),
-             boutiques_others AS (
-               SELECT t.*, 2 AS source_type FROM boutiques t WHERE NOT (t.agg_prix_min BETWEEN 50000 AND 150000)
+             boutiques_all AS (
+               SELECT t.*, 2 AS source_type FROM boutiques t
              ),
              mixed_top AS (
-               SELECT *, 1 AS sort_group 
-               FROM (SELECT * FROM boutiques_top UNION ALL SELECT * FROM scraped_top) sub
+               SELECT *, 1 AS sort_group, ROW_NUMBER() OVER(PARTITION BY source_type ORDER BY agg_prix_min ASC NULLS LAST, agg_nb_offres DESC) as mix_rank 
+               FROM (SELECT * FROM boutiques_all UNION ALL SELECT * FROM scraped_top) sub
              ),
              others AS (
-               SELECT *, 2 AS sort_group 
-               FROM (SELECT * FROM boutiques_others UNION ALL SELECT * FROM scraped_others) sub
+               SELECT *, 2 AS sort_group, ROW_NUMBER() OVER(ORDER BY created_at DESC) as mix_rank 
+               FROM scraped_others
              ),
              combined AS (
                SELECT * FROM mixed_top UNION ALL SELECT * FROM others
              )
         SELECT ${colonnesFinales}, COUNT(*) OVER() AS total_count
         FROM combined t
-        ORDER BY t.sort_group ASC, t.agg_prix_min ASC NULLS LAST, t.agg_nb_offres DESC NULLS LAST
+        ORDER BY t.sort_group ASC, t.mix_rank ASC, t.source_type DESC
         LIMIT $5 OFFSET $6`;
     }
 
