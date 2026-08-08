@@ -2510,7 +2510,7 @@ export default function BoutiqueClient({
 
   function handleSuccess() {
     const isEdit = typeof mode === 'object' && 'editing' in mode
-    setSuccessMsg(isEdit ? '✅ Boutique modifiée !' : '✅ Boutique créée !')
+    setSuccessMsg(isEdit ? 'Boutique modifiée avec succès !' : 'Boutique créée avec succès !')
     setMode('list')
     router.refresh()
   }
@@ -2548,7 +2548,7 @@ export default function BoutiqueClient({
             }
             setMode('list')
           }}
-          onEdit={() => { setSuccessMsg('✅ Boutique modifiée !'); setMode('list'); router.refresh() }}
+          onEdit={() => { setSuccessMsg('Boutique modifiée avec succès !'); setMode('list'); router.refresh() }}
           prixPro={prixPro}
         />
       </div>
@@ -2580,7 +2580,7 @@ export default function BoutiqueClient({
         boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
         marginBottom: 28,
         display: 'flex',
-        justify-content: 'space-between',
+        justifyContent: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: 20
@@ -2599,7 +2599,7 @@ export default function BoutiqueClient({
               padding: '3px 10px',
               borderRadius: 20,
               display: 'inline-flex',
-              align-items: 'center',
+              alignItems: 'center',
               gap: 5
             }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#2563eb' }} />
@@ -2615,7 +2615,7 @@ export default function BoutiqueClient({
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <Link href="/boutique/caisse" style={{
             display: 'inline-flex',
-            align-items: 'center',
+            alignItems: 'center',
             gap: 8,
             padding: '10px 18px',
             borderRadius: 10,

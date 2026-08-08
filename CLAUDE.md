@@ -157,8 +157,9 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
   - Création du dashboard Superadmin pour la supervision en temps réel de l'ensemble des clés API REST (`nopalou_sk_live_...`) et webhooks (`whsec_...`) générés par les marchands Business VIP.
   - Ajout des routes d'administration `GET /api/boutiques/admin/developer-portal`, `DELETE /api/boutiques/admin/api-keys/:keyId` et `DELETE /api/boutiques/admin/webhooks/:webhookId` pour la modération et la révocation des accès en 1-clic.
   - Intégration du lien `🔌 Portail Développeur API` dans la barre de navigation latérale de l'Administration Superadmin.
-- **Correction Erreur Build SWC Render (`BoutiqueClient.tsx`)** :
-  - Retrait des guillemets doubles imbriqués dans l'attribut `style` (`"Segoe UI"` à l'intérieur de guillemets simples), débloquant la compilation SWC/Webpack de Next.js. Validation par build local standalone réussi (`✓ Compiled successfully`, 86/86 pages).
+- **Correction Définitive & Déblocage du Build Render (`BoutiqueClient.tsx`)** :
+  - **Correction des Clés CSS Inline (JS camelCase)** : Remplacement des clés avec tirets `justify-content` et `align-items` par `justifyContent` et `alignItems` dans les styles JSX en ligne de `BoutiqueClient.tsx`. C'était la cause exacte du rejet de parsing SWC/Webpack sur Render (`Unexpected token div`).
+  - Validation complète par typecheck TypeScript (`npx tsc --noEmit`) et build de production standalone réussi (**✓ Compiled successfully**, 86/86 pages statiques et dynamiques).
 - **Driver WebBluetooth ESC/POS Direct (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
   - Intégration du driver binaire WebBluetooth Direct permettant aux imprimantes thermiques Bluetooth sans fil (POS-5802, GOOJPRT, Xprinter, etc.) de se connecter en 1-clic depuis Chrome/Edge (Android & PC).
   - Envoi direct des commandes ESC/POS (format 58mm / 80mm, coupe et ouverture tiroir) sans passer par la boîte de dialogue d'impression système.
