@@ -225,22 +225,19 @@ export default async function BoutiquesPage({
           </div>
 
           </div>
-        </div>
-      </div>
 
-      {/* BLOC RECHERCHE ET FILTRES UNIFIÉ */}
-      <div style={{ maxWidth: 840, margin: '-40px auto 32px', position: 'relative', zIndex: 10, background: '#fff', padding: '16px 20px', borderRadius: 24, boxShadow: '0 10px 40px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0' }}>
-        
-        {/* Barre de recherche */}
-        <div style={{ marginBottom: 16 }}>
-          <BoutiquesSearch currentQ={q} currentVille={ville} currentCat={cat} />
-        </div>
+          </div>
 
-        {/* Ligne séparatrice */}
-        <div style={{ height: 1, background: '#f1f5f9', margin: '0 -20px 16px' }} />
-        
-        {/* Filtres par Ville Dynamique, Formule & Tri */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
+          {/* RECHERCHE ET FILTRES (Intégrés dans le Hero) */}
+          <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid rgba(199,91,0,0.15)', width: '100%' }}>
+            <div style={{ maxWidth: 840, margin: '0 auto' }}>
+              {/* Barre de recherche */}
+              <div style={{ marginBottom: 20 }}>
+                <BoutiquesSearch currentQ={q} currentVille={ville} currentCat={cat} />
+              </div>
+              
+              {/* Filtres par Ville Dynamique, Formule & Tri */}
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
           
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ville :</span>
@@ -294,6 +291,8 @@ export default async function BoutiquesPage({
             <Link href={buildLink({ tri: 'recommande', page: '1' })} style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none', background: tri === 'recommande' ? '#1e293b' : '#f8fafc', color: tri === 'recommande' ? '#fff' : '#4b5563', border: tri === 'recommande' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Recommandé</Link>
             <Link href={buildLink({ tri: 'recent', page: '1' })} style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none', background: tri === 'recent' ? '#1e293b' : '#f8fafc', color: tri === 'recent' ? '#fff' : '#4b5563', border: tri === 'recent' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Plus récents</Link>
             <Link href={buildLink({ tri: 'nom', page: '1' })} style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none', background: tri === 'nom' ? '#1e293b' : '#f8fafc', color: tri === 'nom' ? '#fff' : '#4b5563', border: tri === 'nom' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Nom A-Z</Link>
+          </div>
+            </div>
           </div>
         </div>
       </div>
