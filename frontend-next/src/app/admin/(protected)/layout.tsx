@@ -27,6 +27,7 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
             <a href="/admin/immo" className="admin-nav-link">🏠 Immo à valider</a>
             <a href="/admin/boutiques" className="admin-nav-link">🏪 Boutiques</a>
             <a href="/admin/telecom" className="admin-nav-link">📱 Forfaits télécom</a>
+            <a href="/admin/qualite" className="admin-nav-link">🔍 Qualité Données</a>
           </div>
 
           <div className="admin-nav-group">
@@ -41,6 +42,7 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
             <span className="admin-nav-group-title">Marketing &amp; Partenaires</span>
             <a href="/admin/partenaires" className="admin-nav-link">🤝 Partenaires</a>
             <a href="/admin/affiliation" className="admin-nav-link">🖱 Affiliation</a>
+            <a href="/admin/affiliates/tracking" className="admin-nav-link">🔗 Tracking Affiliates</a>
             <a href="/admin/apporteurs" className="admin-nav-link">🤝 Apporteurs d&apos;affaires</a>
             <a href="/admin/tarifs" className="admin-nav-link">🏷 Tarifs &amp; Promos</a>
           </div>

@@ -8,6 +8,9 @@ interface Props {
 }
 
 const GUIDES = [
+  { href: '/tarifs-boutique', emoji: '🛍️', label: 'Tarifs & Forfaits Vendeurs', highlight: true, badge: 'OFFRE', badgeColor: '#C75B00' },
+  { href: '/guide-creer-boutique', emoji: '📦', label: 'Guide Vendeur & Sourcing' },
+  { href: '/demo', emoji: '🚀', label: 'Démo Commerciale', highlight: true, badge: 'NOUVEAU', badgeColor: 'var(--accent)' },
   { href: '/guide-achat',   emoji: '🏆', label: 'Guide d\'achat intelligent' },
   { href: '/guide-forfait', emoji: '📡', label: 'Guide forfait télécom' },
   { href: '/guide-immo',   emoji: '🏡', label: 'Guide immobilier' },
@@ -62,8 +65,22 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
 
           <div className="mobile-nav-section">Guides</div>
           {GUIDES.map(g => (
-            <a key={g.href} href={g.href} className="mobile-nav-link mobile-nav-link--sub" onClick={close}>
-              {g.emoji} {g.label}
+            <a 
+              key={g.href} 
+              href={g.href} 
+              className="mobile-nav-link mobile-nav-link--sub" 
+              onClick={close}
+              style={g.highlight ? { background: '#fff7ed', fontWeight: 700, color: 'var(--accent)' } : undefined}
+            >
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ marginRight: 8 }}>{g.emoji}</span> 
+                {g.label}
+                {g.badge && (
+                  <span style={{ background: g.badgeColor, color: '#FFF', fontSize: 9, padding: '2px 6px', borderRadius: 10, marginLeft: 8, fontWeight: 800 }}>
+                    {g.badge}
+                  </span>
+                )}
+              </span>
             </a>
           ))}
 
@@ -79,7 +96,11 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
               <a href="/compte" className="mobile-nav-link" onClick={close}>👤 {nom ?? 'Mon compte'}</a>
               <a href="/mes-annonces" className="mobile-nav-link" onClick={close}>📋 Mes annonces</a>
               <a href="/mes-annonces-immo" className="mobile-nav-link" onClick={close}>🏠 Mes biens immo</a>
+              <a href="/mes-alertes" className="mobile-nav-link" onClick={close}>🔔 Mes alertes prix</a>
               <a href="/favoris" className="mobile-nav-link" onClick={close}>❤ Mes favoris</a>
+              <a href="/deposer-immo" className="mobile-nav-link" onClick={close}>🏡 Publier un bien immo</a>
+              <a href="/compte/apporteur" className="mobile-nav-link" onClick={close}>💼 Apporteur d&apos;affaires</a>
+              <a href="/compte/fonctionnalites" className="mobile-nav-link" onClick={close}>📖 Forfaits &amp; Fonctionnalités</a>
               <form action={logout} style={{ margin: 0 }}>
                 <button type="submit" className="mobile-nav-link mobile-nav-link--logout">
                   Déconnexion

@@ -60,6 +60,7 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${BASE}/guide-forfait`, changeFrequency: 'monthly', priority: 0.6 },
   { url: `${BASE}/guide-emploi`,  changeFrequency: 'monthly', priority: 0.5 },
   { url: `${BASE}/assistant-whatsapp`, changeFrequency: 'monthly', priority: 0.5 },
+  { url: `${BASE}/demo`, changeFrequency: 'monthly', priority: 0.8 },
   { url: `${BASE}/deposer-annonce`, changeFrequency: 'monthly', priority: 0.5 },
   { url: `${BASE}/deposer-immo`,  changeFrequency: 'monthly', priority: 0.5 },
 ]

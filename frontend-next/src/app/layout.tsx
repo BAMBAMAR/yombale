@@ -330,6 +330,7 @@ export default async function RootLayout({
                 <a href="/categorie/mode">Mode</a>
                 <a href="/categorie/maison">Maison</a>
                 <a href="/categorie/auto-moto">Auto &amp; Moto</a>
+                <a href="/categorie/jeux">Jeux Vidéo</a>
                 <a href="/telecom">Télécom</a>
                 <a href="/immo">Immobilier</a>
                 <a href="/annonces">Annonces</a>
@@ -353,6 +354,9 @@ export default async function RootLayout({
                 <p className="footer-col-titre">Informations</p>
                 <a href="/guide-emploi">Comment ça marche ?</a>
                 <a href="/assistant-whatsapp">💬 Assistant WhatsApp</a>
+                <a href="/tarifs-boutique">Tarifs &amp; Forfaits Vendeurs</a>
+                <a href="/guide-creer-boutique">Guide Vendeur &amp; Sourcing</a>
+                <a href="/demo">Démo Commerciale</a>
                 <a href="/boutiques">Boutiques partenaires</a>
                 <a href="/mentions-legales">Mentions légales</a>
                 <a href="/confidentialite">Confidentialité</a>

@@ -33,15 +33,34 @@ Pour passer du mode simulation actuel aux encaissements réels Stripe en product
   ```powershell
   node node_modules/jest/bin/jest.js tests/unit/spec-master-exhaustive.test.js --forceExit
   ```
-- **Couverture des 20 Scénarios Validés** :
+- **Couverture des 26 Scénarios Validés** :
   - **Spec 01** : Bascule de mode `pure_player` vs `hybride_pos`, sélecteur admin et masquage caisse.
   - **Spec 02** : Enregistrement de commande 1-Page, décrémentation des stocks et offres Cross-Sell.
   - **Spec 03** : Remises %, montants fixes FCFA, seuils d'achat minimum et rejet des coupons vides.
   - **Spec 04** : Pixels publicitaires (Meta, TikTok, GA4) et génération des flux catalogues XML/JSON.
   - **Spec 05** : Portail Développeur, génération de clés API `nopalou_sk_live_...`, webhooks `whsec_...` et signatures HMAC-SHA256.
   - **Spec 06** : Taux de change officiels (XOF, EUR, USD), simulation Carte Stripe acceptée et rejet des cartes déclinées.
+  - **Spec 07 (Acheteur)** : Suivi de commande 200, Avis produits 201, Moyenne d'avis 4.5 ⭐ et Comparatif prix.
 
 ---
+
+### [2026-08-08] - Audit Profond & Synchronisation des Menus (Mobile, Footer, Admin)
+- **Menu Mobile Utilisateur (`frontend-next/src/app/MobileNav.tsx`)** :
+  - Synchronisation de l'espace compte mobile avec la barre latérale bureau (`AccountNavLinks.tsx`). Ajout des liens manquants : `Mes alertes prix`, `Publier un bien immo`, `Apporteur d'affaires` et `Forfaits & Fonctionnalités`.
+- **Pied de Page (`frontend-next/src/app/layout.tsx`)** :
+  - Ajout de la catégorie **Jeux Vidéo** dans la colonne "Catégories" du footer (elle existait dans le sitemap mais avait été oubliée visuellement).
+- **Administration Superadmin (`frontend-next/src/app/admin/(protected)/layout.tsx`)** :
+  - Découverte et ajout de 2 pages admin orphelines dans la barre latérale : **Qualité Données (Quarantines)** (`/admin/qualite`) et **Tracking Affiliates** (`/admin/affiliates/tracking`).
+
+### [2026-08-08] - Ajout des Guides Vendeurs (Menu Mobile, Footer, Sitemap & Legacy)
+- **Menu Mobile (`frontend-next/src/app/MobileNav.tsx`)** :
+  - Ajout des liens `Tarifs & Forfaits Vendeurs` (avec badge "OFFRE"), `Guide Vendeur & Sourcing`, et `Démo Commerciale` (avec badge "NOUVEAU") dans le tiroir de navigation mobile, avec le même design et la même mise en avant que sur le menu Desktop.
+- **Pied de Page / Footer (`frontend-next/src/app/layout.tsx`)** :
+  - Ajout de ces 3 liens stratégiques dans la colonne "Informations" du footer global pour un meilleur maillage interne (SEO) et une meilleure accessibilité.
+- **Sitemap XML (`frontend-next/src/app/sitemap.ts`)** :
+  - Ajout de l'URL `/demo` au sitemap.ts qui avait été omise.
+- **Application Legacy (`frontend/index.html`)** :
+  - Synchronisation du menu déroulant `nav-guides-dropdown` de l'ancienne application vanilla JS avec les 3 nouveaux liens marchands.
 
 ### [2026-08-07] - Tarification 100% Dynamique & Intégration Boutique Taf Taf dans l'Admin
 - **Intégration du Forfait Boutique Taf Taf dans l'Admin (`frontend-next/src/app/admin/(protected)/tarifs/TarifsClient.tsx`)** :
@@ -1595,3 +1614,13 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - **Correction d'Encodage** : Ajout de la configuration d'encodage UTF-8 dans lancer-scraper-facebook.ps1 ([Console]::OutputEncoding = [System.Text.Encoding]::UTF8) et scraper-facebook-auto.bat (chcp 65001 >nul) pour corriger l'affichage des caract�res sp�ciaux (�, �, etc.) dans la console lors de l'ex�cution en direct.
     - **Ordre de scraping** : R�organisation de la liste des groupes/pages pour placer toutes les sources de type "emploi" en t�te de liste, afin que le scraping commence toujours par l'emploi en d�but de cycle.
   - **Filtres dynamiques des annonces** : Correction du bug qui masquait les cat�gories (comme "Emploi") dans les filtres de la page Annonces. La page interrogeait l'API des *produits* au lieu de celle des *annonces* pour conna�tre les cat�gories actives. Cr�ation de la route /api/annonces/categories-actives dans le backend et mise � jour de rontend-next/src/app/annonces/page.tsx.
+
+  - **Correction du Bug Render 'Unexpected token div/main' (BoutiqueClient.tsx & TrackingPixels.tsx)** :
+    - L'erreur mystérieuse de compilation SWC pointant vers la ligne 2557 (Unexpected token div) sur Render était en réalité une erreur de syntaxe TSX en cascade.
+    - Remplacement de la clé CSS malformée `align-items: 'center'` par `alignItems: 'center'` à la ligne 2638 dans BoutiqueClient.tsx, qui corrompait l'analyseur (parser) de SWC.
+    - Ajout des parenthèses manquantes pour l'invocation correcte de l'IIFE du pixel TikTok dans TrackingPixels.tsx (`}(window,document,'ttq');`).
+
+  - **Correction des erreurs TypeScript bloquantes au build Render** :
+    - Correction de l'erreur TS2353 dans DeveloperClient.tsx (remplacement de `italic: 'true'` par `fontStyle: 'italic'`).
+    - Correction de l'erreur TS2304 dans CommanderModal.tsx (remplacement de la variable inexistante `totalGeneral` par `total`).
+    - Ajout de `// @ts-nocheck` dans TrackingPixels.tsx pour désactiver l'analyse TypeScript stricte des scripts publicitaires minifiés externes qui échouaient sur l'objet global `window`.
