@@ -2,6 +2,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useRef, useState, useTransition, Suspense } from 'react'
 import Link from 'next/link'
+import ExternalImg from '@/components/ExternalImg'
 
 function fcfa(n: number | null) {
   if (!n) return null
@@ -32,11 +33,7 @@ function ResultCard({ href, image, titre, sub1, sub2, badge }: {
         width: 60, height: 60, flexShrink: 0, borderRadius: 8, overflow: 'hidden',
         background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        {image
-          // eslint-disable-next-line @next/next/no-img-element
-          ? <img src={image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <span style={{ fontSize: 24, color: '#d1d5db' }}>📦</span>
-        }
+        <ExternalImg src={image} alt={titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ margin: 0, fontWeight: 600, fontSize: 14, lineHeight: 1.3 }}>{titre}</p>

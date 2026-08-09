@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useRef, useState, useEffect, useTransition } from 'react'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
+import ExternalImg from '@/components/ExternalImg'
 
 interface ProduitResult {
   id: string
@@ -177,11 +178,9 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
                         textDecoration: 'none', color: '#111827',
                       }}
                     >
-                      {b.logo_url ? (
-                        <img src={b.logo_url} alt="" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover' }} />
-                      ) : (
-                        <span style={{ fontSize: 18 }}>🏪</span>
-                      )}
+                      <div style={{ width: 28, height: 28, borderRadius: 6, overflow: 'hidden', flexShrink: 0 }}>
+                        <ExternalImg src={b.logo_url} alt="" fallback="🏪" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
                       <div>
                         <p style={{ margin: 0, fontWeight: 700, fontSize: 13 }}>{b.nom}</p>
                         <span style={{ fontSize: 11, color: '#6b7280' }}>📍 {b.ville}</span>
@@ -205,11 +204,9 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
                         textDecoration: 'none', color: '#111827', borderBottom: '1px solid #f8fafc',
                       }}
                     >
-                      {p.images?.[0] ? (
-                        <img src={p.images[0]} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', background: '#f8fafc' }} />
-                      ) : (
-                        <div style={{ width: 36, height: 36, borderRadius: 6, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>📦</div>
-                      )}
+                      <div style={{ width: 36, height: 36, borderRadius: 6, overflow: 'hidden', flexShrink: 0, background: '#f8fafc' }}>
+                        <ExternalImg src={p.images?.[0]} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ margin: 0, fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nom}</p>
                         <span style={{ fontSize: 11, color: '#6b7280' }}>{p.boutique_nom}</span>

@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import BoutiqueDetailClient, { type Produit, type Annonce } from './BoutiqueDetailClient'
 import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
+import ExternalImg from '@/components/ExternalImg'
 
 interface Boutique {
   id: string
@@ -87,10 +88,9 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
         width: '100%', height: 220, background: '#f1f5f9',
         position: 'relative', overflow: 'hidden', marginBottom: 0,
       }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <ExternalImg
           src={b.cover_url ? cloudinaryHQ(b.cover_url, { width: 1200 }) : getCategoryCoverPhoto(b.nom, b.categorie)}
-          alt=""
+          alt={b.nom}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
         {/* Gradient overlay */}
@@ -116,11 +116,7 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
               boxShadow: '0 4px 16px rgba(0,0,0,.18)',
               position: 'relative', zIndex: 10,
             }}>
-              {b.logo_url
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={b.logo_url} alt={b.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <span style={{ fontSize: 36 }}>{CAT_ICONS[b.categorie ?? ''] ?? '🏪'}</span>
-              }
+              <ExternalImg src={b.logo_url} alt={b.nom} fallback={CAT_ICONS[b.categorie ?? ''] ?? '🏪'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
 
             <div style={{ flex: 1, paddingBottom: 4 }}>

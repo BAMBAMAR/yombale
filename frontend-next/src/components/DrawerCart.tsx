@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useCart } from '@/context/CartContext'
 import { fcfa } from '@/lib/format'
+import ExternalImg from '@/components/ExternalImg'
 
 interface Zone { id: string; nom: string; prix: number }
 
@@ -232,11 +233,9 @@ export default function DrawerCart() {
               <>
                 {items.map(item => (
                   <div key={item.id} style={{ display: 'flex', gap: 12, paddingBottom: 14, borderBottom: '1px solid #f3f4f6', alignItems: 'center' }}>
-                    {item.images?.[0] ? (
-                      <img src={item.images[0]} alt={item.nom} style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover', background: '#f8fafc' }} />
-                    ) : (
-                      <div style={{ width: 56, height: 56, borderRadius: 8, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>📦</div>
-                    )}
+                    <div style={{ width: 56, height: 56, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: '#f8fafc' }}>
+                      <ExternalImg src={item.images?.[0]} alt={item.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
   
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 14, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.nom}</p>

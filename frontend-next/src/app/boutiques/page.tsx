@@ -5,6 +5,7 @@ import BoutiquesSearch from './BoutiquesSearch'
 import { Store, ShieldCheck, MapPin, Sparkles, Star, MessageCircle, ArrowRight, Building2 } from 'lucide-react'
 import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
 import HeroCarousel from './HeroCarousel'
+import ExternalImg from '@/components/ExternalImg'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 export const dynamic = 'force-dynamic'
@@ -396,8 +397,7 @@ export default async function BoutiquesPage({
                   width: '100%', height: 110, background: '#f1f5f9',
                   position: 'relative', overflow: 'hidden',
                 }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={coverImageSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <ExternalImg src={coverImageSrc} alt={b.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
 
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.4) 100%)' }} />
 
@@ -440,12 +440,7 @@ export default async function BoutiquesPage({
                       boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                      {b.logo_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={b.logo_url} alt={b.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <span style={{ fontSize: 22, fontWeight: 900, color: '#C75B00', letterSpacing: -0.5 }}>{initials}</span>
-                      )}
+                      <ExternalImg src={b.logo_url} alt={b.nom} fallback={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fffbeb', padding: '3px 9px', borderRadius: 12, border: '1px solid #fef3c7' }}>

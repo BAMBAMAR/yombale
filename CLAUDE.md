@@ -1,3 +1,17 @@
+## 🚀 Mises à jour du 09/08/2026 : Correction Globale des Images Nopalou (Boutiques, Logos, Couvertures & Espace Marchand)
+- **Remplacement complet des balises `<img>` brutes par `ExternalImg` sur les Boutiques Nopalou** :
+  * Annuaire & Répertoire des Boutiques (`boutiques/page.tsx`) : Logos et photos de couverture.
+  * Vitrine & En-tête de la Boutique (`boutiques/[id]/page.tsx`) : Logos, bannière de couverture et produits boutique.
+  * Espace Marchand & Tableau de bord (`BoutiqueClient.tsx`) : Formulaires de modification de logo, couverture et catalogue produits.
+- **Protection & Proxy Universel pour toutes les images Nopalou** : Masquage automatique de l'en-tête `Referer` et fallback instantané vers le proxy CDN `wsrv.nl` si un CDN ou navigateur bloque l'accès direct aux images Cloudinary/externes.
+
+## 🚀 Mises à jour du 09/08/2026 : Correction de l'Affichage des Photos & Proxy CDN Fallback
+- **Nettoyage & Sécurisation des URLs d'images (`sanitizeImgUrl`)** : Conversion automatique des URLs relatives `//` et `http://` en `https://` pour éviter les blocages de contenu mixte, nettoyage des espaces et correction des préfixes SVG corrompus.
+- **Politique de Referrer (`referrerPolicy="no-referrer"`)** : Suppression de l'en-tête Referer lors de la demande d'images pour contourner les protections anti-hotlink des CDN externes (CoinAfrique, Jumia, Expat-Dakar, etc.).
+- **Fallback Automatique Proxy CDN (`wsrv.nl`)** : En cas d'erreur de chargement direct (403, SSL, ECONNRESET), `ExternalImg` retente automatiquement le chargement via le proxy CDN sécurisé `wsrv.nl` avant de basculer sur l'icône de secours (📦).
+- **Généralisation sur tout le site** : Remplacement des balises `<img>` brutes par `ExternalImg` dans les boutiques (`BoutiqueDetailClient`), les cartes immobilières (`ImmoCard`), le panier latéral (`DrawerCart`), la recherche (`NavbarSearch` & `RechercheClient`).
+- **Nettoyage Base de Données PostgreSQL** : Suppression des URLs d'images SVG corrompues (`data:image/svg`) issues du scraping dans la table `produits`.
+
 - Injection directe des styles CSS POS dans style jsx global pour garantir l'affichage immédiat sans dépendre du cache navigateur (Masquage direct du header du site et layout 50/50).
 - Exigence de Session POS Ouverte & Gestion des Modes de Fonctionnement :
   * Blocage de l'ajout d'articles au panier si aucune session de caisse n'est ouverte (session === null) et déclenchement automatique de la modale Ouverture de Session.
@@ -1706,9 +1720,9 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
 - Refonte Globale Premium : Am�lioration de la typographie (letter-spacing), glassmorphism et animations d'entr�e sur les modales, soft shadows dynamiques sur les cartes produits/immo, et glow effects sur les boutons principaux.
  
  
-### Am�lioration du Mode Hors-Ligne (PWA Caisse)
+### Am�lioration du Mode Hors-Ligne (PWA Caisse)
 - Installation de Serwist (@serwist/next) pour la gestion du mode PWA (remplacement du fichier sw.js manuel).
-- Mise � jour de next.config.js avec withSerwist pour la mise en cache automatique des chunks Next.js.
-- Cr�ation de src/app/sw.ts g�rant le pr�caching et runtime caching.
+- Mise � jour de next.config.js avec withSerwist pour la mise en cache automatique des chunks Next.js.
+- Cr�ation de src/app/sw.ts g�rant le pr�caching et runtime caching.
 - Ajout d'un raccourci d'application (Caisse) dans le manifest.json.
-- Am�lioration UI de la caisse (CaisseClient.tsx) avec ajout d'un compteur du nombre de ventes en attente de synchronisation sur l'indicateur hors-ligne.
+- Am�lioration UI de la caisse (CaisseClient.tsx) avec ajout d'un compteur du nombre de ventes en attente de synchronisation sur l'indicateur hors-ligne.

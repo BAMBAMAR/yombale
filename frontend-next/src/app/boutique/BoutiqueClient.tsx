@@ -3,6 +3,7 @@ import { useState, useEffect, useTransition, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
+import ExternalImg from '@/components/ExternalImg'
 import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage, publierProduitAnnonce, getBoutiqueProduits, updateStock, duplicateProduit } from './actions'
 import Comptabilite from './Comptabilite'
 import Commandes from './Commandes'
@@ -580,8 +581,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
           <input name="logo" type="file" accept="image/*" style={{ fontSize: 13 }} />
           {boutique?.logo_url && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={boutique.logo_url} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb' }} />
+              <ExternalImg src={boutique.logo_url} alt="Logo" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb' }} />
               <span style={{ fontSize: 11, color: '#6b7280' }}>Logo actuel</span>
             </div>
           )}
@@ -591,8 +591,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
           <input name="cover" type="file" accept="image/*" style={{ fontSize: 13 }} />
           {boutique?.cover_url && (
             <div style={{ marginTop: 6, borderRadius: 6, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={boutique.cover_url} alt="" style={{ width: '100%', height: 50, objectFit: 'cover' }} />
+              <ExternalImg src={boutique.cover_url} alt="Couverture" style={{ width: '100%', height: 50, objectFit: 'cover' }} />
             </div>
           )}
         </div>
@@ -1177,15 +1176,13 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
             <div className="photos-previews">
               {imagesExistantes.map((src, i) => (
                 <div key={`existante-${i}`} className="photo-thumb">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt={`Photo ${i + 1}`} />
+                  <ExternalImg src={src} alt={`Photo ${i + 1}`} />
                   <button type="button" className="photo-remove" onClick={() => removeImageExistante(i)} aria-label="Supprimer">✕</button>
                 </div>
               ))}
               {previews.map((src, i) => (
                 <div key={`nouvelle-${i}`} className="photo-thumb">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt={`Nouvelle photo ${i + 1}`} />
+                  <ExternalImg src={src} alt={`Nouvelle photo ${i + 1}`} />
                   <button type="button" className="photo-remove" onClick={() => removeNouvellePhoto(i)} aria-label="Supprimer">✕</button>
                 </div>
               ))}
@@ -1300,8 +1297,7 @@ function MarketingBoutique({ boutique, onVoirJamaisPartages, planActif }: { bout
       }}>
         <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {boutique.logo_url
-            // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={boutique.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ? <ExternalImg src={boutique.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             : <span style={{ fontSize: 28 }}>🏪</span>
           }
         </div>
@@ -1655,11 +1651,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
               <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                 {/* Image */}
                 <div style={{ width: 60, height: 60, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: '#f8fafc', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {p.images?.[0]
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={p.images[0]} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <span style={{ fontSize: 26 }}>📦</span>
-                  }
+                  <ExternalImg src={p.images?.[0]} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
 
                 {/* Informations */}
@@ -1877,8 +1869,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
           {/* Logo et Nom */}
           <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
             {boutique.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={boutique.logo_url} alt={boutique.nom} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 12, flexShrink: 0, border: '1px solid #e2e8f0' }} />
+              <ExternalImg src={boutique.logo_url} alt={boutique.nom} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 12, flexShrink: 0, border: '1px solid #e2e8f0' }} />
             ) : (
               <div style={{ width: 56, height: 56, borderRadius: 12, background: 'linear-gradient(135deg, #fff8f2 0%, #fdf0e6 100%)', border: '1px solid #ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Store size={28} style={{ color: '#C75B00' }} />

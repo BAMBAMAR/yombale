@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { cloudinaryHQ } from '@/lib/cloudinary'
+import ExternalImg from '@/components/ExternalImg'
 import { fcfa, lienBoutiqueWhatsapp } from '@/lib/format'
 import CommanderModal from './CommanderModal'
 import AvisClients from '@/components/AvisClients'
@@ -69,8 +70,7 @@ function ProduitCard({
       <div className="card-premium" style={{ display: 'flex', gap: 16, padding: 14, alignItems: 'center' }}>
         <div style={{ width: 110, height: 110, borderRadius: 10, flexShrink: 0, position: 'relative', background: '#f8fafc', overflow: 'hidden' }}>
           {img ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={cloudinaryHQ(img, { width: 300 })} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+            <ExternalImg src={cloudinaryHQ(img, { width: 300 })} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9' }}>
               <ShoppingCart size={28} style={{ color: 'var(--text3)' }} />
@@ -132,8 +132,7 @@ function ProduitCard({
         <Link href={`/boutiques/${boutiqueId}/produits/${p.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
           <div style={{ width: '100%', aspectRatio: '1/1', position: 'relative', background: '#f8fafc', overflow: 'hidden' }}>
             {img ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={cloudinaryHQ(img, { width: 400 })} alt={p.nom}
+              <ExternalImg src={cloudinaryHQ(img, { width: 400 })} alt={p.nom}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
                 loading="lazy"
                 onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)' }}

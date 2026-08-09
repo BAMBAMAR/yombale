@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import CardActions from '@/app/CardActions'
+import ExternalImg from '@/components/ExternalImg'
 
 export interface AnnonceImmo {
   id: string
@@ -51,12 +52,14 @@ export default function ImmoCard({ a }: { a: AnnonceImmo }) {
     <Link href={`/immo/${a.id}`} className="immo-card" style={{ position: 'relative' }}>
       <CardActions id={a.id} nom={a.titre} type="immo" />
       <div className="immo-card-img">
-        {img ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={cloudinaryHQ(img, { width: 480 })} alt={a.titre} loading="lazy" />
-        ) : (
-          <span className="immo-img-placeholder">{typeIcon}</span>
-        )}
+        <ExternalImg 
+          src={cloudinaryHQ(img, { width: 480 })} 
+          alt={a.titre} 
+          fallback={typeIcon} 
+          fallbackClassName="immo-img-placeholder" 
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+          loading="lazy" 
+        />
         <span className={`immo-transaction-badge${isVente ? ' immo-transaction-badge--vente' : ''}`}>
           {isVente ? 'Vente' : 'Location'}
         </span>
