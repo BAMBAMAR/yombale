@@ -168,22 +168,24 @@ export default async function BoutiquesPage({
           pointerEvents: 'none',
         }} />
 
-        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexWrap: 'wrap', gap: 40, justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexWrap: 'wrap', gap: 40, alignItems: 'flex-start' }}>
           
           {/* COLONNE GAUCHE (60%) : Contenu et Recherche */}
-          <div style={{ flex: '1 1 500px', maxWidth: 760, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '6px 14px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 14, border: '1px solid #ffedd5', width: 'fit-content' }}>
-              <Sparkles size={14} style={{ color: '#C75B00' }} />
-              <span>Hub officiel des vendeurs vérifiés Nopalou</span>
+          <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ maxWidth: 700 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '6px 14px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 14, border: '1px solid #ffedd5', width: 'fit-content' }}>
+                <Sparkles size={14} style={{ color: '#C75B00' }} />
+                <span>Hub officiel des vendeurs vérifiés Nopalou</span>
+              </div>
+
+              <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 42, fontWeight: 900, margin: '0 0 16px', lineHeight: 1.1, color: '#0f172a' }}>
+                Boutiques & Vendeurs Pro au <span style={{ color: '#C75B00' }}>Sénégal</span>
+              </h1>
+
+              <p style={{ fontSize: 16, color: '#475569', margin: '0 0 32px', lineHeight: 1.6 }}>
+                Découvrez des commerçants de confiance, parcourez leurs catalogues en ligne, comparez les prix et contactez-les directement par WhatsApp ou téléphone.
+              </p>
             </div>
-
-            <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 42, fontWeight: 900, margin: '0 0 16px', lineHeight: 1.1, color: '#0f172a' }}>
-              Boutiques & Vendeurs Pro au <span style={{ color: '#C75B00' }}>Sénégal</span>
-            </h1>
-
-            <p style={{ fontSize: 16, color: '#475569', margin: '0 0 32px', lineHeight: 1.6 }}>
-              Découvrez des commerçants de confiance, parcourez leurs catalogues en ligne, comparez les prix et contactez-les directement par WhatsApp ou téléphone.
-            </p>
 
             {/* BARRE DE RECHERCHE ET FILTRES (Intégrés à gauche) */}
             <div style={{ background: '#ffffff', borderRadius: 24, padding: '24px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 16 }}>
