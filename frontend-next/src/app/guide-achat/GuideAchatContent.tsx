@@ -189,6 +189,7 @@ export default function GuideAchatPage({ categoriesActives }: { categoriesActive
         emoji="🏆"
         titre="Guide d'achat intelligent"
         compteur="Scoring personnalisé · 4 profils d'achat"
+        centered={true}
       />
 
       <Link href="/" className="guide-back-btn">← Retour</Link>

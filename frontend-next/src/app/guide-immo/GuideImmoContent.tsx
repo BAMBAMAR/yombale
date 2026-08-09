@@ -142,12 +142,12 @@ export default function GuideImmoPage() {
       <PageHeader
         breadcrumb={[
           { label: 'Accueil', href: '/' },
-          { label: 'Immobilier', href: '/immo' },
-          { label: 'Guide immobilier' },
+          { label: 'Guide Immo' },
         ]}
         emoji="🏡"
         titre="Guide immobilier intelligent"
-        compteur="Scoring personnalisé · 5 profils d'acheteur"
+        compteur={`${results.length} annonces correspondantes`}
+        centered={true}
       />
 
       <Link href="/immo" className="guide-back-btn">← Annonces</Link>

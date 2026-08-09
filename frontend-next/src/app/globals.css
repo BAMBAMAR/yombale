@@ -1959,30 +1959,36 @@ a {
   min-height: calc(100vh - 110px);
 }
 
-/* Left dark panel */
+/* Left floating panel */
 .guide-left {
   width: 340px;
   min-width: 260px;
   flex-shrink: 0;
-  padding: 24px 20px 40px;
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   position: sticky;
-  top: 109px;
+  top: 100px;
   align-self: flex-start;
-  max-height: calc(100vh - 109px);
-  scrollbar-width: thin;
+  max-height: calc(100vh - 120px);
+  margin: 0 24px 24px 0;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  scrollbar-width: none;
+}
+.guide-left::-webkit-scrollbar {
+  display: none;
 }
 .guide-left::after {
   content: "";
   display: block;
-  min-height: 40px;
+  min-height: 24px;
   flex-shrink: 0;
 }
 .guide-left--navy {
   background: linear-gradient(180deg, var(--navy) 0%, rgba(13,27,42,0.95) 100%);
-  border-right: 1px solid rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.05);
 }
 
 /* Animation pop sur les boutons carte */

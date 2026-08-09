@@ -151,19 +151,18 @@ export default function GuideForfaitPage() {
   })
 
   const topForfait = sorted[0] ?? null
-
   return (
     <div className="guide-page">
 
       <PageHeader
         breadcrumb={[
           { label: 'Accueil', href: '/' },
-          { label: 'Télécom', href: '/telecom' },
-          { label: 'Guide forfait' },
+          { label: 'Guide Forfaits' },
         ]}
-        emoji="🎯"
-        titre="Guide forfait télécom"
-        compteur="Scoring personnalisé · 5 profils d'usage"
+        emoji="📱"
+        titre="Comparateur de Forfaits"
+        compteur={`${results.length} forfaits correspondants`}
+        centered={true}
       />
 
       <Link href="/telecom" className="guide-back-btn">← Forfaits</Link>
