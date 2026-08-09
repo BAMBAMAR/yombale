@@ -32,6 +32,7 @@ import NavbarGuides from './NavbarGuides'
 import MobileNav from './MobileNav'
 import BottomBars from './BottomBars';
 import RegisterSW from './RegisterSW';
+import PwaInstallPrompt from '@/components/PwaInstallPrompt';
 import FavToast from './FavToast';
 import VerifyEmailToast from './VerifyEmailToast';
 import { CartProvider } from '@/context/CartContext';
@@ -287,6 +288,7 @@ export default async function RootLayout({
 
         <BottomBars />
         <RegisterSW />
+        <PwaInstallPrompt />
         <FavToast />
         <Suspense fallback={null}>
           <VerifyEmailToast />

@@ -1,3 +1,11 @@
+## 🚀 Mises à jour du 09/08/2026 : Intégration du Composant d'Installation PWA Nativisé (Bannière & Modale iOS)
+- **Bannière d'Installation PWA Flottante (`PwaInstallPrompt.tsx`)** :
+  * Écoute automatique de l'événement natif navigateur `beforeinstallprompt` sur Chrome Android, Edge & PC Desktop.
+  * Déclenchement de la fenêtre d'installation en 1 clic ("Installer l'App Nopalou").
+  * Détection intelligente d'iOS / Safari avec modale d'instruction pas à pas ("Partager 📤 -> Sur l'écran d'accueil 📲").
+  * Masquage automatique si l'application est déjà installée en mode standalone ou si fermée par l'utilisateur (mémoire 14 jours).
+- **Intégration Globale (`layout.tsx`)** : Activation automatique sur l'ensemble de l'application.
+
 ## 🚀 Mises à jour du 09/08/2026 : Correction Globale des Images Nopalou (Boutiques, Logos, Couvertures & Espace Marchand)
 - **Remplacement complet des balises `<img>` brutes par `ExternalImg` sur les Boutiques Nopalou** :
   * Annuaire & Répertoire des Boutiques (`boutiques/page.tsx`) : Logos et photos de couverture.
