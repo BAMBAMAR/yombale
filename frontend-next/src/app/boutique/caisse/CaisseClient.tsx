@@ -845,6 +845,10 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   }
 
   function changerBoutiqueActive(newBId: string) {
+    if (session) {
+      alert("⚠️ Vous avez une session de caisse (Fonds de caisse) en cours sur cette boutique. Veuillez clôturer votre caisse (Clôture Z) avant de changer de boutique.");
+      return;
+    }
     setBoutiqueActiveId(newBId)
     chargerProduitsBoutique(newBId)
     viderPanier()
