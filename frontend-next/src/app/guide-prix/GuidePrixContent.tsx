@@ -161,6 +161,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
         emoji="💡"
         titre="Guide des prix"
         compteur="Recherchez un produit pour connaître son prix actuel au Sénégal, comparer les marchands et voir l'évolution du prix dans le temps."
+        centered={true}
       />
       <div className="guide-prix-hero">
         <form onSubmit={search} className="guide-prix-form">
