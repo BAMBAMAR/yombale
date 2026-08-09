@@ -57,6 +57,7 @@ router.get('/', limiterRecherche, async (req, res) => {
            AND (a.titre ILIKE $1 OR a.description ILIKE $1 OR a.categorie ILIKE $1 OR a.ville ILIKE $1)
          ORDER BY
            CASE WHEN a.titre ILIKE $2 THEN 0 ELSE 1 END,
+           CASE WHEN a.utilisateur_id IS NOT NULL THEN 0 ELSE 1 END,
            a.created_at DESC
          LIMIT $3`,
         [like, `${q}%`, limit]

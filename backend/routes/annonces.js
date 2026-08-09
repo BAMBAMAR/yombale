@@ -143,7 +143,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
 
     const orderBy = tri === 'prix_asc'  ? 'prix ASC NULLS LAST'
                   : tri === 'prix_desc' ? 'prix DESC NULLS LAST'
-                  :                       'created_at DESC';
+                  :                       'CASE WHEN utilisateur_id IS NOT NULL THEN 0 ELSE 1 END, created_at DESC';
 
     const where = 'WHERE ' + conds.join(' AND ');
     const [rows, cnt] = await Promise.all([
