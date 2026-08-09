@@ -320,7 +320,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   const [superviseurTitre, setSuperviseurTitre] = useState<string>('')
   const [superviseurError, setSuperviseurError] = useState<string | null>(null)
 
-  // ── État Catalogue & Panier & Paiement Mixte ─────────────────────────────────
+  // ── État Catalogue & Panier & Paiement Mixte & Navigation Mobile ─────────────
+  const [tabMobile, setTabMobile] = useState<'catalogue' | 'ticket'>('catalogue')
   const [recherche, setRecherche] = useState<string>('')
   const [categorieFiltre, setCategorieFiltre] = useState<string>('tous')
   const [panier, setPanier] = useState<LignePanier[]>([])
@@ -418,11 +419,20 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
   async function demarrerScannerCamera() {
     setModalScannerCamera(true)
-    setScannerCameraStatus('Demande d’accès à la caméra du téléphone…')
+    setScannerCameraStatus('Demande d’accès à la caméra…')
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      })
+      let stream: MediaStream | null = null
+      try {
+        // Tentative 1 : Caméra arrière principale
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
+        })
+      } catch (errEnv) {
+        console.warn('Caméra arrière non disponible, tentative caméra standard...', errEnv)
+        // Tentative 2 : Toute caméra disponible sur l’appareil
+        stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      }
+
       cameraStreamRef.current = stream
       if (videoScannerRef.current) {
         videoScannerRef.current.srcObject = stream
@@ -430,9 +440,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       }
       setScannerCameraStatus('📷 Caméra active ! Placez le code-barres devant l’objectif')
       demarrerDetectionCodeBarre()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erreur accès caméra:', err)
-      setScannerCameraStatus('❌ Impossible d’accéder à la caméra. Saisissez le code directement.')
+      if (typeof window !== 'undefined' && window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        setScannerCameraStatus('🔒 L’accès caméra requiert un site sécurisé (HTTPS). Saisissez le code ou utilisez la Douchette Smartphone.')
+      } else {
+        setScannerCameraStatus('❌ Impossible d’accéder à la caméra. Vérifiez les permissions de votre navigateur ou utilisez la Douchette Smartphone.')
+      }
     }
   }
 
@@ -1928,11 +1942,29 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         </div>
       </header>
 
+      {/* Sélecteur d'Onglets Mobile (Visible <= 1024px) */}
+      <div className="caisse-mobile-tabs no-print">
+        <button
+          type="button"
+          onClick={() => setTabMobile('catalogue')}
+          className={`caisse-mobile-tab-btn ${tabMobile === 'catalogue' ? 'active' : ''}`}
+        >
+          🛍️ Catalogue ({produitsFiltres.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setTabMobile('ticket')}
+          className={`caisse-mobile-tab-btn ${tabMobile === 'ticket' ? 'active' : ''} ${panier.length > 0 ? 'has-items' : ''}`}
+        >
+          🛒 Ticket ({panier.reduce((sum, item) => sum + item.quantite, 0)}) • {fcfa(netAPayer)}
+        </button>
+      </div>
+
       {/* Main Grid Caisse */}
       <div className="caisse-main-layout">
 
         {/* Côté Gauche : Recherche & Catalogue Produits Réel avec Décrémentation Dynamique du Stock */}
-        <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}>
+        <div className={`caisse-catalogue-section ${tabMobile === 'catalogue' ? 'mobile-active' : 'mobile-hidden'}`} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}>
           
           {/* File d'attente Multi-Clients (1, 2, 3 clients simultanés) */}
           {ticketsEnAttente.length > 0 && (
@@ -2126,7 +2158,16 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         </div>
 
         {/* Côté Droit : Ticket Panier & Encaissement POS */}
-        <div className="ticket-section" style={{ background: '#ffffff', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Bouton retour au catalogue sur Mobile */}
+          <button
+            type="button"
+            onClick={() => setTabMobile('catalogue')}
+            className="caisse-back-to-catalogue-btn no-print"
+          >
+            ⬅️ Revenir au Catalogue produits ({produitsFiltres.length})
+          </button>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>🛒 Ticket en cours</h2>
 
@@ -2424,6 +2465,23 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
           </div>
         </div>
       </div>
+
+      {/* Barre Flottante Sticky Mobile (Catalogue mode) */}
+      {tabMobile === 'catalogue' && panier.length > 0 && (
+        <div className="caisse-sticky-bottom-bar no-print">
+          <div className="caisse-sticky-bottom-info">
+            <span className="caisse-sticky-count">🛒 {panier.reduce((sum, item) => sum + item.quantite, 0)} article{panier.reduce((sum, item) => sum + item.quantite, 0) > 1 ? 's' : ''}</span>
+            <span className="caisse-sticky-total">{fcfa(netAPayer)}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTabMobile('ticket')}
+            className="caisse-sticky-btn"
+          >
+            🛒 VOIR TICKET & ENCAISSER →
+          </button>
+        </div>
+      )}
 
       {/* Ticket Impression Thermique 80mm */}
       {derniereVente && (
@@ -2877,9 +2935,17 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
             <p style={{ margin: 0, fontSize: 13, color: '#475569', fontWeight: 700 }}>{scannerCameraStatus}</p>
 
-            <button onClick={arreterScannerCamera} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 10, padding: 12, fontWeight: 800, cursor: 'pointer' }}>
-              Fermer le scanner
-            </button>
+            <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
+              <button onClick={demarrerScannerCamera} style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>
+                🔄 Réessayer d&apos;activer la Caméra
+              </button>
+              <button onClick={() => { arreterScannerCamera(); setModalPairageSmartphone(true); }} style={{ background: '#0284c7', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>
+                📱 Passer en Douchette Smartphone Distante
+              </button>
+              <button onClick={arreterScannerCamera} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 10, padding: 10, fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+                Fermer le scanner
+              </button>
+            </div>
           </div>
         </div>
       )}

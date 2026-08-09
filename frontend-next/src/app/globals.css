@@ -9828,10 +9828,175 @@ span.ripple {
   overflow: hidden;
 }
 
+/* ── Navigation Caisse POS Mobile ── */
+.caisse-mobile-tabs {
+  display: none !important;
+}
+
+.caisse-sticky-bottom-bar {
+  display: none !important;
+}
+
+.caisse-back-to-catalogue-btn {
+  display: none !important;
+}
+
 @media (max-width: 1024px) {
   .caisse-main-layout {
     grid-template-columns: 1fr;
     overflow-y: auto;
+  }
+
+  .caisse-mobile-tabs {
+    display: flex !important;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: #ffffff;
+    padding: 8px 12px;
+    gap: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  }
+
+  .caisse-mobile-tab-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 800;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #475569;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .caisse-mobile-tab-btn.active {
+    background: #1e3a5f;
+    color: #ffffff;
+    border-color: #1e3a5f;
+    box-shadow: 0 3px 10px rgba(30, 58, 95, 0.25);
+  }
+
+  .caisse-mobile-tab-btn.has-items.active {
+    background: linear-gradient(135deg, #ea580c 0%, #c75b00 100%);
+    color: #ffffff;
+    border-color: #c75b00;
+    box-shadow: 0 4px 12px rgba(199, 91, 0, 0.3);
+  }
+
+  .caisse-mobile-tab-btn.has-items:not(.active) {
+    border-color: #fdba74;
+    background: #fff7ed;
+    color: #c2410c;
+  }
+
+  .caisse-catalogue-section.mobile-hidden {
+    display: none !important;
+  }
+
+  .ticket-section.mobile-hidden {
+    display: none !important;
+  }
+
+  .caisse-catalogue-section.mobile-active {
+    display: flex !important;
+    width: 100% !important;
+    padding-bottom: 90px !important;
+  }
+
+  .ticket-section.mobile-active {
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  .caisse-back-to-catalogue-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 14px;
+    background: #f1f5f9;
+    color: #1e3a5f;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  }
+
+  .caisse-sticky-bottom-bar {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 10px 14px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 -6px 25px rgba(15, 23, 42, 0.35);
+    border-top: 1px solid #334155;
+    animation: slideUpBar 0.25s ease-out;
+  }
+
+  .caisse-sticky-bottom-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .caisse-sticky-count {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .caisse-sticky-total {
+    font-size: 17px;
+    font-weight: 900;
+    color: #38bdf8;
+  }
+
+  .caisse-sticky-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-weight: 900;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+    transition: transform 0.1s ease;
+  }
+
+  .caisse-sticky-btn:active {
+    transform: scale(0.97);
+  }
+}
+
+@keyframes slideUpBar {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 

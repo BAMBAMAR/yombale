@@ -1,3 +1,8 @@
+## ğŸš€ Mises Ã  jour du 09/08/2026 : Optimisation Caisse POS Mobile & CamÃ©ra Scanner
+- Navigation Caisse Mobile par Onglets (caisse-mobile-tabs) : Onglets [ ğŸ›ï¸ Catalogue | ğŸ›’ Ticket ] sous le header (<= 1024px).
+- Barre Flottante Collante (caisse-sticky-bottom-bar) : Affichage en direct du total FCFA et bouton VOIR TICKET & ENCAISSER sur mobile.
+- Robustesse Scanner CamÃ©ra : Fallback automatique multi-camÃ©ras (facingMode environment -> video: true), gestion HTTPS et raccourci Douchette Smartphone Distante.
+
 # CLAUDE.md
 
 ## ğŸ› ï¸ Guide de Configuration & d'Activation Production (OpenSpec Nopalou)
@@ -1654,21 +1659,21 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - Suppression des mots-clÃ©s gÃ©nÃ©riques (`besoin de`, `recherche un`, `recherche une`, `recherche d'un`) qui provoquaient la classification erronÃ©e de voitures ou d'objets (TV, Maison) comme offres d'emploi.
     - Modification de la logique de forÃ§age de catÃ©gorie (`force_categorie`) pour les groupes d'emploi afin qu'elle serve de catÃ©gorie par dÃ©faut (fallback) uniquement si aucune autre catÃ©gorie plus spÃ©cifique (ex: auto-moto) n'est dÃ©tectÃ©e dans le post.
 
-  - **Audit & Amélioration de la Catégorisation** :
-    - Enrichissement des mots-clés pour auto-moto, mode, immo et emploi (ajout de 'diesel', 'essence', 'shoes', 'wax', 'cherche boulot', etc.).
-    - Réordonnancement de l'évaluation des catégories dans scraper-immo-facebook.js (priorité donnée à auto-moto et immo pour éviter les faux positifs dans tv-electro ou informatique liés aux mots comme 'écran' ou 'ordinateur').
-    - Création et exécution d'un script de migration (ackend/scripts/reclassify.js) qui a réévalué l'intégralité des annonces de la base de données avec la nouvelle logique, corrigeant plusieurs centaines d'erreurs historiques.
+  - **Audit & Amï¿½lioration de la Catï¿½gorisation** :
+    - Enrichissement des mots-clï¿½s pour auto-moto, mode, immo et emploi (ajout de 'diesel', 'essence', 'shoes', 'wax', 'cherche boulot', etc.).
+    - Rï¿½ordonnancement de l'ï¿½valuation des catï¿½gories dans scraper-immo-facebook.js (prioritï¿½ donnï¿½e ï¿½ auto-moto et immo pour ï¿½viter les faux positifs dans tv-electro ou informatique liï¿½s aux mots comme 'ï¿½cran' ou 'ordinateur').
+    - Crï¿½ation et exï¿½cution d'un script de migration (ackend/scripts/reclassify.js) qui a rï¿½ï¿½valuï¿½ l'intï¿½gralitï¿½ des annonces de la base de donnï¿½es avec la nouvelle logique, corrigeant plusieurs centaines d'erreurs historiques.
 
-  - **Scraper Facebook** : Ajout de 5 nouveaux groupes dédiés à l'emploi pour augmenter le volume d'annonces de cette catégorie.
+  - **Scraper Facebook** : Ajout de 5 nouveaux groupes dï¿½diï¿½s ï¿½ l'emploi pour augmenter le volume d'annonces de cette catï¿½gorie.
 
-    - Ajustement du scraper : Les groupes d'emploi sont tous traités dans le tout premier lot de requêtes (maxGroupes = 10) pour maximiser le remplissage immédiat de la catégorie Emploi.
+    - Ajustement du scraper : Les groupes d'emploi sont tous traitï¿½s dans le tout premier lot de requï¿½tes (maxGroupes = 10) pour maximiser le remplissage immï¿½diat de la catï¿½gorie Emploi.
 
- # # #   R è g l e   U I   :   B a r r e s   d e   R e c h e r c h e 
- -   * * D é f i l e m e n t   a u t o m a t i q u e   ( A n c r e   # r e s u l t a t s ) * *   :   T o u t e s   l e s   b a r r e s   d e   r e c h e r c h e   s i t u é e s   s u r   d e s   p a g e s   c o n t e n a n t   u n   e n - t ê t e   ( H e r o )   d o i v e n t   a j o u t e r   l ' a n c r e   # r e s u l t a t s   l o r s   d e   l a   s o u m i s s i o n   (  o u t e r . p u s h ( ' / p a g e ? q = . . . # r e s u l t a t s ' ) )   p o u r   q u e   l ' u t i l i s a t e u r   a t t e r r i s s e   d i r e c t e m e n t   s u r   l e s   r é s u l t a t s ,   e n   s a u t a n t   l e   H e r o . 
+ # # #   R ï¿½ g l e   U I   :   B a r r e s   d e   R e c h e r c h e 
+ -   * * D ï¿½ f i l e m e n t   a u t o m a t i q u e   ( A n c r e   # r e s u l t a t s ) * *   :   T o u t e s   l e s   b a r r e s   d e   r e c h e r c h e   s i t u ï¿½ e s   s u r   d e s   p a g e s   c o n t e n a n t   u n   e n - t ï¿½ t e   ( H e r o )   d o i v e n t   a j o u t e r   l ' a n c r e   # r e s u l t a t s   l o r s   d e   l a   s o u m i s s i o n   (  o u t e r . p u s h ( ' / p a g e ? q = . . . # r e s u l t a t s ' ) )   p o u r   q u e   l ' u t i l i s a t e u r   a t t e r r i s s e   d i r e c t e m e n t   s u r   l e s   r ï¿½ s u l t a t s ,   e n   s a u t a n t   l e   H e r o . 
   
  
-    - Affichage Annonces : Modification de l'API (routes \nnonces.js\ et \search.js\) pour systématiquement prioriser les annonces natives (créées directement sur Nopalou) au-dessus des annonces importées depuis Facebook dans l'ordre d'affichage par défaut.
+    - Affichage Annonces : Modification de l'API (routes \nnonces.js\ et \search.js\) pour systï¿½matiquement prioriser les annonces natives (crï¿½ï¿½es directement sur Nopalou) au-dessus des annonces importï¿½es depuis Facebook dans l'ordre d'affichage par dï¿½faut.
 
-- Refonte UI Guides : Stylisation premium des composants guide (Achat, Immo, Forfait) avec correction des espacements, refonte du bouton de retour et amélioration globale de l'interface (globals.css, composants React).
+- Refonte UI Guides : Stylisation premium des composants guide (Achat, Immo, Forfait) avec correction des espacements, refonte du bouton de retour et amï¿½lioration globale de l'interface (globals.css, composants React).
 
-- Refonte Globale Premium : Amélioration de la typographie (letter-spacing), glassmorphism et animations d'entrée sur les modales, soft shadows dynamiques sur les cartes produits/immo, et glow effects sur les boutons principaux.
+- Refonte Globale Premium : Amï¿½lioration de la typographie (letter-spacing), glassmorphism et animations d'entrï¿½e sur les modales, soft shadows dynamiques sur les cartes produits/immo, et glow effects sur les boutons principaux.
