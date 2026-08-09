@@ -2134,20 +2134,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               />
             </div>
 
-            <div className="caisse-search-row-btns">
-              <button
-                onClick={() => setVueCatalogue(prev => prev === 'mosaique' ? 'liste' : 'mosaique')}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', borderRadius: 10,
-                  background: '#f8fafc', color: '#475569', border: '1px solid #cbd5e1', fontWeight: 700, fontSize: 13,
-                  cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s ease',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
-                }}
-                title={`Affichage en ${vueCatalogue === 'mosaique' ? 'liste' : 'mosaïque'}`}
-              >
-                {vueCatalogue === 'mosaique' ? <AlignJustify size={16} /> : <LayoutGrid size={16} />}
-              </button>
-
+            <div className="caisse-search-row-btns" style={{ flexWrap: 'wrap' }}>
               <button
                 onClick={demarrerScannerCamera}
                 style={{
@@ -2155,6 +2142,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                   background: '#1e3a5f', color: '#ffffff', border: 'none', fontWeight: 800, fontSize: 13,
                   cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(30,58,95,0.25)',
                   transition: 'all 0.15s ease',
+                  flex: '1 1 auto', justifyContent: 'center'
                 }}
               >
                 <Camera size={18} />
@@ -2168,6 +2156,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                   background: '#0284c7', color: '#ffffff', border: 'none', fontWeight: 800, fontSize: 13,
                   cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(2,132,199,0.25)',
                   transition: 'all 0.15s ease',
+                  flex: '1 1 auto', justifyContent: 'center'
                 }}
                 title="Connecter la caméra de votre smartphone comme douchette sans fil pour votre PC"
               >
@@ -2176,10 +2165,27 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
             </div>
           </div>
 
-          {/* Filtre Catégories (Fluidité Tactile & Scroll Sans Coupure) */}
-          <div className="nopalou-scroll-tabs caisse-categories-bar" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-            {[
-              { id: 'tous', label: '✨ Tous les articles' },
+          {/* Filtre Catégories (Fluidité Tactile & Scroll Sans Coupure) et Toggle Vue */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', paddingBottom: 6 }}>
+            {/* Bouton de bascule d'affichage (Placé à gauche des catégories) */}
+            <button
+              onClick={() => setVueCatalogue(prev => prev === 'mosaique' ? 'liste' : 'mosaique')}
+              style={{
+                flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                width: 44, height: 40, borderRadius: 10,
+                background: '#ffffff', color: '#475569', border: '1.5px solid #cbd5e1', 
+                cursor: 'pointer', transition: 'all 0.15s ease',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+              }}
+              title={`Passer en vue ${vueCatalogue === 'mosaique' ? 'liste' : 'mosaïque'}`}
+            >
+              {vueCatalogue === 'mosaique' ? <AlignJustify size={18} /> : <LayoutGrid size={18} />}
+            </button>
+
+            {/* Barre déroulante des catégories */}
+            <div className="nopalou-scroll-tabs caisse-categories-bar" style={{ display: 'flex', gap: 8, overflowX: 'auto', flex: 1, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+              {[
+                { id: 'tous', label: '✨ Tous les articles' },
               ...CATEGORIES.filter(c => c.value !== 'mixte').map(c => {
                 const cleanLabels: Record<string, string> = {
                   smartphones: '📱 Téléphonie',
