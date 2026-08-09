@@ -158,8 +158,6 @@ a {
   box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0,0,0,0.06);
   border-color: rgba(199, 91, 0, 0.3); /* Subtle accent glow on border */
 }
-  box-shadow: var(--shadow2), inset 3px 0 0 var(--accent);
-}
 
 /* ── Signature « ticket » — cartes promo uniquement (spec 2026-07-11) ──
    Le tilt signale « bon plan à saisir ». Perforation = vraies encoches
