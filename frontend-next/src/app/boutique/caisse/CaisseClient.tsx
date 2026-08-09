@@ -72,133 +72,9 @@ interface TicketEnAttente {
 
 export default function CaisseClient({ planActif: planActifProp, initialToken }: { planActif?: string | null; initialToken?: string | null }) {
   const [terminalPlan, setTerminalPlan] = useState<string | null>('pro')
-  const planActif = initialToken ? (terminalPlan || 'pro') : planActifProp
-  if (planActif !== 'pro' && planActif !== 'business') {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: '#f8fafc',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px 16px',
-        fontFamily: 'system-ui, -apple-system, sans-serif'
-      }}>
-        <div style={{
-          maxWidth: 580,
-          width: '100%',
-          background: '#ffffff',
-          borderRadius: 24,
-          padding: '40px 32px',
-          boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.1)',
-          border: '1px solid #e2e8f0',
-          textAlign: 'center'
-        }}>
-          <div style={{
-            width: 72,
-            height: 72,
-            borderRadius: '50%',
-            background: '#fff7ed',
-            border: '2px solid #ffedd5',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#c75b00',
-            marginBottom: 20
-          }}>
-            <Lock size={36} />
-          </div>
-
-          <div style={{
-            display: 'inline-block',
-            background: '#fff7ed',
-            color: '#c75b00',
-            fontWeight: 700,
-            fontSize: 12,
-            padding: '4px 12px',
-            borderRadius: 20,
-            marginBottom: 12,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
-          }}>
-            🔒 Fonctionnalité Réservée aux Abonnés
-          </div>
-
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', margin: '0 0 12px' }}>
-            Caisse Enregistreuse POS Verrouillée
-          </h1>
-
-          <p style={{ fontSize: 15, color: '#64748b', lineHeight: 1.6, margin: '0 0 28px' }}>
-            L&apos;accès à la caisse enregistreuse et au point de vente physique est réservé aux boutiques disposant d&apos;un abonnement <strong>Pro</strong> ou <strong>Business</strong> actif.
-          </p>
-
-          <div style={{
-            background: '#f8fafc',
-            borderRadius: 16,
-            padding: 20,
-            textAlign: 'left',
-            marginBottom: 32,
-            border: '1px solid #f1f5f9'
-          }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Fonctionnalités débloquées avec l&apos;abonnement :
-            </div>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14, color: '#475569' }}>
-              <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ color: '#16a34a', fontWeight: 800 }}>✓</span> Encaissement rapide Espèces, Wave, Orange Money &amp; Carte
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ color: '#16a34a', fontWeight: 800 }}>✓</span> Impression de tickets de caisse &amp; reçus thermiques
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ color: '#16a34a', fontWeight: 800 }}>✓</span> Ouvertures, clôtures Z et gestion des écarts de caisse
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ color: '#16a34a', fontWeight: 800 }}>✓</span> Gestion multi-caissiers avec codes PIN sécurisés
-              </li>
-            </ul>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <Link
-              href="/boutique/abonnement"
-              style={{
-                display: 'block',
-                width: '100%',
-                padding: '14px 20px',
-                borderRadius: 12,
-                background: 'linear-gradient(135deg, #c75b00 0%, #ea580c 100%)',
-                color: '#ffffff',
-                fontWeight: 700,
-                fontSize: 15,
-                textDecoration: 'none',
-                boxShadow: '0 4px 12px rgba(199, 91, 0, 0.25)'
-              }}
-            >
-              Passer à la Boutique Pro (5 000 FCFA/mois)
-            </Link>
-            <Link
-              href="/boutique"
-              style={{
-                display: 'block',
-                color: '#64748b',
-                fontSize: 14,
-                fontWeight: 600,
-                textDecoration: 'none',
-                padding: '8px'
-              }}
-            >
-              ← Retour au tableau de bord boutique
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-  // ── Charte Graphique Nopalou Thème Lumineux ─────────────────────────────────
 
   // ── État Boutiques du Marchand & Synchronisation Catalogue ───────────────────
-  const [boutiques, setBoutiques] = useState<{ id: string; nom: string; regime_fiscal?: string; prix_tva_incluse?: boolean; timbre_fiscal_applicable?: boolean; tva_taux_defaut?: number; actif?: boolean; adresse?: string | null; telephone?: string | null }[]>([])
+  const [boutiques, setBoutiques] = useState<{ id: string; nom: string; plan_actif?: string | null; regime_fiscal?: string; prix_tva_incluse?: boolean; timbre_fiscal_applicable?: boolean; tva_taux_defaut?: number; actif?: boolean; adresse?: string | null; telephone?: string | null }[]>([])
   const [boutiqueActiveId, setBoutiqueActiveId] = useState<string>('')
   const [loadingProduits, setLoadingProduits] = useState<boolean>(true)
   const [modalImportBatch, setModalImportBatch] = useState<boolean>(false)
@@ -211,6 +87,14 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   // --- ÉTAT OFFLINE & SYNC ---
   const [offlineModeActive, setOfflineModeActive] = useState<boolean>(false)
   const [syncingOffline, setSyncingOffline] = useState<boolean>(false)
+
+  // ── Vérification dynamique de l'autorisation POS selon la boutique sélectionnée ──
+  const activeBoutiqueObj = boutiques.find(b => b.id === boutiqueActiveId)
+  const activePlan = (activeBoutiqueObj?.plan_actif !== undefined && activeBoutiqueObj?.plan_actif !== null)
+    ? activeBoutiqueObj.plan_actif
+    : (initialToken ? (terminalPlan || 'pro') : planActifProp)
+
+  const estBoutiqueAutorisee = (activePlan === 'pro' || activePlan === 'business') || (loadingProduits && boutiques.length === 0)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1672,6 +1556,125 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
     return matchCat && matchSearch
   })
 
+  // ── ÉCRAN DE VERROUILLAGE SI BOUTIQUE NON AUTORISÉE À LA CAISSE POS ──────
+  if (!estBoutiqueAutorisee) {
+    const boutiquesAutorisees = boutiques.filter(b => b.plan_actif === 'pro' || b.plan_actif === 'business')
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#f8fafc',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 16px',
+        fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif'
+      }}>
+        <div style={{
+          maxWidth: 580,
+          width: '100%',
+          background: '#ffffff',
+          borderRadius: 24,
+          padding: '40px 32px',
+          boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.1)',
+          border: '1px solid #e2e8f0',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            background: '#fff7ed',
+            border: '2px solid #ffedd5',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#c75b00',
+            marginBottom: 20
+          }}>
+            <Lock size={36} />
+          </div>
+
+          <div style={{
+            display: 'inline-block',
+            background: '#fff7ed',
+            color: '#c75b00',
+            fontWeight: 800,
+            fontSize: 11,
+            padding: '4px 12px',
+            borderRadius: 20,
+            marginBottom: 12,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em'
+          }}>
+            🔒 Caisse POS Non Autorisée Pour Cette Boutique
+          </div>
+
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#0f172a', margin: '0 0 12px' }}>
+            La boutique &quot;{activeBoutiqueObj?.nom || 'Sélectionnée'}&quot; n&apos;a pas d&apos;Abonnement POS
+          </h1>
+
+          <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.6, margin: '0 0 24px' }}>
+            L&apos;accès à la caisse enregistreuse tactile POS est réservé aux boutiques disposant d&apos;un abonnement <strong>Pro</strong> ou <strong>Business</strong> actif.
+          </p>
+
+          {/* Sélecteur de secours si le marchand possède au moins une boutique autorisée */}
+          {boutiquesAutorisees.length > 0 && (
+            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 14, padding: 16, marginBottom: 24, textAlign: 'left' }}>
+              <label style={{ fontSize: 12, fontWeight: 800, color: '#166534', display: 'block', marginBottom: 6 }}>
+                💡 Basculer vers une boutique autorisée :
+              </label>
+              <select
+                value=""
+                onChange={e => changerBoutiqueActive(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #86efac', background: '#ffffff', color: '#0f172a', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+              >
+                <option value="">-- Sélectionner une boutique avec caisse autorisée --</option>
+                {boutiquesAutorisees.map(b => (
+                  <option key={b.id} value={b.id}>
+                    🟢 {b.nom} ({b.plan_actif?.toUpperCase()})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <Link
+              href="/boutique/abonnement"
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '14px 20px',
+                borderRadius: 12,
+                background: 'linear-gradient(135deg, #c75b00 0%, #ea580c 100%)',
+                color: '#ffffff',
+                fontWeight: 800,
+                fontSize: 14,
+                textDecoration: 'none',
+                boxShadow: '0 4px 12px rgba(199, 91, 0, 0.25)'
+              }}
+            >
+              Activer l&apos;Abonnement Pro (5 000 FCFA/mois) →
+            </Link>
+            <Link
+              href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'}
+              style={{
+                display: 'block',
+                color: '#64748b',
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: 'none',
+                padding: '6px'
+              }}
+            >
+              ← Retour au tableau de bord boutique
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // ── ÉCRAN DE VERROUILLAGE PIN SÉCURISÉ ─────────────────────────────────────
   if (verrouille) {
     return (
@@ -1899,11 +1902,14 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               className="caisse-boutique-select"
               style={{ padding: '4px 6px', borderRadius: 6, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 11, cursor: 'pointer', outline: 'none', maxWidth: 120, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
             >
-              {boutiques.map(b => (
-                <option key={b.id} value={b.id}>
-                  {b.nom}{!b.actif ? ' (Off)' : ''}
-                </option>
-              ))}
+              {boutiques.map(b => {
+                const isAuth = b.plan_actif === 'pro' || b.plan_actif === 'business';
+                return (
+                  <option key={b.id} value={b.id}>
+                    {isAuth ? '🟢' : '🔒'} {b.nom}{!b.actif ? ' (Off)' : ''}
+                  </option>
+                );
+              })}
             </select>
           )}
         </div>

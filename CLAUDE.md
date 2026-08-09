@@ -1,3 +1,8 @@
+- Sécurité & Contrôle d'Accès Caisse POS par Boutique :
+  * Injection de plan_actif dans la liste des boutiques (/api/boutiques/mine).
+  * Vérification dynamique stricte des droits POS par boutique sélectionnée dans CaisseClient.
+  * Blocage automatique et affichage de l'écran de verrouillage dès qu'un marchand bascule vers une boutique sans abonnement Pro/Business (Gratuit/Starter).
+  * Ajout des indicateurs de statut POS (🟢 Autorisé / 🔒 Verrouillé) dans le menu de sélection d'en-tête.
 - Optimisation PIN & En-tête Caisse POS :
   * Persistance de session déverrouillée au rafraîchissement (F5) via LocalStorage.
   * Suppression du bouton Déverrouiller & déverrouillage automatique dès 4 chiffres avec message d'erreur si faux.

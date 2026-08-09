@@ -560,7 +560,12 @@ router.get('/mine', verifierToken, async (req, res) => {
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
               b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.conditions_vente, b.pied_de_page_document,
               COALESCE(b.caisse_token, b.id::text) AS caisse_token,
-              (b.utilisateur_id = $1) AS is_owner
+              (b.utilisateur_id = $1) AS is_owner,
+              (
+                SELECT a.plan FROM abonnements a
+                WHERE a.utilisateur_id = b.utilisateur_id AND a.statut = 'actif' AND a.fin > NOW()
+                ORDER BY a.fin DESC LIMIT 1
+              ) AS plan_actif
        FROM boutiques b
        LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
        WHERE b.utilisateur_id = $1 OR bu.utilisateur_id = $1
