@@ -2188,7 +2188,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               </button>
             </div>
           ) : (
-            <div className="produits-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
+            <div className="produits-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
               {produitsFiltres.map(p => {
                 // Déduire la quantité déjà placée dans le panier en direct
                 const qteAuPanier = panier.find(i => i.produit.id === p.id)?.quantite || 0
@@ -2200,36 +2200,55 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                     key={p.id}
                     onClick={() => ajouterAuPanier(p)}
                     style={{
-                      background: '#ffffff', border: estHorsStock ? '1px solid #fecaca' : '1px solid #e2e8f0', borderRadius: 12, padding: 12,
-                      cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                      transition: 'transform 0.1s, border-color 0.1s', userSelect: 'none', minHeight: 110,
-                      boxShadow: '0 2px 5px rgba(0,0,0,0.03)',
+                      background: '#ffffff',
+                      border: estHorsStock ? '1px solid #fecaca' : qteAuPanier > 0 ? '2px solid #C75B00' : '1px solid #e2e8f0',
+                      borderRadius: 10,
+                      padding: '10px 12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      transition: 'all 0.15s ease',
+                      userSelect: 'none',
+                      minHeight: 92,
+                      position: 'relative',
+                      boxShadow: qteAuPanier > 0 ? '0 4px 12px rgba(199, 91, 0, 0.15)' : '0 2px 4px rgba(0,0,0,0.02)',
                     }}
                   >
+                    {qteAuPanier > 0 && (
+                      <div style={{
+                        position: 'absolute', top: -6, right: -6, background: '#C75B00', color: '#fff',
+                        borderRadius: 10, width: 20, height: 20, fontSize: 11, fontWeight: 900,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(199,91,0,0.4)', zIndex: 2
+                      }}>
+                        {qteAuPanier}
+                      </div>
+                    )}
+
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 4 }}>
-                        <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 700, color: '#0f172a', lineHeight: 1.3 }}>{p.nom}</p>
+                        <p style={{ margin: '0 0 2px', fontSize: 12, fontWeight: 800, color: '#0f172a', lineHeight: 1.2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.nom}</p>
                         <button
                           onClick={e => genererImprimerEtiquetteCodeBarre(e, p)}
-                          title="Imprimer ou Générer une étiquette code-barres EAN-13"
-                          style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 4, padding: '2px 5px', fontSize: 10, cursor: 'pointer', color: '#475569', fontWeight: 700 }}
+                          title="Générer / Imprimer étiquette code-barres EAN"
+                          style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 4, padding: '1px 4px', fontSize: 9, cursor: 'pointer', color: '#475569', fontWeight: 700, flexShrink: 0 }}
                         >
-                          🏷️ EAN
+                          🏷️
                         </button>
                       </div>
-                      <p style={{ margin: 0, fontSize: 10, color: '#64748b' }}>CB: {p.code_barre || 'Générer EAN'}</p>
+                      <p style={{ margin: 0, fontSize: 9, color: '#94a3b8', fontFamily: 'monospace' }}>{p.code_barre ? `EAN ${p.code_barre}` : ''}</p>
                     </div>
 
-                    <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 14, fontWeight: 900, color: '#C75B00' }}>{fcfa(p.prix)}</span>
+                    <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, fontWeight: 900, color: '#C75B00' }}>{fcfa(p.prix)}</span>
                       <span style={{
-                        fontSize: 10,
+                        fontSize: 9,
                         background: estHorsStock ? '#fef2f2' : stockRestant <= 3 ? '#fff7ed' : '#f0fdf4',
                         color: estHorsStock ? '#991b1b' : stockRestant <= 3 ? '#c2410c' : '#166534',
                         border: estHorsStock ? '1px solid #fecaca' : stockRestant <= 3 ? '1px solid #fed7aa' : '1px solid #bbf7d0',
-                        padding: '2px 6px', borderRadius: 4, fontWeight: 700
+                        padding: '1px 5px', borderRadius: 4, fontWeight: 700
                       }}>
-                        {estHorsStock ? 'Max Panier' : `Stock ${stockRestant}`}
+                        {estHorsStock ? 'Épuisé' : `Stk ${stockRestant}`}
                       </span>
                     </div>
                   </div>

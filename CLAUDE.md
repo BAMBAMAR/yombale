@@ -1,3 +1,8 @@
+- Redesign Ergonomie & Design Premium Caisse POS :
+  * Suppression du double en-tête mobile : masquage automatique du header global du site, de la nav et du footer via body:has(.caisse-header) en mode POS Fullscreen.
+  * Restructuration des proportions du layout standard POS (52% Catalogue / 48% Caisse & Ticket).
+  * Grille de produits compacte haute densité (Square POS style) avec badge compteur d'articles et surbrillance orange active.
+  * Modales premium avec flou d'arrière-plan glassmorphism (backdrop-filter) et typographie épurée.
 - Sécurité & Contrôle d'Accès Caisse POS par Boutique :
   * Injection de plan_actif dans la liste des boutiques (/api/boutiques/mine).
   * Vérification dynamique stricte des droits POS par boutique sélectionnée dans CaisseClient.
