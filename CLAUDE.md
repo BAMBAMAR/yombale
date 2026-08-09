@@ -1,3 +1,4 @@
+- Intégration du moteur universel html5-qrcode : Décodage natif EAN-13, EAN-8, Code 128, Code 39, UPC-A, UPC-E et QR-Code en direct sur la caméra (iOS Safari, Android Chrome, PC/Webcams).
 - Correctif Permissions-Policy Caméra : Modification de camera=() en camera=(self) dans next.config.js et middleware.ts pour lever la restriction navigateur [Violation] Permissions policy violation.
 ## 🚀 Mises à jour du 09/08/2026 : Optimisation Caisse POS Mobile & Caméra Scanner
 - Navigation Caisse Mobile par Onglets (caisse-mobile-tabs) : Onglets [ 🛍️ Catalogue | 🛒 Ticket ] sous le header (<= 1024px).

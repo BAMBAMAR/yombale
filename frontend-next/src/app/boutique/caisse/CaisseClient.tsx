@@ -385,8 +385,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   const [sessionScannerId] = useState<string>(() => `SCAN-${Math.floor(100000 + Math.random() * 900000)}`)
   const [scannerCameraStatus, setScannerCameraStatus] = useState<string>('Initialisation...')
   const [formatTicketThermique, setFormatTicketThermique] = useState<'80mm' | '58mm'>('80mm')
-  const videoScannerRef = useRef<HTMLVideoElement | null>(null)
-  const cameraStreamRef = useRef<MediaStream | null>(null)
+  const html5QrcodeScannerRef = useRef<any>(null)
 
   // Polling automatique de la douchette smartphone distante sur PC Caisse
   useEffect(() => {
@@ -419,65 +418,74 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
   async function demarrerScannerCamera() {
     setModalScannerCamera(true)
-    setScannerCameraStatus('Demande d’accès à la caméra…')
-    try {
-      let stream: MediaStream | null = null
-      try {
-        // Tentative 1 : Caméra arrière principale
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' }
-        })
-      } catch (errEnv) {
-        console.warn('Caméra arrière non disponible, tentative caméra standard...', errEnv)
-        // Tentative 2 : Toute caméra disponible sur l’appareil
-        stream = await navigator.mediaDevices.getUserMedia({ video: true })
-      }
+    setScannerCameraStatus('Initialisation du scanner EAN/Code-Barres…')
 
-      cameraStreamRef.current = stream
-      if (videoScannerRef.current) {
-        videoScannerRef.current.srcObject = stream
-        videoScannerRef.current.play()
+    setTimeout(async () => {
+      try {
+        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
+
+        if (html5QrcodeScannerRef.current) {
+          try {
+            await html5QrcodeScannerRef.current.stop()
+            html5QrcodeScannerRef.current.clear()
+          } catch (e) {}
+          html5QrcodeScannerRef.current = null
+        }
+
+        const scannerContainer = document.getElementById('nopalou-reader-scanner')
+        if (!scannerContainer) return
+
+        const scanner = new Html5Qrcode('nopalou-reader-scanner')
+        html5QrcodeScannerRef.current = scanner
+
+        const config = {
+          fps: 15,
+          qrbox: { width: 250, height: 160 },
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.QR_CODE
+          ]
+        }
+
+        const onScanSuccess = (decodedText: string) => {
+          console.log('[EAN DECODED SUCCESS]', decodedText)
+          traiterCodeBarreCamera(decodedText)
+        }
+
+        try {
+          await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
+          setScannerCameraStatus('📷 Caméra active ! Placez le code-barres (EAN-13, etc.) dans le cadre')
+        } catch (errEnv) {
+          console.warn('Bascule caméra arrière -> caméra standard...', errEnv)
+          try {
+            await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {})
+            setScannerCameraStatus('📷 Caméra active ! Placez le code-barres dans le cadre')
+          } catch (errUser: any) {
+            console.error('Erreur lancement caméra:', errUser)
+            setScannerCameraStatus('❌ Impossible d’accéder à la caméra. Vérifiez les permissions de votre navigateur ou utilisez la Douchette Smartphone.')
+          }
+        }
+      } catch (err: any) {
+        console.error('Erreur module scanner:', err)
+        setScannerCameraStatus('❌ Impossible d’initialiser le scanner. Utilisez la Douchette Smartphone.')
       }
-      setScannerCameraStatus('📷 Caméra active ! Placez le code-barres devant l’objectif')
-      demarrerDetectionCodeBarre()
-    } catch (err: any) {
-      console.error('Erreur accès caméra:', err)
-      if (typeof window !== 'undefined' && window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        setScannerCameraStatus('🔒 L’accès caméra requiert un site sécurisé (HTTPS). Saisissez le code ou utilisez la Douchette Smartphone.')
-      } else {
-        setScannerCameraStatus('❌ Impossible d’accéder à la caméra. Vérifiez les permissions de votre navigateur ou utilisez la Douchette Smartphone.')
-      }
-    }
+    }, 300)
   }
 
-  function arreterScannerCamera() {
-    if (cameraStreamRef.current) {
-      cameraStreamRef.current.getTracks().forEach(track => track.stop())
-      cameraStreamRef.current = null
+  async function arreterScannerCamera() {
+    if (html5QrcodeScannerRef.current) {
+      try {
+        await html5QrcodeScannerRef.current.stop()
+        html5QrcodeScannerRef.current.clear()
+      } catch (e) {}
+      html5QrcodeScannerRef.current = null
     }
     setModalScannerCamera(false)
-  }
-
-  function demarrerDetectionCodeBarre() {
-    if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
-      try {
-        const detector = new (window as any).BarcodeDetector({ formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a'] })
-        const timer = setInterval(async () => {
-          if (videoScannerRef.current && videoScannerRef.current.readyState === 4) {
-            try {
-              const codes = await detector.detect(videoScannerRef.current)
-              if (codes && codes.length > 0) {
-                const scannedVal = codes[0].rawValue
-                if (scannedVal) {
-                  clearInterval(timer)
-                  traiterCodeBarreCamera(scannedVal)
-                }
-              }
-            } catch (e) {}
-          }
-        }, 400)
-      } catch (e) {}
-    }
   }
 
   const [btDeviceName, setBtDeviceName] = useState<string | null>(null)
@@ -2928,9 +2936,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               <button onClick={arreterScannerCamera} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
 
-            <div style={{ position: 'relative', width: '100%', height: 260, borderRadius: 14, overflow: 'hidden', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <video ref={videoScannerRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', inset: 30, border: '2px dashed #22c55e', borderRadius: 12, pointerEvents: 'none', boxShadow: '0 0 0 9999px rgba(0,0,0,0.3)' }} />
+            <div style={{ position: 'relative', width: '100%', minHeight: 250, borderRadius: 14, overflow: 'hidden', background: '#000' }}>
+              <div id="nopalou-reader-scanner" style={{ width: '100%', height: '100%' }} />
             </div>
 
             <p style={{ margin: 0, fontSize: 13, color: '#475569', fontWeight: 700 }}>{scannerCameraStatus}</p>
