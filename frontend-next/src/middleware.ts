@@ -74,7 +74,7 @@ export async function middleware(req: NextRequest) {
   if (!isDev) {
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
   }
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  response.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()')
 
   return response
 }

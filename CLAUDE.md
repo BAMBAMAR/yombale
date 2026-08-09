@@ -1,3 +1,4 @@
+- Correctif Permissions-Policy Caméra : Modification de camera=() en camera=(self) dans next.config.js et middleware.ts pour lever la restriction navigateur [Violation] Permissions policy violation.
 ## 🚀 Mises à jour du 09/08/2026 : Optimisation Caisse POS Mobile & Caméra Scanner
 - Navigation Caisse Mobile par Onglets (caisse-mobile-tabs) : Onglets [ 🛍️ Catalogue | 🛒 Ticket ] sous le header (<= 1024px).
 - Barre Flottante Collante (caisse-sticky-bottom-bar) : Affichage en direct du total FCFA et bouton VOIR TICKET & ENCAISSER sur mobile.
