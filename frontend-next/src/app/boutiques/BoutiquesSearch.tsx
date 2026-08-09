@@ -29,6 +29,21 @@ export default function BoutiquesSearch({ currentQ, currentVille, currentCat }: 
   return (
     <>
       <style>{`
+        .boutiques-search-input {
+          padding-left: 60px;
+          padding-right: 160px;
+          font-size: 16px;
+        }
+        .search-clear-btn {
+          right: 140px;
+        }
+        .boutiques-search-btn {
+          padding: 0 24px;
+        }
+        .search-btn-icon-only {
+          display: none;
+        }
+        
         @media (max-width: 640px) {
           .boutiques-search-input {
             padding-right: 70px !important;
@@ -39,6 +54,12 @@ export default function BoutiquesSearch({ currentQ, currentVille, currentCat }: 
             padding: 0 16px !important;
           }
           .search-btn-text {
+            display: none !important;
+          }
+          .search-btn-icon-only {
+            display: block !important;
+          }
+          .search-btn-icon-text {
             display: none !important;
           }
           .search-clear-btn {
@@ -61,12 +82,9 @@ export default function BoutiquesSearch({ currentQ, currentVille, currentCat }: 
           className="boutiques-search-input"
           style={{
             width: '100%',
-            paddingLeft: 60,
-            paddingRight: q ? 160 : 160,
             height: 64,
             borderRadius: 32,
             border: '1px solid #e2e8f0',
-            fontSize: 16,
             fontWeight: 500,
             outline: 'none',
             boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
@@ -83,7 +101,7 @@ export default function BoutiquesSearch({ currentQ, currentVille, currentCat }: 
             onClick={handleClear}
             className="search-clear-btn"
             style={{
-              position: 'absolute', right: 140, top: '50%', transform: 'translateY(-50%)',
+              position: 'absolute', top: '50%', transform: 'translateY(-50%)',
               background: '#f1f5f9', border: 'none', borderRadius: '50%', color: '#64748b', cursor: 'pointer', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s'
             }}
             title="Effacer"
@@ -96,14 +114,15 @@ export default function BoutiquesSearch({ currentQ, currentVille, currentCat }: 
           className="boutiques-search-btn"
           style={{
             position: 'absolute', right: 8, top: 8, bottom: 8,
-            padding: '0 24px', borderRadius: 26,
+            borderRadius: 26,
             background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)',
             color: '#fff', border: 'none', fontWeight: 800, fontSize: 15,
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             boxShadow: '0 4px 12px rgba(199,91,0,0.25)', transition: 'all 0.2s'
           }}
         >
-          <Search size={18} strokeWidth={2.5} />
+          <Search size={18} strokeWidth={2.5} className="search-btn-icon-text" />
+          <Search size={22} strokeWidth={2.5} className="search-btn-icon-only" />
           <span className="search-btn-text">Rechercher</span>
         </button>
       </form>
