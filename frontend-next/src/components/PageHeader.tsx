@@ -27,14 +27,27 @@ export default function PageHeader({ breadcrumb, emoji, titre, compteur, cta, ce
 
   return (
     <div style={{ marginBottom: 20, textAlign }}>
-      <nav aria-label="Fil d'Ariane" style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>
+      <nav
+        aria-label="Fil d'Ariane"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          fontSize: 12,
+          fontWeight: 600,
+          background: 'rgba(0,0,0,0.03)',
+          padding: '4px 14px',
+          borderRadius: '20px',
+          border: '1px solid rgba(0,0,0,0.06)',
+          marginBottom: 14,
+        }}
+      >
         {breadcrumb.map((c, i) => (
-          <span key={i}>
-            {i > 0 && ' › '}
+          <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
+            {i > 0 && <span style={{ margin: '0 6px', opacity: 0.35, fontSize: 11 }}>/</span>}
             {c.href ? (
-              <Link href={c.href} style={{ color: 'var(--text2)' }}>{c.label}</Link>
+              <Link href={c.href} style={{ color: 'var(--text3)', textDecoration: 'none' }}>{c.label}</Link>
             ) : (
-              <span style={{ color: 'var(--text1)' }}>{c.label}</span>
+              <span style={{ color: 'var(--text1)', fontWeight: 700 }}>{c.label}</span>
             )}
           </span>
         ))}
