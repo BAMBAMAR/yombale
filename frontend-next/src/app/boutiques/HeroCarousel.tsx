@@ -119,7 +119,6 @@ export default function HeroCarousel() {
     >
       {/* Container with explicit minimum height to avoid jumping */}
       <div 
-        className="hero-side-card" 
         style={{ 
           background: slide.bg, 
           padding: '24px 24px 16px 24px', 

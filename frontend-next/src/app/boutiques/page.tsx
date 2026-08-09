@@ -187,9 +187,18 @@ export default async function BoutiquesPage({
               </p>
 
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', display: 'flex', flexDirection: 'column', gap: 10, color: '#475569', fontSize: 15 }}>
-                <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: '#10b981' }}>✔</span> <span style={{ fontWeight: 600, color: '#334155' }}>0% de commission</span> sur vos achats</li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: '#10b981' }}>✔</span> <span style={{ fontWeight: 600, color: '#334155' }}>100% Vendeurs vérifiés</span> et certifiés</li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: '#10b981' }}>✔</span> <span style={{ fontWeight: 600, color: '#334155' }}>Contact direct WhatsApp</span> avec les marchands</li>
+                <li style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <span style={{ color: '#10b981', marginTop: 1 }}>✔</span> 
+                  <span><span style={{ fontWeight: 600, color: '#334155' }}>0% de commission</span> sur vos achats</span>
+                </li>
+                <li style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <span style={{ color: '#10b981', marginTop: 1 }}>✔</span> 
+                  <span><span style={{ fontWeight: 600, color: '#334155' }}>100% Vendeurs vérifiés</span> et certifiés</span>
+                </li>
+                <li style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <span style={{ color: '#10b981', marginTop: 1 }}>✔</span> 
+                  <span><span style={{ fontWeight: 600, color: '#334155' }}>Contact direct WhatsApp</span> avec les marchands</span>
+                </li>
               </ul>
             </div>
 
