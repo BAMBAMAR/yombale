@@ -1658,3 +1658,5 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - Enrichissement des mots-clés pour auto-moto, mode, immo et emploi (ajout de 'diesel', 'essence', 'shoes', 'wax', 'cherche boulot', etc.).
     - Réordonnancement de l'évaluation des catégories dans scraper-immo-facebook.js (priorité donnée à auto-moto et immo pour éviter les faux positifs dans tv-electro ou informatique liés aux mots comme 'écran' ou 'ordinateur').
     - Création et exécution d'un script de migration (ackend/scripts/reclassify.js) qui a réévalué l'intégralité des annonces de la base de données avec la nouvelle logique, corrigeant plusieurs centaines d'erreurs historiques.
+
+  - **Scraper Facebook** : Ajout de 5 nouveaux groupes dédiés à l'emploi pour augmenter le volume d'annonces de cette catégorie.

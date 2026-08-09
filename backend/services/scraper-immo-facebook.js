@@ -78,6 +78,11 @@ const GROUPES = [
   { id: '1989058224662026',  label: 'Emploi 1', force_categorie: 'emploi' },
   { id: '234254775016841',   label: 'Emploi 2', force_categorie: 'emploi' },
   { id: '519668123858499',   label: 'Emploi 3', force_categorie: 'emploi' },
+  { id: '462589772247046',   label: 'Emploi 4', force_categorie: 'emploi' },
+  { id: '1763952164139832',  label: 'Emploi 5', force_categorie: 'emploi' },
+  { id: '1462110264598253',  label: 'Emploi 6', force_categorie: 'emploi' },
+  { id: '2767116616757898',  label: 'Emploi 7', force_categorie: 'emploi' },
+  { id: '1293527887919003',  label: 'Emploi 8', force_categorie: 'emploi' },
 
   // Autres groupes (Immo, divers)
   { id: '252740871421764',   label: 'Groupe immo 1' },
