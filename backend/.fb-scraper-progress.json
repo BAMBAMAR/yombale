@@ -1,15 +1,16 @@
 {
-  "status": "in_progress",
+  "status": "completed",
   "mode": "live",
-  "groupeIndex": 7,
+  "groupeIndex": 10,
   "totalGroupes": 10,
-  "pourcentage": 70,
-  "groupeActuel": "Je vide je vends j'achete je livre",
-  "groupeUrl": "https://www.facebook.com/groups/513266200918066",
-  "scrapes": 26,
-  "inseres": 12,
-  "doublons": 3,
-  "ignores": 11,
-  "erreurs": [],
-  "updatedAt": "2026-08-09T00:06:05.772Z"
+  "pourcentage": 100,
+  "groupeActuel": "Terminé",
+  "scrapes": 37,
+  "inseres": 16,
+  "doublons": 5,
+  "ignores": 16,
+  "erreurs": [
+    "Je vide je vends j'achete je livre: aucun contenu chargé (groupe privé ou ID invalide)"
+  ],
+  "updatedAt": "2026-08-09T00:11:41.484Z"
 }

@@ -4,6 +4,7 @@ import { apiFetch } from '@/lib/api'
 import BoutiquesSearch from './BoutiquesSearch'
 import { Store, ShieldCheck, MapPin, Sparkles, Star, MessageCircle, ArrowRight, Building2 } from 'lucide-react'
 import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
+import HeroCarousel from './HeroCarousel'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 export const dynamic = 'force-dynamic'
@@ -251,25 +252,9 @@ export default async function BoutiquesPage({
           {/* COLONNE DROITE (40%) : BENTO BOX (Taf Taf + Stats) */}
           <div style={{ flex: '1 1 350px', maxWidth: 450, display: 'flex', flexDirection: 'column', gap: 16 }}>
             
-            {/* Widget Taf Taf */}
-            <div className="hero-side-card" style={{ background: '#0f172a', padding: 24, borderRadius: 24, color: '#f8fafc', border: '1px solid #1e293b', boxShadow: '0 10px 30px rgba(15,23,42,0.15)', display: 'flex', flexDirection: 'column' }}>
-              <div><span style={{ display: 'inline-block', background: 'rgba(199,91,0,0.2)', color: '#fed7aa', padding: '4px 10px', borderRadius: 12, fontSize: 10, fontWeight: 800, marginBottom: 12, border: '1px solid rgba(199,91,0,0.3)' }}>🚀 NOUVEAU</span></div>
-              <h3 style={{ fontSize: 18, fontWeight: 900, marginBottom: 8, color: '#fff' }}>Boutique Taf Taf</h3>
-              <p style={{ fontSize: 13, color: '#94a3b8', margin: '0 0 20px', lineHeight: 1.5 }}>Créez votre boutique complète en 30 secondes chrono pour 2 500 FCFA !</p>
-              
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <li style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, color: '#e2e8f0' }}>
-                  <span style={{ color: '#C75B00' }}>✓</span> Lien personnalisé (nopalou.com/shop)
-                </li>
-                <li style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, color: '#e2e8f0' }}>
-                  <span style={{ color: '#C75B00' }}>✓</span> Gestionnaire de commandes
-                </li>
-                <li style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, color: '#e2e8f0' }}>
-                  <span style={{ color: '#C75B00' }}>✓</span> Visibilité accrue sur Nopalou
-                </li>
-              </ul>
-
-              <Link href="/creer-boutique" style={{ display: 'block', textAlign: 'center', background: '#C75B00', color: '#fff', fontWeight: 800, fontSize: 14, padding: '12px', borderRadius: 12, textDecoration: 'none', marginTop: 20, boxShadow: '0 4px 12px rgba(199,91,0,0.2)', transition: 'background 0.2s' }}>Créer ma vitrine →</Link>
+            {/* Widget Taf Taf remplacé par le Carrousel */}
+            <div style={{ height: 330, width: '100%' }}>
+              <HeroCarousel />
             </div>
 
             {/* Widgets Statistiques (En Grille sous Taf Taf) */}
