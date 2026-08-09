@@ -270,7 +270,7 @@ export default async function BoutiquesPage({
           <div style={{ flex: '1 1 350px', maxWidth: 450, display: 'flex', flexDirection: 'column', gap: 16 }}>
             
             {/* Widget Taf Taf remplacé par le Carrousel */}
-            <div style={{ height: 330, width: '100%' }}>
+            <div style={{ minHeight: 330, width: '100%' }}>
               <HeroCarousel />
             </div>
 
