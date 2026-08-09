@@ -168,10 +168,10 @@ export default async function BoutiquesPage({
           pointerEvents: 'none',
         }} />
 
-        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexWrap: 'wrap', gap: 40, alignItems: 'flex-start' }}>
+        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexWrap: 'wrap', gap: 40, justifyContent: 'space-between', alignItems: 'flex-start' }}>
           
           {/* COLONNE GAUCHE (60%) : Contenu et Recherche */}
-          <div style={{ flex: '1 1 500px', maxWidth: 680, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: '1 1 500px', maxWidth: 760, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '6px 14px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 14, border: '1px solid #ffedd5', width: 'fit-content' }}>
               <Sparkles size={14} style={{ color: '#C75B00' }} />
               <span>Hub officiel des vendeurs vérifiés Nopalou</span>
