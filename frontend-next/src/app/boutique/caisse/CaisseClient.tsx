@@ -213,6 +213,22 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
   const [modePaiement, setModePaiement] = useState<'especes' | 'wave' | 'orange_money' | 'carte' | 'credit_client' | 'mixte'>('especes')
   const [montantRecu, setMontantRecu] = useState<string>('')
+  const [montantEspecesMixte, setMontantEspecesMixte] = useState<string>('')
+  const [secondModeMixte, setSecondModeMixte] = useState<'wave' | 'orange_money' | 'carte'>('wave')
+
+  const [derniereVente, setDerniereVente] = useState<{
+    id: string
+    date: string
+    heure: string
+    total: number
+    remise: number
+    recu: number
+    monnaie: number
+    ticket: LignePanier[]
+    mode: string
+    caissier: string
+    detailMixte?: { especes: number; autreMode: string; autreMontant: number }
+  } | null>(null)
   
   // Toggle de la classe pos-active sur le document.body pour masquer entièrement l'en-tête global du site
   useEffect(() => {

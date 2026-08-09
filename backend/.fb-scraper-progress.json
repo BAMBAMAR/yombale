@@ -5,10 +5,10 @@
   "totalGroupes": 10,
   "pourcentage": 100,
   "groupeActuel": "Terminé",
-  "scrapes": 39,
-  "inseres": 16,
-  "doublons": 3,
-  "ignores": 20,
+  "scrapes": 36,
+  "inseres": 26,
+  "doublons": 5,
+  "ignores": 5,
   "erreurs": [],
-  "updatedAt": "2026-08-09T14:13:41.654Z"
+  "updatedAt": "2026-08-09T18:09:34.489Z"
 }
