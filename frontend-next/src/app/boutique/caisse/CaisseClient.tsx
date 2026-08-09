@@ -1896,13 +1896,14 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         justifyContent: 'space-between',
         alignItems: 'center',
         boxShadow: 'var(--shadow)',
-        overflow: 'visible',
-        gap: 6,
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        gap: 8,
         minHeight: 50,
         flexShrink: 0,
       }}>
         {/* Côté Gauche : Retour + POS badge + Boutique selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           {/* Bouton retour — icône seule sur mobile */}
           <Link
             href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'}
@@ -1941,7 +1942,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               value={boutiqueActiveId}
               onChange={e => changerBoutiqueActive(e.target.value)}
               className="caisse-boutique-select"
-              style={{ padding: '4px 6px', borderRadius: 6, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 11, cursor: 'pointer', outline: 'none', maxWidth: 120, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
+              style={{ padding: '4px 6px', borderRadius: 6, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 11, cursor: 'pointer', outline: 'none', maxWidth: 140, minWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis' }}
             >
               {boutiques.map(b => {
                 const isAuth = b.plan_actif === 'pro' || b.plan_actif === 'business';
