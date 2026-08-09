@@ -1,3 +1,10 @@
+## 🚀 Mises à jour du 09/08/2026 : Correction du Schéma d'URL et Résolution Complète de l'Affichage des Photos
+- **Correction Critique de `sanitizeImgUrl` (`ExternalImg.tsx`)** :
+  * Ajout du préfixage automatique `https://` pour toutes les URLs d'images stockées sans protocole dans la base de données (ex: `res.cloudinary.com/...`, `images.coinafrique.com/...`, `masterofficedeco.sn/...`, `www.soumari.com/...`, `kanje.sn/...`, `electroniccorp.sn/...`, `static.kaynoo.sn/...`).
+  * Normalisation des chemins relatifs d'images scrapées CoinAfrique (`thumb_...`, `uploaded_...`, `image_...`) vers `https://images.coinafrique.com/`.
+  * Résolution des erreurs navigateur `net::ERR_FAILED` qui interprétaient les URLs sans schéma comme des chemins relatifs locaux (ex: `https://nopalou.com/res.cloudinary.com/...` -> 404).
+  * Correction du relais vers `wsrv.nl` pour transmettre des URLs encodées valides avec protocole HTTPS complet.
+
 ## 🚀 Mises à jour du 09/08/2026 : Intégration du Composant d'Installation PWA Nativisé (Bannière & Modale iOS)
 - **Bannière d'Installation PWA Flottante (`PwaInstallPrompt.tsx`)** :
   * Écoute automatique de l'événement natif navigateur `beforeinstallprompt` sur Chrome Android, Edge & PC Desktop.

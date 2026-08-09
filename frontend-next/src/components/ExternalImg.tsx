@@ -24,20 +24,43 @@ export function sanitizeImgUrl(url: string | null | undefined): string | null {
   let cleaned = String(url).trim()
   if (!cleaned) return null
 
-  // Corrige les préfixes corrompus (ex: "https://domain.comdata:image/svg+xml,...")
+  // 1. Corrige les préfixes corrompus (ex: "https://domain.comdata:image/svg+xml,...")
   if (cleaned.includes('data:image/')) {
     const idx = cleaned.indexOf('data:image/')
-    cleaned = cleaned.substring(idx)
+    return cleaned.substring(idx)
   }
 
-  // Corrige les URLs relatives par protocole ("//domain.com/...")
+  // 2. Corrige les URLs relatives CoinAfrique (ex: "thumb_5904736...", "uploaded_...")
+  if (cleaned.startsWith('thumb_') || cleaned.startsWith('uploaded_') || cleaned.startsWith('image_')) {
+    return 'https://images.coinafrique.com/' + cleaned
+  }
+
+  // 3. Corrige les URLs relatives par protocole ("//domain.com/...")
   if (cleaned.startsWith('//')) {
-    cleaned = 'https:' + cleaned
+    return 'https:' + cleaned
   }
 
-  // Force HTTPS pour éviter les blocages de contenu mixte
+  // 4. Force HTTPS pour éviter les blocages de contenu mixte et échecs CSP upgrade-insecure-requests
   if (cleaned.startsWith('http://')) {
-    cleaned = cleaned.replace(/^http:\/\//i, 'https://')
+    return cleaned.replace(/^http:\/\//i, 'https://')
+  }
+
+  // 5. Si l'URL ne commence ni par https:// ni par / ni par data:/blob: mais contient un domaine (ex: res.cloudinary.com/..., images.coinafrique.com/...)
+  if (
+    !cleaned.startsWith('https://') &&
+    !cleaned.startsWith('/') &&
+    !cleaned.startsWith('data:') &&
+    !cleaned.startsWith('blob:')
+  ) {
+    if (
+      cleaned.includes('/') ||
+      cleaned.includes('.com') ||
+      cleaned.includes('.sn') ||
+      cleaned.includes('.net') ||
+      cleaned.includes('.org')
+    ) {
+      return 'https://' + cleaned
+    }
   }
 
   return cleaned
@@ -98,7 +121,7 @@ export default function ExternalImg({
       loading={loading}
       width={width}
       height={height}
-      referrerPolicy="no-referrer"
+      referrerPolicy={attempt === 0 ? "no-referrer" : undefined}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onError={() => {
