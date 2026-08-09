@@ -168,7 +168,7 @@ export default async function BoutiquesPage({
           pointerEvents: 'none',
         }} />
 
-        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexWrap: 'wrap', gap: 40, alignItems: 'flex-start' }}>
+        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexWrap: 'wrap', gap: 40, alignItems: 'stretch' }}>
           
           {/* COLONNE GAUCHE (60%) : Contenu et Recherche */}
           <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column' }}>
@@ -183,12 +183,12 @@ export default async function BoutiquesPage({
               </h1>
 
               <p style={{ fontSize: 16, color: '#475569', margin: '0 0 32px', lineHeight: 1.6 }}>
-                Découvrez des commerçants de confiance, parcourez leurs catalogues en ligne, comparez les prix et contactez-les directement par WhatsApp ou téléphone.
+                L'annuaire de référence pour trouver des commerçants de confiance, grossistes et artisans. Parcourez leurs catalogues interactifs, comparez les prix, et contactez-les directement par WhatsApp, sans aucun intermédiaire.
               </p>
             </div>
 
-            {/* BARRE DE RECHERCHE ET FILTRES (Intégrés à gauche) */}
-            <div style={{ background: '#ffffff', borderRadius: 24, padding: '24px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* BARRE DE RECHERCHE ET FILTRES (Intégrés à gauche et collés en bas) */}
+            <div style={{ background: '#ffffff', borderRadius: 24, padding: '24px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 16, marginTop: 'auto' }}>
               <BoutiquesSearch currentQ={q} currentVille={ville} currentCat={cat} />
               
               <div style={{ height: 1, background: '#f1f5f9' }} />
