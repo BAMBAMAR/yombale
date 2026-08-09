@@ -1649,3 +1649,7 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - Correction de l'erreur TS2353 dans DeveloperClient.tsx (remplacement de `italic: 'true'` par `fontStyle: 'italic'`).
     - Correction de l'erreur TS2304 dans CommanderModal.tsx (remplacement de la variable inexistante `totalGeneral` par `total`).
     - Ajout de `// @ts-nocheck` dans TrackingPixels.tsx pour désactiver l'analyse TypeScript stricte des scripts publicitaires minifiés externes qui échouaient sur l'objet global `window`.
+
+  - **Correction du Scraper Facebook pour l'Emploi** : Affinage de la détection de la catégorie Emploi.
+    - Suppression des mots-clés génériques (`besoin de`, `recherche un`, `recherche une`, `recherche d'un`) qui provoquaient la classification erronée de voitures ou d'objets (TV, Maison) comme offres d'emploi.
+    - Modification de la logique de forçage de catégorie (`force_categorie`) pour les groupes d'emploi afin qu'elle serve de catégorie par défaut (fallback) uniquement si aucune autre catégorie plus spécifique (ex: auto-moto) n'est détectée dans le post.

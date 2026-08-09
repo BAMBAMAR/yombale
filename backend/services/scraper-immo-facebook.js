@@ -103,12 +103,12 @@ const VILLES = ['Dakar', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor',
 
 // Catégories connues (categories.slug en DB) + mots-clés associés, ordre = priorité de match
 const CATEGORIES_MOTS = [
-  { slug: 'emploi',      mots: ['recrutement', 'recrute', 'offre d\'emploi', 'offres d\'emploi', 'offre d emploi',
+  { slug: 'emploi',      mots: ['recrutement', 'recrute', 'offre d\\'emploi', 'offres d\\'emploi', 'offre d emploi',
                                  'stage', 'stagiaire', 'cherche emploi', 'cherche un emploi', 'postuler', 'poste de',
-                                 'avis de recrutement', 'besoin de', 'souhaite recruter', 'cv', 'embauche', 'job',
+                                 'avis de recrutement', 'souhaite recruter', 'cv', 'embauche', 'job',
                                  'appel a candidature', 'appel à candidature', 'profil recherche', 'profil recherché',
-                                 'recherche d\'un', 'recherche une', 'recherche un', 'technicien', 'chauffeur', 
-                                 'nounou', 'menagere', 'ménagère', 'gardien', 'serveuse', 'gérante', 'gerante', 'caissiere'] },
+                                 'technicien', 'chauffeur', 'nounou', 'menagere', 'ménagère', 
+                                 'gardien', 'serveuse', 'gérante', 'gerante', 'caissiere'] },
   { slug: 'immo',        mots: ['loue', 'location', 'à louer', 'a louer', 'appartement', 'villa', 'studio',
                                  'chambre à louer', 'chambre a louer', 'chambre', 'maison à louer', 'maison', 'bureau',
                                  'terrain', 'duplex', 'immeuble', 'titre foncier', 'bail', 'caution', 'parcelle',
@@ -532,8 +532,10 @@ async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
             if (texteOcr) texte = `${texte} ${texteOcr}`.trim();
           }
 
-          let categorie_slug = detecterCategorie(texte) || 'divers';
-          if (groupe.force_categorie) categorie_slug = groupe.force_categorie;
+          let categorie_slug = detecterCategorie(texte);
+          if (!categorie_slug) {
+            categorie_slug = groupe.force_categorie || 'divers';
+          }
 
           const tel = parseTelephoneFB(texte);
           
