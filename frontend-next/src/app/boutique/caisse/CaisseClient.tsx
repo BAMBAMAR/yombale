@@ -87,6 +87,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   // --- ÉTAT OFFLINE & SYNC ---
   const [offlineModeActive, setOfflineModeActive] = useState<boolean>(false)
   const [syncingOffline, setSyncingOffline] = useState<boolean>(false)
+  const [ventesHorsLigneCount, setVentesHorsLigneCount] = useState<number>(0)
+
 
   // ── Vérification dynamique de l'autorisation POS selon la boutique sélectionnée ──
   const activeBoutiqueObj = boutiques.find(b => b.id === boutiqueActiveId)
@@ -96,9 +98,19 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
   const estBoutiqueAutorisee = (activePlan === 'pro' || activePlan === 'business') || (loadingProduits && boutiques.length === 0)
 
+  async function rafraichirCompteurOffline() {
+    try {
+      const q = await obtenirVentesHorsLigne()
+      setVentesHorsLigneCount(q.length)
+    } catch {
+      setVentesHorsLigneCount(0)
+    }
+  }
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setOfflineModeActive(!navigator.onLine)
+      rafraichirCompteurOffline()
       
       const goOnline = () => {
         setOfflineModeActive(false)
@@ -106,6 +118,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       }
       const goOffline = () => {
         setOfflineModeActive(true)
+        rafraichirCompteurOffline()
       }
 
       window.addEventListener('online', goOnline)
@@ -155,13 +168,17 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
       if (successCount > 0) {
         await viderVentesHorsLigne()
+        rafraichirCompteurOffline()
         const hist = await getPosHistorique(boutiqueActiveId)
         if (hist && hist.length > 0) {
           setHistoriqueVentes(hist)
         }
+      } else {
+        rafraichirCompteurOffline()
       }
     } catch (err) {
       console.error('Erreur synchronisation offline:', err)
+      rafraichirCompteurOffline()
     } finally {
       setSyncingOffline(false)
     }
@@ -1362,6 +1379,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
             total: payloadVente.total,
             date: new Date().toISOString()
           })
+          rafraichirCompteurOffline()
           console.log('[OFFLINE] Vente sauvegardée localement dans IndexedDB.')
         } catch (eOff) {
           console.error('Erreur stockage local vente:', eOff)
@@ -1383,6 +1401,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               total: payloadVente.total,
               date: new Date().toISOString()
             })
+            rafraichirCompteurOffline()
           } catch (eOff2) {}
         }
       }
@@ -1929,11 +1948,16 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               fontSize: 10,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 2,
+              gap: 4,
               flexShrink: 0,
               animation: 'pulse 1.5s infinite'
             }}>
               ⚠️ HORS-LIGNE
+              {ventesHorsLigneCount > 0 && (
+                <span style={{ background: '#991b1b', padding: '2px 5px', borderRadius: 4, fontSize: 9 }}>
+                  {ventesHorsLigneCount} {ventesHorsLigneCount > 1 ? 'ventes' : 'vente'} en attente
+                </span>
+              )}
             </div>
           )}
 

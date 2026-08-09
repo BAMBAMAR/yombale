@@ -9,6 +9,12 @@ try {
   withSentryConfig = (config) => config; // no-op si pas installé
 }
 
+const withSerwist = require('@serwist/next').default({
+  swSrc: 'src/app/sw.ts',
+  swDest: 'public/sw.js',
+  disable: process.env.NODE_ENV === 'development',
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
@@ -65,13 +71,7 @@ const nextConfig = {
           { key: 'Cache-Control', value: 'public, max-age=86400' },
         ],
       },
-      {
-        source: '/sw.js',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
-          { key: 'Service-Worker-Allowed', value: '/' },
-        ],
-      },
+      // Note: Header pour sw.js supprimé ici car Serwist s'en charge
     ]
   },
 
@@ -102,7 +102,7 @@ const nextConfig = {
   },
 }
 
-module.exports = withSentryConfig(nextConfig, {
+module.exports = withSentryConfig(withSerwist(nextConfig), {
   org: 'nopalou',
   project: 'nopalou-frontend',
   authToken: process.env.SENTRY_AUTH_TOKEN,

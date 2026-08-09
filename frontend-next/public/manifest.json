@@ -38,6 +38,12 @@
   ],
   "shortcuts": [
     {
+      "name": "Caisse (POS)",
+      "short_name": "Caisse",
+      "url": "/boutique/caisse",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
       "name": "Déposer une annonce",
       "short_name": "Déposer",
       "url": "/deposer-annonce",

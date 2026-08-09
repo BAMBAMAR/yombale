@@ -1706,3 +1706,9 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
 - Refonte Globale Premium : Amï¿½lioration de la typographie (letter-spacing), glassmorphism et animations d'entrï¿½e sur les modales, soft shadows dynamiques sur les cartes produits/immo, et glow effects sur les boutons principaux.
  
  
+### Amélioration du Mode Hors-Ligne (PWA Caisse)
+- Installation de Serwist (@serwist/next) pour la gestion du mode PWA (remplacement du fichier sw.js manuel).
+- Mise à jour de next.config.js avec withSerwist pour la mise en cache automatique des chunks Next.js.
+- Création de src/app/sw.ts gérant le précaching et runtime caching.
+- Ajout d'un raccourci d'application (Caisse) dans le manifest.json.
+- Amélioration UI de la caisse (CaisseClient.tsx) avec ajout d'un compteur du nombre de ventes en attente de synchronisation sur l'indicateur hors-ligne.
