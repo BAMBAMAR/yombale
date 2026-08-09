@@ -1964,7 +1964,7 @@ a {
   width: 340px;
   min-width: 260px;
   flex-shrink: 0;
-  padding: 24px 20px 40px; /* Increased bottom padding */
+  padding: 24px 20px 40px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -2076,6 +2076,10 @@ a {
   flex-direction: column;
   min-height: calc(100vh - 60px);
   background: var(--bg);
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 20px 24px;
 }
 
 
