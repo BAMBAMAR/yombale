@@ -1670,3 +1670,5 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - Affichage Annonces : Modification de l'API (routes \nnonces.js\ et \search.js\) pour systématiquement prioriser les annonces natives (créées directement sur Nopalou) au-dessus des annonces importées depuis Facebook dans l'ordre d'affichage par défaut.
 
 - Refonte UI Guides : Stylisation premium des composants guide (Achat, Immo, Forfait) avec correction des espacements, refonte du bouton de retour et amélioration globale de l'interface (globals.css, composants React).
+
+- Refonte Globale Premium : Amélioration de la typographie (letter-spacing), glassmorphism et animations d'entrée sur les modales, soft shadows dynamiques sur les cartes produits/immo, et glow effects sur les boutons principaux.

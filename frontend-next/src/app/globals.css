@@ -87,10 +87,14 @@ body, button, input, select, textarea, optgroup {
 
 body {
   min-height: 100vh;
+  letter-spacing: -0.01em;
+  line-height: 1.6;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-archivo), var(--font-inter), system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
 
 /* ── Accessibilité & Evitement (WCAG 2.4.1) ─────────────────────── */
@@ -136,18 +140,24 @@ a {
 /* ── Carte produit ─────────────────────────────────────────────── */
 .card-produit {
   background: var(--card);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Premium subtle border in dark mode usually, or soft grey in light mode. Wait, using var(--border) is safer but let's make the shadow premium */
   border-radius: var(--radius);
   padding: 16px;
-  box-shadow: 0 1px 2px rgba(26,22,18,.08), 0 8px 24px rgba(26,22,18,.10);
-  transition: box-shadow 0.2s;
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0,0,0,0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   gap: 8px;
   font-variant-numeric: tabular-nums;
+  position: relative;
+  overflow: hidden;
 }
 
 .card-produit:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0,0,0,0.06);
+  border-color: rgba(199, 91, 0, 0.3); /* Subtle accent glow on border */
+}
   box-shadow: var(--shadow2), inset 3px 0 0 var(--accent);
 }
 
@@ -884,14 +894,22 @@ a {
 
 .card-immo {
   background: var(--card);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius);
   padding: 20px;
-  box-shadow: var(--shadow);
-  transition: box-shadow 0.2s;
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0,0,0,0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-immo:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0,0,0,0.06);
+  border-color: rgba(199, 91, 0, 0.3);
 }
 
 /* ── Page immo Sprint 5 ─────────────────────────────────────────── */
@@ -1684,7 +1702,7 @@ a {
   padding: 5px 0;
   font-size: 15px;
   cursor: pointer;
-  transition: background .15s, border-color .15s, color .15s;
+  transition: all .25s ease;
   color: var(--accent);
 }
 
@@ -1692,6 +1710,8 @@ a {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--orange2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(199, 91, 0, 0.15);
 }
 
 .card-action-btn.active {
@@ -8455,9 +8475,32 @@ a {
 .guide-prix-voir-fiche:hover { opacity: .85; }
 
 /* ── Modals ────────────────────────────────────────────────────── */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: #fff; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
+.modal-overlay { 
+  position: fixed; inset: 0; 
+  background: rgba(0,0,0,.6); 
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center; 
+  z-index: 1000; 
+  animation: overlayFadeIn 0.3s ease;
+}
+.modal-content { 
+  background: #fff; 
+  border-radius: 20px; 
+  max-height: 90vh; 
+  overflow-y: auto; 
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: modalPop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
 /* ── Formulaires & Alertes ─────────────────────────────────────── */
 .form-alerte, .form-group { display: flex; flex-direction: column; gap: 12px; }
 .form-group label { font-weight: 600; color: var(--text1); font-size: 13px; }
@@ -8468,12 +8511,24 @@ a {
 .form-status-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
 .form-status-error { background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca; }
 
-.button-primary, .button-danger { font-weight: 600; padding: 10px 16px; border: none; border-radius: var(--radius); cursor: pointer; transition: all .2s; font-size: 14px; }
-.button-primary { background: var(--accent); color: #fff; }
-.button-primary:hover { background: #a84700; }
-.button-primary:disabled { background: #ccc; cursor: not-allowed; }
+.button-primary, .button-danger { 
+  font-weight: 600; padding: 10px 16px; border: none; border-radius: var(--radius); cursor: pointer; transition: all .25s ease; font-size: 14px; 
+}
+.button-primary { 
+  background: var(--accent); color: #fff; 
+  box-shadow: 0 4px 12px rgba(199, 91, 0, 0.2);
+}
+.button-primary:hover { 
+  background: #a84700; 
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(199, 91, 0, 0.35);
+}
+.button-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+.button-primary:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
 .button-danger { background: #dc2626; color: #fff; font-size: 13px; padding: 6px 10px; }
-.button-danger:hover { background: #b91c1c; }
+.button-danger:hover { background: #b91c1c; transform: translateY(-1px); }
 .button-sm { font-size: 12px; padding: 6px 10px; }
 
 .alertes-list { margin-top: 20px; }
