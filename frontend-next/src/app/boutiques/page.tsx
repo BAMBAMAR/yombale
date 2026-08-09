@@ -182,9 +182,15 @@ export default async function BoutiquesPage({
                 Boutiques & Vendeurs Pro au <span style={{ color: '#C75B00' }}>Sénégal</span>
               </h1>
 
-              <p style={{ fontSize: 16, color: '#475569', margin: '0 0 32px', lineHeight: 1.6 }}>
-                Découvrez des commerçants de confiance, parcourez leurs catalogues en ligne, comparez les prix et contactez-les directement par WhatsApp ou téléphone.
+              <p style={{ fontSize: 16, color: '#475569', margin: '0 0 16px', lineHeight: 1.6 }}>
+                L'annuaire de référence pour trouver des commerçants de confiance, grossistes et artisans. Parcourez leurs catalogues interactifs et contactez-les directement sans intermédiaire.
               </p>
+
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', display: 'flex', flexDirection: 'column', gap: 10, color: '#475569', fontSize: 15 }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: '#10b981' }}>✔</span> <span style={{ fontWeight: 600, color: '#334155' }}>0% de commission</span> sur vos achats</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: '#10b981' }}>✔</span> <span style={{ fontWeight: 600, color: '#334155' }}>100% Vendeurs vérifiés</span> et certifiés</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: '#10b981' }}>✔</span> <span style={{ fontWeight: 600, color: '#334155' }}>Contact direct WhatsApp</span> avec les marchands</li>
+              </ul>
             </div>
 
             {/* BARRE DE RECHERCHE ET FILTRES (Intégrés à gauche et collés en bas) */}
