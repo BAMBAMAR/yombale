@@ -25,8 +25,10 @@ export function tempsRelatif(d: string | Date | null | undefined): string | null
 }
 
 export function fcfa(prix: number | string | null): string {
-  if (!prix) return '—';
-  return new Intl.NumberFormat('fr-FR').format(Number(prix)) + ' FCFA';
+  if (prix === null || prix === undefined || prix === '') return '—';
+  const num = Number(prix);
+  if (isNaN(num)) return '—';
+  return new Intl.NumberFormat('fr-FR').format(Math.round(num)) + ' FCFA';
 }
 
 export function escapeHtml(s: string | null | undefined): string {

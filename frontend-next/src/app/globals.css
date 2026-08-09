@@ -9856,6 +9856,10 @@ body:has(.caisse-header) .site-footer {
   .caisse-main-layout {
     grid-template-columns: 1fr;
     overflow-y: auto;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
   }
 
   .caisse-mobile-tabs {
@@ -9864,17 +9868,20 @@ body:has(.caisse-header) .site-footer {
     top: 0;
     z-index: 40;
     background: #ffffff;
-    padding: 8px 12px;
-    gap: 8px;
+    padding: 8px 8px;
+    gap: 6px;
     border-bottom: 1px solid #e2e8f0;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    box-sizing: border-box !important;
+    max-width: 100vw !important;
   }
 
   .caisse-mobile-tab-btn {
     flex: 1;
-    padding: 10px 12px;
+    min-width: 0;
+    padding: 8px 6px;
     border-radius: 10px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
     border: 1px solid #cbd5e1;
     background: #f8fafc;
@@ -9918,12 +9925,17 @@ body:has(.caisse-header) .site-footer {
   .caisse-catalogue-section.mobile-active {
     display: flex !important;
     width: 100% !important;
-    padding-bottom: 90px !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    padding: 12px 10px 90px 10px !important;
   }
 
   .ticket-section.mobile-active {
     display: flex !important;
     width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    padding: 12px 10px !important;
   }
 
   .caisse-back-to-catalogue-btn {

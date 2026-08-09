@@ -2365,7 +2365,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         </div>
 
         {/* Côté Droit : Ticket Panier & Encaissement POS */}
-        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 14, boxSizing: 'border-box', maxWidth: '100%' }}>
           {/* Bouton retour au catalogue sur Mobile */}
           <button
             type="button"
@@ -2375,21 +2375,21 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
             ⬅️ Revenir au Catalogue produits ({produitsFiltres.length})
           </button>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
-            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>🛒 Ticket en cours</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 10, gap: 8 }}>
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#0f172a', flexShrink: 0 }}>🛒 Ticket en cours</h2>
 
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
               {panier.length > 0 && (
                 <button
                   onClick={mettrePanierEnAttente}
                   title="Mettre en attente le ticket pour servir le client suivant"
-                  style={{ background: '#ea580c', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                  style={{ background: '#ea580c', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
                   ⏸️ En Attente
                 </button>
               )}
               {panier.length > 0 && (
-                <button onClick={viderPanier} style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={viderPanier} style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 11, fontWeight: 700, cursor: 'pointer', padding: '2px 4px', whiteSpace: 'nowrap' }}>
                   Vider
                 </button>
               )}
@@ -2397,7 +2397,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
           </div>
 
           {/* Contenu Panier */}
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {!session ? (
               <div style={{
                 background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
@@ -2438,28 +2438,28 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               </div>
             ) : (
               panier.map(item => (
-                <div key={item.produit.id} style={{ background: '#f8fafc', border: item.quantite > item.produit.stock ? '1px solid #fde047' : '1px solid #e2e8f0', borderRadius: 10, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={item.produit.id} style={{ background: '#f8fafc', border: item.quantite > item.produit.stock ? '1px solid #fde047' : '1px solid #e2e8f0', borderRadius: 10, padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, boxSizing: 'border-box' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: 13, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: 12, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item.produit.nom}
                     </p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 12, color: '#C75B00', fontWeight: 800 }}>{fcfa(item.prixUnitaire)}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 11, color: '#C75B00', fontWeight: 800 }}>{fcfa(item.prixUnitaire)}</span>
                       {item.quantite > item.produit.stock && (
-                        <span style={{ fontSize: 10, background: '#fef08a', color: '#854d0e', padding: '1px 6px', borderRadius: 4, fontWeight: 800 }}>
-                          👑 Dépassement de Stock Autorisé
+                        <span style={{ fontSize: 9, background: '#fef08a', color: '#854d0e', padding: '1px 5px', borderRadius: 4, fontWeight: 800 }}>
+                          👑 Dépassement
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#ffffff', padding: '2px 6px', borderRadius: 6, border: '1px solid #cbd5e1' }}>
-                      <button onClick={() => modifierQuantite(item.produit.id, -1)} style={{ background: 'none', border: 'none', color: '#0f172a', fontWeight: 800, cursor: 'pointer' }}>-</button>
-                      <span style={{ fontSize: 13, fontWeight: 800, minWidth: 16, textAlign: 'center', color: '#0f172a' }}>{item.quantite}</span>
-                      <button onClick={() => modifierQuantite(item.produit.id, 1)} style={{ background: 'none', border: 'none', color: '#0f172a', fontWeight: 800, cursor: 'pointer' }}>+</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: '#ffffff', padding: '2px 5px', borderRadius: 6, border: '1px solid #cbd5e1' }}>
+                      <button onClick={() => modifierQuantite(item.produit.id, -1)} style={{ background: 'none', border: 'none', color: '#0f172a', fontWeight: 800, cursor: 'pointer', padding: '0 3px', fontSize: 12 }}>-</button>
+                      <span style={{ fontSize: 12, fontWeight: 800, minWidth: 14, textAlign: 'center', color: '#0f172a' }}>{item.quantite}</span>
+                      <button onClick={() => modifierQuantite(item.produit.id, 1)} style={{ background: 'none', border: 'none', color: '#0f172a', fontWeight: 800, cursor: 'pointer', padding: '0 3px', fontSize: 12 }}>+</button>
                     </div>
-                    <span style={{ fontSize: 13, fontWeight: 900, color: '#0f172a', minWidth: 60, textAlign: 'right' }}>{fcfa(item.prixUnitaire * item.quantite)}</span>
+                    <span style={{ fontSize: 12, fontWeight: 900, color: '#0f172a', textAlign: 'right', whiteSpace: 'nowrap' }}>{fcfa(item.prixUnitaire * item.quantite)}</span>
                   </div>
                 </div>
               ))
@@ -2467,9 +2467,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
           </div>
 
           {/* Mode de Paiement */}
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label style={{ fontSize: 12, fontWeight: 800, color: '#475569' }}>MODE DE RÈGLEMENT</label>
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', flexShrink: 0 }}>MODE DE RÈGLEMENT</label>
               {panier.length > 0 && (
                 <button
                   type="button"
@@ -2480,32 +2480,35 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                       if (val > 0 && val <= 50) setRemisePourcentage(val)
                     })
                   }}
-                  style={{ background: 'none', border: 'none', color: '#C75B00', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                  style={{ background: 'none', border: 'none', color: '#C75B00', fontSize: 10, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
-                  🏷️ Remise Superviseur ({remisePourcentage}%)
+                  🏷️ Remise ({remisePourcentage}%)
                 </button>
               )}
             </div>
 
-            <div className="paiement-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+            <div className="paiement-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5 }}>
               {[
                 { id: 'especes', label: '💵 Espèces' },
                 { id: 'wave', label: '🌊 Wave' },
                 { id: 'orange_money', label: '🍊 OM' },
                 { id: 'carte', label: '💳 Carte' },
-                { id: 'mixte', label: '🔀 Mixte (Partagé)' },
-                { id: 'credit_client', label: '📝 Crédit Client' },
+                { id: 'mixte', label: '🔀 Mixte' },
+                { id: 'credit_client', label: '📝 Crédit' },
               ].map(m => (
                 <button
                   key={m.id}
                   onClick={() => setModePaiement(m.id as any)}
                   style={{
-                    padding: '8px 4px', borderRadius: 8,
+                    padding: '8px 2px', borderRadius: 8,
                     background: modePaiement === m.id ? '#C75B00' : '#f8fafc',
                     color: modePaiement === m.id ? '#fff' : '#334155',
-                    fontWeight: modePaiement === m.id ? 800 : 600, fontSize: 11, cursor: 'pointer',
+                    fontWeight: modePaiement === m.id ? 800 : 600, fontSize: 10, cursor: 'pointer',
                     border: modePaiement === m.id ? '1px solid #C75B00' : '1px solid #cbd5e1',
                     boxShadow: modePaiement === m.id ? '0 2px 8px rgba(199,91,0,0.25)' : 'none',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                   }}
                 >
                   {m.label}

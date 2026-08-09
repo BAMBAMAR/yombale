@@ -1,3 +1,10 @@
+## 🚀 Mises à jour du 09/08/2026 : Correction du Débordement & Tronquature à Droite sur Caisse POS Mobile
+- **Fixation de la Tronquature à Droite (`globals.css` & `CaisseClient.tsx`)** :
+  * Ajout de `box-sizing: border-box !important`, `max-width: 100vw !important` et `overflow-x: hidden !important` sur `.caisse-main-layout`, `.ticket-section.mobile-active` et `.caisse-catalogue-section.mobile-active`.
+  * Ajustement des paddings mobiles de 20px à 10px-12px pour empêcher le débordement de 40px hors-écran sur les smartphones.
+  * Optimisation des libellés dans la grille de paiement à 3 colonnes (`🔀 Mixte`, `📝 Crédit`, `🏷️ Remise`) et ajout de `overflow: hidden` et `text-overflow: ellipsis` pour empêcher tout chevauchement.
+  * Arrondissement au franc près dans la fonction d'affichage de monnaie `fcfa` (`Math.round`) pour éliminer les décimales flottantes longues (ex: `273 069,492 FCFA` -> `273 069 FCFA`).
+
 ## 🚀 Mises à jour du 09/08/2026 : Correction du Schéma d'URL et Résolution Complète de l'Affichage des Photos
 - **Correction Critique de `sanitizeImgUrl` (`ExternalImg.tsx`)** :
   * Ajout du préfixage automatique `https://` pour toutes les URLs d'images stockées sans protocole dans la base de données (ex: `res.cloudinary.com/...`, `images.coinafrique.com/...`, `masterofficedeco.sn/...`, `www.soumari.com/...`, `kanje.sn/...`, `electroniccorp.sn/...`, `static.kaynoo.sn/...`).
