@@ -284,7 +284,7 @@ async function upsertAnnonceClassifiee(a) {
 // kill en cours d'exécution quand ce scraper tournait longtemps (16 groupes) en même
 // temps que le cron de scraping produits. Relancer le bouton admin plusieurs fois
 // couvre progressivement tous les groupes.
-async function scraperImmo({ dryRun = false, maxGroupes = 5 } = {}) {
+async function scraperImmo({ dryRun = false, maxGroupes = 10 } = {}) {
   if (!playwright) {
     console.error('[FB-SCRAPER] playwright non installé. Lancez : npm install playwright && npx playwright install chromium');
     return { erreurs: ['playwright non installé'], inseres: 0 };
