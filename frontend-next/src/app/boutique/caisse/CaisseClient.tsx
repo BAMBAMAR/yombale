@@ -6,7 +6,7 @@ import { exportToCSV, printPDFReport } from '@/lib/export'
 import BatchImportModal from '@/app/boutique/BatchImportModal'
 import { CATEGORIES } from '@/lib/categories'
 import { getBoutiqueProduits, getBoutiquesMine, getPosHistorique, creerPosVente, declarerIncident, creerBoutiqueDocument } from '../actions'
-import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store, Camera, MessageCircle, Printer } from 'lucide-react'
+import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store, Camera, MessageCircle, Printer, AlignJustify, LayoutGrid } from 'lucide-react'
 import {
   sauvegarderProduitsLocaux,
   obtenirProduitsLocaux,
@@ -206,6 +206,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
   // ── État Catalogue & Panier & Paiement Mixte & Navigation Mobile ─────────────
   const [tabMobile, setTabMobile] = useState<'catalogue' | 'ticket'>('catalogue')
+  const [vueCatalogue, setVueCatalogue] = useState<'mosaique' | 'liste'>('mosaique')
   const [recherche, setRecherche] = useState<string>('')
   const [categorieFiltre, setCategorieFiltre] = useState<string>('tous')
   const [panier, setPanier] = useState<LignePanier[]>([])
@@ -1913,28 +1914,24 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
             <ArrowLeft size={13} />
             <span className="caisse-label-desktop">Boutique</span>
           </Link>
-
-          {/* Badge POS */}
-          <div style={{ background: 'var(--accent)', color: '#fff', padding: '4px 7px', borderRadius: 6, fontWeight: 800, fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-            <Store size={11} /> POS
-          </div>
-
-          {/* Badge de Connexion Offline / Online */}
-          <div className="caisse-status-badge" style={{
-            background: offlineModeActive ? '#dc2626' : '#16a34a',
-            color: '#fff',
-            padding: '4px 7px',
-            borderRadius: 6,
-            fontWeight: 800,
-            fontSize: 10,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 2,
-            flexShrink: 0,
-            animation: offlineModeActive ? 'pulse 1.5s infinite' : 'none'
-          }}>
-            {offlineModeActive ? '⚠️ HORS-LIGNE' : '🟢 EN LIGNE'}
-          </div>
+          {/* Badge Hors-Ligne (affiché uniquement si hors ligne) */}
+          {offlineModeActive && (
+            <div className="caisse-status-badge" style={{
+              background: '#dc2626',
+              color: '#fff',
+              padding: '4px 7px',
+              borderRadius: 6,
+              fontWeight: 800,
+              fontSize: 10,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 2,
+              flexShrink: 0,
+              animation: 'pulse 1.5s infinite'
+            }}>
+              ⚠️ HORS-LIGNE
+            </div>
+          )}
 
           {/* Sélecteur de boutique — masqué sur très petit écran */}
           {boutiques.length > 0 && (
@@ -2135,6 +2132,19 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
             <div className="caisse-search-row-btns">
               <button
+                onClick={() => setVueCatalogue(prev => prev === 'mosaique' ? 'liste' : 'mosaique')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', borderRadius: 10,
+                  background: '#f8fafc', color: '#475569', border: '1px solid #cbd5e1', fontWeight: 700, fontSize: 13,
+                  cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s ease',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+                }}
+                title={`Affichage en ${vueCatalogue === 'mosaique' ? 'liste' : 'mosaïque'}`}
+              >
+                {vueCatalogue === 'mosaique' ? <AlignJustify size={16} /> : <LayoutGrid size={16} />}
+              </button>
+
+              <button
                 onClick={demarrerScannerCamera}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px', borderRadius: 10,
@@ -2230,7 +2240,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               </button>
             </div>
           ) : (
-            <div className="produits-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
+            <div className="produits-grid" style={{ 
+              display: vueCatalogue === 'mosaique' ? 'grid' : 'flex', 
+              gridTemplateColumns: vueCatalogue === 'mosaique' ? 'repeat(auto-fill, minmax(130px, 1fr))' : undefined, 
+              flexDirection: vueCatalogue === 'liste' ? 'column' : undefined,
+              gap: 10 
+            }}>
               {produitsFiltres.map(p => {
                 // Déduire la quantité déjà placée dans le panier en direct
                 const qteAuPanier = panier.find(i => i.produit.id === p.id)?.quantite || 0
@@ -2248,11 +2263,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                       padding: '10px 12px',
                       cursor: 'pointer',
                       display: 'flex',
-                      flexDirection: 'column',
+                      flexDirection: vueCatalogue === 'liste' ? 'row' : 'column',
+                      alignItems: vueCatalogue === 'liste' ? 'center' : 'stretch',
                       justifyContent: 'space-between',
                       transition: 'all 0.15s ease',
                       userSelect: 'none',
-                      minHeight: 92,
+                      minHeight: vueCatalogue === 'liste' ? 60 : 92,
                       position: 'relative',
                       boxShadow: qteAuPanier > 0 ? '0 4px 12px rgba(199, 91, 0, 0.15)' : '0 2px 4px rgba(0,0,0,0.02)',
                     }}
@@ -2267,31 +2283,44 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                       </div>
                     )}
 
-                    <div>
+                    <div style={{ flex: vueCatalogue === 'liste' ? 1 : 'unset', minWidth: 0, paddingRight: vueCatalogue === 'liste' ? 10 : 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 4 }}>
                         <p style={{ margin: '0 0 2px', fontSize: 12, fontWeight: 800, color: '#0f172a', lineHeight: 1.2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.nom}</p>
-                        <button
-                          onClick={e => genererImprimerEtiquetteCodeBarre(e, p)}
-                          title="Générer / Imprimer étiquette code-barres EAN"
-                          style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 4, padding: '1px 4px', fontSize: 9, cursor: 'pointer', color: '#475569', fontWeight: 700, flexShrink: 0 }}
-                        >
-                          🏷️
-                        </button>
+                        {vueCatalogue !== 'liste' && (
+                          <button
+                            onClick={e => genererImprimerEtiquetteCodeBarre(e, p)}
+                            title="Générer / Imprimer étiquette code-barres EAN"
+                            style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 4, padding: '1px 4px', fontSize: 9, cursor: 'pointer', color: '#475569', fontWeight: 700, flexShrink: 0 }}
+                          >
+                            🏷️
+                          </button>
+                        )}
                       </div>
                       <p style={{ margin: 0, fontSize: 9, color: '#94a3b8', fontFamily: 'monospace' }}>{p.code_barre ? `EAN ${p.code_barre}` : ''}</p>
                     </div>
 
-                    <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ marginTop: vueCatalogue === 'liste' ? 0 : 6, display: 'flex', flexDirection: vueCatalogue === 'liste' ? 'column' : 'row', justifyContent: vueCatalogue === 'liste' ? 'center' : 'space-between', alignItems: vueCatalogue === 'liste' ? 'flex-end' : 'center', gap: vueCatalogue === 'liste' ? 2 : 0, flexShrink: 0 }}>
                       <span style={{ fontSize: 13, fontWeight: 900, color: '#C75B00' }}>{fcfa(p.prix)}</span>
-                      <span style={{
-                        fontSize: 9,
-                        background: estHorsStock ? '#fef2f2' : stockRestant <= 3 ? '#fff7ed' : '#f0fdf4',
-                        color: estHorsStock ? '#991b1b' : stockRestant <= 3 ? '#c2410c' : '#166534',
-                        border: estHorsStock ? '1px solid #fecaca' : stockRestant <= 3 ? '1px solid #fed7aa' : '1px solid #bbf7d0',
-                        padding: '1px 5px', borderRadius: 4, fontWeight: 700
-                      }}>
-                        {estHorsStock ? 'Épuisé' : `Stk ${stockRestant}`}
-                      </span>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        {vueCatalogue === 'liste' && (
+                          <button
+                            onClick={e => genererImprimerEtiquetteCodeBarre(e, p)}
+                            title="Générer / Imprimer étiquette code-barres EAN"
+                            style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 4, padding: '1px 4px', fontSize: 9, cursor: 'pointer', color: '#475569', fontWeight: 700, flexShrink: 0 }}
+                          >
+                            🏷️
+                          </button>
+                        )}
+                        <span style={{
+                          fontSize: 9,
+                          background: estHorsStock ? '#fef2f2' : stockRestant <= 3 ? '#fff7ed' : '#f0fdf4',
+                          color: estHorsStock ? '#991b1b' : stockRestant <= 3 ? '#c2410c' : '#166534',
+                          border: estHorsStock ? '1px solid #fecaca' : stockRestant <= 3 ? '1px solid #fed7aa' : '1px solid #bbf7d0',
+                          padding: '1px 5px', borderRadius: 4, fontWeight: 700
+                        }}>
+                          {estHorsStock ? 'Épuisé' : `Stk ${stockRestant}`}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )
