@@ -8,6 +8,7 @@ import CompareFilterBanner from '@/components/CompareFilterBanner'
 import PageHeader from '@/components/PageHeader'
 import FiltresBar from '@/components/FiltresBar'
 import SeoCard from '@/components/SeoCard'
+import SearchWithAnchor from '@/app/SearchWithAnchor'
 import { CATEGORIES } from '../categories-data'
 import { SOUS_CATEGORIES } from '../sous-categories-data'
 
@@ -178,24 +179,13 @@ export default async function CategoriePage({
         />
 
         {/* Recherche texte */}
-        <form action={`/categorie/${params.slug}`} method="get" className="annonces-search">
-          {prixMax   && <input type="hidden" name="prixMax" value={prixMax} />}
-          {tri !== 'pertinence' && <input type="hidden" name="tri" value={tri} />}
-          {sousType  && <input type="hidden" name="sousType" value={sousType} />}
-          <input
-            type="text"
-            name="q"
-            defaultValue={q}
-            placeholder={`Rechercher dans ${cat.label.toLowerCase()}…`}
-            className="annonces-search-input"
-          />
-          <button type="submit" className="annonces-search-btn">🔍 Rechercher</button>
-          {q && (
-            <Link href={buildLink({ q: '' })} className="budget-pill budget-pill--reset">
-              ✕ Recherche
-            </Link>
-          )}
-        </form>
+        <SearchWithAnchor 
+          action={`/categorie/${params.slug}`} 
+          defaultValue={q} 
+          placeholder={`Rechercher dans ${cat.label.toLowerCase()}…`}
+          hiddenParams={{ prixMax, tri: tri !== 'pertinence' ? tri : '', sousType }}
+          clearLink={buildLink({ q: '' })}
+        />
 
         {/* Filtres */}
         <div style={{ marginBottom: 20 }}>
@@ -235,7 +225,7 @@ export default async function CategoriePage({
             </Link>
           </div>
         ) : (
-          <div className="grid-produits">
+          <div id="resultats" className="grid-produits">
             {produits.map(p => (
               <Link key={p.id} href={`/produit/${p.id}`} style={{ display: 'contents' }}>
                 <article className="card-produit">

@@ -5,6 +5,7 @@ import CardActions from '@/app/CardActions'
 import PageHeader from '@/components/PageHeader'
 import FiltresBar from '@/components/FiltresBar'
 import SeoCard from '@/components/SeoCard'
+import SearchWithAnchor from '@/app/SearchWithAnchor'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 const SSR_SECRET = process.env.SSR_SECRET || ''
@@ -177,26 +178,13 @@ export default async function AnnoncesPage({
       />
 
       {/* Recherche texte */}
-      <form action="/annonces" method="get" className="annonces-search">
-        {categorie && <input type="hidden" name="categorie" value={categorie} />}
-        {tri       && <input type="hidden" name="tri" value={tri} />}
-        {prixMax   && <input type="hidden" name="prixMax" value={prixMax} />}
-        {ville     && <input type="hidden" name="ville" value={ville} />}
-        {source    && <input type="hidden" name="source" value={source} />}
-        <input
-          type="text"
-          name="q"
-          defaultValue={q}
-          placeholder="Rechercher une annonce (ex: iphone, canapé, voiture…)"
-          className="annonces-search-input"
-        />
-        <button type="submit" className="annonces-search-btn">🔍 Rechercher</button>
-        {q && (
-          <Link href={buildLink({ q: '' })} className="budget-pill budget-pill--reset">
-            ✕ Recherche
-          </Link>
-        )}
-      </form>
+      <SearchWithAnchor 
+        action="/annonces" 
+        defaultValue={q} 
+        placeholder="Rechercher une annonce (ex: iphone, canapé, voiture…)"
+        hiddenParams={{ categorie, tri, prixMax, ville, source }}
+        clearLink={buildLink({ q: '' })}
+      />
 
       {/* Filtres */}
       <FiltresBar
@@ -252,7 +240,7 @@ export default async function AnnoncesPage({
           </Link>
         </div>
       ) : (
-        <div className="annonces-grid">
+        <div id="resultats" className="annonces-grid">
           {(annonces as Annonce[]).map(a => {
             const photo = Array.isArray(a.photos) ? a.photos[0] : null
             return (
