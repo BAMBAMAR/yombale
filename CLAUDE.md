@@ -21,6 +21,8 @@
 - Intégration du moteur universel html5-qrcode : Décodage natif EAN-13, EAN-8, Code 128, Code 39, UPC-A, UPC-E et QR-Code en direct sur la caméra (iOS Safari, Android Chrome, PC/Webcams).
 - Correctif Permissions-Policy Caméra : Modification de camera=() en camera=(self) dans next.config.js et middleware.ts pour lever la restriction navigateur [Violation] Permissions policy violation.
 ## 🚀 Mises à jour du 09/08/2026 : Optimisation Caisse POS Mobile & Caméra Scanner
+- **Refonte Ergonomique Barre de Recherche & Scanners (Responsive)** : Correction du chevauchement inesthétique des boutons "Scanner Caméra" et "Douchette Smartphone" sur mobile.
+- **Déplacement du Bouton Vue Catalogue** : Le bouton de basculement d'affichage (Liste / Mosaïque) a été déplacé sous la barre de recherche, à gauche de la liste des catégories, pour libérer de l'espace en haut et harmoniser l'interface.
 - **Verrouillage Strict du Changement de Boutique** : Blocage complet de la sélection de boutique dans l'en-tête (affichage d'une alerte) lorsqu'une session de caisse (Fonds de caisse) est actuellement ouverte. Empêche le caissier de fuir ou de mélanger les caisses sans avoir fait sa Clôture Z (fermeture de caisse).
 - **Catalogue POS (Grille/Liste) & Épuration Header** : Ajout d'un bouton de bascule dynamique Liste / Mosaïque pour l'affichage des produits. Nettoyage de l'en-tête mobile avec suppression des badges redondants (POS, EN LIGNE) et correction du layout responsif pour éviter le chevauchement des éléments (scroll horizontal de l'en-tête).
 - Navigation Caisse Mobile par Onglets (caisse-mobile-tabs) : Onglets [ 🛍️ Catalogue | 🛒 Ticket ] sous le header (<= 1024px).

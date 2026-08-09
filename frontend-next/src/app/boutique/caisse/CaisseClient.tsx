@@ -2226,6 +2226,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                 {c.label}
               </button>
             ))}
+            </div>
           </div>
 
           {/* Grille des produits Réels avec Affichage Dynamique du Stock Restant */}
