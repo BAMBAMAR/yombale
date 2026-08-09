@@ -1790,12 +1790,39 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         </div>
       )}
 
-      {/* Styles d'impression Thermique 80mm */}
+      {/* Styles Globaux Caisse POS (Plein Écran & Layout Standard 50/50) */}
       <style jsx global>{`
-        .hover-bg-slate:hover {
-          background-color: #f1f5f9 !important;
-        }
         @media screen {
+          body header[role="banner"],
+          body nav.navbar,
+          body .navbar,
+          body .mobile-nav,
+          body .bottom-bars,
+          body footer,
+          body .site-footer {
+            display: none !important;
+          }
+
+          .caisse-main-layout {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1.1fr) minmax(460px, 1fr) !important;
+            height: calc(100vh - 52px) !important;
+            max-height: calc(100vh - 52px) !important;
+            overflow: hidden !important;
+          }
+
+          @media (max-width: 1024px) {
+            .caisse-main-layout {
+              grid-template-columns: 1fr !important;
+              height: auto !important;
+              max-height: none !important;
+              overflow-y: auto !important;
+            }
+          }
+
+          .hover-bg-slate:hover {
+            background-color: #f1f5f9 !important;
+          }
           .ticket-print-container {
             display: none !important;
           }

@@ -1,3 +1,4 @@
+- Injection directe des styles CSS POS dans style jsx global pour garantir l'affichage immédiat sans dépendre du cache navigateur (Masquage direct du header du site et layout 50/50).
 - Exigence de Session POS Ouverte & Gestion des Modes de Fonctionnement :
   * Blocage de l'ajout d'articles au panier si aucune session de caisse n'est ouverte (session === null) et déclenchement automatique de la modale Ouverture de Session.
   * Affichage d'un panneau de déverrouillage de session élégant dans la section ticket lorsque la session est fermée.
