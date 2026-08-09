@@ -14,7 +14,7 @@ export default function BoutiquesSearch({ currentQ, currentVille, currentCat }: 
     if (currentCat) p.set('cat', currentCat)
     if (q.trim()) p.set('q', q.trim())
     p.set('page', '1')
-    router.push(`/boutiques?${p.toString()}`)
+    router.push(`/boutiques?${p.toString()}#resultats`)
   }
 
   function handleClear() {
@@ -23,7 +23,7 @@ export default function BoutiquesSearch({ currentQ, currentVille, currentCat }: 
     if (currentVille) p.set('ville', currentVille)
     if (currentCat) p.set('cat', currentCat)
     p.set('page', '1')
-    router.push(`/boutiques?${p.toString()}`)
+    router.push(`/boutiques?${p.toString()}#resultats`)
   }
 
   return (

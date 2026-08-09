@@ -168,11 +168,32 @@ export default async function BoutiquesPage({
           pointerEvents: 'none',
         }} />
 
-        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexWrap: 'wrap', gap: 40, alignItems: 'stretch' }}>
+        <style>{`
+          .hero-bento-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 450px;
+            gap: 40px;
+            align-items: stretch;
+          }
+          .hero-text-block { grid-column: 1; grid-row: 1; }
+          .hero-search-block { grid-column: 1; grid-row: 2; align-self: end; }
+          .hero-right-block { grid-column: 2; grid-row: 1 / span 2; }
+
+          @media (max-width: 1023px) {
+            .hero-bento-grid {
+              display: flex;
+              flex-direction: column;
+              gap: 32px;
+            }
+            .hero-text-block { order: 1; }
+            .hero-right-block { order: 2; }
+            .hero-search-block { order: 3; }
+          }
+        `}</style>
+        <div className="hero-bento-grid" style={{ position: 'relative', zIndex: 2 }}>
           
-          {/* COLONNE GAUCHE (60%) : Contenu et Recherche */}
-          <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ maxWidth: 700 }}>
+          {/* TEXT BLOCK */}
+          <div className="hero-text-block" style={{ maxWidth: 700 }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '6px 14px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 14, border: '1px solid #ffedd5', width: 'fit-content' }}>
                 <Sparkles size={14} style={{ color: '#C75B00' }} />
                 <span>Hub officiel des vendeurs vérifiés Nopalou</span>
@@ -202,8 +223,8 @@ export default async function BoutiquesPage({
               </ul>
             </div>
 
-            {/* BARRE DE RECHERCHE ET FILTRES (Intégrés à gauche et collés en bas) */}
-            <div style={{ background: '#ffffff', borderRadius: 24, padding: '24px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 16, marginTop: 'auto' }}>
+            {/* SEARCH BLOCK */}
+            <div className="hero-search-block" style={{ background: '#ffffff', borderRadius: 24, padding: '24px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 16 }}>
               <BoutiquesSearch currentQ={q} currentVille={ville} currentCat={cat} />
               
               <div style={{ height: 1, background: '#f1f5f9' }} />
@@ -264,10 +285,9 @@ export default async function BoutiquesPage({
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* COLONNE DROITE (40%) : BENTO BOX (Taf Taf + Stats) */}
-          <div style={{ flex: '1 1 350px', maxWidth: 450, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* RIGHT BLOCK (Carousel + Stats) */}
+          <div className="hero-right-block" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             
             {/* Widget Taf Taf remplacé par le Carrousel */}
             <div style={{ minHeight: 330, width: '100%' }}>
@@ -298,7 +318,7 @@ export default async function BoutiquesPage({
       </div>
 
       {/* CATEGORIES */}
-      <div style={{ marginBottom: 32 }}>
+      <div id="resultats" style={{ marginBottom: 32 }}>
         <div className="hero-categories-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none', justifyContent: 'center' }}>
           {categoriesAffichage.map(c => {
             const isSelected = (cat === c.slug) || (!cat && c.slug === '')

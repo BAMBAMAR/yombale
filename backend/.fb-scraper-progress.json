@@ -5,12 +5,10 @@
   "totalGroupes": 10,
   "pourcentage": 100,
   "groupeActuel": "Terminé",
-  "scrapes": 37,
-  "inseres": 16,
-  "doublons": 5,
-  "ignores": 16,
-  "erreurs": [
-    "Je vide je vends j'achete je livre: aucun contenu chargé (groupe privé ou ID invalide)"
-  ],
-  "updatedAt": "2026-08-09T00:11:41.484Z"
+  "scrapes": 33,
+  "inseres": 22,
+  "doublons": 6,
+  "ignores": 5,
+  "erreurs": [],
+  "updatedAt": "2026-08-09T13:26:31.125Z"
 }
