@@ -1,3 +1,7 @@
+- Exigence de Session POS Ouverte & Gestion des Modes de Fonctionnement :
+  * Blocage de l'ajout d'articles au panier si aucune session de caisse n'est ouverte (session === null) et déclenchement automatique de la modale Ouverture de Session.
+  * Affichage d'un panneau de déverrouillage de session élégant dans la section ticket lorsque la session est fermée.
+  * Explication claire de la gestion des boutiques Pur Web (pure_player) vs Hybride POS (hybride_pos).
 - Redesign Ergonomie & Design Premium Caisse POS :
   * Suppression du double en-tête mobile : masquage automatique du header global du site, de la nav et du footer via body:has(.caisse-header) en mode POS Fullscreen.
   * Restructuration des proportions du layout standard POS (52% Catalogue / 48% Caisse & Ticket).

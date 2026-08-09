@@ -214,22 +214,15 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   const [modePaiement, setModePaiement] = useState<'especes' | 'wave' | 'orange_money' | 'carte' | 'credit_client' | 'mixte'>('especes')
   const [montantRecu, setMontantRecu] = useState<string>('')
   
-  const [montantEspecesMixte, setMontantEspecesMixte] = useState<string>('')
-  const [secondModeMixte, setSecondModeMixte] = useState<'wave' | 'orange_money' | 'carte'>('wave')
-
-  const [derniereVente, setDerniereVente] = useState<{
-    id: string
-    date: string
-    heure: string
-    total: number
-    remise: number
-    recu: number
-    monnaie: number
-    ticket: LignePanier[]
-    mode: string
-    caissier: string
-    detailMixte?: { especes: number; autreMode: string; autreMontant: number }
-  } | null>(null)
+  // Toggle de la classe pos-active sur le document.body pour masquer entièrement l'en-tête global du site
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.classList.add('pos-active')
+      return () => {
+        document.body.classList.remove('pos-active')
+      }
+    }
+  }, [])
 
   // ── Carnet de Crédit & Dettes Clients Avancé ─────────────────────────────────
   const [clientsCredits, setClientsCredits] = useState<{ id: string; nom: string; prenom?: string; telephone: string; adresse?: string | null; solde: number; plafond_max: number; note_client?: string | null; created_at?: string; exonere_tva?: boolean }[]>([])
@@ -1097,8 +1090,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
     setModalSessionOuverture(false)
   }
 
-  // AJOUT AU PANIER AVEC CONTRÔLE ET AUTORISATION SUPERVISEUR EN CAS DE DÉPASSEMENT
+  // AJOUT AU PANIER AVEC VÉRIFICATION DE SESSION ET CONTRÔLE STOCK
   function ajouterAuPanier(p: ProduitCaisse) {
+    if (!session) {
+      setModalSessionOuverture(true)
+      return
+    }
+
     const itemExist = panier.find(item => item.produit.id === p.id)
     const qteActuelle = itemExist ? itemExist.quantite : 0
 
@@ -2292,7 +2290,39 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
           {/* Contenu Panier */}
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {panier.length === 0 ? (
+            {!session ? (
+              <div style={{
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                color: '#ffffff',
+                borderRadius: 16,
+                padding: '28px 20px',
+                textAlign: 'center',
+                boxShadow: '0 10px 25px rgba(15,23,42,0.15)',
+                margin: 'auto 0'
+              }}>
+                <div style={{ fontSize: 40, marginBottom: 10 }}>🔒</div>
+                <h3 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 900, color: '#ffffff' }}>Session de Caisse Fermée</h3>
+                <p style={{ margin: '0 0 18px', fontSize: 13, color: '#94a3b8', lineHeight: 1.5 }}>
+                  Déclarez votre fond de caisse initial pour ouvrir la session et commencer à encaisser vos clients.
+                </p>
+                <button
+                  onClick={() => setModalSessionOuverture(true)}
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: 12,
+                    padding: '13px 22px',
+                    fontWeight: 900,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
+                  }}
+                >
+                  🔓 Ouvrir la Session de Caisse →
+                </button>
+              </div>
+            ) : panier.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 20px', color: '#94a3b8' }}>
                 <span style={{ fontSize: 40, display: 'block', marginBottom: 8 }}>🧾</span>
                 <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#475569' }}>Le ticket de caisse est vide</p>
