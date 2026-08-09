@@ -1660,3 +1660,5 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
     - Création et exécution d'un script de migration (ackend/scripts/reclassify.js) qui a réévalué l'intégralité des annonces de la base de données avec la nouvelle logique, corrigeant plusieurs centaines d'erreurs historiques.
 
   - **Scraper Facebook** : Ajout de 5 nouveaux groupes dédiés à l'emploi pour augmenter le volume d'annonces de cette catégorie.
+
+    - Ajustement du scraper : Les groupes d'emploi sont tous traités dans le tout premier lot de requêtes (maxGroupes = 10) pour maximiser le remplissage immédiat de la catégorie Emploi.
