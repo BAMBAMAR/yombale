@@ -1653,3 +1653,8 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
   - **Correction du Scraper Facebook pour l'Emploi** : Affinage de la dÃ©tection de la catÃ©gorie Emploi.
     - Suppression des mots-clÃ©s gÃ©nÃ©riques (`besoin de`, `recherche un`, `recherche une`, `recherche d'un`) qui provoquaient la classification erronÃ©e de voitures ou d'objets (TV, Maison) comme offres d'emploi.
     - Modification de la logique de forÃ§age de catÃ©gorie (`force_categorie`) pour les groupes d'emploi afin qu'elle serve de catÃ©gorie par dÃ©faut (fallback) uniquement si aucune autre catÃ©gorie plus spÃ©cifique (ex: auto-moto) n'est dÃ©tectÃ©e dans le post.
+
+  - **Audit & Amélioration de la Catégorisation** :
+    - Enrichissement des mots-clés pour auto-moto, mode, immo et emploi (ajout de 'diesel', 'essence', 'shoes', 'wax', 'cherche boulot', etc.).
+    - Réordonnancement de l'évaluation des catégories dans scraper-immo-facebook.js (priorité donnée à auto-moto et immo pour éviter les faux positifs dans tv-electro ou informatique liés aux mots comme 'écran' ou 'ordinateur').
+    - Création et exécution d'un script de migration (ackend/scripts/reclassify.js) qui a réévalué l'intégralité des annonces de la base de données avec la nouvelle logique, corrigeant plusieurs centaines d'erreurs historiques.
