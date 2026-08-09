@@ -1,3 +1,8 @@
+- Optimisation PIN & En-tête Caisse POS :
+  * Persistance de session déverrouillée au rafraîchissement (F5) via LocalStorage.
+  * Suppression du bouton Déverrouiller & déverrouillage automatique dès 4 chiffres avec message d'erreur si faux.
+  * Réduction automatique du clavier virtuel mobile (inputMode numeric + auto-blur).
+  * Alignment et nettoyage de l'en-tête caisse-header sans aucun chevauchement sur mobile.
 - Intégration du moteur universel html5-qrcode : Décodage natif EAN-13, EAN-8, Code 128, Code 39, UPC-A, UPC-E et QR-Code en direct sur la caméra (iOS Safari, Android Chrome, PC/Webcams).
 - Correctif Permissions-Policy Caméra : Modification de camera=() en camera=(self) dans next.config.js et middleware.ts pour lever la restriction navigateur [Violation] Permissions policy violation.
 ## 🚀 Mises à jour du 09/08/2026 : Optimisation Caisse POS Mobile & Caméra Scanner

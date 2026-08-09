@@ -717,7 +717,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
-  // ── Initialisation des PINs depuis LocalStorage ──────────────────────────────
+  // ── Initialisation des PINs & Restauration Session depuis LocalStorage ────────
   useEffect(() => {
     const savedCaissier = localStorage.getItem('nopalou_pin_caissier')
     if (savedCaissier) setPinCaissier(savedCaissier)
@@ -725,6 +725,24 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
     const savedSuperviseur = localStorage.getItem('nopalou_pin_superviseur')
     if (savedSuperviseur) setPinSuperviseur(savedSuperviseur)
   }, [])
+
+  // Restauration de l'authentification lors des rafraîchissements F5
+  useEffect(() => {
+    if (typeof window !== 'undefined' && boutiqueActiveId) {
+      const savedUnlocked = localStorage.getItem(`nopalou_pos_unlocked_${boutiqueActiveId}`)
+      if (savedUnlocked) {
+        try {
+          const parsed = JSON.parse(savedUnlocked)
+          if (parsed.unlocked) {
+            setVerrouille(false)
+            if (parsed.roleActif) setRoleActif(parsed.roleActif)
+            if (parsed.caissierNom) setCaissierNom(parsed.caissierNom)
+            if (parsed.caissierId) setCaissierSelectionneId(parsed.caissierId)
+          }
+        } catch (e) {}
+      }
+    }
+  }, [boutiqueActiveId])
 
   // ── Synchroniser la sauvegarde locale de l'historique des ventes ──────────────
   useEffect(() => {
@@ -1039,25 +1057,47 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
     }
   }
 
-  // ── Authentification et Déverrouillage par Rôle ─────────────────────────────
-  function deverrouillerPin() {
+  // Auto-validation du code PIN Superviseur dès 4 chiffres polis
+  useEffect(() => {
+    if (modalSuperviseur && pinSuperviseurSaisi.length === 4) {
+      validerSuperviseurPin()
+    }
+  }, [pinSuperviseurSaisi, modalSuperviseur])
+
+  // ── Authentification et Déverrouillage Automatique par Rôle ──────────────────
+  function deverrouillerPin(codeToTest?: string) {
+    const codeSaisi = codeToTest !== undefined ? codeToTest : codePinSaisi
+    if (!codeSaisi || codeSaisi.length < 4) return
+
     const caissier = caissiersList.find(c => c.id === caissierSelectionneId)
     const isValide = caissier 
-      ? codePinSaisi === caissier.code_pin 
-      : (codePinSaisi === pinCaissier || codePinSaisi === pinSuperviseur);
+      ? codeSaisi === caissier.code_pin 
+      : (codeSaisi === pinCaissier || codeSaisi === pinSuperviseur);
       
     if (isValide) {
       const isSuper = caissier 
         ? (caissier.role === 'superviseur' || caissier.role === 'admin')
-        : codePinSaisi === pinSuperviseur;
+        : codeSaisi === pinSuperviseur;
         
-      setRoleActif(isSuper ? 'superviseur' : 'caissier')
+      const realRole = isSuper ? 'superviseur' : 'caissier'
+      setRoleActif(realRole)
       
       const realNom = caissier 
         ? `${caissier.prenom} ${caissier.nom}`
-        : (codePinSaisi === pinSuperviseur ? 'Gérant / Superviseur' : 'Caissier 1 (Bamba)');
+        : (codeSaisi === pinSuperviseur ? 'Gérant / Superviseur' : 'Caissier 1 (Bamba)');
         
       setCaissierNom(realNom)
+
+      // Conserver la session déverrouillée dans le LocalStorage (persistance au rafraîchissement F5)
+      if (typeof window !== 'undefined' && boutiqueActiveId) {
+        localStorage.setItem(`nopalou_pos_unlocked_${boutiqueActiveId}`, JSON.stringify({
+          unlocked: true,
+          roleActif: realRole,
+          caissierNom: realNom,
+          caissierId: caissierSelectionneId,
+          timestamp: Date.now()
+        }))
+      }
       
       // GESTION DU CONFLIT DE SESSION
       if (session && session.caissierNom !== realNom && !isSuper) {
@@ -1069,13 +1109,35 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       setVerrouille(false)
       setCodePinSaisi('')
       setPinError(null)
+
+      // Réduire & fermer automatiquement le clavier virtuel tactile mobile
+      if (typeof document !== 'undefined') {
+        (document.activeElement as HTMLElement)?.blur()
+      }
+
       if (!session && (!conflitSessionMessage || isSuper)) {
         setModalSessionOuverture(true)
       }
     } else {
-      setPinError('Code PIN incorrect. Veuillez vérifier votre saisie.')
+      setPinError('❌ Code PIN incorrect. Veuillez vérifier votre saisie.')
       setCodePinSaisi('')
     }
+  }
+
+  // Auto-déverrouillage dès la saisie du 4ème chiffre sans cliquer sur aucun bouton
+  useEffect(() => {
+    if (verrouille && codePinSaisi.length === 4) {
+      deverrouillerPin(codePinSaisi)
+    }
+  }, [codePinSaisi, verrouille])
+
+  function verrouillerCaisseManuellement() {
+    if (typeof window !== 'undefined' && boutiqueActiveId) {
+      localStorage.removeItem(`nopalou_pos_unlocked_${boutiqueActiveId}`)
+    }
+    setVerrouille(true)
+    setCodePinSaisi('')
+    setPinError(null)
   }
 
   // ── Actions Multi-Tickets / File d'attente Client ───────────────────────────
@@ -1649,6 +1711,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
           <div style={{ marginBottom: 20 }}>
             <input
               type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
               maxLength={4}
               placeholder="••••"
               value={codePinSaisi}
@@ -1658,38 +1722,41 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                 background: '#f8fafc', color: '#0f172a', fontSize: 24, letterSpacing: '0.4em', textAlign: 'center', boxSizing: 'border-box',
               }}
             />
-            {pinError && <p style={{ margin: '8px 0 0', color: '#dc2626', fontSize: 12, fontWeight: 600 }}>{pinError}</p>}
+            {pinError && <p style={{ margin: '8px 0 0', color: '#dc2626', fontSize: 13, fontWeight: 700 }}>{pinError}</p>}
           </div>
 
-          {/* Clavier Numérique PIN Pad */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 20 }}>
+          {/* Clavier Numérique PIN Pad Tactile avec Déclenchement Automatique */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
             {['1','2','3','4','5','6','7','8','9','C','0','⌫'].map(val => (
               <button
                 key={val}
-                onClick={() => {
-                  if (val === 'C') setCodePinSaisi('')
-                  else if (val === '⌫') setCodePinSaisi(prev => prev.slice(0, -1))
-                  else if (codePinSaisi.length < 4) setCodePinSaisi(prev => prev + val)
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  if (val === 'C') {
+                    setCodePinSaisi('')
+                    setPinError(null)
+                  } else if (val === '⌫') {
+                    setCodePinSaisi(prev => prev.slice(0, -1))
+                    setPinError(null)
+                  } else if (codePinSaisi.length < 4) {
+                    const nextPin = codePinSaisi + val
+                    setCodePinSaisi(nextPin)
+                    setPinError(null)
+                  }
                 }}
                 style={{
                   padding: '16px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 10,
-                  color: '#0f172a', fontWeight: 800, fontSize: 18, cursor: 'pointer',
+                  color: '#0f172a', fontWeight: 800, fontSize: 18, cursor: 'pointer', userSelect: 'none',
                 }}
               >
                 {val}
               </button>
             ))}
           </div>
-
-          <button
-            onClick={deverrouillerPin}
-            style={{
-              width: '100%', padding: '14px', background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)', color: '#fff', border: 'none',
-              borderRadius: 12, fontWeight: 800, fontSize: 15, cursor: 'pointer', boxShadow: '0 4px 14px rgba(199,91,0,0.3)',
-            }}
-          >
-            🔓 Déverrouiller la Caisse →
-          </button>
+          <p style={{ margin: '0', fontSize: 11, color: '#94a3b8', fontStyle: 'italic' }}>
+            ⚡ Le déverrouillage s&apos;effectue automatiquement dès la saisie du 4ème chiffre.
+          </p>
         </div>
       </div>
     )
@@ -1808,7 +1875,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
           </div>
 
           {/* Badge de Connexion Offline / Online */}
-          <div style={{
+          <div className="caisse-status-badge" style={{
             background: offlineModeActive ? '#dc2626' : '#16a34a',
             color: '#fff',
             padding: '4px 7px',
@@ -1830,7 +1897,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               value={boutiqueActiveId}
               onChange={e => changerBoutiqueActive(e.target.value)}
               className="caisse-boutique-select"
-              style={{ padding: '4px 6px', borderRadius: 6, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 11, cursor: 'pointer', outline: 'none', maxWidth: 130, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
+              style={{ padding: '4px 6px', borderRadius: 6, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 11, cursor: 'pointer', outline: 'none', maxWidth: 120, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
             >
               {boutiques.map(b => (
                 <option key={b.id} value={b.id}>
@@ -1849,17 +1916,18 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
             display: 'flex', alignItems: 'center', gap: 5,
             background: '#f8fafc', border: '1px solid #e2e8f0',
             borderRadius: 8, padding: '3px 7px 3px 8px',
+            maxWidth: 130, flexShrink: 0
           }}>
             <span style={{ fontSize: 13 }}>{roleActif === 'superviseur' ? '👑' : '👤'}</span>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: '#0f172a', maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{caissierNom}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#0f172a', maxWidth: 65, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{caissierNom}</span>
               <span style={{ fontSize: 9, fontWeight: 700, color: session ? '#16a34a' : '#ef4444', lineHeight: 1.2 }}>
                 {session ? '● Active' : '● Fermée'}
               </span>
             </div>
             <button
-              onClick={() => setVerrouille(true)}
-              title="Verrouiller"
+              onClick={verrouillerCaisseManuellement}
+              title="Verrouiller la caisse"
               style={{ background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 5, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
             >
               <Lock size={10} />
