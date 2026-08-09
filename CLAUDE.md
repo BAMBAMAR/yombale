@@ -1662,3 +1662,8 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
   - **Scraper Facebook** : Ajout de 5 nouveaux groupes dédiés à l'emploi pour augmenter le volume d'annonces de cette catégorie.
 
     - Ajustement du scraper : Les groupes d'emploi sont tous traités dans le tout premier lot de requêtes (maxGroupes = 10) pour maximiser le remplissage immédiat de la catégorie Emploi.
+
+ # # #   R è g l e   U I   :   B a r r e s   d e   R e c h e r c h e 
+ -   * * D é f i l e m e n t   a u t o m a t i q u e   ( A n c r e   # r e s u l t a t s ) * *   :   T o u t e s   l e s   b a r r e s   d e   r e c h e r c h e   s i t u é e s   s u r   d e s   p a g e s   c o n t e n a n t   u n   e n - t ê t e   ( H e r o )   d o i v e n t   a j o u t e r   l ' a n c r e   # r e s u l t a t s   l o r s   d e   l a   s o u m i s s i o n   (  o u t e r . p u s h ( ' / p a g e ? q = . . . # r e s u l t a t s ' ) )   p o u r   q u e   l ' u t i l i s a t e u r   a t t e r r i s s e   d i r e c t e m e n t   s u r   l e s   r é s u l t a t s ,   e n   s a u t a n t   l e   H e r o . 
+  
+ 
