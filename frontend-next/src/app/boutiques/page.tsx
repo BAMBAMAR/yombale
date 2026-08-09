@@ -178,12 +178,12 @@ export default async function BoutiquesPage({
                 <span>Hub officiel des vendeurs vérifiés Nopalou</span>
               </div>
 
-              <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 42, fontWeight: 900, margin: '0 0 16px', lineHeight: 1.1, color: '#0f172a' }}>
+              <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 32, fontWeight: 900, margin: '0 0 16px', lineHeight: 1.1, color: '#0f172a' }}>
                 Boutiques & Vendeurs Pro au <span style={{ color: '#C75B00' }}>Sénégal</span>
               </h1>
 
               <p style={{ fontSize: 16, color: '#475569', margin: '0 0 32px', lineHeight: 1.6 }}>
-                L'annuaire de référence pour trouver des commerçants de confiance, grossistes et artisans. Parcourez leurs catalogues interactifs, comparez les prix, et contactez-les directement par WhatsApp, sans aucun intermédiaire.
+                Découvrez des commerçants de confiance, parcourez leurs catalogues en ligne, comparez les prix et contactez-les directement par WhatsApp ou téléphone.
               </p>
             </div>
 
