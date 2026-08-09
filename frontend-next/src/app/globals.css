@@ -1964,7 +1964,7 @@ a {
   width: 340px;
   min-width: 260px;
   flex-shrink: 0;
-  padding: 24px 20px;
+  padding: 24px 20px 40px; /* Increased bottom padding */
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -1983,7 +1983,7 @@ a {
 .guide-left::after {
   content: "";
   display: block;
-  min-height: 24px;
+  min-height: 60px; /* Big space to ensure button and its shadow are fully visible */
   flex-shrink: 0;
 }
 .guide-left--navy {
