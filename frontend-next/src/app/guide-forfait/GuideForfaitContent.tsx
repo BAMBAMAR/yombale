@@ -166,7 +166,7 @@ export default function GuideForfaitPage() {
         compteur="Scoring personnalisé · 5 profils d'usage"
       />
 
-      <Link href="/telecom" className="guide-back-btn" style={{ marginBottom: 16 }}>← Forfaits</Link>
+      <Link href="/telecom" className="guide-back-btn">← Forfaits</Link>
 
       <div className="guide-wrap">
 

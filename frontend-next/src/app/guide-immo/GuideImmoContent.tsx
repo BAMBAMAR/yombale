@@ -150,7 +150,7 @@ export default function GuideImmoPage() {
         compteur="Scoring personnalisé · 5 profils d'acheteur"
       />
 
-      <Link href="/immo" className="guide-back-btn" style={{ marginBottom: 16 }}>← Annonces</Link>
+      <Link href="/immo" className="guide-back-btn">← Annonces</Link>
 
       <div className="guide-wrap">
 

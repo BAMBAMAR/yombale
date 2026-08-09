@@ -191,7 +191,7 @@ export default function GuideAchatPage({ categoriesActives }: { categoriesActive
         compteur="Scoring personnalisé · 4 profils d'achat"
       />
 
-      <Link href="/" className="guide-back-btn" style={{ marginBottom: 16 }}>← Retour</Link>
+      <Link href="/" className="guide-back-btn">← Retour</Link>
 
       <div className="guide-wrap">
 
