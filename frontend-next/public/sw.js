@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nopalou-shell-v3';
+const CACHE_NAME = 'nopalou-shell-v4';
 const APP_SHELL = [
   '/',
   '/offline.html',
@@ -36,7 +36,19 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/offline.html'))
+      fetch(request).catch(() => 
+        caches.match('/offline.html', { ignoreSearch: true, ignoreVary: true })
+          .then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // Secours ultime si offline.html a disparu du cache (empêche ERR_FAILED)
+            return new Response(
+              "<!DOCTYPE html><html lang='fr'><head><meta charset='utf-8'><title>Hors ligne</title><meta name='viewport' content='width=device-width, initial-scale=1'><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#F8F5F0;color:#333;text-align:center}</style></head><body><div><h1>Vous êtes hors ligne</h1><p>Impossible de joindre Nopalou pour le moment.</p><button onclick='location.reload()' style='padding:10px 20px;background:#C75B00;color:white;border:none;border-radius:8px;'>Réessayer</button></div></body></html>",
+              { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+            );
+          })
+      )
     );
     return;
   }

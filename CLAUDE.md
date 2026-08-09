@@ -28,6 +28,7 @@
 - Navigation Caisse Mobile par Onglets (caisse-mobile-tabs) : Onglets [ 🛍️ Catalogue | 🛒 Ticket ] sous le header (<= 1024px).
 - Barre Flottante Collante (caisse-sticky-bottom-bar) : Affichage en direct du total FCFA et bouton VOIR TICKET & ENCAISSER sur mobile.
 - Robustesse Scanner Caméra : Fallback automatique multi-caméras (facingMode environment -> video: true), gestion HTTPS et raccourci Douchette Smartphone Distante.
+- **Correction Critique Mode Hors Ligne (PWA / Service Worker)** : Résolution de l'erreur `ERR_FAILED` lors de la navigation sans connexion. Ajout des paramètres `{ ignoreSearch: true, ignoreVary: true }` pour forcer la lecture du cache Chrome et injection directe du HTML de secours (`offline.html`) dans `sw.js` (incrémenté à `v4`) pour garantir 100% de fiabilité.
 
 # CLAUDE.md
 
