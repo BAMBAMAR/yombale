@@ -2225,6 +2225,8 @@ a {
   font-weight: 700;
   cursor: pointer;
   margin-top: 16px;
+  margin-bottom: 32px;
+  flex-shrink: 0;
   letter-spacing: .02em;
   box-shadow: 0 4px 12px rgba(199, 91, 0, 0.2);
   transition: all .25s ease;
