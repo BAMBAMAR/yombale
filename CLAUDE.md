@@ -1,3 +1,14 @@
+## 🚀 Mises à jour du 10/08/2026 : Audit Complet & Securisation du Mode Offline POS / PWA + Suite de Tests E2E
+- **Suppression Sélective Unitaire dans IndexedDB (`frontend-next/src/lib/db-offline.ts` & `CaisseClient.tsx`)** :
+  * Création de la méthode `supprimerVenteHorsLigne(id_temporaire)` pour supprimer unitairement chaque vente synchronisée avec le serveur.
+  * Élimination de la purge globale `viderVentesHorsLigne()` qui détruisait les ventes non encore synchronisées en cas d'erreur ou d'échec partiel de réseau.
+- **Persistance des Stocks Décrémentés Hors-Ligne (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
+  * Synchronisation immédiate des niveaux de stock décrémentés localement dans la table IndexedDB `produits` lors de la validation d'une vente hors-ligne (`sauvegarderProduitsLocaux`).
+- **Enregistrement Effectif du Service Worker PWA (`frontend-next/src/app/RegisterSW.tsx`)** :
+  * Ajout de l'appel `navigator.serviceWorker.register('/sw.js')` dans le cycle de vie client pour garantir l'activation du Service Worker et la gestion proactive du cache PWA.
+- **Suite de Tests End-To-End Playwright (`tests/e2e/07-pos-offline-sync.spec.ts`)** :
+  * Création d'un test E2E automatisé validant la détection offline via `context.setOffline(true)`, l'affichage de l'alerte UI hors-ligne, la mise en file d'attente IndexedDB et le comportement au rétablissement réseau.
+
 ## 🚀 Mises à jour du 10/08/2026 : Amélioration du Mode Hors-Ligne PWA & Caisse POS
 - **Déblocage de l'Écran de Secours (Fallback) Hors-Ligne (`frontend-next/src/app/sw.ts`)** :
   * Suppression de l'exclusion stricte des routes `/boutique`, `/compte`, `/admin`, etc. qui provoquait un plantage natif Chrome (`ERR_NAME_NOT_RESOLVED`) au lieu de servir la page d'attente hors-ligne.

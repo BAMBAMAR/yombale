@@ -148,6 +148,18 @@ export async function obtenirVentesHorsLigne(): Promise<OfflineSale[]> {
   });
 }
 
+export async function supprimerVenteHorsLigne(id_temporaire: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('ventes_queue', 'readwrite');
+    const store = tx.objectStore('ventes_queue');
+    store.delete(id_temporaire);
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 export async function viderVentesHorsLigne(): Promise<void> {
   const db = await initialiserBaseLocale();
   return new Promise<void>((resolve, reject) => {
@@ -159,3 +171,4 @@ export async function viderVentesHorsLigne(): Promise<void> {
     tx.onerror = () => reject(tx.error);
   });
 }
+

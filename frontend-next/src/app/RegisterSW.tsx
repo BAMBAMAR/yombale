@@ -7,6 +7,18 @@ export default function RegisterSW() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
+    // Enregistrement effectif du Service Worker PWA
+    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((reg) => {
+          console.log('[PWA SW] Service Worker enregistré avec succès:', reg.scope)
+        })
+        .catch((err) => {
+          console.error('[PWA SW] Échec enregistrement Service Worker:', err)
+        })
+    }
+
     const handleOffline = () => setIsOffline(true)
     const handleOnline = () => {
       setIsOffline(false)

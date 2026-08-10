@@ -14,6 +14,7 @@ import {
   obtenirClientsLocaux,
   ajouterVenteHorsLigne,
   obtenirVentesHorsLigne,
+  supprimerVenteHorsLigne,
   viderVentesHorsLigne
 } from '@/lib/db-offline'
 
@@ -160,6 +161,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
           })
           if (res.success) {
             successCount++
+            await supprimerVenteHorsLigne(vente.id_temporaire).catch(() => {})
           }
         } catch (eErr) {
           console.error('Erreur synchro vente offline:', eErr)
@@ -167,7 +169,6 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       }
 
       if (successCount > 0) {
-        await viderVentesHorsLigne()
         rafraichirCompteurOffline()
         const hist = await getPosHistorique(boutiqueActiveId)
         if (hist && hist.length > 0) {
@@ -1438,6 +1439,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       })
       if (boutiqueActiveId) {
         localStorage.setItem(`nopalou_pos_produits_${boutiqueActiveId}`, JSON.stringify(updated))
+        sauvegarderProduitsLocaux(updated).catch(() => {})
       }
       return updated
     })
