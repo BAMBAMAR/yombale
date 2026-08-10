@@ -22,8 +22,22 @@ const serwist = new Serwist({
     entries: [
       {
         url: "/offline.html",
-        matcher({ request }) {
-          return request.destination === "document";
+        matcher({ request, url }) {
+          if (request.destination !== "document") return false;
+          const href = url?.href || request.url || "";
+          const pathname = new URL(href, self.location.href).pathname;
+          // Ne jamais intercepter les pages de compte, de boutique, de caisse POS, d'admin ou d'API avec l'écran hors-ligne
+          if (
+            pathname.startsWith("/compte") ||
+            pathname.startsWith("/boutique") ||
+            pathname.startsWith("/admin") ||
+            pathname.startsWith("/deposer") ||
+            pathname.startsWith("/mes-") ||
+            pathname.startsWith("/api")
+          ) {
+            return false;
+          }
+          return true;
         },
       },
     ],

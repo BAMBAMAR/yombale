@@ -1,3 +1,10 @@
+## 🚀 Mises à jour du 10/08/2026 : Déblocage des Actions Compte & Caisse POS (Exclusion SW & Suppression du Pop-up Masquant)
+- **Suppression Complète de la Pop-up Flottante Intrusive (`src/app/RegisterSW.tsx`)** :
+  * Élimination du bandeau flottant noir/orange qui masquait l'en-tête de la Caisse POS et les boutons d'action sur mobile. Le Service Worker s'enregistre désormais de façon 100% silencieuse en arrière-plan sans bloquer l'écran.
+- **Exclusion des Pages de Compte, Admin, Boutique & POS de la Redirection Hors-Ligne (`src/app/sw.ts`)** :
+  * Modification du matcher de fallback dans Service Worker : les routes `/compte`, `/boutique`, `/admin`, `/deposer`, `/mes-` et `/api` sont formellement exclues du remplacement par `/offline.html`.
+  * Garantit que toutes les actions utilisateur (création de produit, vente caisse POS, modification de profil, enregistrement d'annonce) s'exécutent en direct sans interruption.
+
 ## 🚀 Mises à jour du 10/08/2026 : Correction Majeure du Mode Hors-Ligne PWA & Enregistrement Service Worker (`sw.js`)
 - **Activation Universelle du Service Worker (`src/app/RegisterSW.tsx`)** :
   * Déblocage de l'enregistrement de `/sw.js` pour qu'il s'enregistre de façon fiable sur tous les navigateurs et terminaux mobiles.
