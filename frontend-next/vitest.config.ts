@@ -24,6 +24,7 @@ export default defineConfig({
     ],
   },
   test: {
+    pool: 'threads',
     setupFiles: ['./vitest.setup.ts'],
   },
 })

@@ -62,9 +62,9 @@ test.describe('API Backend — santé', () => {
 })
 
 test.describe('Diagnostic JWT_SECRET', () => {
-  test('vérification env var côté Next.js via /api proxy', async ({ page, request }) => {
+  test('vérification env var côté Next.js via /api proxy', async ({ request }) => {
     // Tester si le proxy /api/ fonctionne
-    const res = await page.request.get('/api/produits?limit=1')
+    const res = await request.get('/api/produits?limit=1')
     console.log(`Status /api/produits via proxy Next.js: ${res.status()}`)
     if (res.status() === 200) {
       console.log('✅ Proxy /api/ fonctionne')
