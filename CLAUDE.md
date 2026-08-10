@@ -1,3 +1,14 @@
+## 🚀 Mises à jour du 10/08/2026 : Résolution des Crashs Fugitifs/Intermittents & Déblocage CSP Service Worker (`sw.js`)
+- **Élimination de la Saturation du Pool DB (`backend/models/db.js`)** :
+  * Augmentation de la taille maximale du pool PostgreSQL de `max: 5` à `max: 20` (ou paramétrable via `PG_MAX_CONNECTIONS`) pour éviter la saturation sous trafic simultané.
+  * Réduction du délai d'attente de connexion `connectionTimeoutMillis` de 30s à 5s pour faire échouer et retenter rapidement au lieu de bloquer la file d'attente Node.js.
+  * Ajout obligatoire de l'écouteur d'événement `pool.on('error')` pour éviter qu'une déconnexion PostgreSQL inattendue sur un client inactif ne provoque le crash instantané du processus Node.js (`Unhandled error event`).
+- **Gestion Globale des Exceptions Backend (`backend/app.js`)** :
+  * Ajout des gestionnaires d'événements `process.on('uncaughtException')` et `process.on('unhandledRejection')` dans `app.js` pour empêcher la fermeture abrupte du serveur Express lors d'une promesse rejetée non capturée.
+- **Correction des Blocages CSP (`middleware.ts` & `backend/app.js`)** :
+  * Ajout des schémas `https:` et `wss:` ainsi que `blob:` et `data:` dans la directive `connect-src` des en-têtes Content Security Policy.
+  * Résolution des erreurs navigateur `sw.js: Refused to connect because it violates the document's Content Security Policy` et suppression des plantages de rendu Next.js Server Components (`An error occurred in the Server Components render`).
+
 ## 🚀 Mises à jour du 10/08/2026 : Résolution de la Tronquature d'URL d'Images (net::ERR_FAILED) & Suppression des Warnings Preload WOFF2
 - **Assainissement Universel des URLs d'Images (`ExternalImg.tsx` & `cloudinaryHQ` dans `lib/cloudinary.ts`)** :
   * Correction globale du préfixage `https://` dans `sanitizeImgUrl` pour les URLs sans protocole provenant de la base de données et des scrapers (Cloudinary, CoinAfrique, Soumari, Electroniccorp, Kaynoo, MasterOfficeDeco, UniversCosmetix, Jumia, etc.).

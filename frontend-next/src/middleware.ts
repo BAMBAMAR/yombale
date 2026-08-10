@@ -49,7 +49,7 @@ export async function middleware(req: NextRequest) {
     `style-src 'self' 'unsafe-inline'`,
     "img-src 'self' blob: data: https:",
     "font-src 'self' data:",
-    `connect-src 'self' ${process.env.BACKEND_URL ?? 'http://localhost:3000'} ${process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:3000'} https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://static.cloudflareinsights.com https://cloudflareinsights.com`,
+    `connect-src 'self' blob: data: https: wss: ${process.env.BACKEND_URL ?? ''} ${process.env.NEXT_PUBLIC_BACKEND_URL ?? ''}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

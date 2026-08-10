@@ -18,6 +18,15 @@ const compression = require('compression');
 const path        = require('path');
 require('dotenv').config();
 
+// ── Gestion globale des erreurs inattendues (Évite la mort du process Node) ──
+process.on('uncaughtException', (err) => {
+  console.error('💥 [CRITICAL UNCAUGHT EXCEPTION]:', err.stack || err.message);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('💥 [UNHANDLED REJECTION]:', reason);
+});
+
 // ── Sentry (monitoring, free tier) ──────────────────────────────
 let Sentry;
 try {
@@ -55,7 +64,7 @@ app.use(helmet({
       defaultSrc:    ["'self'"],
       scriptSrc:     ["'self'", "'unsafe-inline'"],
       scriptSrcAttr: ["'unsafe-inline'"],
-      connectSrc:    ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
+      connectSrc:    ["'self'", "https:", "wss:"],
       styleSrc:      ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       styleSrcElem:  ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc:       ["'self'", "https://fonts.gstatic.com", "data:"],

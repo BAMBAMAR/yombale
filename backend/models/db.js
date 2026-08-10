@@ -2,13 +2,18 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 5,                                    // Réduire le max pour éviter la saturation
+  max: process.env.PG_MAX_CONNECTIONS ? parseInt(process.env.PG_MAX_CONNECTIONS, 10) : 20,
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: process.env.NODE_ENV === 'production' } : false,
-  connectionTimeoutMillis: 30000,            // 30s (Render.com peut être lent depuis localhost)
-  statement_timeout:       30000,            // 30s
-  idle_in_transaction_session_timeout: 30000,// 30s
-  idleTimeoutMillis: 60000,                  // Garder les connexions idle 60s avant de fermer
+  connectionTimeoutMillis: 5000,             // Abandonne l'attente au bout de 5s au lieu de 30s
+  statement_timeout:       15000,            // 15s max par requête SQL
+  idle_in_transaction_session_timeout: 10000,// 10s max en transaction idle
+  idleTimeoutMillis: 30000,                  // Libère les connexions inactives au bout de 30s
   allowExitOnIdle: false,
+});
+
+// Écouteur global pour éviter le crash Node.js sur déconnexion inattendue d'un client inactif
+pool.on('error', (err) => {
+  console.error('⚠️ [PG POOL] Erreur inattendue sur client inactif:', err.message);
 });
 
 // Tentative de connexion avec retry
