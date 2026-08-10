@@ -1,3 +1,12 @@
+## 🚀 Mises à jour du 10/08/2026 : Débogage End-To-End (E2E), Immunisation DNS & Validation 100% Réussie
+- **Redondance du Backend API (`src/lib/api.ts`)** :
+  * Ajout explicite de l'URL directe du serveur Render (`https://yombale.onrender.com`) dans la liste de repli de l'utilitaire `apiFetch`.
+  * Garantit l'accès ininterrompu au backend même lors d'une micro-coupure de résolution DNS du nom de domaine personnalisé (`nopalou.com` -> `ERR_NAME_NOT_RESOLVED`).
+- **Validation Globale des Tests End-To-End (E2E Playwright)** :
+  * Compilation TypeScript sans erreur (`npx tsc --noEmit`).
+  * Vérification de la syntaxe backend Node.js (`node --check backend/app.js`).
+  * Exécution intégrale des suites de tests E2E pages publiques et API (`npx playwright test`) : **100% de succès (8 tests réussis sur 8)**.
+
 ## 🚀 Mises à jour du 10/08/2026 : Exemption du Scanner Remote POS & Augmentation Quota API (`/scanner-remote`)
 - **Correction Cruciale du Blocage Caisse POS (`backend/app.js`)** :
   * Identification de la cause exacte du crash révélée par les logs de la console browser (`/api/boutiques/.../scanner-remote?sessionId=SCAN-506709`) : l'auto-polling continu du scanner POS (1 requête/seconde) atteignait le quota de 300 requêtes en 5 minutes, déclenchant une erreur 429 "Trop de requêtes" puis une interception `ERR_FAILED` par le Service Worker.

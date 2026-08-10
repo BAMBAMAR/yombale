@@ -3,6 +3,7 @@ const BACKEND_URLS = Array.from(
     [
       process.env.BACKEND_URL,
       process.env.NEXT_PUBLIC_BACKEND_URL,
+      'https://yombale.onrender.com',
       'http://127.0.0.1:3000',
       'http://localhost:3000',
     ].filter((u): u is string => Boolean(u && u.trim()))
