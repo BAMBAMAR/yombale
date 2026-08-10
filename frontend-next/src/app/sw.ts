@@ -22,9 +22,9 @@ const serwist = new Serwist({
     entries: [
       {
         url: "/offline.html",
-        matcher({ request, url }) {
-          if (request.destination !== "document") return false;
-          const href = url?.href || request.url || "";
+        matcher({ request }: any) {
+          if (!request || request.destination !== "document") return false;
+          const href = request.url || "";
           const pathname = new URL(href, self.location.href).pathname;
           // Ne jamais intercepter les pages de compte, de boutique, de caisse POS, d'admin ou d'API avec l'écran hors-ligne
           if (

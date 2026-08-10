@@ -3,6 +3,7 @@
   * Élimination du bandeau flottant noir/orange qui masquait l'en-tête de la Caisse POS et les boutons d'action sur mobile. Le Service Worker s'enregistre désormais de façon 100% silencieuse en arrière-plan sans bloquer l'écran.
 - **Exclusion des Pages de Compte, Admin, Boutique & POS de la Redirection Hors-Ligne (`src/app/sw.ts`)** :
   * Modification du matcher de fallback dans Service Worker : les routes `/compte`, `/boutique`, `/admin`, `/deposer`, `/mes-` et `/api` sont formellement exclues du remplacement par `/offline.html`.
+  * Validation TypeScript rigoureusement confirmée avec **0 erreur (`npx tsc --noEmit`)**.
   * Garantit que toutes les actions utilisateur (création de produit, vente caisse POS, modification de profil, enregistrement d'annonce) s'exécutent en direct sans interruption.
 
 ## 🚀 Mises à jour du 10/08/2026 : Correction Majeure du Mode Hors-Ligne PWA & Enregistrement Service Worker (`sw.js`)
