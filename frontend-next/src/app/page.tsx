@@ -187,10 +187,41 @@ export default async function HomePage({
           {/* CATÉGORIES EN PILULES FLUIDES (Défilement horizontal sur mobile) */}
           <div className="hero-categories-scroll" style={{ maxWidth: 840, margin: '14px auto 0', position: 'relative', zIndex: 2 }}>
             {CATEGORIES.map((c) => {
-              if (categoriesActives !== null && !categoriesActives.includes(c.slug) && c.slug !== 'telecom') {
+              if (
+                categoriesActives !== null &&
+                !categoriesActives.includes(c.slug) &&
+                c.slug !== 'telecom' &&
+                c.slug !== 'immo' &&
+                c.slug !== 'annonces'
+              ) {
                 return null;
               }
               const isSelected = categorie === c.slug
+
+              if (c.slug === 'immo') {
+                return (
+                  <Link key={c.slug} href="/immo" className="categ-pill" style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                    whiteSpace: 'nowrap', flexShrink: 0
+                  }}>
+                    <span>🏢</span> <span>Immobilier & Terrains</span>
+                  </Link>
+                )
+              }
+
+              if (c.slug === 'annonces') {
+                return (
+                  <Link key={c.slug} href="/annonces" className="categ-pill" style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                    whiteSpace: 'nowrap', flexShrink: 0
+                  }}>
+                    <span>📢</span> <span>Petites Annonces</span>
+                  </Link>
+                )
+              }
+
               if (c.slug === 'telecom') {
                 return (
                   <Link key={c.slug} href="/telecom" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
@@ -202,6 +233,7 @@ export default async function HomePage({
                   </Link>
                 )
               }
+
               return (
                 <Link
                   key={c.slug}

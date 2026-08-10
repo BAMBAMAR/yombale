@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 10/08/2026 : Redirection des Pilules de Catégories Accueil vers les Pages Dédiées (`/immo` & `/annonces`)
+- **Correction des Redirections de Catégories d'Accueil (`app/page.tsx`)** :
+  * Configuration spécifique des pilules de catégories `🏢 Immobilier & Terrains` et `📢 Petites Annonces` dans la barre de défilement de la page d'accueil pour rediriger directement vers leurs univers dédiés respectifs (`/immo` et `/annonces`).
+  * Immunisation des pilules de catégories `immo`, `annonces` et `telecom` contre le filtrage automatique par `categoriesActives` pour garantir leur visibilité permanente.
+
 ## 🚀 Mises à jour du 10/08/2026 : Élimination Définitive du Crash Server Component (`TypeError: (0, s.u) is not a function`)
 - **Correction Cruciale de la Frontière Client / Serveur (`lib/sanitizeImg.ts`)** :
   * Identification de la cause fondamentale des erreurs de logs Render (`TypeError: (0, s.u) is not a function at immo/[id]/page.js`) : la fonction de nettoyage d'images `sanitizeImgUrl` était déclarée dans `components/ExternalImg.tsx` marquée de la directive Client `'use client'`.
