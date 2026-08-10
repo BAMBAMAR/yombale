@@ -61,9 +61,10 @@ function scoreMixte(data_mo: number | null, minutes: number | null, prix: number
   return (data / prix) * 600 + (mins / prix) * 70
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   try {
-    const f = await apiFetch<Forfait>(`/telecom/${params.id}`)
+    const { id } = await params
+    const f = await apiFetch<Forfait>(`/telecom/${id}`)
     return {
       title: `${f.nom} — Forfait ${f.operateur}`,
       description: `Forfait ${f.operateur} ${f.nom} à ${fcfa(f.prix)}${f.data_mo ? ` — ${formatData(f.data_mo)} internet` : ''}${f.minutes === -1 ? ', appels illimités' : f.minutes ? `, ${f.minutes} min d'appels` : ''}`,
@@ -73,17 +74,18 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-export default async function FicheForfaitPage({ params }: { params: { id: string } }) {
+export default async function FicheForfaitPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   let forfait: Forfait
   let similaires: ForfaitSimilaire[] = []
 
   try {
-    forfait = await apiFetch<Forfait>(`/telecom/${params.id}`)
+    forfait = await apiFetch<Forfait>(`/telecom/${id}`)
   } catch {
     notFound()
   }
 
-  await apiFetch<{ forfaits: ForfaitSimilaire[] }>(`/telecom/${params.id}/similaires`)
+  await apiFetch<{ forfaits: ForfaitSimilaire[] }>(`/telecom/${id}/similaires`)
     .then(raw => { similaires = raw?.forfaits ?? [] })
     .catch(() => {})
 

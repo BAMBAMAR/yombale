@@ -1,3 +1,10 @@
+## 🚀 Mises à jour du 10/08/2026 : Résolution Critique du Crash SSR Server Components (Next.js 15 Async Params)
+- **Résolution du Plantage des Routes Dynamiques (`immo/[id]`, `annonces/[id]`, `produit/[id]`, `boutiques/[id]`, `categorie/[slug]`, `telecom/[id]`, `comparer/[a]/[b]`, `payer-annonce/[id]`)** :
+  * Identification de la cause exacte du message d'erreur de rendu `An error occurred in the Server Components render` : l'accès synchrone non-asynchrone à `params.id` / `params.slug` sur Next.js 15 App Router.
+  * Conversion intégrale du type `params: { id: string }` vers `params: Promise<{ id: string }>` et ajout systématique de `const { id } = await params` ou `const { slug } = await params` dans toutes les fonctions `generateMetadata` et composants de page SSR.
+  * Migration des appels `fetch` directs avec `http://localhost:3000` vers l'utilitaire résilient `apiFetch` ([lib/api.ts](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/lib/api.ts)) sur les pages `/annonces` et `/annonces/[id]` pour garantir le basculement automatique entre les adresses IP backend et éliminer les échecs SSR.
+  * Encapsulation des sous-requêtes secondaires (produits similaires, annonces associées, historique) dans des blocs `.catch(() => {})` pour empêcher tout échec secondaire d'interrompre le rendu de la page principale.
+
 ## 🚀 Mises à jour du 10/08/2026 : Résolution des Crashs Fugitifs/Intermittents & Déblocage CSP Service Worker (`sw.js`)
 - **Élimination de la Saturation du Pool DB (`backend/models/db.js`)** :
   * Augmentation de la taille maximale du pool PostgreSQL de `max: 5` à `max: 20` (ou paramétrable via `PG_MAX_CONNECTIONS`) pour éviter la saturation sous trafic simultané.

@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
@@ -13,10 +13,11 @@ interface PageParams {
 
 export const dynamic = 'force-dynamic'
 
-export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<PageParams> }): Promise<Metadata> {
+  const p = await params;
   return {
-    title: `Comparer ${decodeURIComponent(params.a)} vs ${decodeURIComponent(params.b)}`,
-    description: `Comparaison détaillée : ${decodeURIComponent(params.a)} vs ${decodeURIComponent(params.b)}. Trouvez le meilleur prix au Sénégal.`,
+    title: `Comparer ${decodeURIComponent(p.a)} vs ${decodeURIComponent(p.b)}`,
+    description: `Comparaison détaillée : ${decodeURIComponent(p.a)} vs ${decodeURIComponent(p.b)}. Trouvez le meilleur prix au Sénégal.`,
   };
 }
 
@@ -34,9 +35,10 @@ interface ApiResponse {
   data?: Produit[];
 }
 
-export default async function ComparerPage({ params }: { params: PageParams }) {
-  const produitAName = decodeURIComponent(params.a);
-  const produitBName = decodeURIComponent(params.b);
+export default async function ComparerPage({ params }: { params: Promise<PageParams> }) {
+  const p = await params;
+  const produitAName = decodeURIComponent(p.a);
+  const produitBName = decodeURIComponent(p.b);
 
   let produitA: Produit | undefined;
   let produitB: Produit | undefined;

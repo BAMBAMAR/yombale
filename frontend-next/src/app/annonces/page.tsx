@@ -7,9 +7,28 @@ import FiltresBar from '@/components/FiltresBar'
 import SeoCard from '@/components/SeoCard'
 import SearchWithAnchor from '@/app/SearchWithAnchor'
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
-const SSR_SECRET = process.env.SSR_SECRET || ''
-const SSR_HEADERS: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}
+import { apiFetch } from '@/lib/api'
+
+interface AnnoncesResponse {
+  annonces: Annonce[]
+  total: number
+}
+
+async function fetchAnnonces(
+  categorie: string, page: number, tri: string,
+  q: string, prixMax: string, ville: string, source: string
+) {
+  const params = new URLSearchParams({ limit: '24', page: String(page) })
+  if (categorie) params.set('categorie', categorie)
+  if (tri)       params.set('tri', tri)
+  if (q)         params.set('q', q)
+  if (prixMax)   params.set('prixMax', prixMax)
+  if (ville)     params.set('ville', ville)
+  if (source)    params.set('source', source)
+  try {
+    return await apiFetch<AnnoncesResponse>(`/annonces?${params}`)
+  } catch { return { annonces: [], total: 0 } }
+}
 
 const CATEGORIES = [
   { slug: '',             label: 'Toutes',       emoji: '🗂' },
@@ -61,23 +80,7 @@ interface Annonce {
   created_at: string
 }
 
-async function fetchAnnonces(
-  categorie: string, page: number, tri: string,
-  q: string, prixMax: string, ville: string, source: string
-) {
-  const params = new URLSearchParams({ limit: '24', page: String(page) })
-  if (categorie) params.set('categorie', categorie)
-  if (tri)       params.set('tri', tri)
-  if (q)         params.set('q', q)
-  if (prixMax)   params.set('prixMax', prixMax)
-  if (ville)     params.set('ville', ville)
-  if (source)    params.set('source', source)
-  try {
-    const r = await fetch(`${BACKEND}/api/annonces?${params}`, { headers: SSR_HEADERS, next: { revalidate: 60 } })
-    if (!r.ok) return { annonces: [], total: 0 }
-    return r.json()
-  } catch { return { annonces: [], total: 0 } }
-}
+
 
 function formatPrix(p: number | null) {
   if (!p) return 'Prix à négocier'

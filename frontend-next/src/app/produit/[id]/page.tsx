@@ -206,10 +206,11 @@ function HistoriqueChart({ data }: { data: HistoriquePoint[] }) {
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   try {
-    const p = await apiFetch<Produit>(`/produits/${params.id}`);
+    const { id } = await params;
+    const p = await apiFetch<Produit>(`/produits/${id}`);
     const titre = `${p.nom}${p.marque ? ` ${p.marque}` : ''} — Prix Sénégal | Nopalou`;
     const prixStr = p.prix_min ? ` à partir de ${fcfa(p.prix_min)}` : ''
     const description = p.description
@@ -251,7 +252,8 @@ function buildJsonLd(produit: Produit, offres: Offre[]): string {
 
 // ── Page ───────────────────────────────────────────────────────────
 
-export default async function FicheProduitPage({ params }: { params: { id: string } }) {
+export default async function FicheProduitPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   let produit: Produit;
   let offres: Offre[] = [];
   let historique: HistoriquePoint[] = [];
@@ -260,13 +262,13 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
   const session = await getOptionalSession();
 
   try {
-    produit = await apiFetch<Produit>(`/produits/${params.id}`);
+    produit = await apiFetch<Produit>(`/produits/${id}`);
   } catch {
     notFound();
   }
 
   await Promise.all([
-    apiFetch<Offre[] | { offres?: Offre[]; data?: Offre[] }>(`/produits/${params.id}/offres`)
+    apiFetch<Offre[] | { offres?: Offre[]; data?: Offre[] }>(`/produits/${id}/offres`)
       .then(raw => {
         const list = Array.isArray(raw) ? raw : (raw.offres ?? raw.data ?? []);
         // Le backend renvoie prix en NUMERIC Postgres (sérialisé en string, ex: "230000.00") —
@@ -274,10 +276,10 @@ export default async function FicheProduitPage({ params }: { params: { id: strin
         offres = list.map(o => ({ ...o, prix: o.prix != null ? Number(o.prix) : null }));
       })
       .catch(() => {}),
-    apiFetch<HistoriquePoint[]>(`/produits/${params.id}/historique`)
+    apiFetch<HistoriquePoint[]>(`/produits/${id}/historique`)
       .then(raw => { historique = Array.isArray(raw) ? raw : []; })
       .catch(() => {}),
-    apiFetch<{ produits: ProduitSimilaire[] }>(`/produits/${params.id}/similaires`)
+    apiFetch<{ produits: ProduitSimilaire[] }>(`/produits/${id}/similaires`)
       .then(raw => { similaires = raw?.produits ?? []; })
       .catch(() => {}),
   ]);

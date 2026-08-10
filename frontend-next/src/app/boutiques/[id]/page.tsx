@@ -34,9 +34,10 @@ const CAT_ICONS: Record<string, string> = {
   services: '🛠', alimentation: '🥗', beaute: '💄', autre: '🏪',
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   try {
-    const b = await apiFetch<Boutique>(`/boutiques/${params.id}`)
+    const { id } = await params
+    const b = await apiFetch<Boutique>(`/boutiques/${id}`)
     return {
       title: `${b.nom} — Boutique sur Nopalou`,
       description: b.description ?? `Boutique de ${b.ville} sur Nopalou`,
@@ -47,13 +48,14 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-export default async function BoutiqueDetailPage({ params }: { params: { id: string } }) {
+export default async function BoutiqueDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   let boutique: Boutique
   let annonces: Annonce[] = []
   let produits: Produit[] = []
 
   try {
-    boutique = await apiFetch<Boutique>(`/boutiques/${params.id}`)
+    boutique = await apiFetch<Boutique>(`/boutiques/${id}`)
   } catch {
     notFound()
   }
@@ -61,7 +63,7 @@ export default async function BoutiqueDetailPage({ params }: { params: { id: str
   const b = boutique!
 
   // URL canonique : rediriger vers le slug si on est arrivé via l'UUID
-  if (b.slug && params.id !== b.slug) {
+  if (b.slug && id !== b.slug) {
     redirect(`/boutiques/${b.slug}`)
   }
 

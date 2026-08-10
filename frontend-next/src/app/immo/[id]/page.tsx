@@ -85,10 +85,11 @@ function buildRealEstateJsonLd(annonce: AnnonceImmo): string {
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   try {
-    const annonce = await apiFetch<AnnonceImmo>(`/immo/${params.id}`);
+    const { id } = await params;
+    const annonce = await apiFetch<AnnonceImmo>(`/immo/${id}`);
     const localisation = [annonce.quartier, annonce.ville].filter(Boolean).join(', ');
     const titre = `${annonce.titre}${localisation ? ` — ${localisation}` : ''} | Nopalou Immo`;
     const description =
@@ -119,21 +120,22 @@ export async function generateMetadata({
 export default async function FicheImmoPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   let annonce: AnnonceImmo;
   let similaires: AnnonceSimilaire[] = [];
   const session = await getOptionalSession();
 
   try {
-    annonce = await apiFetch<AnnonceImmo>(`/immo/${params.id}`);
+    annonce = await apiFetch<AnnonceImmo>(`/immo/${id}`);
   } catch {
     notFound();
   }
 
-  await apiFetch<{ annonces: AnnonceSimilaire[] }>(`/immo/${params.id}/similaires`)
+  await apiFetch<{ annonces: AnnonceSimilaire[] }>(`/immo/${id}/similaires`)
     .then(raw => { similaires = raw?.annonces ?? []; })
-    .catch(() => {});
+    .catch(() => { similaires = []; });
 
   const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000';
   let settings: Record<string, string> = {};

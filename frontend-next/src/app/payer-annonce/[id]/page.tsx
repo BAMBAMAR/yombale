@@ -17,7 +17,8 @@ interface Annonce {
   categorie_slug: string
 }
 
-export default async function PayerAnnoncePage({ params }: { params: { id: string } }) {
+export default async function PayerAnnoncePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const session = await getOptionalSession()
   if (!session) redirect('/connexion?redirect=/mes-annonces')
 
@@ -27,7 +28,7 @@ export default async function PayerAnnoncePage({ params }: { params: { id: strin
     const res = await backendAuthFetch('/annonces/mine')
     if (res.ok) {
       const data: { annonces: Annonce[] } = await res.json()
-      annonce = data.annonces.find(a => a.id === params.id) ?? null
+      annonce = data.annonces.find(a => a.id === id) ?? null
     }
   } catch {
     // handled below

@@ -42,11 +42,12 @@ const CARAC_LABELS: Record<string, string> = {
 }
 
 export async function generateMetadata(
-  { params }: { params: { id: string; produitId: string } }
+  { params }: { params: Promise<{ id: string; produitId: string }> }
 ): Promise<Metadata> {
   try {
+    const { id, produitId } = await params
     const { produit } = await apiFetch<{ produit: ProduitDetail }>(
-      `/boutiques/${params.id}/produits/${params.produitId}`
+      `/boutiques/${id}/produits/${produitId}`
     )
     return {
       title: `${produit.nom} — ${produit.boutique_nom}`,
@@ -59,13 +60,14 @@ export async function generateMetadata(
 }
 
 export default async function FicheProduitPage(
-  { params }: { params: { id: string; produitId: string } }
+  { params }: { params: Promise<{ id: string; produitId: string }> }
 ) {
+  const { id, produitId } = await params
   let produit: ProduitDetail
 
   try {
     const data = await apiFetch<{ produit: ProduitDetail }>(
-      `/boutiques/${params.id}/produits/${params.produitId}`
+      `/boutiques/${id}/produits/${produitId}`
     )
     produit = data.produit
   } catch {

@@ -41,9 +41,10 @@ interface ApiResponse {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const cat = CATEGORIES[params.slug]
+  const { slug } = await params
+  const cat = CATEGORIES[slug]
   if (!cat) return { title: 'Catégorie introuvable' }
 
   return {
@@ -54,10 +55,10 @@ export async function generateMetadata({
       title: `${cat.label} au Sénégal — Nopalou`,
       description: cat.description,
       type: 'website',
-      url: `${BASE}/categorie/${params.slug}`,
+      url: `${BASE}/categorie/${slug}`,
     },
     alternates: {
-      canonical: `${BASE}/categorie/${params.slug}`,
+      canonical: `${BASE}/categorie/${slug}`,
     },
   }
 }
@@ -68,10 +69,11 @@ export default async function CategoriePage({
   params,
   searchParams,
 }: {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
   searchParams: Promise<{ page?: string; prixMax?: string; tri?: string; sousType?: string; q?: string }> | { page?: string; prixMax?: string; tri?: string; sousType?: string; q?: string }
 }) {
-  const cat = CATEGORIES[params.slug]
+  const { slug } = await params
+  const cat = CATEGORIES[slug]
   if (!cat) notFound()
 
   const sp = await Promise.resolve(searchParams)
