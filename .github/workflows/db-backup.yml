@@ -1,0 +1,36 @@
+name: Sauvegarde Automatique Base de Données
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Exécution automatique chaque nuit à 02h00 UTC
+  workflow_dispatch: # Permet de lancer un backup manuellement en 1-clic depuis GitHub
+
+jobs:
+  backup:
+    name: Backup PostgreSQL Nopalou
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Récupération du code source
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Configuration de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📦 Installation des dépendances
+        run: npm install pg
+
+      - name: 🗄️ Exécution de l'exportation SQL
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          node scripts/backup-railway.js "$DATABASE_URL"
+
+      - name: 💾 Archivage de la Sauvegarde (Rétention 30 jours)
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-nopalou-sql
+          path: backup-railway-*.sql
+          retention-days: 30

@@ -1,3 +1,11 @@
+## 🚀 Mises à jour du 10/08/2026 : Automatisation des Backups Nocturnes & Auto-Rétablissement UI en Cas de Panne
+- **Workflow de Sauvegarde Automatique Nocturne (`.github/workflows/db-backup.yml`)** :
+  * Déclenchement automatique chaque nuit à 02h00 UTC pour exporter l'intégralité de la base de données PostgreSQL Nopalou.
+  * Archivage et rétention chiffrée pendant 30 jours des dumps SQL sur GitHub Artifacts.
+- **Rétablissement Automatique UI en Cas de Coupure (`frontend-next/src/app/error.tsx`)** :
+  * Intégration d'un sondage automatique arrière-plan (`polling /api/health` toutes les 4s) sur la page d'erreur globale.
+  * Dès que le serveur/base de données se rétablit, la page recharge et réinitialise automatiquement l'application pour les utilisateurs sans aucune intervention manuelle.
+
 ## 🚀 Mises à jour du 10/08/2026 : Déploiement de l'Architecture Haute Disponibilité (HA) & Résilience E-Commerce
 - **Isolation Stricte des Processus (`PROCESS_TYPE=web` vs `PROCESS_TYPE=worker` dans `backend/app.js`)** :
   * Séparation nette des responsabilités : en mode Web API (`PROCESS_TYPE=web`), le serveur Express ne lance **jamais** Puppeteer ni le scraping en arrière-plan, préservant 100% de la mémoire RAM pour répondre aux requêtes clients en < 50ms.

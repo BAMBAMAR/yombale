@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function Error({
   error,
@@ -9,9 +9,32 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const [isChecking, setIsChecking] = useState(false)
+
   useEffect(() => {
     console.error('[Nopalou Error]', error)
-  }, [error])
+
+    // Sondage automatique /api/health toutes les 4 secondes pour restaurer la page dès que le serveur réagit
+    const interval = setInterval(async () => {
+      try {
+        setIsChecking(true)
+        const res = await fetch('/api/health', { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.status === 'ok') {
+            clearInterval(interval)
+            reset()
+          }
+        }
+      } catch {
+        // En attente du rétablissement serveur
+      } finally {
+        setIsChecking(false)
+      }
+    }, 4000)
+
+    return () => clearInterval(interval)
+  }, [error, reset])
 
   const isNextTechnicalError =
     error?.message?.includes('Server Components render') ||
@@ -19,7 +42,7 @@ export default function Error({
     error?.message?.includes('production builds')
 
   const displayMessage = isNextTechnicalError || !error?.message
-    ? 'Un problème temporaire de connexion est survenu. Cliquez ci-dessous pour recharger la page.'
+    ? 'Un problème temporaire de connexion est survenu. Le système se réinitialise automatiquement.'
     : error.message
 
   return (
@@ -33,9 +56,14 @@ export default function Error({
       <p style={{ marginBottom: 24, color: '#6b7280', fontSize: '0.95rem', lineHeight: 1.5 }}>
         {displayMessage}
       </p>
+      {isChecking && (
+        <div style={{ fontSize: '0.85rem', color: '#C75B00', marginBottom: 16, fontWeight: 700 }}>
+          ⏳ Connexion au serveur en cours...
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
         <button onClick={() => reset()} className="btn-primary" style={{ padding: '10px 20px', cursor: 'pointer' }}>
-          🔄 Réessayer
+          🔄 Réessayer maintenant
         </button>
         <a href="/" className="btn-secondary" style={{ padding: '10px 20px', textDecoration: 'none', background: '#f3f4f6', color: '#374151', borderRadius: 8, fontWeight: 600 }}>
           🏠 Retour à l&apos;accueil
