@@ -23,20 +23,9 @@ const serwist = new Serwist({
       {
         url: "/offline.html",
         matcher({ request }: any) {
+          // Si ce n'est pas une navigation complète de page HTML, on ne sert pas l'écran hors-ligne
           if (!request || request.destination !== "document") return false;
-          const href = request.url || "";
-          const pathname = new URL(href, self.location.href).pathname;
-          // Ne jamais intercepter les pages de compte, de boutique, de caisse POS, d'admin ou d'API avec l'écran hors-ligne
-          if (
-            pathname.startsWith("/compte") ||
-            pathname.startsWith("/boutique") ||
-            pathname.startsWith("/admin") ||
-            pathname.startsWith("/deposer") ||
-            pathname.startsWith("/mes-") ||
-            pathname.startsWith("/api")
-          ) {
-            return false;
-          }
+          
           return true;
         },
       },
