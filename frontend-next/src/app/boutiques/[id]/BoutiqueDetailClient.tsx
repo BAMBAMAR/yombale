@@ -135,8 +135,8 @@ function ProduitCard({
               <ExternalImg src={cloudinaryHQ(img, { width: 400 })} alt={p.nom}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
                 loading="lazy"
-                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+                onMouseEnter={(e: React.MouseEvent<HTMLImageElement>) => { e.currentTarget.style.transform = 'scale(1.05)' }}
+                onMouseLeave={(e: React.MouseEvent<HTMLImageElement>) => { e.currentTarget.style.transform = 'scale(1)' }}
               />
             ) : (
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', color: 'var(--text3)' }}>

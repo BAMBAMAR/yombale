@@ -3,6 +3,7 @@
   * Identification de la cause fondamentale des erreurs de logs Render (`TypeError: (0, s.u) is not a function at immo/[id]/page.js`) : la fonction de nettoyage d'images `sanitizeImgUrl` était déclarée dans `components/ExternalImg.tsx` marquée de la directive Client `'use client'`.
   * L'importation de `sanitizeImgUrl` depuis un fichier `'use client'` par les composants Serveur App Router (`lib/cloudinary.ts`, `immo/[id]/page.tsx`, `annonces/page.tsx`) transformait la fonction en un objet de référence Client non invocable côté serveur.
   * Extraction de `sanitizeImgUrl` dans le nouveau fichier isomorphe pur [lib/sanitizeImg.ts](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/lib/sanitizeImg.ts) sans directive `'use client'`, supprimant l'erreur de fonction invalide et fiabilisant à 100% le rendu SSR.
+  * Validation TypeScript rigoureuse et typage d'événements React pour garantir **0 erreur (`npx tsc --noEmit`)**.
 
 ## 🚀 Mises à jour du 10/08/2026 : Résolution Critique du Crash SSR Server Components (Next.js 15 Async Params & Fallback API)
 - **Multi-Endpoint Fallback Loop dans `apiFetch` (`lib/api.ts`)** :

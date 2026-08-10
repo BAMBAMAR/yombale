@@ -5,6 +5,20 @@ import { sanitizeImgUrl } from '@/lib/sanitizeImg'
 
 export { sanitizeImgUrl }
 
+export interface ExternalImgProps {
+  src: string | null | undefined
+  alt: string
+  fallback?: string | React.ReactNode
+  className?: string
+  fallbackClassName?: string
+  style?: React.CSSProperties
+  loading?: 'lazy' | 'eager'
+  width?: number
+  height?: number
+  onMouseEnter?: (e: React.MouseEvent<HTMLImageElement>) => void
+  onMouseLeave?: (e: React.MouseEvent<HTMLImageElement>) => void
+}
+
 /**
  * Balise img native robuste :
  * - Chargement direct et sécurisé en HTTPS
