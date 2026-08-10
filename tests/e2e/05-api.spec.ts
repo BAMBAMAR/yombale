@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://yombale-backend.onrender.com'
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://yombale.onrender.com'
 
 // ── Tests API backend ────────────────────────────────────────────────
 // Ces tests vérifient que le backend répond correctement
