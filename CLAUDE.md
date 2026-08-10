@@ -1,3 +1,9 @@
+## 🚀 Mises à jour du 10/08/2026 : Amélioration du Mode Hors-Ligne PWA & Caisse POS
+- **Déblocage de l'Écran de Secours (Fallback) Hors-Ligne (`frontend-next/src/app/sw.ts`)** :
+  * Suppression de l'exclusion stricte des routes `/boutique`, `/compte`, `/admin`, etc. qui provoquait un plantage natif Chrome (`ERR_NAME_NOT_RESOLVED`) au lieu de servir la page d'attente hors-ligne.
+- **Ajout d'Action Contextuelle Hors-Ligne (`frontend-next/public/offline.html`)** :
+  * Intégration d'un bouton de retour rapide vers la Caisse POS (`/boutique/caisse`) pour permettre aux utilisateurs de reprendre leurs ventes sans interruption.
+
 ## 🚀 Mises à jour du 10/08/2026 : Débogage End-To-End (E2E), Immunisation DNS & Validation 100% Réussie
 - **Redondance du Backend API (`src/lib/api.ts`)** :
   * Ajout explicite de l'URL directe du serveur Render (`https://yombale.onrender.com`) dans la liste de repli de l'utilitaire `apiFetch`.
