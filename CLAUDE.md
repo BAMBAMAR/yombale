@@ -1,3 +1,9 @@
+## 🚀 Mises à jour du 10/08/2026 : Exemption du Scanner Remote POS & Augmentation Quota API (`/scanner-remote`)
+- **Correction Cruciale du Blocage Caisse POS (`backend/app.js`)** :
+  * Identification de la cause exacte du crash révélée par les logs de la console browser (`/api/boutiques/.../scanner-remote?sessionId=SCAN-506709`) : l'auto-polling continu du scanner POS (1 requête/seconde) atteignait le quota de 300 requêtes en 5 minutes, déclenchant une erreur 429 "Trop de requêtes" puis une interception `ERR_FAILED` par le Service Worker.
+  * Ajout de l'exemption explicite (`skip`) dans `apiLimiter` pour les routes de sondage temps réel `/scanner-remote`, `/health` et `/analytics`.
+  * Augmentation du quota global `apiLimiter` de 300 à 1000 requêtes / 15 min.
+
 ## 🚀 Mises à jour du 10/08/2026 : Résolution Définitive de l'Erreur `ERR_FAILED` & Déblocage Total de la Navigation (`/boutique`, `/boutiques`, Catalogue)
 - **Élimination de l'Interception Interne par le Service Worker (`RegisterSW.tsx` & `public/sw.js`)** :
   * Identification de la cause exacte de l'erreur Chrome `ERR_FAILED` sur `https://nopalou.com/boutique` : l'ancien Service Worker Serwist pré-enregistré dans les navigateurs tentait d'intercepter les requêtes HTTP/RSC et bloquait la connexion.

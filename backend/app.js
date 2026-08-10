@@ -106,9 +106,16 @@ const rateLimit = require('express-rate-limit');
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    return (
+      req.path.includes('/scanner-remote') ||
+      req.path.includes('/health') ||
+      req.path.includes('/analytics')
+    );
+  },
   message: { error: 'Trop de requêtes, veuillez réessayer dans 15 minutes.' },
 });
 
