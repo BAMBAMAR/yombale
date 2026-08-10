@@ -14,7 +14,7 @@ const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
-  navigationPreload: true,
+  navigationPreload: false,
   runtimeCaching: [
     ...defaultCache,
   ],
@@ -23,9 +23,22 @@ const serwist = new Serwist({
       {
         url: "/offline.html",
         matcher({ request }: any) {
-          // Si ce n'est pas une navigation complète de page HTML, on ne sert pas l'écran hors-ligne
+          // Ne pas intercepter si ce n'est pas une navigation HTML
           if (!request || request.destination !== "document") return false;
-          
+
+          // Si l'appareil est connecté à Internet, ne JAMAIS afficher l'écran offline.html
+          if (typeof self !== "undefined" && self.navigator && self.navigator.onLine === true) {
+            return false;
+          }
+
+          // Exclure les requêtes d'API et d'assets Next.js
+          try {
+            const url = new URL(request.url);
+            if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/")) {
+              return false;
+            }
+          } catch {}
+
           return true;
         },
       },

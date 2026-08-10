@@ -1,3 +1,9 @@
+## 🚀 Mises à jour du 10/08/2026 : Résolution des Erreurs SW `Uncaught (in promise)` & Securisation du Fallback Offline
+- **Élimination des Erreurs Console Service Worker (`frontend-next/src/app/sw.ts`)** :
+  * Passation de `navigationPreload: false` dans Serwist pour supprimer les rejections de promesse non capturées (`Uncaught (in promise)`) sous Chrome lors du préchargement de navigation.
+- **Protection Anti-Fausse Redirection Hors-Ligne (`frontend-next/src/app/sw.ts`)** :
+  * Ajout du contrôle `self.navigator.onLine === true` dans le matcher `fallbacks.entries` pour garantir que `/offline.html` ne s'affiche JAMAIS lorsque l'utilisateur est connecté à Internet (ex: sur `/compte`, `/boutique`, `/admin`).
+
 ## 🚀 Mises à jour du 10/08/2026 : Correction de la Récupération des Boutiques & Persistance de la Boutique Sélectionnée
 - **Correction Critique de la Requête SQL (`backend/routes/boutiques.js`)** :
   * Correction de la clause `GROUP BY b.id, is_owner` -> `GROUP BY b.id` sur la route `/api/boutiques/mine`. L'utilisation de l'alias d'expression `is_owner` déclenchait une erreur PostgreSQL 500 (`column "is_owner" does not exist`), ce qui retournait 0 boutique et affichait l'écran de création par défaut lors du retour à `/boutique`.
