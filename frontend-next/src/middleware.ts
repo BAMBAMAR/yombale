@@ -76,6 +76,16 @@ export async function middleware(req: NextRequest) {
   }
   response.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()')
 
+  // ── 3. Edge CDN Caching pour routes de catalogue publiques ────
+  if (
+    pathname.startsWith('/immo') ||
+    pathname.startsWith('/annonces') ||
+    pathname.startsWith('/categorie') ||
+    pathname.startsWith('/telecom')
+  ) {
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+  }
+
   return response
 }
 

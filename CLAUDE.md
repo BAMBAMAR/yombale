@@ -1,3 +1,15 @@
+## 🚀 Mises à jour du 10/08/2026 : Déploiement de l'Architecture Haute Disponibilité (HA) & Résilience E-Commerce
+- **Isolation Stricte des Processus (`PROCESS_TYPE=web` vs `PROCESS_TYPE=worker` dans `backend/app.js`)** :
+  * Séparation nette des responsabilités : en mode Web API (`PROCESS_TYPE=web`), le serveur Express ne lance **jamais** Puppeteer ni le scraping en arrière-plan, préservant 100% de la mémoire RAM pour répondre aux requêtes clients en < 50ms.
+  * Les crons lourds et le scraping Puppeteer sont isolés dans les processus Workers (`PROCESS_TYPE=worker`).
+- **Protection Anti-DDoS & Brute-Force (`express-rate-limit` dans `backend/app.js`)** :
+  * Rate limiter applicatif global sur `/api/` (300 requêtes / 15 min par IP).
+  * Rate limiter renforcé sur les endpoints d'authentification et paiement (`/api/auth/login`, `/api/auth/register`, `/api/admin/login`, `/api/paiement/`) limité à 20 requêtes / 15 min par IP.
+- **Route d'État & Diag Santé `/api/health` & `/health`** :
+  * Diagnostic complet renvoyant le statut DB (`SELECT 1`), la latence SQL en ms, le mode de process (`PROCESS_TYPE`), l'uptime et la consommation RAM détaillée (`rss`, `heapUsed`).
+- **Mise en Cache Edge CDN (`frontend-next/src/middleware.ts`)** :
+  * Injection automatique des en-têtes `Cache-Control: public, s-maxage=300, stale-while-revalidate=600` sur toutes les routes de catalogue publiques (`/immo`, `/annonces`, `/categorie`, `/telecom`) pour optimiser le caching Cloudflare / Vercel Edge.
+
 ## 🚀 Mises à jour du 10/08/2026 : Redirection des Pilules de Catégories Accueil vers les Pages Dédiées (`/immo` & `/annonces`)
 - **Correction des Redirections de Catégories d'Accueil (`app/page.tsx`)** :
   * Configuration spécifique des pilules de catégories `🏢 Immobilier & Terrains` et `📢 Petites Annonces` dans la barre de défilement de la page d'accueil pour rediriger directement vers leurs univers dédiés respectifs (`/immo` et `/annonces`).

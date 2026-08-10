@@ -101,6 +101,31 @@ app.use(cors({
 }));
 app.use(compression());
 
+// ── Rate Limiting (Protection contre DDoS & Brute-force) ─────
+const rateLimit = require('express-rate-limit');
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de requêtes, veuillez réessayer dans 15 minutes.' },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de tentatives, veuillez réessayer dans 15 minutes.' },
+});
+
+app.use('/api/', apiLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/admin/login', authLimiter);
+app.use('/api/paiement/', authLimiter);
+
 // Sentry v8+ : l'instrumentation des requêtes est automatique (pas de middleware requis)
 
 app.use(express.json({
@@ -200,12 +225,36 @@ app.use('/api/apporteurs',      require('./routes/apporteurs'));
 app.use('/api/affiliates',      require('./routes/affiliates'));
 app.use('/api/qualite',         require('./routes/qualite'));
 
-// ── Health check ──────────────────────────────────────────────
-app.get('/health', async (req, res) => {
+// ── Health check (Diagnostics & Liveness/Readiness Probes) ─────
+app.get(['/health', '/api/health'], async (req, res) => {
   const { pool } = require('./models/db');
-  let db = 'ok';
-  try { await pool.query('SELECT 1'); } catch { db = 'erreur'; }
-  res.json({ status: 'ok', version: '1.1.0', db, ts: new Date() });
+  let dbStatus = 'ok';
+  let dbLatency = 0;
+  const start = Date.now();
+  try {
+    await pool.query('SELECT 1');
+    dbLatency = Date.now() - start;
+  } catch (err) {
+    dbStatus = 'error: ' + err.message;
+  }
+
+  const mem = process.memoryUsage();
+  res.json({
+    status: dbStatus === 'ok' ? 'ok' : 'degraded',
+    processType: process.env.PROCESS_TYPE || 'web',
+    version: '1.2.0',
+    uptimeSeconds: Math.floor(process.uptime()),
+    memoryMB: {
+      rss: Math.round(mem.rss / 1024 / 1024),
+      heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
+      heapTotal: Math.round(mem.heapTotal / 1024 / 1024),
+    },
+    db: {
+      status: dbStatus,
+      latencyMs: dbLatency,
+    },
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // ── SSR pour les bots (Googlebot, Bingbot…) ──────────────────
@@ -251,13 +300,21 @@ async function demarrerApp() {
       }
     });
 
-    const { demarrerScraping, demarrerCronsMetier } = require('./services/scraper');
-    demarrerCronsMetier();
+    const processType = process.env.PROCESS_TYPE || 'web';
 
-    if (process.env.SCRAPING_DISABLED !== 'true') {
-      demarrerScraping();
+    if (processType === 'worker') {
+      console.log('🤖 [MODE WORKER] Démarrage des tâches de fond (scraping & crons)');
+      const { demarrerScraping, demarrerCronsMetier } = require('./services/scraper');
+      demarrerCronsMetier();
+      if (process.env.SCRAPING_DISABLED !== 'true') {
+        demarrerScraping();
+      } else {
+        console.log('[SCRAPER] Désactivé (SCRAPING_DISABLED=true)');
+      }
     } else {
-      console.log('[SCRAPER] Désactivé (SCRAPING_DISABLED=true)');
+      console.log('⚡ [MODE WEB SERVER] Démarrage de l\'API Web uniquement (Scraping isolé dans le worker)');
+      const { demarrerCronsMetier } = require('./services/scraper');
+      demarrerCronsMetier();
     }
   });
 
