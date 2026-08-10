@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Archivo } from 'next/font/google';
 import Script from 'next/script';
 import { headers } from 'next/headers';
 import Image from 'next/image';
@@ -28,8 +27,8 @@ try {
 
 import NavbarActions from './NavbarActions';
 import NavbarSearch from './NavbarSearch';
-import NavbarGuides from './NavbarGuides'
-import MobileNav from './MobileNav'
+import NavbarGuides from './NavbarGuides';
+import MobileNav from './MobileNav';
 import BottomBars from './BottomBars';
 import RegisterSW from './RegisterSW';
 import PwaInstallPrompt from '@/components/PwaInstallPrompt';
@@ -37,18 +36,6 @@ import FavToast from './FavToast';
 import VerifyEmailToast from './VerifyEmailToast';
 import { CartProvider } from '@/context/CartContext';
 import { Suspense } from 'react';
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-const archivo = Archivo({
-  subsets: ['latin'],
-  variable: '--font-archivo',
-  display: 'swap',
-});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -174,7 +161,7 @@ export default async function RootLayout({
   const nonce = (await headers()).get('x-nonce') ?? undefined;
 
   return (
-    <html lang="fr" className={`${inter.variable} ${archivo.variable}`}>
+    <html lang="fr">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="color-scheme" content="light" />

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
+import ExternalImg from '@/components/ExternalImg'
 
 export const metadata: Metadata = {
   title: 'Comparaison immobilier',
@@ -112,10 +113,7 @@ export default async function ImmoComparaisonPage({
                   <th key={a.id} className={`comp-th${i === meilleursIndex ? ' comp-th--best' : ''}`}>
                     {i === meilleursIndex && <div className="comp-best-badge">Meilleur prix</div>}
                     <div className="comp-prod-img">
-                      {img
-                        ? <img src={img} alt={a.titre} loading="lazy" />
-                        : <span className="comp-img-placeholder">{TYPE_ICONS[a.type_bien ?? ''] ?? '🏠'}</span>
-                      }
+                      <ExternalImg src={img} alt={a.titre} fallback={TYPE_ICONS[a.type_bien ?? ''] ?? '🏠'} fallbackClassName="comp-img-placeholder" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <Link href={`/immo/${a.id}`} className="comp-prod-nom">{a.titre}</Link>
                     {a.ville && <span className="comp-prod-marque">📍 {a.ville}</span>}

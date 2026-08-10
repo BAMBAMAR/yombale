@@ -46,9 +46,9 @@ export async function middleware(req: NextRequest) {
   const cspDirectives = [
     "default-src 'self'",
     `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com`,
-    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+    `style-src 'self' 'unsafe-inline'`,
     "img-src 'self' blob: data: https:",
-    "font-src 'self' https://fonts.gstatic.com data:",
+    "font-src 'self' data:",
     `connect-src 'self' ${process.env.BACKEND_URL ?? 'http://localhost:3000'} ${process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:3000'} https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://static.cloudflareinsights.com https://cloudflareinsights.com`,
     "object-src 'none'",
     "base-uri 'self'",

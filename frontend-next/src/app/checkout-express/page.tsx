@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import ExternalImg from '@/components/ExternalImg'
 
 interface Zone {
   id: string
@@ -196,11 +197,7 @@ function CheckoutExpressContent() {
         {/* Détails du Produit */}
         {produitInfo ? (
           <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid #f1f5f9', marginBottom: 20 }}>
-            {produitInfo.photo ? (
-              <img src={produitInfo.photo} alt={produitInfo.nom} style={{ width: 68, height: 68, borderRadius: 12, objectFit: 'cover' }} />
-            ) : (
-              <div style={{ width: 68, height: 68, borderRadius: 12, background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>📦</div>
-            )}
+            <ExternalImg src={produitInfo.photo} alt={produitInfo.nom} fallback="📦" style={{ width: 68, height: 68, borderRadius: 12, objectFit: 'cover' }} />
             <div style={{ flex: 1 }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: '#C75B00', textTransform: 'uppercase' }}>{produitInfo.boutiqueNom}</span>
               <h1 style={{ margin: '2px 0 4px', fontSize: 16, fontWeight: 800, color: '#0f172a' }}>{produitInfo.nom}</h1>

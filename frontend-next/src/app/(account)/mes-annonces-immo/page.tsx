@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { backendFetch } from '@/lib/backend-fetch'
 import { fcfa } from '@/lib/format'
 import DeleteImmoButton from './DeleteImmoButton'
+import ExternalImg from '@/components/ExternalImg'
 
 export const metadata: Metadata = {
   title: 'Mes annonces immo',
@@ -100,12 +101,7 @@ export default async function MesAnnoncesImmoPage({
             return (
               <div key={a.id} className="mes-immo-card">
                 <div className="mes-immo-card-img">
-                  {a.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={a.image_url} alt={a.titre} />
-                  ) : (
-                    <span>{icon}</span>
-                  )}
+                  <ExternalImg src={a.image_url} alt={a.titre} fallback={icon} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 <div className="mes-immo-card-body">
                   <p className="mes-immo-card-titre">{a.titre}</p>

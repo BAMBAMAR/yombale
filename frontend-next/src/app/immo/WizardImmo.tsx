@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { fcfa } from '@/lib/format'
 
+import ExternalImg from '@/components/ExternalImg'
+
 interface AnnonceImmo {
   id: string
   titre: string
@@ -208,10 +210,7 @@ export default function WizardImmo({ onClose }: Props) {
                   return (
                     <a key={a.id} href={`/immo/${a.id}`} className="wizard-immo-card" target="_blank" rel="noopener">
                       <div className="wizard-immo-img">
-                        {img
-                          ? <img src={img} alt={a.titre} loading="lazy" />
-                          : <span style={{ fontSize: 28 }}>🏠</span>
-                        }
+                        <ExternalImg src={img} alt={a.titre} fallback="🏠" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                       <div className="wizard-immo-info">
                         <p className="wizard-immo-titre">{a.titre}</p>

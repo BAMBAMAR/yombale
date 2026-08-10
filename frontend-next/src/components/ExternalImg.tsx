@@ -17,7 +17,7 @@ interface ExternalImgProps {
 }
 
 /**
- * Nettoie et sécurise l'URL d'image.
+ * Nettoie et sécurise l'URL d'image pour garantir un protocole HTTPS absolu.
  */
 export function sanitizeImgUrl(url: string | null | undefined): string | null {
   if (!url) return null
@@ -40,37 +40,30 @@ export function sanitizeImgUrl(url: string | null | undefined): string | null {
     return 'https:' + cleaned
   }
 
-  // 4. Force HTTPS pour éviter les blocages de contenu mixte et échecs CSP upgrade-insecure-requests
+  // 4. Force HTTPS pour éviter les blocages de contenu mixte
   if (cleaned.startsWith('http://')) {
     return cleaned.replace(/^http:\/\//i, 'https://')
   }
 
-  // 5. Si l'URL ne commence ni par https:// ni par / ni par data:/blob: mais contient un domaine (ex: res.cloudinary.com/..., images.coinafrique.com/...)
-  if (
-    !cleaned.startsWith('https://') &&
-    !cleaned.startsWith('/') &&
-    !cleaned.startsWith('data:') &&
-    !cleaned.startsWith('blob:')
-  ) {
-    if (
-      cleaned.includes('/') ||
-      cleaned.includes('.com') ||
-      cleaned.includes('.sn') ||
-      cleaned.includes('.net') ||
-      cleaned.includes('.org')
-    ) {
-      return 'https://' + cleaned
-    }
+  // 5. URLs absolues avec https://, data:, blob:
+  if (cleaned.startsWith('https://') || cleaned.startsWith('data:') || cleaned.startsWith('blob:')) {
+    return cleaned
   }
 
-  return cleaned
+  // 6. Fichiers statiques locaux de l'application Next.js (ex: /icons/..., /logo.svg)
+  if (cleaned.startsWith('/')) {
+    return cleaned
+  }
+
+  // 7. Domaine sans protocole (ex: res.cloudinary.com/..., images.coinafrique.com/..., www.soumari.com/..., electroniccorp.sn/..., etc.)
+  return 'https://' + cleaned.replace(/^(https?:\/\/)?/i, '')
 }
 
 /**
  * Balise img native robuste :
- * - referrerPolicy="no-referrer" pour éviter les blocages anti-hotlink des CDN (CoinAfrique, Jumia, etc.)
- * - Tentative automatique via le proxy CDN sécurisé (wsrv.nl) si le chargement direct échoue
- * - Affichage de l'élément de secours (emoji/icône) uniquement en dernier recours
+ * - Chargement direct et sécurisé en HTTPS
+ * - Fallback via proxy CDN (wsrv.nl) si échec direct
+ * - Affichage de l'élément de secours en dernier recours
  */
 export default function ExternalImg({
   src,

@@ -1,3 +1,14 @@
+## 🚀 Mises à jour du 10/08/2026 : Résolution de la Tronquature d'URL d'Images (net::ERR_FAILED) & Suppression des Warnings Preload WOFF2
+- **Assainissement Universel des URLs d'Images (`ExternalImg.tsx` & `cloudinaryHQ` dans `lib/cloudinary.ts`)** :
+  * Correction globale du préfixage `https://` dans `sanitizeImgUrl` pour les URLs sans protocole provenant de la base de données et des scrapers (Cloudinary, CoinAfrique, Soumari, Electroniccorp, Kaynoo, MasterOfficeDeco, UniversCosmetix, Jumia, etc.).
+  * Intégration systématique de `sanitizeImgUrl` à l'intérieur du helper `cloudinaryHQ` pour garantir qu'aucune transformation d'image ne retourne d'URL relative sans protocole `https://`.
+  * Élimination définitive des erreurs navigateur `net::ERR_FAILED` qui tentaient de charger des URLs sans schéma en tant que ressources locales (ex: `https://nopalou.com/res.cloudinary.com/...` -> 404).
+  * Remplacement des balises `<img>` brutes par le composant résilient `<ExternalImg />` ou `sanitizeImgUrl` dans `WizardImmo.tsx`, `immo/[id]/page.tsx`, `immo/comparaison/page.tsx`, `checkout-express/page.tsx`, `mes-annonces-immo/page.tsx`.
+- **Conformité Polices Système & Suppression des Warnings Preload (`layout.tsx`, `globals.css` & `middleware.ts`)** :
+  * Suppression de l'import `next/font/google` (`Inter` & `Archivo`) dans `layout.tsx` pour éliminer les requêtes/téléchargements WOFF2 et les avertissements navigateur `The resource .../media/*.woff2 was preloaded using link preload but not used within a few seconds`.
+  * Définition des variables CSS `--font-inter` et `--font-archivo` directement sur `:root` dans `globals.css` avec la pile de polices système native haute lisibilité (`system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`), en parfaite conformité avec les règles agentiques du projet.
+  * Nettoyage des directives `style-src` et `font-src` dans le middleware CSP (`middleware.ts`).
+
 ## 🚀 Mises à jour du 10/08/2026 : Intégration du Bilan de Session Caissier Synthétique (Rapport X) & Traçabilité Audit
 - **Modale & Rapport X Intermédiaire Caisse (`CaisseClient.tsx`)** :
   * Création d'une modale dédiée **`📊 Bilan Session (Rapport X)`** accessible en 1 clic dans le menu **🔧 Outils** de la caisse POS.

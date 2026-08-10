@@ -55,7 +55,9 @@ img, video, iframe {
   --shadow:  0 1px 4px rgba(26,22,18,.07);
   --shadow2: 0 6px 24px rgba(26,22,18,.13);
 
-  /* Pile monospace système — 0 Ko, chiffres tabulaires alignés (prix, compteurs) */
+  /* Piles de polices système haute lisibilité sans chargement externe */
+  --font-inter: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-archivo: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Mono', 'Roboto Mono', Consolas, monospace;
 
   /* Largeur commune des sections homepage — ces variables étaient référencées

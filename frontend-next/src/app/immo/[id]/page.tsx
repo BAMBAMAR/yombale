@@ -9,6 +9,7 @@ import SponsoringImmoBtn from './SponsoringImmoBtn';
 import { cloudinaryHQ } from '@/lib/cloudinary';
 import BoutonWhatsApp from '@/components/BoutonWhatsApp';
 import SimilRow from '@/components/SimilRow';
+import { sanitizeImgUrl } from '@/components/ExternalImg';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -185,7 +186,7 @@ export default async function FicheImmoPage({
         <Link href={`/immo/${meilleurBien.id}`} className="meilleur-choix-banner">
           <div className="meilleur-choix-img">
             {meilleurBien.photos?.[0]
-              ? <img src={meilleurBien.photos[0]} alt={meilleurBien.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ? <img src={sanitizeImgUrl(meilleurBien.photos[0])!} alt={meilleurBien.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : <span>🏠</span>
             }
           </div>
@@ -448,7 +449,7 @@ export default async function FicheImmoPage({
                         <div className="simil-produit-cell">
                           <div className="simil-img-wrap">
                             {l.photo
-                              ? <img src={l.photo} alt={l.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ? <img src={sanitizeImgUrl(l.photo)!} alt={l.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               : <span>🏠</span>
                             }
                           </div>
