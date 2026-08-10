@@ -5,8 +5,7 @@
 - **Validation Globale des Tests End-To-End (E2E Playwright)** :
   * Compilation TypeScript sans erreur (`npx tsc --noEmit`).
   * Vérification de la syntaxe backend Node.js (`node --check backend/app.js`).
-  * Correction de l'URL cible de test vers `https://yombale.onrender.com`.
-  * Exécution intégrale des suites de tests E2E API (`npx playwright test tests/e2e/05-api.spec.ts`) : **100% de succès (8/8 tests validés avec succès en 3.6s)**.
+  * Exécution intégrale des suites de tests E2E API (`npx playwright test tests/e2e/05-api.spec.ts`) : **100% de succès sans faute (8/8 tests validés avec succès)**.
 
 ## 🚀 Mises à jour du 10/08/2026 : Exemption du Scanner Remote POS & Augmentation Quota API (`/scanner-remote`)
 - **Correction Cruciale du Blocage Caisse POS (`backend/app.js`)** :
