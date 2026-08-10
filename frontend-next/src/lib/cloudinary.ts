@@ -1,4 +1,4 @@
-import { sanitizeImgUrl } from '@/components/ExternalImg'
+import { sanitizeImgUrl } from '@/lib/sanitizeImg'
 
 /**
  * Transforme une URL Cloudinary pour y injecter des paramètres de qualité.

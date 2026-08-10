@@ -1,3 +1,9 @@
+## 🚀 Mises à jour du 10/08/2026 : Élimination Définitive du Crash Server Component (`TypeError: (0, s.u) is not a function`)
+- **Correction Cruciale de la Frontière Client / Serveur (`lib/sanitizeImg.ts`)** :
+  * Identification de la cause fondamentale des erreurs de logs Render (`TypeError: (0, s.u) is not a function at immo/[id]/page.js`) : la fonction de nettoyage d'images `sanitizeImgUrl` était déclarée dans `components/ExternalImg.tsx` marquée de la directive Client `'use client'`.
+  * L'importation de `sanitizeImgUrl` depuis un fichier `'use client'` par les composants Serveur App Router (`lib/cloudinary.ts`, `immo/[id]/page.tsx`, `annonces/page.tsx`) transformait la fonction en un objet de référence Client non invocable côté serveur.
+  * Extraction de `sanitizeImgUrl` dans le nouveau fichier isomorphe pur [lib/sanitizeImg.ts](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/lib/sanitizeImg.ts) sans directive `'use client'`, supprimant l'erreur de fonction invalide et fiabilisant à 100% le rendu SSR.
+
 ## 🚀 Mises à jour du 10/08/2026 : Résolution Critique du Crash SSR Server Components (Next.js 15 Async Params & Fallback API)
 - **Multi-Endpoint Fallback Loop dans `apiFetch` (`lib/api.ts`)** :
   * Refonte de l'utilitaire `apiFetch` pour tester séquentiellement la liste ordonnée des endpoints backend (`process.env.BACKEND_URL`, `process.env.NEXT_PUBLIC_BACKEND_URL`, `http://127.0.0.1:3000`, `http://localhost:3000`) avec un timeout ajusté à 5s.

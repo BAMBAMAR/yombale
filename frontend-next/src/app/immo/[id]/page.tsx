@@ -9,7 +9,7 @@ import SponsoringImmoBtn from './SponsoringImmoBtn';
 import { cloudinaryHQ } from '@/lib/cloudinary';
 import BoutonWhatsApp from '@/components/BoutonWhatsApp';
 import SimilRow from '@/components/SimilRow';
-import { sanitizeImgUrl } from '@/components/ExternalImg';
+import { sanitizeImgUrl } from '@/lib/sanitizeImg';
 
 // ── Types ────────────────────────────────────────────────────────
 
