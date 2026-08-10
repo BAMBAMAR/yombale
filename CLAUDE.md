@@ -1,3 +1,10 @@
+## 🚀 Mises à jour du 10/08/2026 : Correction Majeure du Mode Hors-Ligne PWA & Enregistrement Service Worker (`sw.js`)
+- **Activation Universelle du Service Worker (`src/app/RegisterSW.tsx`)** :
+  * Déblocage de l'enregistrement de `/sw.js` pour qu'il s'enregistre de façon fiable sur tous les navigateurs et terminaux mobiles.
+  * Ajout d'une bannière flottante réactive en direct (`online` / `offline`) : affiche `📡 Mode Hors-Ligne — Consultation des pages en cache local` lors de la perte de réseau, et se dissipe automatiquement avec `✅ Connexion Internet rétablie` lors du retour du réseau.
+- **Refonte de la Page Hors-Ligne Fallback PWA (`public/offline.html`)** :
+  * Design moderne Nopalou avec auto-rechargement dynamique dès le retour d'Internet et bouton de consultation du cache local.
+
 ## 🚀 Mises à jour du 10/08/2026 : Automatisation des Backups Nocturnes & Auto-Rétablissement UI en Cas de Panne
 - **Workflow de Sauvegarde Automatique Nocturne (`.github/workflows/db-backup.yml`)** :
   * Déclenchement automatique chaque nuit à 02h00 UTC pour exporter l'intégralité de la base de données PostgreSQL Nopalou.
