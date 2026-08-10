@@ -1,9 +1,16 @@
-## 🚀 Mises à jour du 10/08/2026 : Résolution Critique du Crash SSR Server Components (Next.js 15 Async Params)
+## 🚀 Mises à jour du 10/08/2026 : Résolution Critique du Crash SSR Server Components (Next.js 15 Async Params & Fallback API)
+- **Multi-Endpoint Fallback Loop dans `apiFetch` (`lib/api.ts`)** :
+  * Refonte de l'utilitaire `apiFetch` pour tester séquentiellement la liste ordonnée des endpoints backend (`process.env.BACKEND_URL`, `process.env.NEXT_PUBLIC_BACKEND_URL`, `http://127.0.0.1:3000`, `http://localhost:3000`) avec un timeout ajusté à 5s.
+  * Garantit que le SSR de Next.js résout automatiquement l'URL publique ou locale du backend quelle que soit la plateforme d'hébergement (Vercel, Railway, Render, Local).
+- **Sécurisation de la Page d'Accueil (`app/page.tsx`)** :
+  * Migration de tous les appels `fetch` directs de `app/page.tsx` vers `apiFetch` avec gestion gracieuse d'état d'erreur pour empêcher tout échec SSR d'interrompre l'affichage du site.
+- **Refonte de la Page d'Erreur Globale (`app/error.tsx`)** :
+  * Interception des messages d'erreur masqués de Next.js en production (`Server Components render`) pour afficher un message clair et professionnel à l'utilisateur au lieu du texte brut technique.
+  * Ajout d'un bouton de rechargement rapide 🔄 et d'un bouton de retour à l'accueil 🏠.
 - **Résolution du Plantage des Routes Dynamiques (`immo/[id]`, `annonces/[id]`, `produit/[id]`, `boutiques/[id]`, `categorie/[slug]`, `telecom/[id]`, `comparer/[a]/[b]`, `payer-annonce/[id]`)** :
   * Identification de la cause exacte du message d'erreur de rendu `An error occurred in the Server Components render` : l'accès synchrone non-asynchrone à `params.id` / `params.slug` sur Next.js 15 App Router.
   * Conversion intégrale du type `params: { id: string }` vers `params: Promise<{ id: string }>` et résolution asynchrone complète (`const { id } = await params`, `const { slug } = await params`, `const { id, produitId } = await params`) dans toutes les fonctions `generateMetadata` et les templates JSX des composantes de page.
   * Compilations TypeScript rigoureusement validées avec **0 erreur (`npx tsc --noEmit`)**.
-  * Migration des appels `fetch` directs avec `http://localhost:3000` vers l'utilitaire résilient `apiFetch` ([lib/api.ts](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/lib/api.ts)) sur la page `/annonces` et la catégorie `/categorie/[slug]` pour éliminer tout risque d'échec SSR.
 
 ## 🚀 Mises à jour du 10/08/2026 : Résolution des Crashs Fugitifs/Intermittents & Déblocage CSP Service Worker (`sw.js`)
 - **Élimination de la Saturation du Pool DB (`backend/models/db.js`)** :

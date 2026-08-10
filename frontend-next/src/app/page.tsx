@@ -11,6 +11,7 @@ import ProduitsListe from './ProduitsListe'
 import RecentlyViewed from './RecentlyViewed'
 import CompareFilterBanner from '@/components/CompareFilterBanner'
 import ShowcaseTabs from './ShowcaseTabs'
+import { apiFetch } from '@/lib/api'
 
 export const metadata: Metadata = {
   title: 'Comparateur de prix au Sénégal · Dakar',
@@ -90,18 +91,7 @@ export default async function HomePage({
     if (tri)       params.set('tri',       tri)
     if (sousType)  params.set('sousType',  sousType)
 
-    const url = `${BACKEND}/api/produits?${params}`
-    let r: Response
-    try {
-      r = await fetch(url, { cache: 'no-store', headers: SSR_HEADERS })
-    } catch {
-      const fallbackUrl = url.includes('127.0.0.1')
-        ? url.replace('127.0.0.1', 'localhost')
-        : url.replace('localhost', '127.0.0.1')
-      r = await fetch(fallbackUrl, { cache: 'no-store', headers: SSR_HEADERS })
-    }
-    if (!r.ok) throw new Error(`API produits → ${r.status}`)
-    const data: ApiResponse | Produit[] = await r.json()
+    const data = await apiFetch<ApiResponse | Produit[]>(`/produits?${params}`)
     if (Array.isArray(data)) {
       produits = data
       total    = data.length
@@ -118,15 +108,12 @@ export default async function HomePage({
   let settings: Record<string, string> = {}
   let categoriesActives: string[] | null = null
   try {
-    const [rSettings, rCat] = await Promise.all([
-      fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store', headers: SSR_HEADERS }).catch(() => null),
-      fetch(`${BACKEND}/api/produits/categories-actives`, { cache: 'no-store', headers: SSR_HEADERS }).catch(() => null)
+    const [stg, catAct] = await Promise.all([
+      apiFetch<Record<string, string>>('/settings/public').catch(() => ({})),
+      apiFetch<string[]>('/produits/categories-actives').catch(() => null),
     ])
-    if (rSettings && rSettings.ok) settings = await rSettings.json()
-    if (rCat && rCat.ok) {
-      categoriesActives = await rCat.json()
-      // Always include 'mixte' if it's not present, or maybe it's not needed if we filter by slug
-    }
+    if (stg) settings = stg
+    if (catAct) categoriesActives = catAct
   } catch {
     // valeurs par défaut ci-dessous
   }
