@@ -137,10 +137,7 @@ export default async function AnnoncesPage({
 
   let categoriesActives: string[] | null = null
   try {
-    const res = await fetch(`${BACKEND}/api/annonces/categories-actives`, { cache: 'no-store', headers: SSR_HEADERS })
-    if (res.ok) {
-      categoriesActives = await res.json()
-    }
+    categoriesActives = await apiFetch<string[]>('/annonces/categories-actives')
   } catch (e) {}
 
   const filteredCategories = CATEGORIES.filter(cat => !cat.slug || categoriesActives === null || categoriesActives.includes(cat.slug))

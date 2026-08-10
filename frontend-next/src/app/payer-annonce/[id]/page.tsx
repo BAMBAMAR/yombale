@@ -92,7 +92,7 @@ export default async function PayerAnnoncePage({ params }: { params: Promise<{ i
       </div>
 
       <PaiementClient
-        annonceId={params.id}
+        annonceId={id}
         titreCourt={titreCourt}
         settings={settings}
         userId={session.userId}

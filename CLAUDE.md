@@ -1,9 +1,9 @@
 ## 🚀 Mises à jour du 10/08/2026 : Résolution Critique du Crash SSR Server Components (Next.js 15 Async Params)
 - **Résolution du Plantage des Routes Dynamiques (`immo/[id]`, `annonces/[id]`, `produit/[id]`, `boutiques/[id]`, `categorie/[slug]`, `telecom/[id]`, `comparer/[a]/[b]`, `payer-annonce/[id]`)** :
   * Identification de la cause exacte du message d'erreur de rendu `An error occurred in the Server Components render` : l'accès synchrone non-asynchrone à `params.id` / `params.slug` sur Next.js 15 App Router.
-  * Conversion intégrale du type `params: { id: string }` vers `params: Promise<{ id: string }>` et ajout systématique de `const { id } = await params` ou `const { slug } = await params` dans toutes les fonctions `generateMetadata` et composants de page SSR.
-  * Migration des appels `fetch` directs avec `http://localhost:3000` vers l'utilitaire résilient `apiFetch` ([lib/api.ts](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/lib/api.ts)) sur les pages `/annonces` et `/annonces/[id]` pour garantir le basculement automatique entre les adresses IP backend et éliminer les échecs SSR.
-  * Encapsulation des sous-requêtes secondaires (produits similaires, annonces associées, historique) dans des blocs `.catch(() => {})` pour empêcher tout échec secondaire d'interrompre le rendu de la page principale.
+  * Conversion intégrale du type `params: { id: string }` vers `params: Promise<{ id: string }>` et résolution asynchrone complète (`const { id } = await params`, `const { slug } = await params`, `const { id, produitId } = await params`) dans toutes les fonctions `generateMetadata` et les templates JSX des composantes de page.
+  * Compilations TypeScript rigoureusement validées avec **0 erreur (`npx tsc --noEmit`)**.
+  * Migration des appels `fetch` directs avec `http://localhost:3000` vers l'utilitaire résilient `apiFetch` ([lib/api.ts](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/lib/api.ts)) sur la page `/annonces` et la catégorie `/categorie/[slug]` pour éliminer tout risque d'échec SSR.
 
 ## 🚀 Mises à jour du 10/08/2026 : Résolution des Crashs Fugitifs/Intermittents & Déblocage CSP Service Worker (`sw.js`)
 - **Élimination de la Saturation du Pool DB (`backend/models/db.js`)** :

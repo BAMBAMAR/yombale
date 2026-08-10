@@ -78,7 +78,7 @@ export default async function FicheProduitPage(
 
   const waContact = p.boutique_whatsapp || p.boutique_telephone
   const waUrl = waContact
-    ? `https://wa.me/${waContact.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par :\n\n*${p.nom}*${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${params.id}/produits/${params.produitId}`)}`
+    ? `https://wa.me/${waContact.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par :\n\n*${p.nom}*${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${id}/produits/${produitId}`)}`
     : null
   const telUrl = p.boutique_telephone ? `tel:${p.boutique_telephone}` : null
 
@@ -97,7 +97,7 @@ export default async function FicheProduitPage(
       <nav style={{ fontSize: 13, color: '#9ca3af', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
         <Link href="/boutiques" style={{ color: '#6b7280', textDecoration: 'none' }}>Boutiques</Link>
         <span>›</span>
-        <Link href={`/boutiques/${params.id}`} style={{ color: '#6b7280', textDecoration: 'none' }}>{p.boutique_nom}</Link>
+        <Link href={`/boutiques/${id}`} style={{ color: '#6b7280', textDecoration: 'none' }}>{p.boutique_nom}</Link>
         <span>›</span>
         <span style={{ color: '#374151', fontWeight: 600 }}>{p.nom}</span>
       </nav>
@@ -122,7 +122,7 @@ export default async function FicheProduitPage(
               {p.nom}
             </h1>
             <div style={{ marginTop: 8, maxWidth: 200 }}>
-              <CardActions id={p.id} nom={p.nom} type="boutique_produit" boutiqueId={params.id} />
+              <CardActions id={p.id} nom={p.nom} type="boutique_produit" boutiqueId={id} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
               <span style={{
@@ -193,7 +193,7 @@ export default async function FicheProduitPage(
 
           {/* Boutique vendeur */}
           <Link
-            href={`/boutiques/${params.id}`}
+            href={`/boutiques/${id}`}
             style={{
               display: 'flex', alignItems: 'center', gap: 12,
               background: '#f8fafc', border: '1px solid #e2e8f0',
@@ -215,7 +215,7 @@ export default async function FicheProduitPage(
 
           {/* CTA */}
           <ProduitCTA
-            boutiqueId={params.id}
+            boutiqueId={id}
             produit={{ id: p.id, nom: p.nom, prix: p.prix }}
             enStock={p.en_stock}
             waUrl={waUrl}
@@ -224,9 +224,9 @@ export default async function FicheProduitPage(
           />
 
           <BoutonPartager
-            lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${params.id}/produits/${params.produitId}`}
-            message={`${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${params.id}/produits/${params.produitId}`}
-            lienVisuel={`/assets/produit-boutique/${params.produitId}/story?boutiqueId=${params.id}`}
+            lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${id}/produits/${produitId}`}
+            message={`${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${id}/produits/${produitId}`}
+            lienVisuel={`/assets/produit-boutique/${produitId}/story?boutiqueId=${id}`}
           />
 
         </div>
@@ -234,7 +234,7 @@ export default async function FicheProduitPage(
 
       {/* Retour boutique */}
       <div style={{ marginTop: 40, paddingTop: 24, borderTop: '1px solid #f1f5f9' }}>
-        <Link href={`/boutiques/${params.id}`} style={{ color: '#6b7280', textDecoration: 'none', fontSize: 14 }}>
+        <Link href={`/boutiques/${id}`} style={{ color: '#6b7280', textDecoration: 'none', fontSize: 14 }}>
           ← Retour à la boutique {p.boutique_nom}
         </Link>
       </div>

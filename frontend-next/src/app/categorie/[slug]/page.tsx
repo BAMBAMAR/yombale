@@ -83,7 +83,7 @@ export default async function CategoriePage({
   const sousType = sp?.sousType ?? ''
   const q      = sp?.q      ?? ''
 
-  const qs = new URLSearchParams({ limit: '24', page, categorie: params.slug })
+  const qs = new URLSearchParams({ limit: '24', page, categorie: slug })
   if (prixMax) qs.set('prixMax', prixMax)
   if (tri !== 'pertinence') qs.set('tri', tri)
   if (sousType) qs.set('sousType', sousType)
@@ -94,13 +94,10 @@ export default async function CategoriePage({
   let pages = 1
 
   try {
-    const res  = await fetch(`${BACKEND}/api/produits?${qs}`, { cache: 'no-store', headers: SSR_HEADERS })
-    if (res.ok) {
-      const data: ApiResponse = await res.json()
-      produits = data.produits ?? data.data ?? []
-      total    = data.total ?? produits.length
-      pages    = Math.ceil(total / 24) || 1
-    }
+    const res  = await apiFetch<ApiResponse>(`/produits?${qs}`)
+    produits = res.produits ?? res.data ?? []
+    total    = res.total ?? produits.length
+    pages    = Math.ceil(total / 24) || 1
   } catch {
     // empty state
   }
@@ -115,7 +112,7 @@ export default async function CategoriePage({
     if (q) ps.set('q', q)
     Object.entries(p).forEach(([k, v]) => (v ? ps.set(k, v) : ps.delete(k)))
     const qs2 = ps.toString()
-    return `/categorie/${params.slug}${qs2 ? `?${qs2}` : ''}`
+    return `/categorie/${slug}${qs2 ? `?${qs2}` : ''}`
   }
 
   // JSON-LD BreadcrumbList + ItemList
@@ -124,7 +121,7 @@ export default async function CategoriePage({
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Accueil', item: BASE },
-      { '@type': 'ListItem', position: 2, name: cat.label, item: `${BASE}/categorie/${params.slug}` },
+      { '@type': 'ListItem', position: 2, name: cat.label, item: `${BASE}/categorie/${slug}` },
     ],
   }
 
@@ -182,7 +179,7 @@ export default async function CategoriePage({
 
         {/* Recherche texte */}
         <SearchWithAnchor 
-          action={`/categorie/${params.slug}`} 
+          action={`/categorie/${slug}`} 
           defaultValue={q} 
           placeholder={`Rechercher dans ${cat.label.toLowerCase()}…`}
           hiddenParams={{ prixMax, tri: tri !== 'pertinence' ? tri : '', sousType }}
@@ -242,7 +239,7 @@ export default async function CategoriePage({
                       {p.nb_offres} offres
                     </p>
                   )}
-                  <CardActions id={p.id} nom={p.nom} categorieSlug={params.slug} />
+                  <CardActions id={p.id} nom={p.nom} categorieSlug={slug} />
                 </article>
               </Link>
             ))}
@@ -302,10 +299,10 @@ export default async function CategoriePage({
               label: 'Sous-catégories & budgets',
               chips: [
                 ...Object.entries(SOUS_CATEGORIES)
-                  .filter(([, sc]) => sc.categorie === params.slug)
+                  .filter(([, sc]) => sc.categorie === slug)
                   .map(([key, sc]) => ({ href: `/categorie/${key}`, emoji: sc.emoji, label: sc.label })),
-                { href: `/categorie/${params.slug}/moins-de-50000`, emoji: '💰', label: 'Moins de 50 000 FCFA' },
-                { href: `/categorie/${params.slug}/moins-de-100000`, emoji: '💰', label: 'Moins de 100 000 FCFA' },
+                { href: `/categorie/${slug}/moins-de-50000`, emoji: '💰', label: 'Moins de 50 000 FCFA' },
+                { href: `/categorie/${slug}/moins-de-100000`, emoji: '💰', label: 'Moins de 100 000 FCFA' },
               ],
             },
             {
@@ -313,7 +310,7 @@ export default async function CategoriePage({
               chips: [
                 { href: '/', emoji: '🗂', label: 'Tous les produits', small: true },
                 ...Object.entries(CATEGORIES)
-                  .filter(([s]) => s !== params.slug)
+                  .filter(([s]) => s !== slug)
                   .slice(0, 4)
                   .map(([s, c]) => ({ href: `/categorie/${s}`, emoji: c.emoji, label: c.label, small: true })),
               ],
