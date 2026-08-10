@@ -1,3 +1,9 @@
+## 🚀 Mises à jour du 10/08/2026 : Résolution Définitive de l'Erreur `ERR_FAILED` & Déblocage Total de la Navigation (`/boutique`, `/boutiques`, Catalogue)
+- **Élimination de l'Interception Interne par le Service Worker (`RegisterSW.tsx` & `public/sw.js`)** :
+  * Identification de la cause exacte de l'erreur Chrome `ERR_FAILED` sur `https://nopalou.com/boutique` : l'ancien Service Worker Serwist pré-enregistré dans les navigateurs tentait d'intercepter les requêtes HTTP/RSC et bloquait la connexion.
+  * Mise en place d'un script d'auto-désinstallation et de vidage intégral du cache Service Worker (`caches.delete()`, `registration.unregister()`).
+  * Restauration de l'accès réseau direct ultra-rapide sans intermédiaire pour l'ensemble des pages (`/boutique`, `/boutiques`, catalogue et espace compte).
+
 ## 🚀 Mises à jour du 10/08/2026 : Déblocage des Actions Compte & Caisse POS (Exclusion SW & Suppression du Pop-up Masquant)
 - **Suppression Complète de la Pop-up Flottante Intrusive (`src/app/RegisterSW.tsx`)** :
   * Élimination du bandeau flottant noir/orange qui masquait l'en-tête de la Caisse POS et les boutons d'action sur mobile. Le Service Worker s'enregistre désormais de façon 100% silencieuse en arrière-plan sans bloquer l'écran.
