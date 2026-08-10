@@ -155,6 +155,7 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
           }}
         >
           <option value="tous">Toutes les actions</option>
+          <option value="pos_session">Sessions Caisse &amp; Rapport X</option>
           <option value="produit_cree">Produit créé</option>
           <option value="produit_modifie">Produit modifié</option>
           <option value="produit_supprime">Produit supprimé</option>

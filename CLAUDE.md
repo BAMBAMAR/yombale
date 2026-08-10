@@ -1,9 +1,12 @@
-## 🚀 Mises à jour du 10/08/2026 : Intégration du Bilan de Session Caissier Synthétique (Rapport X)
+## 🚀 Mises à jour du 10/08/2026 : Intégration du Bilan de Session Caissier Synthétique (Rapport X) & Traçabilité Audit
 - **Modale & Rapport X Intermédiaire Caisse (`CaisseClient.tsx`)** :
   * Création d'une modale dédiée **`📊 Bilan Session (Rapport X)`** accessible en 1 clic dans le menu **🔧 Outils** de la caisse POS.
   * Affichage consolidé du profil caissier, fond de caisse initial, total du chiffre d'affaires encaissé, nombre de tickets édités et espèces théoriques en caisse.
   * Ventilation complète par mode de règlement (💵 Espèces, 🌊 Wave, 🍊 Orange Money, 💳 Carte Bancaire, 🔀 Mixte).
   * Possibilité pour le caissier ou le superviseur de consulter ou d'imprimer à tout moment le bilan d'activité de la session en cours **sans devoir fermer la caisse**.
+- **Traçabilité & Journal d'Audit (`boutique_logs` & `BoutiqueLogs.tsx`)** :
+  * Enregistrement automatique dans le **Journal d'Audit & Sécurité** de toutes les ouvertures de session, clôtures Z et consultations/impressions du Rapport X avec le nom du caissier, le total du CA et l'adresse IP.
+  * Ajout du filtre dédié **`Sessions Caisse & Rapport X`** dans l'interface du Journal d'Audit marchand.
 
 ## 🚀 Mises à jour du 09/08/2026 : Correction du Débordement & Tronquature à Droite sur Caisse POS Mobile
 - **Fixation de la Tronquature à Droite (`globals.css` & `CaisseClient.tsx`)** :

@@ -2043,7 +2043,17 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                     <span style={{ fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outils caisse</span>
                   </div>
                   <button
-                    onClick={() => { setModalBilanSession(true); setMenuOutilsOuvert(false); }}
+                    onClick={() => {
+                      setModalBilanSession(true);
+                      setMenuOutilsOuvert(false);
+                      if (boutiqueActiveId) {
+                        fetch(`/api/boutiques/${boutiqueActiveId}/pos-sessions/rapport-x/log`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ caissierNom, totalVentes: session?.ventes?.total || 0, nbVentes: session?.ventes?.nbVentes || 0 })
+                        }).catch(() => {})
+                      }
+                    }}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: '#fff7ed', border: '1px solid #ffedd5', color: '#c2410c', fontSize: 13, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 4 }}
                   >
                     <BarChart3 size={14} color="#ea580c" /> 📊 Bilan Session (Rapport X)

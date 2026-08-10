@@ -2297,6 +2297,17 @@ router.post('/:id/pos-sessions/ouvrir', tokenOptional, async (req, res) => {
       [boutiqueId, caissierId || null, caissierNom || 'Caissier', Number(fondDeCaisse || 0)]
     );
 
+    // Enregistrement dans le Journal d'Audit & Sécurité
+    await enregistrerAuditLog(
+      boutiqueId,
+      req.user?.userId,
+      caissierNom || 'Caissier',
+      'pos_session',
+      `Ouverture de session de caisse POS par ${caissierNom || 'Caissier'} (Fond initial: ${fondDeCaisse || 0} FCFA)`,
+      { fondDeCaisse, caissierNom, caissierId, sessionId: r.rows[0]?.id },
+      req
+    );
+
     res.status(201).json({ success: true, session: r.rows[0] });
   } catch (err) {
     console.error('[POST POS SESSION OUVRIR ERR]', err);
@@ -2308,10 +2319,11 @@ router.post('/:id/pos-sessions/ouvrir', tokenOptional, async (req, res) => {
 router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const { sessionId, especesComptees, ventesEspeces, ventesWave, ventesOrangeMoney, ventesCarte, ventesTotal, nbVentes } = req.body;
+    const { sessionId, especesComptees, ventesEspeces, ventesWave, ventesOrangeMoney, ventesCarte, ventesTotal, nbVentes, caissierNom } = req.body;
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
 
     if (sessionId && /^[0-9a-f-]{36}$/i.test(sessionId)) {
       await pool.query(
@@ -2338,12 +2350,50 @@ router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
           sessionId
         ]
       );
+
+      // Enregistrement dans le Journal d'Audit & Sécurité
+      await enregistrerAuditLog(
+        boutiqueId,
+        req.user?.userId,
+        caissierNom || 'Caissier',
+        'pos_session',
+        `Clôture Z de la session de caisse POS par ${caissierNom || 'Caissier'} (Espèces comptées: ${especesComptees || 0} FCFA, Ventes totales: ${ventesTotal || 0} FCFA, Tickets: ${nbVentes || 0})`,
+        { sessionId, especesComptees, ventesTotal, nbVentes, caissierNom },
+        req
+      );
     }
 
     res.json({ success: true, message: 'Session clôturée avec succès' });
   } catch (err) {
     console.error('[POST POS SESSION CLOTURER ERR]', err);
     res.status(500).json({ error: 'Erreur lors de la clôture de session' });
+  }
+});
+
+// POST /api/boutiques/:id/pos-sessions/rapport-x/log
+router.post('/:id/pos-sessions/rapport-x/log', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { caissierNom, totalVentes, nbVentes } = req.body;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    await enregistrerAuditLog(
+      boutiqueId,
+      req.user?.userId,
+      caissierNom || 'Caissier',
+      'pos_session',
+      `Consultation / Impression du Bilan de Session Rapport X (Caissier: ${caissierNom || 'Caissier'}, CA cumulé: ${totalVentes || 0} FCFA, Tickets: ${nbVentes || 0})`,
+      { caissierNom, totalVentes, nbVentes },
+      req
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[POST POS SESSION RAPPORT-X LOG ERR]', err);
+    res.status(500).json({ error: 'Erreur journalisation Rapport X' });
   }
 });
 
