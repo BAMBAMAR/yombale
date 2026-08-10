@@ -3,7 +3,7 @@
   * **TypeScript (`npx tsc --noEmit`)** : 100% Validé (0 erreur de typage).
   * **Syntaxe Node.js Backend (`node --check`)** : 100% Validé (Toutes les routes backend vérifiées).
   * **Suite Playwright API (`05-api.spec.ts`)** : 8/8 Tests Réussis (100% de succès).
-  * **Suite Playwright POS Offline (`07-pos-offline-sync.spec.ts`)** : 3/3 Tests Réussis avec succès (Badge UI offline, secours PWA offline.html et stockage IndexedDB validés sans faille).
+  * **Suite Playwright POS Offline (`07-pos-offline-sync.spec.ts`)** : 7/7 Tests Réussis avec succès (Boutiques hors-ligne, catalogues produits offline, badge UI déconnexion, secours PWA offline.html, stockage IndexedDB et suppression unitaire non-destructive 100% validés).
 
 ## 🚀 Mises à jour du 10/08/2026 : Résolution des Erreurs SW `Uncaught (in promise)` & Securisation du Fallback Offline
 - **Élimination des Erreurs Console Service Worker (`frontend-next/src/app/sw.ts`)** :
