@@ -2489,28 +2489,48 @@ export default function BoutiqueClient({
   const [, startSponsoring] = useTransition()
   const router = useRouter()
 
+  const [boutiquesList, setBoutiquesList] = useState<Boutique[]>(boutiques)
+
+  useEffect(() => {
+    if (boutiques && boutiques.length > 0) {
+      setBoutiquesList(boutiques)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify(boutiques))
+      }
+    } else {
+      const cachedStr = typeof window !== 'undefined' ? localStorage.getItem('nopalou_pos_user_boutiques') : null
+      if (cachedStr) {
+        try {
+          const cached = JSON.parse(cachedStr)
+          if (cached && Array.isArray(cached) && cached.length > 0) {
+            setBoutiquesList(cached)
+          }
+        } catch (e) {}
+      }
+    }
+  }, [boutiques])
+
   const searchParams = useSearchParams()
   const manageId = searchParams.get('manage') || searchParams.get('id')
   const tabParam = searchParams.get('tab')
   const lockedParam = searchParams.get('locked')
 
   useEffect(() => {
+    const listToSearch = boutiquesList.length > 0 ? boutiquesList : boutiques
     if (typeof mode === 'object' && 'managing' in mode) {
-      const targetBoutique = boutiques.find(b => b.id === mode.managing.id)
+      const targetBoutique = listToSearch.find(b => b.id === mode.managing.id)
       if (targetBoutique) {
         setMode({ managing: targetBoutique })
       }
-    } else if (manageId && boutiques.length > 0) {
-      const targetBoutique = boutiques.find(b => b.id === manageId || b.slug === manageId)
+    } else if (manageId && listToSearch.length > 0) {
+      const targetBoutique = listToSearch.find(b => b.id === manageId || b.slug === manageId)
       if (targetBoutique) {
         setMode({ managing: targetBoutique })
       }
-    } else if ((tabParam || lockedParam) && boutiques.length > 0) {
-      // Redirection depuis une page verrouillée (ex: /boutique/analytics → /boutique?tab=analytics&locked=true)
-      // Entrer en mode gestion avec la première boutique pour afficher l'écran de verrouillage
-      setMode({ managing: boutiques[0] })
+    } else if ((tabParam || lockedParam) && listToSearch.length > 0) {
+      setMode({ managing: listToSearch[0] })
     }
-  }, [manageId, tabParam, lockedParam, boutiques])
+  }, [manageId, tabParam, lockedParam, boutiquesList, boutiques])
 
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const waveActif    = settings.paiement_wave !== 'false'
@@ -2710,7 +2730,7 @@ export default function BoutiqueClient({
         </Link>
       )}
 
-      {boutiques.length === 0 ? (
+      {boutiquesList.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '64px 20px', background: '#fff', borderRadius: 16, border: '1px dashed #d1d5db' }}>
           <p style={{ fontSize: 48, marginBottom: 16 }}>🏪</p>
           <p style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Créez votre boutique en ligne</p>
@@ -2729,7 +2749,7 @@ export default function BoutiqueClient({
           gap: 24,
           alignItems: 'start'
         }}>
-          {boutiques.map(b => (
+          {boutiquesList.map(b => (
             <BoutiqueCard
               key={b.id}
               boutique={b}

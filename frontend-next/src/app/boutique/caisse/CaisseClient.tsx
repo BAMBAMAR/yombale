@@ -689,11 +689,34 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         const merchantBoutiques = mine || []
         if (merchantBoutiques.length > 0) {
           setBoutiques(merchantBoutiques)
-          const bId = boutiqueActiveId || merchantBoutiques[0].id
+          localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify(merchantBoutiques))
+          const savedBId = typeof window !== 'undefined' ? localStorage.getItem('nopalou_pos_active_boutique_id') : null
+          const validSaved = merchantBoutiques.find(b => b.id === savedBId)
+          const bId = validSaved ? validSaved.id : (boutiqueActiveId || merchantBoutiques[0].id)
           setBoutiqueActiveId(bId)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('nopalou_pos_active_boutique_id', bId)
+          }
           await chargerProduitsBoutique(bId)
           await chargerClientsCredits(bId)
         } else {
+          // Fallback hors-ligne : restaurer depuis le cache local si la requête réseau a échoué
+          const cachedStr = typeof window !== 'undefined' ? localStorage.getItem('nopalou_pos_user_boutiques') : null
+          if (cachedStr) {
+            try {
+              const cachedBoutiques = JSON.parse(cachedStr)
+              if (cachedBoutiques && cachedBoutiques.length > 0) {
+                setBoutiques(cachedBoutiques)
+                const savedBId = typeof window !== 'undefined' ? localStorage.getItem('nopalou_pos_active_boutique_id') : null
+                const validSaved = cachedBoutiques.find((b: any) => b.id === savedBId)
+                const bId = validSaved ? validSaved.id : (boutiqueActiveId || cachedBoutiques[0].id)
+                setBoutiqueActiveId(bId)
+                await chargerProduitsBoutique(bId)
+                await chargerClientsCredits(bId)
+                return
+              }
+            } catch (eCache) {}
+          }
           setBoutiques([])
           setLoadingProduits(false)
         }
@@ -869,6 +892,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       return;
     }
     setBoutiqueActiveId(newBId)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nopalou_pos_active_boutique_id', newBId)
+    }
     chargerProduitsBoutique(newBId)
     viderPanier()
     setVerrouille(true)

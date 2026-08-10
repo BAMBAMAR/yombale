@@ -1,3 +1,10 @@
+## 🚀 Mises à jour du 10/08/2026 : Correction de la Récupération des Boutiques & Persistance de la Boutique Sélectionnée
+- **Correction Critique de la Requête SQL (`backend/routes/boutiques.js`)** :
+  * Correction de la clause `GROUP BY b.id, is_owner` -> `GROUP BY b.id` sur la route `/api/boutiques/mine`. L'utilisation de l'alias d'expression `is_owner` déclenchait une erreur PostgreSQL 500 (`column "is_owner" does not exist`), ce qui retournait 0 boutique et affichait l'écran de création par défaut lors du retour à `/boutique`.
+- **Persistance et Restauration de la Boutique Sélectionnée (`CaisseClient.tsx` & `BoutiqueClient.tsx`)** :
+  * Mémorisation dans `localStorage` (`nopalou_pos_active_boutique_id` & `nopalou_pos_user_boutiques`) de la boutique active choisie par le marchand.
+  * Restauration automatique de la boutique du marchand et de son catalogue lors des navigations entre la Caisse et l'espace de gestion `/boutique`.
+
 ## 🚀 Mises à jour du 10/08/2026 : Audit Complet & Securisation du Mode Offline POS / PWA + Suite de Tests E2E
 - **Suppression Sélective Unitaire dans IndexedDB (`frontend-next/src/lib/db-offline.ts` & `CaisseClient.tsx`)** :
   * Création de la méthode `supprimerVenteHorsLigne(id_temporaire)` pour supprimer unitairement chaque vente synchronisée avec le serveur.

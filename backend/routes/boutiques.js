@@ -569,12 +569,15 @@ router.get('/mine', verifierToken, async (req, res) => {
        FROM boutiques b
        LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
        WHERE b.utilisateur_id = $1 OR bu.utilisateur_id = $1
-       GROUP BY b.id, is_owner
+       GROUP BY b.id
        ORDER BY b.created_at DESC`,
       [req.user.userId]
     );
     res.json({ boutiques: rows.rows });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+  } catch (err) {
+    console.error('[GET_BOUTIQUES_MINE_ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 // ── Spec 04/07 : GET /api/boutiques/:id/catalog.xml — Flux XML Meta Commerce Manager & TikTok Catalog
