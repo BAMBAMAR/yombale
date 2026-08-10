@@ -6,7 +6,7 @@ import { exportToCSV, printPDFReport } from '@/lib/export'
 import BatchImportModal from '@/app/boutique/BatchImportModal'
 import { CATEGORIES } from '@/lib/categories'
 import { getBoutiqueProduits, getBoutiquesMine, getPosHistorique, creerPosVente, declarerIncident, creerBoutiqueDocument } from '../actions'
-import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store, Camera, MessageCircle, Printer, AlignJustify, LayoutGrid } from 'lucide-react'
+import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store, Camera, MessageCircle, Printer, AlignJustify, LayoutGrid, BarChart3 } from 'lucide-react'
 import {
   sauvegarderProduitsLocaux,
   obtenirProduitsLocaux,
@@ -207,6 +207,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   const [menuOutilsOuvert, setMenuOutilsOuvert] = useState<boolean>(false)
   const [modalSessionOuverture, setModalSessionOuverture] = useState<boolean>(false)
   const [modalClotureZ, setModalClotureZ] = useState<boolean>(false)
+  const [modalBilanSession, setModalBilanSession] = useState<boolean>(false)
   const [modalHistorique, setModalHistorique] = useState<boolean>(false)
   const [fondDeCaisseSaisi, setFondDeCaisseSaisi] = useState<string>('50000')
   const [especesComptees, setEspecesComptees] = useState<string>('')
@@ -2042,6 +2043,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                     <span style={{ fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outils caisse</span>
                   </div>
                   <button
+                    onClick={() => { setModalBilanSession(true); setMenuOutilsOuvert(false); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: '#fff7ed', border: '1px solid #ffedd5', color: '#c2410c', fontSize: 13, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 4 }}
+                  >
+                    <BarChart3 size={14} color="#ea580c" /> 📊 Bilan Session (Rapport X)
+                  </button>
+                  <button
                     onClick={() => { setModalImportBatch(true); setMenuOutilsOuvert(false); }}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                   >
@@ -3717,6 +3724,149 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                   ✓ Enregistrer
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* MODALE BILAN / SYNTHÈSE DE SESSION CAISSIER (RAPPORT X) */}
+      {modalBilanSession && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#ffffff', borderRadius: 16, maxWidth: 540, width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #cbd5e1' }}>
+            
+            {/* En-tête Modale */}
+            <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#ffffff', padding: '18px 20px', borderTopLeftRadius: 15, borderTopRightRadius: 15, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#ffffff', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  📊 Bilan de Session Caissier (Rapport X)
+                </h3>
+                <p style={{ margin: '3px 0 0', fontSize: 12, color: '#94a3b8' }}>
+                  Synthèse d&apos;activité intermédiaire sans clôture de la caisse
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalBilanSession(false)}
+                style={{ background: 'rgba(255,255,255,0.1)', color: '#ffffff', border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, fontWeight: 900, cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Corps Modale */}
+            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              
+              {/* Carte Identité Session & Caissier */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                <div>
+                  <span style={{ fontSize: 11, color: '#64748b', display: 'block', fontWeight: 600 }}>👤 Caissier Titulaire</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>{caissierNom} ({roleActif === 'superviseur' ? '👑 Superviseur' : 'Caissier'})</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: 11, color: '#64748b', display: 'block', fontWeight: 600 }}>🏪 Boutique</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>{activeBoutiqueObj?.nom || 'Nopalou POS'}</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: 11, color: '#64748b', display: 'block', fontWeight: 600 }}>⏰ Ouverture Session</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>{session?.dateOuverture ? new Date(session.dateOuverture).toLocaleString('fr-FR') : 'Session Active'}</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: 11, color: '#64748b', display: 'block', fontWeight: 600 }}>🟢 Statut Session</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#16a34a', background: '#dcfce7', padding: '2px 8px', borderRadius: 6, display: 'inline-block' }}>● Active en cours</span>
+                </div>
+              </div>
+
+              {/* Chiffres Clés Synthétiques */}
+              {(() => {
+                const fondInitial = session?.fondDeCaisse || 0
+                const totalVentes = (session?.ventes?.total ?? (panier.length > 0 ? netAPayer : 0)) || 0
+                const nbVentes = session?.ventes?.nbVentes ?? 0
+                const totalEspeces = session?.ventes?.especes ?? 0
+                const totalWave = session?.ventes?.wave ?? 0
+                const totalOM = session?.ventes?.orangeMoney ?? 0
+                const totalCarte = session?.ventes?.carte ?? 0
+                const totalMixte = session?.ventes?.mixte ?? 0
+
+                return (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                      <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+                        <span style={{ fontSize: 11, color: '#1e40af', fontWeight: 700, display: 'block' }}>💵 Fond de Caisse Initial</span>
+                        <span style={{ fontSize: 16, fontWeight: 900, color: '#1e3a5f' }}>{fcfa(fondInitial)}</span>
+                      </div>
+
+                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+                        <span style={{ fontSize: 11, color: '#166534', fontWeight: 700, display: 'block' }}>⚡ Total Ventes (CA)</span>
+                        <span style={{ fontSize: 16, fontWeight: 900, color: '#15803d' }}>{fcfa(totalVentes)}</span>
+                      </div>
+
+                      <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+                        <span style={{ fontSize: 11, color: '#9a3412', fontWeight: 700, display: 'block' }}>🧾 Nombre de Tickets</span>
+                        <span style={{ fontSize: 16, fontWeight: 900, color: '#c2410c' }}>{nbVentes} vente{nbVentes > 1 ? 's' : ''}</span>
+                      </div>
+
+                      <div style={{ background: '#fefce8', border: '1px solid #fef08a', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+                        <span style={{ fontSize: 11, color: '#854d0e', fontWeight: 700, display: 'block' }}>💰 Espèces Théoriques Caisse</span>
+                        <span style={{ fontSize: 16, fontWeight: 900, color: '#a16207' }}>{fcfa(fondInitial + totalEspeces)}</span>
+                      </div>
+                    </div>
+
+                    {/* Ventilation Détaillée par Mode de Paiement */}
+                    <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#ffffff' }}>
+                      <h4 style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 800, color: '#0f172a', borderBottom: '1px solid #f1f5f9', paddingBottom: 6 }}>
+                        💳 Ventilation des Encaissements par Mode de Règlement
+                      </h4>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#f8fafc', borderRadius: 6 }}>
+                          <span style={{ fontWeight: 700, color: '#334155' }}>💵 Ventes en Espèces</span>
+                          <span style={{ fontWeight: 900, color: '#0f172a' }}>{fcfa(totalEspeces)}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#f8fafc', borderRadius: 6 }}>
+                          <span style={{ fontWeight: 700, color: '#0284c7' }}>🌊 Ventes Wave Mobile</span>
+                          <span style={{ fontWeight: 900, color: '#0f172a' }}>{fcfa(totalWave)}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#f8fafc', borderRadius: 6 }}>
+                          <span style={{ fontWeight: 700, color: '#ea580c' }}>🍊 Ventes Orange Money</span>
+                          <span style={{ fontWeight: 900, color: '#0f172a' }}>{fcfa(totalOM)}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#f8fafc', borderRadius: 6 }}>
+                          <span style={{ fontWeight: 700, color: '#4f46e5' }}>💳 Ventes Carte Bancaire</span>
+                          <span style={{ fontWeight: 900, color: '#0f172a' }}>{fcfa(totalCarte)}</span>
+                        </div>
+
+                        {totalMixte > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#f8fafc', borderRadius: 6 }}>
+                            <span style={{ fontWeight: 700, color: '#9333ea' }}>🔀 Ventes Paiement Mixte</span>
+                            <span style={{ fontWeight: 900, color: '#0f172a' }}>{fcfa(totalMixte)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )
+              })()}
+
+              {/* Boutons d'Action */}
+              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  style={{ flex: 1, padding: '12px', background: '#1e3a5f', color: '#ffffff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                >
+                  🖨️ Imprimer Rapport X (80mm)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalBilanSession(false)}
+                  style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+                >
+                  Fermer
+                </button>
+              </div>
+
             </div>
           </div>
         </div>
