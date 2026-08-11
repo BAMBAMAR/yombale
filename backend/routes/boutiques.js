@@ -3287,7 +3287,7 @@ router.get('/caisse-terminal/:token', async (req, res) => {
     if (!token) return res.status(400).json({ error: 'Jeton requis' });
 
     const bRes = await pool.query(
-      `SELECT id, nom, logo_url, telephone, adresse, ville, caisse_token, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut
+      `SELECT id, nom, logo_url, telephone, adresse, ville, caisse_token, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut, actif
        FROM boutiques WHERE caisse_token = $1 AND actif = TRUE`,
       [token]
     );
