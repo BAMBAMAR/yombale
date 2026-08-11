@@ -118,4 +118,34 @@ self.addEventListener("fetch", (event: any) => {
   }
 });
 
+serwist.setCatchHandler(async ({ request }: any) => {
+  // Handle HTML document navigations offline
+  if (
+    request.destination === "document" || 
+    request.mode === "navigate" || 
+    request.headers?.get("accept")?.includes("text/html")
+  ) {
+    const cached = await caches.match(request, { ignoreSearch: true });
+    if (cached) return cached;
+    const fallback = await caches.match("/offline.html", { ignoreSearch: true });
+    if (fallback) return fallback;
+    return new Response(FALLBACK_HTML, {
+      status: 200,
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    });
+  }
+
+  // Handle Next.js RSC data requests (_rsc=...) offline
+  if (request.url && request.url.includes("_rsc=")) {
+    const cachedRsc = await caches.match(request, { ignoreSearch: true });
+    if (cachedRsc) return cachedRsc;
+    return new Response("{}", {
+      status: 200,
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
+
+  return Response.error();
+});
+
 serwist.addEventListeners();
