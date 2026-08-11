@@ -1,3 +1,11 @@
+## 🚀 Mises à jour du 11/08/2026 : Robustesse Hors-Ligne & Préchargement Global PWA
+- **Préchargement Global Arrière-plan (`BoutiqueClient.tsx`)** :
+  * Ajout d'une mécanique de synchronisation automatique et silencieuse dès la connexion au tableau de bord. Si une connexion Internet est active, l'application télécharge et met en cache l'intégralité du catalogue produits, de l'historique de caisse et du carnet de clients.
+  * L'utilisateur n'a plus besoin d'ouvrir explicitement la section Caisse pour déclencher la mise en cache : tout est prêt pour un basculement hors-ligne immédiat et transparent.
+- **Amélioration Ergonomique de la Notification Hors-Ligne (`CaisseClient.tsx`)** :
+  * Déplacement de la notification Toast "Mode hors-ligne" de `top-right` vers le `bottom-center` pour libérer l'espace en haut à droite et ne plus masquer les menus "Outils", le profil utilisateur, ni le bouton "Clôture Z".
+  * Déclenchement automatique garanti du Toast même si l'utilisateur ouvre directement la caisse sans connexion Internet (auparavant, le Toast ne s'affichait que lors de la transition actif -> coupé).
+
 ## 🚀 Mises à jour du 11/08/2026 : Correction de l'Incohérence du Stock Hors-Ligne & Déblocage Stock Physique
 - **Unification des Propriétés de Stock (`BoutiqueClient.tsx`, `Comptabilite.tsx`, `CaisseClient.tsx`)** :
   * L'affichage du catalogue lisait `p.stock_quantite`, tandis que le cache de la Caisse POS sauvegardait les produits décrémentés sous la propriété formatée `p.stock` tout en supprimant l'objet d'origine. Conséquence : en mode hors-ligne, les vues Catalogue et Stock affichaient "0" car la donnée était effacée du cache commun.

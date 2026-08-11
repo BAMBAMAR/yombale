@@ -117,8 +117,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setOfflineModeActive(!navigator.onLine)
+      const isOffline = !navigator.onLine;
+      setOfflineModeActive(isOffline)
       rafraichirCompteurOffline()
+      
+      if (isOffline) {
+        showToast('Mode caisse locale activé (Hors-ligne).', 'warning')
+      }
       
       const goOnline = () => {
         setOfflineModeActive(false)
@@ -1931,13 +1936,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       {/* Toast Notification (Offline/Online) */}
       {toastMsg && (
         <div style={{
-          position: 'fixed', top: 20, right: 20, zIndex: 10000,
+          position: 'fixed', bottom: 30, left: '50%', transform: 'translateX(-50%)', zIndex: 10000,
           background: toastMsg.type === 'warning' ? '#fef3c7' : '#dcfce7',
           color: toastMsg.type === 'warning' ? '#92400e' : '#166534',
           border: `1px solid ${toastMsg.type === 'warning' ? '#fcd34d' : '#bbf7d0'}`,
-          padding: '12px 20px', borderRadius: 8, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-          display: 'flex', alignItems: 'center', gap: 10, fontWeight: 700, fontSize: 13,
-          animation: 'slideInRight 0.3s ease-out'
+          padding: '12px 20px', borderRadius: 24, boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)',
+          display: 'flex', alignItems: 'center', gap: 10, fontWeight: 700, fontSize: 14,
+          animation: 'slideUp 0.3s ease-out'
         }}>
           {toastMsg.type === 'warning' ? '⚠️' : '✅'}
           {toastMsg.text}

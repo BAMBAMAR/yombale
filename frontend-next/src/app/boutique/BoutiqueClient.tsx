@@ -2578,6 +2578,53 @@ export default function BoutiqueClient({
     }
   }, [manageId, tabParam, lockedParam, boutiquesList, boutiques])
 
+  // ── Préchargement Global (Offline Sync) ───────────────────────────────────────────────
+  // Charge toutes les données (catalogue, historique caisse, clients) en arrière-plan
+  // dès la connexion pour garantir un fonctionnement hors-ligne optimal.
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.onLine) {
+      const boutiquesAPrecharger = boutiquesList.length > 0 ? boutiquesList : boutiques;
+      boutiquesAPrecharger.forEach(async (b) => {
+        try {
+          // 1. Précharger le catalogue de produits
+          const prods = await getBoutiqueProduits(b.id);
+          if (prods && Array.isArray(prods)) {
+            const prodsFormates = prods.map((p: any) => {
+              let stockVal = Number(p.stock ?? p.quantite_stock ?? p.stock_quantite);
+              if (isNaN(stockVal)) stockVal = 10;
+              return { ...p, stock: stockVal };
+            });
+            localStorage.setItem(`nopalou_pos_produits_${b.id}`, JSON.stringify(prodsFormates));
+            sauvegarderProduitsLocaux(prodsFormates, b.id).catch(() => {});
+          }
+
+          // 2. Précharger l'historique de caisse
+          import('./actions').then(({ getPosHistorique }) => {
+            getPosHistorique(b.id).then(hist => {
+              if (hist && Array.isArray(hist) && hist.length > 0) {
+                localStorage.setItem(`nopalou_pos_historique_${b.id}`, JSON.stringify(hist));
+              }
+            }).catch(() => {});
+          }).catch(() => {});
+
+          // 3. Précharger le carnet de clients (Crédits)
+          const resClients = await fetch(`/api/boutiques/${b.id}/credits-clients`);
+          if (resClients.ok) {
+            const dataClients = await resClients.json();
+            if (dataClients.clients && Array.isArray(dataClients.clients)) {
+              import('@/lib/db-offline').then(({ sauvegarderClientsLocaux }) => {
+                sauvegarderClientsLocaux(dataClients.clients).catch(() => {});
+              }).catch(() => {});
+            }
+          }
+        } catch (e) {
+          console.warn("Erreur préchargement background pour boutique", b.id, e);
+        }
+      });
+    }
+  }, [boutiquesList, boutiques]);
+
+
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const waveActif    = settings.paiement_wave !== 'false'
   const montantSponsor = Number(settings.prix_sponsoring) || 5000
