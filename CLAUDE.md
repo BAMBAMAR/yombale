@@ -1,3 +1,9 @@
+## 🚀 Mises à jour du 11/08/2026 : Suppression Intégrale de l'Étiquette "(Off)" & Ajustement de la Caisse POS (`CaisseClient.tsx`)
+- **Élimination Définitive du Label "(Off)" (`CaisseClient.tsx`)** :
+  * Suppression complète du texte `(Off)` dans le sélecteur de boutique de l'en-tête POS. Toutes les boutiques du marchand affichent exclusivement `🟢 NomBoutique` (ou `🔒 NomBoutique`), éliminant toute ambiguïté d'affichage.
+- **Optimisation du Spacing Vertical (`CaisseClient.tsx`)** :
+  * Réduction des espacements et padding du bloc ticket vide (de 60px à 24px) pour garantir que le bloc de paiement et le bouton `ENCAISSER` rentrent sans aucun défilement forcé.
+
 ## 🚀 Mises à jour du 11/08/2026 : Fixation Permanente du Bouton "ENCAISSER" Sticky en Bas d'Écran (`CaisseClient.tsx`)
 - **Correction Débordement & Placement Sticky (`CaisseClient.tsx`)** :
   * Ajout du défilement interne `overflowY: 'auto'` sur la section ticket et conversion du bloc de paiement (`Net à payer`, `DEVIS`, `PROFORMA`, `⚡ ENCAISSER ET TICKET`) en conteneur `position: 'sticky', bottom: 0`.

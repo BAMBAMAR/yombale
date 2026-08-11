@@ -2050,7 +2050,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                 const isAuth = b.plan_actif === 'pro' || b.plan_actif === 'business';
                 return (
                   <option key={b.id} value={b.id}>
-                    {isAuth ? '🟢' : '🔒'} {b.nom}{b.actif === false ? ' (Off)' : ''}
+                    {isAuth ? '🟢' : '🔒'} {b.nom}
                   </option>
                 );
               })}
@@ -2466,7 +2466,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         </div>
 
         {/* Côté Droit : Ticket Panier & Encaissement POS */}
-        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: '16px 12px 24px 12px', display: 'flex', flexDirection: 'column', gap: 14, boxSizing: 'border-box', maxWidth: '100%', overflowY: 'auto', height: '100%' }}>
+        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: '12px 10px 20px 10px', display: 'flex', flexDirection: 'column', gap: 8, boxSizing: 'border-box', maxWidth: '100%', overflowY: 'auto', height: '100%' }}>
           {/* Bouton retour au catalogue sur Mobile */}
           <button
             type="button"
@@ -2534,10 +2534,10 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                 </button>
               </div>
             ) : panier.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#94a3b8' }}>
-                <span style={{ fontSize: 40, display: 'block', marginBottom: 8 }}>🧾</span>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#475569' }}>Le ticket de caisse est vide</p>
-                <p style={{ margin: '4px 0 0', fontSize: 12 }}>Scannez un code-barres ou cliquez sur un article.</p>
+              <div style={{ textAlign: 'center', padding: '24px 10px', color: '#94a3b8' }}>
+                <span style={{ fontSize: 36, display: 'block', marginBottom: 4 }}>🧾</span>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#475569' }}>Le ticket de caisse est vide</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11 }}>Scannez un code-barres ou cliquez sur un article.</p>
               </div>
             ) : (
               panier.map(item => (
