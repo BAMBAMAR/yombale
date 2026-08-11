@@ -1,3 +1,11 @@
+## 🚀 Mises à jour du 11/08/2026 : Visibilité Universelle Mobile & Desktop de la File d'Attente Tickets (`CaisseClient.tsx`)
+- **Positionnement Universel Hors-Panneau (`CaisseClient.tsx`)** :
+  * Le bandeau "👥 Clients en file d'attente" a été placé juste sous la barre d'onglets mobile (`🛍️ Catalogue` / `🛒 Ticket`).
+  * Ainsi, sur mobile, que le caissier soit sur l'onglet "Catalogue" ou "Ticket", les paniers en attente sont **systématiquement visibles en haut de l'écran**.
+- **Badge Dynamique Onglet Ticket & Bascule Automatique** :
+  * Ajout du badge d'alerte orange `👥 X en attente` sur le bouton de l'onglet `🛒 Ticket`.
+  * La reprise d'un ticket en attente déclenche la bascule automatique vers l'onglet `🛒 Ticket` (`setTabMobile('ticket')`).
+
 ## 🚀 Mises à jour du 11/08/2026 : Résolution Définitive du Statut "(Off)" à Côté de la Boutique Active (POS)
 - **Sécurisation SQL des valeurs Nulles (`backend/routes/boutiques.js`)** :
   * Utilisation de `COALESCE(b.actif, true) AS actif` dans les routes `/api/boutiques/mine` et `/api/boutiques/caisse-terminal/:token` pour éviter que les boutiques existantes ayant un champ `actif` valant `NULL` en base de données ne soient renvoyées comme inactives.
