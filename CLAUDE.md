@@ -1980,3 +1980,4 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
 - Cr�ation de src/app/sw.ts g�rant le pr�caching et runtime caching.
 - Ajout d'un raccourci d'application (Caisse) dans le manifest.json.
 - Am�lioration UI de la caisse (CaisseClient.tsx) avec ajout d'un compteur du nombre de ventes en attente de synchronisation sur l'indicateur hors-ligne.
+- Correction de l'affichage du stock NaN dans la caisse et ajout de notifications toast pour le mode hors-ligne.

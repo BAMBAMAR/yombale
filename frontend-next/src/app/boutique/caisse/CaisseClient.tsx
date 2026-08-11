@@ -89,6 +89,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   const [offlineModeActive, setOfflineModeActive] = useState<boolean>(false)
   const [syncingOffline, setSyncingOffline] = useState<boolean>(false)
   const [ventesHorsLigneCount, setVentesHorsLigneCount] = useState<number>(0)
+  const [toastMsg, setToastMsg] = useState<{ text: string; type: 'success' | 'warning' } | null>(null)
+
+  function showToast(text: string, type: 'success' | 'warning' = 'success') {
+    setToastMsg({ text, type })
+    setTimeout(() => setToastMsg(null), 4000)
+  }
+
 
 
   // ── Vérification dynamique de l'autorisation POS selon la boutique sélectionnée ──
@@ -115,10 +122,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       
       const goOnline = () => {
         setOfflineModeActive(false)
+        showToast('Connexion internet rétablie ! Synchronisation en cours...', 'success')
         declencherSyncOffline()
       }
       const goOffline = () => {
         setOfflineModeActive(true)
+        showToast('Vous êtes hors-ligne. Mode caisse locale activé.', 'warning')
         rafraichirCompteurOffline()
       }
 
@@ -906,7 +915,11 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
     try {
       const produits = await getBoutiqueProduits(bId)
       if (produits && Array.isArray(produits) && produits.length > 0) {
-        const prodsFormates: ProduitCaisse[] = produits.map((p: any) => ({
+        const prodsFormates: ProduitCaisse[] = produits.map((p: any) => {
+        let stockVal = Number(p.stock ?? p.quantite_stock ?? p.stock_quantite);
+        if (isNaN(stockVal)) stockVal = 10;
+        
+        return {
           ...p,
           id: p.id,
           nom: p.nom,
@@ -914,8 +927,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
           code_barre: p.code_barre || p.id.slice(0, 8),
           photo: p.images?.[0] || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400',
           categorie: p.categorie || 'alimentation',
-          stock: Number(p.stock_quantite ?? p.quantite_stock ?? 10),
-        }))
+          stock: stockVal,
+        };
+      })
         setProduits(prodsFormates)
         localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify(prodsFormates))
         sauvegarderProduitsLocaux(prodsFormates, bId).catch(() => {})
@@ -1914,6 +1928,23 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   return (
     <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
 
+      {/* Toast Notification (Offline/Online) */}
+      {toastMsg && (
+        <div style={{
+          position: 'fixed', top: 20, right: 20, zIndex: 10000,
+          background: toastMsg.type === 'warning' ? '#fef3c7' : '#dcfce7',
+          color: toastMsg.type === 'warning' ? '#92400e' : '#166534',
+          border: `1px solid ${toastMsg.type === 'warning' ? '#fcd34d' : '#bbf7d0'}`,
+          padding: '12px 20px', borderRadius: 8, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+          display: 'flex', alignItems: 'center', gap: 10, fontWeight: 700, fontSize: 13,
+          animation: 'slideInRight 0.3s ease-out'
+        }}>
+          {toastMsg.type === 'warning' ? '⚠️' : '✅'}
+          {toastMsg.text}
+        </div>
+      )}
+
+
       {conflitSessionMessage && (
         <div className="no-print" style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 32, width: '100%', maxWidth: 460, textAlign: 'center', border: '2px solid #dc2626', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
@@ -2428,8 +2459,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               {produitsFiltres.map(p => {
                 // Déduire la quantité déjà placée dans le panier en direct
                 const qteAuPanier = panier.find(i => i.produit.id === p.id)?.quantite || 0
-                const stockRestant = Math.max(0, p.stock - qteAuPanier)
-                const estHorsStock = stockRestant === 0
+                const isStockValide = typeof p.stock === 'number' && !isNaN(p.stock)
+                const stockRestant = isStockValide ? Math.max(0, p.stock - qteAuPanier) : null
+                const estHorsStock = isStockValide && stockRestant === 0
 
                 return (
                   <div
@@ -2490,15 +2522,17 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                             🏷️
                           </button>
                         )}
-                        <span style={{
-                          fontSize: 9,
-                          background: estHorsStock ? '#fef2f2' : stockRestant <= 3 ? '#fff7ed' : '#f0fdf4',
-                          color: estHorsStock ? '#991b1b' : stockRestant <= 3 ? '#c2410c' : '#166534',
-                          border: estHorsStock ? '1px solid #fecaca' : stockRestant <= 3 ? '1px solid #fed7aa' : '1px solid #bbf7d0',
-                          padding: '1px 5px', borderRadius: 4, fontWeight: 700
-                        }}>
-                          {estHorsStock ? 'Épuisé' : `Stk ${stockRestant}`}
-                        </span>
+                        {isStockValide && (
+                          <span style={{
+                            fontSize: 9,
+                            background: estHorsStock ? '#fef2f2' : (stockRestant ?? 999) <= 3 ? '#fff7ed' : '#f0fdf4',
+                            color: estHorsStock ? '#991b1b' : (stockRestant ?? 999) <= 3 ? '#c2410c' : '#166534',
+                            border: estHorsStock ? '1px solid #fecaca' : (stockRestant ?? 999) <= 3 ? '1px solid #fed7aa' : '1px solid #bbf7d0',
+                            padding: '1px 5px', borderRadius: 4, fontWeight: 700
+                          }}>
+                            {estHorsStock ? 'Épuisé' : `Stk ${stockRestant}`}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -2591,7 +2625,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontSize: 11, color: '#C75B00', fontWeight: 800 }}>{fcfa(item.prixUnitaire)}</span>
-                      {item.quantite > item.produit.stock && (
+                      {typeof item.produit.stock === 'number' && !isNaN(item.produit.stock) && item.quantite > item.produit.stock && (
                         <span style={{ fontSize: 9, background: '#fef08a', color: '#854d0e', padding: '1px 5px', borderRadius: 4, fontWeight: 800 }}>
                           👑 Dépassement
                         </span>
