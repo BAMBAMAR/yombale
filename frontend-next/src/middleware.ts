@@ -28,6 +28,29 @@ export async function middleware(req: NextRequest) {
   const token = req.cookies.get(COOKIE_NAME)?.value
   const session = token ? await verifyToken(token) : null
 
+  // Redirections pour la refonte SPA Espace Compte
+  const legacyToSpa: Record<string, string> = {
+    '/mes-annonces': 'mes-annonces',
+    '/mes-annonces-immo': 'mes-annonces-immo',
+    '/compte/profil': 'profil',
+    '/compte/apporteur': 'apporteur',
+    '/compte/fonctionnalites': 'fonctionnalites',
+    // On peut aussi rediriger les favoris pour les connectés
+  }
+  
+  if (legacyToSpa[pathname]) {
+    const url = new URL('/compte', req.nextUrl)
+    url.searchParams.set('tab', legacyToSpa[pathname])
+    return NextResponse.redirect(url)
+  }
+  
+  // Pour /favoris, si connecté on redirige vers le SPA, sinon on laisse tel quel
+  if (pathname === '/favoris' && session) {
+    const url = new URL('/compte', req.nextUrl)
+    url.searchParams.set('tab', 'favoris')
+    return NextResponse.redirect(url)
+  }
+
   const isProtected = PROTECTED_ROUTES.some(r => pathname.startsWith(r)) ||
                      PROTECTED_EXACT.some(r => pathname === r)
   const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r))

@@ -18,14 +18,20 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
   const [adding, setAdding] = useState(false)
 
   async function fetchAdmins() {
-    setLoading(true)
+    const cached = localStorage.getItem(`nopalou_offline_admins_${boutiqueId}`)
+    if (cached) {
+      try { setAdmins(JSON.parse(cached)) } catch(e) {}
+    }
+    if (!cached) setLoading(true)
+
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/admins`)
       if (!res.ok) throw new Error('Erreur de chargement')
       const data = await res.json()
       setAdmins(data.admins || [])
+      localStorage.setItem(`nopalou_offline_admins_${boutiqueId}`, JSON.stringify(data.admins || []))
     } catch (err: any) {
-      setError(err.message)
+      if (!cached) setError(err.message)
     } finally {
       setLoading(false)
     }

@@ -2617,12 +2617,50 @@ export default function BoutiqueClient({
               }).catch(() => {});
             }
           }
+
+          // 4. Précharger Analytics
+          fetch(`/api/analytics/boutique/${b.id}`)
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(data => {
+              if (data.stats) localStorage.setItem(`nopalou_offline_analytics_${b.id}`, JSON.stringify(data));
+            }).catch(() => {});
+
+          // 5. Précharger Admins
+          fetch(`/api/boutiques/${b.id}/admins`)
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(data => {
+              if (data.admins) localStorage.setItem(`nopalou_offline_admins_${b.id}`, JSON.stringify(data.admins));
+            }).catch(() => {});
+
+          // 6. Précharger Caissiers
+          fetch(`/api/boutiques/${b.id}/caissiers`)
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(data => {
+              if (data.caissiers) localStorage.setItem(`nopalou_offline_caissiers_${b.id}`, JSON.stringify(data.caissiers));
+            }).catch(() => {});
+
         } catch (e) {
           console.warn("Erreur préchargement background pour boutique", b.id, e);
         }
       });
     }
   }, [boutiquesList, boutiques]);
+
+  // État et Listener pour le mode hors-ligne du Dashboard
+  const [dashboardOffline, setDashboardOffline] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setDashboardOffline(!navigator.onLine);
+      const handleOff = () => setDashboardOffline(true);
+      const handleOn = () => setDashboardOffline(false);
+      window.addEventListener('offline', handleOff);
+      window.addEventListener('online', handleOn);
+      return () => {
+        window.removeEventListener('offline', handleOff);
+        window.removeEventListener('online', handleOn);
+      };
+    }
+  }, []);
 
 
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
@@ -2866,6 +2904,18 @@ export default function BoutiqueClient({
           onClose={() => setManuelBoutiqueId(null)}
           onSuccess={() => { setManuelBoutiqueId(null); router.refresh() }}
         />
+      )}
+
+      {/* Notification Hors-Ligne Dashboard */}
+      {dashboardOffline && (
+        <div style={{
+          position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+          background: '#c2410c', color: 'white', padding: '10px 24px', borderRadius: 30,
+          fontWeight: 700, fontSize: 14, zIndex: 999999, boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+          display: 'flex', alignItems: 'center', gap: 10, whiteSpace: 'nowrap'
+        }}>
+          <span>📡</span> Mode Hors-Ligne (Données en cache)
+        </div>
       )}
     </main>
   )

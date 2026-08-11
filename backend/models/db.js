@@ -3,11 +3,12 @@ const { Pool } = require('pg');
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: process.env.PG_MAX_CONNECTIONS ? parseInt(process.env.PG_MAX_CONNECTIONS, 10) : 20,
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: process.env.NODE_ENV === 'production' } : false,
-  connectionTimeoutMillis: 5000,             // Abandonne l'attente au bout de 5s au lieu de 30s
-  statement_timeout:       15000,            // 15s max par requête SQL
-  idle_in_transaction_session_timeout: 10000,// 10s max en transaction idle
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+  connectionTimeoutMillis: 15000,            // 15s max pour établir une connexion (réseau distant/Render)
+  statement_timeout:       30000,            // 30s max par requête SQL
+  idle_in_transaction_session_timeout: 15000,// 15s max en transaction idle
   idleTimeoutMillis: 30000,                  // Libère les connexions inactives au bout de 30s
+  keepAlive: true,                           // Évite les déconnexions intempestives par les pare-feux
   allowExitOnIdle: false,
 });
 

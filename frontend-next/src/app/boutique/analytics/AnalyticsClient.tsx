@@ -35,12 +35,32 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
 
   useEffect(() => {
     if (!boutiqueId) return
-    setLoading(true)
+    
+    // 1. Charger depuis le cache immédiatement
+    const cached = localStorage.getItem(`nopalou_offline_analytics_${boutiqueId}`)
+    if (cached) {
+      try {
+        const data = JSON.parse(cached)
+        if (data.stats) setStats(data.stats)
+        if (data.historique) setHistorique(data.historique)
+      } catch(e) {}
+    }
+
+    if (!cached) setLoading(true)
     setErreur(null)
+
+    // 2. Fetch en arrière-plan
     fetch(`/api/analytics/boutique/${boutiqueId}`)
-      .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error || r.status)))
-      .then(data => { setStats(data.stats); setHistorique(data.historique ?? []) })
-      .catch((msg) => setErreur(typeof msg === 'string' ? msg : 'Impossible de charger les statistiques.'))
+      .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error || r.status)).catch(() => Promise.reject(r.statusText)))
+      .then(data => { 
+        setStats(data.stats)
+        setHistorique(data.historique ?? []) 
+        localStorage.setItem(`nopalou_offline_analytics_${boutiqueId}`, JSON.stringify(data))
+      })
+      .catch((msg) => {
+        // Ne pas afficher d'erreur si on a déjà des données en cache (mode hors-ligne)
+        if (!cached) setErreur(typeof msg === 'string' ? msg : 'Impossible de charger les statistiques.')
+      })
       .finally(() => setLoading(false))
   }, [boutiqueId])
 

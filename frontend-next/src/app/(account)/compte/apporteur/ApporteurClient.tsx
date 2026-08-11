@@ -21,11 +21,28 @@ const ETAPES = [
 const MESSAGE_PARTAGE = (lien: string) =>
   `Salut ! Je te recommande Nopalou, le comparateur de prix N°1 au Sénégal. Tu peux créer ta boutique en ligne gratuitement (30 jours d'essai Pro offerts) et recevoir tes commandes directement sur WhatsApp. Crée ta boutique ici : ${lien}`
 
-export default function ApporteurClient({ statsInitiales }: { statsInitiales: StatsApporteur | null }) {
-  const [stats, setStats] = useState(statsInitiales)
+export default function ApporteurClient({ statsInitiales }: { statsInitiales?: StatsApporteur | null }) {
+  const [stats, setStats] = useState(statsInitiales || null)
+  const [loading, setLoading] = useState(statsInitiales === undefined)
   const [isPending, startTransition] = useTransition()
   const [erreur, setErreur] = useState<string | null>(null)
   const [copie, setCopie] = useState(false)
+
+  useEffect(() => {
+    if (statsInitiales !== undefined) return
+    const cacheKey = 'nopalou_offline_apporteur_stats'
+    const cached = localStorage.getItem(cacheKey)
+    if (cached) { try { setStats(JSON.parse(cached)); setLoading(false) } catch(e) {} }
+
+    import('./actions').then(m => {
+      m.getMesStatsApporteur().then(fraiches => {
+        setStats(fraiches)
+        localStorage.setItem(cacheKey, JSON.stringify(fraiches))
+      }).catch(err => {
+        console.error('Erreur getMesStatsApporteur', err)
+      }).finally(() => setLoading(false))
+    })
+  }, [statsInitiales])
 
   function activer() {
     setErreur(null)
@@ -36,6 +53,10 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales: St
       const fraiches = await getMesStatsApporteur()
       setStats(fraiches)
     })
+  }
+
+  if (loading && !stats) {
+    return <p style={{ padding: 20 }}>Chargement de l'espace Apporteur d'Affaires...</p>
   }
 
   if (!stats) {

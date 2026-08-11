@@ -28,21 +28,36 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
   const [statutFiltreDoc, setStatutFiltreDoc] = useState<string>('tous')
 
   const chargerDonnees = async () => {
+    const cacheKeyDocs = `nopalou_offline_docs_${boutiqueId}`
+    const cacheKeyClients = `nopalou_offline_clients_${boutiqueId}`
+    const cacheKeyProds = `nopalou_offline_prods_${boutiqueId}`
+
+    const cDocs = localStorage.getItem(cacheKeyDocs)
+    if (cDocs) { try { setDocuments(JSON.parse(cDocs)) } catch(e) {} }
+    const cClients = localStorage.getItem(cacheKeyClients)
+    if (cClients) { try { setClients(JSON.parse(cClients)) } catch(e) {} }
+    const cProds = localStorage.getItem(cacheKeyProds)
+    if (cProds) { try { setProduits(JSON.parse(cProds)) } catch(e) {} }
+
+    if (!cDocs) setLoading(true)
+
     try {
-      setLoading(true)
       const docs = await getBoutiqueDocuments(boutiqueId)
       setDocuments(docs)
+      localStorage.setItem(cacheKeyDocs, JSON.stringify(docs))
 
       // Charger clients pour le formulaire
       const resClients = await fetch(`/api/boutiques/${boutiqueId}/credits-clients`)
       if (resClients.ok) {
         const dClients = await resClients.json()
         setClients(dClients.clients || [])
+        localStorage.setItem(cacheKeyClients, JSON.stringify(dClients.clients || []))
       }
 
       // Charger catalogue pour le formulaire
       const prods = await getBoutiqueProduits(boutiqueId)
       setProduits(prods || [])
+      localStorage.setItem(cacheKeyProds, JSON.stringify(prods || []))
     } catch (err) {
       console.error('Erreur chargement documents:', err)
     } finally {

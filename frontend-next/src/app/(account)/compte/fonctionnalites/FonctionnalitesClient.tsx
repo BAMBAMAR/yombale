@@ -1,31 +1,34 @@
-import type { Metadata } from 'next'
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { backendFetch } from '@/lib/backend-fetch'
-import { verifySession } from '@/lib/dal'
 import { FONCTIONNALITES_PLATEFORME, PALIERS_BOUTIQUE } from '@/lib/fonctionnalites-data'
 
-export const metadata: Metadata = { title: 'Fonctionnalités & abonnements' }
+export default function FonctionnalitesClient() {
+  const [planActif, setPlanActif] = useState<{ plan: string; fin: string } | null>(null)
+  const [settings, setSettings] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(true)
 
-export default async function FonctionnalitesPage() {
-  await verifySession()
+  useEffect(() => {
+    const cacheKey = 'nopalou_offline_fonctionnalites'
+    const cached = localStorage.getItem(cacheKey)
+    if (cached) { try { const d = JSON.parse(cached); setPlanActif(d.planActif); setSettings(d.settings); setLoading(false) } catch(e) {} }
 
-  let planActif: { plan: string; fin: string } | null = null
-  try {
-    const res = await backendFetch('/api/abonnements/mon-plan')
-    if (res.ok) {
-      const data = await res.json()
-      planActif = data.abonnement
-    }
-  } catch { /* page neutre si erreur */ }
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
-  const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
-  let settings: Record<string, string> = {}
-  try {
-    const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' })
-    if (r.ok) settings = await r.json()
-  } catch {
-    // valeurs par défaut ci-dessous
-  }
+    Promise.all([
+      fetch('/api/abonnements/mon-plan', { headers }).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      fetch('/api/settings/public').then(r => r.ok ? r.json() : {}).catch(() => ({}))
+    ]).then(([planData, settingsData]) => {
+      const plan = planData.abonnement || null
+      setPlanActif(plan)
+      setSettings(settingsData)
+      localStorage.setItem(cacheKey, JSON.stringify({ planActif: plan, settings: settingsData }))
+      setLoading(false)
+    })
+  }, [])
+
   const prixPro = Number(settings.plan_pro_prix) || 5000
   const prixBusiness = Number(settings.plan_business_prix) || 10000
   const PRIX_PAR_PALIER: Record<string, number | null> = { gratuit: null, pro: prixPro, business: prixBusiness }
@@ -33,8 +36,12 @@ export default async function FonctionnalitesPage() {
   const palierActuelId = planActif ? planActif.plan : 'gratuit'
   const RANG_PALIER: Record<string, number> = { gratuit: 0, pro: 1, business: 2 }
 
+  if (loading && !planActif) {
+    return <p style={{ padding: 20 }}>Chargement de vos fonctionnalités...</p>
+  }
+
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 16px' }}>
+    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '16px 0' }}>
       <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1C2B4A', marginBottom: 8 }}>
         Fonctionnalités & abonnements
       </h1>

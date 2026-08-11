@@ -6,10 +6,10 @@ const GROUPES = [
   {
     label: 'Mes annonces',
     liens: [
-      { href: '/mes-annonces',      label: 'Mes annonces',        emoji: '📋' },
-      { href: '/mes-annonces-immo', label: 'Mes biens immo',      emoji: '🏠' },
-      { href: '/mes-alertes',       label: 'Mes alertes prix',    emoji: '🔔' },
-      { href: '/favoris',           label: 'Mes favoris',         emoji: '♥' },
+      { href: '/compte?tab=mes-annonces',      label: 'Mes annonces',        emoji: '📋', tab: 'mes-annonces' },
+      { href: '/compte?tab=mes-annonces-immo', label: 'Mes biens immo',      emoji: '🏠', tab: 'mes-annonces-immo' },
+      { href: '/compte?tab=mes-alertes',       label: 'Mes alertes prix',    emoji: '🔔', tab: 'mes-alertes' },
+      { href: '/compte?tab=favoris',           label: 'Mes favoris',         emoji: '♥',  tab: 'favoris' },
       { href: '/deposer-annonce',   label: 'Publier une annonce', emoji: '➕' },
       { href: '/deposer-immo',      label: 'Publier un bien',     emoji: '🏡' },
     ],
@@ -23,14 +23,14 @@ const GROUPES = [
   {
     label: 'Compte',
     liens: [
-      { href: '/compte/profil',         label: 'Mon profil',                   emoji: '✏️' },
-      { href: '/compte/apporteur',      label: 'Apporteur d\'affaires',        emoji: '💼' },
-      { href: '/compte/fonctionnalites', label: 'Fonctionnalités & abonnements', emoji: '📖' },
+      { href: '/compte?tab=profil',         label: 'Mon profil',                   emoji: '✏️', tab: 'profil' },
+      { href: '/compte?tab=apporteur',      label: 'Apporteur d\'affaires',        emoji: '💼', tab: 'apporteur' },
+      { href: '/compte?tab=fonctionnalites', label: 'Fonctionnalités & abonnements', emoji: '📖', tab: 'fonctionnalites' },
     ],
   },
 ]
 
-export default function AccountNavLinks() {
+export default function AccountNavLinks({ overrideTab }: { overrideTab?: string }) {
   const pathname = usePathname()
 
   return (
@@ -40,7 +40,9 @@ export default function AccountNavLinks() {
           <p className="account-nav-group-label">{groupe.label}</p>
           <div>
             {groupe.liens.map(lien => {
-              const actif = pathname === lien.href || pathname.startsWith(lien.href + '/')
+              const actif = overrideTab && lien.tab === overrideTab 
+                ? true 
+                : (!overrideTab && (pathname === lien.href || pathname.startsWith(lien.href + '/')))
               return (
                 <Link
                   key={lien.href}
