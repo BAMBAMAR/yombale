@@ -664,6 +664,53 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
     }
   }, [historiqueVentes, boutiqueActiveId])
 
+  // ── Restauration automatique du Panier et de la File d'attente lors d'un rafraîchissement F5 ──
+  useEffect(() => {
+    if (typeof window !== 'undefined' && boutiqueActiveId) {
+      try {
+        const savedPanier = localStorage.getItem(`nopalou_pos_panier_${boutiqueActiveId}`)
+        if (savedPanier) {
+          const parsedPanier = JSON.parse(savedPanier)
+          if (Array.isArray(parsedPanier) && parsedPanier.length > 0) {
+            setPanier(parsedPanier)
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const savedTickets = localStorage.getItem(`nopalou_pos_tickets_attente_${boutiqueActiveId}`)
+        if (savedTickets) {
+          const parsedTickets = JSON.parse(savedTickets)
+          if (Array.isArray(parsedTickets) && parsedTickets.length > 0) {
+            setTicketsEnAttente(parsedTickets)
+          }
+        }
+      } catch (e) {}
+    }
+  }, [boutiqueActiveId])
+
+  // ── Persistance automatique du Panier en cours ──
+  useEffect(() => {
+    if (typeof window !== 'undefined' && boutiqueActiveId) {
+      if (panier.length > 0) {
+        localStorage.setItem(`nopalou_pos_panier_${boutiqueActiveId}`, JSON.stringify(panier))
+      } else {
+        localStorage.removeItem(`nopalou_pos_panier_${boutiqueActiveId}`)
+      }
+    }
+  }, [panier, boutiqueActiveId])
+
+  // ── Persistance automatique de la File d'attente ──
+  useEffect(() => {
+    if (typeof window !== 'undefined' && boutiqueActiveId) {
+      if (ticketsEnAttente.length > 0) {
+        localStorage.setItem(`nopalou_pos_tickets_attente_${boutiqueActiveId}`, JSON.stringify(ticketsEnAttente))
+      } else {
+        localStorage.removeItem(`nopalou_pos_tickets_attente_${boutiqueActiveId}`)
+      }
+    }
+  }, [ticketsEnAttente, boutiqueActiveId])
+
   // ── Charger les boutiques du marchand et le catalogue réel de produits ───────
   useEffect(() => {
     async function chargerBoutiquesEtProduits() {

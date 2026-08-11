@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 11/08/2026 : Persistance Anti-Perte des Paniers et Tickets en Attente lors du Rafraîchissement (F5) (`CaisseClient.tsx`)
+- **Sauvegarde & Restauration Automatique (`localStorage`)** :
+  * Mémorisation dynamique en temps réel du panier en cours (`nopalou_pos_panier_${boutiqueActiveId}`) et de la file d'attente des tickets suspendus (`nopalou_pos_tickets_attente_${boutiqueActiveId}`).
+  * Lors d'un rafraîchissement F5, de la fermeture accidentelle de l'onglet ou d'un redémarrage du navigateur, la caisse restaure intégralement l'état du panier et tous les tickets en attente.
+
 ## 🚀 Mises à jour du 11/08/2026 : Visibilité Universelle Mobile & Desktop de la File d'Attente Tickets (`CaisseClient.tsx`)
 - **Positionnement Universel Hors-Panneau (`CaisseClient.tsx`)** :
   * Le bandeau "👥 Clients en file d'attente" a été placé juste sous la barre d'onglets mobile (`🛍️ Catalogue` / `🛒 Ticket`).
