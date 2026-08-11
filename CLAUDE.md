@@ -1,3 +1,7 @@
+## 🚀 Mises à jour du 11/08/2026 : Correction de l'Affichage du Statut "(Off)" dans la Caisse POS
+- **Correction de la requête API Terminal Caisse (`backend/routes/boutiques.js`)** :
+  * Ajout du champ `actif` dans la clause `SELECT` de la route `/api/boutiques/caisse-terminal/:token`. Auparavant, ce champ était omis, ce qui forçait la caisse POS à afficher incorrectement le label `(Off)` à côté du nom de la boutique même lorsqu'elle était parfaitement active.
+
 ## 🚀 Mises à jour du 11/08/2026 : Correction de l'Affichage Mobile & Badge Commandes
 - **Fix du menu de gestion boutique sur mobile (`globals.css`)** :
   * Utilisation de `display: contents` sur les `.bq-nav-group` pour aplanir la hiérarchie DOM sur mobile, ce qui restaure la barre de navigation horizontale défilante compacte et rend l'en-tête de la boutique visible sans être poussé par un menu vertical cassé.
