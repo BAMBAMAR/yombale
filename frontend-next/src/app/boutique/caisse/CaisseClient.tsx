@@ -2466,7 +2466,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         </div>
 
         {/* Côté Droit : Ticket Panier & Encaissement POS */}
-        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 14, boxSizing: 'border-box', maxWidth: '100%' }}>
+        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: '16px 12px 24px 12px', display: 'flex', flexDirection: 'column', gap: 14, boxSizing: 'border-box', maxWidth: '100%', overflowY: 'auto', height: '100%' }}>
           {/* Bouton retour au catalogue sur Mobile */}
           <button
             type="button"
@@ -2761,52 +2761,55 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, marginBottom: 12 }}>
-              <div>
-                <span style={{ fontSize: 13, color: '#475569', display: 'block', fontWeight: 600 }}>Net à payer</span>
+            {/* Actions Sticky Net à Payer / Devis / Proforma / Encaisser */}
+            <div style={{ position: 'sticky', bottom: 0, background: '#ffffff', paddingTop: 10, paddingBottom: 12, borderTop: '1px solid #e2e8f0', zIndex: 10, marginTop: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <div>
+                  <span style={{ fontSize: 13, color: '#475569', display: 'block', fontWeight: 600 }}>Net à payer</span>
+                </div>
+                <span style={{ fontSize: 24, fontWeight: 900, color: '#C75B00' }}>{fcfa(netAPayer)}</span>
               </div>
-              <span style={{ fontSize: 24, fontWeight: 900, color: '#C75B00' }}>{fcfa(netAPayer)}</span>
-            </div>
 
-            {/* Actions Devis / Proforma / Encaisser */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              {/* Actions Devis / Proforma / Encaisser */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <button
+                  onClick={() => enregistrerDocumentCaisse('devis')}
+                  disabled={netAPayer === 0}
+                  style={{
+                    flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1',
+                    background: '#ffffff', color: netAPayer > 0 ? '#475569' : '#94a3b8',
+                    fontWeight: 700, fontSize: 12, cursor: netAPayer > 0 ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  📄 DEVIS
+                </button>
+                <button
+                  onClick={() => enregistrerDocumentCaisse('proforma')}
+                  disabled={netAPayer === 0}
+                  style={{
+                    flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1',
+                    background: '#ffffff', color: netAPayer > 0 ? '#475569' : '#94a3b8',
+                    fontWeight: 700, fontSize: 12, cursor: netAPayer > 0 ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  📄 PROFORMA
+                </button>
+              </div>
+
               <button
-                onClick={() => enregistrerDocumentCaisse('devis')}
+                onClick={encaisserVente}
                 disabled={netAPayer === 0}
                 style={{
-                  flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1',
-                  background: '#ffffff', color: netAPayer > 0 ? '#475569' : '#94a3b8',
-                  fontWeight: 700, fontSize: 12, cursor: netAPayer > 0 ? 'pointer' : 'not-allowed'
+                  width: '100%', padding: '14px', borderRadius: 10, border: 'none',
+                  background: netAPayer > 0 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#cbd5e1',
+                  color: netAPayer > 0 ? '#fff' : '#64748b',
+                  fontWeight: 900, fontSize: 16, cursor: netAPayer > 0 ? 'pointer' : 'not-allowed',
+                  boxShadow: netAPayer > 0 ? '0 4px 14px rgba(16,185,129,0.3)' : 'none',
                 }}
               >
-                📄 DEVIS
-              </button>
-              <button
-                onClick={() => enregistrerDocumentCaisse('proforma')}
-                disabled={netAPayer === 0}
-                style={{
-                  flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1',
-                  background: '#ffffff', color: netAPayer > 0 ? '#475569' : '#94a3b8',
-                  fontWeight: 700, fontSize: 12, cursor: netAPayer > 0 ? 'pointer' : 'not-allowed'
-                }}
-              >
-                📄 PROFORMA
+                ⚡ ENCAISSER ET TICKET (80mm) →
               </button>
             </div>
-
-            <button
-              onClick={encaisserVente}
-              disabled={netAPayer === 0}
-              style={{
-                width: '100%', padding: '14px', borderRadius: 10, border: 'none',
-                background: netAPayer > 0 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#cbd5e1',
-                color: netAPayer > 0 ? '#fff' : '#64748b',
-                fontWeight: 900, fontSize: 16, cursor: netAPayer > 0 ? 'pointer' : 'not-allowed',
-                boxShadow: netAPayer > 0 ? '0 4px 14px rgba(16,185,129,0.3)' : 'none',
-              }}
-            >
-              ⚡ ENCAISSER ET TICKET (80mm) →
-            </button>
           </div>
         </div>
       </div>

@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 11/08/2026 : Fixation Permanente du Bouton "ENCAISSER" Sticky en Bas d'Écran (`CaisseClient.tsx`)
+- **Correction Débordement & Placement Sticky (`CaisseClient.tsx`)** :
+  * Ajout du défilement interne `overflowY: 'auto'` sur la section ticket et conversion du bloc de paiement (`Net à payer`, `DEVIS`, `PROFORMA`, `⚡ ENCAISSER ET TICKET`) en conteneur `position: 'sticky', bottom: 0`.
+  * Résout le problème où le bouton vert "ENCAISSER" était poussé sous le bas de l'écran ou tronqué sur les mobiles et écrans de taille intermédiaire. Le bouton reste désormais **100% visible et accessible en permanence**.
+
 ## 🚀 Mises à jour du 11/08/2026 : Persistance Anti-Perte des Paniers et Tickets en Attente lors du Rafraîchissement (F5) (`CaisseClient.tsx`)
 - **Sauvegarde & Restauration Automatique (`localStorage`)** :
   * Mémorisation dynamique en temps réel du panier en cours (`nopalou_pos_panier_${boutiqueActiveId}`) et de la file d'attente des tickets suspendus (`nopalou_pos_tickets_attente_${boutiqueActiveId}`).
