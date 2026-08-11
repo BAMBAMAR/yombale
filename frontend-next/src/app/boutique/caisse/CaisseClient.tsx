@@ -318,11 +318,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   useEffect(() => {
     if (!boutiqueActiveId || !sessionScannerId) return
     const timer = setInterval(async () => {
+      if (typeof window !== 'undefined' && !navigator.onLine) return
       try {
-        const res = await fetch(`/api/boutiques/${boutiqueActiveId}/scanner-remote?sessionId=${sessionScannerId}`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data.codes && Array.isArray(data.codes) && data.codes.length > 0) {
+        const res = await fetch(`/api/boutiques/${boutiqueActiveId}/scanner-remote?sessionId=${sessionScannerId}`).catch(() => null)
+        if (res && res.ok) {
+          const data = await res.json().catch(() => null)
+          if (data && data.codes && Array.isArray(data.codes) && data.codes.length > 0) {
             data.codes.forEach((code: string) => {
               traiterCodeBarreCamera(code)
             })
