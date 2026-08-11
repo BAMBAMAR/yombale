@@ -2002,7 +2002,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                 const isAuth = b.plan_actif === 'pro' || b.plan_actif === 'business';
                 return (
                   <option key={b.id} value={b.id}>
-                    {isAuth ? '🟢' : '🔒'} {b.nom}{!b.actif ? ' (Off)' : ''}
+                    {isAuth ? '🟢' : '🔒'} {b.nom}{b.actif === false ? ' (Off)' : ''}
                   </option>
                 );
               })}

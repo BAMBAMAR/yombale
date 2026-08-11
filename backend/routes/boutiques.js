@@ -553,7 +553,7 @@ router.get('/mine', verifierToken, async (req, res) => {
     const rows = await pool.query(
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
               b.logo_url, b.cover_url, b.site_web, b.facebook, b.instagram, b.slug,
-              b.actif, b.sponsorise, b.sponsor_jusqu_au, b.whatsapp_catalog_id, b.created_at,
+              COALESCE(b.actif, true) AS actif, b.sponsorise, b.sponsor_jusqu_au, b.whatsapp_catalog_id, b.created_at,
               COALESCE(b.mode_fonctionnement, 'hybride_pos') AS mode_fonctionnement,
               COALESCE(b.devise_defaut, 'XOF') AS devise_defaut,
               b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
@@ -1513,8 +1513,8 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
 
     // INSERT avec colonnes de base (toujours présentes)
     const r = await pool.query(
-      `INSERT INTO boutiques (utilisateur_id, nom, description, categorie, telephone, adresse, ville, logo_url, apporteur_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+      `INSERT INTO boutiques (utilisateur_id, nom, description, categorie, telephone, adresse, ville, logo_url, apporteur_id, actif)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, true) RETURNING id`,
       [userId, nom.trim(), description||null, categorie||null, telephone||null,
        adresse||null, ville||'Dakar', logo_url, apporteurId]
     );
@@ -3287,8 +3287,8 @@ router.get('/caisse-terminal/:token', async (req, res) => {
     if (!token) return res.status(400).json({ error: 'Jeton requis' });
 
     const bRes = await pool.query(
-      `SELECT id, nom, logo_url, telephone, adresse, ville, caisse_token, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut, actif
-       FROM boutiques WHERE caisse_token = $1 AND actif = TRUE`,
+      `SELECT id, nom, logo_url, telephone, adresse, ville, caisse_token, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut, COALESCE(actif, true) AS actif
+       FROM boutiques WHERE caisse_token = $1 AND COALESCE(actif, TRUE) = TRUE`,
       [token]
     );
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Terminal introuvable ou désactivé' });

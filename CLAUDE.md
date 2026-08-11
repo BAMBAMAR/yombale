@@ -1,3 +1,10 @@
+## 🚀 Mises à jour du 11/08/2026 : Résolution Définitive du Statut "(Off)" à Côté de la Boutique Active (POS)
+- **Sécurisation SQL des valeurs Nulles (`backend/routes/boutiques.js`)** :
+  * Utilisation de `COALESCE(b.actif, true) AS actif` dans les routes `/api/boutiques/mine` et `/api/boutiques/caisse-terminal/:token` pour éviter que les boutiques existantes ayant un champ `actif` valant `NULL` en base de données ne soient renvoyées comme inactives.
+  * Ajout de `actif = true` par défaut lors de la création d'une nouvelle boutique (`INSERT INTO boutiques`).
+- **Correction Frontend POS (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
+  * Remplacement du contrôle trop permissif `!b.actif` par la comparaison stricte `b.actif === false`. Le tag `(Off)` n'est désormais affiché QUE si la boutique est explicitement désactivée en modération administration, éliminant tout faux positif sur `null` ou `undefined`.
+
 ## 🚀 Mises à jour du 11/08/2026 : Accessibilité Mobile des Tickets en Attente
 - **Déplacement du composant "File d'attente" (`CaisseClient.tsx`)** :
   * Auparavant, la liste des tickets mis en attente était affichée exclusivement dans la section Catalogue. Sur mobile, cela la rendait introuvable lorsque le caissier était sur l'onglet "Ticket", l'empêchant de reprendre facilement un ticket.
