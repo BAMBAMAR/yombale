@@ -732,8 +732,14 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
             }
           }
         }
-        const mine = await getBoutiquesMine()
-        const merchantBoutiques = mine || []
+        let merchantBoutiques: any[] = []
+        try {
+          const mine = await getBoutiquesMine()
+          merchantBoutiques = mine || []
+        } catch (e) {
+          console.warn("Réseau indisponible, tentative de lecture du cache...", e)
+        }
+
         if (merchantBoutiques.length > 0) {
           setBoutiques(merchantBoutiques)
           localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify(merchantBoutiques))
