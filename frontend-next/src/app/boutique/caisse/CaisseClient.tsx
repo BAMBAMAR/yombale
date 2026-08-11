@@ -2160,32 +2160,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         {/* Côté Gauche : Recherche & Catalogue Produits Réel avec Décrémentation Dynamique du Stock */}
         <div className={`caisse-catalogue-section ${tabMobile === 'catalogue' ? 'mobile-active' : 'mobile-hidden'}`} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}>
           
-          {/* File d'attente Multi-Clients (1, 2, 3 clients simultanés) */}
-          {ticketsEnAttente.length > 0 && (
-            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: '#c2410c', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>👥</span> Clients en file d&apos;attente ({ticketsEnAttente.length}) :
-                </span>
-                <span style={{ fontSize: 11, color: '#9a3412' }}>Cliquez pour reprendre un panier</span>
-              </div>
 
-              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
-                {ticketsEnAttente.map(t => (
-                  <button
-                    key={t.id}
-                    onClick={() => reprendreTicketEnAttente(t.id)}
-                    style={{
-                      background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 12px',
-                      fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
-                    }}
-                  >
-                    <span>▶️</span> {t.clientLabel} ({t.panier.length} art. • {t.heure})
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Barre de Recherche Code-Barres & Nom + Scanner Caméra (Responsive Mobile 2 Lignes) */}
           <div className="caisse-search-row">
@@ -2419,6 +2394,33 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
           >
             ⬅️ Revenir au Catalogue produits ({produitsFiltres.length})
           </button>
+
+          {/* File d'attente Multi-Clients (1, 2, 3 clients simultanés) */}
+          {ticketsEnAttente.length > 0 && (
+            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: '#c2410c', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>👥</span> Clients en file d&apos;attente ({ticketsEnAttente.length}) :
+                </span>
+                <span style={{ fontSize: 11, color: '#9a3412' }}>Cliquez pour reprendre un panier</span>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+                {ticketsEnAttente.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => reprendreTicketEnAttente(t.id)}
+                    style={{
+                      background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 12px',
+                      fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <span>▶️</span> {t.clientLabel} ({t.panier.length} art. • {t.heure})
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 10, gap: 8 }}>
             <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#0f172a', flexShrink: 0 }}>🛒 Ticket en cours</h2>
