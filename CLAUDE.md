@@ -54,6 +54,16 @@
   * Ajout d'un écouteur `onClick` sur tous les liens "Aller à la caisse" spécifiques à une boutique.
   * Mise à jour de `nopalou_pos_active_boutique_id` dans le `localStorage` avant la redirection vers `/boutique/caisse` pour garantir que `CaisseClient.tsx` charge systématiquement la bonne boutique.
 
+## 🚀 Mises à jour du 11/08/2026 : Correction de la Persistance Hors-Ligne du Catalogue (IndexedDB & SW)
+- **Isolation du Stockage IndexedDB par Boutique (`frontend-next/src/lib/db-offline.ts`)** :
+  * Mise à jour de `sauvegarderProduitsLocaux(produits, boutiqueId)` et `obtenirProduitsLocaux(boutiqueId)` pour isoler les articles par `boutique_id`.
+  * La sauvegarde d'une boutique supprime désormais uniquement les produits de cette boutique au lieu d'effectuer un `store.clear()` global.
+- **Sécurisation du Chargement dans la Caisse POS (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
+  * Protection du cache local : si l'API renvoie une réponse vide `[]` alors que le réseau est actif, le cache IndexedDB existant est conservé au lieu d'être écrasé.
+  * Propagation systématique de `bId` pour toutes les opérations de lecture/écriture du catalogue local.
+- **Mise en Cache des Visuels d'Articles (`frontend-next/src/app/sw.ts`)** :
+  * Ajout d'une stratégie `StaleWhileRevalidate` (30 jours) dans Serwist pour conserver les images d'articles (`destination === "image"`) accessibles sans connexion réseau.
+
 ## 🚀 Mises à jour du 10/08/2026 : Diagnostic en Profondeur & Validation 100% Réussie (Playwright E2E & TypeScript)
 - **Validation Globale Sans Fautes (0 Erreur)** :
   * **TypeScript (`npx tsc --noEmit`)** : 100% Validé (0 erreur de typage).

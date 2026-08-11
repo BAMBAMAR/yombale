@@ -61,32 +61,57 @@ export function initialiserBaseLocale(): Promise<IDBDatabase> {
 
 // --- CATALOGUE PRODUITS ---
 
-export async function sauvegarderProduitsLocaux(produits: any[]): Promise<void> {
+export async function sauvegarderProduitsLocaux(produits: any[], boutiqueId?: string): Promise<void> {
   const db = await initialiserBaseLocale();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction('produits', 'readwrite');
     const store = tx.objectStore('produits');
     
-    // Vider l'ancien cache
-    store.clear();
-    
-    produits.forEach(p => {
-      store.put(p);
-    });
+    const getAllReq = store.getAll();
+    getAllReq.onsuccess = () => {
+      const existing: any[] = getAllReq.result || [];
+      if (boutiqueId) {
+        existing.forEach(item => {
+          if (item.boutique_id === boutiqueId) {
+            store.delete(item.id);
+          }
+        });
+      } else {
+        store.clear();
+      }
+
+      produits.forEach(p => {
+        const itemToSave = boutiqueId ? { ...p, boutique_id: boutiqueId } : p;
+        store.put(itemToSave);
+      });
+    };
+
+    getAllReq.onerror = () => {
+      if (!boutiqueId) store.clear();
+      produits.forEach(p => store.put(p));
+    };
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }
 
-export async function obtenirProduitsLocaux(): Promise<any[]> {
+export async function obtenirProduitsLocaux(boutiqueId?: string): Promise<any[]> {
   const db = await initialiserBaseLocale();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('produits', 'readonly');
     const store = tx.objectStore('produits');
     const request = store.getAll();
 
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const results: any[] = request.result || [];
+      if (boutiqueId) {
+        const filtered = results.filter(p => !p.boutique_id || p.boutique_id === boutiqueId);
+        resolve(filtered);
+      } else {
+        resolve(results);
+      }
+    };
     request.onerror = () => reject(request.error);
   });
 }

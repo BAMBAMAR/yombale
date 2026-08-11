@@ -16,6 +16,19 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: false,
   runtimeCaching: [
+    ({
+      matcher({ request }: any) {
+        return request && request.destination === "image";
+      },
+      handler: "StaleWhileRevalidate",
+      options: {
+        cacheName: "images-catalogue-cache",
+        expiration: {
+          maxEntries: 200,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 jours
+        },
+      },
+    } as any),
     ...defaultCache,
   ],
   fallbacks: {

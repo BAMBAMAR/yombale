@@ -911,15 +911,21 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         }))
         setProduits(prodsFormates)
         localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify(prodsFormates))
-        sauvegarderProduitsLocaux(prodsFormates).catch(() => {})
+        sauvegarderProduitsLocaux(prodsFormates, bId).catch(() => {})
       } else if (produits && Array.isArray(produits) && produits.length === 0 && navigator.onLine) {
-        // En ligne et la boutique est réellement vide
-        setProduits([])
-        localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify([]))
-        sauvegarderProduitsLocaux([]).catch(() => {})
+        // En ligne et la boutique renvoie une liste vide : vérifier d'abord si on avait des produits en cache
+        const cachedExistants = await obtenirProduitsLocaux(bId).catch(() => [])
+        if (!cachedExistants || cachedExistants.length === 0) {
+          setProduits([])
+          localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify([]))
+          sauvegarderProduitsLocaux([], bId).catch(() => {})
+        } else {
+          // Si on avait un cache valide, le conserver plutôt que de tout effacer
+          setProduits(cachedExistants)
+        }
       } else {
-        // En cas d'échec réseau ou réponse vide hors-ligne, restaurer le cache local
-        const cached = await obtenirProduitsLocaux().catch(() => [])
+        // En cas d'échec réseau ou réponse vide hors-ligne, restaurer le cache local scopé par bId
+        const cached = await obtenirProduitsLocaux(bId).catch(() => [])
         if (cached && cached.length > 0) {
           setProduits(cached)
         } else if (localProds) {
@@ -933,7 +939,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       }
     } catch (e) {
       console.error('Erreur chargement produits caisse:', e)
-      const cached = await obtenirProduitsLocaux().catch(() => [])
+      const cached = await obtenirProduitsLocaux(bId).catch(() => [])
       if (cached && cached.length > 0) {
         setProduits(cached)
       } else if (localProds) {
@@ -1529,7 +1535,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       })
       if (boutiqueActiveId) {
         localStorage.setItem(`nopalou_pos_produits_${boutiqueActiveId}`, JSON.stringify(updated))
-        sauvegarderProduitsLocaux(updated).catch(() => {})
+        sauvegarderProduitsLocaux(updated, boutiqueActiveId).catch(() => {})
       }
       return updated
     })
@@ -2021,14 +2027,28 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       }}>
         {/* Côté Gauche : Retour + POS badge + Boutique selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          {/* Bouton retour — icône seule sur mobile */}
+          {/* Bouton retour universel — visible mobile & desktop */}
           <Link
             href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'}
-            className="btn-premium btn-premium-secondary caisse-btn-retour"
-            style={{ padding: '5px 8px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0 }}
+            className="caisse-btn-retour"
+            style={{
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 800,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              flexShrink: 0,
+              background: '#0f172a',
+              color: '#ffffff',
+              border: '1px solid #334155',
+              borderRadius: 8,
+              textDecoration: 'none',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            }}
           >
-            <ArrowLeft size={13} />
-            <span className="caisse-label-desktop">Boutique</span>
+            <ArrowLeft size={14} />
+            <span>Boutique</span>
           </Link>
           {/* Badge Hors-Ligne (affiché uniquement si hors ligne) */}
           {offlineModeActive && (
