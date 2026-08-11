@@ -54,15 +54,18 @@
   * Ajout d'un écouteur `onClick` sur tous les liens "Aller à la caisse" spécifiques à une boutique.
   * Mise à jour de `nopalou_pos_active_boutique_id` dans le `localStorage` avant la redirection vers `/boutique/caisse` pour garantir que `CaisseClient.tsx` charge systématiquement la bonne boutique.
 
-## 🚀 Mises à jour du 11/08/2026 : Correction de la Persistance Hors-Ligne du Catalogue (IndexedDB & SW)
+## 🚀 Mises à jour du 11/08/2026 : Correction Intégrale du Mode Hors-Ligne Web (Catalogue Vendeur & Service Worker)
+- **Notification Flottante Hors-Ligne Globale Web & Mobile (`frontend-next/src/app/RegisterSW.tsx`)** :
+  * Intégration du bandeau réactif flottant en haut d'écran `📡 Mode Hors-Ligne — Consultation des données locales en cache` lors de la déconnexion réseau, et dissipation automatique `✅ Connexion Internet rétablie` au retour du réseau.
+  * Suppression de la condition restrictive `process.env.NODE_ENV === 'production'` pour garantir l'enregistrement et la réactivité du Service Worker dans tous les environnements.
+- **Correction Critique de l'Erreur Service Worker (`frontend-next/src/app/sw.ts`)** :
+  * Élimination de l'erreur `Uncaught (in promise) TypeError: c.handle is not a function` en remettant la configuration `defaultCache` conforme au moteur Serwist.
+- **Restauration Hors-Ligne du Catalogue Vendeur (`frontend-next/src/app/boutique/BoutiqueClient.tsx`)** :
+  * Mise en cache et restauration automatique du catalogue dans l'espace marchand `/boutique` via IndexedDB et LocalStorage. En cas de navigation sans réseau, le catalogue affiche désormais l'intégralité des produits enregistrés au lieu de l'écran vide `0 produits`.
 - **Isolation du Stockage IndexedDB par Boutique (`frontend-next/src/lib/db-offline.ts`)** :
   * Mise à jour de `sauvegarderProduitsLocaux(produits, boutiqueId)` et `obtenirProduitsLocaux(boutiqueId)` pour isoler les articles par `boutique_id`.
-  * La sauvegarde d'une boutique supprime désormais uniquement les produits de cette boutique au lieu d'effectuer un `store.clear()` global.
 - **Sécurisation du Chargement dans la Caisse POS (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
   * Protection du cache local : si l'API renvoie une réponse vide `[]` alors que le réseau est actif, le cache IndexedDB existant est conservé au lieu d'être écrasé.
-  * Propagation systématique de `bId` pour toutes les opérations de lecture/écriture du catalogue local.
-- **Mise en Cache des Visuels d'Articles (`frontend-next/src/app/sw.ts`)** :
-  * Ajout d'une stratégie `StaleWhileRevalidate` (30 jours) dans Serwist pour conserver les images d'articles (`destination === "image"`) accessibles sans connexion réseau.
 
 ## 🚀 Mises à jour du 10/08/2026 : Diagnostic en Profondeur & Validation 100% Réussie (Playwright E2E & TypeScript)
 - **Validation Globale Sans Fautes (0 Erreur)** :

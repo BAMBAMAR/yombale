@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react'
 
 export default function RegisterSW() {
   const [isOffline, setIsOffline] = useState(false)
+  const [showOnlineToast, setShowOnlineToast] = useState(false)
+
   useEffect(() => {
     if (typeof window === 'undefined') return
 
     // Enregistrement effectif du Service Worker PWA
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+    if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js')
         .then((reg) => {
@@ -19,10 +21,14 @@ export default function RegisterSW() {
         })
     }
 
-    const handleOffline = () => setIsOffline(true)
+    const handleOffline = () => {
+      setIsOffline(true)
+      setShowOnlineToast(false)
+    }
     const handleOnline = () => {
       setIsOffline(false)
-      // On peut forcer le SW à vérifier les mises à jour au retour en ligne
+      setShowOnlineToast(true)
+      setTimeout(() => setShowOnlineToast(false), 4000)
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(reg => {
           reg.update().catch(() => {})
@@ -33,7 +39,6 @@ export default function RegisterSW() {
     window.addEventListener('offline', handleOffline)
     window.addEventListener('online', handleOnline)
 
-    // Vérification initiale
     if (!navigator.onLine) {
       setIsOffline(true)
     }
@@ -44,29 +49,36 @@ export default function RegisterSW() {
     }
   }, [])
 
-  if (!isOffline) return null
+  if (!isOffline && !showOnlineToast) return null
 
   return (
     <div style={{
       position: 'fixed',
-      bottom: '80px', // Au-dessus de la BottomBar mobile
+      top: '16px',
       left: '50%',
       transform: 'translateX(-50%)',
-      backgroundColor: '#C75B00',
-      color: '#fff',
-      padding: '8px 16px',
-      borderRadius: '20px',
+      backgroundColor: isOffline ? '#c2410c' : '#15803d',
+      color: '#ffffff',
+      padding: '10px 22px',
+      borderRadius: '30px',
       fontSize: '13px',
       fontWeight: 'bold',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-      zIndex: 9999,
+      boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+      zIndex: 99999,
       display: 'flex',
       alignItems: 'center',
-      gap: '8px',
-      pointerEvents: 'none'
+      gap: '10px',
+      border: '1px solid rgba(255,255,255,0.25)',
+      backdropFilter: 'blur(8px)',
+      pointerEvents: 'auto',
+      transition: 'all 0.3s ease-in-out'
     }}>
-      <span>📡</span>
-      Mode Hors-Ligne Actif
+      <span>{isOffline ? '📡' : '✅'}</span>
+      <span>
+        {isOffline 
+          ? 'Mode Hors-Ligne — Consultation des données locales en cache' 
+          : 'Connexion Internet rétablie'}
+      </span>
     </div>
   )
 }

@@ -22,6 +22,7 @@ import GestionDocuments from './GestionDocuments'
 import GestionFournisseurs from './GestionFournisseurs'
 import BoutiqueLogs from './BoutiqueLogs'
 import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2 } from 'lucide-react'
+import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
 
 import { CATEGORIES, PRODUIT_CATEGORIES } from '@/lib/categories'
 
@@ -1396,10 +1397,52 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
   async function loadProduits() {
     setLoading(true)
     try {
-      const produits = await getBoutiqueProduits(boutique.id)
-      setProduits(produits)
+      const prods = await getBoutiqueProduits(boutique.id)
+      if (prods && Array.isArray(prods) && prods.length > 0) {
+        setProduits(prods)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`nopalou_pos_produits_${boutique.id}`, JSON.stringify(prods))
+        }
+        sauvegarderProduitsLocaux(prods, boutique.id).catch(() => {})
+      } else if (prods && Array.isArray(prods) && prods.length === 0 && typeof window !== 'undefined' && navigator.onLine) {
+        const cachedExistants = await obtenirProduitsLocaux(boutique.id).catch(() => [])
+        if (!cachedExistants || cachedExistants.length === 0) {
+          setProduits([])
+        } else {
+          setProduits(cachedExistants)
+        }
+      } else {
+        const cached = await obtenirProduitsLocaux(boutique.id).catch(() => [])
+        if (cached && cached.length > 0) {
+          setProduits(cached)
+        } else {
+          const localProds = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_pos_produits_${boutique.id}`) : null
+          if (localProds) {
+            try {
+              const parsed = JSON.parse(localProds)
+              if (Array.isArray(parsed)) setProduits(parsed)
+            } catch {}
+          }
+        }
+      }
     } catch {
-      setProduits([])
+      const cached = await obtenirProduitsLocaux(boutique.id).catch(() => [])
+      if (cached && cached.length > 0) {
+        setProduits(cached)
+      } else {
+        const localProds = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_pos_produits_${boutique.id}`) : null
+        if (localProds) {
+          try {
+            const parsed = JSON.parse(localProds)
+            if (Array.isArray(parsed) && parsed.length > 0) setProduits(parsed)
+            else setProduits([])
+          } catch {
+            setProduits([])
+          }
+        } else {
+          setProduits([])
+        }
+      }
     } finally {
       setLoading(false)
     }
