@@ -1950,7 +1950,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
           )}
           <div style={{ display: 'flex', gap: 10 }}>
             {boutique.mode_fonctionnement !== 'pure_player' && (
-              <a href="/boutique/caisse" className="btn-premium btn-premium-success" style={{ flex: 1, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+              <a href="/boutique/caisse" className="btn-premium btn-premium-success" style={{ flex: 1, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }} onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}>
                 <Monitor size={16} /> Caisse POS
               </a>
             )}
@@ -2116,6 +2116,7 @@ function BoutiqueDashboard({
             <a
               href="/boutique/caisse"
               style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#faf5ff', border: '1px solid #e9d5ff', textDecoration: 'none' }}
+              onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
             >
               <span style={{ fontSize: 24 }}>🛒</span>
               <div>
@@ -2350,7 +2351,6 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                       key={item.key}
                       onClick={() => { 
                         setTab(item.key); 
-                        if (item.key === 'commandes') setNbEnAttente(0);
                         // Sur mobile, on pourrait vouloir fermer la nav, mais ici on la laisse telle quelle
                       }}
                       className={`bq-nav-item${tab === item.key ? ' active' : ''}`}
@@ -2385,7 +2385,9 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             </div>
           ) : isAllowed('pro') ? (
             <a href="/boutique/caisse"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', fontSize: 12, color: '#16a34a', textDecoration: 'none', borderRadius: 6, fontWeight: 700, background: '#f0fdf4' }}>
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', fontSize: 12, color: '#16a34a', textDecoration: 'none', borderRadius: 6, fontWeight: 700, background: '#f0fdf4' }}
+              onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
+            >
               <span>🛒 Caisse POS (Physique) ↗</span>
             </a>
           ) : (

@@ -1,3 +1,14 @@
+## 🚀 Mises à jour du 11/08/2026 : Correction de l'Affichage Mobile & Badge Commandes
+- **Fix du menu de gestion boutique sur mobile (`globals.css`)** :
+  * Utilisation de `display: contents` sur les `.bq-nav-group` pour aplanir la hiérarchie DOM sur mobile, ce qui restaure la barre de navigation horizontale défilante compacte et rend l'en-tête de la boutique visible sans être poussé par un menu vertical cassé.
+- **Correction du badge 'Commandes en attente' (`BoutiqueClient.tsx`)** :
+  * Suppression de la réinitialisation manuelle forcée (`setNbEnAttente(0)`) lors du clic sur l'onglet, pour empêcher le badge de clignoter ou "réinitialiser" artificiellement (le serveur renvoyait le vrai nombre de commandes en attente 30 secondes plus tard).
+
+## 🚀 Mises à jour du 11/08/2026 : Correction du routage vers la Caisse POS (Boutique Active)
+- **Fix du bug d'ouverture de la Caisse POS avec la mauvaise boutique (`BoutiqueClient.tsx`)** :
+  * Ajout d'un écouteur `onClick` sur tous les liens "Aller à la caisse" spécifiques à une boutique.
+  * Mise à jour de `nopalou_pos_active_boutique_id` dans le `localStorage` avant la redirection vers `/boutique/caisse` pour garantir que `CaisseClient.tsx` charge systématiquement la bonne boutique.
+
 ## 🚀 Mises à jour du 10/08/2026 : Diagnostic en Profondeur & Validation 100% Réussie (Playwright E2E & TypeScript)
 - **Validation Globale Sans Fautes (0 Erreur)** :
   * **TypeScript (`npx tsc --noEmit`)** : 100% Validé (0 erreur de typage).

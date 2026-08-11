@@ -9112,6 +9112,17 @@ button:focus-visible,
   }
   .bq-nav::-webkit-scrollbar { display: none; }
 
+  /* Aplatir la hiérarchie pour le flex row sur mobile */
+  .bq-nav-group {
+    display: contents;
+  }
+  .bq-nav-group-title {
+    display: none !important;
+  }
+  .bq-nav-group > div {
+    display: contents !important;
+  }
+
   .bq-nav-item {
     flex-shrink: 0;
     width: auto;
