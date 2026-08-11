@@ -744,9 +744,32 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
 
   async function load() {
     setLoading(true)
-    const produits = await getBoutiqueProduits(boutiqueId)
-    setProduits(produits)
-    setLoading(false)
+    try {
+      const prods = await getBoutiqueProduits(boutiqueId)
+      if (prods && prods.length > 0) {
+        setProduits(prods)
+      } else {
+        // Fallback si vide + potentiellement hors ligne
+        const cache = localStorage.getItem(`nopalou_pos_produits_${boutiqueId}`)
+        if (cache) {
+          try {
+            const parsed = JSON.parse(cache)
+            if (Array.isArray(parsed)) setProduits(parsed)
+          } catch {}
+        }
+      }
+    } catch (e) {
+      console.warn("StockView offline fallback", e)
+      const cache = localStorage.getItem(`nopalou_pos_produits_${boutiqueId}`)
+      if (cache) {
+        try {
+          const parsed = JSON.parse(cache)
+          if (Array.isArray(parsed)) setProduits(parsed)
+        } catch {}
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, [boutiqueId])
@@ -767,8 +790,8 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
       p.id,
       p.nom,
       p.prix || 0,
-      p.stock_quantite ?? 'Non suivi',
-      p.stock_quantite === null ? 'Non suivi' : p.stock_quantite <= 3 ? 'STOCK BAS' : 'DISPONIBLE'
+      (p.quantite_stock ?? p.stock_quantite) ?? 'Non suivi',
+      (p.quantite_stock ?? p.stock_quantite) === null ? 'Non suivi' : (p.quantite_stock ?? p.stock_quantite)! <= 3 ? 'STOCK BAS' : 'DISPONIBLE'
     ])
     exportToCSV(`inventaire_stock_${boutiqueId}`, headers, rows)
   }
@@ -779,8 +802,8 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
       p.id.slice(0, 8),
       p.nom,
       p.prix ? `${p.prix.toLocaleString('fr-FR')} FCFA` : '—',
-      p.stock_quantite ?? 'Non suivi',
-      p.stock_quantite === null ? 'Non suivi' : p.stock_quantite <= 3 ? '⚠️ BAS' : '✅ OK'
+      (p.quantite_stock ?? p.stock_quantite) ?? 'Non suivi',
+      (p.quantite_stock ?? p.stock_quantite) === null ? 'Non suivi' : (p.quantite_stock ?? p.stock_quantite)! <= 3 ? '⚠️ BAS' : '✅ OK'
     ])
     printPDFReport('Inventaire État des Stocks', `Boutique ${boutiqueId}`, headers, rows)
   }
@@ -808,13 +831,21 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {produits.map(p => (
-        <div key={p.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, flex: 1, minWidth: 0 }}>{p.nom}</p>
+        <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h4 style={{ margin: 0, fontSize: 14, color: '#111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nom}</h4>
+              <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>ID: {p.id.slice(0, 8)}</p>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
+              {p.prix ? `${p.prix.toLocaleString('fr-FR')} FCFA` : '—'}
+            </div>
+          </div>
           {editing === p.id ? (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <input
-                type="number" min={0}
-                value={stockVal[p.id] ?? (p.stock_quantite ?? '')}
+                type="number"
+                value={stockVal[p.id] ?? ((p.quantite_stock ?? p.stock_quantite) ?? '')}
                 onChange={e => setStockVal(prev => ({ ...prev, [p.id]: e.target.value }))}
                 style={{ ...inputStyle, width: 80 }}
                 autoFocus
@@ -826,12 +857,12 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
               <span style={{
                 fontSize: 13, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-                background: p.stock_quantite === null ? '#f1f5f9' : p.stock_quantite <= 3 ? '#fef2f2' : '#dcfce7',
-                color: p.stock_quantite === null ? '#9ca3af' : p.stock_quantite <= 3 ? '#dc2626' : '#16a34a',
+                background: (p.quantite_stock ?? p.stock_quantite) === null ? '#f1f5f9' : (p.quantite_stock ?? p.stock_quantite)! <= 3 ? '#fef2f2' : '#dcfce7',
+                color: (p.quantite_stock ?? p.stock_quantite) === null ? '#9ca3af' : (p.quantite_stock ?? p.stock_quantite)! <= 3 ? '#dc2626' : '#16a34a',
               }}>
-                {p.stock_quantite === null ? 'Non suivi' : `${p.stock_quantite} en stock`}
+                {(p.quantite_stock ?? p.stock_quantite) === null ? 'Non suivi' : `${(p.quantite_stock ?? p.stock_quantite)} en stock`}
               </span>
-              <button onClick={() => { setEditing(p.id); setStockVal(prev => ({ ...prev, [p.id]: String(p.stock_quantite ?? '') })) }}
+              <button onClick={() => { setEditing(p.id); setStockVal(prev => ({ ...prev, [p.id]: String((p.quantite_stock ?? p.stock_quantite) ?? '') })) }}
                 style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', fontSize: 12 }}>
                 Modifier
               </button>

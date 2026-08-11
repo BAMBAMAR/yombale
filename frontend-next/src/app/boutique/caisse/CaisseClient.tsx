@@ -907,6 +907,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       const produits = await getBoutiqueProduits(bId)
       if (produits && Array.isArray(produits) && produits.length > 0) {
         const prodsFormates: ProduitCaisse[] = produits.map((p: any) => ({
+          ...p,
           id: p.id,
           nom: p.nom,
           prix: Number(p.prix),

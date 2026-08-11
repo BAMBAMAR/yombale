@@ -66,6 +66,7 @@ interface Produit {
   images: string[]
   en_stock: boolean
   stock_quantite: number | null
+  quantite_stock?: number | null
   categorie: string | null
   caracteristiques: Record<string, string> | null
   variantes: Variante[] | null
@@ -1721,11 +1722,11 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
                       </div>
                     ) : (
                       <span
-                        onClick={(e) => { e.stopPropagation(); setEditingStockId(p.id); setStockInputVal(String(p.stock_quantite ?? 0)) }}
+                        onClick={(e) => { e.stopPropagation(); setEditingStockId(p.id); setStockInputVal(String(p.quantite_stock ?? p.stock_quantite ?? 0)) }}
                         style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: p.en_stock ? '#f0fdf4' : '#fef2f2', color: p.en_stock ? '#15803d' : '#dc2626', fontWeight: 800, cursor: 'pointer', border: p.en_stock ? '1px solid #bbf7d0' : '1px solid #fecaca' }}
                         title="Cliquez pour modifier le stock"
                       >
-                        📦 Stock: {p.stock_quantite ?? 0} ✏️
+                        📦 Stock: {p.quantite_stock ?? p.stock_quantite ?? 0} ✏️
                       </span>
                     )}
 
@@ -2070,7 +2071,7 @@ function BoutiqueDashboard({
       .then(produits => {
         if (!active) return
         setProduitsCount(produits.length)
-        const alerts = produits.filter(p => !p.en_stock || (p.stock_quantite !== null && p.stock_quantite <= 3))
+        const alerts = produits.filter(p => !p.en_stock || ((p.quantite_stock ?? p.stock_quantite) !== null && (p.quantite_stock ?? p.stock_quantite)! <= 3))
         setStockAlertsCount(alerts.length)
       })
       .catch(() => {})

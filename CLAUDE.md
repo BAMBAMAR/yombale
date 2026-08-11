@@ -1,3 +1,14 @@
+## 🚀 Mises à jour du 11/08/2026 : Correction de l'Incohérence du Stock Hors-Ligne & Déblocage Stock Physique
+- **Unification des Propriétés de Stock (`BoutiqueClient.tsx`, `Comptabilite.tsx`, `CaisseClient.tsx`)** :
+  * L'affichage du catalogue lisait `p.stock_quantite`, tandis que le cache de la Caisse POS sauvegardait les produits décrémentés sous la propriété formatée `p.stock` tout en supprimant l'objet d'origine. Conséquence : en mode hors-ligne, les vues Catalogue et Stock affichaient "0" car la donnée était effacée du cache commun.
+  * Ajout du destructoring `...p` dans `CaisseClient.tsx` pour préserver 100% des propriétés originales en cache hors-ligne (`quantite_stock`, `stock_quantite`, etc.).
+  * Mise à jour de `BoutiqueClient.tsx` et `Comptabilite.tsx` pour lire prioritairement `p.quantite_stock ?? p.stock_quantite`, assurant une synchronisation parfaite des affichages.
+- **Déblocage de la Vue "Stock Physique" (Chargement infini)** :
+  * Le composant `StockView` (dans `Comptabilite.tsx`) lançait l'action serveur `getBoutiqueProduits` sans bloc `try/catch`. En mode hors-ligne, l'exception réseau bloquait le rendu avant d'atteindre `setLoading(false)`.
+  * Ajout d'un `try/catch` avec **récupération automatique depuis le cache LocalStorage** (`nopalou_pos_produits`) pour un affichage immédiat même sans connexion Internet.
+- **Notification PWA Hors-Ligne** :
+  * Explication : Le bandeau PWA "Mode Hors-Ligne" natif fonctionne par l'API système `navigator.onLine`. En cas de panne DNS ou de coupure locale du backend (sans désactiver le Wi-Fi), ce bandeau n'apparaît pas. Cependant, l'application est désormais robuste pour utiliser ses caches hors-ligne même dans ce cas de figure.
+
 ## 🚀 Mises à jour du 11/08/2026 : Correction Critique de la Protection du Cache Produit Hors-Ligne (`CaisseClient.tsx`)
 - **Correction du Bug d'Écrasement du Cache Local Hors-Ligne (`CaisseClient.tsx`)** :
   * Lors d'une perte de réseau ou de l'ouverture de la caisse hors-ligne, la fonction `getBoutiqueProduits` renvoyait le tableau vide `[]` en cas d'erreur de réseau. Le test `if (produits && Array.isArray(produits))` s'évaluait comme vrai sur `[]`, provoquant l'effacement involontaire du cache de produits stocké dans `localStorage` et `IndexedDB`.
