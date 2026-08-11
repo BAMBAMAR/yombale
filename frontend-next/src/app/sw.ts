@@ -10,6 +10,41 @@ declare global {
 
 declare const self: WorkerGlobalScope & typeof globalThis;
 
+const FALLBACK_HTML = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hors-Ligne — Nopalou Sénégal</title>
+<style>
+  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #0f172a; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #f8fafc; text-align: center; padding: 24px; box-sizing: border-box; }
+  .box { max-width: 440px; background: #1e293b; border-radius: 24px; padding: 36px 28px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+  .badge { display: inline-block; background: rgba(199, 91, 0, 0.2); color: #fed7aa; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(199, 91, 0, 0.3); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
+  h1 { font-size: 22px; font-weight: 900; margin: 0 0 10px; color: #ffffff; }
+  p { font-size: 14px; line-height: 1.6; color: #94a3b8; margin: 0 0 24px; }
+  .btn-group { display: flex; flex-direction: column; gap: 12px; }
+  button, a.btn { background: #C75B00; color: #ffffff; border: none; border-radius: 12px; padding: 12px 20px; font-size: 14px; font-weight: 800; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(199,91,0,0.3); }
+  a.btn-sec { background: #334155; color: #e2e8f0; box-shadow: none; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="badge">📡 NOPALOU PWA OFFLINE</div>
+    <div style="font-size: 48px; margin-bottom: 12px;">⚡</div>
+    <h1>Vous êtes actuellement Hors-Ligne</h1>
+    <p>Votre connexion Internet mobile est momentanément interrompue. Les données précédemment consultées restent disponibles en cache local.</p>
+    <div class="btn-group">
+      <button onclick="location.reload()">🔄 Réessayer la connexion</button>
+      <a href="/boutique/caisse" class="btn btn-sec">🛒 Retourner à la Caisse POS</a>
+      <a href="/" class="btn btn-sec">🏠 Consulter l'Accueil (Cache)</a>
+    </div>
+  </div>
+  <script>
+    window.addEventListener('online', function() { location.reload(); });
+  </script>
+</body>
+</html>`;
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
@@ -21,27 +56,66 @@ const serwist = new Serwist({
       {
         url: "/offline.html",
         matcher({ request }: any) {
-          // Ne pas intercepter si ce n'est pas une navigation HTML
           if (!request || request.destination !== "document") return false;
-
-          // Si l'appareil est connecté à Internet, ne JAMAIS afficher l'écran offline.html
           if (typeof self !== "undefined" && self.navigator && self.navigator.onLine === true) {
             return false;
           }
-
-          // Exclure les requêtes d'API et d'assets Next.js
           try {
             const url = new URL(request.url);
             if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/")) {
               return false;
             }
           } catch {}
-
           return true;
         },
       },
     ],
   },
+});
+
+// Pré-cacher explicitement /offline.html lors de l'installation
+self.addEventListener("install", (event: any) => {
+  event.waitUntil(
+    caches.open("nopalou-offline-fallback-v1").then((cache) => {
+      return cache.put(
+        "/offline.html",
+        new Response(FALLBACK_HTML, {
+          status: 200,
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        })
+      );
+    }).catch(() => {})
+  );
+});
+
+// Capturer les échecs de navigation HTML/document et renvoyer le HTML de secours
+self.addEventListener("fetch", (event: any) => {
+  const request = event.request;
+  if (!request) return;
+
+  const isHtmlNavigation = 
+    request.mode === "navigate" || 
+    (request.method === "GET" && request.headers?.get("accept")?.includes("text/html"));
+
+  if (isHtmlNavigation && typeof self !== "undefined" && self.navigator && self.navigator.onLine === false) {
+    event.respondWith(
+      caches.match(request, { ignoreSearch: true }).then((cachedResponse) => {
+        if (cachedResponse) return cachedResponse;
+        return caches.match("/offline.html", { ignoreSearch: true }).then((fallback) => {
+          if (fallback) return fallback;
+          return new Response(FALLBACK_HTML, {
+            status: 200,
+            headers: { "Content-Type": "text/html; charset=utf-8" },
+          });
+        });
+      }).catch(() => {
+        return new Response(FALLBACK_HTML, {
+          status: 200,
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
+      })
+    );
+  }
 });
 
 serwist.addEventListeners();

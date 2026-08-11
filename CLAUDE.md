@@ -58,8 +58,9 @@
 - **Notification Flottante Hors-Ligne Globale Web & Mobile (`frontend-next/src/app/RegisterSW.tsx`)** :
   * Intégration du bandeau réactif flottant en haut d'écran `📡 Mode Hors-Ligne — Consultation des données locales en cache` lors de la déconnexion réseau, et dissipation automatique `✅ Connexion Internet rétablie` au retour du réseau.
   * Suppression de la condition restrictive `process.env.NODE_ENV === 'production'` pour garantir l'enregistrement et la réactivité du Service Worker dans tous les environnements.
-- **Correction Critique de l'Erreur Service Worker (`frontend-next/src/app/sw.ts`)** :
-  * Élimination de l'erreur `Uncaught (in promise) TypeError: c.handle is not a function` en remettant la configuration `defaultCache` conforme au moteur Serwist.
+- **Correction Critique de l'Erreur Service Worker & Élimination de `ERR_FAILED` (`frontend-next/src/app/sw.ts`)** :
+  * Élimination de l'erreur `Uncaught (in promise) TypeError: c.handle is not a function` en réutilisant la configuration `defaultCache`.
+  * Injection directe du HTML de secours `FALLBACK_HTML` et d'un écouteur `fetch` hors-ligne dans `sw.ts`. Lorsqu'un utilisateur clique sur n'importe quelle page non-cachée sans connexion (ex: `/compte`, `/boutique/abonnement`), le SW intercepte l'échec et retourne immédiatement la page de secours Nopalou 200 OK au lieu de l'erreur de navigateur `ERR_FAILED`.
 - **Restauration Hors-Ligne du Catalogue Vendeur (`frontend-next/src/app/boutique/BoutiqueClient.tsx`)** :
   * Mise en cache et restauration automatique du catalogue dans l'espace marchand `/boutique` via IndexedDB et LocalStorage. En cas de navigation sans réseau, le catalogue affiche désormais l'intégralité des produits enregistrés au lieu de l'écran vide `0 produits`.
 - **Isolation du Stockage IndexedDB par Boutique (`frontend-next/src/lib/db-offline.ts`)** :
