@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 11/08/2026 : Accessibilité Mobile des Tickets en Attente
+- **Déplacement du composant "File d'attente" (`CaisseClient.tsx`)** :
+  * Auparavant, la liste des tickets mis en attente était affichée exclusivement dans la section Catalogue. Sur mobile, cela la rendait introuvable lorsque le caissier était sur l'onglet "Ticket", l'empêchant de reprendre facilement un ticket.
+  * La liste des clients en attente a été déplacée au début de la section "Ticket en cours". Ainsi, sur mobile, elle est immédiatement visible et cliquable lorsqu'on consulte son panier actuel.
+
 ## 🚀 Mises à jour du 11/08/2026 : Correction de l'Affichage du Statut "(Off)" dans la Caisse POS
 - **Correction de la requête API Terminal Caisse (`backend/routes/boutiques.js`)** :
   * Ajout du champ `actif` dans la clause `SELECT` de la route `/api/boutiques/caisse-terminal/:token`. Auparavant, ce champ était omis, ce qui forçait la caisse POS à afficher incorrectement le label `(Off)` à côté du nom de la boutique même lorsqu'elle était parfaitement active.
