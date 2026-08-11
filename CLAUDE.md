@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 11/08/2026 : Correction Critique de la Protection du Cache Produit Hors-Ligne (`CaisseClient.tsx`)
+- **Correction du Bug d'Écrasement du Cache Local Hors-Ligne (`CaisseClient.tsx`)** :
+  * Lors d'une perte de réseau ou de l'ouverture de la caisse hors-ligne, la fonction `getBoutiqueProduits` renvoyait le tableau vide `[]` en cas d'erreur de réseau. Le test `if (produits && Array.isArray(produits))` s'évaluait comme vrai sur `[]`, provoquant l'effacement involontaire du cache de produits stocké dans `localStorage` et `IndexedDB`.
+  * Modification du contrôle pour exiger `produits.length > 0` avant d'écraser le cache local, et bascule vers `obtenirProduitsLocaux()` et `localStorage` si l'appel backend renvoie un résultat vide hors-ligne. Les produits en base enregistrés localement restent désormais **100% préservés et affichés en mode hors-ligne**.
+
 ## 🚀 Mises à jour du 11/08/2026 : Suppression Intégrale de l'Étiquette "(Off)" & Ajustement de la Caisse POS (`CaisseClient.tsx`)
 - **Élimination Définitive du Label "(Off)" (`CaisseClient.tsx`)** :
   * Suppression complète du texte `(Off)` dans le sélecteur de boutique de l'en-tête POS. Toutes les boutiques du marchand affichent exclusivement `🟢 NomBoutique` (ou `🔒 NomBoutique`), éliminant toute ambiguïté d'affichage.

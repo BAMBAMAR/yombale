@@ -899,7 +899,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
     // 3. Charger le catalogue produits
     try {
       const produits = await getBoutiqueProduits(bId)
-      if (produits && Array.isArray(produits)) {
+      if (produits && Array.isArray(produits) && produits.length > 0) {
         const prodsFormates: ProduitCaisse[] = produits.map((p: any) => ({
           id: p.id,
           nom: p.nom,
@@ -912,12 +912,23 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         setProduits(prodsFormates)
         localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify(prodsFormates))
         sauvegarderProduitsLocaux(prodsFormates).catch(() => {})
+      } else if (produits && Array.isArray(produits) && produits.length === 0 && navigator.onLine) {
+        // En ligne et la boutique est réellement vide
+        setProduits([])
+        localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify([]))
+        sauvegarderProduitsLocaux([]).catch(() => {})
       } else {
+        // En cas d'échec réseau ou réponse vide hors-ligne, restaurer le cache local
         const cached = await obtenirProduitsLocaux().catch(() => [])
         if (cached && cached.length > 0) {
           setProduits(cached)
-        } else if (!localProds) {
-          setProduits([])
+        } else if (localProds) {
+          try {
+            const parsedP = JSON.parse(localProds)
+            if (Array.isArray(parsedP) && parsedP.length > 0) {
+              setProduits(parsedP)
+            }
+          } catch {}
         }
       }
     } catch (e) {
@@ -925,8 +936,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       const cached = await obtenirProduitsLocaux().catch(() => [])
       if (cached && cached.length > 0) {
         setProduits(cached)
-      } else if (!localProds) {
-        setProduits([])
+      } else if (localProds) {
+        try {
+          const parsedP = JSON.parse(localProds)
+          if (Array.isArray(parsedP) && parsedP.length > 0) {
+            setProduits(parsedP)
+          }
+        } catch {}
       }
     } finally {
       setLoadingProduits(false)
