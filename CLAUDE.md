@@ -1,3 +1,9 @@
+## 🚀 Mises à jour du 11/08/2026 : Sécurisation du Polling Caisse POS (`CaisseClient.tsx`)
+
+- **Neutralisation des Erreurs Console Hors-Ligne (`CaisseClient.tsx`)** :
+  * Interruption automatique du polling douchette distante (`/api/boutiques/${id}/scanner-remote`) en mode hors-ligne (`!navigator.onLine`).
+  * Capture silencieuse (`.catch(() => null)`) des échecs de connexion réseau pour supprimer les erreurs `net::ERR_CONNECTION_RESET` / `ERR_CONNECTION_REFUSED` dans la console.
+
 ## 🚀 Mises à jour du 11/08/2026 : Extension du Préchargement Global (Boutiques, Catalogues Produits, Caisse POS & Clients)
 
 - **Préchargement Universel (`CompteClient.tsx`)** :
