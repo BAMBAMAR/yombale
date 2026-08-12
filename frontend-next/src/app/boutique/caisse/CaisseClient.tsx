@@ -2531,7 +2531,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         </div>
 
         {/* Côté Droit : Ticket Panier & Encaissement POS */}
-        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: '12px 10px 20px 10px', display: 'flex', flexDirection: 'column', gap: 8, boxSizing: 'border-box', maxWidth: '100%', height: '100%', minHeight: 0 }}>
+        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: '12px 10px 20px 10px', display: 'flex', flexDirection: 'column', gap: 8, boxSizing: 'border-box', maxWidth: '100%', height: '100%', minHeight: 0, overflowY: 'auto' }}>
           {/* Bouton retour au catalogue sur Mobile */}
           <button
             type="button"
@@ -2565,7 +2565,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           </div>
 
           {/* Contenu Panier */}
-          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '6px 2px' }}>
+          <div style={{ flex: 1, minHeight: 140, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '6px 2px' }}>
             {!session ? (
               <div style={{
                 background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',

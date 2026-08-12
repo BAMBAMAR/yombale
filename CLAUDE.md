@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 12/08/2026 : Hauteur Minimale Garantie pour le Ticket POS (`CaisseClient.tsx`)
+- **Fix Définitif de la Tronquature du Panier POS (`CaisseClient.tsx`)** :
+  * Définition d'une hauteur minimale garantie `minHeight: 140px` sur le conteneur des articles du ticket pour empêcher Flexbox de compresser la liste à 15px sous l'accumulation des boutons de règlement.
+  * Réactivation de `overflowY: 'auto'` sur le panneau droit `.ticket-section` permettant un défilement fluide de l'ensemble de la caisse sur tous les types d'écrans et résolutions.
+
 ## 🚀 Mises à jour du 12/08/2026 : Correction de l'Erreur d'Hydratation React / Next.js (`RegisterSW.tsx`)
 - **Résolution de l'Erreur Mismatch Hydration (`RegisterSW.tsx`)** :
   * Ajout du garde `mounted` (`useEffect` -> `setMounted(true)`) empêchant l'injection prématurée de balises HTML `<div>` d'alerte hors-ligne lors du rendu SSR/Hydratation initiale.
