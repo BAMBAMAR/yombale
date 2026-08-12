@@ -2,7 +2,8 @@
 
 - **Bypass Total de `/api/ping` du Service Worker (`sw.ts` & `useOnlineStatus.ts`)** :
   * Exclusion complète de `/api/ping` des règles `runtimeCaching` du Service Worker afin d'éviter que Serwist n'intercepte la requête et ne renvoie des erreurs `Response.error()`.
-  * Le navigateur effectue désormais un `fetch` réseau natif direct vers `/api/ping?t=...` avec horodatage dynamique, garantissant une réponse HTTP 200 immédiate en ligne et la suppression du bandeau orange hors-ligne lors du rafraîchissement.
+  * Le navigateur effectue désormais un `fetch` réseau natif direct vers `/api/ping?t=...` avec horodatage dynamique, garantissant une réponse HTTP 200 immédiate en ligne.
+  * Initialisation de l'état `isOnline` à `true` par défaut (online optimiste) pour éliminer l'affichage temporaire du bandeau orange lors du chargement initial de la page pendant que le ping s'exécute.
 - **Correction de la Structure Syntaxique (`BoutiqueClient.tsx`)** :
   * Correction d'une accolade fermante manquante sur le bloc `try` de la fonction `loadProduits` (ligne 1434), éliminant l'erreur de compilation SWC et restaurant le module `BoutiqueClient`.
 - **Relance des Serveurs Localhost** :

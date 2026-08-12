@@ -40,11 +40,8 @@ async function checkRealConnectivity(): Promise<boolean> {
 }
 
 export function useOnlineStatus() {
-  // Indice initial : navigator.onLine (peut mentir, mais c'est un bon point de départ)
-  const [isOnline, setIsOnline] = useState(() => {
-    if (typeof navigator !== 'undefined') return navigator.onLine
-    return true
-  })
+  // État initial optimiste à true (en ligne)
+  const [isOnline, setIsOnline] = useState(true)
   
   const prevOnline = useRef(isOnline)
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
