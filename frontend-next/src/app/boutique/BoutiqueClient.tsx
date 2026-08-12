@@ -23,6 +23,7 @@ import GestionFournisseurs from './GestionFournisseurs'
 import BoutiqueLogs from './BoutiqueLogs'
 import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2 } from 'lucide-react'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
+import { useOnlineStatus } from '@/lib/useOnlineStatus'
 
 import { CATEGORIES, PRODUIT_CATEGORIES } from '@/lib/categories'
 
@@ -1405,27 +1406,32 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
           localStorage.setItem(`nopalou_pos_produits_${boutique.id}`, JSON.stringify(prods))
         }
         sauvegarderProduitsLocaux(prods, boutique.id).catch(() => {})
-      } else if (prods && Array.isArray(prods) && prods.length === 0 && typeof window !== 'undefined' && navigator.onLine) {
-        const cachedExistants = await obtenirProduitsLocaux(boutique.id).catch(() => [])
-        if (!cachedExistants || cachedExistants.length === 0) {
-          setProduits([])
+      } else if (prods && Array.isArray(prods) && prods.length === 0 && typeof window !== 'undefined') {
+        // Vérifier la connectivité réelle par un ping rapide
+        const pingOk = await fetch('/api/ping', { cache: 'no-store', signal: AbortSignal.timeout(3000) }).then(r => r.ok).catch(() => false)
+        if (pingOk) {
+          // En ligne confirmé : la boutique est vraiment vide, vérifier le cache avant d'effacer
+          const cachedExistants = await obtenirProduitsLocaux(boutique.id).catch(() => [])
+          if (!cachedExistants || cachedExistants.length === 0) {
+            setProduits([])
+          } else {
+            setProduits(cachedExistants)
+          }
         } else {
-          setProduits(cachedExistants)
-        }
-      } else {
-        const cached = await obtenirProduitsLocaux(boutique.id).catch(() => [])
-        if (cached && cached.length > 0) {
-          setProduits(cached)
-        } else {
-          const localProds = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_pos_produits_${boutique.id}`) : null
-          if (localProds) {
-            try {
-              const parsed = JSON.parse(localProds)
-              if (Array.isArray(parsed)) setProduits(parsed)
-            } catch {}
+          // Hors-ligne : restaurer depuis le cache local
+          const cached = await obtenirProduitsLocaux(boutique.id).catch(() => [])
+          if (cached && cached.length > 0) {
+            setProduits(cached)
+          } else {
+            const localProds = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_pos_produits_${boutique.id}`) : null
+            if (localProds) {
+              try {
+                const parsed = JSON.parse(localProds)
+                if (Array.isArray(parsed)) setProduits(parsed)
+              } catch {}
+            }
           }
         }
-      }
     } catch {
       const cached = await obtenirProduitsLocaux(boutique.id).catch(() => [])
       if (cached && cached.length > 0) {
@@ -2603,7 +2609,7 @@ export default function BoutiqueClient({
   // Charge toutes les données (catalogue, historique caisse, clients) en arrière-plan
   // dès la connexion pour garantir un fonctionnement hors-ligne optimal.
   useEffect(() => {
-    if (typeof window !== 'undefined' && navigator.onLine) {
+    if (typeof window !== 'undefined' && isReallyOnline) {
       const boutiquesAPrecharger = boutiquesList.length > 0 ? boutiquesList : boutiques;
       boutiquesAPrecharger.forEach(async (b) => {
         try {
@@ -2669,19 +2675,10 @@ export default function BoutiqueClient({
 
   // État et Listener pour le mode hors-ligne du Dashboard
   const [dashboardOffline, setDashboardOffline] = useState(false);
+  const isReallyOnline = useOnlineStatus();
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setDashboardOffline(!navigator.onLine);
-      const handleOff = () => setDashboardOffline(true);
-      const handleOn = () => setDashboardOffline(false);
-      window.addEventListener('offline', handleOff);
-      window.addEventListener('online', handleOn);
-      return () => {
-        window.removeEventListener('offline', handleOff);
-        window.removeEventListener('online', handleOn);
-      };
-    }
-  }, []);
+    setDashboardOffline(!isReallyOnline);
+  }, [isReallyOnline]);
 
 
   const manuelActif  = settings.paiement_manuel_actif !== 'false'

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { useOnlineStatus } from '@/lib/useOnlineStatus'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
@@ -72,6 +73,8 @@ interface TicketEnAttente {
 }
 
 export default function CaisseClient({ planActif: planActifProp, initialToken }: { planActif?: string | null; initialToken?: string | null }) {
+  // Hook de connectivité fiable (ping /api/ping au lieu de navigator.onLine)
+  const isReallyOnline = useOnlineStatus()
   const [terminalPlan, setTerminalPlan] = useState<string | null>('pro')
 
   // ── État Boutiques du Marchand & Synchronisation Catalogue ───────────────────
@@ -115,45 +118,29 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
     }
   }
 
+  // Synchroniser l'état offline avec le hook de connectivité réelle (ping /api/ping)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const isOffline = !navigator.onLine;
-      setOfflineModeActive(isOffline)
-      rafraichirCompteurOffline()
-      
-      if (isOffline) {
-        showToast('Mode caisse locale activé (Hors-ligne).', 'warning')
+    if (typeof window === 'undefined') return
+    
+    const newOffline = !isReallyOnline
+    setOfflineModeActive(prev => {
+      if (prev !== newOffline) {
+        if (newOffline) {
+          console.warn('🔴 [Diagnostic Caisse] Mode caisse locale ACTIVÉ (ping échoué).')
+          showToast('Vous êtes hors-ligne. Mode caisse locale activé.', 'warning')
+        } else {
+          console.log('🟢 [Diagnostic Caisse] Mode caisse locale désactivé (ping réussi).')
+          showToast('Connexion internet rétablie ! Synchronisation en cours...', 'success')
+          declencherSyncOffline()
+        }
       }
-      
-      const goOnline = () => {
-        console.log('🟢 [Diagnostic Caisse] Événement navigateur "online" détecté. Mode caisse locale désactivé.')
-        setOfflineModeActive(false)
-        showToast('Connexion internet rétablie ! Synchronisation en cours...', 'success')
-        declencherSyncOffline()
-      }
-      const goOffline = () => {
-        console.warn('🔴 [Diagnostic Caisse] Événement navigateur "offline" détecté. Mode caisse locale ACTIVÉ.')
-        setOfflineModeActive(true)
-        showToast('Vous êtes hors-ligne. Mode caisse locale activé.', 'warning')
-        rafraichirCompteurOffline()
-      }
-
-      window.addEventListener('online', goOnline)
-      window.addEventListener('offline', goOffline)
-
-      if (navigator.onLine) {
-        declencherSyncOffline()
-      }
-
-      return () => {
-        window.removeEventListener('online', goOnline)
-        window.removeEventListener('offline', goOffline)
-      }
-    }
-  }, [boutiqueActiveId])
+      return newOffline
+    })
+    rafraichirCompteurOffline()
+  }, [isReallyOnline, boutiqueActiveId])
 
   async function declencherSyncOffline() {
-    if (!boutiqueActiveId || syncingOffline || !navigator.onLine) return
+    if (!boutiqueActiveId || syncingOffline) return
     try {
       setSyncingOffline(true)
       const ventesQueue = await obtenirVentesHorsLigne()
@@ -322,7 +309,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   useEffect(() => {
     if (!boutiqueActiveId || !sessionScannerId) return
     const timer = setInterval(async () => {
-      if (typeof window !== 'undefined' && !navigator.onLine) return
+      if (typeof window !== 'undefined' && !isReallyOnline) return
       try {
         const res = await fetch(`/api/boutiques/${boutiqueActiveId}/scanner-remote?sessionId=${sessionScannerId}`).catch(() => null)
         if (res && res.ok) {
@@ -947,8 +934,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         // Le Server Action a retourné [] — deux cas possibles :
         // A) On est en ligne et la boutique est vraiment vide
         // B) On est hors-ligne et le Server Action a échoué silencieusement (retourne [] par défaut)
-        const isReallyOnline = typeof navigator !== 'undefined' && navigator.onLine === true
-        if (isReallyOnline) {
+        const isActuallyOnline = isReallyOnline
+        if (isActuallyOnline) {
           // En ligne et la boutique renvoie une liste vide : vérifier d'abord si on avait des produits en cache
           const cachedExistants = await obtenirProduitsLocaux(bId).catch(() => [])
           if (!cachedExistants || cachedExistants.length === 0) {
@@ -1524,7 +1511,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         total: netAPayer,
       }
 
-      if (!navigator.onLine || offlineModeActive) {
+      if (!isReallyOnline || offlineModeActive) {
         try {
           const temporaryId = payloadVente.idempotency_key
           await ajouterVenteHorsLigne({

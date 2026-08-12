@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useOnlineStatus } from '@/lib/useOnlineStatus'
 
 export default function RegisterSW() {
-  const [isOffline, setIsOffline] = useState(false)
+  const isOnline = useOnlineStatus()
   const [showOnlineToast, setShowOnlineToast] = useState(false)
+  const [wasOffline, setWasOffline] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -20,62 +22,39 @@ export default function RegisterSW() {
           console.error('[PWA SW] Échec enregistrement Service Worker:', err)
         })
     }
+  }, [])
 
-    const handleOffline = () => {
-      console.warn('🔴 [Diagnostic PWA] Événement navigateur "offline" capturé. Déconnexion réseau détectée.')
-      console.info('📡 [Diagnostic PWA] Le bandeau UI Hors-Ligne va s\'afficher.')
-      setIsOffline(true)
+  // Détecter les transitions offline → online pour afficher le toast
+  useEffect(() => {
+    if (!isOnline) {
+      // On passe hors-ligne
+      setWasOffline(true)
       setShowOnlineToast(false)
-    }
-    const handleOnline = () => {
-      console.log('🟢 [Diagnostic PWA] Événement navigateur "online" capturé. Connexion réseau rétablie.')
-      console.info('✅ [Diagnostic PWA] Le bandeau UI de reconnexion va s\'afficher pendant 4 secondes.')
-      setIsOffline(false)
+      console.warn('🔴 [RegisterSW] Hors-ligne confirmé par ping applicatif.')
+    } else if (wasOffline && isOnline) {
+      // Transition offline → online confirmée par ping réel
+      console.log('🟢 [RegisterSW] Connexion rétablie confirmée par ping applicatif.')
       setShowOnlineToast(true)
-      setTimeout(() => setShowOnlineToast(false), 4000)
+      setWasOffline(false)
+      
+      // Mettre à jour le SW en arrière-plan
       if ('serviceWorker' in navigator) {
-        console.log('🔄 [Diagnostic PWA] Demande de mise à jour du Service Worker en arrière-plan...')
         navigator.serviceWorker.ready.then(reg => {
           reg.update().then(() => {
-             console.log('✅ [Diagnostic PWA] Mise à jour du Service Worker réussie.')
+            console.log('✅ [RegisterSW] Mise à jour du Service Worker réussie.')
           }).catch((err) => {
-             console.error('❌ [Diagnostic PWA] Échec de la mise à jour du Service Worker:', err)
+            console.error('❌ [RegisterSW] Échec de la mise à jour du Service Worker:', err)
           })
         })
       }
+
+      // Masquer le toast après 4s
+      const timer = setTimeout(() => setShowOnlineToast(false), 4000)
+      return () => clearTimeout(timer)
     }
+  }, [isOnline, wasOffline])
 
-    window.addEventListener('offline', handleOffline)
-    window.addEventListener('online', handleOnline)
-
-    if (!navigator.onLine) {
-      setIsOffline(true)
-    }
-
-    // Polling de sécurité pour desktop : certains navigateurs ne déclenchent pas
-    // l'événement 'offline' de manière fiable (notamment sur PC avec câble Ethernet)
-    const pollingInterval = setInterval(() => {
-      const currentlyOffline = !navigator.onLine
-      setIsOffline(prev => {
-        if (prev !== currentlyOffline) {
-          if (currentlyOffline) {
-            console.warn('🔴 [Diagnostic PWA Polling] Déconnexion détectée par polling.')
-          } else {
-            console.log('🟢 [Diagnostic PWA Polling] Reconnexion détectée par polling.')
-            setShowOnlineToast(true)
-            setTimeout(() => setShowOnlineToast(false), 4000)
-          }
-        }
-        return currentlyOffline
-      })
-    }, 3000)
-
-    return () => {
-      window.removeEventListener('offline', handleOffline)
-      window.removeEventListener('online', handleOnline)
-      clearInterval(pollingInterval)
-    }
-  }, [])
+  const isOffline = !isOnline
 
   if (!isOffline && !showOnlineToast) return null
 

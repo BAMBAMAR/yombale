@@ -1,6 +1,6 @@
-import { defaultCache } from "@serwist/next/worker";
+// [SUPPRIMÉ] import { defaultCache } — En dev, c'est un catch-all NetworkOnly(/.*/i) qui cassait l'offline
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist, NetworkFirst, StaleWhileRevalidate, ExpirationPlugin } from "serwist";
+import { Serwist, NetworkFirst, NetworkOnly, StaleWhileRevalidate, ExpirationPlugin } from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -51,12 +51,36 @@ const FALLBACK_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+// ── Helpers pour exclure les URLs externes du routing SW ─────────────────
+function isExternalUrl(url: URL): boolean {
+  return (
+    url.hostname.includes('google') ||
+    url.hostname.includes('googletagmanager') ||
+    url.hostname.includes('google-analytics') ||
+    url.hostname.includes('doubleclick') ||
+    url.hostname.includes('facebook') ||
+    url.hostname.includes('analytics')
+  );
+}
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: false,
   runtimeCaching: [
+    // 0. Exclure les URLs externes (analytics, trackers) — ne jamais cacher ni router
+    // Elles échouent naturellement en offline, pas besoin de les gérer.
+    {
+      matcher: ({ url }) => isExternalUrl(url),
+      handler: new NetworkOnly(),
+    },
+    // 0b. /api/ping — TOUJOURS NetworkOnly, JAMAIS en cache
+    // C'est la route de health check utilisée pour détecter la connectivité réelle.
+    {
+      matcher: ({ url }) => url.pathname === '/api/ping',
+      handler: new NetworkOnly(),
+    },
     // 1. Navigation HTML (pages visitées) — NetworkFirst avec cache 7j
     {
       matcher: ({ request }) => request.mode === "navigate" || (request.method === "GET" && request.headers.get("accept")?.includes("text/html")),
@@ -103,14 +127,29 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // 4. Assets statiques (CSS, JS, images) — StaleWhileRevalidate
+    // 4. manifest.json et icons — StaleWhileRevalidate (nécessaires pour PWA offline)
+    {
+      matcher: ({ url }) => {
+        return url.pathname === '/manifest.json' || url.pathname.startsWith('/icons/');
+      },
+      handler: new StaleWhileRevalidate({
+        cacheName: "nopalou-pwa-meta-cache",
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 20,
+            maxAgeSeconds: 24 * 60 * 60 * 30, // 30 days
+          }),
+        ],
+      }),
+    },
+    // 5. Assets statiques (CSS, JS, images) — StaleWhileRevalidate
     {
       matcher: ({ request, url }) => {
         return request.destination === "style" || 
                request.destination === "script" || 
                request.destination === "image" ||
                url.pathname.startsWith("/_next/static/") ||
-               url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|css|js)$/i);
+               url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|css|js)$/i) !== null;
       },
       handler: new StaleWhileRevalidate({
         cacheName: "nopalou-assets-cache",
@@ -122,17 +161,20 @@ const serwist = new Serwist({
         ],
       }),
     },
-    ...defaultCache,
+    // [SUPPRIMÉ] ...defaultCache — En dev, c'est un catch-all NetworkOnly(/.*/i)
+    // qui cassait tout le mode offline en court-circuitant le fallback.
+    // Nos 5 règles ci-dessus couvrent déjà tous les cas nécessaires.
   ],
   fallbacks: {
     entries: [
       {
         url: "/offline.html",
         matcher({ request }: any) {
+          // Ne s'applique qu'aux navigations document
           if (!request || request.destination !== "document") return false;
-          if (typeof self !== "undefined" && self.navigator && self.navigator.onLine === true) {
-            return false;
-          }
+          // [CORRIGÉ] Supprimé le check self.navigator.onLine car il est non fiable
+          // dans le SW. Le fallback doit s'activer dès que le réseau échoue,
+          // pas quand le navigateur pense qu'on est offline.
           try {
             const url = new URL(request.url);
             if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/")) {

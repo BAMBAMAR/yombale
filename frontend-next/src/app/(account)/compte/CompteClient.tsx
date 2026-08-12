@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useOnlineStatus } from '@/lib/useOnlineStatus'
 import { useSearchParams, useRouter } from 'next/navigation'
 // Sous-composants
 
@@ -26,28 +27,13 @@ export default function CompteClient({
   const router = useRouter()
   const searchParams = useSearchParams()
   const tab = searchParams.get('tab') || 'mes-annonces'
+  const isOnline = useOnlineStatus()
   const [isOffline, setIsOffline] = useState(false)
 
   useEffect(() => {
-    setIsOffline(!navigator.onLine)
-    console.info(`[Compte SPA] Statut Réseau initial : ${navigator.onLine ? '🟢 En Ligne' : '📡 Hors-Ligne'}`)
-
-    const handleOnline = () => {
-      console.info('[Compte SPA] Connexion rétablie 🟢 -> Mode En Ligne')
-      setIsOffline(false)
-    }
-    const handleOffline = () => {
-      console.warn('[Compte SPA] Perte de connexion réseau 📡 -> Activation du Mode Hors-Ligne')
-      setIsOffline(true)
-    }
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [])
+    setIsOffline(!isOnline)
+    console.info(`[Compte SPA] Statut Réseau : ${isOnline ? '🟢 En Ligne (ping confirmé)' : '📡 Hors-Ligne (ping échoué)'}`)
+  }, [isOnline])
 
   // Log de navigation par onglet
   useEffect(() => {
@@ -57,7 +43,7 @@ export default function CompteClient({
   // Préchargement global universel (Annonces, Immo, Plan, Boutiques & tout leur contenu)
   // Les routes /api/* de Next.js servent de proxy authentifié via la session serveur (JWT signé)
   useEffect(() => {
-    if (!navigator.onLine) {
+    if (!isOnline) {
       console.log('[Compte SPA] 📡 Hors-ligne : Préchargement arrière-plan ignoré (cache existant utilisé)')
       return
     }

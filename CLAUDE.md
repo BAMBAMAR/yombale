@@ -1,3 +1,19 @@
+## 🚀 Mises à jour du 12/08/2026 : Correction Définitive du Mode Offline PWA & Détection Réseau Fiable (Ping /api/ping)
+
+- **Suppression du Catch-All NetworkOnly (`frontend-next/src/app/sw.ts`)** :
+  * Suppression de `defaultCache` (fourni par `@serwist/next`) qui injectait un matcher `/.*/i → NetworkOnly()` en dev, causant des erreurs `FetchEvent resulted in a network error response` en mode hors-ligne pour `/manifest.json`, navigations et assets.
+  * Ajout d'une stratégie `StaleWhileRevalidate` explicite pour `manifest.json` et les icônes PWA (`/icons/*`).
+  * Exclusion explicite des URLs externes (analytics, GTM, trackers) pour supprimer les erreurs et le bruit dans les logs SW.
+  * Suppression du check `navigator.onLine` dans le matcher du fallback document HTML (non fiable dans le Service Worker).
+- **Création du Hook Universel de Connectivité Réelle (`frontend-next/src/lib/useOnlineStatus.ts`)** :
+  * Élimination des faux positifs de `navigator.onLine` (qui signale à tort `online` sur desktop/Ethernet et lors des basculages responsive mobile ↔ web).
+  * Le nouveau hook valide l'accès réseau réel via des pings actifs vers `/api/ping` avec un timeout de 4s, un polling adaptatif (30s en ligne, 5s hors-ligne) et une suspension lorsque l'onglet est masqué (`document.hidden`).
+- **Route Health Check `/api/ping` (`frontend-next/src/app/api/ping/route.ts`)** :
+  * Ajout des en-têtes `Cache-Control: no-store, no-cache, must-revalidate` stricts et exclusion du cache Service Worker (`NetworkOnly`).
+- **Migration des Composants Clients (`RegisterSW.tsx`, `CaisseClient.tsx`, `BoutiqueClient.tsx`, `CompteClient.tsx`)** :
+  * Remplacement de toutes les occurrences de `navigator.onLine` par le hook `useOnlineStatus`.
+  * Le toast "Connexion Internet rétablie" ne s'affiche désormais que lorsqu'un vrai ping réussit après une déconnexion, éliminant tout faux toast lors des bascules d'affichage web ↔ mobile.
+
 ## Mises à jour du 12/08/2026 : Correctifs de fiabilité Offline POS
 
 - **Service worker (`frontend-next/src/app/sw.ts`)** : ajout d'un délai de bascule de 3 secondes pour HTML, RSC et API. Un cache miss API retourne désormais une erreur réseau au lieu d'un faux JSON HTTP 200, afin que chaque écran puisse restaurer son cache local.
