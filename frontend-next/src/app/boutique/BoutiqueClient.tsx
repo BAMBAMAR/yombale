@@ -2537,6 +2537,27 @@ export default function BoutiqueClient({
 
   const [boutiquesList, setBoutiquesList] = useState<Boutique[]>(boutiques)
 
+  // ── Plan actif : persistance offline ─────────────────────────────────────────
+  // Sauvegarde le plan dès qu'il est connu (online) et le restaure depuis le
+  // cache lorsque la prop serveur est null (mode hors-ligne / page non-SSR).
+  const [planActifEffectif, setPlanActifEffectif] = useState<'pro' | 'business' | 'decouverte' | 'taf_taf' | null>(() => {
+    if (planActif) return planActif as any
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('nopalou_plan_actif')
+      if (cached) return cached as any
+    }
+    return null
+  })
+
+  useEffect(() => {
+    if (planActif) {
+      setPlanActifEffectif(planActif as any)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nopalou_plan_actif', planActif)
+      }
+    }
+  }, [planActif])
+
   useEffect(() => {
     if (boutiques && boutiques.length > 0) {
       setBoutiquesList(boutiques)
@@ -2712,7 +2733,7 @@ export default function BoutiqueClient({
       <div style={{ maxWidth: 1360, margin: '32px auto', padding: '0 24px' }}>
         <BoutiqueManage
           boutique={mode.managing}
-          planActif={planActif ?? null}
+          planActif={planActifEffectif ?? null}
           initialTab={tabParam ?? undefined}
           onBack={() => {
             if (typeof window !== 'undefined') {
@@ -2884,7 +2905,7 @@ export default function BoutiqueClient({
             <BoutiqueCard
               key={b.id}
               boutique={b}
-              planActif={planActif ?? null}
+              planActif={planActifEffectif ?? null}
               onEdit={() => setMode({ editing: b })}
               onDelete={() => handleDelete(b.id)}
               onSponsoring={waveActif ? () => handleSponsoring(b.id) : undefined}

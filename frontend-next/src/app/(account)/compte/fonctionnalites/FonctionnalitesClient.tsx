@@ -14,11 +14,9 @@ export default function FonctionnalitesClient() {
     const cached = localStorage.getItem(cacheKey)
     if (cached) { try { const d = JSON.parse(cached); setPlanActif(d.planActif); setSettings(d.settings); setLoading(false) } catch(e) {} }
 
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
-    const headers = token ? { Authorization: `Bearer ${token}` } : {}
-
+    // Utilise les proxies Next.js authentifiés (pas de token Bearer nécessaire)
     Promise.all([
-      fetch('/api/abonnements/mon-plan', { headers }).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      fetch('/api/abonnements/mon-plan').then(r => r.ok ? r.json() : {}).catch(() => ({})),
       fetch('/api/settings/public').then(r => r.ok ? r.json() : {}).catch(() => ({}))
     ]).then(([planData, settingsData]) => {
       const plan = planData.abonnement || null

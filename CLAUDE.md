@@ -1,3 +1,16 @@
+## 🚀 Mises à jour du 12/08/2026 : Finalisation du Système Offline-First Complémentaire (Compte & Boutiques)
+
+- **Création des Proxies API Next.js Authentifiés (`/api/abonnements/mon-plan`)** :
+  * Proxy Next.js permettant aux composants clients (`CompteClient.tsx`, `FonctionnalitesClient.tsx`) d'interroger le backend via JWT signé serveur.
+- **Extension du Préchargement Universel (`CompteClient.tsx`)** :
+  * Intégration du plan d'abonnement actif (`nopalou_plan_actif`), des administrateurs (`nopalou_offline_admins_${b.id}`), des caissiers (`nopalou_offline_caissiers_${b.id}`) et des analytics (`nopalou_offline_analytics_${b.id}`) dans le préchargement universel.
+  * Gestion défensive des erreurs avec `.catch()` pour empêcher tout échec réseau partiel de bloquer le préchargement global.
+- **Persistance du Plan d'Abonnement en Mode Offline (`BoutiqueClient.tsx`)** :
+  * Sauvegarde automatique du `planActif` en `localStorage` lors de la connexion.
+  * Restauration transparente depuis le cache local (`planActifEffectif`) en mode hors-ligne lorsque la prop serveur est `null`, conservant le statut (Business / Pro) et déverrouillant les fonctionnalités de l'interface.
+- **Suppression du Bearer Token Obsolète (`AnnoncesImmoClient.tsx`, `FonctionnalitesClient.tsx`)** :
+  * Remplacement des requêtes directes à Bearer token par les proxys Next.js authentifiés.
+
 ## 🚀 Mises à jour du 11/08/2026 : Sécurisation du Polling Caisse POS (`CaisseClient.tsx`)
 
 - **Neutralisation des Erreurs Console Hors-Ligne (`CaisseClient.tsx`)** :

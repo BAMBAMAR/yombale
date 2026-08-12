@@ -43,12 +43,10 @@ export default function AnnoncesImmoClient({ created, updated }: { created?: boo
     }
     if (!cached) setLoading(true)
 
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
-    fetch('/api/immo/mine', {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    })
+    // Utilise le proxy Next.js authentifié (pas de token Bearer nécessaire)
+    fetch('/api/immo/mine')
       .then(async r => {
-        if (!r.ok) throw new Error('fetch error')
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
         const data = await r.json()
         setAnnonces(data)
         localStorage.setItem(cacheKey, JSON.stringify(data))
