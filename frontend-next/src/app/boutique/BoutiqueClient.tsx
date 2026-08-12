@@ -2562,6 +2562,11 @@ export default function BoutiqueClient({
 
   const [boutiquesList, setBoutiquesList] = useState<Boutique[]>(boutiques)
 
+  const isReallyOnline = useOnlineStatus()
+  const [dashboardOffline, setDashboardOffline] = useState(false)
+  useEffect(() => {
+    setDashboardOffline(!isReallyOnline);
+  }, [isReallyOnline]);
   // ── Plan actif : persistance offline ─────────────────────────────────────────
   // Sauvegarde le plan dès qu'il est connu (online) et le restaure depuis le
   // cache lorsque la prop serveur est null (mode hors-ligne / page non-SSR).
@@ -2697,13 +2702,7 @@ export default function BoutiqueClient({
     }
   }, [boutiquesList, boutiques, isReallyOnline]);
 
-  // État et Listener pour le mode hors-ligne du Dashboard
-  const [dashboardOffline, setDashboardOffline] = useState(false);
-  const isReallyOnline = useOnlineStatus();
-  useEffect(() => {
-    setDashboardOffline(!isReallyOnline);
-  }, [isReallyOnline]);
-
+  // État et Listener pour le mode hors-ligne du Dashboard gérés plus haut
 
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const waveActif    = settings.paiement_wave !== 'false'

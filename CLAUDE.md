@@ -1,4 +1,7 @@
-## 🚀 Mises à jour du 12/08/2026 : Hook `useOnlineStatus` Événementiel & Zéro Polling en Ligne
+## 🚀 Mises à jour du 12/08/2026 : Correction `ReferenceError` (Dashboard) & Zéro Polling en Ligne
+- **Correction d'Erreur Fatale sur le Dashboard (`BoutiqueClient.tsx`)** :
+  * Résolution de l'erreur `Uncaught ReferenceError: Cannot access 'isReallyOnline' before initialization` qui faisait crasher l'interface du Dashboard (écran blanc/rouge).
+  * Déplacement de l'initialisation du hook `useOnlineStatus()` en haut du composant, avant son utilisation dans les `useEffect` de préchargement.
 - **Architecture Réseau Événementielle (`useOnlineStatus.ts`)** :
   * Élimination du polling répétitif en mode connecté : zéro requête `/api/ping` lorsque l'utilisateur est en ligne, supprimant toute surcharge réseau et tout conflit avec les Server Actions.
   * Déclenchement réactif sur événements natifs (`offline`, `online`, `focus`) et activation du sondage de reconnexion (toutes les 5s) uniquement lors des déconnexions réelles.
