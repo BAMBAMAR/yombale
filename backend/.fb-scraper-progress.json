@@ -1,15 +1,15 @@
 {
   "status": "in_progress",
   "mode": "live",
-  "groupeIndex": 1,
+  "groupeIndex": 8,
   "totalGroupes": 10,
-  "pourcentage": 10,
-  "groupeActuel": "Groupe immo 1",
-  "groupeUrl": "https://www.facebook.com/groups/252740871421764",
-  "scrapes": 0,
-  "inseres": 0,
-  "doublons": 0,
-  "ignores": 0,
+  "pourcentage": 80,
+  "groupeActuel": "Marketplace Senegal",
+  "groupeUrl": "https://www.facebook.com/groups/329011281773600",
+  "scrapes": 25,
+  "inseres": 11,
+  "doublons": 8,
+  "ignores": 6,
   "erreurs": [],
-  "updatedAt": "2026-08-12T21:11:23.929Z"
+  "updatedAt": "2026-08-12T21:19:23.294Z"
 }

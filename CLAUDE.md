@@ -22,6 +22,9 @@
     - `💾 [IndexedDB v3]` pour l'ensemble des opérations de cache local (sauvegarde, lecture, file d'attente, purge).
     - `🛒 [Caisse POS]` pour le suivi des ventes en ligne vs hors-ligne.
     - `📦 [Catalogue]` pour le chargement des produits par boutique.
+- **Persistance Hors-Ligne Comptabilité & Ventes/Dépenses (`frontend-next/src/app/boutique/Comptabilite.tsx`)** :
+  * Intégration de la persistance locale `localStorage` dans `VentesView` (`nopalou_offline_compta_ventes_${bId}`, `nopalou_offline_compta_zones_${bId}`) et `DepensesView` (`nopalou_offline_compta_depenses_${bId}`).
+  * Garantit que la totalité des sous-sections de la Boutique (Vue d'ensemble, Caisse POS, Catalogue, Comptabilité Ventes, Dépenses, Commandes et Zones de livraison) s'affichent instantanément hors-ligne à partir des données locales en cache sans blocage réseau.
 - **Service Worker v5, Purge Automatique, Image SVG Fallback & Réponses 504 Propres (`sw.ts`, `next.config.js`, `RegisterSW.tsx`)** :
   * Incrémentation de la version des caches à `CACHE_VERSION = 'v5'` avec nettoyeur automatique des anciens caches dans l'événement `activate`.
   * Remplacement de `Response.error()` dans `setCatchHandler` par un **Fallback Image SVG** pour les images non cachées (Unsplash, Cloudinary, wsrv.nl) et une réponse HTTP 504 propre (`Gateway Timeout (Offline)`) pour les requêtes API/ping échouées hors-ligne, éliminant les 50+ lignes d'avertissements `FetchEvent resulted in a network error response` dans la console Chrome DevTools.
