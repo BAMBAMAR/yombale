@@ -2634,7 +2634,7 @@ export default function BoutiqueClient({
             const dataClients = await resClients.json().catch(() => null);
             if (dataClients && dataClients.clients && Array.isArray(dataClients.clients)) {
               import('@/lib/db-offline').then(({ sauvegarderClientsLocaux }) => {
-                sauvegarderClientsLocaux(dataClients.clients).catch(() => {});
+                sauvegarderClientsLocaux(dataClients.clients, b.id).catch(() => {});
               }).catch(() => {});
             }
           }

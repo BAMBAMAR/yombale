@@ -1,3 +1,10 @@
+## Mises à jour du 12/08/2026 : Correctifs de fiabilité Offline POS
+
+- **Service worker (`frontend-next/src/app/sw.ts`)** : ajout d'un délai de bascule de 3 secondes pour HTML, RSC et API. Un cache miss API retourne désormais une erreur réseau au lieu d'un faux JSON HTTP 200, afin que chaque écran puisse restaurer son cache local.
+- **Isolation du carnet clients (`frontend-next/src/lib/db-offline.ts`)** : migration IndexedDB vers la version 2 ; les clients sont stockés et lus par boutique, sans effacer les carnets des autres boutiques.
+- **Synchronisation POS (`CaisseClient.tsx`, `backend/routes/boutiques.js`)** : chaque vente reçoit une clé d'idempotence conservée dans la queue offline. La route POS reconnaît une référence déjà enregistrée pour éviter de retraiter une reprise après réponse perdue. Une contrainte SQL transactionnelle reste prévue dans `PLAN_CORRECTION_OFFLINE.md` avant généralisation en production.
+- **Validation** : `node --check backend/routes/boutiques.js` et `git diff --check` réussissent. La suite frontend complète n'a pas terminé dans la fenêtre de validation locale.
+
 ## 🚀 Mises à jour du 12/08/2026 : Finalisation du Système Offline-First Complémentaire (Compte & Boutiques)
 
 - **Neutralisation de l'Avertissement Service Worker (`sw.ts`)** :

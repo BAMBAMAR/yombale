@@ -62,6 +62,7 @@ const serwist = new Serwist({
       matcher: ({ request }) => request.mode === "navigate" || (request.method === "GET" && request.headers.get("accept")?.includes("text/html")),
       handler: new NetworkFirst({
         cacheName: "nopalou-html-cache",
+        networkTimeoutSeconds: 3,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 50,
@@ -77,6 +78,7 @@ const serwist = new Serwist({
       },
       handler: new NetworkFirst({
         cacheName: "nopalou-rsc-cache",
+        networkTimeoutSeconds: 3,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 80,
@@ -92,6 +94,7 @@ const serwist = new Serwist({
       },
       handler: new NetworkFirst({
         cacheName: "nopalou-api-cache",
+        networkTimeoutSeconds: 3,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 100,
@@ -190,12 +193,9 @@ serwist.setCatchHandler(async ({ request }: any) => {
     return Response.error();
   }
 
-  // Intercepter les appels API en mode Hors-Ligne pour éviter les erreurs rouges dans la console
+  // Un cache miss doit déclencher les fallbacks locaux des composants, pas un faux succès HTTP 200.
   if (request.url && request.url.includes("/api/")) {
-    return new Response(JSON.stringify({}), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return Response.error();
   }
 
   return Response.error();

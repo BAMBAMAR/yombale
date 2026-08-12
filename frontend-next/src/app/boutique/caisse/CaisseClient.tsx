@@ -109,7 +109,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   async function rafraichirCompteurOffline() {
     try {
       const q = await obtenirVentesHorsLigne()
-      setVentesHorsLigneCount(q.length)
+      setVentesHorsLigneCount(q.filter(vente => vente.boutique_id === boutiqueActiveId).length)
     } catch {
       setVentesHorsLigneCount(0)
     }
@@ -169,6 +169,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         if (vente.boutique_id !== boutiqueActiveId) continue
         try {
           const res = await creerPosVente(vente.boutique_id, {
+            idempotency_key: vente.id_temporaire,
             items: vente.items,
             caissier: vente.caissier,
             modePaiement: vente.modePaiement,
@@ -807,15 +808,15 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         const data = await res.json()
         if (data.clients) {
           setClientsCredits(data.clients)
-          sauvegarderClientsLocaux(data.clients).catch(() => {})
+          sauvegarderClientsLocaux(data.clients, bId).catch(() => {})
         }
       } else {
-        const cached = await obtenirClientsLocaux().catch(() => [])
+        const cached = await obtenirClientsLocaux(bId).catch(() => [])
         if (cached && cached.length > 0) setClientsCredits(cached)
       }
     } catch (e) {
       console.error('Erreur chargement carnet credits:', e)
-      const cached = await obtenirClientsLocaux().catch(() => [])
+      const cached = await obtenirClientsLocaux(bId).catch(() => [])
       if (cached && cached.length > 0) setClientsCredits(cached)
     }
   }
@@ -1515,6 +1516,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
     if (boutiqueActiveId) {
       const payloadVente = {
+        idempotency_key: `POS-${crypto.randomUUID()}`,
         items: panier.map(i => ({ id: i.produit.id, quantite: i.quantite, nom: i.produit.nom, prix: i.prixUnitaire })),
         caissier: caissierNom,
         modePaiement,
@@ -1524,7 +1526,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
       if (!navigator.onLine || offlineModeActive) {
         try {
-          const temporaryId = `OFFLINE-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`
+          const temporaryId = payloadVente.idempotency_key
           await ajouterVenteHorsLigne({
             id_temporaire: temporaryId,
             boutique_id: boutiqueActiveId,
@@ -1542,11 +1544,14 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         }
       } else {
         try {
-          await creerPosVente(boutiqueActiveId, payloadVente)
+          const result = await creerPosVente(boutiqueActiveId, payloadVente)
+          if (!result.success) {
+            throw new Error(result.error || 'Impossible d\'enregistrer la vente')
+          }
         } catch (e) {
           console.error('Erreur mise à jour stock backend direct:', e)
           try {
-            const temporaryId = `OFFLINE-ERR-${Date.now()}`
+            const temporaryId = payloadVente.idempotency_key
             await ajouterVenteHorsLigne({
               id_temporaire: temporaryId,
               boutique_id: boutiqueActiveId,

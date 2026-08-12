@@ -1816,7 +1816,7 @@ router.get('/:id/scanner-remote', async (req, res) => {
 router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const { items, caissier, modePaiement, client_id } = req.body;
+    const { items, caissier, modePaiement, client_id, idempotency_key } = req.body;
 
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const bRes = await pool.query(
@@ -1826,6 +1826,21 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
     const boutique = bRes.rows[0];
     const boutiqueId = boutique.id;
+    const idempotencyKey = typeof idempotency_key === 'string' && idempotency_key.length > 0 && idempotency_key.length <= 128
+      ? idempotency_key
+      : null;
+
+    // Une réponse peut être perdue après l'enregistrement d'une vente offline.
+    // La même clé doit alors être reconnue avant toute nouvelle déduction de stock.
+    if (idempotencyKey) {
+      const existingSale = await pool.query(
+        `SELECT reference FROM caisse_documents WHERE boutique_id = $1 AND reference = $2 LIMIT 1`,
+        [boutiqueId, idempotencyKey]
+      );
+      if (existingSale.rows[0]) {
+        return res.json({ success: true, duplicate: true, reference: existingSale.rows[0].reference });
+      }
+    }
 
     let client = null;
     if (client_id && /^[0-9a-f-]{36}$/i.test(client_id)) {
@@ -1834,7 +1849,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
     }
 
     if (Array.isArray(items) && items.length > 0) {
-      const refVente = `POS-${Date.now().toString().slice(-6)}`;
+      const refVente = idempotencyKey || `POS-${Date.now().toString().slice(-6)}`;
       
       // Calcul fiscalité globale
       const calculation = calculerFiscaliteDocument(boutique, client, items);

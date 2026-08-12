@@ -3,7 +3,7 @@
  */
 
 const DB_NAME = 'nopalou_pos_offline';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export interface OfflineSale {
   id_temporaire: string;
@@ -46,10 +46,12 @@ export function initialiserBaseLocale(): Promise<IDBDatabase> {
         db.createObjectStore('produits', { keyPath: 'id' });
       }
       
-      // Stockage clients
-      if (!db.objectStoreNames.contains('clients')) {
-        db.createObjectStore('clients', { keyPath: 'id' });
+      // Stockage clients isolé par boutique. La version 1 utilisait l'id client
+      // comme clé globale et écrasait le carnet d'une autre boutique.
+      if (db.objectStoreNames.contains('clients')) {
+        db.deleteObjectStore('clients');
       }
+      db.createObjectStore('clients', { keyPath: 'cache_key' });
       
       // File d'attente des ventes offline
       if (!db.objectStoreNames.contains('ventes_queue')) {
@@ -118,31 +120,44 @@ export async function obtenirProduitsLocaux(boutiqueId?: string): Promise<any[]>
 
 // --- CLIENTS ---
 
-export async function sauvegarderClientsLocaux(clients: any[]): Promise<void> {
+export async function sauvegarderClientsLocaux(clients: any[], boutiqueId: string): Promise<void> {
+  if (!boutiqueId) return;
   const db = await initialiserBaseLocale();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction('clients', 'readwrite');
     const store = tx.objectStore('clients');
     
-    store.clear();
-    
-    clients.forEach(c => {
-      store.put(c);
-    });
+    const existing = store.getAll();
+    existing.onsuccess = () => {
+      (existing.result || []).forEach((client: any) => {
+        if (client.boutique_id === boutiqueId) store.delete(client.cache_key);
+      });
+      clients.forEach(c => {
+        store.put({ ...c, boutique_id: boutiqueId, cache_key: `${boutiqueId}:${c.id}` });
+      });
+    };
+    existing.onerror = () => {
+      clients.forEach(c => {
+        store.put({ ...c, boutique_id: boutiqueId, cache_key: `${boutiqueId}:${c.id}` });
+      });
+    };
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }
 
-export async function obtenirClientsLocaux(): Promise<any[]> {
+export async function obtenirClientsLocaux(boutiqueId: string): Promise<any[]> {
+  if (!boutiqueId) return [];
   const db = await initialiserBaseLocale();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('clients', 'readonly');
     const store = tx.objectStore('clients');
     const request = store.getAll();
 
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => resolve((request.result || [])
+      .filter((client: any) => client.boutique_id === boutiqueId)
+      .map(({ cache_key, boutique_id, ...client }: any) => client));
     request.onerror = () => reject(request.error);
   });
 }
@@ -196,4 +211,3 @@ export async function viderVentesHorsLigne(): Promise<void> {
     tx.onerror = () => reject(tx.error);
   });
 }
-
