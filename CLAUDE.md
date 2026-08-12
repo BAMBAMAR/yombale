@@ -1,4 +1,8 @@
-## 🚀 Mises à jour du 12/08/2026 : Correction de Typage TypeScript & Validation 100% Sans Erreurs (`tsc --noEmit`)
+## 🚀 Mises à jour du 12/08/2026 : Correction de l'Affichage Vertical du Ticket POS (`CaisseClient.tsx`)
+- **Correction Dépassement & Tronquature du Ticket en Cours (`CaisseClient.tsx`)** :
+  * Ajout de `minHeight: 0` sur la section ticket et le conteneur défilant du panier pour éliminer le conflit de défilement imbriqué.
+  * Ajout d'un padding vertical de respiration (`padding: '6px 2px'`) et augmentation de la hauteur minimale des cartes d'articles (`minHeight: 48px`, `padding: '10px 12px'`).
+  * Les articles du ticket de caisse ("Smartphone...", etc.) sont désormais 100% lisibles et dégagés sous la barre de titre `🛒 Ticket en cours` sans aucun chevauchement ni tronquature.
 - **Fix Typage `FonctionnalitesClient.tsx`** :
   * Transtypage explicite de la réponse API `planData` (`as { abonnement?: { plan: string; fin: string } }`) pour supprimer l'erreur TS2339 (`Property 'abonnement' does not exist on type '{}'`).
 - **Fix Interface `<ExternalImg />` (`AnnoncesImmoClient.tsx`)** :

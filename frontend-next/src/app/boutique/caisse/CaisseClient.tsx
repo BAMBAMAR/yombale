@@ -2531,7 +2531,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         </div>
 
         {/* Côté Droit : Ticket Panier & Encaissement POS */}
-        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: '12px 10px 20px 10px', display: 'flex', flexDirection: 'column', gap: 8, boxSizing: 'border-box', maxWidth: '100%', overflowY: 'auto', height: '100%' }}>
+        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: '12px 10px 20px 10px', display: 'flex', flexDirection: 'column', gap: 8, boxSizing: 'border-box', maxWidth: '100%', height: '100%', minHeight: 0 }}>
           {/* Bouton retour au catalogue sur Mobile */}
           <button
             type="button"
@@ -2543,7 +2543,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
 
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 10, gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 10, gap: 8, flexShrink: 0 }}>
             <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#0f172a', flexShrink: 0 }}>🛒 Ticket en cours</h2>
 
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
@@ -2565,7 +2565,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           </div>
 
           {/* Contenu Panier */}
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '6px 2px' }}>
             {!session ? (
               <div style={{
                 background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
@@ -2606,9 +2606,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               </div>
             ) : (
               panier.map(item => (
-                <div key={item.produit.id} style={{ background: '#f8fafc', border: item.quantite > item.produit.stock ? '1px solid #fde047' : '1px solid #e2e8f0', borderRadius: 10, padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, boxSizing: 'border-box' }}>
+                <div key={item.produit.id} style={{ background: '#f8fafc', border: item.quantite > item.produit.stock ? '1px solid #fde047' : '1px solid #e2e8f0', borderRadius: 10, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, boxSizing: 'border-box', minHeight: 48, flexShrink: 0 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: 12, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ margin: '0 0 3px', fontWeight: 700, fontSize: 13, lineHeight: 1.3, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item.produit.nom}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -2621,13 +2621,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: '#ffffff', padding: '2px 5px', borderRadius: 6, border: '1px solid #cbd5e1' }}>
-                      <button onClick={() => modifierQuantite(item.produit.id, -1)} style={{ background: 'none', border: 'none', color: '#0f172a', fontWeight: 800, cursor: 'pointer', padding: '0 3px', fontSize: 12 }}>-</button>
-                      <span style={{ fontSize: 12, fontWeight: 800, minWidth: 14, textAlign: 'center', color: '#0f172a' }}>{item.quantite}</span>
-                      <button onClick={() => modifierQuantite(item.produit.id, 1)} style={{ background: 'none', border: 'none', color: '#0f172a', fontWeight: 800, cursor: 'pointer', padding: '0 3px', fontSize: 12 }}>+</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#ffffff', padding: '3px 6px', borderRadius: 6, border: '1px solid #cbd5e1' }}>
+                      <button onClick={() => modifierQuantite(item.produit.id, -1)} style={{ background: 'none', border: 'none', color: '#0f172a', fontWeight: 800, cursor: 'pointer', padding: '0 4px', fontSize: 13 }}>-</button>
+                      <span style={{ fontSize: 13, fontWeight: 800, minWidth: 16, textAlign: 'center', color: '#0f172a' }}>{item.quantite}</span>
+                      <button onClick={() => modifierQuantite(item.produit.id, 1)} style={{ background: 'none', border: 'none', color: '#0f172a', fontWeight: 800, cursor: 'pointer', padding: '0 4px', fontSize: 13 }}>+</button>
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 900, color: '#0f172a', textAlign: 'right', whiteSpace: 'nowrap' }}>{fcfa(item.prixUnitaire * item.quantite)}</span>
+                    <span style={{ fontSize: 13, fontWeight: 900, color: '#0f172a', textAlign: 'right', whiteSpace: 'nowrap' }}>{fcfa(item.prixUnitaire * item.quantite)}</span>
                   </div>
                 </div>
               ))
