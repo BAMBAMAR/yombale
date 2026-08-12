@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 12/08/2026 : Correction de l'Erreur d'Hydratation React / Next.js (`RegisterSW.tsx`)
+- **Résolution de l'Erreur Mismatch Hydration (`RegisterSW.tsx`)** :
+  * Ajout du garde `mounted` (`useEffect` -> `setMounted(true)`) empêchant l'injection prématurée de balises HTML `<div>` d'alerte hors-ligne lors du rendu SSR/Hydratation initiale.
+  * Garantit que le DOM serveur et le DOM client initial correspondent à 100% sans aucun avertissement ni erreur `Hydration failed because the initial UI does not match`.
+
 ## 🚀 Mises à jour du 12/08/2026 : Correction de l'Affichage Vertical du Ticket POS (`CaisseClient.tsx`)
 - **Correction Dépassement & Tronquature du Ticket en Cours (`CaisseClient.tsx`)** :
   * Ajout de `minHeight: 0` sur la section ticket et le conteneur défilant du panier pour éliminer le conflit de défilement imbriqué.

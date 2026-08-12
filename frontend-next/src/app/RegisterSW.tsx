@@ -8,6 +8,11 @@ export default function RegisterSW() {
   const [showOnlineToast, setShowOnlineToast] = useState(false)
   const [wasOffline, setWasOffline] = useState(false)
   const [swUpdateAvailable, setSwUpdateAvailable] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -79,6 +84,8 @@ export default function RegisterSW() {
       }
     })
   }
+
+  if (!mounted) return null
 
   const isOffline = !isOnline
 
