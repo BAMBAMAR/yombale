@@ -1,3 +1,11 @@
+## 🚀 Mises à jour du 12/08/2026 : Correction de Typage TypeScript & Validation 100% Sans Erreurs (`tsc --noEmit`)
+- **Fix Typage `FonctionnalitesClient.tsx`** :
+  * Transtypage explicite de la réponse API `planData` (`as { abonnement?: { plan: string; fin: string } }`) pour supprimer l'erreur TS2339 (`Property 'abonnement' does not exist on type '{}'`).
+- **Fix Interface `<ExternalImg />` (`AnnoncesImmoClient.tsx`)** :
+  * Suppression du prop obsolète `fill` qui ne correspondait pas aux définitions de l'interface `ExternalImgProps`.
+- **Validation TypeScript Globale** :
+  * Compilation `npx tsc --noEmit` validée avec 0 erreur (100% propre).
+
 ## 🚀 Mises à jour du 12/08/2026 : Refonte Majeure du Mode Hors-Ligne POS (Idempotence & SyncManager)
 - **Transaction PostgreSQL Atomique (`backend/routes/boutiques.js`)** :
   * Refonte complète de la route `POST /api/boutiques/:id/pos-vente` avec `pool.connect()` et une transaction SQL atomique (`BEGIN` / `COMMIT` / `ROLLBACK`).

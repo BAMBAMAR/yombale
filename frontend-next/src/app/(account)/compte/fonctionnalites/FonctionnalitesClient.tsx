@@ -19,9 +19,9 @@ export default function FonctionnalitesClient() {
       fetch('/api/abonnements/mon-plan').then(r => r.ok ? r.json() : {}).catch(() => ({})),
       fetch('/api/settings/public').then(r => r.ok ? r.json() : {}).catch(() => ({}))
     ]).then(([planData, settingsData]) => {
-      const plan = planData.abonnement || null
+      const plan = (planData as { abonnement?: { plan: string; fin: string } })?.abonnement || null
       setPlanActif(plan)
-      setSettings(settingsData)
+      setSettings(settingsData as Record<string, string>)
       localStorage.setItem(cacheKey, JSON.stringify({ planActif: plan, settings: settingsData }))
       setLoading(false)
     })

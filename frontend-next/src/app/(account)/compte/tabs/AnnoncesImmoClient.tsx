@@ -107,7 +107,7 @@ export default function AnnoncesImmoClient({ created, updated }: { created?: boo
               <div key={a.id} className={`mes-immo-card ${!isActive ? 'inactive' : ''}`}>
                 <div className="mes-immo-img-wrapper">
                   {a.image_url ? (
-                    <ExternalImg src={a.image_url} alt={a.titre} fill className="mes-immo-img" />
+                    <ExternalImg src={a.image_url} alt={a.titre} className="mes-immo-img" />
                   ) : (
                     <div className="mes-immo-img-placeholder">{icon}</div>
                   )}
