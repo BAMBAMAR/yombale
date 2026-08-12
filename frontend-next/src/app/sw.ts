@@ -48,7 +48,7 @@ const FALLBACK_HTML = `<!DOCTYPE html>
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
-  clientsClaim: true,
+  clientsClaim: false,
   navigationPreload: false,
   runtimeCaching: defaultCache,
   fallbacks: {
@@ -71,6 +71,13 @@ const serwist = new Serwist({
       },
     ],
   },
+});
+
+// Réclamation sécurisée des clients lors de l'activation
+self.addEventListener("activate", (event: any) => {
+  event.waitUntil(
+    self.clients.claim().catch(() => {})
+  );
 });
 
 // Pré-cacher explicitement /offline.html lors de l'installation
