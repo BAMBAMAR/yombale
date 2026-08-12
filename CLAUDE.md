@@ -1,5 +1,9 @@
 ## 🚀 Mises à jour du 12/08/2026 : Finalisation du Système Offline-First Complémentaire (Compte & Boutiques)
 
+- **Sécurisation de la Route Proxy (`/api/boutiques/[id]/credits-clients`)** :
+  * Traitement gracieux des erreurs réseau et des réponses vides en renvoyant `{ clients: [] }` avec HTTP 200 pour éliminer les erreurs 500 intempestives dans la console navigateur.
+  * Ajout de `.catch(() => null)` défensif dans `BoutiqueClient.tsx` pour le préchargement en arrière-plan.
+
 - **Création des Proxies API Next.js Authentifiés (`/api/abonnements/mon-plan`)** :
   * Proxy Next.js permettant aux composants clients (`CompteClient.tsx`, `FonctionnalitesClient.tsx`) d'interroger le backend via JWT signé serveur.
 - **Extension du Préchargement Universel (`CompteClient.tsx`)** :

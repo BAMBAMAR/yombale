@@ -2629,10 +2629,10 @@ export default function BoutiqueClient({
           }).catch(() => {});
 
           // 3. Précharger le carnet de clients (Crédits)
-          const resClients = await fetch(`/api/boutiques/${b.id}/credits-clients`);
-          if (resClients.ok) {
-            const dataClients = await resClients.json();
-            if (dataClients.clients && Array.isArray(dataClients.clients)) {
+          const resClients = await fetch(`/api/boutiques/${b.id}/credits-clients`).catch(() => null);
+          if (resClients && resClients.ok) {
+            const dataClients = await resClients.json().catch(() => null);
+            if (dataClients && dataClients.clients && Array.isArray(dataClients.clients)) {
               import('@/lib/db-offline').then(({ sauvegarderClientsLocaux }) => {
                 sauvegarderClientsLocaux(dataClients.clients).catch(() => {});
               }).catch(() => {});
