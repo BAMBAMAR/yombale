@@ -52,9 +52,28 @@ export default function RegisterSW() {
       setIsOffline(true)
     }
 
+    // Polling de sécurité pour desktop : certains navigateurs ne déclenchent pas
+    // l'événement 'offline' de manière fiable (notamment sur PC avec câble Ethernet)
+    const pollingInterval = setInterval(() => {
+      const currentlyOffline = !navigator.onLine
+      setIsOffline(prev => {
+        if (prev !== currentlyOffline) {
+          if (currentlyOffline) {
+            console.warn('🔴 [Diagnostic PWA Polling] Déconnexion détectée par polling.')
+          } else {
+            console.log('🟢 [Diagnostic PWA Polling] Reconnexion détectée par polling.')
+            setShowOnlineToast(true)
+            setTimeout(() => setShowOnlineToast(false), 4000)
+          }
+        }
+        return currentlyOffline
+      })
+    }, 3000)
+
     return () => {
       window.removeEventListener('offline', handleOffline)
       window.removeEventListener('online', handleOnline)
+      clearInterval(pollingInterval)
     }
   }, [])
 

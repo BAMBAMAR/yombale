@@ -54,9 +54,10 @@ const FALLBACK_HTML = `<!DOCTYPE html>
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
-  clientsClaim: false,
+  clientsClaim: true,
   navigationPreload: false,
   runtimeCaching: [
+    // 1. Navigation HTML (pages visitées) — NetworkFirst avec cache 7j
     {
       matcher: ({ request }) => request.mode === "navigate" || (request.method === "GET" && request.headers.get("accept")?.includes("text/html")),
       handler: new NetworkFirst({
@@ -69,6 +70,37 @@ const serwist = new Serwist({
         ],
       }),
     },
+    // 2. Requêtes RSC (Next.js client navigation _rsc=...) — NetworkFirst pour cache offline
+    {
+      matcher: ({ url }) => {
+        return url.searchParams.has("_rsc");
+      },
+      handler: new NetworkFirst({
+        cacheName: "nopalou-rsc-cache",
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 80,
+            maxAgeSeconds: 24 * 60 * 60 * 3, // 3 days
+          }),
+        ],
+      }),
+    },
+    // 3. Routes API internes (/api/) — NetworkFirst pour données offline
+    {
+      matcher: ({ url }) => {
+        return url.pathname.startsWith("/api/");
+      },
+      handler: new NetworkFirst({
+        cacheName: "nopalou-api-cache",
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 100,
+            maxAgeSeconds: 24 * 60 * 60 * 1, // 1 day
+          }),
+        ],
+      }),
+    },
+    // 4. Assets statiques (CSS, JS, images) — StaleWhileRevalidate
     {
       matcher: ({ request, url }) => {
         return request.destination === "style" || 
@@ -128,35 +160,9 @@ self.addEventListener("install", (event: any) => {
   );
 });
 
-// Capturer les échecs de navigation HTML/document et renvoyer le HTML de secours
-self.addEventListener("fetch", (event: any) => {
-  const request = event.request;
-  if (!request) return;
-
-  const isHtmlNavigation = 
-    request.mode === "navigate" || 
-    (request.method === "GET" && request.headers?.get("accept")?.includes("text/html"));
-
-  if (isHtmlNavigation && typeof self !== "undefined" && self.navigator && self.navigator.onLine === false) {
-    event.respondWith(
-      caches.match(request, { ignoreSearch: true }).then((cachedResponse) => {
-        if (cachedResponse) return cachedResponse;
-        return caches.match("/offline.html", { ignoreSearch: true }).then((fallback) => {
-          if (fallback) return fallback;
-          return new Response(FALLBACK_HTML, {
-            status: 200,
-            headers: { "Content-Type": "text/html; charset=utf-8" },
-          });
-        });
-      }).catch(() => {
-        return new Response(FALLBACK_HTML, {
-          status: 200,
-          headers: { "Content-Type": "text/html; charset=utf-8" },
-        });
-      })
-    );
-  }
-});
+// [SUPPRIMÉ] L'ancien fetch listener manuel a été supprimé car il court-circuitait
+// les règles runtimeCaching de Serwist (NetworkFirst pour API, RSC, HTML).
+// Le fallbacks.entries + setCatchHandler gèrent tout correctement.
 
 serwist.setCatchHandler(async ({ request }: any) => {
   // Handle HTML document navigations offline
@@ -176,13 +182,12 @@ serwist.setCatchHandler(async ({ request }: any) => {
   }
 
   // Handle Next.js RSC data requests (_rsc=...) offline
+  // Retourner le cache si disponible, sinon laisser React gérer l'erreur proprement
+  // (ne PAS retourner "{}" car c'est un payload RSC invalide qui crashe React)
   if (request.url && request.url.includes("_rsc=")) {
     const cachedRsc = await caches.match(request, { ignoreSearch: true });
     if (cachedRsc) return cachedRsc;
-    return new Response("{}", {
-      status: 200,
-      headers: { "Content-Type": "text/plain" },
-    });
+    return Response.error();
   }
 
   // Intercepter les appels API en mode Hors-Ligne pour éviter les erreurs rouges dans la console

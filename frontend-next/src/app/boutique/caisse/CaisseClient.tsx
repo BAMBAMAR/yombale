@@ -942,20 +942,42 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         setProduits(prodsFormates)
         localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify(prodsFormates))
         sauvegarderProduitsLocaux(prodsFormates, bId).catch(() => {})
-      } else if (produits && Array.isArray(produits) && produits.length === 0 && navigator.onLine) {
-        // En ligne et la boutique renvoie une liste vide : vérifier d'abord si on avait des produits en cache
-        const cachedExistants = await obtenirProduitsLocaux(bId).catch(() => [])
-        if (!cachedExistants || cachedExistants.length === 0) {
-          setProduits([])
-          localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify([]))
-          sauvegarderProduitsLocaux([], bId).catch(() => {})
+      } else if (produits && Array.isArray(produits) && produits.length === 0) {
+        // Le Server Action a retourné [] — deux cas possibles :
+        // A) On est en ligne et la boutique est vraiment vide
+        // B) On est hors-ligne et le Server Action a échoué silencieusement (retourne [] par défaut)
+        const isReallyOnline = typeof navigator !== 'undefined' && navigator.onLine === true
+        if (isReallyOnline) {
+          // En ligne et la boutique renvoie une liste vide : vérifier d'abord si on avait des produits en cache
+          const cachedExistants = await obtenirProduitsLocaux(bId).catch(() => [])
+          if (!cachedExistants || cachedExistants.length === 0) {
+            setProduits([])
+            localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify([]))
+            sauvegarderProduitsLocaux([], bId).catch(() => {})
+          } else {
+            // Si on avait un cache valide, le conserver plutôt que de tout effacer
+            setProduits(cachedExistants)
+          }
         } else {
-          // Si on avait un cache valide, le conserver plutôt que de tout effacer
-          setProduits(cachedExistants)
+          // En cas d'échec réseau ou réponse vide hors-ligne, restaurer le cache local scopé par bId
+          console.warn('📡 [Diagnostic Caisse] Échec de la récupération réseau des produits ou réponse vide hors-ligne. Bascule sur le cache IndexedDB.')
+          const cached = await obtenirProduitsLocaux(bId).catch(() => [])
+          if (cached && cached.length > 0) {
+            console.log(`📦 [Diagnostic Caisse] ${cached.length} produits restaurés depuis IndexedDB.`)
+            setProduits(cached)
+          } else if (localProds) {
+            try {
+              const parsedP = JSON.parse(localProds)
+              if (Array.isArray(parsedP) && parsedP.length > 0) {
+                console.log(`📦 [Diagnostic Caisse] ${parsedP.length} produits restaurés depuis LocalStorage (Fallback).`)
+                setProduits(parsedP)
+              }
+            } catch {}
+          }
         }
       } else {
         // En cas d'échec réseau ou réponse vide hors-ligne, restaurer le cache local scopé par bId
-        console.warn('📡 [Diagnostic Caisse] Échec de la récupération réseau des produits ou réponse vide hors-ligne. Bascule sur le cache IndexedDB.')
+        console.warn('📡 [Diagnostic Caisse] Échec de la récupération réseau des produits. Bascule sur le cache IndexedDB.')
         const cached = await obtenirProduitsLocaux(bId).catch(() => [])
         if (cached && cached.length > 0) {
           console.log(`📦 [Diagnostic Caisse] ${cached.length} produits restaurés depuis IndexedDB.`)
@@ -964,7 +986,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
           try {
             const parsedP = JSON.parse(localProds)
             if (Array.isArray(parsedP) && parsedP.length > 0) {
-              console.log(`📦 [Diagnostic Caisse] ${parsedP.length} produits restaurés depuis LocalStorage (Fallback).`)
+              console.log(`📦 [Diagnostic Caisse] ${parsedP.length} produits restaurés depuis LocalStorage.`)
               setProduits(parsedP)
             }
           } catch {}
