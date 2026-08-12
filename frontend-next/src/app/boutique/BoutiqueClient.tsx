@@ -1432,6 +1432,25 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
             }
           }
         }
+      } else {
+        const cached = await obtenirProduitsLocaux(boutique.id).catch(() => [])
+        if (cached && cached.length > 0) {
+          setProduits(cached)
+        } else {
+          const localProds = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_pos_produits_${boutique.id}`) : null
+          if (localProds) {
+            try {
+              const parsed = JSON.parse(localProds)
+              if (Array.isArray(parsed) && parsed.length > 0) setProduits(parsed)
+              else setProduits([])
+            } catch {
+              setProduits([])
+            }
+          } else {
+            setProduits([])
+          }
+        }
+      }
     } catch {
       const cached = await obtenirProduitsLocaux(boutique.id).catch(() => [])
       if (cached && cached.length > 0) {

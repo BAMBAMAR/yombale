@@ -75,12 +75,6 @@ const serwist = new Serwist({
       matcher: ({ url }) => isExternalUrl(url),
       handler: new NetworkOnly(),
     },
-    // 0b. /api/ping — TOUJOURS NetworkOnly, JAMAIS en cache
-    // C'est la route de health check utilisée pour détecter la connectivité réelle.
-    {
-      matcher: ({ url }) => url.pathname === '/api/ping',
-      handler: new NetworkOnly(),
-    },
     // 1. Navigation HTML (pages visitées) — NetworkFirst avec cache 7j
     {
       matcher: ({ request }) => request.mode === "navigate" || (request.method === "GET" && request.headers.get("accept")?.includes("text/html")),
@@ -111,10 +105,10 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // 3. Routes API internes (/api/) — NetworkFirst pour données offline
+    // 3. Routes API internes (/api/) — NetworkFirst pour données offline (sauf /api/ping)
     {
       matcher: ({ url }) => {
-        return url.pathname.startsWith("/api/");
+        return url.pathname.startsWith("/api/") && url.pathname !== "/api/ping";
       },
       handler: new NetworkFirst({
         cacheName: "nopalou-api-cache",

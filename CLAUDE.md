@@ -1,3 +1,14 @@
+## 🚀 Mises à jour du 12/08/2026 : Correction de Syntaxe `BoutiqueClient.tsx`, Bypass SW `/api/ping` & Relance Localhost
+
+- **Bypass Total de `/api/ping` du Service Worker (`sw.ts` & `useOnlineStatus.ts`)** :
+  * Exclusion complète de `/api/ping` des règles `runtimeCaching` du Service Worker afin d'éviter que Serwist n'intercepte la requête et ne renvoie des erreurs `Response.error()`.
+  * Le navigateur effectue désormais un `fetch` réseau natif direct vers `/api/ping?t=...` avec horodatage dynamique, garantissant une réponse HTTP 200 immédiate en ligne et la suppression du bandeau orange hors-ligne lors du rafraîchissement.
+- **Correction de la Structure Syntaxique (`BoutiqueClient.tsx`)** :
+  * Correction d'une accolade fermante manquante sur le bloc `try` de la fonction `loadProduits` (ligne 1434), éliminant l'erreur de compilation SWC et restaurant le module `BoutiqueClient`.
+- **Relance des Serveurs Localhost** :
+  * Arrêt propre et libération des ports 3000 (Backend Express) et 3001 (Next.js Frontend).
+  * Redémarrage des processus en arrière-plan avec nettoyage du cache `.next`.
+
 ## 🚀 Mises à jour du 12/08/2026 : Correction Définitive du Mode Offline PWA & Détection Réseau Fiable (Ping /api/ping)
 
 - **Suppression du Catch-All NetworkOnly (`frontend-next/src/app/sw.ts`)** :

@@ -27,14 +27,9 @@ async function checkRealConnectivity(): Promise<boolean> {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), PING_TIMEOUT_MS)
     
-    const response = await fetch(PING_URL, {
+    const response = await fetch(`${PING_URL}?t=${Date.now()}`, {
       method: 'GET',
-      cache: 'no-store',
       signal: controller.signal,
-      headers: {
-        'Cache-Control': 'no-cache, no-store',
-        'Pragma': 'no-cache',
-      },
     })
     
     clearTimeout(timeout)
