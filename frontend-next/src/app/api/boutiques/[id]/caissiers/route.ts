@@ -9,13 +9,13 @@ export async function GET(
   try {
     const res = await backendFetch(`/api/boutiques/${params.id}/caissiers`)
     if (!res.ok) {
-      return NextResponse.json({ caissiers: [] }, { status: res.status })
+      return NextResponse.json({ caissiers: [] }, { status: 200 })
     }
-    const data = await res.json()
+    const data = await res.json().catch(() => ({ caissiers: [] }))
     return NextResponse.json(data)
   } catch (err) {
     console.error('[API Route] /boutiques/[id]/caissiers GET error:', err)
-    return NextResponse.json({ caissiers: [] }, { status: 500 })
+    return NextResponse.json({ caissiers: [] }, { status: 200 })
   }
 }
 

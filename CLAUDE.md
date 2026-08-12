@@ -1,8 +1,8 @@
 ## 🚀 Mises à jour du 12/08/2026 : Finalisation du Système Offline-First Complémentaire (Compte & Boutiques)
 
 - **Neutralisation de l'Avertissement Service Worker (`sw.ts`)** :
-  * Passé `clientsClaim: false` dans la configuration Serwist et gestion défensive de `self.clients.claim().catch(() => {})` lors de l'évènement `activate`.
-  * Suppression de l'erreur console `InvalidStateError: Only the active worker can claim clients` générée lors des rechargements à chaud (HMR Dev).
+  * Passé `clientsClaim: false` dans la configuration Serwist et suppression totale de l'appel manuel `self.clients.claim()` lors de l'évènement `activate`.
+  * Élimination de l'erreur console `Uncaught (in promise) InvalidStateError: Only the active worker can claim clients` générée lors des rechargements à chaud (HMR Dev).
 
 - **Sécurisation de la Route Proxy (`/api/boutiques/[id]/credits-clients`)** :
   * Traitement gracieux des erreurs réseau et des réponses vides en renvoyant `{ clients: [] }` avec HTTP 200 pour éliminer les erreurs 500 intempestives dans la console navigateur.

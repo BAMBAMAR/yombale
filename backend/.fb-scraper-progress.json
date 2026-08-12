@@ -1,14 +1,16 @@
 {
   "status": "completed",
   "mode": "live",
-  "groupeIndex": 10,
+  "groupeIndex": 1,
   "totalGroupes": 10,
   "pourcentage": 100,
   "groupeActuel": "Terminé",
-  "scrapes": 55,
-  "inseres": 36,
-  "doublons": 3,
-  "ignores": 16,
-  "erreurs": [],
-  "updatedAt": "2026-08-11T08:09:04.441Z"
+  "scrapes": 0,
+  "inseres": 0,
+  "doublons": 0,
+  "ignores": 0,
+  "erreurs": [
+    "Ndeye Yacine Seck Faye (Offres Emploi): Session Facebook invalidée (mur de connexion détecté) — relancez : node backend/scripts/fb-login-setup.js"
+  ],
+  "updatedAt": "2026-08-12T03:04:43.848Z"
 }

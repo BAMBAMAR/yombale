@@ -22,16 +22,25 @@ export default function RegisterSW() {
     }
 
     const handleOffline = () => {
+      console.warn('🔴 [Diagnostic PWA] Événement navigateur "offline" capturé. Déconnexion réseau détectée.')
+      console.info('📡 [Diagnostic PWA] Le bandeau UI Hors-Ligne va s\'afficher.')
       setIsOffline(true)
       setShowOnlineToast(false)
     }
     const handleOnline = () => {
+      console.log('🟢 [Diagnostic PWA] Événement navigateur "online" capturé. Connexion réseau rétablie.')
+      console.info('✅ [Diagnostic PWA] Le bandeau UI de reconnexion va s\'afficher pendant 4 secondes.')
       setIsOffline(false)
       setShowOnlineToast(true)
       setTimeout(() => setShowOnlineToast(false), 4000)
       if ('serviceWorker' in navigator) {
+        console.log('🔄 [Diagnostic PWA] Demande de mise à jour du Service Worker en arrière-plan...')
         navigator.serviceWorker.ready.then(reg => {
-          reg.update().catch(() => {})
+          reg.update().then(() => {
+             console.log('✅ [Diagnostic PWA] Mise à jour du Service Worker réussie.')
+          }).catch((err) => {
+             console.error('❌ [Diagnostic PWA] Échec de la mise à jour du Service Worker:', err)
+          })
         })
       }
     }
@@ -54,7 +63,7 @@ export default function RegisterSW() {
   return (
     <div style={{
       position: 'fixed',
-      top: '16px',
+      bottom: '24px',
       left: '50%',
       transform: 'translateX(-50%)',
       backgroundColor: isOffline ? '#c2410c' : '#15803d',
@@ -67,11 +76,16 @@ export default function RegisterSW() {
       zIndex: 99999,
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'center',
       gap: '10px',
       border: '1px solid rgba(255,255,255,0.25)',
       backdropFilter: 'blur(8px)',
       pointerEvents: 'auto',
-      transition: 'all 0.3s ease-in-out'
+      transition: 'all 0.3s ease-in-out',
+      width: 'max-content',
+      maxWidth: '90vw',
+      textAlign: 'center',
+      lineHeight: '1.4'
     }}>
       <span>{isOffline ? '📡' : '✅'}</span>
       <span>

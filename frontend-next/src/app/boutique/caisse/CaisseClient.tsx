@@ -126,11 +126,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       }
       
       const goOnline = () => {
+        console.log('🟢 [Diagnostic Caisse] Événement navigateur "online" détecté. Mode caisse locale désactivé.')
         setOfflineModeActive(false)
         showToast('Connexion internet rétablie ! Synchronisation en cours...', 'success')
         declencherSyncOffline()
       }
       const goOffline = () => {
+        console.warn('🔴 [Diagnostic Caisse] Événement navigateur "offline" détecté. Mode caisse locale ACTIVÉ.')
         setOfflineModeActive(true)
         showToast('Vous êtes hors-ligne. Mode caisse locale activé.', 'warning')
         rafraichirCompteurOffline()
@@ -160,7 +162,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         return
       }
 
-      console.log(`[OFFLINE SYNC] Tentative de synchronisation de ${ventesQueue.length} vente(s)...`)
+      console.log(`🔄 [Diagnostic Caisse] [OFFLINE SYNC] Tentative de synchronisation de ${ventesQueue.length} vente(s) hors-ligne vers le serveur...`)
       let successCount = 0
       
       for (const vente of ventesQueue) {
@@ -183,6 +185,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       }
 
       if (successCount > 0) {
+        console.log(`✅ [Diagnostic Caisse] [OFFLINE SYNC] ${successCount} vente(s) synchronisée(s) avec succès !`)
         rafraichirCompteurOffline()
         const hist = await getPosHistorique(boutiqueActiveId)
         if (hist && hist.length > 0) {
@@ -952,27 +955,33 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         }
       } else {
         // En cas d'échec réseau ou réponse vide hors-ligne, restaurer le cache local scopé par bId
+        console.warn('📡 [Diagnostic Caisse] Échec de la récupération réseau des produits ou réponse vide hors-ligne. Bascule sur le cache IndexedDB.')
         const cached = await obtenirProduitsLocaux(bId).catch(() => [])
         if (cached && cached.length > 0) {
+          console.log(`📦 [Diagnostic Caisse] ${cached.length} produits restaurés depuis IndexedDB.`)
           setProduits(cached)
         } else if (localProds) {
           try {
             const parsedP = JSON.parse(localProds)
             if (Array.isArray(parsedP) && parsedP.length > 0) {
+              console.log(`📦 [Diagnostic Caisse] ${parsedP.length} produits restaurés depuis LocalStorage (Fallback).`)
               setProduits(parsedP)
             }
           } catch {}
         }
       }
     } catch (e) {
-      console.error('Erreur chargement produits caisse:', e)
+      console.error('🔴 [Diagnostic Caisse] Erreur réseau lors du chargement des produits:', e)
+      console.info('📡 [Diagnostic Caisse] Bascule d\'urgence sur les caches locaux.')
       const cached = await obtenirProduitsLocaux(bId).catch(() => [])
       if (cached && cached.length > 0) {
+        console.log(`📦 [Diagnostic Caisse] ${cached.length} produits récupérés depuis IndexedDB.`)
         setProduits(cached)
       } else if (localProds) {
         try {
           const parsedP = JSON.parse(localProds)
           if (Array.isArray(parsedP) && parsedP.length > 0) {
+            console.log(`📦 [Diagnostic Caisse] ${parsedP.length} produits récupérés depuis LocalStorage.`)
             setProduits(parsedP)
           }
         } catch {}

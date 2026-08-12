@@ -1,6 +1,6 @@
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist } from "serwist";
+import { Serwist, NetworkFirst, StaleWhileRevalidate, ExpirationPlugin } from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -35,12 +35,18 @@ const FALLBACK_HTML = `<!DOCTYPE html>
     <p>Votre connexion Internet mobile est momentanément interrompue. Les données précédemment consultées restent disponibles en cache local.</p>
     <div class="btn-group">
       <button onclick="location.reload()">🔄 Réessayer la connexion</button>
+      <button onclick="window.history.back()" class="btn btn-sec">🔙 Revenir à la page précédente</button>
       <a href="/boutique/caisse" class="btn btn-sec">🛒 Retourner à la Caisse POS</a>
       <a href="/" class="btn btn-sec">🏠 Consulter l'Accueil (Cache)</a>
     </div>
   </div>
   <script>
     window.addEventListener('online', function() { location.reload(); });
+    // Masquer le bouton de retour si on ne peut pas revenir en arrière
+    if (window.history.length <= 1) {
+      const backBtn = document.querySelector('button[onclick="window.history.back()"]');
+      if (backBtn) backBtn.style.display = 'none';
+    }
   </script>
 </body>
 </html>`;
@@ -50,7 +56,39 @@ const serwist = new Serwist({
   skipWaiting: true,
   clientsClaim: false,
   navigationPreload: false,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [
+    {
+      matcher: ({ request }) => request.mode === "navigate" || (request.method === "GET" && request.headers.get("accept")?.includes("text/html")),
+      handler: new NetworkFirst({
+        cacheName: "nopalou-html-cache",
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 50,
+            maxAgeSeconds: 24 * 60 * 60 * 7, // 1 week
+          }),
+        ],
+      }),
+    },
+    {
+      matcher: ({ request, url }) => {
+        return request.destination === "style" || 
+               request.destination === "script" || 
+               request.destination === "image" ||
+               url.pathname.startsWith("/_next/static/") ||
+               url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|css|js)$/i);
+      },
+      handler: new StaleWhileRevalidate({
+        cacheName: "nopalou-assets-cache",
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 200,
+            maxAgeSeconds: 24 * 60 * 60 * 30, // 30 days
+          }),
+        ],
+      }),
+    },
+    ...defaultCache,
+  ],
   fallbacks: {
     entries: [
       {
@@ -73,12 +111,7 @@ const serwist = new Serwist({
   },
 });
 
-// Réclamation sécurisée des clients lors de l'activation
-self.addEventListener("activate", (event: any) => {
-  event.waitUntil(
-    self.clients.claim().catch(() => {})
-  );
-});
+
 
 // Pré-cacher explicitement /offline.html lors de l'installation
 self.addEventListener("install", (event: any) => {
@@ -149,6 +182,14 @@ serwist.setCatchHandler(async ({ request }: any) => {
     return new Response("{}", {
       status: 200,
       headers: { "Content-Type": "text/plain" },
+    });
+  }
+
+  // Intercepter les appels API en mode Hors-Ligne pour éviter les erreurs rouges dans la console
+  if (request.url && request.url.includes("/api/")) {
+    return new Response(JSON.stringify({}), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
     });
   }
 
