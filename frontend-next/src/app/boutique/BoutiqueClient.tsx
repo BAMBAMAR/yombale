@@ -2629,68 +2629,73 @@ export default function BoutiqueClient({
   // dès la connexion pour garantir un fonctionnement hors-ligne optimal.
   useEffect(() => {
     if (typeof window !== 'undefined' && isReallyOnline) {
-      const boutiquesAPrecharger = boutiquesList.length > 0 ? boutiquesList : boutiques;
-      boutiquesAPrecharger.forEach(async (b) => {
-        try {
-          // 1. Précharger le catalogue de produits
-          const prods = await getBoutiqueProduits(b.id);
-          if (prods && Array.isArray(prods)) {
-            const prodsFormates = prods.map((p: any) => {
-              let stockVal = Number(p.stock ?? p.quantite_stock ?? p.stock_quantite);
-              if (isNaN(stockVal)) stockVal = 10;
-              return { ...p, stock: stockVal };
-            });
-            localStorage.setItem(`nopalou_pos_produits_${b.id}`, JSON.stringify(prodsFormates));
-            sauvegarderProduitsLocaux(prodsFormates, b.id).catch(() => {});
-          }
-
-          // 2. Précharger l'historique de caisse
-          import('./actions').then(({ getPosHistorique }) => {
-            getPosHistorique(b.id).then(hist => {
-              if (hist && Array.isArray(hist) && hist.length > 0) {
-                localStorage.setItem(`nopalou_pos_historique_${b.id}`, JSON.stringify(hist));
-              }
-            }).catch(() => {});
-          }).catch(() => {});
-
-          // 3. Précharger le carnet de clients (Crédits)
-          const resClients = await fetch(`/api/boutiques/${b.id}/credits-clients`).catch(() => null);
-          if (resClients && resClients.ok) {
-            const dataClients = await resClients.json().catch(() => null);
-            if (dataClients && dataClients.clients && Array.isArray(dataClients.clients)) {
-              import('@/lib/db-offline').then(({ sauvegarderClientsLocaux }) => {
-                sauvegarderClientsLocaux(dataClients.clients, b.id).catch(() => {});
-              }).catch(() => {});
+      const preloadTimer = setTimeout(() => {
+        const fetchLow = (url: string) => fetch(url, { priority: 'low' } as any);
+        const boutiquesAPrecharger = boutiquesList.length > 0 ? boutiquesList : boutiques;
+        boutiquesAPrecharger.forEach(async (b) => {
+          try {
+            // 1. Précharger le catalogue de produits
+            const prods = await getBoutiqueProduits(b.id);
+            if (prods && Array.isArray(prods)) {
+              const prodsFormates = prods.map((p: any) => {
+                let stockVal = Number(p.stock ?? p.quantite_stock ?? p.stock_quantite);
+                if (isNaN(stockVal)) stockVal = 10;
+                return { ...p, stock: stockVal };
+              });
+              localStorage.setItem(`nopalou_pos_produits_${b.id}`, JSON.stringify(prodsFormates));
+              sauvegarderProduitsLocaux(prodsFormates, b.id).catch(() => {});
             }
+
+            // 2. Précharger l'historique de caisse
+            import('./actions').then(({ getPosHistorique }) => {
+              getPosHistorique(b.id).then(hist => {
+                if (hist && Array.isArray(hist) && hist.length > 0) {
+                  localStorage.setItem(`nopalou_pos_historique_${b.id}`, JSON.stringify(hist));
+                }
+              }).catch(() => {});
+            }).catch(() => {});
+
+            // 3. Précharger le carnet de clients (Crédits)
+            const resClients = await fetchLow(`/api/boutiques/${b.id}/credits-clients`).catch(() => null);
+            if (resClients && resClients.ok) {
+              const dataClients = await resClients.json().catch(() => null);
+              if (dataClients && dataClients.clients && Array.isArray(dataClients.clients)) {
+                import('@/lib/db-offline').then(({ sauvegarderClientsLocaux }) => {
+                  sauvegarderClientsLocaux(dataClients.clients, b.id).catch(() => {});
+                }).catch(() => {});
+              }
+            }
+
+            // 4. Précharger Analytics
+            fetchLow(`/api/analytics/boutique/${b.id}`)
+              .then(r => r.ok ? r.json() : Promise.reject())
+              .then(data => {
+                if (data.stats) localStorage.setItem(`nopalou_offline_analytics_${b.id}`, JSON.stringify(data));
+              }).catch(() => {});
+
+            // 5. Précharger Admins
+            fetchLow(`/api/boutiques/${b.id}/admins`)
+              .then(r => r.ok ? r.json() : Promise.reject())
+              .then(data => {
+                if (data.admins) localStorage.setItem(`nopalou_offline_admins_${b.id}`, JSON.stringify(data.admins));
+              }).catch(() => {});
+
+            // 6. Précharger Caissiers
+            fetchLow(`/api/boutiques/${b.id}/caissiers`)
+              .then(r => r.ok ? r.json() : Promise.reject())
+              .then(data => {
+                if (data.caissiers) localStorage.setItem(`nopalou_offline_caissiers_${b.id}`, JSON.stringify(data.caissiers));
+              }).catch(() => {});
+
+          } catch (e) {
+            console.warn("Erreur préchargement background pour boutique", b.id, e);
           }
+        });
+      }, 1200);
 
-          // 4. Précharger Analytics
-          fetch(`/api/analytics/boutique/${b.id}`)
-            .then(r => r.ok ? r.json() : Promise.reject())
-            .then(data => {
-              if (data.stats) localStorage.setItem(`nopalou_offline_analytics_${b.id}`, JSON.stringify(data));
-            }).catch(() => {});
-
-          // 5. Précharger Admins
-          fetch(`/api/boutiques/${b.id}/admins`)
-            .then(r => r.ok ? r.json() : Promise.reject())
-            .then(data => {
-              if (data.admins) localStorage.setItem(`nopalou_offline_admins_${b.id}`, JSON.stringify(data.admins));
-            }).catch(() => {});
-
-          // 6. Précharger Caissiers
-          fetch(`/api/boutiques/${b.id}/caissiers`)
-            .then(r => r.ok ? r.json() : Promise.reject())
-            .then(data => {
-              if (data.caissiers) localStorage.setItem(`nopalou_offline_caissiers_${b.id}`, JSON.stringify(data.caissiers));
-            }).catch(() => {});
-
-        } catch (e) {
-          console.warn("Erreur préchargement background pour boutique", b.id, e);
-        }
-      });
+      return () => clearTimeout(preloadTimer);
     }
-  }, [boutiquesList, boutiques]);
+  }, [boutiquesList, boutiques, isReallyOnline]);
 
   // État et Listener pour le mode hors-ligne du Dashboard
   const [dashboardOffline, setDashboardOffline] = useState(false);

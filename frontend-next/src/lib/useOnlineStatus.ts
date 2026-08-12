@@ -18,7 +18,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
  */
 
 const PING_URL = '/api/ping'
-const PING_TIMEOUT_MS = 4000
+const PING_TIMEOUT_MS = 8000
 const POLL_INTERVAL_ONLINE_MS = 30000  // 30s quand on est en ligne
 const POLL_INTERVAL_OFFLINE_MS = 5000  // 5s quand on est hors-ligne (retry rapide)
 
@@ -29,6 +29,7 @@ async function checkRealConnectivity(): Promise<boolean> {
     
     const response = await fetch(`${PING_URL}?t=${Date.now()}`, {
       method: 'GET',
+      priority: 'high',
       signal: controller.signal,
     })
     

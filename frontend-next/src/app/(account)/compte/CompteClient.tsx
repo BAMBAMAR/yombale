@@ -47,119 +47,127 @@ export default function CompteClient({
       console.log('[Compte SPA] 📡 Hors-ligne : Préchargement arrière-plan ignoré (cache existant utilisé)')
       return
     }
-    console.log('[Compte SPA] 🚀 Démarrage du préchargement global (Annonces, Immo, Plan, Boutiques & Catalogues)...')
 
-    // 1. Précharge les annonces classifiées
-    fetch('/api/annonces/mine')
-      .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
-      .then(d => {
-        if (d?.annonces) {
-          localStorage.setItem(`nopalou_offline_annonces_${session?.userId}`, JSON.stringify(d.annonces))
-          console.log(`[Compte SPA] ✅ ${d.annonces.length} annonces classifiées préchargées en cache.`)
-        }
-      })
-      .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement annonces :', err))
+    // Différer le préchargement de 1200ms pour laisser le ping prioritaire s'exécuter sans encombrement réseau
+    const preloadTimer = setTimeout(() => {
+      console.log('[Compte SPA] 🚀 Démarrage du préchargement global (Annonces, Immo, Plan, Boutiques & Catalogues)...')
 
-    // 2. Précharge les annonces immo
-    fetch('/api/immo/mine')
-      .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
-      .then(d => {
-        if (Array.isArray(d)) {
-          localStorage.setItem('nopalou_offline_immo_mine', JSON.stringify(d))
-          console.log(`[Compte SPA] ✅ ${d.length} biens immobiliers préchargés en cache.`)
-        }
-      })
-      .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement immo :', err))
+      const fetchLow = (url: string) => fetch(url, { priority: 'low' } as any)
 
-    // 3. Précharge le plan d'abonnement actif
-    fetch('/api/abonnements/mon-plan')
-      .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
-      .then(d => {
-        if (d?.abonnement?.plan) {
-          localStorage.setItem('nopalou_plan_actif', d.abonnement.plan)
-          console.log(`[Compte SPA] ✅ Plan actif "${d.abonnement.plan}" sauvegardé en cache.`)
-        }
-      })
-      .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement plan :', err))
-
-    // 4. Précharge les boutiques & tout leur contenu (catalogues, caisse, clients, equipe, analytics)
-    fetch('/api/boutiques/mine')
-      .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
-      .then(d => {
-        const boutiquesList = d?.boutiques || (Array.isArray(d) ? d : [])
-        if (boutiquesList.length === 0) return
-        localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify(boutiquesList))
-        console.log(`[Compte SPA] ✅ ${boutiquesList.length} boutique(s) préchargée(s). Synchronisation des catalogues...`)
-
-        boutiquesList.forEach(async (b: any) => {
-          // 4a. Catalogue produits
-          fetch(`/api/boutiques/${b.id}/produits`)
-            .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
-            .then(pData => {
-              const prods = pData.produits || (Array.isArray(pData) ? pData : [])
-              localStorage.setItem(`nopalou_pos_produits_${b.id}`, JSON.stringify(prods))
-              console.log(`[Compte SPA] ✅ Catalogue Boutique "${b.nom}" (${prods.length} produits) préchargé.`)
-            })
-            .catch(() => console.warn(`[Compte SPA] ⚠️ Catalogue "${b.nom}" : erreur réseau (ignorée)`))
-
-          // 4b. Historique caisse POS
-          fetch(`/api/boutiques/${b.id}/pos-historique`)
-            .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
-            .then(hist => {
-              if (Array.isArray(hist) && hist.length > 0) {
-                localStorage.setItem(`nopalou_pos_historique_${b.id}`, JSON.stringify(hist))
-                console.log(`[Compte SPA] ✅ Historique caisse "${b.nom}" (${hist.length} ventes) préchargé.`)
-              }
-            })
-            .catch(() => {})
-
-          // 4c. Clients & Crédits
-          fetch(`/api/boutiques/${b.id}/credits-clients`)
-            .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
-            .then(cData => {
-              if (cData?.clients && Array.isArray(cData.clients)) {
-                localStorage.setItem(`nopalou_offline_clients_${b.id}`, JSON.stringify(cData.clients))
-                console.log(`[Compte SPA] ✅ Clients "${b.nom}" (${cData.clients.length}) préchargés.`)
-              }
-            })
-            .catch(() => {})
-
-          // 4d. Admins
-          fetch(`/api/boutiques/${b.id}/admins`)
-            .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
-            .then(data => {
-              if (data?.admins) {
-                localStorage.setItem(`nopalou_offline_admins_${b.id}`, JSON.stringify(data.admins))
-                console.log(`[Compte SPA] ✅ Admins "${b.nom}" (${data.admins.length}) préchargés.`)
-              }
-            })
-            .catch(() => {})
-
-          // 4e. Caissiers
-          fetch(`/api/boutiques/${b.id}/caissiers`)
-            .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
-            .then(data => {
-              if (data?.caissiers) {
-                localStorage.setItem(`nopalou_offline_caissiers_${b.id}`, JSON.stringify(data.caissiers))
-                console.log(`[Compte SPA] ✅ Caissiers "${b.nom}" (${data.caissiers.length}) préchargés.`)
-              }
-            })
-            .catch(() => {})
-
-          // 4f. Analytics
-          fetch(`/api/analytics/boutique/${b.id}`)
-            .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
-            .then(data => {
-              if (data?.stats) {
-                localStorage.setItem(`nopalou_offline_analytics_${b.id}`, JSON.stringify(data))
-                console.log(`[Compte SPA] ✅ Analytics "${b.nom}" préchargés.`)
-              }
-            })
-            .catch(() => {})
+      // 1. Précharge les annonces classifiées
+      fetchLow('/api/annonces/mine')
+        .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+        .then(d => {
+          if (d?.annonces) {
+            localStorage.setItem(`nopalou_offline_annonces_${session?.userId}`, JSON.stringify(d.annonces))
+            console.log(`[Compte SPA] ✅ ${d.annonces.length} annonces classifiées préchargées en cache.`)
+          }
         })
-      })
-      .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement boutiques :', err))
-  }, [session?.userId])
+        .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement annonces :', err))
+
+      // 2. Précharge les annonces immo
+      fetchLow('/api/immo/mine')
+        .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+        .then(d => {
+          if (Array.isArray(d)) {
+            localStorage.setItem('nopalou_offline_immo_mine', JSON.stringify(d))
+            console.log(`[Compte SPA] ✅ ${d.length} biens immobiliers préchargés en cache.`)
+          }
+        })
+        .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement immo :', err))
+
+      // 3. Précharge le plan d'abonnement actif
+      fetchLow('/api/abonnements/mon-plan')
+        .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+        .then(d => {
+          if (d?.abonnement?.plan) {
+            localStorage.setItem('nopalou_plan_actif', d.abonnement.plan)
+            console.log(`[Compte SPA] ✅ Plan actif "${d.abonnement.plan}" sauvegardé en cache.`)
+          }
+        })
+        .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement plan :', err))
+
+      // 4. Précharge les boutiques & tout leur contenu (catalogues, caisse, clients, equipe, analytics)
+      fetchLow('/api/boutiques/mine')
+        .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+        .then(d => {
+          const boutiquesList = d?.boutiques || (Array.isArray(d) ? d : [])
+          if (boutiquesList.length === 0) return
+          localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify(boutiquesList))
+          console.log(`[Compte SPA] ✅ ${boutiquesList.length} boutique(s) préchargée(s). Synchronisation des catalogues...`)
+
+          boutiquesList.forEach(async (b: any) => {
+            // 4a. Catalogue produits
+            fetchLow(`/api/boutiques/${b.id}/produits`)
+              .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+              .then(pData => {
+                const prods = pData.produits || (Array.isArray(pData) ? pData : [])
+                localStorage.setItem(`nopalou_pos_produits_${b.id}`, JSON.stringify(prods))
+                console.log(`[Compte SPA] ✅ Catalogue Boutique "${b.nom}" (${prods.length} produits) préchargé.`)
+              })
+              .catch(() => console.warn(`[Compte SPA] ⚠️ Catalogue "${b.nom}" : erreur réseau (ignorée)`))
+
+            // 4b. Historique caisse POS
+            fetchLow(`/api/boutiques/${b.id}/pos-historique`)
+              .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+              .then(hist => {
+                if (Array.isArray(hist) && hist.length > 0) {
+                  localStorage.setItem(`nopalou_pos_historique_${b.id}`, JSON.stringify(hist))
+                  console.log(`[Compte SPA] ✅ Historique caisse "${b.nom}" (${hist.length} ventes) préchargé.`)
+                }
+              })
+              .catch(() => {})
+
+            // 4c. Clients & Crédits
+            fetchLow(`/api/boutiques/${b.id}/credits-clients`)
+              .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+              .then(cData => {
+                if (cData?.clients && Array.isArray(cData.clients)) {
+                  localStorage.setItem(`nopalou_offline_clients_${b.id}`, JSON.stringify(cData.clients))
+                  console.log(`[Compte SPA] ✅ Clients "${b.nom}" (${cData.clients.length}) préchargés.`)
+                }
+              })
+              .catch(() => {})
+
+            // 4d. Admins
+            fetchLow(`/api/boutiques/${b.id}/admins`)
+              .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+              .then(data => {
+                if (data?.admins) {
+                  localStorage.setItem(`nopalou_offline_admins_${b.id}`, JSON.stringify(data.admins))
+                  console.log(`[Compte SPA] ✅ Admins "${b.nom}" (${data.admins.length}) préchargés.`)
+                }
+              })
+              .catch(() => {})
+
+            // 4e. Caissiers
+            fetchLow(`/api/boutiques/${b.id}/caissiers`)
+              .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+              .then(data => {
+                if (data?.caissiers) {
+                  localStorage.setItem(`nopalou_offline_caissiers_${b.id}`, JSON.stringify(data.caissiers))
+                  console.log(`[Compte SPA] ✅ Caissiers "${b.nom}" (${data.caissiers.length}) préchargés.`)
+                }
+              })
+              .catch(() => {})
+
+            // 4f. Analytics
+            fetchLow(`/api/analytics/boutique/${b.id}`)
+              .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+              .then(data => {
+                if (data?.stats) {
+                  localStorage.setItem(`nopalou_offline_analytics_${b.id}`, JSON.stringify(data))
+                  console.log(`[Compte SPA] ✅ Analytics "${b.nom}" préchargés.`)
+                }
+              })
+              .catch(() => {})
+          })
+        })
+        .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement boutiques :', err))
+    }, 1200)
+
+    return () => clearTimeout(preloadTimer)
+  }, [isOnline, session?.userId])
 
   const userId = session?.userId || ''
 
