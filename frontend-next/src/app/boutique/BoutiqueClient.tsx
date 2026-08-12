@@ -2614,19 +2614,34 @@ export default function BoutiqueClient({
 
   useEffect(() => {
     const listToSearch = boutiquesList.length > 0 ? boutiquesList : boutiques
-    if (typeof mode === 'object' && 'managing' in mode) {
-      const targetBoutique = listToSearch.find(b => b.id === mode.managing.id)
-      if (targetBoutique) {
-        setMode({ managing: targetBoutique })
+    
+    setMode(prevMode => {
+      // 1. Si on gère déjà une boutique manuellement
+      if (typeof prevMode === 'object' && 'managing' in prevMode) {
+        // Obéir à l'URL si elle force explicitement une AUTRE boutique
+        if (manageId && prevMode.managing.id !== manageId && prevMode.managing.slug !== manageId) {
+          const target = listToSearch.find(b => b.id === manageId || b.slug === manageId)
+          if (target) return { managing: target }
+        }
+        
+        // Rafraîchir les données de la boutique active (si modifiées par le réseau/cache)
+        const updatedTarget = listToSearch.find(b => b.id === prevMode.managing.id)
+        if (updatedTarget && updatedTarget !== prevMode.managing) {
+          return { managing: updatedTarget }
+        }
+        return prevMode // On ne touche à rien
       }
-    } else if (manageId && listToSearch.length > 0) {
-      const targetBoutique = listToSearch.find(b => b.id === manageId || b.slug === manageId)
-      if (targetBoutique) {
-        setMode({ managing: targetBoutique })
+      
+      // 2. Si on n'est pas encore en mode 'managing', on lit l'URL
+      if (manageId && listToSearch.length > 0) {
+        const targetBoutique = listToSearch.find(b => b.id === manageId || b.slug === manageId)
+        if (targetBoutique) return { managing: targetBoutique }
+      } else if ((tabParam || lockedParam) && listToSearch.length > 0) {
+        return { managing: listToSearch[0] }
       }
-    } else if ((tabParam || lockedParam) && listToSearch.length > 0) {
-      setMode({ managing: listToSearch[0] })
-    }
+      
+      return prevMode
+    })
   }, [manageId, tabParam, lockedParam, boutiquesList, boutiques])
 
   // ── Préchargement Global (Offline Sync) ───────────────────────────────────────────────

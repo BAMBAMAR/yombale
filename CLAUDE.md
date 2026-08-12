@@ -1,4 +1,7 @@
-## 🚀 Mises à jour du 12/08/2026 : Correction `ReferenceError` (Dashboard) & Zéro Polling en Ligne
+## 🚀 Mises à jour du 12/08/2026 : Correction Dashboard (ReferenceError & Stale Closure) & Zéro Polling en Ligne
+- **Correction du Basculement Forcé de Boutique Hors-Ligne (`BoutiqueClient.tsx`)** :
+  * Résolution du bug où cliquer sur une boutique secondaire (ex: Amar) forçait le retour à la boutique principale (ex: Tech Dakar) en mode hors-ligne.
+  * Remplacement du stale closure dans l'initialisation du `useEffect` par un `setMode(prevMode => ...)` garantissant le respect absolu du choix de l'utilisateur.
 - **Correction d'Erreur Fatale sur le Dashboard (`BoutiqueClient.tsx`)** :
   * Résolution de l'erreur `Uncaught ReferenceError: Cannot access 'isReallyOnline' before initialization` qui faisait crasher l'interface du Dashboard (écran blanc/rouge).
   * Déplacement de l'initialisation du hook `useOnlineStatus()` en haut du composant, avant son utilisation dans les `useEffect` de préchargement.
