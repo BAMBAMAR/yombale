@@ -1,4 +1,7 @@
-## 🚀 Mises à jour du 12/08/2026 : Priorisation HTTP du Ping `/api/ping` & Différenciation du Préchargement
+## 🚀 Mises à jour du 12/08/2026 : Fallback Assets Statiques Offline (`sw.ts`) & Priorisation Ping
+- **Secours des Assets Statiques Hors-Ligne (`sw.ts`)** :
+  * Ajout d'une recherche dans le cache avec `ignoreSearch: true` dans le `setCatchHandler` pour les scripts (`.js`), styles (`.css`), images et fichiers `/_next/static/`.
+  * Résolution des échecs d'affichage en HTML brut lors du passage en mode offline sous DevTools Chrome (les paramètres de requête dynamiques `?v=...` générés par Next.js empêchaient la correspondance exacte d'URL).
 - **Priorisation Réseau Maximale (`useOnlineStatus.ts`)** :
   * Ajout de `priority: 'high'` sur le `fetch('/api/ping?t=...')` et augmentation du timeout à 8000ms.
   * Différenciation du préchargement global dans `CompteClient.tsx` et `BoutiqueClient.tsx` avec une temporisation de 1200ms et `priority: 'low'`.

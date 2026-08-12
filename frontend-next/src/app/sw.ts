@@ -229,6 +229,18 @@ serwist.setCatchHandler(async ({ request }: any) => {
     return Response.error();
   }
 
+  // Handle static assets (JS, CSS, images, _next/static) offline
+  // Tentative de récupération en cache en ignorant la Query String (?v=... de Next.js dev)
+  if (
+    request.destination === "style" || 
+    request.destination === "script" || 
+    request.destination === "image" ||
+    (request.url && (request.url.includes("/_next/static/") || request.url.match(/\.(png|jpg|jpeg|svg|webp|gif|css|js)$/i) !== null))
+  ) {
+    const cachedAsset = await caches.match(request, { ignoreSearch: true });
+    if (cachedAsset) return cachedAsset;
+  }
+
   // Un cache miss doit déclencher les fallbacks locaux des composants, pas un faux succès HTTP 200.
   if (request.url && request.url.includes("/api/")) {
     return Response.error();
