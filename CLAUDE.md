@@ -15,7 +15,8 @@
   * Suppression de la fonction `viderVentesHorsLigne` pour prévenir toute perte accidentelle de données.
 - **Détection de Connectivité Réelle v3 Singleton & Tracing Avancé (`frontend-next/src/lib/useOnlineStatus.ts`)** :
   * Transformation de `useOnlineStatus` en Singleton centralisé : élimination complète des pings dupliqués `/api/ping` émis lors du montage simultané de plusieurs composants.
-  * Déduplication des requêtes HTTP en cours (`inFlightPingPromise`) et temporisation (throttle 500ms) pour éviter la saturation réseau.
+  * Réactivité instantanée à la reconnexion WiFi : réinitialisation explicite (`lastPingTimestamp = 0`) lors des événements `online` et `focus` pour contourner la temporisation 500ms et faire basculer l'interface en mode en ligne sur-le-champ.
+  * Déduplication des requêtes HTTP en cours (`inFlightPingPromise`) et temporisation adaptative pour éviter la saturation réseau.
   * Tracing de diagnostic unifié avec balises visuelles explicites dans la console DevTools :
     - `📡 [Network Monitor]` pour les changements d'état réseau et résultats de pings `/api/ping`.
     - `💾 [IndexedDB v3]` pour l'ensemble des opérations de cache local (sauvegarde, lecture, file d'attente, purge).

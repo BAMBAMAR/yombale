@@ -1,5 +1,5 @@
 'use client'
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { devenirApporteur, type StatsApporteur } from './actions'
 import { fcfa } from '@/lib/format'
 
