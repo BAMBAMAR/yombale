@@ -142,9 +142,14 @@
 - **Protection Anti-Fausse Redirection Hors-Ligne (`frontend-next/src/app/sw.ts`)** :
   * Ajout du contrÃ´le `self.navigator.onLine === true` dans le matcher `fallbacks.entries` pour garantir que `/offline.html` ne s'affiche JAMAIS lorsque l'utilisateur est connectÃ© Ã  Internet (ex: sur `/compte`, `/boutique`, `/admin`).
 
+## 📌 Note et Constat Client : Attentes non encore réalisées (12/08/2026)
+- **Préchargement Complet Incomplet** : Le préchargement automatique de toutes les boutiques et données en arrière-plan n'est pas totalement effectif.
+- **Mode Hors-Ligne Desktop Inopérant** : Le mode offline sur navigateur de bureau (desktop) rencontre toujours des problèmes d'affichage et de détection.
+- **Bascule de Boutique Involontaire (AMAR -> TECH)** : Lors de l'entrée dans la boutique AMAR, l'application réinitialise ou bascule l'affichage vers la boutique TECH (problème de persistance/synchronisation du `boutiqueActiveId`).
+
 ## ðŸš€ Mises Ã  jour du 10/08/2026 : Correction de la RÃ©cupÃ©ration des Boutiques & Persistance de la Boutique SÃ©lectionnÃ©e
 - **Correction Critique de la RequÃªte SQL (`backend/routes/boutiques.js`)** :
-  * Correction de la clause `GROUP BY b.id, is_owner` -> `GROUP BY b.id` sur la route `/api/boutiques/mine`. L'utilisation de l'alias d'expression `is_owner` dÃ©clenchait une erreur PostgreSQL 500 (`column "is_owner" does not exist`), ce qui retournait 0 boutique et affichait l'Ã©cran de crÃ©ation par dÃ©faut lors du retour Ã  `/boutique`.
+  * Correction de la clause `GROUP BY b.id` sur la route `/api/boutiques/mine`. L'utilisation de l'alias d'expression `is_owner` déclenchait une erreur PostgreSQL 500 (`column "is_owner" does not exist`), ce qui retournait 0 boutique et affichait l'Ã©cran de crÃ©ation par dÃ©faut lors du retour Ã  `/boutique`.
 - **Persistance et Restauration de la Boutique SÃ©lectionnÃ©e (`CaisseClient.tsx` & `BoutiqueClient.tsx`)** :
   * MÃ©morisation dans `localStorage` (`nopalou_pos_active_boutique_id` & `nopalou_pos_user_boutiques`) de la boutique active choisie par le marchand.
   * Restauration automatique de la boutique du marchand et de son catalogue lors des navigations entre la Caisse et l'espace de gestion `/boutique`.
