@@ -13,10 +13,14 @@
   * Passage à IndexedDB `DB_VERSION = 3` avec isolation systématique par `userId` et `boutiqueId` (`cache_key = ${userId}:${boutiqueId}:${id}`).
   * Ajout du statut de synchronisation (`'pending' | 'syncing' | 'done'`) sur chaque vente offline pour verrouiller le traitement.
   * Suppression de la fonction `viderVentesHorsLigne` pour prévenir toute perte accidentelle de données.
-- **Détection de Connectivité Réelle v2 (`frontend-next/src/lib/useOnlineStatus.ts`)** :
-  * Exécution d'un ping de vérification immédiat au montage au lieu de présumer un état online optimiste.
-  * Réduction du timeout de ping à 3000ms pour une meilleure réactivité sur réseaux mobiles 3G/4G.
-  * Polling adaptatif exclusivement en mode hors-ligne (3s × 3 tentatives puis 10s), suspension automatique si l'onglet est masqué et re-vérification immédiate lors du focus.
+- **Détection de Connectivité Réelle v3 Singleton & Tracing Avancé (`frontend-next/src/lib/useOnlineStatus.ts`)** :
+  * Transformation de `useOnlineStatus` en Singleton centralisé : élimination complète des pings dupliqués `/api/ping` émis lors du montage simultané de plusieurs composants.
+  * Déduplication des requêtes HTTP en cours (`inFlightPingPromise`) et temporisation (throttle 500ms) pour éviter la saturation réseau.
+  * Tracing de diagnostic unifié avec balises visuelles explicites dans la console DevTools :
+    - `📡 [Network Monitor]` pour les changements d'état réseau et résultats de pings `/api/ping`.
+    - `💾 [IndexedDB v3]` pour l'ensemble des opérations de cache local (sauvegarde, lecture, file d'attente, purge).
+    - `🛒 [Caisse POS]` pour le suivi des ventes en ligne vs hors-ligne.
+    - `📦 [Catalogue]` pour le chargement des produits par boutique.
 - **Service Worker v4, Purge Automatique & Mise à Jour (`sw.ts`, `next.config.js`, `RegisterSW.tsx`)** :
   * Incrémentation de la version des caches à `CACHE_VERSION = 'v4'` et ajout d'un nettoyeur automatique des anciens caches dans l'événement `activate`.
   * Placement de la règle `NetworkOnly` pour `/api/ping` en priorité absolue dans Serwist.

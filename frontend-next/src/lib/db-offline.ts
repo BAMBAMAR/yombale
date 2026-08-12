@@ -5,7 +5,7 @@
  *  - Isolation complète par userId + boutiqueId dans toutes les clés.
  *  - Champ `status` dans ventes_queue ('pending' | 'syncing' | 'done') pour éviter les doubles syncs.
  *  - Suppression de `viderVentesHorsLigne` (trop dangereux).
- *  - Tous les stores sont purgés lors d'une migration de version.
+ *  - Tracing de diagnostic explicite 💾 [IndexedDB v3].
  */
 
 const DB_NAME = 'nopalou_pos_offline';
@@ -38,7 +38,7 @@ export function initialiserBaseLocale(): Promise<IDBDatabase> {
     const request = window.indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => {
-      console.error("Erreur d'ouverture de IndexedDB");
+      console.error("❌ 💾 [IndexedDB v3] Erreur d'ouverture d'IndexedDB:", request.error);
       reject(request.error);
     };
 
@@ -50,10 +50,8 @@ export function initialiserBaseLocale(): Promise<IDBDatabase> {
       const db = request.result;
       const oldVersion = event.oldVersion;
 
-      console.log(`[DB-Offline] Migration IndexedDB v${oldVersion} → v${DB_VERSION}`);
+      console.log(`🛠️ 💾 [IndexedDB v3] Migration base locale v${oldVersion} → v${DB_VERSION}`);
 
-      // ── Purge complète des anciens stores (migration propre) ──
-      // v1 et v2 utilisaient des clés non isolées par userId → fuites de cache entre comptes
       if (db.objectStoreNames.contains('produits')) {
         db.deleteObjectStore('produits');
       }
@@ -64,16 +62,12 @@ export function initialiserBaseLocale(): Promise<IDBDatabase> {
         db.deleteObjectStore('ventes_queue');
       }
 
-      // ── Nouveau store produits isolé par userId + boutiqueId ──
-      // cache_key = `${userId}:${boutiqueId}:${produitId}`
       const produitsStore = db.createObjectStore('produits', { keyPath: 'cache_key' });
       produitsStore.createIndex('by_boutique', ['user_id', 'boutique_id'], { unique: false });
 
-      // ── Nouveau store clients isolé par userId + boutiqueId ──
       const clientsStore = db.createObjectStore('clients', { keyPath: 'cache_key' });
       clientsStore.createIndex('by_boutique', ['user_id', 'boutique_id'], { unique: false });
 
-      // ── Nouveau store ventes_queue avec champ status ──
       const ventesStore = db.createObjectStore('ventes_queue', { keyPath: 'id_temporaire' });
       ventesStore.createIndex('by_boutique_status', ['boutique_id', 'status'], { unique: false });
       ventesStore.createIndex('by_user_boutique', ['user_id', 'boutique_id'], { unique: false });
@@ -94,7 +88,6 @@ export async function sauvegarderProduitsLocaux(
     const tx = db.transaction('produits', 'readwrite');
     const store = tx.objectStore('produits');
 
-    // Supprimer d'abord les anciens produits de cette boutique/user
     const index = store.index('by_boutique');
     const range = IDBKeyRange.only([userId, boutiqueId]);
     const cursorReq = index.openCursor(range);
@@ -105,7 +98,6 @@ export async function sauvegarderProduitsLocaux(
         cursor.delete();
         cursor.continue();
       } else {
-        // Insérer les nouveaux produits
         produits.forEach((p) => {
           store.put({
             ...p,
@@ -117,8 +109,14 @@ export async function sauvegarderProduitsLocaux(
       }
     };
 
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
+    tx.oncomplete = () => {
+      console.log(`💾 [IndexedDB v3] ✅ ${produits.length} produits sauvegardés en cache local (User: ${userId}, Boutique: ${boutiqueId})`);
+      resolve();
+    };
+    tx.onerror = () => {
+      console.error(`💾 [IndexedDB v3] ❌ Erreur sauvegarde produits:`, tx.error);
+      reject(tx.error);
+    };
   });
 }
 
@@ -137,10 +135,13 @@ export async function obtenirProduitsLocaux(
 
     request.onsuccess = () => {
       const results: any[] = request.result || [];
-      // Nettoyer les champs de cache avant de retourner
+      console.log(`💾 [IndexedDB v3] 📦 ${results.length} produits extraits du cache local (User: ${userId}, Boutique: ${boutiqueId})`);
       resolve(results.map(({ cache_key, user_id, boutique_id: _b, ...prod }) => prod));
     };
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      console.error(`💾 [IndexedDB v3] ❌ Erreur lecture produits locaux:`, request.error);
+      reject(request.error);
+    };
   });
 }
 
@@ -178,8 +179,14 @@ export async function sauvegarderClientsLocaux(
       }
     };
 
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
+    tx.oncomplete = () => {
+      console.log(`💾 [IndexedDB v3] ✅ ${clients.length} clients sauvegardés en cache local (User: ${userId}, Boutique: ${boutiqueId})`);
+      resolve();
+    };
+    tx.onerror = () => {
+      console.error(`💾 [IndexedDB v3] ❌ Erreur sauvegarde clients:`, tx.error);
+      reject(tx.error);
+    };
   });
 }
 
@@ -198,11 +205,13 @@ export async function obtenirClientsLocaux(
 
     request.onsuccess = () => {
       const results: any[] = request.result || [];
-      resolve(
-        results.map(({ cache_key, user_id, boutique_id: _b, ...client }) => client)
-      );
+      console.log(`💾 [IndexedDB v3] 👥 ${results.length} clients extraits du cache local (User: ${userId}, Boutique: ${boutiqueId})`);
+      resolve(results.map(({ cache_key, user_id, boutique_id: _b, ...client }) => client));
     };
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      console.error(`💾 [IndexedDB v3] ❌ Erreur lecture clients locaux:`, request.error);
+      reject(request.error);
+    };
   });
 }
 
@@ -213,10 +222,17 @@ export async function ajouterVenteHorsLigne(vente: Omit<OfflineSale, 'status'>):
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction('ventes_queue', 'readwrite');
     const store = tx.objectStore('ventes_queue');
-    store.put({ ...vente, status: 'pending' });
+    const payload = { ...vente, status: 'pending' as const };
+    store.put(payload);
 
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
+    tx.oncomplete = () => {
+      console.log(`💾 [IndexedDB v3] 📥 Vente hors-ligne enregistrée localement (ID: ${vente.id_temporaire}, Total: ${vente.total} FCFA)`);
+      resolve();
+    };
+    tx.onerror = () => {
+      console.error(`💾 [IndexedDB v3] ❌ Erreur ajout vente hors-ligne:`, tx.error);
+      reject(tx.error);
+    };
   });
 }
 
@@ -230,24 +246,27 @@ export async function obtenirVentesHorsLigne(
     const store = tx.objectStore('ventes_queue');
 
     if (boutiqueId && userId) {
-      // Lire uniquement les ventes en attente pour cette boutique/user
       const index = store.index('by_user_boutique');
       const range = IDBKeyRange.only([userId, boutiqueId]);
       const request = index.getAll(range);
-      request.onsuccess = () =>
-        resolve((request.result || []).filter((v) => v.status === 'pending'));
+      request.onsuccess = () => {
+        const list = (request.result || []).filter((v) => v.status === 'pending');
+        console.log(`💾 [IndexedDB v3] 📄 ${list.length} vente(s) hors-ligne en attente pour Boutique ${boutiqueId}`);
+        resolve(list);
+      };
       request.onerror = () => reject(request.error);
     } else {
       const request = store.getAll();
-      request.onsuccess = () => resolve(request.result || []);
+      request.onsuccess = () => {
+        const list = request.result || [];
+        console.log(`💾 [IndexedDB v3] 📄 ${list.length} vente(s) hors-ligne au total dans la file`);
+        resolve(list);
+      };
       request.onerror = () => reject(request.error);
     }
   });
 }
 
-/**
- * Marquer une vente comme "en cours de sync" pour éviter les doubles syncs.
- */
 export async function marquerVenteSyncing(id_temporaire: string): Promise<void> {
   const db = await initialiserBaseLocale();
   return new Promise<void>((resolve, reject) => {
@@ -258,6 +277,7 @@ export async function marquerVenteSyncing(id_temporaire: string): Promise<void> 
     getReq.onsuccess = () => {
       if (getReq.result) {
         store.put({ ...getReq.result, status: 'syncing' });
+        console.log(`💾 [IndexedDB v3] ⏳ Vente ${id_temporaire} marquée comme 'syncing'`);
       }
     };
 
@@ -266,10 +286,6 @@ export async function marquerVenteSyncing(id_temporaire: string): Promise<void> 
   });
 }
 
-/**
- * Supprimer une vente après ACK confirmé du serveur.
- * NE PAS appeler avant d'avoir reçu success:true en réponse HTTP.
- */
 export async function supprimerVenteHorsLigne(id_temporaire: string): Promise<void> {
   const db = await initialiserBaseLocale();
   return new Promise<void>((resolve, reject) => {
@@ -277,14 +293,14 @@ export async function supprimerVenteHorsLigne(id_temporaire: string): Promise<vo
     const store = tx.objectStore('ventes_queue');
     store.delete(id_temporaire);
 
-    tx.oncomplete = () => resolve();
+    tx.oncomplete = () => {
+      console.log(`💾 [IndexedDB v3] 🗑️ Vente ${id_temporaire} supprimée de la file IndexedDB après ACK serveur`);
+      resolve();
+    };
     tx.onerror = () => reject(tx.error);
   });
 }
 
-/**
- * Remettre une vente en status 'pending' si la sync a échoué.
- */
 export async function revertVenteSyncing(id_temporaire: string): Promise<void> {
   const db = await initialiserBaseLocale();
   return new Promise<void>((resolve, reject) => {
@@ -295,6 +311,7 @@ export async function revertVenteSyncing(id_temporaire: string): Promise<void> {
     getReq.onsuccess = () => {
       if (getReq.result && getReq.result.status === 'syncing') {
         store.put({ ...getReq.result, status: 'pending' });
+        console.log(`💾 [IndexedDB v3] ↩️ Vente ${id_temporaire} remise en statut 'pending'`);
       }
     };
 
@@ -303,9 +320,6 @@ export async function revertVenteSyncing(id_temporaire: string): Promise<void> {
   });
 }
 
-/**
- * Purger le cache d'une boutique lors de la déconnexion de l'utilisateur.
- */
 export async function purgerCacheUtilisateur(userId: string): Promise<void> {
   if (!userId) return;
   const db = await initialiserBaseLocale();
@@ -315,8 +329,6 @@ export async function purgerCacheUtilisateur(userId: string): Promise<void> {
 
     for (const storeName of ['produits', 'clients'] as const) {
       const store = tx.objectStore(storeName);
-      const index = store.index('by_boutique');
-      // On ne peut pas filtrer par userId seul via l'index compound, on fait un scan
       const cursorReq = store.openCursor();
       cursorReq.onsuccess = () => {
         const cursor = cursorReq.result;
@@ -329,7 +341,10 @@ export async function purgerCacheUtilisateur(userId: string): Promise<void> {
       };
     }
 
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => resolve(); // Ne pas bloquer même si erreur
+    tx.oncomplete = () => {
+      console.log(`💾 [IndexedDB v3] 🧹 Cache de l'utilisateur ${userId} purgé avec succès`);
+      resolve();
+    };
+    tx.onerror = () => resolve();
   });
 }

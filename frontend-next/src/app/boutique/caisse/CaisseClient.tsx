@@ -1465,6 +1465,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         total: netAPayer,
       }
 
+      console.log(`🛒 [Caisse POS] Validation vente (${!isReallyOnline || offlineModeActive ? 'OFFLINE INDEXEDDB' : 'EN LIGNE API'}) — ${netAPayer} FCFA — Key: ${payloadVente.idempotency_key}`)
+
       if (!isReallyOnline || offlineModeActive) {
         try {
           const temporaryId = payloadVente.idempotency_key
@@ -1480,9 +1482,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             date: new Date().toISOString()
           })
           rafraichirCompteurOffline()
-          console.log('[OFFLINE] Vente sauvegardée localement dans IndexedDB.')
+          console.log(`🛒 [Caisse POS] ✅ Vente ${temporaryId} enregistrée en file d'attente IndexedDB v3.`)
         } catch (eOff) {
-          console.error('Erreur stockage local vente:', eOff)
+          console.error('🛒 [Caisse POS] ❌ Erreur stockage local vente:', eOff)
         }
       } else {
         try {
@@ -1490,8 +1492,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           if (!result.success) {
             throw new Error(result.error || 'Impossible d\'enregistrer la vente')
           }
+          console.log(`🛒 [Caisse POS] ✅ Vente enregistrée directement sur le serveur backend.`)
         } catch (e) {
-          console.error('Erreur mise à jour stock backend direct:', e)
+          console.error('🛒 [Caisse POS] ⚠️ Échec direct serveur, bascule secours sur IndexedDB local:', e)
           try {
             const temporaryId = payloadVente.idempotency_key
             await ajouterVenteHorsLigne({
