@@ -21,8 +21,9 @@
     - `💾 [IndexedDB v3]` pour l'ensemble des opérations de cache local (sauvegarde, lecture, file d'attente, purge).
     - `🛒 [Caisse POS]` pour le suivi des ventes en ligne vs hors-ligne.
     - `📦 [Catalogue]` pour le chargement des produits par boutique.
-- **Service Worker v4, Purge Automatique & Mise à Jour (`sw.ts`, `next.config.js`, `RegisterSW.tsx`)** :
-  * Incrémentation de la version des caches à `CACHE_VERSION = 'v4'` et ajout d'un nettoyeur automatique des anciens caches dans l'événement `activate`.
+- **Service Worker v5, Purge Automatique, Image SVG Fallback & Réponses 504 Propres (`sw.ts`, `next.config.js`, `RegisterSW.tsx`)** :
+  * Incrémentation de la version des caches à `CACHE_VERSION = 'v5'` avec nettoyeur automatique des anciens caches dans l'événement `activate`.
+  * Remplacement de `Response.error()` dans `setCatchHandler` par un **Fallback Image SVG** pour les images non cachées (Unsplash, Cloudinary, wsrv.nl) et une réponse HTTP 504 propre (`Gateway Timeout (Offline)`) pour les requêtes API/ping échouées hors-ligne, éliminant les 50+ lignes d'avertissements `FetchEvent resulted in a network error response` dans la console Chrome DevTools.
   * Placement de la règle `NetworkOnly` pour `/api/ping` en priorité absolue dans Serwist.
   * Désactivation du Service Worker en environnement de développement (`disable: process.env.NODE_ENV === 'development'`) pour éviter la fausse détection offline et les conflits HMR.
   * Ajout d'une notification non intrusive dans `RegisterSW.tsx` proposant l'installation immédiate des nouvelles versions du Service Worker (`SKIP_WAITING`).

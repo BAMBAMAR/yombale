@@ -1,6 +1,5 @@
-// [SUPPRIMÉ] import { defaultCache } — En dev, c'est un catch-all NetworkOnly(/.*/i) qui cassait l'offline
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist, NetworkFirst, NetworkOnly, StaleWhileRevalidate, ExpirationPlugin, CacheFirst } from "serwist";
+import { Serwist, NetworkFirst, NetworkOnly, StaleWhileRevalidate, CacheFirst, ExpirationPlugin } from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -11,7 +10,7 @@ declare global {
 declare const self: WorkerGlobalScope & typeof globalThis;
 
 // ── Version du cache — incrémenter à chaque déploiement pour forcer purge ──
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE_NAMES = [
   `nopalou-html-cache-${CACHE_VERSION}`,
   `nopalou-rsc-cache-${CACHE_VERSION}`,
@@ -62,8 +61,15 @@ const FALLBACK_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+const PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#1e293b" rx="16"/>
+  <path d="M70 120 L100 80 L130 120 Z" fill="#475569"/>
+  <circle cx="130" cy="70" r="12" fill="#475569"/>
+  <text x="100" y="155" text-anchor="middle" fill="#94a3b8" font-size="12" font-family="sans-serif" font-weight="bold">Image Hors-Ligne</text>
+</svg>`;
+
 // ── Helpers pour exclure les URLs externes du routing SW ─────────────────
-function isExternalUrl(url: URL): boolean {
+function isExternalTracker(url: URL): boolean {
   return (
     url.hostname.includes('google') ||
     url.hostname.includes('googletagmanager') ||
@@ -80,18 +86,17 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: false,
   runtimeCaching: [
-    // 0. Exclure les URLs externes (analytics, trackers) — ne jamais cacher ni router
+    // 0. Exclure les URLs externes d'analytics/trackers
     {
-      matcher: ({ url }) => isExternalUrl(url),
+      matcher: ({ url }) => isExternalTracker(url),
       handler: new NetworkOnly(),
     },
     // 1. /api/ping — NetworkOnly STRICT en premier (ne jamais cacher)
-    //    Cette règle doit être avant le matcher /api/* pour garantir qu'elle s'applique en premier.
     {
       matcher: ({ url }) => url.pathname === '/api/ping',
       handler: new NetworkOnly(),
     },
-    // 2. Navigation HTML (pages visitées) — NetworkFirst avec cache 7j, timeout réduit à 2s
+    // 2. Navigation HTML — NetworkFirst avec timeout 2s
     {
       matcher: ({ request }) =>
         request.mode === "navigate" ||
@@ -107,7 +112,7 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // 3. Requêtes RSC (Next.js client navigation _rsc=...) — NetworkFirst
+    // 3. Requêtes RSC (_rsc=...) — NetworkFirst
     {
       matcher: ({ url }) => url.searchParams.has("_rsc"),
       handler: new NetworkFirst({
@@ -121,7 +126,7 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // 4. Routes API internes (/api/) — NetworkFirst pour données offline (sauf /api/ping déjà géré)
+    // 4. Routes API internes (/api/) — NetworkFirst (sauf /api/ping)
     {
       matcher: ({ url }) =>
         url.pathname.startsWith("/api/") && url.pathname !== "/api/ping",
@@ -136,7 +141,7 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // 5. manifest.json et icons — CacheFirst (rarement modifiés)
+    // 5. Manifest & PWA Meta — CacheFirst
     {
       matcher: ({ url }) =>
         url.pathname === '/manifest.json' || url.pathname.startsWith('/icons/'),
@@ -150,13 +155,16 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // 6. Assets statiques (CSS, JS, images) — StaleWhileRevalidate
+    // 6. Assets statiques (CSS, JS, images locales et distantes) — StaleWhileRevalidate
     {
       matcher: ({ request, url }) =>
         request.destination === "style" ||
         request.destination === "script" ||
         request.destination === "image" ||
         url.pathname.startsWith("/_next/static/") ||
+        url.hostname.includes("unsplash.com") ||
+        url.hostname.includes("cloudinary.com") ||
+        url.hostname.includes("wsrv.nl") ||
         url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|css|js)$/i) !== null,
       handler: new StaleWhileRevalidate({
         cacheName: `nopalou-assets-cache-${CACHE_VERSION}`,
@@ -208,7 +216,6 @@ self.addEventListener("activate", (event: any) => {
   event.waitUntil(
     caches.keys().then(async (keys) => {
       const toDelete = keys.filter((key) => {
-        // Conserver uniquement les caches de la version actuelle
         const isCurrentVersion = CACHE_NAMES.some((name) => key === name);
         const isPrecache = key.startsWith('serwist-precache');
         return !isCurrentVersion && !isPrecache;
@@ -222,8 +229,11 @@ self.addEventListener("activate", (event: any) => {
   );
 });
 
+// ── Gestionnaire de secours d'urgence (Offline Catch Handler) ────────────
 serwist.setCatchHandler(async ({ request }: any) => {
-  // Handle HTML document navigations offline
+  const url = request.url ? new URL(request.url) : null;
+
+  // 1. Document HTML / Navigation
   if (
     request.destination === "document" ||
     request.mode === "navigate" ||
@@ -239,28 +249,43 @@ serwist.setCatchHandler(async ({ request }: any) => {
     });
   }
 
-  // Handle Next.js RSC data requests (_rsc=...) offline
-  if (request.url && request.url.includes("_rsc=")) {
-    const cachedRsc = await caches.match(request, { ignoreSearch: true });
-    if (cachedRsc) return cachedRsc;
-    return Response.error();
+  // 2. Images (locales ou distantes) non disponibles en cache → SVG Fallback propre
+  if (
+    request.destination === "image" ||
+    (url && url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif)$/i) !== null)
+  ) {
+    const cachedAsset = await caches.match(request, { ignoreSearch: true });
+    if (cachedAsset) return cachedAsset;
+    return new Response(PLACEHOLDER_SVG, {
+      status: 200,
+      headers: { "Content-Type": "image/svg+xml; charset=utf-8" },
+    });
   }
 
-  // Handle static assets (JS, CSS, images, _next/static) offline
+  // 3. Next.js RSC data requests (_rsc=...)
+  if (url && url.searchParams.has("_rsc")) {
+    const cachedRsc = await caches.match(request, { ignoreSearch: true });
+    if (cachedRsc) return cachedRsc;
+  }
+
+  // 4. Assets statiques (JS, CSS, fonts)
   if (
     request.destination === "style" ||
     request.destination === "script" ||
-    request.destination === "image" ||
-    (request.url &&
-      (request.url.includes("/_next/static/") ||
-        request.url.match(/\.(png|jpg|jpeg|svg|webp|gif|css|js)$/i) !== null))
+    (url && (url.pathname.includes("/_next/static/") || url.pathname.match(/\.(css|js)$/i) !== null))
   ) {
     const cachedAsset = await caches.match(request, { ignoreSearch: true });
     if (cachedAsset) return cachedAsset;
   }
 
-  // API et autres → erreur réseau propre (pas de faux HTTP 200)
-  return Response.error();
+  // 5. API / ping / fallback général → Réponse HTTP 504 propre (au lieu de Response.error() qui crashe les FetchEvent)
+  return new Response(
+    JSON.stringify({ error: "Réseau indisponible (Mode Hors-Ligne PWA)", offline: true }),
+    {
+      status: 504,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 });
 
 serwist.addEventListeners();
