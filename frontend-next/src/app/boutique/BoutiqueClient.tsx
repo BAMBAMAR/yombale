@@ -1361,7 +1361,8 @@ function MarketingBoutique({ boutique, onVoirJamaisPartages, planActif }: { bout
 
 // ── Gestionnaire de catalogue produits ───────────────────────────────────────
 
-function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { boutique: Boutique; planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null; prixPro: number; filtreInitial?: 'jamais_partage' }) {
+function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId: userIdProp }: { boutique: Boutique; planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null; prixPro: number; filtreInitial?: 'jamais_partage'; userId?: string }) {
+  const userId = userIdProp || 'anonymous'
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<'list' | { creating: 'rapide' | 'detaille' } | { editing: Produit }>('list')
@@ -1405,13 +1406,13 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
         if (typeof window !== 'undefined') {
           localStorage.setItem(`nopalou_pos_produits_${boutique.id}`, JSON.stringify(prods))
         }
-        sauvegarderProduitsLocaux(prods, boutique.id).catch(() => {})
+        sauvegarderProduitsLocaux(prods, boutique.id, userId).catch(() => {})
       } else if (prods && Array.isArray(prods) && prods.length === 0 && typeof window !== 'undefined') {
         // Vérifier la connectivité réelle par un ping rapide
         const pingOk = await fetch('/api/ping', { cache: 'no-store', signal: AbortSignal.timeout(3000) }).then(r => r.ok).catch(() => false)
         if (pingOk) {
           // En ligne confirmé : la boutique est vraiment vide, vérifier le cache avant d'effacer
-          const cachedExistants = await obtenirProduitsLocaux(boutique.id).catch(() => [])
+          const cachedExistants = await obtenirProduitsLocaux(boutique.id, userId).catch(() => [])
           if (!cachedExistants || cachedExistants.length === 0) {
             setProduits([])
           } else {
@@ -1419,7 +1420,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
           }
         } else {
           // Hors-ligne : restaurer depuis le cache local
-          const cached = await obtenirProduitsLocaux(boutique.id).catch(() => [])
+          const cached = await obtenirProduitsLocaux(boutique.id, userId).catch(() => [])
           if (cached && cached.length > 0) {
             setProduits(cached)
           } else {
@@ -1433,7 +1434,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
           }
         }
       } else {
-        const cached = await obtenirProduitsLocaux(boutique.id).catch(() => [])
+        const cached = await obtenirProduitsLocaux(boutique.id, userId).catch(() => [])
         if (cached && cached.length > 0) {
           setProduits(cached)
         } else {
@@ -1452,7 +1453,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
         }
       }
     } catch {
-      const cached = await obtenirProduitsLocaux(boutique.id).catch(() => [])
+      const cached = await obtenirProduitsLocaux(boutique.id, userId).catch(() => [])
       if (cached && cached.length > 0) {
         setProduits(cached)
       } else {
@@ -2618,12 +2619,6 @@ export default function BoutiqueClient({
     setMode(prevMode => {
       // 1. Si on gère déjà une boutique manuellement
       if (typeof prevMode === 'object' && 'managing' in prevMode) {
-        // Obéir à l'URL si elle force explicitement une AUTRE boutique
-        if (manageId && prevMode.managing.id !== manageId && prevMode.managing.slug !== manageId) {
-          const target = listToSearch.find(b => b.id === manageId || b.slug === manageId)
-          if (target) return { managing: target }
-        }
-        
         // Rafraîchir les données de la boutique active (si modifiées par le réseau/cache)
         const updatedTarget = listToSearch.find(b => b.id === prevMode.managing.id)
         if (updatedTarget && updatedTarget !== prevMode.managing) {
@@ -2631,7 +2626,7 @@ export default function BoutiqueClient({
         }
         return prevMode // On ne touche à rien
       }
-      
+
       // 2. Si on n'est pas encore en mode 'managing', on lit l'URL
       if (manageId && listToSearch.length > 0) {
         const targetBoutique = listToSearch.find(b => b.id === manageId || b.slug === manageId)
@@ -2663,7 +2658,7 @@ export default function BoutiqueClient({
                 return { ...p, stock: stockVal };
               });
               localStorage.setItem(`nopalou_pos_produits_${b.id}`, JSON.stringify(prodsFormates));
-              sauvegarderProduitsLocaux(prodsFormates, b.id).catch(() => {});
+              sauvegarderProduitsLocaux(prodsFormates, b.id, userId).catch(() => {});
             }
 
             // 2. Précharger l'historique de caisse
@@ -2681,7 +2676,7 @@ export default function BoutiqueClient({
               const dataClients = await resClients.json().catch(() => null);
               if (dataClients && dataClients.clients && Array.isArray(dataClients.clients)) {
                 import('@/lib/db-offline').then(({ sauvegarderClientsLocaux }) => {
-                  sauvegarderClientsLocaux(dataClients.clients, b.id).catch(() => {});
+                  sauvegarderClientsLocaux(dataClients.clients, b.id, userId).catch(() => {});
                 }).catch(() => {});
               }
             }

@@ -1,3 +1,31 @@
+## 🚀 Mises à jour du 12/08/2026 : Refonte Majeure du Mode Hors-Ligne POS (Idempotence & SyncManager)
+- **Transaction PostgreSQL Atomique (`backend/routes/boutiques.js`)** :
+  * Refonte complète de la route `POST /api/boutiques/:id/pos-vente` avec `pool.connect()` et une transaction SQL atomique (`BEGIN` / `COMMIT` / `ROLLBACK`).
+  * Garantit que le stock, les ventes, les commandes, la facture et la session caisse sont mis à jour ensemble ou annulés en bloc en cas d'erreur.
+  * Ajout de `ON CONFLICT (reference) DO NOTHING` sur l'insertion dans `caisse_documents`.
+- **Migration SQL Idempotence (`database/migration_pos_idempotence_2026-08-12.sql`)** :
+  * Script SQL de migration créant la contrainte `UNIQUE` sur `caisse_documents.reference` et un index composite `(boutique_id, reference)`.
+- **Gestionnaire Centralisé `SyncManager` (`frontend-next/src/lib/sync-manager.ts`)** :
+  * Création d'un module de synchronisation centralisé avec verrou par boutique (`syncLocks`) évitant les doubles synchronisations simultanées.
+  * Intégration de re-tentatives avec backoff exponentiel (1s → 2s → 4s) et suppression de l'IndexedDB **uniquement** après réception d'un ACK HTTP serveur (200 OK / duplicate: true).
+  * Exposition du hook `useSyncOffline(boutiqueId, userId)` pour les composants React.
+- **IndexedDB v3 & Isolation Multi-Utilisateurs (`frontend-next/src/lib/db-offline.ts`)** :
+  * Passage à IndexedDB `DB_VERSION = 3` avec isolation systématique par `userId` et `boutiqueId` (`cache_key = ${userId}:${boutiqueId}:${id}`).
+  * Ajout du statut de synchronisation (`'pending' | 'syncing' | 'done'`) sur chaque vente offline pour verrouiller le traitement.
+  * Suppression de la fonction `viderVentesHorsLigne` pour prévenir toute perte accidentelle de données.
+- **Détection de Connectivité Réelle v2 (`frontend-next/src/lib/useOnlineStatus.ts`)** :
+  * Exécution d'un ping de vérification immédiat au montage au lieu de présumer un état online optimiste.
+  * Réduction du timeout de ping à 3000ms pour une meilleure réactivité sur réseaux mobiles 3G/4G.
+  * Polling adaptatif exclusivement en mode hors-ligne (3s × 3 tentatives puis 10s), suspension automatique si l'onglet est masqué et re-vérification immédiate lors du focus.
+- **Service Worker v4, Purge Automatique & Mise à Jour (`sw.ts`, `next.config.js`, `RegisterSW.tsx`)** :
+  * Incrémentation de la version des caches à `CACHE_VERSION = 'v4'` et ajout d'un nettoyeur automatique des anciens caches dans l'événement `activate`.
+  * Placement de la règle `NetworkOnly` pour `/api/ping` en priorité absolue dans Serwist.
+  * Désactivation du Service Worker en environnement de développement (`disable: process.env.NODE_ENV === 'development'`) pour éviter la fausse détection offline et les conflits HMR.
+  * Ajout d'une notification non intrusive dans `RegisterSW.tsx` proposant l'installation immédiate des nouvelles versions du Service Worker (`SKIP_WAITING`).
+- **Propagations Caisse & UI (`CaisseClient.tsx`, `page.tsx`, `BoutiqueClient.tsx`)** :
+  * Passage du `userId` vérifié côté serveur (`verifySession()`) vers les composants clients pour l'isolation des données locales par compte.
+  * Branchement de la Caisse POS sur `useSyncOffline()` et suppression de la synchro inline dupliquée.
+
 ## 🚀 Mises à jour du 12/08/2026 : Correction Dashboard (ReferenceError & Stale Closure) & Zéro Polling en Ligne
 - **Correction du Basculement Forcé de Boutique Hors-Ligne (`BoutiqueClient.tsx`)** :
   * Résolution du bug où cliquer sur une boutique secondaire (ex: Amar) forçait le retour à la boutique principale (ex: Tech Dakar) en mode hors-ligne.

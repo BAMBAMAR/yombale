@@ -1,13 +1,20 @@
 /**
  * Service de base de données locale (IndexedDB) pour la caisse enregistreuse POS en mode offline.
+ *
+ * v3 — Refonte majeure :
+ *  - Isolation complète par userId + boutiqueId dans toutes les clés.
+ *  - Champ `status` dans ventes_queue ('pending' | 'syncing' | 'done') pour éviter les doubles syncs.
+ *  - Suppression de `viderVentesHorsLigne` (trop dangereux).
+ *  - Tous les stores sont purgés lors d'une migration de version.
  */
 
 const DB_NAME = 'nopalou_pos_offline';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export interface OfflineSale {
-  id_temporaire: string;
+  id_temporaire: string;    // UUID unique généré côté client — utilisé comme idempotency_key
   boutique_id: string;
+  user_id: string;          // Isolation par utilisateur
   items: Array<{
     id: string | null;
     nom: string;
@@ -19,18 +26,19 @@ export interface OfflineSale {
   client_id?: string | null;
   total: number;
   date: string;
+  status: 'pending' | 'syncing' | 'done'; // Verrou de synchronisation
 }
 
 export function initialiserBaseLocale(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') {
-      return reject(new Error('IndexedDB n\'est pas disponible côté serveur'));
+      return reject(new Error("IndexedDB n'est pas disponible côté serveur"));
     }
-    
+
     const request = window.indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => {
-      console.error('Erreur d\'ouverture de IndexedDB');
+      console.error("Erreur d'ouverture de IndexedDB");
       reject(request.error);
     };
 
@@ -40,57 +48,73 @@ export function initialiserBaseLocale(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = (event) => {
       const db = request.result;
-      
-      // Stockage produits du catalogue
-      if (!db.objectStoreNames.contains('produits')) {
-        db.createObjectStore('produits', { keyPath: 'id' });
+      const oldVersion = event.oldVersion;
+
+      console.log(`[DB-Offline] Migration IndexedDB v${oldVersion} → v${DB_VERSION}`);
+
+      // ── Purge complète des anciens stores (migration propre) ──
+      // v1 et v2 utilisaient des clés non isolées par userId → fuites de cache entre comptes
+      if (db.objectStoreNames.contains('produits')) {
+        db.deleteObjectStore('produits');
       }
-      
-      // Stockage clients isolé par boutique. La version 1 utilisait l'id client
-      // comme clé globale et écrasait le carnet d'une autre boutique.
       if (db.objectStoreNames.contains('clients')) {
         db.deleteObjectStore('clients');
       }
-      db.createObjectStore('clients', { keyPath: 'cache_key' });
-      
-      // File d'attente des ventes offline
-      if (!db.objectStoreNames.contains('ventes_queue')) {
-        db.createObjectStore('ventes_queue', { keyPath: 'id_temporaire' });
+      if (db.objectStoreNames.contains('ventes_queue')) {
+        db.deleteObjectStore('ventes_queue');
       }
+
+      // ── Nouveau store produits isolé par userId + boutiqueId ──
+      // cache_key = `${userId}:${boutiqueId}:${produitId}`
+      const produitsStore = db.createObjectStore('produits', { keyPath: 'cache_key' });
+      produitsStore.createIndex('by_boutique', ['user_id', 'boutique_id'], { unique: false });
+
+      // ── Nouveau store clients isolé par userId + boutiqueId ──
+      const clientsStore = db.createObjectStore('clients', { keyPath: 'cache_key' });
+      clientsStore.createIndex('by_boutique', ['user_id', 'boutique_id'], { unique: false });
+
+      // ── Nouveau store ventes_queue avec champ status ──
+      const ventesStore = db.createObjectStore('ventes_queue', { keyPath: 'id_temporaire' });
+      ventesStore.createIndex('by_boutique_status', ['boutique_id', 'status'], { unique: false });
+      ventesStore.createIndex('by_user_boutique', ['user_id', 'boutique_id'], { unique: false });
     };
   });
 }
 
 // --- CATALOGUE PRODUITS ---
 
-export async function sauvegarderProduitsLocaux(produits: any[], boutiqueId?: string): Promise<void> {
+export async function sauvegarderProduitsLocaux(
+  produits: any[],
+  boutiqueId: string,
+  userId: string
+): Promise<void> {
+  if (!boutiqueId || !userId) return;
   const db = await initialiserBaseLocale();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction('produits', 'readwrite');
     const store = tx.objectStore('produits');
-    
-    const getAllReq = store.getAll();
-    getAllReq.onsuccess = () => {
-      const existing: any[] = getAllReq.result || [];
-      if (boutiqueId) {
-        existing.forEach(item => {
-          if (item.boutique_id === boutiqueId) {
-            store.delete(item.id);
-          }
-        });
+
+    // Supprimer d'abord les anciens produits de cette boutique/user
+    const index = store.index('by_boutique');
+    const range = IDBKeyRange.only([userId, boutiqueId]);
+    const cursorReq = index.openCursor(range);
+
+    cursorReq.onsuccess = () => {
+      const cursor = cursorReq.result;
+      if (cursor) {
+        cursor.delete();
+        cursor.continue();
       } else {
-        store.clear();
+        // Insérer les nouveaux produits
+        produits.forEach((p) => {
+          store.put({
+            ...p,
+            user_id: userId,
+            boutique_id: boutiqueId,
+            cache_key: `${userId}:${boutiqueId}:${p.id}`,
+          });
+        });
       }
-
-      produits.forEach(p => {
-        const itemToSave = boutiqueId ? { ...p, boutique_id: boutiqueId } : p;
-        store.put(itemToSave);
-      });
-    };
-
-    getAllReq.onerror = () => {
-      if (!boutiqueId) store.clear();
-      produits.forEach(p => store.put(p));
     };
 
     tx.oncomplete = () => resolve();
@@ -98,21 +122,23 @@ export async function sauvegarderProduitsLocaux(produits: any[], boutiqueId?: st
   });
 }
 
-export async function obtenirProduitsLocaux(boutiqueId?: string): Promise<any[]> {
+export async function obtenirProduitsLocaux(
+  boutiqueId: string,
+  userId: string
+): Promise<any[]> {
+  if (!boutiqueId || !userId) return [];
   const db = await initialiserBaseLocale();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('produits', 'readonly');
     const store = tx.objectStore('produits');
-    const request = store.getAll();
+    const index = store.index('by_boutique');
+    const range = IDBKeyRange.only([userId, boutiqueId]);
+    const request = index.getAll(range);
 
     request.onsuccess = () => {
       const results: any[] = request.result || [];
-      if (boutiqueId) {
-        const filtered = results.filter(p => !p.boutique_id || p.boutique_id === boutiqueId);
-        resolve(filtered);
-      } else {
-        resolve(results);
-      }
+      // Nettoyer les champs de cache avant de retourner
+      resolve(results.map(({ cache_key, user_id, boutique_id: _b, ...prod }) => prod));
     };
     request.onerror = () => reject(request.error);
   });
@@ -120,26 +146,36 @@ export async function obtenirProduitsLocaux(boutiqueId?: string): Promise<any[]>
 
 // --- CLIENTS ---
 
-export async function sauvegarderClientsLocaux(clients: any[], boutiqueId: string): Promise<void> {
-  if (!boutiqueId) return;
+export async function sauvegarderClientsLocaux(
+  clients: any[],
+  boutiqueId: string,
+  userId: string
+): Promise<void> {
+  if (!boutiqueId || !userId) return;
   const db = await initialiserBaseLocale();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction('clients', 'readwrite');
     const store = tx.objectStore('clients');
-    
-    const existing = store.getAll();
-    existing.onsuccess = () => {
-      (existing.result || []).forEach((client: any) => {
-        if (client.boutique_id === boutiqueId) store.delete(client.cache_key);
-      });
-      clients.forEach(c => {
-        store.put({ ...c, boutique_id: boutiqueId, cache_key: `${boutiqueId}:${c.id}` });
-      });
-    };
-    existing.onerror = () => {
-      clients.forEach(c => {
-        store.put({ ...c, boutique_id: boutiqueId, cache_key: `${boutiqueId}:${c.id}` });
-      });
+
+    const index = store.index('by_boutique');
+    const range = IDBKeyRange.only([userId, boutiqueId]);
+    const cursorReq = index.openCursor(range);
+
+    cursorReq.onsuccess = () => {
+      const cursor = cursorReq.result;
+      if (cursor) {
+        cursor.delete();
+        cursor.continue();
+      } else {
+        clients.forEach((c) => {
+          store.put({
+            ...c,
+            user_id: userId,
+            boutique_id: boutiqueId,
+            cache_key: `${userId}:${boutiqueId}:${c.id}`,
+          });
+        });
+      }
     };
 
     tx.oncomplete = () => resolve();
@@ -147,47 +183,93 @@ export async function sauvegarderClientsLocaux(clients: any[], boutiqueId: strin
   });
 }
 
-export async function obtenirClientsLocaux(boutiqueId: string): Promise<any[]> {
-  if (!boutiqueId) return [];
+export async function obtenirClientsLocaux(
+  boutiqueId: string,
+  userId: string
+): Promise<any[]> {
+  if (!boutiqueId || !userId) return [];
   const db = await initialiserBaseLocale();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('clients', 'readonly');
     const store = tx.objectStore('clients');
-    const request = store.getAll();
+    const index = store.index('by_boutique');
+    const range = IDBKeyRange.only([userId, boutiqueId]);
+    const request = index.getAll(range);
 
-    request.onsuccess = () => resolve((request.result || [])
-      .filter((client: any) => client.boutique_id === boutiqueId)
-      .map(({ cache_key, boutique_id, ...client }: any) => client));
+    request.onsuccess = () => {
+      const results: any[] = request.result || [];
+      resolve(
+        results.map(({ cache_key, user_id, boutique_id: _b, ...client }) => client)
+      );
+    };
     request.onerror = () => reject(request.error);
   });
 }
 
 // --- SYNCHRONISATION DES VENTES HORS-LIGNE ---
 
-export async function ajouterVenteHorsLigne(vente: OfflineSale): Promise<void> {
+export async function ajouterVenteHorsLigne(vente: Omit<OfflineSale, 'status'>): Promise<void> {
   const db = await initialiserBaseLocale();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction('ventes_queue', 'readwrite');
     const store = tx.objectStore('ventes_queue');
-    store.put(vente);
+    store.put({ ...vente, status: 'pending' });
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }
 
-export async function obtenirVentesHorsLigne(): Promise<OfflineSale[]> {
+export async function obtenirVentesHorsLigne(
+  boutiqueId?: string,
+  userId?: string
+): Promise<OfflineSale[]> {
   const db = await initialiserBaseLocale();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('ventes_queue', 'readonly');
     const store = tx.objectStore('ventes_queue');
-    const request = store.getAll();
 
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    if (boutiqueId && userId) {
+      // Lire uniquement les ventes en attente pour cette boutique/user
+      const index = store.index('by_user_boutique');
+      const range = IDBKeyRange.only([userId, boutiqueId]);
+      const request = index.getAll(range);
+      request.onsuccess = () =>
+        resolve((request.result || []).filter((v) => v.status === 'pending'));
+      request.onerror = () => reject(request.error);
+    } else {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    }
   });
 }
 
+/**
+ * Marquer une vente comme "en cours de sync" pour éviter les doubles syncs.
+ */
+export async function marquerVenteSyncing(id_temporaire: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('ventes_queue', 'readwrite');
+    const store = tx.objectStore('ventes_queue');
+    const getReq = store.get(id_temporaire);
+
+    getReq.onsuccess = () => {
+      if (getReq.result) {
+        store.put({ ...getReq.result, status: 'syncing' });
+      }
+    };
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+/**
+ * Supprimer une vente après ACK confirmé du serveur.
+ * NE PAS appeler avant d'avoir reçu success:true en réponse HTTP.
+ */
 export async function supprimerVenteHorsLigne(id_temporaire: string): Promise<void> {
   const db = await initialiserBaseLocale();
   return new Promise<void>((resolve, reject) => {
@@ -200,14 +282,54 @@ export async function supprimerVenteHorsLigne(id_temporaire: string): Promise<vo
   });
 }
 
-export async function viderVentesHorsLigne(): Promise<void> {
+/**
+ * Remettre une vente en status 'pending' si la sync a échoué.
+ */
+export async function revertVenteSyncing(id_temporaire: string): Promise<void> {
   const db = await initialiserBaseLocale();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction('ventes_queue', 'readwrite');
     const store = tx.objectStore('ventes_queue');
-    store.clear();
+    const getReq = store.get(id_temporaire);
+
+    getReq.onsuccess = () => {
+      if (getReq.result && getReq.result.status === 'syncing') {
+        store.put({ ...getReq.result, status: 'pending' });
+      }
+    };
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
+  });
+}
+
+/**
+ * Purger le cache d'une boutique lors de la déconnexion de l'utilisateur.
+ */
+export async function purgerCacheUtilisateur(userId: string): Promise<void> {
+  if (!userId) return;
+  const db = await initialiserBaseLocale();
+
+  await new Promise<void>((resolve) => {
+    const tx = db.transaction(['produits', 'clients'], 'readwrite');
+
+    for (const storeName of ['produits', 'clients'] as const) {
+      const store = tx.objectStore(storeName);
+      const index = store.index('by_boutique');
+      // On ne peut pas filtrer par userId seul via l'index compound, on fait un scan
+      const cursorReq = store.openCursor();
+      cursorReq.onsuccess = () => {
+        const cursor = cursorReq.result;
+        if (cursor) {
+          if ((cursor.value as any).user_id === userId) {
+            cursor.delete();
+          }
+          cursor.continue();
+        }
+      };
+    }
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => resolve(); // Ne pas bloquer même si erreur
   });
 }

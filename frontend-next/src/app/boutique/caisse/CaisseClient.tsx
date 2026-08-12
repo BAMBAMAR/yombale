@@ -14,10 +14,8 @@ import {
   sauvegarderClientsLocaux,
   obtenirClientsLocaux,
   ajouterVenteHorsLigne,
-  obtenirVentesHorsLigne,
-  supprimerVenteHorsLigne,
-  viderVentesHorsLigne
 } from '@/lib/db-offline'
+import { useSyncOffline } from '@/lib/sync-manager'
 
 interface ProduitCaisse {
   id: string
@@ -72,7 +70,9 @@ interface TicketEnAttente {
   panier: LignePanier[]
 }
 
-export default function CaisseClient({ planActif: planActifProp, initialToken }: { planActif?: string | null; initialToken?: string | null }) {
+export default function CaisseClient({ planActif: planActifProp, initialToken, userId: userIdProp }: { planActif?: string | null; initialToken?: string | null; userId?: string | null }) {
+  // Récupère le userId depuis la prop serveur, avec fallback sur localStorage pour mode terminal
+  const userId = userIdProp || (typeof window !== 'undefined' ? localStorage.getItem('nopalou_user_id') || 'anonymous' : 'anonymous')
   // Hook de connectivité fiable (ping /api/ping au lieu de navigator.onLine)
   const isReallyOnline = useOnlineStatus()
   const [terminalPlan, setTerminalPlan] = useState<string | null>('pro')
@@ -88,18 +88,22 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   const [codePinSaisi, setCodePinSaisi] = useState<string>('')
   const [pinError, setPinError] = useState<string | null>(null)
 
-  // --- ÉTAT OFFLINE & SYNC ---
+  // --- ÉTAT OFFLINE & SYNC (géré par useSyncOffline centralisé) ---
   const [offlineModeActive, setOfflineModeActive] = useState<boolean>(false)
-  const [syncingOffline, setSyncingOffline] = useState<boolean>(false)
-  const [ventesHorsLigneCount, setVentesHorsLigneCount] = useState<number>(0)
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'success' | 'warning' } | null>(null)
+
+  // Hook centralisé : verrou par boutique, retry backoff, ACK avant suppression
+  const {
+    syncPending: syncingOffline,
+    ventesEnAttente: ventesHorsLigneCount,
+    declencherSync: declencherSyncOffline,
+    rafraichirCompteur: rafraichirCompteurOffline,
+  } = useSyncOffline(boutiqueActiveId, userId || 'anonymous')
 
   function showToast(text: string, type: 'success' | 'warning' = 'success') {
     setToastMsg({ text, type })
     setTimeout(() => setToastMsg(null), 4000)
   }
-
-
 
   // ── Vérification dynamique de l'autorisation POS selon la boutique sélectionnée ──
   const activeBoutiqueObj = boutiques.find(b => b.id === boutiqueActiveId)
@@ -108,15 +112,6 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
     : (initialToken ? (terminalPlan || 'pro') : planActifProp)
 
   const estBoutiqueAutorisee = (activePlan === 'pro' || activePlan === 'business') || (loadingProduits && boutiques.length === 0)
-
-  async function rafraichirCompteurOffline() {
-    try {
-      const q = await obtenirVentesHorsLigne()
-      setVentesHorsLigneCount(q.filter(vente => vente.boutique_id === boutiqueActiveId).length)
-    } catch {
-      setVentesHorsLigneCount(0)
-    }
-  }
 
   // Synchroniser l'état offline avec le hook de connectivité réelle (ping /api/ping)
   useEffect(() => {
@@ -129,66 +124,25 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
           console.warn('🔴 [Diagnostic Caisse] Mode caisse locale ACTIVÉ (ping échoué).')
           showToast('Vous êtes hors-ligne. Mode caisse locale activé.', 'warning')
         } else {
-          console.log('🟢 [Diagnostic Caisse] Mode caisse locale désactivé (ping réussi).')
+          console.log('🟢 [Diagnostic Caisse] Mode caisse locale désactivé (ping réussi). Sync...')
           showToast('Connexion internet rétablie ! Synchronisation en cours...', 'success')
-          declencherSyncOffline()
+          // Déclencher la sync via le SyncManager centralisé (avec verrou + retry + ACK)
+          declencherSyncOffline().then((result) => {
+            if (result.synced > 0) {
+              showToast(`✅ ${result.synced} vente(s) synchronisée(s)`, 'success')
+              getPosHistorique(boutiqueActiveId).then((hist) => {
+                if (hist && hist.length > 0) setHistoriqueVentes(hist)
+              }).catch(() => {})
+            }
+            if (result.failed > 0) {
+              showToast(`⚠️ ${result.failed} vente(s) non synchronisée(s). Réessai automatique.`, 'warning')
+            }
+          }).catch(() => {})
         }
       }
       return newOffline
     })
-    rafraichirCompteurOffline()
   }, [isReallyOnline, boutiqueActiveId])
-
-  async function declencherSyncOffline() {
-    if (!boutiqueActiveId || syncingOffline) return
-    try {
-      setSyncingOffline(true)
-      const ventesQueue = await obtenirVentesHorsLigne()
-      if (ventesQueue.length === 0) {
-        setSyncingOffline(false)
-        return
-      }
-
-      console.log(`🔄 [Diagnostic Caisse] [OFFLINE SYNC] Tentative de synchronisation de ${ventesQueue.length} vente(s) hors-ligne vers le serveur...`)
-      let successCount = 0
-      
-      for (const vente of ventesQueue) {
-        if (vente.boutique_id !== boutiqueActiveId) continue
-        try {
-          const res = await creerPosVente(vente.boutique_id, {
-            idempotency_key: vente.id_temporaire,
-            items: vente.items,
-            caissier: vente.caissier,
-            modePaiement: vente.modePaiement,
-            client_id: vente.client_id,
-            total: vente.total
-          })
-          if (res.success) {
-            successCount++
-            await supprimerVenteHorsLigne(vente.id_temporaire).catch(() => {})
-          }
-        } catch (eErr) {
-          console.error('Erreur synchro vente offline:', eErr)
-        }
-      }
-
-      if (successCount > 0) {
-        console.log(`✅ [Diagnostic Caisse] [OFFLINE SYNC] ${successCount} vente(s) synchronisée(s) avec succès !`)
-        rafraichirCompteurOffline()
-        const hist = await getPosHistorique(boutiqueActiveId)
-        if (hist && hist.length > 0) {
-          setHistoriqueVentes(hist)
-        }
-      } else {
-        rafraichirCompteurOffline()
-      }
-    } catch (err) {
-      console.error('Erreur synchronisation offline:', err)
-      rafraichirCompteurOffline()
-    } finally {
-      setSyncingOffline(false)
-    }
-  }
   
   // Rôle Actif de la Session ('caissier' ou 'superviseur')
   const [roleActif, setRoleActif] = useState<'caissier' | 'superviseur'>('caissier')
@@ -795,15 +749,15 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         const data = await res.json()
         if (data.clients) {
           setClientsCredits(data.clients)
-          sauvegarderClientsLocaux(data.clients, bId).catch(() => {})
+          sauvegarderClientsLocaux(data.clients, bId, userId).catch(() => {})
         }
       } else {
-        const cached = await obtenirClientsLocaux(bId).catch(() => [])
+        const cached = await obtenirClientsLocaux(bId, userId).catch(() => [])
         if (cached && cached.length > 0) setClientsCredits(cached)
       }
     } catch (e) {
       console.error('Erreur chargement carnet credits:', e)
-      const cached = await obtenirClientsLocaux(bId).catch(() => [])
+      const cached = await obtenirClientsLocaux(bId, userId).catch(() => [])
       if (cached && cached.length > 0) setClientsCredits(cached)
     }
   }
@@ -929,7 +883,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       })
         setProduits(prodsFormates)
         localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify(prodsFormates))
-        sauvegarderProduitsLocaux(prodsFormates, bId).catch(() => {})
+        sauvegarderProduitsLocaux(prodsFormates, bId, userId).catch(() => {})
       } else if (produits && Array.isArray(produits) && produits.length === 0) {
         // Le Server Action a retourné [] — deux cas possibles :
         // A) On est en ligne et la boutique est vraiment vide
@@ -937,11 +891,11 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         const isActuallyOnline = isReallyOnline
         if (isActuallyOnline) {
           // En ligne et la boutique renvoie une liste vide : vérifier d'abord si on avait des produits en cache
-          const cachedExistants = await obtenirProduitsLocaux(bId).catch(() => [])
+          const cachedExistants = await obtenirProduitsLocaux(bId, userId).catch(() => [])
           if (!cachedExistants || cachedExistants.length === 0) {
             setProduits([])
             localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify([]))
-            sauvegarderProduitsLocaux([], bId).catch(() => {})
+            sauvegarderProduitsLocaux([], bId, userId).catch(() => {})
           } else {
             // Si on avait un cache valide, le conserver plutôt que de tout effacer
             setProduits(cachedExistants)
@@ -949,7 +903,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         } else {
           // En cas d'échec réseau ou réponse vide hors-ligne, restaurer le cache local scopé par bId
           console.warn('📡 [Diagnostic Caisse] Échec de la récupération réseau des produits ou réponse vide hors-ligne. Bascule sur le cache IndexedDB.')
-          const cached = await obtenirProduitsLocaux(bId).catch(() => [])
+          const cached = await obtenirProduitsLocaux(bId, userId).catch(() => [])
           if (cached && cached.length > 0) {
             console.log(`📦 [Diagnostic Caisse] ${cached.length} produits restaurés depuis IndexedDB.`)
             setProduits(cached)
@@ -966,7 +920,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       } else {
         // En cas d'échec réseau ou réponse vide hors-ligne, restaurer le cache local scopé par bId
         console.warn('📡 [Diagnostic Caisse] Échec de la récupération réseau des produits. Bascule sur le cache IndexedDB.')
-        const cached = await obtenirProduitsLocaux(bId).catch(() => [])
+        const cached = await obtenirProduitsLocaux(bId, userId).catch(() => [])
         if (cached && cached.length > 0) {
           console.log(`📦 [Diagnostic Caisse] ${cached.length} produits restaurés depuis IndexedDB.`)
           setProduits(cached)
@@ -983,7 +937,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
     } catch (e) {
       console.error('🔴 [Diagnostic Caisse] Erreur réseau lors du chargement des produits:', e)
       console.info('📡 [Diagnostic Caisse] Bascule d\'urgence sur les caches locaux.')
-      const cached = await obtenirProduitsLocaux(bId).catch(() => [])
+      const cached = await obtenirProduitsLocaux(bId, userId).catch(() => [])
       if (cached && cached.length > 0) {
         console.log(`📦 [Diagnostic Caisse] ${cached.length} produits récupérés depuis IndexedDB.`)
         setProduits(cached)
@@ -1517,6 +1471,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
           await ajouterVenteHorsLigne({
             id_temporaire: temporaryId,
             boutique_id: boutiqueActiveId,
+            user_id: userId,
             items: payloadVente.items,
             caissier: payloadVente.caissier,
             modePaiement: payloadVente.modePaiement,
@@ -1542,6 +1497,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
             await ajouterVenteHorsLigne({
               id_temporaire: temporaryId,
               boutique_id: boutiqueActiveId,
+              user_id: userId,
               items: payloadVente.items,
               caissier: payloadVente.caissier,
               modePaiement: payloadVente.modePaiement,
@@ -1585,7 +1541,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       })
       if (boutiqueActiveId) {
         localStorage.setItem(`nopalou_pos_produits_${boutiqueActiveId}`, JSON.stringify(updated))
-        sauvegarderProduitsLocaux(updated, boutiqueActiveId).catch(() => {})
+        sauvegarderProduitsLocaux(updated, boutiqueActiveId, userId).catch(() => {})
       }
       return updated
     })

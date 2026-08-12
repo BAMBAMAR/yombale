@@ -1,6 +1,6 @@
 // [SUPPRIMÉ] import { defaultCache } — En dev, c'est un catch-all NetworkOnly(/.*/i) qui cassait l'offline
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist, NetworkFirst, NetworkOnly, StaleWhileRevalidate, ExpirationPlugin } from "serwist";
+import { Serwist, NetworkFirst, NetworkOnly, StaleWhileRevalidate, ExpirationPlugin, CacheFirst } from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -9,6 +9,18 @@ declare global {
 }
 
 declare const self: WorkerGlobalScope & typeof globalThis;
+
+// ── Version du cache — incrémenter à chaque déploiement pour forcer purge ──
+const CACHE_VERSION = 'v4';
+const CACHE_NAMES = [
+  `nopalou-html-cache-${CACHE_VERSION}`,
+  `nopalou-rsc-cache-${CACHE_VERSION}`,
+  `nopalou-api-cache-${CACHE_VERSION}`,
+  `nopalou-pwa-meta-cache-${CACHE_VERSION}`,
+  `nopalou-assets-cache-${CACHE_VERSION}`,
+  'nopalou-offline-fallback-v1',
+  'serwist-precache',
+];
 
 const FALLBACK_HTML = `<!DOCTYPE html>
 <html lang="fr">
@@ -42,7 +54,6 @@ const FALLBACK_HTML = `<!DOCTYPE html>
   </div>
   <script>
     window.addEventListener('online', function() { location.reload(); });
-    // Masquer le bouton de retour si on ne peut pas revenir en arrière
     if (window.history.length <= 1) {
       const backBtn = document.querySelector('button[onclick="window.history.back()"]');
       if (backBtn) backBtn.style.display = 'none';
@@ -70,105 +81,100 @@ const serwist = new Serwist({
   navigationPreload: false,
   runtimeCaching: [
     // 0. Exclure les URLs externes (analytics, trackers) — ne jamais cacher ni router
-    // Elles échouent naturellement en offline, pas besoin de les gérer.
     {
       matcher: ({ url }) => isExternalUrl(url),
       handler: new NetworkOnly(),
     },
-    // 1. Navigation HTML (pages visitées) — NetworkFirst avec cache 7j
+    // 1. /api/ping — NetworkOnly STRICT en premier (ne jamais cacher)
+    //    Cette règle doit être avant le matcher /api/* pour garantir qu'elle s'applique en premier.
     {
-      matcher: ({ request }) => request.mode === "navigate" || (request.method === "GET" && request.headers.get("accept")?.includes("text/html")),
+      matcher: ({ url }) => url.pathname === '/api/ping',
+      handler: new NetworkOnly(),
+    },
+    // 2. Navigation HTML (pages visitées) — NetworkFirst avec cache 7j, timeout réduit à 2s
+    {
+      matcher: ({ request }) =>
+        request.mode === "navigate" ||
+        (request.method === "GET" && request.headers.get("accept")?.includes("text/html") === true),
       handler: new NetworkFirst({
-        cacheName: "nopalou-html-cache",
-        networkTimeoutSeconds: 3,
+        cacheName: `nopalou-html-cache-${CACHE_VERSION}`,
+        networkTimeoutSeconds: 2,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 50,
-            maxAgeSeconds: 24 * 60 * 60 * 7, // 1 week
+            maxAgeSeconds: 24 * 60 * 60 * 7,
           }),
         ],
       }),
     },
-    // 2. Requêtes RSC (Next.js client navigation _rsc=...) — NetworkFirst pour cache offline
+    // 3. Requêtes RSC (Next.js client navigation _rsc=...) — NetworkFirst
     {
-      matcher: ({ url }) => {
-        return url.searchParams.has("_rsc");
-      },
+      matcher: ({ url }) => url.searchParams.has("_rsc"),
       handler: new NetworkFirst({
-        cacheName: "nopalou-rsc-cache",
-        networkTimeoutSeconds: 3,
+        cacheName: `nopalou-rsc-cache-${CACHE_VERSION}`,
+        networkTimeoutSeconds: 2,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 80,
-            maxAgeSeconds: 24 * 60 * 60 * 3, // 3 days
+            maxAgeSeconds: 24 * 60 * 60 * 3,
           }),
         ],
       }),
     },
-    // 3. Routes API internes (/api/) — NetworkFirst pour données offline (sauf /api/ping)
+    // 4. Routes API internes (/api/) — NetworkFirst pour données offline (sauf /api/ping déjà géré)
     {
-      matcher: ({ url }) => {
-        return url.pathname.startsWith("/api/") && url.pathname !== "/api/ping";
-      },
+      matcher: ({ url }) =>
+        url.pathname.startsWith("/api/") && url.pathname !== "/api/ping",
       handler: new NetworkFirst({
-        cacheName: "nopalou-api-cache",
-        networkTimeoutSeconds: 3,
+        cacheName: `nopalou-api-cache-${CACHE_VERSION}`,
+        networkTimeoutSeconds: 2,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 100,
-            maxAgeSeconds: 24 * 60 * 60 * 1, // 1 day
+            maxAgeSeconds: 24 * 60 * 60 * 1,
           }),
         ],
       }),
     },
-    // 4. manifest.json et icons — StaleWhileRevalidate (nécessaires pour PWA offline)
+    // 5. manifest.json et icons — CacheFirst (rarement modifiés)
     {
-      matcher: ({ url }) => {
-        return url.pathname === '/manifest.json' || url.pathname.startsWith('/icons/');
-      },
-      handler: new StaleWhileRevalidate({
-        cacheName: "nopalou-pwa-meta-cache",
+      matcher: ({ url }) =>
+        url.pathname === '/manifest.json' || url.pathname.startsWith('/icons/'),
+      handler: new CacheFirst({
+        cacheName: `nopalou-pwa-meta-cache-${CACHE_VERSION}`,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 20,
-            maxAgeSeconds: 24 * 60 * 60 * 30, // 30 days
+            maxAgeSeconds: 24 * 60 * 60 * 30,
           }),
         ],
       }),
     },
-    // 5. Assets statiques (CSS, JS, images) — StaleWhileRevalidate
+    // 6. Assets statiques (CSS, JS, images) — StaleWhileRevalidate
     {
-      matcher: ({ request, url }) => {
-        return request.destination === "style" || 
-               request.destination === "script" || 
-               request.destination === "image" ||
-               url.pathname.startsWith("/_next/static/") ||
-               url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|css|js)$/i) !== null;
-      },
+      matcher: ({ request, url }) =>
+        request.destination === "style" ||
+        request.destination === "script" ||
+        request.destination === "image" ||
+        url.pathname.startsWith("/_next/static/") ||
+        url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|css|js)$/i) !== null,
       handler: new StaleWhileRevalidate({
-        cacheName: "nopalou-assets-cache",
+        cacheName: `nopalou-assets-cache-${CACHE_VERSION}`,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 200,
-            maxAgeSeconds: 24 * 60 * 60 * 30, // 30 days
+            maxAgeSeconds: 24 * 60 * 60 * 30,
           }),
         ],
       }),
     },
-    // [SUPPRIMÉ] ...defaultCache — En dev, c'est un catch-all NetworkOnly(/.*/i)
-    // qui cassait tout le mode offline en court-circuitant le fallback.
-    // Nos 5 règles ci-dessus couvrent déjà tous les cas nécessaires.
   ],
   fallbacks: {
     entries: [
       {
         url: "/offline.html",
         matcher({ request }: any) {
-          // Ne s'applique qu'aux navigations document
           if (!request || request.destination !== "document") return false;
-          // [CORRIGÉ] Supprimé le check self.navigator.onLine car il est non fiable
-          // dans le SW. Le fallback doit s'activer dès que le réseau échoue,
-          // pas quand le navigateur pense qu'on est offline.
           try {
             const url = new URL(request.url);
             if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/")) {
@@ -182,9 +188,7 @@ const serwist = new Serwist({
   },
 });
 
-
-
-// Pré-cacher explicitement /offline.html lors de l'installation
+// ── Installation : pré-cacher /offline.html ───────────────────────────────
 self.addEventListener("install", (event: any) => {
   event.waitUntil(
     caches.open("nopalou-offline-fallback-v1").then((cache) => {
@@ -199,15 +203,30 @@ self.addEventListener("install", (event: any) => {
   );
 });
 
-// [SUPPRIMÉ] L'ancien fetch listener manuel a été supprimé car il court-circuitait
-// les règles runtimeCaching de Serwist (NetworkFirst pour API, RSC, HTML).
-// Le fallbacks.entries + setCatchHandler gèrent tout correctement.
+// ── Activation : purger tous les caches de versions précédentes ───────────
+self.addEventListener("activate", (event: any) => {
+  event.waitUntil(
+    caches.keys().then(async (keys) => {
+      const toDelete = keys.filter((key) => {
+        // Conserver uniquement les caches de la version actuelle
+        const isCurrentVersion = CACHE_NAMES.some((name) => key === name);
+        const isPrecache = key.startsWith('serwist-precache');
+        return !isCurrentVersion && !isPrecache;
+      });
+
+      if (toDelete.length > 0) {
+        console.log(`[SW ${CACHE_VERSION}] Purge de ${toDelete.length} cache(s) obsolète(s):`, toDelete);
+        await Promise.all(toDelete.map((key) => caches.delete(key)));
+      }
+    })
+  );
+});
 
 serwist.setCatchHandler(async ({ request }: any) => {
   // Handle HTML document navigations offline
   if (
-    request.destination === "document" || 
-    request.mode === "navigate" || 
+    request.destination === "document" ||
+    request.mode === "navigate" ||
     request.headers?.get("accept")?.includes("text/html")
   ) {
     const cached = await caches.match(request, { ignoreSearch: true });
@@ -221,8 +240,6 @@ serwist.setCatchHandler(async ({ request }: any) => {
   }
 
   // Handle Next.js RSC data requests (_rsc=...) offline
-  // Retourner le cache si disponible, sinon laisser React gérer l'erreur proprement
-  // (ne PAS retourner "{}" car c'est un payload RSC invalide qui crashe React)
   if (request.url && request.url.includes("_rsc=")) {
     const cachedRsc = await caches.match(request, { ignoreSearch: true });
     if (cachedRsc) return cachedRsc;
@@ -230,22 +247,19 @@ serwist.setCatchHandler(async ({ request }: any) => {
   }
 
   // Handle static assets (JS, CSS, images, _next/static) offline
-  // Tentative de récupération en cache en ignorant la Query String (?v=... de Next.js dev)
   if (
-    request.destination === "style" || 
-    request.destination === "script" || 
+    request.destination === "style" ||
+    request.destination === "script" ||
     request.destination === "image" ||
-    (request.url && (request.url.includes("/_next/static/") || request.url.match(/\.(png|jpg|jpeg|svg|webp|gif|css|js)$/i) !== null))
+    (request.url &&
+      (request.url.includes("/_next/static/") ||
+        request.url.match(/\.(png|jpg|jpeg|svg|webp|gif|css|js)$/i) !== null))
   ) {
     const cachedAsset = await caches.match(request, { ignoreSearch: true });
     if (cachedAsset) return cachedAsset;
   }
 
-  // Un cache miss doit déclencher les fallbacks locaux des composants, pas un faux succès HTTP 200.
-  if (request.url && request.url.includes("/api/")) {
-    return Response.error();
-  }
-
+  // API et autres → erreur réseau propre (pas de faux HTTP 200)
   return Response.error();
 });
 

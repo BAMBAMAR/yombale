@@ -1869,41 +1869,45 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
 
       const netAPayer = calculation.total_ttc + timbre - retenueBRS;
 
-      for (const item of calculation.items) {
-        const qte = Number(item.quantite || 1);
+      // ── TRANSACTION ATOMIQUE : stock + ventes + commandes + facture + session ──
+      const dbClient = await pool.connect();
+      try {
+        await dbClient.query('BEGIN');
 
-        // 1. Décrémenter le stock dans la base PostgreSQL
-        let pRes = null;
-        if (item.id && /^[0-9a-f-]{36}$/i.test(item.id)) {
-          pRes = await pool.query(
-            `UPDATE boutique_produits
-             SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
-                 en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
-             WHERE id = $2 AND boutique_id = $3
-             RETURNING id, nom, prix, stock_quantite`,
-            [qte, item.id, boutiqueId]
-          );
-        }
+        for (const item of calculation.items) {
+          const qte = Number(item.quantite || 1);
 
-        if (!pRes?.rows[0] && item.nom) {
-          pRes = await pool.query(
-            `UPDATE boutique_produits
-             SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
-                 en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
-             WHERE LOWER(nom) = LOWER($2) AND boutique_id = $3
-             RETURNING id, nom, prix, stock_quantite`,
-            [qte, item.nom.trim(), boutiqueId]
-          );
-        }
+          // 1. Décrémenter le stock dans la base PostgreSQL
+          let pRes = null;
+          if (item.id && /^[0-9a-f-]{36}$/i.test(item.id)) {
+            pRes = await dbClient.query(
+              `UPDATE boutique_produits
+               SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
+                   en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
+               WHERE id = $2 AND boutique_id = $3
+               RETURNING id, nom, prix, stock_quantite`,
+              [qte, item.id, boutiqueId]
+            );
+          }
 
-        const nomProduit = item.nom || pRes?.rows[0]?.nom || 'Article POS';
-        const prixUnitaire = Number(item.prix_unitaire || pRes?.rows[0]?.prix || 0);
-        const totalLigne = prixUnitaire * qte;
-        const prodIdReal = pRes?.rows[0]?.id || (item.id && /^[0-9a-f-]{36}$/i.test(item.id) ? item.id : null);
+          if (!pRes?.rows[0] && item.nom) {
+            pRes = await dbClient.query(
+              `UPDATE boutique_produits
+               SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
+                   en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
+               WHERE LOWER(nom) = LOWER($2) AND boutique_id = $3
+               RETURNING id, nom, prix, stock_quantite`,
+              [qte, item.nom.trim(), boutiqueId]
+            );
+          }
 
-        // 2. Insérer dans la table des ventes pour la Comptabilité & Analytics
-        try {
-          await pool.query(
+          const nomProduit = item.nom || pRes?.rows[0]?.nom || 'Article POS';
+          const prixUnitaire = Number(item.prix_unitaire || pRes?.rows[0]?.prix || 0);
+          const totalLigne = prixUnitaire * qte;
+          const prodIdReal = pRes?.rows[0]?.id || (item.id && /^[0-9a-f-]{36}$/i.test(item.id) ? item.id : null);
+
+          // 2. Insérer dans la table des ventes pour la Comptabilité & Analytics
+          await dbClient.query(
             `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, methode_paiement, created_at)
              VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, NOW())`,
             [
@@ -1918,13 +1922,9 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
               modePaiement || 'cash'
             ]
           );
-        } catch (eCompta) {
-          console.error('[POS VENTE COMPTA ERR]', eCompta.message);
-        }
 
-        // 3. Insérer dans le journal des commandes_boutique
-        try {
-          await pool.query(
+          // 3. Insérer dans le journal des commandes_boutique
+          await dbClient.query(
             `INSERT INTO commandes_boutique (reference, boutique_id, client_nom, statut, nom_produit, quantite, montant_total, mode_paiement, created_at)
              VALUES ($1, $2, $3, 'livree', $4, $5, $6, $7, NOW())`,
             [
@@ -1937,38 +1937,33 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
               modePaiement || 'cash'
             ]
           );
-        } catch (eCmd) {}
-      }
+        }
 
-      // 4. Insérer dans caisse_documents (Facture Payée)
-      try {
-        await pool.query(
+        // 4. Insérer dans caisse_documents (Facture Payée) — avec ON CONFLICT pour double sécurité idempotence
+        await dbClient.query(
           `INSERT INTO caisse_documents (
             boutique_id, client_id, caissier_id, type, reference, statut,
             total_ht, total_tva, timbre_fiscal, retenue_brs, total_ttc, net_a_payer,
             mode_paiement, notes, items, created_at, updated_at
-          ) VALUES ($1, $2, null, 'facture', $3, 'paye', $4, $5, $6, $7, $8, $9, $10, 'Vente directe caisse POS', $11, NOW(), NOW())`,
+          ) VALUES ($1, $2, null, 'facture', $3, 'paye', $4, $5, $6, $7, $8, $9, $10, 'Vente directe caisse POS', $11, NOW(), NOW())
+          ON CONFLICT (reference) DO NOTHING`,
           [
             boutiqueId, client_id || null, refVente,
             calculation.total_ht, calculation.total_tva, timbre, retenueBRS, calculation.total_ttc, netAPayer,
             modePaiement || 'cash', JSON.stringify(calculation.items)
           ]
         );
-      } catch (eDoc) {
-        console.error('[POS VENTE INSERT CAISSE DOC ERR]', eDoc.message);
-      }
 
-      // 5. Mettre à jour la session active de caisse de la boutique si elle existe
-      try {
-        const activeSessionRes = await pool.query(
+        // 5. Mettre à jour la session active de caisse de la boutique si elle existe
+        const activeSessionRes = await dbClient.query(
           `SELECT id FROM boutique_pos_sessions WHERE boutique_id = $1 AND statut = 'ouverte' ORDER BY date_ouverture DESC LIMIT 1`,
           [boutiqueId]
         );
         if (activeSessionRes.rows[0]) {
           const activeSessionId = activeSessionRes.rows[0].id;
           const mode = (modePaiement || 'cash').toLowerCase();
-          
-          await pool.query(
+
+          await dbClient.query(
             `UPDATE boutique_pos_sessions
              SET ventes_total = COALESCE(ventes_total, 0) + $1,
                  ventes_especes = COALESCE(ventes_especes, 0) + $2,
@@ -1987,8 +1982,14 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
             ]
           );
         }
-      } catch (eSessionUpdate) {
-        console.error('[POS VENTE SESSION UPDATE ERR]', eSessionUpdate.message);
+
+        await dbClient.query('COMMIT');
+      } catch (txErr) {
+        await dbClient.query('ROLLBACK');
+        console.error('[POS VENTE TX ROLLBACK]', txErr.message);
+        throw txErr;
+      } finally {
+        dbClient.release();
       }
     }
 
