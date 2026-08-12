@@ -1,4 +1,7 @@
-## 🚀 Mises à jour du 12/08/2026 : Fallback Assets Statiques Offline (`sw.ts`) & Priorisation Ping
+## 🚀 Mises à jour du 12/08/2026 : Hook `useOnlineStatus` Événementiel & Zéro Polling en Ligne
+- **Architecture Réseau Événementielle (`useOnlineStatus.ts`)** :
+  * Élimination du polling répétitif en mode connecté : zéro requête `/api/ping` lorsque l'utilisateur est en ligne, supprimant toute surcharge réseau et tout conflit avec les Server Actions.
+  * Déclenchement réactif sur événements natifs (`offline`, `online`, `focus`) et activation du sondage de reconnexion (toutes les 5s) uniquement lors des déconnexions réelles.
 - **Secours des Assets Statiques Hors-Ligne (`sw.ts`)** :
   * Ajout d'une recherche dans le cache avec `ignoreSearch: true` dans le `setCatchHandler` pour les scripts (`.js`), styles (`.css`), images et fichiers `/_next/static/`.
   * Résolution des échecs d'affichage en HTML brut lors du passage en mode offline sous DevTools Chrome (les paramètres de requête dynamiques `?v=...` générés par Next.js empêchaient la correspondance exacte d'URL).

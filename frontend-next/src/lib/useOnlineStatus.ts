@@ -3,24 +3,19 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 
 /**
- * Hook de détection de connectivité fiable.
+ * Hook de détection de connectivité ultra-fiable et réactif.
  * 
- * Contrairement à navigator.onLine (qui ment fréquemment sur desktop,
- * Ethernet, et lors de bascules responsive mobile↔web), ce hook
- * effectue un vrai ping applicatif vers /api/ping pour confirmer
- * la connectivité.
- * 
- * Fonctionnement :
- * - navigator.onLine comme indice initial uniquement
- * - Ping /api/ping avec timeout 4s pour confirmer
- * - Re-vérifie au focus, à l'événement online, et sur intervalle
- * - Suspend les vérifications quand l'onglet est masqué
+ * Principes :
+ * - Mode en ligne : AUCUN polling inutile pour éviter tout bruit réseau
+ *   et aucun conflit avec les requêtes de préchargement / Server Actions.
+ * - Événement 'offline' / perte de réseau : passage immédiat en mode hors-ligne
+ *   et démarrage d'un sondage léger toutes les 5s vers /api/ping.
+ * - Reconnexion : dès qu'un ping réussit, passage en mode en ligne et arrêt du sondage.
  */
 
 const PING_URL = '/api/ping'
-const PING_TIMEOUT_MS = 8000
-const POLL_INTERVAL_ONLINE_MS = 30000  // 30s quand on est en ligne
-const POLL_INTERVAL_OFFLINE_MS = 5000  // 5s quand on est hors-ligne (retry rapide)
+const PING_TIMEOUT_MS = 5000
+const RECONNECT_POLL_MS = 5000 // Sondage de tentative de reconnexion (uniquement hors-ligne)
 
 async function checkRealConnectivity(): Promise<boolean> {
   try {
@@ -41,102 +36,78 @@ async function checkRealConnectivity(): Promise<boolean> {
 }
 
 export function useOnlineStatus() {
-  // État initial optimiste à true (en ligne)
-  const [isOnline, setIsOnline] = useState(true)
-  
-  const prevOnline = useRef(isOnline)
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [isOnline, setIsOnline] = useState<boolean>(true)
+  const isOnlineRef = useRef<boolean>(true)
 
-  const performCheck = useCallback(async () => {
-    // Si l'onglet est masqué, ne pas vérifier (économie batterie/réseau)
-    if (typeof document !== 'undefined' && document.hidden) return
-
-    const reallyOnline = await checkRealConnectivity()
-    
-    setIsOnline(prev => {
-      if (prev !== reallyOnline) {
-        if (reallyOnline) {
-          console.log('🟢 [useOnlineStatus] Connectivité confirmée par ping /api/ping')
-        } else {
-          console.warn('🔴 [useOnlineStatus] Ping /api/ping échoué — mode hors-ligne')
-        }
+  const updateStatus = useCallback((onlineStatus: boolean) => {
+    if (isOnlineRef.current !== onlineStatus) {
+      isOnlineRef.current = onlineStatus
+      setIsOnline(onlineStatus)
+      if (onlineStatus) {
+        console.log('🟢 [useOnlineStatus] Statut Réseau : Connecté (ping /api/ping OK)')
+      } else {
+        console.warn('🔴 [useOnlineStatus] Statut Réseau : Hors-Ligne (ping /api/ping échoué)')
       }
-      prevOnline.current = reallyOnline
-      return reallyOnline
-    })
+    }
   }, [])
+
+  const verifyConnectivity = useCallback(async () => {
+    if (typeof document !== 'undefined' && document.hidden) return
+    const reallyOnline = await checkRealConnectivity()
+    updateStatus(reallyOnline)
+  }, [updateStatus])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    // Vérification initiale immédiate
-    performCheck()
-
-    // Événements navigateur comme déclencheurs de re-vérification
-    const handleOnlineEvent = () => {
-      // Ne pas faire confiance directement — vérifier par ping
-      console.log('📡 [useOnlineStatus] Événement "online" reçu — vérification par ping...')
-      performCheck()
-    }
-    
+    // 1. Événement 'offline' du navigateur → passage hors-ligne immédiat
     const handleOfflineEvent = () => {
-      // L'événement offline est plus fiable — appliquer immédiatement
-      // mais vérifier quand même par ping au prochain cycle
-      console.warn('📡 [useOnlineStatus] Événement "offline" reçu — passage hors-ligne immédiat')
-      setIsOnline(false)
-      prevOnline.current = false
+      console.warn('📡 [useOnlineStatus] Événement navigateur "offline" capturé.')
+      updateStatus(false)
     }
 
-    const handleFocus = () => {
-      // Re-vérifier au retour de focus (l'utilisateur revient sur l'onglet)
-      performCheck()
+    // 2. Événement 'online' du navigateur → confirmation obligatoire par ping réel
+    const handleOnlineEvent = () => {
+      console.log('📡 [useOnlineStatus] Événement navigateur "online" capturé. Confirmation par ping...')
+      verifyConnectivity()
     }
 
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // L'onglet redevient visible — re-vérifier
-        performCheck()
+    // 3. Focus / Changement de visibilité d'onglet → vérifier la connectivité si on était hors-ligne
+    const handleFocusOrVisibility = () => {
+      if (!document.hidden && !isOnlineRef.current) {
+        verifyConnectivity()
       }
     }
 
-    window.addEventListener('online', handleOnlineEvent)
     window.addEventListener('offline', handleOfflineEvent)
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('online', handleOnlineEvent)
+    window.addEventListener('focus', handleFocusOrVisibility)
+    document.addEventListener('visibilitychange', handleFocusOrVisibility)
 
-    // Polling adaptatif : plus rapide en offline (retry), plus lent en ligne
-    const startPolling = () => {
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current)
-      
-      const interval = prevOnline.current ? POLL_INTERVAL_ONLINE_MS : POLL_INTERVAL_OFFLINE_MS
-      pollTimerRef.current = setInterval(() => {
-        performCheck()
-      }, interval)
+    // Si navigator.onLine indique qu'on est offline au chargement, vérifier par ping
+    if (!navigator.onLine) {
+      verifyConnectivity()
     }
-
-    startPolling()
-
-    // Ajuster le polling quand l'état change
-    const adjustPollingInterval = setInterval(() => {
-      const currentInterval = prevOnline.current ? POLL_INTERVAL_ONLINE_MS : POLL_INTERVAL_OFFLINE_MS
-      // Redémarrer le polling si l'intervalle doit changer
-      if (pollTimerRef.current) {
-        clearInterval(pollTimerRef.current)
-        pollTimerRef.current = setInterval(() => {
-          performCheck()
-        }, currentInterval)
-      }
-    }, 10000) // Vérifie l'ajustement toutes les 10s
 
     return () => {
-      window.removeEventListener('online', handleOnlineEvent)
       window.removeEventListener('offline', handleOfflineEvent)
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current)
-      clearInterval(adjustPollingInterval)
+      window.removeEventListener('online', handleOnlineEvent)
+      window.removeEventListener('focus', handleFocusOrVisibility)
+      document.removeEventListener('visibilitychange', handleFocusOrVisibility)
     }
-  }, [performCheck])
+  }, [verifyConnectivity, updateStatus])
+
+  // 4. Polling de reconnexion : S'ACTIVE UNIQUEMENT LORSQU'ON EST HORS-LIGNE
+  useEffect(() => {
+    if (isOnline) return // Pas de polling quand on est connecté (0 overhead)
+
+    console.log('🔄 [useOnlineStatus] Polling de reconnexion actif (toutes les 5s)...')
+    const timer = setInterval(() => {
+      verifyConnectivity()
+    }, RECONNECT_POLL_MS)
+
+    return () => clearInterval(timer)
+  }, [isOnline, verifyConnectivity])
 
   return isOnline
 }
