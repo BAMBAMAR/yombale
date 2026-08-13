@@ -1889,7 +1889,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             </Link>
             <button
               type="button"
-              onClick={onBack}
+              onClick={() => window.history.back()}
               className="annonce-back"
               style={{ margin: '0 auto' }}
             >

@@ -207,7 +207,7 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
               <MaskedContactPhone
                 phone={annonce.contact_tel}
                 titre={annonce.titre}
-                prix={annonce.prix}
+                prix={annonce.prix ?? undefined}
                 annonceId={annonce.id}
                 baseUrl={process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}
               />
