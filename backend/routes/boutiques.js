@@ -3458,6 +3458,7 @@ router.post('/commandes/express', async (req, res) => {
           success_url: `${process.env.FRONTEND_URL}/paiement/succes?ref=${ref}&type=commande-express`,
           error_url: `${process.env.FRONTEND_URL}/paiement/erreur`,
           client_reference: ref,
+          mobile: client_telephone,
         });
         return res.status(201).json({
           succes: true,

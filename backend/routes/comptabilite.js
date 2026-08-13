@@ -609,6 +609,7 @@ router.post(
             success_url: `${process.env.FRONTEND_URL}/paiement/succes?ref=${commande.reference}&type=commande-boutique`,
             error_url: `${process.env.FRONTEND_URL}/paiement/erreur`,
             client_reference: commande.reference,
+            mobile: client_telephone,
           });
           return res.status(201).json({ commande, wave_url: waveSession.wave_url, session_id: waveSession.session_id, message: 'Commande créée. Redirection vers Wave…' });
         } catch (waveErr) {
