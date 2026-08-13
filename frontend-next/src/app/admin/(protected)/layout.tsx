@@ -35,6 +35,7 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
             <a href="/admin/comptes" className="admin-nav-link">👥 Comptes utilisateurs</a>
             <a href="/admin/abonnements" className="admin-nav-link">⭐ Abonnements</a>
             <a href="/admin/paiements-manuels" className="admin-nav-link">🧾 Paiements manuels</a>
+            <a href="/admin/reversements" className="admin-nav-link" style={{ fontWeight: 700, color: '#1d4ed8' }}>💸 Reversements Wave 1-Clic</a>
             <a href="/admin/revenus" className="admin-nav-link">💰 Revenus</a>
           </div>
 
