@@ -167,7 +167,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
       </div>
 
       {/* 💳 CARTES DES PLANS BOUTIQUE */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(310px, 100%), 1fr))', gap: 24 }}>
         {PLANS.map((plan) => {
           const estActif = planActif?.plan === plan.id
           const enCours = isPending && loadingPlan === plan.id

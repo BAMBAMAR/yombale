@@ -707,7 +707,7 @@ export default function BoutiqueDetailClient({
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 20 }}>
             {/* Carte Contact & Adresse */}
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
               <p style={{ fontWeight: 900, margin: 0, fontSize: 15, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>

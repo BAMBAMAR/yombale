@@ -461,7 +461,7 @@ export default function BatchImportModal({
                 }}
               />
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))', gap: 14 }}>
                 {templatesAffiches.map(t => {
                   const item = saisies[t.id]
                   if (!item) return null

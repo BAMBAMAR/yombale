@@ -16,6 +16,7 @@ const helmet      = require('helmet');
 const morgan      = require('morgan');
 const compression = require('compression');
 const path        = require('path');
+const rateLimit   = require('express-rate-limit');
 require('dotenv').config();
 
 // ── Gestion globale des erreurs inattendues (Évite la mort du process Node) ──
