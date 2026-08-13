@@ -1,8 +1,10 @@
-## 🚀 Mises à jour du 13/08/2026 : Fix DÉFINITIF de la Récurrence en Boucle du Toast PWA (`RegisterSW.tsx` & `sw.ts`)
-- **Résolution du Bouclage "Nouvelle version disponible" (`RegisterSW.tsx` & `sw.ts`)** :
-  * **Problème** : Le clic sur `🔄 Nouvelle version disponible — Mettre à jour` envoyait un message `SKIP_WAITING`, mais le Service Worker `sw.ts` ne possédait pas l'écouteur d'événements `self.addEventListener('message')`. Le worker restait bloqué en état `waiting`. À chaque rechargement de page ou re-compilation dev local, `reg.waiting` était détecté à nouveau, faisant réapparaître le bandeau bleu en boucle infinie.
-  * **Solution 1 (`sw.ts`)** : Ajout de l'écouteur d'événement `self.addEventListener('message')` qui exécute `self.skipWaiting()` lors de la réception de `SKIP_WAITING`.
-  * **Solution 2 (`RegisterSW.tsx`)** : Ajout du marqueur de session `sessionStorage.setItem('nopalou_sw_updated_session', 'true')` empêchant le réaffichage intrusif du bandeau une fois que l'utilisateur a cliqué sur mettre à jour durant la même session d'utilisation.
+## 🚀 Mises à jour du 13/08/2026 : Architecture PWA Purifiée & Élimination Définitive du Bandeau de Mise à Jour (`RegisterSW.tsx` & `sw.ts`)
+- **Élimination Définitive du Réaffichage du Toast de Mise à Jour (`RegisterSW.tsx` & `sw.ts`)** :
+  * **Explication Technique** : Vous avez parfaitement raison, ce n'est pas censé dépendre d'un stockage de session ! Dans l'architecture PWA standard, dès que le bouton est cliqué et que `self.skipWaiting()` s'exécute, le nouveau Service Worker passe à l'état `active`. À cet instant précis, `reg.waiting` devient `null`.
+  * **Correctif Appliqué** : 
+    1. Prise en charge native du message `SKIP_WAITING` dans [sw.ts](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/sw.ts) via `self.skipWaiting()`.
+    2. Écoute de l'événement natif `controllerchange` dans [RegisterSW.tsx](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/RegisterSW.tsx) pour recharger la page uniquement au moment où le nouveau SW a pris le relais.
+    3. Retrait complet des hacks `sessionStorage` : Une fois mis à jour, `reg.waiting` vaut `null`. Tant qu'aucun nouveau déploiement n'a lieu sur le serveur, la notification **ne réapparaîtra plus jamais**, ni pendant la session, ni lors des redémarrages du navigateur.
 
 ## 🚀 Mises à jour du 13/08/2026 : Préchargement Hors-Ligne des Dashboards & Liens "Retour à mon compte" (`Comptabilite.tsx`, `BoutiqueClient.tsx`, `RegisterSW.tsx`, `sw.ts`)
 - **Fix du Blocage par Squelette de Chargement Hors-Ligne (`Comptabilite.tsx`)** :

@@ -18,12 +18,15 @@ export default function RegisterSW() {
     if (typeof window === 'undefined') return
     if (!('serviceWorker' in navigator)) return
 
-    // Éviter le réaffichage en boucle si déjà mis à jour durant cette session
-    try {
-      if (sessionStorage.getItem('nopalou_sw_updated_session') === 'true') {
-        return
+    // Écouter l'activation du nouveau SW (controllerchange) pour recharger proprement
+    let refreshing = false
+    const handleControllerChange = () => {
+      if (!refreshing) {
+        refreshing = true
+        window.location.reload()
       }
-    } catch {}
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange)
 
     // Enregistrement effectif du Service Worker PWA
     navigator.serviceWorker
@@ -31,40 +34,32 @@ export default function RegisterSW() {
       .then((reg) => {
         console.log('[PWA SW] Service Worker enregistré avec succès:', reg.scope)
 
-        // Détecter une mise à jour disponible
+        // Détecter une mise à jour disponible lors du téléchargement
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing
           if (!newWorker) return
 
           newWorker.addEventListener('statechange', () => {
-            // Le nouveau SW est installé et prêt à remplacer l'ancien
+            // Le nouveau SW est installé et prêt à remplacer l'ancien contrôleur
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               console.log('[PWA SW] Nouvelle version disponible. Affichage du bouton de mise à jour.')
-              try {
-                if (sessionStorage.getItem('nopalou_sw_updated_session') !== 'true') {
-                  setSwUpdateAvailable(true)
-                }
-              } catch {
-                setSwUpdateAvailable(true)
-              }
+              setSwUpdateAvailable(true)
             }
           })
         })
 
-        // Vérifier si une mise à jour est déjà en attente
-        if (reg.waiting) {
-          try {
-            if (sessionStorage.getItem('nopalou_sw_updated_session') !== 'true') {
-              setSwUpdateAvailable(true)
-            }
-          } catch {
-            setSwUpdateAvailable(true)
-          }
+        // Vérifier si un nouveau SW est déjà téléchargé et en attente
+        if (reg.waiting && navigator.serviceWorker.controller) {
+          setSwUpdateAvailable(true)
         }
       })
       .catch((err) => {
         console.error('[PWA SW] Échec enregistrement Service Worker:', err)
       })
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange)
+    }
   }, [])
 
   // Détecter les transitions offline → online pour afficher le toast
@@ -99,20 +94,14 @@ export default function RegisterSW() {
     setSwUpdateAvailable(false)
     if (typeof window === 'undefined') return
 
-    try {
-      sessionStorage.setItem('nopalou_sw_updated_session', 'true')
-    } catch {}
-
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistration()
         .then((reg) => {
           if (reg && reg.waiting) {
             reg.waiting.postMessage({ type: 'SKIP_WAITING' })
+          } else {
+            window.location.reload()
           }
-          if (reg && reg.installing) {
-            reg.installing.postMessage({ type: 'SKIP_WAITING' })
-          }
-          window.location.reload()
         })
         .catch(() => {
           window.location.reload()
