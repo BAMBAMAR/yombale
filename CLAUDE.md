@@ -2334,3 +2334,6 @@ opalou_pos_session_) pour conserver l'état du CA même en cas d'actualisation d
   - **Avatar & Badge Boutique** : Remplacement du pavé bleu avec l'emoji 🏪 par un avatar dégradé signature orange/sable avec les initiales de la boutique (AM pour AMAR) et ombre portée douce. Le badge de formule est désormais un chip pilule pastel dynamique (● Business, ● Pro).
 - **Correction de l'erreur de build Render (Expected '}', got '<eof>')** :
   - **Accolade fermante restaurée dans CaisseClient.tsx** : Restauration des caractères de fermeture } }, [ticketsEnAttente, boutiqueActiveId]) sur le useEffect de persistance des tickets en attente (ligne 670) qui avait été tronqué lors de la mise à jour précédente, ce qui provoquait l'échec de la compilation SWC sur Render.
+- **Modernisation Globale des Boutons de Retour & Pagination Vectorielle (Annonces, Suivi Commande, CSS)** :
+  - **Pagination Vectorielle Nopalou** : Remplacement des boutons ← Précédent et Suivant → bruts sur les annonces par des boutons pilules réactifs intégrant des icônes vectorielles SVG (<polyline points="15 18 9 12 15 6" />), avec effets d'élévation, arrière-plan sable pastel et ombre portée douce.
+  - **Boutons de Retour Intégrés** : Stylisation unifiée des liens de retour dans nnonces/[id], suivi-commande et sur l'ensemble des composants avec la classe .annonce-back et l'icône SVG <ArrowLeft>.
