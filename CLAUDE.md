@@ -2234,14 +2234,194 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
   - **Amï¿½lioration du Scraper Facebook (ackend/services/scraper-immo-facebook.js, ackend/scripts/)** :
     - **Scraping des Offres d'Emploi** : Application de la catï¿½gorie forcï¿½e emploi sur les nouveaux groupes/pages d'emploi (Badou Diop, Emploi 1, 2, 3) pour s'assurer que les offres sont bien classï¿½es dans la catï¿½gorie emploi mï¿½me sans mots clï¿½s explicites. Extension de la dï¿½rogation "Voir sur Facebook" comme numï¿½ro de tï¿½lï¿½phone par dï¿½faut pour l'ensemble de la catï¿½gorie emploi (au lieu de juste la page Ndeye Yacine).
     - **Gestion des Profils & Timouts** : Augmentation du timeout de navigation de 60s ï¿½ 90s avec un try-catch permettant de continuer le scraping si le DOM est partiellement chargï¿½, prï¿½venant l'interruption complï¿½te (Timeout 60000ms exceeded). Amï¿½lioration de la dï¿½tection de fil d'actualitï¿½ pour bien prendre en compte les profils (comme Badou Diop).
-    - **Groupes par Run** : Augmentation de la limite de groupes visitï¿½s par exï¿½cution par dï¿½faut de 5 ï¿½ 10 (maxGroupes dans scraper-facebook-local.js).
-    - **Correction d'Encodage** : Ajout de la configuration d'encodage UTF-8 dans lancer-scraper-facebook.ps1 ([Console]::OutputEncoding = [System.Text.Encoding]::UTF8) et scraper-facebook-auto.bat (chcp 65001 >nul) pour corriger l'affichage des caractï¿½res spï¿½ciaux (ï¿½, ï¿½, etc.) dans la console lors de l'exï¿½cution en direct.
-    - **Ordre de scraping** : Rï¿½organisation de la liste des groupes/pages pour placer toutes les sources de type "emploi" en tï¿½te de liste, afin que le scraping commence toujours par l'emploi en dï¿½but de cycle.
-  - **Filtres dynamiques des annonces** : Correction du bug qui masquait les catï¿½gories (comme "Emploi") dans les filtres de la page Annonces. La page interrogeait l'API des *produits* au lieu de celle des *annonces* pour connaï¿½tre les catï¿½gories actives. Crï¿½ation de la route /api/annonces/categories-actives dans le backend et mise ï¿½ jour de rontend-next/src/app/annonces/page.tsx.
+    - IntÃ©gration de la base IndexedDB locale (`db-offline.ts`) pour la caisse.
+    - Sauvegarde automatique en cache local du catalogue produits et des clients pour continuer Ã  vendre mÃªme en cas de coupure internet.
+    - File d'attente locale de synchronisation des ventes en arriÃ¨re-plan rÃ©injectant automatiquement les transactions dÃ¨s le retour de la connexion internet.
+    - Indicateur dynamique clignotant `ðŸŸ¢ EN LIGNE` / `âš ï¸ HORS-LIGNE` dans l'en-tÃªte de la caisse POS.
+  - **Validation & Compilation globale** :
+    - Correction des typages et vÃ©rification de la compilation TypeScript de l'ensemble du projet frontend (`npx tsc --noEmit` validÃ© avec succÃ¨s).
+  - **Impression PDF & Affichage des Documents** :
+    - Ajout de l'endpoint `GET /api/boutiques/:id/documents/:docId/pdf` pour gÃ©nÃ©rer un PDF A4 stylisÃ© (Facture, Devis, Proforma) avec en-tÃªte de boutique, dÃ©tails clients, tableau d'articles et totaux de taxes.
+    - Ajout du bouton d'action `ðŸ–¨ï¸ PDF` dans l'interface de gestion des documents pour ouvrir ou tÃ©lÃ©charger la facture en 1 clic.
+    - Correction de l'affichage des montants HT/TVA/TTC qui s'affichaient sous forme de tiret (`â€”`) dÃ» Ã  une divergence de noms de colonnes (`total_ht` au lieu de `montant_ht`).
+    - Nettoyage du nom de client affichÃ© (`client.nom` au lieu de `client.prenom client.nom` qui provoquait un affichage `undefined nom_client`).
+    - Ajout d'un bouton `âœï¸ Modifier` dans l'onglet des documents clients permettant d'ouvrir la modale de modification prÃ©-remplie avec le type de document, le client associÃ©, la liste des articles (avec qte et prix unit.) et les notes.
+    - Mise Ã  jour de la route backend PUT pour recalculer automatiquement les taxes, le timbre fiscal, et sauvegarder les modifications d'articles en base de donnÃ©es.
+  - **Correction affichage mobile du menu Actions produit** :
+    - Le dropdown `Actions â–¾` des cartes produit dans le dashboard marchand (`BoutiqueClient.tsx`) dÃ©bordait Ã  gauche sur mobile en raison du positionnement `right: 0`. CorrigÃ© avec `left: 0; right: auto` pour que le menu s'aligne cÃ´tÃ© gauche du bouton et reste dans le viewport.
+  - **Ã‰dition des Fournisseurs + Affichage responsive** :
+    - Ajout d'un bouton `âœï¸ Modifier` sur chaque fournisseur dans `GestionFournisseurs.tsx`, ouvrant la modale prÃ©-remplie en mode Ã©dition et appelant le Server Action `modifierFournisseur` existant.
+    - Le formulaire de la modale fournisseur est dÃ©sormais dynamique : le titre, le bouton de soumission et l'action serveur s'adaptent entre crÃ©ation et modification.
+    - Remplacement du tableau HTML (`<table>`) par des cartes responsives (`<div>`) pour les fournisseurs, avec icÃ´nes contact (ðŸ“ž, âœ‰ï¸, ðŸ“), garantissant un affichage correct sur mobile et desktop.
+    - **Correction Tableau Achats / Bons de commande** :
+      - Correction du bogue `Invalid Date` : lecture de `created_at` / `date_livraison` au lieu de `date_commande` qui Ã©tait indÃ©finie.
+      - Correction du bogue `Total Achat` qui affichait un tiret (`â€”`) : lecture de `montant_total` retournÃ© par la base SQL au lieu de `total_achat`.
+      - Correction du bouton `ðŸ“¥ RÃ©ceptionner` et des badges de statut pour supporter indiffÃ©remment les valeurs de statut `'recu'` et `'recue'`.
+      - Ajout d'une colonne d'Actions complÃ¨te dans le tableau des bons de commande fournisseur : bouton `ðŸ“¥ RÃ©ceptionner` (pour commandes en attente), bouton `âœï¸ Modifier` (ouvre la modale prÃ©-remplie pour rÃ©ajuster les articles, quantitÃ©s ou tarifs d'un bon de commande en attente), bouton `ðŸ‘ï¸ DÃ©tails` (ouvre une modale synthÃ©tique avec le dÃ©tail complet des articles, quantitÃ©es et prix d'achat), et bouton `ðŸ—‘ï¸ Supprimer` (avec confirmation et appel au Server Action `supprimerCommandeFournisseur`).
+      - **Documents Justificatifs & Fichiers Joints** : Remplacement des champs texte URL par un vrai sÃ©lecteur de fichier (`<input type="file" />`) permettant de tÃ©lÃ©verser directement des factures ou reÃ§us (image/PDF). Route backend `POST /api/boutiques/:id/upload-justificatif` ajoutÃ©e. Une modale de rÃ©ception dÃ©diÃ©e permet Ã©galement d'attacher ou mettre Ã  jour le justificatif de rÃ©ception lors du clic sur `ðŸ“¥ RÃ©ceptionner`.
+      - **LibellÃ©s de colonnes dans les formulaires d'achat** : Ajout d'en-tÃªtes de colonnes clairs (`DÃ©signation Produit *`, `QuantitÃ© *`, `Prix Achat Unit. (FCFA) *`) au-dessus de chaque ligne d'article dans les formulaires de commande d'achat.
+      - **Maintien dans la Boutique aprÃ¨s enregistrement des paramÃ¨tres fiscaux** : Synchronisation permanente du paramÃ¨tre d'URL `?manage=BOUTIQUE_ID`.
+      - **Correction Boucle d'Alerte** : Remplacement du popup natif `alert()` (qui se redÃ©clenchait en boucle Ã  chaque re-render) par une banniÃ¨re de succÃ¨s verte Ã©phÃ©mÃ¨re (`savedMessage`) et mÃ©morisation du state traitÃ© via `useRef(handledRef)` pour un rafraÃ®chissement fluide sans blocage.
+      - **Recherche & Filtrage MulticritÃ¨re GÃ©nÃ©ralisÃ©s** : IntÃ©gration de barres de recherche textuelle temps rÃ©el et de menus de filtrage par statut sur tous les onglets : `Fournisseurs` (nom, tÃ©lÃ©phone, email, adresse), `Bons de Commande` (rÃ©fÃ©rence, fournisseur, statut attente/reÃ§ue), `Documents Commerciaux` (rÃ©fÃ©rence, client, NINEA, statut brouillon/validÃ©/payÃ©/envoyÃ©).
+      - **Correction & DÃ©coupage Automatique Importation Batch CSV (`BatchImportModal.tsx`)** :
+        - **Correction du parsing de prix CSV** : Suppression de la regex `replace(/\D/g, '')` qui corrompait les montants avec dÃ©cimales (ex: `15000.00` devenait `1500000`). RemplacÃ©e par `parsePrixString()` pour supporter tous les formats (virgules, points, espaces, devises).
+        - **DÃ©coupage automatique par sous-lots (Chunking)** : Traitement automatique des fichiers CSV/Excel de plus de 50 produits en sous-lots successifs de 50 articles. Permet d'importer des fichiers de plusieurs centaines ou milliers de produits sans blocage ni erreur 400.
+        - **Correction backend (`boutiques.js`)** : Retrait du filtre strict `!p.prix` qui Ã©liminait les articles Ã  prix zÃ©ro ou dÃ©cimaux, et hausse de la limite maximale par requÃªte backend Ã  500 articles.
+        - **Recherche globale multi-catÃ©gories & Mappage d'alias (`BatchImportModal.tsx`)** :
+          - Recherche globale : la saisie dans la barre de recherche interroge dÃ©sormais les **2 070 produits modÃ¨les** sur **toutes les catÃ©gories simultanÃ©ment**.
+          - Mappage d'alias : correction de l'incohÃ©rence des clÃ©s de catÃ©gories (ex: `electronique` regroupe dÃ©sormais `smartphones`, `informatique`, `electronique` et `high-tech`).
+          - Ajout de l'onglet **`ðŸ“ Tous les produits`** au dÃ©but pour parcourir l'ensemble du catalogue standard sans restriction.
+        - **Enrichissement IntÃ©gral & Garantie de 100 Produits Minimum par CatÃ©gorie (2 010 Produits au Total sur Render)** :
+          - Mise en place d'un gÃ©nÃ©rateur automatique (`buildFull100`) dans `generate-catalog.js` garantissant **au moins 100 produits modÃ¨les rÃ©els pour CHACUNE des 20 catÃ©gories du systÃ¨me**.
+          - Total gÃ©nÃ©ral : **2 010 produits modÃ¨les** avec visuels HD Unsplash dÃ©diÃ©s et fidÃ¨les.
+      - **Correction Persistance des Cases Ã  Cocher Fiscales (`ParametresFiscalite.tsx` & `boutiques.js`)** :
+        - Diagnostic : le navigateur envoyait la valeur natif HTML `'on'` pour les cases cochÃ©es au lieu de `'true'`, tandis que le backend Ã©chouait la comparaison `'on' === 'true'` (sauvegardait `false`). DÃ©cocher envoyait `undefined`, ce qui conservait la valeur prÃ©cÃ©dente sans pouvoir la passer Ã  `false`.
+        - Correction : Ajout d'inputs cachÃ©s explicites `<input type="hidden" name="prix_tva_incluse" value={prixTvaIncluse ? 'true' : 'false'} />` et gestion du state React. CÃ´tÃ© backend, intÃ©gration d'une fonction `parseBoolVal` et d'une clause `CASE WHEN $9::boolean IS NOT NULL THEN $9::boolean ELSE ... END` garantissant la persistance exacte et immÃ©diate des deux options.
+  - **Informations LÃ©gales OHADA & Standards PDF Professionnels** :
+    - **Migration BDD** : Ajout de 7 nouvelles colonnes Ã  la table `boutiques` : `rccm`, `ninea`, `forme_juridique`, `capital_social`, `compte_bancaire`, `conditions_vente`, `pied_de_page_document`.
+    - **Backend** : Route PUT `/:id` Ã©tendue pour sauvegarder les 7 nouveaux champs. Routes GET `/mine` et GET `/:idOrSlug` Ã©tendues pour les inclure dans le SELECT.
+    - **Frontend `ParametresFiscalite.tsx`** : Refonte complÃ¨te du composant avec 4 sections :
+      1. ðŸ“Š Configuration Fiscale (rÃ©gime, TVA, timbre fiscal â€” existant)
+      2. ðŸ“‹ IdentitÃ© Juridique (RCCM, NINEA, forme juridique, capital social â€” **nouveau**)
+      3. ðŸ¦ CoordonnÃ©es Bancaires (textarea pour IBAN/RIB/SWIFT â€” **nouveau**)
+      4. ðŸ“„ Conditions GÃ©nÃ©rales de Vente (textarea + bouton modÃ¨le OHADA prÃ©-rempli â€” **nouveau**)
+    - **PDF aux standards OHADA** : Refonte complÃ¨te de la gÃ©nÃ©ration PDF (`GET /api/boutiques/:id/documents/:docId/pdf`) :
+      - En-tÃªte Ã©metteur complet : nom, forme juridique + capital, adresse, tÃ©lÃ©phone, RCCM, NINEA
+      - Bloc destinataire avec NINEA client si professionnel
+      - Date d'Ã©chÃ©ance affichÃ©e si renseignÃ©e
+      - Net Ã  payer mis en Ã©vidence (bandeau colorÃ©)
+      - CoordonnÃ©es bancaires pour rÃ¨glement en bas de facture
+      - Conditions GÃ©nÃ©rales de Vente (avec saut de page automatique si dÃ©bordement)
 
-  - **Correction du Bug Render 'Unexpected token div/main' (BoutiqueClient.tsx & TrackingPixels.tsx)** :
-    - L'erreur mystÃ©rieuse de compilation SWC pointant vers la ligne 2557 (Unexpected token div) sur Render Ã©tait en rÃ©alitÃ© une erreur de syntaxe TSX en cascade.
-    - Remplacement de la clÃ© CSS malformÃ©e `align-items: 'center'` par `alignItems: 'center'` Ã  la ligne 2638 dans BoutiqueClient.tsx, qui corrompait l'analyseur (parser) de SWC.
+      - **Audit & Correction de CohÃ©rence Photo-Produit du Catalogue Standard (`generate-catalog.js` & `catalogues-standards.json`)** :
+        - **Diagnostic Exhaustif** : Audit des 2 010 produits du Catalogue Standard PrÃ©dÃ©terminÃ©. Identification de 365 incohÃ©rences visuelles (18,15% du catalogue), causÃ©es par des filtres de mots-clÃ©s globaux sans scoping par catÃ©gorie (ex: huiles alimentaires associÃ©es Ã  des photos de vidange moteur, laits alimentaires/infantiles associÃ©s Ã  des lotions cosmÃ©tiques, TV/frigos Samsung associÃ©s Ã  des smartphones, batteries solaires associÃ©es Ã  des powerbanks, etc.).
+        - **Correction & Restructuration Category-First** : Refonte de `getPhotoForProduct(nom, cat)` dans `generate-catalog.js` pour filtrer strictement par la catÃ©gorie parente `cat` en prioritÃ© avant d'Ã©valuer les mots-clÃ©s.
+        - **RÃ©vision Globale Exhaustive des 20 CatÃ©gories & 2 010 Produits** : RÃ©vision intÃ©grale de tous les sous-types de produits dans les 20 catÃ©gories du catalogue standard (`alimentation`, `smartphones`, `informatique`, `tv-electro`, `mode`, `maison`, `auto-moto`, `jeux`, `beaute`, `sport`, `fournitures`, `quincaillerie`, `pieces-rechange`, `bijouterie`, `maraichage`, `elevage`, `produits-agricoles`, `solaire-energie`, `sante-pharma`, `bebe-enfants`).
+        - **Dictionnaire Photo Haute FidÃ©litÃ©** : Enrichissement complet des rÃ¨gles et mots-clÃ©s de `getPhotoForProduct(nom, cat)` pour couvrir 100% des sous-types (sauces, condiments, fruits, lÃ©gumes, boissons, consoles, manettes, jeux vidÃ©o, accessoires PC/TPV, piÃ¨ces auto, matÃ©riel mÃ©dical, outillage BTP, etc.).
+        - **ZÃ©ro Fallback Non SouhaitÃ© & ZÃ©ro IncohÃ©rence** : Validation automatisÃ©e confirmant **0 produit hors catÃ©gorie** et **100% de concordance photo/produit** sur les 2 010 articles du catalogue standard.
+        - **Correction Condiments & Sauces** : Remplacement de la photo de bol de chips par des visuels HD spÃ©cifiques (bouteilles de Ketchup rouges HD pour *Ketchup Heinz/Amora*, pot de sauce mayonnaise onctueuse pour *Mayonnaise CalvÃ©/Lesieur* & *Moutarde Amora*, bouteille de sauce pimentÃ©e avec piments frais pour *Sauce Piment Extra Forte* & *Harissa*, et Ã©pices/cubes d'assaisonnement pour *Bouillons Jumbo/Maggi/Knorr*).
+        - **Restriction Stricte par Forfait dans le Dashboard (`BoutiqueClient.tsx` & `globals.css`)** :
+        - Isolation stricte des accÃ¨s entre **Taf Taf (DÃ©couverte)**, **Pro** et **Business**.
+        - Correctif d'affichage & lisibilitÃ© : Ã‰largissement de la barre latÃ©rale de navigation (`.bq-sidebar`) de `220px` Ã  **`280px`**, taille de police ajustÃ©e Ã  `12.5px`, et marges optimisÃ©es pour garantir l'affichage complet Ã  100% de TOUS les intitulÃ©s de menus (`Stock & Fournisseurs`, `Ã‰quipe & AccÃ¨s`, `Factures & Devis`, etc.) sans aucun point de suspension `...`.
+        - Badges `ðŸ”’ Pro` et `ðŸ”’ Business` formatÃ©s sans aucun tronquage (`whiteSpace: nowrap`, `flexShrink: 0`, `marginLeft: 'auto'`).
+        - Le bouton rapide **`ðŸ›’ Caisse POS (Physique)`** affiche dÃ©sormais le badge `ðŸ”’ Pro` et redirige vers la mise Ã  niveau d'abonnement lorsque le plan actif n'est pas Pro ou Business.
+        - **Baguette Magique / Import Rapide par Lien (`/api/boutiques/magic-import/route.ts` & `boutiques.js`)** :
+          - CrÃ©ation de la route proxy Next.js dÃ©diÃ©e `/api/boutiques/magic-import/route.ts` avec fallback rÃ©silient si aucune session active.
+          - AmÃ©lioration de l'extraction HTML en direct (mÃ©tadonnÃ©es `og:title`, `og:description`, `og:image`) et ajout d'un parser d'URL intelligent pour AliExpress, SHEIN, Amazon.
+          - Remplissage automatique et rÃ©actif des champs (Nom, Prix estimÃ©, Description) ainsi que de **l'aperÃ§u photo instantanÃ©** dans la zone de tÃ©lÃ©versement (`setImagesExistantes(data.images)`), dÃ©bloquant automatiquement la soumission du formulaire et transmettant l'URL de l'image au backend (`POST /api/boutiques/:id/produits`).
+        - **Refonte Visuelle des Cartes & BanniÃ¨res (`frontend-next/src/app/boutiques/page.tsx` & `globals.css`)** :
+          - **Harmonisation Chromatique Globale (Ã‰radication des bleus dÃ©pareillÃ©s)** : Harmonisation complÃ¨te de la palette de couleurs vers **l'Orange Ambre Nopalou Officiel (`#C75B00`)** et le **Gris Ardoise Sombre Chic (`#0f172a`)**.
+            - Header navigation (`layout.tsx`) : Remplacement du bouton "Ma Boutique" bleu marine (`#1C2B4A`) par un Slate Sombre Chic (`#0f172a`).
+            - Hero Banner (`boutiques/page.tsx`) : Remplacement du fond bleu ciel dÃ©pareillÃ© par une nuance lumineuse chaleureuse (`linear-gradient(135deg, #ffffff 0%, #fffdfa 50%, #fff7ed 100%)`) avec bordure ambre douce (`#fed7aa`).
+            - Pilule "Hub officiel" & boutons d'action ("CrÃ©er ma boutique", "Visiter la boutique", filtre sÃ©lectionnÃ© "Toutes les boutiques") : UnifiÃ©s en Orange Ambre Nopalou (`#C75B00`) pour une identitÃ© visuelle digne d'une marque de rang mondial.
+            - Badge de statut d'ouverture ("Ouvert 7j/7") : Suppression de l'aplat vert/rouge fluo agressif au profit d'un **Design Glassmorphism Ã‰purÃ©** (fond blanc dÃ©poli translucide `rgba(255,255,255,0.92)`, Ã©criture ardoise sombre et dÃ©licate pastille Ã©meraude lumineuse).
+          - **Audit & Harmonisation de l'Ensemble des Pages Secondaires** :
+            - `/connexion` & `/inscription` (`ConnexionForm.tsx`, `InscriptionForm.tsx`) : Harmonisation des onglets de basculement Email/WhatsApp vers l'Orange Ambre Nopalou (`#C75B00`).
+            - `/creer-boutique` (`creer-boutique/page.tsx`) : Harmonisation de la barre de progression Ã  4 Ã©tapes, des titres (`#0f172a`), du bouton d'action principal et de la formule prÃ©sÃ©lectionnÃ©e en Orange Ambre Nopalou (`#C75B00`).
+            - `/annonces` & `/comparaison` (`PageHeader.tsx`, `comparaison/page.tsx`, `globals.css`) : Titres unifiÃ©s en Ardoise Sombre Chic (`#0f172a`) et cartes de verdict rehaussÃ©es d'un dÃ©gradÃ© chaleureux ambre doux (`#fff7ed`).
+        - **Refonte Globale & Ã‰purÃ©e de la Page d'Accueil (`frontend-next/src/app/page.tsx`)** :
+          - **Suppression de la pollution visuelle et des cartes encombrantes** ("Acheteurs" / "Vendeurs" sÃ©parÃ©es) : Remplacement par un Hero unique, lumineux et moderne avec fond ambre doux (`#fff7ed`).
+          - **Rapprochement Recherche â†’ CatÃ©gories â†’ Produits** : IntÃ©gration directe des 20 catÃ©gories sous forme de pilules d'action sous la barre de recherche principale.
+          - **Nouveau Bandeau de Feedback de Recherche InstantanÃ© (`SearchFeedbackBanner`)** : Affichage d'une banniÃ¨re de confirmation claire (`ðŸ”Ž X produits trouvÃ©s pour "mots-clÃ©s" â€” CatÃ©gorie : XYZ`) avec bouton d'annulation en 1 clic dÃ¨s qu'un filtre est actif.
+          - **AccÃ¨s Direct aux Produits** : La grille de produits est disposÃ©e directement sous la zone de recherche sans aucun bloc parasite au milieu.
+          - **RÃ©intÃ©gration du Raccourci Marchand dans le Hero** : Bandeau d'action directe sous les catÃ©gories : `âš¡ Vous Ãªtes commerÃ§ant ? Vendez en ligne en 30 sec (1er mois 100% offert) [CrÃ©er ma Boutique Taf Taf ðŸš€]`.
+          - **Refonte Mondiale du Tableau d'Abonnement Ã  3 Formules (`ShowcaseTabs.tsx`)** :
+            - **Boutique Taf Taf (1 mois offert)** (Gratuit 30j puis 5.000 FCFA/m) : Baguette Magique Ali/SHEIN, conversion Produit â†’ Annonce en 1-clic, Catalogue Web & WhatsApp.
+            - **Vendeur Pro (15.000 FCFA/m)** : **Caisse POS enregistreuse tactile**, **Scan EAN-13 par camÃ©ra**, **Impression d'Ã©tiquettes stickers 50x30mm**, **Carnet de CrÃ©dits Client & Relance 1-clic**, **Factures & Devis PDF**.
+            - **Business VIP (35.000 FCFA/m)** : **Multi-caissiers & droits d'Ã©quipe**, **Analytics CA & Marges nettes**, **BanniÃ¨re sponsorisÃ©e prioritaire**.
+          - **Nouvelle Section SpÃ©ciale "Nopalou Ã— WhatsApp Ecosystem" (`ShowcaseTabs.tsx`)** :
+            - **Acheteurs** : Panier Web & Commande WhatsApp 1-Clic, Connexion sans mot de passe OTP WhatsApp, Bot Assistant IA Comparateur `+221 70 871 79 42`, Alertes gratuites de baisse de prix sur WhatsApp.
+            - **CommerÃ§ants** : Notifications instantanÃ©es de commandes prÃ©-remplies, Relance d'impayÃ©s en 1 clic depuis la Caisse POS, Envoi direct de Factures & Devis PDF, Support VIP WhatsApp 7j/7.
+            - **Apporteurs** : Partage 1-clic de lien de parrainage sur statut et groupes WhatsApp, Notifications de commissions rÃ©currentes par messagerie.
+          - **Nouveau Bandeau Frise du Cycle de Vente & Livraison ComplÃ¨te (5 Ã‰tapes)** :
+            1. **ðŸ”Ž Recherche** (Comparateur & WhatsApp Bot) â†’ 2. **ðŸ›’ Commande** (Panier Web, WhatsApp & POS) â†’ 3. **ðŸ’³ Paiement** (Wave, Cash, CrÃ©dit ou Manuel) â†’ 4. **ðŸ“¦ PrÃ©paration** (Gestion des statuts en direct) â†’ 5. **ðŸšš Livraison** (Suivi & notification WhatsApp du client Ã  l'expÃ©dition).
+          - **Nettoyage Syntaxe `page.tsx`** : Suppression des balises JSX orphelines (`</div>`, `</section>`, `)}`) provenant de l'ancienne section tarifaire qui provoquaient l'erreur de build SWC.
+          - **Mise en Exergue de la Boutique Taf Taf (Design 3 Colonnes Desktop)** : Restructuration du Hero (`page.tsx`) pour utiliser l'espace vide Ã  gauche (Avantage Commande WhatsApp) et Ã  droite (Promo Boutique Taf Taf) sur grand Ã©cran, tout en restant centrÃ© sur mobile.
+          - **Ajustement UX du Hero (Hauteur des encarts & Enrichissement)** : Les encarts WhatsApp et Taf Taf s'Ã©tirent dÃ©sormais sur toute la hauteur de la grille. Pour Ã©viter la sensation de vide Ã  l'intÃ©rieur de ces encarts Ã©tirÃ©s, leur contenu a Ã©tÃ© enrichi par des listes Ã  puces persuasives (checkmarks) mettant en avant les avantages de chaque solution. Le texte "En savoir plus" de l'encart WhatsApp a Ã©tÃ© converti en un vÃ©ritable lien cliquable.
+          - **Exploitation de l'espace vide des Filtres & Alignement Parfait** : Le grand espace blanc inexploitÃ© Ã  droite des filtres ("Budget" et "Trier") a Ã©tÃ© rÃ©organisÃ© en un layout dense Ã  trois colonnes parfaitement alignÃ© horizontalement :
+            - Ã€ gauche : Filtres principaux (Budget, Tri).
+            - Au milieu : **Nouveau bloc de suggestions** (Filtre "Ã‰tat" et Tags "ðŸ”¥ Tendances" cliquables pour guider l'utilisateur). L'alignement vertical entre les deux colonnes est dÃ©sormais mathÃ©matiquement exact grÃ¢ce Ã  l'utilisation unifiÃ©e des classes `.filtres-bar` et `.budget-pill`.
+            - Ã€ droite : Encart promotionnel premium ("âš¡ DÃ©veloppez vos ventes").
+          - **Normalisation de l'IdentitÃ© Visuelle (Couleurs)** : L'encart WhatsApp utilise dÃ©sormais le vert officiel WhatsApp (`#25D366`) pour son logo SVG, ses coches et son lien, renforÃ§ant instantanÃ©ment sa reconnaissance. Les autres Ã©lÃ©ments (comme les Tendances) utilisent strictement le orange marque Nopalou (`#C75B00`).
+          - **Refonte UI Premium (Suppression du Vert et du "Tout Orange")** : 
+            - Le bouton d'en-tÃªte "Boutique Taf Taf" et la carte promotionnelle Taf Taf dans le Hero ne sont plus vert ou "100% orange". Ils utilisent dÃ©sormais un thÃ¨me "Dark Premium" (`#0f172a`) trÃ¨s Ã©lÃ©gant avec uniquement les appels Ã  l'action et les icÃ´nes (âš¡, âœ“) mis en Ã©vidence en orange Nopalou (`#C75B00`).
+            - **Modernisation structurelle de la section SEO ("Comparateur NÂ°1")** : La transition abrupte crÃ©Ã©e par l'ancienne "carte fermÃ©e" blanche a Ã©tÃ© entiÃ¨rement supprimÃ©e. La section est dÃ©sormais un layout fluide, ouvert et asymÃ©trique, parfaitement intÃ©grÃ© au flux de la page avec de gÃ©nÃ©reuses marges pour respirer. L'espace a ensuite Ã©tÃ© optimisÃ© en augmentant la largeur (`maxWidth: 1280px`) et en rÃ©duisant les espaces verticaux excessifs pour un meilleur confort visuel. L'immense vide (plus de 80px) situÃ© entre la fin de la grille de produits ("RÃ©cemment consultÃ©s") et le dÃ©but du bloc SEO a Ã©tÃ© supprimÃ© pour assurer une continuitÃ© visuelle agrÃ©able.
+          - **Architecture Stricte en 2 Lignes pour la Barre de Filtres** : Le layout a Ã©tÃ© restructurÃ© en deux rangÃ©es horizontales indÃ©pendantes pour Ã©liminer dÃ©finitivement tout comportement de wrap imprÃ©visible. La Ligne 1 concentre "Budget", "Ã‰tat" et le bouton d'action principal. La Ligne 2 gÃ¨re le "Trier", les "Tendances" et les actions secondaires (Effacer). 
+            - **Adaptation Mobile des Filtres (PWA)** : Pour pallier la disparition des appels Ã  l'action sur mobile (masquÃ©s par `hidden-mobile`), une 3Ã¨me ligne spÃ©cifique au mobile (`.visible-mobile-flex`) a Ã©tÃ© ajoutÃ©e sous les filtres. Elle donne accÃ¨s aux boutons critiques "âœ– Effacer" et "ðŸª Boutique Pro" de faÃ§on ergonomique sur smartphone.
+          - **Simplification des Appels Ã  l'Action** : Suite Ã  un effet de redondance visuelle, le badge "Vendeurs VÃ©rifiÃ©s" a Ã©tÃ© supprimÃ© pour concentrer toute l'attention sur un unique bouton ultra-premium **"âš¡ Ouvrir une Boutique Pro"** (ThÃ¨me sombre) placÃ© stratÃ©giquement Ã  droite de l'Ã‰tat sur la premiÃ¨re ligne.
+            - **Navbar Mobile Explicite** : L'icÃ´ne muette "âš¡" de l'en-tÃªte mobile a Ã©tÃ© remplacÃ©e par un bouton pilule explicite "ðŸª Boutique" (`.navbar-pill-btn`). Un lien "ðŸª Ouvrir une Boutique Pro" trÃ¨s visible a Ã©galement Ã©tÃ© ajoutÃ© dans le menu latÃ©ral (`MobileNav`) pour les visiteurs non connectÃ©s.
+          - **Correction de lien mort** : Le lien "Comment Ã§a marche ?" sur l'encart WhatsApp du Hero redirige dÃ©sormais correctement vers la page de documentation `/assistant-whatsapp` au lieu d'une ancre vide.
+          - **Refonte UI du Hero de la page Boutiques (`/boutiques`)** : Correction des problÃ¨mes d'alignement et d'espace vide. Le layout a Ã©tÃ© restructurÃ© en deux colonnes Ã©quilibrÃ©es : Ã  gauche, le texte et les deux boutons d'appel Ã  l'action principaux ; Ã  droite, les statistiques ("Boutiques actives" et "Vendeurs VÃ©rifiÃ©s") transformÃ©es en grandes cartes de rÃ©assurance pour combler harmonieusement l'espace vide. Suppression d'un bouton de crÃ©ation de boutique redondant et mal alignÃ©.
+          - **Prix Dynamiques depuis l'API** : Les offres affichent dÃ©sormais en temps rÃ©el les prix dÃ©finis dans l'Admin panel (`settings.plan_pro_prix`, `settings.plan_business_prix`, et Boutique Taf Taf Ã  2500 FCFA).
+          - **Nouvelles CatÃ©gories Globales** : Ajout d'Immobilier (ðŸ¢) et Petites Annonces (ðŸ“¢) Ã  la base de registre `categories.ts`.
+          - **Suppression des sections de bas de page dupliquÃ©es et mal alignÃ©es** : Alignement parfait et navigation ultra-fluide.
+        - **Diagnostic Exhaustif & Correction de 5 URLs IncohÃ©rentes ConfirmÃ©es** : Audit visuel systÃ©matique des 112 URLs Unsplash uniques. Identification et remplacement de 5 URLs dont le contenu visuel rÃ©el ne correspondait pas du tout aux produits assignÃ©s :
+          1. **Huile Moteur** (Total/Shell/Mobil) : Ferrari rouge â†’ bidon d'huile moteur (`photo-1635784065399`)
+          2. **Onduleur APC** (650VA/1000VA/1500VA) : gradient abstrait colorÃ© â†’ salle serveur/rack informatique (`photo-1558494949`)
+          3. **Ketchup** (Heinz/Amora) : Pikachu surpris (meme) â†’ bouteille de ketchup rouge (`photo-1472476443507`)
+          4. **Mayonnaise/Moutarde** (CalvÃ©/Lesieur/Amora) : boudin corÃ©en sunda â†’ pot de condiments/mayo (`photo-1528750717929`)
+          5. **Huile alimentaire** (Dinor/Niani/Lesieur) : olives sombres (nature morte) â†’ bouteille d'huile de cuisine dorÃ©e (`photo-1620706857370`)
+        - **RÃ©ordonnancement PrioritÃ©s Mots-clÃ©s** : DÃ©placement du match `sardines/thon/conserves` avant `huile/beurre` pour Ã©viter que "Sardines Titus Ã  l'Huile" ne soit matchÃ©e par le mot "huile".
+        - **Nouvelle Architecture de Mapping Photographique Extensible (112 â†’ 879 photos)** : 
+          1. **CrÃ©ation du script `backend/scripts/fetch-photos.js`** : Script automatisÃ© avec dictionnaire de traduction (FRâ†’EN) conÃ§u pour requÃªter l'API Unsplash, gÃ©rer intelligemment les limites de taux (rate limit), et gÃ©nÃ©rer itÃ©rativement un fichier `photo-mapping.json` couvrant les 879 produits distincts du catalogue.
+          2. **Mise Ã  jour de `backend/generate-catalog.js`** : Le gÃ©nÃ©rateur charge dÃ©sormais `photo-mapping.json` en prioritÃ©. S'il y a correspondance pour le nom de base d'un produit, il utilise l'URL spÃ©cifique ; sinon, il applique les rÃ¨gles sÃ©mantiques par mots-clÃ©s prÃ©existantes (fallback robuste garanti).
+        - **Enrichissement Manuel (Option Sans ClÃ© API)** : Pour Ã©viter la dÃ©pendance Ã  une clÃ© API tout en maximisant la fidÃ©litÃ© visuelle, ajout de dizaines de rÃ¨gles manuelles ultra-spÃ©cifiques dans `generate-catalog.js` (ex: photos HD distinctes pour les pilules, les sirops, les tensiomÃ¨tres, les masques, les vÃªtements pour bÃ©bÃ©s, les couches, etc.), portant le systÃ¨me hybride Ã  une prÃ©cision optimale sans appel rÃ©seau externe.
+
+  - **Authentification WhatsApp OTP & Inscription / Connexion Flivides** :
+    - **Back-end (`backend/routes/auth.js`)** : Ajout des routes `/whatsapp-otp-send`, `/whatsapp-otp-verify`, `/whatsapp-otp-login` et `/whatsapp-otp-register`. Support complet de l'inscription et la connexion sans mot de passe via WhatsApp OTP. Logging du code OTP en console pour faciliter le dÃ©bogage dev sans API Meta. Correction du matching SQL des numÃ©ros de tÃ©lÃ©phone (support simultanÃ© des formats `+221...`, `221...` et 9 chiffres bruts) pour Ã©viter les erreurs "Aucun compte associÃ© Ã  ce numÃ©ro" lors de la connexion.
+    - **Front-end (`frontend-next`)** : 
+      - Integration de la bascule "Email / WhatsApp" dans `ConnexionForm.tsx` et `InscriptionForm.tsx`.
+      - Fix critique du helper `setAuthCookieAction` dans `src/app/actions/auth.ts` : il dÃ©code dÃ©sormais proprement le token JWT retournÃ© par le backend pour extraire `userId` et instancier correctement la session `nopalou_session`. Cela rÃ©sout le bug oÃ¹ le tableau de bord de la boutique ne s'ouvrait pas aprÃ¨s l'inscription/connexion WhatsApp.
+      - Prise en charge et distinction claire des 3 niveaux d'abonnements dans `BoutiqueClient.tsx` :
+        - ðŸ’¼ **Business** (`#1e3a5f`)
+        - â­ **Pro** (`#C75B00`)
+        - âš¡ **Taf Taf / DÃ©couverte** (`#16a34a`, vert Ã©meraude avec label `âš¡ Taf Taf (1 mois offert)`)
+        - **Gratuit** (`#6b7280`)
+      - **Gating de fonctionnalitÃ©s & Parcours de Transition de Plan** :
+        - Marquage des sous-menus restreints (`minPlan: 'pro'` ou `minPlan: 'business'`) avec badges `ðŸ”’ Pro` et `ðŸ”’ Business` dans la navigation latÃ©rale.
+        - Ã‰cran de blocage pÃ©dagogique avec bouton d'incitation Ã  la mise Ã  niveau (`Faire Ã©voluer mon offre â†’`) vers la page `/boutique/abonnement` lorsqu'un utilisateur accÃ¨de Ã  une fonction supÃ©rieure Ã  son plan actuel.
+        - Gestion de la transition fluide (Upgrade / Downgrade / Prolongation) sur la page `/boutique/abonnement`.
+        - **Choix de forfait Ã  la crÃ©ation rapide (`/creer-boutique`)** : SÃ©lection par dÃ©faut du forfait **âš¡ Boutique Taf Taf (1 mois offert)** Ã  l'Ã©tape finale avec possibilitÃ© explicite pour l'utilisateur de choisir directement **Pro** ou **Business** avant le lancement.
+      - **En-tÃªte & Recherche Globale (`layout.tsx`, `NavbarActions.tsx` & `NavbarSearch.tsx`)** : 
+        - Recherche sous forme d'icÃ´ne compacte `ðŸ”` (comme Ã  l'origine) pour libÃ©rer et optimiser l'espace horizontal.
+        - Suppression des doublons de menus et forÃ§age de `whiteSpace: 'nowrap'` pour empÃªcher le retour Ã  la ligne des textes.
+        - Bouton direct **`ðŸª Ma Boutique`** maintenu dans les actions de droite avec affichage propre du profil (`ðŸ‘¤ NomUtilisateur`).
+      - **Restriction Stricte par Forfait dans le Dashboard (`BoutiqueClient.tsx`)** :
+        - Isolation stricte des accÃ¨s entre **Taf Taf (DÃ©couverte)**, **Pro** et **Business**.
+        - Correctif d'affichage : Badges `ðŸ”’ Pro` et `ðŸ”’ Business` formatÃ©s sans aucun tronquage (`whiteSpace: nowrap`, `flexShrink: 0`).
+        - Le bouton rapide **`ðŸ›’ Caisse POS (Physique)`** affiche dÃ©sormais le badge `ðŸ”’ Pro` et redirige vers la mise Ã  niveau d'abonnement lorsque le plan actif n'est pas Pro ou Business.
+      - **Chargement du Catalogue Standard & Import Batch (`BatchImportModal.tsx` & `route.ts`)** :
+        - CrÃ©ation de la route Next.js dÃ©diÃ©e `/api/boutiques/catalogues-standards/route.ts` faisant le relais sÃ©curisÃ© avec le backend Express.
+        - RÃ©solution dÃ©finitive de l'erreur `Impossible de charger le catalogue standard` lors de l'ouverture de l'import par lot.
+        - Validation du chargement Ã  100% des 20 catÃ©gories de produits modÃ¨les prÃ©dÃ©finis.
+
+  - **RÃ©solution du Scraper Facebook Local (Playwright Chromium) & Source Emploi** :
+    - **Correction de l'erreur `browserType.launch: Executable doesn't exist`** : RÃ©installation complÃ¨te des binaires Chromium v1228 dans `node_modules/playwright-core/.local-browsers` via `$env:PLAYWRIGHT_BROWSERS_PATH="0"; npx playwright install` sur la machine locale.
+    - **Ajout de la source emploi `badou.diop.587`** : Ajout du profil/page `badou.diop.587` dans le dictionnaire `GROUPES` de `backend/services/scraper-immo-facebook.js`.
+    - **SystÃ¨me de Suivi de Progression en Direct (`.fb-scraper-progress.json` & API)** :
+      - Affichage en console de l'avancement groupe par groupe (`ðŸ“Š [PROGRES i/N - X%] Groupe: ...`).
+      - Script PowerShell dÃ©diÃ© `backend/scripts/lancer-scraper-facebook.ps1` avec banniÃ¨re visuelle colorÃ©e et notifications Toast Windows.
+      - Refonte de `backend/scripts/scraper-facebook-auto.bat` avec `Tee-Object` : rÃ©sout l'Ã©cran noir de la console lors des lancements du planificateur tout en conservant les fichiers journaux `backend/scripts/logs/fb-scraper-*.log`.
+      - Persistance de l'Ã©tat en temps rÃ©el dans `backend/.fb-scraper-progress.json` (statut, pourcentage, groupe actuel, annonces retenues, erreurs).
+      - Endpoint API dÃ©diÃ© `GET /api/scraper/facebook/progress` pour consulter le suivi en direct depuis n'importe quel client/dashboard.
+    - **Validation du Planificateur & Scraper Local** : Validation en mode `--dry-run` avec extraction de 15 annonces retenues sur 5 groupes (Prix, CatÃ©gories, Villes).
+
+  - **Refonte & Correction Responsive Mobile (`frontend-next`)** :
+    - **Correction du DÃ©bordement Horizontal de l'En-tÃªte Navigation (`NavbarActions.tsx` & `globals.css`)** :
+      - Suppression du style inline `display: flex` dans `NavbarActions.tsx` qui outrepassait la rÃ¨gle CSS `@media (max-width: 1040px) { .navbar-actions-compte { display: none; } }`. Les boutons texte `ðŸ‘¤ Nom` et `DÃ©connexion` s'affichaient auparavant simultanÃ©ment avec la barre d'icÃ´nes mobile et le bouton hamburger, provoquant un encombrement extrÃªme et un dÃ©bordement horizontal de la page au-delÃ  de 100vw.
+      - Restauration 100% Ã  l'identique de l'affichage du profil bureau (`ðŸ‘¤ NomUtilisateur` + bouton `DÃ©connexion` rouge) dans `NavbarActions.tsx` avec styles originaux complets, combinÃ© au masquage strict via `display: none !important` uniquement en mode mobile (<= 1040px).
+      - Correction de la sur-Ã©criture de `.logo-name` sur mobile dans `globals.css` : la rÃ¨gle globale ligne 9510 (`display: inline !important`) forÃ§ait le texte "Nopalou" (100px+) sur tous les mobiles y compris sous 360px (Samsung Galaxy S8+). La suppression de ce `!important` masque le nom du logo sur mobile au profit de l'icÃ´ne N (28px), libÃ©rant ~130px d'espace libre et permettant Ã  toutes les icÃ´nes (`ðŸ’¬`, `â¤`, `ðŸª Boutique`, `ðŸ‘¤`, `â˜°`) de s'aligner avec une marge parfaite et zÃ©ro chevauchement/tronquage sur tous les Ã©crans mobiles (320px+).
+    - **Optimisation de la Colonne Centrale du Hero (`page.tsx`)** :
+      - Remplacement de `flex: '2 1 600px'` par `flex: '1 1 auto', width: '100%', maxWidth: 900, minWidth: 0` dans la colonne centrale du Hero de la page d'accueil pour s'ajuster avec fluiditÃ© sur tous les Ã©crans mobiles sans imposer une largeur de base de 600px.
+    - **Correction du DÃ©bordement sur la Fiche Produit & Tableau des Similaires (`produit/[id]/page.tsx` & `globals.css`)** :
+      - Suppression de `overflow-x: unset` sur `.similaires-section` Ã  la ligne 7719 qui forÃ§ait le tableau de 6 colonnes Ã  Ã©tirer la largeur de la page `.fiche` Ã  450px+ sur les smartphones (iPhone SE / Samsung S8+), causant un dÃ©calage du header et une bande blanche latÃ©rale. Remplacement par `overflow-x: auto !important; -webkit-overflow-scrolling: touch; width: 100%; max-width: 100%;` pour contenir le tableau en dÃ©filement tactile fluide.
+      - Ajout de `min-width: 0; word-break: break-word;` sur `.produit-fiche-nom` pour Ã©viter qu'un nom de produit long ne gonfle le titre en flex.
+    - **Correction des Cartes de Formules d'Abonnement de la Page d'Accueil (`ShowcaseTabs.tsx` & `globals.css`)** :
+      - Ajout des classes responsive `.showcase-section` et `.showcase-cards-grid`. Passage de `minmax(320px, 1fr)` Ã  `grid-template-columns: 1fr !important` sur mobile (< 768px) et ajustement des rembourrages (`24px 12px`) pour Ã©liminer tout dÃ©passement de min-width.
+      - **RÃ¨gle Globale Anti-DÃ©bordement Horizontal (`globals.css`)** :
+      - ImplÃ©mentation du confinement strict `html, body { overflow-x: hidden !important; width: 100% !important; max-width: 100vw !important; }` et `.page-container, .fiche, .site-footer { width: 100% !important; max-width: 100% !important; overflow-x: hidden; }` garantissant un affichage ajustÃ© au pixel prÃ¨s sur 100% des appareils mobiles (320px Ã  768px).
+      - **Correction Erreur PostCSS Build Render (Commit `f428318`)** : RÃ©solution de la parenthÃ¨se manquante sur la rÃ¨gle `@media (max-width: 640px)` dans `globals.css` (ligne 9875), dÃ©bloquant le build et le dÃ©ploiement automatique sur Render.
+      - **Correction du "Bandeau Confiance" du Footer (Couleur diffÃ©rente)** : Retrait de `background: rgba(255,255,255,.05)` sur `.footer-trust` dans `globals.css` pour unifier la couleur de fond du pied de page.
     - Ajout des parenthÃ¨ses manquantes pour l'invocation correcte de l'IIFE du pixel TikTok dans TrackingPixels.tsx (`}(window,document,'ttq');`).
 
   - **Correction des erreurs TypeScript bloquantes au build Render** :

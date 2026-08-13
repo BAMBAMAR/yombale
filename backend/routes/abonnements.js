@@ -1,9 +1,9 @@
 const router = require('express').Router();
-const axios  = require('axios');
 const { pool } = require('../models/db');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
 const { limiterEcriture, limiterGeneral } = require('../middlewares/rateLimit');
 const cfg = require('../lib/settingsCache');
+const wave = require('../services/wave');
 
 async function getPlans() {
   return {
@@ -56,18 +56,14 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
     const prixTotal = Math.round((prixMensuel * duree) * (1 - remise));
     const clientRef = `abmt_${userId}_${plan}_${duree}`;
 
-    const session = await axios.post(
-      'https://api.wave.com/v1/checkout/sessions',
-      {
-        amount:           prixTotal,
-        currency:         'XOF',
-        success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${plan}&type=abonnement`,
-        error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
-        client_reference: clientRef,
-      },
-      { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
-    );
-    res.json({ wave_url: session.data.wave_launch_url, session_id: session.data.id, plan, label, prix: prixTotal, duree });
+    const session = await wave.createCheckoutSession({
+      amount:           prixTotal,
+      currency:         'XOF',
+      success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${plan}&type=abonnement`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      client_reference: clientRef,
+    });
+    res.json({ wave_url: session.wave_url, session_id: session.session_id, plan, label, prix: prixTotal, duree });
   } catch (err) {
     const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Erreur Wave';
     console.error('[ABONNEMENTS INITIER]', msg);

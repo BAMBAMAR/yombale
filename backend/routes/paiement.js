@@ -6,6 +6,7 @@ const notifs   = require('../services/notifications');
 const { limiterEcriture, limiterAuth, limiterGeneral } = require('../middlewares/rateLimit');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
 const cfg = require('../lib/settingsCache');
+const wave = require('../services/wave');
 const multer = require('multer');
 const { uploadBuffer } = require('../services/cloudinary');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
@@ -175,6 +176,16 @@ async function appliquerPaiementReussi(reference, montant, methode) {
   return ref;
 }
 
+// GET /api/paiement/server-ip — Renvoie l'IP publique sortante du serveur (utile pour la Liste Blanche IP Wave)
+router.get('/server-ip', async (req, res) => {
+  try {
+    const ipRes = await axios.get('https://api.ipify.org?format=json', { timeout: 5000 });
+    res.json({ outbound_ip: ipRes.data.ip, status: 'ok' });
+  } catch (err) {
+    res.status(500).json({ error: 'Impossible de déterminer l\'IP sortante', message: err.message });
+  }
+});
+
 // POST /api/paiement/wave/initier
 router.post('/wave/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
@@ -183,40 +194,39 @@ router.post('/wave/initier', verifierToken, limiterEcriture, async (req, res) =>
     }
     const user_id  = req.user.userId;
     const { montant, produit_id } = req.body;
-    const session = await axios.post(
-      'https://api.wave.com/v1/checkout/sessions',
-      {
-        amount:           montant,
-        currency:         'XOF',
-        success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${produit_id}`,
-        error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
-        client_reference: `pm_${user_id}_${produit_id}`
-      },
-      { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
-    );
-    res.json({ wave_url: session.data.wave_launch_url, session_id: session.data.id });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+    const session = await wave.createCheckoutSession({
+      amount:           montant,
+      currency:         'XOF',
+      success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${produit_id}`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      client_reference: `pm_${user_id}_${produit_id}`,
+    });
+    res.json({ wave_url: session.wave_url, session_id: session.session_id });
+  } catch (err) {
+    const detail = err?.response?.data ?? err?.message ?? 'inconnu';
+    console.error('[wave/initier] Erreur Wave:', detail);
+    res.status(500).json({ error: err.message || 'Erreur d\'initialisation du paiement Wave', detail });
+  }
 });
 
 // POST /api/paiement/wave/webhook — appelé automatiquement par Wave
 router.post('/wave/webhook', limiterGeneral, async (req, res) => {
-  const sig      = req.headers['x-wave-signature'] || '';
-  const expected = crypto
-    .createHmac('sha256', process.env.WAVE_WEBHOOK_SECRET)
-    .update(JSON.stringify(req.body)).digest('hex');
-  const sigBuf = Buffer.from(sig, 'hex');
-  const expBuf = Buffer.from(expected, 'hex');
-  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
-    return res.status(401).json({ error: 'Signature invalide' });
+  if (!wave.verifyWebhookSignature(req)) {
+    return res.status(401).json({ error: 'Signature Wave invalide ou expirée' });
   }
 
-  const { type, data } = req.body;
-  if (type === 'checkout.session.completed') {
-    const ref = await appliquerPaiementReussi(data.client_reference, data.amount, 'wave');
-    if (data.customer_phone)
-      await notifs.confirmationCommande(data.customer_phone, ref);
+  try {
+    const { type, data } = req.body;
+    if (type === 'checkout.session.completed') {
+      const ref = await appliquerPaiementReussi(data.client_reference, data.amount, 'wave');
+      if (data.customer_phone)
+        await notifs.confirmationCommande(data.customer_phone, ref);
+    }
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('[WAVE WEBHOOK ERREUR]:', err.message);
+    res.sendStatus(200); // 200 pour éviter les boucles de retry infinies en cas de problème applicatif
   }
-  res.sendStatus(200);
 });
 
 // POST /api/paiement/annonce/initier — paiement d'une annonce classifiée (Wave)
@@ -240,19 +250,19 @@ router.post('/annonce/initier', verifierToken, limiterEcriture, async (req, res)
     const montant = prix.annonce;
     const clientRef = `ann_${userId}_${annonce_id}`;
 
-    const session = await require('axios').post(
-      'https://api.wave.com/v1/checkout/sessions',
-      {
-        amount:           montant,
-        currency:         'XOF',
-        success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${annonce_id}&type=annonce`,
-        error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
-        client_reference: clientRef,
-      },
-      { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
-    );
-    res.json({ wave_url: session.data.wave_launch_url, session_id: session.data.id });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+    const session = await wave.createCheckoutSession({
+      amount:           montant,
+      currency:         'XOF',
+      success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${annonce_id}&type=annonce`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      client_reference: clientRef,
+    });
+    res.json({ wave_url: session.wave_url, session_id: session.session_id });
+  } catch (err) {
+    const detail = err?.response?.data ?? err?.message ?? 'inconnu';
+    console.error('[annonce/initier] Erreur Wave:', detail);
+    res.status(500).json({ error: 'Erreur serveur d\'initialisation Wave', detail });
+  }
 });
 
 // POST /api/paiement/immo-sponsoring/initier — mise en avant immo 30j (Wave)
@@ -273,19 +283,19 @@ router.post('/immo-sponsoring/initier', verifierToken, limiterEcriture, async (r
 
     const clientRef = `immo_${userId}_${immo_id}`;
     const { sponsoring: prixSponsoImmo } = await getPrix();
-    const session = await axios.post(
-      'https://api.wave.com/v1/checkout/sessions',
-      {
-        amount:           prixSponsoImmo,
-        currency:         'XOF',
-        success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${immo_id}&type=immo-sponsoring`,
-        error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
-        client_reference: clientRef,
-      },
-      { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
-    );
-    res.json({ wave_url: session.data.wave_launch_url, session_id: session.data.id });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+    const session = await wave.createCheckoutSession({
+      amount:           prixSponsoImmo,
+      currency:         'XOF',
+      success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${immo_id}&type=immo-sponsoring`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      client_reference: clientRef,
+    });
+    res.json({ wave_url: session.wave_url, session_id: session.session_id });
+  } catch (err) {
+    const detail = err?.response?.data ?? err?.message ?? 'inconnu';
+    console.error('[immo-sponsoring] Erreur Wave:', detail);
+    res.status(500).json({ error: 'Erreur serveur d\'initialisation Wave', detail });
+  }
 });
 
 // POST /api/paiement/produit-sponsoring/initier — mise en avant produit 30j (Wave)
@@ -303,18 +313,14 @@ router.post('/produit-sponsoring/initier', verifierToken, limiterEcriture, async
 
     const clientRef = `prod_${userId}_${produit_id}`;
     const { sponsoring: prixSponsoProd } = await getPrix();
-    const session = await axios.post(
-      'https://api.wave.com/v1/checkout/sessions',
-      {
-        amount:           prixSponsoProd,
-        currency:         'XOF',
-        success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${produit_id}&type=produit-sponsoring`,
-        error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
-        client_reference: clientRef,
-      },
-      { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
-    );
-    res.json({ wave_url: session.data.wave_launch_url, session_id: session.data.id });
+    const session = await wave.createCheckoutSession({
+      amount:           prixSponsoProd,
+      currency:         'XOF',
+      success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${produit_id}&type=produit-sponsoring`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      client_reference: clientRef,
+    });
+    res.json({ wave_url: session.wave_url, session_id: session.session_id });
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[produit-sponsoring] erreur Wave:', detail);
@@ -340,19 +346,19 @@ router.post('/boutique-sponsoring/initier', verifierToken, limiterEcriture, asyn
 
     const clientRef = `bout_${userId}_${boutique_id}`;
     const { sponsoring: prixSponsoBout } = await getPrix();
-    const session = await axios.post(
-      'https://api.wave.com/v1/checkout/sessions',
-      {
-        amount:           prixSponsoBout,
-        currency:         'XOF',
-        success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${boutique_id}&type=boutique-sponsoring`,
-        error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
-        client_reference: clientRef,
-      },
-      { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
-    );
-    res.json({ wave_url: session.data.wave_launch_url, session_id: session.data.id });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+    const session = await wave.createCheckoutSession({
+      amount:           prixSponsoBout,
+      currency:         'XOF',
+      success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${boutique_id}&type=boutique-sponsoring`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      client_reference: clientRef,
+    });
+    res.json({ wave_url: session.wave_url, session_id: session.session_id });
+  } catch (err) {
+    const detail = err?.response?.data ?? err?.message ?? 'inconnu';
+    console.error('[boutique-sponsoring] Erreur Wave:', detail);
+    res.status(500).json({ error: 'Erreur serveur d\'initialisation Wave', detail });
+  }
 });
 
 // POST /api/paiement/orange/initier
@@ -457,19 +463,19 @@ router.post('/boost/initier', verifierToken, limiterEcriture, async (req, res) =
 
     const clientRef = `boost_${userId}_${annonce_id}`;
     const { boost: prixBoost } = await getPrix();
-    const session = await require('axios').post(
-      'https://api.wave.com/v1/checkout/sessions',
-      {
-        amount:           prixBoost,
-        currency:         'XOF',
-        success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${annonce_id}&type=boost`,
-        error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
-        client_reference: clientRef,
-      },
-      { headers: { Authorization: `Bearer ${process.env.WAVE_API_KEY}` } }
-    );
-    res.json({ wave_url: session.data.wave_launch_url });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+    const session = await wave.createCheckoutSession({
+      amount:           prixBoost,
+      currency:         'XOF',
+      success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${annonce_id}&type=boost`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      client_reference: clientRef,
+    });
+    res.json({ wave_url: session.wave_url, session_id: session.session_id });
+  } catch (err) {
+    const detail = err?.response?.data ?? err?.message ?? 'inconnu';
+    console.error('[boost/initier] Erreur Wave:', detail);
+    res.status(500).json({ error: err.message || 'Erreur Wave', detail });
+  }
 });
 
 // POST /api/paiement/manuel/declarer — le client déclare un dépôt Wave/Orange effectué manuellement

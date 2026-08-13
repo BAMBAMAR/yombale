@@ -106,6 +106,7 @@ app.use(compression());
 const BAD_USER_AGENTS = /scrapy|python-requests|go-http-client|java\/|libwww-perl|wget\/|httrack|aiohttp|httpx|curl\//i;
 
 const botBlockerMiddleware = (req, res, next) => {
+  if (req.path.includes('/webhook')) return next();
   const ua = req.headers['user-agent'] || '';
   if (BAD_USER_AGENTS.test(ua)) {
     return res.status(403).json({ error: 'Accès refusé : requête automatisée détectée (Anti-Scraping Nopalou)' });
@@ -124,7 +125,8 @@ const apiLimiter = rateLimit({
     return (
       req.path.includes('/scanner-remote') ||
       req.path.includes('/health') ||
-      req.path.includes('/analytics')
+      req.path.includes('/analytics') ||
+      req.path.includes('/webhook')
     );
   },
   message: { error: 'Trop de requêtes, veuillez réessayer dans 15 minutes.' },
@@ -152,7 +154,10 @@ app.use('/api/annonces/publiques', searchLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/admin/login', authLimiter);
-app.use('/api/paiement/', authLimiter);
+app.use('/api/paiement/', (req, res, next) => {
+  if (req.path.includes('/webhook')) return next();
+  return authLimiter(req, res, next);
+});
 
 // Sentry v8+ : l'instrumentation des requêtes est automatique (pas de middleware requis)
 
