@@ -711,9 +711,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 localStorage.setItem('nopalou_pos_active_boutique_id', data.boutique.id)
                 localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify([data.boutique]))
               }
-              setTerminalPlan(data.planActif || 'pro')
-              if (data.caissiers && Array.isArray(data.caissiers)) {
-                setCaissiersList(data.caissiers)
+              if (data.caissiers && Array.isArray(data.caissiers) && data.caissiers.length > 0) {
+                const actifs = data.caissiers.filter((c: any) => c.actif !== false)
+                setCaissiersList(actifs)
+                if (actifs.length > 0) {
+                  setCaissierSelectionneId(actifs[0].id)
+                  setCaissierNom(`${actifs[0].prenom} ${actifs[0].nom}`)
+                }
               }
               if (data.produits && Array.isArray(data.produits)) {
                 const prodsFormates = data.produits.map((p: any) => ({
@@ -1135,12 +1139,16 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     const codeSaisi = codeToTest !== undefined ? codeToTest : codePinSaisi
     if (!codeSaisi || codeSaisi.length < 4) return
 
-    const caissier = caissiersList.find(c => c.id === caissierSelectionneId)
+    const caissier = caissiersList.find(c => c.id === caissierSelectionneId) 
+      || caissiersList.find(c => c.code_pin === codeSaisi) 
+      || caissiersList[0]
+
     const isValide = caissier 
       ? codeSaisi === caissier.code_pin 
       : (codeSaisi === pinCaissier || codeSaisi === pinSuperviseur);
       
     if (isValide) {
+      if (caissier) setCaissierSelectionneId(caissier.id);
       const isSuper = caissier 
         ? (caissier.role === 'superviseur' || caissier.role === 'admin')
         : codeSaisi === pinSuperviseur;
