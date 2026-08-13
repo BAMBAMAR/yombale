@@ -125,6 +125,15 @@ async function sendWhatsAppCarousel(phone, templateName, cards) {
 // ── Interactive List Message (menu chatbot) ───────────────────────────────────
 // sections = [{ title, rows: [{ id, title, description }] }]
 async function sendWhatsAppInteractive(phone, headerText, bodyText, sections) {
+  const sanitizedSections = (sections || []).map(s => ({
+    title: (s.title || '').slice(0, 24),
+    rows: (s.rows || []).map(r => ({
+      id: r.id,
+      title: (r.title || '').slice(0, 24),
+      ...(r.description ? { description: r.description.slice(0, 72) } : {}),
+    })),
+  }));
+
   return post({
     messaging_product: 'whatsapp',
     recipient_type: 'individual',
@@ -132,12 +141,12 @@ async function sendWhatsAppInteractive(phone, headerText, bodyText, sections) {
     type: 'interactive',
     interactive: {
       type: 'list',
-      header: { type: 'text', text: headerText },
+      header: { type: 'text', text: (headerText || '').slice(0, 60) },
       body: { text: bodyText },
       footer: { text: 'Nopalou — Comparez les prix au Sénégal' },
       action: {
         button: 'Sélectionner ▾',
-        sections,
+        sections: sanitizedSections,
       },
     },
   });

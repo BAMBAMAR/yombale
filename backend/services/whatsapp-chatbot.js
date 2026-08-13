@@ -1191,10 +1191,10 @@ async function handleIncoming(msg) {
       }
     } else {
       rows = [
-        { id: 'f_dakar_wave', title: '🌊 Dakar (1 500 F) + Wave', description: 'Livraison Dakar & Wave' },
-        { id: 'f_dakar_cash', title: '💵 Dakar (1 500 F) + Cash', description: 'Livraison Dakar & Espèces' },
-        { id: 'f_banlieue_cash', title: '🚚 Banlieue (2 500 F) + Cash', description: 'Banlieue & Espèces à la livraison' },
-        { id: 'f_retrait_cash', title: '🏬 Retrait Boutique (Gratuit)', description: 'Retrait sur place (0 FCFA)' },
+        { id: 'f_dakar_wave', title: '🌊 Dakar + Wave (1500F)', description: 'Livraison Dakar & Wave' },
+        { id: 'f_dakar_cash', title: '💵 Dakar + Cash (1500F)', description: 'Livraison Dakar & Espèces' },
+        { id: 'f_banlieue_cash', title: '🚚 Banlieue + Cash (2500F)', description: 'Banlieue & Espèces à la livraison' },
+        { id: 'f_retrait_cash', title: '🏬 Retrait sur place', description: 'Retrait en boutique (0 FCFA)' },
       ];
     }
     await sendWhatsAppInteractive(

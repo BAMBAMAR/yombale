@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 13/08/2026 : Fix du Blocage du Menu Interactif WhatsApp (Sanitisation des Titres < 24 caractères Meta) (`whatsapp.js`, `whatsapp-chatbot.js`)
+- **Fix du Rejet Meta 400 Bad Request sur les Menus de Commande (`whatsapp.js` & `whatsapp-chatbot.js`)** :
+  * **Problème** : Les titres des options de livraison (`🌊 Dakar (1 500 F) + Wave`, etc.) dépassaient 24 caractères, provoquant le rejet silencieux du message interactif par la Meta Cloud API et le blocage de l'utilisateur après la saisie de son Nom/Adresse.
+  * **Solution** : Ajout d'une sanitisation automatique systématique `.slice(0, 24)` dans `sendWhatsAppInteractive` pour garantir qu'aucun message interactif WhatsApp ne puisse être rejeté pour dépassement de longueur de titre.
+
 ## 🚀 Mises à jour du 13/08/2026 : Déduction Automatique des 2% de Frais Totaux Wave (1% Encaissement + 1% Payout) (`comptabilite.js`, `wave.js`)
 - **Prise en compte des 2% de Frais de Transaction Wave sur le Reversement Marchand (`comptabilite.js`)** :
   * Calcul automatique des frais totaux Wave (1% encaissement Wave Checkout + 1% virement Wave Payout = 2% total) lors du calcul du montant net à reverser (`netAmount = montant_total - commission_nopalou - fraisWaveTotaux`).
