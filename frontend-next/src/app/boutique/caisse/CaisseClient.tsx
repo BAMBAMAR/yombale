@@ -667,6 +667,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       } else {
         localStorage.removeItem(`nopalou_pos_tickets_attente_${boutiqueActiveId}`)
       }
+    }
+  }, [ticketsEnAttente, boutiqueActiveId])
+
   // ── Persistance et restauration de la session de caisse POS ─────────────────
   useEffect(() => {
     if (typeof window !== 'undefined' && boutiqueActiveId) {
