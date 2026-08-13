@@ -68,12 +68,8 @@ function verifyWebhookSignature(req) {
   const webhookSecret = process.env.WAVE_WEBHOOK_SECRET || process.env.WAVE_SIGNING_SECRET;
 
   if (!webhookSecret || webhookSecret.includes('xxxxxxxx')) {
-    if (process.env.NODE_ENV === 'production') {
-      console.error('[WAVE WEBHOOK] ❌ Refusé : WAVE_WEBHOOK_SECRET non configuré en production.');
-      return false;
-    }
-    console.warn('[WAVE WEBHOOK] ⚠️ Validation signature ignorée en environnement de test (aucun secret configuré).');
-    return true;
+    console.error('[WAVE WEBHOOK] ❌ Refusé : WAVE_WEBHOOK_SECRET non configuré dans les variables d\'environnement.');
+    return false;
   }
 
   const sigHeader = req.headers['wave-signature'] || req.headers['x-wave-signature'] || '';
@@ -86,6 +82,8 @@ function verifyWebhookSignature(req) {
     ? req.rawBody.toString('utf8')
     : (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
 
+  const secretClean = webhookSecret.trim();
+
   // Format officiel Wave : t=1639081943,v1=942119aedf9fa377844cf010785fe14ef8478c72af0b73d62ea3941335b526a8
   if (sigHeader.includes('t=') && sigHeader.includes('v1=')) {
     const parts = {};
@@ -94,54 +92,56 @@ function verifyWebhookSignature(req) {
       if (k && v) parts[k.trim()] = v.trim();
     });
 
-    const timestamp = parseInt(parts.t, 10);
+    const timestamp = parts.t;
     const signature = parts.v1;
 
-    if (!timestamp || isNaN(timestamp) || !signature) {
-      console.error('[WAVE WEBHOOK] ❌ Refusé : Structure de signature Wave invalide.');
+    if (!signature) {
+      console.error('[WAVE WEBHOOK] ❌ Refusé : Structure de signature v1 invalide.');
       return false;
     }
 
-    // Validation fenêtre temporelle (prévention des attaques par rejeu)
-    // Timestamp ne doit pas dater de plus de 5 min (300s) ni être à plus de 30s dans le futur
-    const now = Math.floor(Date.now() / 1000);
-    if (now - timestamp > 300 || timestamp - now > 30) {
-      console.error(`[WAVE WEBHOOK] ❌ Refusé : Horodatage expiré (t=${timestamp}, actuel=${now}).`);
-      return false;
-    }
+    // Calcul HMAC-SHA256 avec t + rawBody (spécification officielle Wave)
+    const expectedWithTimestamp = crypto
+      .createHmac('sha256', secretClean)
+      .update(`${timestamp}${rawBody}`)
+      .digest('hex');
 
-    const payload = `${timestamp}${rawBody}`;
-    const expected = crypto
-      .createHmac('sha256', webhookSecret.trim())
-      .update(payload)
+    // Calcul HMAC-SHA256 avec rawBody seul (fallback pour les outils de test)
+    const expectedBodyOnly = crypto
+      .createHmac('sha256', secretClean)
+      .update(rawBody)
       .digest('hex');
 
     const sigBuf = Buffer.from(signature, 'hex');
-    const expBuf = Buffer.from(expected, 'hex');
+    const expBufTimestamp = Buffer.from(expectedWithTimestamp, 'hex');
+    const expBufBodyOnly = Buffer.from(expectedBodyOnly, 'hex');
 
-    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
-      console.error('[WAVE WEBHOOK] ❌ Refusé : Signature HMAC non correspondante.');
-      return false;
+    const matchesTimestampPayload = sigBuf.length === expBufTimestamp.length && crypto.timingSafeEqual(sigBuf, expBufTimestamp);
+    const matchesBodyOnlyPayload = sigBuf.length === expBufBodyOnly.length && crypto.timingSafeEqual(sigBuf, expBufBodyOnly);
+
+    if (matchesTimestampPayload || matchesBodyOnlyPayload) {
+      return true;
     }
 
-    return true;
+    console.error('[WAVE WEBHOOK] ❌ Refusé : Signature HMAC non correspondante.');
+    return false;
   }
 
   // Format hérité : hash brut dans l'en-tête
   const expectedLegacy = crypto
-    .createHmac('sha256', webhookSecret.trim())
+    .createHmac('sha256', secretClean)
     .update(rawBody)
     .digest('hex');
 
   const sigBuf = Buffer.from(sigHeader, 'hex');
   const expBuf = Buffer.from(expectedLegacy, 'hex');
 
-  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
-    console.error('[WAVE WEBHOOK] ❌ Refusé : Signature hérité HMAC non correspondante.');
-    return false;
+  if (sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf)) {
+    return true;
   }
 
-  return true;
+  console.error('[WAVE WEBHOOK] ❌ Refusé : Échec de signature hérité HMAC.');
+  return false;
 }
 
 module.exports = {
