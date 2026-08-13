@@ -3448,6 +3448,25 @@ router.post('/commandes/express', async (req, res) => {
 
     pool.query(`INSERT INTO analytics_events (type, boutique_id) VALUES ('commande_web', $1)`, [actualBoutiqueId]).catch(() => {});
 
+    // Notification WhatsApp au vendeur
+    try {
+      const { notifierVendeurCommande } = require('./comptabilite');
+      notifierVendeurCommande(bqRes.rows[0], {
+        reference: ref,
+        nomProduit: articles.map(a => a.nom_produit || 'Produit').join(', '),
+        quantite: articles.reduce((acc, a) => acc + (Number(a.quantite) || 1), 0),
+        montantTotal: totalGeneral,
+        fraisLivraison: fraisLiv,
+        methodePaiement: methode_paiement || 'wave',
+        clientNom: client_nom.trim(),
+        clientTelephone: client_telephone.trim(),
+        clientAdresse: client_adresse || null,
+        note: note || null,
+      }).catch(err => console.error('[EXPRESS NOTIF VENDEUR ERR]:', err.message));
+    } catch (eNotif) {
+      console.error('[EXPRESS NOTIF ERR]:', eNotif.message);
+    }
+
     // Initialisation session Wave si paiement Wave sélectionné
     if ((methode_paiement === 'wave' || methode_paiement === 'pay_wave') && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
       try {

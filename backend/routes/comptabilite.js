@@ -720,7 +720,7 @@ router.patch(
         }
       }
 
-      // Notifier le client du changement de statut
+      // Notifier le client du changement de statut sur WhatsApp
       if (commande.client_telephone) {
         const { sendWhatsAppText } = require('../services/whatsapp');
         const msgs = {
@@ -731,7 +731,21 @@ router.patch(
           annulee:        `❌ *Commande annulée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* a été annulée. Contactez la boutique pour plus d'informations.`,
         };
         const msg = msgs[req.body.statut];
-        if (msg) sendWhatsAppText(commande.client_telephone, msg).catch(() => {});
+        if (msg) {
+          sendWhatsAppText(commande.client_telephone, msg)
+            .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Statut ${req.body.statut} envoyé au ${commande.client_telephone}`))
+            .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));
+        }
+      }
+
+      // Notifier également le marchand sur son WhatsApp
+      const vendeurMobile = boutique.whatsapp || boutique.telephone;
+      if (vendeurMobile) {
+        const { sendWhatsAppText } = require('../services/whatsapp');
+        const msgVendeur = `📢 *Statut Commande Mis à Jour — ${boutique.nom}*\n\nCommande : *${commande.reference}*\nNouveau statut : *${req.body.statut.toUpperCase()}*\nClient : ${commande.client_nom} (${commande.client_telephone})`;
+        sendWhatsAppText(vendeurMobile, msgVendeur)
+          .then(() => console.log(`[WHATSAPP VENDEUR STATUS NOTIF SUCCESS] Envoyé au ${vendeurMobile}`))
+          .catch(err => console.error('[WHATSAPP VENDEUR STATUS NOTIF ERR]:', err.message));
       }
 
       res.json(commande);
