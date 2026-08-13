@@ -2402,21 +2402,88 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
 
       {/* Sidebar */}
       <aside className="bq-sidebar">
-        {/* Boutique header dans sidebar */}
-        <div className="bq-sidebar-header">
-          <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#64748b', fontWeight: 700, padding: 0, display: 'flex', alignItems: 'center', gap: 4, marginBottom: 14 }}>
-            ← Retour à mon compte
+        {/* Boutique header dans sidebar — Design System Nopalou Premium */}
+        <div className="bq-sidebar-header" style={{ paddingBottom: 16, borderBottom: '1px solid var(--pos-border, #E8DDD2)', marginBottom: 16 }}>
+          <button
+            onClick={onBack}
+            className="bq-back-btn"
+            style={{
+              background: 'var(--pos-surface2, #FAF8F5)',
+              border: '1.5px solid var(--pos-border, #E8DDD2)',
+              borderRadius: 10,
+              cursor: 'pointer',
+              fontSize: 12,
+              color: 'var(--pos-navy, #1C2B4A)',
+              fontWeight: 800,
+              padding: '6px 12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              marginBottom: 14,
+              boxShadow: '0 1px 3px rgba(26,22,18,0.05)',
+              transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #C75B00)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Mon compte</span>
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {boutique.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={boutique.logo_url} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+              <img
+                src={boutique.logo_url}
+                alt={boutique.nom}
+                style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 12, flexShrink: 0, boxShadow: '0 3px 10px rgba(26,22,18,0.12)', border: '1.5px solid #ffffff' }}
+              />
             ) : (
-              <div style={{ width: 40, height: 40, borderRadius: 8, background: '#f0f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🏪</div>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 15,
+                  fontWeight: 900,
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(199, 91, 0, 0.28)',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {boutique.nom ? boutique.nom.slice(0, 2).toUpperCase() : 'NP'}
+              </div>
             )}
-            <div style={{ minWidth: 0 }}>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{boutique.nom}</p>
-              {planActif && <span style={{ fontSize: 10, color: planColor, fontWeight: 700 }}>{planLabel}</span>}
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <p style={{ margin: '0 0 3px', fontWeight: 900, fontSize: 14, color: 'var(--pos-navy, #1C2B4A)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.02em' }}>
+                {boutique.nom}
+              </p>
+              {planActif && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: planActif === 'business' ? '#166534' : planActif === 'pro' ? '#9a3412' : '#475569',
+                    background: planActif === 'business' ? '#dcfce7' : planActif === 'pro' ? '#ffedd5' : '#f1f5f9',
+                    padding: '2px 8px',
+                    borderRadius: 12,
+                    border: `1px solid ${planActif === 'business' ? '#bbf7d0' : planActif === 'pro' ? '#fed7aa' : '#e2e8f0'}`,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  <span style={{ fontSize: 7 }}>●</span> {planActif}
+                </span>
+              )}
             </div>
           </div>
         </div>

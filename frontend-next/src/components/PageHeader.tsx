@@ -32,22 +32,57 @@ export default function PageHeader({ breadcrumb, emoji, titre, compteur, cta, ce
         style={{
           display: 'inline-flex',
           alignItems: 'center',
+          gap: 6,
           fontSize: 12,
           fontWeight: 600,
-          background: 'rgba(0,0,0,0.03)',
-          padding: '4px 14px',
+          background: 'var(--orange2, #FFF3E8)',
+          padding: '5px 14px',
           borderRadius: '20px',
-          border: '1px solid rgba(0,0,0,0.06)',
+          border: '1px solid rgba(199, 91, 0, 0.12)',
+          boxShadow: '0 1px 3px rgba(199, 91, 0, 0.05)',
           marginBottom: 14,
         }}
       >
         {breadcrumb.map((c, i) => (
-          <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
-            {i > 0 && <span style={{ margin: '0 6px', opacity: 0.35, fontSize: 11 }}>/</span>}
+          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            {i > 0 && (
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #C75B00)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            )}
             {c.href ? (
-              <Link href={c.href} style={{ color: 'var(--text3)', textDecoration: 'none' }}>{c.label}</Link>
+              <Link
+                href={c.href}
+                style={{
+                  color: 'var(--text2, #6B5E52)',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'color 0.15s ease',
+                }}
+              >
+                {i === 0 && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #C75B00)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                )}
+                <span>{c.label}</span>
+              </Link>
             ) : (
-              <span style={{ color: 'var(--text1)', fontWeight: 700 }}>{c.label}</span>
+              <span
+                style={{
+                  color: 'var(--accent, #C75B00)',
+                  fontWeight: 800,
+                  background: '#ffffff',
+                  padding: '2px 8px',
+                  borderRadius: '10px',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
+                }}
+              >
+                {c.label}
+              </span>
             )}
           </span>
         ))}
