@@ -527,38 +527,35 @@ async function creerCommandeBoutique({
   let prixUnitaire = Number(prixUnitaireManuel) || 0;
   let fraisLivraison = 0;
 
-  if (zoneLivraisonId) {
+  const validZoneId = (zoneLivraisonId && String(zoneLivraisonId).length === 36 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(zoneLivraisonId)) ? zoneLivraisonId : null;
+  const validProduitId = (produitId && String(produitId).length === 36 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(produitId)) ? produitId : null;
+
+  if (validZoneId) {
     const { rows: [zone] } = await pool.query(
-      'SELECT prix, nom FROM zones_livraison WHERE (id::text=$1 OR id=$1) AND boutique_id=$2',
-      [zoneLivraisonId, actualBoutiqueId]
+      'SELECT prix, nom FROM zones_livraison WHERE id = $1 AND boutique_id = $2',
+      [validZoneId, actualBoutiqueId]
     );
     if (zone) fraisLivraison = Number(zone.prix);
   }
 
-  if (produitId) {
+  if (validProduitId) {
     const { rows: [p] } = await pool.query(
-      'SELECT nom, prix, stock_quantite FROM boutique_produits WHERE (id::text=$1 OR id=$1) AND boutique_id=$2',
-      [produitId, actualBoutiqueId]
+      'SELECT nom, prix, stock_quantite FROM boutique_produits WHERE id = $1 AND boutique_id = $2',
+      [validProduitId, actualBoutiqueId]
     );
-    if (!p) {
-      const e = new Error('Produit introuvable');
-      e.status = 404;
-      throw e;
-    }
-    nomProduit = p.nom;
-    if (!prixUnitaire && p.prix) prixUnitaire = Number(p.prix);
-    if (p.stock_quantite !== null && p.stock_quantite < quantite) {
-      const e = new Error('Stock insuffisant');
-      e.status = 400;
-      throw e;
+    if (p) {
+      if (!nomProduitManuel && p.nom) nomProduit = p.nom;
+      if (!prixUnitaire && p.prix) prixUnitaire = Number(p.prix);
+      if (p.stock_quantite !== null && p.stock_quantite < quantite) {
+        const e = new Error('Stock insuffisant');
+        e.status = 400;
+        throw e;
+      }
     }
   }
 
   const montantTotal = prixUnitaire * quantite + fraisLivraison;
   const ref = genRefCommande();
-
-  const validProduitId = (produitId && produitId.length === 36) ? produitId : null;
-  const validZoneId = (zoneLivraisonId && zoneLivraisonId.length === 36) ? zoneLivraisonId : null;
 
   const { rows: [commande] } = await pool.query(
     `INSERT INTO commandes_boutique

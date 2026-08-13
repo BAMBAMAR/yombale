@@ -106,7 +106,8 @@ export default function DrawerCart() {
           client_telephone: clientTel.trim(),
           client_adresse: clientAdresse.trim() || undefined,
           methode_paiement: methodePaiement,
-          zone_livraison_id: zoneId || undefined,
+          zone_livraison_id: (zoneId && zoneId.length === 36) ? zoneId : undefined,
+          frais_livraison: fraisLivraison,
           source: 'web_panier',
         }),
       })
