@@ -1,15 +1,15 @@
 {
   "status": "in_progress",
   "mode": "live",
-  "groupeIndex": 10,
+  "groupeIndex": 1,
   "totalGroupes": 10,
-  "pourcentage": 100,
-  "groupeActuel": "Emploi 8",
-  "groupeUrl": "https://www.facebook.com/groups/1293527887919003",
-  "scrapes": 23,
-  "inseres": 18,
-  "doublons": 3,
-  "ignores": 2,
+  "pourcentage": 10,
+  "groupeActuel": "Groupe immo 1",
+  "groupeUrl": "https://www.facebook.com/groups/252740871421764",
+  "scrapes": 0,
+  "inseres": 0,
+  "doublons": 0,
+  "ignores": 0,
   "erreurs": [],
-  "updatedAt": "2026-08-13T00:15:52.189Z"
+  "updatedAt": "2026-08-13T00:28:06.146Z"
 }

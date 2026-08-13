@@ -1,3 +1,7 @@
+- **Fix Réactivité du Toast de Mise à Jour PWA (`RegisterSW.tsx`)** :
+  * **Problème** : Le clic sur le bandeau `🔄 Nouvelle version disponible — Mettre à jour` ne réagissait pas si le Service Worker était déjà dans l'état `active` ou sans worker `waiting` explicite.
+  * **Solution** : Refonte de la fonction `handleSwUpdate()` dans `RegisterSW.tsx` avec déclenchement systématique et garanti de `window.location.reload()`, assurant le rechargement immédiat de la page et l'application instantanée de la nouvelle version.
+
 ## 🚀 Mises à jour du 13/08/2026 : Refonte Ergonomique de la Navigation Mobile & Fix des Sous-Menus Cachés (`BoutiqueClient.tsx`, `GestionDocuments.tsx` & `globals.css`)
 - **Correction des Sous-Menus Masqués / Tronqués à Droite (`BoutiqueClient.tsx`, `GestionDocuments.tsx`, `globals.css`)** :
   * **Problème** : Sur mobile (< 640px), la barre de navigation `.bq-nav` masquait les titres de groupes (`display: none !important`) et alignait tous les 15 éléments de menu sur une seule ligne défilante horizontale avec barres de défilement masquées (`scrollbar-width: none`). Lorsque l'utilisateur cliquait sur un groupe (ex: *Commandes & Livraisons*), les autres sous-menus étaient poussés hors-écran sur la droite sans aucun indicateur visuel, laissant penser que le menu était tronqué ou incomplet. De plus, les filtres de documents (`GestionDocuments.tsx`) débordaient sur mobile.

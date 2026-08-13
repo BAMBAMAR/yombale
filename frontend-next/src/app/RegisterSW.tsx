@@ -73,16 +73,24 @@ export default function RegisterSW() {
   }, [isOnline, wasOffline])
 
   function handleSwUpdate() {
-    if (!('serviceWorker' in navigator)) return
-    navigator.serviceWorker.ready.then((reg) => {
-      if (reg.waiting) {
-        // Demander au nouveau SW de prendre le contrôle immédiatement
-        reg.waiting.postMessage({ type: 'SKIP_WAITING' })
-        setSwUpdateAvailable(false)
-        // Recharger pour appliquer la mise à jour
-        setTimeout(() => window.location.reload(), 300)
-      }
-    })
+    setSwUpdateAvailable(false)
+    if (typeof window === 'undefined') return
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready
+        .then((reg) => {
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' })
+          }
+          reg.update().catch(() => {})
+        })
+        .catch(() => {})
+        .finally(() => {
+          window.location.reload()
+        })
+    } else {
+      window.location.reload()
+    }
   }
 
   if (!mounted) return null
