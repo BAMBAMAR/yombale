@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 13/08/2026 : Intégration du Module de Paiement Wave Express Web & Redirection 1-Clic (`checkout-express/page.tsx`, `paiement.js`)
+- **Intégration du Paiement Direct Wave 1-Clic sur la Page Express Web (`checkout-express/page.tsx` & `paiement.js`)** :
+  * **Redirection automatique vers l'Application Wave** : Lors du clic sur la caisse express web avec l'option Wave (`pay=wave`), la page initialise la session Wave (`/api/paiement/wave/initier-express`) et redirige automatiquement l'acheteur vers l'application **Wave** (`wave_url`).
+  * Pre-sélection automatique du mode de paiement en fonction du paramètre de requête `pay` (`pay=wave`, `pay=cash`, etc.).
+
 ## 🚀 Mises à jour du 13/08/2026 : Ajout de Banlieue + Wave & Gestion Dynamique des Zones de Livraison (`whatsapp-chatbot.js`)
 - **Ajout de la Formule `🌊 Banlieue + Wave (2500F)` & Dynamisme BDD (`whatsapp-chatbot.js`)** :
   * Ajout de l'option combinée `🌊 Banlieue + Wave (2500F)` dans la liste par défaut des formules tout-en-un.

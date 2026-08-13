@@ -28,6 +28,7 @@ function CheckoutExpressContent() {
   const boutiqueId = searchParams.get('boutique') || searchParams.get('b') || ''
   const phoneParam = searchParams.get('phone') || searchParams.get('tel') || ''
   const nomParam = searchParams.get('nom') || ''
+  const payParam = (searchParams.get('pay') || searchParams.get('m') || '').toLowerCase()
   const quantiteParam = parseInt(searchParams.get('q') || '1', 10)
 
   const [loading, setLoading] = useState<boolean>(true)
@@ -40,7 +41,9 @@ function CheckoutExpressContent() {
   const [clientNom, setClientNom] = useState(nomParam)
   const [clientTel, setClientTel] = useState(phoneParam)
   const [clientAdresse, setClientAdresse] = useState('')
-  const [methodePaiement, setMethodePaiement] = useState<'wave' | 'orange_money' | 'cash'>('wave')
+  const [methodePaiement, setMethodePaiement] = useState<'wave' | 'orange_money' | 'cash'>(
+    payParam === 'cash' ? 'cash' : payParam === 'om' || payParam === 'orange_money' ? 'orange_money' : 'wave'
+  )
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [success, setSuccess] = useState<boolean>(false)
   const [orderRef, setOrderRef] = useState<string>('')
@@ -126,12 +129,33 @@ function CheckoutExpressContent() {
       })
 
       const data = await res.json()
-      if (!res.ok) {
-        // En cas d'API non trouvée ou erreur, générer une référence locale et confirmer
-        setOrderRef(data.reference || `CMD-${Date.now().toString(36).toUpperCase()}`)
-      } else {
-        setOrderRef(data.reference || `CMD-${Date.now().toString(36).toUpperCase()}`)
+      const referenceToUse = data.reference || `CMD-${Date.now().toString(36).toUpperCase()}`
+      setOrderRef(referenceToUse)
+
+      if (methodePaiement === 'wave') {
+        try {
+          const waveRes = await fetch(`${backendUrl}/api/paiement/wave/initier-express`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              montant: totalGlobal,
+              reference: referenceToUse,
+              nom_produit: produitInfo?.nom || 'Commande Express',
+            }),
+          }).catch(() => null)
+
+          if (waveRes && waveRes.ok) {
+            const waveData = await waveRes.json()
+            if (waveData.wave_url) {
+              window.location.href = waveData.wave_url
+              return
+            }
+          }
+        } catch (wErr) {
+          console.error('[WAVE INIT ERR]', wErr)
+        }
       }
+
       setSuccess(true)
     } catch {
       setOrderRef(`CMD-${Date.now().toString(36).toUpperCase()}`)

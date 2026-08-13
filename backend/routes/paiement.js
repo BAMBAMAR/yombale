@@ -209,6 +209,30 @@ router.post('/wave/initier', verifierToken, limiterEcriture, async (req, res) =>
   }
 });
 
+// POST /api/paiement/wave/initier-express — initialisation paiement Wave express sans token
+router.post('/wave/initier-express', limiterEcriture, async (req, res) => {
+  try {
+    const { montant, reference, nom_produit } = req.body;
+    if (!montant || Number(montant) <= 0) return res.status(400).json({ error: 'Montant invalide' });
+
+    const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+    const ref = reference || `CMD-${Date.now().toString(36).toUpperCase()}`;
+
+    const session = await wave.createCheckoutSession({
+      amount: Math.round(Number(montant)),
+      currency: 'XOF',
+      success_url: `${SITE}/paiement/succes?ref=${ref}`,
+      error_url: `${SITE}/paiement/erreur?ref=${ref}`,
+      client_reference: ref,
+    });
+    res.json({ wave_url: session.wave_url, session_id: session.session_id, reference: ref });
+  } catch (err) {
+    const detail = err?.response?.data ?? err?.message ?? 'inconnu';
+    console.error('[wave/initier-express] Erreur Wave:', detail);
+    res.status(500).json({ error: err.message || 'Erreur d\'initialisation du paiement Wave', detail });
+  }
+});
+
 // POST /api/paiement/wave/webhook — appelé automatiquement par Wave
 router.post('/wave/webhook', limiterGeneral, async (req, res) => {
   if (!wave.verifyWebhookSignature(req)) {
