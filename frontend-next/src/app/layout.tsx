@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   keywords: ['comparateur prix', 'Sénégal', 'Dakar', 'achat en ligne', 'immobilier', 'forfait télécom', 'Nopalou'],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'),
   alternates: {
-    canonical: './',
+    canonical: process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com',
   },
   authors: [{ name: 'Nopalou' }],
   publisher: 'Nopalou / Yombale',
