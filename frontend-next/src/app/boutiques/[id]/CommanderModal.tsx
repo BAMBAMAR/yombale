@@ -211,6 +211,11 @@ export default function CommanderModal({
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Erreur lors de la commande'); setLoading(false); return }
       
+      if (data.wave_url) {
+        window.location.href = data.wave_url
+        return
+      }
+
       // Sauvegarde Zero-Effort des coordonnées client
       try {
         if (nom) localStorage.setItem('nopalou_client_nom', nom)

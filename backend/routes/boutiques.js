@@ -3392,11 +3392,16 @@ router.post('/commandes/express', async (req, res) => {
       return res.status(400).json({ error: 'Au moins un article est requis dans le panier.' });
     }
 
-    const bqRes = await pool.query('SELECT id, nom FROM boutiques WHERE id = $1 AND actif = true', [boutique_id]);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(boutique_id);
+    const bqQuery = isUUID
+      ? 'SELECT id, nom FROM boutiques WHERE id = $1 AND actif = true'
+      : 'SELECT id, nom FROM boutiques WHERE (slug = $1 OR id::text = $1) AND actif = true';
+    const bqRes = await pool.query(bqQuery, [boutique_id]);
     if (!bqRes.rows[0]) {
       return res.status(400).json({ error: 'Boutique introuvable.' });
     }
 
+    const actualBoutiqueId = bqRes.rows[0].id;
     const ref = 'CMD-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
     const fraisLiv = Number(frais_livraison) || 0;
     let totalArticles = 0;
@@ -3405,8 +3410,10 @@ router.post('/commandes/express', async (req, res) => {
       let prix = Number(art.prix_unitaire);
       let nomProd = art.nom_produit || 'Produit sans nom';
 
-      if (art.produit_id) {
-        const pRes = await pool.query('SELECT id, nom, prix, stock_quantite FROM boutique_produits WHERE id = $1', [art.produit_id]);
+      const validProdId = (art.produit_id && String(art.produit_id).length === 36) ? art.produit_id : null;
+
+      if (validProdId) {
+        const pRes = await pool.query('SELECT id, nom, prix, stock_quantite FROM boutique_produits WHERE id = $1', [validProdId]);
         if (pRes.rows[0]) {
           if (!prix || isNaN(prix)) prix = Number(pRes.rows[0].prix) || 0;
           if (pRes.rows[0].nom) nomProd = pRes.rows[0].nom;
@@ -3414,7 +3421,7 @@ router.post('/commandes/express', async (req, res) => {
           // Décrémentation de stock (si géré)
           if (typeof pRes.rows[0].stock_quantite === 'number' && pRes.rows[0].stock_quantite > 0) {
             const nvStock = Math.max(0, pRes.rows[0].stock_quantite - (Number(art.quantite) || 1));
-            await pool.query('UPDATE boutique_produits SET stock_quantite = $1 WHERE id = $2', [nvStock, art.produit_id]).catch(() => {});
+            await pool.query('UPDATE boutique_produits SET stock_quantite = $1 WHERE id = $2', [nvStock, validProdId]).catch(() => {});
           }
         }
       }
@@ -3430,7 +3437,7 @@ router.post('/commandes/express', async (req, res) => {
           statut, source, methode_paiement, frais_livraison, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'en_attente', 'web', $12, $13, NOW())`,
         [
-          ref, boutique_id, art.produit_id || null, nomProd, qte, prix || 0,
+          ref, actualBoutiqueId, validProdId, nomProd, qte, prix || 0,
           totalLigne, client_nom.trim(), client_telephone.trim(), client_adresse || null, note || null,
           methode_paiement || 'wave', fraisLiv,
         ]
@@ -3439,7 +3446,32 @@ router.post('/commandes/express', async (req, res) => {
 
     const totalGeneral = totalArticles + fraisLiv;
 
-    pool.query(`INSERT INTO analytics_events (type, boutique_id) VALUES ('commande_web', $1)`, [boutique_id]).catch(() => {});
+    pool.query(`INSERT INTO analytics_events (type, boutique_id) VALUES ('commande_web', $1)`, [actualBoutiqueId]).catch(() => {});
+
+    // Initialisation session Wave si paiement Wave sélectionné
+    if ((methode_paiement === 'wave' || methode_paiement === 'pay_wave') && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
+      try {
+        const wave = require('../services/wave');
+        const waveSession = await wave.createCheckoutSession({
+          amount: Number(totalGeneral),
+          currency: 'XOF',
+          success_url: `${process.env.FRONTEND_URL}/paiement/succes?ref=${ref}&type=commande-express`,
+          error_url: `${process.env.FRONTEND_URL}/paiement/erreur`,
+          client_reference: ref,
+        });
+        return res.status(201).json({
+          succes: true,
+          reference: ref,
+          montant_total: totalGeneral,
+          statut: 'en_attente',
+          wave_url: waveSession.wave_url,
+          session_id: waveSession.session_id,
+          message: 'Commande enregistrée. Redirection vers Wave…'
+        });
+      } catch (waveErr) {
+        console.error('[EXPRESS WAVE INIT ERR]:', waveErr.message);
+      }
+    }
 
     res.status(201).json({
       succes: true,
