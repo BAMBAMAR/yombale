@@ -4,9 +4,10 @@
   * **Solution** : Appel immédiat de `setLoading(false)` dès la récupération du cache et dans le bloc `.finally()`. Les statistiques comptables s'affichent désormais en 0 ms hors-ligne.
 - **Préchargement des Compteurs du Tableau de Bord (`BoutiqueClient.tsx`)** :
   * Mise en cache locale des indicateurs de la vue d'ensemble (`nopalou_offline_dash_counts_${boutique.id}`). Les nombres de produits et alertes de stock s'affichent immédiatement sans temporisation.
-- **Ajout des Liens Explicites "Retour à mon compte" (`BoutiqueClient.tsx`, `sw.ts`)** :
+- **Ajout des Liens Explicites "Retour à mon compte" & Incrément PWA v6 (`BoutiqueClient.tsx`, `sw.ts`, `public/sw.js`)** :
   * Modification du bouton d'en-tête de la sidebar en `← Retour à mon compte`.
-  * Ajout du bouton `👤 Mon compte marchand ↗` dans les raccourcis de la boutique et `👤 Retourner à mon compte` sur la page de secours PWA hors-ligne (`sw.ts`).
+  * Ajout du bouton `👤 Mon compte marchand ↗` dans les raccourcis de la boutique et `👤 Retourner à mon compte` sur la page de secours PWA hors-ligne (`sw.ts` & bundle compilé `public/sw.js`).
+  * Incrémentation de la version des caches Service Worker à `v6` (`CACHE_VERSION = 'v6'`) pour forcer le rafraîchissement immédiat de la page hors-ligne chez les utilisateurs.
 - **Disparition Automatique du Toast de Connexion (`RegisterSW.tsx`)** :
   * Ajout d'un `useEffect` dédié sur `showOnlineToast` garantissant le masquage automatique du toast vert `✅ Connexion Internet rétablie` après 3,5 secondes.
 
