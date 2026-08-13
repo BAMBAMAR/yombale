@@ -65,8 +65,14 @@ export default function SuiviCommandePage() {
       <div style={{ maxWidth: 650, margin: '0 auto' }}>
         
         {/* Header */}
-        <div style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#C75B00', fontWeight: 700, marginBottom: 20 }}>
-          <Link href="/" style={{ color: '#C75B00', textDecoration: 'none' }}>← Retour à l&apos;accueil Nopalou</Link>
+        <div style={{ marginBottom: 20 }}>
+          <Link href="/" className="annonce-back">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Retour à l&apos;accueil Nopalou</span>
+          </Link>
         </div>
 
         <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '28px 24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', marginBottom: 24 }}>

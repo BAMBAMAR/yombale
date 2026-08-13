@@ -274,11 +274,21 @@ export default async function AnnoncesPage({
       {totalPages > 1 && (
         <div className="annonces-pagination">
           {page > 1 && (
-            <Link href={pageUrl(page - 1)} className="pag-btn">← Précédent</Link>
+            <Link href={pageUrl(page - 1)} className="pag-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              <span>Précédent</span>
+            </Link>
           )}
           <span className="pag-info">Page {page} / {totalPages}</span>
           {page < totalPages && (
-            <Link href={pageUrl(page + 1)} className="pag-btn">Suivant →</Link>
+            <Link href={pageUrl(page + 1)} className="pag-btn">
+              <span>Suivant</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Link>
           )}
         </div>
       )}

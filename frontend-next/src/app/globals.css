@@ -7000,30 +7000,49 @@ a {
   color: var(--text2);
 }
 
+/* ── Boutons de Retour & Pagination Nopalou Premium ────────────────── */
 .annonces-pagination {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 24px 0;
+  gap: 12px;
+  padding: 28px 0;
 }
 
-.pag-btn {
+.pag-btn, .page-btn, .budget-pill, .wizard-back, .annonce-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 16px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius);
+  border: 1.5px solid var(--pos-border, #E8DDD2);
+  border-radius: 12px;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--navy);
-  background: var(--card);
-  transition: border-color .15s;
+  font-weight: 700;
+  color: var(--pos-navy, #1C2B4A);
+  background: var(--pos-surface2, #FAF8F5);
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(26,22,18,0.05);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
 }
 
-.pag-btn:hover { border-color: var(--accent); color: var(--accent); }
+.pag-btn:hover, .page-btn:hover, .budget-pill:hover, .wizard-back:hover, .annonce-back:hover {
+  border-color: var(--accent, #C75B00);
+  color: var(--accent, #C75B00);
+  background: var(--pos-primary-bg, #FFF3E8);
+  transform: translateX(-3px);
+  box-shadow: 0 3px 10px rgba(199, 91, 0, 0.14);
+}
 
 .pag-info {
   font-size: 13px;
-  color: var(--text3);
+  font-weight: 800;
+  color: var(--pos-navy, #1C2B4A);
+  background: var(--pos-surface, #ffffff);
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--pos-border, #E8DDD2);
+  box-shadow: 0 1px 3px rgba(26,22,18,0.04);
 }
 
 /* ── Annonce détail (Sprint 13) ────────────────────────────────── */

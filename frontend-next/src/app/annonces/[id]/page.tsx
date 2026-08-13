@@ -218,8 +218,12 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
           </div>
 
           <div className="annonce-contact-nav">
-            <Link href="/annonces" className="annonce-contact-back">
-              ← Retour aux annonces
+            <Link href="/annonces" className="annonce-back">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              <span>Retour aux annonces</span>
             </Link>
             <Link href="/deposer-annonce" className="annonce-contact-deposer">
               + Publier une annonce
