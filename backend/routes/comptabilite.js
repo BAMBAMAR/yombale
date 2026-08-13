@@ -612,7 +612,11 @@ router.post(
           });
           return res.status(201).json({ commande, wave_url: waveSession.wave_url, session_id: waveSession.session_id, message: 'Commande créée. Redirection vers Wave…' });
         } catch (waveErr) {
-          console.error('[COMMANDE WAVE INIT ERR]:', waveErr.response?.data || waveErr.message);
+          const waveMsg = waveErr.response?.data?.message || waveErr.response?.data?.code || waveErr.message;
+          console.error('[COMMANDE WAVE INIT ERR]:', waveMsg);
+          return res.status(400).json({
+            error: `Erreur Wave API: ${waveMsg}. (Vérifiez la liste blanche IP dans le portail Wave).`
+          });
         }
       }
 

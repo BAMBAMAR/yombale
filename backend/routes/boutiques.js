@@ -3488,7 +3488,11 @@ router.post('/commandes/express', async (req, res) => {
           message: 'Commande enregistrée. Redirection vers Wave…'
         });
       } catch (waveErr) {
-        console.error('[EXPRESS WAVE INIT ERR]:', waveErr.response?.data || waveErr.message);
+        const waveMsg = waveErr.response?.data?.message || waveErr.response?.data?.code || waveErr.message;
+        console.error('[EXPRESS WAVE INIT ERR]:', waveMsg);
+        return res.status(400).json({
+          error: `Erreur Wave API: ${waveMsg}. (Si IP non autorisée, ajoutez l'IP de votre serveur Render à la liste blanche Wave).`
+        });
       }
     }
 
