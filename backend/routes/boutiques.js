@@ -3394,8 +3394,8 @@ router.post('/commandes/express', async (req, res) => {
 
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(boutique_id);
     const bqQuery = isUUID
-      ? 'SELECT id, nom FROM boutiques WHERE id = $1 AND actif = true'
-      : 'SELECT id, nom FROM boutiques WHERE (slug = $1 OR id::text = $1) AND actif = true';
+      ? 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE id = $1 AND actif = true'
+      : 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (slug = $1 OR id::text = $1) AND actif = true';
     const bqRes = await pool.query(bqQuery, [boutique_id]);
     if (!bqRes.rows[0]) {
       return res.status(400).json({ error: 'Boutique introuvable.' });

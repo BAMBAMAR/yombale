@@ -476,12 +476,28 @@ async function notifierVendeurCommande(boutique, {
   reference, nomProduit, quantite, montantTotal, fraisLivraison,
   methodePaiement, clientNom, clientTelephone, clientAdresse, note,
 }) {
-  const vendeurTel = boutique.whatsapp || boutique.telephone;
-  if (!vendeurTel) return;
+  let vendeurTel = boutique.whatsapp || boutique.telephone;
+
+  // Repli sur le téléphone de l'utilisateur propriétaire de la boutique si manquant sur la boutique
+  if (!vendeurTel && boutique.utilisateur_id) {
+    try {
+      const uRes = await pool.query('SELECT telephone FROM utilisateurs WHERE id=$1', [boutique.utilisateur_id]);
+      if (uRes.rows[0]?.telephone) vendeurTel = uRes.rows[0].telephone;
+    } catch (eU) {}
+  }
+
+  if (!vendeurTel) {
+    console.warn(`[WHATSAPP NOTIF VENDEUR] ⚠️ Impossible d'envoyer la notif : Aucun téléphone/whatsapp configuré pour la boutique "${boutique.nom}"`);
+    return;
+  }
+
   const { sendWhatsAppText } = require('../services/whatsapp');
   const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement' };
   const msg = `🛒 *Nouvelle commande — ${boutique.nom}*\n\nRéf : *${reference}*\nProduit : ${nomProduit} × ${quantite}${montantTotal > 0 ? `\nMontant : *${new Intl.NumberFormat('fr-FR').format(montantTotal)} FCFA*` : ''}${fraisLivraison > 0 ? `\nLivraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA` : ''}\n💳 Paiement souhaité : ${methodeLabel[methodePaiement] || methodePaiement}\n\n👤 Client : ${clientNom}\n📞 ${clientTelephone}${clientAdresse ? `\n📍 ${clientAdresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\n⚡ Répondez vite pour confirmer !`;
-  sendWhatsAppText(vendeurTel, msg).catch(() => {});
+
+  sendWhatsAppText(vendeurTel, msg)
+    .then(() => console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} envoyée à ${vendeurTel}`))
+    .catch(err => console.error(`[WHATSAPP VENDEUR NOTIF ERR]:`, err.message));
 }
 
 // Logique de création de commande, partagée entre la route HTTP publique
