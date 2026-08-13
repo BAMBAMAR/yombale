@@ -1,3 +1,11 @@
+## 🚀 Mises à jour du 13/08/2026 : Resolution de la 404 sur le Bouton du Template WhatsApp (`immo/boutique/page.tsx`, `immo/[id]/page.tsx`, `next.config.js`)
+- **Fix de la Redirection 404 du Bouton *"Voir les détails"* WhatsApp (`immo/boutique/page.tsx` & `next.config.js`)** :
+  * **Problème** : Le template Meta `nopalou_fiche_texte` est enregistré chez Meta avec une URL de bouton fixe `https://nopalou.com/immo/{{1}}`. Lors de l'envoi du paramètre `boutique?tab=commandes`, le bouton cliquable WhatsApp générait l'URL `https://nopalou.com/immo/boutique?tab=commandes` qui renvoyait vers une page 404.
+  * **Solution** :
+    1. Création de la route dédiée `frontend-next/src/app/immo/boutique/page.tsx` redirigeant automatiquement vers `/boutique?tab=commandes`.
+    2. Ajout de la règle de redirection globale dans `next.config.js` (`/immo/boutique` ➔ `/boutique?tab=commandes`).
+    3. Ajout d'une gestion de secours intelligente dans `immo/[id]/page.tsx` redirigeant `/immo/boutique` vers `/boutique?tab=commandes` et les annonces classifiées vers `/annonces/[id]`.
+
 ## 🚀 Mises à jour du 13/08/2026 : Correction de la Restriction Meta 24h & Intégration du Lien Direct vers les Commandes (`comptabilite.js`, `whatsapp-chatbot.js`)
 - **Fix de la Restriction Meta WhatsApp des 24 Heures (Code 131047)** :
   * **Problème identifié via les logs** : Meta Cloud API échouait l'envoi des notifications texte aux vendeurs qui n'avaient pas écrit au bot WhatsApp dans les 24h avec l'erreur `131047 (Re-engagement message / 24 hours window)`.

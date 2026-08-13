@@ -35,6 +35,16 @@ const nextConfig = {
     return config
   },
 
+  async redirects() {
+    return [
+      {
+        source: '/immo/boutique',
+        destination: '/boutique?tab=commandes',
+        permanent: false,
+      },
+    ]
+  },
+
   async rewrites() {
     return {
       beforeFiles: [],

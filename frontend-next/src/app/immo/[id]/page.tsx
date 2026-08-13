@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { apiFetch } from '@/lib/api';
@@ -89,6 +89,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   try {
     const { id } = await params;
+    if (id === 'boutique') {
+      return { title: 'Mes commandes' };
+    }
     const annonce = await apiFetch<AnnonceImmo>(`/immo/${id}`);
     const localisation = [annonce.quartier, annonce.ville].filter(Boolean).join(', ');
     const titre = `${annonce.titre}${localisation ? ` — ${localisation}` : ''} | Nopalou Immo`;
@@ -123,6 +126,11 @@ export default async function FicheImmoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  if (id === 'boutique') {
+    redirect('/boutique?tab=commandes');
+  }
+
   let annonce: AnnonceImmo;
   let similaires: AnnonceSimilaire[] = [];
   const session = await getOptionalSession();
@@ -130,7 +138,13 @@ export default async function FicheImmoPage({
   try {
     annonce = await apiFetch<AnnonceImmo>(`/immo/${id}`);
   } catch {
-    notFound();
+    // Redirection de secours si c'est une annonce classifiée standard (bouton template Meta)
+    try {
+      await apiFetch(`/annonces/${id}`);
+      redirect(`/annonces/${id}`);
+    } catch {
+      notFound();
+    }
   }
 
   await apiFetch<{ annonces: AnnonceSimilaire[] }>(`/immo/${id}/similaires`)
