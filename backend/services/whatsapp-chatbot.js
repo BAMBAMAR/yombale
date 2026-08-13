@@ -1182,18 +1182,27 @@ async function handleIncoming(msg) {
       client_telephone: context.commande?.client_telephone || phone,
     };
 
-    const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 10', [boutique.id]);
+    const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 5', [boutique.id]);
     let rows = [];
     if (zones.rows.length > 0) {
-      rows = zones.rows.map(z => ({ id: `zone_${z.id}`, title: z.nom.slice(0, 24), description: prixFmt(Number(z.prix)) }));
+      for (const z of zones.rows) {
+        rows.push({ id: `f_z_${z.id}_wave`, title: `🌊 ${z.nom.slice(0, 18)} (Wave)`, description: `${prixFmt(Number(z.prix))} — Payez par Wave` });
+        rows.push({ id: `f_z_${z.id}_cash`, title: `💵 ${z.nom.slice(0, 18)} (Cash)`, description: `${prixFmt(Number(z.prix))} — Cash à la livraison` });
+      }
     } else {
       rows = [
-        { id: 'zone_def_dakar', title: '📍 Dakar (Intra-Muros)', description: '1 500 FCFA' },
-        { id: 'zone_def_retrait', title: '🏬 Retrait en boutique', description: 'Gratuit (0 FCFA)' },
-        { id: 'zone_def_banlieue', title: '🚚 Banlieue (Pikine...)', description: '2 500 FCFA' },
+        { id: 'f_dakar_wave', title: '🌊 Dakar (1 500 F) + Wave', description: 'Livraison Dakar & Wave' },
+        { id: 'f_dakar_cash', title: '💵 Dakar (1 500 F) + Cash', description: 'Livraison Dakar & Espèces' },
+        { id: 'f_banlieue_cash', title: '🚚 Banlieue (2 500 F) + Cash', description: 'Banlieue & Espèces à la livraison' },
+        { id: 'f_retrait_cash', title: '🏬 Retrait Boutique (Gratuit)', description: 'Retrait sur place (0 FCFA)' },
       ];
     }
-    await sendWhatsAppInteractive(phone, 'Livraison', 'Choisissez votre mode/zone de livraison :', [{ title: 'Options Livraison', rows }]);
+    await sendWhatsAppInteractive(
+      phone,
+      'Livraison & Paiement',
+      'Choisissez votre formule tout-en-un :',
+      [{ title: 'Formules Tout-en-un', rows }]
+    );
     await setSession(phone, 'COMMANDE_ZONE', { boutique, commande: commandeComplete });
     return;
   }
@@ -1250,35 +1259,57 @@ async function handleIncoming(msg) {
       await envoyerMenuBoutique(phone, boutique);
       return;
     }
-    let zoneNom = 'Livraison standard';
-    let fraisLivraison = 0;
+    let zoneNom = 'Dakar (Intra-Muros)';
+    let fraisLivraison = 1500;
     let zoneId = null;
+    let methodePaiement = 'wave';
 
-    if (interactiveId === 'zone_def_dakar') {
+    if (interactiveId === 'f_dakar_wave' || interactiveId === 'zone_def_dakar') {
       zoneNom = 'Dakar (Intra-Muros)';
       fraisLivraison = 1500;
-    } else if (interactiveId === 'zone_def_retrait') {
-      zoneNom = 'Retrait en boutique (gratuit)';
-      fraisLivraison = 0;
-    } else if (interactiveId === 'zone_def_banlieue') {
+      methodePaiement = 'wave';
+    } else if (interactiveId === 'f_dakar_cash') {
+      zoneNom = 'Dakar (Intra-Muros)';
+      fraisLivraison = 1500;
+      methodePaiement = 'cash';
+    } else if (interactiveId === 'f_banlieue_cash' || interactiveId === 'zone_def_banlieue') {
       zoneNom = 'Banlieue';
       fraisLivraison = 2500;
+      methodePaiement = 'cash';
+    } else if (interactiveId === 'f_retrait_cash' || interactiveId === 'zone_def_retrait') {
+      zoneNom = 'Retrait en boutique (gratuit)';
+      fraisLivraison = 0;
+      methodePaiement = 'cash';
     } else {
-      const zoneMatch = interactiveId.match(/^zone_(.+)$/);
-      if (zoneMatch) {
-        const { rows: [zone] } = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE id=$1 AND boutique_id=$2', [zoneMatch[1], boutique.id]);
+      const customMatch = interactiveId.match(/^f_z_(.+)_(wave|cash)$/);
+      if (customMatch) {
+        const [_, zId, mType] = customMatch;
+        const { rows: [zone] } = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE id=$1 AND boutique_id=$2', [zId, boutique.id]);
         if (zone) {
           zoneId = zone.id;
           zoneNom = zone.nom;
           fraisLivraison = Number(zone.prix);
+          methodePaiement = mType;
+        }
+      } else {
+        const zoneMatch = interactiveId.match(/^zone_(.+)$/);
+        if (zoneMatch) {
+          const { rows: [zone] } = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE id=$1 AND boutique_id=$2', [zoneMatch[1], boutique.id]);
+          if (zone) {
+            zoneId = zone.id;
+            zoneNom = zone.nom;
+            fraisLivraison = Number(zone.prix);
+          }
         }
       }
     }
-    await envoyerRecapCommande(phone, boutique, {
+
+    await envoyerRecapFinal(phone, boutique, {
       ...context.commande,
       zone_livraison_id: zoneId,
       zone_nom: zoneNom,
       frais_livraison: fraisLivraison,
+      methode_paiement: methodePaiement,
     });
     return;
   }
