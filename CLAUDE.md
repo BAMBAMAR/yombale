@@ -1,3 +1,15 @@
+## 🚀 Mises à jour du 13/08/2026 : Préchargement Hors-Ligne des Dashboards & Liens "Retour à mon compte" (`Comptabilite.tsx`, `BoutiqueClient.tsx`, `RegisterSW.tsx`, `sw.ts`)
+- **Fix du Blocage par Squelette de Chargement Hors-Ligne (`Comptabilite.tsx`)** :
+  * **Problème** : En mode hors-ligne, les données du tableau de bord comptable étaient bien lues depuis `localStorage`, mais `setLoading(false)` n'était pas exécuté lors de la présence du cache local. Le composant restait bloqué à `loading = true`, affichant des rectangles de chargement beiges indéfiniment.
+  * **Solution** : Appel immédiat de `setLoading(false)` dès la récupération du cache et dans le bloc `.finally()`. Les statistiques comptables s'affichent désormais en 0 ms hors-ligne.
+- **Préchargement des Compteurs du Tableau de Bord (`BoutiqueClient.tsx`)** :
+  * Mise en cache locale des indicateurs de la vue d'ensemble (`nopalou_offline_dash_counts_${boutique.id}`). Les nombres de produits et alertes de stock s'affichent immédiatement sans temporisation.
+- **Ajout des Liens Explicites "Retour à mon compte" (`BoutiqueClient.tsx`, `sw.ts`)** :
+  * Modification du bouton d'en-tête de la sidebar en `← Retour à mon compte`.
+  * Ajout du bouton `👤 Mon compte marchand ↗` dans les raccourcis de la boutique et `👤 Retourner à mon compte` sur la page de secours PWA hors-ligne (`sw.ts`).
+- **Disparition Automatique du Toast de Connexion (`RegisterSW.tsx`)** :
+  * Ajout d'un `useEffect` dédié sur `showOnlineToast` garantissant le masquage automatique du toast vert `✅ Connexion Internet rétablie` après 3,5 secondes.
+
 - **Fix Réactivité du Toast de Mise à Jour PWA (`RegisterSW.tsx`)** :
   * **Problème** : Le clic sur le bandeau `🔄 Nouvelle version disponible — Mettre à jour` ne réagissait pas si le Service Worker était déjà dans l'état `active` ou sans worker `waiting` explicite.
   * **Solution** : Refonte de la fonction `handleSwUpdate()` dans `RegisterSW.tsx` avec déclenchement systématique et garanti de `window.location.reload()`, assurant le rechargement immédiat de la page et l'application instantanée de la nouvelle version.

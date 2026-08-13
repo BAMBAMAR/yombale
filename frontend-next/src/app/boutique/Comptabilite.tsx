@@ -47,17 +47,26 @@ function DashboardView({ boutiqueId }: { boutiqueId: string }) {
     const cacheKey = `nopalou_offline_compta_dash_${boutiqueId}`
     const cached = localStorage.getItem(cacheKey)
     if (cached) {
-      try { setData(JSON.parse(cached)) } catch(e) {}
+      try {
+        const parsed = JSON.parse(cached)
+        if (parsed) {
+          setData(parsed)
+          setLoading(false)
+        }
+      } catch(e) {}
     }
-    if (!cached) setLoading(true)
 
-    getDashboard(boutiqueId).then(d => { 
-      setData(d)
-      localStorage.setItem(cacheKey, JSON.stringify(d))
-      setLoading(false) 
-    }).catch(() => {
-      if (!cached) setLoading(false)
-    })
+    getDashboard(boutiqueId)
+      .then(d => { 
+        if (d) {
+          setData(d)
+          localStorage.setItem(cacheKey, JSON.stringify(d))
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setLoading(false)
+      })
   }, [boutiqueId])
 
   if (loading) return (

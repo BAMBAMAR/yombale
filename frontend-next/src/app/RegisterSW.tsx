@@ -65,12 +65,16 @@ export default function RegisterSW() {
           reg.update().catch(() => {})
         })
       }
-
-      // Masquer le toast après 4s
-      const timer = setTimeout(() => setShowOnlineToast(false), 4000)
-      return () => clearTimeout(timer)
     }
   }, [isOnline, wasOffline])
+
+  // Masquage garanti du toast "Connexion Internet rétablie" après 3.5 secondes
+  useEffect(() => {
+    if (showOnlineToast) {
+      const timer = setTimeout(() => setShowOnlineToast(false), 3500)
+      return () => clearTimeout(timer)
+    }
+  }, [showOnlineToast])
 
   function handleSwUpdate() {
     setSwUpdateAvailable(false)

@@ -48,6 +48,7 @@ const FALLBACK_HTML = `<!DOCTYPE html>
       <button onclick="location.reload()">🔄 Réessayer la connexion</button>
       <button onclick="window.history.back()" class="btn btn-sec">🔙 Revenir à la page précédente</button>
       <a href="/boutique/caisse" class="btn btn-sec">🛒 Retourner à la Caisse POS</a>
+      <a href="/compte" class="btn btn-sec">👤 Retourner à mon compte</a>
       <a href="/" class="btn btn-sec">🏠 Consulter l'Accueil (Cache)</a>
     </div>
   </div>

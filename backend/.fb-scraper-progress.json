@@ -1,15 +1,16 @@
 {
-  "status": "in_progress",
+  "status": "completed",
   "mode": "live",
   "groupeIndex": 1,
   "totalGroupes": 10,
-  "pourcentage": 10,
-  "groupeActuel": "Groupe immo 1",
-  "groupeUrl": "https://www.facebook.com/groups/252740871421764",
+  "pourcentage": 100,
+  "groupeActuel": "Terminé",
   "scrapes": 0,
   "inseres": 0,
   "doublons": 0,
   "ignores": 0,
-  "erreurs": [],
-  "updatedAt": "2026-08-13T00:28:06.146Z"
+  "erreurs": [
+    "Groupe immo 1: Session Facebook invalidée (mur de connexion détecté) — relancez : node backend/scripts/fb-login-setup.js"
+  ],
+  "updatedAt": "2026-08-13T00:30:41.270Z"
 }

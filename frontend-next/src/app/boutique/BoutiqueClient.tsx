@@ -2095,12 +2095,25 @@ function BoutiqueDashboard({
 
   useEffect(() => {
     let active = true
+    const cacheKey = `nopalou_offline_dash_counts_${boutique.id}`
+    const cached = localStorage.getItem(cacheKey)
+    if (cached) {
+      try {
+        const { count, alerts } = JSON.parse(cached)
+        if (typeof count === 'number') setProduitsCount(count)
+        if (typeof alerts === 'number') setStockAlertsCount(alerts)
+        setLoading(false)
+      } catch (e) {}
+    }
+
     getBoutiqueProduits(boutique.id)
       .then(produits => {
         if (!active) return
-        setProduitsCount(produits.length)
-        const alerts = produits.filter(p => !p.en_stock || ((p.quantite_stock ?? p.stock_quantite) !== null && (p.quantite_stock ?? p.stock_quantite)! <= 3))
-        setStockAlertsCount(alerts.length)
+        const count = produits.length
+        const alerts = produits.filter(p => !p.en_stock || ((p.quantite_stock ?? p.stock_quantite) !== null && (p.quantite_stock ?? p.stock_quantite)! <= 3)).length
+        setProduitsCount(count)
+        setStockAlertsCount(alerts)
+        localStorage.setItem(cacheKey, JSON.stringify({ count, alerts }))
       })
       .catch(() => {})
       .finally(() => { if (active) setLoading(false) })
@@ -2393,8 +2406,8 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
       <aside className="bq-sidebar">
         {/* Boutique header dans sidebar */}
         <div className="bq-sidebar-header">
-          <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#9ca3af', padding: 0, display: 'flex', alignItems: 'center', gap: 4, marginBottom: 14 }}>
-            ← Retour
+          <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#64748b', fontWeight: 700, padding: 0, display: 'flex', alignItems: 'center', gap: 4, marginBottom: 14 }}>
+            ← Retour à mon compte
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {boutique.logo_url ? (
@@ -2578,6 +2591,10 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer"
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#6b7280', textDecoration: 'none', borderRadius: 6 }}>
             Voir la boutique ↗
+          </a>
+          <a href="/compte"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#1e3a5f', textDecoration: 'none', borderRadius: 6, fontWeight: 700, background: '#f1f5f9' }}>
+            👤 Mon compte marchand ↗
           </a>
         </div>
       </aside>
