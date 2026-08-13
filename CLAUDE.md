@@ -2310,3 +2310,6 @@ avigator.vibrate(35) lors de l'ajout d'un produit au panier sur mobile/tablette 
   - **Design Ticket Poinçonné** : Effet d'encoches semi-circulaires en haut du ticket de caisse via .ticket-section::before.
   - **Écran PIN & Modale Session Fermée** : Remplacement des couleurs génériques Slate par la palette chaude Nopalou (sable #F4F1EC, orange #C75B00, marine #1C2B4A).
   - **Mini-strip KPIs Session** : Affichage d'un résumé instantané (CA du jour, nombre de ventes, montant espèces) au centre du ticket vide lorsque la session est active.
+- **Correction du blocage du bouton Encaissement & Affichage du CA Session (CaisseClient.tsx)** :
+  - **Correction du spinner infini** : Enveloppement de la fonction encaisserVente dans un bloc 	ry...finally pour garantir la réinitialisation de encaissementEnCours à alse dans tous les cas de figure (vente réussie, annulation, erreur réseau, vente à crédit sans client sélectionné). Réinitialisation explicite dans iderPanier().
+  - **Affichage permanent du CA de session** : Mise à jour de la mini-barre de synthèse affichée au centre du ticket vide lorsque la session est ouverte. Le chiffre d'affaires cumulé (💰 CA Session), le nombre de ventes et le total en espèces sont désormais toujours visibles au premier coup d'œil dès qu'une session de caisse est active.
