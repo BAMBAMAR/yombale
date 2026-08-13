@@ -47,6 +47,8 @@ function getContent(type: PayType, ref: string) {
   }
 }
 
+import { ConfirmerSuccesEffect } from './ConfirmerSuccesEffect'
+
 export default function PaiementSuccesPage({
   searchParams,
 }: {
@@ -59,6 +61,7 @@ export default function PaiementSuccesPage({
 
   return (
     <div className="page-container" style={{ paddingTop: '4rem', maxWidth: 560 }}>
+      <ConfirmerSuccesEffect reference={ref} />
       <div className="paiement-succes-page">
         <div className="paiement-succes-icon">✅</div>
         <h1 className="paiement-succes-titre">Paiement confirmé{methode} !</h1>

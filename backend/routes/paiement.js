@@ -218,6 +218,13 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
   try {
     const { type, data } = req.body;
     if (type === 'checkout.session.completed') {
+      const clientRef = data?.client_reference;
+      if (clientRef) {
+        await pool.query(
+          `UPDATE commandes_boutique SET paiement_recu = true, statut = CASE WHEN statut = 'en_attente' THEN 'payee' ELSE statut END, updated_at = NOW() WHERE reference = $1`,
+          [clientRef]
+        ).catch(e => console.error('[WAVE WEBHOOK CMD UPDATE ERR]:', e.message));
+      }
       const ref = await appliquerPaiementReussi(data.client_reference, data.amount, 'wave');
       if (data.customer_phone)
         await notifs.confirmationCommande(data.customer_phone, ref);
@@ -226,6 +233,23 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
   } catch (err) {
     console.error('[WAVE WEBHOOK ERREUR]:', err.message);
     res.sendStatus(200); // 200 pour éviter les boucles de retry infinies en cas de problème applicatif
+  }
+});
+
+// POST /api/paiement/confirmer-succes — confirmation de succès Wave au retour d'affichage
+router.post('/confirmer-succes', async (req, res) => {
+  try {
+    const { reference } = req.body;
+    if (!reference) return res.status(400).json({ error: 'Référence requise' });
+
+    await pool.query(
+      `UPDATE commandes_boutique SET paiement_recu = true, statut = CASE WHEN statut = 'en_attente' THEN 'payee' ELSE statut END, updated_at = NOW() WHERE reference = $1`,
+      [reference]
+    );
+
+    res.json({ succes: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
