@@ -746,15 +746,15 @@ router.patch(
             const mobile = boutique.whatsapp || boutique.telephone;
             if (mobile) {
               const commission = (b?.commission_rate > 0) ? (commande.montant_total * b.commission_rate / 100) : 0;
-              const fraisWave = Math.round(Number(commande.montant_total) * 0.01);
-              const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - commission - fraisWave));
+              const fraisWaveTotaux = Math.round(Number(commande.montant_total) * 0.02); // 1% encaissement + 1% payout
+              const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - commission - fraisWaveTotaux));
               const wave = require('../services/wave');
               await wave.sendPayout({
                 amount: netAmount,
                 mobile,
                 client_reference: `auto_payout_${commande.reference}`,
               });
-              console.log(`[AUTO PAYOUT WAVE SUCCESS] ⚡ ${netAmount} FCFA transférés automatiquement à ${boutique.nom} (${mobile}) [Déduction Frais Wave 1%: ${fraisWave} FCFA]`);
+              console.log(`[AUTO PAYOUT WAVE SUCCESS] ⚡ ${netAmount} FCFA transférés automatiquement à ${boutique.nom} (${mobile}) [Déduction Frais Wave 2% (1%+1%): ${fraisWaveTotaux} FCFA]`);
             }
           } catch (autoErr) {
             console.error('[AUTO PAYOUT WAVE ERR]:', autoErr.message);
@@ -1132,8 +1132,8 @@ router.post('/admin/reversements/:commandeId/payer', adminSecretOnly, async (req
     const mobile = commande.boutique_whatsapp || commande.boutique_telephone;
     if (!mobile) return res.status(400).json({ error: 'Numéro de téléphone du marchand introuvable' });
 
-    const fraisWave = Math.round(Number(commande.montant_total) * 0.01);
-    const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - (Number(commande.montant_commission) || 0) - fraisWave));
+    const fraisWaveTotaux = Math.round(Number(commande.montant_total) * 0.02); // 1% encaissement + 1% payout
+    const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - (Number(commande.montant_commission) || 0) - fraisWaveTotaux));
 
     const wave = require('../services/wave');
     const payoutResult = await wave.sendPayout({
@@ -1142,7 +1142,7 @@ router.post('/admin/reversements/:commandeId/payer', adminSecretOnly, async (req
       client_reference: `payout_${commande.reference}`,
     });
 
-    res.json({ success: true, payout: payoutResult, net_amount: netAmount, frais_wave: fraisWave, mobile });
+    res.json({ success: true, payout: payoutResult, net_amount: netAmount, frais_wave: fraisWaveTotaux, mobile });
   } catch (err) {
     console.error('[ADMIN PAYOUT ERR]', err);
     res.status(500).json({ error: err.message || 'Erreur lors du transfert Wave Payout' });
