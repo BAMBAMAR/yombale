@@ -34,11 +34,11 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
   const pathname = usePathname()
 
   return (
-    <nav aria-label="Navigation de l'espace compte utilisateur">
+    <nav className="account-nav-container" aria-label="Navigation de l'espace compte utilisateur">
       {GROUPES.map(groupe => (
         <div key={groupe.label} className="account-nav-group">
           <p className="account-nav-group-label">{groupe.label}</p>
-          <div>
+          <div className="account-nav-links-list">
             {groupe.liens.map(lien => {
               const actif = overrideTab && lien.tab === overrideTab 
                 ? true 

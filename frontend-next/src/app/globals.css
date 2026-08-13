@@ -9661,9 +9661,62 @@ span.ripple {
     display: none !important;
   }
 
-  /* Si on est sur /compte, on masque les liens de navigation de la sidebar pour éviter les doublons avec les cartes */
+  /* Sur /compte mobile, afficher les liens sous forme d'onglets défilants horizontaux */
   .account-sidebar--main .account-sidebar-nav-wrapper {
+    display: block !important;
+    margin-top: 10px;
+  }
+
+  .account-nav-container {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 4px 2px 8px 2px !important;
+  }
+
+  .account-nav-container::-webkit-scrollbar {
     display: none !important;
+  }
+
+  .account-nav-group {
+    margin-bottom: 0 !important;
+    display: flex !important;
+    flex-shrink: 0 !important;
+  }
+
+  .account-nav-group-label {
+    display: none !important;
+  }
+
+  .account-nav-links-list {
+    display: flex !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .account-nav-link {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    padding: 8px 14px !important;
+    border-radius: 20px !important;
+    border-left: none !important;
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    transition: all 0.15s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .account-nav-link--active {
+    background: #C75B00 !important;
+    color: #ffffff !important;
+    box-shadow: 0 3px 8px rgba(199, 91, 0, 0.25) !important;
   }
 
   /* Affichage du bouton de retour sur les sous-pages sur mobile */

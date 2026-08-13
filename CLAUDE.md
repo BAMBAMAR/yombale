@@ -1,3 +1,9 @@
+## 🚀 Mises à jour du 13/08/2026 : Intégration des Onglets de Navigation Mobile sur `/compte` (`AccountNavLinks.tsx` & `globals.css`)
+- **Correction des Liens de Navigation Masqués sur Mobile (`AccountNavLinks.tsx`, `globals.css`)** :
+  * **Problème** : La règle CSS `.account-sidebar--main .account-sidebar-nav-wrapper { display: none !important; }` masquait complètement les liens du compte sur mobile (< 768px). L'utilisateur ne voyait que sa carte d'identité et ses annonces sans aucun moyen de naviguer vers ses biens immo, ses abonnements/plan, son profil ou sa boutique.
+  * **Solution** : Transformation de la barre de navigation en barre d'onglets défilante horizontale (`overflow-x: auto`) avec pilules tactiles élégantes sous la carte profil.
+  * Tous les onglets (`📋 Mes annonces`, `🏠 Mes biens immo`, `🏪 Ma boutique`, `📖 Abonnements`, `💼 Apporteur`, `✏️ Mon profil`, `♥ Mes favoris`) sont désormais immédiatement visibles, défilables et cliquables sur mobile.
+
 ## 🚀 Mises à jour du 13/08/2026 : Architecture PWA Purifiée & Élimination Définitive du Bandeau de Mise à Jour (`RegisterSW.tsx` & `sw.ts`)
 - **Élimination Définitive du Réaffichage du Toast de Mise à Jour (`RegisterSW.tsx` & `sw.ts`)** :
   * **Explication Technique** : Vous avez parfaitement raison, ce n'est pas censé dépendre d'un stockage de session ! Dans l'architecture PWA standard, dès que le bouton est cliqué et que `self.skipWaiting()` s'exécute, le nouveau Service Worker passe à l'état `active`. À cet instant précis, `reg.waiting` devient `null`.
