@@ -698,6 +698,26 @@ router.patch(
         } catch (eComptaCmd) {
           console.error('[CMD LIVREE COMPTA ERR]', eComptaCmd.message);
         }
+
+        // Reversement 100% Automatique Wave Payout vers le marchand si activé
+        if ((commande.methode_paiement === 'wave' || commande.methode_paiement === 'pay_wave') && process.env.REVERSEMENT_AUTOMATIQUE_WAVE !== 'false' && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
+          try {
+            const mobile = boutique.whatsapp || boutique.telephone;
+            if (mobile) {
+              const commission = (b?.commission_rate > 0) ? (commande.montant_total * b.commission_rate / 100) : 0;
+              const netAmount = Number(commande.montant_total) - commission;
+              const wave = require('../services/wave');
+              await wave.sendPayout({
+                amount: netAmount,
+                mobile,
+                client_reference: `auto_payout_${commande.reference}`,
+              });
+              console.log(`[AUTO PAYOUT WAVE SUCCESS] ⚡ ${netAmount} FCFA transférés automatiquement à ${boutique.nom} (${mobile})`);
+            }
+          } catch (autoErr) {
+            console.error('[AUTO PAYOUT WAVE ERR]:', autoErr.message);
+          }
+        }
       }
 
       // Notifier le client du changement de statut
