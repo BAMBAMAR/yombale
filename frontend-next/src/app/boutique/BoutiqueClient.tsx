@@ -1935,7 +1935,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
     <div className="card-premium" style={{ display: 'flex', flexDirection: 'column', height: '100%', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.04)', background: '#fff', overflow: 'hidden' }}>
       <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
         {/* En-tête : Logo, Nom, Statut, et Actions secondaires */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 20, flexWrap: 'wrap', minWidth: 0, overflow: 'hidden' }}>
           {/* Logo et Nom */}
           <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flex: '1 1 200px', minWidth: 0 }}>
             {boutique.logo_url ? (
@@ -1961,7 +1961,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
           </div>
           
           {/* Actions Secondaires (Icônes) et Statut */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', flexShrink: 0, maxWidth: '100%' }}>
             <span className="badge-premium" style={{ color: boutique.actif ? '#15803d' : '#64748b', background: boutique.actif ? '#f0fdf4' : '#f8fafc', borderColor: boutique.actif ? '#bbf7d0' : '#e2e8f0', fontSize: 11, padding: '2px 8px' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: boutique.actif ? '#22c55e' : '#94a3b8', display: 'inline-block', marginRight: 4 }}></span>
               {boutique.actif ? 'Active' : 'Inactive'}
@@ -2911,7 +2911,7 @@ export default function BoutiqueClient({
 
   // Vue liste
   return (
-    <main style={{ maxWidth: 1200, margin: '32px auto', padding: '0 20px 80px' }}>
+    <main style={{ maxWidth: 1200, margin: '32px auto', padding: '0 20px 80px', overflowX: 'hidden' }}>
       {/* Navigation Fil d Ariane */}
       <nav aria-label="Fil d Ariane" style={{ marginBottom: 16 }}>
         <ol style={{ display: 'flex', alignItems: 'center', gap: 8, listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#64748b' }}>
@@ -3053,7 +3053,7 @@ export default function BoutiqueClient({
       ) : (
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(360px, 100%), 1fr))', 
           gap: 24,
           alignItems: 'start'
         }}>
