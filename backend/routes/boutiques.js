@@ -3320,11 +3320,20 @@ router.get('/caisse-terminal/:token', async (req, res) => {
       [boutique.id]
     );
 
+    const pRes = await pool.query(
+      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes, p.code_barre
+       FROM boutique_produits p
+       WHERE p.boutique_id = $1
+       ORDER BY p.ordre ASC, p.created_at DESC`,
+      [boutique.id]
+    );
+
     res.json({
       success: true,
       boutique,
       planActif: plan,
-      caissiers: cRes.rows
+      caissiers: cRes.rows,
+      produits: pRes.rows
     });
   } catch (err) {
     console.error('[GET CAISSE TERMINAL ERR]', err);

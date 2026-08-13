@@ -715,6 +715,22 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               if (data.caissiers && Array.isArray(data.caissiers)) {
                 setCaissiersList(data.caissiers)
               }
+              if (data.produits && Array.isArray(data.produits)) {
+                const prodsFormates = data.produits.map((p: any) => ({
+                  ...p,
+                  id: p.id,
+                  nom: p.nom,
+                  prix: Number(p.prix),
+                  code_barre: p.code_barre || p.id.slice(0, 8),
+                  photo: p.images?.[0] || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400',
+                  categorie: p.categorie || 'alimentation',
+                  stock: isNaN(Number(p.stock_quantite ?? p.stock)) ? 10 : Number(p.stock_quantite ?? p.stock),
+                }))
+                setProduits(prodsFormates)
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem(`nopalou_pos_produits_${data.boutique.id}`, JSON.stringify(prodsFormates))
+                }
+              }
               await chargerCaissiersEtSession(data.boutique.id)
               await chargerProduitsBoutique(data.boutique.id)
               await chargerClientsCredits(data.boutique.id)
