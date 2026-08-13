@@ -53,6 +53,11 @@ export const metadata: Metadata = {
     'Comparez les prix de milliers de produits, annonces immo et forfaits télécom au Sénégal. Trouvez les meilleures offres à Dakar.',
   keywords: ['comparateur prix', 'Sénégal', 'Dakar', 'achat en ligne', 'immobilier', 'forfait télécom', 'Nopalou'],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'),
+  alternates: {
+    canonical: './',
+  },
+  authors: [{ name: 'Nopalou' }],
+  publisher: 'Nopalou / Yombale',
   openGraph: {
     siteName: 'Nopalou',
     locale: 'fr_SN',

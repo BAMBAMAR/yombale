@@ -1,3 +1,21 @@
+## 🚀 Mises à jour du 13/08/2026 : Implémentation du Renforcement Anti-Clonage, Anti-Scraping et Protection de la Marque
+- **Masquage Sécurisé des Numéros de Contact Vendeurs (`MaskedContactPhone.tsx` & `annonces/[id]/page.tsx`)** :
+  * Création d'un composant interactif de protection des numéros marchands (`+221 77 *** ** 42`) avec bouton tactile *"👁️ Afficher le numéro"*.
+  * Bloque l'aspiration automatisée des numéros par des robots d'aspiration et enregistre l'événement d'intention de contact (Lead tracking).
+- **Tatouage Visuel de Marque & Protection Anti-Vol de Médias (`ExternalImg.tsx` & `produit/[id]/page.tsx`)** :
+  * Ajout du support de filigrane numérique (`watermark={true}`) superposant la griffe de marque `nopalou.com` semi-transparente avec désactivation du clic-droit (`onContextMenu`) pour décourager le vol de visuels originaux.
+- **Filtrage des Scrapers & Rate Limiting Resserré (`backend/app.js`)** :
+  * Intégration du middleware `botBlockerMiddleware` bloquant les User-Agents de scraping et d'aspiration headless (`Scrapy`, `python-requests`, `go-http-client`, `Java/`, `Wget`, `Curl`).
+  * Mise en place de la limite resserrée `searchLimiter` (150 req / 15 min) sur les endpoints de recherche publique.
+- **Blocage des Robots d'Aspiration IA (`robots.ts`)** :
+  * Ajout des directives d'interdiction explicites (`disallow: /`) pour 13 crawlers d'IA et de data mining (`GPTBot`, `Bytespider`, `CCBot`, `ClaudeBot`, `ImagesiftBot`, `Scrapy`, `AhrefsBot`, `SemrushBot`).
+- **Verrouillage Anti-Reversing & Headers Anti-Framing (`next.config.js`)** :
+  * Désactivation explicite des cartes sources client (`productionBrowserSourceMaps: false`) pour empêcher la rétro-ingénierie du code React Next.js.
+  * Ajout de la directive CSP `Content-Security-Policy: frame-ancestors 'self'` pour interdire l'iframe-jacking/clonage dans des cadres tiers.
+- **Clauses Juridiques d'Interdiction d'Aspiration & Canonical SEO (`cgu/page.tsx` & `layout.tsx`)** :
+  * Ajout de la section **6. Propriété Intellectuelle & Interdiction d'Aspiration de Données (Anti-Scraping / DMCA)** aux CGU conformément au Droit d'Auteur sénégalais et aux directives de l'APDP.
+  * Configuration de l'URL canonique `alternates: { canonical: './' }` et metadonnées d'auteur/éditeur dans `layout.tsx` pour forcer l'attribution canonique par Google.
+
 ## 🚀 Mises à jour du 13/08/2026 : Nettoyage Intégral des Logs de Débogage & Fichiers de Logs
 - **Nettoyage des Logs Console de Débogage (`frontend-next`)** :
   * Purge de 65 lignes de logs console verbeux (`console.log`, `console.info`) ajoutés lors du développement et du diagnostic hors-ligne / PWA sur 9 fichiers clés :

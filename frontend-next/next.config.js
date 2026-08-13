@@ -22,6 +22,7 @@ const nextConfig = {
   output: 'standalone',
   compress: true,
   poweredByHeader: false,
+  productionBrowserSourceMaps: false, // Désactive l'export des cartes sources du code client React (Anti-Reversing)
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -51,11 +52,12 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Security headers on all routes
+        // Security headers on all routes (Anti-Clonage & Anti-Framing)
         source: '/(.*)',
         headers: [
           { key: 'X-Content-Type-Options',    value: 'nosniff' },
           { key: 'X-Frame-Options',           value: 'SAMEORIGIN' },
+          { key: 'Content-Security-Policy',   value: "frame-ancestors 'self';" },
           { key: 'Referrer-Policy',           value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy',        value: 'camera=(self), microphone=(), geolocation=()' },
         ],

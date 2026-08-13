@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import AnnonceGallery from './AnnonceGallery'
+import MaskedContactPhone from '@/components/MaskedContactPhone'
 import { apiFetch } from '@/lib/api'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
@@ -203,22 +204,13 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
                 </a>
               )
             ) : (
-              <>
-                <a
-                  href={`tel:${annonce.contact_tel}`}
-                  className="annonce-contact-tel"
-                >
-                  📞 {annonce.contact_tel}
-                </a>
-                <a
-                  href={`https://wa.me/${annonce.contact_tel.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par votre annonce :\n\n*${annonce.titre}*${annonce.prix ? ` — ${formatPrix(annonce.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/annonces/${annonce.id}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="annonce-contact-whatsapp"
-                >
-                  WhatsApp
-                </a>
-              </>
+              <MaskedContactPhone
+                phone={annonce.contact_tel}
+                titre={annonce.titre}
+                prix={annonce.prix}
+                annonceId={annonce.id}
+                baseUrl={process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}
+              />
             )}
             <p className="annonce-contact-warn">
               ⚠️ Ne payez jamais à l&apos;avance sans avoir vu le produit.

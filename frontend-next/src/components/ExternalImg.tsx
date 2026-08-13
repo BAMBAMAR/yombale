@@ -15,6 +15,7 @@ export interface ExternalImgProps {
   loading?: 'lazy' | 'eager'
   width?: number
   height?: number
+  watermark?: boolean
   onMouseEnter?: (e: React.MouseEvent<HTMLImageElement>) => void
   onMouseLeave?: (e: React.MouseEvent<HTMLImageElement>) => void
 }
@@ -24,6 +25,7 @@ export interface ExternalImgProps {
  * - Chargement direct et sécurisé en HTTPS
  * - Fallback via proxy CDN (wsrv.nl) si échec direct
  * - Affichage de l'élément de secours en dernier recours
+ * - Tatouage numérique / Watermark anti-vol de marque (optionnel)
  */
 export default function ExternalImg({
   src,
@@ -35,6 +37,7 @@ export default function ExternalImg({
   loading = 'lazy',
   width,
   height,
+  watermark = false,
   onMouseEnter,
   onMouseLeave,
 }: ExternalImgProps) {
@@ -64,7 +67,7 @@ export default function ExternalImg({
     ? `https://wsrv.nl/?url=${encodeURIComponent(cleanSrc)}`
     : cleanSrc
 
-  return (
+  const imageElement = (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={currentSrc}
@@ -77,10 +80,41 @@ export default function ExternalImg({
       referrerPolicy={attempt === 0 ? "no-referrer" : undefined}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onContextMenu={watermark ? (e) => e.preventDefault() : undefined}
       onError={() => {
         setAttempt(prev => prev + 1)
       }}
     />
   )
+
+  if (watermark) {
+    return (
+      <div style={{ position: 'relative', display: 'block', width: '100%', height: '100%', overflow: 'hidden' }}>
+        {imageElement}
+        <span
+          style={{
+            position: 'absolute',
+            bottom: 6,
+            right: 6,
+            fontSize: 10,
+            fontWeight: 700,
+            color: 'rgba(255, 255, 255, 0.9)',
+            background: 'rgba(0, 0, 0, 0.55)',
+            padding: '2px 7px',
+            borderRadius: 4,
+            backdropFilter: 'blur(3px)',
+            letterSpacing: '0.4px',
+            pointerEvents: 'none',
+            userSelect: 'none',
+            zIndex: 3,
+          }}
+        >
+          nopalou.com
+        </span>
+      </div>
+    )
+  }
+
+  return imageElement
 }
 

@@ -101,8 +101,18 @@ app.use(cors({
 }));
 app.use(compression());
 
-// ── Rate Limiting (Protection contre DDoS & Brute-force) ─────
-const rateLimit = require('express-rate-limit');
+// ── Protection Anti-Scraping & Filtrage des User-Agents de Bots ─
+const BAD_USER_AGENTS = /scrapy|python-requests|go-http-client|java\/|libwww-perl|wget\/|httrack|aiohttp|httpx|curl\//i;
+
+const botBlockerMiddleware = (req, res, next) => {
+  const ua = req.headers['user-agent'] || '';
+  if (BAD_USER_AGENTS.test(ua)) {
+    return res.status(403).json({ error: 'Accès refusé : requête automatisée détectée (Anti-Scraping Nopalou)' });
+  }
+  next();
+};
+
+app.use('/api/', botBlockerMiddleware);
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -119,6 +129,14 @@ const apiLimiter = rateLimit({
   message: { error: 'Trop de requêtes, veuillez réessayer dans 15 minutes.' },
 });
 
+const searchLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 150,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Limite de recherche atteinte, veuillez patienter quelques minutes.' },
+});
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -128,6 +146,8 @@ const authLimiter = rateLimit({
 });
 
 app.use('/api/', apiLimiter);
+app.use('/api/search', searchLimiter);
+app.use('/api/annonces/publiques', searchLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/admin/login', authLimiter);

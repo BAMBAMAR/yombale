@@ -418,7 +418,7 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
               <div className="produit-fiche-nom-row produit-fiche-nom-row--avec-cta">
                 {produit.image_url && (
                   <div className="produit-fiche-img">
-                    <ExternalImg src={produit.image_url} alt={produit.nom} style={{ width: '100%', height: '100%', objectFit: 'contain' }} loading="eager" />
+                    <ExternalImg src={produit.image_url} alt={produit.nom} watermark={true} style={{ width: '100%', height: '100%', objectFit: 'contain' }} loading="eager" />
                   </div>
                 )}
                 <h1 className="produit-fiche-nom">{produit.nom}</h1>

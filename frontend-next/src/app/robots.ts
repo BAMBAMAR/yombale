@@ -9,6 +9,24 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
         disallow: ['/compte/', '/mes-annonces', '/payer-annonce/', '/paiement/', '/admin/', '/api/'],
       },
+      {
+        userAgent: [
+          'GPTBot',
+          'ChatGPT-User',
+          'Bytespider',
+          'CCBot',
+          'ClaudeBot',
+          'ImagesiftBot',
+          'Scrapy',
+          'AhrefsBot',
+          'SemrushBot',
+          'DotBot',
+          'MJ12bot',
+          'PetalBot',
+          'DataForSeoBot'
+        ],
+        disallow: '/',
+      },
     ],
     sitemap: `${base}/sitemap.xml`,
   }

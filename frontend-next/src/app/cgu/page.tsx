@@ -55,27 +55,39 @@ export default async function CguPage() {
       </section>
 
       <section className="legal-section">
-        <h2>6. Comportements interdits</h2>
+        <h2>6. Propriété Intellectuelle & Interdiction d&apos;Aspiration de Données (Anti-Scraping)</h2>
+        <p>L&apos;intégralité de la plateforme Nopalou / Yombale (marques, logos, interfaces, structure de la base de données, code source, graphismes et contenus) est protégée par les lois relatives à la propriété intellectuelle, au droit d&apos;auteur et aux droits des producteurs de bases de données (Loi sénégalaise sur le Droit d&apos;Auteur et directives de l&apos;APDP).</p>
+        <p>Il est strictement interdit, sans autorisation préalable écrite de Nopalou :</p>
+        <ul>
+          <li>De copier, cloner, reproduire, imiter ou encadrer (framing/iframe) tout ou partie du site ou de ses composants.</li>
+          <li>D&apos;extraire ou réutiliser, par aspiration automatisée (data scraping, web crawling, bots, scripts ou moissonnage), les données des annonces, catalogues marchands, prix et contacts clients.</li>
+          <li>De détourner les numéros de téléphone et coordonnées des vendeurs à des fins de démarchage commercial ou de constitution de bases concurrentes.</li>
+        </ul>
+        <p>Toute violation fera l&apos;objet de poursuites judiciaires immédiates et de signalements DMCA / APDP.</p>
+      </section>
+
+      <section className="legal-section">
+        <h2>7. Comportements interdits</h2>
         <ul>
           <li>Tenter d&apos;accéder illicitement à des données ou systèmes.</li>
           <li>Publier des annonces frauduleuses ou des arnaques.</li>
           <li>Utiliser le service à des fins de spam ou de démarchage non sollicité.</li>
-          <li>Contourner les systèmes de modération.</li>
+          <li>Contourner les systèmes de modération ou de limitation d&apos;accès.</li>
         </ul>
       </section>
 
       <section className="legal-section">
-        <h2>7. Limitation de responsabilité</h2>
+        <h2>8. Limitation de responsabilité</h2>
         <p>Nopalou est un intermédiaire et n&apos;est pas partie aux transactions entre acheteurs et vendeurs. Nopalou ne peut être tenu responsable des litiges entre utilisateurs, de la qualité des produits ou de l&apos;exactitude des prix affichés par les marchands partenaires.</p>
       </section>
 
       <section className="legal-section">
-        <h2>8. Modification des CGU</h2>
+        <h2>9. Modification des CGU</h2>
         <p>Nopalou se réserve le droit de modifier ces CGU à tout moment. Les modifications entrent en vigueur à leur publication sur le site. L&apos;utilisation continue du service vaut acceptation des nouvelles CGU.</p>
       </section>
 
       <section className="legal-section">
-        <h2>9. Contact</h2>
+        <h2>10. Contact</h2>
         <p>Pour toute question relative aux présentes CGU : <a href="mailto:contact@nopalou.com">contact@nopalou.com</a></p>
       </section>
     </div>
