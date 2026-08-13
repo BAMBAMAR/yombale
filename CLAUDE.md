@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 13/08/2026 : Intégration du Lien Direct vers les Commandes dans les Notifications WhatsApp Vendeur (`comptabilite.js`, `whatsapp-chatbot.js`)
+- **Intégration du Lien de Redirection Direct vers l'Espace Vendeur (`comptabilite.js` & `whatsapp-chatbot.js`)** :
+  * Ajout automatique de l'URL de redirection direct vers l'onglet des commandes du tableau de bord vendeur (`${SITE}/boutique?tab=commandes`) dans les messages de notification WhatsApp envoyés aux marchands lors d'une nouvelle commande mono-produit ou groupée.
+  * Permet au marchand de cliquer directement sur le lien reçu par WhatsApp pour ouvrir son espace d'administration et gérer/valider la commande immédiatement.
+
 ## 🚀 Mises à jour du 13/08/2026 : Implémentation du Renforcement Anti-Clonage, Anti-Scraping et Protection de la Marque
 - **Masquage Sécurisé des Numéros de Contact Vendeurs (`MaskedContactPhone.tsx` & `annonces/[id]/page.tsx`)** :
   * Création d'un composant interactif de protection des numéros marchands (`+221 77 *** ** 42`) avec bouton tactile *"👁️ Afficher le numéro"*.
