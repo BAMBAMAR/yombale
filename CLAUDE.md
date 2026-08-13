@@ -2316,3 +2316,6 @@ avigator.vibrate(35) lors de l'ajout d'un produit au panier sur mobile/tablette 
 - **Correction de la numérotation des tickets en file d'attente (CaisseClient.tsx)** :
   - **Correction du doublon Client 2 / Client 4** : Remplacement du calcul basé sur la longueur du tableau (	icketsEnAttente.length + 1) par un helper d'inspection dynamique genererLabelClientUnique(tickets) qui extrait le numéro maximal existant (maxNum + 1) pour garantir que chaque ticket en attente possède un numéro séquentiel 100% unique (Client 1, Client 2, Client 3, Client 4...).
   - **Identifiants uniques avec sel** : Ajout d'un sel aléatoire T-- pour éliminer tout risque de collision de clé React lors du swapp de paniers.
+- **Correction de l'affichage de l'Heure d'Ouverture de Session (Rapport X)** :
+  - **Correction du bug Invalid Date** : session.dateOuverture étant déjà stockée sous forme de chaîne d'heure formatée ( 5:21), le ré-enveloppement 
+ew Date(session.dateOuverture) provoquait un échec d'analyse Date JS et affichait Invalid Date dans la modale du Rapport X. Remplacé par un rendu direct Aujourd'hui à HH:MM propre et lisible.
