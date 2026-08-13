@@ -1154,12 +1154,17 @@ async function handleIncoming(msg) {
     const commandeAvecAdresse = { ...context.commande, client_adresse: text.trim() };
 
     const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 10', [boutique.id]);
-    if (!zones.rows.length) {
-      await envoyerRecapCommande(phone, boutique, commandeAvecAdresse);
-      return;
+    let rows = [];
+    if (zones.rows.length > 0) {
+      rows = zones.rows.map(z => ({ id: `zone_${z.id}`, title: z.nom.slice(0, 24), description: prixFmt(Number(z.prix)) }));
+    } else {
+      rows = [
+        { id: 'zone_def_dakar', title: '📍 Dakar (Intra-Muros)', description: '1 500 FCFA' },
+        { id: 'zone_def_retrait', title: '🏬 Retrait en boutique', description: 'Gratuit (0 FCFA)' },
+        { id: 'zone_def_banlieue', title: '🚚 Banlieue (Pikine...)', description: '2 500 FCFA' },
+      ];
     }
-    const rows = zones.rows.map(z => ({ id: `zone_${z.id}`, title: z.nom.slice(0, 24), description: prixFmt(Number(z.prix)) }));
-    await sendWhatsAppInteractive(phone, 'Livraison', 'Choisissez votre zone de livraison :', [{ title: 'Zones', rows }]);
+    await sendWhatsAppInteractive(phone, 'Livraison', 'Choisissez votre mode/zone de livraison :', [{ title: 'Options Livraison', rows }]);
     await setSession(phone, 'COMMANDE_ZONE', { boutique, commande: commandeAvecAdresse });
     return;
   }
@@ -1172,21 +1177,35 @@ async function handleIncoming(msg) {
       await envoyerMenuBoutique(phone, boutique);
       return;
     }
-    const zoneMatch = interactiveId.match(/^zone_(.+)$/);
-    if (!zoneMatch) {
-      await sendWhatsAppText(phone, 'Choisissez une zone dans la liste ci-dessus.');
-      return;
-    }
-    const { rows: [zone] } = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE id=$1 AND boutique_id=$2', [zoneMatch[1], boutique.id]);
-    if (!zone) {
-      await sendWhatsAppText(phone, '⚠️ Zone invalide, réessayez.');
-      return;
+    let zoneNom = 'Livraison standard';
+    let fraisLivraison = 0;
+    let zoneId = null;
+
+    if (interactiveId === 'zone_def_dakar') {
+      zoneNom = 'Dakar (Intra-Muros)';
+      fraisLivraison = 1500;
+    } else if (interactiveId === 'zone_def_retrait') {
+      zoneNom = 'Retrait en boutique (gratuit)';
+      fraisLivraison = 0;
+    } else if (interactiveId === 'zone_def_banlieue') {
+      zoneNom = 'Banlieue';
+      fraisLivraison = 2500;
+    } else {
+      const zoneMatch = interactiveId.match(/^zone_(.+)$/);
+      if (zoneMatch) {
+        const { rows: [zone] } = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE id=$1 AND boutique_id=$2', [zoneMatch[1], boutique.id]);
+        if (zone) {
+          zoneId = zone.id;
+          zoneNom = zone.nom;
+          fraisLivraison = Number(zone.prix);
+        }
+      }
     }
     await envoyerRecapCommande(phone, boutique, {
       ...context.commande,
-      zone_livraison_id: zone.id,
-      zone_nom: zone.nom,
-      frais_livraison: Number(zone.prix),
+      zone_livraison_id: zoneId,
+      zone_nom: zoneNom,
+      frais_livraison: fraisLivraison,
     });
     return;
   }
