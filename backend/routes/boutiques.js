@@ -3304,7 +3304,7 @@ router.get('/caisse-terminal/:token', async (req, res) => {
 
     const bRes = await pool.query(
       `SELECT id, nom, logo_url, telephone, adresse, ville, caisse_token, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut, COALESCE(actif, true) AS actif
-       FROM boutiques WHERE caisse_token = $1 AND COALESCE(actif, TRUE) = TRUE`,
+       FROM boutiques WHERE COALESCE(caisse_token, id::text) = $1 AND COALESCE(actif, TRUE) = TRUE`,
       [token]
     );
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Terminal introuvable ou désactivé' });

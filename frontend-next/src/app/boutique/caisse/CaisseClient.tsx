@@ -704,8 +704,14 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             if (data?.success && data?.boutique) {
               setBoutiques([data.boutique])
               setBoutiqueActiveId(data.boutique.id)
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('nopalou_pos_active_boutique_id', data.boutique.id)
+                localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify([data.boutique]))
+              }
               setTerminalPlan(data.planActif || 'pro')
-              if (data.caissiers) setCaissiersList(data.caissiers)
+              if (data.caissiers && Array.isArray(data.caissiers)) {
+                setCaissiersList(data.caissiers)
+              }
               await chargerCaissiersEtSession(data.boutique.id)
               await chargerProduitsBoutique(data.boutique.id)
               await chargerClientsCredits(data.boutique.id)
