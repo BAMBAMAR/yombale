@@ -1,3 +1,11 @@
+## 🚀 Mises à jour du 13/08/2026 : Intégration de WhatsApp Direct 1-Clic & Simplification du Tunnel de Commande Chatbot (`whatsapp-chatbot.js`)
+- **Intégration du Bouton *"💬 Contact Vendeur (WhatsApp Direct 1-Clic)"* dans le Chatbot** :
+  * Génération automatique du lien direct `wa.me/221XXXXXXX?text=...` avec le message pré-rempli identique à la fiche produit Web : *“Bonjour ! Je suis intéressé(e) par l'article [Nom] ([Prix]) vu sur Nopalou. Est-il disponible ?”*.
+  * Ajout du bouton tactile `💬 Contact Vendeur` sous chaque fiche produit WhatsApp pour permettre la discussion instantanée en 1 clic sans aucun formulaire.
+- **Réduction Drastique des Questions du Tunnel de Commande Chat (Passage de 6 étapes à 1 seule saisie)** :
+  * Fusion de la collecte des informations en une **seule et unique invite textuelle** : *"Entrez votre Nom et Adresse de livraison (ex: Amar, Sacré-Cœur 3)"*.
+  * Suppression des questions séquentielles redondantes (Nom ? puis Adresse ? puis Téléphone ?) et enchaînement immédiat sur les boutons tactiles de choix de la zone de livraison et du mode de paiement.
+
 ## 🚀 Mises à jour du 13/08/2026 : Resolution de la 404 sur le Bouton du Template WhatsApp (`immo/boutique/page.tsx`, `immo/[id]/page.tsx`, `next.config.js`)
 - **Fix de la Redirection 404 du Bouton *"Voir les détails"* WhatsApp (`immo/boutique/page.tsx` & `next.config.js`)** :
   * **Problème** : Le template Meta `nopalou_fiche_texte` est enregistré chez Meta avec une URL de bouton fixe `https://nopalou.com/immo/{{1}}`. Lors de l'envoi du paramètre `boutique?tab=commandes`, le bouton cliquable WhatsApp générait l'URL `https://nopalou.com/immo/boutique?tab=commandes` qui renvoyait vers une page 404.

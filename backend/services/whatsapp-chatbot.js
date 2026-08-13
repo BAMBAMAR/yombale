@@ -405,11 +405,18 @@ async function envoyerFicheProduitBoutique(phone, produit, boutique) {
     await sendWhatsAppText(phone, lignes.join('\n'));
   }
 
-  await sendWhatsAppButtons3(phone, 'Que souhaitez-vous faire ?', [
+  const contactVendeur = boutique.whatsapp || boutique.telephone;
+  const buttons = [
     { id: `commander_${produit.id}`, title: '🛒 Commander' },
-    { id: `prod_suivant_${produit.id}`, title: '⏩ Suivant' },
-    { id: 'boutique_recherche', title: '🔍 Rechercher' },
-  ]).catch(() => {});
+  ];
+  if (contactVendeur) {
+    buttons.push({ id: `contact_vendeur_${produit.id}`, title: '💬 Contact Vendeur' });
+  } else {
+    buttons.push({ id: `prod_suivant_${produit.id}`, title: '⏩ Suivant' });
+  }
+  buttons.push({ id: 'boutique_recherche', title: '🔍 Rechercher' });
+
+  await sendWhatsAppButtons3(phone, 'Que souhaitez-vous faire ?', buttons).catch(() => {});
 }
 
 // ── Recherche / navigation par catégorie dans une boutique précise ─────────────
@@ -467,6 +474,39 @@ async function envoyerProduitsBoutique(phone, boutique, { query, categorie, excl
   });
 }
 
+// ── Contact direct WhatsApp vendeur ───────────────────────────────────────────
+async function envoyerContactVendeurDirect(phone, boutique, produitId) {
+  const contact = boutique.whatsapp || boutique.telephone;
+  if (!contact) {
+    await sendWhatsAppText(phone, 'Cette boutique n\'a pas encore renseigné de numéro WhatsApp direct.');
+    return;
+  }
+
+  let produitNom = 'ce produit';
+  let produitPrixStr = '';
+  if (produitId) {
+    try {
+      const r = await pool.query('SELECT nom, prix FROM boutique_produits WHERE id=$1', [produitId]);
+      if (r.rows[0]) {
+        produitNom = r.rows[0].nom;
+        if (r.rows[0].prix) produitPrixStr = ` (${prixFmt(r.rows[0].prix)})`;
+      }
+    } catch (e) {}
+  }
+
+  const msgPreRempli = encodeURIComponent(`Bonjour ! Je suis intéressé(e) par l'article "${produitNom}"${produitPrixStr} vu sur Nopalou. Est-il disponible ?`);
+  const waLink = `https://wa.me/${normalisePhone(contact)}?text=${msgPreRempli}`;
+
+  await sendWhatsAppText(
+    phone,
+    `📲 *Discuter en 1-Clic avec le vendeur (${boutique.nom})*\n\n` +
+    `Évitez la saisie de formulaires ! Ouvrez directement WhatsApp pour convenir du lieu de livraison et finaliser votre commande avec le vendeur.\n\n` +
+    `👉 ${waLink}`
+  );
+  await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+  await setSession(phone, 'BOUTIQUE_MENU', { boutique });
+}
+
 // ── Démarrage du flux de commande ────────────────────────────────────────────
 async function demarrerCommande(phone, boutique, produitId) {
   const r = await pool.query(
@@ -481,28 +521,25 @@ async function demarrerCommande(phone, boutique, produitId) {
   }
 
   const expressLink = `${SITE}/checkout-express?produit=${produit.id}&boutique=${boutique.id}&phone=${phone}`;
+  const contact = boutique.whatsapp || boutique.telephone;
+  let waDirectBlock = '';
+  if (contact) {
+    const msgPreRempli = encodeURIComponent(`Bonjour ! Je suis intéressé(e) par l'article "${produit.nom}" (${prixFmt(produit.prix)}) vu sur Nopalou. Est-il disponible ?`);
+    const waLink = `https://wa.me/${normalisePhone(contact)}?text=${msgPreRempli}`;
+    waDirectBlock = `💬 *Option 1 (Discuter en 1-Clic avec le Vendeur)* :\n` +
+      `Ouvrez directement WhatsApp pour convenir du lieu de livraison et finaliser avec le vendeur :\n👉 ${waLink}\n\n`;
+  }
+
   await sendWhatsAppText(
     phone,
-    `🛒 *Commande — ${produit.nom}*\nPrix : *${prixFmt(produit.prix)}*\n\n` +
-    `⚡ *Option 1 (Formulaire Web 1-Page Express)* :\n👉 ${expressLink}\n\n` +
-    `💬 *Option 2 (Commande WhatsApp Direct)* : Choisissez la quantité ci-dessous :`
+    `🛒 *Acheter cet article — ${produit.nom}*\nPrix : *${prixFmt(produit.prix)}*\n\n` +
+    waDirectBlock +
+    `⚡ *Option 2 (Formulaire Web 1-Page Express)* :\n👉 ${expressLink}\n\n` +
+    `📋 *Option 3 (Commande Rapide par Chat)* :\n` +
+    `Entrez votre *Nom et Adresse de livraison* (ex: Amar, Sacré-Cœur 3, Dakar) ci-dessous :`
   );
 
-  await sendWhatsAppInteractive(
-    phone,
-    'Quantité',
-    'Sélectionnez la quantité souhaitée :',
-    [{
-      title: 'Quantité',
-      rows: [
-        { id: `qty_1_${produit.id}`, title: '1 article' },
-        { id: `qty_2_${produit.id}`, title: '2 articles' },
-        { id: `qty_3_${produit.id}`, title: '3 articles' },
-      ],
-    }]
-  ).catch(() => {});
-
-  await setSession(phone, 'COMMANDE_QUANTITE', {
+  await setSession(phone, 'COMMANDE_NOM', {
     boutique,
     commande: {
       items: [{ produit_id: produit.id, nom_produit: produit.nom, prix: Number(produit.prix) || 0, quantite: 1, stock_quantite: produit.stock_quantite }],
@@ -998,6 +1035,11 @@ async function handleIncoming(msg) {
       await sendMenu(phone);
       return;
     }
+    const contactMatch = interactiveId.match(/^contact_vendeur_(.+)$/);
+    if (contactMatch) {
+      await envoyerContactVendeurDirect(phone, boutique, contactMatch[1]);
+      return;
+    }
     const commanderMatch = interactiveId.match(/^commander_(.+)$/);
     if (commanderMatch) {
       await demarrerCommande(phone, boutique, commanderMatch[1]);
@@ -1021,6 +1063,11 @@ async function handleIncoming(msg) {
     if (!boutique) {
       await setSession(phone, 'MENU', {});
       await sendMenu(phone);
+      return;
+    }
+    const contactMatch = interactiveId.match(/^contact_vendeur_(.+)$/);
+    if (contactMatch) {
+      await envoyerContactVendeurDirect(phone, boutique, contactMatch[1]);
       return;
     }
     const commanderMatch = interactiveId.match(/^commander_(.+)$/);
@@ -1122,16 +1169,32 @@ async function handleIncoming(msg) {
       return;
     }
     if (!text || text.trim().length < 2) {
-      await sendWhatsAppText(phone, '⚠️ Entrez votre nom complet.');
+      await sendWhatsAppText(phone, '⚠️ Entrez votre Nom et Adresse de livraison (ex: Amar, Sacré-Cœur 3).');
       return;
     }
-    const clientNom = text.trim();
-    // Téléphone déjà pré-rempli via msg.from -> passer directement à l'adresse de livraison
-    await sendWhatsAppText(phone, 'Votre adresse de livraison ? (quartier, ville...)');
-    await setSession(phone, 'COMMANDE_ADRESSE', {
-      boutique,
-      commande: { ...context.commande, client_nom: clientNom, client_telephone: context.commande?.client_telephone || phone }
-    });
+    const parts = text.split(',');
+    const clientNom = parts[0].trim();
+    const clientAdresse = parts.length > 1 ? parts.slice(1).join(',').trim() : text.trim();
+    const commandeComplete = {
+      ...context.commande,
+      client_nom: clientNom,
+      client_adresse: clientAdresse,
+      client_telephone: context.commande?.client_telephone || phone,
+    };
+
+    const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 10', [boutique.id]);
+    let rows = [];
+    if (zones.rows.length > 0) {
+      rows = zones.rows.map(z => ({ id: `zone_${z.id}`, title: z.nom.slice(0, 24), description: prixFmt(Number(z.prix)) }));
+    } else {
+      rows = [
+        { id: 'zone_def_dakar', title: '📍 Dakar (Intra-Muros)', description: '1 500 FCFA' },
+        { id: 'zone_def_retrait', title: '🏬 Retrait en boutique', description: 'Gratuit (0 FCFA)' },
+        { id: 'zone_def_banlieue', title: '🚚 Banlieue (Pikine...)', description: '2 500 FCFA' },
+      ];
+    }
+    await sendWhatsAppInteractive(phone, 'Livraison', 'Choisissez votre mode/zone de livraison :', [{ title: 'Options Livraison', rows }]);
+    await setSession(phone, 'COMMANDE_ZONE', { boutique, commande: commandeComplete });
     return;
   }
 
