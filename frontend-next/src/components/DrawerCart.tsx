@@ -118,6 +118,12 @@ export default function DrawerCart() {
         return
       }
 
+      if (data.wave_url) {
+        clearCart(activeBoutiqueId!)
+        window.location.href = data.wave_url
+        return
+      }
+
       setCheckoutMode('succes')
       clearCart(activeBoutiqueId!)
     } catch {

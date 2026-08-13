@@ -494,32 +494,35 @@ async function creerCommandeBoutique({
   note, source = 'web', methodePaiement = 'wave', zoneLivraisonId,
   nomProduitManuel, prixUnitaireManuel, groupeCommande,
 }) {
-  const { rows: [boutique] } = await pool.query(
-    'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE id=$1 AND actif=true',
-    [boutiqueId]
-  );
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(boutiqueId);
+  const bQuery = isUUID
+    ? 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE id=$1 AND actif=true'
+    : 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE slug=$1 AND actif=true';
+
+  const { rows: [boutique] } = await pool.query(bQuery, [boutiqueId]);
   if (!boutique) {
     const e = new Error('Boutique introuvable');
     e.status = 404;
     throw e;
   }
 
+  const actualBoutiqueId = boutique.id;
   let nomProduit = nomProduitManuel || 'Produit';
   let prixUnitaire = Number(prixUnitaireManuel) || 0;
   let fraisLivraison = 0;
 
   if (zoneLivraisonId) {
     const { rows: [zone] } = await pool.query(
-      'SELECT prix, nom FROM zones_livraison WHERE id=$1 AND boutique_id=$2',
-      [zoneLivraisonId, boutiqueId]
+      'SELECT prix, nom FROM zones_livraison WHERE (id::text=$1 OR id=$1) AND boutique_id=$2',
+      [zoneLivraisonId, actualBoutiqueId]
     );
     if (zone) fraisLivraison = Number(zone.prix);
   }
 
   if (produitId) {
     const { rows: [p] } = await pool.query(
-      'SELECT nom, prix, stock_quantite FROM boutique_produits WHERE id=$1 AND boutique_id=$2',
-      [produitId, boutiqueId]
+      'SELECT nom, prix, stock_quantite FROM boutique_produits WHERE (id::text=$1 OR id=$1) AND boutique_id=$2',
+      [produitId, actualBoutiqueId]
     );
     if (!p) {
       const e = new Error('Produit introuvable');
@@ -538,14 +541,17 @@ async function creerCommandeBoutique({
   const montantTotal = prixUnitaire * quantite + fraisLivraison;
   const ref = genRefCommande();
 
+  const validProduitId = (produitId && produitId.length === 36) ? produitId : null;
+  const validZoneId = (zoneLivraisonId && zoneLivraisonId.length === 36) ? zoneLivraisonId : null;
+
   const { rows: [commande] } = await pool.query(
     `INSERT INTO commandes_boutique
        (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
         client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison, groupe_commande)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
-    [ref, boutiqueId, produitId || null, nomProduit, quantite, prixUnitaire, montantTotal,
+    [ref, actualBoutiqueId, validProduitId, nomProduit, quantite, prixUnitaire, montantTotal,
      clientNom, clientTelephone, clientAdresse || null, note || null, source,
-     methodePaiement, zoneLivraisonId || null, fraisLivraison, groupeCommande || null]
+     methodePaiement, validZoneId, fraisLivraison, groupeCommande || null]
   );
 
   return { commande, boutique };
@@ -554,10 +560,9 @@ async function creerCommandeBoutique({
 // POST /api/comptabilite/:boutiqueId/commandes — public, client passe commande
 router.post(
   '/:boutiqueId/commandes',
-  param('boutiqueId').isUUID(),
   body('client_nom').trim().isLength({ min: 2, max: 150 }),
   body('client_telephone').trim().isLength({ min: 6, max: 30 }),
-  body('produit_id').optional().isUUID(),
+  body('produit_id').optional(),
   body('nom_produit').optional().trim().isLength({ max: 300 }),
   body('quantite').optional().isInt({ min: 1, max: 100 }),
   async (req, res) => {
@@ -593,6 +598,23 @@ router.post(
         clientAdresse: commande.client_adresse,
         note: commande.note,
       });
+
+      // Si le paiement Wave est sélectionné et l'API Wave est disponible, initialiser le checkout Wave
+      if ((methode_paiement === 'wave' || methode_paiement === 'pay_wave') && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
+        try {
+          const wave = require('../services/wave');
+          const waveSession = await wave.createCheckoutSession({
+            amount: Number(commande.montant_total),
+            currency: 'XOF',
+            success_url: `${process.env.FRONTEND_URL}/paiement/succes?ref=${commande.reference}&type=commande-boutique`,
+            error_url: `${process.env.FRONTEND_URL}/paiement/erreur`,
+            client_reference: commande.reference,
+          });
+          return res.status(201).json({ commande, wave_url: waveSession.wave_url, session_id: waveSession.session_id, message: 'Commande créée. Redirection vers Wave…' });
+        } catch (waveErr) {
+          console.error('[COMMANDE WAVE INIT ERR]:', waveErr.message);
+        }
+      }
 
       res.status(201).json({ commande, message: 'Commande envoyée avec succès' });
     } catch (err) {
