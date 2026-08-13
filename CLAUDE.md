@@ -2,6 +2,9 @@
 - **Fix du Blocage par Squelette de Chargement Hors-Ligne (`Comptabilite.tsx`)** :
   * **Problème** : En mode hors-ligne, les données du tableau de bord comptable étaient bien lues depuis `localStorage`, mais `setLoading(false)` n'était pas exécuté lors de la présence du cache local. Le composant restait bloqué à `loading = true`, affichant des rectangles de chargement beiges indéfiniment.
   * **Solution** : Appel immédiat de `setLoading(false)` dès la récupération du cache et dans le bloc `.finally()`. Les statistiques comptables s'affichent désormais en 0 ms hors-ligne.
+- **Préchargement Hors-Ligne du Journal d'Audit (`BoutiqueLogs.tsx`, `BoutiqueClient.tsx`)** :
+  * **Problème** : En mode hors-ligne, la consultation du *Journal d'Audit & Historique des Actions* affichait le rectangle d'erreur rouge `Impossible de charger le journal d'audit` car les événements de logs n'étaient pas intégrés au préchargeur d'arrière-plan. De plus, `setLoading(false)` n'était pas exécuté lors de la lecture du cache local.
+  * **Solution** : Ajout du préchargement en tâche de fond des logs (`/api/boutiques/${b.id}/logs?limit=150` -> `nopalou_offline_logs_${b.id}_tous`) dans `BoutiqueClient.tsx` et désactivation immédiate du loader lors de la présence des logs en cache dans `BoutiqueLogs.tsx`.
 - **Préchargement des Compteurs du Tableau de Bord (`BoutiqueClient.tsx`)** :
   * Mise en cache locale des indicateurs de la vue d'ensemble (`nopalou_offline_dash_counts_${boutique.id}`). Les nombres de produits et alertes de stock s'affichent immédiatement sans temporisation.
 - **Ajout des Liens Explicites "Retour à mon compte" & Incrément PWA v6 (`BoutiqueClient.tsx`, `sw.ts`, `public/sw.js`)** :

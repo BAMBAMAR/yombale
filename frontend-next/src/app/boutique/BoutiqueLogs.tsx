@@ -22,8 +22,18 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
   async function fetchLogs() {
     const cacheKey = `nopalou_offline_logs_${boutiqueId}_${filtreType}`
     const cached = localStorage.getItem(cacheKey)
-    if (cached) { try { setLogs(JSON.parse(cached)) } catch(e) {} }
-    if (!cached) setLoading(true)
+    let hasCache = false
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached)
+        if (Array.isArray(parsed)) {
+          setLogs(parsed)
+          setLoading(false)
+          hasCache = true
+        }
+      } catch(e) {}
+    }
+    if (!hasCache) setLoading(true)
     setError(null)
 
     try {
@@ -37,7 +47,7 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
       setLogs(data.logs || [])
       localStorage.setItem(cacheKey, JSON.stringify(data.logs || []))
     } catch (err: any) {
-      if (!cached) setError(err.message)
+      if (!hasCache) setError(err.message)
     } finally {
       setLoading(false)
     }

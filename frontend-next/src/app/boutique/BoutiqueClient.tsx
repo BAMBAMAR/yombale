@@ -2823,6 +2823,13 @@ export default function BoutiqueClient({
                 if (data.caissiers) localStorage.setItem(`nopalou_offline_caissiers_${b.id}`, JSON.stringify(data.caissiers));
               }).catch(() => {});
 
+            // 7. Précharger le Journal d'Audit & Historique des Actions
+            fetchLow(`/api/boutiques/${b.id}/logs?limit=150`)
+              .then(r => r.ok ? r.json() : Promise.reject())
+              .then(data => {
+                if (data.logs) localStorage.setItem(`nopalou_offline_logs_${b.id}_tous`, JSON.stringify(data.logs));
+              }).catch(() => {});
+
           } catch (e) {
             console.warn("Erreur préchargement background pour boutique", b.id, e);
           }
