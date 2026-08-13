@@ -182,7 +182,7 @@ router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
        ORDER BY
          CASE a.plan WHEN 'business' THEN 0 WHEN 'pro' THEN 1 ELSE 2 END ASC,
          b.created_at DESC
-       LIMIT 200`
+       LIMIT 5000`
     );
     res.json({ boutiques: rows });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }

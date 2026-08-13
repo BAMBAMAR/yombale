@@ -179,6 +179,7 @@ router.get('/mine', verifierToken, async (req, res) => {
 // ── GET /api/annonces/admin/en-attente (admin) — toutes les annonces non supprimées
 router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
   try {
+    const limit = parseInt(req.query.limit) || 5000;
     const rows = await pool.query(
       `SELECT a.id, a.categorie_slug, a.titre, a.description, a.prix, a.ville, a.quartier,
               a.contact_nom, a.contact_tel, a.photos, a.actif, a.payee, a.rejete,
@@ -187,11 +188,13 @@ router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
        FROM annonces_classifiees a
        LEFT JOIN utilisateurs u ON u.id = a.utilisateur_id
        WHERE a.supprimee=false
-       ORDER BY a.created_at DESC LIMIT 200`
+       ORDER BY a.created_at DESC LIMIT $1`,
+      [limit]
     );
     res.json({ annonces: rows.rows });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
+
 
 // ── GET /api/annonces/:id — détail
 router.get('/:id', param('id').isUUID(), async (req, res) => {

@@ -2,7 +2,7 @@
   "status": "completed",
   "mode": "live",
   "groupeIndex": 1,
-  "totalGroupes": 6,
+  "totalGroupes": 10,
   "pourcentage": 100,
   "groupeActuel": "Terminé",
   "scrapes": 0,
@@ -10,7 +10,7 @@
   "doublons": 0,
   "ignores": 0,
   "erreurs": [
-    "Achat vente a Dakar: Session Facebook invalidée (mur de connexion détecté) — relancez : node backend/scripts/fb-login-setup.js"
+    "Ndeye Yacine Seck Faye (Offres Emploi): Session Facebook invalidée (mur de connexion détecté) — relancez : node backend/scripts/fb-login-setup.js"
   ],
-  "updatedAt": "2026-08-13T01:43:22.074Z"
+  "updatedAt": "2026-08-13T02:00:15.236Z"
 }

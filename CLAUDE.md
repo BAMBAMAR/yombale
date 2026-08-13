@@ -1,5 +1,9 @@
-## 🚀 Mises à jour du 13/08/2026 : Intégration des Actions en Masse (Batch Actions) dans l'Administration (`BatchActionBar.tsx`, `admin.ts`, `annonces.js`, `partenaires.js`)
+## 🚀 Mises à jour du 13/08/2026 : Intégration des Actions en Masse (Batch Actions) & Levée de la Limite des Annonces en Admin (`annonces.js`, `boutiques.js`)
+- **Fix du Plafond de 200 Élément dans l'Admin (`backend/routes/annonces.js`, `boutiques.js`)** :
+  * **Problème** : Les requêtes admin `GET /api/annonces/admin/en-attente` et `GET /api/boutiques/admin/en-attente` étaient bridées par une clause SQL `LIMIT 200`, ce qui masquait les annonces et boutiques au-delà des 200 plus récentes sur les 2000+ existantes.
+  * **Solution** : Passage de la limite SQL de 200 à **5000** (avec support dynamique du paramètre query `?limit=...`), permettant l'affichage, la sélection et l'exécution d'actions en masse sur l'intégralité du catalogue.
 - **Système d'Actions en Masse sur Tout le Portail d'Administration** :
+
   * **Composant Réutilisable `BatchActionBar.tsx`** : Ajout d'une barre d'action flottante / sticky pour l'administration avec case à cocher globale ("Tout sélectionner / Tout désélectionner"), compteur d'éléments sélectionnés et boutons colorés conditionnels (Activer 🟢, Désactiver 🟠, Supprimer 🔴, Sponsoriser/Prolonger 🔵) avec modal de confirmation préalable pour la suppression en masse.
   * **Extension des Actions Serveur & Backend (`admin.ts`, `annonces.js`, `partenaires.js`)** : Création des fonctions batch et des endpoints de suppression pour Annonces, Boutiques, Immobilier, Comptes utilisateurs, Demandes partenaires, Publications, Paiements manuels, Commissions apporteurs, Telecom et Abonnements.
   * **Déploiement sur 10 Sections Admin** :
