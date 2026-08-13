@@ -2319,3 +2319,8 @@ avigator.vibrate(35) lors de l'ajout d'un produit au panier sur mobile/tablette 
 - **Correction de l'affichage de l'Heure d'Ouverture de Session (Rapport X)** :
   - **Correction du bug Invalid Date** : session.dateOuverture étant déjà stockée sous forme de chaîne d'heure formatée ( 5:21), le ré-enveloppement 
 ew Date(session.dateOuverture) provoquait un échec d'analyse Date JS et affichait Invalid Date dans la modale du Rapport X. Remplacé par un rendu direct Aujourd'hui à HH:MM propre et lisible.
+- **Correction de la volatilité / remise à zéro du CA de session (CaisseClient.tsx)** :
+  - **Suppression du rechargement destructif** : Retrait de l'appel chargerCaissiersEtSession(bId) de la fonction chargerProduitsBoutique. Auparavant, chaque ré-actualisation de stock (500ms après chaque vente) réinterrogeait l'API session du serveur et écrasait le CA accumulé par   FCFA.
+  - **Fusion sécurisée (Math.max)** : Mise à jour de chargerCaissiersEtSession pour systématiquement fusionner les chiffres d'affaires et le nombre de ventes du serveur avec l'état local existant (Math.max(dbTotal, localTotal)), garantissant qu'aucune vente enregistrée localement ne puisse être effacée.
+  - **Persistance LocalStorage** : Sauvegarde automatique de la session active et de son CA dans localStorage (
+opalou_pos_session_) pour conserver l'état du CA même en cas d'actualisation de la page (F5).
