@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { Forfait } from './page'
+import BatchActionBar, { BatchActionConfig } from '@/components/admin/BatchActionBar'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
@@ -34,6 +35,25 @@ export default function AdminTelecomClient({
   const [form, setForm] = useState<Omit<Forfait, 'id' | 'actif'>>(EMPTY)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [loadingBatch, setLoadingBatch] = useState(false)
+
+  const allIds = forfaits.map(f => f.id)
+  const allSelected = allIds.length > 0 && selectedIds.length === allIds.length
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(allIds)
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
 
   function openCreate() {
     setForm(EMPTY)
@@ -96,6 +116,21 @@ export default function AdminTelecomClient({
     } catch { alert('Erreur lors de la désactivation.') }
   }
 
+  const handleBatchDeactivate = async () => {
+    setLoadingBatch(true)
+    for (const id of selectedIds) {
+      try {
+        await fetch(`${BACKEND}/api/telecom/${id}`, {
+          method: 'DELETE',
+          headers: { 'X-Admin-Secret': adminSecret },
+        })
+      } catch {}
+    }
+    setForfaits(prev => prev.filter(f => !selectedIds.includes(f.id)))
+    setSelectedIds([])
+    setLoadingBatch(false)
+  }
+
   function field(k: keyof typeof form, label: string, type = 'text', placeholder = '') {
     const val = form[k]
     return (
@@ -121,11 +156,33 @@ export default function AdminTelecomClient({
   const autres = forfaits.filter(f => !OPERATEURS.includes(f.operateur))
   if (autres.length) grouped['Autre'] = (grouped['Autre'] || []).concat(autres)
 
+  const batchActions: BatchActionConfig[] = [
+    {
+      key: 'desactiver',
+      label: 'Désactiver / Supprimer les forfaits',
+      icon: '🗑️',
+      color: 'red',
+      confirmMsg: 'Désactiver tous les forfaits sélectionnés ?',
+      onClick: handleBatchDeactivate,
+    },
+  ]
+
   return (
     <>
       <div style={{ marginBottom: 20 }}>
         <button className="admin-action-btn" onClick={openCreate}>+ Nouveau forfait</button>
       </div>
+
+      <BatchActionBar
+        selectedCount={selectedIds.length}
+        totalCount={forfaits.length}
+        allSelected={allSelected}
+        onToggleSelectAll={toggleSelectAll}
+        onClearSelection={() => setSelectedIds([])}
+        actions={batchActions}
+        loading={loadingBatch}
+        itemLabel="forfait(s)"
+      />
 
       {OPERATEURS.filter(op => grouped[op]?.length).map(op => (
         <section key={op} style={{ marginBottom: 32 }}>
@@ -134,6 +191,14 @@ export default function AdminTelecomClient({
             <table className="admin-table">
               <thead>
                 <tr>
+                  <th style={{ width: 40, textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleSelectAll}
+                      style={{ width: 16, height: 16, accentColor: '#3b82f6', cursor: 'pointer' }}
+                    />
+                  </th>
                   <th>Nom</th>
                   <th>Type</th>
                   <th>Data</th>
@@ -144,20 +209,31 @@ export default function AdminTelecomClient({
                 </tr>
               </thead>
               <tbody>
-                {grouped[op].map(f => (
-                  <tr key={f.id}>
-                    <td><strong>{f.nom}</strong></td>
-                    <td><span className={`admin-badge admin-badge--${f.type}`}>{f.type}</span></td>
-                    <td>{f.data_mo != null ? `${f.data_mo >= 1024 ? `${(f.data_mo/1024).toFixed(0)} Go` : `${f.data_mo} Mo`}` : '—'}</td>
-                    <td>{f.minutes != null ? `${f.minutes} min` : '—'}</td>
-                    <td>{f.validite_jours != null ? `${f.validite_jours}j` : '—'}</td>
-                    <td><strong>{f.prix.toLocaleString('fr-SN')} FCFA</strong></td>
-                    <td>
-                      <button className="admin-btn-edit" onClick={() => openEdit(f)}>Modifier</button>
-                      <button className="admin-btn-reject" onClick={() => deactivate(f.id)}>Désactiver</button>
-                    </td>
-                  </tr>
-                ))}
+                {grouped[op].map(f => {
+                  const isSel = selectedIds.includes(f.id)
+                  return (
+                    <tr key={f.id} style={{ background: isSel ? '#eff6ff' : 'transparent' }}>
+                      <td style={{ textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={isSel}
+                          onChange={() => toggleSelect(f.id)}
+                          style={{ width: 16, height: 16, accentColor: '#3b82f6', cursor: 'pointer' }}
+                        />
+                      </td>
+                      <td><strong>{f.nom}</strong></td>
+                      <td><span className={`admin-badge admin-badge--${f.type}`}>{f.type}</span></td>
+                      <td>{f.data_mo != null ? `${f.data_mo >= 1024 ? `${(f.data_mo/1024).toFixed(0)} Go` : `${f.data_mo} Mo`}` : '—'}</td>
+                      <td>{f.minutes != null ? `${f.minutes} min` : '—'}</td>
+                      <td>{f.validite_jours != null ? `${f.validite_jours}j` : '—'}</td>
+                      <td><strong>{f.prix.toLocaleString('fr-SN')} FCFA</strong></td>
+                      <td>
+                        <button className="admin-btn-edit" onClick={() => openEdit(f)}>Modifier</button>
+                        <button className="admin-btn-reject" onClick={() => deactivate(f.id)}>Désactiver</button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

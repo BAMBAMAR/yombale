@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition, useCallback } from 'react'
+import BatchActionBar from '@/components/admin/BatchActionBar'
 
 async function api(path: string, opts: RequestInit = {}) {
   const res = await fetch(`/admin-proxy/fb/${path}`, {
@@ -197,10 +198,16 @@ export default function PublicationsPage() {
   const [editId, setEditId]   = useState<string | null>(null)
   const [err, setErr]         = useState('')
   const [ok, setOk]           = useState('')
+
   const [isPending, startTransition] = useTransition()
   const [showTokenModal, setShowTokenModal] = useState(false)
   const [tokenKey, setTokenKey] = useState(0)
+
   const [showPublies, setShowPublies] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+
+
+  const visiblePosts = posts.filter(p => showPublies || p.statut !== 'publie')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -452,14 +459,64 @@ export default function PublicationsPage() {
         </button>
       </div>
 
+      <BatchActionBar
+        selectedCount={selectedIds.length}
+        totalCount={visiblePosts.length}
+        allSelected={visiblePosts.length > 0 && selectedIds.length === visiblePosts.length}
+        onToggleSelectAll={() => {
+          if (selectedIds.length === visiblePosts.length) setSelectedIds([])
+          else setSelectedIds(visiblePosts.map(p => p.id))
+        }}
+        onClearSelection={() => setSelectedIds([])}
+        actions={[
+          {
+            key: 'approuver',
+            label: 'Approuver les sélectionnées',
+            icon: '✅',
+            color: 'green',
+            onClick: async () => {
+              for (const id of selectedIds) {
+                try { await api(`${id}/approuver`, { method: 'POST' }) } catch {}
+              }
+              setSelectedIds([])
+              load()
+            }
+          },
+          {
+            key: 'supprimer',
+            label: 'Supprimer les sélectionnées',
+            icon: '🗑️',
+            color: 'red',
+            confirmMsg: 'Supprimer définitivement ces publications ?',
+            onClick: async () => {
+              for (const id of selectedIds) {
+                try { await api(id, { method: 'DELETE' }) } catch {}
+              }
+              setSelectedIds([])
+              load()
+            }
+          }
+        ]}
+        itemLabel="publication(s)"
+      />
+
       {loading && <p style={{ color: '#94A3B8' }}>Chargement...</p>}
 
-      {posts.filter(p => showPublies || p.statut !== 'publie').map(p => {
+      {visiblePosts.map(p => {
         const st = STATUT_LABEL[p.statut] || { label: p.statut, color: '#94A3B8' }
+        const isSel = selectedIds.includes(p.id)
         return (
-          <div key={p.id} style={s.card}>
+          <div key={p.id} style={{ ...s.card, border: isSel ? '2px solid #3b82f6' : '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  type="checkbox"
+                  checked={isSel}
+                  onChange={() => {
+                    setSelectedIds(prev => prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id])
+                  }}
+                  style={{ width: 18, height: 18, accentColor: '#3b82f6', cursor: 'pointer' }}
+                />
                 <span style={{
                   fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 20,
                   background: st.color + '20', color: st.color,
@@ -485,7 +542,7 @@ export default function PublicationsPage() {
             <pre style={{
               fontSize: 13, color: '#1C2B4A', whiteSpace: 'pre-wrap', background: '#F8FAFC',
               border: '1px solid #E2E8F0', borderRadius: 8, padding: '12px', margin: '0 0 10px',
-              fontFamily: 'var(--font-inter)', lineHeight: 1.6,
+              fontFamily: 'system-ui, sans-serif', lineHeight: 1.6,
             }}>{p.message}</pre>
 
             {p.date_publication && (
@@ -542,3 +599,4 @@ export default function PublicationsPage() {
     </div>
   )
 }
+

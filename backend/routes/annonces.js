@@ -436,4 +436,18 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
   }
 });
 
+// ── DELETE /api/annonces/admin/:id — supprimer annonce classifiée (admin)
+router.delete('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const { rows } = await pool.query('DELETE FROM annonces_classifiees WHERE id=$1 RETURNING id', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[ADMIN DELETE /annonces]', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 module.exports = router;
+

@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { modererBoutique, activerSponsoringBoutique } from '@/app/actions/admin'
+import { modererBoutique, activerSponsoringBoutique, supprimerBoutique, batchModererBoutiques, batchSupprimerBoutiques } from '@/app/actions/admin'
 import { activerPlanTest } from '../abonnements/actions'
+import BatchActionBar, { BatchActionConfig } from '@/components/admin/BatchActionBar'
 
 interface Boutique {
   id: string
@@ -148,7 +149,7 @@ function ModalGestionMarchand({ boutique, onClose, onRefresh }: { boutique: Bout
                   <option value={30}>1 Mois (30j)</option>
                   <option value={90}>3 Mois (90j — 10% reduc)</option>
                   <option value={180}>6 Mois (180j — 15% reduc)</option>
-                  <option value={365}>12 Mois (365j — 25% reduc)</option>
+                  <option value={365}>1 An (365j — 25% reduc)</option>
                 </select>
               </div>
             </div>
@@ -157,47 +158,34 @@ function ModalGestionMarchand({ boutique, onClose, onRefresh }: { boutique: Bout
               onClick={handleActiverPlan}
               disabled={pending}
               style={{
-                width: '100%', padding: '10px 0', borderRadius: 10, border: 'none',
-                background: planSelect === 'business' ? '#1e3a5f' : '#C75B00',
-                color: '#fff', fontWeight: 700, fontSize: 14, cursor: pending ? 'wait' : 'pointer'
+                width: '100%', padding: '10px', borderRadius: 10, fontSize: 13, fontWeight: 800,
+                background: planSelect === 'business' ? '#1e3a5f' : '#C75B00', color: '#fff',
+                border: 'none', cursor: 'pointer', opacity: pending ? 0.7 : 1
               }}
             >
-              {pending ? 'Application…' : `Activer le Plan ${planSelect.toUpperCase()} (${joursSelect}j)`}
+              {pending ? 'Activation en cours…' : `Accorder l'Abonnement ${planSelect.toUpperCase()}`}
             </button>
           </div>
 
-          {/* Fonctionnalités associées */}
-          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 16, marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: '#475569', marginBottom: 8 }}>
-              💡 Fonctionnalités débloquées avec {planSelect.toUpperCase()} :
-            </div>
-            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#64748b', display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <li>Badge Vendeur {planSelect === 'business' ? 'Business' : 'Pro'} & placement prioritaire</li>
-              <li>Accès complet à la Caisse Enregistreuse POS (Magasin)</li>
-              <li>{planSelect === 'business' ? '15 annonces offertes/mois + URL dédiée + Commission 2%' : '5 annonces offertes/mois'}</li>
-            </ul>
-          </div>
-
-          {/* Actions Modération & Sponsoring */}
-          <div style={{ display: 'flex', gap: 10 }}>
+          {/* Section Modération Rapide */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <button
               onClick={handleToggleSponsor}
               disabled={pending}
               style={{
-                flex: 1, padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 700,
-                border: sponsorActif ? '1px solid #fcd34d' : 'none',
-                background: sponsorActif ? '#fffbeb' : '#D97706',
-                color: sponsorActif ? '#92400e' : '#fff', cursor: 'pointer'
+                padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 700, border: 'none',
+                background: sponsorActif ? '#fee2e2' : '#fef3c7',
+                color: sponsorActif ? '#991b1b' : '#92400e', cursor: 'pointer'
               }}
             >
-              {sponsorActif ? '✕ Retirer Sponsor' : '⭐ Sponsoriser 30j'}
+              {sponsorActif ? '❌ Enlever Sponsoring' : '⭐ Mettre en Sponsoring'}
             </button>
 
             <button
               onClick={handleToggleActif}
               disabled={pending}
               style={{
-                flex: 1, padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 700, border: 'none',
+                padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 700, border: 'none',
                 background: boutique.actif ? '#fee2e2' : '#dcfce7',
                 color: boutique.actif ? '#991b1b' : '#166534', cursor: 'pointer'
               }}
@@ -211,7 +199,19 @@ function ModalGestionMarchand({ boutique, onClose, onRefresh }: { boutique: Bout
   )
 }
 
-function BoutiqueRow({ boutique, onAction, onOpenGestion }: { boutique: Boutique; onAction: () => void; onOpenGestion: (b: Boutique) => void }) {
+function BoutiqueRow({
+  boutique,
+  isSelected,
+  onToggleSelect,
+  onAction,
+  onOpenGestion
+}: {
+  boutique: Boutique
+  isSelected: boolean
+  onToggleSelect: () => void
+  onAction: () => void
+  onOpenGestion: (b: Boutique) => void
+}) {
   const [pending, startTransition] = useTransition()
   const sponsorActif = isSponsorActif(boutique)
 
@@ -222,9 +222,10 @@ function BoutiqueRow({ boutique, onAction, onOpenGestion }: { boutique: Boutique
     })
   }
 
-  function handleToggleSponsor() {
+  function handleSupprimer() {
+    if (!window.confirm(`Supprimer définitivement la boutique "${boutique.nom}" ?`)) return
     startTransition(async () => {
-      await activerSponsoringBoutique(boutique.id, !sponsorActif)
+      await supprimerBoutique(boutique.id)
       onAction()
     })
   }
@@ -241,6 +242,16 @@ function BoutiqueRow({ boutique, onAction, onOpenGestion }: { boutique: Boutique
       opacity: pending ? 0.5 : 1,
       transition: 'opacity .2s',
     }}>
+      {/* Checkbox */}
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={onToggleSelect}
+          style={{ width: 18, height: 18, accentColor: '#3b82f6', cursor: 'pointer' }}
+        />
+      </div>
+
       {/* Logo */}
       <div style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 8, overflow: 'hidden', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {boutique.logo_url
@@ -325,6 +336,14 @@ function BoutiqueRow({ boutique, onAction, onOpenGestion }: { boutique: Boutique
           >
             {pending ? '…' : boutique.actif ? 'Désact.' : 'Réact.'}
           </button>
+          <button
+            onClick={handleSupprimer}
+            disabled={pending}
+            className="admin-btn admin-btn--rejeter"
+            style={{ fontSize: 11, background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }}
+          >
+            🗑️
+          </button>
         </div>
       </div>
     </div>
@@ -334,10 +353,87 @@ function BoutiqueRow({ boutique, onAction, onOpenGestion }: { boutique: Boutique
 export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutique[] }) {
   const [, startTransition] = useTransition()
   const [selectedBoutique, setSelectedBoutique] = useState<Boutique | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [loadingBatch, setLoadingBatch] = useState(false)
 
   function refresh() {
     startTransition(() => { window.location.reload() })
   }
+
+  const allIds = boutiques.map(b => b.id)
+  const allSelected = allIds.length > 0 && selectedIds.length === allIds.length
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(allIds)
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
+
+  const handleBatchActiver = async () => {
+    setLoadingBatch(true)
+    try {
+      await batchModererBoutiques(selectedIds, true)
+      setSelectedIds([])
+      refresh()
+    } finally {
+      setLoadingBatch(false)
+    }
+  }
+
+  const handleBatchDesactiver = async () => {
+    setLoadingBatch(true)
+    try {
+      await batchModererBoutiques(selectedIds, false)
+      setSelectedIds([])
+      refresh()
+    } finally {
+      setLoadingBatch(false)
+    }
+  }
+
+  const handleBatchSupprimer = async () => {
+    setLoadingBatch(true)
+    try {
+      await batchSupprimerBoutiques(selectedIds)
+      setSelectedIds([])
+      refresh()
+    } finally {
+      setLoadingBatch(false)
+    }
+  }
+
+  const batchActions: BatchActionConfig[] = [
+    {
+      key: 'activer',
+      label: 'Activer les boutiques',
+      icon: '🟢',
+      color: 'green',
+      onClick: handleBatchActiver,
+    },
+    {
+      key: 'desactiver',
+      label: 'Désactiver les boutiques',
+      icon: '🔴',
+      color: 'amber',
+      onClick: handleBatchDesactiver,
+    },
+    {
+      key: 'supprimer',
+      label: 'Supprimer définitivement',
+      icon: '🗑️',
+      color: 'red',
+      confirmMsg: 'Êtes-vous sûr de vouloir supprimer définitivement ces boutiques ?',
+      onClick: handleBatchSupprimer,
+    },
+  ]
 
   const abonnees   = boutiques.filter(b => b.plan_actif)
   const sponsorisees = boutiques.filter(b => !b.plan_actif && isSponsorActif(b))
@@ -349,6 +445,17 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
 
   return (
     <div className="admin-annonces-sections">
+      <BatchActionBar
+        selectedCount={selectedIds.length}
+        totalCount={boutiques.length}
+        allSelected={allSelected}
+        onToggleSelectAll={toggleSelectAll}
+        onClearSelection={() => setSelectedIds([])}
+        actions={batchActions}
+        loading={loadingBatch}
+        itemLabel="boutique(s)"
+      />
+
       {abonnees.length > 0 && (
         <section className="admin-annonces-section" style={{ marginBottom: 32 }}>
           <h2 className="admin-section-titre" style={{ color: '#C75B00' }}>
@@ -360,7 +467,14 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
           </p>
           <div className="admin-annonces-list">
             {abonnees.map(b => (
-              <BoutiqueRow key={b.id} boutique={b} onAction={refresh} onOpenGestion={setSelectedBoutique} />
+              <BoutiqueRow
+                key={b.id}
+                boutique={b}
+                isSelected={selectedIds.includes(b.id)}
+                onToggleSelect={() => toggleSelect(b.id)}
+                onAction={refresh}
+                onOpenGestion={setSelectedBoutique}
+              />
             ))}
           </div>
         </section>
@@ -374,7 +488,14 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
           </h2>
           <div className="admin-annonces-list">
             {sponsorisees.map(b => (
-              <BoutiqueRow key={b.id} boutique={b} onAction={refresh} onOpenGestion={setSelectedBoutique} />
+              <BoutiqueRow
+                key={b.id}
+                boutique={b}
+                isSelected={selectedIds.includes(b.id)}
+                onToggleSelect={() => toggleSelect(b.id)}
+                onAction={refresh}
+                onOpenGestion={setSelectedBoutique}
+              />
             ))}
           </div>
         </section>
@@ -387,7 +508,14 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
         </h2>
         <div className="admin-annonces-list">
           {autres.map(b => (
-            <BoutiqueRow key={b.id} boutique={b} onAction={refresh} onOpenGestion={setSelectedBoutique} />
+            <BoutiqueRow
+              key={b.id}
+              boutique={b}
+              isSelected={selectedIds.includes(b.id)}
+              onToggleSelect={() => toggleSelect(b.id)}
+              onAction={refresh}
+              onOpenGestion={setSelectedBoutique}
+            />
           ))}
         </div>
       </section>

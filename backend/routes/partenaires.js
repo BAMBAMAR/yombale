@@ -110,4 +110,17 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
   }
 });
 
+// DELETE /api/partenaires/:id — supprimer demande partenaire (admin)
+router.delete('/:id', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query('DELETE FROM demandes_partenaires WHERE id = $1 RETURNING id', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Demande introuvable' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[DELETE /api/partenaires/:id]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
+

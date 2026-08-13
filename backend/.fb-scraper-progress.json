@@ -2,7 +2,7 @@
   "status": "completed",
   "mode": "live",
   "groupeIndex": 1,
-  "totalGroupes": 10,
+  "totalGroupes": 6,
   "pourcentage": 100,
   "groupeActuel": "Terminé",
   "scrapes": 0,
@@ -10,7 +10,7 @@
   "doublons": 0,
   "ignores": 0,
   "erreurs": [
-    "Groupe immo 1: Session Facebook invalidée (mur de connexion détecté) — relancez : node backend/scripts/fb-login-setup.js"
+    "Achat vente a Dakar: Session Facebook invalidée (mur de connexion détecté) — relancez : node backend/scripts/fb-login-setup.js"
   ],
-  "updatedAt": "2026-08-13T00:30:41.270Z"
+  "updatedAt": "2026-08-13T01:43:22.074Z"
 }

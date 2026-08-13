@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useMemo, useState, useTransition } from 'react'
-import { modererImmo, activerSponsoring } from '@/app/actions/admin'
+import { modererImmo, activerSponsoring, supprimerImmo, batchModererImmo } from '@/app/actions/admin'
+import BatchActionBar, { BatchActionConfig } from '@/components/admin/BatchActionBar'
 
 interface AnnonceImmo {
   id: number
@@ -70,7 +71,17 @@ function trier(annonces: AnnonceImmo[], tri: Tri) {
   }
 }
 
-function ImmoRow({ annonce, onAction }: { annonce: AnnonceImmo; onAction: () => void }) {
+function ImmoRow({
+  annonce,
+  isSelected,
+  onToggleSelect,
+  onAction
+}: {
+  annonce: AnnonceImmo
+  isSelected: boolean
+  onToggleSelect: () => void
+  onAction: () => void
+}) {
   const [pending, startTransition] = useTransition()
   const [showRejet, setShowRejet] = React.useState(false)
   const [motif, setMotif] = React.useState('')
@@ -98,8 +109,25 @@ function ImmoRow({ annonce, onAction }: { annonce: AnnonceImmo; onAction: () => 
     })
   }
 
+  function handleSupprimer() {
+    if (!window.confirm('Supprimer définitivement cette annonce immobilière ?')) return
+    startTransition(async () => {
+      await supprimerImmo(annonce.id)
+      onAction()
+    })
+  }
+
   return (
     <div className={`admin-annonce-row ${statutClass(annonce)}${pending ? ' admin-annonce-row--loading' : ''}`}>
+      <div style={{ padding: '12px 0 0 16px', display: 'flex', alignItems: 'center' }}>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={onToggleSelect}
+          style={{ width: 18, height: 18, accentColor: '#3b82f6', cursor: 'pointer' }}
+        />
+      </div>
+
       <div className="admin-annonce-body">
         <div className="admin-annonce-thumb">
           {annonce.photos?.[0]
@@ -198,6 +226,14 @@ function ImmoRow({ annonce, onAction }: { annonce: AnnonceImmo; onAction: () => 
               ⏸ Désactiver
             </button>
           )}
+          <button
+            onClick={handleSupprimer}
+            disabled={pending}
+            className="admin-btn admin-btn--rejeter"
+            style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }}
+          >
+            🗑️ Supprimer
+          </button>
         </div>
       </div>
 
@@ -218,7 +254,17 @@ function ImmoRow({ annonce, onAction }: { annonce: AnnonceImmo; onAction: () => 
   )
 }
 
-function SponsoringRow({ annonce, onAction }: { annonce: AnnonceImmo; onAction: () => void }) {
+function SponsoringRow({
+  annonce,
+  isSelected,
+  onToggleSelect,
+  onAction
+}: {
+  annonce: AnnonceImmo
+  isSelected: boolean
+  onToggleSelect: () => void
+  onAction: () => void
+}) {
   const [pending, startTransition] = useTransition()
 
   function handleActiver() {
@@ -228,8 +274,24 @@ function SponsoringRow({ annonce, onAction }: { annonce: AnnonceImmo; onAction: 
     })
   }
 
+  function handleSupprimer() {
+    if (!window.confirm('Supprimer définitivement cette annonce immobilière ?')) return
+    startTransition(async () => {
+      await supprimerImmo(annonce.id)
+      onAction()
+    })
+  }
+
   return (
     <div className="admin-annonce-row">
+      <div style={{ padding: '12px 0 0 16px', display: 'flex', alignItems: 'center' }}>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={onToggleSelect}
+          style={{ width: 18, height: 18, accentColor: '#3b82f6', cursor: 'pointer' }}
+        />
+      </div>
       <div className="admin-annonce-body">
         <div className="admin-annonce-thumb">
           {annonce.photos?.[0]
@@ -254,6 +316,14 @@ function SponsoringRow({ annonce, onAction }: { annonce: AnnonceImmo; onAction: 
             className="admin-btn admin-btn--approuver"
           >
             {pending ? '…' : 'Activer 30 jours'}
+          </button>
+          <button
+            onClick={handleSupprimer}
+            disabled={pending}
+            className="admin-btn admin-btn--rejeter"
+            style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }}
+          >
+            🗑️ Supprimer
           </button>
         </div>
       </div>
@@ -281,6 +351,8 @@ export default function AdminImmoClient({
   const [tab, setTab] = useState<TabKey>('attente')
   const [q, setQ] = useState('')
   const [tri, setTri] = useState<Tri>('recent')
+  const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [loadingBatch, setLoadingBatch] = useState(false)
 
   function refresh() {
     startTransition(() => { window.location.reload() })
@@ -304,13 +376,106 @@ export default function AdminImmoClient({
 
   const filtres = useMemo(() => trier(source.filter(a => correspond(a, q)), tri), [source, q, tri])
 
+  const allIds = filtres.map(a => a.id)
+  const allSelected = allIds.length > 0 && selectedIds.length === allIds.length
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(allIds)
+    }
+  }
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
+
+  const handleBatchValider = async () => {
+    setLoadingBatch(true)
+    try {
+      await batchModererImmo(selectedIds, 'valider')
+      setSelectedIds([])
+      refresh()
+    } finally {
+      setLoadingBatch(false)
+    }
+  }
+
+  const handleBatchDesactiver = async () => {
+    setLoadingBatch(true)
+    try {
+      await batchModererImmo(selectedIds, 'desactiver')
+      setSelectedIds([])
+      refresh()
+    } finally {
+      setLoadingBatch(false)
+    }
+  }
+
+  const handleBatchSponsoriser = async () => {
+    setLoadingBatch(true)
+    try {
+      await batchModererImmo(selectedIds, 'sponsoriser')
+      setSelectedIds([])
+      refresh()
+    } finally {
+      setLoadingBatch(false)
+    }
+  }
+
+  const handleBatchSupprimer = async () => {
+    setLoadingBatch(true)
+    try {
+      await batchModererImmo(selectedIds, 'supprimer')
+      setSelectedIds([])
+      refresh()
+    } finally {
+      setLoadingBatch(false)
+    }
+  }
+
+  const batchActions: BatchActionConfig[] = [
+    {
+      key: 'valider',
+      label: 'Valider les sélectionnées',
+      icon: '✅',
+      color: 'green',
+      onClick: handleBatchValider,
+    },
+    {
+      key: 'desactiver',
+      label: 'Désactiver / Rejeter',
+      icon: '⏸️',
+      color: 'amber',
+      onClick: handleBatchDesactiver,
+    },
+    {
+      key: 'sponsoriser',
+      label: 'Sponsoriser 30 jours',
+      icon: '⭐',
+      color: 'blue',
+      onClick: handleBatchSponsoriser,
+    },
+    {
+      key: 'supprimer',
+      label: 'Supprimer définitivement',
+      icon: '🗑️',
+      color: 'red',
+      confirmMsg: 'Êtes-vous sûr de vouloir supprimer définitivement ces annonces immobilières ?',
+      onClick: handleBatchSupprimer,
+    },
+  ]
+
   return (
     <div className="admin-annonces-sections">
       <div className="admin-tabs" style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {TABS.map(t => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
+            onClick={() => { setTab(t.key); setSelectedIds([]) }}
             className="admin-btn"
             style={{
               background: tab === t.key ? '#1e293b' : '#f1f5f9',
@@ -345,13 +510,40 @@ export default function AdminImmoClient({
         </select>
       </div>
 
+      <BatchActionBar
+        selectedCount={selectedIds.length}
+        totalCount={filtres.length}
+        allSelected={allSelected}
+        onToggleSelectAll={toggleSelectAll}
+        onClearSelection={() => setSelectedIds([])}
+        actions={batchActions}
+        loading={loadingBatch}
+        itemLabel="annonce(s) immo"
+      />
+
       {filtres.length === 0 ? (
         <p className="admin-empty">Aucune annonce dans cette section.</p>
       ) : (
         <div className="admin-annonces-list">
           {tab === 'sponsoring'
-            ? filtres.map(a => <SponsoringRow key={a.id} annonce={a} onAction={refresh} />)
-            : filtres.map(a => <ImmoRow key={a.id} annonce={a} onAction={refresh} />)
+            ? filtres.map(a => (
+                <SponsoringRow
+                  key={a.id}
+                  annonce={a}
+                  isSelected={selectedIds.includes(a.id)}
+                  onToggleSelect={() => toggleSelect(a.id)}
+                  onAction={refresh}
+                />
+              ))
+            : filtres.map(a => (
+                <ImmoRow
+                  key={a.id}
+                  annonce={a}
+                  isSelected={selectedIds.includes(a.id)}
+                  onToggleSelect={() => toggleSelect(a.id)}
+                  onAction={refresh}
+                />
+              ))
           }
         </div>
       )}

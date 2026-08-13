@@ -184,3 +184,212 @@ export async function modererImmo(
   if (!r.ok) return { error: 'Erreur lors de la modération' }
   return {}
 }
+
+// ── Supprimer annonce classifiée ───────────────────────────────────
+export async function supprimerAnnonce(id: string): Promise<{ error?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  const r = await fetch(`${BACKEND}/api/annonces/admin/${id}`, {
+    method: 'DELETE',
+    headers: adminHeaders(secret),
+    cache: 'no-store',
+  })
+
+  if (!r.ok) return { error: 'Erreur lors de la suppression' }
+  revalidatePath('/admin/annonces')
+  revalidatePath('/annonces')
+  return {}
+}
+
+// ── Batch Actions Annonces ──────────────────────────────────────────
+export async function batchModererAnnonces(ids: string[], action: 'approuver' | 'rejeter'): Promise<{ successCount: number; errors: number }> {
+  let successCount = 0
+  let errors = 0
+  for (const id of ids) {
+    const res = await modererAnnonce(id, action)
+    if (res.error) errors++
+    else successCount++
+  }
+  revalidatePath('/admin/annonces')
+  return { successCount, errors }
+}
+
+export async function batchSupprimerAnnonces(ids: string[]): Promise<{ successCount: number; errors: number }> {
+  let successCount = 0
+  let errors = 0
+  for (const id of ids) {
+    const res = await supprimerAnnonce(id)
+    if (res.error) errors++
+    else successCount++
+  }
+  revalidatePath('/admin/annonces')
+  return { successCount, errors }
+}
+
+// ── Supprimer boutique ──────────────────────────────────────────────
+export async function supprimerBoutique(id: string): Promise<{ error?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  const r = await fetch(`${BACKEND}/api/boutiques/admin/${id}`, {
+    method: 'DELETE',
+    headers: adminHeaders(secret),
+    cache: 'no-store',
+  })
+
+  if (!r.ok) return { error: 'Erreur lors de la suppression de la boutique' }
+  revalidatePath('/admin/boutiques')
+  return {}
+}
+
+// ── Batch Actions Boutiques ─────────────────────────────────────────
+export async function batchModererBoutiques(ids: string[], actif: boolean): Promise<{ successCount: number; errors: number }> {
+  let successCount = 0
+  let errors = 0
+  for (const id of ids) {
+    const res = await modererBoutique(id, actif)
+    if (res.error) errors++
+    else successCount++
+  }
+  revalidatePath('/admin/boutiques')
+  return { successCount, errors }
+}
+
+export async function batchSupprimerBoutiques(ids: string[]): Promise<{ successCount: number; errors: number }> {
+  let successCount = 0
+  let errors = 0
+  for (const id of ids) {
+    const res = await supprimerBoutique(id)
+    if (res.error) errors++
+    else successCount++
+  }
+  revalidatePath('/admin/boutiques')
+  return { successCount, errors }
+}
+
+// ── Supprimer immo ──────────────────────────────────────────────────
+export async function supprimerImmo(id: number | string): Promise<{ error?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  const r = await fetch(`${BACKEND}/api/immo/${id}`, {
+    method: 'DELETE',
+    headers: adminHeaders(secret),
+    cache: 'no-store',
+  })
+
+  if (!r.ok) return { error: 'Erreur lors de la suppression immo' }
+  revalidatePath('/admin/immo')
+  return {}
+}
+
+// ── Batch Actions Immo ──────────────────────────────────────────────
+export async function batchModererImmo(
+  ids: (number | string)[],
+  action: 'valider' | 'desactiver' | 'sponsoriser' | 'supprimer'
+): Promise<{ successCount: number; errors: number }> {
+  let successCount = 0
+  let errors = 0
+
+  for (const id of ids) {
+    const numId = typeof id === 'string' ? parseInt(id, 10) : id
+    let res: { error?: string } = {}
+    if (action === 'valider') {
+      res = await modererImmo(numId, true)
+    } else if (action === 'desactiver') {
+      res = await modererImmo(numId, false)
+    } else if (action === 'sponsoriser') {
+      res = await activerSponsoring(numId)
+    } else if (action === 'supprimer') {
+      res = await supprimerImmo(numId)
+    }
+
+    if (res.error) errors++
+    else successCount++
+  }
+
+  revalidatePath('/admin/immo')
+  return { successCount, errors }
+}
+
+// ── Supprimer Partenaire ────────────────────────────────────────────
+export async function supprimerPartenaire(id: string): Promise<{ error?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  const r = await fetch(`${BACKEND}/api/partenaires/${id}`, {
+    method: 'DELETE',
+    headers: adminHeaders(secret),
+    cache: 'no-store',
+  })
+
+  if (!r.ok) return { error: 'Erreur lors de la suppression' }
+  revalidatePath('/admin/partenaires')
+  return {}
+}
+
+// ── Batch Actions Partenaires ───────────────────────────────────────
+export async function batchModererPartenaires(
+  ids: string[],
+  action: 'approuver' | 'rejeter' | 'supprimer'
+): Promise<{ successCount: number; errors: number }> {
+  let successCount = 0
+  let errors = 0
+  for (const id of ids) {
+    let res: { error?: string } = {}
+    if (action === 'approuver') res = await modererPartenaire(id, 'approuve')
+    else if (action === 'rejeter') res = await modererPartenaire(id, 'rejete')
+    else if (action === 'supprimer') res = await supprimerPartenaire(id)
+
+    if (res.error) errors++
+    else successCount++
+  }
+  revalidatePath('/admin/partenaires')
+  return { successCount, errors }
+}
+
+// ── Batch Actions Comptes ───────────────────────────────────────────
+export async function batchModererComptes(
+  ids: string[],
+  action: 'suspendre' | 'reactiver' | 'supprimer'
+): Promise<{ successCount: number; errors: number }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { successCount: 0, errors: ids.length }
+
+  let successCount = 0
+  let errors = 0
+
+  for (const id of ids) {
+    let url = `${BACKEND}/api/admin/utilisateurs/${id}/suspendre`
+    let method = 'PUT'
+
+    if (action === 'reactiver') {
+      url = `${BACKEND}/api/admin/utilisateurs/${id}/reactiver`
+    } else if (action === 'supprimer') {
+      url = `${BACKEND}/api/admin/utilisateurs/${id}/marquer-supprime`
+      method = 'POST'
+    }
+
+    try {
+      const r = await fetch(url, {
+        method,
+        headers: adminHeaders(secret),
+        cache: 'no-store',
+      })
+      if (r.ok) successCount++
+      else errors++
+    } catch {
+      errors++
+    }
+  }
+
+  revalidatePath('/admin/comptes')
+  return { successCount, errors }
+}
+

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { modererAnnonce } from '@/app/actions/admin'
+import React, { useState, useTransition } from 'react'
+import { modererAnnonce, supprimerAnnonce, batchModererAnnonces, batchSupprimerAnnonces } from '@/app/actions/admin'
+import BatchActionBar, { BatchActionConfig } from '@/components/admin/BatchActionBar'
 
 interface Annonce {
   id: string
@@ -41,7 +42,17 @@ function StatutBadge({ annonce }: { annonce: Annonce }) {
   return <span className="admin-annonce-statut admin-annonce-statut--attente">En attente</span>
 }
 
-function AnnonceRow({ annonce, onAction }: { annonce: Annonce; onAction: () => void }) {
+function AnnonceRow({
+  annonce,
+  isSelected,
+  onToggleSelect,
+  onAction
+}: {
+  annonce: Annonce
+  isSelected: boolean
+  onToggleSelect: () => void
+  onAction: () => void
+}) {
   const [pending, startTransition] = useTransition()
   const [expanded, setExpanded] = useState(false)
 
@@ -52,12 +63,30 @@ function AnnonceRow({ annonce, onAction }: { annonce: Annonce; onAction: () => v
     })
   }
 
+  function handleSupprimer() {
+    if (!window.confirm('Supprimer définitivement cette annonce ?')) return
+    startTransition(async () => {
+      await supprimerAnnonce(annonce.id)
+      onAction()
+    })
+  }
+
   const allPhotos = Array.isArray(annonce.photos) ? annonce.photos : []
   const photo = allPhotos[0] ?? null
   const prix = formatPrix(annonce.prix)
 
   return (
-    <div className={`admin-annonce-row ${statutClass(annonce)}${pending ? ' admin-annonce-row--loading' : ''}`}>
+    <div className={`admin-annonce-row ${statutClass(annonce)}${pending ? ' admin-annonce-row--loading' : ''}`} style={{ position: 'relative' }}>
+      {/* Checkbox de sélection */}
+      <div style={{ padding: '12px 0 0 16px', display: 'flex', alignItems: 'center' }}>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={onToggleSelect}
+          style={{ width: 18, height: 18, accentColor: '#3b82f6', cursor: 'pointer' }}
+        />
+      </div>
+
       {/* Corps principal */}
       <div className="admin-annonce-body">
         {/* Photo */}
@@ -136,6 +165,14 @@ function AnnonceRow({ annonce, onAction }: { annonce: Annonce; onAction: () => v
               ↩ Réactiver
             </button>
           )}
+          <button
+            onClick={handleSupprimer}
+            disabled={pending}
+            className="admin-btn admin-btn--rejeter"
+            style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }}
+          >
+            🗑️ Supprimer
+          </button>
         </div>
       </div>
 
@@ -177,12 +214,89 @@ export default function AdminAnnoncesClient({
   annonces: Annonce[]
 }) {
   const [, startTransition] = useTransition()
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [loadingBatch, setLoadingBatch] = useState(false)
 
   function refresh() {
     startTransition(() => {
       window.location.reload()
     })
   }
+
+  const allIds = initial.map(a => a.id)
+  const allSelected = allIds.length > 0 && selectedIds.length === allIds.length
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(allIds)
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
+
+  const handleBatchApprouver = async () => {
+    setLoadingBatch(true)
+    try {
+      await batchModererAnnonces(selectedIds, 'approuver')
+      setSelectedIds([])
+      refresh()
+    } finally {
+      setLoadingBatch(false)
+    }
+  }
+
+  const handleBatchDesactiver = async () => {
+    setLoadingBatch(true)
+    try {
+      await batchModererAnnonces(selectedIds, 'rejeter')
+      setSelectedIds([])
+      refresh()
+    } finally {
+      setLoadingBatch(false)
+    }
+  }
+
+  const handleBatchSupprimer = async () => {
+    setLoadingBatch(true)
+    try {
+      await batchSupprimerAnnonces(selectedIds)
+      setSelectedIds([])
+      refresh()
+    } finally {
+      setLoadingBatch(false)
+    }
+  }
+
+  const batchActions: BatchActionConfig[] = [
+    {
+      key: 'approuver',
+      label: 'Approuver les sélectionnées',
+      icon: '✅',
+      color: 'green',
+      onClick: handleBatchApprouver,
+    },
+    {
+      key: 'desactiver',
+      label: 'Désactiver / Rejeter',
+      icon: '⏸️',
+      color: 'amber',
+      onClick: handleBatchDesactiver,
+    },
+    {
+      key: 'supprimer',
+      label: 'Supprimer définitivement',
+      icon: '🗑️',
+      color: 'red',
+      confirmMsg: 'Êtes-vous sûr de vouloir supprimer définitivement ces annonces ?',
+      onClick: handleBatchSupprimer,
+    },
+  ]
 
   const enAttente = initial.filter(a => !a.actif && !a.rejete)
   const actives   = initial.filter(a => a.actif)
@@ -196,6 +310,17 @@ export default function AdminAnnoncesClient({
 
   return (
     <div className="admin-annonces-sections">
+      <BatchActionBar
+        selectedCount={selectedIds.length}
+        totalCount={initial.length}
+        allSelected={allSelected}
+        onToggleSelectAll={toggleSelectAll}
+        onClearSelection={() => setSelectedIds([])}
+        actions={batchActions}
+        loading={loadingBatch}
+        itemLabel="annonce(s)"
+      />
+
       {sections.map(s => (
         s.items.length === 0 ? null : (
           <section key={s.titre} className="admin-annonces-section">
@@ -205,7 +330,13 @@ export default function AdminAnnoncesClient({
             </h2>
             <div className="admin-annonces-list">
               {s.items.map(a => (
-                <AnnonceRow key={a.id} annonce={a} onAction={refresh} />
+                <AnnonceRow
+                  key={a.id}
+                  annonce={a}
+                  isSelected={selectedIds.includes(a.id)}
+                  onToggleSelect={() => toggleSelect(a.id)}
+                  onAction={refresh}
+                />
               ))}
             </div>
           </section>

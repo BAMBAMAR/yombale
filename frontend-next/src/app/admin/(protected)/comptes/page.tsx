@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import Link from 'next/link'
+import ComptesTableClient from './ComptesTableClient'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 const COOKIE  = 'nopalou_admin'
@@ -137,40 +138,7 @@ export default async function AdminComptesPage({
 
       <p style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>{total} compte(s)</p>
 
-      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 600 }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                {['Nom / Email', 'Téléphone', 'Statuts', 'Inscrit le', ''].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {utilisateurs.length === 0 && (
-                <tr><td colSpan={5} style={{ padding: 32, textAlign: 'center', color: '#94a3b8' }}>Aucun compte trouvé</td></tr>
-              )}
-              {utilisateurs.map((u, i) => (
-                <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
-                  <td style={{ padding: '10px 14px' }}>
-                    <div style={{ fontWeight: 600 }}>{u.nom}</div>
-                    <div style={{ color: '#64748b', fontSize: 12 }}>{u.email}</div>
-                  </td>
-                  <td style={{ padding: '10px 14px', color: '#64748b' }}>{u.telephone ?? '—'}</td>
-                  <td style={{ padding: '10px 14px' }}>{badge(u)}</td>
-                  <td style={{ padding: '10px 14px', whiteSpace: 'nowrap', color: '#64748b' }}>{dateF(u.created_at)}</td>
-                  <td style={{ padding: '10px 14px' }}>
-                    <Link href={`/admin/comptes/${u.id}`} style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8', textDecoration: 'none' }}>
-                      Voir →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <ComptesTableClient utilisateurs={utilisateurs} />
 
       <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
         {parseInt(page) > 1 && (
@@ -183,3 +151,4 @@ export default async function AdminComptesPage({
     </div>
   )
 }
+

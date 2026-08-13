@@ -1,5 +1,7 @@
 'use client'
+
 import { useState } from 'react'
+import BatchActionBar, { BatchActionConfig } from '@/components/admin/BatchActionBar'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
@@ -46,6 +48,26 @@ export default function ApporteursClient({
   const [commissions, setCommissions] = useState<Commission[]>(initialCommissions)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const [selectedCommissionIds, setSelectedCommissionIds] = useState<string[]>([])
+  const [loadingBatch, setLoadingBatch] = useState(false)
+
+  const commissionsDues = commissions.filter(c => c.statut === 'du')
+  const allDueIds = commissionsDues.map(c => c.id)
+  const allSelected = allDueIds.length > 0 && selectedCommissionIds.length === allDueIds.length
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedCommissionIds([])
+    } else {
+      setSelectedCommissionIds(allDueIds)
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedCommissionIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
 
   async function saveSettings() {
     setSaving(true)
@@ -80,6 +102,30 @@ export default function ApporteursClient({
     }
   }
 
+  const handleBatchPayerCommissions = async () => {
+    setLoadingBatch(true)
+    setMsg(null)
+    let okCount = 0
+    for (const id of selectedCommissionIds) {
+      try {
+        const comm = commissions.find(c => c.id === id)
+        const r = await fetch(`${BACKEND}/api/apporteurs/admin/commissions/${id}/payer`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
+          body: JSON.stringify({ ignorer_seuil: true }),
+        })
+        const data = await r.json()
+        if (r.ok) {
+          okCount++
+          setCommissions(cs => cs.map(c => c.id === id ? { ...c, statut: 'paye', paye_at: data.commission?.paye_at || new Date().toISOString() } : c))
+        }
+      } catch {}
+    }
+    setSelectedCommissionIds([])
+    setLoadingBatch(false)
+    setMsg({ type: 'ok', text: `${okCount} commission(s) marquée(s) payée(s) ✓` })
+  }
+
   const field = (key: keyof Settings, label: string, suffix: string) => (
     <div style={{ marginBottom: 16 }}>
       <label style={{ display: 'block', fontWeight: 600, marginBottom: 4, fontSize: 13, color: '#374151' }}>{label}</label>
@@ -96,6 +142,16 @@ export default function ApporteursClient({
   )
 
   const actif = form.apporteur_actif === 'true'
+
+  const batchActions: BatchActionConfig[] = [
+    {
+      key: 'payer',
+      label: 'Marquer payées les commissions sélectionnées',
+      icon: '🟢',
+      color: 'green',
+      onClick: handleBatchPayerCommissions,
+    },
+  ]
 
   return (
     <div style={{ maxWidth: 960 }}>
@@ -165,38 +221,71 @@ export default function ApporteursClient({
 
       <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,.08)' }}>
         <h3 style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 700 }}>💰 Commissions</h3>
+
+        <BatchActionBar
+          selectedCount={selectedCommissionIds.length}
+          totalCount={commissionsDues.length}
+          allSelected={allSelected}
+          onToggleSelectAll={toggleSelectAll}
+          onClearSelection={() => setSelectedCommissionIds([])}
+          actions={batchActions}
+          loading={loadingBatch}
+          itemLabel="commission(s)"
+        />
+
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 500 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 550 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #f3f4f6' }}>
+                <th style={{ padding: '8px 10px', width: 40, textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleSelectAll}
+                    style={{ width: 16, height: 16, accentColor: '#3b82f6', cursor: 'pointer' }}
+                  />
+                </th>
                 {['Apporteur', 'Boutique', 'Montant', 'Statut', ''].map(h => (
                   <th key={h} style={{ textAlign: 'left', padding: '8px 10px', color: '#6b7280' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {commissions.map(c => (
-                <tr key={c.id} style={{ borderBottom: '1px solid #f9fafb' }}>
-                  <td style={{ padding: '8px 10px' }}>{c.apporteur_nom} ({c.code_apporteur})</td>
-                  <td style={{ padding: '8px 10px' }}>{c.boutique_nom}</td>
-                  <td style={{ padding: '8px 10px' }}>{Number(c.montant).toLocaleString('fr-FR')} FCFA</td>
-                  <td style={{ padding: '8px 10px', color: c.statut === 'paye' ? '#16a34a' : '#dc2626' }}>{c.statut}</td>
-                  <td style={{ padding: '8px 10px' }}>
-                    {c.statut === 'du' && (
-                      <button
-                        onClick={() => payerCommission(c.id, !c.seuil_atteint)}
-                        title={!c.seuil_atteint ? 'Cumul sous le seuil — cliquer pour forcer le paiement' : undefined}
-                        style={{
-                          padding: '6px 14px', fontSize: 12, fontWeight: 700, borderRadius: 6, border: 'none', cursor: 'pointer',
-                          background: c.seuil_atteint ? '#16a34a' : '#f59e0b', color: '#fff',
-                        }}
-                      >
-                        {c.seuil_atteint ? 'Marquer payé' : 'Forcer le paiement'}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {commissions.map(c => {
+                const isSel = selectedCommissionIds.includes(c.id)
+                return (
+                  <tr key={c.id} style={{ borderBottom: '1px solid #f9fafb', background: isSel ? '#eff6ff' : 'transparent' }}>
+                    <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                      {c.statut === 'du' && (
+                        <input
+                          type="checkbox"
+                          checked={isSel}
+                          onChange={() => toggleSelect(c.id)}
+                          style={{ width: 16, height: 16, accentColor: '#3b82f6', cursor: 'pointer' }}
+                        />
+                      )}
+                    </td>
+                    <td style={{ padding: '8px 10px' }}>{c.apporteur_nom} ({c.code_apporteur})</td>
+                    <td style={{ padding: '8px 10px' }}>{c.boutique_nom}</td>
+                    <td style={{ padding: '8px 10px' }}>{Number(c.montant).toLocaleString('fr-FR')} FCFA</td>
+                    <td style={{ padding: '8px 10px', color: c.statut === 'paye' ? '#16a34a' : '#dc2626' }}>{c.statut}</td>
+                    <td style={{ padding: '8px 10px' }}>
+                      {c.statut === 'du' && (
+                        <button
+                          onClick={() => payerCommission(c.id, !c.seuil_atteint)}
+                          title={!c.seuil_atteint ? 'Cumul sous le seuil — cliquer pour forcer le paiement' : undefined}
+                          style={{
+                            padding: '6px 14px', fontSize: 12, fontWeight: 700, borderRadius: 6, border: 'none', cursor: 'pointer',
+                            background: c.seuil_atteint ? '#16a34a' : '#f59e0b', color: '#fff',
+                          }}
+                        >
+                          {c.seuil_atteint ? 'Marquer payé' : 'Forcer le paiement'}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

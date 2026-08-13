@@ -1,4 +1,21 @@
+## 🚀 Mises à jour du 13/08/2026 : Intégration des Actions en Masse (Batch Actions) dans l'Administration (`BatchActionBar.tsx`, `admin.ts`, `annonces.js`, `partenaires.js`)
+- **Système d'Actions en Masse sur Tout le Portail d'Administration** :
+  * **Composant Réutilisable `BatchActionBar.tsx`** : Ajout d'une barre d'action flottante / sticky pour l'administration avec case à cocher globale ("Tout sélectionner / Tout désélectionner"), compteur d'éléments sélectionnés et boutons colorés conditionnels (Activer 🟢, Désactiver 🟠, Supprimer 🔴, Sponsoriser/Prolonger 🔵) avec modal de confirmation préalable pour la suppression en masse.
+  * **Extension des Actions Serveur & Backend (`admin.ts`, `annonces.js`, `partenaires.js`)** : Création des fonctions batch et des endpoints de suppression pour Annonces, Boutiques, Immobilier, Comptes utilisateurs, Demandes partenaires, Publications, Paiements manuels, Commissions apporteurs, Telecom et Abonnements.
+  * **Déploiement sur 10 Sections Admin** :
+    1. **Annonces Classifiées** (`AdminAnnoncesClient.tsx`) : Approuver, Désactiver, Supprimer en masse.
+    2. **Boutiques** (`AdminBoutiquesClient.tsx`) : Activer, Désactiver, Supprimer en masse.
+    3. **Comptes Utilisateurs** (`ComptesTableClient.tsx`) : Réactiver, Suspendre, Supprimer en masse.
+    4. **Immobilier** (`AdminImmoClient.tsx`) : Valider, Désactiver, Sponsoriser 30j, Supprimer en masse.
+    5. **Partenaires** (`AdminPartenairesClient.tsx`) : Approuver, Rejeter, Supprimer en masse.
+    6. **Publications (FB/IG)** (`publications/page.tsx`) : Approuver, Supprimer en masse.
+    7. **Paiements Manuels** (`PaiementsManuelsClient.tsx`) : Valider, Rejeter en masse.
+    8. **Apporteurs** (`ApporteursClient.tsx`) : Marquer payées les commissions sélectionnées.
+    9. **Telecom** (`AdminTelecomClient.tsx`) : Désactiver / Supprimer en masse.
+    10. **Abonnements** (`AbonnementsTableClient.tsx`) : Prolonger 30j, Annuler en masse.
+
 ## 🚀 Mises à jour du 13/08/2026 : Correction du Débordement des Cartes de Boutiques sur Mobile (`BoutiqueClient.tsx`)
+
 - **Fix du Débordement des Icônes d'Actions (`BoutiqueClient.tsx`)** :
   * **Problème** : Sur l'écran de liste des boutiques (`/boutique`), la rangée supérieure des cartes (`BoutiqueCard`) forçait le logo, le nom de la boutique, les badges, le statut `Active`/`Inactive` et les 3 boutons d'actions (`👁 Voir`, `📝 Modifier`, `🗑 Supprimer`) à s'aligner sur une seule ligne rigide sans flex-wrap. Sur mobile (< 480px), le bouton de suppression `🗑` était poussé hors du bord droit de la carte.
   * **Solution** : Ajout de `flexWrap: 'wrap'`, `flex: '1 1 200px'` et alignement responsive dans l'en-tête et le pied de carte de `BoutiqueCard`. Sur mobile, les icônes d'actions s'ajustent proprement sous le nom de la boutique avec 100% de visibilité dans la carte.
