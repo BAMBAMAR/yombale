@@ -2324,3 +2324,7 @@ ew Date(session.dateOuverture) provoquait un échec d'analyse Date JS et afficha
   - **Fusion sécurisée (Math.max)** : Mise à jour de chargerCaissiersEtSession pour systématiquement fusionner les chiffres d'affaires et le nombre de ventes du serveur avec l'état local existant (Math.max(dbTotal, localTotal)), garantissant qu'aucune vente enregistrée localement ne puisse être effacée.
   - **Persistance LocalStorage** : Sauvegarde automatique de la session active et de son CA dans localStorage (
 opalou_pos_session_) pour conserver l'état du CA même en cas d'actualisation de la page (F5).
+- **Correction de la connexion par jeton terminal caisse ?token=... (API Route & Backend)** :
+  - **Création du proxy API Next.js** : Ajout de la route rontend-next/src/app/api/boutiques/caisse-terminal/[token]/route.ts. Auparavant, la requête etch('/api/boutiques/caisse-terminal/TOKEN') effectuée depuis le navigateur était capturée par le routeur dynamique Next.js src/app/api/boutiques/[id], qui l'interprétait comme id = 'caisse-terminal', retournant une erreur 404 introuvable et empêchant le chargement des produits et caissiers de la boutique.
+  - **Fallback SQL backend** : Modification de la requête SQL dans ackend/routes/boutiques.js (WHERE COALESCE(caisse_token, id::text) = ) pour accepter indifféremment le jeton généré caisse_token ou l'ID de la boutique.
+  - **Persistance du terminal** : Sauvegarde immédiate du outique_id résolu dans localStorage lors de l'accès via initialToken.
