@@ -63,56 +63,56 @@ export default function PaiementClient({ annonceId, titreCourt, settings, userId
         <p className="paiement-methodes-titre">Choisissez votre mode de paiement</p>
 
         {waveActif && (
-          <button
-            onClick={payerWave}
-            disabled={pendingWave || pendingOrange}
-            className="paiement-btn paiement-btn--wave"
-          >
-            {pendingWave ? (
-              <span>Connexion Wave…</span>
-            ) : (
-              <>
-                <span className="paiement-btn-logo">🌊</span>
-                <div className="paiement-btn-text">
-                  <span className="paiement-btn-nom">Wave</span>
-                  <span className="paiement-btn-desc">Paiement mobile instantané</span>
-                </div>
-                <span className="paiement-btn-arrow">→</span>
-              </>
-            )}
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: 4, width: 'fit-content' }}>
+              ⚡ Recommandé — Activation automatique instantanée
+            </span>
+            <button
+              onClick={payerWave}
+              disabled={pendingWave || pendingOrange}
+              className="paiement-btn paiement-btn--wave"
+              style={{ border: '2px solid #1d4ed8', boxShadow: '0 4px 12px rgba(29,78,216,0.15)' }}
+            >
+              {pendingWave ? (
+                <span>Connexion à Wave…</span>
+              ) : (
+                <>
+                  <span className="paiement-btn-logo">🌊</span>
+                  <div className="paiement-btn-text">
+                    <span className="paiement-btn-nom" style={{ fontWeight: 700 }}>Wave (Paiement Direct)</span>
+                    <span className="paiement-btn-desc">Paiement 100% sécurisé et validation immédiate</span>
+                  </div>
+                  <span className="paiement-btn-arrow">→</span>
+                </>
+              )}
+            </button>
+          </div>
         )}
 
-        {orangeActif && (
-          <button
-            onClick={payerOrange}
-            disabled={pendingWave || pendingOrange}
-            className="paiement-btn paiement-btn--orange"
-          >
-            {pendingOrange ? (
-              <span>Connexion Orange Money…</span>
-            ) : (
-              <>
-                <span className="paiement-btn-logo">🟠</span>
-                <div className="paiement-btn-text">
-                  <span className="paiement-btn-nom">Orange Money</span>
-                  <span className="paiement-btn-desc">Paiement via votre compte Orange</span>
-                </div>
-                <span className="paiement-btn-arrow">→</span>
-              </>
-            )}
-          </button>
-        )}
+        <button
+          disabled={true}
+          className="paiement-btn paiement-btn--orange"
+          style={{ opacity: 0.65, cursor: 'not-allowed', background: '#f8fafc', borderColor: '#cbd5e1' }}
+        >
+          <span className="paiement-btn-logo">🟠</span>
+          <div className="paiement-btn-text">
+            <span className="paiement-btn-nom">Orange Money <small style={{ color: '#ea580c', fontWeight: 700, marginLeft: 6 }}>(Bientôt disponible)</small></span>
+            <span className="paiement-btn-desc">Intégration API automatique en cours</span>
+          </div>
+        </button>
 
         {manuelActif && (
-          <button onClick={() => setShowManuel(true)} className="paiement-btn">
-            <span className="paiement-btn-logo">🧾</span>
-            <div className="paiement-btn-text">
-              <span className="paiement-btn-nom">J&apos;ai déjà payé / Payer</span>
-              <span className="paiement-btn-desc">Dépôt manuel Wave/Orange, validé par notre équipe</span>
-            </div>
-            <span className="paiement-btn-arrow">→</span>
-          </button>
+          <div style={{ marginTop: 8, paddingTop: 12, borderTop: '1px dashed #cbd5e1' }}>
+            <p style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>Problème avec Wave ou vous préférez un dépôt manuel ?</p>
+            <button onClick={() => setShowManuel(true)} className="paiement-btn" style={{ background: '#fff', border: '1px solid #94a3b8' }}>
+              <span className="paiement-btn-logo">🧾</span>
+              <div className="paiement-btn-text">
+                <span className="paiement-btn-nom">Paiement Manuel / Reçu de Dépôt</span>
+                <span className="paiement-btn-desc">Envoyer la preuve de transfert Wave / Orange Money</span>
+              </div>
+              <span className="paiement-btn-arrow">→</span>
+            </button>
+          </div>
         )}
       </div>
 

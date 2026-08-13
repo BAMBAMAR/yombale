@@ -519,10 +519,10 @@ async function envoyerRecapCommande(phone, boutique, commande) {
     [{
       title: 'Paiement',
       rows: [
-        { id: 'pay_wave', title: 'Wave' },
-        { id: 'pay_om', title: 'Orange Money' },
-        { id: 'pay_cash', title: 'Espèces à la livraison' },
-        { id: 'pay_virement', title: 'Virement' },
+        { id: 'pay_wave', title: '🌊 Wave (Recommandé)' },
+        { id: 'pay_cash', title: '💵 Cash à la livraison' },
+        { id: 'pay_om', title: '🟠 Orange Money (Bientôt)' },
+        { id: 'pay_virement', title: '🏦 Virement' },
       ],
     }]
   );
