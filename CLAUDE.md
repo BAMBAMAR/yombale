@@ -1,4 +1,7 @@
-## 🚀 Mises à jour du 13/08/2026 : Correction de l'Endpoint Wave Payout API & Signature (`wave.js`)
+## 🚀 Mises à jour du 13/08/2026 : Déduction Automatique des 1% de Frais Wave Payout (`comptabilite.js`, `wave.js`)
+- **Prise en compte des 1% de Frais de Transaction Wave sur le Reversement Marchand (`comptabilite.js`)** :
+  * Calcul automatique des frais de transaction Wave (1% du montant total) lors du calcul du montant net à reverser (`netAmount = montant_total - commission - fraisWave`).
+  * Application à la fois sur le reversement 100% automatique (`sendPayout`) et l'API de paiement admin.
 - **Correction de l'URL Endpoint Wave Payout (`wave.js`)** :
   * Modification de `/v1/payouts` vers l'endpoint officiel `/v1/payout` et ajout systématique de l'en-tête de signature HMAC SHA256 `Wave-Signature: t=...,v1=...`.
 
