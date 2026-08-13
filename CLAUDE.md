@@ -1,3 +1,10 @@
+## 🚀 Mises à jour du 13/08/2026 : Audit de Non-Régression & Alignement des Tests E2E (`07-pos-offline-sync.spec.ts`)
+- **Alignement du Locator du Badge Offline (`07-pos-offline-sync.spec.ts`)** :
+  * Mise à jour du sélecteur Playwright pour correspondre exactement au libellé réel du toast réactif (`Mode Hors-Ligne — Consultation des données locales en cache`).
+- **Validation Sans Régression** :
+  * Contrôle de la syntaxe applicative backend Node.js (`backend/app.js` et `backend/routes/boutiques.js`) validé avec 0 erreur.
+  * Validation TypeScript globale (`npx tsc --noEmit`) confirmée 100% sans fautes.
+
 ## 🚀 Mises à jour du 12/08/2026 : Hauteur Minimale Garantie pour le Ticket POS (`CaisseClient.tsx`)
 - **Fix Définitif de la Tronquature du Panier POS (`CaisseClient.tsx`)** :
   * Définition d'une hauteur minimale garantie `minHeight: 140px` sur le conteneur des articles du ticket pour empêcher Flexbox de compresser la liste à 15px sous l'accumulation des boutons de règlement.
