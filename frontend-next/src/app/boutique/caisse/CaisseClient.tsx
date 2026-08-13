@@ -1145,12 +1145,27 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     setPinError(null)
   }
 
+  // ── Helper pour générer un label client unique et séquentiel ──────────────────
+  function genererLabelClientUnique(tickets: TicketEnAttente[]): string {
+    let maxNum = 0
+    for (const t of tickets) {
+      const match = t.clientLabel.match(/\d+/)
+      if (match) {
+        const num = parseInt(match[0], 10)
+        if (num > maxNum) maxNum = num
+      }
+    }
+    return `Client ${maxNum + 1}`
+  }
+
   // ── Actions Multi-Tickets / File d'attente Client ───────────────────────────
   function mettrePanierEnAttente() {
     if (panier.length === 0) return
+    const uniqueId = `T-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`
+    const nouveauLabel = genererLabelClientUnique(ticketsEnAttente)
     const nouveauTicket: TicketEnAttente = {
-      id: `T-${Date.now().toString().slice(-4)}`,
-      clientLabel: `Client ${ticketsEnAttente.length + 1}`,
+      id: uniqueId,
+      clientLabel: nouveauLabel,
       heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       panier: [...panier],
     }
@@ -1162,15 +1177,16 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     const t = ticketsEnAttente.find(x => x.id === ticketId)
     if (t) {
       if (panier.length > 0) {
-        setTicketsEnAttente(prev => [
-          ...prev.filter(x => x.id !== ticketId),
-          {
-            id: `T-${Date.now().toString().slice(-4)}`,
-            clientLabel: `Client ${ticketsEnAttente.length + 1}`,
-            heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-            panier: [...panier],
-          }
-        ])
+        const ticketsRestants = ticketsEnAttente.filter(x => x.id !== ticketId)
+        const uniqueId = `T-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`
+        const nouveauLabel = genererLabelClientUnique(ticketsRestants)
+        const ticketPanierActuel: TicketEnAttente = {
+          id: uniqueId,
+          clientLabel: nouveauLabel,
+          heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          panier: [...panier],
+        }
+        setTicketsEnAttente([...ticketsRestants, ticketPanierActuel])
       } else {
         setTicketsEnAttente(prev => prev.filter(x => x.id !== ticketId))
       }
