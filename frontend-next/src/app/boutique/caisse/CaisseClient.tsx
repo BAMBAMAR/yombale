@@ -3971,7 +3971,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 </div>
                 <div>
                   <span style={{ fontSize: 11, color: '#64748b', display: 'block', fontWeight: 600 }}>⏰ Ouverture Session</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>{session?.dateOuverture ? new Date(session.dateOuverture).toLocaleString('fr-FR') : 'Session Active'}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>
+                    {session?.dateOuverture
+                      ? (session.dateOuverture.includes(':') && !session.dateOuverture.includes('T')
+                          ? `Aujourd'hui à ${session.dateOuverture}`
+                          : session.dateOuverture)
+                      : 'Session Active'}
+                  </span>
                 </div>
                 <div>
                   <span style={{ fontSize: 11, color: '#64748b', display: 'block', fontWeight: 600 }}>🟢 Statut Session</span>
