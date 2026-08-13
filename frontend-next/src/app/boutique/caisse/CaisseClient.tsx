@@ -1291,6 +1291,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     setMontantRecu('')
     setMontantEspecesMixte('')
     setRemisePourcentage(0)
+    setEncaissementEnCours(false)
   }
 
   const boutiqueActive = boutiques.find(b => b.id === boutiqueActiveId)
@@ -1401,95 +1402,71 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
     setEncaissementEnCours(true)
 
-    const ticketId = `TICK-${Math.floor(10000 + Math.random() * 90000)}`
-    const dateStr = new Date().toLocaleDateString('fr-FR')
-    const heureStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    try {
+      const ticketId = `TICK-${Math.floor(10000 + Math.random() * 90000)}`
+      const dateStr = new Date().toLocaleDateString('fr-FR')
+      const heureStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
-    const nouvelleVenteHist: VenteHistorique = {
-      id: ticketId,
-      date: dateStr,
-      heure: heureStr,
-      caissier: caissierNom,
-      modePaiement,
-      total: netAPayer,
-      statut: 'validee',
-      detailPaiementMixte: modePaiement === 'mixte' ? {
-        especes: especesMixteNum,
-        autreMode: secondModeMixte.toUpperCase(),
-        autreMontant: resteAPayerMixte,
-      } : undefined,
-      ticket: [...panier],
-    }
-
-    setHistoriqueVentes(prev => [nouvelleVenteHist, ...prev])
-
-    if (modePaiement === 'credit_client') {
-      if (!clientCreditIdPOS) {
-        alert('Veuillez sélectionner un client dans le carnet pour valider la vente à crédit.')
-        return
-      }
-      if (boutiqueActiveId) {
-        try {
-          const resCredit = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientCreditIdPOS}/transaction`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'vente_credit',
-              montant: netAPayer,
-              produits: panier.map(i => ({ nom: i.produit.nom, quantite: i.quantite, prix: i.prixUnitaire })),
-              date_echeance: creditDateEcheancePOS || null,
-              note: creditNotePOS || 'Vente caisse POS à crédit',
-              mode_paiement: 'credit',
-            })
-          })
-          if (!resCredit.ok) {
-            const dataErr = await resCredit.json()
-            alert(dataErr.error || 'Erreur lors de l’enregistrement de la vente à crédit dans le carnet.')
-            return
-          }
-          await chargerClientsCredits(boutiqueActiveId)
-        } catch (e) {
-          console.error('Erreur enregistrement vente crédit carnet:', e)
-        }
-      }
-    }
-
-    if (boutiqueActiveId) {
-      const payloadVente = {
-        idempotency_key: `POS-${crypto.randomUUID()}`,
-        items: panier.map(i => ({ id: i.produit.id, quantite: i.quantite, nom: i.produit.nom, prix: i.prixUnitaire })),
+      const nouvelleVenteHist: VenteHistorique = {
+        id: ticketId,
+        date: dateStr,
+        heure: heureStr,
         caissier: caissierNom,
         modePaiement,
-        client_id: clientCreditIdPOS || null,
         total: netAPayer,
+        statut: 'validee',
+        detailPaiementMixte: modePaiement === 'mixte' ? {
+          especes: especesMixteNum,
+          autreMode: secondModeMixte.toUpperCase(),
+          autreMontant: resteAPayerMixte,
+        } : undefined,
+        ticket: [...panier],
       }
 
-      if (!isReallyOnline || offlineModeActive) {
-        try {
-          const temporaryId = payloadVente.idempotency_key
-          await ajouterVenteHorsLigne({
-            id_temporaire: temporaryId,
-            boutique_id: boutiqueActiveId,
-            user_id: userId,
-            items: payloadVente.items,
-            caissier: payloadVente.caissier,
-            modePaiement: payloadVente.modePaiement,
-            client_id: payloadVente.client_id,
-            total: payloadVente.total,
-            date: new Date().toISOString()
-          })
-          rafraichirCompteurOffline()
-        } catch (eOff) {
-          console.error('🛒 [Caisse POS] ❌ Erreur stockage local vente:', eOff)
+      setHistoriqueVentes(prev => [nouvelleVenteHist, ...prev])
+
+      if (modePaiement === 'credit_client') {
+        if (!clientCreditIdPOS) {
+          alert('Veuillez sélectionner un client dans le carnet pour valider la vente à crédit.')
+          return
         }
-      } else {
-        try {
-          const result = await creerPosVente(boutiqueActiveId, payloadVente)
-          if (!result.success) {
-            throw new Error(result.error || 'Impossible d\'enregistrer la vente')
+        if (boutiqueActiveId) {
+          try {
+            const resCredit = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientCreditIdPOS}/transaction`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'vente_credit',
+                montant: netAPayer,
+                produits: panier.map(i => ({ nom: i.produit.nom, quantite: i.quantite, prix: i.prixUnitaire })),
+                date_echeance: creditDateEcheancePOS || null,
+                note: creditNotePOS || 'Vente caisse POS à crédit',
+                mode_paiement: 'credit',
+              })
+            })
+            if (!resCredit.ok) {
+              const dataErr = await resCredit.json()
+              alert(dataErr.error || 'Erreur lors de l’enregistrement de la vente à crédit dans le carnet.')
+              return
+            }
+            await chargerClientsCredits(boutiqueActiveId)
+          } catch (e) {
+            console.error('Erreur enregistrement vente crédit carnet:', e)
           }
-        } catch (e) {
-          console.error('🛒 [Caisse POS] ⚠️ Échec direct serveur, bascule secours sur IndexedDB local:', e)
+        }
+      }
+
+      if (boutiqueActiveId) {
+        const payloadVente = {
+          idempotency_key: `POS-${crypto.randomUUID()}`,
+          items: panier.map(i => ({ id: i.produit.id, quantite: i.quantite, nom: i.produit.nom, prix: i.prixUnitaire })),
+          caissier: caissierNom,
+          modePaiement,
+          client_id: clientCreditIdPOS || null,
+          total: netAPayer,
+        }
+
+        if (!isReallyOnline || offlineModeActive) {
           try {
             const temporaryId = payloadVente.idempotency_key
             await ajouterVenteHorsLigne({
@@ -1504,77 +1481,105 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               date: new Date().toISOString()
             })
             rafraichirCompteurOffline()
-          } catch (eOff2) {}
+          } catch (eOff) {
+            console.error('🛒 [Caisse POS] ❌ Erreur stockage local vente:', eOff)
+          }
+        } else {
+          try {
+            const result = await creerPosVente(boutiqueActiveId, payloadVente)
+            if (!result.success) {
+              throw new Error(result.error || 'Impossible d\'enregistrer la vente')
+            }
+          } catch (e) {
+            console.error('🛒 [Caisse POS] ⚠️ Échec direct serveur, bascule secours sur IndexedDB local:', e)
+            try {
+              const temporaryId = payloadVente.idempotency_key
+              await ajouterVenteHorsLigne({
+                id_temporaire: temporaryId,
+                boutique_id: boutiqueActiveId,
+                user_id: userId,
+                items: payloadVente.items,
+                caissier: payloadVente.caissier,
+                modePaiement: payloadVente.modePaiement,
+                client_id: payloadVente.client_id,
+                total: payloadVente.total,
+                date: new Date().toISOString()
+              })
+              rafraichirCompteurOffline()
+            } catch (eOff2) {}
+          }
         }
       }
-    }
 
-    setSession(prev => {
-      if (!prev) return null
-      const stats = { ...prev.ventes }
-      stats.total += netAPayer
-      stats.nbVentes += 1
-      if (modePaiement === 'especes') stats.especes += netAPayer
-      if (modePaiement === 'wave') stats.wave += netAPayer
-      if (modePaiement === 'orange_money') stats.orangeMoney += netAPayer
-      if (modePaiement === 'carte') stats.carte += netAPayer
-      if (modePaiement === 'mixte') {
-        stats.especes += especesMixteNum
-        if (secondModeMixte === 'wave') stats.wave += resteAPayerMixte
-        if (secondModeMixte === 'orange_money') stats.orangeMoney += resteAPayerMixte
-        if (secondModeMixte === 'carte') stats.carte += resteAPayerMixte
-        stats.mixte += netAPayer
-      }
-      return { ...prev, ventes: stats }
-    })
-
-    // Décrémenter le stock localement après encaissement, persister dans LocalStorage et recharger depuis le backend
-    setProduits(prev => {
-      const updated = prev.map(p => {
-        const itemPanier = panier.find(i => i.produit.id === p.id)
-        if (itemPanier) {
-          return { ...p, stock: Math.max(0, p.stock - itemPanier.quantite) }
+      setSession(prev => {
+        if (!prev) return null
+        const stats = { ...prev.ventes }
+        stats.total += netAPayer
+        stats.nbVentes += 1
+        if (modePaiement === 'especes') stats.especes += netAPayer
+        if (modePaiement === 'wave') stats.wave += netAPayer
+        if (modePaiement === 'orange_money') stats.orangeMoney += netAPayer
+        if (modePaiement === 'carte') stats.carte += netAPayer
+        if (modePaiement === 'mixte') {
+          stats.especes += especesMixteNum
+          if (secondModeMixte === 'wave') stats.wave += resteAPayerMixte
+          if (secondModeMixte === 'orange_money') stats.orangeMoney += resteAPayerMixte
+          if (secondModeMixte === 'carte') stats.carte += resteAPayerMixte
+          stats.mixte += netAPayer
         }
-        return p
+        return { ...prev, ventes: stats }
       })
+
+      // Décrémenter le stock localement après encaissement, persister dans LocalStorage et recharger depuis le backend
+      setProduits(prev => {
+        const updated = prev.map(p => {
+          const itemPanier = panier.find(i => i.produit.id === p.id)
+          if (itemPanier) {
+            return { ...p, stock: Math.max(0, p.stock - itemPanier.quantite) }
+          }
+          return p
+        })
+        if (boutiqueActiveId) {
+          localStorage.setItem(`nopalou_pos_produits_${boutiqueActiveId}`, JSON.stringify(updated))
+          sauvegarderProduitsLocaux(updated, boutiqueActiveId, userId).catch(() => {})
+        }
+        return updated
+      })
+
       if (boutiqueActiveId) {
-        localStorage.setItem(`nopalou_pos_produits_${boutiqueActiveId}`, JSON.stringify(updated))
-        sauvegarderProduitsLocaux(updated, boutiqueActiveId, userId).catch(() => {})
+        setTimeout(() => {
+          chargerProduitsBoutique(boutiqueActiveId)
+        }, 500)
       }
-      return updated
-    })
 
-    if (boutiqueActiveId) {
+      const venteImprimee = {
+        id: ticketId,
+        date: dateStr,
+        heure: heureStr,
+        total: totalPanier,
+        remise: montantRemise,
+        recu,
+        monnaie: monnaieARendre,
+        ticket: [...panier],
+        mode: modePaiement.toUpperCase(),
+        caissier: caissierNom,
+        detailMixte: modePaiement === 'mixte' ? {
+          especes: especesMixteNum,
+          autreMode: secondModeMixte.toUpperCase(),
+          autreMontant: resteAPayerMixte,
+        } : undefined,
+      }
+
+      setDerniereVente(venteImprimee)
+
       setTimeout(() => {
-        chargerProduitsBoutique(boutiqueActiveId)
-      }, 500)
+        window.print()
+      }, 300)
+
+      viderPanier()
+    } finally {
+      setEncaissementEnCours(false)
     }
-
-    const venteImprimee = {
-      id: ticketId,
-      date: dateStr,
-      heure: heureStr,
-      total: totalPanier,
-      remise: montantRemise,
-      recu,
-      monnaie: monnaieARendre,
-      ticket: [...panier],
-      mode: modePaiement.toUpperCase(),
-      caissier: caissierNom,
-      detailMixte: modePaiement === 'mixte' ? {
-        especes: especesMixteNum,
-        autreMode: secondModeMixte.toUpperCase(),
-        autreMontant: resteAPayerMixte,
-      } : undefined,
-    }
-
-    setDerniereVente(venteImprimee)
-
-    setTimeout(() => {
-      window.print()
-    }, 300)
-
-    viderPanier()
   }
 
   // Incident de caisse : Annulation / Remboursement d'une vente par le Superviseur
@@ -2588,13 +2593,15 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 </button>
               </div>
             ) : panier.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px 10px', color: 'var(--pos-text3)' }}>
+              <div style={{ textAlign: 'center', padding: '20px 10px', color: 'var(--pos-text3)' }}>
                 {/* Mini-strip KPI Session si active et sans panier */}
-                {session?.ventes && session.ventes.nbVentes > 0 && (
-                  <div style={{ background: 'var(--pos-primary-bg)', border: '1px solid var(--pos-border)', borderRadius: 10, padding: '8px 12px', marginBottom: 16, display: 'flex', justifyContent: 'space-around', fontSize: 11, fontWeight: 700, color: 'var(--pos-text)' }}>
-                    <div>💰 CA: <span style={{ color: 'var(--pos-success)', fontWeight: 900 }}>{fcfa(session.ventes.total)}</span></div>
-                    <div>🧾 {session.ventes.nbVentes} vente{session.ventes.nbVentes > 1 ? 's' : ''}</div>
-                    <div>💵 Cash: {fcfa(session.ventes.especes)}</div>
+                {session?.ventes && (
+                  <div style={{ background: 'var(--pos-primary-bg)', border: '1.5px solid var(--pos-border)', borderRadius: 12, padding: '10px 14px', marginBottom: 16, display: 'flex', justifyContent: 'space-around', alignItems: 'center', fontSize: 12, fontWeight: 700, color: 'var(--pos-text)', boxShadow: '0 2px 6px rgba(199,91,0,0.08)' }}>
+                    <div>💰 CA Session: <span style={{ color: 'var(--pos-success)', fontWeight: 900, fontSize: 14 }}>{fcfa(session.ventes.total)}</span></div>
+                    <div style={{ opacity: 0.3 }}>|</div>
+                    <div>🧾 <span style={{ fontWeight: 800 }}>{session.ventes.nbVentes}</span> vente{session.ventes.nbVentes > 1 ? 's' : ''}</div>
+                    <div style={{ opacity: 0.3 }}>|</div>
+                    <div>💵 Cash: <span style={{ fontWeight: 800 }}>{fcfa(session.ventes.especes)}</span></div>
                   </div>
                 )}
                 <span style={{ fontSize: 36, display: 'block', marginBottom: 4 }}>🧾</span>
@@ -2875,7 +2882,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   disabled={netAPayer === 0 || encaissementEnCours}
                   className="pos-btn-encaisser"
                 >
-                  {encaissementEnCours ? (
+                  {encaissementEnCours && netAPayer > 0 ? (
                     <>
                       <span className="pos-spinner" />
                       <span>Encaissement en cours...</span>
