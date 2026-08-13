@@ -144,8 +144,43 @@ function verifyWebhookSignature(req) {
   return false;
 }
 
+/**
+ * Déclenche un reversement (Payout) depuis le compte Wave Business vers le téléphone d'un marchand.
+ * Endpoint officiel Wave Payout API: POST https://api.wave.com/v1/payouts
+ */
+async function sendPayout({ amount, mobile, client_reference }) {
+  const apiKey = process.env.WAVE_API_KEY;
+  if (!apiKey || apiKey.includes('xxxxxxxx')) {
+    throw new Error('Clé API Wave non configurée.');
+  }
+
+  const formattedMobile = mobile.startsWith('+')
+    ? mobile
+    : `+221${mobile.replace(/\D/g, '').slice(-9)}`;
+
+  const payload = {
+    amount: Math.round(Number(amount)),
+    currency: 'XOF',
+    mobile: formattedMobile,
+    client_reference,
+  };
+
+  const headers = {
+    Authorization: `Bearer ${apiKey.trim()}`,
+    'Content-Type': 'application/json',
+  };
+
+  const response = await axios.post(`${WAVE_BASE_URL}/v1/payouts`, payload, {
+    headers,
+    timeout: 10000,
+  });
+
+  return response.data;
+}
+
 module.exports = {
   createCheckoutSession,
   verifyWebhookSignature,
   generateWaveSignature,
+  sendPayout,
 };

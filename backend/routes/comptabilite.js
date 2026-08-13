@@ -1016,6 +1016,56 @@ router.get('/:boutiqueId/zones/public', async (req, res) => {
   }
 });
 
+// GET /api/comptabilite/admin/reversements-dus — Liste des commandes livrées en attente de reversement marchand
+router.get('/admin/reversements-dus', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT c.id, c.reference, c.montant_total, c.montant_commission, c.methode_paiement, c.statut, c.created_at,
+             b.nom AS boutique_nom, b.telephone AS boutique_telephone, b.whatsapp AS boutique_whatsapp, b.id AS boutique_id
+      FROM commandes_boutique c
+      JOIN boutiques b ON b.id = c.boutique_id
+      WHERE c.statut = 'livree' AND (c.methode_paiement = 'wave' OR c.methode_paiement = 'pay_wave')
+      ORDER BY c.created_at DESC
+      LIMIT 100
+    `);
+    res.json({ reversements: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/comptabilite/admin/reversements/:commandeId/payer — Déclencher le Payout Wave vers le marchand
+router.post('/admin/reversements/:commandeId/payer', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows: [commande] } = await pool.query(`
+      SELECT c.id, c.reference, c.montant_total, c.montant_commission, c.methode_paiement, c.statut,
+             b.nom AS boutique_nom, b.telephone AS boutique_telephone, b.whatsapp AS boutique_whatsapp
+      FROM commandes_boutique c
+      JOIN boutiques b ON b.id = c.boutique_id
+      WHERE c.id = $1
+    `, [req.params.commandeId]);
+
+    if (!commande) return res.status(404).json({ error: 'Commande introuvable' });
+
+    const mobile = commande.boutique_whatsapp || commande.boutique_telephone;
+    if (!mobile) return res.status(400).json({ error: 'Numéro de téléphone du marchand introuvable' });
+
+    const netAmount = Number(commande.montant_total) - (Number(commande.montant_commission) || 0);
+
+    const wave = require('../services/wave');
+    const payoutResult = await wave.sendPayout({
+      amount: netAmount,
+      mobile,
+      client_reference: `payout_${commande.reference}`,
+    });
+
+    res.json({ success: true, payout: payoutResult, net_amount: netAmount, mobile });
+  } catch (err) {
+    console.error('[ADMIN PAYOUT ERR]', err);
+    res.status(500).json({ error: err.message || 'Erreur lors du transfert Wave Payout' });
+  }
+});
+
 module.exports = router;
 module.exports.creerCommandeBoutique = creerCommandeBoutique;
 module.exports.notifierVendeurCommande = notifierVendeurCommande;
