@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 13/08/2026 : Envoi Automatique du Lien de Paiement Wave 1-Clic sur WhatsApp (`comptabilite.js`, `whatsapp-chatbot.js`)
+- **Génération & Envoi du Lien de Paiement Wave Direct sur WhatsApp (`comptabilite.js` & `whatsapp-chatbot.js`)** :
+  * **Sur confirmation de la commande par le marchand** : Dès que le vendeur valide la commande depuis son espace boutique (`statut=confirmee`), une notification WhatsApp est automatiquement envoyée au client avec le lien de paiement Wave 1-Clic (`👉 ${SITE}/checkout-express?...&pay=wave`).
+  * **Dès la validation de la commande par chat** : Le message de confirmation finale généré par le bot WhatsApp inclut directement le lien direct vers le module de règlement Wave 1-Clic.
+
 ## 🚀 Mises à jour du 13/08/2026 : Formules Tout-en-Un (Livraison + Paiement en 1 Clic) & WhatsApp Direct Chatbot (`whatsapp-chatbot.js`)
 - **Combinaison des Étapes de Livraison & Paiement en 1 Seul Menu Interactif Tout-en-Un** :
   * Fusion des choix de la zone de livraison et du mode de paiement en une seule liste d'options combinées : `🌊 Dakar (1 500 F) + Wave`, `💵 Dakar (1 500 F) + Cash`, `🚚 Banlieue (2 500 F) + Cash`, `🏬 Retrait Boutique (Gratuit)`.

@@ -764,8 +764,14 @@ router.patch(
       // Notifier le client du changement de statut sur WhatsApp
       if (commande.client_telephone) {
         const { sendWhatsAppText } = require('../services/whatsapp');
+        const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+        let msgConfirmee = `✅ *Commande confirmée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* (${commande.nom_produit}) a été confirmée. Nous préparons votre colis !`;
+        if (commande.methode_paiement === 'wave' || commande.methode_paiement === 'pay_wave') {
+          const wavePayUrl = `${SITE}/checkout-express?produit=${commande.produit_id || ''}&boutique=${commande.boutique_id}&phone=${commande.client_telephone}&pay=wave`;
+          msgConfirmee += `\n\n🌊 *Réglez directement votre commande par Wave en 1 Clic :*\n👉 ${wavePayUrl}`;
+        }
         const msgs = {
-          confirmee:      `✅ *Commande confirmée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* (${commande.nom_produit}) a été confirmée. Nous préparons votre colis !`,
+          confirmee:      msgConfirmee,
           en_preparation: `📦 *En préparation — ${boutique.nom}*\n\nVotre commande *${commande.reference}* est en cours de préparation.`,
           expediee:       `🚚 *Commande expédiée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* est en route ! Vous serez livré(e) prochainement.`,
           livree:         `🎉 *Livraison confirmée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* a été livrée. Merci pour votre achat !`,

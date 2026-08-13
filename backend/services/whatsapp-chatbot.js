@@ -1384,6 +1384,10 @@ async function handleIncoming(msg) {
       }
       const refs = creees.map(c => c.reference).join(', ');
       let msgFinal = `✅ *Commande ${refs} envoyée !*\n\nLe vendeur *${boutique.nom}* va vous contacter pour finaliser le paiement et la livraison.`;
+      if (creees[0]?.methode_paiement === 'wave' || creees[0]?.methode_paiement === 'pay_wave') {
+        const wavePayUrl = `${SITE}/checkout-express?produit=${creees[0]?.produit_id || ''}&boutique=${boutique.id}&phone=${phone}&pay=wave`;
+        msgFinal += `\n\n🌊 *Réglez directement votre commande par Wave en 1 Clic :*\n👉 ${wavePayUrl}`;
+      }
       if (echecs.length > 0) {
         msgFinal += `\n\n⚠️ ${echecs.map(e => e.nom).join(', ')} n'${echecs.length > 1 ? 'ont' : 'a'} pas pu être commandé(s) : ${echecs[0].erreur}.`;
       }
