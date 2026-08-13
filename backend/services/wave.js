@@ -165,12 +165,16 @@ async function sendPayout({ amount, mobile, client_reference }) {
     client_reference,
   };
 
+  const signingSecret = process.env.WAVE_SIGNING_SECRET || process.env.WAVE_WEBHOOK_SECRET;
   const headers = {
     Authorization: `Bearer ${apiKey.trim()}`,
     'Content-Type': 'application/json',
   };
+  if (signingSecret) {
+    headers['Wave-Signature'] = generateWaveSignature(signingSecret, payload);
+  }
 
-  const response = await axios.post(`${WAVE_BASE_URL}/v1/payouts`, payload, {
+  const response = await axios.post(`${WAVE_BASE_URL}/v1/payout`, payload, {
     headers,
     timeout: 10000,
   });

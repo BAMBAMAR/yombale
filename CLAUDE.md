@@ -1,3 +1,7 @@
+## 🚀 Mises à jour du 13/08/2026 : Correction de l'Endpoint Wave Payout API & Signature (`wave.js`)
+- **Correction de l'URL Endpoint Wave Payout (`wave.js`)** :
+  * Modification de `/v1/payouts` vers l'endpoint officiel `/v1/payout` et ajout systématique de l'en-tête de signature HMAC SHA256 `Wave-Signature: t=...,v1=...`.
+
 ## 🚀 Mises à jour du 13/08/2026 : Envoi Automatique du Lien de Paiement Wave 1-Clic sur WhatsApp (`comptabilite.js`, `whatsapp-chatbot.js`)
 - **Génération & Envoi du Lien de Paiement Wave Direct sur WhatsApp (`comptabilite.js` & `whatsapp-chatbot.js`)** :
   * **Sur confirmation de la commande par le marchand** : Dès que le vendeur valide la commande depuis son espace boutique (`statut=confirmee`), une notification WhatsApp est automatiquement envoyée au client avec le lien de paiement Wave 1-Clic (`👉 ${SITE}/checkout-express?...&pay=wave`).
