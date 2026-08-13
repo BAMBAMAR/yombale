@@ -10,7 +10,7 @@
   "doublons": 0,
   "ignores": 0,
   "erreurs": [
-    "Ndeye Yacine Seck Faye (Offres Emploi): Session Facebook invalidée (mur de connexion détecté) — relancez : node backend/scripts/fb-login-setup.js"
+    "Groupe immo 1: Session Facebook invalidée (mur de connexion détecté) — relancez : node backend/scripts/fb-login-setup.js"
   ],
-  "updatedAt": "2026-08-13T02:00:15.236Z"
+  "updatedAt": "2026-08-13T02:27:48.834Z"
 }

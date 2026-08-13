@@ -50,8 +50,6 @@ export function initialiserBaseLocale(): Promise<IDBDatabase> {
       const db = request.result;
       const oldVersion = event.oldVersion;
 
-      console.log(`🛠️ 💾 [IndexedDB v3] Migration base locale v${oldVersion} → v${DB_VERSION}`);
-
       if (db.objectStoreNames.contains('produits')) {
         db.deleteObjectStore('produits');
       }
@@ -110,7 +108,6 @@ export async function sauvegarderProduitsLocaux(
     };
 
     tx.oncomplete = () => {
-      console.log(`💾 [IndexedDB v3] ✅ ${produits.length} produits sauvegardés en cache local (User: ${userId}, Boutique: ${boutiqueId})`);
       resolve();
     };
     tx.onerror = () => {
@@ -135,7 +132,6 @@ export async function obtenirProduitsLocaux(
 
     request.onsuccess = () => {
       const results: any[] = request.result || [];
-      console.log(`💾 [IndexedDB v3] 📦 ${results.length} produits extraits du cache local (User: ${userId}, Boutique: ${boutiqueId})`);
       resolve(results.map(({ cache_key, user_id, boutique_id: _b, ...prod }) => prod));
     };
     request.onerror = () => {
@@ -180,7 +176,6 @@ export async function sauvegarderClientsLocaux(
     };
 
     tx.oncomplete = () => {
-      console.log(`💾 [IndexedDB v3] ✅ ${clients.length} clients sauvegardés en cache local (User: ${userId}, Boutique: ${boutiqueId})`);
       resolve();
     };
     tx.onerror = () => {
@@ -205,7 +200,6 @@ export async function obtenirClientsLocaux(
 
     request.onsuccess = () => {
       const results: any[] = request.result || [];
-      console.log(`💾 [IndexedDB v3] 👥 ${results.length} clients extraits du cache local (User: ${userId}, Boutique: ${boutiqueId})`);
       resolve(results.map(({ cache_key, user_id, boutique_id: _b, ...client }) => client));
     };
     request.onerror = () => {
@@ -226,7 +220,6 @@ export async function ajouterVenteHorsLigne(vente: Omit<OfflineSale, 'status'>):
     store.put(payload);
 
     tx.oncomplete = () => {
-      console.log(`💾 [IndexedDB v3] 📥 Vente hors-ligne enregistrée localement (ID: ${vente.id_temporaire}, Total: ${vente.total} FCFA)`);
       resolve();
     };
     tx.onerror = () => {
@@ -251,7 +244,6 @@ export async function obtenirVentesHorsLigne(
       const request = index.getAll(range);
       request.onsuccess = () => {
         const list = (request.result || []).filter((v) => v.status === 'pending');
-        console.log(`💾 [IndexedDB v3] 📄 ${list.length} vente(s) hors-ligne en attente pour Boutique ${boutiqueId}`);
         resolve(list);
       };
       request.onerror = () => reject(request.error);
@@ -259,7 +251,6 @@ export async function obtenirVentesHorsLigne(
       const request = store.getAll();
       request.onsuccess = () => {
         const list = request.result || [];
-        console.log(`💾 [IndexedDB v3] 📄 ${list.length} vente(s) hors-ligne au total dans la file`);
         resolve(list);
       };
       request.onerror = () => reject(request.error);
@@ -277,7 +268,6 @@ export async function marquerVenteSyncing(id_temporaire: string): Promise<void> 
     getReq.onsuccess = () => {
       if (getReq.result) {
         store.put({ ...getReq.result, status: 'syncing' });
-        console.log(`💾 [IndexedDB v3] ⏳ Vente ${id_temporaire} marquée comme 'syncing'`);
       }
     };
 
@@ -294,7 +284,6 @@ export async function supprimerVenteHorsLigne(id_temporaire: string): Promise<vo
     store.delete(id_temporaire);
 
     tx.oncomplete = () => {
-      console.log(`💾 [IndexedDB v3] 🗑️ Vente ${id_temporaire} supprimée de la file IndexedDB après ACK serveur`);
       resolve();
     };
     tx.onerror = () => reject(tx.error);
@@ -311,7 +300,6 @@ export async function revertVenteSyncing(id_temporaire: string): Promise<void> {
     getReq.onsuccess = () => {
       if (getReq.result && getReq.result.status === 'syncing') {
         store.put({ ...getReq.result, status: 'pending' });
-        console.log(`💾 [IndexedDB v3] ↩️ Vente ${id_temporaire} remise en statut 'pending'`);
       }
     };
 
@@ -342,7 +330,6 @@ export async function purgerCacheUtilisateur(userId: string): Promise<void> {
     }
 
     tx.oncomplete = () => {
-      console.log(`💾 [IndexedDB v3] 🧹 Cache de l'utilisateur ${userId} purgé avec succès`);
       resolve();
     };
     tx.onerror = () => resolve();

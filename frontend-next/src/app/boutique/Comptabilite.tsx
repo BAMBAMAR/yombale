@@ -373,7 +373,6 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
       if (Array.isArray(v)) { setVentes(v); localStorage.setItem(cacheKeyV, JSON.stringify(v)) }
       if (Array.isArray(z)) { setZones(z); localStorage.setItem(cacheKeyZ, JSON.stringify(z)) }
       if (Array.isArray(p)) setProduits(p)
-      console.log(`📊 [Comptabilité] ✅ ${v?.length || 0} ventes et ${z?.length || 0} zones chargées depuis le serveur.`)
     } catch (err) {
       console.warn(`📊 [Comptabilité] Mode hors-ligne : utilisation du cache local ventes/zones (${cachedV ? 'disponible' : 'vide'}).`)
     } finally {
@@ -639,7 +638,6 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
       if (Array.isArray(d)) {
         setDepenses(d)
         localStorage.setItem(cacheKey, JSON.stringify(d))
-        console.log(`📊 [Comptabilité] ✅ ${d.length} dépenses chargées depuis le serveur.`)
       }
     } catch (err) {
       console.warn(`📊 [Comptabilité] Mode hors-ligne : utilisation du cache local dépenses (${cached ? 'disponible' : 'vide'}).`)

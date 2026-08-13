@@ -124,7 +124,6 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           console.warn('🔴 [Diagnostic Caisse] Mode caisse locale ACTIVÉ (ping échoué).')
           showToast('Vous êtes hors-ligne. Mode caisse locale activé.', 'warning')
         } else {
-          console.log('🟢 [Diagnostic Caisse] Mode caisse locale désactivé (ping réussi). Sync...')
           showToast('Connexion internet rétablie ! Synchronisation en cours...', 'success')
           // Déclencher la sync via le SyncManager centralisé (avec verrou + retry + ACK)
           declencherSyncOffline().then((result) => {
@@ -326,7 +325,6 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         }
 
         const onScanSuccess = (decodedText: string) => {
-          console.log('[EAN DECODED SUCCESS]', decodedText)
           traiterCodeBarreCamera(decodedText)
         }
 
@@ -905,13 +903,11 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           console.warn('📡 [Diagnostic Caisse] Échec de la récupération réseau des produits ou réponse vide hors-ligne. Bascule sur le cache IndexedDB.')
           const cached = await obtenirProduitsLocaux(bId, userId).catch(() => [])
           if (cached && cached.length > 0) {
-            console.log(`📦 [Diagnostic Caisse] ${cached.length} produits restaurés depuis IndexedDB.`)
             setProduits(cached)
           } else if (localProds) {
             try {
               const parsedP = JSON.parse(localProds)
               if (Array.isArray(parsedP) && parsedP.length > 0) {
-                console.log(`📦 [Diagnostic Caisse] ${parsedP.length} produits restaurés depuis LocalStorage (Fallback).`)
                 setProduits(parsedP)
               }
             } catch {}
@@ -922,13 +918,11 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         console.warn('📡 [Diagnostic Caisse] Échec de la récupération réseau des produits. Bascule sur le cache IndexedDB.')
         const cached = await obtenirProduitsLocaux(bId, userId).catch(() => [])
         if (cached && cached.length > 0) {
-          console.log(`📦 [Diagnostic Caisse] ${cached.length} produits restaurés depuis IndexedDB.`)
           setProduits(cached)
         } else if (localProds) {
           try {
             const parsedP = JSON.parse(localProds)
             if (Array.isArray(parsedP) && parsedP.length > 0) {
-              console.log(`📦 [Diagnostic Caisse] ${parsedP.length} produits restaurés depuis LocalStorage.`)
               setProduits(parsedP)
             }
           } catch {}
@@ -939,13 +933,11 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       console.info('📡 [Diagnostic Caisse] Bascule d\'urgence sur les caches locaux.')
       const cached = await obtenirProduitsLocaux(bId, userId).catch(() => [])
       if (cached && cached.length > 0) {
-        console.log(`📦 [Diagnostic Caisse] ${cached.length} produits récupérés depuis IndexedDB.`)
         setProduits(cached)
       } else if (localProds) {
         try {
           const parsedP = JSON.parse(localProds)
           if (Array.isArray(parsedP) && parsedP.length > 0) {
-            console.log(`📦 [Diagnostic Caisse] ${parsedP.length} produits récupérés depuis LocalStorage.`)
             setProduits(parsedP)
           }
         } catch {}
@@ -1465,8 +1457,6 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         total: netAPayer,
       }
 
-      console.log(`🛒 [Caisse POS] Validation vente (${!isReallyOnline || offlineModeActive ? 'OFFLINE INDEXEDDB' : 'EN LIGNE API'}) — ${netAPayer} FCFA — Key: ${payloadVente.idempotency_key}`)
-
       if (!isReallyOnline || offlineModeActive) {
         try {
           const temporaryId = payloadVente.idempotency_key
@@ -1482,7 +1472,6 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             date: new Date().toISOString()
           })
           rafraichirCompteurOffline()
-          console.log(`🛒 [Caisse POS] ✅ Vente ${temporaryId} enregistrée en file d'attente IndexedDB v3.`)
         } catch (eOff) {
           console.error('🛒 [Caisse POS] ❌ Erreur stockage local vente:', eOff)
         }
@@ -1492,7 +1481,6 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           if (!result.success) {
             throw new Error(result.error || 'Impossible d\'enregistrer la vente')
           }
-          console.log(`🛒 [Caisse POS] ✅ Vente enregistrée directement sur le serveur backend.`)
         } catch (e) {
           console.error('🛒 [Caisse POS] ⚠️ Échec direct serveur, bascule secours sur IndexedDB local:', e)
           try {

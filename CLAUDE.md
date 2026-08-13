@@ -1,3 +1,17 @@
+## 🚀 Mises à jour du 13/08/2026 : Nettoyage Intégral des Logs de Débogage & Fichiers de Logs
+- **Nettoyage des Logs Console de Débogage (`frontend-next`)** :
+  * Purge de 65 lignes de logs console verbeux (`console.log`, `console.info`) ajoutés lors du développement et du diagnostic hors-ligne / PWA sur 9 fichiers clés :
+    1. `CompteClient.tsx` : Suppression des logs de préchargement universel SPA et de navigation par onglet.
+    2. `CaisseClient.tsx` : Nettoyage des logs de diagnostic caisse, décodage EAN code-barres et validation POS.
+    3. `BoutiqueClient.tsx` : Suppression des logs de chargement catalogue.
+    4. `Comptabilite.tsx` : Suppression des logs de comptabilité.
+    5. `AnnoncesClient.tsx` & `AnnoncesImmoClient.tsx` : Nettoyage des logs de cache local annonces/immo.
+    6. `db-offline.ts` : Purge des logs verbeux d'opérations IndexedDB v3 (les `console.error` d'erreurs réelles restant préservés).
+    7. `sync-manager.ts` : Suppression des logs verbeux de synchronisation.
+    8. `useOnlineStatus.ts` : Suppression des logs de monitoring réseau et de polling.
+- **Suppression des Fichiers de Logs Temporaires à la Racine** :
+  * Nettoyage des fichiers temporaires `backend_stderr.log`, `backend_stdout.log`, `server.log`.
+
 ## 🚀 Mises à jour du 13/08/2026 : Audit, Nettoyage BDD & Refonte du Scraping FB (`clean-scraped-annonces.js`, `scraper-immo-facebook.js`)
 - **Audit Approfondi de la BDD (1 922 Annonces Classifiées & 6 494 Offres)** :
   * Identification des causes d'annonces incohérentes : 1 410 sans prix (73%), 1 189 avec caractères d'obfuscation stealth Facebook (`\u0378`, `\u034F`, diacritiques combinés), 317 polluées par les boutons UI Facebook (`Envoyer un message`, `Voir la traduction`, `En voir plus`), et 366 avec `+` d'encodage URL non décodés.

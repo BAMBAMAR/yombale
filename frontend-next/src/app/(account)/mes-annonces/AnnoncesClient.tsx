@@ -195,7 +195,6 @@ export default function AnnoncesClient({
       try { 
         const parsed = JSON.parse(cached)
         setAnnonces(parsed)
-        console.log(`[AnnoncesClient] 📦 ${parsed.length} annonces classifiées chargées depuis le cache local (localStorage).`)
       } catch(e) {} 
     }
     if (!cached) setLoading(true)
@@ -209,7 +208,6 @@ export default function AnnoncesClient({
         if (d.annonces) {
           setAnnonces(d.annonces)
           localStorage.setItem(cacheKey, JSON.stringify(d.annonces))
-          console.log(`[AnnoncesClient] ⚡ Données fraîches reçues de l'API (${d.annonces.length} annonces), cache mis à jour.`)
         }
       })
       .catch(err => console.warn('[AnnoncesClient] Mode hors-ligne ou erreur réseau lors du fetch :', err))

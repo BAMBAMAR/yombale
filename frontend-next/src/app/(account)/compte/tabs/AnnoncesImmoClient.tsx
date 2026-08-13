@@ -38,7 +38,6 @@ export default function AnnoncesImmoClient({ created, updated }: { created?: boo
       try { 
         const parsed = JSON.parse(cached)
         setAnnonces(parsed)
-        console.log(`[AnnoncesImmoClient] 📦 ${parsed.length} biens immo chargés depuis le cache local (localStorage).`)
       } catch(e) {} 
     }
     if (!cached) setLoading(true)
@@ -50,7 +49,6 @@ export default function AnnoncesImmoClient({ created, updated }: { created?: boo
         const data = await r.json()
         setAnnonces(data)
         localStorage.setItem(cacheKey, JSON.stringify(data))
-        console.log(`[AnnoncesImmoClient] ⚡ Données fraîches reçues de l'API (${data.length} biens immo), cache mis à jour.`)
       })
       .catch(err => {
         console.warn('[AnnoncesImmoClient] Mode hors-ligne ou erreur réseau lors du fetch :', err.message)

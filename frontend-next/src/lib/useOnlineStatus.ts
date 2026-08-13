@@ -73,7 +73,6 @@ async function checkRealConnectivity(): Promise<boolean> {
         globalIsChecking = false
         if (isOk) {
           retryCount = 0
-          console.log(`🟢 📡 [Network Monitor] CONNECTÉ (Ping /api/ping 200 OK en ${duration}ms)`)
         } else {
           console.warn(`🔴 📡 [Network Monitor] HORS-LIGNE (Ping /api/ping HTTP ${response.status} en ${duration}ms)`)
         }
@@ -123,7 +122,6 @@ function scheduleReconnectPolling() {
     }
 
     retryCount++
-    console.log(`🔄 📡 [Network Monitor] Polling reconnexion #${retryCount} dans ${delay}ms...`)
     lastPingTimestamp = 0 // Forcer la réémission du ping sans throttling
     const isNowOnline = await checkRealConnectivity()
     if (!isNowOnline) {
@@ -144,7 +142,6 @@ if (typeof window !== 'undefined') {
   }
 
   const handleOnline = () => {
-    console.log('⚡ 📡 [Network Monitor] Événement navigateur "online" → Confirmation par ping /api/ping...')
     globalIsChecking = true
     lastPingTimestamp = 0 // Reset immédiat du throttling pour exécuter le ping tout de suite
     notifyListeners()
@@ -155,7 +152,6 @@ if (typeof window !== 'undefined') {
 
   const handleVisibilityOrFocus = () => {
     if (typeof document !== 'undefined' && !document.hidden) {
-      console.log('👁️ 📡 [Network Monitor] Focus / Onglet actif → Vérification statut réseau...')
       lastPingTimestamp = 0 // Reset du throttling pour re-vérification immédiate
       checkRealConnectivity().then((isOk) => {
         if (!isOk) scheduleReconnectPolling()

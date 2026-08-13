@@ -32,26 +32,21 @@ export default function CompteClient({
 
   useEffect(() => {
     setIsOffline(!isOnline)
-    console.info(`[Compte SPA] Statut Réseau : ${isOnline ? '🟢 En Ligne (ping confirmé)' : '📡 Hors-Ligne (ping échoué)'}`)
   }, [isOnline])
 
-  // Log de navigation par onglet
+  // Navigation par onglet
   useEffect(() => {
-    console.log(`[Compte SPA] Navigation vers l'onglet : "${tab}"`)
   }, [tab])
 
   // Préchargement global universel (Annonces, Immo, Plan, Boutiques & tout leur contenu)
   // Les routes /api/* de Next.js servent de proxy authentifié via la session serveur (JWT signé)
   useEffect(() => {
     if (!isOnline) {
-      console.log('[Compte SPA] 📡 Hors-ligne : Préchargement arrière-plan ignoré (cache existant utilisé)')
       return
     }
 
     // Différer le préchargement de 1200ms pour laisser le ping prioritaire s'exécuter sans encombrement réseau
     const preloadTimer = setTimeout(() => {
-      console.log('[Compte SPA] 🚀 Démarrage du préchargement global (Annonces, Immo, Plan, Boutiques & Catalogues)...')
-
       const fetchLow = (url: string) => fetch(url, { priority: 'low' } as any)
 
       // 1. Précharge les annonces classifiées
@@ -60,7 +55,6 @@ export default function CompteClient({
         .then(d => {
           if (d?.annonces) {
             localStorage.setItem(`nopalou_offline_annonces_${session?.userId}`, JSON.stringify(d.annonces))
-            console.log(`[Compte SPA] ✅ ${d.annonces.length} annonces classifiées préchargées en cache.`)
           }
         })
         .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement annonces :', err))
@@ -71,7 +65,6 @@ export default function CompteClient({
         .then(d => {
           if (Array.isArray(d)) {
             localStorage.setItem('nopalou_offline_immo_mine', JSON.stringify(d))
-            console.log(`[Compte SPA] ✅ ${d.length} biens immobiliers préchargés en cache.`)
           }
         })
         .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement immo :', err))
@@ -82,7 +75,6 @@ export default function CompteClient({
         .then(d => {
           if (d?.abonnement?.plan) {
             localStorage.setItem('nopalou_plan_actif', d.abonnement.plan)
-            console.log(`[Compte SPA] ✅ Plan actif "${d.abonnement.plan}" sauvegardé en cache.`)
           }
         })
         .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement plan :', err))
@@ -94,7 +86,6 @@ export default function CompteClient({
           const boutiquesList = d?.boutiques || (Array.isArray(d) ? d : [])
           if (boutiquesList.length === 0) return
           localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify(boutiquesList))
-          console.log(`[Compte SPA] ✅ ${boutiquesList.length} boutique(s) préchargée(s). Synchronisation des catalogues...`)
 
           boutiquesList.forEach(async (b: any) => {
             // 4a. Catalogue produits
@@ -103,7 +94,6 @@ export default function CompteClient({
               .then(pData => {
                 const prods = pData.produits || (Array.isArray(pData) ? pData : [])
                 localStorage.setItem(`nopalou_pos_produits_${b.id}`, JSON.stringify(prods))
-                console.log(`[Compte SPA] ✅ Catalogue Boutique "${b.nom}" (${prods.length} produits) préchargé.`)
               })
               .catch(() => console.warn(`[Compte SPA] ⚠️ Catalogue "${b.nom}" : erreur réseau (ignorée)`))
 
@@ -113,7 +103,6 @@ export default function CompteClient({
               .then(hist => {
                 if (Array.isArray(hist) && hist.length > 0) {
                   localStorage.setItem(`nopalou_pos_historique_${b.id}`, JSON.stringify(hist))
-                  console.log(`[Compte SPA] ✅ Historique caisse "${b.nom}" (${hist.length} ventes) préchargé.`)
                 }
               })
               .catch(() => {})
@@ -124,7 +113,6 @@ export default function CompteClient({
               .then(cData => {
                 if (cData?.clients && Array.isArray(cData.clients)) {
                   localStorage.setItem(`nopalou_offline_clients_${b.id}`, JSON.stringify(cData.clients))
-                  console.log(`[Compte SPA] ✅ Clients "${b.nom}" (${cData.clients.length}) préchargés.`)
                 }
               })
               .catch(() => {})
@@ -135,7 +123,6 @@ export default function CompteClient({
               .then(data => {
                 if (data?.admins) {
                   localStorage.setItem(`nopalou_offline_admins_${b.id}`, JSON.stringify(data.admins))
-                  console.log(`[Compte SPA] ✅ Admins "${b.nom}" (${data.admins.length}) préchargés.`)
                 }
               })
               .catch(() => {})
@@ -146,7 +133,6 @@ export default function CompteClient({
               .then(data => {
                 if (data?.caissiers) {
                   localStorage.setItem(`nopalou_offline_caissiers_${b.id}`, JSON.stringify(data.caissiers))
-                  console.log(`[Compte SPA] ✅ Caissiers "${b.nom}" (${data.caissiers.length}) préchargés.`)
                 }
               })
               .catch(() => {})
@@ -157,7 +143,6 @@ export default function CompteClient({
               .then(data => {
                 if (data?.stats) {
                   localStorage.setItem(`nopalou_offline_analytics_${b.id}`, JSON.stringify(data))
-                  console.log(`[Compte SPA] ✅ Analytics "${b.nom}" préchargés.`)
                 }
               })
               .catch(() => {})

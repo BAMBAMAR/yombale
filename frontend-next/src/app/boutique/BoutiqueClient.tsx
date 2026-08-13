@@ -1399,12 +1399,10 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
 
   async function loadProduits() {
     setLoading(true)
-    console.log(`📦 [Catalogue] Chargement produits pour boutique ${boutique.nom} (${boutique.id})`)
     try {
       const prods = await getBoutiqueProduits(boutique.id)
       if (prods && Array.isArray(prods) && prods.length > 0) {
         setProduits(prods)
-        console.log(`📦 [Catalogue] ✅ ${prods.length} produits reçus du serveur API pour ${boutique.nom}`)
         if (typeof window !== 'undefined') {
           localStorage.setItem(`nopalou_pos_produits_${boutique.id}`, JSON.stringify(prods))
         }

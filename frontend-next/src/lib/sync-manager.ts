@@ -107,7 +107,6 @@ export async function syncVentesBoutique(
 
   // Vérifier le verrou
   if (syncLocks.get(boutiqueId)) {
-    console.log(`[SyncManager] Sync déjà en cours pour boutique ${boutiqueId}. Ignoré.`)
     return { synced: 0, failed: 0, errors: [] }
   }
 
@@ -119,11 +118,8 @@ export async function syncVentesBoutique(
     const ventes = await obtenirVentesHorsLigne(boutiqueId, userId)
 
     if (ventes.length === 0) {
-      console.log(`[SyncManager] Aucune vente en attente pour boutique ${boutiqueId}.`)
       return result
     }
-
-    console.log(`[SyncManager] Début sync de ${ventes.length} vente(s) pour boutique ${boutiqueId}`)
 
     for (const vente of ventes) {
       // Marquer comme "en cours" pour éviter double traitement
@@ -136,7 +132,6 @@ export async function syncVentesBoutique(
       for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
         if (attempt > 0) {
           const delay = BACKOFF_BASE_MS * Math.pow(2, attempt - 1)
-          console.log(`[SyncManager] Retry ${attempt}/${MAX_RETRIES - 1} dans ${delay}ms pour vente ${vente.id_temporaire}`)
           await sleep(delay)
         }
 
@@ -147,7 +142,6 @@ export async function syncVentesBoutique(
           await supprimerVenteHorsLigne(vente.id_temporaire).catch(() => {})
           result.synced++
           success = true
-          console.log(`[SyncManager] ✅ Vente ${vente.id_temporaire} synchronisée.`)
           break
         }
 
@@ -169,10 +163,6 @@ export async function syncVentesBoutique(
         console.error(`[SyncManager] ❌ Vente ${vente.id_temporaire} non synchronisée après ${MAX_RETRIES} tentatives.`)
       }
     }
-
-    console.log(
-      `[SyncManager] Sync terminée pour boutique ${boutiqueId}: ${result.synced} succès, ${result.failed} échecs.`
-    )
   } finally {
     syncLocks.delete(boutiqueId)
   }
