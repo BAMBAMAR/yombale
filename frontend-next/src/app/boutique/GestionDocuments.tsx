@@ -238,7 +238,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
             placeholder="🔍 Rechercher par référence, nom client..."
             style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, minWidth: 200, flex: 1, outline: 'none' }}
           />
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+          <div className="nopalou-scroll-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {['tous', 'facture', 'devis', 'proforma'].map(t => (
               <button
                 key={t}

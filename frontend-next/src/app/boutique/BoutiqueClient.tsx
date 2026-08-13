@@ -1812,7 +1812,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                         onClick={() => setMenuActionsOuvertId(null)}
                         style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
                       />
-                      <div style={{
+                      <div className="bq-actions-dropdown" style={{
                         position: 'absolute', right: 0, left: 'auto', bottom: 'calc(100% + 6px)', background: '#ffffff', border: '1px solid #cbd5e1',
                         borderRadius: 10, padding: 6, zIndex: 9999, boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
                         display: 'flex', flexDirection: 'column', gap: 4, minWidth: 200, maxWidth: 'calc(100vw - 32px)'
@@ -2282,6 +2282,17 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
     });
     return defaultExpanded;
   })
+  const getGroupIdxForTab = (t: ManageTab): number => {
+    const idx = NAV_GROUPS.findIndex(g => g.items.some(i => i.key === t))
+    return idx >= 0 ? idx : 0
+  }
+  const [activeGroupIdx, setActiveGroupIdx] = useState<number>(() => getGroupIdxForTab(resolvedInitialTab))
+
+  useEffect(() => {
+    const gIdx = getGroupIdxForTab(tab)
+    setActiveGroupIdx(gIdx)
+  }, [tab])
+
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
@@ -2399,8 +2410,8 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           </div>
         </div>
 
-        {/* Nav par Groupes */}
-        <nav className="bq-nav">
+        {/* Nav Desktop (Hiérarchie verticale classique) */}
+        <nav className="bq-nav bq-nav-desktop">
           {NAV_GROUPS.map((group, gIdx) => {
             const isExpanded = expandedGroups[gIdx] ?? false;
             return (
@@ -2421,10 +2432,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                   return (
                     <button
                       key={item.key}
-                      onClick={() => { 
-                        setTab(item.key); 
-                        // Sur mobile, on pourrait vouloir fermer la nav, mais ici on la laisse telle quelle
-                      }}
+                      onClick={() => setTab(item.key)}
                       className={`bq-nav-item${tab === item.key ? ' active' : ''}`}
                       style={{ opacity: allowed ? 1 : 0.9, display: 'flex', alignItems: 'center', width: '100%', gap: 6, padding: '8px 8px' }}
                     >
@@ -2447,6 +2455,100 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             </div>
             )
           })}
+        </nav>
+
+        {/* Nav Mobile (2 Niveaux : Sélection du Groupe puis Affichage Clair de Tous Ses Sous-Menus) */}
+        <nav className="bq-nav-mobile">
+          {/* Niveau 1 : Choix du Groupe de Gestion */}
+          <div style={{ padding: '10px 12px 6px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', color: '#64748b', marginBottom: 6, letterSpacing: '0.05em' }}>
+              📂 Groupes de gestion
+            </div>
+            <div className="nopalou-scroll-tabs" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+              {NAV_GROUPS.map((group, gIdx) => {
+                const isGroupActive = activeGroupIdx === gIdx
+                return (
+                  <button
+                    key={gIdx}
+                    onClick={() => setActiveGroupIdx(gIdx)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 8,
+                      border: isGroupActive ? '1px solid #C75B00' : '1px solid #cbd5e1',
+                      background: isGroupActive ? '#fff7ed' : '#ffffff',
+                      color: isGroupActive ? '#C75B00' : '#475569',
+                      fontSize: 12,
+                      fontWeight: isGroupActive ? 800 : 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6
+                    }}
+                  >
+                    <span>{group.title}</span>
+                    <span style={{
+                      fontSize: 10,
+                      padding: '1px 5px',
+                      borderRadius: 10,
+                      background: isGroupActive ? '#C75B00' : '#f1f5f9',
+                      color: isGroupActive ? '#ffffff' : '#64748b',
+                      fontWeight: 800
+                    }}>
+                      {group.items.length}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Niveau 2 : Sous-Menus du Groupe Sélectionné (100% Visibles & Déploiement Direct) */}
+          <div style={{ padding: '10px 12px', background: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
+            <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', color: '#64748b', marginBottom: 6, letterSpacing: '0.05em', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>📌 Sous-menus : {NAV_GROUPS[activeGroupIdx]?.title}</span>
+              <span style={{ fontSize: 10, color: '#C75B00', fontWeight: 800 }}>
+                {NAV_GROUPS[activeGroupIdx]?.items.length} disponible{NAV_GROUPS[activeGroupIdx]?.items.length > 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="nopalou-scroll-tabs" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+              {NAV_GROUPS[activeGroupIdx]?.items.map(item => {
+                const allowed = isAllowed(item.minPlan)
+                const isActive = tab === item.key
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => setTab(item.key)}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: isActive ? '1px solid #1e3a5f' : '1px solid #e2e8f0',
+                      background: isActive ? '#1e3a5f' : '#ffffff',
+                      color: isActive ? '#ffffff' : '#334155',
+                      fontSize: 12,
+                      fontWeight: isActive ? 800 : 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6
+                    }}
+                  >
+                    <span style={{ fontSize: 14 }}>{item.icon}</span>
+                    <span>{item.label}</span>
+                    {!allowed && (
+                      <span style={{ fontSize: 9, background: item.minPlan === 'business' ? '#1e3a5f' : '#C75B00', color: '#fff', padding: '1px 4px', borderRadius: 4, fontWeight: 800 }}>
+                        🔒
+                      </span>
+                    )}
+                    {allowed && item.key === 'commandes' && nbEnAttente > 0 && (
+                      <span className="bq-nav-badge" style={{ marginLeft: 2 }}>{nbEnAttente}</span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </nav>
 
         {/* Liens rapides */}

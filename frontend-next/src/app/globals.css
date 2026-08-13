@@ -9100,45 +9100,12 @@ button:focus-visible,
     padding: 12px 14px 10px;
   }
 
-  .bq-nav {
-    display: flex;
-    flex-direction: row;
-    overflow-x: auto;
-    gap: 4px;
-    padding: 8px 10px;
-    flex: none;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .bq-nav::-webkit-scrollbar { display: none; }
-
-  /* Aplatir la hiérarchie pour le flex row sur mobile */
-  .bq-nav-group {
-    display: contents;
-  }
-  .bq-nav-group-title {
+  .bq-nav-desktop {
     display: none !important;
   }
-  .bq-nav-group > div {
-    display: contents !important;
-  }
 
-  .bq-nav-item {
-    flex-shrink: 0;
-    width: auto;
-    flex-direction: column;
-    gap: 2px;
-    padding: 8px 12px;
-    border-left: none;
-    border-bottom: 3px solid transparent;
-    font-size: 11px;
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  .bq-nav-item.active {
-    border-left: none;
-    border-bottom: 3px solid #C75B00;
+  .bq-nav-mobile {
+    display: block !important;
   }
 
   .bq-nav-badge {
@@ -9235,6 +9202,12 @@ button:focus-visible,
   .produit-actions {
     width: 100%;
     justify-content: flex-start !important;
+  }
+
+  /* Positionnement intelligent du menu déroulant Actions pour éviter les débordements à gauche sur mobile */
+  .bq-actions-dropdown {
+    right: auto !important;
+    left: 0 !important;
   }
 
   /* Actions pro */
@@ -10199,17 +10172,30 @@ body:has(.caisse-header) .site-footer {
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 2px;
+  padding-bottom: 4px;
 }
 .nopalou-scroll-tabs::-webkit-scrollbar {
-  display: none;
+  height: 4px;
+}
+.nopalou-scroll-tabs::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+.nopalou-scroll-tabs::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
 }
 .nopalou-scroll-tabs > button,
 .nopalou-scroll-tabs > a {
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.bq-nav-mobile {
+  display: none;
 }
 
 /* Caisse POS Search Row */

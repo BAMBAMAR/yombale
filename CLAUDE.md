@@ -1,3 +1,21 @@
+## 🚀 Mises à jour du 13/08/2026 : Refonte Ergonomique de la Navigation Mobile & Fix des Sous-Menus Cachés (`BoutiqueClient.tsx`, `GestionDocuments.tsx` & `globals.css`)
+- **Correction des Sous-Menus Masqués / Tronqués à Droite (`BoutiqueClient.tsx`, `GestionDocuments.tsx`, `globals.css`)** :
+  * **Problème** : Sur mobile (< 640px), la barre de navigation `.bq-nav` masquait les titres de groupes (`display: none !important`) et alignait tous les 15 éléments de menu sur une seule ligne défilante horizontale avec barres de défilement masquées (`scrollbar-width: none`). Lorsque l'utilisateur cliquait sur un groupe (ex: *Commandes & Livraisons*), les autres sous-menus étaient poussés hors-écran sur la droite sans aucun indicateur visuel, laissant penser que le menu était tronqué ou incomplet. De plus, les filtres de documents (`GestionDocuments.tsx`) débordaient sur mobile.
+  * **Solution Navigation 2-Niveaux (`BoutiqueClient.tsx`)** :
+    1. **Niveau 1 (Groupes de gestion)** : Affichage d'une barre d'onglets de groupes (`Ventes & Clients`, `Catalogue & Stocks`, `Finance & Rapports`, `Paramètres & Équipe`) avec le nombre exact de sous-menus contenus dans chaque groupe (`(3)`, `(2)`, etc.).
+    2. **Niveau 2 (Sous-menus du groupe sélectionné)** : Affichage clair et direct de tous les sous-menus du groupe actif avec badges, icônes et verrous de formule (`🔒 Pro`, `🔒 Business`).
+  * **Passage à `flexWrap: 'wrap'` (`GestionDocuments.tsx`)** :
+    * Les onglets de filtres de documents (`📁 Tous`, `🧾 Factures`, `📝 Devis`, `📋 Proformas`) s'ajustent désormais sur plusieurs lignes sur mobile sans aucun tronquage.
+  * **Indicateur de Scroll Subtil (`globals.css`)** :
+    * Mise en place d'une scrollbar fine stylisée (`scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent`) sur `.nopalou-scroll-tabs` pour indiquer visuellement le défilement horizontal.
+
+## 🚀 Mises à jour du 13/08/2026 : Correction du Positionnement Responsive du Menu Déroulant Actions (`BoutiqueClient.tsx` & `globals.css`)
+- **Fix du Tronquage / Débordement Hors-Écran du Menu Déroulant (`BoutiqueClient.tsx`, `BoutonPartager.tsx`, `globals.css`)** :
+  * **Problème** : Sur les écrans mobiles et étroits (< 640px), le bouton `Actions ▾` s'aligne à gauche de la carte produit. Le style `right: 0; left: auto;` positionnait le bord droit du menu déroulant sur le bouton, poussant les 200px du menu hors-écran vers la gauche et tronquant les libellés (`🏷️ Scan / EAN`, `🖨️ Imprimer Étiquette`, `📄 Dupliquer le produit`, `📢 Publier en Annonce`, `🗑️ Supprimer`).
+  * **Solution** : Ajout de la classe CSS `.bq-actions-dropdown` avec repli responsive `left: 0 !important; right: auto !important;` sous `@media (max-width: 640px)`.
+  * Le menu déroulant s'aligne désormais proprement sur la gauche et s'étend vers la droite tout en restant 100% visible et accessible à l'intérieur de l'écran.
+  * Déploiement & Push Git : Déploiement validé sans erreurs sur `origin main`.
+
 ## 🚀 Mises à jour du 13/08/2026 : Audit de Non-Régression & Alignement des Tests E2E (`07-pos-offline-sync.spec.ts`)
 - **Alignement du Locator du Badge Offline (`07-pos-offline-sync.spec.ts`)** :
   * Mise à jour du sélecteur Playwright pour correspondre exactement au libellé réel du toast réactif (`Mode Hors-Ligne — Consultation des données locales en cache`).

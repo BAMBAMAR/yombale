@@ -56,7 +56,7 @@ export default function BoutonPartager({ lien, message, lienVisuel, onPartage }:
             onClick={() => setOuvert(false)}
             style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
           />
-          <div style={{
+          <div className="bq-actions-dropdown" style={{
             position: 'absolute', top: '110%', right: 0, zIndex: 9999,
             background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10,
             boxShadow: '0 8px 24px rgba(0,0,0,0.15)', padding: 8, minWidth: 190, maxWidth: 'calc(100vw - 32px)',
