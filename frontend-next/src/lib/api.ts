@@ -23,7 +23,7 @@ export async function apiFetch<T>(path: string): Promise<T> {
       const url = `${cleanBase}/api${cleanPath}`
 
       const res = await fetch(url, {
-        next: { revalidate: 300 },
+        cache: 'no-store',
         headers,
         signal: AbortSignal.timeout(5000),
       })

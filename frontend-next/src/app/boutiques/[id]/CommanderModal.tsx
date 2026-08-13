@@ -96,8 +96,8 @@ export default function CommanderModal({
       .catch(() => {})
   }, [boutiqueId, produit.id, backendUrl])
 
-  const zoneSelectionnee = zones.find(z => z.id === zoneId) || DEFAULT_ZONES[0]
-  const fraisLivraison = zoneSelectionnee ? zoneSelectionnee.prix : 1500
+  const zoneSelectionnee = zoneId ? (zones.find(z => z.id === zoneId) || null) : null
+  const fraisLivraison = zoneSelectionnee ? Number(zoneSelectionnee.prix || 0) : 0
   const sousTotalMain = produit.prix ? produit.prix * quantite : 0
   const sousTotalAddons = Object.entries(selectedAddons).reduce((acc, [pId, qte]) => {
     const item = crossSell.find(c => c.id === pId)
