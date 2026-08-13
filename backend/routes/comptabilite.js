@@ -612,6 +612,19 @@ router.post(
         note: commande.note,
       });
 
+      // Notification WhatsApp au Client (Acheteur)
+      if (commande.client_telephone) {
+        try {
+          const { sendWhatsAppText } = require('../services/whatsapp');
+          const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement bancaire' };
+          const msgClient = `✅ *Commande enregistrée avec succès — ${boutique.nom}*\n\nRéférence : *${commande.reference}*\nProduit : ${commande.nom_produit} × ${commande.quantite}\n💰 Total : *${new Intl.NumberFormat('fr-FR').format(commande.montant_total)} FCFA*\n💳 Mode de paiement : ${methodeLabel[commande.methode_paiement] || commande.methode_paiement}\n\n🙏 La boutique *${boutique.nom}* a bien reçu votre commande et vous contactera très vite !`;
+
+          sendWhatsAppText(commande.client_telephone, msgClient)
+            .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Confirmation commande envoyée au ${commande.client_telephone}`))
+            .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));
+        } catch (eCl) {}
+      }
+
       // Si le paiement Wave est sélectionné et l'API Wave est disponible, initialiser le checkout Wave
       if ((methode_paiement === 'wave' || methode_paiement === 'pay_wave') && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
         try {

@@ -3467,6 +3467,21 @@ router.post('/commandes/express', async (req, res) => {
       console.error('[EXPRESS NOTIF ERR]:', eNotif.message);
     }
 
+    // Notification WhatsApp à l'acheteur (client)
+    if (client_telephone && client_telephone.trim()) {
+      try {
+        const { sendWhatsAppText } = require('../services/whatsapp');
+        const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement bancaire' };
+        const msgClient = `✅ *Commande enregistrée avec succès — ${bqRes.rows[0].nom}*\n\nRéférence : *${ref}*\nArticles : ${articles.map(a => `${a.quantite || 1}x ${a.nom_produit || 'Produit'}`).join(', ')}\n💰 Total : *${new Intl.NumberFormat('fr-FR').format(totalGeneral)} FCFA*${fraisLiv > 0 ? ` (dont ${new Intl.NumberFormat('fr-FR').format(fraisLiv)} FCFA de livraison)` : ''}\n💳 Mode de paiement : ${methodeLabel[methode_paiement] || methode_paiement}\n\n📍 Adresse : ${client_adresse || 'Retrait en boutique'}\n\n🙏 La boutique *${bqRes.rows[0].nom}* a bien reçu votre commande et vous contactera très vite !`;
+
+        sendWhatsAppText(client_telephone.trim(), msgClient)
+          .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Confirmation envoyée au ${client_telephone}`))
+          .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));
+      } catch (eCl) {
+        console.error('[WHATSAPP CLIENT NOTIF ERR]:', eCl.message);
+      }
+    }
+
     // Initialisation session Wave si paiement Wave sélectionné
     if ((methode_paiement === 'wave' || methode_paiement === 'pay_wave') && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
       try {
