@@ -1193,6 +1193,7 @@ async function handleIncoming(msg) {
       rows = [
         { id: 'f_dakar_wave', title: '🌊 Dakar + Wave (1500F)', description: 'Livraison Dakar & Wave' },
         { id: 'f_dakar_cash', title: '💵 Dakar + Cash (1500F)', description: 'Livraison Dakar & Espèces' },
+        { id: 'f_banlieue_wave', title: '🌊 Banlieue + Wave (2500F)', description: 'Banlieue (Pikine...) & Wave' },
         { id: 'f_banlieue_cash', title: '🚚 Banlieue + Cash (2500F)', description: 'Banlieue & Espèces à la livraison' },
         { id: 'f_retrait_cash', title: '🏬 Retrait sur place', description: 'Retrait en boutique (0 FCFA)' },
       ];
@@ -1272,6 +1273,10 @@ async function handleIncoming(msg) {
       zoneNom = 'Dakar (Intra-Muros)';
       fraisLivraison = 1500;
       methodePaiement = 'cash';
+    } else if (interactiveId === 'f_banlieue_wave') {
+      zoneNom = 'Banlieue';
+      fraisLivraison = 2500;
+      methodePaiement = 'wave';
     } else if (interactiveId === 'f_banlieue_cash' || interactiveId === 'zone_def_banlieue') {
       zoneNom = 'Banlieue';
       fraisLivraison = 2500;

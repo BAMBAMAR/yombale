@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 13/08/2026 : Ajout de Banlieue + Wave & Gestion Dynamique des Zones de Livraison (`whatsapp-chatbot.js`)
+- **Ajout de la Formule `🌊 Banlieue + Wave (2500F)` & Dynamisme BDD (`whatsapp-chatbot.js`)** :
+  * Ajout de l'option combinée `🌊 Banlieue + Wave (2500F)` dans la liste par défaut des formules tout-en-un.
+  * **Fonctionnement dynamique** : Si le vendeur a configuré ses propres zones de livraison dans la base de données (`zones_livraison`), le système génère dynamiquement pour chaque zone du vendeur les options Wave et Cash associées !
+
 ## 🚀 Mises à jour du 13/08/2026 : Fix du Blocage du Menu Interactif WhatsApp (Sanitisation des Titres < 24 caractères Meta) (`whatsapp.js`, `whatsapp-chatbot.js`)
 - **Fix du Rejet Meta 400 Bad Request sur les Menus de Commande (`whatsapp.js` & `whatsapp-chatbot.js`)** :
   * **Problème** : Les titres des options de livraison (`🌊 Dakar (1 500 F) + Wave`, etc.) dépassaient 24 caractères, provoquant le rejet silencieux du message interactif par la Meta Cloud API et le blocage de l'utilisateur après la saisie de son Nom/Adresse.
