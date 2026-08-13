@@ -3315,10 +3315,22 @@ router.get('/caisse-terminal/:token', async (req, res) => {
       return res.status(403).json({ error: 'Abonnement Pro/Business requis pour utiliser la caisse POS', besoinAbonnement: true });
     }
 
-    const cRes = await pool.query(
+    let cRes = await pool.query(
       `SELECT id, nom, prenom, code_pin, role FROM boutique_caissiers WHERE boutique_id = $1 AND actif = TRUE ORDER BY nom`,
       [boutique.id]
     );
+
+    let caissiers = cRes.rows;
+    if (caissiers.length === 0) {
+      const defC = await pool.query(
+        `INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role)
+         VALUES ($1, 'Bamba', 'Caissier 1', '1234', 'caissier'),
+                ($1, 'Superviseur', 'Gérant', '9999', 'superviseur')
+         RETURNING id, nom, prenom, code_pin, role`,
+        [boutique.id]
+      );
+      caissiers = defC.rows;
+    }
 
     const pRes = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes, p.code_barre
@@ -3332,7 +3344,7 @@ router.get('/caisse-terminal/:token', async (req, res) => {
       success: true,
       boutique,
       planActif: plan,
-      caissiers: cRes.rows,
+      caissiers,
       produits: pRes.rows
     });
   } catch (err) {

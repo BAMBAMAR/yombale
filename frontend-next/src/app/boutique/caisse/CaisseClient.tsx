@@ -1887,19 +1887,18 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             >
               Activer l&apos;Abonnement Pro (5 000 FCFA/mois) →
             </Link>
-            <Link
-              href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'}
-              style={{
-                display: 'block',
-                color: '#64748b',
-                fontSize: 13,
-                fontWeight: 600,
-                textDecoration: 'none',
-                padding: '6px'
-              }}
+            <button
+              type="button"
+              onClick={onBack}
+              className="annonce-back"
+              style={{ margin: '0 auto' }}
             >
-              ← Retour au tableau de bord boutique
-            </Link>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              <span>Retour au tableau de bord boutique</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1908,11 +1907,14 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
   // ── ÉCRAN DE VERROUILLAGE PIN SÉCURISÉ ─────────────────────────────────────
   if (verrouille) {
+    const bqName = boutiques.find(b => b.id === boutiqueActiveId)?.nom || (boutiques[0]?.nom) || ''
     return (
       <div style={{ background: 'var(--pos-bg)', color: 'var(--pos-text)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
         <div style={{ background: 'var(--pos-surface)', border: '2px solid var(--pos-primary)', borderRadius: 24, padding: 32, width: '100%', maxWidth: 400, textAlign: 'center', boxShadow: 'var(--pos-shadow-lg)' }}>
           <div style={{ fontSize: 44, marginBottom: 12 }}>🔒</div>
-          <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 900, color: 'var(--pos-navy)' }}>Caisse POS Nopalou</h2>
+          <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 900, color: 'var(--pos-navy)' }}>
+            Caisse POS {bqName ? `· ${bqName}` : 'Nopalou'}
+          </h2>
           <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--pos-text2)' }}>Entrez votre code PIN secret pour accéder à la caisse.</p>
 
           <div style={{ marginBottom: 16 }}>
@@ -1935,7 +1937,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 ))
               ) : (
                 <>
-                  <option value="">👤 Caissier par défaut</option>
+                  <option value="">👤 Caissier 1 (Bamba)</option>
                   <option value="9999">👑 Gérant / Superviseur</option>
                 </>
               )}
