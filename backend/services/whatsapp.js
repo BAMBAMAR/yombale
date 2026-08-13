@@ -42,13 +42,26 @@ async function post(payload) {
 
 // ── Texte libre (existant) ────────────────────────────────────────────────────
 async function sendWhatsAppText(phone, message) {
-  return post({
-    messaging_product: 'whatsapp',
-    recipient_type: 'individual',
-    to: normalisePhone(phone),
-    type: 'text',
-    text: { body: message, preview_url: false },
-  });
+  try {
+    return await post({
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: normalisePhone(phone),
+      type: 'text',
+      text: { body: message, preview_url: false },
+    });
+  } catch (err) {
+    const metaError = err.response?.data?.error;
+    if (metaError?.code === 131047 || metaError?.message?.includes('24 hours')) {
+      console.warn(`[WHATSAPP 24H WINDOW RESTRICTION] ⚠️ Impossible d'envoyer le message texte libre à ${phone} (Fenêtre 24h Meta fermée). Tentative d'envoi par template...`);
+      try {
+        return await sendWhatsAppTemplate(phone, 'hello_world');
+      } catch (tErr) {
+        console.error(`[WHATSAPP TEMPLATE FALLBACK ERR]:`, tErr.response?.data?.error?.message || tErr.message);
+      }
+    }
+    throw err;
+  }
 }
 
 // ── Template simple (image ou texte) ─────────────────────────────────────────
