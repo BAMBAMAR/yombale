@@ -1937,9 +1937,9 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
     <div className="card-premium" style={{ display: 'flex', flexDirection: 'column', height: '100%', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.04)', background: '#fff', overflow: 'hidden' }}>
       <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
         {/* En-tête : Logo, Nom, Statut, et Actions secondaires */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
           {/* Logo et Nom */}
-          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flex: '1 1 200px', minWidth: 0 }}>
             {boutique.logo_url ? (
               <ExternalImg src={boutique.logo_url} alt={boutique.nom} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 12, flexShrink: 0, border: '1px solid #e2e8f0' }} />
             ) : (
@@ -1963,7 +1963,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
           </div>
           
           {/* Actions Secondaires (Icônes) et Statut */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', flexShrink: 0 }}>
             <span className="badge-premium" style={{ color: boutique.actif ? '#15803d' : '#64748b', background: boutique.actif ? '#f0fdf4' : '#f8fafc', borderColor: boutique.actif ? '#bbf7d0' : '#e2e8f0', fontSize: 11, padding: '2px 8px' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: boutique.actif ? '#22c55e' : '#94a3b8', display: 'inline-block', marginRight: 4 }}></span>
               {boutique.actif ? 'Active' : 'Inactive'}
@@ -2007,26 +2007,26 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
         {/* Actions Financières et Principales (Bas de carte) */}
         <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {(onSponsoring || onPayerManuel) && (
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               {onSponsoring && (
-                <button onClick={onSponsoring} className="btn-premium" style={{ flex: 1, padding: '8px 12px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#fffbeb', fontWeight: 700 }}>
+                <button onClick={onSponsoring} className="btn-premium" style={{ flex: 1, minWidth: 120, padding: '8px 12px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#fffbeb', fontWeight: 700 }}>
                   🌟 Mettre en avant
                 </button>
               )}
               {onPayerManuel && (
-                <button onClick={onPayerManuel} className="btn-premium" style={{ flex: 1, padding: '8px 12px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#ffffff', fontWeight: 700 }}>
+                <button onClick={onPayerManuel} className="btn-premium" style={{ flex: 1, minWidth: 120, padding: '8px 12px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#ffffff', fontWeight: 700 }}>
                   Payer abonnement
                 </button>
               )}
             </div>
           )}
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {boutique.mode_fonctionnement !== 'pure_player' && (
-              <a href="/boutique/caisse" className="btn-premium btn-premium-success" style={{ flex: 1, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }} onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}>
+              <a href="/boutique/caisse" className="btn-premium btn-premium-success" style={{ flex: 1, minWidth: 120, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }} onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}>
                 <Monitor size={16} /> Caisse POS
               </a>
             )}
-            <button onClick={onManage} className="btn-premium btn-premium-primary" style={{ flex: boutique.mode_fonctionnement !== 'pure_player' ? 1.5 : 1, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+            <button onClick={onManage} className="btn-premium btn-premium-primary" style={{ flex: boutique.mode_fonctionnement !== 'pure_player' ? 1.5 : 1, minWidth: 140, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
               Gérer la boutique →
             </button>
           </div>

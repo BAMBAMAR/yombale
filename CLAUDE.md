@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 13/08/2026 : Correction du Débordement des Cartes de Boutiques sur Mobile (`BoutiqueClient.tsx`)
+- **Fix du Débordement des Icônes d'Actions (`BoutiqueClient.tsx`)** :
+  * **Problème** : Sur l'écran de liste des boutiques (`/boutique`), la rangée supérieure des cartes (`BoutiqueCard`) forçait le logo, le nom de la boutique, les badges, le statut `Active`/`Inactive` et les 3 boutons d'actions (`👁 Voir`, `📝 Modifier`, `🗑 Supprimer`) à s'aligner sur une seule ligne rigide sans flex-wrap. Sur mobile (< 480px), le bouton de suppression `🗑` était poussé hors du bord droit de la carte.
+  * **Solution** : Ajout de `flexWrap: 'wrap'`, `flex: '1 1 200px'` et alignement responsive dans l'en-tête et le pied de carte de `BoutiqueCard`. Sur mobile, les icônes d'actions s'ajustent proprement sous le nom de la boutique avec 100% de visibilité dans la carte.
+
 ## 🚀 Mises à jour du 13/08/2026 : Perfectionnement Ergonomique Mobile & Défilé Bord-à-Bord (`globals.css`)
 - **Fix du Tronquage / Débordement sur Mobile (`globals.css`)** :
   * **Onglets de navigation bord-à-bord** : Application de marges négatives (`margin: 10px -12px -4px -12px`) sur le conteneur défilant des onglets `.account-sidebar-nav-wrapper`. Les pilules d'onglets (`Mes annonces`, `Mes biens immo`, `Ma boutique`, `Abonnements`, `Apporteur`, `Profil`, `Favoris`) défilent désormais de manière fluide sur **toute la largeur de l'écran** sans aucune coupure sur le bord de la carte.
