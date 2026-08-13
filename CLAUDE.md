@@ -1,3 +1,17 @@
+## 🚀 Mises à jour du 13/08/2026 : Audit, Nettoyage BDD & Refonte du Scraping FB (`clean-scraped-annonces.js`, `scraper-immo-facebook.js`)
+- **Audit Approfondi de la BDD (1 922 Annonces Classifiées & 6 494 Offres)** :
+  * Identification des causes d'annonces incohérentes : 1 410 sans prix (73%), 1 189 avec caractères d'obfuscation stealth Facebook (`\u0378`, `\u034F`, diacritiques combinés), 317 polluées par les boutons UI Facebook (`Envoyer un message`, `Voir la traduction`, `En voir plus`), et 366 avec `+` d'encodage URL non décodés.
+- **Exécution d'un Script de Nettoyage et Réparation Massif (`backend/scripts/clean-scraped-annonces.js`)** :
+  * **1 110 mises à jour SQL exécutées en BDD** :
+  * Suppression à 100% de l'obfuscation Unicode FB stealth (passé de 62% à 0%).
+  * Réparation et restauration automatique de **115 prix** extraits du texte (ex: `25k`, `15.000f`).
+  * Assainissement de **917 titres/descriptions** débarrassés des textes parasites d'interface FB.
+  * Masquage automatique (`actif = false`) de **404 annonces inexploitables** (sans photo et sans prix).
+- **Sécurisation Préventive du Scraper Facebook (`backend/services/scraper-immo-facebook.js`)** :
+  * **Génération de Titre Intelligent (`extraireTitreIntelligentFB`)** : Extraction de la première vraie phrase descriptive du produit plutôt que le dernier segment d'interface FB (`texte.split('·')[last]`).
+  * **Sanitizers Automatiques (`purgerUnicodeStealthFB`, `purgerUiFacebook`, `decoderChainePlus`)** : Purge systématique des bruits UI/diacritiques et décodage URL avant toute insertion SQL.
+  * **Parsing des Prix Avancé (`parsePrixFB`)** : Support des syntaxes locales sénégalaises (`25k`, `15.000f`, `prix: 10000`, `à 15000`).
+
 ## 🚀 Mises à jour du 13/08/2026 : Intégration des Actions en Masse (Batch Actions) & Levée de la Limite des Annonces en Admin (`annonces.js`, `boutiques.js`)
 - **Fix du Plafond de 200 Élément dans l'Admin (`backend/routes/annonces.js`, `boutiques.js`)** :
   * **Problème** : Les requêtes admin `GET /api/annonces/admin/en-attente` et `GET /api/boutiques/admin/en-attente` étaient bridées par une clause SQL `LIMIT 200`, ce qui masquait les annonces et boutiques au-delà des 200 plus récentes sur les 2000+ existantes.

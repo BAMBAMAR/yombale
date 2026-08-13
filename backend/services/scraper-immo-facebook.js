@@ -173,18 +173,90 @@ function estAnnoncePotentielle(texte) {
   return SIGNAUX_VENTE.some(s => t.includes(s));
 }
 
+function purgerUnicodeStealthFB(txt) {
+  if (!txt) return '';
+  return txt
+    .replace(/[\u0300-\u036F\u0370-\u03FF\u00AD\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\u00A0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function purgerUiFacebook(txt) {
+  if (!txt) return '';
+  let s = txt;
+  s = s.replace(/(?:Facebook\s*){2,}/gi, ' ');
+  s = s.replace(/Envoyer un message\s*(?:\d+)?/gi, '');
+  s = s.replace(/Voir la traduction\s*(?:\d+)?/gi, '');
+  s = s.replace(/…?\s*(?:En\s+)?[Vv]oir\s+plus\b/gi, '');
+  s = s.replace(/Voir plus de commentaires|Voir \d+ commentaires?/gi, '');
+  s = s.replace(/Envoyez votre premier commentaire|Écrivez un commentaire public/gi, '');
+  s = s.replace(/Indicateur de statut\s*En ligne(?:\s*En ligne)?/gi, '');
+  s = s.replace(/J'aime\s*Répondre\s*Partager/gi, '');
+  s = s.replace(/Commenter en tant que\s*.*$/gi, '');
+  s = s.replace(/\b\d{1,2}:\d{2}\s*\/\s*\d{1,2}:\d{2}\b/g, '');
+  s = s.replace(/(?:Les commentaires ont été désactivés pour cette publication\.?)/gi, '');
+  s = s.replace(/\s+/g, ' ').trim();
+  return s;
+}
+
+function decoderChainePlus(txt) {
+  if (!txt) return '';
+  if (txt.includes('+') && !txt.match(/\+\d{2,3}/)) {
+    const parts = txt.split('+').map(p => p.trim()).filter(Boolean);
+    if (parts.length >= 3) {
+      return parts.join(' ');
+    }
+  }
+  return txt;
+}
+
+function extraireTitreIntelligentFB(texte) {
+  if (!texte) return 'Annonce';
+  let t = purgerUnicodeStealthFB(texte);
+  t = purgerUiFacebook(t);
+  t = decoderChainePlus(t);
+
+  const phrases = t.split(/(?:[\n·|•]|\.\s+)/)
+    .map(p => p.trim())
+    .filter(p => {
+      if (p.length < 6) return false;
+      if (p.match(/^(bonjour|salut|hello|coucou|disponible|inbox|contact|tél|tel|prix|http|whatsapp)/i)) return false;
+      if (p.match(/^[0-9\s\+\.\-\/]{1,15}$/)) return false;
+      if (p.match(/cliquez sur le lien|rejoindre ma chaîne/i)) return false;
+      return true;
+    });
+
+  if (phrases.length > 0) {
+    let candidat = phrases[0].replace(/\s*\+\d{1,3}\s*$/, '').trim();
+    if (candidat.length >= 6) {
+      return candidat.slice(0, 250);
+    }
+  }
+
+  return (t.slice(0, 100).replace(/\s*\+\d{1,3}\s*$/, '').trim()) || 'Annonce';
+}
+
 function parsePrixFB(texte) {
+  if (!texte) return null;
+  const t = purgerUnicodeStealthFB(texte);
   // Format classique : "150 000 FCFA"
-  let m = texte.match(/(\d[\d\s.]*)\s*(?:fcfa|xof|f\b|fr\b)/i);
+  let m = t.match(/(?:prix\s*[:=-]?\s*)?(\d[\d\s.]{3,12})\s*(?:fcfa|xof|f\b|fr\b)/i);
   if (m) {
     const v = parseInt(m[1].replace(/[\s.]/g, ''), 10);
-    if (v >= 500 && v < 100_000_000) return v;
+    if (v >= 500 && v < 500_000_000) return v;
   }
   // Format raccourci : "35k", "35 k", "35.000k" → 35 000
-  m = texte.match(/(\d+(?:[.,]\d+)?)\s*k\b/i);
+  m = t.match(/(\d+(?:[.,]\d+)?)\s*k\b/i);
   if (m) {
     const v = Math.round(parseFloat(m[1].replace(',', '.')) * 1000);
-    if (v >= 500 && v < 100_000_000) return v;
+    if (v >= 500 && v < 500_000_000) return v;
+  }
+  // Format "Prix 25.000", "Prix: 25000", "A 15000"
+  m = t.match(/(?:prix|à|a)\s*[:=-]?\s*(\d{4,9})\b/i);
+  if (m) {
+    const v = parseInt(m[1], 10);
+    if (v >= 1000 && v < 500_000_000) return v;
   }
   return null;
 }
@@ -559,26 +631,17 @@ async function scraperImmo({ dryRun = false, maxGroupes = 10 } = {}) {
           // Sans numéro extrait (et hors dérogation Emploi), l'annonce n'est pas exploitable
           if (!telFinal) { stats.ignores++; continue; }
 
-          // Le dernier segment "·" est en général le corps de l'annonce, mais peut parfois
-          // être un fragment résiduel (date de republication type "12 juil") sur les posts
-          // partagés depuis un autre groupe — on retombe alors sur l'avant-dernier segment utile.
-          const DATE_FRAGMENT = /^\d{1,2}\s+(janv|févr|mars|avr|mai|juin|juil|août|sept|oct|nov|déc)/i;
-          const lignes = texte.split('·').map(l => l.trim()).filter(Boolean);
-          let titreLigne = lignes[lignes.length - 1];
-          if (titreLigne && (DATE_FRAGMENT.test(titreLigne) || titreLigne.length < 8)) {
-            titreLigne = lignes.slice(0, -1).reverse().find(l => !DATE_FRAGMENT.test(l) && l.length >= 8);
-          }
+          const descriptionPropre = purgerUiFacebook(purgerUnicodeStealthFB(texte)).slice(0, 2000);
+          const titre = extraireTitreIntelligentFB(texte);
           const prix  = parsePrixFB(texte);
           const ville = parseVilleFB(texte);
-
-          const titre = titreLigne?.slice(0, 250) || 'Annonce';
 
           const ref_externe = post.refExterneId ? `fb-${groupe.id}-${post.refExterneId}` : null;
 
           const annonce = {
             categorie_slug,
             titre: titre || 'Annonce',
-            description: texte.slice(0, 2000),
+            description: descriptionPropre,
             prix,
             ville,
             contact_tel: telFinal,
