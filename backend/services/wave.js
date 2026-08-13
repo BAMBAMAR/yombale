@@ -21,7 +21,7 @@ function generateWaveSignature(signingSecret, bodyObj) {
 /**
  * Initialise une session de paiement Wave Checkout
  */
-async function createCheckoutSession({ amount, currency = 'XOF', success_url, error_url, client_reference, mobile }) {
+async function createCheckoutSession({ amount, currency = 'XOF', success_url, error_url, client_reference }) {
   const apiKey = process.env.WAVE_API_KEY;
   const signingSecret = process.env.WAVE_SIGNING_SECRET || process.env.WAVE_WEBHOOK_SECRET;
 
@@ -30,20 +30,12 @@ async function createCheckoutSession({ amount, currency = 'XOF', success_url, er
   }
 
   const payload = {
-    amount: Math.round(Number(amount)),
+    amount: String(Math.round(Number(amount))),
     currency,
     success_url,
     error_url,
     client_reference,
   };
-
-  if (mobile) {
-    const cleanMobile = mobile.startsWith('+')
-      ? mobile
-      : `+221${mobile.replace(/\D/g, '').slice(-9)}`;
-    payload.client_phone_number = cleanMobile;
-    payload.customer_phone_number = cleanMobile;
-  }
 
   const headers = {
     Authorization: `Bearer ${apiKey.trim()}`,

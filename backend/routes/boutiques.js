@@ -3455,10 +3455,9 @@ router.post('/commandes/express', async (req, res) => {
         const waveSession = await wave.createCheckoutSession({
           amount: Number(totalGeneral),
           currency: 'XOF',
-          success_url: `${process.env.FRONTEND_URL}/paiement/succes?ref=${ref}&type=commande-express`,
-          error_url: `${process.env.FRONTEND_URL}/paiement/erreur`,
+          success_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/succes?ref=${ref}&type=commande-express`,
+          error_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/erreur`,
           client_reference: ref,
-          mobile: client_telephone,
         });
         return res.status(201).json({
           succes: true,
@@ -3470,7 +3469,7 @@ router.post('/commandes/express', async (req, res) => {
           message: 'Commande enregistrée. Redirection vers Wave…'
         });
       } catch (waveErr) {
-        console.error('[EXPRESS WAVE INIT ERR]:', waveErr.message);
+        console.error('[EXPRESS WAVE INIT ERR]:', waveErr.response?.data || waveErr.message);
       }
     }
 

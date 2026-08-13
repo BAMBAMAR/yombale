@@ -606,14 +606,13 @@ router.post(
           const waveSession = await wave.createCheckoutSession({
             amount: Number(commande.montant_total),
             currency: 'XOF',
-            success_url: `${process.env.FRONTEND_URL}/paiement/succes?ref=${commande.reference}&type=commande-boutique`,
-            error_url: `${process.env.FRONTEND_URL}/paiement/erreur`,
+            success_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/succes?ref=${commande.reference}&type=commande-boutique`,
+            error_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/erreur`,
             client_reference: commande.reference,
-            mobile: client_telephone,
           });
           return res.status(201).json({ commande, wave_url: waveSession.wave_url, session_id: waveSession.session_id, message: 'Commande créée. Redirection vers Wave…' });
         } catch (waveErr) {
-          console.error('[COMMANDE WAVE INIT ERR]:', waveErr.message);
+          console.error('[COMMANDE WAVE INIT ERR]:', waveErr.response?.data || waveErr.message);
         }
       }
 
