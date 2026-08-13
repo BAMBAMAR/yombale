@@ -14,7 +14,7 @@
   * Ajout de la directive CSP `Content-Security-Policy: frame-ancestors 'self'` pour interdire l'iframe-jacking/clonage dans des cadres tiers.
 - **Clauses Juridiques d'Interdiction d'Aspiration & Canonical SEO (`cgu/page.tsx` & `layout.tsx`)** :
   * Ajout de la section **6. Propriété Intellectuelle & Interdiction d'Aspiration de Données (Anti-Scraping / DMCA)** aux CGU conformément au Droit d'Auteur sénégalais et aux directives de l'APDP.
-  * Configuration de l'URL canonique `alternates: { canonical: './' }` et metadonnées d'auteur/éditeur dans `layout.tsx` pour forcer l'attribution canonique par Google.
+  * Configuration de l'URL canonique `alternates: { canonical: 'https://nopalou.com' }` (URL absolue via `NEXT_PUBLIC_SITE_URL`) et metadonnées d'auteur/éditeur dans `layout.tsx` pour forcer l'attribution canonique par Google. *(Corrigé le 13/08/2026 : `./'` relatif remplacé par URL absolue — commit `f277e27`)*
 
 ## 🚀 Mises à jour du 13/08/2026 : Nettoyage Intégral des Logs de Débogage & Fichiers de Logs
 - **Nettoyage des Logs Console de Débogage (`frontend-next`)** :
@@ -2285,3 +2285,28 @@ opalou_session lors des appels fetch ct client (interface Caisse/POS).
 - Préchargement global de toutes les données du dashboard (Analytics, Commandes, Caissiers, Admins) dès l'ouverture de la boutique dans BoutiqueClient.tsx.
 - Mise en place du modèle SWR (Stale-While-Revalidate) pour garantir un affichage instantané des sections Analytics, Commandes, Admins, Caissiers et Comptabilité sans bloquer sur l'état "Chargement...".
 - Ajout d'une notification Hors-Ligne dédiée au Dashboard pour alerter visuellement l'utilisateur de l'affichage des données en cache.
+
+
+### Audit UX/UI & Refonte Design Caisse POS (Août 2026)
+- **Audit UX complet** : Bilan détaillé de tous les problèmes visuels (palette double, tailles incohérentes, boutons non standardisés, icônes mixtes, header scrollable).
+- **Design System POS Nopalou** : Ajout de 20 variables CSS --pos-* dans :root (globals.css) mappant la palette Nopalou (orange brûlé #C75B00, vert forêt #0A5C36, marine #1C2B4A, sable chaud) sur la Caisse POS. Fin du Slate/Tailwind générique.
+- **Système de boutons standardisé** : Classes .pos-btn avec 4 tailles (sm=32px / md=40px / lg=48px / xl=60px) et 5 variantes (primary/success/secondary/ghost/danger) dans globals.css.
+- **Bouton ENCAISSER dominant** : Refonte complète — hauteur 60px, font 18px 900, animation pulse glow verte en continu, spring physics active, SVG arrow inline. Le CTA le plus important est désormais visuellement dominant.
+- **Bannière Total Panier grand format** : Remplacement du petit "Net à payer 24px" par un bandeau sticky vert forêt (gradient) avec le total en 34px gras, nb articles, remise et TVA inclus.
+- **Header caisse no-scroll** : Suppression de overflowX: auto → lexWrap: wrap, bordure Nopalou 2px solid var(--pos-primary), couleurs brand.
+- **Boutons mode paiement accessibles** : Passage à minHeight: 48px (cible tactile WCAG), format 2 lignes (emoji 16px + texte 10px), transitions fluides.
+- **Icônes unifiées** : Remplacement de 🔧 Outils par <Settings> Lucide, suppression des doublons Lucide+emoji, badge caissier avec <User> iconique.
+- **Cartes produits POS** : Classes CSS .pos-produit-card avec spring-physics cubic-bezier(0.34, 1.56, 0.64, 1), hover scale, active scale retour tactile, états --in-cart et --epuise.
+- **Spacing system** : Variables --sp-1 à --sp-10 (4px à 40px) dans :root.
+- **Fond catalogue** : #f8fafc Slate → ar(--pos-surface2) sable Nopalou (#FAF8F5).
+- **Aucune erreur TypeScript** dans les fichiers modifiés (globals.css, CaisseClient.tsx).
+
+- **Refonte UX/UI Caisse POS — Phase 2 (Priorités 3 & 4 - Polissage & Micro-interactions)** :
+  - **Type Scale unifié** : Tokens de typographie responsive --text-xs (11px) à --text-3xl (clamp) définis dans :root.
+  - **Anti-double-clic & Spinner Loading** : Ajout de l'état encaissementEnCours empêchant les double-validations d'encaissement et affichant une animation .pos-spinner sur le bouton ENCAISSER.
+  - **Feedback Haptique & Vibration Tactile** : Invocation de 
+avigator.vibrate(35) lors de l'ajout d'un produit au panier sur mobile/tablette POS.
+  - **Micro-animations Tactiles** : Animation spring .pos-qte-badge (pop 0.3s cubic-bezier) sur le badge de quantité des cartes produits.
+  - **Design Ticket Poinçonné** : Effet d'encoches semi-circulaires en haut du ticket de caisse via .ticket-section::before.
+  - **Écran PIN & Modale Session Fermée** : Remplacement des couleurs génériques Slate par la palette chaude Nopalou (sable #F4F1EC, orange #C75B00, marine #1C2B4A).
+  - **Mini-strip KPIs Session** : Affichage d'un résumé instantané (CA du jour, nombre de ventes, montant espèces) au centre du ticket vide lorsque la session est active.

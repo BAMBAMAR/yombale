@@ -87,6 +87,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [verrouille, setVerrouille] = useState<boolean>(true)
   const [codePinSaisi, setCodePinSaisi] = useState<string>('')
   const [pinError, setPinError] = useState<string | null>(null)
+  const [encaissementEnCours, setEncaissementEnCours] = useState<boolean>(false)
 
   // --- ÉTAT OFFLINE & SYNC (géré par useSyncOffline centralisé) ---
   const [offlineModeActive, setOfflineModeActive] = useState<boolean>(false)
@@ -1220,6 +1221,10 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
   // AJOUT AU PANIER AVEC VÉRIFICATION DE SESSION ET CONTRÔLE STOCK
   function ajouterAuPanier(p: ProduitCaisse) {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try { navigator.vibrate(35) } catch {}
+    }
+
     if (!session) {
       setModalSessionOuverture(true)
       return
@@ -1388,11 +1393,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   }
 
   async function encaisserVente() {
-    if (netAPayer === 0) return
+    if (netAPayer === 0 || encaissementEnCours) return
     if (!session) {
       setModalSessionOuverture(true)
       return
     }
+
+    setEncaissementEnCours(true)
 
     const ticketId = `TICK-${Math.floor(10000 + Math.random() * 90000)}`
     const dateStr = new Date().toLocaleDateString('fr-FR')
@@ -1812,14 +1819,14 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   // ── ÉCRAN DE VERROUILLAGE PIN SÉCURISÉ ─────────────────────────────────────
   if (verrouille) {
     return (
-      <div style={{ background: '#f1f5f9', color: '#0f172a', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
-        <div style={{ background: '#ffffff', border: '2px solid #C75B00', borderRadius: 20, padding: 32, width: '100%', maxWidth: 400, textAlign: 'center', boxShadow: '0 20px 40px rgba(199,91,0,0.15)' }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>🔒</div>
-          <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 900, color: '#0f172a' }}>Caisse POS Nopalou</h2>
-          <p style={{ margin: '0 0 20px', fontSize: 13, color: '#64748b' }}>Entrez votre code PIN secret pour accéder à la caisse.</p>
+      <div style={{ background: 'var(--pos-bg)', color: 'var(--pos-text)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
+        <div style={{ background: 'var(--pos-surface)', border: '2px solid var(--pos-primary)', borderRadius: 24, padding: 32, width: '100%', maxWidth: 400, textAlign: 'center', boxShadow: 'var(--pos-shadow-lg)' }}>
+          <div style={{ fontSize: 44, marginBottom: 12 }}>🔒</div>
+          <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 900, color: 'var(--pos-navy)' }}>Caisse POS Nopalou</h2>
+          <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--pos-text2)' }}>Entrez votre code PIN secret pour accéder à la caisse.</p>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6, textAlign: 'left' }}>IDENTIFICATION CAISSIER</label>
+            <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--pos-text2)', display: 'block', marginBottom: 6, textAlign: 'left', letterSpacing: '0.05em' }}>IDENTIFICATION CAISSIER</label>
             <select
               value={caissierSelectionneId}
               onChange={e => {
@@ -1828,7 +1835,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 const c = caissiersList.find(x => x.id === cid);
                 if (c) setCaissierNom(`${c.prenom} ${c.nom}`);
               }}
-              style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #cbd5e1', background: '#f8fafc', color: '#0f172a', fontSize: 14, fontWeight: 700 }}
+              style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1.5px solid var(--pos-border)', background: 'var(--pos-surface2)', color: 'var(--pos-text)', fontSize: 14, fontWeight: 700, outline: 'none' }}
             >
               {caissiersList.length > 0 ? (
                 caissiersList.map(c => (
@@ -1855,11 +1862,11 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               value={codePinSaisi}
               onChange={e => setCodePinSaisi(e.target.value)}
               style={{
-                width: '100%', padding: '14px', borderRadius: 12, border: '2px solid #C75B00',
-                background: '#f8fafc', color: '#0f172a', fontSize: 24, letterSpacing: '0.4em', textAlign: 'center', boxSizing: 'border-box',
+                width: '100%', padding: '14px', borderRadius: 12, border: '2px solid var(--pos-primary)',
+                background: 'var(--pos-primary-bg)', color: 'var(--pos-navy)', fontSize: 26, letterSpacing: '0.4em', textAlign: 'center', boxSizing: 'border-box', fontWeight: 900,
               }}
             />
-            {pinError && <p style={{ margin: '8px 0 0', color: '#dc2626', fontSize: 13, fontWeight: 700 }}>{pinError}</p>}
+            {pinError && <p style={{ margin: '8px 0 0', color: 'var(--pos-danger)', fontSize: 13, fontWeight: 700 }}>{pinError}</p>}
           </div>
 
           {/* Clavier Numérique PIN Pad Tactile avec Déclenchement Automatique */}
@@ -1883,15 +1890,16 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   }
                 }}
                 style={{
-                  padding: '16px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 10,
-                  color: '#0f172a', fontWeight: 800, fontSize: 18, cursor: 'pointer', userSelect: 'none',
+                  padding: '16px', background: 'var(--pos-surface2)', border: '1.5px solid var(--pos-border)', borderRadius: 10,
+                  color: 'var(--pos-navy)', fontWeight: 800, fontSize: 18, cursor: 'pointer', userSelect: 'none',
+                  transition: 'background 0.1s',
                 }}
               >
                 {val}
               </button>
             ))}
           </div>
-          <p style={{ margin: '0', fontSize: 11, color: '#94a3b8', fontStyle: 'italic' }}>
+          <p style={{ margin: '0', fontSize: 11, color: 'var(--pos-text3)', fontStyle: 'italic' }}>
             ⚡ Le déverrouillage s&apos;effectue automatiquement dès la saisie du 4ème chiffre.
           </p>
         </div>
@@ -1902,7 +1910,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
 
   return (
-    <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: 'var(--pos-bg)', color: 'var(--pos-text)', minHeight: '100vh', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
 
       {/* Toast Notification (Offline/Online) */}
       {toastMsg && (
@@ -2026,18 +2034,17 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
       {/* En-tête MOBILE-FIRST NOPALOU POS */}
       <header className="caisse-header no-print" style={{
-        background: '#ffffff',
-        borderBottom: '1px solid var(--border)',
-        padding: '8px 14px',
+        background: 'var(--pos-surface)',
+        borderBottom: '2px solid var(--pos-primary)',
+        padding: '0 14px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        boxShadow: 'var(--shadow)',
-        overflowX: 'auto',
-        WebkitOverflowScrolling: 'touch',
+        boxShadow: 'var(--pos-shadow)',
         gap: 8,
-        minHeight: 50,
+        minHeight: 52,
         flexShrink: 0,
+        flexWrap: 'wrap',
       }}>
         {/* Côté Gauche : Retour + POS badge + Boutique selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -2053,12 +2060,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               alignItems: 'center',
               gap: 5,
               flexShrink: 0,
-              background: '#0f172a',
+              background: 'var(--pos-navy)',
               color: '#ffffff',
-              border: '1px solid #334155',
+              border: '1px solid var(--pos-navy)',
               borderRadius: 8,
               textDecoration: 'none',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+              boxShadow: '0 2px 6px rgba(28,43,74,0.25)'
             }}
           >
             <ArrowLeft size={14} />
@@ -2111,26 +2118,26 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         {/* Côté Droit : Caissier + Outils + Session — groupé compact */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
 
-          {/* Espace Caissier — compact */}
+          {/* Espace Caissier — compact Nopalou */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 5,
-            background: '#f8fafc', border: '1px solid #e2e8f0',
-            borderRadius: 8, padding: '3px 7px 3px 8px',
-            maxWidth: 130, flexShrink: 0
+            background: 'var(--pos-primary-bg)', border: '1px solid var(--pos-border)',
+            borderRadius: 8, padding: '4px 8px 4px 9px',
+            maxWidth: 140, flexShrink: 0
           }}>
-            <span style={{ fontSize: 13 }}>{roleActif === 'superviseur' ? '👑' : '👤'}</span>
+            <span style={{ fontSize: 13 }}>{roleActif === 'superviseur' ? '👑' : <User size={13} color="var(--pos-primary)" />}</span>
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: '#0f172a', maxWidth: 65, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{caissierNom}</span>
-              <span style={{ fontSize: 9, fontWeight: 700, color: session ? '#16a34a' : '#ef4444', lineHeight: 1.2 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--pos-text)', maxWidth: 68, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{caissierNom}</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: session ? 'var(--pos-success)' : 'var(--pos-danger)', lineHeight: 1.2 }}>
                 {session ? '● Active' : '● Fermée'}
               </span>
             </div>
             <button
               onClick={verrouillerCaisseManuellement}
               title="Verrouiller la caisse"
-              style={{ background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 5, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+              style={{ background: 'var(--pos-primary-bg)', color: 'var(--pos-primary)', border: '1px solid var(--pos-border)', borderRadius: 5, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
             >
-              <Lock size={10} />
+              <Lock size={11} />
             </button>
           </div>
 
@@ -2138,10 +2145,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setMenuOutilsOuvert(!menuOutilsOuvert)}
-              className="btn-premium btn-premium-secondary"
-              style={{ padding: '5px 8px', fontSize: 11, border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}
+              className="pos-btn pos-btn-sm pos-btn-secondary"
+              style={{ gap: 5, flexShrink: 0, fontWeight: 800 }}
             >
-              🔧<span className="caisse-label-desktop"> Outils</span> ▾
+              <Settings size={13} />
+              <span className="caisse-label-desktop">Outils</span>
+              <span style={{ fontSize: 9, opacity: 0.7 }}>▾</span>
             </button>
             {menuOutilsOuvert && (
               <>
@@ -2182,7 +2191,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     }}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: '#fff7ed', border: '1px solid #ffedd5', color: '#c2410c', fontSize: 13, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 4 }}
                   >
-                    <BarChart3 size={14} color="#ea580c" /> 📊 Bilan Session (Rapport X)
+                    <BarChart3 size={14} color="#ea580c" /> Bilan Session (Rapport X)
                   </button>
                   <button
                     onClick={() => { setModalImportBatch(true); setMenuOutilsOuvert(false); }}
@@ -2213,20 +2222,20 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             )}
           </div>
 
-          {/* Bouton Session/Clôture */}
+          {/* Bouton Session/Clôture — Nopalou brand colors */}
           {session ? (
             <button
               onClick={() => setModalClotureZ(true)}
-              className="btn-premium btn-premium-danger"
-              style={{ padding: '5px 9px', fontSize: 11, flexShrink: 0 }}
+              className="pos-btn pos-btn-sm pos-btn-danger"
+              style={{ flexShrink: 0, fontWeight: 800, gap: 5 }}
             >
               <Lock size={11} /> <span className="caisse-label-desktop">Clôture Z</span>
             </button>
           ) : (
             <button
               onClick={() => setModalSessionOuverture(true)}
-              className="btn-premium btn-premium-success"
-              style={{ padding: '5px 9px', fontSize: 11, flexShrink: 0 }}
+              className="pos-btn pos-btn-sm pos-btn-success"
+              style={{ flexShrink: 0, fontWeight: 800, gap: 5 }}
             >
               <Unlock size={11} /> <span className="caisse-label-desktop">Session</span>
             </button>
@@ -2289,7 +2298,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       <div className="caisse-main-layout">
 
         {/* Côté Gauche : Recherche & Catalogue Produits Réel avec Décrémentation Dynamique du Stock */}
-        <div className={`caisse-catalogue-section ${tabMobile === 'catalogue' ? 'mobile-active' : 'mobile-hidden'}`} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}>
+        <div className={`caisse-catalogue-section ${tabMobile === 'catalogue' ? 'mobile-active' : 'mobile-hidden'}`} style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', background: 'var(--pos-surface2)', borderRight: '1px solid var(--pos-border)' }}>
           
 
 
@@ -2298,14 +2307,18 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             <div style={{ flex: 1, position: 'relative' }}>
               <input
                 type="text"
-                placeholder="🔍 Scannez à la douchette ou tapez le nom / code-barres…"
+                placeholder="Scannez ou tapez le nom / code-barres…"
                 value={recherche}
                 onChange={e => setRecherche(e.target.value)}
                 style={{
-                  width: '100%', padding: '14px 16px', borderRadius: 10, border: '1px solid #cbd5e1',
-                  background: '#ffffff', color: '#0f172a', fontSize: 15, fontWeight: 600, boxSizing: 'border-box',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                  width: '100%', padding: '13px 16px', borderRadius: 10, border: '1.5px solid var(--pos-border)',
+                  background: 'var(--pos-surface)', color: 'var(--pos-text)', fontSize: 14, fontWeight: 600, boxSizing: 'border-box',
+                  boxShadow: 'var(--pos-shadow)',
+                  outline: 'none',
+                  transition: 'border-color 0.15s',
                 }}
+                onFocus={e => { e.target.style.borderColor = 'var(--pos-primary)'; }}
+                onBlur={e => { e.target.style.borderColor = 'var(--pos-border)'; }}
               />
             </div>
 
@@ -2428,7 +2441,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           ) : (
             <div className="produits-grid" style={{ 
               display: vueCatalogue === 'mosaique' ? 'grid' : 'flex', 
-              gridTemplateColumns: vueCatalogue === 'mosaique' ? 'repeat(auto-fill, minmax(130px, 1fr))' : undefined, 
+              gridTemplateColumns: vueCatalogue === 'mosaique' ? 'repeat(auto-fill, minmax(140px, 1fr))' : undefined, 
               flexDirection: vueCatalogue === 'liste' ? 'column' : undefined,
               gap: 10 
             }}>
@@ -2443,28 +2456,25 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   <div
                     key={p.id}
                     onClick={() => ajouterAuPanier(p)}
+                    className={[
+                      'pos-produit-card',
+                      qteAuPanier > 0 ? 'pos-produit-card--in-cart' : '',
+                      estHorsStock ? 'pos-produit-card--epuise' : ''
+                    ].filter(Boolean).join(' ')}
                     style={{
-                      background: '#ffffff',
-                      border: estHorsStock ? '1px solid #fecaca' : qteAuPanier > 0 ? '2px solid #C75B00' : '1px solid #e2e8f0',
-                      borderRadius: 10,
                       padding: '10px 12px',
-                      cursor: 'pointer',
                       display: 'flex',
                       flexDirection: vueCatalogue === 'liste' ? 'row' : 'column',
                       alignItems: vueCatalogue === 'liste' ? 'center' : 'stretch',
                       justifyContent: 'space-between',
-                      transition: 'all 0.15s ease',
-                      userSelect: 'none',
-                      minHeight: vueCatalogue === 'liste' ? 60 : 92,
-                      position: 'relative',
-                      boxShadow: qteAuPanier > 0 ? '0 4px 12px rgba(199, 91, 0, 0.15)' : '0 2px 4px rgba(0,0,0,0.02)',
+                      minHeight: vueCatalogue === 'liste' ? 60 : 96,
                     }}
                   >
                     {qteAuPanier > 0 && (
-                      <div style={{
-                        position: 'absolute', top: -6, right: -6, background: '#C75B00', color: '#fff',
-                        borderRadius: 10, width: 20, height: 20, fontSize: 11, fontWeight: 900,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(199,91,0,0.4)', zIndex: 2
+                      <div className="pos-qte-badge" style={{
+                        position: 'absolute', top: -6, right: -6, background: 'var(--pos-primary)', color: '#fff',
+                        borderRadius: 10, width: 22, height: 22, fontSize: 11, fontWeight: 900,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(199,91,0,0.4)', zIndex: 2
                       }}>
                         {qteAuPanier}
                       </div>
@@ -2519,7 +2529,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         </div>
 
         {/* Côté Droit : Ticket Panier & Encaissement POS */}
-        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: '12px 10px 20px 10px', display: 'flex', flexDirection: 'column', gap: 8, boxSizing: 'border-box', maxWidth: '100%', height: '100%', minHeight: 0, overflowY: 'auto' }}>
+        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: 'var(--pos-surface)', padding: '12px 10px 20px 10px', display: 'flex', flexDirection: 'column', gap: 8, boxSizing: 'border-box', maxWidth: '100%', height: '100%', minHeight: 0, overflowY: 'auto' }}>
           {/* Bouton retour au catalogue sur Mobile */}
           <button
             type="button"
@@ -2556,40 +2566,39 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           <div style={{ flex: 1, minHeight: 140, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '6px 2px' }}>
             {!session ? (
               <div style={{
-                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                background: 'linear-gradient(135deg, var(--pos-navy) 0%, #243860 100%)',
                 color: '#ffffff',
                 borderRadius: 16,
-                padding: '28px 20px',
+                padding: '24px 18px',
                 textAlign: 'center',
-                boxShadow: '0 10px 25px rgba(15,23,42,0.15)',
+                boxShadow: 'var(--pos-shadow-lg)',
                 margin: 'auto 0'
               }}>
-                <div style={{ fontSize: 40, marginBottom: 10 }}>🔒</div>
-                <h3 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 900, color: '#ffffff' }}>Session de Caisse Fermée</h3>
-                <p style={{ margin: '0 0 18px', fontSize: 13, color: '#94a3b8', lineHeight: 1.5 }}>
+                <div style={{ fontSize: 36, marginBottom: 8 }}>🔒</div>
+                <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 900, color: '#ffffff' }}>Session de Caisse Fermée</h3>
+                <p style={{ margin: '0 0 16px', fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
                   Déclarez votre fond de caisse initial pour ouvrir la session et commencer à encaisser vos clients.
                 </p>
                 <button
                   onClick={() => setModalSessionOuverture(true)}
-                  style={{
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: 12,
-                    padding: '13px 22px',
-                    fontWeight: 900,
-                    fontSize: 14,
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
-                  }}
+                  className="pos-btn pos-btn-lg pos-btn-success"
+                  style={{ width: '100%', fontSize: 14 }}
                 >
                   🔓 Ouvrir la Session de Caisse →
                 </button>
               </div>
             ) : panier.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px 10px', color: '#94a3b8' }}>
+              <div style={{ textAlign: 'center', padding: '24px 10px', color: 'var(--pos-text3)' }}>
+                {/* Mini-strip KPI Session si active et sans panier */}
+                {session?.ventes && session.ventes.nbVentes > 0 && (
+                  <div style={{ background: 'var(--pos-primary-bg)', border: '1px solid var(--pos-border)', borderRadius: 10, padding: '8px 12px', marginBottom: 16, display: 'flex', justifyContent: 'space-around', fontSize: 11, fontWeight: 700, color: 'var(--pos-text)' }}>
+                    <div>💰 CA: <span style={{ color: 'var(--pos-success)', fontWeight: 900 }}>{fcfa(session.ventes.total)}</span></div>
+                    <div>🧾 {session.ventes.nbVentes} vente{session.ventes.nbVentes > 1 ? 's' : ''}</div>
+                    <div>💵 Cash: {fcfa(session.ventes.especes)}</div>
+                  </div>
+                )}
                 <span style={{ fontSize: 36, display: 'block', marginBottom: 4 }}>🧾</span>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#475569' }}>Le ticket de caisse est vide</p>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--pos-text2)' }}>Le ticket de caisse est vide</p>
                 <p style={{ margin: '2px 0 0', fontSize: 11 }}>Scannez un code-barres ou cliquez sur un article.</p>
               </div>
             ) : (
@@ -2643,31 +2652,33 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               )}
             </div>
 
-            <div className="paiement-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5 }}>
+            <div className="paiement-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
               {[
-                { id: 'especes', label: '💵 Espèces' },
-                { id: 'wave', label: '🌊 Wave' },
-                { id: 'orange_money', label: '🍊 OM' },
-                { id: 'carte', label: '💳 Carte' },
-                { id: 'mixte', label: '🔀 Mixte' },
-                { id: 'credit_client', label: '📝 Crédit' },
+                { id: 'especes', label: '💵', text: 'Espèces' },
+                { id: 'wave', label: '🌊', text: 'Wave' },
+                { id: 'orange_money', label: '🍊', text: 'Orange Money' },
+                { id: 'carte', label: '💳', text: 'Carte' },
+                { id: 'mixte', label: '🔀', text: 'Mixte' },
+                { id: 'credit_client', label: '📝', text: 'Crédit' },
               ].map(m => (
                 <button
                   key={m.id}
                   onClick={() => setModePaiement(m.id as any)}
                   style={{
-                    padding: '8px 2px', borderRadius: 8,
-                    background: modePaiement === m.id ? '#C75B00' : '#f8fafc',
-                    color: modePaiement === m.id ? '#fff' : '#334155',
-                    fontWeight: modePaiement === m.id ? 800 : 600, fontSize: 10, cursor: 'pointer',
-                    border: modePaiement === m.id ? '1px solid #C75B00' : '1px solid #cbd5e1',
-                    boxShadow: modePaiement === m.id ? '0 2px 8px rgba(199,91,0,0.25)' : 'none',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    minHeight: 48, borderRadius: 10,
+                    background: modePaiement === m.id ? 'var(--pos-primary)' : 'var(--pos-surface)',
+                    color: modePaiement === m.id ? '#fff' : 'var(--pos-text2)',
+                    fontWeight: modePaiement === m.id ? 800 : 600,
+                    fontSize: 11, cursor: 'pointer',
+                    border: modePaiement === m.id ? '2px solid var(--pos-primary)' : '1.5px solid var(--pos-border)',
+                    boxShadow: modePaiement === m.id ? '0 3px 10px rgba(199,91,0,.28)' : 'none',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 2, padding: '6px 4px',
+                    transition: 'all 0.12s ease',
                   }}
                 >
-                  {m.label}
+                  <span style={{ fontSize: 16, lineHeight: 1 }}>{m.label}</span>
+                  <span style={{ fontSize: 10, fontWeight: 'inherit', lineHeight: 1 }}>{m.text}</span>
                 </button>
               ))}
             </div>
@@ -2814,54 +2825,72 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               )}
             </div>
 
-            {/* Actions Sticky Net à Payer / Devis / Proforma / Encaisser */}
-            <div style={{ position: 'sticky', bottom: 0, background: '#ffffff', paddingTop: 10, paddingBottom: 12, borderTop: '1px solid #e2e8f0', zIndex: 10, marginTop: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                <div>
-                  <span style={{ fontSize: 13, color: '#475569', display: 'block', fontWeight: 600 }}>Net à payer</span>
-                </div>
-                <span style={{ fontSize: 24, fontWeight: 900, color: '#C75B00' }}>{fcfa(netAPayer)}</span>
-              </div>
+            {/* ── Zone Sticky : Total + Actions + Bouton ENCAISSER ── */}
+            <div style={{ position: 'sticky', bottom: 0, background: 'var(--pos-surface)', paddingTop: 10, borderTop: '1px solid var(--pos-border)', zIndex: 10, marginTop: 'auto' }}>
 
-              {/* Actions Devis / Proforma / Encaisser */}
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              {/* Bannière Total Panier — Grand Format */}
+              {panier.length > 0 && (
+                <div className="pos-total-banner" style={{ marginBottom: 10 }}>
+                  <span className="pos-total-banner-label">TOTAL À ENCAISSER</span>
+                  <span className="pos-total-banner-amount">{fcfa(netAPayer)}</span>
+                  <div className="pos-total-banner-details">
+                    <span>{panier.reduce((s, i) => s + i.quantite, 0)} article{panier.reduce((s, i) => s + i.quantite, 0) > 1 ? 's' : ''}</span>
+                    {remisePourcentage > 0 && <span>Remise {remisePourcentage}%</span>}
+                    {regimeFiscal === 'reel' && !estExonereClient && totalTVA > 0 && <span>TVA {tvaDefaut}% incluse</span>}
+                  </div>
+                </div>
+              )}
+
+              {panier.length === 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, padding: '0 4px' }}>
+                  <span style={{ fontSize: 13, color: 'var(--pos-text3)', fontWeight: 600 }}>Net à payer</span>
+                  <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--pos-text3)' }}>0 FCFA</span>
+                </div>
+              )}
+
+              {/* Actions Devis / Proforma */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8, padding: '0 4px' }}>
                 <button
                   onClick={() => enregistrerDocumentCaisse('devis')}
                   disabled={netAPayer === 0}
-                  style={{
-                    flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1',
-                    background: '#ffffff', color: netAPayer > 0 ? '#475569' : '#94a3b8',
-                    fontWeight: 700, fontSize: 12, cursor: netAPayer > 0 ? 'pointer' : 'not-allowed'
-                  }}
+                  className="pos-btn pos-btn-md pos-btn-ghost"
+                  style={{ flex: 1, fontWeight: 700, fontSize: 12, opacity: netAPayer === 0 ? 0.4 : 1 }}
                 >
                   📄 DEVIS
                 </button>
                 <button
                   onClick={() => enregistrerDocumentCaisse('proforma')}
                   disabled={netAPayer === 0}
-                  style={{
-                    flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1',
-                    background: '#ffffff', color: netAPayer > 0 ? '#475569' : '#94a3b8',
-                    fontWeight: 700, fontSize: 12, cursor: netAPayer > 0 ? 'pointer' : 'not-allowed'
-                  }}
+                  className="pos-btn pos-btn-md pos-btn-ghost"
+                  style={{ flex: 1, fontWeight: 700, fontSize: 12, opacity: netAPayer === 0 ? 0.4 : 1 }}
                 >
                   📄 PROFORMA
                 </button>
               </div>
 
-              <button
-                onClick={encaisserVente}
-                disabled={netAPayer === 0}
-                style={{
-                  width: '100%', padding: '14px', borderRadius: 10, border: 'none',
-                  background: netAPayer > 0 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#cbd5e1',
-                  color: netAPayer > 0 ? '#fff' : '#64748b',
-                  fontWeight: 900, fontSize: 16, cursor: netAPayer > 0 ? 'pointer' : 'not-allowed',
-                  boxShadow: netAPayer > 0 ? '0 4px 14px rgba(16,185,129,0.3)' : 'none',
-                }}
-              >
-                ⚡ ENCAISSER ET TICKET (80mm) →
-              </button>
+              {/* Bouton ENCAISSER — Dominant avec spinner loading */}
+              <div style={{ padding: '0 4px 14px' }}>
+                <button
+                  onClick={encaisserVente}
+                  disabled={netAPayer === 0 || encaissementEnCours}
+                  className="pos-btn-encaisser"
+                >
+                  {encaissementEnCours ? (
+                    <>
+                      <span className="pos-spinner" />
+                      <span>Encaissement en cours...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14M13 6l6 6-6 6"/>
+                      </svg>
+                      ENCAISSER
+                      {netAPayer > 0 && <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginLeft: 2 }}>· {fcfa(netAPayer)}</span>}
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

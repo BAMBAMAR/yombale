@@ -76,6 +76,304 @@ img, video, iframe {
   --orange2: #FFF3E8;   /* → fond clair accent */
   --gold:    #D97706;
   --red:     #B91C1C;
+
+  /* ── Variables POS — mappées sur la palette Nopalou ─────────────
+     Remplace les couleurs Slate (#0f172a / #f8fafc) dans CaisseClient
+     pour une cohérence de marque complète                          */
+  --pos-bg:        #F4F1EC;   /* sable légèrement plus foncé que --bg */
+  --pos-surface:   #FFFFFF;
+  --pos-surface2:  #FAF8F5;   /* fond secondaire panneau catalogue */
+  --pos-text:      #1A1612;   /* = --text1 encre chaude */
+  --pos-text2:     #6B5E52;   /* = --text2 pierre chaude */
+  --pos-text3:     #9C8E84;   /* = --text3 gris chaud */
+  --pos-border:    #E8DDD2;   /* = --border beige sable */
+  --pos-primary:   #C75B00;   /* = --accent orange brûlé */
+  --pos-primary-dk:#A34900;   /* orange brûlé foncé hover */
+  --pos-primary-bg:#FFF3E8;   /* fond clair accent */
+  --pos-success:   #0A5C36;   /* = --price vert forêt */
+  --pos-success-dk:#084A2B;   /* vert forêt foncé hover */
+  --pos-success-bg:#E6F4EC;   /* fond clair vert */
+  --pos-danger:    #B91C1C;   /* = --red */
+  --pos-warning:   #D97706;   /* = --gold */
+  --pos-navy:      #1C2B4A;   /* = --navy */
+  --pos-shadow:    0 2px 8px rgba(26,22,18,.08);
+  --pos-shadow-lg: 0 8px 32px rgba(26,22,18,.16);
+
+  /* ── Système de spacing unifié (évite les valeurs arbitraires) ── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  /* ── Hauteurs de bouton standardisées ───────────────────────────
+     sm=32px  md=40px  lg=48px  xl=60px (Encaisser)               */
+  --btn-h-sm:  32px;
+  --btn-h-md:  40px;
+  --btn-h-lg:  48px;
+  --btn-h-xl:  60px;
+
+  /* ── Type Scale unifié (WCAG Compliant) ───────────────────────── */
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-base: 13px;
+  --text-md:   15px;
+  --text-lg:   18px;
+  --text-xl:   22px;
+  --text-2xl:  28px;
+  --text-3xl:  clamp(28px, 4vw, 44px);
+}
+
+/* Keyframes animations P4 */
+@keyframes pos-badge-pop {
+  0%   { transform: scale(0.6); }
+  50%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pos-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.pos-qte-badge {
+  animation: pos-badge-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pos-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: pos-spin 0.7s linear infinite;
+}
+
+/* Poinçonnage papier ticket de caisse */
+.ticket-section {
+  position: relative;
+}
+.ticket-section::before {
+  content: '';
+  display: block;
+  height: 6px;
+  margin: -12px -10px 4px;
+  background: radial-gradient(circle at 7px -2px, var(--pos-bg) 4px, transparent 4.5px) repeat-x left top / 14px 6px;
+}
+
+/* ── Système de boutons POS standardisés ──────────────────────────
+   Utilisable dans toute la caisse pour remplacer les inline styles */
+.pos-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  text-decoration: none;
+}
+.pos-btn:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.pos-btn:not(:disabled):active { transform: scale(0.97); }
+
+/* Tailles */
+.pos-btn-sm { height: var(--btn-h-sm); padding: 0 12px; font-size: 12px; border-radius: 6px; }
+.pos-btn-md { height: var(--btn-h-md); padding: 0 16px; font-size: 13px; }
+.pos-btn-lg { height: var(--btn-h-lg); padding: 0 20px; font-size: 14px; font-weight: 800; }
+.pos-btn-xl { height: var(--btn-h-xl); padding: 0 24px; font-size: 17px; font-weight: 900; letter-spacing: -0.01em; border-radius: 14px; }
+
+/* Variantes couleur */
+.pos-btn-primary {
+  background: var(--pos-primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(199,91,0,.28);
+}
+.pos-btn-primary:not(:disabled):hover {
+  background: var(--pos-primary-dk);
+  box-shadow: 0 6px 18px rgba(199,91,0,.36);
+}
+.pos-btn-success {
+  background: linear-gradient(135deg, var(--pos-success) 0%, var(--pos-success-dk) 100%);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(10,92,54,.30);
+}
+.pos-btn-success:not(:disabled):hover {
+  box-shadow: 0 8px 28px rgba(10,92,54,.40);
+  opacity: 0.95;
+}
+.pos-btn-secondary {
+  background: var(--pos-surface);
+  color: var(--pos-text2);
+  border: 1.5px solid var(--pos-border);
+}
+.pos-btn-secondary:not(:disabled):hover {
+  background: var(--pos-surface2);
+  border-color: var(--pos-primary);
+  color: var(--pos-primary);
+}
+.pos-btn-ghost {
+  background: transparent;
+  color: var(--pos-text2);
+  border: 1px solid var(--pos-border);
+}
+.pos-btn-ghost:not(:disabled):hover {
+  background: var(--pos-surface2);
+}
+.pos-btn-danger {
+  background: #FEF2F2;
+  color: var(--pos-danger);
+  border: 1px solid #FECACA;
+}
+.pos-btn-danger:not(:disabled):hover {
+  background: #FEE2E2;
+}
+
+/* Bouton ENCAISSER — Dominant, grand format */
+.pos-btn-encaisser {
+  width: 100%;
+  height: var(--btn-h-xl);
+  background: linear-gradient(135deg, var(--pos-success) 0%, var(--pos-success-dk) 100%);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(10,92,54,.35);
+  transition: box-shadow 0.2s ease, transform 0.12s ease, opacity 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+.pos-btn-encaisser::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 50%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.pos-btn-encaisser:not(:disabled):hover {
+  box-shadow: 0 12px 36px rgba(10,92,54,.45);
+  transform: translateY(-1px);
+}
+.pos-btn-encaisser:not(:disabled):active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 4px 14px rgba(10,92,54,.25);
+}
+.pos-btn-encaisser:disabled {
+  background: #D1D5DB;
+  color: #9CA3AF;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Animation pulse sur le bouton encaisser quand panier > 0 */
+@keyframes pos-encaisser-glow {
+  0%, 100% { box-shadow: 0 8px 28px rgba(10,92,54,.35); }
+  50%       { box-shadow: 0 10px 36px rgba(10,92,54,.55); }
+}
+.pos-btn-encaisser:not(:disabled) {
+  animation: pos-encaisser-glow 2.5s ease-in-out infinite;
+}
+.pos-btn-encaisser:not(:disabled):hover,
+.pos-btn-encaisser:not(:disabled):active {
+  animation: none;
+}
+
+/* Bannière Total Panier POS */
+.pos-total-banner {
+  background: linear-gradient(135deg, var(--pos-success) 0%, var(--pos-success-dk) 100%);
+  border-radius: 12px 12px 0 0;
+  padding: 14px 16px 10px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.pos-total-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, transparent 50%);
+  pointer-events: none;
+}
+.pos-total-banner-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.75);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  display: block;
+}
+.pos-total-banner-amount {
+  font-size: 34px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  display: block;
+}
+.pos-total-banner-details {
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  margin-top: 4px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Cartes produit POS — feedback tactile amélioré */
+.pos-produit-card {
+  background: var(--pos-surface);
+  border: 1px solid var(--pos-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.12s ease,
+    border-color 0.12s ease;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+.pos-produit-card:hover {
+  transform: scale(1.025);
+  box-shadow: 0 4px 16px rgba(199,91,0,.15);
+  border-color: var(--pos-primary);
+}
+.pos-produit-card:active {
+  transform: scale(0.97);
+  box-shadow: 0 1px 4px rgba(199,91,0,.10);
+}
+.pos-produit-card--in-cart {
+  border: 2px solid var(--pos-primary);
+  box-shadow: 0 4px 14px rgba(199,91,0,.18);
+}
+.pos-produit-card--epuise {
+  opacity: 0.55;
+  border-color: #FECACA;
+  cursor: not-allowed;
+}
+.pos-produit-card--epuise:hover,
+.pos-produit-card--epuise:active {
+  transform: none;
+  box-shadow: none;
+  border-color: #FECACA;
 }
 
 body, button, input, select, textarea, optgroup {
