@@ -1,7 +1,9 @@
-## 🚀 Mises à jour du 13/08/2026 : Intégration du Lien Direct vers les Commandes dans les Notifications WhatsApp Vendeur (`comptabilite.js`, `whatsapp-chatbot.js`)
-- **Intégration du Lien de Redirection Direct vers l'Espace Vendeur (`comptabilite.js` & `whatsapp-chatbot.js`)** :
-  * Ajout automatique de l'URL de redirection direct vers l'onglet des commandes du tableau de bord vendeur (`${SITE}/boutique?tab=commandes`) dans les messages de notification WhatsApp envoyés aux marchands lors d'une nouvelle commande mono-produit ou groupée.
-  * Permet au marchand de cliquer directement sur le lien reçu par WhatsApp pour ouvrir son espace d'administration et gérer/valider la commande immédiatement.
+## 🚀 Mises à jour du 13/08/2026 : Correction de la Restriction Meta 24h & Intégration du Lien Direct vers les Commandes (`comptabilite.js`, `whatsapp-chatbot.js`)
+- **Fix de la Restriction Meta WhatsApp des 24 Heures (Code 131047)** :
+  * **Problème identifié via les logs** : Meta Cloud API échouait l'envoi des notifications texte aux vendeurs qui n'avaient pas écrit au bot WhatsApp dans les 24h avec l'erreur `131047 (Re-engagement message / 24 hours window)`.
+  * **Solution** : Ajout systématique de l'envoi par le Template Meta approuvé `nopalou_fiche_texte` (qui contourne la fenêtre des 24h Meta) en complément du message texte détaillé dans `notifierVendeurCommande` et `notifierVendeurPanierGroupe`.
+- **Intégration du Lien de Redirection Direct vers l'Espace Vendeur** :
+  * Ajout automatique de l'URL de redirection direct vers l'onglet des commandes du tableau de bord vendeur (`${SITE}/boutique?tab=commandes`) dans les messages et templates de notification WhatsApp envoyés aux marchands lors d'une nouvelle commande.
 
 ## 🚀 Mises à jour du 13/08/2026 : Implémentation du Renforcement Anti-Clonage, Anti-Scraping et Protection de la Marque
 - **Masquage Sécurisé des Numéros de Contact Vendeurs (`MaskedContactPhone.tsx` & `annonces/[id]/page.tsx`)** :

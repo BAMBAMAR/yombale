@@ -491,15 +491,24 @@ async function notifierVendeurCommande(boutique, {
     return;
   }
 
-  const { sendWhatsAppText } = require('../services/whatsapp');
+  const { sendWhatsAppText, sendWhatsAppTemplate } = require('../services/whatsapp');
   const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement' };
   const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
   const lienCommandes = `${SITE}/boutique?tab=commandes`;
   const msg = `🛒 *Nouvelle commande — ${boutique.nom}*\n\nRéf : *${reference}*\nProduit : ${nomProduit} × ${quantite}${montantTotal > 0 ? `\nMontant : *${new Intl.NumberFormat('fr-FR').format(montantTotal)} FCFA*` : ''}${fraisLivraison > 0 ? `\nLivraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA` : ''}\n💳 Paiement souhaité : ${methodeLabel[methodePaiement] || methodePaiement}\n\n👤 Client : ${clientNom}\n📞 ${clientTelephone}${clientAdresse ? `\n📍 ${clientAdresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\n👉 *Consultez vos commandes ici :*\n${lienCommandes}\n\n⚡ Répondez vite pour confirmer !`;
 
+  // 1. Envoi du message texte (si le marchand a écrit au bot dans les 24h)
   sendWhatsAppText(vendeurTel, msg)
     .then(() => console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} envoyée à ${vendeurTel}`))
     .catch(err => console.error(`[WHATSAPP VENDEUR NOTIF ERR]:`, err.message));
+
+  // 2. Envoi garanti par Template Meta (passant outre la restriction des 24h)
+  const titleTpl = `🛒 Nouvelle commande — ${boutique.nom}`;
+  const detailTpl = `Réf ${reference} — ${nomProduit} × ${quantite}${montantTotal > 0 ? ' (' + new Intl.NumberFormat('fr-FR').format(montantTotal) + ' FCFA)' : ''}`;
+  sendWhatsAppTemplate(vendeurTel, 'nopalou_fiche_texte', [
+    { type: 'body', parameters: [{ type: 'text', text: titleTpl }, { type: 'text', text: detailTpl }, { type: 'text', text: lienCommandes }] },
+    { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: 'boutique?tab=commandes' }] },
+  ]).catch(err => console.error(`[WHATSAPP VENDEUR TPL ERR]:`, err.message));
 }
 
 // Logique de création de commande, partagée entre la route HTTP publique

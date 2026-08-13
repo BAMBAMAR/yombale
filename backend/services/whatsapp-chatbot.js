@@ -644,6 +644,14 @@ async function notifierVendeurPanierGroupe(boutique, commandesCreees, groupeComm
   const lienCommandes = `${SITE}/boutique?tab=commandes`;
   const msg = `🛒 *Nouvelle commande groupée — ${boutique.nom}*\n\nRéf groupe : *${groupeCommande}*\n${lignesArticles}${fraisLivraison > 0 ? `\n🚚 Livraison : ${prixFmt(fraisLivraison)}` : ''}\n💰 *Total : ${prixFmt(total)}*\n💳 Paiement souhaité : ${methodeLabel[premiere.methode_paiement] || premiere.methode_paiement}\n\n👤 Client : ${premiere.client_nom}\n📞 ${premiere.client_telephone}${premiere.client_adresse ? `\n📍 ${premiere.client_adresse}` : ''}\n\n👉 *Consultez vos commandes ici :*\n${lienCommandes}\n\n⚡ Répondez vite pour confirmer !`;
   sendWhatsAppText(vendeurTel, msg).catch(() => {});
+
+  // Envoi garanti par Template Meta (passant outre la restriction des 24h)
+  const titleTpl = `🛒 Nouvelle commande groupée — ${boutique.nom}`;
+  const detailTpl = `Réf ${groupeCommande} — Total: ${prixFmt(total)} (${commandesCreees.length} articles)`;
+  sendWhatsAppTemplate(vendeurTel, 'nopalou_fiche_texte', [
+    { type: 'body', parameters: [{ type: 'text', text: titleTpl }, { type: 'text', text: detailTpl }, { type: 'text', text: lienCommandes }] },
+    { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: 'boutique?tab=commandes' }] },
+  ]).catch(() => {});
 }
 
 // ── Dispatcher principal ──────────────────────────────────────────────────────
