@@ -667,8 +667,30 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       } else {
         localStorage.removeItem(`nopalou_pos_tickets_attente_${boutiqueActiveId}`)
       }
+  // ── Persistance et restauration de la session de caisse POS ─────────────────
+  useEffect(() => {
+    if (typeof window !== 'undefined' && boutiqueActiveId) {
+      if (session) {
+        localStorage.setItem(`nopalou_pos_session_${boutiqueActiveId}`, JSON.stringify(session))
+      } else {
+        localStorage.removeItem(`nopalou_pos_session_${boutiqueActiveId}`)
+      }
     }
-  }, [ticketsEnAttente, boutiqueActiveId])
+  }, [session, boutiqueActiveId])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && boutiqueActiveId) {
+      const savedSession = localStorage.getItem(`nopalou_pos_session_${boutiqueActiveId}`)
+      if (savedSession) {
+        try {
+          const parsed = JSON.parse(savedSession)
+          if (parsed && parsed.statut === 'ouverte') {
+            setSession(parsed)
+          }
+        } catch (e) {}
+      }
+    }
+  }, [boutiqueActiveId])
 
   // ── Charger les boutiques du marchand et le catalogue réel de produits ───────
   useEffect(() => {
@@ -684,6 +706,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               setBoutiqueActiveId(data.boutique.id)
               setTerminalPlan(data.planActif || 'pro')
               if (data.caissiers) setCaissiersList(data.caissiers)
+              await chargerCaissiersEtSession(data.boutique.id)
               await chargerProduitsBoutique(data.boutique.id)
               await chargerClientsCredits(data.boutique.id)
               setLoadingProduits(false)
@@ -709,6 +732,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           if (typeof window !== 'undefined') {
             localStorage.setItem('nopalou_pos_active_boutique_id', bId)
           }
+          await chargerCaissiersEtSession(bId)
           await chargerProduitsBoutique(bId)
           await chargerClientsCredits(bId)
         } else {
@@ -723,6 +747,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 const validSaved = cachedBoutiques.find((b: any) => b.id === savedBId)
                 const bId = validSaved ? validSaved.id : (boutiqueActiveId || cachedBoutiques[0].id)
                 setBoutiqueActiveId(bId)
+                await chargerCaissiersEtSession(bId)
                 await chargerProduitsBoutique(bId)
                 await chargerClientsCredits(bId)
                 return
@@ -797,28 +822,40 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         const data = await resSession.json();
         if (data.session) {
           const dbSession = data.session;
-          const fmtSession: SessionCaisse = {
-            id: dbSession.id,
-            dateOuverture: new Date(dbSession.date_ouverture).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-            fondDeCaisse: Number(dbSession.fond_caisse_initial || 0),
-            caissierNom: dbSession.caissier_nom,
-            statut: 'ouverte',
-            ventes: {
-              total: Number(dbSession.ventes_total || 0),
-              especes: Number(dbSession.ventes_especes || 0),
-              wave: Number(dbSession.ventes_wave || 0),
-              orangeMoney: Number(dbSession.ventes_orange_money || 0),
-              carte: Number(dbSession.ventes_carte || 0),
-              mixte: 0,
-              nbVentes: Number(dbSession.nb_ventes || 0)
-            }
-          };
-          setSession(fmtSession);
-        } else {
-          setSession(null);
+          const dbTotal = Number(dbSession.ventes_total || 0);
+          const dbNb = Number(dbSession.nb_ventes || 0);
+          const dbEspeces = Number(dbSession.ventes_especes || 0);
+          const dbWave = Number(dbSession.ventes_wave || 0);
+          const dbOM = Number(dbSession.ventes_orange_money || 0);
+          const dbCarte = Number(dbSession.ventes_carte || 0);
+
+          setSession(prev => {
+            const localTotal = prev?.ventes?.total || 0;
+            const localNb = prev?.ventes?.nbVentes || 0;
+            const localEspeces = prev?.ventes?.especes || 0;
+            const localWave = prev?.ventes?.wave || 0;
+            const localOM = prev?.ventes?.orangeMoney || 0;
+            const localCarte = prev?.ventes?.carte || 0;
+            const localMixte = prev?.ventes?.mixte || 0;
+
+            return {
+              id: dbSession.id,
+              dateOuverture: prev?.dateOuverture || (dbSession.date_ouverture ? new Date(dbSession.date_ouverture).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })),
+              fondDeCaisse: Number(dbSession.fond_caisse_initial || prev?.fondDeCaisse || 0),
+              caissierNom: dbSession.caissier_nom || caissierNom,
+              statut: 'ouverte',
+              ventes: {
+                total: Math.max(dbTotal, localTotal),
+                especes: Math.max(dbEspeces, localEspeces),
+                wave: Math.max(dbWave, localWave),
+                orangeMoney: Math.max(dbOM, localOM),
+                carte: Math.max(dbCarte, localCarte),
+                mixte: localMixte,
+                nbVentes: Math.max(dbNb, localNb)
+              }
+            };
+          });
         }
-      } else {
-        setSession(null);
       }
     } catch (err) {
       console.error('[chargerCaissiersEtSession err]', err);
@@ -828,7 +865,6 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   async function chargerProduitsBoutique(bId: string) {
     if (!bId) return
     setLoadingProduits(true)
-    chargerCaissiersEtSession(bId)
 
     // 1. Restaurer immédiatement depuis LocalStorage si présent
     const localHist = localStorage.getItem(`nopalou_pos_historique_${bId}`)
