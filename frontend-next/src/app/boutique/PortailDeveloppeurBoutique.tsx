@@ -39,9 +39,18 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') || sessionStorage.getItem('token') : null
 
   const chargerDonnees = async () => {
+    const cacheKeyKeys = `nopalou_offline_api_keys_${boutiqueId}`
+    const cacheKeyWebhooks = `nopalou_offline_webhooks_${boutiqueId}`
+    
+    const cKeys = localStorage.getItem(cacheKeyKeys)
+    if (cKeys) { try { setKeys(JSON.parse(cKeys)) } catch(e) {} }
+    const cWebhooks = localStorage.getItem(cacheKeyWebhooks)
+    if (cWebhooks) { try { setWebhooks(JSON.parse(cWebhooks)) } catch(e) {} }
+
+    if (!cKeys || !cWebhooks) setLoading(true)
+    setErreur(null)
+
     try {
-      setLoading(true)
-      setErreur(null)
 
       const [resKeys, resWebhooks] = await Promise.all([
         fetch(`/api/boutiques/${boutiqueId}/api-keys`, {
@@ -55,15 +64,16 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
       if (resKeys.ok) {
         const dataKeys = await resKeys.json()
         setKeys(dataKeys.apiKeys || dataKeys.keys || [])
+        localStorage.setItem(cacheKeyKeys, JSON.stringify(dataKeys.apiKeys || dataKeys.keys || []))
       }
 
       if (resWebhooks.ok) {
         const dataWebhooks = await resWebhooks.json()
         setWebhooks(dataWebhooks.webhooks || [])
+        localStorage.setItem(cacheKeyWebhooks, JSON.stringify(dataWebhooks.webhooks || []))
       }
     } catch (err: any) {
-      console.error('[PORTAIL DEV BOUTIQUE ERR]', err)
-      setErreur(err.message || 'Impossible de charger vos données Développeur')
+      if (!cKeys && !cWebhooks) setErreur(err.message || 'Erreur réseau lors du chargement des données.')
     } finally {
       setLoading(false)
     }

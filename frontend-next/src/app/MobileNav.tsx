@@ -94,9 +94,9 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
             <>
               <a href="/boutique" className="mobile-nav-link" style={{ fontWeight: 800, color: 'var(--accent)' }} onClick={close}>🏪 Ma boutique (Gestion)</a>
               <a href="/compte" className="mobile-nav-link" onClick={close}>👤 {nom ?? 'Mon compte'}</a>
-              <a href="/mes-annonces" className="mobile-nav-link" onClick={close}>📋 Mes annonces</a>
-              <a href="/mes-annonces-immo" className="mobile-nav-link" onClick={close}>🏠 Mes biens immo</a>
-              <a href="/mes-alertes" className="mobile-nav-link" onClick={close}>🔔 Mes alertes prix</a>
+              <a href="/compte?tab=mes-annonces" className="mobile-nav-link" onClick={close}>📋 Mes annonces</a>
+              <a href="/compte?tab=mes-annonces-immo" className="mobile-nav-link" onClick={close}>🏠 Mes biens immo</a>
+              <a href="/compte?tab=mes-alertes" className="mobile-nav-link" onClick={close}>🔔 Mes alertes prix</a>
               <a href="/favoris" className="mobile-nav-link" onClick={close}>❤ Mes favoris</a>
               <a href="/deposer-immo" className="mobile-nav-link" onClick={close}>🏡 Publier un bien immo</a>
               <a href="/compte/apporteur" className="mobile-nav-link" onClick={close}>💼 Apporteur d&apos;affaires</a>

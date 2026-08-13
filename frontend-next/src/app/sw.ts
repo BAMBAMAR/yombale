@@ -1,6 +1,5 @@
-import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist } from "serwist";
+import { Serwist, NetworkFirst, NetworkOnly, StaleWhileRevalidate, CacheFirst, ExpirationPlugin } from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -9,6 +8,18 @@ declare global {
 }
 
 declare const self: WorkerGlobalScope & typeof globalThis;
+
+// ── Version du cache — incrémenter à chaque déploiement pour forcer purge ──
+const CACHE_VERSION = 'v5';
+const CACHE_NAMES = [
+  `nopalou-html-cache-${CACHE_VERSION}`,
+  `nopalou-rsc-cache-${CACHE_VERSION}`,
+  `nopalou-api-cache-${CACHE_VERSION}`,
+  `nopalou-pwa-meta-cache-${CACHE_VERSION}`,
+  `nopalou-assets-cache-${CACHE_VERSION}`,
+  'nopalou-offline-fallback-v1',
+  'serwist-precache',
+];
 
 const FALLBACK_HTML = `<!DOCTYPE html>
 <html lang="fr">
@@ -35,31 +46,143 @@ const FALLBACK_HTML = `<!DOCTYPE html>
     <p>Votre connexion Internet mobile est momentanément interrompue. Les données précédemment consultées restent disponibles en cache local.</p>
     <div class="btn-group">
       <button onclick="location.reload()">🔄 Réessayer la connexion</button>
+      <button onclick="window.history.back()" class="btn btn-sec">🔙 Revenir à la page précédente</button>
       <a href="/boutique/caisse" class="btn btn-sec">🛒 Retourner à la Caisse POS</a>
       <a href="/" class="btn btn-sec">🏠 Consulter l'Accueil (Cache)</a>
     </div>
   </div>
   <script>
     window.addEventListener('online', function() { location.reload(); });
+    if (window.history.length <= 1) {
+      const backBtn = document.querySelector('button[onclick="window.history.back()"]');
+      if (backBtn) backBtn.style.display = 'none';
+    }
   </script>
 </body>
 </html>`;
+
+const PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#1e293b" rx="16"/>
+  <path d="M70 120 L100 80 L130 120 Z" fill="#475569"/>
+  <circle cx="130" cy="70" r="12" fill="#475569"/>
+  <text x="100" y="155" text-anchor="middle" fill="#94a3b8" font-size="12" font-family="sans-serif" font-weight="bold">Image Hors-Ligne</text>
+</svg>`;
+
+// ── Helpers pour exclure les URLs externes du routing SW ─────────────────
+function isExternalTracker(url: URL): boolean {
+  return (
+    url.hostname.includes('google') ||
+    url.hostname.includes('googletagmanager') ||
+    url.hostname.includes('google-analytics') ||
+    url.hostname.includes('doubleclick') ||
+    url.hostname.includes('facebook') ||
+    url.hostname.includes('analytics')
+  );
+}
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: false,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [
+    // 0. Exclure les URLs externes d'analytics/trackers
+    {
+      matcher: ({ url }) => isExternalTracker(url),
+      handler: new NetworkOnly(),
+    },
+    // 1. /api/ping — NetworkOnly STRICT en premier (ne jamais cacher)
+    {
+      matcher: ({ url }) => url.pathname === '/api/ping',
+      handler: new NetworkOnly(),
+    },
+    // 2. Navigation HTML — NetworkFirst avec timeout 2s
+    {
+      matcher: ({ request }) =>
+        request.mode === "navigate" ||
+        (request.method === "GET" && request.headers.get("accept")?.includes("text/html") === true),
+      handler: new NetworkFirst({
+        cacheName: `nopalou-html-cache-${CACHE_VERSION}`,
+        networkTimeoutSeconds: 2,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 50,
+            maxAgeSeconds: 24 * 60 * 60 * 7,
+          }),
+        ],
+      }),
+    },
+    // 3. Requêtes RSC (_rsc=...) — NetworkFirst
+    {
+      matcher: ({ url }) => url.searchParams.has("_rsc"),
+      handler: new NetworkFirst({
+        cacheName: `nopalou-rsc-cache-${CACHE_VERSION}`,
+        networkTimeoutSeconds: 2,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 80,
+            maxAgeSeconds: 24 * 60 * 60 * 3,
+          }),
+        ],
+      }),
+    },
+    // 4. Routes API internes (/api/) — NetworkFirst (sauf /api/ping)
+    {
+      matcher: ({ url }) =>
+        url.pathname.startsWith("/api/") && url.pathname !== "/api/ping",
+      handler: new NetworkFirst({
+        cacheName: `nopalou-api-cache-${CACHE_VERSION}`,
+        networkTimeoutSeconds: 2,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 100,
+            maxAgeSeconds: 24 * 60 * 60 * 1,
+          }),
+        ],
+      }),
+    },
+    // 5. Manifest & PWA Meta — CacheFirst
+    {
+      matcher: ({ url }) =>
+        url.pathname === '/manifest.json' || url.pathname.startsWith('/icons/'),
+      handler: new CacheFirst({
+        cacheName: `nopalou-pwa-meta-cache-${CACHE_VERSION}`,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 20,
+            maxAgeSeconds: 24 * 60 * 60 * 30,
+          }),
+        ],
+      }),
+    },
+    // 6. Assets statiques (CSS, JS, images locales et distantes) — StaleWhileRevalidate
+    {
+      matcher: ({ request, url }) =>
+        request.destination === "style" ||
+        request.destination === "script" ||
+        request.destination === "image" ||
+        url.pathname.startsWith("/_next/static/") ||
+        url.hostname.includes("unsplash.com") ||
+        url.hostname.includes("cloudinary.com") ||
+        url.hostname.includes("wsrv.nl") ||
+        url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|css|js)$/i) !== null,
+      handler: new StaleWhileRevalidate({
+        cacheName: `nopalou-assets-cache-${CACHE_VERSION}`,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 200,
+            maxAgeSeconds: 24 * 60 * 60 * 30,
+          }),
+        ],
+      }),
+    },
+  ],
   fallbacks: {
     entries: [
       {
         url: "/offline.html",
         matcher({ request }: any) {
           if (!request || request.destination !== "document") return false;
-          if (typeof self !== "undefined" && self.navigator && self.navigator.onLine === true) {
-            return false;
-          }
           try {
             const url = new URL(request.url);
             if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/")) {
@@ -73,7 +196,7 @@ const serwist = new Serwist({
   },
 });
 
-// Pré-cacher explicitement /offline.html lors de l'installation
+// ── Installation : pré-cacher /offline.html ───────────────────────────────
 self.addEventListener("install", (event: any) => {
   event.waitUntil(
     caches.open("nopalou-offline-fallback-v1").then((cache) => {
@@ -88,41 +211,32 @@ self.addEventListener("install", (event: any) => {
   );
 });
 
-// Capturer les échecs de navigation HTML/document et renvoyer le HTML de secours
-self.addEventListener("fetch", (event: any) => {
-  const request = event.request;
-  if (!request) return;
+// ── Activation : purger tous les caches de versions précédentes ───────────
+self.addEventListener("activate", (event: any) => {
+  event.waitUntil(
+    caches.keys().then(async (keys) => {
+      const toDelete = keys.filter((key) => {
+        const isCurrentVersion = CACHE_NAMES.some((name) => key === name);
+        const isPrecache = key.startsWith('serwist-precache');
+        return !isCurrentVersion && !isPrecache;
+      });
 
-  const isHtmlNavigation = 
-    request.mode === "navigate" || 
-    (request.method === "GET" && request.headers?.get("accept")?.includes("text/html"));
-
-  if (isHtmlNavigation && typeof self !== "undefined" && self.navigator && self.navigator.onLine === false) {
-    event.respondWith(
-      caches.match(request, { ignoreSearch: true }).then((cachedResponse) => {
-        if (cachedResponse) return cachedResponse;
-        return caches.match("/offline.html", { ignoreSearch: true }).then((fallback) => {
-          if (fallback) return fallback;
-          return new Response(FALLBACK_HTML, {
-            status: 200,
-            headers: { "Content-Type": "text/html; charset=utf-8" },
-          });
-        });
-      }).catch(() => {
-        return new Response(FALLBACK_HTML, {
-          status: 200,
-          headers: { "Content-Type": "text/html; charset=utf-8" },
-        });
-      })
-    );
-  }
+      if (toDelete.length > 0) {
+        console.log(`[SW ${CACHE_VERSION}] Purge de ${toDelete.length} cache(s) obsolète(s):`, toDelete);
+        await Promise.all(toDelete.map((key) => caches.delete(key)));
+      }
+    })
+  );
 });
 
+// ── Gestionnaire de secours d'urgence (Offline Catch Handler) ────────────
 serwist.setCatchHandler(async ({ request }: any) => {
-  // Handle HTML document navigations offline
+  const url = request.url ? new URL(request.url) : null;
+
+  // 1. Document HTML / Navigation
   if (
-    request.destination === "document" || 
-    request.mode === "navigate" || 
+    request.destination === "document" ||
+    request.mode === "navigate" ||
     request.headers?.get("accept")?.includes("text/html")
   ) {
     const cached = await caches.match(request, { ignoreSearch: true });
@@ -135,17 +249,43 @@ serwist.setCatchHandler(async ({ request }: any) => {
     });
   }
 
-  // Handle Next.js RSC data requests (_rsc=...) offline
-  if (request.url && request.url.includes("_rsc=")) {
-    const cachedRsc = await caches.match(request, { ignoreSearch: true });
-    if (cachedRsc) return cachedRsc;
-    return new Response("{}", {
+  // 2. Images (locales ou distantes) non disponibles en cache → SVG Fallback propre
+  if (
+    request.destination === "image" ||
+    (url && url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif)$/i) !== null)
+  ) {
+    const cachedAsset = await caches.match(request, { ignoreSearch: true });
+    if (cachedAsset) return cachedAsset;
+    return new Response(PLACEHOLDER_SVG, {
       status: 200,
-      headers: { "Content-Type": "text/plain" },
+      headers: { "Content-Type": "image/svg+xml; charset=utf-8" },
     });
   }
 
-  return Response.error();
+  // 3. Next.js RSC data requests (_rsc=...)
+  if (url && url.searchParams.has("_rsc")) {
+    const cachedRsc = await caches.match(request, { ignoreSearch: true });
+    if (cachedRsc) return cachedRsc;
+  }
+
+  // 4. Assets statiques (JS, CSS, fonts)
+  if (
+    request.destination === "style" ||
+    request.destination === "script" ||
+    (url && (url.pathname.includes("/_next/static/") || url.pathname.match(/\.(css|js)$/i) !== null))
+  ) {
+    const cachedAsset = await caches.match(request, { ignoreSearch: true });
+    if (cachedAsset) return cachedAsset;
+  }
+
+  // 5. API / ping / fallback général → Réponse HTTP 504 propre (au lieu de Response.error() qui crashe les FetchEvent)
+  return new Response(
+    JSON.stringify({ error: "Réseau indisponible (Mode Hors-Ligne PWA)", offline: true }),
+    {
+      status: 504,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 });
 
 serwist.addEventListeners();

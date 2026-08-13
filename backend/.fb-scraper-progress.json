@@ -1,14 +1,15 @@
 {
-  "status": "completed",
+  "status": "in_progress",
   "mode": "live",
-  "groupeIndex": 10,
+  "groupeIndex": 8,
   "totalGroupes": 10,
-  "pourcentage": 100,
-  "groupeActuel": "Terminé",
-  "scrapes": 55,
-  "inseres": 36,
-  "doublons": 3,
-  "ignores": 16,
+  "pourcentage": 80,
+  "groupeActuel": "Marketplace Senegal",
+  "groupeUrl": "https://www.facebook.com/groups/329011281773600",
+  "scrapes": 25,
+  "inseres": 11,
+  "doublons": 8,
+  "ignores": 6,
   "erreurs": [],
-  "updatedAt": "2026-08-11T08:09:04.441Z"
+  "updatedAt": "2026-08-12T21:19:23.294Z"
 }

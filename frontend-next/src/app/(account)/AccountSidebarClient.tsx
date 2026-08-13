@@ -1,5 +1,5 @@
 'use client'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import AccountNavLinks from './AccountNavLinks'
 
 interface Props {
@@ -10,6 +10,8 @@ interface Props {
 
 export default function AccountSidebarClient({ nom, email, initiale }: Props) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const tab = searchParams.get('tab') || undefined
   const isMainPage = pathname === '/compte'
 
   return (
@@ -25,7 +27,7 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
         </div>
       </div>
       <div className="account-sidebar-nav-wrapper">
-        <AccountNavLinks />
+        <AccountNavLinks overrideTab={tab} />
       </div>
     </aside>
   )

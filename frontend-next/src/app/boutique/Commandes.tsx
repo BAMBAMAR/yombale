@@ -272,26 +272,42 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
   async function load() {
-    setLoading(true)
+    const cacheKey = `nopalou_offline_commandes_${boutiqueId}_${filtre}`
+    const cached = localStorage.getItem(cacheKey)
+    if (cached) {
+      try { 
+        const parsed = JSON.parse(cached)
+        if (filtre === 'abandonne') setPaniersAbandonnes(parsed)
+        else setCommandes(parsed)
+      } catch(e) {}
+    }
+    if (!cached) setLoading(true)
+
     if (filtre === 'abandonne') {
       try {
         const res = await fetch(`/api/compta-proxy/${boutiqueId}/paniers-abandonnes`)
+        let data
         if (!res.ok) {
           const directRes = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/paniers-abandonnes`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('nopalou_token') || ''}` }
           })
-          const data = await directRes.json()
-          setPaniersAbandonnes(data.paniers || [])
+          data = await directRes.json()
         } else {
-          const data = await res.json()
-          setPaniersAbandonnes(data.paniers || [])
+          data = await res.json()
         }
+        setPaniersAbandonnes(data.paniers || [])
+        localStorage.setItem(cacheKey, JSON.stringify(data.paniers || []))
       } catch {
-        setPaniersAbandonnes([])
+        if (!cached) setPaniersAbandonnes([])
       }
     } else {
-      const data = await listCommandes(boutiqueId, filtre)
-      setCommandes(data)
+      try {
+        const data = await listCommandes(boutiqueId, filtre)
+        setCommandes(data)
+        localStorage.setItem(cacheKey, JSON.stringify(data))
+      } catch (err) {
+        if (!cached) setCommandes([])
+      }
     }
     setLoading(false)
   }

@@ -12,6 +12,8 @@ try {
 const withSerwist = require('@serwist/next').default({
   swSrc: 'src/app/sw.ts',
   swDest: 'public/sw.js',
+  // Désactivé en dev pour éviter les interférences HMR et les faux positifs offline.
+  // Pour tester l'offline en dev : utiliser Chrome DevTools > Application > Service Workers > Offline.
   disable: process.env.NODE_ENV === 'development',
 });
 

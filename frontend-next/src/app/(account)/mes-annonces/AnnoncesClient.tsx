@@ -1,5 +1,5 @@
 'use client'
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { deleteAnnonce } from '@/app/actions/annonces'
@@ -167,7 +167,6 @@ function AnnonceCard({
 }
 
 export default function AnnoncesClient({
-  annonces,
   created,
   updated,
   userId,
@@ -177,9 +176,8 @@ export default function AnnoncesClient({
   numeroOM,
   waveActif,
 }: {
-  annonces: Annonce[]
-  created?: boolean
-  updated?: boolean
+  created: boolean
+  updated: boolean
   userId: string
   prixAnnonce: number
   prixBoost: number
@@ -187,8 +185,40 @@ export default function AnnoncesClient({
   numeroOM: string
   waveActif: boolean
 }) {
+  const [annonces, setAnnonces] = useState<Annonce[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const cacheKey = `nopalou_offline_annonces_${userId}`
+    const cached = localStorage.getItem(cacheKey)
+    if (cached) { 
+      try { 
+        const parsed = JSON.parse(cached)
+        setAnnonces(parsed)
+        console.log(`[AnnoncesClient] 📦 ${parsed.length} annonces classifiées chargées depuis le cache local (localStorage).`)
+      } catch(e) {} 
+    }
+    if (!cached) setLoading(true)
+
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+    fetch('/api/annonces/mine', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.annonces) {
+          setAnnonces(d.annonces)
+          localStorage.setItem(cacheKey, JSON.stringify(d.annonces))
+          console.log(`[AnnoncesClient] ⚡ Données fraîches reçues de l'API (${d.annonces.length} annonces), cache mis à jour.`)
+        }
+      })
+      .catch(err => console.warn('[AnnoncesClient] Mode hors-ligne ou erreur réseau lors du fetch :', err))
+      .finally(() => setLoading(false))
+  }, [userId])
+
   return (
     <div>
+      {loading && annonces.length === 0 && <p style={{ padding: 20 }}>Chargement de vos annonces...</p>}
       {created && (
         <div className="annonce-created-banner">
           ✅ Annonce créée avec succès !

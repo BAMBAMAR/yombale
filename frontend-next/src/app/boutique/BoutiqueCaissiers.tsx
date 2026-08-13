@@ -27,14 +27,20 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
   const [savingEdit, setSavingEdit] = useState(false)
 
   async function fetchCaissiers() {
-    setLoading(true)
+    const cached = localStorage.getItem(`nopalou_offline_caissiers_${boutiqueId}`)
+    if (cached) {
+      try { setCaissiers(JSON.parse(cached)) } catch(e) {}
+    }
+    if (!cached) setLoading(true)
+
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/caissiers`)
       if (!res.ok) throw new Error('Erreur de chargement')
       const data = await res.json()
       setCaissiers(data.caissiers || [])
+      localStorage.setItem(`nopalou_offline_caissiers_${boutiqueId}`, JSON.stringify(data.caissiers || []))
     } catch (err: any) {
-      setError(err.message)
+      if (!cached) setError(err.message)
     } finally {
       setLoading(false)
     }

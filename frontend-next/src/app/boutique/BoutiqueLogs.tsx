@@ -20,8 +20,12 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
   const [filtreType, setFiltreType] = useState('tous')
 
   async function fetchLogs() {
-    setLoading(true)
+    const cacheKey = `nopalou_offline_logs_${boutiqueId}_${filtreType}`
+    const cached = localStorage.getItem(cacheKey)
+    if (cached) { try { setLogs(JSON.parse(cached)) } catch(e) {} }
+    if (!cached) setLoading(true)
     setError(null)
+
     try {
       let url = `/api/boutiques/${boutiqueId}/logs?limit=150`
       if (filtreType !== 'tous') url += `&type=${encodeURIComponent(filtreType)}`
@@ -31,8 +35,9 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
       if (!res.ok) throw new Error('Impossible de charger le journal d\'audit')
       const data = await res.json()
       setLogs(data.logs || [])
+      localStorage.setItem(cacheKey, JSON.stringify(data.logs || []))
     } catch (err: any) {
-      setError(err.message)
+      if (!cached) setError(err.message)
     } finally {
       setLoading(false)
     }

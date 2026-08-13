@@ -20,9 +20,11 @@ export default async function CaissePage({
   const token = params.token?.trim() || null
 
   let planActif: string | null = null
+  let userId: string | null = null
 
   if (!token) {
-    await verifySession()
+    const session = await verifySession()
+    userId = session.userId ?? null
     try {
       const res = await backendFetch('/api/abonnements/mon-plan')
       if (res.ok) {
@@ -40,5 +42,5 @@ export default async function CaissePage({
     }
   }
 
-  return <CaisseClient planActif={planActif} initialToken={token} />
+  return <CaisseClient planActif={planActif} initialToken={token} userId={userId} />
 }

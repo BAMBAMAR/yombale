@@ -11,7 +11,7 @@ test.describe('Mode Hors-Ligne — Tests complets PWA & POS', () => {
       window.dispatchEvent(new Event('offline'))
     })
 
-    const badgeOffline = page.locator('text=Mode Hors-Ligne Actif').first()
+    const badgeOffline = page.locator('text=Mode Hors-Ligne').first()
     await expect(badgeOffline).toBeVisible({ timeout: 10000 })
   })
 

@@ -23,6 +23,7 @@ import GestionFournisseurs from './GestionFournisseurs'
 import BoutiqueLogs from './BoutiqueLogs'
 import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2 } from 'lucide-react'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
+import { useOnlineStatus } from '@/lib/useOnlineStatus'
 
 import { CATEGORIES, PRODUIT_CATEGORIES } from '@/lib/categories'
 
@@ -1360,7 +1361,8 @@ function MarketingBoutique({ boutique, onVoirJamaisPartages, planActif }: { bout
 
 // ── Gestionnaire de catalogue produits ───────────────────────────────────────
 
-function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { boutique: Boutique; planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null; prixPro: number; filtreInitial?: 'jamais_partage' }) {
+function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId: userIdProp }: { boutique: Boutique; planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null; prixPro: number; filtreInitial?: 'jamais_partage'; userId?: string }) {
+  const userId = userIdProp || 'anonymous'
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<'list' | { creating: 'rapide' | 'detaille' } | { editing: Produit }>('list')
@@ -1397,23 +1399,44 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
 
   async function loadProduits() {
     setLoading(true)
+    console.log(`📦 [Catalogue] Chargement produits pour boutique ${boutique.nom} (${boutique.id})`)
     try {
       const prods = await getBoutiqueProduits(boutique.id)
       if (prods && Array.isArray(prods) && prods.length > 0) {
         setProduits(prods)
+        console.log(`📦 [Catalogue] ✅ ${prods.length} produits reçus du serveur API pour ${boutique.nom}`)
         if (typeof window !== 'undefined') {
           localStorage.setItem(`nopalou_pos_produits_${boutique.id}`, JSON.stringify(prods))
         }
-        sauvegarderProduitsLocaux(prods, boutique.id).catch(() => {})
-      } else if (prods && Array.isArray(prods) && prods.length === 0 && typeof window !== 'undefined' && navigator.onLine) {
-        const cachedExistants = await obtenirProduitsLocaux(boutique.id).catch(() => [])
-        if (!cachedExistants || cachedExistants.length === 0) {
-          setProduits([])
+        sauvegarderProduitsLocaux(prods, boutique.id, userId).catch(() => {})
+      } else if (prods && Array.isArray(prods) && prods.length === 0 && typeof window !== 'undefined') {
+        // Vérifier la connectivité réelle par un ping rapide
+        const pingOk = await fetch('/api/ping', { cache: 'no-store', signal: AbortSignal.timeout(3000) }).then(r => r.ok).catch(() => false)
+        if (pingOk) {
+          // En ligne confirmé : la boutique est vraiment vide, vérifier le cache avant d'effacer
+          const cachedExistants = await obtenirProduitsLocaux(boutique.id, userId).catch(() => [])
+          if (!cachedExistants || cachedExistants.length === 0) {
+            setProduits([])
+          } else {
+            setProduits(cachedExistants)
+          }
         } else {
-          setProduits(cachedExistants)
+          // Hors-ligne : restaurer depuis le cache local
+          const cached = await obtenirProduitsLocaux(boutique.id, userId).catch(() => [])
+          if (cached && cached.length > 0) {
+            setProduits(cached)
+          } else {
+            const localProds = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_pos_produits_${boutique.id}`) : null
+            if (localProds) {
+              try {
+                const parsed = JSON.parse(localProds)
+                if (Array.isArray(parsed)) setProduits(parsed)
+              } catch {}
+            }
+          }
         }
       } else {
-        const cached = await obtenirProduitsLocaux(boutique.id).catch(() => [])
+        const cached = await obtenirProduitsLocaux(boutique.id, userId).catch(() => [])
         if (cached && cached.length > 0) {
           setProduits(cached)
         } else {
@@ -1421,13 +1444,18 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial }: { bo
           if (localProds) {
             try {
               const parsed = JSON.parse(localProds)
-              if (Array.isArray(parsed)) setProduits(parsed)
-            } catch {}
+              if (Array.isArray(parsed) && parsed.length > 0) setProduits(parsed)
+              else setProduits([])
+            } catch {
+              setProduits([])
+            }
+          } else {
+            setProduits([])
           }
         }
       }
     } catch {
-      const cached = await obtenirProduitsLocaux(boutique.id).catch(() => [])
+      const cached = await obtenirProduitsLocaux(boutique.id, userId).catch(() => [])
       if (cached && cached.length > 0) {
         setProduits(cached)
       } else {
@@ -2537,6 +2565,32 @@ export default function BoutiqueClient({
 
   const [boutiquesList, setBoutiquesList] = useState<Boutique[]>(boutiques)
 
+  const isReallyOnline = useOnlineStatus()
+  const [dashboardOffline, setDashboardOffline] = useState(false)
+  useEffect(() => {
+    setDashboardOffline(!isReallyOnline);
+  }, [isReallyOnline]);
+  // ── Plan actif : persistance offline ─────────────────────────────────────────
+  // Sauvegarde le plan dès qu'il est connu (online) et le restaure depuis le
+  // cache lorsque la prop serveur est null (mode hors-ligne / page non-SSR).
+  const [planActifEffectif, setPlanActifEffectif] = useState<'pro' | 'business' | 'decouverte' | 'taf_taf' | null>(() => {
+    if (planActif) return planActif as any
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('nopalou_plan_actif')
+      if (cached) return cached as any
+    }
+    return null
+  })
+
+  useEffect(() => {
+    if (planActif) {
+      setPlanActifEffectif(planActif as any)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nopalou_plan_actif', planActif)
+      }
+    }
+  }, [planActif])
+
   useEffect(() => {
     if (boutiques && boutiques.length > 0) {
       setBoutiquesList(boutiques)
@@ -2563,67 +2617,104 @@ export default function BoutiqueClient({
 
   useEffect(() => {
     const listToSearch = boutiquesList.length > 0 ? boutiquesList : boutiques
-    if (typeof mode === 'object' && 'managing' in mode) {
-      const targetBoutique = listToSearch.find(b => b.id === mode.managing.id)
-      if (targetBoutique) {
-        setMode({ managing: targetBoutique })
+    
+    setMode(prevMode => {
+      // 1. Si on gère déjà une boutique manuellement
+      if (typeof prevMode === 'object' && 'managing' in prevMode) {
+        // Rafraîchir les données de la boutique active (si modifiées par le réseau/cache)
+        const updatedTarget = listToSearch.find(b => b.id === prevMode.managing.id)
+        if (updatedTarget && updatedTarget !== prevMode.managing) {
+          return { managing: updatedTarget }
+        }
+        return prevMode // On ne touche à rien
       }
-    } else if (manageId && listToSearch.length > 0) {
-      const targetBoutique = listToSearch.find(b => b.id === manageId || b.slug === manageId)
-      if (targetBoutique) {
-        setMode({ managing: targetBoutique })
+
+      // 2. Si on n'est pas encore en mode 'managing', on lit l'URL
+      if (manageId && listToSearch.length > 0) {
+        const targetBoutique = listToSearch.find(b => b.id === manageId || b.slug === manageId)
+        if (targetBoutique) return { managing: targetBoutique }
+      } else if ((tabParam || lockedParam) && listToSearch.length > 0) {
+        return { managing: listToSearch[0] }
       }
-    } else if ((tabParam || lockedParam) && listToSearch.length > 0) {
-      setMode({ managing: listToSearch[0] })
-    }
+      
+      return prevMode
+    })
   }, [manageId, tabParam, lockedParam, boutiquesList, boutiques])
 
   // ── Préchargement Global (Offline Sync) ───────────────────────────────────────────────
   // Charge toutes les données (catalogue, historique caisse, clients) en arrière-plan
   // dès la connexion pour garantir un fonctionnement hors-ligne optimal.
   useEffect(() => {
-    if (typeof window !== 'undefined' && navigator.onLine) {
-      const boutiquesAPrecharger = boutiquesList.length > 0 ? boutiquesList : boutiques;
-      boutiquesAPrecharger.forEach(async (b) => {
-        try {
-          // 1. Précharger le catalogue de produits
-          const prods = await getBoutiqueProduits(b.id);
-          if (prods && Array.isArray(prods)) {
-            const prodsFormates = prods.map((p: any) => {
-              let stockVal = Number(p.stock ?? p.quantite_stock ?? p.stock_quantite);
-              if (isNaN(stockVal)) stockVal = 10;
-              return { ...p, stock: stockVal };
-            });
-            localStorage.setItem(`nopalou_pos_produits_${b.id}`, JSON.stringify(prodsFormates));
-            sauvegarderProduitsLocaux(prodsFormates, b.id).catch(() => {});
-          }
-
-          // 2. Précharger l'historique de caisse
-          import('./actions').then(({ getPosHistorique }) => {
-            getPosHistorique(b.id).then(hist => {
-              if (hist && Array.isArray(hist) && hist.length > 0) {
-                localStorage.setItem(`nopalou_pos_historique_${b.id}`, JSON.stringify(hist));
-              }
-            }).catch(() => {});
-          }).catch(() => {});
-
-          // 3. Précharger le carnet de clients (Crédits)
-          const resClients = await fetch(`/api/boutiques/${b.id}/credits-clients`);
-          if (resClients.ok) {
-            const dataClients = await resClients.json();
-            if (dataClients.clients && Array.isArray(dataClients.clients)) {
-              import('@/lib/db-offline').then(({ sauvegarderClientsLocaux }) => {
-                sauvegarderClientsLocaux(dataClients.clients).catch(() => {});
-              }).catch(() => {});
+    if (typeof window !== 'undefined' && isReallyOnline) {
+      const preloadTimer = setTimeout(() => {
+        const fetchLow = (url: string) => fetch(url, { priority: 'low' } as any);
+        const boutiquesAPrecharger = boutiquesList.length > 0 ? boutiquesList : boutiques;
+        boutiquesAPrecharger.forEach(async (b) => {
+          try {
+            // 1. Précharger le catalogue de produits
+            const prods = await getBoutiqueProduits(b.id);
+            if (prods && Array.isArray(prods)) {
+              const prodsFormates = prods.map((p: any) => {
+                let stockVal = Number(p.stock ?? p.quantite_stock ?? p.stock_quantite);
+                if (isNaN(stockVal)) stockVal = 10;
+                return { ...p, stock: stockVal };
+              });
+              localStorage.setItem(`nopalou_pos_produits_${b.id}`, JSON.stringify(prodsFormates));
+              sauvegarderProduitsLocaux(prodsFormates, b.id, userId).catch(() => {});
             }
-          }
-        } catch (e) {
-          console.warn("Erreur préchargement background pour boutique", b.id, e);
-        }
-      });
-    }
-  }, [boutiquesList, boutiques]);
 
+            // 2. Précharger l'historique de caisse
+            import('./actions').then(({ getPosHistorique }) => {
+              getPosHistorique(b.id).then(hist => {
+                if (hist && Array.isArray(hist) && hist.length > 0) {
+                  localStorage.setItem(`nopalou_pos_historique_${b.id}`, JSON.stringify(hist));
+                }
+              }).catch(() => {});
+            }).catch(() => {});
+
+            // 3. Précharger le carnet de clients (Crédits)
+            const resClients = await fetchLow(`/api/boutiques/${b.id}/credits-clients`).catch(() => null);
+            if (resClients && resClients.ok) {
+              const dataClients = await resClients.json().catch(() => null);
+              if (dataClients && dataClients.clients && Array.isArray(dataClients.clients)) {
+                import('@/lib/db-offline').then(({ sauvegarderClientsLocaux }) => {
+                  sauvegarderClientsLocaux(dataClients.clients, b.id, userId).catch(() => {});
+                }).catch(() => {});
+              }
+            }
+
+            // 4. Précharger Analytics
+            fetchLow(`/api/analytics/boutique/${b.id}`)
+              .then(r => r.ok ? r.json() : Promise.reject())
+              .then(data => {
+                if (data.stats) localStorage.setItem(`nopalou_offline_analytics_${b.id}`, JSON.stringify(data));
+              }).catch(() => {});
+
+            // 5. Précharger Admins
+            fetchLow(`/api/boutiques/${b.id}/admins`)
+              .then(r => r.ok ? r.json() : Promise.reject())
+              .then(data => {
+                if (data.admins) localStorage.setItem(`nopalou_offline_admins_${b.id}`, JSON.stringify(data.admins));
+              }).catch(() => {});
+
+            // 6. Précharger Caissiers
+            fetchLow(`/api/boutiques/${b.id}/caissiers`)
+              .then(r => r.ok ? r.json() : Promise.reject())
+              .then(data => {
+                if (data.caissiers) localStorage.setItem(`nopalou_offline_caissiers_${b.id}`, JSON.stringify(data.caissiers));
+              }).catch(() => {});
+
+          } catch (e) {
+            console.warn("Erreur préchargement background pour boutique", b.id, e);
+          }
+        });
+      }, 1200);
+
+      return () => clearTimeout(preloadTimer);
+    }
+  }, [boutiquesList, boutiques, isReallyOnline]);
+
+  // État et Listener pour le mode hors-ligne du Dashboard gérés plus haut
 
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const waveActif    = settings.paiement_wave !== 'false'
@@ -2674,7 +2765,7 @@ export default function BoutiqueClient({
       <div style={{ maxWidth: 1360, margin: '32px auto', padding: '0 24px' }}>
         <BoutiqueManage
           boutique={mode.managing}
-          planActif={planActif ?? null}
+          planActif={planActifEffectif ?? null}
           initialTab={tabParam ?? undefined}
           onBack={() => {
             if (typeof window !== 'undefined') {
@@ -2846,7 +2937,7 @@ export default function BoutiqueClient({
             <BoutiqueCard
               key={b.id}
               boutique={b}
-              planActif={planActif ?? null}
+              planActif={planActifEffectif ?? null}
               onEdit={() => setMode({ editing: b })}
               onDelete={() => handleDelete(b.id)}
               onSponsoring={waveActif ? () => handleSponsoring(b.id) : undefined}
@@ -2866,6 +2957,18 @@ export default function BoutiqueClient({
           onClose={() => setManuelBoutiqueId(null)}
           onSuccess={() => { setManuelBoutiqueId(null); router.refresh() }}
         />
+      )}
+
+      {/* Notification Hors-Ligne Dashboard */}
+      {dashboardOffline && (
+        <div style={{
+          position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+          background: '#c2410c', color: 'white', padding: '10px 24px', borderRadius: 30,
+          fontWeight: 700, fontSize: 14, zIndex: 999999, boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+          display: 'flex', alignItems: 'center', gap: 10, whiteSpace: 'nowrap'
+        }}>
+          <span>📡</span> Mode Hors-Ligne (Données en cache)
+        </div>
       )}
     </main>
   )

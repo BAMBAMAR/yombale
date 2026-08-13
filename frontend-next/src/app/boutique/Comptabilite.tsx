@@ -11,7 +11,7 @@ import { exportToCSV, printPDFReport } from '@/lib/export'
 
 interface Zone    { id: string; nom: string; prix: number }
 interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string; justificatif_url: string | null }
-interface Produit { id: string; nom: string; prix: number | null; stock_quantite: number | null }
+interface Produit { id: string; nom: string; prix: number | null; stock_quantite: number | null; quantite_stock?: number | null }
 interface Depense { id: string; montant: number; categorie: string; description: string | null; date_depense: string; justificatif_url: string | null }
 interface Dashboard {
   ca_mois: number; ca_mois_precedent: number; nb_ventes_mois: number; ca_total: number
@@ -44,7 +44,20 @@ function DashboardView({ boutiqueId }: { boutiqueId: string }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getDashboard(boutiqueId).then(d => { setData(d); setLoading(false) })
+    const cacheKey = `nopalou_offline_compta_dash_${boutiqueId}`
+    const cached = localStorage.getItem(cacheKey)
+    if (cached) {
+      try { setData(JSON.parse(cached)) } catch(e) {}
+    }
+    if (!cached) setLoading(true)
+
+    getDashboard(boutiqueId).then(d => { 
+      setData(d)
+      localStorage.setItem(cacheKey, JSON.stringify(d))
+      setLoading(false) 
+    }).catch(() => {
+      if (!cached) setLoading(false)
+    })
   }, [boutiqueId])
 
   if (loading) return (
@@ -334,14 +347,29 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
   async function load() {
-    setLoading(true)
-    const [v, z, p] = await Promise.all([
-      listVentes(boutiqueId),
-      listZones(boutiqueId),
-      getBoutiqueProduits(boutiqueId),
-    ])
-    setVentes(v); setZones(z); setProduits(p)
-    setLoading(false)
+    const cacheKeyV = `nopalou_offline_compta_ventes_${boutiqueId}`
+    const cacheKeyZ = `nopalou_offline_compta_zones_${boutiqueId}`
+    const cachedV = localStorage.getItem(cacheKeyV)
+    const cachedZ = localStorage.getItem(cacheKeyZ)
+
+    if (cachedV) { try { setVentes(JSON.parse(cachedV)) } catch(e) {} }
+    if (cachedZ) { try { setZones(JSON.parse(cachedZ)) } catch(e) {} }
+
+    try {
+      const [v, z, p] = await Promise.all([
+        listVentes(boutiqueId),
+        listZones(boutiqueId),
+        getBoutiqueProduits(boutiqueId),
+      ])
+      if (Array.isArray(v)) { setVentes(v); localStorage.setItem(cacheKeyV, JSON.stringify(v)) }
+      if (Array.isArray(z)) { setZones(z); localStorage.setItem(cacheKeyZ, JSON.stringify(z)) }
+      if (Array.isArray(p)) setProduits(p)
+      console.log(`📊 [Comptabilité] ✅ ${v?.length || 0} ventes et ${z?.length || 0} zones chargées depuis le serveur.`)
+    } catch (err) {
+      console.warn(`📊 [Comptabilité] Mode hors-ligne : utilisation du cache local ventes/zones (${cachedV ? 'disponible' : 'vide'}).`)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, [boutiqueId])
@@ -593,10 +621,22 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
   const [, startTransition] = useTransition()
 
   async function load() {
-    setLoading(true)
-    const d = await listDepenses(boutiqueId)
-    setDepenses(d)
-    setLoading(false)
+    const cacheKey = `nopalou_offline_compta_depenses_${boutiqueId}`
+    const cached = localStorage.getItem(cacheKey)
+    if (cached) { try { setDepenses(JSON.parse(cached)) } catch(e) {} }
+
+    try {
+      const d = await listDepenses(boutiqueId)
+      if (Array.isArray(d)) {
+        setDepenses(d)
+        localStorage.setItem(cacheKey, JSON.stringify(d))
+        console.log(`📊 [Comptabilité] ✅ ${d.length} dépenses chargées depuis le serveur.`)
+      }
+    } catch (err) {
+      console.warn(`📊 [Comptabilité] Mode hors-ligne : utilisation du cache local dépenses (${cached ? 'disponible' : 'vide'}).`)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, [boutiqueId])

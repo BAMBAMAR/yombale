@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { useOnlineStatus } from '@/lib/useOnlineStatus'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
@@ -13,10 +14,8 @@ import {
   sauvegarderClientsLocaux,
   obtenirClientsLocaux,
   ajouterVenteHorsLigne,
-  obtenirVentesHorsLigne,
-  supprimerVenteHorsLigne,
-  viderVentesHorsLigne
 } from '@/lib/db-offline'
+import { useSyncOffline } from '@/lib/sync-manager'
 
 interface ProduitCaisse {
   id: string
@@ -71,7 +70,11 @@ interface TicketEnAttente {
   panier: LignePanier[]
 }
 
-export default function CaisseClient({ planActif: planActifProp, initialToken }: { planActif?: string | null; initialToken?: string | null }) {
+export default function CaisseClient({ planActif: planActifProp, initialToken, userId: userIdProp }: { planActif?: string | null; initialToken?: string | null; userId?: string | null }) {
+  // Récupère le userId depuis la prop serveur, avec fallback sur localStorage pour mode terminal
+  const userId = userIdProp || (typeof window !== 'undefined' ? localStorage.getItem('nopalou_user_id') || 'anonymous' : 'anonymous')
+  // Hook de connectivité fiable (ping /api/ping au lieu de navigator.onLine)
+  const isReallyOnline = useOnlineStatus()
   const [terminalPlan, setTerminalPlan] = useState<string | null>('pro')
 
   // ── État Boutiques du Marchand & Synchronisation Catalogue ───────────────────
@@ -85,18 +88,22 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   const [codePinSaisi, setCodePinSaisi] = useState<string>('')
   const [pinError, setPinError] = useState<string | null>(null)
 
-  // --- ÉTAT OFFLINE & SYNC ---
+  // --- ÉTAT OFFLINE & SYNC (géré par useSyncOffline centralisé) ---
   const [offlineModeActive, setOfflineModeActive] = useState<boolean>(false)
-  const [syncingOffline, setSyncingOffline] = useState<boolean>(false)
-  const [ventesHorsLigneCount, setVentesHorsLigneCount] = useState<number>(0)
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'success' | 'warning' } | null>(null)
+
+  // Hook centralisé : verrou par boutique, retry backoff, ACK avant suppression
+  const {
+    syncPending: syncingOffline,
+    ventesEnAttente: ventesHorsLigneCount,
+    declencherSync: declencherSyncOffline,
+    rafraichirCompteur: rafraichirCompteurOffline,
+  } = useSyncOffline(boutiqueActiveId, userId || 'anonymous')
 
   function showToast(text: string, type: 'success' | 'warning' = 'success') {
     setToastMsg({ text, type })
     setTimeout(() => setToastMsg(null), 4000)
   }
-
-
 
   // ── Vérification dynamique de l'autorisation POS selon la boutique sélectionnée ──
   const activeBoutiqueObj = boutiques.find(b => b.id === boutiqueActiveId)
@@ -106,98 +113,36 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
   const estBoutiqueAutorisee = (activePlan === 'pro' || activePlan === 'business') || (loadingProduits && boutiques.length === 0)
 
-  async function rafraichirCompteurOffline() {
-    try {
-      const q = await obtenirVentesHorsLigne()
-      setVentesHorsLigneCount(q.length)
-    } catch {
-      setVentesHorsLigneCount(0)
-    }
-  }
-
+  // Synchroniser l'état offline avec le hook de connectivité réelle (ping /api/ping)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const isOffline = !navigator.onLine;
-      setOfflineModeActive(isOffline)
-      rafraichirCompteurOffline()
-      
-      if (isOffline) {
-        showToast('Mode caisse locale activé (Hors-ligne).', 'warning')
-      }
-      
-      const goOnline = () => {
-        setOfflineModeActive(false)
-        showToast('Connexion internet rétablie ! Synchronisation en cours...', 'success')
-        declencherSyncOffline()
-      }
-      const goOffline = () => {
-        setOfflineModeActive(true)
-        showToast('Vous êtes hors-ligne. Mode caisse locale activé.', 'warning')
-        rafraichirCompteurOffline()
-      }
-
-      window.addEventListener('online', goOnline)
-      window.addEventListener('offline', goOffline)
-
-      if (navigator.onLine) {
-        declencherSyncOffline()
-      }
-
-      return () => {
-        window.removeEventListener('online', goOnline)
-        window.removeEventListener('offline', goOffline)
-      }
-    }
-  }, [boutiqueActiveId])
-
-  async function declencherSyncOffline() {
-    if (!boutiqueActiveId || syncingOffline || !navigator.onLine) return
-    try {
-      setSyncingOffline(true)
-      const ventesQueue = await obtenirVentesHorsLigne()
-      if (ventesQueue.length === 0) {
-        setSyncingOffline(false)
-        return
-      }
-
-      console.log(`[OFFLINE SYNC] Tentative de synchronisation de ${ventesQueue.length} vente(s)...`)
-      let successCount = 0
-      
-      for (const vente of ventesQueue) {
-        if (vente.boutique_id !== boutiqueActiveId) continue
-        try {
-          const res = await creerPosVente(vente.boutique_id, {
-            items: vente.items,
-            caissier: vente.caissier,
-            modePaiement: vente.modePaiement,
-            client_id: vente.client_id,
-            total: vente.total
-          })
-          if (res.success) {
-            successCount++
-            await supprimerVenteHorsLigne(vente.id_temporaire).catch(() => {})
-          }
-        } catch (eErr) {
-          console.error('Erreur synchro vente offline:', eErr)
+    if (typeof window === 'undefined') return
+    
+    const newOffline = !isReallyOnline
+    setOfflineModeActive(prev => {
+      if (prev !== newOffline) {
+        if (newOffline) {
+          console.warn('🔴 [Diagnostic Caisse] Mode caisse locale ACTIVÉ (ping échoué).')
+          showToast('Vous êtes hors-ligne. Mode caisse locale activé.', 'warning')
+        } else {
+          console.log('🟢 [Diagnostic Caisse] Mode caisse locale désactivé (ping réussi). Sync...')
+          showToast('Connexion internet rétablie ! Synchronisation en cours...', 'success')
+          // Déclencher la sync via le SyncManager centralisé (avec verrou + retry + ACK)
+          declencherSyncOffline().then((result) => {
+            if (result.synced > 0) {
+              showToast(`✅ ${result.synced} vente(s) synchronisée(s)`, 'success')
+              getPosHistorique(boutiqueActiveId).then((hist) => {
+                if (hist && hist.length > 0) setHistoriqueVentes(hist)
+              }).catch(() => {})
+            }
+            if (result.failed > 0) {
+              showToast(`⚠️ ${result.failed} vente(s) non synchronisée(s). Réessai automatique.`, 'warning')
+            }
+          }).catch(() => {})
         }
       }
-
-      if (successCount > 0) {
-        rafraichirCompteurOffline()
-        const hist = await getPosHistorique(boutiqueActiveId)
-        if (hist && hist.length > 0) {
-          setHistoriqueVentes(hist)
-        }
-      } else {
-        rafraichirCompteurOffline()
-      }
-    } catch (err) {
-      console.error('Erreur synchronisation offline:', err)
-      rafraichirCompteurOffline()
-    } finally {
-      setSyncingOffline(false)
-    }
-  }
+      return newOffline
+    })
+  }, [isReallyOnline, boutiqueActiveId])
   
   // Rôle Actif de la Session ('caissier' ou 'superviseur')
   const [roleActif, setRoleActif] = useState<'caissier' | 'superviseur'>('caissier')
@@ -318,11 +263,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
   useEffect(() => {
     if (!boutiqueActiveId || !sessionScannerId) return
     const timer = setInterval(async () => {
+      if (typeof window !== 'undefined' && !isReallyOnline) return
       try {
-        const res = await fetch(`/api/boutiques/${boutiqueActiveId}/scanner-remote?sessionId=${sessionScannerId}`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data.codes && Array.isArray(data.codes) && data.codes.length > 0) {
+        const res = await fetch(`/api/boutiques/${boutiqueActiveId}/scanner-remote?sessionId=${sessionScannerId}`).catch(() => null)
+        if (res && res.ok) {
+          const data = await res.json().catch(() => null)
+          if (data && data.codes && Array.isArray(data.codes) && data.codes.length > 0) {
             data.codes.forEach((code: string) => {
               traiterCodeBarreCamera(code)
             })
@@ -803,15 +749,15 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         const data = await res.json()
         if (data.clients) {
           setClientsCredits(data.clients)
-          sauvegarderClientsLocaux(data.clients).catch(() => {})
+          sauvegarderClientsLocaux(data.clients, bId, userId).catch(() => {})
         }
       } else {
-        const cached = await obtenirClientsLocaux().catch(() => [])
+        const cached = await obtenirClientsLocaux(bId, userId).catch(() => [])
         if (cached && cached.length > 0) setClientsCredits(cached)
       }
     } catch (e) {
       console.error('Erreur chargement carnet credits:', e)
-      const cached = await obtenirClientsLocaux().catch(() => [])
+      const cached = await obtenirClientsLocaux(bId, userId).catch(() => [])
       if (cached && cached.length > 0) setClientsCredits(cached)
     }
   }
@@ -937,41 +883,69 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       })
         setProduits(prodsFormates)
         localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify(prodsFormates))
-        sauvegarderProduitsLocaux(prodsFormates, bId).catch(() => {})
-      } else if (produits && Array.isArray(produits) && produits.length === 0 && navigator.onLine) {
-        // En ligne et la boutique renvoie une liste vide : vérifier d'abord si on avait des produits en cache
-        const cachedExistants = await obtenirProduitsLocaux(bId).catch(() => [])
-        if (!cachedExistants || cachedExistants.length === 0) {
-          setProduits([])
-          localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify([]))
-          sauvegarderProduitsLocaux([], bId).catch(() => {})
+        sauvegarderProduitsLocaux(prodsFormates, bId, userId).catch(() => {})
+      } else if (produits && Array.isArray(produits) && produits.length === 0) {
+        // Le Server Action a retourné [] — deux cas possibles :
+        // A) On est en ligne et la boutique est vraiment vide
+        // B) On est hors-ligne et le Server Action a échoué silencieusement (retourne [] par défaut)
+        const isActuallyOnline = isReallyOnline
+        if (isActuallyOnline) {
+          // En ligne et la boutique renvoie une liste vide : vérifier d'abord si on avait des produits en cache
+          const cachedExistants = await obtenirProduitsLocaux(bId, userId).catch(() => [])
+          if (!cachedExistants || cachedExistants.length === 0) {
+            setProduits([])
+            localStorage.setItem(`nopalou_pos_produits_${bId}`, JSON.stringify([]))
+            sauvegarderProduitsLocaux([], bId, userId).catch(() => {})
+          } else {
+            // Si on avait un cache valide, le conserver plutôt que de tout effacer
+            setProduits(cachedExistants)
+          }
         } else {
-          // Si on avait un cache valide, le conserver plutôt que de tout effacer
-          setProduits(cachedExistants)
+          // En cas d'échec réseau ou réponse vide hors-ligne, restaurer le cache local scopé par bId
+          console.warn('📡 [Diagnostic Caisse] Échec de la récupération réseau des produits ou réponse vide hors-ligne. Bascule sur le cache IndexedDB.')
+          const cached = await obtenirProduitsLocaux(bId, userId).catch(() => [])
+          if (cached && cached.length > 0) {
+            console.log(`📦 [Diagnostic Caisse] ${cached.length} produits restaurés depuis IndexedDB.`)
+            setProduits(cached)
+          } else if (localProds) {
+            try {
+              const parsedP = JSON.parse(localProds)
+              if (Array.isArray(parsedP) && parsedP.length > 0) {
+                console.log(`📦 [Diagnostic Caisse] ${parsedP.length} produits restaurés depuis LocalStorage (Fallback).`)
+                setProduits(parsedP)
+              }
+            } catch {}
+          }
         }
       } else {
         // En cas d'échec réseau ou réponse vide hors-ligne, restaurer le cache local scopé par bId
-        const cached = await obtenirProduitsLocaux(bId).catch(() => [])
+        console.warn('📡 [Diagnostic Caisse] Échec de la récupération réseau des produits. Bascule sur le cache IndexedDB.')
+        const cached = await obtenirProduitsLocaux(bId, userId).catch(() => [])
         if (cached && cached.length > 0) {
+          console.log(`📦 [Diagnostic Caisse] ${cached.length} produits restaurés depuis IndexedDB.`)
           setProduits(cached)
         } else if (localProds) {
           try {
             const parsedP = JSON.parse(localProds)
             if (Array.isArray(parsedP) && parsedP.length > 0) {
+              console.log(`📦 [Diagnostic Caisse] ${parsedP.length} produits restaurés depuis LocalStorage.`)
               setProduits(parsedP)
             }
           } catch {}
         }
       }
     } catch (e) {
-      console.error('Erreur chargement produits caisse:', e)
-      const cached = await obtenirProduitsLocaux(bId).catch(() => [])
+      console.error('🔴 [Diagnostic Caisse] Erreur réseau lors du chargement des produits:', e)
+      console.info('📡 [Diagnostic Caisse] Bascule d\'urgence sur les caches locaux.')
+      const cached = await obtenirProduitsLocaux(bId, userId).catch(() => [])
       if (cached && cached.length > 0) {
+        console.log(`📦 [Diagnostic Caisse] ${cached.length} produits récupérés depuis IndexedDB.`)
         setProduits(cached)
       } else if (localProds) {
         try {
           const parsedP = JSON.parse(localProds)
           if (Array.isArray(parsedP) && parsedP.length > 0) {
+            console.log(`📦 [Diagnostic Caisse] ${parsedP.length} produits récupérés depuis LocalStorage.`)
             setProduits(parsedP)
           }
         } catch {}
@@ -1483,6 +1457,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
     if (boutiqueActiveId) {
       const payloadVente = {
+        idempotency_key: `POS-${crypto.randomUUID()}`,
         items: panier.map(i => ({ id: i.produit.id, quantite: i.quantite, nom: i.produit.nom, prix: i.prixUnitaire })),
         caissier: caissierNom,
         modePaiement,
@@ -1490,12 +1465,15 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         total: netAPayer,
       }
 
-      if (!navigator.onLine || offlineModeActive) {
+      console.log(`🛒 [Caisse POS] Validation vente (${!isReallyOnline || offlineModeActive ? 'OFFLINE INDEXEDDB' : 'EN LIGNE API'}) — ${netAPayer} FCFA — Key: ${payloadVente.idempotency_key}`)
+
+      if (!isReallyOnline || offlineModeActive) {
         try {
-          const temporaryId = `OFFLINE-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`
+          const temporaryId = payloadVente.idempotency_key
           await ajouterVenteHorsLigne({
             id_temporaire: temporaryId,
             boutique_id: boutiqueActiveId,
+            user_id: userId,
             items: payloadVente.items,
             caissier: payloadVente.caissier,
             modePaiement: payloadVente.modePaiement,
@@ -1504,20 +1482,25 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
             date: new Date().toISOString()
           })
           rafraichirCompteurOffline()
-          console.log('[OFFLINE] Vente sauvegardée localement dans IndexedDB.')
+          console.log(`🛒 [Caisse POS] ✅ Vente ${temporaryId} enregistrée en file d'attente IndexedDB v3.`)
         } catch (eOff) {
-          console.error('Erreur stockage local vente:', eOff)
+          console.error('🛒 [Caisse POS] ❌ Erreur stockage local vente:', eOff)
         }
       } else {
         try {
-          await creerPosVente(boutiqueActiveId, payloadVente)
+          const result = await creerPosVente(boutiqueActiveId, payloadVente)
+          if (!result.success) {
+            throw new Error(result.error || 'Impossible d\'enregistrer la vente')
+          }
+          console.log(`🛒 [Caisse POS] ✅ Vente enregistrée directement sur le serveur backend.`)
         } catch (e) {
-          console.error('Erreur mise à jour stock backend direct:', e)
+          console.error('🛒 [Caisse POS] ⚠️ Échec direct serveur, bascule secours sur IndexedDB local:', e)
           try {
-            const temporaryId = `OFFLINE-ERR-${Date.now()}`
+            const temporaryId = payloadVente.idempotency_key
             await ajouterVenteHorsLigne({
               id_temporaire: temporaryId,
               boutique_id: boutiqueActiveId,
+              user_id: userId,
               items: payloadVente.items,
               caissier: payloadVente.caissier,
               modePaiement: payloadVente.modePaiement,
@@ -1561,7 +1544,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
       })
       if (boutiqueActiveId) {
         localStorage.setItem(`nopalou_pos_produits_${boutiqueActiveId}`, JSON.stringify(updated))
-        sauvegarderProduitsLocaux(updated, boutiqueActiveId).catch(() => {})
+        sauvegarderProduitsLocaux(updated, boutiqueActiveId, userId).catch(() => {})
       }
       return updated
     })
@@ -2548,7 +2531,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
         </div>
 
         {/* Côté Droit : Ticket Panier & Encaissement POS */}
-        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: '12px 10px 20px 10px', display: 'flex', flexDirection: 'column', gap: 8, boxSizing: 'border-box', maxWidth: '100%', overflowY: 'auto', height: '100%' }}>
+        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: '#ffffff', padding: '12px 10px 20px 10px', display: 'flex', flexDirection: 'column', gap: 8, boxSizing: 'border-box', maxWidth: '100%', height: '100%', minHeight: 0, overflowY: 'auto' }}>
           {/* Bouton retour au catalogue sur Mobile */}
           <button
             type="button"
@@ -2560,7 +2543,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
 
 
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 10, gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 10, gap: 8, flexShrink: 0 }}>
             <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#0f172a', flexShrink: 0 }}>🛒 Ticket en cours</h2>
 
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
@@ -2582,7 +2565,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
           </div>
 
           {/* Contenu Panier */}
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ flex: 1, minHeight: 140, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '6px 2px' }}>
             {!session ? (
               <div style={{
                 background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
@@ -2623,9 +2606,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
               </div>
             ) : (
               panier.map(item => (
-                <div key={item.produit.id} style={{ background: '#f8fafc', border: item.quantite > item.produit.stock ? '1px solid #fde047' : '1px solid #e2e8f0', borderRadius: 10, padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, boxSizing: 'border-box' }}>
+                <div key={item.produit.id} style={{ background: '#f8fafc', border: item.quantite > item.produit.stock ? '1px solid #fde047' : '1px solid #e2e8f0', borderRadius: 10, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, boxSizing: 'border-box', minHeight: 48, flexShrink: 0 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: 12, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ margin: '0 0 3px', fontWeight: 700, fontSize: 13, lineHeight: 1.3, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item.produit.nom}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -2638,13 +2621,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken }:
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: '#ffffff', padding: '2px 5px', borderRadius: 6, border: '1px solid #cbd5e1' }}>
-                      <button onClick={() => modifierQuantite(item.produit.id, -1)} style={{ background: 'none', border: 'none', color: '#0f172a', fontWeight: 800, cursor: 'pointer', padding: '0 3px', fontSize: 12 }}>-</button>
-                      <span style={{ fontSize: 12, fontWeight: 800, minWidth: 14, textAlign: 'center', color: '#0f172a' }}>{item.quantite}</span>
-                      <button onClick={() => modifierQuantite(item.produit.id, 1)} style={{ background: 'none', border: 'none', color: '#0f172a', fontWeight: 800, cursor: 'pointer', padding: '0 3px', fontSize: 12 }}>+</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#ffffff', padding: '3px 6px', borderRadius: 6, border: '1px solid #cbd5e1' }}>
+                      <button onClick={() => modifierQuantite(item.produit.id, -1)} style={{ background: 'none', border: 'none', color: '#0f172a', fontWeight: 800, cursor: 'pointer', padding: '0 4px', fontSize: 13 }}>-</button>
+                      <span style={{ fontSize: 13, fontWeight: 800, minWidth: 16, textAlign: 'center', color: '#0f172a' }}>{item.quantite}</span>
+                      <button onClick={() => modifierQuantite(item.produit.id, 1)} style={{ background: 'none', border: 'none', color: '#0f172a', fontWeight: 800, cursor: 'pointer', padding: '0 4px', fontSize: 13 }}>+</button>
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 900, color: '#0f172a', textAlign: 'right', whiteSpace: 'nowrap' }}>{fcfa(item.prixUnitaire * item.quantite)}</span>
+                    <span style={{ fontSize: 13, fontWeight: 900, color: '#0f172a', textAlign: 'right', whiteSpace: 'nowrap' }}>{fcfa(item.prixUnitaire * item.quantite)}</span>
                   </div>
                 </div>
               ))

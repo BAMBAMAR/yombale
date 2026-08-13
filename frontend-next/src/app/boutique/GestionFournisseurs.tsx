@@ -53,18 +53,33 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
   const chargerDonnees = async () => {
+    const cacheKeyFous = `nopalou_offline_fournisseurs_${boutiqueId}`
+    const cacheKeyCmds = `nopalou_offline_cmd_fournisseurs_${boutiqueId}`
+    const cacheKeyProds = `nopalou_offline_prods_${boutiqueId}`
+
+    const cFous = localStorage.getItem(cacheKeyFous)
+    if (cFous) { try { setFournisseurs(JSON.parse(cFous)) } catch(e) {} }
+    const cCmds = localStorage.getItem(cacheKeyCmds)
+    if (cCmds) { try { setCommandes(JSON.parse(cCmds)) } catch(e) {} }
+    const cProds = localStorage.getItem(cacheKeyProds)
+    if (cProds) { try { setProduits(JSON.parse(cProds)) } catch(e) {} }
+
+    if (!cFous || !cCmds) setLoading(true)
+
     try {
-      setLoading(true)
       const [fous, cmds] = await Promise.all([
         getFournisseurs(boutiqueId),
         getCommandesFournisseurs(boutiqueId)
       ])
       setFournisseurs(fous)
       setCommandes(cmds)
+      localStorage.setItem(cacheKeyFous, JSON.stringify(fous))
+      localStorage.setItem(cacheKeyCmds, JSON.stringify(cmds))
 
-      // Catalogue pour le formulaire d'achat
+      // Charger les produits de la boutique pour les sélectionner dans la ligne de commande
       const prods = await getBoutiqueProduits(boutiqueId)
       setProduits(prods || [])
+      localStorage.setItem(cacheKeyProds, JSON.stringify(prods || []))
     } catch (err) {
       console.error('Erreur chargement donnees fournisseurs:', err)
     } finally {
