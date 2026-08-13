@@ -9656,25 +9656,35 @@ span.ripple {
 }
 
 @media (max-width: 768px) {
+  .account-layout {
+    padding: 12px 10px 80px !important;
+    gap: 14px !important;
+  }
+
+  .account-sidebar {
+    padding: 14px 12px !important;
+    overflow: hidden !important;
+  }
+
   /* Si on est sur une sous-page du compte, on masque la sidebar pour afficher immédiatement le contenu */
   .account-sidebar--sub {
     display: none !important;
   }
 
-  /* Sur /compte mobile, afficher les liens sous forme d'onglets défilants horizontaux */
+  /* Sur /compte mobile, afficher les liens sous forme d'onglets défilants horizontaux bord-à-bord */
   .account-sidebar--main .account-sidebar-nav-wrapper {
     display: block !important;
-    margin-top: 10px;
+    margin: 10px -12px -4px -12px !important;
+    padding: 4px 12px 8px 12px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .account-nav-container {
     display: flex !important;
     flex-wrap: nowrap !important;
     gap: 8px !important;
-    overflow-x: auto !important;
-    scrollbar-width: none !important;
-    -webkit-overflow-scrolling: touch !important;
-    padding: 4px 2px 8px 2px !important;
   }
 
   .account-nav-container::-webkit-scrollbar {
@@ -9717,6 +9727,34 @@ span.ripple {
     background: #C75B00 !important;
     color: #ffffff !important;
     box-shadow: 0 3px 8px rgba(199, 91, 0, 0.25) !important;
+  }
+
+  /* Cartes d'annonces mobiles — éliminer tout débordement horizontal des boutons */
+  .annonce-card {
+    padding: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .annonce-card-body {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .annonce-card-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-top: 10px !important;
+    width: 100% !important;
+  }
+
+  .annonce-action-btn {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    border-radius: 6px !important;
+    white-space: nowrap !important;
   }
 
   /* Affichage du bouton de retour sur les sous-pages sur mobile */

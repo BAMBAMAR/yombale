@@ -1,3 +1,8 @@
+## 🚀 Mises à jour du 13/08/2026 : Perfectionnement Ergonomique Mobile & Défilé Bord-à-Bord (`globals.css`)
+- **Fix du Tronquage / Débordement sur Mobile (`globals.css`)** :
+  * **Onglets de navigation bord-à-bord** : Application de marges négatives (`margin: 10px -12px -4px -12px`) sur le conteneur défilant des onglets `.account-sidebar-nav-wrapper`. Les pilules d'onglets (`Mes annonces`, `Mes biens immo`, `Ma boutique`, `Abonnements`, `Apporteur`, `Profil`, `Favoris`) défilent désormais de manière fluide sur **toute la largeur de l'écran** sans aucune coupure sur le bord de la carte.
+  * **Responsivité des cartes d'annonces (`.annonce-card`, `.annonce-card-actions`)** : Ajout des règles `width: 100%`, `box-sizing: border-box` et retour à la ligne automatique (`flex-wrap: wrap`) sur les boutons d'action (`Modifier`, `Booster 7j`, `Booster`, `Supprimer`). Les boutons ne débordent plus sur la droite de l'écran mobile.
+
 ## 🚀 Mises à jour du 13/08/2026 : Intégration des Onglets de Navigation Mobile sur `/compte` (`AccountNavLinks.tsx` & `globals.css`)
 - **Correction des Liens de Navigation Masqués sur Mobile (`AccountNavLinks.tsx`, `globals.css`)** :
   * **Problème** : La règle CSS `.account-sidebar--main .account-sidebar-nav-wrapper { display: none !important; }` masquait complètement les liens du compte sur mobile (< 768px). L'utilisateur ne voyait que sa carte d'identité et ses annonces sans aucun moyen de naviguer vers ses biens immo, ses abonnements/plan, son profil ou sa boutique.
