@@ -2343,3 +2343,6 @@ opalou_pos_session_) pour conserver l'état du CA même en cas d'actualisation d
 - **Correction de la sélection automatique du caissier sur le terminal POS (CaisseClient.tsx)** :
   - **Pré-sélection du caissier actif** : Lors du chargement via jeton terminal, l'identifiant du premier caissier titulaire (data.caissiers[0].id) est désormais immédiatement assigné au state caissierSelectionneId. Cela évite que le menu déroulant d'identification caissier reste bloqué sur la valeur neutre 👤 Caissier par défaut.
   - **Résolution dynamique par PIN** : La fonction deverrouillerPin identifie automatiquement le caissier correspondant au code PIN saisi (ex: 1234 pour Caissier 1 / Bamba, 9999 pour Gérant / Superviseur) même si la liste est en cours de synchronisation.
+- **Auto-création des caissiers par défaut & Affichage du Nom de la Boutique sur l'Écran de Verrouillage (1424c02)** :
+  - **Génération automatique des caissiers** : Si la table outique_caissiers d'une boutique est vide lors de l'appel au jeton terminal (GET /caisse-terminal/:token), le backend crée et renvoie automatiquement les deux caissiers par défaut (Caissier 1 (Bamba) avec PIN 1234 et Gérant / Superviseur avec PIN 9999).
+  - **Identité claire sur l'écran PIN** : L'écran de verrouillage affiche explicitement le nom de la boutique active (ex: Caisse POS · AMAR) au-dessus du pavé numérique.
