@@ -289,4 +289,11 @@ serwist.setCatchHandler(async ({ request }: any) => {
   );
 });
 
+// ── Gestion de la mise à jour immédiate (Skip Waiting) ─────────────────────
+self.addEventListener("message", (event: any) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 serwist.addEventListeners();

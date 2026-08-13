@@ -1,3 +1,9 @@
+## 🚀 Mises à jour du 13/08/2026 : Fix DÉFINITIF de la Récurrence en Boucle du Toast PWA (`RegisterSW.tsx` & `sw.ts`)
+- **Résolution du Bouclage "Nouvelle version disponible" (`RegisterSW.tsx` & `sw.ts`)** :
+  * **Problème** : Le clic sur `🔄 Nouvelle version disponible — Mettre à jour` envoyait un message `SKIP_WAITING`, mais le Service Worker `sw.ts` ne possédait pas l'écouteur d'événements `self.addEventListener('message')`. Le worker restait bloqué en état `waiting`. À chaque rechargement de page ou re-compilation dev local, `reg.waiting` était détecté à nouveau, faisant réapparaître le bandeau bleu en boucle infinie.
+  * **Solution 1 (`sw.ts`)** : Ajout de l'écouteur d'événement `self.addEventListener('message')` qui exécute `self.skipWaiting()` lors de la réception de `SKIP_WAITING`.
+  * **Solution 2 (`RegisterSW.tsx`)** : Ajout du marqueur de session `sessionStorage.setItem('nopalou_sw_updated_session', 'true')` empêchant le réaffichage intrusif du bandeau une fois que l'utilisateur a cliqué sur mettre à jour durant la même session d'utilisation.
+
 ## 🚀 Mises à jour du 13/08/2026 : Préchargement Hors-Ligne des Dashboards & Liens "Retour à mon compte" (`Comptabilite.tsx`, `BoutiqueClient.tsx`, `RegisterSW.tsx`, `sw.ts`)
 - **Fix du Blocage par Squelette de Chargement Hors-Ligne (`Comptabilite.tsx`)** :
   * **Problème** : En mode hors-ligne, les données du tableau de bord comptable étaient bien lues depuis `localStorage`, mais `setLoading(false)` n'était pas exécuté lors de la présence du cache local. Le composant restait bloqué à `loading = true`, affichant des rectangles de chargement beiges indéfiniment.

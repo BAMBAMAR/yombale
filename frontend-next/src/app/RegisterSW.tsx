@@ -18,6 +18,13 @@ export default function RegisterSW() {
     if (typeof window === 'undefined') return
     if (!('serviceWorker' in navigator)) return
 
+    // Éviter le réaffichage en boucle si déjà mis à jour durant cette session
+    try {
+      if (sessionStorage.getItem('nopalou_sw_updated_session') === 'true') {
+        return
+      }
+    } catch {}
+
     // Enregistrement effectif du Service Worker PWA
     navigator.serviceWorker
       .register('/sw.js')
@@ -33,14 +40,26 @@ export default function RegisterSW() {
             // Le nouveau SW est installé et prêt à remplacer l'ancien
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               console.log('[PWA SW] Nouvelle version disponible. Affichage du bouton de mise à jour.')
-              setSwUpdateAvailable(true)
+              try {
+                if (sessionStorage.getItem('nopalou_sw_updated_session') !== 'true') {
+                  setSwUpdateAvailable(true)
+                }
+              } catch {
+                setSwUpdateAvailable(true)
+              }
             }
           })
         })
 
         // Vérifier si une mise à jour est déjà en attente
         if (reg.waiting) {
-          setSwUpdateAvailable(true)
+          try {
+            if (sessionStorage.getItem('nopalou_sw_updated_session') !== 'true') {
+              setSwUpdateAvailable(true)
+            }
+          } catch {
+            setSwUpdateAvailable(true)
+          }
         }
       })
       .catch((err) => {
@@ -80,16 +99,22 @@ export default function RegisterSW() {
     setSwUpdateAvailable(false)
     if (typeof window === 'undefined') return
 
+    try {
+      sessionStorage.setItem('nopalou_sw_updated_session', 'true')
+    } catch {}
+
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready
+      navigator.serviceWorker.getRegistration()
         .then((reg) => {
-          if (reg.waiting) {
+          if (reg && reg.waiting) {
             reg.waiting.postMessage({ type: 'SKIP_WAITING' })
           }
-          reg.update().catch(() => {})
+          if (reg && reg.installing) {
+            reg.installing.postMessage({ type: 'SKIP_WAITING' })
+          }
+          window.location.reload()
         })
-        .catch(() => {})
-        .finally(() => {
+        .catch(() => {
           window.location.reload()
         })
     } else {
