@@ -2910,7 +2910,7 @@ export default function BoutiqueClient({
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const waveActif    = settings.paiement_wave !== 'false'
   const montantSponsor = Number(settings.prix_sponsoring) || 5000
-  const prixPro = Number(settings.plan_pro_prix) || 15000
+  const prixPro = Number(settings.plan_pro_prix) || 5000
 
   async function handleSponsoring(boutiqueId: string) {
     setSponsorError(null)

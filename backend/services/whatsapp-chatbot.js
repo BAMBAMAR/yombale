@@ -36,7 +36,7 @@ const FAQ = [
   },
   {
     motsCles: ['boutique', 'vendre en ligne'],
-    reponse: '🛍️ *Créer votre boutique*\n\nVendez directement sur Nopalou : catalogue produits, statistiques, mise en avant. Formules Pro (15 000 FCFA/mois) et Business (35 000 FCFA/mois, 2% de commission).\n👉 ' + SITE + '/boutique',
+    reponse: '🛍️ *Créer votre boutique*\n\nVendez directement sur Nopalou : catalogue produits, statistiques, encaissements Wave & Orange Money 1-Clic. 1er mois 100% OFFERT sur tous nos forfaits !\n👉 ' + SITE + '/creer-boutique',
   },
   {
     motsCles: ['comparer', 'meilleur prix', 'moins cher'],
@@ -863,23 +863,24 @@ async function handleIncoming(msg) {
       const pxDecouverte = (await cfg.getNum('plan_decouverte_prix')) || 2500;
       const pxPro = (await cfg.getNum('plan_pro_prix')) || 5000;
       const pxBusiness = (await cfg.getNum('plan_business_prix')) || 10000;
-      const commBiz = (await cfg.getNum('commission_business')) || 2.0;
+      const labelDecouverte = (await cfg.get('plan_decouverte_label')) || 'Boutique Taf Taf';
+      const labelPro = (await cfg.get('plan_pro_label')) || 'Boutique Pro';
+      const labelBusiness = (await cfg.get('plan_business_label')) || 'Boutique Business';
+      const essaiJours = (await cfg.getNum('abonnement_essai_jours')) || 30;
 
       const msgText = `💎 *Forfaits & Abonnements Boutiques Nopalou*\n\n` +
-        `Choisissez la formule adaptée à vos besoins :\n\n` +
-        `🌱 *Boutique Taf Taf (${prixFmt(pxDecouverte)}/mois)*\n` +
-        `• 🎁 1er mois 100% OFFERT\n` +
+        `🎁 *Offre Spéciale : ${essaiJours} jours (${Math.round(essaiJours / 30)} mois) 100% OFFERTS sur TOUS nos forfaits !*\n\n` +
+        `🌱 *${labelDecouverte} (${prixFmt(pxDecouverte)}/mois)*\n` +
         `• Catalogue produits illimité\n` +
-        `• Encaissement Wave & Orange Money\n` +
+        `• Encaissement direct Wave & Orange Money\n` +
         `• 0% de commission sur vos ventes\n\n` +
-        `🚀 *Boutique Pro (${prixFmt(pxPro)}/mois)*\n` +
-        `• Tout le plan Taf Taf +\n` +
+        `🚀 *${labelPro} (${prixFmt(pxPro)}/mois)*\n` +
+        `• Tout le contenu du plan ${labelDecouverte} +\n` +
         `• Badge Vendeur Pro Certifié ⭐\n` +
         `• Référencement prioritaire sur le comparateur\n` +
         `• Support client prioritaire 7j/7\n\n` +
-        `👑 *Boutique Business (${prixFmt(pxBusiness)}/mois)*\n` +
-        `• Tout le plan Pro +\n` +
-        `• Commission réduite (${commBiz}%)\n` +
+        `👑 *${labelBusiness} (${prixFmt(pxBusiness)}/mois)*\n` +
+        `• Tout le contenu du plan ${labelPro} +\n` +
         `• Sponsoring & Bannière Page d'Accueil\n` +
         `• Multi-Magasins & Caisse Caissiers POS\n\n` +
         `👉 *Découvrir les détails et s'abonner :*\n${SITE}/tarifs-boutique`;

@@ -1,7 +1,7 @@
 ## 🚀 Mises à jour du 14/08/2026 : Intégration des Options "Créer ma boutique" & "Forfaits Boutiques" dans le Chatbot WhatsApp (`whatsapp-chatbot.js`)
 - **Enrichissement du Menu Interactif WhatsApp (`sendMenu`)** :
   * **Ajout de l'Option *"🛍️ Créer ma boutique"*** : Permet aux commerçants de découvrir les avantages marchands Nopalou (catalogue, Wave 1-Clic, bot dédié, reversements) et d'accéder directement à la création de boutique (`/creer-boutique`).
-  * **Ajout de l'Option *"💎 Forfaits Boutiques"*** : Présentation détaillée des formules lues dynamiquement depuis la base de données via `settingsCache` (Plan Taf Taf 2 500 F/mois avec 1er mois offert, Plan Pro 5 000 F/mois, Plan Business 10 000 F/mois avec commission réduite à 2%) directement par chat WhatsApp avec accès aux abonnements (`/tarifs-boutique`).
+  * **Ajout de l'Option *"💎 Forfaits Boutiques"*** : Présentation dynamique des forfaits lus depuis l'admin/BDD via `settingsCache`. Application claire du **1er mois 100% OFFERT sur TOUS les forfaits** et **suppression des mentions en dur de commission réduite à 2.0%**. Nettoyage des anciennes valeurs de repli obsolètes (`15000` / `35000`) sur l'ensemble du backend et du frontend.
   * Réorganisation des sections en *"Acheter & Explorer"* et *"Marchands & Compte"* pour respecter strictement la limite des 10 éléments interactifs Meta.
 
 ## 🚀 Mises à jour du 14/08/2026 : Ouverture Directe de l'Application Wave via WhatsApp & Auto-Redirection Web (`whatsapp-chatbot.js`, `comptabilite.js`, `checkout-express/page.tsx`)
