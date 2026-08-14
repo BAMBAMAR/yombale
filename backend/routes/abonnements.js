@@ -67,7 +67,10 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
   } catch (err) {
     const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Erreur Wave';
     console.error('[ABONNEMENTS INITIER]', msg);
-    res.json({ fallback_manuel: true, error: msg, numero_depot: '777202086', reference: clientRef, plan, prix: prixTotal, duree });
+    const userId = req.user?.userId;
+    const { plan = 'pro', duree_mois = 1 } = req.body || {};
+    const ref = `abmt_${userId}_${plan}_${duree_mois}`;
+    res.json({ fallback_manuel: true, error: msg, numero_depot: '777202086', reference: ref, plan, duree: duree_mois });
   }
 });
 

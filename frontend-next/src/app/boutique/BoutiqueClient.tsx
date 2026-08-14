@@ -2004,20 +2004,14 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
 
         {/* Actions Financières et Principales (Bas de carte) */}
         <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {(onSponsoring || onPayerManuel) && (
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {onSponsoring && (
-                <button onClick={onSponsoring} className="btn-premium" style={{ flex: 1, minWidth: 120, padding: '8px 12px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#fffbeb', fontWeight: 700 }}>
-                  🌟 Mettre en avant
-                </button>
-              )}
-              {onPayerManuel && (
-                <button onClick={onPayerManuel} className="btn-premium" style={{ flex: 1, minWidth: 120, padding: '8px 12px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#ffffff', fontWeight: 700 }}>
-                  Payer abonnement
-                </button>
-              )}
-            </div>
-          )}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button onClick={onSponsoring} className="btn-premium" style={{ flex: 1, minWidth: 120, padding: '8px 12px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#fffbeb', fontWeight: 700, cursor: 'pointer' }}>
+              🌟 Mettre en avant
+            </button>
+            <Link href="/boutique/abonnement" className="btn-premium" style={{ flex: 1, minWidth: 120, padding: '8px 12px', fontSize: 13, color: '#1e3a8a', borderColor: '#bfdbfe', backgroundColor: '#eff6ff', fontWeight: 700, textAlign: 'center', textDecoration: 'none' }}>
+              📖 Abonnements
+            </Link>
+          </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {boutique.mode_fonctionnement !== 'pure_player' && (
               <a href="/boutique/caisse" className="btn-premium btn-premium-success" style={{ flex: 1, minWidth: 120, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }} onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}>
@@ -2915,9 +2909,15 @@ export default function BoutiqueClient({
   async function handleSponsoring(boutiqueId: string) {
     setSponsorError(null)
     startSponsoring(async () => {
-      const res = await initierWaveBoutiqueSponsoring(boutiqueId)
-      if (res.ok && res.url) window.location.href = res.url
-      else setSponsorError(res.error ?? 'Impossible d\'initialiser le paiement.')
+      if (waveActif) {
+        const res = await initierWaveBoutiqueSponsoring(boutiqueId)
+        if (res.ok && res.url) {
+          window.location.href = res.url
+          return
+        }
+      }
+      // Basculement automatique vers le paiement manuel en cas d'échec ou Wave inactif
+      setManuelBoutiqueId(boutiqueId)
     })
   }
 

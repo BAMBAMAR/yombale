@@ -25,7 +25,10 @@ export default function SponsoringImmoBtn({ immoId, userId, settings }: Props) {
       if (res.ok && res.url) {
         window.location.href = res.url
       } else {
-        setError(res.error ?? 'Impossible d\'initialiser le paiement.')
+        setShowManuel(true)
+        if (res.error && !res.fallbackManuel) {
+          setError(res.error)
+        }
       }
     })
   }
@@ -60,7 +63,7 @@ export default function SponsoringImmoBtn({ immoId, userId, settings }: Props) {
             fontSize: 14, cursor: 'pointer',
           }}
         >
-          🧾 Payer
+          🧾 Dépôt Manuel (Wave / OM)
         </button>
       )}
 

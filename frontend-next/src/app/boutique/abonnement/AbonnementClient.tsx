@@ -68,7 +68,10 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
       if (result.ok && result.url) {
         window.location.href = result.url
       } else {
-        setError(result.error ?? 'Une erreur est survenue')
+        setPlanManuel(plan)
+        if (result.error && !result.fallbackManuel) {
+          setError(result.error)
+        }
         setLoadingPlan(null)
       }
     })

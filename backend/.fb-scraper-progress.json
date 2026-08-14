@@ -1,14 +1,17 @@
 {
-  "status": "completed",
+  "status": "in_progress",
   "mode": "live",
-  "groupeIndex": 10,
-  "totalGroupes": 10,
-  "pourcentage": 100,
-  "groupeActuel": "Terminé",
-  "scrapes": 36,
-  "inseres": 20,
-  "doublons": 8,
-  "ignores": 8,
-  "erreurs": [],
-  "updatedAt": "2026-08-14T12:17:13.572Z"
+  "groupeIndex": 4,
+  "totalGroupes": 6,
+  "pourcentage": 67,
+  "groupeActuel": "Tout vendre et tout acheter au Senegal",
+  "groupeUrl": "https://www.facebook.com/groups/276857303027165",
+  "scrapes": 4,
+  "inseres": 3,
+  "doublons": 0,
+  "ignores": 1,
+  "erreurs": [
+    "Je vide je vends j'achete je livre: page.evaluate: Execution context was destroyed, most likely because of a navigation"
+  ],
+  "updatedAt": "2026-08-14T20:19:51.059Z"
 }

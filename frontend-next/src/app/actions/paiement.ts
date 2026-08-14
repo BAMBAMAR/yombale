@@ -17,6 +17,10 @@ export interface PaiementResult {
   ok: boolean
   url?: string
   error?: string
+  fallbackManuel?: boolean
+  reference?: string
+  montant?: number
+  numeroDepot?: string
 }
 
 export async function initierWaveAnnonce(annonce_id: string): Promise<PaiementResult> {
@@ -31,7 +35,16 @@ export async function initierWaveAnnonce(annonce_id: string): Promise<PaiementRe
       body: JSON.stringify({ annonce_id }),
     })
     const body = await res.json()
-    if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }
+    if (!res.ok || body.fallback_manuel || !body.wave_url) {
+      return {
+        ok: false,
+        fallbackManuel: Boolean(body.fallback_manuel || !body.wave_url),
+        error: body.error ?? `Erreur ${res.status}`,
+        reference: body.reference,
+        montant: body.montant,
+        numeroDepot: body.numero_depot,
+      }
+    }
     return { ok: true, url: body.wave_url }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }
@@ -50,7 +63,16 @@ export async function initierWaveBoost(annonce_id: string): Promise<PaiementResu
       body: JSON.stringify({ annonce_id }),
     })
     const body = await res.json()
-    if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }
+    if (!res.ok || body.fallback_manuel || !body.wave_url) {
+      return {
+        ok: false,
+        fallbackManuel: Boolean(body.fallback_manuel || !body.wave_url),
+        error: body.error ?? `Erreur ${res.status}`,
+        reference: body.reference,
+        montant: body.montant,
+        numeroDepot: body.numero_depot,
+      }
+    }
     return { ok: true, url: body.wave_url }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }
@@ -96,7 +118,16 @@ export async function initierWaveImmoSponsoring(immo_id: string): Promise<Paieme
       body: JSON.stringify({ immo_id }),
     })
     const body = await res.json()
-    if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }
+    if (!res.ok || body.fallback_manuel || !body.wave_url) {
+      return {
+        ok: false,
+        fallbackManuel: Boolean(body.fallback_manuel || !body.wave_url),
+        error: body.error ?? `Erreur ${res.status}`,
+        reference: body.reference,
+        montant: body.montant,
+        numeroDepot: body.numero_depot,
+      }
+    }
     return { ok: true, url: body.wave_url }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }
@@ -115,9 +146,16 @@ export async function initierWaveProduitSponsoring(produit_id: string): Promise<
       body: JSON.stringify({ produit_id }),
     })
     const body = await res.json()
-    if (!res.ok) {
+    if (!res.ok || body.fallback_manuel || !body.wave_url) {
       const detail = body.detail ? ` (${JSON.stringify(body.detail)})` : ''
-      return { ok: false, error: (body.error ?? `Erreur ${res.status}`) + detail }
+      return {
+        ok: false,
+        fallbackManuel: Boolean(body.fallback_manuel || !body.wave_url),
+        error: (body.error ?? `Erreur ${res.status}`) + detail,
+        reference: body.reference,
+        montant: body.montant,
+        numeroDepot: body.numero_depot,
+      }
     }
     return { ok: true, url: body.wave_url }
   } catch (e) {
@@ -137,7 +175,16 @@ export async function initierWaveAbonnement(plan: 'pro' | 'business', duree_mois
       body: JSON.stringify({ plan, duree_mois }),
     })
     const body = await res.json()
-    if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }
+    if (!res.ok || body.fallback_manuel || !body.wave_url) {
+      return {
+        ok: false,
+        fallbackManuel: Boolean(body.fallback_manuel || !body.wave_url),
+        error: body.error ?? `Erreur ${res.status}`,
+        reference: body.reference,
+        montant: body.montant,
+        numeroDepot: body.numero_depot,
+      }
+    }
     return { ok: true, url: body.wave_url }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }
@@ -156,7 +203,16 @@ export async function initierWaveBoutiqueSponsoring(boutique_id: string): Promis
       body: JSON.stringify({ boutique_id }),
     })
     const body = await res.json()
-    if (!res.ok) return { ok: false, error: body.error ?? `Erreur ${res.status}` }
+    if (!res.ok || body.fallback_manuel || !body.wave_url) {
+      return {
+        ok: false,
+        fallbackManuel: Boolean(body.fallback_manuel || !body.wave_url),
+        error: body.error ?? `Erreur ${res.status}`,
+        reference: body.reference,
+        montant: body.montant,
+        numeroDepot: body.numero_depot,
+      }
+    }
     return { ok: true, url: body.wave_url }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Erreur réseau' }

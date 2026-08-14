@@ -26,7 +26,10 @@ export default function SponsoringProduitBtn({ produitId, userId, settings }: Pr
       if (result.ok && result.url) {
         window.location.href = result.url
       } else {
-        setError(result.error ?? 'Erreur inattendue')
+        setShowManuel(true)
+        if (result.error && !result.fallbackManuel) {
+          setError(result.error)
+        }
       }
     })
   }
@@ -54,7 +57,7 @@ export default function SponsoringProduitBtn({ produitId, userId, settings }: Pr
           className="sponsoring-produit-btn"
           style={{ marginTop: 8, background: 'none', border: '1px solid var(--border, #d1d5db)' }}
         >
-          🧾 Payer
+          🧾 Dépôt Manuel (Wave / OM)
         </button>
       )}
 

@@ -80,12 +80,18 @@ function AnnonceCard({
     })
   }
 
-  function payerBoostWave() {
+  function handleBoost() {
     setBoostErr(null)
     startBoost(async () => {
-      const res = await initierWaveBoost(annonce.id)
-      if (res.ok && res.url) window.location.href = res.url
-      else setBoostErr(res.error ?? 'Erreur lors du boost')
+      if (waveActif) {
+        const res = await initierWaveBoost(annonce.id)
+        if (res.ok && res.url) {
+          window.location.href = res.url
+          return
+        }
+      }
+      // En cas de Wave inactif ou échec/fallback_manuel -> Modale paiement manuel
+      setShowBoostModal(true)
     })
   }
 
@@ -131,14 +137,9 @@ function AnnonceCard({
           <Link href={`/mes-annonces/${annonce.id}/modifier`} className="annonce-action-btn annonce-action-btn--edit">
             Modifier
           </Link>
-          {annonce.actif && waveActif && (
-            <button onClick={payerBoostWave} disabled={pendingBoost} className="annonce-action-btn">
-              {pendingBoost ? '…' : '🚀 Booster 7j'}
-            </button>
-          )}
           {annonce.actif && (
-            <button onClick={() => setShowBoostModal(true)} className="annonce-action-btn">
-              Booster
+            <button onClick={handleBoost} disabled={pendingBoost} className="annonce-action-btn">
+              {pendingBoost ? '…' : '🚀 Booster 7j'}
             </button>
           )}
           <button

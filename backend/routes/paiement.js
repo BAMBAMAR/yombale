@@ -553,7 +553,7 @@ router.post('/boost/initier', verifierToken, limiterEcriture, async (req, res) =
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[boost/initier] Erreur Wave:', detail);
-    res.status(500).json({ error: err.message || 'Erreur Wave', detail });
+    res.json({ fallback_manuel: true, error: err.message || 'Erreur Wave API', detail, numero_depot: '777202086', reference: `boost_${req.user?.userId}_${req.body?.annonce_id}` });
   }
 });
 
