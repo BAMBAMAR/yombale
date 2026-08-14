@@ -170,7 +170,10 @@ export default async function GuideEmploiPage() {
       {/* Footer Info */}
       <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 20, textAlign: 'center', marginBottom: 32 }}>
         <div style={{ fontWeight: 800, color: '#1C2B4A', fontSize: 15, marginBottom: 4 }}>✅ Nopalou est 100% gratuit et indépendant pour les acheteurs</div>
-        <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.6 }}>Les prix et informations proviennent directement des sites marchands et boutiques locales partenaires. Nopalou compare et oriente pour vous faire économiser au quotidien.</div>
+        <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.6, marginBottom: 12 }}>Les prix et informations proviennent directement des sites marchands et boutiques locales partenaires. Nopalou compare et oriente pour vous faire économiser au quotidien.</div>
+        <div style={{ fontSize: 12, color: '#475569', paddingTop: 10, borderTop: '1px dashed #cbd5e1' }}>
+          🗑️ <strong>Droit de retrait :</strong> Pour supprimer votre annonce ou votre numéro du site, envoyez <strong>&quot;supprimer&quot;</strong> sur <Link href="/assistant-whatsapp" style={{ color: '#25d366', fontWeight: 700 }}>WhatsApp</Link>. Pour ne plus recevoir de messages, envoyez <strong>&quot;STOP&quot;</strong>. (<Link href="/cgu#suppression-donnees" style={{ color: '#0284c7', textDecoration: 'underline' }}>En savoir plus</Link>)
+        </div>
       </div>
     </div>
   )

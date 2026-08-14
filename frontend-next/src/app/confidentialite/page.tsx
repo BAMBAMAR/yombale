@@ -49,9 +49,14 @@ export default function ConfidentialitePage() {
         <p>Aucun cookie publicitaire ou de tracking tiers n&apos;est utilisé.</p>
       </section>
 
-      <section className="legal-section">
-        <h2>Vos droits</h2>
-        <p>Conformément à la loi sénégalaise sur la protection des données personnelles (loi n°2008-12), vous disposez d&apos;un droit d&apos;accès, de rectification et de suppression de vos données. Pour exercer ces droits, contactez-nous à <a href="mailto:contact@nopalou.com">contact@nopalou.com</a>.</p>
+      <section className="legal-section" id="suppression-donnees">
+        <h2>Vos droits (Droit à l&apos;effacement, Retrait &amp; Désinscription)</h2>
+        <p>Conformément à la loi sénégalaise sur la protection des données personnelles (loi n°2008-12 / APDP) et aux règles du droit à l&apos;oubli :</p>
+        <ul>
+          <li><strong>Droit de retrait immédiat d&apos;annonce / numéro :</strong> Si votre numéro de téléphone ou votre annonce apparaît sur Nopalou, vous pouvez demander son retrait immédiat en envoyant le mot <strong>&quot;supprimer&quot;</strong> à notre <a href="/assistant-whatsapp">Assistant WhatsApp</a>. Vos annonces et coordonnées associées seront automatiquement désactivées et retirées.</li>
+          <li><strong>Désinscription des communications (Opt-out) :</strong> Vous pouvez refuser toute réception de message WhatsApp de notre part en envoyant le mot <strong>&quot;STOP&quot;</strong> au chatbot WhatsApp. Votre numéro sera immédiatement placé en liste noire. (Envoi du mot <strong>&quot;START&quot;</strong> pour annuler la désinscription).</li>
+          <li><strong>Demande d&apos;effacement par e-mail :</strong> Vous pouvez exercer vos droits d&apos;accès, de rectification et d&apos;effacement à tout moment en écrivant à <a href="mailto:contact@nopalou.com?subject=Exercice%20droits%20RGPD%20APDP">contact@nopalou.com</a> (traitement sous 24h).</li>
+        </ul>
       </section>
 
       <section className="legal-section">

@@ -1,3 +1,11 @@
+## 🚀 Mises à jour du 14/08/2026 : Extension des Mentions de Droit à l'Effacement & Opt-Out sur Tout le Site (`confidentialite/page.tsx`, `assistant-whatsapp/page.tsx`, `guide-emploi/page.tsx`)
+- **Politique de Confidentialité (`confidentialite/page.tsx#suppression-donnees`)** :
+  * Enrichissement de la section *"Vos droits (Droit à l'effacement, Retrait & Désinscription)"* précisant l'usage de la commande WhatsApp `supprimer` pour le retrait immédiat des annonces/numéros et `STOP` pour l'inscription en liste noire (Opt-out).
+- **Guide Assistant WhatsApp (`assistant-whatsapp/page.tsx`)** :
+  * Ajout de la carte d'aide *"🗑️ Supprimer vos annonces ou votre numéro (Désinscription)"* dans les fonctionnalités du chatbot.
+- **Guide D'Emploi & Comment ça marche (`guide-emploi/page.tsx`)** :
+  * Ajout du cartouche d'information *"🗑️ Droit de retrait"* renvoyant vers le chatbot WhatsApp et les CGU.
+
 ## 🚀 Mises à jour du 14/08/2026 : Ajout de la Suppression & Retrait des Biens Immobiliers (`ModifierImmoForm.tsx`, `immo/[id]/page.tsx`, `actions/immo.ts`)
 - **Option de Suppression Définitive sur la Modification d'un Bien Immo (`ModifierImmoForm.tsx`)** :
   * Intégration du composant `DeleteImmoButton` directement dans la barre d'action du formulaire de modification (`/mes-annonces-immo/[id]/modifier`). Permet au propriétaire d'un bien de le retirer/supprimer en un clic avec confirmation.

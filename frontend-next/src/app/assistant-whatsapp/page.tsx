@@ -70,6 +70,11 @@ const FONCTIONS = [
         titre: 'Poser une question sur le site',
         texte: "Gratuit ou payant, comment publier une annonce, créer une boutique, comparer les prix... L'assistant répond directement aux questions les plus courantes, et vous donne les coordonnées de l'équipe Nopalou si besoin.",
       },
+      {
+        icon: '🗑️', couleur: '#dc2626',
+        titre: 'Supprimer vos annonces ou votre numéro (Désinscription)',
+        texte: "Envoyez \"supprimer\" pour désactiver instantanément vos annonces et votre numéro de téléphone du site Nopalou. Envoyez \"STOP\" pour vous désinscrire définitivement de tous les messages WhatsApp.",
+      },
     ],
   },
 ]
