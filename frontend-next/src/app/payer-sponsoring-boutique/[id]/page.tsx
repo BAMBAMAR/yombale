@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getOptionalSession } from '@/lib/dal'
 import { backendAuthFetch } from '@/lib/backendFetch'
+import PageHeader from '@/components/PageHeader'
 import PaiementSponsoringBoutiqueClient from './PaiementSponsoringBoutiqueClient'
 
 export const metadata: Metadata = {
@@ -61,17 +62,15 @@ export default async function PayerSponsoringBoutiquePage({ params }: { params: 
 
   return (
     <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 560 }}>
-      <div style={{ marginBottom: 24 }}>
-        <Link href="/boutique" style={{ fontSize: 13, color: 'var(--text2)', textDecoration: 'none' }}>
-          ← Mes boutiques
-        </Link>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--navy)', margin: '10px 0 4px' }}>
-          Sponsoriser votre boutique
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-          Mettez votre boutique &quot;{nomCourt}&quot; en vedette pour 30 jours (Apparaîtra dans la section Boutiques Pro).
-        </p>
-      </div>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Ma boutique', href: '/boutique' },
+          { label: 'Sponsoriser' }
+        ]}
+        emoji="⭐"
+        titre="Sponsoriser votre boutique"
+        compteur={`Mettez votre boutique "${nomCourt}" en vedette pour 30 jours (Apparaîtra dans la section Boutiques Pro).`}
+      />
 
       <PaiementSponsoringBoutiqueClient
         boutiqueId={id}

@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import { notFound, redirect } from 'next/navigation'
+import PageHeader from '@/components/PageHeader'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import BoutiqueDetailClient, { type Produit, type Annonce } from './BoutiqueDetailClient'
 import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
@@ -192,6 +193,16 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
 
       {/* Contenu avec onglets */}
       <div style={{ maxWidth: 1350, margin: '0 auto', padding: '0 20px' }}>
+        <div style={{ marginTop: 32, marginBottom: 16 }}>
+          <PageHeader
+            breadcrumb={[
+              { label: 'Toutes les boutiques', href: '/boutiques' },
+              { label: b.nom }
+            ]}
+            titre=""
+          />
+        </div>
+
         <BoutiqueDetailClient
           boutique={{
             id: b.id,
@@ -212,12 +223,6 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
           produits={produits}
           annonces={annonces}
         />
-
-        <div style={{ marginTop: 32 }}>
-          <Link href="/boutiques" style={{ color: '#6b7280', textDecoration: 'none', fontSize: 14 }}>
-            ← Toutes les boutiques
-          </Link>
-        </div>
       </div>
     </div>
   )

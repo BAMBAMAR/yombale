@@ -10,6 +10,7 @@ import { cloudinaryHQ } from '@/lib/cloudinary';
 import BoutonWhatsApp from '@/components/BoutonWhatsApp';
 import SimilRow from '@/components/SimilRow';
 import { sanitizeImgUrl } from '@/lib/sanitizeImg';
+import PageHeader from '@/components/PageHeader';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -182,20 +183,14 @@ export default async function FicheImmoPage({
 
   return (
     <div className="fiche-immo">
-      {/* Fil d'Ariane */}
-      <p
-        style={{
-          fontSize: '13px',
-          color: 'var(--text3)',
-          marginBottom: '16px',
-        }}
-      >
-        <Link href="/">Accueil</Link>
-        {' › '}
-        <Link href="/immo">Immobilier</Link>
-        {' › '}
-        <span>{annonce.titre}</span>
-      </p>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Accueil', href: '/' },
+          { label: 'Immobilier', href: '/immo' },
+          { label: annonce.titre }
+        ]}
+        titre={annonce.titre}
+      />
 
       {/* Bandeau "meilleur choix" — pousse vers le bien comparable le moins cher du secteur */}
       {proposerMeilleur && meilleurBien && (
@@ -258,7 +253,7 @@ export default async function FicheImmoPage({
               </span>
             )}
 
-            <h1>{annonce.titre}</h1>
+
 
             {/* Méta-données */}
             <div className="meta-row">

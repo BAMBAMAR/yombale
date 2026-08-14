@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getOptionalSession } from '@/lib/dal'
+import PageHeader from '@/components/PageHeader'
 import FormulaireImmo from './FormulaireImmo'
 
 export const metadata: Metadata = {
@@ -17,9 +18,15 @@ export default async function DeposerImmoPage() {
 
   return (
     <div>
-      <p className="deposer-immo-sub">
-        Gratuit et rapide — votre annonce sera visible après validation par notre équipe.
-      </p>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Mes biens immo', href: '/mes-annonces-immo' },
+          { label: 'Publier' }
+        ]}
+        emoji="🏡"
+        titre="Publier un bien immobilier"
+        compteur="Gratuit et rapide — votre annonce sera visible après validation par notre équipe."
+      />
 
       <FormulaireImmo />
     </div>

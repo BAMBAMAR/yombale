@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
+import PageHeader from '@/components/PageHeader'
 
 export const metadata: Metadata = {
   title: 'Comparaison immobilier',
@@ -72,7 +73,7 @@ export default async function ImmoComparaisonPage({
         <div className="empty-state">
           <span style={{ fontSize: 48 }}>🏡</span>
           <p>Impossible de charger les annonces demandées.</p>
-          <Link href="/immo" className="budget-pill active" style={{ marginTop: 8 }}>Retour</Link>
+          <Link href="/immo" className="budget-pill active" style={{ marginTop: 8 }}>Parcourir les annonces</Link>
         </div>
       </div>
     )
@@ -99,7 +100,13 @@ export default async function ImmoComparaisonPage({
 
   return (
     <div className="page-container" style={{ paddingTop: '2rem' }}>
-      <h1 className="comp-titre">Comparaison immobilier</h1>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Immobilier', href: '/immo' },
+          { label: 'Comparaison détaillée' }
+        ]}
+        titre="Comparaison immobilier"
+      />
       <p className="comp-sous-titre">Comparez côte à côte les annonces immo au Sénégal.</p>
 
       <div className="comp-table-wrap">
@@ -146,11 +153,6 @@ export default async function ImmoComparaisonPage({
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <div style={{ textAlign: 'center', marginTop: 32 }}>
-        <Link href="/immo" className="budget-pill">← Retour à l&apos;immobilier</Link>
-      </div>
     </div>
   )
 }

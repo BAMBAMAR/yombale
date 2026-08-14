@@ -4,6 +4,7 @@ import Link from 'next/link'
 import AnnonceGallery from './AnnonceGallery'
 import MaskedContactPhone from '@/components/MaskedContactPhone'
 import { apiFetch } from '@/lib/api'
+import PageHeader from '@/components/PageHeader'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 const SSR_SECRET = process.env.SSR_SECRET || ''
@@ -123,18 +124,15 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="annonce-detail-page">
-      {/* Breadcrumb */}
-      <nav className="annonce-detail-breadcrumb">
-        <Link href="/">Accueil</Link>
-        <span>›</span>
-        <Link href="/annonces">Annonces</Link>
-        <span>›</span>
-        <Link href={`/annonces?categorie=${annonce.categorie_slug}`}>
-          {CAT_LABELS[annonce.categorie_slug] ?? annonce.categorie_slug}
-        </Link>
-        <span>›</span>
-        <span>{annonce.titre.slice(0, 40)}{annonce.titre.length > 40 ? '…' : ''}</span>
-      </nav>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Accueil', href: '/' },
+          { label: 'Annonces', href: '/annonces' },
+          { label: CAT_LABELS[annonce.categorie_slug] ?? annonce.categorie_slug, href: `/annonces?categorie=${annonce.categorie_slug}` },
+          { label: annonce.titre.length > 40 ? `${annonce.titre.slice(0, 40)}…` : annonce.titre }
+        ]}
+        titre={annonce.titre}
+      />
 
       <div className="annonce-detail-layout">
         {/* Colonne gauche — contenu */}
@@ -143,11 +141,10 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
           <AnnonceGallery photos={photos} titre={annonce.titre} />
 
           {/* Titre + meta */}
-          <div className="annonce-detail-header">
+          <div className="annonce-detail-header" style={{ marginTop: 16 }}>
             <span className="annonce-detail-cat">
               {CAT_LABELS[annonce.categorie_slug] ?? annonce.categorie_slug}
             </span>
-            <h1 className="annonce-detail-titre">{annonce.titre}</h1>
             <div className="annonce-detail-meta-row">
               <span>📍 {annonce.quartier ? `${annonce.quartier}, ` : ''}{annonce.ville ?? 'Dakar'}</span>
               <span>🗓 {formatDate(annonce.created_at)}</span>
@@ -221,13 +218,6 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
           </div>
 
           <div className="annonce-contact-nav">
-            <Link href="/annonces" className="annonce-back">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-              </svg>
-              <span>Retour aux annonces</span>
-            </Link>
             <Link href="/deposer-annonce" className="annonce-contact-deposer">
               + Publier une annonce
             </Link>

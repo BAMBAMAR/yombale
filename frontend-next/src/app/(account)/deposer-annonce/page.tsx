@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getOptionalSession } from '@/lib/dal'
 import Link from 'next/link'
+import PageHeader from '@/components/PageHeader'
 import FormulaireAnnonce from './FormulaireAnnonce'
 
 export const metadata: Metadata = {
@@ -18,6 +19,14 @@ export default async function DeposerAnnoncePage() {
 
   return (
     <div>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Mes annonces', href: '/mes-annonces' },
+          { label: 'Publier' }
+        ]}
+        emoji="📢"
+        titre="Publier une annonce"
+      />
       <FormulaireAnnonce email={session.email ?? ''} />
 
       <p style={{ marginTop: 24, fontSize: 12, color: 'var(--text3)', textAlign: 'center' }}>

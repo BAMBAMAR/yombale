@@ -8,6 +8,7 @@ import GalerieClient from './GalerieClient'
 import ProduitCTA from './ProduitCTA'
 import BoutonPartager from '@/components/BoutonPartager'
 import CardActions from '@/app/CardActions'
+import PageHeader from '@/components/PageHeader'
 
 
 interface ProduitDetail {
@@ -93,14 +94,16 @@ export default async function FicheProduitPage(
   return (
     <div className="boutique-produit-page">
 
-      {/* Fil d'Ariane */}
-      <nav style={{ fontSize: 13, color: '#9ca3af', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-        <Link href="/boutiques" style={{ color: '#6b7280', textDecoration: 'none' }}>Boutiques</Link>
-        <span>›</span>
-        <Link href={`/boutiques/${id}`} style={{ color: '#6b7280', textDecoration: 'none' }}>{p.boutique_nom}</Link>
-        <span>›</span>
-        <span style={{ color: '#374151', fontWeight: 600 }}>{p.nom}</span>
-      </nav>
+      <div style={{ marginBottom: 24 }}>
+        <PageHeader
+          breadcrumb={[
+            { label: 'Boutiques', href: '/boutiques' },
+            { label: p.boutique_nom, href: `/boutiques/${id}` },
+            { label: p.nom }
+          ]}
+          titre=""
+        />
+      </div>
 
       {/* Layout principal */}
       <div className="boutique-produit-layout">
@@ -230,13 +233,6 @@ export default async function FicheProduitPage(
           />
 
         </div>
-      </div>
-
-      {/* Retour boutique */}
-      <div style={{ marginTop: 40, paddingTop: 24, borderTop: '1px solid #f1f5f9' }}>
-        <Link href={`/boutiques/${id}`} style={{ color: '#6b7280', textDecoration: 'none', fontSize: 14 }}>
-          ← Retour à la boutique {p.boutique_nom}
-        </Link>
       </div>
     </div>
   )

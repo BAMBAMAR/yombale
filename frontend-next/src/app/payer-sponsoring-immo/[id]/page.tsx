@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getOptionalSession } from '@/lib/dal'
+import { backendAuthFetch } from '@/lib/backendFetch'
+import PageHeader from '@/components/PageHeader'
 import PaiementSponsoringImmoClient from './PaiementSponsoringImmoClient'
 import { apiFetch } from '@/lib/api'
 
@@ -50,17 +52,15 @@ export default async function PayerSponsoringImmoPage({ params }: { params: Prom
 
   return (
     <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 560 }}>
-      <div style={{ marginBottom: 24 }}>
-        <Link href={`/immo/${id}`} style={{ fontSize: 13, color: 'var(--text2)', textDecoration: 'none' }}>
-          ← Retour à l&apos;annonce
-        </Link>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--navy)', margin: '10px 0 4px' }}>
-          Sponsoriser votre bien immobilier
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-          Mettez &quot;{titreCourt}&quot; en vedette pour 30 jours (Apparaîtra en haut de la liste).
-        </p>
-      </div>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Immobilier', href: `/immo/${id}` },
+          { label: 'Sponsoriser' }
+        ]}
+        emoji="⭐"
+        titre="Sponsoriser votre bien immobilier"
+        compteur={`Mettez "${titreCourt}" en vedette pour 30 jours (Apparaîtra en haut de la liste).`}
+      />
 
       <PaiementSponsoringImmoClient
         immoId={id}

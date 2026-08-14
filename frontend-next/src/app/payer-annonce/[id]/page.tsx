@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getOptionalSession } from '@/lib/dal'
 import { backendAuthFetch } from '@/lib/backendFetch'
+import PageHeader from '@/components/PageHeader'
 import PaiementClient from './PaiementClient'
 
 export const metadata: Metadata = {
@@ -79,17 +80,15 @@ export default async function PayerAnnoncePage({ params }: { params: Promise<{ i
 
   return (
     <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 560 }}>
-      <div style={{ marginBottom: 24 }}>
-        <Link href="/mes-annonces" style={{ fontSize: 13, color: 'var(--text2)', textDecoration: 'none' }}>
-          ← Mes annonces
-        </Link>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--navy)', margin: '10px 0 4px' }}>
-          Activer votre annonce
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-          Votre quota gratuit est atteint. Activez votre annonce pour {(Number(settings.prix_annonce) || 1500).toLocaleString('fr-FR')} FCFA.
-        </p>
-      </div>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Mes annonces', href: '/mes-annonces' },
+          { label: 'Activer' }
+        ]}
+        emoji="🚀"
+        titre="Activer votre annonce"
+        compteur={`Votre quota gratuit est atteint. Activez votre annonce pour ${(Number(settings.prix_annonce) || 1500).toLocaleString('fr-FR')} FCFA.`}
+      />
 
       <PaiementClient
         annonceId={id}

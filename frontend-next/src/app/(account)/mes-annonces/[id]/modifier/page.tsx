@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { backendFetch } from '@/lib/backend-fetch'
+import PageHeader from '@/components/PageHeader'
 import ModifierAnnonceForm from './ModifierAnnonceForm'
 
 interface Annonce {
@@ -43,17 +44,15 @@ export default async function ModifierAnnoncePage({
 
   return (
     <div>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <Link href="/mes-annonces" style={{ fontSize: 14, color: 'var(--accent)', textDecoration: 'none' }}>
-          ← Retour à mes annonces
-        </Link>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--navy)', margin: '8px 0 4px' }}>
-          Modifier l&apos;annonce
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-          Toute modification soumettra votre annonce à une nouvelle modération.
-        </p>
-      </div>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Mes annonces', href: '/mes-annonces' },
+          { label: 'Modifier' }
+        ]}
+        emoji="✏️"
+        titre="Modifier l'annonce"
+        compteur="Toute modification soumettra votre annonce à une nouvelle modération."
+      />
       <ModifierAnnonceForm annonce={annonce} />
     </div>
   )

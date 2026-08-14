@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import PageHeader from '@/components/PageHeader'
 import FavorisClient from './FavorisClient'
 
 export const metadata: Metadata = {
@@ -7,5 +8,17 @@ export const metadata: Metadata = {
 }
 
 export default function FavorisPage() {
-  return <FavorisClient />
+  return (
+    <div>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Mon compte', href: '/compte' },
+          { label: 'Mes favoris' }
+        ]}
+        emoji="❤️"
+        titre="Mes favoris"
+      />
+      <FavorisClient />
+    </div>
+  )
 }

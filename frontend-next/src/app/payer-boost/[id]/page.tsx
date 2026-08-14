@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getOptionalSession } from '@/lib/dal'
 import { backendAuthFetch } from '@/lib/backendFetch'
+import PageHeader from '@/components/PageHeader'
 import PaiementBoostClient from './PaiementBoostClient'
 
 export const metadata: Metadata = {
@@ -63,17 +64,15 @@ export default async function PayerBoostPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 560 }}>
-      <div style={{ marginBottom: 24 }}>
-        <Link href="/mes-annonces" style={{ fontSize: 13, color: 'var(--text2)', textDecoration: 'none' }}>
-          ← Mes annonces
-        </Link>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--navy)', margin: '10px 0 4px' }}>
-          Booster votre annonce
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-          Mettez votre annonce &quot;{titreCourt}&quot; en haut des résultats pendant 7 jours.
-        </p>
-      </div>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Mes annonces', href: '/mes-annonces' },
+          { label: 'Booster' }
+        ]}
+        emoji="🚀"
+        titre="Booster votre annonce"
+        compteur={`Mettez votre annonce "${titreCourt}" en haut des résultats pendant 7 jours.`}
+      />
 
       <PaiementBoostClient
         annonceId={id}

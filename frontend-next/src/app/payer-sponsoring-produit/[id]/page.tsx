@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getOptionalSession } from '@/lib/dal'
+import PageHeader from '@/components/PageHeader'
 import PaiementSponsoringProduitClient from './PaiementSponsoringProduitClient'
 import { apiFetch } from '@/lib/api'
 
@@ -50,17 +51,15 @@ export default async function PayerSponsoringProduitPage({ params }: { params: P
 
   return (
     <div className="page-container" style={{ paddingTop: '2rem', maxWidth: 560 }}>
-      <div style={{ marginBottom: 24 }}>
-        <Link href={`/produit/${id}`} style={{ fontSize: 13, color: 'var(--text2)', textDecoration: 'none' }}>
-          ← Retour au produit
-        </Link>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--navy)', margin: '10px 0 4px' }}>
-          Mettre en avant ce produit
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-          Sponsorisez &quot;{nomCourt}&quot; pour 30 jours afin de le propulser en tête des résultats.
-        </p>
-      </div>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Produit', href: `/produit/${id}` },
+          { label: 'Mettre en avant' }
+        ]}
+        emoji="⭐"
+        titre="Mettre en avant ce produit"
+        compteur={`Sponsorisez "${nomCourt}" pour 30 jours afin de le propulser en tête des résultats.`}
+      />
 
       <PaiementSponsoringProduitClient
         produitId={id}

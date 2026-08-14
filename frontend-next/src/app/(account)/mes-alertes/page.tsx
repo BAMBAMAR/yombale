@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { verifySession } from '@/lib/dal';
 import FormAlerte from '@/components/FormAlerte';
 import MesAlertesClient from '@/components/MesAlertesClient';
+import PageHeader from '@/components/PageHeader';
 
 export const metadata: Metadata = {
   title: 'Mes alertes prix',
@@ -12,11 +13,16 @@ export default async function MesAlertesPage() {
   const session = await verifySession();
 
   return (
-    <div className="page-container">
-      <h1>Mes alertes prix</h1>
-      <p className="subtitle">
-        Recevez une alerte WhatsApp ou email quand un prix baisse jusqu&apos;à votre prix cible.
-      </p>
+    <div>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Mon compte', href: '/compte' },
+          { label: 'Mes alertes prix' }
+        ]}
+        emoji="🔔"
+        titre="Mes alertes prix"
+        compteur="Recevez une alerte WhatsApp ou email quand un prix baisse jusqu'à votre prix cible."
+      />
 
       <div className="mes-alertes-grid">
         <div>

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { backendFetch } from '@/lib/backend-fetch'
+import PageHeader from '@/components/PageHeader'
 import ModifierImmoForm from './ModifierImmoForm'
 
 interface AnnonceImmo {
@@ -43,17 +44,15 @@ export default async function ModifierImmoPage({
 
   return (
     <div>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <Link href="/mes-annonces-immo" style={{ fontSize: 14, color: 'var(--accent)', textDecoration: 'none' }}>
-          ← Retour à mes biens immo
-        </Link>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--navy)', margin: '8px 0 4px' }}>
-          Modifier le bien
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-          Toute modification soumettra votre annonce à une nouvelle validation.
-        </p>
-      </div>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Mes biens immo', href: '/mes-annonces-immo' },
+          { label: 'Modifier' }
+        ]}
+        emoji="🏡"
+        titre="Modifier le bien"
+        compteur="Toute modification soumettra votre annonce à une nouvelle validation."
+      />
       <ModifierImmoForm annonce={annonce} />
     </div>
   )
