@@ -1,3 +1,11 @@
+## 🚀 Mises à jour du 14/08/2026 : Correction du Réaffichage Récurrent de la Notification de Mise à Jour PWA (`RegisterSW.tsx`, `next.config.js`)
+- **Fix du Clignotement / Réaffichage du Bandeau Bleu *"🔄 Nouvelle version disponible — Mettre à jour"*** :
+  * **Problème** : Lors du clic sur le bouton bleu de mise à jour PWA, le rechargement de la page re-déclenchait l'événement `updatefound` ou `reg.waiting` avant la finalisation de l'activation du Service Worker, provoquant la réapparition indéfinie du bandeau bleu.
+  * **Solution** :
+    1. Ajout des en-têtes HTTP `Cache-Control: no-cache, no-store, must-revalidate` sur `/sw.js` dans `next.config.js` pour interdire la mise en cache HTTP résiduelle du fichier de Service Worker.
+    2. Utilisation d'un verrou temporaire dans `sessionStorage` (`nopalou_sw_updated`) dans `RegisterSW.tsx` pour empêcher l'affichage en boucle de la notification pendant le processus d'installation.
+    3. Ajout d'un timer de sécurité pour forcer le rechargement si l'événement `controllerchange` tarde à se déclencher.
+
 ## 🚀 Mises à jour du 13/08/2026 : Intégration du Module de Paiement Wave Express Web & Redirection 1-Clic (`checkout-express/page.tsx`, `paiement.js`)
 - **Intégration du Paiement Direct Wave 1-Clic sur la Page Express Web (`checkout-express/page.tsx` & `paiement.js`)** :
   * **Redirection automatique vers l'Application Wave** : Lors du clic sur la caisse express web avec l'option Wave (`pay=wave`), la page initialise la session Wave (`/api/paiement/wave/initier-express`) et redirige automatiquement l'acheteur vers l'application **Wave** (`wave_url`).

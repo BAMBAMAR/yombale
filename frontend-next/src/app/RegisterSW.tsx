@@ -28,6 +28,16 @@ export default function RegisterSW() {
     }
     navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange)
 
+    // Vérifier si une mise à jour récente a eu lieu (< 15 sec) pour éviter le clignotement
+    const isRecentlyUpdated = () => {
+      try {
+        const lastUpdated = sessionStorage.getItem('nopalou_sw_updated')
+        return !!(lastUpdated && Date.now() - parseInt(lastUpdated, 10) < 15000)
+      } catch {
+        return false
+      }
+    }
+
     // Enregistrement effectif du Service Worker PWA
     navigator.serviceWorker
       .register('/sw.js')
@@ -41,7 +51,7 @@ export default function RegisterSW() {
 
           newWorker.addEventListener('statechange', () => {
             // Le nouveau SW est installé et prêt à remplacer l'ancien contrôleur
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller && !isRecentlyUpdated()) {
               console.log('[PWA SW] Nouvelle version disponible. Affichage du bouton de mise à jour.')
               setSwUpdateAvailable(true)
             }
@@ -49,7 +59,7 @@ export default function RegisterSW() {
         })
 
         // Vérifier si un nouveau SW est déjà téléchargé et en attente
-        if (reg.waiting && navigator.serviceWorker.controller) {
+        if (reg.waiting && navigator.serviceWorker.controller && !isRecentlyUpdated()) {
           setSwUpdateAvailable(true)
         }
       })
@@ -94,11 +104,19 @@ export default function RegisterSW() {
     setSwUpdateAvailable(false)
     if (typeof window === 'undefined') return
 
+    try {
+      sessionStorage.setItem('nopalou_sw_updated', Date.now().toString())
+    } catch {}
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistration()
         .then((reg) => {
           if (reg && reg.waiting) {
             reg.waiting.postMessage({ type: 'SKIP_WAITING' })
+            // Fallback reload au cas où controllerchange ne se déclenche pas immédiatement
+            setTimeout(() => {
+              window.location.reload()
+            }, 300)
           } else {
             window.location.reload()
           }
