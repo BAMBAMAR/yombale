@@ -29,7 +29,25 @@ export default function PaiementsManuelsClient({
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [loadingBatch, setLoadingBatch] = useState(false)
 
-  const allIds = paiements.map(p => p.id)
+  // Recherche & Filtres
+  const [q, setQ] = useState('')
+  const [methodeFilter, setMethodeFilter] = useState<'toutes' | 'wave' | 'orange'>('toutes')
+
+  const paiementsFiltres = paiements.filter(p => {
+    if (methodeFilter !== 'toutes' && p.methode !== methodeFilter) return false
+    if (!q.trim()) return true
+    const term = q.trim().toLowerCase()
+    return (
+      p.reference?.toLowerCase().includes(term) ||
+      p.utilisateur_nom?.toLowerCase().includes(term) ||
+      p.utilisateur_email?.toLowerCase().includes(term) ||
+      p.telephone_expediteur?.includes(term) ||
+      p.transaction_id_client?.toLowerCase().includes(term) ||
+      p.id.toLowerCase().includes(term)
+    )
+  })
+
+  const allIds = paiementsFiltres.map(p => p.id)
   const allSelected = allIds.length > 0 && selectedIds.length === allIds.length
 
   const toggleSelectAll = () => {
@@ -84,46 +102,54 @@ export default function PaiementsManuelsClient({
   const handleBatchValider = async () => {
     setLoadingBatch(true)
     setMsg(null)
-    let okCount = 0
-    for (const id of selectedIds) {
-      try {
+    let succesCount = 0
+    try {
+      for (const id of selectedIds) {
         const r = await fetch(`${BACKEND}/api/paiement/manuel/${id}/valider`, {
           method: 'POST', headers: { 'X-Admin-Secret': secret },
         })
-        if (r.ok) okCount++
-      } catch {}
+        if (r.ok) succesCount++
+      }
+      setPaiements(ps => ps.filter(p => !selectedIds.includes(p.id)))
+      setSelectedIds([])
+      setMsg({ type: 'ok', text: `${succesCount} paiement(s) validé(s) avec succès !` })
+    } catch {
+      setMsg({ type: 'err', text: 'Erreur lors de la validation par lot' })
+    } finally {
+      setLoadingBatch(false)
     }
-    setPaiements(ps => ps.filter(p => !selectedIds.includes(p.id)))
-    setSelectedIds([])
-    setLoadingBatch(false)
-    setMsg({ type: 'ok', text: `${okCount} paiement(s) validé(s) avec succès !` })
   }
 
   const handleBatchRejeter = async () => {
+    if (!window.confirm(`Rejeter les ${selectedIds.length} paiements sélectionnés ?`)) return
+    const motif = prompt('Motif du rejet pour ce lot (optionnel) :') ?? ''
     setLoadingBatch(true)
     setMsg(null)
-    let okCount = 0
-    for (const id of selectedIds) {
-      try {
+    let count = 0
+    try {
+      for (const id of selectedIds) {
         const r = await fetch(`${BACKEND}/api/paiement/manuel/${id}/rejeter`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
-          body: JSON.stringify({ motif: 'Rejet en masse' }),
+          body: JSON.stringify({ motif }),
         })
-        if (r.ok) okCount++
-      } catch {}
+        if (r.ok) count++
+      }
+      setPaiements(ps => ps.filter(p => !selectedIds.includes(p.id)))
+      setSelectedIds([])
+      setMsg({ type: 'ok', text: `${count} paiement(s) rejeté(s).` })
+    } catch {
+      setMsg({ type: 'err', text: 'Erreur lors du rejet par lot' })
+    } finally {
+      setLoadingBatch(false)
     }
-    setPaiements(ps => ps.filter(p => !selectedIds.includes(p.id)))
-    setSelectedIds([])
-    setLoadingBatch(false)
-    setMsg({ type: 'ok', text: `${okCount} paiement(s) rejeté(s)` })
   }
 
   const batchActions: BatchActionConfig[] = [
     {
       key: 'valider',
       label: 'Valider les paiements',
-      icon: '🟢',
+      icon: '✅',
       color: 'green',
       onClick: handleBatchValider,
     },
@@ -138,18 +164,44 @@ export default function PaiementsManuelsClient({
   ]
 
   return (
-    <div style={{ maxWidth: 1100 }}>
+    <div style={{ maxWidth: 1100, display: 'flex', flexDirection: 'column', gap: 16 }}>
       {msg && (
-        <div style={{ padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: 14, fontWeight: 600,
+        <div style={{ padding: '12px 16px', borderRadius: 8, fontSize: 14, fontWeight: 600,
           background: msg.type === 'ok' ? '#dcfce7' : '#fee2e2',
           color: msg.type === 'ok' ? '#166534' : '#991b1b' }}>
           {msg.text}
         </div>
       )}
 
+      {/* Barre de recherche */}
+      <div style={{
+        background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 16,
+        display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap'
+      }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 240 }}>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>🔍</span>
+          <input
+            type="text"
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="Rechercher par référence, client, e-mail, téléphone, ID transaction..."
+            style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none' }}
+          />
+        </div>
+        <select
+          value={methodeFilter}
+          onChange={e => setMethodeFilter(e.target.value as any)}
+          style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff' }}
+        >
+          <option value="toutes">Toutes les méthodes</option>
+          <option value="wave">🌊 Wave</option>
+          <option value="orange">🟠 Orange Money</option>
+        </select>
+      </div>
+
       <BatchActionBar
         selectedCount={selectedIds.length}
-        totalCount={paiements.length}
+        totalCount={paiementsFiltres.length}
         allSelected={allSelected}
         onToggleSelectAll={toggleSelectAll}
         onClearSelection={() => setSelectedIds([])}
@@ -160,10 +212,10 @@ export default function PaiementsManuelsClient({
 
       <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,.08)' }}>
         <h3 style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 700 }}>
-          En attente ({paiements.length})
+          En attente ({paiementsFiltres.length})
         </h3>
-        {paiements.length === 0 ? (
-          <p style={{ color: '#9ca3af', fontSize: 14 }}>Aucune déclaration en attente.</p>
+        {paiementsFiltres.length === 0 ? (
+          <p style={{ color: '#9ca3af', fontSize: 14 }}>Aucune déclaration ne correspond aux critères.</p>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 950 }}>
@@ -183,7 +235,7 @@ export default function PaiementsManuelsClient({
                 </tr>
               </thead>
               <tbody>
-                {paiements.map(p => {
+                {paiementsFiltres.map(p => {
                   const isSel = selectedIds.includes(p.id)
                   return (
                     <tr key={p.id} style={{ borderBottom: '1px solid #f9fafb', background: isSel ? '#eff6ff' : 'transparent' }}>

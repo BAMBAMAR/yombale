@@ -356,11 +356,57 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [loadingBatch, setLoadingBatch] = useState(false)
 
+  // Filtres et recherche
+  const [q, setQ] = useState('')
+  const [activeTab, setActiveTab] = useState<'toutes' | 'abonnees' | 'sponsorisees' | 'inactives'>('toutes')
+
   function refresh() {
     startTransition(() => { window.location.reload() })
   }
 
-  const allIds = boutiques.map(b => b.id)
+  // Filtrage combiné réactif
+  const boutiquesFiltrees = useMemo(() => {
+    let list = [...boutiques]
+
+    // 1. Onglet
+    if (activeTab === 'abonnees') {
+      list = list.filter(b => b.plan_actif)
+    } else if (activeTab === 'sponsorisees') {
+      list = list.filter(b => isSponsorActif(b))
+    } else if (activeTab === 'inactives') {
+      list = list.filter(b => !b.actif)
+    }
+
+    // 2. Recherche textuelle
+    if (q.trim()) {
+      const term = q.trim().toLowerCase()
+      list = list.filter(b => {
+        return (
+          b.nom?.toLowerCase().includes(term) ||
+          b.description?.toLowerCase().includes(term) ||
+          b.categorie?.toLowerCase().includes(term) ||
+          b.proprietaire_nom?.toLowerCase().includes(term) ||
+          b.proprietaire_email?.toLowerCase().includes(term) ||
+          b.telephone?.includes(term) ||
+          b.ville?.toLowerCase().includes(term) ||
+          b.adresse?.toLowerCase().includes(term) ||
+          b.id.toLowerCase().includes(term)
+        )
+      })
+    }
+
+    return list
+  }, [boutiques, activeTab, q])
+
+  // Compteurs
+  const counts = useMemo(() => ({
+    toutes: boutiques.length,
+    abonnees: boutiques.filter(b => b.plan_actif).length,
+    sponsorisees: boutiques.filter(b => isSponsorActif(b)).length,
+    inactives: boutiques.filter(b => !b.actif).length,
+  }), [boutiques])
+
+  const allIds = boutiquesFiltrees.map(b => b.id)
   const allSelected = allIds.length > 0 && selectedIds.length === allIds.length
 
   const toggleSelectAll = () => {
@@ -435,19 +481,78 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
     },
   ]
 
-  const abonnees   = boutiques.filter(b => b.plan_actif)
-  const sponsorisees = boutiques.filter(b => !b.plan_actif && isSponsorActif(b))
-  const autres       = boutiques.filter(b => !b.plan_actif && !isSponsorActif(b))
-
-  if (boutiques.length === 0) {
-    return <p className="admin-empty">Aucune boutique enregistrée.</p>
-  }
+  const abonnees     = boutiquesFiltrees.filter(b => b.plan_actif)
+  const sponsorisees = boutiquesFiltrees.filter(b => !b.plan_actif && isSponsorActif(b))
+  const autres       = boutiquesFiltrees.filter(b => !b.plan_actif && !isSponsorActif(b))
 
   return (
-    <div className="admin-annonces-sections">
+    <div className="admin-annonces-sections" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Barre de recherche */}
+      <div style={{
+        background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 16,
+        boxShadow: '0 2px 6px rgba(0,0,0,0.03)', display: 'flex', gap: 10, alignItems: 'center'
+      }}>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: '#94a3b8' }}>🔍</span>
+          <input
+            type="text"
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="Rechercher une boutique par nom, propriétaire, e-mail, téléphone, ville, catégorie..."
+            style={{
+              width: '100%', padding: '10px 40px 10px 42px', borderRadius: 10, border: '1px solid #cbd5e1',
+              fontSize: 14, outline: 'none', fontFamily: 'system-ui, sans-serif'
+            }}
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ('')}
+              style={{
+                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', color: '#94a3b8', fontSize: 16, cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Onglets */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', borderBottom: '2px solid #e2e8f0', paddingBottom: 4 }}>
+        {[
+          { key: 'toutes', label: '📋 Toutes', count: counts.toutes, color: '#1e3a5f' },
+          { key: 'abonnees', label: '⭐ Abonnées Pro/Business', count: counts.abonnees, color: '#C75B00' },
+          { key: 'sponsorisees', label: '⚡ Sponsorisées', count: counts.sponsorisees, color: '#D97706' },
+          { key: 'inactives', label: '⏸ Inactives', count: counts.inactives, color: '#dc2626' },
+        ].map(t => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setActiveTab(t.key as any)}
+            style={{
+              padding: '9px 16px', borderRadius: '10px 10px 0 0', border: 'none', fontSize: 13,
+              fontWeight: 700, cursor: 'pointer',
+              background: activeTab === t.key ? t.color : '#f8fafc',
+              color: activeTab === t.key ? '#fff' : '#475569',
+              display: 'flex', alignItems: 'center', gap: 8
+            }}
+          >
+            {t.label}
+            <span style={{
+              background: activeTab === t.key ? 'rgba(255,255,255,0.3)' : '#e2e8f0',
+              padding: '2px 7px', borderRadius: 10, fontSize: 11
+            }}>
+              {t.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
       <BatchActionBar
         selectedCount={selectedIds.length}
-        totalCount={boutiques.length}
+        totalCount={boutiquesFiltrees.length}
         allSelected={allSelected}
         onToggleSelectAll={toggleSelectAll}
         onClearSelection={() => setSelectedIds([])}
@@ -457,14 +562,11 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
       />
 
       {abonnees.length > 0 && (
-        <section className="admin-annonces-section" style={{ marginBottom: 32 }}>
+        <section className="admin-annonces-section" style={{ marginBottom: 24 }}>
           <h2 className="admin-section-titre" style={{ color: '#C75B00' }}>
             ⭐ Abonnés Pro / Business
             <span className="admin-section-count">{abonnees.length}</span>
           </h2>
-          <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 12 }}>
-            Boutiques avec abonnement actif — priorité maximale dans le listing.
-          </p>
           <div className="admin-annonces-list">
             {abonnees.map(b => (
               <BoutiqueRow
@@ -481,9 +583,9 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
       )}
 
       {sponsorisees.length > 0 && (
-        <section className="admin-annonces-section" style={{ marginBottom: 32 }}>
+        <section className="admin-annonces-section" style={{ marginBottom: 24 }}>
           <h2 className="admin-section-titre" style={{ color: '#D97706' }}>
-            ⭐ Boutiques sponsorisées
+            ⚡ Boutiques sponsorisées
             <span className="admin-section-count">{sponsorisees.length}</span>
           </h2>
           <div className="admin-annonces-list">
@@ -501,24 +603,32 @@ export default function AdminBoutiquesClient({ boutiques }: { boutiques: Boutiqu
         </section>
       )}
 
-      <section className="admin-annonces-section">
-        <h2 className="admin-section-titre">
-          Autres boutiques
-          <span className="admin-section-count">{autres.length}</span>
-        </h2>
-        <div className="admin-annonces-list">
-          {autres.map(b => (
-            <BoutiqueRow
-              key={b.id}
-              boutique={b}
-              isSelected={selectedIds.includes(b.id)}
-              onToggleSelect={() => toggleSelect(b.id)}
-              onAction={refresh}
-              onOpenGestion={setSelectedBoutique}
-            />
-          ))}
-        </div>
-      </section>
+      {autres.length > 0 && (
+        <section className="admin-annonces-section">
+          <h2 className="admin-section-titre">
+            Autres boutiques
+            <span className="admin-section-count">{autres.length}</span>
+          </h2>
+          <div className="admin-annonces-list">
+            {autres.map(b => (
+              <BoutiqueRow
+                key={b.id}
+                boutique={b}
+                isSelected={selectedIds.includes(b.id)}
+                onToggleSelect={() => toggleSelect(b.id)}
+                onAction={refresh}
+                onOpenGestion={setSelectedBoutique}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {boutiquesFiltrees.length === 0 && (
+        <p className="admin-empty" style={{ textAlign: 'center', padding: 32, background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0' }}>
+          Aucune boutique ne correspond à votre recherche.
+        </p>
+      )}
 
       {selectedBoutique && (
         <ModalGestionMarchand

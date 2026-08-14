@@ -176,10 +176,63 @@ router.get('/mine', verifierToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-// ── GET /api/annonces/admin/en-attente (admin) — toutes les annonces non supprimées
+// ── GET /api/annonces/admin/en-attente (admin) — toutes les annonces non supprimées avec filtres
 router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 5000;
+    const { q, categorie, statut, ville, payee, tri, limit = 5000 } = req.query;
+    const conds = ['a.supprimee = false'];
+    const vals = [];
+
+    if (categorie) {
+      vals.push(categorie);
+      conds.push(`a.categorie_slug = $${vals.length}`);
+    }
+    if (ville) {
+      vals.push(`%${ville}%`);
+      conds.push(`a.ville ILIKE $${vals.length}`);
+    }
+    if (payee === 'true') {
+      conds.push(`a.payee = true`);
+    } else if (payee === 'false') {
+      conds.push(`a.payee = false`);
+    }
+    if (statut === 'attente') {
+      conds.push(`(a.actif = false AND (a.rejete IS NOT TRUE))`);
+    } else if (statut === 'actif') {
+      conds.push(`a.actif = true`);
+    } else if (statut === 'rejete') {
+      conds.push(`a.rejete = true`);
+    }
+
+    if (q && q.trim()) {
+      vals.push(`%${q.trim()}%`);
+      const idx = vals.length;
+      conds.push(`(
+        a.titre ILIKE $${idx} OR
+        a.description ILIKE $${idx} OR
+        a.contact_nom ILIKE $${idx} OR
+        a.contact_tel ILIKE $${idx} OR
+        a.ville ILIKE $${idx} OR
+        a.quartier ILIKE $${idx} OR
+        u.nom ILIKE $${idx} OR
+        u.email ILIKE $${idx} OR
+        a.id::text ILIKE $${idx}
+      )`);
+    }
+
+    let orderBy = 'a.created_at DESC';
+    if (tri === 'ancien') {
+      orderBy = 'a.created_at ASC';
+    } else if (tri === 'prix_asc') {
+      orderBy = 'a.prix ASC NULLS LAST';
+    } else if (tri === 'prix_desc') {
+      orderBy = 'a.prix DESC NULLS LAST';
+    }
+
+    const lim = Math.min(10000, parseInt(limit) || 5000);
+    vals.push(lim);
+
+    const where = 'WHERE ' + conds.join(' AND ');
     const rows = await pool.query(
       `SELECT a.id, a.categorie_slug, a.titre, a.description, a.prix, a.ville, a.quartier,
               a.contact_nom, a.contact_tel, a.photos, a.actif, a.payee, a.rejete,
@@ -187,12 +240,15 @@ router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
               u.nom AS auteur_nom, u.email AS auteur_email
        FROM annonces_classifiees a
        LEFT JOIN utilisateurs u ON u.id = a.utilisateur_id
-       WHERE a.supprimee=false
-       ORDER BY a.created_at DESC LIMIT $1`,
-      [limit]
+       ${where}
+       ORDER BY ${orderBy} LIMIT $${vals.length}`,
+      vals
     );
     res.json({ annonces: rows.rows });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+  } catch (err) {
+    console.error('[ADMIN GET /annonces]', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 

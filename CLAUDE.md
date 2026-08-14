@@ -1,3 +1,21 @@
+## 🚀 Mises à jour du 14/08/2026 : Panneau de Recherche, Onglets de Statut, Filtrage Multi-Critères & Tri Dinamique dans l'Espace Admin (`AdminAnnoncesClient.tsx`, `AdminBoutiquesClient.tsx`, `PaiementsManuelsClient.tsx`, `backend/routes/annonces.js`)
+- **Refonte de la Modération des Annonces Classifiées (`AdminAnnoncesClient.tsx`, `backend/routes/annonces.js`)** :
+  * **Barre de Recherche Textuelle Instantanée** : Recherche multi-champs sur le titre, la description, l'auteur (nom, e-mail), le numéro de téléphone, la ville, la catégorie et l'ID d'annonce.
+  * **Onglets de Statut avec Compteurs Dynamiques** : Navigation par onglets (*"⏳ En attente"*, *"✅ Actives"*, *"❌ Rejetées"*, *"📋 Toutes"*) affichant en temps réel le nombre d'annonces par catégorie de modération.
+  * **Sélecteurs de Filtre Avancés & Tri** :
+    - Filtre par Catégorie (Smartphones, Informatique, TV, Auto, Services, Immo, etc.).
+    - Filtre par Ville / Zone géographique (Dakar, Thiès, Saint-Louis, Ziguinchor, etc.).
+    - Filtre par Statut de Paiement (Payée vs Gratuite / Quota).
+    - Options de Tri dynamique (Les plus récentes, Les plus anciennes, Prix croissant, Prix décroissant).
+  * **Bouton de Réinitialiser les Filtres** & bouton d'effacement rapide de la recherche.
+  * **Support Serveur (`backend/routes/annonces.js`)** : Mise à jour de la route backend `GET /api/annonces/admin/en-attente` pour accepter les requêtes de recherche textuelle (`q`), catégorie, statut, ville, paiement et tri.
+- **Ajout de la Recherche & Onglets sur l'Administration des Boutiques (`AdminBoutiquesClient.tsx`)** :
+  * Ajout du champ de recherche textuelle sur les boutiques (nom, description, nom/e-mail/téléphone du propriétaire, catégorie, ville).
+  * Onglets de filtrage par statut de plan (*"📋 Toutes"*, *"⭐ Abonnées Pro/Business"*, *"⚡ Sponsorisées"*, *"⏸ Inactives"*).
+- **Ajout de la Recherche & Filtres Méthode sur les Paiements Manuels (`PaiementsManuelsClient.tsx`)** :
+  * Recherche textuelle par référence, client, e-mail, téléphone et ID de transaction.
+  * Filtre par méthode de paiement (Wave vs Orange Money).
+
 ## 🚀 Mises à jour du 14/08/2026 : Contrat Vendeur & Charte Marchand 100% Dynamique & Éditable depuis l'Admin (`settingsCache.js`, `settings.js`, `TarifsClient.tsx`, `creer-boutique/page.tsx`, `cgu/page.tsx`)
 - **Édition Dynamique depuis l'Admin (`TarifsClient.tsx`, `settingsCache.js`, `settings.js`)** :
   * Ajout des clés `contrat_vendeur_texte` (texte intégral avec articles modèle) et `contrat_vendeur_requis` (`'true'` / `'false'`) aux paramètres par défaut et à l'API publique `/api/settings/public`.
