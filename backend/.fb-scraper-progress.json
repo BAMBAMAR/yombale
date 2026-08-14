@@ -1,17 +1,15 @@
 {
-  "status": "completed",
+  "status": "in_progress",
   "mode": "live",
-  "groupeIndex": 6,
-  "totalGroupes": 6,
-  "pourcentage": 100,
-  "groupeActuel": "Terminé",
-  "scrapes": 11,
-  "inseres": 6,
-  "doublons": 1,
-  "ignores": 3,
-  "erreurs": [
-    "Je vide je vends j'achete je livre: page.evaluate: Execution context was destroyed, most likely because of a navigation",
-    "Connection terminated due to connection timeout"
-  ],
-  "updatedAt": "2026-08-14T20:27:01.737Z"
+  "groupeIndex": 1,
+  "totalGroupes": 10,
+  "pourcentage": 10,
+  "groupeActuel": "Ndeye Yacine Seck Faye (Offres Emploi)",
+  "groupeUrl": "https://www.facebook.com/ndeyeyacineseckfaye",
+  "scrapes": 0,
+  "inseres": 0,
+  "doublons": 0,
+  "ignores": 0,
+  "erreurs": [],
+  "updatedAt": "2026-08-14T21:59:41.078Z"
 }

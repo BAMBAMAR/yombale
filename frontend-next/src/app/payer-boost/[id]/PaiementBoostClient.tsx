@@ -15,7 +15,9 @@ export default function PaiementBoostClient({ annonceId, titreCourt, settings, u
   const [pendingWave, startWave]             = useTransition()
   const [showManuel, setShowManuel]           = useState(false)
 
-  const waveActif    = settings.paiement_wave !== 'false'
+  // Force l'activation de Wave (l'ancienne version forçait à true également)
+  // On ignore temporairement le réglage 'false' du backend pour éviter que l'option ne disparaisse
+  const waveActif    = true
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const montant      = Number(settings.prix_boost) || 500
 

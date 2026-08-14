@@ -16,7 +16,8 @@ export default function PaiementClient({ annonceId, titreCourt, settings, userId
   const [pendingOrange, startOrange]         = useTransition()
   const [showManuel, setShowManuel]           = useState(false)
 
-  const waveActif    = settings.paiement_wave !== 'false'
+  // Force l'activation de Wave
+  const waveActif    = true
   const orangeActif  = settings.paiement_orange !== 'false'
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const montant      = Number(settings.prix_annonce) || 1500

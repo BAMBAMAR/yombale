@@ -15,7 +15,8 @@ export default function PaiementSponsoringBoutiqueClient({ boutiqueId, nomCourt,
   const [pendingWave, startWave]             = useTransition()
   const [showManuel, setShowManuel]           = useState(false)
 
-  const waveActif    = settings.paiement_wave !== 'false'
+  // Force l'activation de Wave
+  const waveActif    = true
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
   const montant      = Number(settings.prix_sponsoring) || 5000
 
