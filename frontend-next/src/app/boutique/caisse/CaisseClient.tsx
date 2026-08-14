@@ -838,8 +838,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         const data = await resCaissiers.json();
         if (data.caissiers && Array.isArray(data.caissiers)) {
           const actifs = data.caissiers.filter((c: any) => c.actif !== false);
-          setCaissiersList(actifs);
           if (actifs.length > 0) {
+            setCaissiersList(actifs);
             setCaissierSelectionneId(actifs[0].id);
             setCaissierNom(`${actifs[0].prenom} ${actifs[0].nom}`);
           }
@@ -1870,35 +1870,43 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <Link
-              href="/boutique/abonnement"
-              style={{
-                display: 'block',
-                width: '100%',
-                padding: '14px 20px',
-                borderRadius: 12,
-                background: 'linear-gradient(135deg, #c75b00 0%, #ea580c 100%)',
-                color: '#ffffff',
-                fontWeight: 800,
-                fontSize: 14,
-                textDecoration: 'none',
-                boxShadow: '0 4px 12px rgba(199, 91, 0, 0.25)'
-              }}
-            >
-              Activer l&apos;Abonnement Pro (5 000 FCFA/mois) →
-            </Link>
-            <button
-              type="button"
-              onClick={() => window.history.back()}
-              className="annonce-back"
-              style={{ margin: '0 auto' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-              </svg>
-              <span>Retour au tableau de bord boutique</span>
-            </button>
+            {initialToken ? (
+              <div style={{ padding: '14px 18px', background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: 12, color: '#c2410c', fontSize: 13, fontWeight: 700, lineHeight: 1.5 }}>
+                ℹ️ La caisse enregistreuse de cette boutique nécessite l&apos;activation d&apos;un abonnement Pro ou Business auprès du gérant/propriétaire. Veuillez contacter l&apos;administrateur du magasin.
+              </div>
+            ) : (
+              <>
+                <Link
+                  href="/boutique/abonnement"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '14px 20px',
+                    borderRadius: 12,
+                    background: 'linear-gradient(135deg, #c75b00 0%, #ea580c 100%)',
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    fontSize: 14,
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 12px rgba(199, 91, 0, 0.25)'
+                  }}
+                >
+                  Activer l&apos;Abonnement Pro (5 000 FCFA/mois) →
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => window.history.back()}
+                  className="annonce-back"
+                  style={{ margin: '0 auto' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                  <span>Retour au tableau de bord boutique</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -2140,29 +2148,49 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       }}>
         {/* Côté Gauche : Retour + POS badge + Boutique selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          {/* Bouton retour universel — visible mobile & desktop */}
-          <Link
-            href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'}
-            className="caisse-btn-retour"
-            style={{
-              padding: '6px 12px',
-              fontSize: 12,
-              fontWeight: 800,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              flexShrink: 0,
-              background: 'var(--pos-navy)',
-              color: '#ffffff',
-              border: '1px solid var(--pos-navy)',
-              borderRadius: 8,
-              textDecoration: 'none',
-              boxShadow: '0 2px 6px rgba(28,43,74,0.25)'
-            }}
-          >
-            <ArrowLeft size={14} />
-            <span>Boutique</span>
-          </Link>
+          {initialToken ? (
+            <div
+              style={{
+                padding: '6px 12px',
+                fontSize: 12,
+                fontWeight: 800,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                flexShrink: 0,
+                background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+                color: '#ffffff',
+                borderRadius: 8,
+                boxShadow: '0 2px 6px rgba(29,78,216,0.3)'
+              }}
+            >
+              <span>📱 Terminal Caissier</span>
+            </div>
+          ) : (
+            <Link
+              href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'}
+              className="caisse-btn-retour"
+              style={{
+                padding: '6px 12px',
+                fontSize: 12,
+                fontWeight: 800,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                flexShrink: 0,
+                background: 'var(--pos-navy)',
+                color: '#ffffff',
+                border: '1px solid var(--pos-navy)',
+                borderRadius: 8,
+                textDecoration: 'none',
+                boxShadow: '0 2px 6px rgba(28,43,74,0.25)'
+              }}
+            >
+              <ArrowLeft size={14} />
+              <span>Boutique</span>
+            </Link>
+          )}
+
           {/* Badge Hors-Ligne (affiché uniquement si hors ligne) */}
           {offlineModeActive && (
             <div className="caisse-status-badge" style={{
@@ -2187,23 +2215,29 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             </div>
           )}
 
-          {/* Sélecteur de boutique — masqué sur très petit écran */}
+          {/* Sélecteur de boutique — masqué en mode terminal dédié */}
           {boutiques.length > 0 && (
-            <select
-              value={boutiqueActiveId}
-              onChange={e => changerBoutiqueActive(e.target.value)}
-              className="caisse-boutique-select"
-              style={{ padding: '4px 6px', borderRadius: 6, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 11, cursor: 'pointer', outline: 'none', maxWidth: 140, minWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis' }}
-            >
-              {boutiques.map(b => {
-                const isAuth = b.plan_actif === 'pro' || b.plan_actif === 'business';
-                return (
-                  <option key={b.id} value={b.id}>
-                    {isAuth ? '🟢' : '🔒'} {b.nom}
-                  </option>
-                );
-              })}
-            </select>
+            initialToken ? (
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--pos-navy)', background: '#eff6ff', padding: '5px 10px', borderRadius: 6, border: '1px solid #bfdbfe', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                🏪 {activeBoutiqueObj?.nom || boutiques[0]?.nom}
+              </span>
+            ) : (
+              <select
+                value={boutiqueActiveId}
+                onChange={e => changerBoutiqueActive(e.target.value)}
+                className="caisse-boutique-select"
+                style={{ padding: '4px 6px', borderRadius: 6, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 11, cursor: 'pointer', outline: 'none', maxWidth: 140, minWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis' }}
+              >
+                {boutiques.map(b => {
+                  const isAuth = b.plan_actif === 'pro' || b.plan_actif === 'business';
+                  return (
+                    <option key={b.id} value={b.id}>
+                      {isAuth ? '🟢' : '🔒'} {b.nom}
+                    </option>
+                  );
+                })}
+              </select>
+            )
           )}
         </div>
 
