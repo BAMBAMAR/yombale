@@ -189,9 +189,7 @@ router.get('/server-ip', async (req, res) => {
 // POST /api/paiement/wave/initier
 router.post('/wave/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
-    if (!(await cfg.getBool('paiement_wave'))) {
-      return res.status(403).json({ error: 'Paiement Wave temporairement indisponible' });
-    }
+
     const user_id  = req.user.userId;
     const { montant, produit_id } = req.body;
     const session = await wave.createCheckoutSession({
@@ -311,9 +309,7 @@ router.post('/confirmer-succes', async (req, res) => {
 // POST /api/paiement/annonce/initier — paiement d'une annonce classifiée (Wave)
 router.post('/annonce/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
-    if (!(await cfg.getBool('paiement_wave'))) {
-      return res.status(403).json({ error: 'Paiement Wave temporairement indisponible' });
-    }
+
     const userId    = req.user.userId;
     const { annonce_id } = req.body;
     if (!annonce_id) return res.status(400).json({ error: 'annonce_id requis' });
@@ -351,9 +347,7 @@ router.post('/annonce/initier', verifierToken, limiterEcriture, async (req, res)
 // POST /api/paiement/immo-sponsoring/initier — mise en avant immo 30j (Wave)
 router.post('/immo-sponsoring/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
-    if (!(await cfg.getBool('paiement_wave'))) {
-      return res.status(403).json({ error: 'Paiement Wave temporairement indisponible' });
-    }
+
     const userId = req.user.userId;
     const { immo_id } = req.body;
     if (!immo_id) return res.status(400).json({ error: 'immo_id requis' });
@@ -384,9 +378,7 @@ router.post('/immo-sponsoring/initier', verifierToken, limiterEcriture, async (r
 // POST /api/paiement/produit-sponsoring/initier — mise en avant produit 30j (Wave)
 router.post('/produit-sponsoring/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
-    if (!(await cfg.getBool('paiement_wave'))) {
-      return res.status(403).json({ error: 'Paiement Wave temporairement indisponible' });
-    }
+
     const userId = req.user.userId;
     const { produit_id } = req.body;
     if (!produit_id) return res.status(400).json({ error: 'produit_id requis' });
@@ -414,9 +406,7 @@ router.post('/produit-sponsoring/initier', verifierToken, limiterEcriture, async
 // POST /api/paiement/boutique-sponsoring/initier — mise en avant boutique 30j (Wave)
 router.post('/boutique-sponsoring/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
-    if (!(await cfg.getBool('paiement_wave'))) {
-      return res.status(403).json({ error: 'Paiement Wave temporairement indisponible' });
-    }
+
     const userId = req.user.userId;
     const { boutique_id } = req.body;
     if (!boutique_id) return res.status(400).json({ error: 'boutique_id requis' });
@@ -531,9 +521,7 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
 // POST /api/paiement/boost/initier — boost annonce 7 jours (500 FCFA, Wave)
 router.post('/boost/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
-    if (!(await cfg.getBool('paiement_wave'))) {
-      return res.status(403).json({ error: 'Paiement Wave temporairement indisponible' });
-    }
+
     const userId = req.user.userId;
     const { annonce_id } = req.body;
     if (!annonce_id) return res.status(400).json({ error: 'annonce_id requis' });
