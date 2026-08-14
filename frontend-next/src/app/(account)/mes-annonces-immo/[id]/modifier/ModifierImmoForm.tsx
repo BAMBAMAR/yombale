@@ -3,6 +3,8 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateAnnonceImmo } from '@/app/actions/immo'
 
+import DeleteImmoButton from '../../DeleteImmoButton'
+
 interface AnnonceImmo {
   id: string
   titre: string
@@ -180,10 +182,13 @@ export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) 
       )}
       {error && <p className="annonce-error" style={{ marginTop: 12 }}>{error}</p>}
 
-      <div className="annonce-submit-row" style={{ marginTop: 24 }}>
-        <a href="/mes-annonces-immo" className="annonce-action-btn annonce-action-btn--delete" style={{ textDecoration: 'none', lineHeight: '1' }}>
-          Annuler
-        </a>
+      <div className="annonce-submit-row" style={{ marginTop: 24, display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <a href="/mes-annonces-immo" className="annonce-action-btn annonce-action-btn--delete" style={{ textDecoration: 'none', lineHeight: '1' }}>
+            Annuler
+          </a>
+          <DeleteImmoButton id={annonce.id} />
+        </div>
         <button type="submit" className="annonce-submit-btn" disabled={isPending}>
           {isPending ? 'Enregistrement…' : '💾 Enregistrer les modifications'}
         </button>

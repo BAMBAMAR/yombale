@@ -1,3 +1,9 @@
+## 🚀 Mises à jour du 14/08/2026 : Ajout de la Suppression & Retrait des Biens Immobiliers (`ModifierImmoForm.tsx`, `immo/[id]/page.tsx`, `actions/immo.ts`)
+- **Option de Suppression Définitive sur la Modification d'un Bien Immo (`ModifierImmoForm.tsx`)** :
+  * Intégration du composant `DeleteImmoButton` directement dans la barre d'action du formulaire de modification (`/mes-annonces-immo/[id]/modifier`). Permet au propriétaire d'un bien de le retirer/supprimer en un clic avec confirmation.
+- **Accès Direct de Retrait/Modification pour le Propriétaire sur la Fiche Immo (`immo/[id]/page.tsx`)** :
+  * Ajout du bouton *"✏️ Modifier ou 🗑️ Supprimer ce bien"* visible par le propriétaire sur la fiche publique de son bien immobilier (`/immo/[id]`), le redirigeant directement vers la gestion et la suppression.
+
 ## 🚀 Mises à jour du 14/08/2026 : Fix de la Page Admin Boutiques (`ReferenceError: useMemo`) & Recherche sur Reversements (`AdminBoutiquesClient.tsx`, `ReversementsClient.tsx`)
 - **Fix `ReferenceError: useMemo is not defined` dans l'Admin Boutiques (`AdminBoutiquesClient.tsx`)** :
   * **Problème** : L'accès à la rubrique `/admin/boutiques` affichait le message d'erreur *"Une interruption temporaire est survenue — useMemo is not defined"* car le hook `useMemo` n'était pas inclus dans l'import React principal.

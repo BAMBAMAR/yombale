@@ -408,18 +408,38 @@ export default async function FicheImmoPage({
               </a>
             )}
 
-            {/* Sponsoring — propriétaire uniquement */}
+            {/* Actions du propriétaire */}
             {isOwner && (
-              isSponsorise ? (
-                <div style={{ marginTop: 16, padding: '14px 18px', background: '#FEF9C3', border: '1px solid #FDE047', borderRadius: 10 }}>
-                  <p style={{ fontWeight: 700, color: '#854D0E' }}>
-                    ⭐ Mise en avant active jusqu&apos;au{' '}
-                    {new Date(annonce.sponsorisee_jusqu_au!).toLocaleDateString('fr-FR')}
-                  </p>
-                </div>
-              ) : (
-                <SponsoringImmoBtn immoId={annonce.id} userId={session!.userId} settings={settings} />
-              )
+              <div style={{ marginTop: 16 }}>
+                {isSponsorise ? (
+                  <div style={{ padding: '14px 18px', background: '#FEF9C3', border: '1px solid #FDE047', borderRadius: 10, marginBottom: 12 }}>
+                    <p style={{ fontWeight: 700, color: '#854D0E' }}>
+                      ⭐ Mise en avant active jusqu&apos;au{' '}
+                      {new Date(annonce.sponsorisee_jusqu_au!).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                ) : (
+                  <SponsoringImmoBtn immoId={annonce.id} userId={session!.userId} settings={settings} />
+                )}
+                <Link
+                  href={`/mes-annonces-immo/${annonce.id}/modifier`}
+                  style={{
+                    display: 'block',
+                    textAlign: 'center',
+                    background: '#f1f5f9',
+                    color: '#334155',
+                    border: '1px solid #cbd5e1',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    marginTop: 10,
+                  }}
+                >
+                  ✏️ Modifier ou 🗑️ Supprimer ce bien
+                </Link>
+              </div>
             )}
           </div>
         </aside>
