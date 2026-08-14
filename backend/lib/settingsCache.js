@@ -25,6 +25,8 @@ const DEFAULTS = {
   commission_business: '2.0',
   paiement_wave:       'true',
   paiement_orange:     'true',
+  wave_api_key:        '',
+  wave_signing_secret: '',
   paiement_manuel_actif:      'true',
   paiement_manuel_numero_wave: '',
   paiement_manuel_numero_om:   '',

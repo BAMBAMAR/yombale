@@ -22,11 +22,12 @@ function generateWaveSignature(signingSecret, bodyObj) {
  * Initialise une session de paiement Wave Checkout
  */
 async function createCheckoutSession({ amount, currency = 'XOF', success_url, error_url, client_reference }) {
-  const apiKey = process.env.WAVE_API_KEY;
-  const signingSecret = process.env.WAVE_SIGNING_SECRET || process.env.WAVE_WEBHOOK_SECRET;
+  const cfg = require('../lib/settingsCache');
+  const apiKey = process.env.WAVE_API_KEY || (await cfg.get('wave_api_key'));
+  const signingSecret = process.env.WAVE_SIGNING_SECRET || process.env.WAVE_WEBHOOK_SECRET || (await cfg.get('wave_signing_secret'));
 
-  if (!apiKey || apiKey.includes('xxxxxxxx')) {
-    throw new Error('Clé API Wave non configurée. Veuillez ajouter WAVE_API_KEY dans votre fichier .env ou variables d\'environnement.');
+  if (!apiKey || !apiKey.trim() || apiKey.includes('xxxxxxxx')) {
+    throw new Error('Clé API Wave non configurée. Veuillez ajouter WAVE_API_KEY dans vos variables d\'environnement Render/Vercel ou dans les paramètres admin.');
   }
 
   const payload = {
