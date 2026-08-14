@@ -4094,33 +4094,35 @@ router.post('/:id/produits/:prodId/avis', async (req, res) => {
 // ── Spec Acheteur 04 : GET /api/boutiques/commandes/suivi — Suivi de commande dynamique
 router.get('/commandes/suivi', async (req, res) => {
   try {
-    const { ref, tel } = req.query;
-    if (!ref && !tel) {
+    const { ref, tel, q } = req.query;
+    const rawTerm = (q || ref || tel || '').toString().trim();
+    if (!rawTerm) {
       return res.status(400).json({ error: 'Veuillez fournir une référence de commande ou un numéro de téléphone.' });
     }
 
-    let query = `
+    const searchPattern = `%${rawTerm}%`;
+    const cleanDigits = rawTerm.replace(/[^0-9]/g, '');
+    const digitsPattern = cleanDigits ? `%${cleanDigits}%` : searchPattern;
+
+    const query = `
       SELECT c.id, c.reference, c.client_nom, c.client_telephone, c.statut, c.montant_total,
-             c.methode_paiement, c.created_at, b.nom as boutique_nom, b.telephone_whatsapp as boutique_whatsapp
-      FROM commandes_express c
-      JOIN boutiques b ON b.id = c.boutique_id
-      WHERE 1=1
+             c.methode_paiement, c.created_at, COALESCE(b.nom, 'Boutique Nopalou') as boutique_nom,
+             COALESCE(b.telephone_whatsapp, b.telephone) as boutique_whatsapp
+      FROM commandes_boutique c
+      LEFT JOIN boutiques b ON b.id = c.boutique_id
+      WHERE (
+        c.reference ILIKE $1
+        OR c.id::text ILIKE $1
+        OR c.client_telephone ILIKE $1
+        OR ($2 <> '%%' AND regexp_replace(c.client_telephone, '[^0-9]', '', 'g') LIKE $2)
+      )
+      ORDER BY c.created_at DESC
+      LIMIT 10
     `;
-    const params = [];
 
-    if (ref) {
-      params.push(`%${ref.trim()}%`);
-      query += ` AND (c.reference ILIKE $${params.length} OR c.id::text ILIKE $${params.length})`;
-    } else if (tel) {
-      params.push(`%${tel.trim()}%`);
-      query += ` AND c.client_telephone ILIKE $${params.length}`;
-    }
-
-    query += ` ORDER BY c.created_at DESC LIMIT 5`;
-
-    const { rows } = await pool.query(query, params);
+    const { rows } = await pool.query(query, [searchPattern, digitsPattern]);
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Aucune commande trouvée pour ces critères.' });
+      return res.status(404).json({ error: 'Aucune commande trouvée. Vérifiez votre numéro de référence ou votre numéro de téléphone.' });
     }
 
     res.json({

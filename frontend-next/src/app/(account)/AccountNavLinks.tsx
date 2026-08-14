@@ -4,8 +4,9 @@ import { usePathname } from 'next/navigation'
 
 const GROUPES = [
   {
-    label: 'Mes annonces',
+    label: 'Mes annonces & achats',
     liens: [
+      { href: '/compte?tab=suivi-commande',    label: 'Suivre ma commande',  emoji: '📦', tab: 'suivi-commande' },
       { href: '/compte?tab=mes-annonces',      label: 'Mes annonces',        emoji: '📋', tab: 'mes-annonces' },
       { href: '/compte?tab=mes-annonces-immo', label: 'Mes biens immo',      emoji: '🏠', tab: 'mes-annonces-immo' },
       { href: '/compte?tab=mes-alertes',       label: 'Mes alertes prix',    emoji: '🔔', tab: 'mes-alertes' },

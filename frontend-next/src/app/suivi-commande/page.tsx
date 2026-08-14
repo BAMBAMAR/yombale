@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 interface CommandeSuivie {
   id: string
@@ -16,30 +17,31 @@ interface CommandeSuivie {
   boutique_whatsapp?: string
 }
 
-export default function SuiviCommandePage() {
-  const [refInput, setRefInput] = useState('')
+function SuiviCommandeContent() {
+  const searchParams = useSearchParams()
+  const initialRef = searchParams.get('ref') || searchParams.get('q') || ''
+  
+  const [refInput, setRefInput] = useState(initialRef)
   const [loading, setLoading] = useState(false)
   const [commandes, setCommandes] = useState<CommandeSuivie[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault()
-    if (!refInput.trim()) return
+  const executeSearch = useCallback(async (queryTerm: string) => {
+    const term = queryTerm.trim()
+    if (!term) return
 
     setLoading(true)
     setError(null)
     setCommandes([])
 
     try {
-      const isTel = /^[0-9\s+]+$/.test(refInput.trim())
-      const paramName = isTel ? 'tel' : 'ref'
-      const res = await fetch(`${backendUrl}/api/boutiques/commandes/suivi?${paramName}=${encodeURIComponent(refInput.trim())}`)
+      const res = await fetch(`${backendUrl}/api/boutiques/commandes/suivi?q=${encodeURIComponent(term)}&ref=${encodeURIComponent(term)}&tel=${encodeURIComponent(term)}`)
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || 'Commande introuvable. Vérifiez votre référence.')
+        setError(data.error || 'Commande introuvable. Vérifiez votre référence ou votre numéro de téléphone.')
       } else {
         setCommandes(data.commandes || [])
       }
@@ -48,6 +50,18 @@ export default function SuiviCommandePage() {
     } finally {
       setLoading(false)
     }
+  }, [backendUrl])
+
+  useEffect(() => {
+    if (initialRef) {
+      setRefInput(initialRef)
+      executeSearch(initialRef)
+    }
+  }, [initialRef, executeSearch])
+
+  async function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    executeSearch(refInput)
   }
 
   function getStepIndex(statut: string) {
@@ -169,5 +183,17 @@ export default function SuiviCommandePage() {
 
       </div>
     </div>
+  )
+}
+
+export default function SuiviCommandePage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '40px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ fontSize: 14, color: '#64748b', fontWeight: 600 }}>Recherche du suivi de commande...</p>
+      </div>
+    }>
+      <SuiviCommandeContent />
+    </Suspense>
   )
 }

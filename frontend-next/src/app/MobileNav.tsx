@@ -58,6 +58,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
 
         <nav>
           <a href="/" className="mobile-nav-link" onClick={close}>🛒 Produits</a>
+          <a href="/suivi-commande" className="mobile-nav-link" onClick={close}>📦 Suivre ma commande</a>
           <a href="/immo" className="mobile-nav-link" onClick={close}>🏠 Immobilier</a>
           <a href="/telecom" className="mobile-nav-link" onClick={close}>📱 Télécom</a>
           <a href="/annonces" className="mobile-nav-link" onClick={close}>📋 Annonces</a>
@@ -94,6 +95,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
             <>
               <a href="/boutique" className="mobile-nav-link" style={{ fontWeight: 800, color: 'var(--accent)' }} onClick={close}>🏪 Ma boutique (Gestion)</a>
               <a href="/compte" className="mobile-nav-link" onClick={close}>👤 {nom ?? 'Mon compte'}</a>
+              <a href="/compte?tab=suivi-commande" className="mobile-nav-link" onClick={close}>📦 Suivre ma commande</a>
               <a href="/compte?tab=mes-annonces" className="mobile-nav-link" onClick={close}>📋 Mes annonces</a>
               <a href="/compte?tab=mes-annonces-immo" className="mobile-nav-link" onClick={close}>🏠 Mes biens immo</a>
               <a href="/compte?tab=mes-alertes" className="mobile-nav-link" onClick={close}>🔔 Mes alertes prix</a>
