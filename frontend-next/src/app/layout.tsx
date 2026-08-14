@@ -351,7 +351,7 @@ export default async function RootLayout({
                 <a href="/tarifs-boutique">Tarifs &amp; Forfaits Vendeurs</a>
                 <a href="/guide-creer-boutique">Guide Vendeur &amp; Sourcing</a>
                 <a href="/demo">Démo Commerciale</a>
-                <a href="/boutiques">Boutiques partenaires</a>
+                <a href="/cgu#suppression-donnees">🗑️ Supprimer annonce / numéro</a>
                 <a href="/mentions-legales">Mentions légales</a>
                 <a href="/confidentialite">Confidentialité</a>
                 <a href="/cgu">CGU</a>

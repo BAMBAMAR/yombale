@@ -29,8 +29,57 @@ function guard() {
   return true;
 }
 
+let _blacklistCache = new Set();
+let _lastBlacklistCheck = 0;
+
+async function estDesinscrit(phone) {
+  if (!phone) return false;
+  const norm = normalisePhone(phone);
+  const now = Date.now();
+  if (now - _lastBlacklistCheck > 20000) {
+    try {
+      const { pool } = require('../models/db');
+      const r = await pool.query('SELECT phone FROM whatsapp_blacklist');
+      _blacklistCache = new Set(r.rows.map(row => normalisePhone(row.phone)));
+      _lastBlacklistCheck = now;
+    } catch {}
+  }
+  return _blacklistCache.has(norm);
+}
+
+async function ajouterBlacklist(phone, reason = 'optout') {
+  const norm = normalisePhone(phone);
+  _blacklistCache.add(norm);
+  try {
+    const { pool } = require('../models/db');
+    await pool.query(
+      `INSERT INTO whatsapp_blacklist (phone, reason, created_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (phone) DO UPDATE SET reason = $2, created_at = NOW()`,
+      [norm, reason]
+    );
+  } catch (err) {
+    console.error('[WHATSAPP BLACKLIST INSERT ERR]:', err.message);
+  }
+}
+
+async function retirerBlacklist(phone) {
+  const norm = normalisePhone(phone);
+  _blacklistCache.delete(norm);
+  try {
+    const { pool } = require('../models/db');
+    await pool.query('DELETE FROM whatsapp_blacklist WHERE phone = $1', [norm]);
+  } catch (err) {
+    console.error('[WHATSAPP BLACKLIST DELETE ERR]:', err.message);
+  }
+}
+
 async function post(payload) {
   if (!guard()) return;
+  if (payload?.to && await estDesinscrit(payload.to)) {
+    console.log(`[WHATSAPP BLACKLISTED] Message ignoré pour le numéro désinscrit ${payload.to}`);
+    return { success: false, reason: 'blacklisted' };
+  }
   try {
     const { data } = await axios.post(apiUrl(), payload, { headers: headers() });
     return data;
@@ -315,4 +364,7 @@ module.exports = {
   sendReadReceipt,
   sendFiche,
   normalisePhone,
+  estDesinscrit,
+  ajouterBlacklist,
+  retirerBlacklist,
 };

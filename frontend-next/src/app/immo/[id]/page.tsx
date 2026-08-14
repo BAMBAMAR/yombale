@@ -380,6 +380,9 @@ export default async function FicheImmoPage({
                   💬 WhatsApp
                 </a>
                 <BoutonWhatsApp type="immo" id={annonce.id} isConnecte={!!session} />
+                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed rgba(255,255,255,0.2)', fontSize: '0.76rem', color: 'rgba(255,255,255,0.7)', textAlign: 'center', lineHeight: '1.4' }}>
+                  🗑️ Pour retirer ce bien ou votre numéro : envoyez &quot;supprimer&quot; sur <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" style={{ color: '#25d366', textDecoration: 'underline' }}>WhatsApp</a> ou <a href="/cgu#suppression-donnees" style={{ color: '#60a5fa', textDecoration: 'underline' }}>consultez les CGU</a>.
+                </div>
               </div>
             )}
 

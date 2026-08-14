@@ -349,6 +349,12 @@ module.exports = async function migrateInline() {
         processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS whatsapp_blacklist (
+        phone       TEXT PRIMARY KEY,
+        reason      TEXT DEFAULT 'optout',
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
       CREATE INDEX IF NOT EXISTS idx_wpm_processed_at
         ON whatsapp_processed_messages(processed_at);
     `);

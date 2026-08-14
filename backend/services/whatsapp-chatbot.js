@@ -10,6 +10,9 @@ const {
   sendWhatsAppMenuOuFin,
   sendReadReceipt,
   normalisePhone,
+  ajouterBlacklist,
+  retirerBlacklist,
+  estDesinscrit,
 } = require('./whatsapp');
 const { creerCommandeBoutique, notifierVendeurCommande } = require('../routes/comptabilite');
 const cfg = require('../lib/settingsCache');
@@ -57,6 +60,10 @@ const FAQ = [
   {
     motsCles: ['comment ça marche', 'comment ca marche', 'comment utiliser', 'aide site', 'utiliser nopalou', 'utiliser le site'],
     reponse: '📖 *Comment utiliser Nopalou*\n\n🔍 Comparez les prix produits\n🏆 Guide d\'achat personnalisé\n🏡 Trouvez un logement\n📶 Comparez les forfaits télécom\n⚖️ Comparez côte à côte\n❤️ Sauvegardez vos favoris\n🔔 Créez des alertes de prix\n📢 Publiez une annonce\n\nGuide complet : ' + SITE + '/guide-emploi',
+  },
+  {
+    motsCles: ['supprimer', 'retirer', 'effacer', 'desinscrire', 'stop', 'droit a l oubli', 'supprimer numero', 'retirer annonce'],
+    reponse: '🗑️ *Suppression d\'annonce ou désinscription*\n\n• Pour supprimer immédiatement vos annonces et votre numéro : tapez *supprimer*\n• Pour ne plus recevoir AUCUN message WhatsApp : tapez *STOP*\n• Vous pouvez aussi écrire à ✉️ contact@nopalou.com',
   },
 ];
 
@@ -715,6 +722,92 @@ async function handleIncoming(msg) {
   const { state, context } = await getSession(phone);
   const text = msg.text?.body?.trim() || '';
   const interactiveId = msg.interactive?.list_reply?.id || msg.interactive?.button_reply?.id || '';
+
+  const normText = normaliserTexte(text);
+  const normInteractive = normaliserTexte(interactiveId);
+
+  // ── 1. Désinscription définitive / STOP (Opt-out) ──────────────────────────
+  const MOTS_STOP = ['stop', 'desinscrire', 'desabonner', 'ne plus recevoir', 'bloquer', 'interdire', 'ne plus me contacter'];
+  const estMotStop = MOTS_STOP.some(m => normText === m || normText.includes(m)) || normInteractive === 'stop';
+
+  if (estMotStop) {
+    await ajouterBlacklist(phone, 'user_stop');
+    const telClean = phone.replace(/\D/g, '').slice(-9);
+    try {
+      await pool.query(
+        `UPDATE annonces_classifiees SET actif = false, supprimee = true, updated_at = NOW() WHERE contact_tel LIKE '%' || $1 OR contact_tel LIKE '%' || $2`,
+        [telClean, phone]
+      );
+      await pool.query(
+        `UPDATE annonces_immo SET actif = false, supprimee = true, updated_at = NOW() WHERE contact_tel LIKE '%' || $1 OR contact_tel LIKE '%' || $2`,
+        [telClean, phone]
+      );
+      await pool.query(`UPDATE alertes SET active = false WHERE telephone LIKE '%' || $1 OR telephone = $2`, [telClean, phone]);
+    } catch {}
+
+    await sendWhatsAppText(
+      phone,
+      `❌ *Désinscription effectuée — Nopalou*\n\nVous êtes maintenant désinscrit(e) des messages WhatsApp Nopalou. Vos annonces et alertes associées ont été désactivées.\n\nVous ne recevrez plus aucun message de notre part sur ce numéro (+${phone}).\n\n*(Pour vous réinscrire un jour : envoyez simplement START)*`
+    );
+    await setSession(phone, 'IDLE', {});
+    return;
+  }
+
+  // ── 2. Réinscription / START ────────────────────────────────────────────────
+  const MOTS_START = ['start', 'reinscrire', 'debloquer', 'reprendre'];
+  if (MOTS_START.includes(normText)) {
+    await retirerBlacklist(phone);
+    await sendWhatsAppText(
+      phone,
+      `✅ *Réinscription effectuée — Nopalou*\n\nVotre numéro (+${phone}) a bien été réinscrit. Vous pouvez de nouveau échanger avec l'assistant Nopalou.\n\nTapez *menu* pour commencer !`
+    );
+    await setSession(phone, 'MENU', {});
+    await sendMenu(phone);
+    return;
+  }
+
+  // Si le numéro est désinscrit (blacklisté) et n'a pas tapé START, ignorer
+  if (await estDesinscrit(phone)) {
+    return;
+  }
+
+  // ── 3. Suppression d'annonce ou de numéro ──────────────────────────────────
+  const MOTS_SUPPRIMER = ['supprimer', 'effacer', 'retirer', 'retirer mon annonce', 'supprimer mon annonce', 'supprimer mon numero', 'retirer mon numero', 'supprimer mes annonces'];
+  const estMotSupprimer = MOTS_SUPPRIMER.some(m => normText.includes(m)) || normInteractive === 'supprimer_donnees';
+
+  if (estMotSupprimer) {
+    const telClean = phone.replace(/\D/g, '').slice(-9);
+    let totalDesactives = 0;
+    try {
+      const r1 = await pool.query(
+        `UPDATE annonces_classifiees SET actif = false, supprimee = true, updated_at = NOW() WHERE (contact_tel LIKE '%' || $1 OR contact_tel LIKE '%' || $2) AND supprimee = false RETURNING id`,
+        [telClean, phone]
+      );
+      totalDesactives += r1.rows.length;
+
+      const r2 = await pool.query(
+        `UPDATE annonces_immo SET actif = false, supprimee = true, updated_at = NOW() WHERE (contact_tel LIKE '%' || $1 OR contact_tel LIKE '%' || $2) AND supprimee = false RETURNING id`,
+        [telClean, phone]
+      );
+      totalDesactives += r2.rows.length;
+
+      await pool.query(`UPDATE alertes SET active = false WHERE telephone LIKE '%' || $1 OR telephone = $2`, [telClean, phone]);
+    } catch (e) {
+      console.error('[SUPPRESSION NUMERO ERR]:', e.message);
+    }
+
+    let msg = `🗑️ *Demande de retrait / suppression Nopalou*\n\n`;
+    if (totalDesactives > 0) {
+      msg += `✅ *${totalDesactives} annonce(s)* et vos coordonnées rattachées au +${phone} ont été **désactivées et retirées** de Nopalou.com.\n\n`;
+    } else {
+      msg += `Vos coordonnées (+${phone}) ont été enregistrées pour suppression. Aucune annonce publique active n'a été trouvée pour ce numéro.\n\n`;
+    }
+    msg += `Si vous ne souhaitez plus recevoir AUCUN message WhatsApp de Nopalou, envoyez simplement *STOP*.\n\nPour toute demande complémentaire d'effacement de données, écrivez à ✉️ contact@nopalou.com.`;
+
+    await sendWhatsAppText(phone, msg);
+    await setSession(phone, 'MENU', {});
+    return;
+  }
 
   // ── Lien direct partagé par un marchand : "boutique_{slug}" (texte ou bouton) ─
   // Traité comme un mot-clé global (au même titre que "menu"/"aide") : actif depuis

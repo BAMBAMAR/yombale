@@ -63,6 +63,18 @@ export default async function CguPage() {
         <p>Nopalou se réserve le droit de modérer, modifier ou supprimer toute annonce ne respectant pas ces règles, sans remboursement.</p>
       </section>
 
+      <section className="legal-section" id="suppression-donnees" style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e2e8f0', margin: '24px 0' }}>
+        <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+          🗑️ Droit de Retrait, Désinscription &amp; Suppression de Téléphone / Annonce
+        </h2>
+        <p>Conformément aux réglementations relatives à la protection des données personnelles (APDP / RGPD) et au droit à l&apos;oubli :</p>
+        <ul>
+          <li><strong>Retrait immédiat d&apos;une annonce ou d&apos;un numéro de téléphone :</strong> Si votre numéro de téléphone ou votre annonce apparaît sur Nopalou et que vous souhaitez sa suppression immédiate, envoyez simplement le mot <strong>&quot;supprimer&quot;</strong> à notre <a href="/assistant-whatsapp">Assistant WhatsApp (wa.me/221708717942)</a>. Le système désactivera automatiquement toutes les annonces et coordonnées associées à votre numéro.</li>
+          <li><strong>Refus de réception de messages (Désinscription / Opt-Out) :</strong> Si vous ne souhaitez plus jamais recevoir aucun message ou notification de Nopalou sur WhatsApp, envoyez simplement <strong>&quot;STOP&quot;</strong> au chatbot WhatsApp. Votre numéro sera inscrit en liste noire et aucun message ne vous sera plus adressé. (Tapez <strong>&quot;START&quot;</strong> si vous souhaitez vous réinscrire).</li>
+          <li><strong>Demande d&apos;effacement par e-mail :</strong> Vous pouvez également adresser votre demande de suppression à tout moment par e-mail à <a href="mailto:contact@nopalou.com?subject=Demande%20de%20suppression%20donnees">contact@nopalou.com</a>. Le traitement est effectué sous 24h ouvrées.</li>
+        </ul>
+      </section>
+
       <section className="legal-section">
         <h2>5. Paiements</h2>
         <p>Les paiements sont traités par <strong>Wave</strong> et <strong>Orange Money</strong>. Nopalou ne stocke aucune donnée bancaire. Les transactions sont sécurisées par les prestataires de paiement.</p>

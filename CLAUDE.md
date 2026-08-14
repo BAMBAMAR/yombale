@@ -1,3 +1,16 @@
+## 🚀 Mises à jour du 14/08/2026 : Système Complet de Retrait d'Annonces, Suppression de Numéro & Désinscription WhatsApp (`STOP`, `START`, `supprimer`) (`whatsapp.js`, `whatsapp-chatbot.js`, `migrate-inline.js`, `layout.tsx`, `cgu/page.tsx`, `annonces/[id]/page.tsx`, `immo/[id]/page.tsx`)
+- **Gestion Dynamique des Désinscriptions & Opt-Out WhatsApp (`whatsapp.js`, `whatsapp-chatbot.js`, `migrate-inline.js`)** :
+  * **Table SQL `whatsapp_blacklist` (`migrate-inline.js`)** : Création automatique de la table de liste noire pour enregistrer les numéros ayant demandé l'arrêt de réception des messages.
+  * **Commande `STOP` (Opt-Out)** : Si un utilisateur envoie `STOP`, `desinscrire`, `ne plus me contacter` ou `bloquer` au chatbot WhatsApp, son numéro est immédiatement ajouté à `whatsapp_blacklist`, toutes ses annonces/alertes sont désactivées et il reçoit une confirmation. Aucun message ou notification ne lui sera plus envoyé par le système (`post()` vérifie automatiquement la liste noire avant d'émettre).
+  * **Commande `START` (Réinscription)** : Permet à tout moment de se réinscrire si l'utilisateur souhaite réutiliser l'assistant Nopalou.
+- **Commande `supprimer` / `retirer` Automatisée sur le Chatbot (`whatsapp-chatbot.js`)** :
+  * Dès qu'un utilisateur tape `supprimer`, `retirer mon annonce` ou `effacer mon numéro` sur WhatsApp, le chatbot recherche en base de données toutes les annonces classifiées et immobilières liées à son numéro et les désactive immédiatement (`actif = false, supprimee = true`). Le chatbot lui confirme le nombre d'annonces retirées.
+  * Ajout de l'entrée d'aide correspondante dans les FAQ interactives du chatbot.
+- **Transparence & Mentions de Droit de Retrait sur le Site Web (`layout.tsx`, `cgu/page.tsx`, `annonces/[id]/page.tsx`, `immo/[id]/page.tsx`)** :
+  * **Pied de Page (`layout.tsx`)** : Ajout du lien direct `🗑️ Supprimer annonce / numéro` renvoyant vers la procédure dans les CGU.
+  * **Page des Conditions Générales (`cgu/page.tsx#suppression-donnees`)** : Ajout d'une section dédiée expliquant clairement les droits de retrait immédiat d'annonce/numéro (via WhatsApp avec le mot `supprimer` ou par e-mail à `contact@nopalou.com`) et de désinscription de messages (via le mot `STOP`).
+  * **Fiches d'Annonces (`annonces/[id]/page.tsx` & `immo/[id]/page.tsx`)** : Ajout sous la carte de contact d'une mention d'information responsive permettant aux propriétaires ou personnes concernées de demander la désactivation instantanée de l'annonce ou de leur numéro.
+
 ## 🚀 Mises à jour du 14/08/2026 : Filtrage des Notifications WhatsApp de Modération (Annonces Déposées sur le Site Uniquement) (`annonces.js`, `notifications.js`)
 - **Exclusion du Scraping / Imports Externes des Notifications WhatsApp (`backend/routes/annonces.js`, `backend/services/notifications.js`)** :
   * **Problème** : Lors de la validation par un administrateur d'une annonce classifiée ou immobilière, le backend envoyait un message WhatsApp automatique (`nopalou_carousel_annonce` / `nopalou_fiche_texte`) au numéro de téléphone rattaché à l'annonce (`contact_tel`), y compris pour les annonces importées ou scrappées (Facebook, Expat-Dakar, CoinAfrique, etc.). Les personnes propriétaires de ces numéros recevaient un message impromptu et répondaient sur WhatsApp, déclenchant les réponses automatiques du Chatbot.
