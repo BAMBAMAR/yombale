@@ -59,7 +59,6 @@ export default function PaiementSponsoringProduitClient({ produitId, nomCourt, s
               onClick={payerWave}
               disabled={pendingWave}
               className="paiement-btn paiement-btn--wave"
-              style={{ border: '2px solid #1d4ed8', boxShadow: '0 4px 12px rgba(29,78,216,0.15)' }}
             >
               {pendingWave ? (
                 <span>Connexion à Wave…</span>
@@ -80,7 +79,6 @@ export default function PaiementSponsoringProduitClient({ produitId, nomCourt, s
         <button
           disabled={true}
           className="paiement-btn paiement-btn--orange"
-          style={{ opacity: 0.65, cursor: 'not-allowed', background: '#f8fafc', borderColor: '#cbd5e1' }}
         >
           <span className="paiement-btn-logo">🟠</span>
           <div className="paiement-btn-text">
@@ -92,7 +90,7 @@ export default function PaiementSponsoringProduitClient({ produitId, nomCourt, s
         {manuelActif && (
           <div style={{ marginTop: 8, paddingTop: 12, borderTop: '1px dashed #cbd5e1' }}>
             <p style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>Problème avec Wave ou vous préférez un dépôt manuel ?</p>
-            <button onClick={() => setShowManuel(true)} className="paiement-btn" style={{ background: '#fff', border: '1px solid #94a3b8' }}>
+            <button onClick={() => setShowManuel(true)} className="paiement-btn">
               <span className="paiement-btn-logo">🧾</span>
               <div className="paiement-btn-text">
                 <span className="paiement-btn-nom">Paiement Manuel / Reçu de Dépôt</span>

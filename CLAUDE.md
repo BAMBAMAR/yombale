@@ -2747,3 +2747,12 @@ opalou_pos_session_) pour conserver l'Ã©tat du CA mÃªme en cas d'actualisation d
     3. **Boutique (outiques/[id]/page.tsx)** : Intégration du PageHeader et suppression du lien textuel en bas de page.
     4. **Produit de Boutique (outiques/[id]/produits/[produitId]/page.tsx)** : Substitution du breadcrumb texte et élimination du lien "Retour à la boutique" par un PageHeader intégré.
     5. **Comparaison Immobilière (immo/comparaison/page.tsx)** : Ajout du PageHeader pour clarifier la position dans l'arborescence, suppression des liens de Retour dans la page et sur les états d'erreur.
+
+## ? Mises à jour du 14/08/2026 : Refonte et Modernisation des Pages de Paiement (Zero-Lost-Conversion)
+- **Amélioration du Design des Cartes de Paiement (Boost & Sponsoring)** :
+  * **Problème** : La page de paiement pour le Boost 7j, ainsi que celles des Sponsorings Boutique/Produit/Immo, présentaient un design basique (bordures dures, fond blanc plat, boutons génériques) qui manquait d'un aspect premium et d'homogénéité avec le reste de la plateforme (Boutiques, Guides).
+  * **Solution** : Refonte totale du composant de la carte de paiement (.paiement-card) dans globals.css et nettoyage des styles en dur dans les composants clients.
+    1. **Design Premium (Glassmorphism & Ombres)** : Ajout de bordures arrondies fluides (24px), d'ombres portées douces (ox-shadow) et d'animations de survol (élévation de la carte).
+    2. **Typographie & Couleurs** : Utilisation d'un fond en dégradé subtil pour l'en-tête (#F8FAFC vers #F1F5F9) et d'un dégradé de texte vert émeraude élégant pour afficher le montant total.
+    3. **Boutons de Paiement Modernisés** : Suppression des styles inline obsolètes dans tous les fichiers Paiement*Client.tsx. Les boutons bénéficient désormais d'une esthétique standardisée (arrondis 16px, ombres douces spécifiques à Wave/OM, effets de sursis interactifs fluides et animation de flèche).
+  * Les 5 modules de paiement (payer-annonce, payer-boost, payer-sponsoring-boutique, payer-sponsoring-produit, payer-sponsoring-immo) sont désormais visuellement luxueux et rassurants.
