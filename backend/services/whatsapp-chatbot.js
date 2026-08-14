@@ -1539,7 +1539,7 @@ async function handleIncoming(msg) {
               amount: Math.round(totalMontant),
               currency: 'XOF',
               success_url: `${SITE}/paiement/succes?ref=${refs}&type=commande-boutique`,
-              error_url: `${SITE}/paiement/erreur`,
+              error_url: `${SITE}/paiement/erreur?ref=${refs}&type=commande-express`,
               client_reference: refs,
             });
             if (waveSession?.wave_url) {

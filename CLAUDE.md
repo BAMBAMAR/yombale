@@ -4,7 +4,7 @@
   * **Cause** : Les URLs de redirection d'erreur (`error_url`) générées côté backend pour Wave ne transmettaient pas le paramètre `type` (ex: `type=commande-express` ou `type=commande-boutique`), et le composant frontend `PaiementErreurPage` attribuait par défaut le type `'annonce'`.
   * **Solution** :
     1. **Correction Frontend (`PaiementErreurPage`)** : Détection automatique et intelligente du type d'achat selon le préfixe de la référence (`CMD-` / `pm_` ➔ commande boutique, `abmt_` ➔ abonnement, `bout_` ➔ sponsoring boutique, `immo_` ➔ sponsoring immo, `prod_` ➔ sponsoring produit, `ann_` ➔ annonce). Si aucun type ne correspond, affichage d'un message neutre et générique (*"Paiement non abouti — Votre paiement n'a pas pu être finalisé (annulation ou solde insuffisant)"*) plutôt que d'assumer qu'il s'agit d'une annonce.
-    2. **Correction Backend (`comptabilite.js`, `boutiques.js`, `paiement.js`, `abonnements.js`)** : Ajout systématique des paramètres `?ref=${ref}&type=...` dans tous les `error_url` transmis aux API de paiement (Wave/Orange).
+    2. **Correction Backend (`comptabilite.js`, `boutiques.js`, `paiement.js`, `abonnements.js`, `whatsapp-chatbot.js`)** : Ajout systématique des paramètres `?ref=${ref}&type=...` dans tous les `error_url` transmis aux API de paiement (Wave/Orange).
 
 ## 🚀 Mises à jour du 14/08/2026 : Extension des Mentions de Droit à l'Effacement & Opt-Out sur Tout le Site (`confidentialite/page.tsx`, `assistant-whatsapp/page.tsx`, `guide-emploi/page.tsx`)
 - **Politique de Confidentialité (`confidentialite/page.tsx#suppression-donnees`)** :
