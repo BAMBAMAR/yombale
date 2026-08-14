@@ -1531,6 +1531,7 @@ async function handleIncoming(msg) {
       let msgFinal = `✅ *Commande ${refs} envoyée !*\n\nLe vendeur *${boutique.nom}* va vous contacter pour finaliser le paiement et la livraison.`;
       if (creees[0]?.methode_paiement === 'wave' || creees[0]?.methode_paiement === 'pay_wave') {
         let wavePayUrl = `${SITE}/checkout-express?produit=${creees[0]?.produit_id || ''}&boutique=${boutique.id}&phone=${phone}&pay=wave&auto=1`;
+        let hasWaveSession = false;
         try {
           const wave = require('./wave');
           const totalMontant = creees.reduce((sum, c) => sum + Number(c.montant_total || 0), 0);
@@ -1544,12 +1545,18 @@ async function handleIncoming(msg) {
             });
             if (waveSession?.wave_url) {
               wavePayUrl = waveSession.wave_url;
+              hasWaveSession = true;
             }
           }
         } catch (wErr) {
           console.error('[WHATSAPP CHATBOT WAVE SESSION ERR]:', wErr.message);
         }
-        msgFinal += `\n\n🌊 *Réglez directement votre commande par Wave en 1 Clic :*\n👉 ${wavePayUrl}`;
+        if (hasWaveSession) {
+          msgFinal += `\n\n🌊 *Réglez directement votre commande par Wave en 1 Clic :*\n👉 ${wavePayUrl}`;
+        } else {
+          const totalMontantFmt = new Intl.NumberFormat('fr-FR').format(creees.reduce((sum, c) => sum + Number(c.montant_total || 0), 0));
+          msgFinal += `\n\n💡 *Paiement par Dépôt Manuel :*\nVous pouvez effectuer votre transfert de *${totalMontantFmt} FCFA* au *77 720 20 86* (Wave / Orange Money) puis nous envoyer la capture de votre reçu.`;
+        }
       }
       if (echecs.length > 0) {
         msgFinal += `\n\n⚠️ ${echecs.map(e => e.nom).join(', ')} n'${echecs.length > 1 ? 'ont' : 'a'} pas pu être commandé(s) : ${echecs[0].erreur}.`;

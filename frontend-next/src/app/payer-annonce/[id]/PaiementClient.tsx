@@ -28,7 +28,8 @@ export default function PaiementClient({ annonceId, titreCourt, settings, userId
       if (res.ok && res.url) {
         window.location.href = res.url
       } else {
-        setError(res.error ?? 'Impossible d\'initialiser le paiement Wave.')
+        setError(res.error ?? 'L\'initialisation Wave à échoué. Réglez par dépôt manuel ci-dessous.')
+        setShowManuel(true)
       }
     })
   }

@@ -209,10 +209,17 @@ export default function CommanderModal({
         }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? 'Erreur lors de la commande'); setLoading(false); return }
+      if (!res.ok && !data.fallback_manuel) { setError(data.error ?? 'Erreur lors de la commande'); setLoading(false); return }
       
       if (data.wave_url) {
         window.location.href = data.wave_url
+        return
+      }
+
+      if (data.fallback_manuel) {
+        setPaiement('manuel')
+        setError('💡 L\'API Wave direct étant momentanément indisponible, votre commande a été enregistrée. Effectuez votre transfert manuel vers le 77 720 20 86 (Wave/OM).')
+        setLoading(false)
         return
       }
 

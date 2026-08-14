@@ -90,6 +90,8 @@ function getErreurContent(type: PayType, ref: string) {
   }
 }
 
+import { ManualFallbackCard } from './ManualFallbackCard'
+
 export default function PaiementErreurPage({
   searchParams,
 }: {
@@ -133,6 +135,8 @@ export default function PaiementErreurPage({
         )}
 
         <div className="paiement-succes-actions">{actions}</div>
+
+        <ManualFallbackCard reference={ref} />
       </div>
     </div>
   )

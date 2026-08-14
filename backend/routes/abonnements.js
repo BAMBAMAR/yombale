@@ -67,7 +67,7 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
   } catch (err) {
     const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Erreur Wave';
     console.error('[ABONNEMENTS INITIER]', msg);
-    res.status(500).json({ error: `Impossible d'initier le paiement : ${msg}` });
+    res.json({ fallback_manuel: true, error: msg, numero_depot: '777202086', reference: clientRef, plan, prix: prixTotal, duree });
   }
 });
 

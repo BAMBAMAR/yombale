@@ -178,6 +178,9 @@ function CheckoutExpressContent() {
               window.location.href = waveData.wave_url
               return
             }
+            if (waveData.fallback_manuel) {
+              setErrorMsg('💡 L\'API Wave direct étant momentanément indisponible, effectuez votre transfert au 77 720 20 86 (Wave/OM). Votre commande est bien enregistrée.')
+            }
           }
         } catch (wErr) {
           console.error('[WAVE INIT ERR]', wErr)

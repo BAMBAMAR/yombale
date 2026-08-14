@@ -651,8 +651,11 @@ router.post(
         } catch (waveErr) {
           const waveMsg = waveErr.response?.data?.message || waveErr.response?.data?.code || waveErr.message;
           console.error('[COMMANDE WAVE INIT ERR]:', waveMsg);
-          return res.status(400).json({
-            error: `Erreur Wave API: ${waveMsg}. (Vérifiez la liste blanche IP dans le portail Wave).`
+          return res.status(201).json({
+            commande,
+            fallback_manuel: true,
+            numero_depot: '777202086',
+            message: 'Commande enregistrée. Redirection vers le paiement manuel…'
           });
         }
       }

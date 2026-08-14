@@ -205,7 +205,7 @@ router.post('/wave/initier', verifierToken, limiterEcriture, async (req, res) =>
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[wave/initier] Erreur Wave:', detail);
-    res.status(500).json({ error: err.message || 'Erreur d\'initialisation du paiement Wave', detail });
+    res.json({ fallback_manuel: true, error: err.message || 'Erreur Wave API', detail, numero_depot: '777202086', montant: req.body?.montant || 0, reference: `pm_${req.user?.userId}_${req.body?.produit_id}` });
   }
 });
 
@@ -229,7 +229,7 @@ router.post('/wave/initier-express', limiterEcriture, async (req, res) => {
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[wave/initier-express] Erreur Wave:', detail);
-    res.status(500).json({ error: err.message || 'Erreur d\'initialisation du paiement Wave', detail });
+    res.json({ fallback_manuel: true, error: err.message || 'Erreur Wave API', detail, numero_depot: '777202086', montant: req.body?.montant || 0, reference: req.body?.reference || `CMD-${Date.now().toString(36).toUpperCase()}` });
   }
 });
 
@@ -340,7 +340,7 @@ router.post('/annonce/initier', verifierToken, limiterEcriture, async (req, res)
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[annonce/initier] Erreur Wave:', detail);
-    res.status(500).json({ error: 'Erreur serveur d\'initialisation Wave', detail });
+    res.json({ fallback_manuel: true, error: 'Erreur serveur Wave API', detail, numero_depot: '777202086', reference: `ann_${req.user?.userId}_${req.body?.annonce_id}` });
   }
 });
 
@@ -373,7 +373,7 @@ router.post('/immo-sponsoring/initier', verifierToken, limiterEcriture, async (r
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[immo-sponsoring] Erreur Wave:', detail);
-    res.status(500).json({ error: 'Erreur serveur d\'initialisation Wave', detail });
+    res.json({ fallback_manuel: true, error: 'Erreur serveur Wave API', detail, numero_depot: '777202086', reference: `immo_${req.user?.userId}_${req.body?.immo_id}` });
   }
 });
 
@@ -403,7 +403,7 @@ router.post('/produit-sponsoring/initier', verifierToken, limiterEcriture, async
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[produit-sponsoring] erreur Wave:', detail);
-    res.status(500).json({ error: 'Erreur serveur', detail });
+    res.json({ fallback_manuel: true, error: 'Erreur serveur Wave API', detail, numero_depot: '777202086', reference: `prod_${req.user?.userId}_${req.body?.produit_id}` });
   }
 });
 
@@ -436,7 +436,7 @@ router.post('/boutique-sponsoring/initier', verifierToken, limiterEcriture, asyn
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[boutique-sponsoring] Erreur Wave:', detail);
-    res.status(500).json({ error: 'Erreur serveur d\'initialisation Wave', detail });
+    res.json({ fallback_manuel: true, error: 'Erreur serveur Wave API', detail, numero_depot: '777202086', reference: `bout_${req.user?.userId}_${req.body?.boutique_id}` });
   }
 });
 
