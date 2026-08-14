@@ -1,16 +1,15 @@
 {
-  "status": "completed",
+  "status": "in_progress",
   "mode": "live",
-  "groupeIndex": 1,
-  "totalGroupes": 6,
-  "pourcentage": 100,
-  "groupeActuel": "Terminé",
-  "scrapes": 0,
-  "inseres": 0,
+  "groupeIndex": 5,
+  "totalGroupes": 10,
+  "pourcentage": 50,
+  "groupeActuel": "Emploi 3",
+  "groupeUrl": "https://www.facebook.com/groups/519668123858499",
+  "scrapes": 2,
+  "inseres": 1,
   "doublons": 0,
-  "ignores": 0,
-  "erreurs": [
-    "Achat vente a Dakar: Session Facebook invalidée (mur de connexion détecté) — relancez : node backend/scripts/fb-login-setup.js"
-  ],
-  "updatedAt": "2026-08-13T22:00:11.397Z"
+  "ignores": 1,
+  "erreurs": [],
+  "updatedAt": "2026-08-14T02:22:35.278Z"
 }

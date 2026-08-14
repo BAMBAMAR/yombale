@@ -702,45 +702,52 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         setLoadingProduits(true)
         if (initialToken) {
           const res = await fetch(`/api/boutiques/caisse-terminal/${initialToken}`)
-          if (res.ok) {
-            const data = await res.json()
-            if (data?.success && data?.boutique) {
-              setBoutiques([data.boutique])
-              setBoutiqueActiveId(data.boutique.id)
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('nopalou_pos_active_boutique_id', data.boutique.id)
-                localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify([data.boutique]))
-              }
-              if (data.caissiers && Array.isArray(data.caissiers) && data.caissiers.length > 0) {
-                const actifs = data.caissiers.filter((c: any) => c.actif !== false)
-                setCaissiersList(actifs)
-                if (actifs.length > 0) {
-                  setCaissierSelectionneId(actifs[0].id)
-                  setCaissierNom(`${actifs[0].prenom} ${actifs[0].nom}`)
-                }
-              }
-              if (data.produits && Array.isArray(data.produits)) {
-                const prodsFormates = data.produits.map((p: any) => ({
-                  ...p,
-                  id: p.id,
-                  nom: p.nom,
-                  prix: Number(p.prix),
-                  code_barre: p.code_barre || p.id.slice(0, 8),
-                  photo: p.images?.[0] || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400',
-                  categorie: p.categorie || 'alimentation',
-                  stock: isNaN(Number(p.stock_quantite ?? p.stock)) ? 10 : Number(p.stock_quantite ?? p.stock),
-                }))
-                setProduits(prodsFormates)
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem(`nopalou_pos_produits_${data.boutique.id}`, JSON.stringify(prodsFormates))
-                }
-              }
-              await chargerCaissiersEtSession(data.boutique.id)
-              await chargerProduitsBoutique(data.boutique.id)
-              await chargerClientsCredits(data.boutique.id)
-              setLoadingProduits(false)
-              return
+          const data = await res.json().catch(() => ({}))
+          if (data?.boutique) {
+            const bqObj = {
+              ...data.boutique,
+              plan_actif: data.planActif || data.boutique?.plan_actif || 'pro'
             }
+            setBoutiques([bqObj])
+            setBoutiqueActiveId(bqObj.id)
+            if (data.planActif) setTerminalPlan(data.planActif)
+
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('nopalou_pos_active_boutique_id', bqObj.id)
+              localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify([bqObj]))
+            }
+
+            if (data.caissiers && Array.isArray(data.caissiers) && data.caissiers.length > 0) {
+              const actifs = data.caissiers.filter((c: any) => c.actif !== false)
+              if (actifs.length > 0) {
+                setCaissiersList(actifs)
+                setCaissierSelectionneId(actifs[0].id)
+                setCaissierNom(`${actifs[0].prenom} ${actifs[0].nom}`)
+              }
+            }
+
+            if (data.produits && Array.isArray(data.produits)) {
+              const prodsFormates = data.produits.map((p: any) => ({
+                ...p,
+                id: p.id,
+                nom: p.nom,
+                prix: Number(p.prix),
+                code_barre: p.code_barre || p.id.slice(0, 8),
+                photo: p.images?.[0] || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400',
+                categorie: p.categorie || 'alimentation',
+                stock: isNaN(Number(p.stock_quantite ?? p.stock)) ? 10 : Number(p.stock_quantite ?? p.stock),
+              }))
+              setProduits(prodsFormates)
+              if (typeof window !== 'undefined') {
+                localStorage.setItem(`nopalou_pos_produits_${bqObj.id}`, JSON.stringify(prodsFormates))
+              }
+            }
+
+            await chargerCaissiersEtSession(bqObj.id)
+            await chargerProduitsBoutique(bqObj.id)
+            await chargerClientsCredits(bqObj.id)
+            setLoadingProduits(false)
+            return
           }
         }
         let merchantBoutiques: any[] = []

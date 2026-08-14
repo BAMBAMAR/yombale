@@ -377,10 +377,34 @@ async function scraperImmo({ dryRun = false, maxGroupes = 10 } = {}) {
     return { erreurs: ['Un autre scraping est déjà en cours'], inseres: 0 };
   }
 
+async function lancerNavigateur(pw) {
+  const optionsBase = {
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-gpu',
+      '--disable-dev-shm-usage',
+      '--no-first-run',
+      '--no-service-autorun',
+    ],
+  };
+
+  try {
+    return await pw.chromium.launch({ ...optionsBase, channel: 'chrome' });
+  } catch (e1) {
+    try {
+      return await pw.chromium.launch({ ...optionsBase, channel: 'msedge' });
+    } catch (e2) {
+      return await pw.chromium.launch(optionsBase);
+    }
+  }
+}
+
   const stats = { scrapes: 0, inseres: 0, doublons: 0, ignores: 0, erreurs: [], dryRun };
   let indexCompteur = 0;
   let groupesDuRun  = [];
-  const browser = await playwright.chromium.launch({ headless: true });
+  const browser = await lancerNavigateur(playwright);
 
   try {
     const ctx  = await browser.newContext({

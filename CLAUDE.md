@@ -1,12 +1,13 @@
-## 🚀 Mises à jour du 14/08/2026 : Correction du Lien Terminal Caissier Dédié (Sans MDP Admin) & Isolation Caisse POS (`backend-fetch.ts`, `CaisseClient.tsx`)
-- **Fix du Blocage au Déverrouillage par Code PIN sur les Tablettes/PC Caisse (`backend-fetch.ts` & `CaisseClient.tsx`)** :
-  * **Problème** : Lors de l'ouverture du lien dédié caissier (`/boutique/caisse?token=TOKEN`), l'appel aux API proxies Next.js (`/api/boutiques/.../caissiers`, `produits`, `pos-historique`, `pos-vente`) utilisait `backendFetch`, qui exigeait une session propriétaire administrateur via `verifySession()`. Sans cookie d'administration propriétaire sur la tablette du magasin, `verifySession()` déclenchait une redirection vers `/connexion`, vidant silencieusement la liste des caissiers et empêchant tout déverrouillage PIN ou encaissement POS.
+## 🚀 Mises à jour du 14/08/2026 : Correction du Lien Terminal Caissier Dédié (Sans MDP Admin) Multi-Navigateur (`backend-fetch.ts`, `CaisseClient.tsx`, `backend/routes/boutiques.js`)
+- **Fix du Chargement sur Nouveau Navigateur / Écran Dédié Caissier (`backend/routes/boutiques.js`, `CaisseClient.tsx`)** :
+  * **Problème** : Sur un autre navigateur ou une tablette vierge (sans cookie de session administrateur), la boutique et la liste des caissiers ne s'affichaient pas car :
+    1. L'endpoint backend `/api/boutiques/caisse-terminal/:token` ne rattachait pas le champ `plan_actif` à l'objet `boutique`, ce qui faisait échouer la validation d'autorisation `estBoutiqueAutorisee` côté client.
+    2. En cas de statut HTTP 403/erreur, `CaisseClient.tsx` ignorait les données de secours et tentait un `getBoutiquesMine()` (réservé aux propriétaires connectés), échouant silencieusement sur les appareils caissiers.
   * **Solution** :
-    1. Modification de `backendFetch` dans `src/lib/backend-fetch.ts` pour utiliser `getOptionalSession()` au lieu de `verifySession()`. Les requêtes unauthenticated (mode terminal caissier) transmettent la requête au backend Express sans lever d'exception `NEXT_REDIRECT`. Le backend Express gère ensuite l'accès via `tokenOptional` et la correspondance `caisse_token`.
-    2. Protection dans `CaisseClient.tsx` pour ne plus réinitialiser `caissiersList` si la requête de rafraîchissement renvoie un tableau vide, préservant les caissiers déjà chargés par le jeton terminal.
+    1. Backend `backend/routes/boutiques.js` : Recherche élargie par `caisse_token`, `id` UUID ou `slug`. Rattachement automatique du champ `plan_actif` à l'objet boutique renvoyé et création systématique des caissiers par défaut si aucun caissier n'existe.
+    2. Client `CaisseClient.tsx` : Lecture inconditionnelle de l'objet `boutique` et de ses caissiers/produits lors du démarrage par `initialToken`, avec mise en cache locale `localStorage` pour un fonctionnement ultra-rapide et hors-ligne.
 - **Isolation des Accès Caissier (Sans accès aux paramètres du Propriétaire)** :
   * En mode terminal dédié (`initialToken`), le bouton de retour au tableau de bord marchand (`/boutique`) et le menu sélecteur de boutiques sont masqués/désactivés pour empêcher les caissiers de naviguer vers le compte du propriétaire ou d'autres boutiques.
-  * Sur l'écran de caisse verrouillée sans formule Pro/Business active, remplacement des boutons d'achat/dashboard admin par un message explicatif destiné à l'employé caissier.
 
 ## 🚀 Mises à jour du 14/08/2026 : Intégration des Options "Créer ma boutique" & "Forfaits Boutiques" dans le Chatbot WhatsApp (`whatsapp-chatbot.js`)
 - **Enrichissement du Menu Interactif WhatsApp (`sendMenu`)** :
