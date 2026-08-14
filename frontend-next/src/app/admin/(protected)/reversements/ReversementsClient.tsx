@@ -25,14 +25,27 @@ export default function ReversementsClient({ initialReversements }: { initialRev
   const [validatingLot, setValidatingLot] = useState<boolean>(false)
   const [msgSuccess, setMsgSuccess] = useState<string | null>(null)
   const [msgError, setMsgError] = useState<string | null>(null)
+  const [q, setQ] = useState('')
 
-  const isAllSelected = items.length > 0 && selectedIds.length === items.length
+  const itemsFiltres = items.filter(i => {
+    if (!q.trim()) return true
+    const s = q.trim().toLowerCase()
+    return (
+      i.boutique_nom?.toLowerCase().includes(s) ||
+      i.reference?.toLowerCase().includes(s) ||
+      i.boutique_telephone?.includes(s) ||
+      i.boutique_whatsapp?.includes(s) ||
+      i.id.toLowerCase().includes(s)
+    )
+  })
+
+  const isAllSelected = itemsFiltres.length > 0 && selectedIds.length === itemsFiltres.length
 
   function handleToggleSelectAll() {
     if (isAllSelected) {
       setSelectedIds([])
     } else {
-      setSelectedIds(items.map(i => i.id))
+      setSelectedIds(itemsFiltres.map(i => i.id))
     }
   }
 
@@ -238,11 +251,46 @@ export default function ReversementsClient({ initialReversements }: { initialRev
         </div>
       )}
 
-      {items.length === 0 ? (
+      {/* Barre de recherche */}
+      {items.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ position: 'relative', maxWidth: 400 }}>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>🔍</span>
+            <input
+              type="text"
+              value={q}
+              onChange={e => setQ(e.target.value)}
+              placeholder="Rechercher par nom de boutique, téléphone ou référence..."
+              style={{
+                width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8,
+                border: '1px solid #cbd5e1', fontSize: 13, outline: 'none'
+              }}
+            />
+            {q && (
+              <button
+                type="button"
+                onClick={() => setQ('')}
+                style={{
+                  position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', color: '#94a3b8', fontSize: 14, cursor: 'pointer'
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {itemsFiltres.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 20px', color: '#6b7280' }}>
-          <span style={{ fontSize: 40, display: 'block', marginBottom: 8 }}>✅</span>
-          <p style={{ fontWeight: 600, fontSize: 16 }}>Aucun reversement marchand en attente !</p>
-          <p style={{ fontSize: 13, color: '#9ca3af' }}>Toutes les commandes livrées payées via Wave ont été réglées aux vendeurs.</p>
+          <span style={{ fontSize: 40, display: 'block', marginBottom: 8 }}>{q ? '🔍' : '✅'}</span>
+          <p style={{ fontWeight: 600, fontSize: 16 }}>
+            {q ? 'Aucun reversement ne correspond à votre recherche.' : 'Aucun reversement marchand en attente !'}
+          </p>
+          <p style={{ fontSize: 13, color: '#9ca3af' }}>
+            {q ? 'Essayez avec un autre nom de boutique ou numéro de téléphone.' : 'Toutes les commandes livrées payées via Wave ont été réglées aux vendeurs.'}
+          </p>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -266,7 +314,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
               </tr>
             </thead>
             <tbody>
-              {items.map(item => {
+              {itemsFiltres.map(item => {
                 const netAmount = Number(item.montant_total) - (Number(item.montant_commission) || 0)
                 const mobile = item.boutique_whatsapp || item.boutique_telephone
                 const isPending = loadingId === item.id

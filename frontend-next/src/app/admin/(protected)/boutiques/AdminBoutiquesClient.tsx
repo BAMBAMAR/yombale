@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import { modererBoutique, activerSponsoringBoutique, supprimerBoutique, batchModererBoutiques, batchSupprimerBoutiques } from '@/app/actions/admin'
 import { activerPlanTest } from '../abonnements/actions'
 import BatchActionBar, { BatchActionConfig } from '@/components/admin/BatchActionBar'

@@ -1,3 +1,10 @@
+## 🚀 Mises à jour du 14/08/2026 : Fix de la Page Admin Boutiques (`ReferenceError: useMemo`) & Recherche sur Reversements (`AdminBoutiquesClient.tsx`, `ReversementsClient.tsx`)
+- **Fix `ReferenceError: useMemo is not defined` dans l'Admin Boutiques (`AdminBoutiquesClient.tsx`)** :
+  * **Problème** : L'accès à la rubrique `/admin/boutiques` affichait le message d'erreur *"Une interruption temporaire est survenue — useMemo is not defined"* car le hook `useMemo` n'était pas inclus dans l'import React principal.
+  * **Solution** : Correction de l'import React (`import { useState, useMemo, useTransition } from 'react'`). La page des boutiques se charge désormais instantanément sans aucune erreur.
+- **Ajout du Champ de Recherche Textuelle sur les Reversements (`ReversementsClient.tsx`)** :
+  * Intégration d'une barre de recherche réactive filtrant en direct par nom de boutique, téléphone ou référence de commande.
+
 ## 🚀 Mises à jour du 14/08/2026 : Système Complet de Retrait d'Annonces, Suppression de Numéro & Désinscription WhatsApp (`STOP`, `START`, `supprimer`) (`whatsapp.js`, `whatsapp-chatbot.js`, `migrate-inline.js`, `layout.tsx`, `cgu/page.tsx`, `annonces/[id]/page.tsx`, `immo/[id]/page.tsx`)
 - **Gestion Dynamique des Désinscriptions & Opt-Out WhatsApp (`whatsapp.js`, `whatsapp-chatbot.js`, `migrate-inline.js`)** :
   * **Table SQL `whatsapp_blacklist` (`migrate-inline.js`)** : Création automatique de la table de liste noire pour enregistrer les numéros ayant demandé l'arrêt de réception des messages.
