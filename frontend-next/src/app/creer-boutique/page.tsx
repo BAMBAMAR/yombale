@@ -22,6 +22,10 @@ export default function CreerBoutiqueWizard() {
   const [couleur, setCouleur] = useState('#C75B00')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [contratTexte, setContratTexte] = useState<string>('')
+  const [contratRequis, setContratRequis] = useState<boolean>(true)
+  const [accepteContrat, setAccepteContrat] = useState<boolean>(false)
+  const [showContratModal, setShowContratModal] = useState<boolean>(false)
 
   const [plansConfig, setPlansConfig] = useState({
     decouverte: {
@@ -67,6 +71,9 @@ export default function CreerBoutiqueWizard() {
         const pxBusiness = Number(settings.plan_business_prix) || 10000;
         const essaiJours = settings.abonnement_essai_jours || '30';
 
+        if (settings.contrat_vendeur_texte) setContratTexte(settings.contrat_vendeur_texte);
+        if (settings.contrat_vendeur_requis !== undefined) setContratRequis(settings.contrat_vendeur_requis === 'true');
+
         setPlansConfig({
           decouverte: {
             name: settings.plan_decouverte_label || 'Boutique Taf Taf',
@@ -107,6 +114,7 @@ export default function CreerBoutiqueWizard() {
     e.preventDefault()
     if (step === 1 && !nom.trim()) { setError('Veuillez entrer le nom de votre boutique.'); return; }
     if (step === 2 && telephone.replace(/\D/g, '').length < 9) { setError('Veuillez saisir un numéro WhatsApp valide (ex: 77 123 45 67).'); return; }
+    if (step === 4 && contratRequis && !accepteContrat) { setError('Veuillez cocher la case d\'acceptation de la Charte Vendeur & des CGU Marchand pour créer votre boutique.'); return; }
     
     setError('')
     const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
@@ -475,6 +483,31 @@ export default function CreerBoutiqueWizard() {
                 </div>
               </div>
 
+              {/* ACCEPTATION CONTRAT & CGU MARCHAND */}
+              {contratRequis && (
+                <div style={{ background: '#fff7ed', border: '1.5px solid #fed7aa', borderRadius: 18, padding: '16px 20px', marginTop: 20 }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', fontSize: 13, color: '#1e293b', fontWeight: 600, lineHeight: 1.5 }}>
+                    <input
+                      type="checkbox"
+                      checked={accepteContrat}
+                      onChange={(e) => setAccepteContrat(e.target.checked)}
+                      style={{ width: 18, height: 18, marginTop: 2, cursor: 'pointer', accentColor: '#C75B00' }}
+                    />
+                    <span>
+                      J'accepte la{' '}
+                      <button
+                        type="button"
+                        onClick={() => setShowContratModal(true)}
+                        style={{ background: 'none', border: 'none', color: '#C75B00', fontWeight: 900, textDecoration: 'underline', cursor: 'pointer', padding: 0, font: 'inherit' }}
+                      >
+                        Charte Vendeur &amp; les CGU Marchand Nopalou
+                      </button>{' '}
+                      (responsabilités, commissions &amp; délais de reversement).
+                    </span>
+                  </label>
+                </div>
+              )}
+
             </div>
           )}
 
@@ -512,7 +545,59 @@ export default function CreerBoutiqueWizard() {
           </div>
         </form>
 
+        {/* MODALE AFFICHAGE DU CONTRAT VENDEUR */}
+        {showContratModal && (
+          <div style={{
+            position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)',
+            zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+          }}>
+            <div style={{
+              background: '#ffffff', borderRadius: 24, maxWidth: 680, width: '100%', maxHeight: '85vh',
+              display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)', overflow: 'hidden'
+            }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>
+                    📜 Contrat &amp; Charte Vendeur Nopalou
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
+                    Conditions Générales d'Utilisation Marchand
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowContratModal(false)}
+                  style={{ background: '#f1f5f9', border: 'none', width: 36, height: 36, borderRadius: '50%', fontSize: 18, cursor: 'pointer', color: '#64748b' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div style={{ padding: 24, overflowY: 'auto', flex: 1, whiteSpace: 'pre-line', fontSize: 13, lineHeight: 1.6, color: '#334155', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                {contratTexte || 'Chargement du contrat...'}
+              </div>
+
+              <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAccepteContrat(true)
+                    setShowContratModal(false)
+                  }}
+                  style={{
+                    background: '#C75B00', color: '#ffffff', border: 'none', padding: '12px 24px',
+                    borderRadius: 12, fontWeight: 900, fontSize: 14, cursor: 'pointer'
+                  }}
+                >
+                  ✓ J'accepte le contrat
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )
 }
+

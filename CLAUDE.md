@@ -1,3 +1,13 @@
+## 🚀 Mises à jour du 14/08/2026 : Contrat Vendeur & Charte Marchand 100% Dynamique & Éditable depuis l'Admin (`settingsCache.js`, `settings.js`, `TarifsClient.tsx`, `creer-boutique/page.tsx`, `cgu/page.tsx`)
+- **Édition Dynamique depuis l'Admin (`TarifsClient.tsx`, `settingsCache.js`, `settings.js`)** :
+  * Ajout des clés `contrat_vendeur_texte` (texte intégral avec articles modèle) et `contrat_vendeur_requis` (`'true'` / `'false'`) aux paramètres par défaut et à l'API publique `/api/settings/public`.
+  * Ajout de la section **"📜 Contrat Vendeur & Charte Marchand"** dans l'espace Admin (`/admin/tarifs`) permettant de modifier et sauvegarder le contrat et ses règles à tout moment.
+- **Acceptation Obligatoire & Modale dans l'Assistant de Création (`creer-boutique/page.tsx`)** :
+  * Ajout de la case à cocher obligatoire `☑️ J'accepte la Charte Vendeur & les CGU Marchand Nopalou` à la dernière étape de création de boutique.
+  * Bouton d'ouverture de modale d'affichage responsive du contrat complet en direct depuis la base de données. Validation bloquant la soumission si la case n'est pas cochée.
+- **Rendu Dynamique sur la Page Publique (`cgu/page.tsx`)** :
+  * Intégration de la section **"📜 Charte Vendeur & Contrat d'Utilisation Marchand"** lisant dynamiquement le texte du contrat configuré en base de données.
+
 ## 🚀 Mises à jour du 14/08/2026 : Exportation Wave Bulk Payout, Validation de Lot Anti-Doublon & Notifications WhatsApp (`paiement.js`, `comptabilite.js`, `export.ts`, `ReversementsClient.tsx`)
 - **Exportation au Format Officiel Wave Business Bulk Payout (`export.ts`, `ReversementsClient.tsx`)** :
   * Ajout de la fonction `exportWaveBulkPaymentCSV` dans `export.ts` et du bouton de téléchargement `.csv / Excel` dans l'espace Admin (`/admin/reversements`).

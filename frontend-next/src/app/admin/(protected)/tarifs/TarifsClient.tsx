@@ -34,6 +34,8 @@ interface Settings {
   alertes_abonnement_jours_avant: string
   alertes_abonnement_whatsapp: string
   alertes_abonnement_email: string
+  contrat_vendeur_requis?: string
+  contrat_vendeur_texte?: string
 }
 
 export default function TarifsClient({ initial, secret }: { initial: Settings; secret: string }) {
@@ -69,6 +71,8 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
       alertes_abonnement_jours_avant: '7',
       alertes_abonnement_whatsapp: 'true',
       alertes_abonnement_email: 'true',
+      contrat_vendeur_requis: 'true',
+      contrat_vendeur_texte: '',
     }
     return { ...defaults, ...initial }
   })
@@ -214,6 +218,24 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
         {toggle('alertes_abonnement_whatsapp', 'Relance par WhatsApp')}
       </>)}
 
+      {card('📜 Contrat Vendeur & Charte Marchand (CGU Dynamiques)', <>
+        {toggle('contrat_vendeur_requis', 'Acceptation du contrat obligatoire lors de la création de boutique')}
+        <div style={{ marginTop: 12 }}>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: 6, fontSize: 13, color: '#374151' }}>
+            Texte du Contrat / CGU Marchand Nopalou :
+          </label>
+          <textarea
+            rows={12}
+            value={form.contrat_vendeur_texte ?? ''}
+            onChange={e => setForm(f => ({ ...f, contrat_vendeur_texte: e.target.value }))}
+            style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, fontFamily: 'monospace', lineHeight: 1.5, resize: 'vertical' }}
+          />
+          <p style={{ fontSize: 12, color: '#6b7280', margin: '6px 0 0' }}>
+            💡 Ce texte est affiché en direct dans la modale d'acceptation lors de la création de boutique et sur la page des CGU. Vous pouvez modifier les clauses et commissions à tout moment.
+          </p>
+        </div>
+      </>)}
+
       <button
         onClick={save}
         disabled={saving}
@@ -225,3 +247,4 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
     </div>
   )
 }
+

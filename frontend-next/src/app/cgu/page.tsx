@@ -8,17 +8,32 @@ export const metadata: Metadata = {
 export default async function CguPage() {
   const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
   let prixAnnonce = 1500
+  let contratTexte = ''
+
   try {
     const r = await fetch(`${BACKEND}/api/settings/public`, { cache: 'no-store' })
-    if (r.ok) prixAnnonce = Number((await r.json()).prix_annonce) || 1500
+    if (r.ok) {
+      const data = await r.json()
+      prixAnnonce = Number(data.prix_annonce) || 1500
+      contratTexte = data.contrat_vendeur_texte || ''
+    }
   } catch {
     // fallback 1500 en cas d'échec du fetch settings
   }
 
   return (
     <div className="legal-page">
-      <h1 className="legal-titre">Conditions Générales d&apos;Utilisation</h1>
-      <p className="legal-update">Dernière mise à jour : Juin 2026</p>
+      <h1 className="legal-titre">Conditions Générales d&apos;Utilisation &amp; Charte Marchand</h1>
+      <p className="legal-update">Dernière mise à jour : Août 2026</p>
+
+      {contratTexte && (
+        <section className="legal-section" style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: 24, borderRadius: 16, marginBottom: 32 }}>
+          <h2 style={{ color: '#C75B00', marginTop: 0 }}>📜 Charte Vendeur &amp; Contrat d&apos;Utilisation Marchand</h2>
+          <div style={{ whiteSpace: 'pre-line', fontSize: 14, lineHeight: 1.6, color: '#334155' }}>
+            {contratTexte}
+          </div>
+        </section>
+      )}
 
       <section className="legal-section">
         <h2>1. Objet</h2>
