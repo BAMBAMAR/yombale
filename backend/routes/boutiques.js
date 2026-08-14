@@ -2453,9 +2453,10 @@ function calculerFiscaliteDocument(boutique, client, items) {
     totalHT += HT * qte;
     totalTVA += TVA * qte;
     
+    const validId = (item.id && /^[0-9a-f-]{36}$/i.test(String(item.id))) ? String(item.id) : null;
     return {
-      id: item.id || null,
-      nom: item.nom,
+      id: validId,
+      nom: item.nom || 'Article',
       quantite: qte,
       prix_unitaire: prix,
       prix_ht: Number(HT.toFixed(2)),
@@ -2562,10 +2563,10 @@ router.post('/:id/documents', tokenOptional, param('id').isUUID(), async (req, r
       ]
     );
 
-    // Si c'est une facture validée/payée, déduire le stock
+    // Si c'est une facture validée/payée, déduire le stock pour les produits du catalogue
     if (type === 'facture' && (statut === 'paye' || statut === 'valide')) {
       for (const item of calculation.items) {
-        if (item.id) {
+        if (item.id && /^[0-9a-f-]{36}$/i.test(String(item.id))) {
           await pool.query(
             `UPDATE boutique_produits SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 0) - $1) WHERE id = $2`,
             [Number(item.quantite), item.id]
@@ -2655,7 +2656,7 @@ router.put('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('
 
     if (!oldIsBilling && newIsBilling) {
       for (const item of calculation.items) {
-        if (item.id) {
+        if (item.id && /^[0-9a-f-]{36}$/i.test(String(item.id))) {
           await pool.query(
             `UPDATE boutique_produits SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 0) - $1) WHERE id = $2`,
             [Number(item.quantite), item.id]
@@ -2693,7 +2694,7 @@ router.delete('/:id/documents/:docId', tokenOptional, param('id').isUUID(), para
     if (doc.type === 'facture' && (doc.statut === 'paye' || doc.statut === 'valide')) {
       const items = typeof doc.items === 'string' ? JSON.parse(doc.items) : doc.items;
       for (const item of items) {
-        if (item.id) {
+        if (item.id && /^[0-9a-f-]{36}$/i.test(String(item.id))) {
           await pool.query(
             `UPDATE boutique_produits SET stock_quantite = COALESCE(stock_quantite, 0) + $1 WHERE id = $2`,
             [Number(item.quantite), item.id]

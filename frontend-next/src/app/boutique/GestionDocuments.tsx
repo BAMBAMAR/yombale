@@ -17,7 +17,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
   const [clientIdSelected, setClientIdSelected] = useState<string>('')
   const [statutDoc, setStatutDoc] = useState<'brouillon' | 'valide' | 'paye'>('brouillon')
   const [noteDoc, setNoteDoc] = useState<string>('')
-  const [lignesSelectionnees, setLignesSelectionnees] = useState<Array<{ produitId: string; quantite: number; prix: number }>>([])
+  const [lignesSelectionnees, setLignesSelectionnees] = useState<Array<{ produitId: string; nom: string; quantite: number; prix: number }>>([])
 
   // Actions states
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
@@ -81,9 +81,10 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
       // Formater les items pour l'API
       const itemsFormates = lignesSelectionnees.map(l => {
         const prodObj = produits.find(p => p.id === l.produitId)
+        const nomFinal = l.nom?.trim() || (prodObj ? prodObj.nom : 'Article / Prestation')
         return {
-          id: l.produitId,
-          nom: prodObj ? prodObj.nom : 'Produit inconnu',
+          id: (l.produitId && l.produitId !== 'custom') ? l.produitId : null,
+          nom: nomFinal,
           quantite: l.quantite,
           prix: l.prix
         }
@@ -130,7 +131,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     setClientIdSelected('')
     setStatutDoc('brouillon')
     setNoteDoc('')
-    setLignesSelectionnees([{ produitId: '', quantite: 1, prix: 0 }])
+    setLignesSelectionnees([{ produitId: 'custom', nom: '', quantite: 1, prix: 0 }])
   }
 
   const handleOuvrirEdition = (doc: any) => {
@@ -144,35 +145,42 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     const lines = (parsedItems || []).map((item: any) => {
       let pId = item.id || item.produit_id || item.produitId || ''
       if (!pId || !produits.some(p => p.id === pId)) {
-        if (item.nom) {
+        if (item.nom && produits.length > 0) {
           const foundByName = produits.find(p => p.nom?.toLowerCase() === item.nom?.toLowerCase())
-          if (foundByName) pId = foundByName.id
+          if (foundByName) pId = foundByName.id; else pId = 'custom'
+        } else {
+          pId = 'custom'
         }
       }
       const unitPrice = Number(item.prix_unitaire ?? item.prix ?? item.prix_unitaire_ht ?? 0)
       return {
         produitId: pId,
+        nom: item.nom || item.description || '',
         quantite: Number(item.quantite || 1),
         prix: unitPrice
       }
     })
-    setLignesSelectionnees(lines.length > 0 ? lines : [{ produitId: '', quantite: 1, prix: 0 }])
+    setLignesSelectionnees(lines.length > 0 ? lines : [{ produitId: 'custom', nom: '', quantite: 1, prix: 0 }])
     setModalOuvert(true)
   }
 
   const handleAjouterLigne = () => {
-    setLignesSelectionnees(prev => [...prev, { produitId: '', quantite: 1, prix: 0 }])
+    setLignesSelectionnees(prev => [...prev, { produitId: 'custom', nom: '', quantite: 1, prix: 0 }])
   }
 
   const handleModifierLigne = (index: number, champ: string, valeur: any) => {
     setLignesSelectionnees(prev => prev.map((l, i) => {
       if (i === index) {
         const updated = { ...l, [champ]: valeur }
-        // Remplir le prix par défaut du produit sélectionné
         if (champ === 'produitId') {
-          const prod = produits.find(p => p.id === valeur)
-          if (prod) {
-            updated.prix = Number(prod.prix)
+          if (valeur === 'custom' || !valeur) {
+            updated.produitId = 'custom'
+          } else {
+            const prod = produits.find(p => p.id === valeur)
+            if (prod) {
+              updated.nom = prod.nom
+              updated.prix = Number(prod.prix)
+            }
           }
         }
         return updated
@@ -409,42 +417,62 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                   </button>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {lignesSelectionnees.map((ligne, idx) => (
-                    <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <select
-                        value={ligne.produitId}
-                        onChange={e => handleModifierLigne(idx, 'produitId', e.target.value)}
-                        style={{ flex: 2, padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }}
-                        required
-                      >
-                        <option value="">-- Choisir un produit --</option>
-                        {produits.map(p => (
-                          <option key={p.id} value={p.id}>{p.nom} ({fcfa(p.prix)})</option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        min="1"
-                        value={ligne.quantite}
-                        onChange={e => handleModifierLigne(idx, 'quantite', Number(e.target.value))}
-                        style={{ width: 80, padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }}
-                        placeholder="Qte"
-                        required
-                      />
-                      <input
-                        type="number"
-                        value={ligne.prix}
-                        onChange={e => handleModifierLigne(idx, 'prix', Number(e.target.value))}
-                        style={{ width: 120, padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }}
-                        placeholder="Prix Unit"
-                        required
-                      />
-                      <button type="button" onClick={() => handleSupprimerLigne(idx)} style={{ padding: '8px 12px', background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 6, cursor: 'pointer' }}>
-                        ✕
-                      </button>
-                    </div>
-                  ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {lignesSelectionnees.map((ligne, idx) => {
+                    const isCatalogProd = produits.some(p => p.id === ligne.produitId);
+                    const estProduitHorsCatalogue = !isCatalogProd || ligne.produitId === 'custom' || !ligne.produitId;
+                    return (
+                      <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 8, background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <select
+                            value={isCatalogProd ? ligne.produitId : 'custom'}
+                            onChange={e => handleModifierLigne(idx, 'produitId', e.target.value)}
+                            style={{ flex: '2 1 200px', padding: 8, borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }}
+                          >
+                            <option value="custom">✏️ Article hors catalogue / Saisie libre</option>
+                            {produits.length > 0 && (
+                              <optgroup label="Catalogue Produits">
+                                {produits.map(p => (
+                                  <option key={p.id} value={p.id}>{p.nom} ({fcfa(p.prix)})</option>
+                                ))}
+                              </optgroup>
+                            )}
+                          </select>
+                          <input
+                            type="number"
+                            min="1"
+                            value={ligne.quantite}
+                            onChange={e => handleModifierLigne(idx, 'quantite', Number(e.target.value))}
+                            style={{ width: 80, padding: 8, borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }}
+                            placeholder="Qté"
+                            required
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            value={ligne.prix}
+                            onChange={e => handleModifierLigne(idx, 'prix', Number(e.target.value))}
+                            style={{ width: 120, padding: 8, borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }}
+                            placeholder="Prix Unit"
+                            required
+                          />
+                          <button type="button" onClick={() => handleSupprimerLigne(idx)} style={{ padding: '8px 12px', background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 6, cursor: 'pointer', fontWeight: 700 }}>
+                            ✕
+                          </button>
+                        </div>
+                        {estProduitHorsCatalogue && (
+                          <input
+                            type="text"
+                            value={ligne.nom}
+                            onChange={e => handleModifierLigne(idx, 'nom', e.target.value)}
+                            placeholder="Désignation / Nom de l'article ou prestation hors catalogue..."
+                            style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, background: '#ffffff' }}
+                            required
+                          />
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 

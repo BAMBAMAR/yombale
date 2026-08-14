@@ -1,3 +1,17 @@
+## 📌 Mises à jour du 14/08/2026 : Support Complet des Articles/Produits Hors Catalogue dans les Documents Commercials de la Boutique (`GestionDocuments.tsx`, `backend/routes/boutiques.js`)
+- **Correction & Saisie des Produits/Articles Hors Catalogue (Saisie Libre)** :
+  * **Problème** : Dans la création et la modification de documents commerciaux (Factures, Devis, Proformas), les produits non présents dans le catalogue de la boutique ne pouvaient pas être saisis manuellement. Si un document contenait un article personnalisé ou un ancien produit supprimé du catalogue, son nom était perdu ou affiché comme "Produit inconnu".
+  * **Correctif apporté** :
+    1. **Frontend (`GestionDocuments.tsx`)** : 
+       - Ajout d'une option *"✏️ Article hors catalogue / Saisie libre"* dans le sélecteur d'articles du formulaire de création/édition.
+       - Affichage automatique d'un champ texte dynamique permettant de saisir librement la désignation/le nom de l'article ou de la prestation hors catalogue.
+       - Préservation de la désignation et du prix unitaire personnalisé lors de l'ouverture et de la modification d'un document existant.
+       - Formatage correct du tableau d'items transmis à l'API (`id: null` pour les articles hors catalogue, `nom` personnalisé conservé).
+    2. **Backend (`backend/routes/boutiques.js`)** :
+       - Sécurisation de `calculerFiscaliteDocument` et des boucles de mise à jour des stocks (`POST`, `PUT`, `DELETE` documents) avec validation stricte par expression régulière regex des UUID (`/^[0-9a-f-]{36}$/i`).
+       - Empêche les erreurs de syntaxe PostgreSQL lors du traitement des identifiants non-UUID (comme `null` ou `"custom"`), tout en déduisant proprement le stock pour les seuls produits réels du catalogue.
+       - Conservation parfaite de la désignation personnalisée des articles dans la base de données et dans la génération de PDF A4 (`GET /documents/:docId/pdf`).
+
 ## 📌 Mises à jour du 14/08/2026 : Correction de la Cause Racine & Intégration dans Espace Compte (/compte?tab=suivi-commande)
 - **Investigation & Correction de la Cause Racine** :
   * **Cause du Bug** : L'API backend de recherche `/api/boutiques/commandes/suivi` dans `backend/routes/boutiques.js` faisait sa requête SQL `SELECT FROM commandes_express`. **La table `commandes_express` n'existait pas en base de données** (toutes les commandes réelles des boutiques et clients sont enregistrées dans la table **`commandes_boutique`**). Toute recherche échouait donc avec une erreur 404 / "Commande introuvable" même avec les bons identifiants.
