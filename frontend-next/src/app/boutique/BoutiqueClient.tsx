@@ -1920,13 +1920,11 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
 
 // ── Carte boutique ────────────────────────────────────────────────────────────
 
-function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onPayerManuel, onManage }: {
+function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
   boutique: Boutique
   planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
   onEdit: () => void
   onDelete: () => void
-  onSponsoring?: () => void
-  onPayerManuel?: () => void
   onManage: () => void
 }) {
   const sponsorActif = boutique.sponsorise && boutique.sponsor_jusqu_au && new Date(boutique.sponsor_jusqu_au) > new Date()
@@ -2005,9 +2003,9 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onSponsoring, onP
         {/* Actions Financières et Principales (Bas de carte) */}
         <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <button onClick={onSponsoring} className="btn-premium" style={{ flex: 1, minWidth: 120, padding: '8px 12px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#fffbeb', fontWeight: 700, cursor: 'pointer' }}>
-              🌟 Mettre en avant
-            </button>
+            <Link href={`/payer-sponsoring-boutique/${boutique.id}`} className="btn-premium" style={{ flex: 1, minWidth: 120, padding: '8px 12px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#fffbeb', fontWeight: 700, textAlign: 'center', textDecoration: 'none' }}>
+              ⭐ Mettre en avant
+            </Link>
             <Link href="/boutique/abonnement" className="btn-premium" style={{ flex: 1, minWidth: 120, padding: '8px 12px', fontSize: 13, color: '#1e3a8a', borderColor: '#bfdbfe', backgroundColor: '#eff6ff', fontWeight: 700, textAlign: 'center', textDecoration: 'none' }}>
               📖 Abonnements
             </Link>
@@ -2906,22 +2904,6 @@ export default function BoutiqueClient({
   const montantSponsor = Number(settings.prix_sponsoring) || 5000
   const prixPro = Number(settings.plan_pro_prix) || 5000
 
-  async function handleSponsoring(boutiqueId: string) {
-    setSponsorError(null)
-    startSponsoring(async () => {
-      if (waveActif) {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token') || undefined
-        const res = await initierWaveBoutiqueSponsoring(boutiqueId, token)
-        if (res.ok && res.url) {
-          window.location.href = res.url
-          return
-        }
-      }
-      // Basculement automatique vers le paiement manuel en cas d'échec ou Wave inactif
-      setManuelBoutiqueId(boutiqueId)
-    })
-  }
-
   async function handleDelete(id: string) {
     if (!confirm('Supprimer cette boutique définitivement ?')) return
     setDeleteError(null)
@@ -3132,23 +3114,10 @@ export default function BoutiqueClient({
               planActif={planActifEffectif ?? null}
               onEdit={() => setMode({ editing: b })}
               onDelete={() => handleDelete(b.id)}
-              onSponsoring={waveActif ? () => handleSponsoring(b.id) : undefined}
-              onPayerManuel={manuelActif ? () => setManuelBoutiqueId(b.id) : undefined}
               onManage={() => setMode({ managing: b })}
             />
           ))}
         </div>
-      )}
-
-      {manuelBoutiqueId && (
-        <ModalPaiementManuel
-          reference={`bout_${userId}_${manuelBoutiqueId}`}
-          montant={montantSponsor}
-          numeroWave={settings.paiement_manuel_numero_wave || ''}
-          numeroOM={settings.paiement_manuel_numero_om || ''}
-          onClose={() => setManuelBoutiqueId(null)}
-          onSuccess={() => { setManuelBoutiqueId(null); router.refresh() }}
-        />
       )}
 
       {/* Notification Hors-Ligne Dashboard */}

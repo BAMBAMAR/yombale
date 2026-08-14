@@ -3,9 +3,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { deleteAnnonce } from '@/app/actions/annonces'
-import { initierWaveBoost } from '@/app/actions/paiement'
 import { cloudinaryHQ } from '@/lib/cloudinary'
-import ModalPaiementManuel from '@/components/ModalPaiementManuel'
 
 interface Annonce {
   id: string
@@ -66,9 +64,6 @@ function AnnonceCard({
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
-  const [showBoostModal, setShowBoostModal] = useState(false)
-  const [pendingBoost, startBoost] = useTransition()
-  const [boostErr, setBoostErr] = useState<string | null>(null)
 
   function handleDelete() {
     if (!confirm('Supprimer cette annonce définitivement ?')) return
@@ -80,24 +75,7 @@ function AnnonceCard({
     })
   }
 
-  function handleBoost() {
-    setBoostErr(null)
-    startBoost(async () => {
-      if (waveActif) {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token') || undefined
-        const res = await initierWaveBoost(annonce.id, token)
-        if (res.ok && res.url) {
-          window.location.href = res.url
-          return
-        }
-        if (res.error) {
-          setBoostErr(res.error)
-        }
-      }
-      // En cas de Wave inactif ou échec/fallback_manuel -> Modale paiement manuel
-      setShowBoostModal(true)
-    })
-  }
+
 
   const needsPayment = !annonce.payee && !annonce.actif && !annonce.rejete
   const photo = annonce.photos?.[0] ?? null
@@ -142,9 +120,9 @@ function AnnonceCard({
             Modifier
           </Link>
           {annonce.actif && (
-            <button onClick={handleBoost} disabled={pendingBoost} className="annonce-action-btn">
-              {pendingBoost ? '…' : '🚀 Booster 7j'}
-            </button>
+            <Link href={`/payer-boost/${annonce.id}`} className="annonce-action-btn">
+              🚀 Booster 7j
+            </Link>
           )}
           <button
             onClick={handleDelete}
@@ -155,17 +133,7 @@ function AnnonceCard({
           </button>
         </div>
 
-        {boostErr && <p className="annonce-delete-err">{boostErr}</p>}
-        {showBoostModal && (
-          <ModalPaiementManuel
-            reference={`boost_${userId}_${annonce.id}`}
-            montant={prixBoost}
-            numeroWave={numeroWave}
-            numeroOM={numeroOM}
-            onClose={() => setShowBoostModal(false)}
-            onSuccess={() => window.location.reload()}
-          />
-        )}
+
       </div>
     </div>
   )
