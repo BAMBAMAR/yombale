@@ -12,6 +12,7 @@ const {
   normalisePhone,
 } = require('./whatsapp');
 const { creerCommandeBoutique, notifierVendeurCommande } = require('../routes/comptabilite');
+const cfg = require('../lib/settingsCache');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 const prixFmt = (p) => p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' : 'N/C';
@@ -118,21 +119,22 @@ async function sendMenu(phone) {
     'Comment puis-je vous aider ?',
     [
       {
-        title: 'Découvrir',
+        title: 'Acheter & Explorer',
         rows: [
-          { id: 'search',    title: '🔍 Rechercher',      description: 'Trouver un produit ou annonce' },
-          { id: 'boutiques', title: '🏪 Boutiques',        description: 'Découvrir les boutiques Nopalou' },
-          { id: 'immo',      title: '🏠 Annonces immo',   description: 'Maisons, appartements, terrains' },
-          { id: 'telecom',   title: '📱 Offres télécom',  description: 'Mobile, internet, forfaits' },
+          { id: 'search', title: '🔍 Rechercher', description: 'Trouver un produit ou annonce' },
+          { id: 'boutiques', title: '🏪 Les Boutiques', description: 'Découvrir les boutiques marchandes' },
+          { id: 'immo', title: '🏠 Annonces immo', description: 'Maisons, appartements, terrains' },
+          { id: 'telecom', title: '📱 Offres télécom', description: 'Mobile, internet, forfaits' },
         ],
       },
       {
-        title: 'Mon compte',
+        title: 'Marchands & Compte',
         rows: [
-          { id: 'alert',   title: '🔔 Alerte prix',     description: 'Être notifié d\'une baisse' },
-          { id: 'order',   title: '📦 Suivre commande', description: 'Statut de votre paiement' },
-          { id: 'support', title: '💬 Support',         description: 'Contacter l\'équipe Nopalou' },
-          { id: 'guide',   title: 'ℹ️ Comment ça marche', description: 'Utiliser le site Nopalou' },
+          { id: 'creer_boutique', title: '🛍️ Créer ma boutique', description: 'Vendre sur Nopalou, espace marchand' },
+          { id: 'forfaits', title: '💎 Forfaits Boutiques', description: 'Tarifs des formules Pro & Business' },
+          { id: 'order', title: '📦 Suivre commande', description: 'Statut de votre paiement' },
+          { id: 'alert', title: '🔔 Alerte prix', description: 'Être notifié d\'une baisse' },
+          { id: 'support', title: '💬 Support', description: 'Contacter l\'équipe Nopalou' },
         ],
       },
     ]
@@ -842,6 +844,50 @@ async function handleIncoming(msg) {
       await sendWhatsAppText(phone, '📦 Entrez votre référence de commande (ex: CMD-12345) :');
       return;
     }
+    if (action === 'creer_boutique') {
+      const msgText = `🛍️ *Créer votre boutique sur Nopalou*\n\n` +
+        `Développez votre activité et vendez vos produits directement en ligne au Sénégal !\n\n` +
+        `✨ *Vos avantages marchands :*\n` +
+        `• 🏪 Catalogue produits complet & gestion de stock\n` +
+        `• 🌊 Encaissement direct Wave & Orange Money\n` +
+        `• 📊 Statistiques de vente en temps réel\n` +
+        `• 💬 Bot WhatsApp automatisé pour vos clients\n` +
+        `• ⚡ Reversements des ventes Wave 1-Clic\n\n` +
+        `👉 *Créez votre boutique gratuitement en 2 min :*\n${SITE}/creer-boutique`;
+      await sendWhatsAppText(phone, msgText);
+      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+      await setSession(phone, 'MENU', {});
+      return;
+    }
+    if (action === 'forfaits' || action === 'forfaits_abonnements') {
+      const pxDecouverte = (await cfg.getNum('plan_decouverte_prix')) || 2500;
+      const pxPro = (await cfg.getNum('plan_pro_prix')) || 5000;
+      const pxBusiness = (await cfg.getNum('plan_business_prix')) || 10000;
+      const commBiz = (await cfg.getNum('commission_business')) || 2.0;
+
+      const msgText = `💎 *Forfaits & Abonnements Boutiques Nopalou*\n\n` +
+        `Choisissez la formule adaptée à vos besoins :\n\n` +
+        `🌱 *Boutique Taf Taf (${prixFmt(pxDecouverte)}/mois)*\n` +
+        `• 🎁 1er mois 100% OFFERT\n` +
+        `• Catalogue produits illimité\n` +
+        `• Encaissement Wave & Orange Money\n` +
+        `• 0% de commission sur vos ventes\n\n` +
+        `🚀 *Boutique Pro (${prixFmt(pxPro)}/mois)*\n` +
+        `• Tout le plan Taf Taf +\n` +
+        `• Badge Vendeur Pro Certifié ⭐\n` +
+        `• Référencement prioritaire sur le comparateur\n` +
+        `• Support client prioritaire 7j/7\n\n` +
+        `👑 *Boutique Business (${prixFmt(pxBusiness)}/mois)*\n` +
+        `• Tout le plan Pro +\n` +
+        `• Commission réduite (${commBiz}%)\n` +
+        `• Sponsoring & Bannière Page d'Accueil\n` +
+        `• Multi-Magasins & Caisse Caissiers POS\n\n` +
+        `👉 *Découvrir les détails et s'abonner :*\n${SITE}/tarifs-boutique`;
+      await sendWhatsAppText(phone, msgText);
+      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+      await setSession(phone, 'MENU', {});
+      return;
+    }
     if (action === 'boutiques') {
       await envoyerToutesLesBoutiques(phone);
       return;
@@ -1390,7 +1436,25 @@ async function handleIncoming(msg) {
       const refs = creees.map(c => c.reference).join(', ');
       let msgFinal = `✅ *Commande ${refs} envoyée !*\n\nLe vendeur *${boutique.nom}* va vous contacter pour finaliser le paiement et la livraison.`;
       if (creees[0]?.methode_paiement === 'wave' || creees[0]?.methode_paiement === 'pay_wave') {
-        const wavePayUrl = `${SITE}/checkout-express?produit=${creees[0]?.produit_id || ''}&boutique=${boutique.id}&phone=${phone}&pay=wave`;
+        let wavePayUrl = `${SITE}/checkout-express?produit=${creees[0]?.produit_id || ''}&boutique=${boutique.id}&phone=${phone}&pay=wave&auto=1`;
+        try {
+          const wave = require('./wave');
+          const totalMontant = creees.reduce((sum, c) => sum + Number(c.montant_total || 0), 0);
+          if (totalMontant > 0 && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
+            const waveSession = await wave.createCheckoutSession({
+              amount: Math.round(totalMontant),
+              currency: 'XOF',
+              success_url: `${SITE}/paiement/succes?ref=${refs}&type=commande-boutique`,
+              error_url: `${SITE}/paiement/erreur`,
+              client_reference: refs,
+            });
+            if (waveSession?.wave_url) {
+              wavePayUrl = waveSession.wave_url;
+            }
+          }
+        } catch (wErr) {
+          console.error('[WHATSAPP CHATBOT WAVE SESSION ERR]:', wErr.message);
+        }
         msgFinal += `\n\n🌊 *Réglez directement votre commande par Wave en 1 Clic :*\n👉 ${wavePayUrl}`;
       }
       if (echecs.length > 0) {

@@ -768,7 +768,24 @@ router.patch(
         const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
         let msgConfirmee = `✅ *Commande confirmée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* (${commande.nom_produit}) a été confirmée. Nous préparons votre colis !`;
         if (commande.methode_paiement === 'wave' || commande.methode_paiement === 'pay_wave') {
-          const wavePayUrl = `${SITE}/checkout-express?produit=${commande.produit_id || ''}&boutique=${commande.boutique_id}&phone=${commande.client_telephone}&pay=wave`;
+          let wavePayUrl = `${SITE}/checkout-express?produit=${commande.produit_id || ''}&boutique=${commande.boutique_id}&phone=${commande.client_telephone}&pay=wave&auto=1`;
+          try {
+            const wave = require('../services/wave');
+            if (Number(commande.montant_total) > 0 && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
+              const waveSession = await wave.createCheckoutSession({
+                amount: Math.round(Number(commande.montant_total)),
+                currency: 'XOF',
+                success_url: `${SITE}/paiement/succes?ref=${commande.reference}&type=commande-boutique`,
+                error_url: `${SITE}/paiement/erreur`,
+                client_reference: commande.reference,
+              });
+              if (waveSession?.wave_url) {
+                wavePayUrl = waveSession.wave_url;
+              }
+            }
+          } catch (wErr) {
+            console.error('[COMPTABILITE WAVE SESSION ERR]:', wErr.message);
+          }
           msgConfirmee += `\n\n🌊 *Réglez directement votre commande par Wave en 1 Clic :*\n👉 ${wavePayUrl}`;
         }
         const msgs = {

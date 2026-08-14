@@ -1,3 +1,17 @@
+## 🚀 Mises à jour du 14/08/2026 : Intégration des Options "Créer ma boutique" & "Forfaits Boutiques" dans le Chatbot WhatsApp (`whatsapp-chatbot.js`)
+- **Enrichissement du Menu Interactif WhatsApp (`sendMenu`)** :
+  * **Ajout de l'Option *"🛍️ Créer ma boutique"*** : Permet aux commerçants de découvrir les avantages marchands Nopalou (catalogue, Wave 1-Clic, bot dédié, reversements) et d'accéder directement à la création de boutique (`/creer-boutique`).
+  * **Ajout de l'Option *"💎 Forfaits Boutiques"*** : Présentation détaillée des formules lues dynamiquement depuis la base de données via `settingsCache` (Plan Taf Taf 2 500 F/mois avec 1er mois offert, Plan Pro 5 000 F/mois, Plan Business 10 000 F/mois avec commission réduite à 2%) directement par chat WhatsApp avec accès aux abonnements (`/tarifs-boutique`).
+  * Réorganisation des sections en *"Acheter & Explorer"* et *"Marchands & Compte"* pour respecter strictement la limite des 10 éléments interactifs Meta.
+
+## 🚀 Mises à jour du 14/08/2026 : Ouverture Directe de l'Application Wave via WhatsApp & Auto-Redirection Web (`whatsapp-chatbot.js`, `comptabilite.js`, `checkout-express/page.tsx`)
+- **Génération Directe de la Session de Paiement Wave (`wave_launch_url`) dans WhatsApp** :
+  * **WhatsApp Chatbot (`whatsapp-chatbot.js`)** : Lors de la création d'une commande par le bot WhatsApp, le système initialise directement une session Wave Checkout (`wave.createCheckoutSession`) et transmet la véritable URL officielle Wave (`wave_launch_url`) dans le message WhatsApp. Cliquer sur le lien dans WhatsApp ouvre **immédiatement l'application Wave** pour payer en 1 Clic (2 secondes).
+  * **Notifications Vendeur ➔ Client (`comptabilite.js`)** : Même comportement lors de l'envoi de la notification de confirmation de commande du marchand vers le client via WhatsApp.
+- **Auto-Redirection Immédiate sur le Web (`checkout-express/page.tsx`)** :
+  * Si le client atterrit sur le lien Web (`/checkout-express?pay=wave&auto=1`), la page déclenche automatiquement l'initialisation de la session Wave et redirige l'acheteur sans nécessiter un second clic.
+  * Ajout d'un écran d'attente visuel moderne (*"🌊 Redirection vers Wave..."*) pendant l'initialisation.
+
 ## 🚀 Mises à jour du 14/08/2026 : Correction du Réaffichage Récurrent de la Notification de Mise à Jour PWA (`RegisterSW.tsx`, `next.config.js`)
 - **Fix du Clignotement / Réaffichage du Bandeau Bleu *"🔄 Nouvelle version disponible — Mettre à jour"*** :
   * **Problème** : Lors du clic sur le bouton bleu de mise à jour PWA, le rechargement de la page re-déclenchait l'événement `updatefound` ou `reg.waiting` avant la finalisation de l'activation du Service Worker, provoquant la réapparition indéfinie du bandeau bleu.

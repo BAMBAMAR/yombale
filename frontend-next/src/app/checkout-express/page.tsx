@@ -45,10 +45,12 @@ function CheckoutExpressContent() {
     payParam === 'cash' ? 'cash' : payParam === 'om' || payParam === 'orange_money' ? 'orange_money' : 'wave'
   )
   const [submitting, setSubmitting] = useState<boolean>(false)
+  const [autoRedirecting, setAutoRedirecting] = useState<boolean>(false)
   const [success, setSuccess] = useState<boolean>(false)
   const [orderRef, setOrderRef] = useState<string>('')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
+  const autoParam = searchParams.get('auto') === '1'
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
   useEffect(() => {
@@ -88,6 +90,32 @@ function CheckoutExpressContent() {
   const fraisLivraison = zoneSelectionnee ? zoneSelectionnee.prix : 1500
   const sousTotal = (produitInfo?.prix || 0) * quantite
   const totalGlobal = sousTotal + fraisLivraison
+
+  // Auto redirection immédiate vers Wave si auto=1
+  useEffect(() => {
+    if (!loading && autoParam && methodePaiement === 'wave' && !submitting && !success && !autoRedirecting) {
+      setAutoRedirecting(true)
+      const refTemp = `CMD-${Date.now().toString(36).toUpperCase()}`
+      fetch(`${backendUrl}/api/paiement/wave/initier-express`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          montant: totalGlobal > 0 ? totalGlobal : 1500,
+          reference: refTemp,
+          nom_produit: produitInfo?.nom || 'Commande Express Wave',
+        }),
+      })
+        .then(res => res.json())
+        .then(waveData => {
+          if (waveData.wave_url) {
+            window.location.href = waveData.wave_url
+          } else {
+            setAutoRedirecting(false)
+          }
+        })
+        .catch(() => setAutoRedirecting(false))
+    }
+  }, [loading, autoParam, methodePaiement, totalGlobal, produitInfo, backendUrl, submitting, success, autoRedirecting])
 
   // WhatsApp direct link generator
   const messageWhatsapp = `Bonjour ! Je souhaite valider la commande suivante via WhatsApp :\n\n` +
@@ -163,6 +191,21 @@ function CheckoutExpressContent() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (autoRedirecting) {
+    return (
+      <div style={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+        <div style={{ background: '#fff', borderRadius: 24, padding: '40px 32px', boxShadow: '0 20px 50px rgba(0,163,224,0.15)', border: '1px solid #e0f7ff', maxWidth: 460, width: '100%' }}>
+          <span style={{ fontSize: 56, display: 'block', marginBottom: 16 }}>🌊</span>
+          <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0084b4', margin: '0 0 12px' }}>Redirection vers Wave…</h2>
+          <p style={{ fontSize: 14, color: '#475569', margin: '0 0 24px', lineHeight: 1.5 }}>
+            Nous préparons votre paiement sécurisé Wave pour <strong>{produitInfo?.nom || 'votre commande'}</strong>.
+          </p>
+          <div style={{ display: 'inline-block', width: 36, height: 36, border: '4px solid #e0f7ff', borderTopColor: '#00a3e0', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        </div>
+      </div>
+    )
   }
 
   if (success) {
