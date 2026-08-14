@@ -1166,6 +1166,29 @@ router.post('/admin/reversements/:commandeId/payer', adminSecretOnly, async (req
   }
 });
 
+// POST /api/comptabilite/reversements/valider-lot — Marquer un lot de commandes comme reversées
+router.post('/reversements/valider-lot', verifierToken, adminSecretOnly, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Aucun ID de commande fourni' });
+    }
+
+    const r = await pool.query(
+      `UPDATE commandes_boutique 
+       SET statut = 'reverse', updated_at = NOW() 
+       WHERE id = ANY($1::text[]) OR reference = ANY($1::text[]) 
+       RETURNING id, reference`,
+      [ids]
+    );
+
+    res.json({ success: true, count: r.rowCount, ids: r.rows.map(row => row.id) });
+  } catch (err) {
+    console.error('[ADMIN VALIDATION LOT ERR]', err);
+    res.status(500).json({ error: err.message || 'Erreur lors de la validation du lot' });
+  }
+});
+
 module.exports = router;
 module.exports.creerCommandeBoutique = creerCommandeBoutique;
 module.exports.notifierVendeurCommande = notifierVendeurCommande;

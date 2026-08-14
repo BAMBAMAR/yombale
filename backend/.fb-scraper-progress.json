@@ -1,15 +1,14 @@
 {
-  "status": "in_progress",
+  "status": "completed",
   "mode": "live",
-  "groupeIndex": 5,
+  "groupeIndex": 10,
   "totalGroupes": 10,
-  "pourcentage": 50,
-  "groupeActuel": "Emploi 3",
-  "groupeUrl": "https://www.facebook.com/groups/519668123858499",
-  "scrapes": 2,
-  "inseres": 1,
-  "doublons": 0,
-  "ignores": 1,
+  "pourcentage": 100,
+  "groupeActuel": "Terminé",
+  "scrapes": 36,
+  "inseres": 20,
+  "doublons": 8,
+  "ignores": 8,
   "erreurs": [],
-  "updatedAt": "2026-08-14T02:22:35.278Z"
+  "updatedAt": "2026-08-14T12:17:13.572Z"
 }

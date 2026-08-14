@@ -64,3 +64,66 @@ export function printPDFReport(title: string, subtitle: string, headers: string[
   `)
   printWindow.document.close()
 }
+
+export interface WaveBulkItem {
+  reference: string
+  boutique_nom: string
+  mobile: string
+  montant_net: number
+}
+
+function formatPhoneE164(phone: string): string {
+  let cleaned = String(phone || '').replace(/[^\d+]/g, '')
+  if (!cleaned) return ''
+  if (!cleaned.startsWith('+')) {
+    if (cleaned.startsWith('00221')) cleaned = '+' + cleaned.slice(2)
+    else if (cleaned.startsWith('221')) cleaned = '+' + cleaned
+    else if (cleaned.length === 9) cleaned = '+221' + cleaned
+    else cleaned = '+' + cleaned
+  }
+  return cleaned
+}
+
+/**
+ * Exporte un lot de reversements au format exact exigé par la plateforme Wave Business pour le paiement en masse.
+ */
+export function exportWaveBulkPaymentCSV(filename: string, items: WaveBulkItem[]) {
+  const headers = [
+    'Nom du client',
+    'Numéro de téléphone',
+    'Montant',
+    'Devise (optionnel)',
+    'Raison du paiement (optionnel)',
+    'Numéro d\'identification national (optionnel)',
+    'Référence (optionnel)'
+  ]
+
+  const rows = items.map(item => {
+    const nomClient = String(item.boutique_nom || 'Marchand').replace(/"/g, '""')
+    const telephone = formatPhoneE164(item.mobile)
+    const montant = Math.round(Number(item.montant_net) || 0)
+    const devise = 'XOF'
+    // Wave limite la raison à 40 caractères max pour l'intégration SMS
+    const raisonBrute = `Reversement Nopalou ${item.reference}`
+    const raison = raisonBrute.slice(0, 40).replace(/"/g, '""')
+    const nationalId = ''
+    const reference = `REV-${item.reference}`.replace(/"/g, '""')
+
+    return [nomClient, telephone, montant, devise, raison, nationalId, reference]
+  })
+
+  const csvContent = [
+    headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(','),
+    ...rows.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+  ].join('\r\n')
+
+  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', `${filename}_WAVE_BULK_${new Date().toISOString().slice(0, 10)}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+

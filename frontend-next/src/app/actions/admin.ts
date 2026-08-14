@@ -430,3 +430,24 @@ export async function effectuerReversementWave(commandeId: string): Promise<{ su
   }
 }
 
+export async function validerLotReversementsWave(ids: string[]): Promise<{ success?: boolean; count?: number; error?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  try {
+    const r = await fetch(`${BACKEND}/api/comptabilite/reversements/valider-lot`, {
+      method: 'POST',
+      headers: adminHeaders(secret),
+      body: JSON.stringify({ ids }),
+    })
+    const data = await r.json()
+    if (!r.ok) return { error: data.error || 'Erreur lors de la validation du lot' }
+    revalidatePath('/admin/reversements')
+    return data
+  } catch (err: any) {
+    return { error: err.message || 'Erreur serveur' }
+  }
+}
+
+

@@ -1,3 +1,16 @@
+## 🚀 Mises à jour du 14/08/2026 : Exportation Wave Bulk Payout, Validation de Lot Anti-Doublon & Notifications WhatsApp (`paiement.js`, `comptabilite.js`, `export.ts`, `ReversementsClient.tsx`)
+- **Exportation au Format Officiel Wave Business Bulk Payout (`export.ts`, `ReversementsClient.tsx`)** :
+  * Ajout de la fonction `exportWaveBulkPaymentCSV` dans `export.ts` et du bouton de téléchargement `.csv / Excel` dans l'espace Admin (`/admin/reversements`).
+  * Conformité exacte aux **7 colonnes de Wave Business** : `Nom du client`, `Numéro de téléphone` (formaté `+221...`), `Montant` (Net vendeur sans décimales), `Devise` (`XOF`), `Raison du paiement` (tronquée à 40 caractères max), `Numéro ID national` (vide), et `Référence` (`REV-${ref}`).
+- **Sélection par Lot & Prévention des Doublons (`ReversementsClient.tsx`, `admin.ts`, `comptabilite.js`)** :
+  * Ajout de cases à cocher de sélection multiple et de la case globale "Tout sélectionner".
+  * Ajout du bouton **"✅ Marquer la sélection comme Reversée"** et de la route API `POST /api/comptabilite/reversements/valider-lot`.
+  * **Sécurité Anti-Doublons** : Dès la validation du lot, les commandes sont marquées `statut = 'reverse'` et **immédiatement retirées de la liste des versements en attente**, éliminant tout risque de réinclusion ou de paiement en double.
+- **Notifications WhatsApp Automatiques à la Confirmation Wave (`paiement.js`)** :
+  * Dès réception du Webhook Wave `checkout.session.completed`, le backend met à jour la commande (`statut = 'payee'`) et déclenche automatiquement deux messages WhatsApp :
+    1. **Au Client (Acheteur)** : Accusé de confirmation du paiement Wave.
+    2. **Au Vendeur (Marchand)** : Alerte de réception du paiement avec invitation à préparer le colis.
+
 ## 🚀 Mises à jour du 14/08/2026 : Correction du Lien Terminal Caissier Dédié (Sans MDP Admin) Multi-Navigateur (`backend-fetch.ts`, `CaisseClient.tsx`, `backend/routes/boutiques.js`)
 - **Fix du Chargement sur Nouveau Navigateur / Écran Dédié Caissier (`backend/routes/boutiques.js`, `CaisseClient.tsx`)** :
   * **Problème** : Sur un autre navigateur ou une tablette vierge (sans cookie de session administrateur), la boutique et la liste des caissiers ne s'affichaient pas car :
