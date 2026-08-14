@@ -318,12 +318,16 @@ router.post('/annonce/initier', verifierToken, limiterEcriture, async (req, res)
     const { annonce_id } = req.body;
     if (!annonce_id) return res.status(400).json({ error: 'annonce_id requis' });
 
-    // Vérifier que l'annonce appartient à cet utilisateur et n'est pas encore payée
     const r = await pool.query(
-      'SELECT id FROM annonces_classifiees WHERE id=$1 AND utilisateur_id=$2 AND payee=false AND supprimee=false',
-      [annonce_id, userId]
+      'SELECT id, utilisateur_id, payee FROM annonces_classifiees WHERE id=$1 AND supprimee=false',
+      [annonce_id]
     );
-    if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable ou déjà payée' });
+    if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
+    const annonceRow = r.rows[0];
+    if (annonceRow.payee) return res.status(400).json({ error: 'Annonce déjà payée' });
+    if (annonceRow.utilisateur_id && annonceRow.utilisateur_id !== userId && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Non autorisé à payer cette annonce' });
+    }
 
     const prix = await getPrix();
     const montant = prix.annonce;
@@ -535,10 +539,14 @@ router.post('/boost/initier', verifierToken, limiterEcriture, async (req, res) =
     if (!annonce_id) return res.status(400).json({ error: 'annonce_id requis' });
 
     const r = await pool.query(
-      'SELECT id FROM annonces_classifiees WHERE id=$1 AND utilisateur_id=$2 AND supprimee=false',
-      [annonce_id, userId]
+      'SELECT id, utilisateur_id FROM annonces_classifiees WHERE id=$1 AND supprimee=false',
+      [annonce_id]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
+    const annonceRow = r.rows[0];
+    if (annonceRow.utilisateur_id && annonceRow.utilisateur_id !== userId && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Non autorisé à booster cette annonce' });
+    }
 
     const clientRef = `boost_${userId}_${annonce_id}`;
     const { boost: prixBoost } = await getPrix();

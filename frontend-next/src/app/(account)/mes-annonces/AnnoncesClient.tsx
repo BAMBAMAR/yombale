@@ -90,6 +90,9 @@ function AnnonceCard({
           window.location.href = res.url
           return
         }
+        if (res.error) {
+          setBoostErr(res.error)
+        }
       }
       // En cas de Wave inactif ou échec/fallback_manuel -> Modale paiement manuel
       setShowBoostModal(true)
