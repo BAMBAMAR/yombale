@@ -60,7 +60,7 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
       amount:           prixTotal,
       currency:         'XOF',
       success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${plan}&type=abonnement`,
-      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur?ref=${clientRef}&type=abonnement`,
       client_reference: clientRef,
     });
     res.json({ wave_url: session.wave_url, session_id: session.session_id, plan, label, prix: prixTotal, duree });

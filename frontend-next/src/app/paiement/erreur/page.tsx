@@ -54,8 +54,19 @@ function getErreurContent(type: PayType, ref: string) {
           </>
         ),
       }
+    case 'produit-sponsoring':
+      return {
+        titre: 'Paiement du sponsoring produit non abouti',
+        desc: 'Le paiement pour la mise en avant de votre produit n\'a pas abouti. Aucun montant n\'a été débité.',
+        actions: (
+          <>
+            <Link href="/boutique" className="paiement-cta-btn">Ma boutique</Link>
+            <Link href="/" className="paiement-cta-btn paiement-cta-btn--outline">Accueil</Link>
+          </>
+        ),
+      }
     case 'annonce':
-    default:
+    case 'boost':
       return {
         titre: 'Paiement d\'annonce non abouti',
         desc: 'Votre paiement n\'a pas abouti. Votre annonce n\'a pas été activée. Aucun montant n\'a été débité.',
@@ -63,6 +74,16 @@ function getErreurContent(type: PayType, ref: string) {
           <>
             <Link href="/mes-annonces" className="paiement-cta-btn">Mes annonces</Link>
             <Link href="/" className="paiement-cta-btn paiement-cta-btn--outline">Accueil</Link>
+          </>
+        ),
+      }
+    default:
+      return {
+        titre: 'Paiement non abouti',
+        desc: 'Votre paiement n\'a pas pu être finalisé (annulation ou solde insuffisant). Aucun montant n\'a été débité.',
+        actions: (
+          <>
+            <Link href="/" className="paiement-cta-btn">Retour à l&apos;accueil</Link>
           </>
         ),
       }
@@ -74,9 +95,27 @@ export default function PaiementErreurPage({
 }: {
   searchParams: { ref?: string; type?: string }
 }) {
-  const type = searchParams.type ?? 'annonce'
   const ref  = searchParams.ref  ?? ''
-  const { titre, desc, actions } = getErreurContent(type, ref)
+  let type   = searchParams.type
+
+  // Si le paramètre `type` n'est pas fourni, déduire le type selon le préfixe de la référence
+  if (!type && ref) {
+    if (ref.startsWith('CMD-') || ref.startsWith('cmd_') || ref.startsWith('pm_')) {
+      type = 'commande-express'
+    } else if (ref.startsWith('abmt_')) {
+      type = 'abonnement'
+    } else if (ref.startsWith('bout_')) {
+      type = 'boutique-sponsoring'
+    } else if (ref.startsWith('immo_')) {
+      type = 'immo-sponsoring'
+    } else if (ref.startsWith('prod_')) {
+      type = 'produit-sponsoring'
+    } else if (ref.startsWith('ann_') || ref.startsWith('boost_')) {
+      type = 'annonce'
+    }
+  }
+
+  const { titre, desc, actions } = getErreurContent(type || 'general', ref)
 
   return (
     <div className="page-container" style={{ paddingTop: '4rem', maxWidth: 560 }}>

@@ -3488,7 +3488,7 @@ router.post('/commandes/express', async (req, res) => {
           amount: Number(totalGeneral),
           currency: 'XOF',
           success_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/succes?ref=${ref}&type=commande-express`,
-          error_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/erreur`,
+          error_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/erreur?ref=${ref}&type=commande-express`,
           client_reference: ref,
         });
         return res.status(201).json({

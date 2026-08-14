@@ -644,7 +644,7 @@ router.post(
             amount: Number(commande.montant_total),
             currency: 'XOF',
             success_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/succes?ref=${commande.reference}&type=commande-boutique`,
-            error_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/erreur`,
+            error_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/erreur?ref=${commande.reference}&type=commande-boutique`,
             client_reference: commande.reference,
           });
           return res.status(201).json({ commande, wave_url: waveSession.wave_url, session_id: waveSession.session_id, message: 'Commande créée. Redirection vers Wave…' });
@@ -776,7 +776,7 @@ router.patch(
                 amount: Math.round(Number(commande.montant_total)),
                 currency: 'XOF',
                 success_url: `${SITE}/paiement/succes?ref=${commande.reference}&type=commande-boutique`,
-                error_url: `${SITE}/paiement/erreur`,
+                error_url: `${SITE}/paiement/erreur?ref=${commande.reference}&type=commande-boutique`,
                 client_reference: commande.reference,
               });
               if (waveSession?.wave_url) {

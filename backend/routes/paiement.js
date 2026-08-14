@@ -198,7 +198,7 @@ router.post('/wave/initier', verifierToken, limiterEcriture, async (req, res) =>
       amount:           montant,
       currency:         'XOF',
       success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${produit_id}`,
-      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur?ref=pm_${user_id}_${produit_id}&type=commande-express`,
       client_reference: `pm_${user_id}_${produit_id}`,
     });
     res.json({ wave_url: session.wave_url, session_id: session.session_id });
@@ -333,7 +333,7 @@ router.post('/annonce/initier', verifierToken, limiterEcriture, async (req, res)
       amount:           montant,
       currency:         'XOF',
       success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${annonce_id}&type=annonce`,
-      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur?ref=${annonce_id}&type=annonce`,
       client_reference: clientRef,
     });
     res.json({ wave_url: session.wave_url, session_id: session.session_id });
@@ -366,7 +366,7 @@ router.post('/immo-sponsoring/initier', verifierToken, limiterEcriture, async (r
       amount:           prixSponsoImmo,
       currency:         'XOF',
       success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${immo_id}&type=immo-sponsoring`,
-      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur?ref=${immo_id}&type=immo-sponsoring`,
       client_reference: clientRef,
     });
     res.json({ wave_url: session.wave_url, session_id: session.session_id });
@@ -396,7 +396,7 @@ router.post('/produit-sponsoring/initier', verifierToken, limiterEcriture, async
       amount:           prixSponsoProd,
       currency:         'XOF',
       success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${produit_id}&type=produit-sponsoring`,
-      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur?ref=${produit_id}&type=produit-sponsoring`,
       client_reference: clientRef,
     });
     res.json({ wave_url: session.wave_url, session_id: session.session_id });
@@ -429,7 +429,7 @@ router.post('/boutique-sponsoring/initier', verifierToken, limiterEcriture, asyn
       amount:           prixSponsoBout,
       currency:         'XOF',
       success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${boutique_id}&type=boutique-sponsoring`,
-      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur?ref=${boutique_id}&type=boutique-sponsoring`,
       client_reference: clientRef,
     });
     res.json({ wave_url: session.wave_url, session_id: session.session_id });
@@ -546,7 +546,7 @@ router.post('/boost/initier', verifierToken, limiterEcriture, async (req, res) =
       amount:           prixBoost,
       currency:         'XOF',
       success_url:      `${process.env.FRONTEND_URL}/paiement/succes?ref=${annonce_id}&type=boost`,
-      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur`,
+      error_url:        `${process.env.FRONTEND_URL}/paiement/erreur?ref=${annonce_id}&type=boost`,
       client_reference: clientRef,
     });
     res.json({ wave_url: session.wave_url, session_id: session.session_id });

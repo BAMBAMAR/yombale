@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
@@ -15,38 +14,28 @@ export default function RetourPaiementPage({
   const status   = searchParams.status ?? ''
   const orderId  = searchParams.order_id ?? ''
 
-  // Si succès Orange Money → redirect vers page succès unifiée
-  if (status === 'SUCCESS') {
-    const type = orderId.startsWith('immo_')
-      ? 'immo-sponsoring'
-      : orderId.startsWith('bout_')
-      ? 'boutique-sponsoring'
-      : 'annonce'
-    const ref  = orderId.split('_').slice(2).join('_') || orderId
-    redirect(`/paiement/succes?ref=${ref}&type=${type}&methode=orange`)
+  let type = 'annonce'
+  if (orderId.startsWith('CMD-') || orderId.startsWith('cmd_') || orderId.startsWith('pm_')) {
+    type = 'commande-express'
+  } else if (orderId.startsWith('abmt_')) {
+    type = 'abonnement'
+  } else if (orderId.startsWith('bout_')) {
+    type = 'boutique-sponsoring'
+  } else if (orderId.startsWith('immo_')) {
+    type = 'immo-sponsoring'
+  } else if (orderId.startsWith('prod_')) {
+    type = 'produit-sponsoring'
+  } else if (orderId.startsWith('boost_')) {
+    type = 'boost'
+  } else if (orderId.startsWith('ann_')) {
+    type = 'annonce'
   }
 
-  // Echec ou retour manuel
-  return (
-    <div className="page-container" style={{ paddingTop: '4rem', maxWidth: 560 }}>
-      <div className="paiement-succes-page">
-        <div className="paiement-succes-icon" style={{ background: '#FEF2F2' }}>❌</div>
-        <h1 className="paiement-succes-titre" style={{ color: 'var(--red)' }}>
-          Paiement non complété
-        </h1>
-        <p className="paiement-succes-desc">
-          Votre paiement Orange Money n&apos;a pas abouti ou a été annulé.
-          Aucun montant n&apos;a été débité.
-        </p>
-        <div className="paiement-succes-actions">
-          <Link href="/mes-annonces" className="paiement-cta-btn">
-            Retenter le paiement
-          </Link>
-          <Link href="/" className="paiement-cta-btn paiement-cta-btn--outline">
-            Retour à l&apos;accueil
-          </Link>
-        </div>
-      </div>
-    </div>
-  )
+  // Si succès Orange Money → redirect vers page succès unifiée
+  if (status === 'SUCCESS') {
+    redirect(`/paiement/succes?ref=${encodeURIComponent(orderId)}&type=${type}&methode=orange`)
+  }
+
+  // En cas d'échec ou d'annulation → redirect vers page d'erreur unifiée
+  redirect(`/paiement/erreur?ref=${encodeURIComponent(orderId)}&type=${type}`)
 }
