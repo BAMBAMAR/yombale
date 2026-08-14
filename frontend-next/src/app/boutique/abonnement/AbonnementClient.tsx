@@ -64,7 +64,8 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
     setError(null)
     setLoadingPlan(plan)
     startTransition(async () => {
-      const result = await initierWaveAbonnement(plan, duree)
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token') || undefined
+      const result = await initierWaveAbonnement(plan, duree, token)
       if (result.ok && result.url) {
         window.location.href = result.url
       } else {

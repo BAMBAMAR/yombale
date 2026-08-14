@@ -84,7 +84,8 @@ function AnnonceCard({
     setBoostErr(null)
     startBoost(async () => {
       if (waveActif) {
-        const res = await initierWaveBoost(annonce.id)
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token') || undefined
+        const res = await initierWaveBoost(annonce.id, token)
         if (res.ok && res.url) {
           window.location.href = res.url
           return

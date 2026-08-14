@@ -2910,7 +2910,8 @@ export default function BoutiqueClient({
     setSponsorError(null)
     startSponsoring(async () => {
       if (waveActif) {
-        const res = await initierWaveBoutiqueSponsoring(boutiqueId)
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token') || undefined
+        const res = await initierWaveBoutiqueSponsoring(boutiqueId, token)
         if (res.ok && res.url) {
           window.location.href = res.url
           return

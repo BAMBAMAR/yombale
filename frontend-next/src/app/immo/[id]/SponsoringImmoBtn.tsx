@@ -21,7 +21,8 @@ export default function SponsoringImmoBtn({ immoId, userId, settings }: Props) {
   function handleClick() {
     setError(null)
     start(async () => {
-      const res = await initierWaveImmoSponsoring(immoId)
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token') || undefined
+      const res = await initierWaveImmoSponsoring(immoId, token)
       if (res.ok && res.url) {
         window.location.href = res.url
       } else {

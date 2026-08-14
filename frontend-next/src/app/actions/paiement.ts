@@ -5,7 +5,9 @@ import { getOptionalSession } from '@/lib/dal'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 
-async function getAuthToken(session: { userId: string; email?: string | null }) {
+async function getAuthToken(session: { userId: string; email?: string | null } | null, clientToken?: string) {
+  if (clientToken && clientToken.trim()) return clientToken.trim()
+  if (!session?.userId) return null
   const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
   return new SignJWT({ userId: session.userId, email: session.email })
     .setProtectedHeader({ alg: 'HS256' })
@@ -23,12 +25,12 @@ export interface PaiementResult {
   numeroDepot?: string
 }
 
-export async function initierWaveAnnonce(annonce_id: string): Promise<PaiementResult> {
+export async function initierWaveAnnonce(annonce_id: string, clientToken?: string): Promise<PaiementResult> {
   const session = await getOptionalSession()
-  if (!session) return { ok: false, error: 'Connexion requise' }
+  const token = await getAuthToken(session, clientToken)
+  if (!token) return { ok: false, error: 'Connexion requise' }
 
   try {
-    const token = await getAuthToken(session)
     const res = await fetch(`${BACKEND}/api/paiement/annonce/initier`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -51,12 +53,12 @@ export async function initierWaveAnnonce(annonce_id: string): Promise<PaiementRe
   }
 }
 
-export async function initierWaveBoost(annonce_id: string): Promise<PaiementResult> {
+export async function initierWaveBoost(annonce_id: string, clientToken?: string): Promise<PaiementResult> {
   const session = await getOptionalSession()
-  if (!session) return { ok: false, error: 'Connexion requise' }
+  const token = await getAuthToken(session, clientToken)
+  if (!token) return { ok: false, error: 'Connexion requise' }
 
   try {
-    const token = await getAuthToken(session)
     const res = await fetch(`${BACKEND}/api/paiement/boost/initier`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -79,9 +81,10 @@ export async function initierWaveBoost(annonce_id: string): Promise<PaiementResu
   }
 }
 
-export async function initierOrangeAnnonce(annonce_id: string): Promise<PaiementResult> {
+export async function initierOrangeAnnonce(annonce_id: string, clientToken?: string): Promise<PaiementResult> {
   const session = await getOptionalSession()
-  if (!session) return { ok: false, error: 'Connexion requise' }
+  const token = await getAuthToken(session, clientToken)
+  if (!token) return { ok: false, error: 'Connexion requise' }
 
   try {
     let montant = 1500
@@ -92,7 +95,6 @@ export async function initierOrangeAnnonce(annonce_id: string): Promise<Paiement
       // fallback 1500 en cas d'échec du fetch settings
     }
 
-    const token = await getAuthToken(session)
     const res = await fetch(`${BACKEND}/api/paiement/orange/initier`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -106,12 +108,12 @@ export async function initierOrangeAnnonce(annonce_id: string): Promise<Paiement
   }
 }
 
-export async function initierWaveImmoSponsoring(immo_id: string): Promise<PaiementResult> {
+export async function initierWaveImmoSponsoring(immo_id: string, clientToken?: string): Promise<PaiementResult> {
   const session = await getOptionalSession()
-  if (!session) return { ok: false, error: 'Connexion requise' }
+  const token = await getAuthToken(session, clientToken)
+  if (!token) return { ok: false, error: 'Connexion requise' }
 
   try {
-    const token = await getAuthToken(session)
     const res = await fetch(`${BACKEND}/api/paiement/immo-sponsoring/initier`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -134,12 +136,12 @@ export async function initierWaveImmoSponsoring(immo_id: string): Promise<Paieme
   }
 }
 
-export async function initierWaveProduitSponsoring(produit_id: string): Promise<PaiementResult> {
+export async function initierWaveProduitSponsoring(produit_id: string, clientToken?: string): Promise<PaiementResult> {
   const session = await getOptionalSession()
-  if (!session) return { ok: false, error: 'Connexion requise' }
+  const token = await getAuthToken(session, clientToken)
+  if (!token) return { ok: false, error: 'Connexion requise' }
 
   try {
-    const token = await getAuthToken(session)
     const res = await fetch(`${BACKEND}/api/paiement/produit-sponsoring/initier`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -163,12 +165,12 @@ export async function initierWaveProduitSponsoring(produit_id: string): Promise<
   }
 }
 
-export async function initierWaveAbonnement(plan: 'pro' | 'business', duree_mois: number = 1): Promise<PaiementResult> {
+export async function initierWaveAbonnement(plan: 'pro' | 'business', duree_mois: number = 1, clientToken?: string): Promise<PaiementResult> {
   const session = await getOptionalSession()
-  if (!session) return { ok: false, error: 'Connexion requise' }
+  const token = await getAuthToken(session, clientToken)
+  if (!token) return { ok: false, error: 'Connexion requise' }
 
   try {
-    const token = await getAuthToken(session)
     const res = await fetch(`${BACKEND}/api/abonnements/initier`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -191,12 +193,12 @@ export async function initierWaveAbonnement(plan: 'pro' | 'business', duree_mois
   }
 }
 
-export async function initierWaveBoutiqueSponsoring(boutique_id: string): Promise<PaiementResult> {
+export async function initierWaveBoutiqueSponsoring(boutique_id: string, clientToken?: string): Promise<PaiementResult> {
   const session = await getOptionalSession()
-  if (!session) return { ok: false, error: 'Connexion requise' }
+  const token = await getAuthToken(session, clientToken)
+  if (!token) return { ok: false, error: 'Connexion requise' }
 
   try {
-    const token = await getAuthToken(session)
     const res = await fetch(`${BACKEND}/api/paiement/boutique-sponsoring/initier`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

@@ -22,7 +22,8 @@ export default function SponsoringProduitBtn({ produitId, userId, settings }: Pr
   function handleClick() {
     setError(null)
     startTransition(async () => {
-      const result = await initierWaveProduitSponsoring(produitId)
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token') || undefined
+      const result = await initierWaveProduitSponsoring(produitId, token)
       if (result.ok && result.url) {
         window.location.href = result.url
       } else {
