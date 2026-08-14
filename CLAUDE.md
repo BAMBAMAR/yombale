@@ -12,10 +12,12 @@
 - **Exportation au Format Officiel Wave Business Bulk Payout (`export.ts`, `ReversementsClient.tsx`)** :
   * Ajout de la fonction `exportWaveBulkPaymentCSV` dans `export.ts` et du bouton de téléchargement `.csv / Excel` dans l'espace Admin (`/admin/reversements`).
   * Conformité exacte aux **7 colonnes de Wave Business** : `Nom du client`, `Numéro de téléphone` (formaté `+221...`), `Montant` (Net vendeur sans décimales), `Devise` (`XOF`), `Raison du paiement` (tronquée à 40 caractères max), `Numéro ID national` (vide), et `Référence` (`REV-${ref}`).
-- **Sélection par Lot & Prévention des Doublons (`ReversementsClient.tsx`, `admin.ts`, `comptabilite.js`)** :
-  * Ajout de cases à cocher de sélection multiple et de la case globale "Tout sélectionner".
-  * Ajout du bouton **"✅ Marquer la sélection comme Reversée"** et de la route API `POST /api/comptabilite/reversements/valider-lot`.
-  * **Sécurité Anti-Doublons** : Dès la validation du lot, les commandes sont marquées `statut = 'reverse'` et **immédiatement retirées de la liste des versements en attente**, éliminant tout risque de réinclusion ou de paiement en double.
+- **Fix du Message "❌ Token manquant" sur la Validation de Lot (`comptabilite.js`, `admin.ts`)** :
+  * **Problème** : Le middleware `verifierToken` était présent à tort sur la route de validation du lot de reversements, ce qui faisait échouer l'action d'administration avec une erreur `401 Token manquant` (les actions admin Next.js utilisant l'en-tête `X-Admin-Secret`).
+  * **Solution** : Correction de l'endpoint vers `/api/comptabilite/admin/reversements/valider-lot` sécurisé uniquement par `adminSecretOnly`. La validation de lot et le retrait des commandes traitées fonctionnent désormais sans aucune erreur.
+- **Exportation Officielle au Format Microsoft Excel (.xls) Wave Business (`export.ts`, `ReversementsClient.tsx`)** :
+  * **Problème** : Le portail Wave exige un fichier au format Microsoft Excel (`.xls`).
+  * **Solution** : Ajout de la fonction `exportWaveBulkPaymentXLS` générant un vrai fichier Excel `.xls` (structure XML/HTML Microsoft Excel avec grille et encodage UTF-8) téléchargeable directement via le bouton principal **`📥 Exporter pour Wave (.xls / Excel)`**. Conservation du format CSV en option secondaire (`.csv`).
 - **Notifications WhatsApp Automatiques à la Confirmation Wave (`paiement.js`)** :
   * Dès réception du Webhook Wave `checkout.session.completed`, le backend met à jour la commande (`statut = 'payee'`) et déclenche automatiquement deux messages WhatsApp :
     1. **Au Client (Acheteur)** : Accusé de confirmation du paiement Wave.

@@ -1166,8 +1166,8 @@ router.post('/admin/reversements/:commandeId/payer', adminSecretOnly, async (req
   }
 });
 
-// POST /api/comptabilite/reversements/valider-lot — Marquer un lot de commandes comme reversées
-router.post('/reversements/valider-lot', verifierToken, adminSecretOnly, async (req, res) => {
+// POST /api/comptabilite/admin/reversements/valider-lot — Marquer un lot de commandes comme reversées
+router.post('/admin/reversements/valider-lot', adminSecretOnly, async (req, res) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {

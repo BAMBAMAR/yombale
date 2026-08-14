@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { effectuerReversementWave, validerLotReversementsWave } from '@/app/actions/admin'
-import { exportWaveBulkPaymentCSV } from '@/lib/export'
+import { exportWaveBulkPaymentCSV, exportWaveBulkPaymentXLS } from '@/lib/export'
 
 interface ReversementItem {
   id: string
@@ -40,7 +40,25 @@ export default function ReversementsClient({ initialReversements }: { initialRev
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
   }
 
-  function handleExportWaveBulk() {
+  function handleExportWaveBulkXLS() {
+    const targets = selectedIds.length > 0
+      ? items.filter(i => selectedIds.includes(i.id))
+      : items
+
+    if (targets.length === 0) return
+
+    const bulkItems = targets.map(i => ({
+      reference: i.reference,
+      boutique_nom: i.boutique_nom,
+      mobile: i.boutique_whatsapp || i.boutique_telephone || '',
+      montant_net: Number(i.montant_total) - (Number(i.montant_commission) || 0)
+    }))
+
+    exportWaveBulkPaymentXLS('Export_Wave_Bulk_Paiement', bulkItems)
+    setMsgSuccess(`📥 Fichier Excel (.xls) Wave Bulk Payout généré pour ${targets.length} reversement(s) !`)
+  }
+
+  function handleExportWaveBulkCSV() {
     const targets = selectedIds.length > 0
       ? items.filter(i => selectedIds.includes(i.id))
       : items
@@ -55,7 +73,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
     }))
 
     exportWaveBulkPaymentCSV('Export_Wave_Bulk_Paiement', bulkItems)
-    setMsgSuccess(`📥 Fichier Wave Bulk Payout généré pour ${targets.length} reversement(s) !`)
+    setMsgSuccess(`📥 Fichier CSV Wave Bulk Payout généré pour ${targets.length} reversement(s) !`)
   }
 
   async function handleValiderLot() {
@@ -147,7 +165,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
-              onClick={handleExportWaveBulk}
+              onClick={handleExportWaveBulkXLS}
               style={{
                 background: '#0284c7',
                 color: '#fff',
@@ -162,7 +180,26 @@ export default function ReversementsClient({ initialReversements }: { initialRev
                 gap: 6
               }}
             >
-              📥 Exporter pour Wave (.csv / Excel)
+              📥 Exporter pour Wave (.xls / Excel)
+            </button>
+
+            <button
+              onClick={handleExportWaveBulkCSV}
+              style={{
+                background: '#38bdf8',
+                color: '#0f172a',
+                border: 'none',
+                padding: '9px 14px',
+                borderRadius: 8,
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              📄 Format CSV
             </button>
 
             {selectedCount > 0 && (

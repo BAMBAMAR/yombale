@@ -436,7 +436,7 @@ export async function validerLotReversementsWave(ids: string[]): Promise<{ succe
   if (!secret) return { error: 'Non authentifié' }
 
   try {
-    const r = await fetch(`${BACKEND}/api/comptabilite/reversements/valider-lot`, {
+    const r = await fetch(`${BACKEND}/api/comptabilite/admin/reversements/valider-lot`, {
       method: 'POST',
       headers: adminHeaders(secret),
       body: JSON.stringify({ ids }),

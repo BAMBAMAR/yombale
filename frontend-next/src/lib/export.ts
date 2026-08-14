@@ -127,3 +127,71 @@ export function exportWaveBulkPaymentCSV(filename: string, items: WaveBulkItem[]
   document.body.removeChild(link)
 }
 
+/**
+ * Exporte un lot de reversements au format Microsoft Excel (.xls) exigé par la plateforme Wave Business.
+ */
+export function exportWaveBulkPaymentXLS(filename: string, items: WaveBulkItem[]) {
+  const headers = [
+    'Nom du client',
+    'Numéro de téléphone',
+    'Montant',
+    'Devise (optionnel)',
+    'Raison du paiement (optionnel)',
+    'Numéro d\'identification national (optionnel)',
+    'Référence (optionnel)'
+  ]
+
+  const rows = items.map(item => {
+    const nomClient = String(item.boutique_nom || 'Marchand')
+    const telephone = formatPhoneE164(item.mobile)
+    const montant = Math.round(Number(item.montant_net) || 0)
+    const devise = 'XOF'
+    const raison = `Reversement Nopalou ${item.reference}`.slice(0, 40)
+    const nationalId = ''
+    const reference = `REV-${item.reference}`
+
+    return [nomClient, telephone, montant, devise, raison, nationalId, reference]
+  })
+
+  const headerHtml = headers.map(h => `<th style="background:#f1f5f9; font-weight:bold; border:1px solid #cbd5e1; text-align:left; padding:8px 12px;">${h}</th>`).join('')
+  const rowsHtml = rows.map(r => `<tr>${r.map(c => `<td style="border:1px solid #cbd5e1; padding:8px 12px;">${c}</td>`).join('')}</tr>`).join('')
+
+  const excelContent = `
+    <html xmlns:o="urn:schemas-microsoft-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+      <!--[if gte mso 9]>
+      <xml>
+        <x:ExcelWorkbook>
+          <x:ExcelWorksheets>
+            <x:ExcelWorksheet>
+              <x:Name>Wave Bulk Payout</x:Name>
+              <x:WorksheetOptions>
+                <x:DisplayGridlines/>
+              </x:WorksheetOptions>
+            </x:ExcelWorksheet>
+          </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+      </xml>
+      <![endif]-->
+    </head>
+    <body>
+      <table>
+        <thead><tr>${headerHtml}</tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </body>
+    </html>
+  `
+
+  const blob = new Blob(['\ufeff' + excelContent], { type: 'application/vnd.ms-excel;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', `${filename}_WAVE_BULK_${new Date().toISOString().slice(0, 10)}.xls`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+
