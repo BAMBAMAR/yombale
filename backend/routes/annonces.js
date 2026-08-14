@@ -461,12 +461,25 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
     res.json({ success: true });
 
     // Notification WhatsApp au déposant si approbation (fire-and-forget)
+    // Seules les annonces déposées sur le site (pas le scraping) déclenchent une notification
     if (newActif) {
       setImmediate(async () => {
         try {
           const ann = await pool.query('SELECT * FROM annonces_classifiees WHERE id=$1', [req.params.id]);
           const a = ann.rows[0];
           if (!a?.contact_tel) return;
+
+          // Exclure les annonces issues du scraping / import externe
+          const estScrape = !!(
+            a.url_source ||
+            a.ref_externe ||
+            (a.source && !['site', 'utilisateur', 'manuel', 'depot_gratuit'].includes(a.source))
+          );
+          if (estScrape) {
+            console.log(`[ADMIN APPROVE] Notification WhatsApp ignorée pour l'annonce ${a.id} (source scraping: ${a.source || 'externe'})`);
+            return;
+          }
+
           const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
           const card = {
             imageUrl: a.photos?.[0] || null,
@@ -486,7 +499,9 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
               { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: a.id }] },
             ]);
           }
-        } catch {}
+        } catch (e) {
+          console.error('[ADMIN APPROVE NOTIF ERR]:', e.message);
+        }
       });
     }
   } catch (err) {

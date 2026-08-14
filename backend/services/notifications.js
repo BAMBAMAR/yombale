@@ -42,6 +42,18 @@ async function confirmationCommande(telephone, reference) {
 
 async function notifierModerationImmo(annonce) {
   if (!annonce.contact_tel) return;
+
+  // Exclure les annonces issues du scraping / import externe
+  const estScrape = !!(
+    annonce.url_source ||
+    annonce.ref_externe ||
+    (annonce.source && !['site', 'utilisateur', 'manuel', 'depot_gratuit'].includes(annonce.source))
+  );
+  if (estScrape) {
+    console.log(`[NOTIF IMMO] WhatsApp ignoré pour l'annonce immo ${annonce.id} (source scraping: ${annonce.source || 'externe'})`);
+    return;
+  }
+
   const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 
   if (annonce.rejete) {
