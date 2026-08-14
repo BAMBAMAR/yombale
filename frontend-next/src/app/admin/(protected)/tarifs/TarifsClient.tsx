@@ -98,7 +98,7 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
     )
   }
 
-  function toggle(key: 'paiement_wave' | 'paiement_orange' | 'promo_active' | 'paiement_manuel_actif' | 'alertes_abonnement_whatsapp' | 'alertes_abonnement_email', label: string) {
+  function toggle(key: keyof Settings, label: string) {
     const on = form[key] === 'true'
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
