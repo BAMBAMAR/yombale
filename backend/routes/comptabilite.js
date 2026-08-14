@@ -1123,7 +1123,7 @@ router.get('/admin/reversements-dus', adminSecretOnly, async (req, res) => {
              b.nom AS boutique_nom, b.telephone AS boutique_telephone, b.whatsapp AS boutique_whatsapp, b.id AS boutique_id
       FROM commandes_boutique c
       JOIN boutiques b ON b.id = c.boutique_id
-      WHERE (c.paiement_recu = true OR c.statut = 'payee' OR c.statut = 'livree') AND (c.methode_paiement = 'wave' OR c.methode_paiement = 'pay_wave')
+      WHERE c.paiement_recu = true AND c.statut != 'reverse' AND (c.methode_paiement = 'wave' OR c.methode_paiement = 'pay_wave')
       ORDER BY c.created_at DESC
       LIMIT 100
     `);

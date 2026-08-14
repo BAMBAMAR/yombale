@@ -15,9 +15,9 @@
 - **Fix du Message "❌ Token manquant" sur la Validation de Lot (`comptabilite.js`, `admin.ts`)** :
   * **Problème** : Le middleware `verifierToken` était présent à tort sur la route de validation du lot de reversements, ce qui faisait échouer l'action d'administration avec une erreur `401 Token manquant` (les actions admin Next.js utilisant l'en-tête `X-Admin-Secret`).
   * **Solution** : Correction de l'endpoint vers `/api/comptabilite/admin/reversements/valider-lot` sécurisé uniquement par `adminSecretOnly`. La validation de lot et le retrait des commandes traitées fonctionnent désormais sans aucune erreur.
-- **Exportation Officielle au Format Microsoft Excel (.xls) Wave Business (`export.ts`, `ReversementsClient.tsx`)** :
-  * **Problème** : Le portail Wave exige un fichier au format Microsoft Excel (`.xls`).
-  * **Solution** : Ajout de la fonction `exportWaveBulkPaymentXLS` générant un vrai fichier Excel `.xls` (structure XML/HTML Microsoft Excel avec grille et encodage UTF-8) téléchargeable directement via le bouton principal **`📥 Exporter pour Wave (.xls / Excel)`**. Conservation du format CSV en option secondaire (`.csv`).
+- **Fix du Filtrage Strict des Transactions Réelles Wave (`comptabilite.js`)** :
+  * **Problème** : L'ancienne requête SQL incluait toutes les commandes brouillons ou abandonnées ayant la méthode `wave` ou le statut `livree`, même si l'acheteur n'avait jamais validé son paiement sur Wave (`paiement_recu = false`).
+  * **Solution** : Restriction stricte de la clause SQL `WHERE c.paiement_recu = true AND c.statut != 'reverse'` dans `/api/comptabilite/admin/reversements-dus`. Seules les transactions dont l'argent a été **réellement encaissé et confirmé par le Webhook Wave** et non encore reversées s'affichent désormais dans la liste.
 - **Notifications WhatsApp Automatiques à la Confirmation Wave (`paiement.js`)** :
   * Dès réception du Webhook Wave `checkout.session.completed`, le backend met à jour la commande (`statut = 'payee'`) et déclenche automatiquement deux messages WhatsApp :
     1. **Au Client (Acheteur)** : Accusé de confirmation du paiement Wave.
