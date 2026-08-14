@@ -153,6 +153,7 @@ export default async function ImmoComparaisonPage({
             </tr>
           </tbody>
         </table>
+      </div>
     </div>
   )
 }
