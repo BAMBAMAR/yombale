@@ -1,3 +1,8 @@
+- **Refonte Ergonomique & Équilibrage de l'En-tête de la Page Boutiques (`src/app/boutiques/page.tsx`, `BoutiquesSearch.tsx`, `HeroCarousel.tsx`)** :
+  * **Problèmes résolus** :
+    1. **Hauteur excessive à 100% de zoom** : La grille héro et les cartes d'annonces dépassaient 550px de hauteur verticale. Réduction du `minHeight` du carrousel de 330px à 225px, ajustement des paddings de 36px à 24px et des tailles de polices pour un en-tête compact de ~290px de haut.
+    2. **Texte coupé dans la recherche ("Rechercher une...")** : Ajustement du `padding-right` de l'input de 160px à 125px et calibrage des marges du bouton de validation afin d'éviter tout le tronquage du placeholder texte.
+    3. **Alignement et structure des filtres** : Réorganisation de la barre sous la recherche en 2 lignes structurées et aérées (`Ville :`, `💼 Business`, `⭐ Vendeur Pro` et `Trier :`).
 - **Correction du Filtrage par Catégorie sur la Liste des Boutiques (`/boutiques?cat=...`, `backend/routes/boutiques.js`, `frontend-next/src/app/boutiques/page.tsx`)** :
   * **Cause du problème** : L'API backend `GET /api/boutiques` ne déstructurait pas `req.query.categorie` ni `req.query.cat` et n'ajoutait pas la clause SQL `WHERE b.categorie ILIKE $X`. Le clic sur un filtre de catégorie comme `👗 Mode & Beauté` (`/boutiques?cat=mode`) renvoyait donc toutes les boutiques indifféremment.
   * **Correctif Backend (`backend/routes/boutiques.js`)** : Prise en compte de `req.query.categorie` et `req.query.cat` avec correspondance flexible SQL par expression `ILIKE` et gestion des synonymes (ex: `mode` inclut `beaute` et `vetements`, `smartphones` inclut `telephone` et `tech`).

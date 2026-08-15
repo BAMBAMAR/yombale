@@ -151,18 +151,17 @@ export default async function BoutiquesPage({
 
   return (
     <div className="page-container" style={{ maxWidth: 1440, paddingTop: '1.5rem', paddingBottom: '4rem' }}>
-      
       {/* HERO BANNER BOUTIQUES — HARMONIE NOPALOU (ORANGE AMBRE & ARDOISE) */}
       <div style={{
         background: 'linear-gradient(135deg, #ffffff 0%, #fffdfa 50%, #fff7ed 100%)',
         borderRadius: 24,
-        padding: '36px 32px',
+        padding: '24px 28px',
         color: '#0f172a',
-        marginBottom: 28,
+        marginBottom: 24,
         position: 'relative',
         overflow: 'hidden',
         border: '1px solid #fed7aa',
-        boxShadow: '0 10px 30px rgba(199, 91, 0, 0.05)',
+        boxShadow: '0 8px 24px rgba(199, 91, 0, 0.05)',
       }}>
         <div style={{
           position: 'absolute', right: -60, top: -60, width: 280, height: 280, borderRadius: '50%',
@@ -173,8 +172,8 @@ export default async function BoutiquesPage({
         <style>{`
           .hero-bento-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 450px;
-            gap: 40px;
+            grid-template-columns: minmax(0, 1fr) 380px;
+            gap: 24px;
             align-items: stretch;
           }
           .hero-text-block { grid-column: 1; grid-row: 1; }
@@ -185,7 +184,7 @@ export default async function BoutiquesPage({
             .hero-bento-grid {
               display: flex;
               flex-direction: column;
-              gap: 32px;
+              gap: 24px;
             }
             .hero-text-block { order: 1; }
             .hero-right-block { order: 2; }
@@ -195,51 +194,50 @@ export default async function BoutiquesPage({
         <div className="hero-bento-grid" style={{ position: 'relative', zIndex: 2 }}>
           
           {/* TEXT BLOCK */}
-          <div className="hero-text-block" style={{ maxWidth: 700 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '6px 14px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 14, border: '1px solid #ffedd5', width: 'fit-content' }}>
-                <Sparkles size={14} style={{ color: '#C75B00' }} />
+          <div className="hero-text-block" style={{ maxWidth: 680 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800, marginBottom: 10, border: '1px solid #ffedd5', width: 'fit-content' }}>
+                <Sparkles size={13} style={{ color: '#C75B00' }} />
                 <span>Hub officiel des vendeurs vérifiés Nopalou</span>
               </div>
 
-              <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 32, fontWeight: 900, margin: '0 0 16px', lineHeight: 1.1, color: '#0f172a' }}>
+              <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 26, fontWeight: 900, margin: '0 0 10px', lineHeight: 1.15, color: '#0f172a' }}>
                 Boutiques & Vendeurs Pro au <span style={{ color: '#C75B00' }}>Sénégal</span>
               </h1>
 
-              <p style={{ fontSize: 16, color: '#475569', margin: '0 0 16px', lineHeight: 1.6 }}>
+              <p style={{ fontSize: 14, color: '#475569', margin: '0 0 12px', lineHeight: 1.5 }}>
                 L'annuaire de référence pour trouver des commerçants de confiance, grossistes et artisans. Parcourez leurs catalogues interactifs et contactez-les directement sans intermédiaire.
               </p>
 
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', display: 'flex', flexDirection: 'column', gap: 10, color: '#475569', fontSize: 15 }}>
-                <li style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <span style={{ color: '#10b981', marginTop: 1 }}>✔</span> 
-                  <span><span style={{ fontWeight: 600, color: '#334155' }}>0% de commission</span> sur vos achats</span>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 14px', display: 'flex', flexDirection: 'column', gap: 6, color: '#475569', fontSize: 13 }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: '#10b981', fontWeight: 900 }}>✔</span> 
+                  <span><span style={{ fontWeight: 700, color: '#334155' }}>0% de commission</span> sur vos achats</span>
                 </li>
-                <li style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <span style={{ color: '#10b981', marginTop: 1 }}>✔</span> 
-                  <span><span style={{ fontWeight: 600, color: '#334155' }}>100% Vendeurs vérifiés</span> et certifiés</span>
+                <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: '#10b981', fontWeight: 900 }}>✔</span> 
+                  <span><span style={{ fontWeight: 700, color: '#334155' }}>100% Vendeurs vérifiés</span> et certifiés</span>
                 </li>
-                <li style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <span style={{ color: '#10b981', marginTop: 1 }}>✔</span> 
-                  <span><span style={{ fontWeight: 600, color: '#334155' }}>Contact direct WhatsApp</span> avec les marchands</span>
+                <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: '#10b981', fontWeight: 900 }}>✔</span> 
+                  <span><span style={{ fontWeight: 700, color: '#334155' }}>Contact direct WhatsApp</span> avec les marchands</span>
                 </li>
               </ul>
             </div>
 
             {/* SEARCH BLOCK */}
-            <div className="hero-search-block" style={{ background: '#ffffff', borderRadius: 24, padding: '24px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="hero-search-block" style={{ background: '#ffffff', borderRadius: 20, padding: '16px 20px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <BoutiquesSearch currentQ={q} currentVille={ville} currentCat={cat} />
-              
-              <div style={{ height: 1, background: '#f1f5f9' }} />
 
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ville :</span>
-                  {villesAffichage.map(v => (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Row 1: Villes & Badges */}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ville :</span>
+                  {villesAffichage.slice(0, 5).map(v => (
                     <Link
                       key={v}
                       href={buildLink({ ville: ville === v ? '' : v, page: '1' })}
                       style={{
-                        padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                        padding: '4px 10px', borderRadius: 16, fontSize: 12, fontWeight: 700, textDecoration: 'none',
                         background: ville === v ? '#fff7f0' : '#f8fafc',
                         color: ville === v ? '#C75B00' : '#4b5563',
                         border: ville === v ? '1.5px solid #C75B00' : '1px solid #e2e8f0',
@@ -248,15 +246,13 @@ export default async function BoutiquesPage({
                       📍 {v}
                     </Link>
                   ))}
-                </div>
 
-                <div style={{ width: 1, height: 24, background: '#e5e7eb', margin: '0 4px' }} />
+                  <div style={{ width: 1, height: 18, background: '#e2e8f0', margin: '0 2px' }} />
 
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   <Link
                     href={buildLink({ plan: plan === 'business' ? '' : 'business', page: '1' })}
                     style={{
-                      padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                      padding: '4px 10px', borderRadius: 16, fontSize: 12, fontWeight: 700, textDecoration: 'none',
                       background: plan === 'business' ? '#1e3a5f' : '#f1f5f9',
                       color: plan === 'business' ? '#fff' : '#1e3a5f',
                       border: '1px solid #cbd5e1',
@@ -267,7 +263,7 @@ export default async function BoutiquesPage({
                   <Link
                     href={buildLink({ plan: plan === 'pro' ? '' : 'pro', page: '1' })}
                     style={{
-                      padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                      padding: '4px 10px', borderRadius: 16, fontSize: 12, fontWeight: 700, textDecoration: 'none',
                       background: plan === 'pro' ? '#C75B00' : '#f1f5f9',
                       color: plan === 'pro' ? '#fff' : '#C75B00',
                       border: '1px solid #cbd5e1',
@@ -277,41 +273,44 @@ export default async function BoutiquesPage({
                   </Link>
                 </div>
 
-                <div style={{ flex: 1, minWidth: 20 }} />
-
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280' }}>Trier :</span>
-                  <Link href={buildLink({ tri: 'recommande', page: '1' })} style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none', background: tri === 'recommande' ? '#1e293b' : '#f8fafc', color: tri === 'recommande' ? '#fff' : '#4b5563', border: tri === 'recommande' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Recommandé</Link>
-                  <Link href={buildLink({ tri: 'recent', page: '1' })} style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none', background: tri === 'recent' ? '#1e293b' : '#f8fafc', color: tri === 'recent' ? '#fff' : '#4b5563', border: tri === 'recent' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Plus récents</Link>
-                  <Link href={buildLink({ tri: 'nom', page: '1' })} style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none', background: tri === 'nom' ? '#1e293b' : '#f8fafc', color: tri === 'nom' ? '#fff' : '#4b5563', border: tri === 'nom' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Nom A-Z</Link>
+                {/* Row 2: Trier par */}
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', paddingTop: 8, borderTop: '1px dashed #f1f5f9' }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trier :</span>
+                  <Link href={buildLink({ tri: 'recommande', page: '1' })} style={{ padding: '3px 10px', borderRadius: 14, fontSize: 11, fontWeight: 700, textDecoration: 'none', background: tri === 'recommande' || !tri ? '#1e293b' : '#f8fafc', color: tri === 'recommande' || !tri ? '#fff' : '#4b5563', border: tri === 'recommande' || !tri ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Recommandé</Link>
+                  <Link href={buildLink({ tri: 'recent', page: '1' })} style={{ padding: '3px 10px', borderRadius: 14, fontSize: 11, fontWeight: 700, textDecoration: 'none', background: tri === 'recent' ? '#1e293b' : '#f8fafc', color: tri === 'recent' ? '#fff' : '#4b5563', border: tri === 'recent' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Plus récents</Link>
+                  <Link href={buildLink({ tri: 'nom', page: '1' })} style={{ padding: '3px 10px', borderRadius: 14, fontSize: 11, fontWeight: 700, textDecoration: 'none', background: tri === 'nom' ? '#1e293b' : '#f8fafc', color: tri === 'nom' ? '#fff' : '#4b5563', border: tri === 'nom' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Nom A-Z</Link>
                 </div>
               </div>
             </div>
 
           {/* RIGHT BLOCK (Carousel + Stats) */}
-          <div className="hero-right-block" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="hero-right-block" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             
-            {/* Widget Taf Taf remplacé par le Carrousel */}
-            <div style={{ minHeight: 330, width: '100%' }}>
+            {/* Widget Carrousel */}
+            <div style={{ width: '100%' }}>
               <HeroCarousel />
             </div>
 
-            {/* Widgets Statistiques (En Grille sous Taf Taf) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div style={{ background: '#ffffff', padding: '16px', borderRadius: 20, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-                <div style={{ background: '#fff7ed', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, marginBottom: 12 }}>
-                  <Store size={20} style={{ color: '#C75B00' }} />
+            {/* Widgets Statistiques */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ background: '#fff7ed', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, flexShrink: 0 }}>
+                  <Store size={18} style={{ color: '#C75B00' }} />
                 </div>
-                <p style={{ margin: 0, fontSize: 24, fontWeight: 900, color: '#0f172a' }}>{total > 0 ? total : '100+'}</p>
-                <p style={{ margin: 0, fontSize: 12, color: '#64748b', fontWeight: 600 }}>Boutiques actives</p>
+                <div>
+                  <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>{total > 0 ? total : '100+'}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748b', fontWeight: 600 }}>Boutiques actives</p>
+                </div>
               </div>
 
-              <div style={{ background: '#ffffff', padding: '16px', borderRadius: 20, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-                <div style={{ background: '#f0fdf4', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, marginBottom: 12 }}>
-                  <ShieldCheck size={20} style={{ color: '#16a34a' }} />
+              <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ background: '#f0fdf4', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, flexShrink: 0 }}>
+                  <ShieldCheck size={18} style={{ color: '#16a34a' }} />
                 </div>
-                <p style={{ margin: 0, fontSize: 24, fontWeight: 900, color: '#0f172a' }}>100%</p>
-                <p style={{ margin: 0, fontSize: 12, color: '#64748b', fontWeight: 600 }}>Vendeurs vérifiés</p>
+                <div>
+                  <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>100%</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748b', fontWeight: 600 }}>Vendeurs vérifiés</p>
+                </div>
               </div>
             </div>
 

@@ -1,17 +1,25 @@
 {
   "status": "in_progress",
   "mode": "live",
-  "groupeIndex": 3,
+  "groupeIndex": 7,
   "totalGroupes": 10,
-  "pourcentage": 30,
-  "groupeActuel": "Emploi 1",
-  "groupeUrl": "https://www.facebook.com/groups/1989058224662026",
-  "scrapes": 1,
+  "pourcentage": 70,
+  "groupeActuel": "Emploi 5",
+  "groupeUrl": "https://www.facebook.com/groups/1763952164139832",
+  "scrapes": 9,
   "inseres": 0,
   "doublons": 0,
-  "ignores": 0,
+  "ignores": 1,
   "erreurs": [
+    "read ECONNRESET",
+    "Connection terminated due to connection timeout",
+    "Emploi 2: page.evaluate: Execution context was destroyed, most likely because of a navigation",
+    "read ECONNRESET",
+    "read ECONNRESET",
+    "read ECONNRESET",
+    "read ECONNRESET",
+    "read ECONNRESET",
     "read ECONNRESET"
   ],
-  "updatedAt": "2026-08-15T18:05:37.195Z"
+  "updatedAt": "2026-08-15T18:21:43.207Z"
 }
