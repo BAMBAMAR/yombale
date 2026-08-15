@@ -245,6 +245,24 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [noteTransCarnet, setNoteTransCarnet] = useState<string>('')
   const [dateEcheanceTransCarnet, setDateEcheanceTransCarnet] = useState<string>('')
   const [produitsTransCarnet, setProduitsTransCarnet] = useState<string>('')
+  const [modeSaisieCarnet, setModeSaisieCarnet] = useState<'catalogue' | 'manuel'>('catalogue')
+  const [panierCarnet, setPanierCarnet] = useState<Record<string, number>>({})
+  const [rechercheProdCarnet, setRechercheProdCarnet] = useState<string>('')
+  const [relanceAutoWaCarnet, setRelanceAutoWaCarnet] = useState<boolean>(true)
+  const [submittingCarnetTrans, setSubmittingCarnetTrans] = useState<boolean>(false)
+
+  const ouvrirModalTransCarnet = (type: 'vente_credit' | 'remboursement') => {
+    setTypeTransCarnet(type)
+    setMontantTransCarnet('')
+    setNoteTransCarnet('')
+    setDateEcheanceTransCarnet('')
+    setProduitsTransCarnet('')
+    setPanierCarnet({})
+    setRechercheProdCarnet('')
+    setRelanceAutoWaCarnet(true)
+    setModeSaisieCarnet(type === 'vente_credit' ? 'catalogue' : 'manuel')
+    setModalTransCarnet(true)
+  }
 
   // Saisie Crédit lors de l'encaissement POS
   const [clientCreditIdPOS, setClientCreditIdPOS] = useState<string>('')
@@ -279,14 +297,31 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     return () => clearInterval(timer)
   }, [boutiqueActiveId, sessionScannerId])
 
-  function envoyerRelanceWhatsApp(c: any) {
-    if (!c.telephone) return
-    const numClean = c.telephone.replace(/\D/g, '')
-    const phone = numClean.startsWith('221') ? numClean : `221${numClean}`
-    const bqNom = boutiques.find(b => b.id === boutiqueActiveId)?.nom || 'Notre Boutique'
-    const soldeText = c.solde > 0 ? `votre solde de dette est de ${fcfa(c.solde)}` : `votre solde d'avance est de ${fcfa(Math.abs(c.solde))}`
-    const message = `Bonjour ${c.nom}, concernant votre carnet de crédit chez ${bqNom} : ${soldeText}. Merci de nous contacter pour le règlement !`
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
+  async function envoyerRelanceWhatsApp(c: any) {
+    if (!c || !boutiqueActiveId) return
+    try {
+      const res = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${c.id}/relance-whatsapp`, {
+        method: 'POST',
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.lienWhatsapp) {
+          window.open(data.lienWhatsapp, '_blank')
+        } else {
+          alert('Relance WhatsApp envoyée !')
+        }
+        await chargerClientsCredits(boutiqueActiveId)
+      } else {
+        const numClean = (c.telephone || '').replace(/\D/g, '')
+        const phone = numClean.startsWith('221') ? numClean : `221${numClean}`
+        const bqNom = boutiques.find(b => b.id === boutiqueActiveId)?.nom || 'Notre Boutique'
+        const soldeText = c.solde > 0 ? `votre solde de dette est de ${fcfa(c.solde)}` : `votre solde d'avance est de ${fcfa(Math.abs(c.solde))}`
+        const message = `Bonjour ${c.nom}, concernant votre carnet de crédit chez ${bqNom} : ${soldeText}. Merci de nous contacter pour le règlement !`
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
+      }
+    } catch (e) {
+      console.error('Erreur relance whatsapp:', e)
+    }
   }
 
   async function demarrerScannerCamera() {
@@ -3810,28 +3845,16 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     </button>
 
                     <button
-                      onClick={() => {
-                        setTypeTransCarnet('remboursement')
-                        setMontantTransCarnet('')
-                        setNoteTransCarnet('')
-                        setModalTransCarnet(true)
-                      }}
+                      onClick={() => ouvrirModalTransCarnet('remboursement')}
                       style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                     >
                       💵 Encaisser Remboursement
                     </button>
                     <button
-                      onClick={() => {
-                        setTypeTransCarnet('vente_credit')
-                        setMontantTransCarnet('')
-                        setNoteTransCarnet('')
-                        setDateEcheanceTransCarnet('')
-                        setProduitsTransCarnet('')
-                        setModalTransCarnet(true)
-                      }}
+                      onClick={() => ouvrirModalTransCarnet('vente_credit')}
                       style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                     >
-                      + Nouveau Crédit Manuel
+                      + Nouveau Crédit (Catalogue / Libre)
                     </button>
                   </div>
                 </div>
@@ -3916,134 +3939,286 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         </div>
       )}
 
-      {/* Modale d'enregistrement de Transaction Carnet (Remboursement / Crédit Manuel) */}
-      {modalTransCarnet && clientCarnetSelectionne && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', zIndex: 1050, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480, border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ margin: 0, fontSize: 16, color: '#0f172a', fontWeight: 900 }}>
-                {typeTransCarnet === 'remboursement' ? '💵 Encaisser un Remboursement' : '📝 Enregistrer un Crédit'}
-              </h3>
-              <button onClick={() => setModalTransCarnet(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 18, cursor: 'pointer' }}>✕</button>
-            </div>
-            <p style={{ margin: '0 0 14px', fontSize: 12, color: '#64748b' }}>Client: <strong>{clientCarnetSelectionne.nom}</strong> ({clientCarnetSelectionne.telephone})</p>
+      {/* Modale d'enregistrement de Transaction Carnet (Catalogue Direct & Remboursement) */}
+      {modalTransCarnet && clientCarnetSelectionne && (() => {
+        const totalPanierCatalogueCarnet = Object.entries(panierCarnet).reduce((sum, [pId, qte]) => {
+          const p = produits.find(item => item.id === pId)
+          const prix = p ? Number(p.prix || 0) : 0
+          return sum + (prix * qte)
+        }, 0)
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div>
-                <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Montant (FCFA) *</label>
-                <input
-                  type="number"
-                  placeholder="Ex: 10000"
-                  value={montantTransCarnet}
-                  onChange={e => setMontantTransCarnet(e.target.value)}
-                  style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, fontWeight: 800, boxSizing: 'border-box' }}
-                />
+        const totalTransactionCouranteCarnet = (typeTransCarnet === 'vente_credit' && modeSaisieCarnet === 'catalogue') 
+          ? totalPanierCatalogueCarnet 
+          : (Number(montantTransCarnet) || 0)
+
+        const prodsFiltresCarnet = produits.filter(p => {
+          if (!rechercheProdCarnet.trim()) return true
+          const q = rechercheProdCarnet.toLowerCase()
+          return p.nom.toLowerCase().includes(q) || (p.code_barre && p.code_barre.includes(q))
+        })
+
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.75)', zIndex: 1050, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 640, maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, borderBottom: '1px solid #f1f5f9', paddingBottom: 12 }}>
+                <h3 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 900, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {typeTransCarnet === 'vente_credit' ? '⚡ Nouvelle Vente à Crédit' : '💸 Encaisser un Remboursement'}
+                </h3>
+                <button onClick={() => setModalTransCarnet(false)} style={{ background: '#f1f5f9', border: 'none', color: '#64748b', borderRadius: '50%', width: 32, height: 32, fontSize: 16, fontWeight: 800, cursor: 'pointer' }}>✕</button>
               </div>
 
-              {typeTransCarnet === 'remboursement' && (
+              <div style={{ background: '#f8fafc', borderRadius: 12, padding: '10px 14px', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e2e8f0' }}>
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Mode de Paiement Reçu</label>
-                  <select
-                    value={modePaiementTransCarnet}
-                    onChange={e => setModePaiementTransCarnet(e.target.value)}
-                    style={{ width: '100%', padding: '9px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                  <span style={{ fontSize: 11, color: '#64748b', fontWeight: 700 }}>Client sélectionné</span>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 900, color: '#0f172a' }}>{clientCarnetSelectionne.nom}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: 11, color: '#64748b', fontWeight: 700 }}>Solde actuel</span>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 900, color: clientCarnetSelectionne.solde > 0 ? '#dc2626' : '#16a34a' }}>
+                    {clientCarnetSelectionne.solde > 0 ? fcfa(clientCarnetSelectionne.solde) : `${fcfa(Math.abs(clientCarnetSelectionne.solde))} (Avance)`}
+                  </p>
+                </div>
+              </div>
+
+              {typeTransCarnet === 'vente_credit' && (
+                <div style={{ display: 'flex', background: '#f1f5f9', padding: 4, borderRadius: 12, marginBottom: 16, gap: 4 }}>
+                  <button
+                    onClick={() => setModeSaisieCarnet('catalogue')}
+                    style={{
+                      flex: 1, padding: '8px 12px', borderRadius: 8, border: 'none',
+                      background: modeSaisieCarnet === 'catalogue' ? '#ffffff' : 'transparent',
+                      color: modeSaisieCarnet === 'catalogue' ? '#0f172a' : '#64748b',
+                      fontWeight: 800, fontSize: 13, cursor: 'pointer',
+                      boxShadow: modeSaisieCarnet === 'catalogue' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                    }}
                   >
-                    <option value="especes">💵 Espèces Cash</option>
-                    <option value="wave">🌊 Wave Senegal</option>
-                    <option value="orange_money">🍊 Orange Money</option>
-                  </select>
+                    🛍️ Choisir du Catalogue
+                  </button>
+                  <button
+                    onClick={() => setModeSaisieCarnet('manuel')}
+                    style={{
+                      flex: 1, padding: '8px 12px', borderRadius: 8, border: 'none',
+                      background: modeSaisieCarnet === 'manuel' ? '#ffffff' : 'transparent',
+                      color: modeSaisieCarnet === 'manuel' ? '#0f172a' : '#64748b',
+                      fontWeight: 800, fontSize: 13, cursor: 'pointer',
+                      boxShadow: modeSaisieCarnet === 'manuel' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                    }}
+                  >
+                    ✍️ Saisie Libre / Hors-Catalogue
+                  </button>
                 </div>
               )}
 
-              {typeTransCarnet === 'vente_credit' && (
-                <>
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingRight: 4 }}>
+                {typeTransCarnet === 'vente_credit' && modeSaisieCarnet === 'catalogue' && (
                   <div>
-                    <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Produits / Articles pris</label>
                     <input
                       type="text"
-                      placeholder="Ex: 2x Sac de riz 25kg, 3L Huile..."
-                      value={produitsTransCarnet}
-                      onChange={e => setProduitsTransCarnet(e.target.value)}
-                      style={{ width: '100%', padding: '9px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                      placeholder="🔍 Rechercher un produit du catalogue..."
+                      value={rechercheProdCarnet}
+                      onChange={e => setRechercheProdCarnet(e.target.value)}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, marginBottom: 12, boxSizing: 'border-box' }}
                     />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Date d'échéance / Promesse de paiement</label>
-                    <input
-                      type="date"
-                      value={dateEcheanceTransCarnet}
-                      onChange={e => setDateEcheanceTransCarnet(e.target.value)}
-                      style={{ width: '100%', padding: '9px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
-                    />
-                  </div>
-                </>
-              )}
 
-              <div>
-                <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Note / Remarque / Justification</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Remboursement partiel par sa femme, etc."
-                  value={noteTransCarnet}
-                  onChange={e => setNoteTransCarnet(e.target.value)}
-                  style={{ width: '100%', padding: '9px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
-                />
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, maxHeight: 220, overflowY: 'auto' }}>
+                      {prodsFiltresCarnet.map(p => {
+                        const qte = panierCarnet[p.id] || 0
+                        return (
+                          <div
+                            key={p.id}
+                            style={{
+                              border: qte > 0 ? '2px solid #ef4444' : '1px solid #e2e8f0',
+                              borderRadius: 10, padding: 8, background: qte > 0 ? '#fef2f2' : '#f8fafc',
+                              display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                            }}
+                          >
+                            <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 800, color: '#0f172a', lineHeight: 1.3 }}>{p.nom}</p>
+                            <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 900, color: '#ef4444' }}>{fcfa(p.prix)}</p>
+                            {qte === 0 ? (
+                              <button
+                                onClick={() => setPanierCarnet(prev => ({ ...prev, [p.id]: 1 }))}
+                                style={{ width: '100%', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 0', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                              >
+                                + Ajouter
+                              </button>
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', borderRadius: 6, border: '1px solid #fecaca', padding: 2 }}>
+                                <button onClick={() => setPanierCarnet(prev => { const n = { ...prev }; if (n[p.id] > 1) n[p.id]--; else delete n[p.id]; return n })} style={{ border: 'none', background: '#fee2e2', color: '#dc2626', width: 22, height: 22, borderRadius: 4, fontWeight: 900, cursor: 'pointer' }}>-</button>
+                                <span style={{ fontSize: 12, fontWeight: 900 }}>{qte}</span>
+                                <button onClick={() => setPanierCarnet(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))} style={{ border: 'none', background: '#ef4444', color: '#fff', width: 22, height: 22, borderRadius: 4, fontWeight: 900, cursor: 'pointer' }}>+</button>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {(typeTransCarnet === 'remboursement' || modeSaisieCarnet === 'manuel') && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Montant (FCFA) *</label>
+                    <input
+                      type="number"
+                      placeholder="Ex: 5000"
+                      value={montantTransCarnet}
+                      onChange={e => setMontantTransCarnet(e.target.value)}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 15, fontWeight: 900, boxSizing: 'border-box' }}
+                    />
+                  </div>
+                )}
+
+                {typeTransCarnet === 'remboursement' && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Mode de Paiement Reçu</label>
+                    <select
+                      value={modePaiementTransCarnet}
+                      onChange={e => setModePaiementTransCarnet(e.target.value)}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                    >
+                      <option value="especes">💵 Espèces Cash</option>
+                      <option value="wave">🌊 Wave Senegal</option>
+                      <option value="orange_money">🍊 Orange Money</option>
+                    </select>
+                  </div>
+                )}
+
+                {typeTransCarnet === 'vente_credit' && (
+                  <>
+                    {modeSaisieCarnet === 'manuel' && (
+                      <div>
+                        <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Description / Articles informels</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: 2x Sac de riz, 1 Carton d'huile..."
+                          value={produitsTransCarnet}
+                          onChange={e => setProduitsTransCarnet(e.target.value)}
+                          style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Date d'échéance / Promesse de règlement</label>
+                      <input
+                        type="date"
+                        value={dateEcheanceTransCarnet}
+                        onChange={e => setDateEcheanceTransCarnet(e.target.value)}
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                      />
+                    </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 700, color: '#0f172a', cursor: 'pointer', background: '#f8fafc', padding: 10, borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                      <input
+                        type="checkbox"
+                        checked={relanceAutoWaCarnet}
+                        onChange={e => setRelanceAutoWaCarnet(e.target.checked)}
+                      />
+                      <span>🔔 Activer la relance automatique WhatsApp à la date d'échéance</span>
+                    </label>
+                  </>
+                )}
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Note / Justification (Optionnelle)</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Remboursement partiel par sa sœur, avance, etc."
+                    value={noteTransCarnet}
+                    onChange={e => setNoteTransCarnet(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                  />
+                </div>
               </div>
 
-              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-                <button onClick={() => setModalTransCarnet(false)} style={{ flex: 1, padding: '10px', background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
-                  Annuler
-                </button>
-                <button
-                  onClick={async () => {
-                    const num = Number(montantTransCarnet)
-                    if (!num || num <= 0) {
-                      alert('Veuillez saisir un montant valide.')
-                      return
-                    }
-                    if (boutiqueActiveId && clientCarnetSelectionne) {
-                      try {
-                        const prodsArr = typeTransCarnet === 'vente_credit' && produitsTransCarnet.trim()
-                          ? [{ nom: produitsTransCarnet.trim(), quantite: 1, prix: num }]
-                          : []
+              {/* Pied de modale : Total et validation */}
+              <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <div>
+                  <span style={{ fontSize: 11, color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>TOTAL TRANSACTION</span>
+                  <p style={{ margin: 0, fontSize: 20, fontWeight: 900, color: typeTransCarnet === 'vente_credit' ? '#ef4444' : '#16a34a' }}>
+                    {fcfa(totalTransactionCouranteCarnet)}
+                  </p>
+                </div>
 
-                        const res = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientCarnetSelectionne.id}/transaction`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            type: typeTransCarnet,
-                            montant: num,
-                            mode_paiement: modePaiementTransCarnet,
-                            note: noteTransCarnet || null,
-                            date_echeance: dateEcheanceTransCarnet || null,
-                            produits: prodsArr,
-                          })
-                        })
-
-                        if (res.ok) {
-                          const dataTrans = await res.json()
-                          setClientCarnetSelectionne((prev: any) => prev ? { ...prev, solde: dataTrans.nouveauSolde } : null)
-                          await chargerClientsCredits(boutiqueActiveId)
-                          await chargerHistoriqueClientSelectionne(clientCarnetSelectionne.id)
-                          setModalTransCarnet(false)
-                        } else {
-                          const errData = await res.json()
-                          alert(errData.error || 'Erreur lors de l’enregistrement.')
-                        }
-                      } catch (e) {
-                        console.error('Erreur transaction carnet:', e)
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={() => setModalTransCarnet(false)} style={{ padding: '10px 16px', background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}>
+                    Annuler
+                  </button>
+                  <button
+                    disabled={submittingCarnetTrans}
+                    onClick={async () => {
+                      const num = totalTransactionCouranteCarnet
+                      if (!num || num <= 0) {
+                        alert('Veuillez ajouter au moins un produit du catalogue ou saisir un montant valide.')
+                        return
                       }
-                    }
-                  }}
-                  style={{ flex: 1, padding: '10px', background: typeTransCarnet === 'remboursement' ? '#16a34a' : '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 900, cursor: 'pointer' }}
-                >
-                  ✓ Enregistrer
-                </button>
+                      if (boutiqueActiveId && clientCarnetSelectionne) {
+                        setSubmittingCarnetTrans(true)
+                        try {
+                          let prodsArr: any[] = []
+                          if (typeTransCarnet === 'vente_credit' && modeSaisieCarnet === 'catalogue') {
+                            prodsArr = Object.entries(panierCarnet).map(([pId, qte]) => {
+                              const p = produits.find(item => item.id === pId)
+                              return {
+                                id: pId,
+                                nom: p?.nom || 'Article catalogue',
+                                quantite: qte,
+                                prix: Number(p?.prix || 0),
+                              }
+                            })
+                          } else {
+                            const nomDefaut = typeTransCarnet === 'remboursement' ? 'Remboursement client' : 'Vente directe'
+                            prodsArr = [{ nom: produitsTransCarnet.trim() || nomDefaut, quantite: 1, prix: num }]
+                          }
+
+                          const noteCalcul = (typeTransCarnet === 'vente_credit' && modeSaisieCarnet === 'catalogue')
+                            ? `Achat catalogue (${prodsArr.length} article(s))`
+                            : (noteTransCarnet.trim() || (typeTransCarnet === 'remboursement' ? 'Remboursement client' : 'Vente directe'))
+
+                          const res = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientCarnetSelectionne.id}/transaction`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              type: typeTransCarnet,
+                              montant: num,
+                              mode_paiement: modePaiementTransCarnet,
+                              note: noteCalcul,
+                              date_echeance: dateEcheanceTransCarnet || null,
+                              relance_auto_whatsapp: relanceAutoWaCarnet,
+                              produits: prodsArr,
+                            })
+                          })
+
+                          if (res.ok) {
+                            const dataTrans = await res.json()
+                            setClientCarnetSelectionne((prev: any) => prev ? { ...prev, solde: dataTrans.nouveauSolde } : null)
+                            await chargerClientsCredits(boutiqueActiveId)
+                            await chargerHistoriqueClientSelectionne(clientCarnetSelectionne.id)
+                            setModalTransCarnet(false)
+                          } else {
+                            const errData = await res.json()
+                            alert(errData.error || 'Erreur lors de l’enregistrement.')
+                          }
+                        } catch (e) {
+                          console.error('Erreur transaction carnet:', e)
+                        } finally {
+                          setSubmittingCarnetTrans(false)
+                        }
+                      }
+                    }}
+                    style={{
+                      padding: '10px 20px',
+                      background: typeTransCarnet === 'remboursement' ? '#16a34a' : '#ef4444',
+                      color: '#ffffff', border: 'none', borderRadius: 10, fontWeight: 900, cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    {submittingCarnetTrans ? 'Enregistrement...' : typeTransCarnet === 'remboursement' ? '✓ Encaisser' : '✓ Valider la Dette'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
       {/* MODALE BILAN / SYNTHÈSE DE SESSION CAISSIER (RAPPORT X) */}
       {modalBilanSession && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>

@@ -1,3 +1,7 @@
+- **Harmonisation du Carnet de Dettes dans la Caisse POS (`CaisseClient.tsx`)** :
+  * Intégration du **sélecteur de produits du catalogue avec photos et prix** dans le Carnet de dettes de la Caisse POS pour ajouter des articles en 1 tap avec calcul en direct du total en FCFA.
+  * Ajout de l'interrupteur de **relance automatique WhatsApp** à l'échéance et alignement des relances amicales 1-clic via l'API backend.
+  * Harmonisation visuelle ultra-premium, typographies modernes et cohérence exacte des couleurs et palettes entre le tableau de bord marchand (`CarnetDettes.tsx`) et la caisse enregistreuse tactile (`CaisseClient.tsx`).
 - **Gestion de la Visibilité & Désactivation de Boutique (`BoutiqueClient.tsx`, `backend/routes/boutiques.js`)** :
   * Possibilité pour le commerçant de désactiver et masquer sa boutique du catalogue public Nopalou (`/boutiques`) en 1-clic via un bouton interactif sur la carte de la boutique ou dans les paramètres du profil.
   * Création de l'endpoint `PUT /api/boutiques/:id/statut` et support de la colonne `actif` dans `PUT /api/boutiques/:id`.
