@@ -1,3 +1,6 @@
+- **Correction du Raccourci Saisie Express & Netteté des Polices Windows (`BoutiqueClient.tsx`, `Comptabilite.tsx`, `globals.css`)** :
+  * **Redirection Directe sur l'Onglet Saisie** : Le clic sur le raccourci *⚡ Saisie Express Ventes & Dépenses* du tableau de bord bascule désormais directement sur l'onglet **Saisie Express** (`initialTab="express"`) au lieu de l'aperçu général.
+  * **Optimisation de la Netteté des Polices sous Windows** : Application globale de `-webkit-font-smoothing: antialiased`, `-moz-osx-font-smoothing: grayscale` et `text-rendering: optimizeLegibility` sur la pile de polices système native haute lisibilité pour éliminer tout aspect crénelé/flou sur les écrans Windows.
 - **Harmonisation Visuelle de la Saisie Express Ventes & Dépenses (`Comptabilite.tsx`)** :
   * Aligné l'interface **Saisie Express** sur la charte graphique globale de Nopalou (boutons dégradés vert émeraude `#10b981` pour les encaissements ventes et rouge crimson `#ef4444` pour les sorties caisse dépense).
   * Affichage en direct du calcul des montants totaux en FCFA, cartes surélevées avec coins arrondis 20px, typographies système native et sélecteurs de modes avec ombres dégradées.

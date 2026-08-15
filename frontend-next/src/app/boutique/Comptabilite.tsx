@@ -1253,8 +1253,14 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
 // ── Composant principal ───────────────────────────────────────────────────────
 
-export default function Comptabilite({ boutiqueId }: { boutiqueId: string }) {
-  const [tab, setTab] = useState<'dashboard' | 'express' | 'ventes' | 'depenses'>('dashboard')
+export default function Comptabilite({ boutiqueId, initialTab = 'dashboard' }: { boutiqueId: string; initialTab?: 'dashboard' | 'express' | 'ventes' | 'depenses' }) {
+  const [tab, setTab] = useState<'dashboard' | 'express' | 'ventes' | 'depenses'>(initialTab)
+
+  useEffect(() => {
+    if (initialTab) {
+      setTab(initialTab)
+    }
+  }, [initialTab])
 
   const tabBtn = (t: typeof tab, label: string) => (
     <button type="button" onClick={() => setTab(t)} style={{

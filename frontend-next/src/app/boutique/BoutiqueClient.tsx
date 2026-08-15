@@ -2135,7 +2135,7 @@ function BoutiqueDashboard({
   boutique: Boutique
   planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
   nbEnAttente: number
-  onNavigate: (tab: ManageTab) => void
+  onNavigate: (tab: ManageTab, subTab?: string) => void
 }) {
   const [produitsCount, setProduitsCount] = useState<number | null>(null)
   const [stockAlertsCount, setStockAlertsCount] = useState<number | null>(null)
@@ -2169,10 +2169,10 @@ function BoutiqueDashboard({
   }, [boutique.id])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       {/* Grille de statistiques clés */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 18 }}>
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Commandes en attente</span>
             <span style={{ fontSize: 20 }}>📋</span>
@@ -2183,7 +2183,7 @@ function BoutiqueDashboard({
           </button>
         </div>
 
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 18 }}>
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Catalogue Produits</span>
             <span style={{ fontSize: 20 }}>🛍️</span>
@@ -2194,7 +2194,7 @@ function BoutiqueDashboard({
           </button>
         </div>
 
-        <div style={{ background: stockAlertsCount && stockAlertsCount > 0 ? '#fffbeb' : '#f8fafc', border: stockAlertsCount && stockAlertsCount > 0 ? '1px solid #fcd34d' : '1px solid #e2e8f0', borderRadius: 14, padding: 18 }}>
+        <div style={{ background: stockAlertsCount && stockAlertsCount > 0 ? '#fffbeb' : '#f8fafc', border: stockAlertsCount && stockAlertsCount > 0 ? '1px solid #fcd34d' : '1px solid #e2e8f0', borderRadius: 16, padding: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : '#64748b' }}>Alertes Stock</span>
             <span style={{ fontSize: 20 }}>⚠️</span>
@@ -2205,7 +2205,7 @@ function BoutiqueDashboard({
           </button>
         </div>
 
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 18 }}>
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Formule Boutique</span>
             <span style={{ fontSize: 20 }}>⭐</span>
@@ -2220,76 +2220,106 @@ function BoutiqueDashboard({
       </div>
 
       {/* Raccourcis d'action rapide */}
-      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 20 }}>
-        <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 800, color: '#0f172a' }}>⚡ Raccourcis & Actions Rapides</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 20, padding: 22, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+        <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.01em' }}>⚡ Raccourcis & Actions Rapides</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
           
           <button
-            onClick={() => onNavigate('compta')}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#f0fdf4', border: '1px solid #bbf7d0', cursor: 'pointer', textAlign: 'left' }}
+            onClick={() => onNavigate('compta', 'express')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+              borderRadius: 14, background: '#f0fdf4', border: '1.5px solid #bbf7d0',
+              cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
+              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)', transition: 'all 0.2s ease',
+            }}
           >
-            <span style={{ fontSize: 24 }}>⚡</span>
+            <span style={{ fontSize: 26 }}>⚡</span>
             <div>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#166534' }}>Saisie Express Ventes & Dépenses</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#15803d' }}>Encaissement & sortie 1-clic</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#15803d', letterSpacing: '-0.01em' }}>Saisie Express Ventes & Dépenses</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#166534', fontWeight: 600 }}>Encaissement & sortie 1-clic</p>
             </div>
           </button>
 
           <button
             onClick={() => onNavigate('carnet')}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#fef2f2', border: '1px solid #fecaca', cursor: 'pointer', textAlign: 'left' }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+              borderRadius: 14, background: '#fef2f2', border: '1.5px solid #fecaca',
+              cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
+              boxShadow: '0 2px 8px rgba(239, 68, 68, 0.08)', transition: 'all 0.2s ease',
+            }}
           >
-            <span style={{ fontSize: 24 }}>📒</span>
+            <span style={{ fontSize: 26 }}>📒</span>
             <div>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#991b1b' }}>Carnet de Dettes Client</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#dc2626' }}>Créances & Relances WhatsApp</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#991b1b', letterSpacing: '-0.01em' }}>Carnet de Dettes Client</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#dc2626', fontWeight: 600 }}>Créances & Relances WhatsApp</p>
             </div>
           </button>
 
           <button
             onClick={() => onNavigate('produits')}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#f8fafc', border: '1px solid #e2e8f0', cursor: 'pointer', textAlign: 'left' }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+              borderRadius: 14, background: '#f8fafc', border: '1.5px solid #e2e8f0',
+              cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)', transition: 'all 0.2s ease',
+            }}
           >
-            <span style={{ fontSize: 24 }}>🛍️</span>
+            <span style={{ fontSize: 26 }}>🛍️</span>
             <div>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#334155' }}>Ajouter un produit</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748b' }}>Photos, prix & détails</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#0f172a', letterSpacing: '-0.01em' }}>Ajouter un produit</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Photos, prix & détails</p>
             </div>
           </button>
 
           <button
             onClick={() => onNavigate('documents')}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#eff6ff', border: '1px solid #bfdbfe', cursor: 'pointer', textAlign: 'left' }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+              borderRadius: 14, background: '#eff6ff', border: '1.5px solid #bfdbfe',
+              cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
+              boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)', transition: 'all 0.2s ease',
+            }}
           >
-            <span style={{ fontSize: 24 }}>📄</span>
+            <span style={{ fontSize: 26 }}>📄</span>
             <div>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#1e40af' }}>Créer une facture/devis</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#1d4ed8' }}>Document client PDF</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#1e40af', letterSpacing: '-0.01em' }}>Créer une facture/devis</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#1d4ed8', fontWeight: 600 }}>Document client PDF</p>
             </div>
           </button>
 
           {boutique.mode_fonctionnement !== 'pure_player' && (
             <a
               href="/boutique/caisse"
-              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#faf5ff', border: '1px solid #e9d5ff', textDecoration: 'none' }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+                borderRadius: 14, background: '#faf5ff', border: '1.5px solid #e9d5ff',
+                textDecoration: 'none', WebkitFontSmoothing: 'antialiased',
+                boxShadow: '0 2px 8px rgba(168, 85, 247, 0.08)', transition: 'all 0.2s ease',
+              }}
               onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
             >
-              <span style={{ fontSize: 24 }}>🛒</span>
+              <span style={{ fontSize: 26 }}>🛒</span>
               <div>
-                <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#6b21a8' }}>Ouvrir Caisse POS</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7e22ce' }}>Vente sur place</p>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#6b21a8', letterSpacing: '-0.01em' }}>Ouvrir Caisse POS</p>
+                <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#7e22ce', fontWeight: 600 }}>Vente sur place</p>
               </div>
             </a>
           )}
 
           <button
             onClick={() => onNavigate('marketing')}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#fff7ed', border: '1px solid #ffedd5', cursor: 'pointer', textAlign: 'left' }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+              borderRadius: 14, background: '#fff7ed', border: '1.5px solid #ffedd5',
+              cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
+              boxShadow: '0 2px 8px rgba(249, 115, 22, 0.08)', transition: 'all 0.2s ease',
+            }}
           >
-            <span style={{ fontSize: 24 }}>📣</span>
+            <span style={{ fontSize: 26 }}>📣</span>
             <div>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#9a3412' }}>Partager la boutique</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#c2410c' }}>Lien WhatsApp & réseaux</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#9a3412', letterSpacing: '-0.01em' }}>Partager la boutique</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#c2410c', fontWeight: 600 }}>Lien WhatsApp & réseaux</p>
             </div>
           </button>
         </div>
@@ -2359,6 +2389,14 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
 
   const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
+  const [subTabCompta, setSubTabCompta] = useState<'dashboard' | 'express' | 'ventes' | 'depenses'>('express')
+
+  const handleNavigateFromDashboard = (targetTab: ManageTab, subTab?: string) => {
+    if (targetTab === 'compta') {
+      setSubTabCompta(subTab === 'dashboard' ? 'dashboard' : 'express')
+    }
+    setTab(targetTab)
+  }
   const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>(() => {
     const defaultExpanded: Record<number, boolean> = {};
     NAV_GROUPS.forEach((g, idx) => {
@@ -2769,11 +2807,11 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           </div>
         ) : (
           <>
-            {tab === 'dashboard'   && <BoutiqueDashboard boutique={boutique} planActif={planActif} nbEnAttente={nbEnAttente} onNavigate={setTab} />}
+            {tab === 'dashboard'   && <BoutiqueDashboard boutique={boutique} planActif={planActif} nbEnAttente={nbEnAttente} onNavigate={handleNavigateFromDashboard} />}
             {tab === 'produits'    && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
             {tab === 'commandes'   && <Commandes boutiqueId={boutique.id} />}
             {tab === 'carnet'      && <CarnetDettes boutique={boutique} planActif={planActif} />}
-            {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} />}
+            {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} initialTab={subTabCompta} />}
             {tab === 'analytics'   && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
             {tab === 'infos'       && (
               <div style={{ maxWidth: 580 }}>

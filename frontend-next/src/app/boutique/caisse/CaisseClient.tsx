@@ -3595,58 +3595,58 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
       {/* Modale Carnet de Crédits Clients Avancé */}
       {modalCarnet && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 860, border: '1px solid #e2e8f0', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: '18px 20px', width: '100%', maxWidth: 860, border: '1px solid #e2e8f0', maxHeight: '94vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
             
             {/* En-tête Carnet */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, borderBottom: '1px solid #f1f5f9', paddingBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fff7f0', border: '1px solid #ffedd5', color: '#C75B00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: '1px solid #f1f5f9', paddingBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: '#fff7f0', border: '1px solid #ffedd5', color: '#C75B00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
                   📒
                 </div>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: 19, color: '#0f172a', fontWeight: 900 }}>Carnet de Crédits & Dettes Clients</h2>
-                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>Gestion complète des crédits de quartier, articles pris, remboursements et échéances.</p>
+                  <h2 style={{ margin: 0, fontSize: 17, color: '#0f172a', fontWeight: 900, lineHeight: 1.2 }}>Carnet de Crédits & Dettes</h2>
+                  <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#64748b' }}>Gestion des crédits, remboursements et relances WhatsApp.</p>
                 </div>
               </div>
-              <button onClick={() => { setModalCarnet(false); setClientCarnetSelectionne(null); }} style={{ background: '#f1f5f9', border: 'none', color: '#64748b', borderRadius: '50%', width: 32, height: 32, fontSize: 18, fontWeight: 700, cursor: 'pointer' }}>✕</button>
+              <button onClick={() => { setModalCarnet(false); setClientCarnetSelectionne(null); }} style={{ background: '#f1f5f9', border: 'none', color: '#64748b', borderRadius: '50%', width: 32, height: 32, fontSize: 16, fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}>✕</button>
             </div>
 
-            {/* Statistiques Globales du Carnet */}
+            {/* Statistiques Globales du Carnet (Responsive Grid) */}
             {(() => {
               const detteTotale = clientsCredits.reduce((acc, c) => acc + (c.solde > 0 ? Number(c.solde) : 0), 0)
               const avanceTotale = clientsCredits.reduce((acc, c) => acc + (c.solde < 0 ? Math.abs(Number(c.solde)) : 0), 0)
 
               return (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 18 }}>
-                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: 12, borderRadius: 12 }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: '#991b1b', textTransform: 'uppercase', letterSpacing: '.05em' }}>Total Dettes Clients</span>
-                    <p style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 900, color: '#dc2626' }}>{fcfa(detteTotale)}</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 14 }}>
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '10px 12px', borderRadius: 12 }}>
+                    <span style={{ fontSize: 10.5, fontWeight: 800, color: '#991b1b', textTransform: 'uppercase', letterSpacing: '.03em', display: 'block', whiteSpace: 'nowrap' }}>Total Dettes</span>
+                    <p style={{ margin: '3px 0 0', fontSize: 16, fontWeight: 900, color: '#dc2626' }}>{fcfa(detteTotale)}</p>
                   </div>
-                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: 12, borderRadius: 12 }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '.05em' }}>Total Avances Reçues</span>
-                    <p style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 900, color: '#16a34a' }}>{fcfa(avanceTotale)}</p>
+                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '10px 12px', borderRadius: 12 }}>
+                    <span style={{ fontSize: 10.5, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '.03em', display: 'block', whiteSpace: 'nowrap' }}>Total Avances</span>
+                    <p style={{ margin: '3px 0 0', fontSize: 16, fontWeight: 900, color: '#16a34a' }}>{fcfa(avanceTotale)}</p>
                   </div>
-                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: 12, borderRadius: 12 }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Clients du Carnet</span>
-                    <p style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 900, color: '#0f172a' }}>{clientsCredits.length} Clients</p>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '10px 12px', borderRadius: 12 }}>
+                    <span style={{ fontSize: 10.5, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.03em', display: 'block', whiteSpace: 'nowrap' }}>Clients Registre</span>
+                    <p style={{ margin: '3px 0 0', fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{clientsCredits.length} Client(s)</p>
                   </div>
                 </div>
               )
             })()}
 
             {/* Barre de Recherche & Bouton Créer Client */}
-            <div style={{ display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 14, alignItems: 'center', flexWrap: 'wrap' }}>
               <input
                 type="text"
-                placeholder="🔍 Rechercher un client par nom, téléphone ou quartier..."
+                placeholder="🔍 Rechercher client, téléphone ou quartier..."
                 value={rechercheClientCarnet}
                 onChange={e => setRechercheClientCarnet(e.target.value)}
-                style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, background: '#f8fafc', outline: 'none' }}
+                style={{ flex: '1 1 200px', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, background: '#f8fafc', outline: 'none' }}
               />
               <button
                 onClick={() => setAfficherFormNouveauClient(!afficherFormNouveauClient)}
-                style={{ background: afficherFormNouveauClient ? '#64748b' : '#C75B00', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                style={{ background: afficherFormNouveauClient ? '#64748b' : '#C75B00', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto' }}
               >
                 {afficherFormNouveauClient ? 'Fermer Formulaire' : '+ Nouveau Client'}
               </button>
@@ -3654,9 +3654,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
             {/* Formulaire d'ajout de Client */}
             {afficherFormNouveauClient && (
-              <div style={{ background: '#fff7f0', border: '1px solid #ffedd5', borderRadius: 14, padding: 16, marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#C75B00' }}>👤 Créer une nouvelle fiche client carnet</p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+              <div style={{ background: '#fff7f0', border: '1px solid #ffedd5', borderRadius: 14, padding: 14, marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ margin: 0, fontSize: 12.5, fontWeight: 800, color: '#C75B00' }}>👤 Créer une nouvelle fiche client carnet</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8 }}>
                   <input
                     type="text"
                     placeholder="Nom complet *"
@@ -3673,7 +3673,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   />
                   <input
                     type="text"
-                    placeholder="Adresse / Quartier (ex: Medina Rue 10)"
+                    placeholder="Adresse / Quartier (ex: Medina)"
                     value={nouveauClientAdresse}
                     onChange={e => setNouveauClientAdresse(e.target.value)}
                     style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
@@ -3728,7 +3728,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                       }
                     }
                   }}
-                  style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontWeight: 800, fontSize: 13, cursor: 'pointer', alignSelf: 'flex-start' }}
+                  style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 14px', fontWeight: 800, fontSize: 12.5, cursor: 'pointer', alignSelf: 'flex-start' }}
                 >
                   ✓ Enregistrer le Client
                 </button>
@@ -3737,7 +3737,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
             {/* Vue Principale : Liste ou Fiche Client */}
             {!clientCarnetSelectionne ? (
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingRight: 2 }}>
                 {clientsCredits
                   .filter(c => {
                     if (!rechercheClientCarnet.trim()) return true
@@ -3752,29 +3752,29 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     const ratioDette = Math.min(100, Math.max(0, (Number(c.solde) / Number(c.plafond_max)) * 100))
 
                     return (
-                      <div key={c.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <p style={{ margin: 0, fontWeight: 900, fontSize: 15, color: '#0f172a' }}>{c.nom}</p>
-                            {c.adresse && <span style={{ fontSize: 11, background: '#e2e8f0', color: '#475569', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>📍 {c.adresse}</span>}
+                      <div key={c.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                        <div style={{ minWidth: 160, flex: '1 1 auto' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <p style={{ margin: 0, fontWeight: 900, fontSize: 14.5, color: '#0f172a' }}>{c.nom}</p>
+                            {c.adresse && <span style={{ fontSize: 10.5, background: '#e2e8f0', color: '#475569', padding: '2px 7px', borderRadius: 12, fontWeight: 700 }}>📍 {c.adresse}</span>}
                           </div>
-                          <p style={{ margin: '4px 0 0', fontSize: 12, color: '#64748b' }}>
+                          <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#64748b' }}>
                             📞 {c.telephone} • Plafond: {fcfa(c.plafond_max)}
                           </p>
                           {c.note_client && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94a3b8', fontStyle: 'italic' }}>Note: {c.note_client}</p>}
 
                           {/* Barre de ratio de dette par rapport au plafond */}
                           {c.solde > 0 && (
-                            <div style={{ marginTop: 6, width: 180, height: 5, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                            <div style={{ marginTop: 6, width: '100%', maxWidth: 180, height: 5, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
                               <div style={{ width: `${ratioDette}%`, height: '100%', background: ratioDette > 85 ? '#dc2626' : '#f59e0b', borderRadius: 3 }} />
                             </div>
                           )}
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                          <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontSize: 11, color: '#64748b', display: 'block', fontWeight: 600 }}>Solde du carnet</span>
-                            <span style={{ fontSize: 16, fontWeight: 900, color: c.solde > 0 ? '#dc2626' : c.solde < 0 ? '#16a34a' : '#64748b' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', width: '100%', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: 8, marginTop: 4 }}>
+                          <div style={{ textAlign: 'left' }}>
+                            <span style={{ fontSize: 10.5, color: '#64748b', display: 'block', fontWeight: 600 }}>Solde du carnet</span>
+                            <span style={{ fontSize: 15, fontWeight: 900, color: c.solde > 0 ? '#dc2626' : c.solde < 0 ? '#16a34a' : '#64748b' }}>
                               {c.solde > 0 ? `Dette: ${fcfa(c.solde)}` : c.solde < 0 ? `Avance: ${fcfa(Math.abs(c.solde))}` : '0 FCFA'}
                             </span>
                           </div>
@@ -3782,7 +3782,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                             <button
                               onClick={() => envoyerRelanceWhatsApp(c)}
-                              style={{ background: '#25d366', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 10px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                              style={{ background: '#25d366', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 10px', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                               title="Envoyer un rappel de solde automatique sur WhatsApp"
                             >
                               <MessageCircle size={14} /> WA Relance
@@ -3792,7 +3792,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                                 setClientCarnetSelectionne(c)
                                 chargerHistoriqueClientSelectionne(c.id)
                               }}
-                              style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                              style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 11.5, fontWeight: 800, cursor: 'pointer' }}
                             >
                               📜 Fiche & Historique
                             </button>
@@ -3804,7 +3804,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                                 setNoteTransCarnet('')
                                 setModalTransCarnet(true)
                               }}
-                              style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                              style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 11.5, fontWeight: 800, cursor: 'pointer' }}
                             >
                               💵 Rembourser
                             </button>
@@ -3816,46 +3816,48 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               </div>
             ) : (
               /* Fiche & Historique Détaillé du Client */
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {/* En-tête Fiche Client */}
-                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                   <div>
                     <button onClick={() => setClientCarnetSelectionne(null)} style={{ background: 'none', border: 'none', color: '#1e3a5f', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginBottom: 4 }}>
                       ← Retour à la liste des clients
                     </button>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>{clientCarnetSelectionne.nom}</h3>
-                    <p style={{ margin: '2px 0 0', fontSize: 13, color: '#64748b' }}>
+                    <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a' }}>{clientCarnetSelectionne.nom}</h3>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
                       📞 {clientCarnetSelectionne.telephone} {clientCarnetSelectionne.adresse && `• 📍 ${clientCarnetSelectionne.adresse}`}
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: 11, color: '#64748b', display: 'block' }}>Solde Actuel</span>
-                      <span style={{ fontSize: 18, fontWeight: 900, color: clientCarnetSelectionne.solde > 0 ? '#dc2626' : clientCarnetSelectionne.solde < 0 ? '#16a34a' : '#64748b' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', width: '100%', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: 10, marginTop: 4 }}>
+                    <div style={{ textAlign: 'left' }}>
+                      <span style={{ fontSize: 10.5, color: '#64748b', display: 'block' }}>Solde Actuel</span>
+                      <span style={{ fontSize: 16, fontWeight: 900, color: clientCarnetSelectionne.solde > 0 ? '#dc2626' : clientCarnetSelectionne.solde < 0 ? '#16a34a' : '#64748b' }}>
                         {clientCarnetSelectionne.solde > 0 ? `Dette: ${fcfa(clientCarnetSelectionne.solde)}` : clientCarnetSelectionne.solde < 0 ? `Avance: ${fcfa(Math.abs(clientCarnetSelectionne.solde))}` : '0 FCFA'}
                       </span>
                     </div>
 
-                    <button
-                      onClick={() => envoyerRelanceWhatsApp(clientCarnetSelectionne)}
-                      style={{ background: '#25d366', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                    >
-                      <MessageCircle size={15} /> WhatsApp Relance
-                    </button>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => envoyerRelanceWhatsApp(clientCarnetSelectionne)}
+                        style={{ background: '#25d366', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 10px', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      >
+                        <MessageCircle size={14} /> Relance WA
+                      </button>
 
-                    <button
-                      onClick={() => ouvrirModalTransCarnet('remboursement')}
-                      style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      💵 Encaisser Remboursement
-                    </button>
-                    <button
-                      onClick={() => ouvrirModalTransCarnet('vente_credit')}
-                      style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      + Nouveau Crédit (Catalogue / Libre)
-                    </button>
+                      <button
+                        onClick={() => ouvrirModalTransCarnet('remboursement')}
+                        style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 11px', fontSize: 11.5, fontWeight: 800, cursor: 'pointer' }}
+                      >
+                        💵 Rembourser
+                      </button>
+                      <button
+                        onClick={() => ouvrirModalTransCarnet('vente_credit')}
+                        style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 11px', fontSize: 11.5, fontWeight: 800, cursor: 'pointer' }}
+                      >
+                        + Crédit (Catalogue / Libre)
+                      </button>
+                    </div>
                   </div>
                 </div>
 
