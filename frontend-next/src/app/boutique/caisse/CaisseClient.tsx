@@ -3423,43 +3423,72 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
       {/* Modale Historique des Opérations */}
       {modalHistorique && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 740, border: '1px solid #e2e8f0', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 800 }}>📜 Historique des Opérations & Incidents de Caisse</h2>
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>Journal des encaissements, annulations et remboursements.</p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <select
-                  value={formatTicketThermique}
-                  onChange={e => setFormatTicketThermique(e.target.value as any)}
-                  style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 12, fontWeight: 700, background: '#ffffff', color: '#0f172a' }}
-                >
-                  <option value="80mm">🖨️ Format 80mm (Standard)</option>
-                  <option value="58mm">🖨️ Format 58mm (Poche)</option>
-                </select>
-                <button
-                  onClick={connecterImprimanteBluetooth}
-                  style={{ background: btDeviceName ? '#f0fdf4' : '#f5f3ff', color: btDeviceName ? '#166534' : '#6d28d9', border: btDeviceName ? '1px solid #bbf7d0' : '1px solid #ddd6fe', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-                  title="Connecter une imprimante thermique Bluetooth direct ESC/POS"
-                >
-                  📱 Bluetooth {btDeviceName ? `(${btDeviceName})` : ''}
-                </button>
-                <button
-                  onClick={exporterHistoriqueCSV}
-                  style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-                >
-                  📥 Excel (CSV)
-                </button>
-                <button
-                  onClick={exporterHistoriquePDF}
-                  style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-                >
-                  📄 Imprimer PDF
-                </button>
-                <button onClick={() => setModalHistorique(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
-              </div>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 780, border: '1px solid #e2e8f0', maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)', position: 'relative' }}>
+            
+            {/* Bouton de Fermeture Top-Right Fixe */}
+            <button
+              onClick={() => setModalHistorique(false)}
+              style={{
+                position: 'absolute',
+                top: 14,
+                right: 14,
+                background: '#f1f5f9',
+                border: 'none',
+                color: '#0f172a',
+                borderRadius: '50%',
+                width: 36,
+                height: 36,
+                fontSize: 18,
+                fontWeight: 900,
+                cursor: 'pointer',
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Fermer la fenêtre"
+            >
+              ✕
+            </button>
+
+            {/* En-tête Modale */}
+            <div style={{ marginBottom: 14, paddingRight: 40 }}>
+              <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 900, display: 'flex', alignItems: 'center', gap: 8 }}>
+                📜 Historique des Opérations & Incidents de Caisse
+              </h2>
+              <p style={{ margin: '3px 0 0', fontSize: 12, color: '#64748b' }}>Journal des encaissements, annulations et remboursements.</p>
+            </div>
+
+            {/* Barre d'outils et d'exports */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14, background: '#f8fafc', padding: 10, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+              <select
+                value={formatTicketThermique}
+                onChange={e => setFormatTicketThermique(e.target.value as any)}
+                style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 12, fontWeight: 700, background: '#ffffff', color: '#0f172a' }}
+              >
+                <option value="80mm">🖨️ Format 80mm (Standard)</option>
+                <option value="58mm">🖨️ Format 58mm (Poche)</option>
+              </select>
+              <button
+                onClick={connecterImprimanteBluetooth}
+                style={{ background: btDeviceName ? '#f0fdf4' : '#f5f3ff', color: btDeviceName ? '#166534' : '#6d28d9', border: btDeviceName ? '1px solid #bbf7d0' : '1px solid #ddd6fe', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                title="Connecter une imprimante thermique Bluetooth direct ESC/POS"
+              >
+                📱 Bluetooth {btDeviceName ? `(${btDeviceName})` : ''}
+              </button>
+              <button
+                onClick={exporterHistoriqueCSV}
+                style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                📥 Excel (CSV)
+              </button>
+              <button
+                onClick={exporterHistoriquePDF}
+                style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                📄 Imprimer PDF
+              </button>
             </div>
 
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -3510,6 +3539,17 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 </div>
               ))}
             </div>
+
+            {/* Pied de Modale avec Bouton Fermer */}
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setModalHistorique(false)}
+                style={{ background: '#0f172a', color: '#ffffff', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
+              >
+                Fermer la fenêtre
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -3517,8 +3557,32 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       {/* Modale Ouverture Session avec Fond de Caisse & PIN */}
       {modalSessionOuverture && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 440, border: '2px solid #16a34a', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 440, border: '2px solid #16a34a', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', position: 'relative' }}>
+            <button
+              onClick={() => setModalSessionOuverture(false)}
+              style={{
+                position: 'absolute',
+                top: 14,
+                right: 14,
+                background: '#f1f5f9',
+                border: 'none',
+                color: '#0f172a',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                fontSize: 16,
+                fontWeight: 900,
+                cursor: 'pointer',
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Fermer la fenêtre"
+            >
+              ✕
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, paddingRight: 34 }}>
               <span style={{ fontSize: 24 }}>🔑</span>
               <div>
                 <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 800 }}>Ouverture de Session POS</h2>
@@ -3576,8 +3640,35 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       {/* Modale Clôture Z */}
       {modalClotureZ && session && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 460, border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480, border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', position: 'relative' }}>
+            
+            {/* Bouton de Fermeture Top-Right Fixe */}
+            <button
+              onClick={() => setModalClotureZ(false)}
+              style={{
+                position: 'absolute',
+                top: 14,
+                right: 14,
+                background: '#f1f5f9',
+                border: 'none',
+                color: '#0f172a',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                fontSize: 16,
+                fontWeight: 900,
+                cursor: 'pointer',
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Fermer la fenêtre"
+            >
+              ✕
+            </button>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingRight: 34 }}>
               <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 800 }}>🔒 Clôture Z — Fin de Journée</h2>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={exporterClotureCSV} title="Exporter Excel" style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>

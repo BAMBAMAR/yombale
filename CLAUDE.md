@@ -48,7 +48,9 @@
   * Sur smartphone (mobile) : Affichage d'une vue Master/Detail avec basculement fluide entre la liste des clients et la Fiche Client en 100% largeur d'écran.
   * Bouton tactile lisible **`← Retour à la liste des clients`** en haut de la Fiche Client sur mobile.
   * Ajustement des modales de création de client et de sélection catalogue produits pour s'adapter aux hauteurs d'écran mobile (`maxHeight: '92vh'`, `padding: 16px`, grille d'articles à colonnes réactives `minmax(110px, 1fr)`).
-  * Harmonisation directe de la section Carnet dans la caisse enregistreuse POS (`CaisseClient.tsx`) et la démo interactive (`DemoClient.tsx`).
+- **4. Harmonisation & Ergonomie des Boutons de Fermeture de toutes les Modales (`CaisseClient.tsx`, `CarnetDettes.tsx`)** :
+  * Intégration systématique d'un bouton de fermeture circulaire tactile **`✕`** en haut à droite avec `position: 'absolute'` (dans *Historique des Opérations & Incidents*, *Clôture Z*, *Ouverture de Session*, *Carnet Dettes*, *Création / Édition Client*).
+  * Ajout d'un bouton de pied de page **`Fermer la fenêtre`** pour éviter que les boutons d'exportation/impression ne masquent ou décalent la fermeture sur écran mobile et tablette.
 
 ## 📌 Mises à jour du 14/08/2026 : Support Complet des Articles/Produits Hors Catalogue dans les Documents Commercials de la Boutique (`GestionDocuments.tsx`, `backend/routes/boutiques.js`)
 - **Correction & Saisie des Produits/Articles Hors Catalogue (Saisie Libre)** :

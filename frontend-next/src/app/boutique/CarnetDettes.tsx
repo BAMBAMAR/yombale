@@ -1086,7 +1086,28 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a' }}>
                 👤 Créer une nouvelle fiche client
               </h3>
-              <button onClick={() => setShowModalNouveauClient(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#94a3b8' }}>✕</button>
+              <button
+                type="button"
+                onClick={() => setShowModalNouveauClient(false)}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  color: '#0f172a',
+                  borderRadius: '50%',
+                  width: 34,
+                  height: 34,
+                  fontSize: 18,
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Fermer la fenêtre"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleCreerClient} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1198,7 +1219,28 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a' }}>
                 ✏️ Modifier la fiche client
               </h3>
-              <button onClick={() => setShowModalEditClient(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#94a3b8' }}>✕</button>
+              <button
+                type="button"
+                onClick={() => setShowModalEditClient(false)}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  color: '#0f172a',
+                  borderRadius: '50%',
+                  width: 34,
+                  height: 34,
+                  fontSize: 18,
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Fermer la fenêtre"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleEnregistrerEditClient} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1317,7 +1359,28 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   Client : <strong>{clientSelectionne.nom}</strong> ({clientSelectionne.telephone})
                 </p>
               </div>
-              <button onClick={() => setShowModalTransaction(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#94a3b8' }}>✕</button>
+              <button
+                type="button"
+                onClick={() => setShowModalTransaction(false)}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  color: '#0f172a',
+                  borderRadius: '50%',
+                  width: 34,
+                  height: 34,
+                  fontSize: 18,
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Fermer la fenêtre"
+              >
+                ✕
+              </button>
             </div>
 
             {typeTransaction === 'vente_credit' && (
