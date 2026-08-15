@@ -24,10 +24,17 @@ export default function ProfilClient({ nom, email }: Props) {
 
   useEffect(() => {
     if (state.message) {
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
       setEditing(false)
       router.refresh()
+    } else if (state.error) {
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
     }
-  }, [state.message, router])
+  }, [state, router])
 
   function demanderReset() {
     setResetErr(null)

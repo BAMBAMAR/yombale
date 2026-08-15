@@ -42,18 +42,35 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
     setTimbreFiscalApplicable(boutique.timbre_fiscal_applicable === true)
   }, [boutique])
 
+  const fiscTopRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     if (state.success && handledRef.current !== state) {
       handledRef.current = state
       setSavedMessage('✅ Paramètres juridiques et fiscaux enregistrés avec succès !')
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      if (fiscTopRef.current) {
+        fiscTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
       onUpdate()
       const t = setTimeout(() => setSavedMessage(null), 6000)
       return () => clearTimeout(t)
+    } else if (state.error && handledRef.current !== state) {
+      handledRef.current = state
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      if (fiscTopRef.current) {
+        fiscTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
     }
   }, [state, onUpdate])
 
   return (
-    <div style={{ maxWidth: 700, background: '#ffffff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+    <div style={{ maxWidth: 700, background: '#ffffff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', paddingBottom: 80 }}>
+      <div ref={fiscTopRef} />
       <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
           ⚖️ Paramètres Fiscalité & Infos Légales
@@ -286,12 +303,25 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
           </div>
         </div>
 
-        <button 
-          type="submit" 
-          style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg, #1e3a5f 0%, #111827 100%)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 6 }}
-        >
-          💾 Enregistrer les paramètres
-        </button>
+        <div style={{
+          position: 'sticky',
+          bottom: 12,
+          zIndex: 40,
+          background: '#ffffff',
+          padding: 12,
+          borderRadius: 12,
+          boxShadow: '0 4px 18px rgba(0,0,0,0.12)',
+          border: '1px solid #e5e7eb',
+          marginTop: 12,
+          marginBottom: 16,
+        }}>
+          <button 
+            type="submit" 
+            style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg, #1e3a5f 0%, #111827 100%)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+          >
+            💾 Enregistrer les paramètres juridiques & fiscaux
+          </button>
+        </div>
       </form>
     </div>
   )

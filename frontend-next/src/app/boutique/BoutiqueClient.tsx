@@ -408,17 +408,46 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
   const action = boutique ? updateBoutique.bind(null, boutique.id) : createBoutique
   const [state, formAction] = useFormState<ActionState, FormData>(action, {})
   const [modeSelect, setModeSelect] = useState<'hybride_pos' | 'pure_player'>(boutique?.mode_fonctionnement || 'hybride_pos')
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const formTopRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => { if (state.success) onSuccess() }, [state.success])
+  useEffect(() => {
+    if (state.success) {
+      setSuccessMsg(boutique ? '✅ Paramètres de la boutique enregistrés avec succès !' : '✅ Boutique créée avec succès !')
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      if (formTopRef.current) {
+        formTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+      onSuccess()
+      const t = setTimeout(() => setSuccessMsg(null), 6000)
+      return () => clearTimeout(t)
+    } else if (state.error) {
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      if (formTopRef.current) {
+        formTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }
+  }, [state, boutique, onSuccess])
 
   return (
-    <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 60 }}>
+      <div ref={formTopRef} />
       <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 18, margin: 0 }}>
         {boutique ? 'Modifier la boutique' : 'Créer une boutique'}
       </h2>
 
+      {successMsg && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '12px 16px', color: '#166534', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+          <span>{successMsg}</span>
+        </div>
+      )}
+
       {state.error && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', fontSize: 14 }}>
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', fontSize: 14, fontWeight: 600 }}>
           {state.error}
         </div>
       )}
@@ -629,11 +658,25 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, paddingTop: 4 }}>
-        <SubmitButton label={boutique ? 'Enregistrer' : 'Créer la boutique'} />
+      <div style={{
+        position: 'sticky',
+        bottom: 12,
+        zIndex: 40,
+        background: '#ffffff',
+        padding: '12px 16px',
+        borderRadius: 12,
+        boxShadow: '0 4px 18px rgba(0,0,0,0.12)',
+        border: '1px solid #e5e7eb',
+        display: 'flex',
+        gap: 12,
+        alignItems: 'center',
+        marginTop: 16,
+        marginBottom: 20,
+      }}>
+        <SubmitButton label={boutique ? '💾 Enregistrer la boutique' : '✨ Créer la boutique'} />
         <button type="button" onClick={onCancel} style={{
-          padding: '10px 20px', background: 'none', border: '1px solid #d1d5db',
-          borderRadius: 8, fontSize: 14, cursor: 'pointer',
+          padding: '10px 20px', background: '#f3f4f6', border: '1px solid #d1d5db',
+          borderRadius: 8, fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer',
         }}>
           Annuler
         </button>
@@ -905,7 +948,30 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
     }))
   }
 
-  useEffect(() => { if (state.success) onSuccess() }, [state.success])
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const produitFormTopRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (state.success) {
+      setSuccessMsg(produit ? '✅ Produit modifié avec succès !' : '✅ Produit ajouté au catalogue avec succès !')
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      if (produitFormTopRef.current) {
+        produitFormTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+      onSuccess()
+      const t = setTimeout(() => setSuccessMsg(null), 6000)
+      return () => clearTimeout(t)
+    } else if (state.error) {
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      if (produitFormTopRef.current) {
+        produitFormTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }
+  }, [state, produit, onSuccess])
 
   function handleCarac(k: string, v: string) {
     setCarac(prev => ({ ...prev, [k]: v }))
@@ -914,13 +980,20 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   const hasCaracFields = cat && cat !== 'autre' && !modeRapide
 
   return (
-    <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 60 }}>
+      <div ref={produitFormTopRef} />
       <h3 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 16, margin: 0 }}>
         {produit ? 'Modifier le produit' : 'Ajouter un produit'}
       </h3>
 
+      {successMsg && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '12px 16px', color: '#166534', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span>{successMsg}</span>
+        </div>
+      )}
+
       {state.error && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', fontSize: 13 }}>
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', fontSize: 13, fontWeight: 600 }}>
           {state.error}
         </div>
       )}
@@ -1256,11 +1329,25 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       {imagesExistantes.length === 0 && photos.length === 0 && (
         <p style={{ color: '#dc2626', fontSize: 12, margin: 0 }}>Ajoutez au moins une photo.</p>
       )}
-      <div style={{ display: 'flex', gap: 12 }}>
-        <SubmitButton label={produit ? 'Enregistrer' : 'Ajouter le produit'} disabled={imagesExistantes.length === 0 && photos.length === 0} />
+      <div style={{
+        position: 'sticky',
+        bottom: 12,
+        zIndex: 40,
+        background: '#ffffff',
+        padding: '12px 16px',
+        borderRadius: 12,
+        boxShadow: '0 4px 18px rgba(0,0,0,0.12)',
+        border: '1px solid #e5e7eb',
+        display: 'flex',
+        gap: 12,
+        alignItems: 'center',
+        marginTop: 16,
+        marginBottom: 20,
+      }}>
+        <SubmitButton label={produit ? '💾 Enregistrer le produit' : '➕ Ajouter le produit'} disabled={imagesExistantes.length === 0 && photos.length === 0} />
         <button type="button" onClick={onCancel} style={{
-          padding: '10px 20px', background: 'none', border: '1px solid #d1d5db',
-          borderRadius: 8, fontSize: 14, cursor: 'pointer',
+          padding: '10px 20px', background: '#f3f4f6', border: '1px solid #d1d5db',
+          borderRadius: 8, fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer',
         }}>
           Annuler
         </button>

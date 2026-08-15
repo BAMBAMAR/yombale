@@ -1,14 +1,15 @@
 {
-  "status": "completed",
+  "status": "in_progress",
   "mode": "live",
-  "groupeIndex": 10,
+  "groupeIndex": 1,
   "totalGroupes": 10,
-  "pourcentage": 100,
-  "groupeActuel": "Terminé",
-  "scrapes": 31,
-  "inseres": 21,
-  "doublons": 5,
-  "ignores": 5,
+  "pourcentage": 10,
+  "groupeActuel": "Ndeye Yacine Seck Faye (Offres Emploi)",
+  "groupeUrl": "https://www.facebook.com/ndeyeyacineseckfaye",
+  "scrapes": 0,
+  "inseres": 0,
+  "doublons": 0,
+  "ignores": 0,
   "erreurs": [],
-  "updatedAt": "2026-08-14T22:16:33.992Z"
+  "updatedAt": "2026-08-15T18:00:11.454Z"
 }

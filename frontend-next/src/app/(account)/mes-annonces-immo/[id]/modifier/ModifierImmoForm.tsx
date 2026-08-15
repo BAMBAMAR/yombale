@@ -59,6 +59,9 @@ export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) 
         if (res.errors) {
           setFieldErrors(res.errors.map(e => e.msg))
         }
+        if (typeof window !== 'undefined') {
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
       }
     })
   }
