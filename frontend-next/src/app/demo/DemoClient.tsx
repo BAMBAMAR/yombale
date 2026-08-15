@@ -526,29 +526,35 @@ export default function DemoClient({
                   {/* TAB 3: CARNET DE CREDIT CLIENT */}
                   {merchantTab === 'credit' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <div style={{ background: '#1E293B', padding: 12, borderRadius: 8, fontSize: 12, color: '#E2E8F0' }}>
-                        📓 <strong>Carnet Dettes Client :</strong> Fini le cahier papier ! Suivez les impayés et relancez en 1 clic sur WhatsApp.
+                      <div style={{ background: '#1E293B', padding: 12, borderRadius: 8, fontSize: 12, color: '#E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 18 }}>📒</span>
+                        <div>
+                          <strong>Carnet de Crédits & Dettes Clients :</strong> Fini le cahier papier ! Enregistrez les créances et relancez en 1 clic sur WhatsApp.
+                        </div>
                       </div>
 
                       {[
                         { nom: 'Mamadou Diallo', tel: '77 123 45 67', solde: 37500, echeance: '15 Août 2026', quartier: 'Medina Rue 11' },
                         { nom: 'Awa Ndiaye', tel: '78 987 65 43', solde: 14500, echeance: '05 Août 2026', quartier: 'HLM 5' },
                       ].map((c, idx) => (
-                        <div key={idx} style={{ background: '#020617', padding: 12, borderRadius: 8, border: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                        <div key={idx} style={{ background: '#020617', padding: 14, borderRadius: 10, border: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                           <div>
                             <div style={{ fontWeight: 800, color: '#FFF', fontSize: 13 }}>👤 {c.nom} ({c.quartier})</div>
-                            <div style={{ fontSize: 11, color: '#94A3B8' }}>Tél: {c.tel} | Échéance: {c.echeance}</div>
+                            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Tél: {c.tel} | 📅 Échéance: {c.echeance}</div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ fontWeight: 900, color: '#EF4444', fontSize: 14 }}>{c.solde.toLocaleString()} FCFA</div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontWeight: 900, color: '#EF4444', fontSize: 14 }}>+ {c.solde.toLocaleString()} FCFA</div>
+                              <span style={{ fontSize: 10, background: '#7F1D1D', color: '#FCA5A5', padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>🔴 Dette</span>
+                            </div>
                             <button
                               onClick={() => {
                                 setRelanceClient(c);
                                 setShowWaRelanceModal(true);
                               }}
-                              style={{ background: '#059669', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                              style={{ background: '#25D366', color: '#FFF', border: 'none', padding: '8px 12px', borderRadius: 8, fontSize: 11.5, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, minHeight: 36 }}
                             >
-                              💬 WA Relance
+                              📱 WA Relance
                             </button>
                           </div>
                         </div>

@@ -4022,7 +4022,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                       style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, marginBottom: 12, boxSizing: 'border-box' }}
                     />
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, maxHeight: 220, overflowY: 'auto' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
                       {prodsFiltresCarnet.map(p => {
                         const qte = panierCarnet[p.id] || 0
                         return (
@@ -4039,15 +4039,15 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                             {qte === 0 ? (
                               <button
                                 onClick={() => setPanierCarnet(prev => ({ ...prev, [p.id]: 1 }))}
-                                style={{ width: '100%', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 0', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                                style={{ width: '100%', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 0', fontSize: 11, fontWeight: 800, cursor: 'pointer', minHeight: 36 }}
                               >
                                 + Ajouter
                               </button>
                             ) : (
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', borderRadius: 6, border: '1px solid #fecaca', padding: 2 }}>
-                                <button onClick={() => setPanierCarnet(prev => { const n = { ...prev }; if (n[p.id] > 1) n[p.id]--; else delete n[p.id]; return n })} style={{ border: 'none', background: '#fee2e2', color: '#dc2626', width: 22, height: 22, borderRadius: 4, fontWeight: 900, cursor: 'pointer' }}>-</button>
+                                <button onClick={() => setPanierCarnet(prev => { const n = { ...prev }; if (n[p.id] > 1) n[p.id]--; else delete n[p.id]; return n })} style={{ border: 'none', background: '#fee2e2', color: '#dc2626', width: 28, height: 28, borderRadius: 4, fontWeight: 900, cursor: 'pointer' }}>-</button>
                                 <span style={{ fontSize: 12, fontWeight: 900 }}>{qte}</span>
-                                <button onClick={() => setPanierCarnet(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))} style={{ border: 'none', background: '#ef4444', color: '#fff', width: 22, height: 22, borderRadius: 4, fontWeight: 900, cursor: 'pointer' }}>+</button>
+                                <button onClick={() => setPanierCarnet(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))} style={{ border: 'none', background: '#ef4444', color: '#fff', width: 28, height: 28, borderRadius: 4, fontWeight: 900, cursor: 'pointer' }}>+</button>
                               </div>
                             )}
                           </div>
@@ -4065,7 +4065,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                       placeholder="Ex: 5000"
                       value={montantTransCarnet}
                       onChange={e => setMontantTransCarnet(e.target.value)}
-                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 15, fontWeight: 900, boxSizing: 'border-box' }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, fontWeight: 900, boxSizing: 'border-box' }}
                     />
                   </div>
                 )}
@@ -4076,7 +4076,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     <select
                       value={modePaiementTransCarnet}
                       onChange={e => setModePaiementTransCarnet(e.target.value)}
-                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
                     >
                       <option value="especes">💵 Espèces Cash</option>
                       <option value="wave">🌊 Wave Senegal</option>
@@ -4095,7 +4095,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                           placeholder="Ex: 2x Sac de riz, 1 Carton d'huile..."
                           value={produitsTransCarnet}
                           onChange={e => setProduitsTransCarnet(e.target.value)}
-                          style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                          style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
                         />
                       </div>
                     )}
@@ -4105,7 +4105,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                         type="date"
                         value={dateEcheanceTransCarnet}
                         onChange={e => setDateEcheanceTransCarnet(e.target.value)}
-                        style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
                       />
                     </div>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 700, color: '#0f172a', cursor: 'pointer', background: '#f8fafc', padding: 10, borderRadius: 10, border: '1px solid #e2e8f0' }}>

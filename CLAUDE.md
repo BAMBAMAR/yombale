@@ -36,6 +36,21 @@
   * Ajout des boutons d'action rapide **"⚡ Saisie Express Ventes & Dépenses"** et **"📒 Carnet de Dettes Client"** dans le bloc *Raccourcis & Actions Rapides* du tableau de bord de la boutique pour un accès instantané en 1 clic.
   * Permet d'enregistrer instantanément des ventes directes ou des dépenses informelles (achats stock, transport, loyer, salaires, électricité, etc.) en 1 clic sans passer par l'ouverture/clôture de session de caisse POS ni scanner.
 
+## 📌 Mises à jour du 15/08/2026 : Harmonisation Intégrale et Adaptation Mobile Réactive des Carnets de Dettes & Crédits Clients (`CarnetDettes.tsx`, `CaisseClient.tsx`, `DemoClient.tsx`)
+- **1. Layout Master/Detail Réactif pour Mobile (`CarnetDettes.tsx`)** :
+  * Détection automatique et dynamique de la largeur d'écran (`isMobile < 768px`).
+  * Sur smartphone (mobile) : Affichage d'une vue Master/Detail avec basculement fluide entre la liste des clients et la Fiche Client en 100% largeur d'écran.
+  * Ajout d'un bouton tactile lisible **`← Retour à la liste des clients`** en haut de la Fiche Client sur mobile pour une navigation ultra-ergonomique.
+  * Élimination des écrasements de colonnes sur les petits écrans de 360px-400px.
+- **2. Harmonisation Visuelle & Terminologie Unique** :
+  * Unification des titres, icônes (`📒`), sous-titres et cartes statistiques KPI sur tout l'écosystème : **🔴 ON ME DOIT (Créances)** (`#dc2626` / `#fef2f2`), **🟢 AVANCES CLIENTS (Dépôts)** (`#16a34a` / `#f0fdf4`), et **🔔 RELANCE AUTO WHATSAPP** (`#0284c7` / `#f0f9ff`).
+  * Badges de statut uniformisés : `🔴 Doit la boutique` / `🟢 Avance client` / `⚪ Solde nul`.
+  * Harmonisation des boutons d'actions tactiles : `👤 + Nouveau Client`, `⚡ + Donner Crédit (Vente)`, `💸 Rembourser`, `📱 Relance WA`.
+- **3. Ergonomie Tactile & Formulaires Mobile-Friendly** :
+  * Application systématique de `fontSize: 16px` sur tous les champs de saisie mobile pour éliminer le zoom automatique intempestif sur Safari / iOS.
+  * Ajustement des modales de création de client et de sélection catalogue produits pour s'adapter aux hauteurs d'écran mobile (`maxHeight: '92vh'`, `padding: 16px`, grille d'articles à colonnes réactives `minmax(110px, 1fr)`).
+  * Harmonisation directe de la section Carnet dans la caisse enregistreuse POS (`CaisseClient.tsx`) et la démo interactive (`DemoClient.tsx`).
+
 ## 📌 Mises à jour du 14/08/2026 : Support Complet des Articles/Produits Hors Catalogue dans les Documents Commercials de la Boutique (`GestionDocuments.tsx`, `backend/routes/boutiques.js`)
 - **Correction & Saisie des Produits/Articles Hors Catalogue (Saisie Libre)** :
   * **Problème** : Dans la création et la modification de documents commerciaux (Factures, Devis, Proformas), les produits non présents dans le catalogue de la boutique ne pouvaient pas être saisis manuellement. Si un document contenait un article personnalisé ou un ancien produit supprimé du catalogue, son nom était perdu ou affiché comme "Produit inconnu".
