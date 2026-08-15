@@ -60,7 +60,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const [produits, setProduits] = useState<ProduitBoutique[]>([])
   const [loading, setLoading] = useState(true)
   const [recherche, setRecherche] = useState('')
-  const [filtreStatus, setFiltreStatus] = useState<'tous' | 'retard' | 'aujourdhui' | 'credits'>('tous')
+  const [filtreStatus, setFiltreStatus] = useState<'tous' | 'retard' | 'credits'>('tous')
   
   // Client sélectionné & Historique
   const [clientSelectionne, setClientSelectionne] = useState<ClientCredit | null>(null)
@@ -276,14 +276,12 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
       if (res.ok) {
         const data = await res.json()
-        // Réinitialiser la modale
         setShowModalTransaction(false)
         setPanierProduits({})
         setMontantManuel('')
         setDescriptionManuelle('')
         setDateEcheance('')
         
-        // Mettre à jour le solde local et recharger l'historique
         const nouveauSolde = data.nouveauSolde
         setClientSelectionne(prev => prev ? { ...prev, solde: nouveauSolde } : null)
         await chargerDonnees()
@@ -323,7 +321,6 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
   // Filtrage des clients
   const clientsFiltres = clients.filter(c => {
-    // Filtre texte
     const textMatch = !recherche.trim() || 
       c.nom.toLowerCase().includes(recherche.toLowerCase()) || 
       c.telephone.includes(recherche) ||
@@ -336,50 +333,56 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     }
     if (filtreStatus === 'credits') {
       return Number(c.solde) < 0
+    }
+    return true
+  })
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
-      {/* En-tête & Banner Synthétique */}
+      {/* En-tête Synthétique Harmonisé avec Nopalou */}
       <div style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
         borderRadius: 20,
-        padding: isMobile ? '16px' : '24px',
+        padding: isMobile ? '16px 18px' : '22px 24px',
         color: '#ffffff',
         boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.15)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 20
+        gap: 16
       }}>
         <div style={{
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
           justify: 'space-between',
           alignItems: isMobile ? 'stretch' : 'center',
-          gap: 16
+          gap: 14
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 26 }}>📒</span>
-              <h1 style={{ margin: 0, fontSize: isMobile ? 19 : 22, fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em' }}>
+              <span style={{ fontSize: 24 }}>📒</span>
+              <h1 style={{ margin: 0, fontSize: isMobile ? 18 : 22, fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em' }}>
                 Carnet de Crédits & Dettes Clients
               </h1>
               <span style={{
                 background: 'rgba(255, 255, 255, 0.15)',
                 color: '#38bdf8',
-                padding: '4px 10px',
+                padding: '3px 10px',
                 borderRadius: 20,
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: 800
               }}>
-                Disponible tous forfaits
+                Tous forfaits
               </span>
             </div>
-            <p style={{ margin: '6px 0 0', fontSize: 13, color: '#94a3b8' }}>
-              Gestion simplifiée des créances, avances clients et relances WhatsApp automatiques à échéance.
-            </p>
+            {!isMobile && (
+              <p style={{ margin: '6px 0 0', fontSize: 13, color: '#94a3b8' }}>
+                Gestion simplifiée des créances, avances clients et relances WhatsApp automatiques.
+              </p>
+            )}
           </div>
 
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
             <button
               onClick={() => setShowModalNouveauClient(true)}
               style={{
@@ -388,16 +391,16 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: 12,
-                padding: '12px 18px',
+                padding: '10px 16px',
                 fontWeight: 800,
-                fontSize: 13.5,
+                fontSize: 13,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 8,
+                gap: 6,
                 boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-                minHeight: 44
+                minHeight: 42
               }}
             >
               👤 + Nouveau Client
@@ -411,101 +414,105 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: 12,
-                padding: '12px 18px',
+                padding: '10px 16px',
                 fontWeight: 800,
-                fontSize: 13.5,
+                fontSize: 13,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 8,
+                gap: 6,
                 boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
-                minHeight: 44
+                minHeight: 42
               }}
             >
-              ⚡ + Donner Crédit (Vente)
+              ⚡ + Donner Crédit
             </button>
           </div>
         </div>
 
-        {/* Cartes KPI */}
+        {/* Cartes KPI Compactes */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? 'repeat(auto-fit, minmax(130px, 1fr))' : 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 12
+          gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: isMobile ? 8 : 12
         }}>
-          
           {/* Card 1: On me doit */}
           <div style={{
             background: 'rgba(239, 68, 68, 0.12)',
             border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: 14,
-            padding: '14px',
+            borderRadius: 12,
+            padding: isMobile ? '8px 10px' : '14px',
             backdropFilter: 'blur(10px)'
           }}>
-            <span style={{ fontSize: 11, color: '#fca5a5', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              🔴 ON ME DOIT (Créances)
+            <span style={{ fontSize: isMobile ? 9.5 : 11, color: '#fca5a5', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
+              🔴 ON ME DOIT
             </span>
-            <div style={{ fontSize: isMobile ? 19 : 24, fontWeight: 900, color: '#f87171', marginTop: 4 }}>
+            <div style={{ fontSize: isMobile ? 15 : 22, fontWeight: 900, color: '#f87171', marginTop: 2 }}>
               {fcfa(totalDettesAEncaisser)}
             </div>
-            <div style={{ fontSize: 11.5, color: '#cbd5e1', marginTop: 4 }}>
-              {nbClientsDebiteurs} client(s) débiteur(s)
-            </div>
+            {!isMobile && (
+              <div style={{ fontSize: 11.5, color: '#cbd5e1', marginTop: 4 }}>
+                {nbClientsDebiteurs} client(s) débiteur(s)
+              </div>
+            )}
           </div>
 
           {/* Card 2: Avances Clients */}
           <div style={{
             background: 'rgba(16, 185, 129, 0.12)',
             border: '1px solid rgba(16, 185, 129, 0.3)',
-            borderRadius: 14,
-            padding: '14px',
+            borderRadius: 12,
+            padding: isMobile ? '8px 10px' : '14px',
             backdropFilter: 'blur(10px)'
           }}>
-            <span style={{ fontSize: 11, color: '#6ee7b7', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              🟢 AVANCES CLIENTS (Dépôts)
+            <span style={{ fontSize: isMobile ? 9.5 : 11, color: '#6ee7b7', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
+              🟢 AVANCES
             </span>
-            <div style={{ fontSize: isMobile ? 19 : 24, fontWeight: 900, color: '#34d399', marginTop: 4 }}>
+            <div style={{ fontSize: isMobile ? 15 : 22, fontWeight: 900, color: '#34d399', marginTop: 2 }}>
               {fcfa(totalAvancesClients)}
             </div>
-            <div style={{ fontSize: 11.5, color: '#cbd5e1', marginTop: 4 }}>
-              Fonds d&apos;avances enregistrés
-            </div>
+            {!isMobile && (
+              <div style={{ fontSize: 11.5, color: '#cbd5e1', marginTop: 4 }}>
+                Fonds d&apos;avances enregistrés
+              </div>
+            )}
           </div>
 
           {/* Card 3: Relance Auto WhatsApp */}
           <div style={{
             background: 'rgba(56, 189, 248, 0.12)',
             border: '1px solid rgba(56, 189, 248, 0.3)',
-            borderRadius: 14,
-            padding: '14px',
+            borderRadius: 12,
+            padding: isMobile ? '8px 10px' : '14px',
             backdropFilter: 'blur(10px)'
           }}>
-            <span style={{ fontSize: 11, color: '#7dd3fc', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              🔔 RELANCE AUTO WHATSAPP
+            <span style={{ fontSize: isMobile ? 9.5 : 11, color: '#7dd3fc', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
+              🔔 RELANCE WA
             </span>
-            <div style={{ fontSize: isMobile ? 15 : 18, fontWeight: 900, color: '#38bdf8', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>✓ Activé (Échéance J)</span>
+            <div style={{ fontSize: isMobile ? 12.5 : 18, fontWeight: 900, color: '#38bdf8', marginTop: 4 }}>
+              ✓ Activé
             </div>
-            <div style={{ fontSize: 11.5, color: '#cbd5e1', marginTop: 4 }}>
-              Rappels automatiques à la date due
-            </div>
+            {!isMobile && (
+              <div style={{ fontSize: 11.5, color: '#cbd5e1', marginTop: 4 }}>
+                Rappels automatiques à la date due
+              </div>
+            )}
           </div>
-
         </div>
       </div>
 
       {/* Barre de Recherche & Filtres */}
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ flex: 1, minWidth: isMobile ? '100%' : 260, position: 'relative' }}>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ flex: '1 1 220px', position: 'relative' }}>
           <input
             type="text"
-            placeholder="🔍 Rechercher un client par nom, téléphone ou adresse..."
+            placeholder="🔍 Rechercher client, téléphone ou quartier..."
             value={recherche}
             onChange={e => setRecherche(e.target.value)}
             style={{
               width: '100%',
-              padding: '12px 16px',
+              padding: '10px 14px',
               borderRadius: 12,
               border: '1px solid #cbd5e1',
               fontSize: 14,
@@ -513,12 +520,12 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               boxSizing: 'border-box',
               background: '#ffffff',
               boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-              minHeight: 44
+              minHeight: 42
             }}
           />
         </div>
 
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, width: isMobile ? '100%' : 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, WebkitOverflowScrolling: 'touch' }}>
           {[
             { id: 'tous', label: `Tous (${clients.length})` },
             { id: 'retard', label: `🔴 Débiteurs (${nbClientsDebiteurs})` },
@@ -528,16 +535,16 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               key={f.id}
               onClick={() => setFiltreStatus(f.id as any)}
               style={{
-                padding: '8px 14px',
+                padding: '7px 12px',
                 borderRadius: 20,
                 border: filtreStatus === f.id ? '2px solid #0f172a' : '1px solid #cbd5e1',
                 background: filtreStatus === f.id ? '#0f172a' : '#ffffff',
                 color: filtreStatus === f.id ? '#ffffff' : '#475569',
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: 700,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                minHeight: 38
+                minHeight: 36
               }}
             >
               {f.label}
@@ -546,30 +553,30 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         </div>
       </div>
 
-      {/* Disposition Principale : Grille Réactive Master/Detail Mobile */}
+      {/* Layout Master/Detail Réactif pour Mobile & Desktop */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: (!isMobile && clientSelectionne) ? '1fr 1fr' : '1fr',
-        gap: 20
+        gridTemplateColumns: (isMobile || !clientSelectionne) ? '1fr' : '1.05fr 1fr',
+        gap: 16
       }}>
         
-        {/* Liste des Fiches Clients (Cachée sur mobile si un client est sélectionné) */}
+        {/* LISTE DES CLIENTS : Cachée sur mobile si un client est sélectionné */}
         {(!isMobile || !clientSelectionne) && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {loading ? (
-              <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Chargement du carnet...</div>
+              <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 14 }}>Chargement du carnet...</div>
             ) : clientsFiltres.length === 0 ? (
               <div style={{
                 textAlign: 'center',
-                padding: '40px 20px',
-                background: '#f8fafc',
+                padding: '30px 16px',
+                background: '#ffffff',
                 borderRadius: 16,
                 border: '2px dashed #cbd5e1',
                 color: '#64748b'
               }}>
-                <span style={{ fontSize: 40, display: 'block', marginBottom: 10 }}>📒</span>
-                <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>Aucun client trouvé dans le carnet</p>
-                <p style={{ margin: '4px 0 16px', fontSize: 13, color: '#94a3b8' }}>
+                <span style={{ fontSize: 36, display: 'block', marginBottom: 8 }}>📒</span>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>Aucun client trouvé dans le carnet</p>
+                <p style={{ margin: '4px 0 14px', fontSize: 12.5, color: '#94a3b8' }}>
                   Ajoutez votre premier client pour enregistrer ses crédits et avances.
                 </p>
                 <button
@@ -582,8 +589,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     padding: '10px 16px',
                     fontWeight: 800,
                     fontSize: 13,
-                    cursor: 'pointer',
-                    minHeight: 42
+                    cursor: 'pointer'
                   }}
                 >
                   + Créer un client
@@ -603,27 +609,27 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     style={{
                       background: estActif ? '#f0f9ff' : '#ffffff',
                       border: estActif ? '2px solid #0284c7' : '1px solid #e2e8f0',
-                      borderRadius: 16,
-                      padding: isMobile ? '14px 16px' : '16px 20px',
+                      borderRadius: 14,
+                      padding: '14px 16px',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                       boxShadow: estActif ? '0 4px 14px rgba(2, 132, 199, 0.12)' : '0 2px 4px rgba(0,0,0,0.02)',
                       display: 'flex',
-                      justifyContent: 'space-between',
+                      justify: 'space-between',
                       alignItems: 'center',
                       gap: 12
                     }}
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 15.5, fontWeight: 900, color: '#0f172a' }}>{c.nom}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 15, fontWeight: 900, color: '#0f172a' }}>{c.nom}</span>
                         {c.adresse && (
-                          <span style={{ fontSize: 10.5, background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>
+                          <span style={{ fontSize: 10.5, background: '#f1f5f9', color: '#475569', padding: '2px 7px', borderRadius: 8, fontWeight: 600 }}>
                             📍 {c.adresse}
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+                      <div style={{ fontSize: 12, color: '#64748b', marginTop: 3 }}>
                         📞 {c.telephone} {c.plafond_max > 0 ? `• Plafond: ${fcfa(c.plafond_max)}` : ''}
                       </div>
                       {c.note_client && (
@@ -635,21 +641,22 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{
-                        fontSize: 15.5,
+                        fontSize: 15,
                         fontWeight: 900,
                         color: estDebiteur ? '#dc2626' : estAvance ? '#16a34a' : '#64748b'
                       }}>
                         {estDebiteur ? `+ ${fcfa(soldeNum)}` : estAvance ? `- ${fcfa(Math.abs(soldeNum))}` : '0 FCFA'}
                       </div>
                       <span style={{
-                        fontSize: 10.5,
+                        fontSize: 10,
                         fontWeight: 800,
                         padding: '2px 8px',
                         borderRadius: 10,
                         display: 'inline-block',
                         marginTop: 4,
                         background: estDebiteur ? '#fef2f2' : estAvance ? '#f0fdf4' : '#f8fafc',
-                        color: estDebiteur ? '#991b1b' : estAvance ? '#166534' : '#64748b'
+                        color: estDebiteur ? '#991b1b' : estAvance ? '#166534' : '#64748b',
+                        border: estDebiteur ? '1px solid #fecaca' : estAvance ? '1px solid #bbf7d0' : '1px solid #e2e8f0'
                       }}>
                         {estDebiteur ? '🔴 Doit la boutique' : estAvance ? '🟢 Avance client' : '⚪ Solde nul'}
                       </span>
@@ -661,19 +668,19 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           </div>
         )}
 
-        {/* Fiche Détaillée & Historique du Client Sélectionné */}
-        {clientSelectionne && (!isMobile || clientSelectionne) && (
+        {/* FICHE DÉTAILLÉE DU CLIENT SÉLECTIONNÉ */}
+        {clientSelectionne && (
           <div style={{
             background: '#ffffff',
             border: '1px solid #e2e8f0',
-            borderRadius: 20,
+            borderRadius: 18,
             padding: isMobile ? '16px' : '20px',
             display: 'flex',
             flexDirection: 'column',
             gap: 16,
-            boxShadow: '0 8px 20px -4px rgba(0,0,0,0.06)'
+            boxShadow: '0 4px 16px rgba(15,23,42,0.06)'
           }}>
-            {/* Bouton Retour Mobile */}
+            {/* Bouton Retour Liste sur Mobile */}
             {isMobile && (
               <button
                 onClick={() => setClientSelectionne(null)}
@@ -689,15 +696,16 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
-                  alignSelf: 'flex-start'
+                  alignSelf: 'flex-start',
+                  minHeight: 38
                 }}
               >
                 ← Retour à la liste des clients
               </button>
             )}
 
-            {/* Header Fiche Client */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #f1f5f9', paddingBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+            {/* En-tête Fiche Client */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #f1f5f9', paddingBottom: 14, flexWrap: 'wrap', gap: 10 }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>{clientSelectionne.nom}</h2>
@@ -710,13 +718,13 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     </button>
                   )}
                 </div>
-                <p style={{ margin: '4px 0 0', fontSize: 12.5, color: '#64748b' }}>
+                <p style={{ margin: '3px 0 0', fontSize: 12.5, color: '#64748b' }}>
                   📞 {clientSelectionne.telephone} {clientSelectionne.adresse ? `• 📍 ${clientSelectionne.adresse}` : ''}
                 </p>
               </div>
 
               <div style={{ textAlign: isMobile ? 'left' : 'right' }}>
-                <span style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Solde Actuel</span>
+                <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Solde Actuel</span>
                 <div style={{
                   fontSize: 19,
                   fontWeight: 900,
@@ -727,14 +735,14 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </div>
             </div>
 
-            {/* Actions Rapides pour ce client */}
+            {/* Actions Rapides */}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button
                 onClick={() => ouvrirModalTransaction('vente_credit')}
                 style={{
                   flex: 1,
-                  minWidth: 130,
-                  background: '#ef4444',
+                  minWidth: 120,
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 10,
@@ -752,8 +760,8 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 onClick={() => ouvrirModalTransaction('remboursement')}
                 style={{
                   flex: 1,
-                  minWidth: 130,
-                  background: '#16a34a',
+                  minWidth: 120,
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 10,
@@ -772,7 +780,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   onClick={() => handleRelancerWhatsApp(clientSelectionne)}
                   style={{
                     flex: isMobile ? 1 : 'none',
-                    minWidth: isMobile ? 130 : 'auto',
+                    minWidth: isMobile ? 120 : 'auto',
                     background: '#25D366',
                     color: '#fff',
                     border: 'none',
@@ -783,7 +791,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    justify: 'center',
+                    justifyContent: 'center',
                     gap: 6,
                     minHeight: 42
                   }}
@@ -793,20 +801,20 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               )}
             </div>
 
-            {/* Historique des opérations du client */}
+            {/* Historique des opérations */}
             <div>
-              <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0f172a', margin: '0 0 10px' }}>
+              <h3 style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', margin: '0 0 10px' }}>
                 📜 Historique des Opérations
               </h3>
 
               {loadingHist ? (
                 <div style={{ fontSize: 13, color: '#64748b' }}>Chargement de l&apos;historique...</div>
               ) : historique.length === 0 ? (
-                <div style={{ fontSize: 13, color: '#94a3b8', fontStyle: 'italic', padding: '12px 0' }}>
+                <div style={{ fontSize: 12.5, color: '#94a3b8', fontStyle: 'italic', padding: '12px 0' }}>
                   Aucune transaction enregistrée pour ce client.
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 350, overflowY: 'auto' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 340, overflowY: 'auto' }}>
                   {historique.map(h => {
                     const estVente = h.type === 'vente_credit'
                     const dateEch = h.date_echeance ? new Date(h.date_echeance) : null
@@ -818,23 +826,24 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                         style={{
                           background: '#f8fafc',
                           border: '1px solid #e2e8f0',
-                          borderRadius: 12,
-                          padding: '12px 14px',
+                          borderRadius: 10,
+                          padding: '10px 12px',
                           display: 'flex',
                           justify: 'space-between',
                           alignItems: 'center',
-                          gap: 10
+                          gap: 8
                         }}
                       >
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                             <span style={{
-                              fontSize: 11,
+                              fontSize: 10.5,
                               fontWeight: 800,
                               padding: '2px 6px',
                               borderRadius: 6,
                               background: estVente ? '#fef2f2' : '#f0fdf4',
-                              color: estVente ? '#991b1b' : '#166534'
+                              color: estVente ? '#991b1b' : '#166534',
+                              border: estVente ? '1px solid #fecaca' : '1px solid #bbf7d0'
                             }}>
                               {estVente ? '🔴 Achat à crédit' : '🟢 Remboursement'}
                             </span>
@@ -844,16 +853,15 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           </div>
 
                           {h.note && (
-                            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1e293b', marginTop: 4 }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', marginTop: 3 }}>
                               {h.note}
                             </div>
                           )}
 
-                          {/* Affichage des produits s'il s'agit d'un achat catalogue */}
                           {Array.isArray(h.produits) && h.produits.length > 0 && (
                             <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                               {h.produits.map((item: any, idx: number) => (
-                                <span key={idx} style={{ fontSize: 10.5, background: '#e2e8f0', color: '#334155', padding: '2px 6px', borderRadius: 4 }}>
+                                <span key={idx} style={{ fontSize: 10, background: '#e2e8f0', color: '#334155', padding: '2px 6px', borderRadius: 4 }}>
                                   {item.nom} (x{item.quantite})
                                 </span>
                               ))}
@@ -869,13 +877,13 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
                           <div style={{
-                            fontSize: 14.5,
+                            fontSize: 14,
                             fontWeight: 900,
                             color: estVente ? '#dc2626' : '#16a34a'
                           }}>
                             {estVente ? `+ ${fcfa(h.montant)}` : `- ${fcfa(h.montant)}`}
                           </div>
-                          <div style={{ fontSize: 11, color: '#94a3b8' }}>
+                          <div style={{ fontSize: 10.5, color: '#94a3b8' }}>
                             {h.mode_paiement || 'Espèces'}
                           </div>
                         </div>
@@ -913,16 +921,16 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             padding: isMobile ? 18 : 24,
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a' }}>
                 👤 Créer une nouvelle fiche client
               </h3>
               <button onClick={() => setShowModalNouveauClient(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#94a3b8' }}>✕</button>
             </div>
 
-            <form onSubmit={handleCreerClient} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <form onSubmit={handleCreerClient} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 12.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Nom complet du client *</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Nom complet du client *</label>
                 <input
                   type="text"
                   required
@@ -934,7 +942,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </div>
 
               <div>
-                <label style={{ fontSize: 12.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Numéro Téléphone (WhatsApp) *</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Numéro Téléphone (WhatsApp) *</label>
                 <input
                   type="tel"
                   required
@@ -947,7 +955,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
                 <div>
-                  <label style={{ fontSize: 12.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Adresse / Quartier</label>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Adresse / Quartier</label>
                   <input
                     type="text"
                     placeholder="Ex: Medina, Rue 10"
@@ -958,7 +966,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Plafond Crédit (FCFA)</label>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Plafond Crédit (FCFA)</label>
                   <input
                     type="number"
                     placeholder="200000"
@@ -970,7 +978,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </div>
 
               <div>
-                <label style={{ fontSize: 12.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Note / Remarque confidentielle</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Note / Remarque confidentielle</label>
                 <input
                   type="text"
                   placeholder="Ex: Voisine d'en face, confiance 100%"
@@ -983,7 +991,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               <button
                 type="submit"
                 style={{
-                  marginTop: 10,
+                  marginTop: 6,
                   background: '#0f172a',
                   color: '#ffffff',
                   border: 'none',
@@ -1002,7 +1010,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         </div>
       )}
 
-      {/* MODALE 2 : TRANSACTION (CREDIT / REMBOURSEMENT) AVEC SELECTEUR CATALOGUE */}
+      {/* MODALE 2 : TRANSACTION (CREDIT / REMBOURSEMENT) */}
       {showModalTransaction && clientSelectionne && (
         <div style={{
           position: 'fixed',
@@ -1022,15 +1030,15 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             width: '100%',
             maxHeight: '92vh',
             overflowY: 'auto',
-            padding: isMobile ? 16 : 24,
+            padding: isMobile ? 16 : 22,
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: isMobile ? 16 : 18, fontWeight: 900, color: '#0f172a' }}>
+                <h3 style={{ margin: 0, fontSize: isMobile ? 15.5 : 18, fontWeight: 900, color: '#0f172a' }}>
                   {typeTransaction === 'vente_credit' ? '⚡ Nouvelle Vente à Crédit' : '💸 Encaisser un Remboursement'}
                 </h3>
-                <p style={{ margin: '3px 0 0', fontSize: 12.5, color: '#64748b' }}>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
                   Client : <strong>{clientSelectionne.nom}</strong> ({clientSelectionne.telephone})
                 </p>
               </div>
@@ -1038,8 +1046,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             </div>
 
             {typeTransaction === 'vente_credit' && (
-              /* Choix du mode de saisie : Catalogue ou Manuel */
-              <div style={{ display: 'flex', gap: 6, marginBottom: 16, background: '#f1f5f9', padding: 4, borderRadius: 12 }}>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 14, background: '#f1f5f9', padding: 4, borderRadius: 12 }}>
                 <button
                   type="button"
                   onClick={() => setModeSaisie('catalogue')}
@@ -1079,23 +1086,23 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </div>
             )}
 
-            {/* Mode Catalogue : Grille des produits */}
+            {/* Mode Catalogue */}
             {typeTransaction === 'vente_credit' && modeSaisie === 'catalogue' && (
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 12.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 8 }}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>
                   Cliquez sur les articles commandés par le client :
                 </label>
                 
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(120px, 1fr))',
-                  gap: 10,
+                  gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(115px, 1fr))',
+                  gap: 8,
                   maxHeight: 220,
                   overflowY: 'auto',
-                  padding: 4
+                  padding: 2
                 }}>
                   {produits.length === 0 ? (
-                    <div style={{ gridColumn: '1 / -1', fontSize: 13, color: '#94a3b8', textAlign: 'center', padding: 20 }}>
+                    <div style={{ gridColumn: '1 / -1', fontSize: 12.5, color: '#94a3b8', textAlign: 'center', padding: 16 }}>
                       Aucun produit dans le catalogue. Utilisez la saisie libre.
                     </div>
                   ) : (
@@ -1110,8 +1117,8 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           style={{
                             background: qte > 0 ? '#f0f9ff' : '#f8fafc',
                             border: qte > 0 ? '2px solid #0284c7' : '1px solid #e2e8f0',
-                            borderRadius: 12,
-                            padding: 10,
+                            borderRadius: 10,
+                            padding: 8,
                             cursor: 'pointer',
                             textAlign: 'center',
                             position: 'relative'
@@ -1120,26 +1127,26 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           {qte > 0 && (
                             <span style={{
                               position: 'absolute',
-                              top: -6,
-                              right: -6,
+                              top: -5,
+                              right: -5,
                               background: '#0284c7',
                               color: '#fff',
                               borderRadius: 10,
-                              width: 22,
-                              height: 22,
+                              width: 20,
+                              height: 20,
                               display: 'flex',
                               alignItems: 'center',
-                              justify: 'center',
-                              fontSize: 12,
+                              justifyContent: 'center',
+                              fontSize: 11,
                               fontWeight: 900
                             }}>
                               {qte}
                             </span>
                           )}
-                          <div style={{ fontSize: 12.5, fontWeight: 800, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {p.nom}
                           </div>
-                          <div style={{ fontSize: 12, color: '#0284c7', fontWeight: 900, marginTop: 4 }}>
+                          <div style={{ fontSize: 11.5, color: '#0284c7', fontWeight: 900, marginTop: 3 }}>
                             {fcfa(prixAff)}
                           </div>
                         </div>
@@ -1152,9 +1159,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
             {/* Mode Manuel / Remboursement */}
             {(modeSaisie === 'manuel' || typeTransaction === 'remboursement') && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
                 <div>
-                  <label style={{ fontSize: 12.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
                     Montant de l&apos;opération (FCFA) *
                   </label>
                   <input
@@ -1163,12 +1170,12 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     placeholder="Ex: 5000"
                     value={montantManuel}
                     onChange={e => setMontantManuel(e.target.value)}
-                    style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, fontWeight: 800, boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, fontWeight: 800, boxSizing: 'border-box' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
                     Description / Note libre
                   </label>
                   <input
@@ -1182,13 +1189,13 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </div>
             )}
 
-            {/* Sélecteur de Date d'échéance & Option Relance Auto WhatsApp (uniquement pour Vente à crédit) */}
+            {/* Échéance & Relance WA */}
             {typeTransaction === 'vente_credit' && (
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, marginBottom: 16 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 12, marginBottom: 14 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8 }}>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                      📅 Date d&apos;échéance de paiement
+                    <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                      📅 Date d&apos;échéance
                     </label>
                     <input
                       type="date"
@@ -1199,7 +1206,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   </div>
 
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                    <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
                       Règlement / Mode
                     </label>
                     <select
@@ -1214,15 +1221,15 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   </div>
                 </div>
 
-                <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input
                     type="checkbox"
                     id="relanceWaCheck"
                     checked={relanceAutoWa}
                     onChange={e => setRelanceAutoWa(e.target.checked)}
-                    style={{ width: 18, height: 18, cursor: 'pointer' }}
+                    style={{ width: 16, height: 16, cursor: 'pointer' }}
                   />
-                  <label htmlFor="relanceWaCheck" style={{ fontSize: 12, color: '#0f172a', fontWeight: 700, cursor: 'pointer' }}>
+                  <label htmlFor="relanceWaCheck" style={{ fontSize: 11.5, color: '#0f172a', fontWeight: 700, cursor: 'pointer' }}>
                     🔔 Relance automatique WhatsApp à l&apos;échéance
                   </label>
                 </div>
@@ -1230,10 +1237,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             )}
 
             {/* Total et Bouton de Validation */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 16, borderTop: '1px solid #f1f5f9' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
               <div>
-                <span style={{ fontSize: 11.5, color: '#64748b' }}>TOTAL TRANSACTION</span>
-                <div style={{ fontSize: 20, fontWeight: 900, color: typeTransaction === 'vente_credit' ? '#dc2626' : '#16a34a' }}>
+                <span style={{ fontSize: 11, color: '#64748b' }}>TOTAL TRANSACTION</span>
+                <div style={{ fontSize: 19, fontWeight: 900, color: typeTransaction === 'vente_credit' ? '#dc2626' : '#16a34a' }}>
                   {fcfa(totalTransactionCourante)}
                 </div>
               </div>
@@ -1245,26 +1252,16 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   background: typeTransaction === 'vente_credit' ? '#dc2626' : '#16a34a',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: 12,
-                  padding: '12px 20px',
+                  borderRadius: 10,
+                  padding: '10px 18px',
                   fontWeight: 900,
-                  fontSize: 14,
+                  fontSize: 13.5,
                   cursor: 'pointer',
                   opacity: submittingTrans ? 0.6 : 1,
                   minHeight: 44
                 }}
               >
                 {submittingTrans ? 'Enregistrement...' : typeTransaction === 'vente_credit' ? '✓ Valider Dette' : '✓ Encaisser'}
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-    </div>
-  )
-}? 'Enregistrement...' : typeTransaction === 'vente_credit' ? '✓ Valider la Dette' : '✓ Encaisser'}
               </button>
             </div>
 

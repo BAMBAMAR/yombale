@@ -3646,7 +3646,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               />
               <button
                 onClick={() => setAfficherFormNouveauClient(!afficherFormNouveauClient)}
-                style={{ background: afficherFormNouveauClient ? '#64748b' : '#C75B00', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto' }}
+                style={{ background: afficherFormNouveauClient ? '#64748b' : '#10b981', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto' }}
               >
                 {afficherFormNouveauClient ? 'Fermer Formulaire' : '+ Nouveau Client'}
               </button>
