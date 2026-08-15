@@ -45,8 +45,13 @@ const CATEGORIES_BOUTIQUE = [
   { slug: 'mode', label: 'Mode & Beauté', icon: '👗' },
   { slug: 'maison', label: 'Maison & Déco', icon: '🏠' },
   { slug: 'auto-moto', label: 'Auto-Moto', icon: '🚗' },
+  { slug: 'jeux', label: 'Jeux & Consoles', icon: '🎮' },
   { slug: 'alimentation', label: 'Alimentation', icon: '🥗' },
+  { slug: 'beaute', label: 'Beauté & Soins', icon: '💄' },
+  { slug: 'bijouterie', label: 'Bijouterie & Horlogerie', icon: '💎' },
+  { slug: 'quincaillerie', label: 'Quincaillerie & BTP', icon: '🧱' },
   { slug: 'services', label: 'Services & Pro', icon: '🛠' },
+  { slug: 'mixte', label: 'Généraliste', icon: '🛍️' },
 ]
 
 const VILLES = ['Dakar', 'Thiès', 'Saint-Louis', 'Ziguinchor', 'Kaolack', 'Mbour']
@@ -118,12 +123,8 @@ export default async function BoutiquesPage({
 
   const villesAffichage = villesDisponibles.length > 0 ? villesDisponibles : VILLES
 
-  // Filtrer les catégories pour afficher uniquement celles avec des boutiques actives (garder 'Toutes les boutiques')
-  const categoriesAffichage = CATEGORIES_BOUTIQUE.filter(c => {
-    if (!c.slug) return true
-    if (categoriesActivesSlugs.length === 0) return true
-    return categoriesActivesSlugs.includes(c.slug)
-  })
+  // Conserver les pilules de catégories actives et principales pour un filtrage fluide
+  const categoriesAffichage = CATEGORIES_BOUTIQUE
 
   let boutiquesFiltrees = boutiques
   if (plan === 'business') {

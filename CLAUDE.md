@@ -1,3 +1,7 @@
+- **Correction du Filtrage par Catégorie sur la Liste des Boutiques (`/boutiques?cat=...`, `backend/routes/boutiques.js`, `frontend-next/src/app/boutiques/page.tsx`)** :
+  * **Cause du problème** : L'API backend `GET /api/boutiques` ne déstructurait pas `req.query.categorie` ni `req.query.cat` et n'ajoutait pas la clause SQL `WHERE b.categorie ILIKE $X`. Le clic sur un filtre de catégorie comme `👗 Mode & Beauté` (`/boutiques?cat=mode`) renvoyait donc toutes les boutiques indifféremment.
+  * **Correctif Backend (`backend/routes/boutiques.js`)** : Prise en compte de `req.query.categorie` et `req.query.cat` avec correspondance flexible SQL par expression `ILIKE` et gestion des synonymes (ex: `mode` inclut `beaute` et `vetements`, `smartphones` inclut `telephone` et `tech`).
+  * **Correctif Frontend (`page.tsx`)** : Harmonisation de la liste des catégories `CATEGORIES_BOUTIQUE` pour inclure toutes les catégories marchands et garantir un filtrage 100% réactif.
 - **Correction du Défilement, des Bannières de Confirmation et du Positionnement des Boutons de Sauvegarde (`BoutiqueClient.tsx`, `ParametresFiscalite.tsx`, `ProfilClient.tsx`, `ModifierAnnonceForm.tsx`, `ModifierImmoForm.tsx`)** :
   * **Diagnostic du problème** : Certains boutons de sauvegarde et de validation (notamment dans les *Paramètres boutique* et formulaires de modification) ne déplaçaient pas la page après enregistrement, n'affichaient aucun message visible de confirmation, et leurs boutons restaient coincés ou masqués en bas d'écran (sous le menu mobile).
   * **Correctif apporté** :

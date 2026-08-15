@@ -1,15 +1,17 @@
 {
   "status": "in_progress",
   "mode": "live",
-  "groupeIndex": 1,
+  "groupeIndex": 3,
   "totalGroupes": 10,
-  "pourcentage": 10,
-  "groupeActuel": "Ndeye Yacine Seck Faye (Offres Emploi)",
-  "groupeUrl": "https://www.facebook.com/ndeyeyacineseckfaye",
-  "scrapes": 0,
+  "pourcentage": 30,
+  "groupeActuel": "Emploi 1",
+  "groupeUrl": "https://www.facebook.com/groups/1989058224662026",
+  "scrapes": 1,
   "inseres": 0,
   "doublons": 0,
   "ignores": 0,
-  "erreurs": [],
-  "updatedAt": "2026-08-15T18:00:11.454Z"
+  "erreurs": [
+    "read ECONNRESET"
+  ],
+  "updatedAt": "2026-08-15T18:05:37.195Z"
 }

@@ -492,7 +492,8 @@ router.post('/magic-import', async (req, res) => {
 // GET /api/boutiques - Liste publique (recherche, tri, filtres)
 router.get('/', async (req, res) => {
   try {
-    const { ville, q, tri, limit = 20, page = 1 } = req.query;
+    const { ville, q, cat, categorie, tri, limit = 20, page = 1 } = req.query;
+    const catQuery = (categorie || cat || '').trim().toLowerCase();
     const offset = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit));
     const lim = Math.min(50, parseInt(limit));
     const conds = ['actif=true'];
@@ -500,6 +501,20 @@ router.get('/', async (req, res) => {
 
     if (ville) { vals.push(ville); conds.push(`ville ILIKE $${vals.length}`); }
     if (q) { vals.push(`%${q}%`); conds.push(`(nom ILIKE $${vals.length} OR description ILIKE $${vals.length})`); }
+    if (catQuery) {
+      if (catQuery === 'mode') {
+        vals.push('%mode%', '%beaute%', '%vetement%');
+        const i1 = vals.length - 2, i2 = vals.length - 1, i3 = vals.length;
+        conds.push(`(categorie ILIKE $${i1} OR categorie ILIKE $${i2} OR categorie ILIKE $${i3})`);
+      } else if (catQuery === 'smartphones') {
+        vals.push('%smartphone%', '%phone%', '%tech%', '%telephone%');
+        const i1 = vals.length - 3, i2 = vals.length - 2, i3 = vals.length - 1, i4 = vals.length;
+        conds.push(`(categorie ILIKE $${i1} OR categorie ILIKE $${i2} OR categorie ILIKE $${i3} OR categorie ILIKE $${i4})`);
+      } else {
+        vals.push(`%${catQuery}%`);
+        conds.push(`categorie ILIKE $${vals.length}`);
+      }
+    }
 
     const orderBy = tri === 'recent'  ? 'b.created_at DESC'
                   : tri === 'nom_asc' ? 'b.nom ASC'
