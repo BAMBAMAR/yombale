@@ -4,6 +4,7 @@ import Link from 'next/link'
 
 interface Props {
   immoId: string
+  userId?: string
   settings: Record<string, string>
 }
 

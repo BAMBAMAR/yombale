@@ -46,7 +46,7 @@ interface CarnetDettesProps {
   boutique: {
     id: string
     nom: string
-    slug: string
+    slug?: string | null
     telephone?: string | null
     whatsapp?: string | null
     currency?: string
@@ -354,7 +354,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         <div style={{
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
-          justify: 'space-between',
+          justifyContent: 'space-between',
           alignItems: isMobile ? 'stretch' : 'center',
           gap: 14
         }}>
@@ -615,7 +615,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       transition: 'all 0.15s ease',
                       boxShadow: estActif ? '0 4px 14px rgba(2, 132, 199, 0.12)' : '0 2px 4px rgba(0,0,0,0.02)',
                       display: 'flex',
-                      justify: 'space-between',
+                      justifyContent: 'space-between',
                       alignItems: 'center',
                       gap: 12
                     }}
@@ -829,7 +829,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           borderRadius: 10,
                           padding: '10px 12px',
                           display: 'flex',
-                          justify: 'space-between',
+                          justifyContent: 'space-between',
                           alignItems: 'center',
                           gap: 8
                         }}
@@ -908,7 +908,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           zIndex: 9999,
           display: 'flex',
           alignItems: 'center',
-          justify: 'center',
+          justifyContent: 'center',
           padding: 12
         }}>
           <div style={{
@@ -1020,7 +1020,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           zIndex: 9999,
           display: 'flex',
           alignItems: 'center',
-          justify: 'center',
+          justifyContent: 'center',
           padding: 12
         }}>
           <div style={{

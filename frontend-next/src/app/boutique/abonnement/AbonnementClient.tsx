@@ -233,7 +233,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
 
               {/* Prix */}
               <div style={{ margin: '14px 0 6px' }}>
-                <span style={{ fontSize: 36, fontWeight: 900, color: '#0f172a', tracking: '-0.02em' }}>
+                <span style={{ fontSize: 36, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
                   {totalAffichage} FCFA
                 </span>
                 <span style={{ fontSize: 14, fontWeight: 600, color: '#64748b', marginLeft: 6 }}>
