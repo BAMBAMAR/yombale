@@ -1,3 +1,7 @@
+- **Emplacements du Bouton de Désactivation / Masque de Boutique (`BoutiqueClient.tsx`)** :
+  * **1. Carte de la boutique dans la liste Mes Boutiques (`/boutique`)** : Bouton-badge interactif **`🟢 Active` / `⚪ Inactive`** en haut à droite de la carte avec demande de confirmation 1-clic.
+  * **2. En-tête du Tableau de Bord Boutique (`BoutiqueManage`)** : Bouton **`🟢 Boutique Active (En ligne)` / `⚪ Boutique Désactivée (Masquée)`** présent en permanence dans le haut du tableau de bord.
+  * **3. Formulaire de Paramètres (`⚙️ Paramètres` / `BoutiqueForm`)** : Champ de sélection **`👁️ Visibilité & Désactivation dans l'Annuaire Public`** permettant de basculer la vitrine publique entre active et masquée.
 - **Correction du Raccourci Saisie Express & Netteté des Polices Windows (`BoutiqueClient.tsx`, `Comptabilite.tsx`, `globals.css`)** :
   * **Redirection Directe sur l'Onglet Saisie** : Le clic sur le raccourci *⚡ Saisie Express Ventes & Dépenses* du tableau de bord bascule désormais directement sur l'onglet **Saisie Express** (`initialTab="express"`) au lieu de l'aperçu général.
   * **Optimisation de la Netteté des Polices sous Windows** : Application globale de `-webkit-font-smoothing: antialiased`, `-moz-osx-font-smoothing: grayscale` et `text-rendering: optimizeLegibility` sur la pile de polices système native haute lisibilité pour éliminer tout aspect crénelé/flou sur les écrans Windows.

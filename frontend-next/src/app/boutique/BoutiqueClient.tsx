@@ -565,6 +565,22 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         <input name="ga4_id" defaultValue={boutique?.ga4_id ?? ''} style={inputStyle} placeholder="Ex: G-XYZ1234567" />
       </div>
 
+      <SectionTitle>👁️ Visibilité & Désactivation dans l'Annuaire Public</SectionTitle>
+      <div>
+        <label style={labelStyle}>Visibilité publique de votre boutique</label>
+        <select
+          name="actif"
+          defaultValue={boutique?.actif !== false ? 'true' : 'false'}
+          style={inputStyle}
+        >
+          <option value="true">🟢 Active (Visible dans le catalogue public et la recherche Nopalou)</option>
+          <option value="false">🔴 Désactivée (Masquée du catalogue public et hors-ligne pour les clients)</option>
+        </select>
+        <p style={{ fontSize: 11, color: '#6b7280', margin: '4px 0 0' }}>
+          Une boutique désactivée ne sera plus visible par les visiteurs sur /boutiques mais reste totalement accessible pour votre gestion interne et votre caisse POS.
+        </p>
+      </div>
+
       <SectionTitle>🔗 Lien personnalisé</SectionTitle>
 
       <div>
@@ -2779,12 +2795,57 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
 
       {/* Contenu principal */}
       <main className="bq-main">
-        {/* Titre de section */}
-        <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
-          <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 20, margin: 0, color: '#111' }}>
-            {currentTabInfo.icon} {currentTabInfo.title}
-          </h2>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>{currentTabInfo.desc}</p>
+        {/* Titre de section & Statut Visibilité Boutique */}
+        <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <h2 style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 20, margin: 0, color: '#111', fontWeight: 900 }}>
+              {currentTabInfo.icon} {currentTabInfo.title}
+            </h2>
+            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>{currentTabInfo.desc}</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={async () => {
+              const nouveauStatut = !boutique.actif
+              const msg = nouveauStatut 
+                ? 'Voulez-vous réactiver votre boutique et la rendre visible dans l’annuaire public Nopalou ?' 
+                : 'Voulez-vous désactiver (masquer) votre boutique du catalogue public Nopalou ?'
+              if (!confirm(msg)) return
+              try {
+                const res = await fetch(`/api/boutiques/${boutique.id}/statut`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ actif: nouveauStatut }),
+                })
+                if (res.ok) {
+                  router.refresh()
+                } else {
+                  alert('Erreur lors de la modification du statut.')
+                }
+              } catch (e) {
+                alert('Erreur réseau')
+              }
+            }}
+            title={boutique.actif !== false ? 'Cliquez pour désactiver et masquer votre boutique du catalogue public' : 'Cliquez pour réactiver votre boutique'}
+            style={{
+              background: boutique.actif !== false ? '#f0fdf4' : '#fef2f2',
+              border: `1px solid ${boutique.actif !== false ? '#bbf7d0' : '#fecaca'}`,
+              color: boutique.actif !== false ? '#15803d' : '#dc2626',
+              fontSize: 12.5,
+              fontWeight: 800,
+              padding: '6px 14px',
+              borderRadius: 12,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+            }}
+          >
+            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: boutique.actif !== false ? '#22c55e' : '#ef4444', display: 'inline-block' }} />
+            {boutique.actif !== false ? '🟢 Boutique Active (En ligne)' : '⚪ Boutique Désactivée (Masquée)'}
+          </button>
         </div>
 
         {!tabAllowed ? (
