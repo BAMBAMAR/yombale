@@ -41,9 +41,9 @@
   * Ajout du bouton **`✏️ Modifier`** sur chaque carte client et dans l'en-tête des fiches clients (Carnet Boutique & Carnet Caisse POS).
   * Création de la modale d'édition préremplie permettant de modifier le nom complet, le téléphone WhatsApp, l'adresse/quartier, le plafond de crédit max et la note confidentielle en temps réel.
   * Création de l'endpoint API backend `PUT /api/boutiques/:id/credits-clients/:clientId`.
-- **2. Harmonisation Intégrale sur la Charte Couleur Claire de Nopalou** :
-  * Élimination des bannières sombres au profit de cartes blanches épurées (`#ffffff`, bordures `#e2e8f0`, ombres douces `0 4px 14px rgba(15, 23, 42, 0.03)`).
-  * Alignement exact des cartes KPI d'en-tête et des boutons d'actions tactiles entre le tableau de bord ([CarnetDettes.tsx](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/boutique/CarnetDettes.tsx)) et la Caisse POS ([CaisseClient.tsx](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/boutique/caisse/CaisseClient.tsx)).
+- **2. Harmonisation Intégrale & Réutilisation du Composant `CarnetDettes` dans la Caisse POS (`CaisseClient.tsx`)** :
+  * Le modal du Carnet dans la Caisse POS réutilise à présent directement et à l'identique le composant d'origine [CarnetDettes.tsx](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/boutique/CarnetDettes.tsx).
+  * Garantit une identité visuelle à 100% identique entre le tableau de bord marchand et le terminal de caisse enregistreuse tactile, sans aucune divergence de design, de couleurs ou de fonctionnalités.
 - **3. Layout Master/Detail Réactif pour Mobile** :
   * Sur smartphone (mobile) : Affichage d'une vue Master/Detail avec basculement fluide entre la liste des clients et la Fiche Client en 100% largeur d'écran.
   * Bouton tactile lisible **`← Retour à la liste des clients`** en haut de la Fiche Client sur mobile.

@@ -1181,7 +1181,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           zIndex: 9999,
           display: 'flex',
           alignItems: 'center',
-          justify: 'center',
+          justifyContent: 'center',
           padding: 12
         }}>
           <div style={{
