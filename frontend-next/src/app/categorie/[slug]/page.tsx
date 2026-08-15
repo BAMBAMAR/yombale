@@ -71,20 +71,22 @@ export default async function CategoriePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ page?: string; prixMax?: string; tri?: string; sousType?: string; q?: string }> | { page?: string; prixMax?: string; tri?: string; sousType?: string; q?: string }
+  searchParams: Promise<{ page?: string; prixMin?: string; prixMax?: string; tri?: string; sousType?: string; q?: string }> | { page?: string; prixMin?: string; prixMax?: string; tri?: string; sousType?: string; q?: string }
 }) {
   const { slug } = await params
   const cat = CATEGORIES[slug]
   if (!cat) notFound()
 
   const sp = await Promise.resolve(searchParams)
-  const page   = sp?.page   ?? '1'
-  const prixMax = sp?.prixMax ?? ''
-  const tri    = sp?.tri    ?? 'pertinence'
+  const page     = sp?.page     ?? '1'
+  const prixMin  = sp?.prixMin  ?? ''
+  const prixMax  = sp?.prixMax  ?? ''
+  const tri      = sp?.tri      ?? 'pertinence'
   const sousType = sp?.sousType ?? ''
-  const q      = sp?.q      ?? ''
+  const q        = sp?.q        ?? ''
 
   const qs = new URLSearchParams({ limit: '24', page, categorie: slug })
+  if (prixMin) qs.set('prixMin', prixMin)
   if (prixMax) qs.set('prixMax', prixMax)
   if (tri !== 'pertinence') qs.set('tri', tri)
   if (sousType) qs.set('sousType', sousType)
@@ -107,6 +109,7 @@ export default async function CategoriePage({
 
   function buildLink(p: Record<string, string>) {
     const ps = new URLSearchParams()
+    if (prixMin) ps.set('prixMin', prixMin)
     if (prixMax) ps.set('prixMax', prixMax)
     if (tri !== 'pertinence') ps.set('tri', tri)
     if (sousType) ps.set('sousType', sousType)

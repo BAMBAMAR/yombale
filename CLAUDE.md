@@ -1,3 +1,9 @@
+- **Audit Global & Vérification de l'Ensemble des Pages de Filtres et Listes (`/boutiques`, `/annonces`, `/immo`, `/categorie/[slug]`)** :
+  * **Vérification complète de la cohérence** :
+    1. **`/boutiques` (`src/app/boutiques/page.tsx`)** : `buildLink` préserve de manière cumulative la ville, la recherche `q`, la catégorie `cat`, le tri `tri` et le plan marchand (`business`/`pro`).
+    2. **`/annonces` (`src/app/annonces/page.tsx`)** : `buildLink` préserve cumulativement la catégorie, le tri, la recherche, le budget `prixMax`, la ville et la source (Nopalou vs Facebook).
+    3. **`/immo` (`src/app/immo/page.tsx`)** : `buildLink` préserve la transaction (`location`/`vente`), le type de bien, le prix, la ville, le quartier, la surface et le nombre de pièces/chambres.
+    4. **`/categorie/[slug]` (`src/app/categorie/[slug]/page.tsx`)** : Ajout du support explicite de `prixMin` dans l'analyse de `searchParams`, la requête API `/api/produits` et le générateur d'URL `buildLink`.
 - **Refonte Ergonomique & Correction du Filtrage de la Page d'Accueil (`frontend-next/src/app/page.tsx`, `ProduitsListe.tsx`, `backend/routes/produits.js`)** :
   * **Analyse des dysfonctionnements résolus** :
     1. **Boutons d'État inactifs** : Les pilules `Neuf` et `Occasion` étaient des balises `<span>` codées en dur sans liens ni interactions. Conversion en liens interactifs fonctionnels (`ETATS.map`).
