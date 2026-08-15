@@ -173,71 +173,71 @@ export default async function BoutiquesPage({
           .hero-bento-grid {
             display: grid;
             grid-template-columns: minmax(0, 1fr) 380px;
-            gap: 24px;
+            gap: 20px;
             align-items: stretch;
           }
-          .hero-text-block { grid-column: 1; grid-row: 1; }
-          .hero-search-block { grid-column: 1; grid-row: 2; align-self: end; }
-          .hero-right-block { grid-column: 2; grid-row: 1 / span 2; }
+          .hero-left-column {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 14px;
+          }
 
           @media (max-width: 1023px) {
             .hero-bento-grid {
               display: flex;
               flex-direction: column;
-              gap: 24px;
+              gap: 20px;
             }
-            .hero-text-block { order: 1; }
-            .hero-right-block { order: 2; }
-            .hero-search-block { order: 3; }
           }
         `}</style>
         <div className="hero-bento-grid" style={{ position: 'relative', zIndex: 2 }}>
           
-          {/* TEXT BLOCK */}
-          <div className="hero-text-block" style={{ maxWidth: 680 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800, marginBottom: 10, border: '1px solid #ffedd5', width: 'fit-content' }}>
+          {/* LEFT COLUMN (Text + Search) */}
+          <div className="hero-left-column">
+            
+            {/* TEXT BLOCK */}
+            <div className="hero-text-block" style={{ maxWidth: 680 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800, marginBottom: 8, border: '1px solid #ffedd5', width: 'fit-content' }}>
                 <Sparkles size={13} style={{ color: '#C75B00' }} />
                 <span>Hub officiel des vendeurs vérifiés Nopalou</span>
               </div>
 
-              <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 26, fontWeight: 900, margin: '0 0 10px', lineHeight: 1.15, color: '#0f172a' }}>
+              <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 25, fontWeight: 900, margin: '0 0 8px', lineHeight: 1.15, color: '#0f172a' }}>
                 Boutiques & Vendeurs Pro au <span style={{ color: '#C75B00' }}>Sénégal</span>
               </h1>
 
-              <p style={{ fontSize: 14, color: '#475569', margin: '0 0 12px', lineHeight: 1.5 }}>
-                L'annuaire de référence pour trouver des commerçants de confiance, grossistes et artisans. Parcourez leurs catalogues interactifs et contactez-les directement sans intermédiaire.
+              <p style={{ fontSize: 13.5, color: '#475569', margin: '0 0 10px', lineHeight: 1.45 }}>
+                L'annuaire de référence pour trouver des commerçants de confiance, grossistes et artisans. Parcourez leurs catalogues et contactez-les directement sans intermédiaire.
               </p>
 
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 14px', display: 'flex', flexDirection: 'column', gap: 6, color: '#475569', fontSize: 13 }}>
-                <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: '#10b981', fontWeight: 900 }}>✔</span> 
-                  <span><span style={{ fontWeight: 700, color: '#334155' }}>0% de commission</span> sur vos achats</span>
-                </li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: '#10b981', fontWeight: 900 }}>✔</span> 
-                  <span><span style={{ fontWeight: 700, color: '#334155' }}>100% Vendeurs vérifiés</span> et certifiés</span>
-                </li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: '#10b981', fontWeight: 900 }}>✔</span> 
-                  <span><span style={{ fontWeight: 700, color: '#334155' }}>Contact direct WhatsApp</span> avec les marchands</span>
-                </li>
-              </ul>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12.5, color: '#334155' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ color: '#10b981', fontWeight: 900 }}>✔</span> <b>0% commission</b>
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ color: '#10b981', fontWeight: 900 }}>✔</span> <b>100% Vendeurs vérifiés</b>
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ color: '#10b981', fontWeight: 900 }}>✔</span> <b>Contact WhatsApp direct</b>
+                </span>
+              </div>
             </div>
 
             {/* SEARCH BLOCK */}
-            <div className="hero-search-block" style={{ background: '#ffffff', borderRadius: 20, padding: '16px 20px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="hero-search-block" style={{ background: '#ffffff', borderRadius: 18, padding: '14px 18px', boxShadow: '0 4px 18px rgba(0,0,0,0.03)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <BoutiquesSearch currentQ={q} currentVille={ville} currentCat={cat} />
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {/* Row 1: Villes & Badges */}
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ville :</span>
                   {villesAffichage.slice(0, 5).map(v => (
                     <Link
                       key={v}
                       href={buildLink({ ville: ville === v ? '' : v, page: '1' })}
                       style={{
-                        padding: '4px 10px', borderRadius: 16, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                        padding: '3px 9px', borderRadius: 14, fontSize: 11.5, fontWeight: 700, textDecoration: 'none',
                         background: ville === v ? '#fff7f0' : '#f8fafc',
                         color: ville === v ? '#C75B00' : '#4b5563',
                         border: ville === v ? '1.5px solid #C75B00' : '1px solid #e2e8f0',
@@ -247,12 +247,12 @@ export default async function BoutiquesPage({
                     </Link>
                   ))}
 
-                  <div style={{ width: 1, height: 18, background: '#e2e8f0', margin: '0 2px' }} />
+                  <div style={{ width: 1, height: 16, background: '#e2e8f0', margin: '0 2px' }} />
 
                   <Link
                     href={buildLink({ plan: plan === 'business' ? '' : 'business', page: '1' })}
                     style={{
-                      padding: '4px 10px', borderRadius: 16, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                      padding: '3px 9px', borderRadius: 14, fontSize: 11.5, fontWeight: 700, textDecoration: 'none',
                       background: plan === 'business' ? '#1e3a5f' : '#f1f5f9',
                       color: plan === 'business' ? '#fff' : '#1e3a5f',
                       border: '1px solid #cbd5e1',
@@ -263,7 +263,7 @@ export default async function BoutiquesPage({
                   <Link
                     href={buildLink({ plan: plan === 'pro' ? '' : 'pro', page: '1' })}
                     style={{
-                      padding: '4px 10px', borderRadius: 16, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                      padding: '3px 9px', borderRadius: 14, fontSize: 11.5, fontWeight: 700, textDecoration: 'none',
                       background: plan === 'pro' ? '#C75B00' : '#f1f5f9',
                       color: plan === 'pro' ? '#fff' : '#C75B00',
                       border: '1px solid #cbd5e1',
@@ -274,14 +274,16 @@ export default async function BoutiquesPage({
                 </div>
 
                 {/* Row 2: Trier par */}
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', paddingTop: 8, borderTop: '1px dashed #f1f5f9' }}>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', paddingTop: 6, borderTop: '1px dashed #f1f5f9' }}>
                   <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trier :</span>
-                  <Link href={buildLink({ tri: 'recommande', page: '1' })} style={{ padding: '3px 10px', borderRadius: 14, fontSize: 11, fontWeight: 700, textDecoration: 'none', background: tri === 'recommande' || !tri ? '#1e293b' : '#f8fafc', color: tri === 'recommande' || !tri ? '#fff' : '#4b5563', border: tri === 'recommande' || !tri ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Recommandé</Link>
-                  <Link href={buildLink({ tri: 'recent', page: '1' })} style={{ padding: '3px 10px', borderRadius: 14, fontSize: 11, fontWeight: 700, textDecoration: 'none', background: tri === 'recent' ? '#1e293b' : '#f8fafc', color: tri === 'recent' ? '#fff' : '#4b5563', border: tri === 'recent' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Plus récents</Link>
-                  <Link href={buildLink({ tri: 'nom', page: '1' })} style={{ padding: '3px 10px', borderRadius: 14, fontSize: 11, fontWeight: 700, textDecoration: 'none', background: tri === 'nom' ? '#1e293b' : '#f8fafc', color: tri === 'nom' ? '#fff' : '#4b5563', border: tri === 'nom' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Nom A-Z</Link>
+                  <Link href={buildLink({ tri: 'recommande', page: '1' })} style={{ padding: '3px 9px', borderRadius: 12, fontSize: 11, fontWeight: 700, textDecoration: 'none', background: tri === 'recommande' || !tri ? '#1e293b' : '#f8fafc', color: tri === 'recommande' || !tri ? '#fff' : '#4b5563', border: tri === 'recommande' || !tri ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Recommandé</Link>
+                  <Link href={buildLink({ tri: 'recent', page: '1' })} style={{ padding: '3px 9px', borderRadius: 12, fontSize: 11, fontWeight: 700, textDecoration: 'none', background: tri === 'recent' ? '#1e293b' : '#f8fafc', color: tri === 'recent' ? '#fff' : '#4b5563', border: tri === 'recent' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Plus récents</Link>
+                  <Link href={buildLink({ tri: 'nom', page: '1' })} style={{ padding: '3px 9px', borderRadius: 12, fontSize: 11, fontWeight: 700, textDecoration: 'none', background: tri === 'nom' ? '#1e293b' : '#f8fafc', color: tri === 'nom' ? '#fff' : '#4b5563', border: tri === 'nom' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Nom A-Z</Link>
                 </div>
               </div>
             </div>
+
+          </div>
 
           {/* RIGHT BLOCK (Carousel + Stats) */}
           <div className="hero-right-block" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

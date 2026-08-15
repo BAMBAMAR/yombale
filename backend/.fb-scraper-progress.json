@@ -1,12 +1,11 @@
 {
-  "status": "in_progress",
+  "status": "completed",
   "mode": "live",
   "groupeIndex": 10,
   "totalGroupes": 10,
   "pourcentage": 100,
-  "groupeActuel": "Emploi 8",
-  "groupeUrl": "https://www.facebook.com/groups/1293527887919003",
-  "scrapes": 11,
+  "groupeActuel": "Terminé",
+  "scrapes": 16,
   "inseres": 0,
   "doublons": 0,
   "ignores": 1,
@@ -22,7 +21,12 @@
     "read ECONNRESET",
     "Emploi 6: page.evaluate: Execution context was destroyed, most likely because of a navigation",
     "read ECONNRESET",
+    "read ECONNRESET",
+    "read ECONNRESET",
+    "read ECONNRESET",
+    "read ECONNRESET",
+    "read ECONNRESET",
     "read ECONNRESET"
   ],
-  "updatedAt": "2026-08-15T18:36:19.072Z"
+  "updatedAt": "2026-08-15T18:39:29.179Z"
 }
