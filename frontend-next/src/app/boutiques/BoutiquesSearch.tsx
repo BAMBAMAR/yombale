@@ -30,15 +30,19 @@ export default function BoutiquesSearch({ currentQ, currentVille, currentCat }: 
     <>
       <style>{`
         .boutiques-search-input {
-          padding-left: 50px;
-          padding-right: 125px;
-          font-size: 15px;
+          padding-left: 44px;
+          padding-right: 105px;
+          font-size: 14px;
+        }
+        .boutiques-search-input::placeholder {
+          color: #94a3b8;
+          font-size: 13.5px;
         }
         .search-clear-btn {
-          right: 118px;
+          right: 98px;
         }
         .boutiques-search-btn {
-          padding: 0 18px;
+          padding: 0 14px;
         }
         .search-btn-icon-only {
           display: none;
@@ -46,12 +50,12 @@ export default function BoutiquesSearch({ currentQ, currentVille, currentCat }: 
         
         @media (max-width: 640px) {
           .boutiques-search-input {
-            padding-right: 60px !important;
-            padding-left: 42px !important;
-            font-size: 14px !important;
+            padding-right: 54px !important;
+            padding-left: 38px !important;
+            font-size: 13.5px !important;
           }
           .boutiques-search-btn {
-            padding: 0 14px !important;
+            padding: 0 12px !important;
           }
           .search-btn-text {
             display: none !important;
@@ -63,15 +67,15 @@ export default function BoutiquesSearch({ currentQ, currentVille, currentCat }: 
             display: none !important;
           }
           .search-clear-btn {
-            right: 56px !important;
+            right: 48px !important;
           }
           .search-icon-left {
-            left: 14px !important;
+            left: 12px !important;
           }
         }
       `}</style>
       <form onSubmit={submit} className="boutiques-search-form" style={{ position: 'relative', width: '100%', maxWidth: 720, margin: '0 auto' }}>
-        <div className="search-icon-left" style={{ position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)', color: '#64748b', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+        <div className="search-icon-left" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#64748b', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
           <Search size={20} strokeWidth={2.5} />
         </div>
         <input
