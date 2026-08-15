@@ -2823,3 +2823,15 @@ opalou_pos_session_) pour conserver l'Ã©tat du CA mÃªme en cas d'actualisati
     2. **Typographie & Couleurs** : Utilisation d'un fond en dégradé subtil pour l'en-tête (#F8FAFC vers #F1F5F9) et d'un dégradé de texte vert émeraude élégant pour afficher le montant total.
     3. **Boutons de Paiement Modernisés** : Suppression des styles inline obsolètes dans tous les fichiers Paiement*Client.tsx. Les boutons bénéficient désormais d'une esthétique standardisée (arrondis 16px, ombres douces spécifiques à Wave/OM, effets de sursis interactifs fluides et animation de flèche).
   * Les 5 modules de paiement (payer-annonce, payer-boost, payer-sponsoring-boutique, payer-sponsoring-produit, payer-sponsoring-immo) sont désormais visuellement luxueux et rassurants.
+
+## 🎨 Mises à jour du 15/08/2026 : Refonte Esthétique & Conformité Polices Système Native (Design System v5.1)
+- **Conformité Stricte & Suppression des Polices Externes** :
+  - **Problème** : `index.html` chargeait des polices distantes Google Fonts (*Sora* et *Inter*), violant la directive d'interdiction absolue de `fetch`/chargement externe de polices.
+  - **Solution** : Suppression de tous les liens externes Google Fonts et basculement vers la pile de polices système native (`var(--font-system)`: `system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`) sur l'ensemble du frontend (`index.html`, `style.css`, `app.js`).
+- **Unification du Système de Boutons & Ergonomie** :
+  - Création des classes utilitaires unifiées `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-outline`.
+  - Ajustement de l'animation de l'effet ripple à 300 ms (`cubic-bezier(0.2, 0.8, 0.4, 1)`) pour des micro-interactions réactives et instantanées.
+  - Amélioration de l'accessibilité `:focus-visible` avec un anneau de focalisation net et bien contrasté pour la navigation au clavier.
+- **Normalisation des Grilles & Dashboard KPI** :
+  - Refonte de `.dash-kpi-grid` (`repeat(auto-fit, minmax(180px, 1fr))`) et de `.dash-body-grid` pour un affichage réactif et harmonieux sur toutes les résolutions.
+  - Ajout de limites de largeur conteneurs (`max-width: 1280px; margin: 0 auto;`) pour garantir la lisibilité sur très grands écrans.

@@ -1,12 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════
-   Nopalou — Design System v5
+   Nopalou — Design System v5.1 (Polices système natives & Ergonomie)
    Palette : Vert savane + Bleu nuit + Or sénégalais
    ════════════════════════════════════════════════════════════════ */
-/* Fonts chargées via <link> dans index.html */
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
+  --font-system: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --blue:    #1a3a6e;
   --blue2:   #2563eb;
   --blue3:   #eff6ff;
@@ -23,18 +23,87 @@
   --text2:   #475569;
   --text3:   #6b7280;
   --radius:  14px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --shadow:  0 2px 12px rgba(0,0,0,.07);
   --shadow2: 0 8px 32px rgba(0,0,0,.12);
+  
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --icon-size: 1.25rem;
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-system);
   background: var(--bg);
   color: var(--text1);
   min-height: 100vh;
+  line-height: 1.5;
 }
 
-h1,h2,h3,h4 { font-family: 'Sora', sans-serif; }
+h1,h2,h3,h4 { font-family: var(--font-system); }
+
+/* ── ICÔNES ─────────────────────────────────────────────────── */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* ── BOUTONS UNIFIÉS ────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: var(--font-system);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.18s ease-in-out;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--blue2);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: var(--orange);
+  color: #fff;
+}
+.btn-secondary:hover {
+  background: #c2410c;
+}
+
+.btn-outline {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text2);
+}
+.btn-outline:hover {
+  background: var(--blue3);
+  border-color: var(--blue2);
+  color: var(--blue);
+}
 
 /* ── NAVBAR ─────────────────────────────────────────────────── */
 nav {
@@ -51,7 +120,7 @@ nav {
   box-shadow: 0 1px 8px rgba(0,0,0,.05);
 }
 .logo {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-system);
   font-size: 22px;
   font-weight: 800;
   color: var(--blue);
@@ -65,7 +134,7 @@ nav {
   background: none; border: none; padding: 7px 14px;
   border-radius: 8px; font-size: 13px; font-weight: 600;
   color: var(--text2); cursor: pointer; transition: all .15s;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-system);
 }
 .nav-center button:hover { background: var(--blue3); color: var(--blue2); }
 .nav-right { display: flex; align-items: center; gap: 10px; }
@@ -114,6 +183,7 @@ nav {
 .hero h1 {
   font-size: 40px; font-weight: 800; margin-bottom: 10px;
   letter-spacing: -.025em; position: relative;
+  font-family: var(--font-system);
 }
 .hero h1 span { color: #fbbf24; }
 .hero p { opacity: .75; margin-bottom: 24px; font-size: 15px; position: relative; }
@@ -126,13 +196,13 @@ nav {
 .sbar input {
   flex: 1; border: none; outline: none;
   padding: 16px 22px; font-size: 15px; color: var(--text1);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-system);
 }
 .sbar button {
   background: var(--orange); color: #fff; border: none;
   padding: 0 28px; font-size: 14px; font-weight: 700; cursor: pointer;
   transition: background .15s; white-space: nowrap;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-system);
 }
 .sbar button:hover { background: #c2410c; }
 
@@ -140,13 +210,14 @@ nav {
 .hero-stats {
   display: flex; justify-content: center; gap: 24px; margin-top: 28px;
   flex-wrap: wrap; position: relative;
+  max-width: 1280px; margin-left: auto; margin-right: auto;
 }
 .hstat {
   display: flex; flex-direction: column; align-items: center;
   background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
   border-radius: 12px; padding: 10px 20px; backdrop-filter: blur(4px);
 }
-.hstat strong { font-size: 20px; font-weight: 800; font-family: 'Sora', sans-serif; }
+.hstat strong { font-size: 20px; font-weight: 800; font-family: var(--font-system); }
 .hstat span   { font-size: 11px; opacity: .7; margin-top: 2px; }
 
 /* ── CHIPS BUDGET ───────────────────────────────────────────── */
@@ -193,7 +264,7 @@ nav {
 }
 
 /* ── GRILLE PRODUITS ────────────────────────────────────────── */
-.products { padding: 24px 5%; }
+.products { padding: 24px 5%; max-width: 1280px; margin: 0 auto; }
 .pgrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -207,13 +278,29 @@ nav {
 /* ── DASHBOARD COMPARAISON ──────────────────────────────────── */
 .dash-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4);
   border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
 }
+.dash-kpi-card {
+  padding: var(--space-3) var(--space-4);
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.dash-kpi-card .kpi-label { font-size: 0.75rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; }
+.dash-kpi-card .kpi-value { font-size: 1.35rem; font-weight: 800; color: var(--text1); font-family: var(--font-system); }
+
 .dash-body-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-4);
   border-bottom: 1px solid #f1f5f9;
 }
 
@@ -259,13 +346,13 @@ nav {
 .pbody { padding: 12px 14px 14px; }
 .pname  { font-size: 13.5px; font-weight: 600; margin-bottom: 3px; line-height: 1.3; color: var(--text1); }
 .pbrand { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
-.pprice { font-size: 17px; font-weight: 800; color: var(--orange); margin-bottom: 4px; font-family: 'Sora', sans-serif; }
+.pprice { font-size: 17px; font-weight: 800; color: var(--orange); margin-bottom: 4px; font-family: var(--font-system); }
 .poffers { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
 .btn-voir {
   width: 100%; background: var(--blue); color: #fff; border: none;
   padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600;
   cursor: pointer; transition: background .15s;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-system);
 }
 .btn-voir:hover { background: var(--blue2); }
 
@@ -369,7 +456,7 @@ nav {
   flex: 1; padding: 8px; border: none; border-radius: 7px;
   font-size: 13px; font-weight: 600; cursor: pointer;
   color: var(--text2); background: transparent;
-  transition: all .15s; font-family: 'Inter', sans-serif;
+  transition: all .15s; font-family: var(--font-system);
 }
 .modal-tab.active { background: #fff; color: var(--blue); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
 .form-group { margin-bottom: 16px; }
@@ -377,14 +464,14 @@ nav {
 .form-group input {
   width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
   padding: 11px 14px; font-size: 14px; outline: none;
-  transition: border-color .15s; font-family: 'Inter', sans-serif;
+  transition: border-color .15s; font-family: var(--font-system);
 }
 .form-group input:focus { border-color: var(--blue2); }
 .btn-primary {
   width: 100%; background: var(--blue); color: #fff; border: none;
   padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 700;
   cursor: pointer; transition: background .15s;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-system);
 }
 .btn-primary:hover { background: var(--blue2); }
 .modal-footer {
@@ -631,7 +718,7 @@ span.ripple {
   position: absolute;
   border-radius: 50%;
   transform: scale(0);
-  animation: ripple-effect 500ms cubic-bezier(0.2, 0.8, 0.4, 1);
+  animation: ripple-effect 300ms cubic-bezier(0.2, 0.8, 0.4, 1);
   background-color: rgba(37, 99, 235, 0.22);
   pointer-events: none;
 }

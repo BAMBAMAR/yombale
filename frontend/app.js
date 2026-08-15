@@ -3684,7 +3684,7 @@ async function ouvrirForfait(id) {
           '<div class="detail-hero-info" style="display:flex;flex-direction:column;gap:14px">',
             '<div><span style="font-size:11px;font-weight:700;color:#f97316;background:#fff7ed;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em">' + f.operateur + '</span></div>',
             '<h1 style="font-size:22px;font-weight:800;color:#1e293b;margin:0">' + f.nom + '</h1>',
-            '<div style="font-size:28px;font-weight:800;color:#f97316;font-family:\'Sora\',sans-serif">' + fcfa(f.prix) + '</div>',
+            '<div style="font-size:28px;font-weight:800;color:#f97316;font-family:var(--font-system)">' + fcfa(f.prix) + '</div>',
             '<div style="display:flex;flex-wrap:wrap;gap:8px">',
               dataLabel ? '<span style="font-size:13px;font-weight:700;color:#1d4ed8;background:#eff6ff;padding:6px 14px;border-radius:10px">📶 ' + dataLabel + '</span>' : '',
               f.minutes ? '<span style="font-size:13px;font-weight:700;color:#10b981;background:#ecfdf5;padding:6px 14px;border-radius:10px">📞 ' + f.minutes + ' min</span>' : '',
@@ -4154,7 +4154,7 @@ function htmlTableauOffres(offresArr, prixMin) {
           '</div>',
           // Prix + écart
           '<div style="text-align:right;flex-shrink:0">',
-            '<div style="font-weight:800;font-size:16px;color:' + (best ? '#10b981' : '#1e293b') + ';font-family:Sora,sans-serif">' + fcfa(o.prix) + '</div>',
+            '<div style="font-weight:800;font-size:16px;color:' + (best ? '#10b981' : '#1e293b') + ';font-family:var(--font-system)">' + fcfa(o.prix) + '</div>',
             ecart > 0 ? '<div style="font-size:10px;color:#ef4444;font-weight:600">+' + fcfa(ecart) + ' (+' + pct + '%)</div>' : '<div style="font-size:10px;color:#10b981;font-weight:600">✓ le moins cher</div>',
           '</div>',
           // Bouton
