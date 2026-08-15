@@ -350,111 +350,109 @@ export default async function HomePage({
           </div>
         )}
 
-        {/* ── BARRE DE FILTRES EN 2 LIGNES COMPACTES ET PARFAITEMENT ALIGNÉES ────────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+        {/* ── BARRE DE FILTRES EN 2 LIGNES STRICTES SANS AUCUN RETOUR À LA LIGNE ────────────────────── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
           
-          {/* LIGNE 1 : Budget + État + Bouton Boutique */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
-              {/* 1. Budget */}
-              <div className="filtres-bar" style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <span className="filtres-label" style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginRight: 2 }}>Budget :</span>
-                {BUDGETS.map((b) => {
-                  const isActive = (b.prixMin === prixMin && b.prixMax === prixMax) || (b.label === 'Tout' && !prixMin && !prixMax);
-                  return (
-                    <Link
-                      key={b.label}
-                      href={buildFilterUrl({ prixMin: b.prixMin, prixMax: b.prixMax })}
-                      className={`budget-pill${isActive ? ' active' : ''}`}
-                      style={{ padding: '4px 10px', fontSize: 12, borderRadius: 16 }}
-                    >
-                      {b.label}
-                    </Link>
-                  )
-                })}
-              </div>
+          {/* LIGNE 1 STRICTE : Budget + État (Gauche) | Bouton Boutique (Droite) */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%', flexWrap: 'nowrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', whiteSpace: 'nowrap', marginRight: 2 }}>Budget :</span>
+              {BUDGETS.map((b) => {
+                const isActive = (b.prixMin === prixMin && b.prixMax === prixMax) || (b.label === 'Tout' && !prixMin && !prixMax);
+                return (
+                  <Link
+                    key={b.label}
+                    href={buildFilterUrl({ prixMin: b.prixMin, prixMax: b.prixMax })}
+                    className={`budget-pill${isActive ? ' active' : ''}`}
+                    style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
+                  >
+                    {b.label}
+                  </Link>
+                )
+              })}
 
-              <div style={{ width: 1, height: 16, background: '#e2e8f0' }} className="hidden-mobile" />
+              <div style={{ width: 1, height: 16, background: '#cbd5e1', margin: '0 4px', flexShrink: 0 }} className="hidden-mobile" />
 
-              {/* 2. État */}
-              <div className="filtres-bar hidden-mobile" style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <span className="filtres-label" style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginRight: 2 }}>État :</span>
-                {ETATS.map((e) => {
-                  const isActive = etat === e.val;
-                  return (
-                    <Link
-                      key={e.label}
-                      href={buildFilterUrl({ etat: e.val })}
-                      className={`budget-pill${isActive ? ' active' : ''}`}
-                      style={{ padding: '4px 10px', fontSize: 12, borderRadius: 16 }}
-                    >
-                      {e.label}
-                    </Link>
-                  )
-                })}
-              </div>
+              <span className="hidden-mobile" style={{ fontSize: 12, fontWeight: 800, color: '#64748b', whiteSpace: 'nowrap', marginLeft: 2 }}>État :</span>
+              {ETATS.map((e) => {
+                const isActive = etat === e.val;
+                return (
+                  <Link
+                    key={e.label}
+                    href={buildFilterUrl({ etat: e.val })}
+                    className={`budget-pill hidden-mobile${isActive ? ' active' : ''}`}
+                    style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
+                  >
+                    {e.label}
+                  </Link>
+                )
+              })}
             </div>
 
-            {/* 3. Bouton Boutique Pro (Aligné à droite) */}
-            <div className="hidden-mobile" style={{ display: 'flex', alignItems: 'center' }}>
-              <Link href="/creer-boutique" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0f172a', color: '#fff', padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 800, textDecoration: 'none', boxShadow: '0 2px 8px rgba(15,23,42,0.12)' }}>
-                <span style={{ color: '#C75B00', fontSize: 13 }}>⚡</span>
-                Ouvrir une Boutique Pro
-              </Link>
-            </div>
+            <Link
+              href="/creer-boutique"
+              className="hidden-mobile"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, background: '#0f172a', color: '#fff',
+                padding: '5px 12px', borderRadius: 18, fontSize: 11.5, fontWeight: 800, textDecoration: 'none',
+                whiteSpace: 'nowrap', flexShrink: 0, boxShadow: '0 2px 6px rgba(15,23,42,0.12)'
+              }}
+            >
+              <span style={{ color: '#C75B00', fontSize: 12 }}>⚡</span>
+              Ouvrir une Boutique Pro
+            </Link>
           </div>
 
-          {/* LIGNE 2 : Trier + Tendances + Reset */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
-              {/* 4. Trier */}
-              <div className="filtres-bar" style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <span className="filtres-label" style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginRight: 2 }}>Trier :</span>
-                {TRIS.map((t) => {
-                  const isActive = tri === t.val;
-                  return (
-                    <Link
-                      key={t.val || 'defaut'}
-                      href={buildFilterUrl({ tri: t.val })}
-                      className={`budget-pill${isActive ? ' active' : ''}`}
-                      style={{ padding: '4px 10px', fontSize: 12, borderRadius: 16 }}
-                    >
-                      {t.label}
-                    </Link>
-                  )
-                })}
-              </div>
+          {/* LIGNE 2 STRICTE : Trier + Tendances (Gauche) | Effacer (Droite) */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%', flexWrap: 'nowrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', whiteSpace: 'nowrap', marginRight: 2 }}>Trier :</span>
+              {TRIS.map((t) => {
+                const isActive = tri === t.val;
+                return (
+                  <Link
+                    key={t.val || 'defaut'}
+                    href={buildFilterUrl({ tri: t.val })}
+                    className={`budget-pill${isActive ? ' active' : ''}`}
+                    style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
+                  >
+                    {t.label}
+                  </Link>
+                )
+              })}
 
-              <div style={{ width: 1, height: 16, background: '#e2e8f0' }} className="hidden-mobile" />
+              <div style={{ width: 1, height: 16, background: '#cbd5e1', margin: '0 4px', flexShrink: 0 }} className="hidden-mobile" />
 
-              {/* 5. Tendances */}
-              <div className="filtres-bar hidden-mobile" style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <span className="filtres-label" style={{ fontSize: 12, fontWeight: 700, color: '#C75B00', marginRight: 2 }}>🔥 Tendances :</span>
-                <Link href={buildFilterUrl({ q: 'iphone' })} className="budget-pill" style={{ padding: '4px 10px', fontSize: 12, borderRadius: 16 }}>iPhone 15</Link>
-                <Link href={buildFilterUrl({ q: 'climatiseur' })} className="budget-pill" style={{ padding: '4px 10px', fontSize: 12, borderRadius: 16 }}>Climatiseurs</Link>
-                <Link href={buildFilterUrl({ q: 'samsung' })} className="budget-pill" style={{ padding: '4px 10px', fontSize: 12, borderRadius: 16 }}>Samsung S24</Link>
-              </div>
+              <span className="hidden-mobile" style={{ fontSize: 12, fontWeight: 800, color: '#C75B00', whiteSpace: 'nowrap', marginLeft: 2 }}>🔥 Tendances :</span>
+              <Link href={buildFilterUrl({ q: 'iphone' })} className="budget-pill hidden-mobile" style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}>iPhone 15</Link>
+              <Link href={buildFilterUrl({ q: 'climatiseur' })} className="budget-pill hidden-mobile" style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}>Climatiseurs</Link>
+              <Link href={buildFilterUrl({ q: 'samsung' })} className="budget-pill hidden-mobile" style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}>Samsung S24</Link>
             </div>
 
-            {/* Actions secondaires */}
-            <div className="hidden-mobile" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {hasFiltre ? (
-                <Link href="/#resultats" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0, fontWeight: 700, padding: '4px 10px', fontSize: 12, borderRadius: 16 }}>
-                  <span>✖</span> Effacer
-                </Link>
-              ) : null}
-            </div>
-          </div>
-
-          {/* LIGNE 3 : MOBILE ONLY */}
-          <div className="visible-mobile-flex" style={{ display: 'none', gap: 8, width: '100%', paddingTop: 2 }}>
             {hasFiltre ? (
-              <Link href="/#resultats" className="budget-pill" style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 4, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0, padding: '6px 10px', fontSize: 12 }}>
+              <Link
+                href="/#resultats"
+                className="budget-pill hidden-mobile"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4, color: '#ef4444', borderColor: '#fee2e2',
+                  background: '#fef2f2', fontWeight: 700, padding: '3px 9px', fontSize: 11.5, borderRadius: 14,
+                  whiteSpace: 'nowrap', flexShrink: 0
+                }}
+              >
                 <span>✖</span> Effacer
               </Link>
             ) : null}
-            <Link href="/creer-boutique" style={{ flex: 2, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6, background: '#0f172a', color: '#fff', padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 800, textDecoration: 'none', boxShadow: '0 2px 8px rgba(15,23,42,0.12)' }}>
-              <span style={{ fontSize: 13 }}>🏪</span> Boutique Pro
+          </div>
+
+          {/* BARRE ACTION MOBILE ONLY */}
+          <div className="visible-mobile-flex" style={{ display: 'none', gap: 8, width: '100%', paddingTop: 2 }}>
+            {hasFiltre ? (
+              <Link href="/#resultats" className="budget-pill" style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 4, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0, padding: '5px 10px', fontSize: 11.5 }}>
+                <span>✖</span> Effacer
+              </Link>
+            ) : null}
+            <Link href="/creer-boutique" style={{ flex: 2, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6, background: '#0f172a', color: '#fff', padding: '5px 12px', borderRadius: 18, fontSize: 11.5, fontWeight: 800, textDecoration: 'none', boxShadow: '0 2px 6px rgba(15,23,42,0.12)' }}>
+              <span style={{ fontSize: 12 }}>🏪</span> Boutique Pro
             </Link>
           </div>
         </div>
