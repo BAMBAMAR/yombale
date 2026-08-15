@@ -4,6 +4,7 @@
 - **Modernisation du Carnet de Dettes & Sélection Directe du Catalogue** :
   * Création du composant dédié `CarnetDettes.tsx` inspiré des meilleures applications de tenue de livre informel (Khatabook, OKCredit, Wave).
   * **Sélecteur Catalogue Direct** : Lors de la création d'une dette client, le marchand peut directement cliquer sur les produits de sa boutique (avec photos, prix et gestion des quantités) sans avoir besoin de scanner un code-barres ou de taper des identifiants EAN.
+  * **Correction du Mode Remboursement / Encaisser** : Correction du calcul de `totalTransactionCourante` lors de l'encaissement d'un remboursement manuel pour utiliser le montant saisi par le marchand au lieu d'évaluer le panier catalogue à 0.
   * Saisie manuelle d'articles informels (hors-catalogue) disponible pour la flexibilité des petits commerces.
   * Suivi synthétique en direct : Total créances clients à encaisser (*On me doit*), total avances/dépôts clients et solde net.
 - **Relances Automatiques & Manuelles WhatsApp selon la Date d'Échéance** 🔔 :

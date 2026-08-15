@@ -141,6 +141,22 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     chargerHistoriqueClient(c.id)
   }
 
+  const ouvrirModalTransaction = (type: 'vente_credit' | 'remboursement', client?: ClientCredit) => {
+    if (client) {
+      setClientSelectionne(client)
+      chargerHistoriqueClient(client.id)
+    } else if (!clientSelectionne && clients.length > 0) {
+      setClientSelectionne(clients[0])
+    }
+    setTypeTransaction(type)
+    setMontantManuel('')
+    setDescriptionManuelle('')
+    setPanierProduits({})
+    setDateEcheance('')
+    setModeSaisie(type === 'vente_credit' ? 'catalogue' : 'manuel')
+    setShowModalTransaction(true)
+  }
+
   // Calculs KPI généraux
   const totalDettesAEncaisser = clients.reduce((acc, c) => acc + (Number(c.solde) > 0 ? Number(c.solde) : 0), 0)
   const totalAvancesClients = clients.reduce((acc, c) => acc + (Number(c.solde) < 0 ? Math.abs(Number(c.solde)) : 0), 0)
@@ -153,7 +169,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     return sum + (prix * qte)
   }, 0)
 
-  const totalTransactionCourante = modeSaisie === 'catalogue' 
+  const totalTransactionCourante = (typeTransaction === 'vente_credit' && modeSaisie === 'catalogue') 
     ? totalPanierCatalogue 
     : (Number(montantManuel) || 0)
 
@@ -213,7 +229,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
     // Préparer la liste des produits
     let produitsListe: any[] = []
-    if (modeSaisie === 'catalogue') {
+    if (typeTransaction === 'vente_credit' && modeSaisie === 'catalogue') {
       produitsListe = Object.entries(panierProduits).map(([pId, qte]) => {
         const p = produits.find(item => item.id === pId)
         return {
@@ -224,11 +240,16 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         }
       })
     } else {
-      produitsListe = [{ nom: descriptionManuelle.trim() || 'Vente directe', quantite: 1, prix: montantFinal }]
+      const nomParDefaut = typeTransaction === 'remboursement' ? 'Remboursement' : 'Vente directe'
+      produitsListe = [{ nom: descriptionManuelle.trim() || nomParDefaut, quantite: 1, prix: montantFinal }]
     }
 
     setSubmittingTrans(true)
     try {
+      const noteFinal = (typeTransaction === 'vente_credit' && modeSaisie === 'catalogue')
+        ? `Achat catalogue (${produitsListe.length} article(s))`
+        : (descriptionManuelle.trim() || (typeTransaction === 'remboursement' ? 'Remboursement client' : 'Vente directe'))
+
       const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/${clientSelectionne.id}/transaction`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -236,7 +257,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           type: typeTransaction,
           montant: montantFinal,
           mode_paiement: modePaiement,
-          note: modeSaisie === 'manuel' ? descriptionManuelle.trim() : `Achat catalogue (${produitsListe.length} article(s))`,
+          note: noteFinal,
           produits: produitsListe,
           date_echeance: dateEcheance || null,
           relance_auto_whatsapp: relanceAutoWa,
@@ -368,13 +389,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             </button>
 
             <button
-              onClick={() => {
-                if (!clientSelectionne && clients.length > 0) {
-                  setClientSelectionne(clients[0])
-                }
-                setTypeTransaction('vente_credit')
-                setShowModalTransaction(true)
-              }}
+              onClick={() => ouvrirModalTransaction('vente_credit')}
               style={{
                 background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                 color: '#ffffff',
@@ -659,10 +674,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             {/* Actions Rapides pour ce client */}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button
-                onClick={() => {
-                  setTypeTransaction('vente_credit')
-                  setShowModalTransaction(true)
-                }}
+                onClick={() => ouvrirModalTransaction('vente_credit')}
                 style={{
                   flex: 1,
                   background: '#ef4444',
@@ -679,10 +691,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </button>
 
               <button
-                onClick={() => {
-                  setTypeTransaction('remboursement')
-                  setShowModalTransaction(true)
-                }}
+                onClick={() => ouvrirModalTransaction('remboursement')}
                 style={{
                   flex: 1,
                   background: '#16a34a',
