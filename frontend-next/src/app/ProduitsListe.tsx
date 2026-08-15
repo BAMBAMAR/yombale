@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import CardActions from './CardActions'
@@ -35,6 +35,11 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
   const [produits, setProduits] = useState<Produit[]>(initialProduits)
   const [loading, setLoading]   = useState(false)
   const [page, setPage]         = useState(1)
+
+  useEffect(() => {
+    setProduits(initialProduits)
+    setPage(1)
+  }, [initialProduits])
 
   const restants = total - produits.length
 
