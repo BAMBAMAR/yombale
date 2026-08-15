@@ -350,26 +350,15 @@ export default async function HomePage({
           </div>
         )}
 
-        {/* ── BARRE DE FILTRES EN 2 LIGNES PARFAITEMENT STRUCTURÉES ────────────────────── */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: 20,
-          padding: '18px 22px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-          border: '1px solid #e2e8f0',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 14,
-          marginBottom: 24
-        }}>
+        {/* ── BARRE DE FILTRES EN 2 LIGNES COMPACTES ET PARFAITEMENT ALIGNÉES ────────────────────── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
           
-          {/* LIGNE 1 : Budget, État, Bouton Boutique */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
+          {/* LIGNE 1 : Budget + État + Bouton Boutique */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
               {/* 1. Budget */}
-              <div className="filtres-bar" style={{ margin: 0 }}>
-                <span className="filtres-label">Budget :</span>
+              <div className="filtres-bar" style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <span className="filtres-label" style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginRight: 2 }}>Budget :</span>
                 {BUDGETS.map((b) => {
                   const isActive = (b.prixMin === prixMin && b.prixMax === prixMax) || (b.label === 'Tout' && !prixMin && !prixMax);
                   return (
@@ -377,6 +366,7 @@ export default async function HomePage({
                       key={b.label}
                       href={buildFilterUrl({ prixMin: b.prixMin, prixMax: b.prixMax })}
                       className={`budget-pill${isActive ? ' active' : ''}`}
+                      style={{ padding: '4px 10px', fontSize: 12, borderRadius: 16 }}
                     >
                       {b.label}
                     </Link>
@@ -384,9 +374,11 @@ export default async function HomePage({
                 })}
               </div>
 
-              {/* 2. État (100% Fonctionnel & Interactif) */}
-              <div className="filtres-bar hidden-mobile" style={{ margin: 0 }}>
-                <span className="filtres-label">État :</span>
+              <div style={{ width: 1, height: 16, background: '#e2e8f0' }} className="hidden-mobile" />
+
+              {/* 2. État */}
+              <div className="filtres-bar hidden-mobile" style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <span className="filtres-label" style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginRight: 2 }}>État :</span>
                 {ETATS.map((e) => {
                   const isActive = etat === e.val;
                   return (
@@ -394,6 +386,7 @@ export default async function HomePage({
                       key={e.label}
                       href={buildFilterUrl({ etat: e.val })}
                       className={`budget-pill${isActive ? ' active' : ''}`}
+                      style={{ padding: '4px 10px', fontSize: 12, borderRadius: 16 }}
                     >
                       {e.label}
                     </Link>
@@ -402,23 +395,21 @@ export default async function HomePage({
               </div>
             </div>
 
-            {/* 3. Bouton Boutique (Aligné à droite) */}
+            {/* 3. Bouton Boutique Pro (Aligné à droite) */}
             <div className="hidden-mobile" style={{ display: 'flex', alignItems: 'center' }}>
-              <Link href="/creer-boutique" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#0f172a', color: '#fff', padding: '9px 18px', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 12px rgba(15,23,42,0.15)', transition: 'transform 0.15s ease' }}>
-                <span style={{ color: '#C75B00', fontSize: 15 }}>⚡</span>
+              <Link href="/creer-boutique" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0f172a', color: '#fff', padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 800, textDecoration: 'none', boxShadow: '0 2px 8px rgba(15,23,42,0.12)' }}>
+                <span style={{ color: '#C75B00', fontSize: 13 }}>⚡</span>
                 Ouvrir une Boutique Pro
               </Link>
             </div>
           </div>
 
-          <div style={{ height: 1, background: '#f1f5f9' }} />
-
-          {/* LIGNE 2 : Trier, Tendances, Reset */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
+          {/* LIGNE 2 : Trier + Tendances + Reset */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
               {/* 4. Trier */}
-              <div className="filtres-bar" style={{ margin: 0 }}>
-                <span className="filtres-label">Trier :</span>
+              <div className="filtres-bar" style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <span className="filtres-label" style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginRight: 2 }}>Trier :</span>
                 {TRIS.map((t) => {
                   const isActive = tri === t.val;
                   return (
@@ -426,6 +417,7 @@ export default async function HomePage({
                       key={t.val || 'defaut'}
                       href={buildFilterUrl({ tri: t.val })}
                       className={`budget-pill${isActive ? ' active' : ''}`}
+                      style={{ padding: '4px 10px', fontSize: 12, borderRadius: 16 }}
                     >
                       {t.label}
                     </Link>
@@ -433,34 +425,36 @@ export default async function HomePage({
                 })}
               </div>
 
+              <div style={{ width: 1, height: 16, background: '#e2e8f0' }} className="hidden-mobile" />
+
               {/* 5. Tendances */}
-              <div className="filtres-bar hidden-mobile" style={{ margin: 0 }}>
-                <span className="filtres-label" style={{ color: '#C75B00' }}>🔥 Tendances :</span>
-                <Link href={buildFilterUrl({ q: 'iphone' })} className="budget-pill">iPhone 15</Link>
-                <Link href={buildFilterUrl({ q: 'climatiseur' })} className="budget-pill">Climatiseurs</Link>
-                <Link href={buildFilterUrl({ q: 'samsung' })} className="budget-pill">Samsung S24</Link>
+              <div className="filtres-bar hidden-mobile" style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <span className="filtres-label" style={{ fontSize: 12, fontWeight: 700, color: '#C75B00', marginRight: 2 }}>🔥 Tendances :</span>
+                <Link href={buildFilterUrl({ q: 'iphone' })} className="budget-pill" style={{ padding: '4px 10px', fontSize: 12, borderRadius: 16 }}>iPhone 15</Link>
+                <Link href={buildFilterUrl({ q: 'climatiseur' })} className="budget-pill" style={{ padding: '4px 10px', fontSize: 12, borderRadius: 16 }}>Climatiseurs</Link>
+                <Link href={buildFilterUrl({ q: 'samsung' })} className="budget-pill" style={{ padding: '4px 10px', fontSize: 12, borderRadius: 16 }}>Samsung S24</Link>
               </div>
             </div>
 
             {/* Actions secondaires */}
-            <div className="hidden-mobile" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="hidden-mobile" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {hasFiltre ? (
-                <Link href="/#resultats" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0, fontWeight: 700 }}>
-                  <span>✖</span> Effacer filtres
+                <Link href="/#resultats" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0, fontWeight: 700, padding: '4px 10px', fontSize: 12, borderRadius: 16 }}>
+                  <span>✖</span> Effacer
                 </Link>
               ) : null}
             </div>
           </div>
 
-          {/* LIGNE 3 : MOBILE ONLY (Bouton Boutique & Effacer) */}
-          <div className="visible-mobile-flex" style={{ display: 'none', gap: 10, width: '100%', paddingTop: 4 }}>
+          {/* LIGNE 3 : MOBILE ONLY */}
+          <div className="visible-mobile-flex" style={{ display: 'none', gap: 8, width: '100%', paddingTop: 2 }}>
             {hasFiltre ? (
-              <Link href="/#resultats" className="budget-pill" style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0 }}>
+              <Link href="/#resultats" className="budget-pill" style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 4, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0, padding: '6px 10px', fontSize: 12 }}>
                 <span>✖</span> Effacer
               </Link>
             ) : null}
-            <Link href="/creer-boutique" style={{ flex: 2, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 8, background: '#0f172a', color: '#fff', padding: '9px 16px', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 12px rgba(15,23,42,0.15)' }}>
-              <span style={{ fontSize: 15 }}>🏪</span> Boutique Pro
+            <Link href="/creer-boutique" style={{ flex: 2, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6, background: '#0f172a', color: '#fff', padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 800, textDecoration: 'none', boxShadow: '0 2px 8px rgba(15,23,42,0.12)' }}>
+              <span style={{ fontSize: 13 }}>🏪</span> Boutique Pro
             </Link>
           </div>
         </div>
