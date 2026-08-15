@@ -1014,33 +1014,39 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
     }
   }
 
+  const totalCalculVente = (Number(quantite) || 1) * (Number(prix) || 0)
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       {/* Selector Mode Vente / Dépense */}
-      <div style={{ display: 'flex', gap: 10, background: '#f1f5f9', padding: 6, borderRadius: 16 }}>
+      <div style={{ display: 'flex', gap: 10, background: '#f1f5f9', padding: 6, borderRadius: 16, border: '1px solid #cbd5e1' }}>
         <button
+          type="button"
           onClick={() => setMode('vente')}
           style={{
-            flex: 1, padding: '12px 18px', borderRadius: 12, border: 'none',
-            background: mode === 'vente' ? '#16a34a' : 'transparent',
+            flex: 1, padding: '14px 18px', borderRadius: 12, border: 'none',
+            background: mode === 'vente' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'transparent',
             color: mode === 'vente' ? '#ffffff' : '#475569',
-            fontWeight: 900, fontSize: 14, cursor: 'pointer',
-            boxShadow: mode === 'vente' ? '0 4px 12px rgba(22, 163, 74, 0.25)' : 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+            fontWeight: 900, fontSize: 14.5, cursor: 'pointer',
+            boxShadow: mode === 'vente' ? '0 4px 14px rgba(16, 185, 129, 0.35)' : 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            transition: 'all 0.2s ease',
           }}
         >
           ⚡ + Vente Rapide (Encaissement)
         </button>
 
         <button
+          type="button"
           onClick={() => setMode('depense')}
           style={{
-            flex: 1, padding: '12px 18px', borderRadius: 12, border: 'none',
-            background: mode === 'depense' ? '#dc2626' : 'transparent',
+            flex: 1, padding: '14px 18px', borderRadius: 12, border: 'none',
+            background: mode === 'depense' ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'transparent',
             color: mode === 'depense' ? '#ffffff' : '#475569',
-            fontWeight: 900, fontSize: 14, cursor: 'pointer',
-            boxShadow: mode === 'depense' ? '0 4px 12px rgba(220, 38, 38, 0.25)' : 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+            fontWeight: 900, fontSize: 14.5, cursor: 'pointer',
+            boxShadow: mode === 'depense' ? '0 4px 14px rgba(239, 68, 68, 0.35)' : 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            transition: 'all 0.2s ease',
           }}
         >
           ⚡ - Dépense Rapide (Sortie Caisse)
@@ -1048,22 +1054,29 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
       </div>
 
       {msgSuccess && (
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '12px 16px', borderRadius: 12, fontWeight: 800, fontSize: 14 }}>
+        <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', color: '#15803d', padding: '14px 18px', borderRadius: 14, fontWeight: 800, fontSize: 14, boxShadow: '0 4px 12px rgba(16, 185, 129, 0.15)' }}>
           {msgSuccess}
         </div>
       )}
 
       {mode === 'vente' ? (
-        <form onSubmit={handleValiderVenteRapide} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>💰 Comptabiliser une Vente Directe</h3>
-          
+        <form onSubmit={handleValiderVenteRapide} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 8px 25px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: 14 }}>
+            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+              💰 Encaissement d&apos;une Vente Directe
+            </h3>
+            <span style={{ fontSize: 11, fontWeight: 800, background: '#f0fdf4', color: '#16a34a', padding: '4px 10px', borderRadius: 12, border: '1px solid #bbf7d0' }}>
+              ⚡ Saisie 1-Clic Sans POS
+            </span>
+          </div>
+
           {produits.length > 0 && (
             <div>
-              <label style={labelStyle}>Choix Produit du Catalogue (Optionnel)</label>
+              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Sélectionner un produit du catalogue (Optionnel)</label>
               <select
                 value={produitSel}
                 onChange={e => handleSelectProduit(e.target.value)}
-                style={inputStyle}
+                style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
               >
                 <option value="">-- Choisir un produit du catalogue --</option>
                 {produits.map(p => (
@@ -1074,20 +1087,20 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           )}
 
           <div>
-            <label style={labelStyle}>Nom / Libellé de l&apos;article *</label>
+            <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Article / Libellé de la vente *</label>
             <input
               type="text"
               required
               placeholder="Ex: Sac de riz 25kg, Canette de boisson, Vente comptoir"
               value={nomLibre}
               onChange={e => setNomLibre(e.target.value)}
-              style={inputStyle}
+              style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <label style={labelStyle}>Prix Unitaire (FCFA) *</label>
+              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Prix Unitaire (FCFA) *</label>
               <input
                 type="number"
                 required
@@ -1095,33 +1108,33 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                 placeholder="Ex: 15000"
                 value={prix}
                 onChange={e => setPrix(e.target.value)}
-                style={{ ...inputStyle, fontSize: 16, fontWeight: 800 }}
+                style={{ ...inputStyle, borderRadius: 12, padding: 12, fontSize: 16, fontWeight: 900, color: '#0f172a' }}
               />
             </div>
 
             <div>
-              <label style={labelStyle}>Quantité *</label>
+              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Quantité *</label>
               <input
                 type="number"
                 required
                 min="1"
                 value={quantite}
                 onChange={e => setQuantite(e.target.value)}
-                style={inputStyle}
+                style={{ ...inputStyle, borderRadius: 12, padding: 12, fontSize: 16, fontWeight: 900 }}
               />
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <label style={labelStyle}>Mode de Paiement</label>
+              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Mode de Paiement Reçu</label>
               <select
                 value={methodePaiement}
                 onChange={e => setMethodePaiement(e.target.value)}
-                style={inputStyle}
+                style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
               >
                 <option value="especes">💵 Espèces (Cash)</option>
-                <option value="wave">🌊 Wave</option>
+                <option value="wave">🌊 Wave Senegal</option>
                 <option value="orange_money">🍊 Orange Money</option>
                 <option value="carte">💳 Carte Bancaire</option>
                 <option value="cheque">📜 Chèque</option>
@@ -1129,39 +1142,54 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             </div>
 
             <div>
-              <label style={labelStyle}>Nom Client (Optionnel)</label>
+              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Nom du Client (Optionnel)</label>
               <input
                 type="text"
-                placeholder="Ex: Client de passage"
+                placeholder="Ex: Client comptoir"
                 value={clientNom}
                 onChange={e => setClientNom(e.target.value)}
-                style={inputStyle}
+                style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
               />
             </div>
+          </div>
+
+          {/* Total Calculé en Direct */}
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Total Encaissé</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#10b981' }}>{fcfa(totalCalculVente)}</span>
           </div>
 
           <button
             type="submit"
             disabled={loading}
             style={{
-              background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-              color: '#ffffff', border: 'none', borderRadius: 12, padding: '14px',
-              fontWeight: 900, fontSize: 15, cursor: 'pointer', opacity: loading ? 0.6 : 1
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              color: '#ffffff', border: 'none', borderRadius: 14, padding: '16px',
+              fontWeight: 900, fontSize: 15, cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.6 : 1,
+              boxShadow: '0 6px 20px rgba(16, 185, 129, 0.35)',
+              transition: 'transform 0.15s ease',
             }}
           >
-            {loading ? 'Enregistrement...' : '⚡ Valider & Enregistrer la Vente'}
+            {loading ? 'Enregistrement de la vente...' : '✓ Valider & Enregistrer la Vente'}
           </button>
         </form>
       ) : (
-        <form onSubmit={handleValiderDepenseRapide} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📉 Enregistrer une Dépense / Sortie</h3>
+        <form onSubmit={handleValiderDepenseRapide} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 8px 25px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: 14 }}>
+            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+              📉 Comptabiliser une Dépense / Sortie de Caisse
+            </h3>
+            <span style={{ fontSize: 11, fontWeight: 800, background: '#fef2f2', color: '#dc2626', padding: '4px 10px', borderRadius: 12, border: '1px solid #fecaca' }}>
+              ⚡ Sortie Caisse Rapide
+            </span>
+          </div>
 
           <div>
-            <label style={labelStyle}>Catégorie de Dépense</label>
+            <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Catégorie de Dépense</label>
             <select
               value={catDepense}
               onChange={e => setCatDepense(e.target.value)}
-              style={inputStyle}
+              style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
             >
               <option value="stock">📦 Achats Stock / Fournisseur</option>
               <option value="transport">🚚 Transport / Livraisons</option>
@@ -1175,7 +1203,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           </div>
 
           <div>
-            <label style={labelStyle}>Montant de la Dépense (FCFA) *</label>
+            <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Montant de la Dépense (FCFA) *</label>
             <input
               type="number"
               required
@@ -1183,31 +1211,39 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
               placeholder="Ex: 2500"
               value={montantDepense}
               onChange={e => setMontantDepense(e.target.value)}
-              style={{ ...inputStyle, fontSize: 16, fontWeight: 800, color: '#dc2626' }}
+              style={{ ...inputStyle, borderRadius: 12, padding: 12, fontSize: 16, fontWeight: 900, color: '#ef4444' }}
             />
           </div>
 
           <div>
-            <label style={labelStyle}>Note / Description</label>
+            <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Description / Note explicative</label>
             <input
               type="text"
-              placeholder="Ex: Frais taxi livraison Medina"
+              placeholder="Ex: Achat fournitures bureau, Transport marchandises Medina..."
               value={descDepense}
               onChange={e => setDescDepense(e.target.value)}
-              style={inputStyle}
+              style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
             />
+          </div>
+
+          {/* Total Sortie en Direct */}
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 14, padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: '#991b1b', textTransform: 'uppercase' }}>TOTAL SORTIE CAISSE</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#ef4444' }}>{fcfa(Number(montantDepense) || 0)}</span>
           </div>
 
           <button
             type="submit"
             disabled={loading}
             style={{
-              background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-              color: '#ffffff', border: 'none', borderRadius: 12, padding: '14px',
-              fontWeight: 900, fontSize: 15, cursor: 'pointer', opacity: loading ? 0.6 : 1
+              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+              color: '#ffffff', border: 'none', borderRadius: 14, padding: '16px',
+              fontWeight: 900, fontSize: 15, cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.6 : 1,
+              boxShadow: '0 6px 20px rgba(239, 68, 68, 0.35)',
+              transition: 'transform 0.15s ease',
             }}
           >
-            {loading ? 'Enregistrement...' : '⚡ Valider & Enregistrer la Dépense'}
+            {loading ? 'Enregistrement de la dépense...' : '✓ Valider & Enregistrer la Dépense'}
           </button>
         </form>
       )}

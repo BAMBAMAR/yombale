@@ -1,3 +1,6 @@
+- **Harmonisation Visuelle de la Saisie Express Ventes & Dépenses (`Comptabilite.tsx`)** :
+  * Aligné l'interface **Saisie Express** sur la charte graphique globale de Nopalou (boutons dégradés vert émeraude `#10b981` pour les encaissements ventes et rouge crimson `#ef4444` pour les sorties caisse dépense).
+  * Affichage en direct du calcul des montants totaux en FCFA, cartes surélevées avec coins arrondis 20px, typographies système native et sélecteurs de modes avec ombres dégradées.
 - **Harmonisation du Carnet de Dettes dans la Caisse POS (`CaisseClient.tsx`)** :
   * Intégration du **sélecteur de produits du catalogue avec photos et prix** dans le Carnet de dettes de la Caisse POS pour ajouter des articles en 1 tap avec calcul en direct du total en FCFA.
   * Ajout de l'interrupteur de **relance automatique WhatsApp** à l'échéance et alignement des relances amicales 1-clic via l'API backend.
