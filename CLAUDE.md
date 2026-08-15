@@ -1,3 +1,20 @@
+## 📌 Mises à jour du 15/08/2026 : Intégration du Carnet de Dettes & Crédits dans le Menu Boutique pour Tous les Forfaits (`CarnetDettes.tsx`, `BoutiqueClient.tsx`, `Comptabilite.tsx`, `backend/routes/boutiques.js`, `backend/services/cron-relances-carnet.js`, `backend/migrate-inline.js`)
+- **Intégration du Carnet dans la Navigation Boutique pour Tous les Forfaits** :
+  * Ajout de l'onglet **"📒 Carnet de Dettes & Crédits"** dans le menu latéral et mobile de la boutique sous la rubrique *Ventes & Clients*, rendu accessible sans restriction de souscription à tous les forfaits (Découverte, Taf-Taf, Pro, Business).
+- **Modernisation du Carnet de Dettes & Sélection Directe du Catalogue** :
+  * Création du composant dédié `CarnetDettes.tsx` inspiré des meilleures applications de tenue de livre informel (Khatabook, OKCredit, Wave).
+  * **Sélecteur Catalogue Direct** : Lors de la création d'une dette client, le marchand peut directement cliquer sur les produits de sa boutique (avec photos, prix et gestion des quantités) sans avoir besoin de scanner un code-barres ou de taper des identifiants EAN.
+  * Saisie manuelle d'articles informels (hors-catalogue) disponible pour la flexibilité des petits commerces.
+  * Suivi synthétique en direct : Total créances clients à encaisser (*On me doit*), total avances/dépôts clients et solde net.
+- **Relances Automatiques & Manuelles WhatsApp selon la Date d'Échéance** 🔔 :
+  * Possibilité d'associer une date d'échéance à chaque vente à crédit avec basculement du statut de relance automatique WhatsApp.
+  * **Service Cron d'Arrière-Plan (`backend/services/cron-relances-carnet.js`)** : Analyse quotidienne automatique des échéances impayées et émission automatique de rappels amicals par WhatsApp au client avec le solde exact en FCFA et le nom de la boutique.
+  * **Relance WhatsApp 1-Clic Manuel** : Bouton direct sur chaque fiche client générant un lien instantané et formaté `wa.me`.
+  * **Migration SQL (`backend/migrate-inline.js`)** : Ajout des colonnes `relance_auto_whatsapp` et `derniere_relance_whatsapp` dans `caisse_credit_historique`.
+- **Saisie Express Ventes & Dépenses dans la Comptabilité (`Comptabilite.tsx`)** :
+  * Ajout du sous-onglet **"⚡ Saisie Express (Ventes & Dépenses)"** dans le tableau de bord de comptabilité.
+  * Permet d'enregistrer instantanément des ventes directes ou des dépenses informelles (achats stock, transport, loyer, salaires, électricité, etc.) en 1 clic sans passer par l'ouverture/clôture de session de caisse POS ni scanner.
+
 ## 📌 Mises à jour du 14/08/2026 : Support Complet des Articles/Produits Hors Catalogue dans les Documents Commercials de la Boutique (`GestionDocuments.tsx`, `backend/routes/boutiques.js`)
 - **Correction & Saisie des Produits/Articles Hors Catalogue (Saisie Libre)** :
   * **Problème** : Dans la création et la modification de documents commerciaux (Factures, Devis, Proformas), les produits non présents dans le catalogue de la boutique ne pouvaient pas être saisis manuellement. Si un document contenait un article personnalisé ou un ancien produit supprimé du catalogue, son nom était perdu ou affiché comme "Produit inconnu".

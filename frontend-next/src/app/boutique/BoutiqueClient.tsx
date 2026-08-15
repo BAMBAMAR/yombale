@@ -6,6 +6,7 @@ import Link from 'next/link'
 import ExternalImg from '@/components/ExternalImg'
 import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage, publierProduitAnnonce, getBoutiqueProduits, updateStock, duplicateProduit } from './actions'
 import Comptabilite from './Comptabilite'
+import CarnetDettes from './CarnetDettes'
 import Commandes from './Commandes'
 import AnalyticsClient from './analytics/AnalyticsClient'
 import PortailDeveloppeurBoutique from './PortailDeveloppeurBoutique'
@@ -2066,7 +2067,7 @@ function BoutiqueEquipe({ boutiqueId }: { boutiqueId: string }) {
   )
 }
 
-type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer'
+type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer'
 
 function BoutiqueDashboard({
   boutique,
@@ -2235,6 +2236,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { key: 'dashboard',   icon: '🏠', label: 'Vue d’ensemble' },
       { key: 'commandes',   icon: '📋', label: 'Commandes & Livraisons' },
+      { key: 'carnet',      icon: '📒', label: 'Carnet de Dettes & Crédits' },
       { key: 'documents',   icon: '📄', label: 'Factures & Devis', minPlan: 'pro' },
     ],
   },
@@ -2273,7 +2275,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   prixPro: number
   initialTab?: string
 }) {
-  const validTabs: ManageTab[] = ['dashboard','produits','commandes','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer']
+  const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer']
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
 
   const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
@@ -2349,6 +2351,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
     dashboard:   { icon: '🏠', title: 'Vue d’ensemble', desc: 'Synthèse de votre activité, commandes et indicateurs clés.' },
     produits:    { icon: '🛍️', title: 'Catalogue produits', desc: 'Gérez vos produits, stocks et tarifs.' },
     commandes:   { icon: '📋', title: 'Commandes', desc: 'Commandes reçues — web et WhatsApp. Mettez à jour les statuts.' },
+    carnet:      { icon: '📒', title: 'Carnet de Dettes & Crédits', desc: 'Suivi des créances clients, achats fournisseurs, sélection catalogue et relances WhatsApp.' },
     compta:      { icon: '💰', title: 'Comptabilité', desc: 'Ventes, dépenses, stock et zones de livraison.' },
     analytics:   { icon: '📊', title: 'Analytics', desc: 'Vues, clics et performances de votre boutique.' },
     infos:       { icon: '⚙️', title: 'Paramètres boutique', desc: 'Modifiez les informations, contacts et photos.' },
@@ -2689,6 +2692,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             {tab === 'dashboard'   && <BoutiqueDashboard boutique={boutique} planActif={planActif} nbEnAttente={nbEnAttente} onNavigate={setTab} />}
             {tab === 'produits'    && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
             {tab === 'commandes'   && <Commandes boutiqueId={boutique.id} />}
+            {tab === 'carnet'      && <CarnetDettes boutique={boutique} planActif={planActif} />}
             {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} />}
             {tab === 'analytics'   && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
             {tab === 'infos'       && (

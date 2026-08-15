@@ -348,6 +348,7 @@ async function demarrerApp() {
       console.log('⚡ [MODE WEB SERVER] Démarrage de l\'API Web uniquement (Scraping isolé dans le worker)');
       const { demarrerCronsMetier } = require('./services/scraper');
       demarrerCronsMetier();
+      try { require('./services/cron-relances-carnet'); } catch (e) { console.warn('[CRON CARNET] Warning:', e.message); }
     }
   });
 

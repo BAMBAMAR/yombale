@@ -922,10 +922,303 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
   )
 }
 
+// ── Saisie Express ───────────────────────────────────────────────────────────
+
+function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
+  const [mode, setMode] = useState<'vente' | 'depense'>('vente')
+  const [produits, setProduits] = useState<Produit[]>([])
+  const [produitSel, setProduitSel] = useState<string>('')
+  const [nomLibre, setNomLibre] = useState('')
+  const [quantite, setQuantite] = useState('1')
+  const [prix, setPrix] = useState('')
+  const [methodePaiement, setMethodePaiement] = useState('especes')
+  const [clientNom, setClientNom] = useState('')
+  
+  // Dépense
+  const [montantDepense, setMontantDepense] = useState('')
+  const [catDepense, setCatDepense] = useState('stock')
+  const [descDepense, setDescDepense] = useState('')
+
+  const [loading, setLoading] = useState(false)
+  const [msgSuccess, setMsgSuccess] = useState('')
+
+  useEffect(() => {
+    getBoutiqueProduits(boutiqueId).then(p => setProduits(p || [])).catch(() => {})
+  }, [boutiqueId])
+
+  const handleSelectProduit = (pId: string) => {
+    setProduitSel(pId)
+    const p = produits.find(item => item.id === pId)
+    if (p) {
+      setNomLibre(p.nom)
+      if (p.prix) setPrix(String(p.prix))
+    }
+  }
+
+  const handleValiderVenteRapide = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const qteNum = Number(quantite) || 1
+    const prixNum = Number(prix) || 0
+    if (prixNum <= 0) {
+      alert('Veuillez saisir un prix valide (> 0).')
+      return
+    }
+
+    setLoading(true)
+    const res = await declarerVente(boutiqueId, {
+      produit_id: produitSel || undefined,
+      nom_produit: nomLibre.trim() || 'Vente rapide',
+      quantite: qteNum,
+      prix_unitaire: prixNum,
+      methode_paiement: methodePaiement,
+      client_nom: clientNom.trim() || undefined,
+    })
+
+    setLoading(false)
+    if (res.success) {
+      setMsgSuccess('⚡ Vente enregistrée avec succès !')
+      setNomLibre('')
+      setPrix('')
+      setQuantite('1')
+      setProduitSel('')
+      setClientNom('')
+      setTimeout(() => setMsgSuccess(''), 3000)
+    } else {
+      alert(res.error || 'Erreur lors de l’enregistrement')
+    }
+  }
+
+  const handleValiderDepenseRapide = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const mNum = Number(montantDepense) || 0
+    if (mNum <= 0) {
+      alert('Veuillez saisir un montant valide.')
+      return
+    }
+
+    setLoading(true)
+    const res = await addDepense(boutiqueId, {
+      montant: mNum,
+      categorie: catDepense,
+      description: descDepense.trim() || undefined,
+    })
+
+    setLoading(false)
+    if (res.success) {
+      setMsgSuccess('⚡ Dépense enregistrée avec succès !')
+      setMontantDepense('')
+      setDescDepense('')
+      setTimeout(() => setMsgSuccess(''), 3000)
+    } else {
+      alert(res.error || 'Erreur lors de l’enregistrement')
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Selector Mode Vente / Dépense */}
+      <div style={{ display: 'flex', gap: 10, background: '#f1f5f9', padding: 6, borderRadius: 16 }}>
+        <button
+          onClick={() => setMode('vente')}
+          style={{
+            flex: 1, padding: '12px 18px', borderRadius: 12, border: 'none',
+            background: mode === 'vente' ? '#16a34a' : 'transparent',
+            color: mode === 'vente' ? '#ffffff' : '#475569',
+            fontWeight: 900, fontSize: 14, cursor: 'pointer',
+            boxShadow: mode === 'vente' ? '0 4px 12px rgba(22, 163, 74, 0.25)' : 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+          }}
+        >
+          ⚡ + Vente Rapide (Encaissement)
+        </button>
+
+        <button
+          onClick={() => setMode('depense')}
+          style={{
+            flex: 1, padding: '12px 18px', borderRadius: 12, border: 'none',
+            background: mode === 'depense' ? '#dc2626' : 'transparent',
+            color: mode === 'depense' ? '#ffffff' : '#475569',
+            fontWeight: 900, fontSize: 14, cursor: 'pointer',
+            boxShadow: mode === 'depense' ? '0 4px 12px rgba(220, 38, 38, 0.25)' : 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+          }}
+        >
+          ⚡ - Dépense Rapide (Sortie Caisse)
+        </button>
+      </div>
+
+      {msgSuccess && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '12px 16px', borderRadius: 12, fontWeight: 800, fontSize: 14 }}>
+          {msgSuccess}
+        </div>
+      )}
+
+      {mode === 'vente' ? (
+        <form onSubmit={handleValiderVenteRapide} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>💰 Comptabiliser une Vente Directe</h3>
+          
+          {produits.length > 0 && (
+            <div>
+              <label style={labelStyle}>Choix Produit du Catalogue (Optionnel)</label>
+              <select
+                value={produitSel}
+                onChange={e => handleSelectProduit(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="">-- Choisir un produit du catalogue --</option>
+                {produits.map(p => (
+                  <option key={p.id} value={p.id}>{p.nom} {p.prix ? `(${fcfa(p.prix)})` : ''}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div>
+            <label style={labelStyle}>Nom / Libellé de l&apos;article *</label>
+            <input
+              type="text"
+              required
+              placeholder="Ex: Sac de riz 25kg, Canette de boisson, Vente comptoir"
+              value={nomLibre}
+              onChange={e => setNomLibre(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={labelStyle}>Prix Unitaire (FCFA) *</label>
+              <input
+                type="number"
+                required
+                min="1"
+                placeholder="Ex: 15000"
+                value={prix}
+                onChange={e => setPrix(e.target.value)}
+                style={{ ...inputStyle, fontSize: 16, fontWeight: 800 }}
+              />
+            </div>
+
+            <div>
+              <label style={labelStyle}>Quantité *</label>
+              <input
+                type="number"
+                required
+                min="1"
+                value={quantite}
+                onChange={e => setQuantite(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={labelStyle}>Mode de Paiement</label>
+              <select
+                value={methodePaiement}
+                onChange={e => setMethodePaiement(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="especes">💵 Espèces (Cash)</option>
+                <option value="wave">🌊 Wave</option>
+                <option value="orange_money">🍊 Orange Money</option>
+                <option value="carte">💳 Carte Bancaire</option>
+                <option value="cheque">📜 Chèque</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={labelStyle}>Nom Client (Optionnel)</label>
+              <input
+                type="text"
+                placeholder="Ex: Client de passage"
+                value={clientNom}
+                onChange={e => setClientNom(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+              color: '#ffffff', border: 'none', borderRadius: 12, padding: '14px',
+              fontWeight: 900, fontSize: 15, cursor: 'pointer', opacity: loading ? 0.6 : 1
+            }}
+          >
+            {loading ? 'Enregistrement...' : '⚡ Valider & Enregistrer la Vente'}
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={handleValiderDepenseRapide} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📉 Enregistrer une Dépense / Sortie</h3>
+
+          <div>
+            <label style={labelStyle}>Catégorie de Dépense</label>
+            <select
+              value={catDepense}
+              onChange={e => setCatDepense(e.target.value)}
+              style={inputStyle}
+            >
+              <option value="stock">📦 Achats Stock / Fournisseur</option>
+              <option value="transport">🚚 Transport / Livraisons</option>
+              <option value="loyer">🏠 Loyer Commerce</option>
+              <option value="salaires">👥 Salaires & Avances Personnel</option>
+              <option value="fournitures">💡 Électricité, Eau & Fournitures</option>
+              <option value="marketing">📣 Marketing & Publicité</option>
+              <option value="taxes">⚖️ Taxes & Fiscalité</option>
+              <option value="autre">➕ Autre dépense informelle</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Montant de la Dépense (FCFA) *</label>
+            <input
+              type="number"
+              required
+              min="1"
+              placeholder="Ex: 2500"
+              value={montantDepense}
+              onChange={e => setMontantDepense(e.target.value)}
+              style={{ ...inputStyle, fontSize: 16, fontWeight: 800, color: '#dc2626' }}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Note / Description</label>
+            <input
+              type="text"
+              placeholder="Ex: Frais taxi livraison Medina"
+              value={descDepense}
+              onChange={e => setDescDepense(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+              color: '#ffffff', border: 'none', borderRadius: 12, padding: '14px',
+              fontWeight: 900, fontSize: 15, cursor: 'pointer', opacity: loading ? 0.6 : 1
+            }}
+          >
+            {loading ? 'Enregistrement...' : '⚡ Valider & Enregistrer la Dépense'}
+          </button>
+        </form>
+      )}
+    </div>
+  )
+}
+
 // ── Composant principal ───────────────────────────────────────────────────────
 
 export default function Comptabilite({ boutiqueId }: { boutiqueId: string }) {
-  const [tab, setTab] = useState<'dashboard' | 'ventes' | 'depenses'>('dashboard')
+  const [tab, setTab] = useState<'dashboard' | 'express' | 'ventes' | 'depenses'>('dashboard')
 
   const tabBtn = (t: typeof tab, label: string) => (
     <button type="button" onClick={() => setTab(t)} style={{
@@ -943,11 +1236,13 @@ export default function Comptabilite({ boutiqueId }: { boutiqueId: string }) {
     <div>
       <div className="nopalou-scroll-tabs" style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
         {tabBtn('dashboard', '📊 Tableau de bord')}
+        {tabBtn('express',   '⚡ Saisie Express (Ventes & Dépenses)')}
         {tabBtn('ventes',    '💰 Ventes')}
         {tabBtn('depenses',  '📉 Dépenses')}
       </div>
 
       {tab === 'dashboard' && <DashboardView boutiqueId={boutiqueId} />}
+      {tab === 'express'   && <SaisieExpressView boutiqueId={boutiqueId} />}
       {tab === 'ventes'    && <VentesView    boutiqueId={boutiqueId} />}
       {tab === 'depenses'  && <DepensesView  boutiqueId={boutiqueId} />}
     </div>

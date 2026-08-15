@@ -278,6 +278,8 @@ module.exports = async function migrateInline() {
 
       ALTER TABLE caisse_credit_historique ADD COLUMN IF NOT EXISTS produits JSONB DEFAULT '[]';
       ALTER TABLE caisse_credit_historique ADD COLUMN IF NOT EXISTS date_echeance DATE;
+      ALTER TABLE caisse_credit_historique ADD COLUMN IF NOT EXISTS relance_auto_whatsapp BOOLEAN DEFAULT TRUE;
+      ALTER TABLE caisse_credit_historique ADD COLUMN IF NOT EXISTS derniere_relance_whatsapp TIMESTAMPTZ;
 
       ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS code_barre VARCHAR(100);
 

@@ -1047,7 +1047,7 @@ router.post('/:id/credits-clients', async (req, res) => {
 router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
   try {
     const { id, clientId } = req.params;
-    const { type, montant, mode_paiement, note, produits, date_echeance } = req.body; // 'vente_credit', 'remboursement', 'depot_avance'
+    const { type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp } = req.body; // 'vente_credit', 'remboursement', 'depot_avance'
     const numMontant = Number(montant);
     if (!type || !numMontant || numMontant <= 0) {
       return res.status(400).json({ error: 'Type de transaction et montant valide (> 0) requis' });
@@ -1088,11 +1088,12 @@ router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
       // Mettre à jour le solde
       await client.query('UPDATE caisse_clients_credits SET solde=$1 WHERE id=$2', [nouveauSolde, clientId]);
 
-      // Enregistrer l'historique détaillé avec produits et date d'échéance
+      // Enregistrer l'historique détaillé avec produits, date d'échéance et option relance whatsapp
+      const autoRelance = relance_auto_whatsapp !== false;
       const hist = await client.query(
-        `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, date_echeance)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-        [clientId, bqId, type, numMontant, mode_paiement || 'especes', note || null, JSON.stringify(produits || []), date_echeance || null]
+        `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [clientId, bqId, type, numMontant, mode_paiement || 'especes', note || null, JSON.stringify(produits || []), date_echeance || null, autoRelance]
       );
 
       await client.query('COMMIT');
@@ -1104,7 +1105,54 @@ router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
       client.release();
     }
   } catch (err) {
-    console.error('[CREDITS CLIENTS TRANSACTION]', err);
+    console.error('[CREDITS TRANSACTION POST]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/boutiques/:id/credits-clients/:clientId/relance-whatsapp — Déclencher une relance WhatsApp
+router.post('/:id/credits-clients/:clientId/relance-whatsapp', async (req, res) => {
+  try {
+    const { id, clientId } = req.params;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
+    const bqRes = await pool.query(`SELECT id, nom, telephone, whatsapp FROM boutiques WHERE ${bqCond}`, [id]);
+    if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const bq = bqRes.rows[0];
+
+    const clientRes = await pool.query(`SELECT * FROM caisse_clients_credits WHERE id=$1 AND boutique_id=$2`, [clientId, bq.id]);
+    if (!clientRes.rows[0]) return res.status(404).json({ error: 'Client introuvable' });
+    const c = clientRes.rows[0];
+
+    const soldeNum = Number(c.solde);
+    if (soldeNum <= 0) {
+      return res.status(400).json({ error: 'Le solde du client n’est pas débiteur.' });
+    }
+
+    const messageRelance = `Bonjour ${c.nom},\n\nUn rappel amical de *${bq.nom}* : Votre solde du carnet s'élève actuellement à *${soldeNum.toLocaleString('fr-FR')} FCFA*.\nMerci de bien vouloir régulariser ce montant dès que possible.\n\nContacts boutique: ${bq.whatsapp || bq.telephone || ''}`;
+
+    // Tente d'envoyer par WhatsApp API Meta Cloud si le module existe
+    try {
+      const whatsappService = require('../services/whatsapp');
+      if (whatsappService && typeof whatsappService.sendWhatsAppText === 'function') {
+        await whatsappService.sendWhatsAppText(c.telephone, messageRelance);
+      }
+    } catch (wsErr) {
+      console.warn('[RELANCE WHATSAPP API FAIL] Fallback lien web:', wsErr.message);
+    }
+
+    // Mettre à jour la date de dernière relance
+    await pool.query(
+      `UPDATE caisse_credit_historique SET derniere_relance_whatsapp=NOW() WHERE client_id=$1 AND boutique_id=$2`,
+      [clientId, bq.id]
+    );
+
+    const telNorm = c.telephone.replace(/[^0-9]/g, '');
+    const lienWhatsapp = `https://wa.me/${telNorm}?text=${encodeURIComponent(messageRelance)}`;
+
+    res.json({ success: true, message: 'Relance préparée avec succès', lienWhatsapp, texteMessage: messageRelance });
+  } catch (err) {
+    console.error('[CREDITS RELANCE WHATSAPP POST]', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
