@@ -1,4 +1,6 @@
-## 📌 Mises à jour du 15/08/2026 : Refonte Intégrale des Forfaits, Visuels d'Abonnement & Carnet Universel (`fonctionnalites-data.ts`, `TarifsPublicsSelector.tsx`, `AbonnementClient.tsx`, `CarnetDettes.tsx`, `BoutiqueClient.tsx`, `Comptabilite.tsx`, `cron-relances-carnet.js`)
+- **Gestion de la Visibilité & Désactivation de Boutique (`BoutiqueClient.tsx`, `backend/routes/boutiques.js`)** :
+  * Possibilité pour le commerçant de désactiver et masquer sa boutique du catalogue public Nopalou (`/boutiques`) en 1-clic via un bouton interactif sur la carte de la boutique ou dans les paramètres du profil.
+  * Création de l'endpoint `PUT /api/boutiques/:id/statut` et support de la colonne `actif` dans `PUT /api/boutiques/:id`.
 - **Refonte Visuelle & Mise à Jour des Forfaits Boutique (`fonctionnalites-data.ts`, `TarifsPublicsSelector.tsx`, `AbonnementClient.tsx`)** :
   * **Passeports & Avantages Enrichis** : Mise en avant de l'inclusion du **Carnet de Dettes Client & Crédits pour TOUS les forfaits** (dès la formule Taf Taf / Découverte à 2.500 FCFA/mois avec 1 mois OFFERT).
   * **Sublimation des Cartes d'Abonnement** : Design ultra-moderne avec cartes surélevées, effets de survol, bordures dégradées lumineuses (*Glow Gradients* pour les formules recommandées et Business VIP), badges d'économie et d'essai gratuit.

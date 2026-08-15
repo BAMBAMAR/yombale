@@ -470,6 +470,18 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         </div>
       </div>
 
+      <SectionTitle>👁️ Visibilité sur Nopalou</SectionTitle>
+      <div>
+        <label style={labelStyle}>Statut de la boutique</label>
+        <select name="actif" defaultValue={boutique?.actif !== false ? 'true' : 'false'} style={inputStyle}>
+          <option value="true">🟢 Active (En ligne & visible dans la liste des boutiques)</option>
+          <option value="false">🔴 Désactivée (Masquée & retirée du catalogue Nopalou)</option>
+        </select>
+        <p style={{ fontSize: 11, color: '#64748b', margin: '4px 0 0' }}>
+          En désactivant votre boutique, elle n&apos;apparaîtra plus dans le catalogue public. Vous seul pourrez continuer à y accéder.
+        </p>
+      </div>
+
       <SectionTitle>📋 Informations</SectionTitle>
 
       <div>
@@ -1928,7 +1940,35 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
   onDelete: () => void
   onManage: () => void
 }) {
+  const router = useRouter()
   const sponsorActif = boutique.sponsorise && boutique.sponsor_jusqu_au && new Date(boutique.sponsor_jusqu_au) > new Date()
+  const [togglingStatut, setTogglingStatut] = useState(false)
+
+  const handleToggleStatut = async () => {
+    const nouveauStatut = !boutique.actif
+    const msg = nouveauStatut 
+      ? 'Voulez-vous réactiver votre boutique et la rendre visible dans l’annuaire Nopalou ?' 
+      : 'Voulez-vous désactiver (masquer) votre boutique du catalogue public Nopalou ?'
+    if (!confirm(msg)) return
+
+    setTogglingStatut(true)
+    try {
+      const res = await fetch(`/api/boutiques/${boutique.id}/statut`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actif: nouveauStatut }),
+      })
+      if (res.ok) {
+        router.refresh()
+      } else {
+        alert('Erreur lors de la modification du statut.')
+      }
+    } catch {
+      alert('Erreur de réseau')
+    } finally {
+      setTogglingStatut(false)
+    }
+  }
 
   return (
     <div className="card-premium" style={{ display: 'flex', flexDirection: 'column', height: '100%', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.04)', background: '#fff', overflow: 'hidden' }}>
@@ -1961,10 +2001,27 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
           
           {/* Actions Secondaires (Icônes) et Statut */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', flexShrink: 0, maxWidth: '100%' }}>
-            <span className="badge-premium" style={{ color: boutique.actif ? '#15803d' : '#64748b', background: boutique.actif ? '#f0fdf4' : '#f8fafc', borderColor: boutique.actif ? '#bbf7d0' : '#e2e8f0', fontSize: 11, padding: '2px 8px' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: boutique.actif ? '#22c55e' : '#94a3b8', display: 'inline-block', marginRight: 4 }}></span>
-              {boutique.actif ? 'Active' : 'Inactive'}
-            </span>
+            <button
+              onClick={handleToggleStatut}
+              disabled={togglingStatut}
+              title={boutique.actif ? "Cliquez pour désactiver (masquer) votre boutique du catalogue public" : "Cliquez pour réactiver et rendre visible votre boutique"}
+              style={{
+                background: boutique.actif !== false ? '#f0fdf4' : '#f8fafc',
+                border: `1px solid ${boutique.actif !== false ? '#bbf7d0' : '#e2e8f0'}`,
+                color: boutique.actif !== false ? '#15803d' : '#64748b',
+                fontSize: 11,
+                fontWeight: 800,
+                padding: '4px 10px',
+                borderRadius: 12,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: boutique.actif !== false ? '#22c55e' : '#94a3b8', display: 'inline-block' }}></span>
+              {boutique.actif !== false ? '🟢 Active' : '⚪ Inactive'}
+            </button>
             <div style={{ display: 'flex', gap: 6 }}>
               <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer" title="Voir la boutique" style={{ width: 32, height: 32, borderRadius: 8, background: '#f8fafc', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', transition: 'all 0.2s', border: '1px solid #e2e8f0' }}>
                 <Eye size={16} />

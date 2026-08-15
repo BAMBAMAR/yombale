@@ -1653,7 +1653,7 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
     try {
       const { regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut,
               rccm, ninea, forme_juridique, capital_social, compte_bancaire, conditions_vente, pied_de_page_document,
-              mode_fonctionnement, meta_pixel_id, tiktok_pixel_id, ga4_id } = req.body;
+              mode_fonctionnement, meta_pixel_id, tiktok_pixel_id, ga4_id, actif } = req.body;
 
       const parseBoolVal = (v) => {
         if (v === undefined || v === null || v === '') return null;
@@ -1682,8 +1682,9 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
          mode_fonctionnement=CASE WHEN $19::text IS NOT NULL THEN $19::text ELSE mode_fonctionnement END,
          meta_pixel_id=COALESCE($20, meta_pixel_id),
          tiktok_pixel_id=COALESCE($21, tiktok_pixel_id),
-         ga4_id=COALESCE($22, ga4_id)
-         WHERE id=$23`,
+         ga4_id=COALESCE($22, ga4_id),
+         actif=CASE WHEN $23::boolean IS NOT NULL THEN $23::boolean ELSE actif END
+         WHERE id=$24`,
         [
           cover_url||null, whatsapp||null, site_web||null, facebook||null,
           instagram||null, horairesJson, newSlug,
@@ -1697,6 +1698,7 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
           meta_pixel_id?.trim() || null,
           tiktok_pixel_id?.trim() || null,
           ga4_id?.trim() || null,
+          parseBoolVal(actif),
           req.params.id
         ]
       );
@@ -1707,6 +1709,24 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
   } catch (err) {
     console.error('[BOUTIQUES PUT]', err);
     res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── PUT /api/boutiques/:id/statut — Activer ou désactiver la visibilité d'une boutique par le commerçant
+router.put('/:id/statut', verifierToken, param('id').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const boutique = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!boutique) return res.status(404).json({ error: 'Boutique introuvable ou accès refusé' });
+    
+    const { actif } = req.body;
+    const isActif = actif === true || actif === 'true' || actif === 1 || actif === '1';
+    
+    await pool.query('UPDATE boutiques SET actif = $1, updated_at = NOW() WHERE id = $2', [isActif, req.params.id]);
+    res.json({ success: true, actif: isActif });
+  } catch (err) {
+    console.error('[BOUTIQUE_STATUT_ERR]', err);
+    res.status(500).json({ error: 'Erreur lors du changement de visibilité de la boutique' });
   }
 });
 
