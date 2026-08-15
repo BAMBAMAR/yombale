@@ -1043,6 +1043,38 @@ router.post('/:id/credits-clients', async (req, res) => {
   }
 });
 
+// ── PUT /api/boutiques/:id/credits-clients/:clientId — Modifier un profil client
+router.put('/:id/credits-clients/:clientId', async (req, res) => {
+  try {
+    const { id, clientId } = req.params;
+    const { nom, telephone, adresse, plafond_max, note_client } = req.body;
+
+    if (!nom || !telephone) {
+      return res.status(400).json({ error: 'Nom et téléphone requis' });
+    }
+
+    const b = await pool.query('SELECT id FROM boutiques WHERE id = $1 OR slug = $1', [id]);
+    if (b.rows.length === 0) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const r = await pool.query(
+      `UPDATE caisse_clients_credit 
+       SET nom = $1, telephone = $2, adresse = $3, plafond_max = $4, note_client = $5, updated_at = NOW()
+       WHERE id = $6 AND boutique_id = $7
+       RETURNING *`,
+      [nom.trim(), telephone.trim(), adresse?.trim() || null, Number(plafond_max || 200000), note_client?.trim() || null, clientId, b.rows[0].id]
+    );
+
+    if (r.rows.length === 0) {
+      return res.status(404).json({ error: 'Client introuvable' });
+    }
+
+    res.json({ success: true, client: r.rows[0] });
+  } catch (err) {
+    console.error('[CREDITS CLIENTS PUT]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // ── POST /api/boutiques/:id/credits-clients/:clientId/transaction — Vente à crédit / Remboursement / Dépôt d'avance
 router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
   try {

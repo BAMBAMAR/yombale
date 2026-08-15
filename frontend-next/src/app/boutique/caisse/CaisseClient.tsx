@@ -251,6 +251,26 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [relanceAutoWaCarnet, setRelanceAutoWaCarnet] = useState<boolean>(true)
   const [submittingCarnetTrans, setSubmittingCarnetTrans] = useState<boolean>(false)
 
+  // Édition Profil Client dans le Carnet POS
+  const [modalEditClientCarnet, setModalEditClientCarnet] = useState<boolean>(false)
+  const [clientCarnetAEditer, setClientCarnetAEditer] = useState<any>(null)
+  const [editClientNom, setEditClientNom] = useState<string>('')
+  const [editClientTel, setEditClientTel] = useState<string>('')
+  const [editClientAdresse, setEditClientAdresse] = useState<string>('')
+  const [editClientPlafond, setEditClientPlafond] = useState<string>('200000')
+  const [editClientNote, setEditClientNote] = useState<string>('')
+  const [submittingEditClient, setSubmittingEditClient] = useState<boolean>(false)
+
+  const ouvrirModalEditClientCarnet = (c: any) => {
+    setClientCarnetAEditer(c)
+    setEditClientNom(c.nom || '')
+    setEditClientTel(c.telephone || '')
+    setEditClientAdresse(c.adresse || '')
+    setEditClientPlafond(String(c.plafond_max || 200000))
+    setEditClientNote(c.note_client || '')
+    setModalEditClientCarnet(true)
+  }
+
   const ouvrirModalTransCarnet = (type: 'vente_credit' | 'remboursement') => {
     setTypeTransCarnet(type)
     setMontantTransCarnet('')
@@ -3066,6 +3086,132 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         </div>
       </div>
 
+      {/* MODALE ÉDITION CLIENT CARNET POS */}
+      {modalEditClientCarnet && clientCarnetAEditer && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)',
+          zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12
+        }}>
+          <div style={{
+            background: '#ffffff', borderRadius: 20, maxWidth: 480, width: '100%',
+            maxHeight: '92vh', overflowY: 'auto', padding: 20, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a' }}>
+                ✏️ Modifier la fiche client
+              </h3>
+              <button onClick={() => setModalEditClientCarnet(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#94a3b8' }}>✕</button>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              if (!editClientNom.trim() || !editClientTel.trim()) {
+                alert('Nom et téléphone obligatoires.')
+                return
+              }
+              if (boutiqueActiveId) {
+                setSubmittingEditClient(true)
+                try {
+                  const res = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientCarnetAEditer.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      nom: editClientNom,
+                      telephone: editClientTel,
+                      adresse: editClientAdresse,
+                      plafond_max: editClientPlafond,
+                      note_client: editClientNote,
+                    })
+                  })
+                  if (res.ok) {
+                    await chargerClientsCredits(boutiqueActiveId)
+                    setModalEditClientCarnet(false)
+                    alert('Profil client mis à jour avec succès !')
+                  } else {
+                    const errData = await res.json()
+                    alert(errData.error || 'Erreur lors de la modification.')
+                  }
+                } catch (err) {
+                  console.error('Erreur modification client POS:', err)
+                } finally {
+                  setSubmittingEditClient(false)
+                }
+              }
+            }} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Nom complet *</label>
+                <input
+                  type="text"
+                  required
+                  value={editClientNom}
+                  onChange={e => setEditClientNom(e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Téléphone (WhatsApp) *</label>
+                <input
+                  type="tel"
+                  required
+                  value={editClientTel}
+                  onChange={e => setEditClientTel(e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Adresse / Quartier</label>
+                  <input
+                    type="text"
+                    value={editClientAdresse}
+                    onChange={e => setEditClientAdresse(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Plafond Crédit (FCFA)</label>
+                  <input
+                    type="number"
+                    value={editClientPlafond}
+                    onChange={e => setEditClientPlafond(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Note / Remarque confidentielle</label>
+                <input
+                  type="text"
+                  value={editClientNote}
+                  onChange={e => setEditClientNote(e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setModalEditClientCarnet(false)}
+                  style={{ flex: 1, padding: '12px', background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingEditClient}
+                  style={{ flex: 2, padding: '12px', background: '#10b981', color: '#ffffff', border: 'none', borderRadius: 10, fontWeight: 900, cursor: 'pointer', opacity: submittingEditClient ? 0.7 : 1 }}
+                >
+                  {submittingEditClient ? 'Enregistrement...' : '✓ Enregistrer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Barre Flottante Sticky Mobile (Catalogue mode) */}
       {tabMobile === 'catalogue' && panier.length > 0 && (
         <div className="caisse-sticky-bottom-bar no-print">
@@ -3788,6 +3934,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                               <MessageCircle size={14} /> WA Relance
                             </button>
                             <button
+                              onClick={() => ouvrirModalEditClientCarnet(c)}
+                              style={{ background: '#475569', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 10px', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                            >
+                              ✏️ Modifier
+                            </button>
+                            <button
                               onClick={() => {
                                 setClientCarnetSelectionne(c)
                                 chargerHistoriqueClientSelectionne(c.id)
@@ -3823,7 +3975,15 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     <button onClick={() => setClientCarnetSelectionne(null)} style={{ background: 'none', border: 'none', color: '#1e3a5f', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginBottom: 4 }}>
                       ← Retour à la liste des clients
                     </button>
-                    <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a' }}>{clientCarnetSelectionne.nom}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a' }}>{clientCarnetSelectionne.nom}</h3>
+                      <button
+                        onClick={() => ouvrirModalEditClientCarnet(clientCarnetSelectionne)}
+                        style={{ background: '#e2e8f0', border: 'none', color: '#334155', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                      >
+                        ✏️ Modifier Profil
+                      </button>
+                    </div>
                     <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
                       📞 {clientCarnetSelectionne.telephone} {clientCarnetSelectionne.adresse && `• 📍 ${clientCarnetSelectionne.adresse}`}
                     </p>

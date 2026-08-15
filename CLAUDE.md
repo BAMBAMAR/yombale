@@ -36,18 +36,17 @@
   * Ajout des boutons d'action rapide **"⚡ Saisie Express Ventes & Dépenses"** et **"📒 Carnet de Dettes Client"** dans le bloc *Raccourcis & Actions Rapides* du tableau de bord de la boutique pour un accès instantané en 1 clic.
   * Permet d'enregistrer instantanément des ventes directes ou des dépenses informelles (achats stock, transport, loyer, salaires, électricité, etc.) en 1 clic sans passer par l'ouverture/clôture de session de caisse POS ni scanner.
 
-## 📌 Mises à jour du 15/08/2026 : Harmonisation Intégrale et Adaptation Mobile Réactive des Carnets de Dettes & Crédits Clients (`CarnetDettes.tsx`, `CaisseClient.tsx`, `DemoClient.tsx`)
-- **1. Layout Master/Detail Réactif pour Mobile (`CarnetDettes.tsx`)** :
-  * Détection automatique et dynamique de la largeur d'écran (`isMobile < 768px`).
+## 📌 Mises à jour du 15/08/2026 : Harmonisation Intégrale, Thème Clair Nopalou & Édition des Fiches Clients (`CarnetDettes.tsx`, `CaisseClient.tsx`, `backend/routes/boutiques.js`)
+- **1. Édition & Modification des Fiches Clients Carnet (`PUT /api/boutiques/:id/credits-clients/:clientId`)** :
+  * Ajout du bouton **`✏️ Modifier`** sur chaque carte client et dans l'en-tête des fiches clients (Carnet Boutique & Carnet Caisse POS).
+  * Création de la modale d'édition préremplie permettant de modifier le nom complet, le téléphone WhatsApp, l'adresse/quartier, le plafond de crédit max et la note confidentielle en temps réel.
+  * Création de l'endpoint API backend `PUT /api/boutiques/:id/credits-clients/:clientId`.
+- **2. Harmonisation Intégrale sur la Charte Couleur Claire de Nopalou** :
+  * Élimination des bannières sombres au profit de cartes blanches épurées (`#ffffff`, bordures `#e2e8f0`, ombres douces `0 4px 14px rgba(15, 23, 42, 0.03)`).
+  * Alignement exact des cartes KPI d'en-tête et des boutons d'actions tactiles entre le tableau de bord ([CarnetDettes.tsx](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/boutique/CarnetDettes.tsx)) et la Caisse POS ([CaisseClient.tsx](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/boutique/caisse/CaisseClient.tsx)).
+- **3. Layout Master/Detail Réactif pour Mobile** :
   * Sur smartphone (mobile) : Affichage d'une vue Master/Detail avec basculement fluide entre la liste des clients et la Fiche Client en 100% largeur d'écran.
-  * Ajout d'un bouton tactile lisible **`← Retour à la liste des clients`** en haut de la Fiche Client sur mobile pour une navigation ultra-ergonomique.
-  * Élimination des écrasements de colonnes sur les petits écrans de 360px-400px.
-- **2. Harmonisation Visuelle & Terminologie Unique** :
-  * Unification des titres, icônes (`📒`), sous-titres et cartes statistiques KPI sur tout l'écosystème : **🔴 ON ME DOIT (Créances)** (`#dc2626` / `#fef2f2`), **🟢 AVANCES CLIENTS (Dépôts)** (`#16a34a` / `#f0fdf4`), et **🔔 RELANCE AUTO WHATSAPP** (`#0284c7` / `#f0f9ff`).
-  * Badges de statut uniformisés : `🔴 Doit la boutique` / `🟢 Avance client` / `⚪ Solde nul`.
-  * Harmonisation des boutons d'actions tactiles : `👤 + Nouveau Client`, `⚡ + Donner Crédit (Vente)`, `💸 Rembourser`, `📱 Relance WA`.
-- **3. Ergonomie Tactile & Formulaires Mobile-Friendly** :
-  * Application systématique de `fontSize: 16px` sur tous les champs de saisie mobile pour éliminer le zoom automatique intempestif sur Safari / iOS.
+  * Bouton tactile lisible **`← Retour à la liste des clients`** en haut de la Fiche Client sur mobile.
   * Ajustement des modales de création de client et de sélection catalogue produits pour s'adapter aux hauteurs d'écran mobile (`maxHeight: '92vh'`, `padding: 16px`, grille d'articles à colonnes réactives `minmax(110px, 1fr)`).
   * Harmonisation directe de la section Carnet dans la caisse enregistreuse POS (`CaisseClient.tsx`) et la démo interactive (`DemoClient.tsx`).
 
