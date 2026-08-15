@@ -34,11 +34,18 @@ const CATEGORIES = LIB_CATEGORIES.map(c => ({
 CATEGORIES.push({ slug: 'telecom', label: 'Télécom & Forfaits', emoji: '📡' })
 
 const BUDGETS = [
-  { label: '< 5 000',    prixMax: '5000'   },
-  { label: '5k – 15k',   prixMax: '15000'  },
-  { label: '15k – 50k',  prixMax: '50000'  },
-  { label: '50k – 100k', prixMax: '100000' },
-  { label: '+ 100 000',  prixMax: ''       },
+  { label: 'Tout',        prixMin: '',       prixMax: ''       },
+  { label: '< 5 000',    prixMin: '',       prixMax: '5000'   },
+  { label: '5k – 15k',   prixMin: '5000',   prixMax: '15000'  },
+  { label: '15k – 50k',  prixMin: '15000',  prixMax: '50000'  },
+  { label: '50k – 100k', prixMin: '50000',  prixMax: '100000' },
+  { label: '+ 100 000',  prixMin: '100000', prixMax: ''       },
+]
+
+const ETATS = [
+  { val: '',         label: 'Tout' },
+  { val: 'Neuf',     label: 'Neuf' },
+  { val: 'Occasion', label: 'Occasion' },
 ]
 
 const TRIS = [
@@ -69,12 +76,14 @@ interface ApiResponse {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; categorie?: string; prixMax?: string; page?: string; tri?: string; sousType?: string }> | { q?: string; categorie?: string; prixMax?: string; page?: string; tri?: string; sousType?: string }
+  searchParams: Promise<{ q?: string; categorie?: string; prixMin?: string; prixMax?: string; etat?: string; page?: string; tri?: string; sousType?: string }> | { q?: string; categorie?: string; prixMin?: string; prixMax?: string; etat?: string; page?: string; tri?: string; sousType?: string }
 }) {
   const sp        = await Promise.resolve(searchParams)
   const q         = sp?.q         ?? ''
   const categorie = sp?.categorie ?? ''
+  const prixMin   = sp?.prixMin   ?? ''
   const prixMax   = sp?.prixMax   ?? ''
+  const etat      = sp?.etat      ?? ''
   const page      = sp?.page      ?? '1'
   const tri       = sp?.tri       ?? ''
   const sousType  = sp?.sousType  ?? ''
@@ -87,7 +96,9 @@ export default async function HomePage({
     const params = new URLSearchParams({ limit: '24', page })
     if (q)         params.set('q',         q)
     if (categorie) params.set('categorie', categorie)
+    if (prixMin)   params.set('prixMin',   prixMin)
     if (prixMax)   params.set('prixMax',   prixMax)
+    if (etat)      params.set('etat',      etat)
     if (tri)       params.set('tri',       tri)
     if (sousType)  params.set('sousType',  sousType)
 
@@ -103,7 +114,27 @@ export default async function HomePage({
     erreur = e instanceof Error ? e.message : 'Erreur inconnue'
   }
 
-  const hasFiltre = q || categorie || prixMax || sousType
+  function buildFilterUrl(changes: Record<string, string | null>) {
+    const state: Record<string, string> = {
+      q, categorie, prixMin, prixMax, etat, tri, sousType
+    }
+    for (const key in changes) {
+      const val = changes[key]
+      if (val === null || val === '') {
+        delete state[key]
+      } else {
+        state[key] = val!
+      }
+    }
+    const ps = new URLSearchParams()
+    for (const k in state) {
+      if (state[k]) ps.set(k, state[k])
+    }
+    const str = ps.toString()
+    return str ? `/?${str}#resultats` : '/#resultats'
+  }
+
+  const hasFiltre = q || categorie || prixMin || prixMax || etat || sousType
 
   let settings: Record<string, string> = {}
   let categoriesActives: string[] | null = null
@@ -319,80 +350,102 @@ export default async function HomePage({
           </div>
         )}
 
-        {/* ── BARRE DE FILTRES EN 2 LIGNES STRICTES ────────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
+        {/* ── BARRE DE FILTRES EN 2 LIGNES PARFAITEMENT STRUCTURÉES ────────────────────── */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: 20,
+          padding: '18px 22px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+          border: '1px solid #e2e8f0',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+          marginBottom: 24
+        }}>
           
           {/* LIGNE 1 : Budget, État, Bouton Boutique */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
-            {/* 1. Budget */}
-            <div className="filtres-bar" style={{ margin: 0 }}>
-              <span className="filtres-label">Budget :</span>
-              {BUDGETS.map((b) => {
-                const ps = new URLSearchParams()
-                if (q)         ps.set('q',         q)
-                if (categorie) ps.set('categorie', categorie)
-                if (b.prixMax) ps.set('prixMax',   b.prixMax)
-                return (
-                  <Link key={b.label} href={`/?${ps}#resultats`} className={`budget-pill${prixMax === b.prixMax && b.prixMax ? ' active' : ''}`}>
-                    {b.label}
-                  </Link>
-                )
-              })}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
+              {/* 1. Budget */}
+              <div className="filtres-bar" style={{ margin: 0 }}>
+                <span className="filtres-label">Budget :</span>
+                {BUDGETS.map((b) => {
+                  const isActive = (b.prixMin === prixMin && b.prixMax === prixMax) || (b.label === 'Tout' && !prixMin && !prixMax);
+                  return (
+                    <Link
+                      key={b.label}
+                      href={buildFilterUrl({ prixMin: b.prixMin, prixMax: b.prixMax })}
+                      className={`budget-pill${isActive ? ' active' : ''}`}
+                    >
+                      {b.label}
+                    </Link>
+                  )
+                })}
+              </div>
+
+              {/* 2. État (100% Fonctionnel & Interactif) */}
+              <div className="filtres-bar hidden-mobile" style={{ margin: 0 }}>
+                <span className="filtres-label">État :</span>
+                {ETATS.map((e) => {
+                  const isActive = etat === e.val;
+                  return (
+                    <Link
+                      key={e.label}
+                      href={buildFilterUrl({ etat: e.val })}
+                      className={`budget-pill${isActive ? ' active' : ''}`}
+                    >
+                      {e.label}
+                    </Link>
+                  )
+                })}
+              </div>
             </div>
 
-            {/* 2. État */}
-            <div className="filtres-bar hidden-mobile" style={{ margin: 0 }}>
-              <span className="filtres-label">État :</span>
-              <span className="budget-pill active" style={{ cursor: 'pointer' }}>Tout</span>
-              <span className="budget-pill" style={{ cursor: 'pointer', opacity: 0.8 }}>Neuf</span>
-              <span className="budget-pill" style={{ cursor: 'pointer', opacity: 0.8 }}>Occasion</span>
-            </div>
-
-            {/* Espace flexible */}
-            <div style={{ flex: '1 1 auto' }} className="hidden-mobile" />
-
-            {/* 3. Bouton Boutique (Unique bouton très mis en valeur) */}
+            {/* 3. Bouton Boutique (Aligné à droite) */}
             <div className="hidden-mobile" style={{ display: 'flex', alignItems: 'center' }}>
-              <Link href="/creer-boutique" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#0f172a', color: '#fff', padding: '10px 20px', borderRadius: 30, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 12px rgba(15,23,42,0.15)' }}>
-                <span style={{ color: '#C75B00', fontSize: 16 }}>⚡</span>
+              <Link href="/creer-boutique" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#0f172a', color: '#fff', padding: '9px 18px', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 12px rgba(15,23,42,0.15)', transition: 'transform 0.15s ease' }}>
+                <span style={{ color: '#C75B00', fontSize: 15 }}>⚡</span>
                 Ouvrir une Boutique Pro
               </Link>
             </div>
           </div>
 
-          {/* LIGNE 2 : Trier, Tendances, Actions */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
-            {/* 4. Trier */}
-            <div className="filtres-bar" style={{ margin: 0 }}>
-              <span className="filtres-label">Trier :</span>
-              {TRIS.map((t) => {
-                const ps = new URLSearchParams()
-                if (q)         ps.set('q',         q)
-                if (categorie) ps.set('categorie', categorie)
-                if (prixMax)   ps.set('prixMax',   prixMax)
-                if (t.val)     ps.set('tri',       t.val)
-                return (
-                  <Link key={t.val || 'defaut'} href={`/?${ps}#resultats`} className={`budget-pill${tri === t.val ? ' active' : ''}`}>
-                    {t.label}
-                  </Link>
-                )
-              })}
-            </div>
+          <div style={{ height: 1, background: '#f1f5f9' }} />
 
-            {/* 5. Tendances */}
-            <div className="filtres-bar hidden-mobile" style={{ margin: 0 }}>
-              <span className="filtres-label" style={{ color: '#C75B00' }}>🔥 Tendances :</span>
-              <Link href="/?q=iphone#resultats" className="budget-pill">iPhone 15</Link>
-              <Link href="/?q=climatiseur#resultats" className="budget-pill">Climatiseurs</Link>
-              <Link href="/?q=samsung#resultats" className="budget-pill">Samsung S24</Link>
-            </div>
+          {/* LIGNE 2 : Trier, Tendances, Reset */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
+              {/* 4. Trier */}
+              <div className="filtres-bar" style={{ margin: 0 }}>
+                <span className="filtres-label">Trier :</span>
+                {TRIS.map((t) => {
+                  const isActive = tri === t.val;
+                  return (
+                    <Link
+                      key={t.val || 'defaut'}
+                      href={buildFilterUrl({ tri: t.val })}
+                      className={`budget-pill${isActive ? ' active' : ''}`}
+                    >
+                      {t.label}
+                    </Link>
+                  )
+                })}
+              </div>
 
-            <div style={{ flex: '1 1 auto' }} className="hidden-mobile" />
+              {/* 5. Tendances */}
+              <div className="filtres-bar hidden-mobile" style={{ margin: 0 }}>
+                <span className="filtres-label" style={{ color: '#C75B00' }}>🔥 Tendances :</span>
+                <Link href={buildFilterUrl({ q: 'iphone' })} className="budget-pill">iPhone 15</Link>
+                <Link href={buildFilterUrl({ q: 'climatiseur' })} className="budget-pill">Climatiseurs</Link>
+                <Link href={buildFilterUrl({ q: 'samsung' })} className="budget-pill">Samsung S24</Link>
+              </div>
+            </div>
 
             {/* Actions secondaires */}
             <div className="hidden-mobile" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              {(q || categorie || prixMax || sousType) ? (
-                <Link href="/#resultats" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0 }}>
+              {hasFiltre ? (
+                <Link href="/#resultats" className="budget-pill" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0, fontWeight: 700 }}>
                   <span>✖</span> Effacer filtres
                 </Link>
               ) : null}
@@ -400,14 +453,14 @@ export default async function HomePage({
           </div>
 
           {/* LIGNE 3 : MOBILE ONLY (Bouton Boutique & Effacer) */}
-          <div className="visible-mobile-flex" style={{ display: 'none', gap: 12, width: '100%' }}>
-            {(q || categorie || prixMax || sousType) ? (
+          <div className="visible-mobile-flex" style={{ display: 'none', gap: 10, width: '100%', paddingTop: 4 }}>
+            {hasFiltre ? (
               <Link href="/#resultats" className="budget-pill" style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0 }}>
                 <span>✖</span> Effacer
               </Link>
             ) : null}
-            <Link href="/creer-boutique" style={{ flex: 2, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 8, background: '#0f172a', color: '#fff', padding: '10px 20px', borderRadius: 30, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 12px rgba(15,23,42,0.15)' }}>
-              <span style={{ fontSize: 16 }}>🏪</span> Boutique Pro
+            <Link href="/creer-boutique" style={{ flex: 2, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 8, background: '#0f172a', color: '#fff', padding: '9px 16px', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 12px rgba(15,23,42,0.15)' }}>
+              <span style={{ fontSize: 15 }}>🏪</span> Boutique Pro
             </Link>
           </div>
         </div>
@@ -415,12 +468,14 @@ export default async function HomePage({
         {/* GRILLE DES PRODUITS IMMÉDIATE */}
         <CompareFilterBanner />
         <ProduitsListe
-          key={`${q}-${categorie}-${prixMax}-${tri}-${sousType}`}
+          key={`${q}-${categorie}-${prixMin}-${prixMax}-${etat}-${tri}-${sousType}`}
           initialProduits={produits}
           total={total}
           q={q}
           categorie={categorie}
+          prixMin={prixMin}
           prixMax={prixMax}
+          etat={etat}
           tri={tri}
           sousType={sousType}
         />

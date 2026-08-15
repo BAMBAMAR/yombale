@@ -24,12 +24,14 @@ interface Props {
   total: number
   q: string
   categorie: string
+  prixMin?: string
   prixMax: string
+  etat?: string
   tri: string
   sousType?: string
 }
 
-export default function ProduitsListe({ initialProduits, total, q, categorie, prixMax, tri, sousType = '' }: Props) {
+export default function ProduitsListe({ initialProduits, total, q, categorie, prixMin = '', prixMax, etat = '', tri, sousType = '' }: Props) {
   const [produits, setProduits] = useState<Produit[]>(initialProduits)
   const [loading, setLoading]   = useState(false)
   const [page, setPage]         = useState(1)
@@ -43,7 +45,9 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
       const params   = new URLSearchParams({ limit: '24', page: String(nextPage) })
       if (q)         params.set('q',         q)
       if (categorie) params.set('categorie', categorie)
+      if (prixMin)   params.set('prixMin',   prixMin)
       if (prixMax)   params.set('prixMax',   prixMax)
+      if (etat)      params.set('etat',      etat)
       if (tri)       params.set('tri',       tri)
       if (sousType)  params.set('sousType',  sousType)
 

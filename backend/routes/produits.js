@@ -212,8 +212,8 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     }
 
     // Prix plancher par défaut (hors accessoires) — seulement quand l'utilisateur n'a
-    // fourni ni tri ni catégorie ni prixMin explicite.
-    const prixMinDefautMixe = defautMixe && !prixMin ? 20000 : null;
+    // fourni ni tri ni catégorie ni prixMin/prixMax ni q ni etat explicite.
+    const prixMinDefautMixe = defautMixe && !prixMin && !prixMax && !q && !etat ? 20000 : null;
 
     function buildSQL(qCondScraped, qCondBoutique) {
       const baseScraped = `
