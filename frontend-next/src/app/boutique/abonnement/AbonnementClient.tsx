@@ -177,43 +177,63 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
           const enCours = isPending && loadingPlan === plan.id
           const totalAffichage = plan.totalApresRemise.toLocaleString('fr-FR')
           const mensuelAffichage = plan.prixMensuelEquivalent.toLocaleString('fr-FR')
+          const estBusiness = plan.id === 'business'
 
           return (
             <div key={plan.id} style={{
-              border: `2.5px solid ${estActif ? plan.couleur : '#e2e8f0'}`,
-              borderRadius: 20, padding: 30,
-              background: estActif ? '#fffbf5' : '#fff',
+              border: estBusiness ? '2.5px solid #6366f1' : estActif ? `2.5px solid ${plan.couleur}` : '1px solid #e2e8f0',
+              borderRadius: 24, padding: 32,
+              background: estBusiness
+                ? 'linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%)'
+                : estActif ? '#fffbf5' : '#ffffff',
               position: 'relative', display: 'flex', flexDirection: 'column',
-              boxShadow: estActif ? '0 12px 30px rgba(199,91,0,0.15)' : '0 6px 20px rgba(0,0,0,0.04)',
+              boxShadow: estBusiness
+                ? '0 20px 40px -10px rgba(99, 102, 241, 0.2)'
+                : estActif
+                ? '0 12px 30px rgba(199,91,0,0.15)'
+                : '0 6px 20px rgba(0,0,0,0.04)',
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
             }}>
               {estActif && (
                 <span style={{
                   position: 'absolute', top: -14, left: 24,
                   background: plan.couleur, color: '#fff',
-                  fontSize: 11, fontWeight: 900, padding: '3px 12px', borderRadius: 20,
-                  letterSpacing: '0.05em',
+                  fontSize: 11, fontWeight: 900, padding: '4px 14px', borderRadius: 20,
+                  letterSpacing: '0.05em', boxShadow: '0 4px 10px rgba(0,0,0,0.15)'
                 }}>
-                  VOTRE PLAN ACTUEL
+                  ✓ VOTRE PLAN ACTUEL
+                </span>
+              )}
+
+              {estBusiness && !estActif && (
+                <span style={{
+                  position: 'absolute', top: -14, left: 24,
+                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', color: '#fff',
+                  fontSize: 11, fontWeight: 900, padding: '4px 14px', borderRadius: 20,
+                  letterSpacing: '0.05em', boxShadow: '0 4px 12px rgba(99,102,241,0.3)'
+                }}>
+                  👑 FORMULE VIP MULTI-SITES
                 </span>
               )}
 
               {plan.economie > 0 && !estActif && (
                 <span style={{
                   position: 'absolute', top: -14, right: 24,
-                  background: '#16a34a', color: '#fff',
-                  fontSize: 11, fontWeight: 900, padding: '3px 12px', borderRadius: 20,
+                  background: '#10b981', color: '#fff',
+                  fontSize: 11, fontWeight: 900, padding: '4px 14px', borderRadius: 20,
+                  boxShadow: '0 4px 10px rgba(16,185,129,0.25)'
                 }}>
                   ÉCONOMISEZ {plan.economie.toLocaleString('fr-FR')} FCFA
                 </span>
               )}
 
-              <h2 style={{ fontSize: 22, fontWeight: 900, color: plan.couleur, margin: '0 0 6px' }}>
+              <h2 style={{ fontSize: 24, fontWeight: 900, color: estBusiness ? '#4f46e5' : plan.couleur, margin: '6px 0 6px' }}>
                 {plan.label}
               </h2>
 
               {/* Prix */}
-              <div style={{ margin: '12px 0 6px' }}>
-                <span style={{ fontSize: 34, fontWeight: 900, color: '#0f172a' }}>
+              <div style={{ margin: '14px 0 6px' }}>
+                <span style={{ fontSize: 36, fontWeight: 900, color: '#0f172a', tracking: '-0.02em' }}>
                   {totalAffichage} FCFA
                 </span>
                 <span style={{ fontSize: 14, fontWeight: 600, color: '#64748b', marginLeft: 6 }}>
@@ -222,21 +242,21 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
               </div>
 
               {duree > 1 && (
-                <p style={{ margin: '0 0 16px', fontSize: 13, color: '#16a34a', fontWeight: 700 }}>
-                  Soit environ <strong>{mensuelAffichage} FCFA</strong> / mois
+                <p style={{ margin: '0 0 16px', fontSize: 13, color: '#059669', fontWeight: 800 }}>
+                  Soit seulement <strong>{mensuelAffichage} FCFA</strong> / mois
                 </p>
               )}
 
-              <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 22, borderBottom: '1px solid #f1f5f9', paddingBottom: 12 }}>
-                {modePaiementLabel}
+              <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 22, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+                {modePaiementLabel} • 🎁 1 mois offert
               </p>
 
               {/* Avantages */}
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
                 {plan.avantages.map((a) => (
-                  <li key={a} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14, color: '#334155', lineHeight: 1.4 }}>
-                    <div style={{ width: 18, height: 18, borderRadius: '50%', background: `${plan.couleur}15`, color: plan.couleur, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                      <Check size={12} style={{ strokeWidth: 3 }} />
+                  <li key={a} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13.5, color: '#334155', lineHeight: 1.4 }}>
+                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: estBusiness ? '#e0e7ff' : `${plan.couleur}20`, color: estBusiness ? '#4f46e5' : plan.couleur, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                      <Check size={13} style={{ strokeWidth: 3 }} />
                     </div>
                     <span>{a}</span>
                   </li>
@@ -249,11 +269,15 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
                   onClick={() => handleSouscrire(plan.id)}
                   disabled={isPending || (estActif && duree === 1)}
                   style={{
-                    width: '100%', padding: '14px 0', borderRadius: 12, border: 'none',
-                    background: (estActif && duree === 1) ? '#e2e8f0' : (plan.id === 'business' ? '#1e3a5f' : '#C75B00'),
-                    color: (estActif && duree === 1) ? '#64748b' : '#fff',
+                    width: '100%', padding: '14px 0', borderRadius: 14, border: 'none',
+                    background: (estActif && duree === 1)
+                      ? '#e2e8f0'
+                      : estBusiness
+                      ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
+                      : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: (estActif && duree === 1) ? '#64748b' : '#ffffff',
                     fontWeight: 900, fontSize: 15, cursor: (isPending || (estActif && duree === 1)) ? 'default' : 'pointer',
-                    boxShadow: (estActif && duree === 1) ? 'none' : '0 4px 14px rgba(0,0,0,0.15)',
+                    boxShadow: (estActif && duree === 1) ? 'none' : estBusiness ? '0 6px 20px rgba(99,102,241,0.35)' : '0 6px 20px rgba(245,158,11,0.35)',
                     transition: 'transform 0.15s ease',
                   }}
                 >
@@ -267,9 +291,9 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
                   onClick={() => setPlanManuel(plan.id)}
                   disabled={isPending || (estActif && duree === 1)}
                   style={{
-                    width: '100%', marginTop: 10, padding: '10px 0', borderRadius: 10,
-                    border: '1.5px solid #cbd5e1', background: '#fff', color: '#334151',
-                    fontSize: 13, fontWeight: 700, cursor: (isPending || (estActif && duree === 1)) ? 'default' : 'pointer',
+                    width: '100%', marginTop: 10, padding: '11px 0', borderRadius: 12,
+                    border: '1.5px solid #cbd5e1', background: '#ffffff', color: '#1e293b',
+                    fontSize: 13, fontWeight: 800, cursor: (isPending || (estActif && duree === 1)) ? 'default' : 'pointer',
                   }}
                 >
                   Payer via Mobile Money (OM / Wave)

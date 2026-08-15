@@ -1,4 +1,8 @@
-## 📌 Mises à jour du 15/08/2026 : Intégration du Carnet de Dettes & Crédits dans le Menu Boutique pour Tous les Forfaits (`CarnetDettes.tsx`, `BoutiqueClient.tsx`, `Comptabilite.tsx`, `backend/routes/boutiques.js`, `backend/services/cron-relances-carnet.js`, `backend/migrate-inline.js`)
+## 📌 Mises à jour du 15/08/2026 : Refonte Intégrale des Forfaits, Visuels d'Abonnement & Carnet Universel (`fonctionnalites-data.ts`, `TarifsPublicsSelector.tsx`, `AbonnementClient.tsx`, `CarnetDettes.tsx`, `BoutiqueClient.tsx`, `Comptabilite.tsx`, `cron-relances-carnet.js`)
+- **Refonte Visuelle & Mise à Jour des Forfaits Boutique (`fonctionnalites-data.ts`, `TarifsPublicsSelector.tsx`, `AbonnementClient.tsx`)** :
+  * **Passeports & Avantages Enrichis** : Mise en avant de l'inclusion du **Carnet de Dettes Client & Crédits pour TOUS les forfaits** (dès la formule Taf Taf / Découverte à 2.500 FCFA/mois avec 1 mois OFFERT).
+  * **Sublimation des Cartes d'Abonnement** : Design ultra-moderne avec cartes surélevées, effets de survol, bordures dégradées lumineuses (*Glow Gradients* pour les formules recommandées et Business VIP), badges d'économie et d'essai gratuit.
+  * **Sélecteur de Durée Interactif** : Calcul direct des remises (-10% sur 3 mois, -15% sur 6 mois, -25% sur 12 mois soit 3 mois offerts) et de l'équivalent mensuel en FCFA.
 - **Intégration du Carnet dans la Navigation Boutique pour Tous les Forfaits** :
   * Ajout de l'onglet **"📒 Carnet de Dettes & Crédits"** dans le menu latéral et mobile de la boutique sous la rubrique *Ventes & Clients*, rendu accessible sans restriction de souscription à tous les forfaits (Découverte, Taf-Taf, Pro, Business).
 - **Modernisation du Carnet de Dettes & Sélection Directe du Catalogue** :
