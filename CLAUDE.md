@@ -12,8 +12,8 @@
   * **Service Cron d'Arrière-Plan (`backend/services/cron-relances-carnet.js`)** : Analyse quotidienne automatique des échéances impayées et émission automatique de rappels amicals par WhatsApp au client avec le solde exact en FCFA et le nom de la boutique.
   * **Relance WhatsApp 1-Clic Manuel** : Bouton direct sur chaque fiche client générant un lien instantané et formaté `wa.me`.
   * **Migration SQL (`backend/migrate-inline.js`)** : Ajout des colonnes `relance_auto_whatsapp` et `derniere_relance_whatsapp` dans `caisse_credit_historique`.
-- **Saisie Express Ventes & Dépenses dans la Comptabilité (`Comptabilite.tsx`)** :
-  * Ajout du sous-onglet **"⚡ Saisie Express (Ventes & Dépenses)"** dans le tableau de bord de comptabilité.
+- **Saisie Express Ventes & Dépenses & Raccourcis d'Action Rapide (`Comptabilite.tsx`, `BoutiqueClient.tsx`)** :
+  * Ajout des boutons d'action rapide **"⚡ Saisie Express Ventes & Dépenses"** et **"📒 Carnet de Dettes Client"** dans le bloc *Raccourcis & Actions Rapides* du tableau de bord de la boutique pour un accès instantané en 1 clic.
   * Permet d'enregistrer instantanément des ventes directes ou des dépenses informelles (achats stock, transport, loyer, salaires, électricité, etc.) en 1 clic sans passer par l'ouverture/clôture de session de caisse POS ni scanner.
 
 ## 📌 Mises à jour du 14/08/2026 : Support Complet des Articles/Produits Hors Catalogue dans les Documents Commercials de la Boutique (`GestionDocuments.tsx`, `backend/routes/boutiques.js`)

@@ -2166,14 +2166,37 @@ function BoutiqueDashboard({
       <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 20 }}>
         <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 800, color: '#0f172a' }}>⚡ Raccourcis & Actions Rapides</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+          
           <button
-            onClick={() => onNavigate('produits')}
+            onClick={() => onNavigate('compta')}
             style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#f0fdf4', border: '1px solid #bbf7d0', cursor: 'pointer', textAlign: 'left' }}
           >
-            <span style={{ fontSize: 24 }}>➕</span>
+            <span style={{ fontSize: 24 }}>⚡</span>
             <div>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#166534' }}>Ajouter un produit</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#15803d' }}>Photos, prix & détails</p>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#166534' }}>Saisie Express Ventes & Dépenses</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#15803d' }}>Encaissement & sortie 1-clic</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigate('carnet')}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#fef2f2', border: '1px solid #fecaca', cursor: 'pointer', textAlign: 'left' }}
+          >
+            <span style={{ fontSize: 24 }}>📒</span>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#991b1b' }}>Carnet de Dettes Client</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#dc2626' }}>Créances & Relances WhatsApp</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigate('produits')}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, background: '#f8fafc', border: '1px solid #e2e8f0', cursor: 'pointer', textAlign: 'left' }}
+          >
+            <span style={{ fontSize: 24 }}>🛍️</span>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#334155' }}>Ajouter un produit</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748b' }}>Photos, prix & détails</p>
             </div>
           </button>
 
