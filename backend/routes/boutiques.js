@@ -701,11 +701,11 @@ router.get('/:id/catalog.json', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const param = req.params.id;
-    // Recherche universelle par UUID ou par slug
+    // Recherche universelle par UUID ou par slug (toujours accessible via lien direct ou QR Code)
     const r = await pool.query(
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
               b.logo_url, b.cover_url, b.whatsapp, b.site_web, b.facebook, b.instagram,
-              b.horaires, b.slug, b.utilisateur_id, b.created_at,
+              b.horaires, b.slug, b.utilisateur_id, b.created_at, b.actif,
               COALESCE(b.mode_fonctionnement, 'hybride_pos') AS mode_fonctionnement,
               b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
@@ -718,7 +718,7 @@ router.get('/:id', async (req, res) => {
          WHERE utilisateur_id = b.utilisateur_id AND statut='actif' AND fin > NOW()
          ORDER BY fin DESC LIMIT 1
        ) a ON true
-       WHERE (b.id::text = $1 OR b.slug = $1) AND COALESCE(b.actif, true) = true`,
+       WHERE (b.id::text = $1 OR b.slug = $1)`,
       [param]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -1301,16 +1301,14 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
 router.get('/:id/produits', tokenOptional, async (req, res) => {
   try {
     const param = req.params.id;
-    const userId = req.user?.userId || null;
     const { rows } = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes, p.code_barre,
               p.whatsapp_sync_statut, p.whatsapp_sync_erreur, p.partage_le
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
-       LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
-       WHERE (b.id::text = $1 OR b.slug = $1) AND (COALESCE(b.actif, true) = true OR b.utilisateur_id = $2 OR bu.utilisateur_id = $2)
+       WHERE (b.id::text = $1 OR b.slug = $1)
        ORDER BY p.ordre ASC, p.created_at DESC`,
-      [param, userId]
+      [param]
     );
     res.json({ produits: rows });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
