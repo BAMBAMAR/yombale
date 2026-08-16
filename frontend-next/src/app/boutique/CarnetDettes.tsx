@@ -1920,6 +1920,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           </div>
                         )
                       })
+                    )}
                   </div>
 
                   {/* Résumé clair du panier sélectionné (Catalogue + Saisie Libre) */}
