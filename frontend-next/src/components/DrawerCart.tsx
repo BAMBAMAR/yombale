@@ -249,10 +249,10 @@ export default function DrawerCart() {
                       <span style={{ fontSize: 13, fontWeight: 700, color: '#C75B00' }}>{fcfa(item.prix)}</span>
                     </div>
   
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f3f4f6', padding: '4px 8px', borderRadius: 8 }}>
-                      <button onClick={() => updateQuantity(activeBoutiqueId!, item.id, -1)} style={{ background: 'none', border: 'none', fontWeight: 800, cursor: 'pointer', padding: '2px 6px' }}>-</button>
-                      <span style={{ fontSize: 13, fontWeight: 800, minWidth: 16, textAlign: 'center' }}>{item.quantite}</span>
-                      <button onClick={() => updateQuantity(activeBoutiqueId!, item.id, 1)} style={{ background: 'none', border: 'none', fontWeight: 800, cursor: 'pointer', padding: '2px 6px' }}>+</button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f3f4f6', padding: '2px 6px', borderRadius: 8 }}>
+                      <button onClick={() => updateQuantity(activeBoutiqueId!, item.id, -1)} style={{ background: 'none', border: 'none', fontWeight: 800, cursor: 'pointer', minWidth: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }} aria-label="Réduire la quantité">-</button>
+                      <span style={{ fontSize: 13, fontWeight: 800, minWidth: 18, textAlign: 'center' }}>{item.quantite}</span>
+                      <button onClick={() => updateQuantity(activeBoutiqueId!, item.id, 1)} style={{ background: 'none', border: 'none', fontWeight: 800, cursor: 'pointer', minWidth: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }} aria-label="Augmenter la quantité">+</button>
                     </div>
   
                     <button onClick={() => removeFromCart(activeBoutiqueId!, item.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 16, padding: 4 }}>🗑️</button>
@@ -396,8 +396,8 @@ export default function DrawerCart() {
                   onClick={() => setCheckoutMode('formulaire')}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    background: '#2563eb', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 14px',
-                    fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 3px 10px rgba(37,99,235,.25)',
+                    background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 14px',
+                    fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 3px 10px rgba(28,43,74,.25)',
                   }}
                 >
                   <span>📋</span> Formulaire en ligne (Wave / OM / Cash) →

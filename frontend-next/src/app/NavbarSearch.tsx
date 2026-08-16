@@ -88,7 +88,7 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
         role="search"
         style={
           open || alwaysOpen
-            ? { display: 'flex', alignItems: 'center', background: '#f8fafc', borderRadius: '10px', border: '1.5px solid #cbd5e1', padding: '2px 8px', width: '220px' }
+            ? { display: 'flex', alignItems: 'center', background: 'var(--card)', borderRadius: '10px', border: '1.5px solid var(--border)', padding: '2px 8px', width: '220px' }
             : { display: 'flex', alignItems: 'center' }
         }
       >
@@ -110,7 +110,7 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
               fontSize: '13px',
               outline: 'none',
               width: '100%',
-              color: '#0f172a'
+              color: 'var(--text1)'
             }}
           />
         )}
@@ -125,8 +125,8 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
             }
           }}
           style={{
-            background: (open || alwaysOpen) ? 'none' : '#f1f5f9',
-            border: (open || alwaysOpen) ? 'none' : '1px solid #cbd5e1',
+            background: (open || alwaysOpen) ? 'none' : 'var(--bg)',
+            border: (open || alwaysOpen) ? 'none' : '1px solid var(--border)',
             borderRadius: '10px',
             width: 36,
             height: 36,
@@ -134,7 +134,7 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            color: '#475569',
+            color: 'var(--navy)',
             flexShrink: 0
           }}
         >

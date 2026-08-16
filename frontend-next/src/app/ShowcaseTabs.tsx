@@ -66,7 +66,7 @@ export default function ShowcaseTabs({
                 onClick={() => setDuree(d.m as any)}
                 style={{
                   padding: '8px 16px', borderRadius: 20, border: 'none',
-                  background: duree === d.m ? (d.m === 12 ? '#C75B00' : '#0f172a') : 'transparent',
+                  background: duree === d.m ? (d.m === 12 ? '#C75B00' : 'var(--navy)') : 'transparent',
                   color: duree === d.m ? '#fff' : '#475569',
                   fontWeight: duree === d.m ? 800 : 600, fontSize: 13, cursor: 'pointer',
                   boxShadow: duree === d.m ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',

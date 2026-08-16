@@ -239,6 +239,37 @@ img, video, iframe {
   background: #FEE2E2;
 }
 
+/* ── Bouton WhatsApp Fiche Produit / Annonce ─────────────────── */
+.bouton-whatsapp-fiche {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #25D366;
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37,211,102,.25);
+  transition: opacity 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  text-decoration: none;
+}
+.bouton-whatsapp-fiche:hover:not(:disabled) {
+  opacity: 0.92;
+  box-shadow: 0 6px 18px rgba(37,211,102,.35);
+}
+.bouton-whatsapp-fiche:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.bouton-whatsapp-fiche:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Bouton ENCAISSER — Dominant, grand format */
 .pos-btn-encaisser {
   width: 100%;
@@ -840,7 +871,7 @@ a {
 /* ── CTA principal ────────────────────────────────────────────── */
 .cta-acheter {
   display: block;
-  background: linear-gradient(135deg, #059669, #047857);
+  background: linear-gradient(135deg, var(--accent) 0%, #A34900 100%);
   color: #fff;
   text-align: center;
   padding: 16px 24px;
@@ -849,11 +880,20 @@ a {
   font-size: 16px;
   font-weight: 800;
   text-decoration: none;
-  box-shadow: 0 4px 12px rgba(5,150,105,.3);
-  transition: opacity .15s;
+  box-shadow: 0 4px 14px rgba(199,91,0,.28);
+  transition: opacity .15s, transform .1s, box-shadow .15s;
 }
 
-.cta-acheter:hover { opacity: .9; }
+.cta-acheter:hover {
+  opacity: .95;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(199,91,0,.38);
+}
+
+.cta-acheter:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 2px 8px rgba(199,91,0,.20);
+}
 
 /* ── Trust badges ─────────────────────────────────────────────── */
 .trust-row {

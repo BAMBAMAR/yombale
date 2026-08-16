@@ -1,3 +1,17 @@
+- **Audit & Plan de Correction UI/UX & Design System Sans Régression (16 août 2026)** :
+  * **Audit Exhaustif des Éléments Cliquables (`audit_boutons_et_couleurs.md`)** : Recensement et évaluation complète de l'intégralité des éléments cliquables de Nopalou répartis en 12 catégories (boutons d'achat, messagerie WhatsApp, navigation header, cartes produits/immo/télécom, bannières flottantes sticky, filtres et pilules, alertes prix, abonnements marchands, formulaires auth, caisse POS, PWA et footer).
+  * **Plan de Correction Sans Régression (`implementation_plan.md`)** : Élaboration et exécution d'un plan d'harmonisation chromatique et ergonomique strict pour éliminer toutes les dérives de teintes et les zones tactiles sub-44px sans altérer la logique métier ni causer de régression.
+  * **Harmonisation des Boutons Principaux (`globals.css`)** :
+    1. **`cta-acheter` & `cta-acheter--header`** : Remplacement de l'émeraude Tailwind (`#059669`) par le gradient officiel Orange Nopalou (`linear-gradient(135deg, var(--accent) 0%, #A34900 100%)`) avec ombre portée `0 4px 14px rgba(199,91,0,.28)` et effets tactiles `:hover` et `:active`.
+    2. **`.bouton-whatsapp-fiche`** : Ajout de la classe CSS manquante pour styliser le bouton d'envoi WhatsApp des fiches avec la couleur officielle (`#25D366`), ombre portée et états interactifs.
+    3. **Micro-boutons et Accessibilité Tactile** : Optimisation de la zone de frappe minimale (touch target minimum 44x44px) sur mobile pour les boutons de cartes produits (`CardActions`) et du panier via des pseudo-éléments et des dimensions adaptées (`minWidth: 28px`, `height: 28px`).
+  * **Harmonisation de la Navigation Header (`layout.tsx`, `NavbarActions.tsx`, `NavbarSearch.tsx`)** :
+    1. **`Boutique Taf Taf` & `Ma Boutique` (`layout.tsx`)** : Remplacement de la couleur Slate 900 (`#0f172a`, `#334155`) par le Marine officiel Nopalou (`var(--navy)` `#1C2B4A`).
+    2. **Compte & Déconnexion (`NavbarActions.tsx`)** : Harmonisation du fond pilule compte sur `var(--bg)` (`#F8F5F0`) et du bouton déconnexion sur la variable de marque `var(--red)` (`#B91C1C`).
+    3. **Barre de Recherche (`NavbarSearch.tsx`)** : Remplacement des teintes gris froid Tailwind (`#f8fafc`, `#cbd5e1`, `#f1f5f9`) par les tokens du Design System (`var(--card)`, `var(--bg)`, `var(--border)`).
+  * **Harmonisation du Panier Tiroir & Vitrines (`DrawerCart.tsx`, `ShowcaseTabs.tsx`)** :
+    1. **Formulaire en ligne (`DrawerCart.tsx`)** : Remplacement du bleu Tailwind (`#2563eb`) par `var(--navy)` (`#1C2B4A`).
+    2. **Sélecteur de Durée (`ShowcaseTabs.tsx`)** : Remplacement du Slate 900 (`#0f172a`) par `var(--navy)`.
 - **Audit Complet du Scraping & Correction SQL `/api/offres` (16 août 2026)** :
   * **Analyse des dysfonctionnements du Scraping** : Le scraping des marchands e-commerce (CoinAfrique, Expat-Dakar, Jumia, Electronic Corp, Soumari, Promo.sn, Kanje, etc.) est à l'arrêt complet depuis le **10 août 2026** (6 jours sans mise à jour).
   * **Cause Racine** : Sur Render (`render.yaml`), `SCRAPING_DISABLED` est configuré à `"true"` (et `PROCESS_TYPE` non défini en `worker`) pour éviter les timeouts et la saturation mémoire du serveur gratuit. Le scraping dépendait donc de lancements manuels/locaux (`forceScrape.js`, scripts d'automatisation Windows Task Scheduler) qui ne tournaient plus.
