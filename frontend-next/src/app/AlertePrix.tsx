@@ -207,4 +207,3 @@ export default function AlertePrix({ produitId, prixMin, email = '', telephone =
   )
 }
 
-}
