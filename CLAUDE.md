@@ -9,9 +9,12 @@
     1. **`Boutique Taf Taf` & `Ma Boutique` (`layout.tsx`)** : Remplacement de la couleur Slate 900 (`#0f172a`, `#334155`) par le Marine officiel Nopalou (`var(--navy)` `#1C2B4A`).
     2. **Compte & Déconnexion (`NavbarActions.tsx`)** : Harmonisation du fond pilule compte sur `var(--bg)` (`#F8F5F0`) et du bouton déconnexion sur la variable de marque `var(--red)` (`#B91C1C`).
     3. **Barre de Recherche (`NavbarSearch.tsx`)** : Remplacement des teintes gris froid Tailwind (`#f8fafc`, `#cbd5e1`, `#f1f5f9`) par les tokens du Design System (`var(--card)`, `var(--bg)`, `var(--border)`).
-  * **Harmonisation du Carnet de Crédits & Dettes Clients (`CarnetDettes.tsx`)** :
-    1. **Boutons En-tête & Utilitaires** : Remplacement de l'arc-en-ciel de couleurs (émeraude `#10b981`, cyan `#0284c7`, violet `#7c3aed`) par le Marine Nopalou (`var(--navy)` `#1C2B4A` pour `+ Nouveau Client`), des boutons neutres surélevés (`var(--card)` et `var(--border)` pour `Export CSV` et `Imprimer PDF`), et le rouge de créance (`var(--red)` `#B91C1C` pour `+ Donner Crédit`).
-    2. **Boutons d'Action Fiche Client & Statuts** : Remplacement des boutons cyan, gris et vert brut par la palette unifiée (`var(--card)`/`var(--navy)` pour `Modifier` et `Fiche Client`, `var(--price)` pour `Rembourser`, et `#25D366` pour `WA Relance`).
+  * **Harmonisation Globale des Pages & Modules Publics (`annonces/[id]`, `guide-emploi`, `HeroCarousel`, `AlertePrix`, `FormAlerte`, `ModalPaiementManuel`, `PwaInstallPrompt`, `AvisClients`, `BatchActionBar`)** :
+    1. **Fiches & Guides Publics** : Remplacement des liens cyan (`#0284c7`) de suppression de données et d'aide par la couleur de structure `var(--navy)` (`#1C2B4A`).
+    2. **Annuaire des Boutiques** : Remplacement du fond CTA cyan du carrousel de la page `/boutiques` par l'Orange Nopalou (`var(--accent)` `#C75B00`).
+    3. **Alerte Prix** : Harmonisation du bouton de canal Email sur `var(--navy)` (`#1C2B4A`) dans `AlertePrix.tsx` et `FormAlerte.tsx`.
+    4. **Modales & Popups** : Remplacement du bouton noir pur (`#111827`) de `ModalPaiementManuel` par `var(--navy)`, et du fond gris par `var(--bg)` (`#F8F5F0`). Remplacement du Slate 900 (`#0f172a`) de la bannière PWA par `var(--navy)`.
+    5. **Avis & Administration** : Harmonisation des cartes d'avis sur `var(--bg)` / `var(--border)` et `var(--red)`, et du badge de sélection groupée admin sur `var(--navy)`.
 - **Audit Complet du Scraping & Correction SQL `/api/offres` (16 août 2026)** :
   * **Analyse des dysfonctionnements du Scraping** : Le scraping des marchands e-commerce (CoinAfrique, Expat-Dakar, Jumia, Electronic Corp, Soumari, Promo.sn, Kanje, etc.) est à l'arrêt complet depuis le **10 août 2026** (6 jours sans mise à jour).
   * **Cause Racine** : Sur Render (`render.yaml`), `SCRAPING_DISABLED` est configuré à `"true"` (et `PROCESS_TYPE` non défini en `worker`) pour éviter les timeouts et la saturation mémoire du serveur gratuit. Le scraping dépendait donc de lancements manuels/locaux (`forceScrape.js`, scripts d'automatisation Windows Task Scheduler) qui ne tournaient plus.

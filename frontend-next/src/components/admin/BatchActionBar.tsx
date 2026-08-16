@@ -98,7 +98,7 @@ export default function BatchActionBar({
 
         {selectedCount > 0 && (
           <span style={{
-            background: '#3b82f6',
+            background: 'var(--navy)',
             color: '#ffffff',
             padding: '3px 10px',
             borderRadius: 20,

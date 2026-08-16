@@ -86,7 +86,7 @@ const SLIDES = [
     ],
     ctaText: 'Voir les Vendeurs Pro →',
     ctaLink: '/boutiques?plan=pro',
-    ctaBg: '#0284c7',
+    ctaBg: 'var(--accent)',
     ctaColor: '#fff'
   }
 ]

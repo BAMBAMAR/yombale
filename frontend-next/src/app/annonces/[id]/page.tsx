@@ -213,7 +213,7 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
               ⚠️ Ne payez jamais à l&apos;avance sans avoir vu le produit.
             </p>
             <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed #cbd5e1', fontSize: '0.78rem', color: '#64748b', textAlign: 'center', lineHeight: '1.4' }}>
-              🗑️ Vous souhaitez retirer cette annonce ou votre numéro ? <a href="/cgu#suppression-donnees" style={{ color: '#0284c7', textDecoration: 'underline' }}>Cliquez ici</a> ou envoyez &quot;supprimer&quot; sur <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" style={{ color: '#16a34a', textDecoration: 'underline' }}>WhatsApp</a>.
+              🗑️ Vous souhaitez retirer cette annonce ou votre numéro ? <a href="/cgu#suppression-donnees" style={{ color: 'var(--navy)', fontWeight: 700, textDecoration: 'underline' }}>Cliquez ici</a> ou envoyez &quot;supprimer&quot; sur <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" style={{ color: '#25D366', fontWeight: 700, textDecoration: 'underline' }}>WhatsApp</a>.
             </div>
           </div>
 

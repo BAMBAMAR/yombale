@@ -120,7 +120,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {avisList.map(a => (
-            <div key={a.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 14 }}>
+            <div key={a.id} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, padding: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontWeight: 700, fontSize: 14, color: '#1e293b' }}>{a.nom_client}</span>
@@ -163,7 +163,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
             ) : (
               <form onSubmit={submitAvis} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {errorMsg && (
-                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '8px 12px', borderRadius: 6, fontSize: 13 }}>
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: 'var(--red)', padding: '8px 12px', borderRadius: 6, fontSize: 13 }}>
                     {errorMsg}
                   </div>
                 )}

@@ -120,7 +120,7 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
             style={{
               flex: 1, padding: '8px', borderRadius: 8, border: 'none',
               fontSize: 12, fontWeight: 800, cursor: 'pointer',
-              background: canal === 'email' ? '#0284c7' : 'transparent',
+              background: canal === 'email' ? 'var(--navy)' : 'transparent',
               color: canal === 'email' ? '#ffffff' : '#475569',
             }}
           >

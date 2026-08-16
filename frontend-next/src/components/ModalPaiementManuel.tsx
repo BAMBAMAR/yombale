@@ -48,7 +48,7 @@ export default function ModalPaiementManuel({ reference, montant, numeroWave, nu
           <p style={{ color: '#6b7280', fontSize: 14 }}>
             Votre paiement sera vérifié et activé sous peu. Vous serez contacté si besoin.
           </p>
-          <button onClick={onSuccess} style={{ marginTop: 16, padding: '10px 24px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
+          <button onClick={onSuccess} style={{ marginTop: 16, padding: '10px 24px', borderRadius: 8, border: 'none', background: 'var(--navy)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
             Fermer
           </button>
         </div>
@@ -79,7 +79,7 @@ export default function ModalPaiementManuel({ reference, montant, numeroWave, nu
           </button>
         </div>
 
-        <div style={{ background: '#f9fafb', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 14 }}>
+        <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 14, border: '1px solid var(--border)' }}>
           Déposez sur le numéro : <strong>{numero || 'Numéro non configuré — contactez le support'}</strong>
         </div>
 

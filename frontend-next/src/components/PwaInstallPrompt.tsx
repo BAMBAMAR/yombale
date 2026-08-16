@@ -94,7 +94,7 @@ export default function PwaInstallPrompt() {
         width: 'calc(100% - 24px)',
         maxWidth: 460,
         zIndex: 999,
-        background: '#0f172a',
+        background: 'var(--navy)',
         color: '#fff',
         borderRadius: 16,
         padding: '12px 14px',
@@ -214,7 +214,7 @@ export default function PwaInstallPrompt() {
             <button
               onClick={handleDismiss}
               style={{
-                width: '100%', padding: '10px 14px', background: '#0f172a', color: '#fff',
+                width: '100%', padding: '10px 14px', background: 'var(--navy)', color: '#fff',
                 border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 13, cursor: 'pointer'
               }}
             >

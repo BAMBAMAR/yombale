@@ -103,9 +103,9 @@ export default function AlertePrix({ produitId, prixMin, email = '', telephone =
           style={{
             flex: 1, padding: '7px 8px', borderRadius: 8, border: 'none',
             fontSize: 12, fontWeight: 800, cursor: 'pointer',
-            background: canal === 'email' ? '#0284c7' : 'transparent',
+            background: canal === 'email' ? 'var(--navy)' : 'transparent',
             color: canal === 'email' ? '#ffffff' : '#475569',
-            boxShadow: canal === 'email' ? '0 2px 6px rgba(2,132,199,0.3)' : 'none',
+            boxShadow: canal === 'email' ? '0 2px 6px rgba(28,43,74,0.25)' : 'none',
             transition: 'all 0.15s ease'
           }}
         >
