@@ -142,6 +142,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
       // 3. Commandes à crédit en attente d'approbation
       try {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
         const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || localStorage.getItem('auth_token') || '') : ''
         const resCmd = await fetch(`${backendUrl}/api/comptabilite/${boutique.id}/commandes`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
