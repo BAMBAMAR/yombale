@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { getBoutiqueDocuments, creerBoutiqueDocument, modifierBoutiqueDocument, supprimerBoutiqueDocument, getBoutiqueProduits } from './actions'
 import { fcfa } from '@/lib/format'
+import SearchableProductSelect from '@/components/SearchableProductSelect'
+import SearchableClientSelect from '@/components/SearchableClientSelect'
 
 export default function GestionDocuments({ boutiqueId }: { boutiqueId: string }) {
   const [documents, setDocuments] = useState<any[]>([])
@@ -400,12 +402,12 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
 
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Associer un client (Facultatif)</label>
-                <select value={clientIdSelected} onChange={e => setClientIdSelected(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }}>
-                  <option value="">-- Client Passant (Anonyme) --</option>
-                  {clients.map(c => (
-                    <option key={c.id} value={c.id}>{c.prenom} {c.nom} ({c.telephone})</option>
-                  ))}
-                </select>
+                <SearchableClientSelect
+                  clients={clients}
+                  value={clientIdSelected}
+                  onChange={(cId) => setClientIdSelected(cId)}
+                  placeholder="-- Client Passant (Anonyme) --"
+                />
               </div>
 
               {/* Lignes d'articles */}
@@ -429,20 +431,12 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                           
                           <div style={{ flex: '2 1 180px', display: 'flex', flexDirection: 'column', gap: 4 }}>
                             <label style={{ fontSize: 11.5, fontWeight: 800, color: '#475569' }}>Article / Produit *</label>
-                            <select
+                            <SearchableProductSelect
+                              produits={produits}
                               value={isCatalogProd ? ligne.produitId : 'custom'}
-                              onChange={e => handleModifierLigne(idx, 'produitId', e.target.value)}
-                              style={{ width: '100%', padding: '9px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, fontWeight: 600, height: 38 }}
-                            >
-                              <option value="custom">✏️ Article hors catalogue / Saisie libre</option>
-                              {produits.length > 0 && (
-                                <optgroup label="Catalogue Produits">
-                                  {produits.map(p => (
-                                    <option key={p.id} value={p.id}>{p.nom} ({fcfa(p.prix)})</option>
-                                  ))}
-                                </optgroup>
-                              )}
-                            </select>
+                              onChange={(pId) => handleModifierLigne(idx, 'produitId', pId)}
+                              placeholder="🔍 Rechercher ou sélectionner un article..."
+                            />
                           </div>
 
                           <div style={{ width: 90, display: 'flex', flexDirection: 'column', gap: 4 }}>

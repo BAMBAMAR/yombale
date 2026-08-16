@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useTransition } from 'react'
-import { listCommandes, updateStatutCommande } from './actions'
+import { listCommandes, updateStatutCommande, creerBoutiqueDocument } from './actions'
 import { fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import { ZonesView } from './Comptabilite'
@@ -123,16 +123,65 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
             </div>
           )}
 
-          {/* Actions de statut */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Actions de statut & Validation Marchand */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Actions Rapides Marchand */}
+            <div style={{ background: '#f8fafc', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span style={{ fontSize: 11.5, fontWeight: 800, color: '#334155' }}>⚡ Actions Marchand Instantanées :</span>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {commande.statut === 'en_attente' && (
+                  <button
+                    onClick={() => changeStatut('confirmee')}
+                    disabled={loading}
+                    style={{ padding: '6px 12px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    ✅ Valider la commande
+                  </button>
+                )}
+
+                <button
+                  onClick={async () => {
+                    try {
+                      setLoading(true)
+                      const res = await creerBoutiqueDocument(boutiqueId, {
+                        type: 'facture',
+                        statut: 'valide',
+                        notes: `Facture issue de la commande Réf: ${commande.reference}`,
+                        items: [{ nom: commande.nom_produit, quantite: commande.quantite, prix: commande.prix_unitaire }]
+                      })
+                      if (res.error) alert(res.error)
+                      else alert(`Facture ${res.reference || ''} générée avec succès !`)
+                    } catch (e) {
+                      alert('Erreur lors de la création de la facture.')
+                    } finally {
+                      setLoading(false)
+                    }
+                  }}
+                  disabled={loading}
+                  style={{ padding: '6px 12px', background: '#0284c7', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  📄 Générer Facture PDF
+                </button>
+
+                <a
+                  href={`https://wa.me/${(commande.client_telephone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour ${commande.client_nom}, votre commande Réf: ${commande.reference} (${commande.quantite}x ${commande.nom_produit} - ${fcfa(commande.montant_total)}) a été bien validée par notre boutique. Merci pour votre confiance !`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ padding: '6px 12px', background: '#25D366', color: '#fff', textDecoration: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                >
+                  📲 Confirmer sur WhatsApp
+                </a>
+              </div>
+            </div>
+
             {next.length > 0 && (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: 12, color: '#6b7280' }}>Passer à :</span>
+                <span style={{ fontSize: 12, color: '#6b7280' }}>Passer au statut :</span>
                 {next.map(s => {
                   const info = STATUTS.find(x => x.key === s)!
                   return (
                     <button key={s} onClick={() => changeStatut(s)} disabled={loading} style={{
-                      fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, cursor: loading ? 'not-allowed' : 'pointer', border: 'none',
+                      fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 8, cursor: loading ? 'not-allowed' : 'pointer', border: 'none',
                       background: info.bg, color: info.color, opacity: loading ? 0.6 : 1,
                     }}>
                       {info.label} →

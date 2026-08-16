@@ -22,6 +22,7 @@ import ParametresFiscalite from './ParametresFiscalite'
 import GestionDocuments from './GestionDocuments'
 import GestionFournisseurs from './GestionFournisseurs'
 import BoutiqueLogs from './BoutiqueLogs'
+import QrCodeShareModal from '@/components/QrCodeShareModal'
 import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
@@ -2448,11 +2449,13 @@ function BoutiqueDashboard({
   planActif,
   nbEnAttente,
   onNavigate,
+  onOpenQrModal,
 }: {
   boutique: Boutique
   planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
   nbEnAttente: number
   onNavigate: (tab: ManageTab, subTab?: string) => void
+  onOpenQrModal?: () => void
 }) {
   const [produitsCount, setProduitsCount] = useState<number | null>(null)
   const [stockAlertsCount, setStockAlertsCount] = useState<number | null>(null)
@@ -2643,7 +2646,7 @@ function BoutiqueDashboard({
           )}
 
           <button
-            onClick={() => onNavigate('marketing')}
+            onClick={() => onOpenQrModal ? onOpenQrModal() : onNavigate('marketing')}
             style={{
               display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
               borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
@@ -2655,8 +2658,8 @@ function BoutiqueDashboard({
               <Share2 size={22} style={{ color: 'var(--accent)' }} />
             </div>
             <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Partager la boutique</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Lien WhatsApp & réseaux</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Mon QR Code & Lien</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Partager QR & Vitrine digital</p>
             </div>
           </button>
         </div>
@@ -2727,6 +2730,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
 
   const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
   const [subTabCompta, setSubTabCompta] = useState<'dashboard' | 'express' | 'ventes' | 'depenses'>('express')
+  const [showQrModal, setShowQrModal] = useState(false)
 
   const handleNavigateFromDashboard = (targetTab: ManageTab, subTab?: string) => {
     if (targetTab === 'compta') {
@@ -2914,6 +2918,13 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
               <p style={{ margin: '0 0 3px', fontWeight: 900, fontSize: 14, color: 'var(--pos-navy, #1C2B4A)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.02em' }}>
                 {boutique.nom}
               </p>
+              <button
+                type="button"
+                onClick={() => setShowQrModal(true)}
+                style={{ background: '#e0f2fe', color: '#0369a1', border: 'none', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              >
+                📱 QR Code & Lien Vitrine
+              </button>
               {planActif && (
                 <span
                   style={{
@@ -3113,6 +3124,13 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           </a>
         </div>
       </aside>
+
+      <QrCodeShareModal
+        isOpen={showQrModal}
+        onClose={() => setShowQrModal(false)}
+        url={typeof window !== 'undefined' ? `${window.location.origin}/boutiques/${boutique.id}` : `https://nopalou.com/boutiques/${boutique.id}`}
+        boutiqueNom={boutique.nom}
+      />
 
       {/* Contenu principal */}
       <main className="bq-main">

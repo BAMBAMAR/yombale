@@ -95,6 +95,8 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   // Formulaire Transaction & Sélecteur Catalogue
   const [modeSaisie, setModeSaisie] = useState<'catalogue' | 'manuel'>('catalogue')
   const [panierProduits, setPanierProduits] = useState<Record<string, number>>({}) // produitId -> qte
+  const [rechercheProduitModal, setRechercheProduitModal] = useState('')
+  const [categorieProduitModal, setCategorieProduitModal] = useState('tous')
   const [montantManuel, setMontantManuel] = useState('')
   const [descriptionManuelle, setDescriptionManuelle] = useState('')
   const [modePaiement, setModePaiement] = useState('especes')
@@ -1689,75 +1691,275 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             )}
 
             {/* Mode Catalogue */}
-            {typeTransaction === 'vente_credit' && modeSaisie === 'catalogue' && (
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>
-                  Cliquez sur les articles commandés par le client :
-                </label>
-                
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(115px, 1fr))',
-                  gap: 8,
-                  maxHeight: 220,
-                  overflowY: 'auto',
-                  padding: 2
-                }}>
-                  {produits.length === 0 ? (
-                    <div style={{ gridColumn: '1 / -1', fontSize: 12.5, color: '#94a3b8', textAlign: 'center', padding: 16 }}>
-                      Aucun produit dans le catalogue. Utilisez la saisie libre.
-                    </div>
-                  ) : (
-                    produits.map(p => {
-                      const qte = panierProduits[p.id] || 0
-                      const prixAff = Number(p.prix_promo || p.prix || 0)
+            {typeTransaction === 'vente_credit' && modeSaisie === 'catalogue' && (() => {
+              const categoriesModal = Array.from(new Set(produits.map((p: any) => p.categorie).filter(Boolean))) as string[]
+              const qModal = rechercheProduitModal.trim().toLowerCase()
+              const produitsFiltresModal = produits.filter((p: any) => {
+                const matchCat = categorieProduitModal === 'tous' || p.categorie === categorieProduitModal
+                const matchText = !qModal ||
+                  p.nom?.toLowerCase().includes(qModal) ||
+                  p.categorie?.toLowerCase().includes(qModal) ||
+                  p.barcode?.toLowerCase().includes(qModal) ||
+                  p.sku?.toLowerCase().includes(qModal)
+                return matchCat && matchText
+              })
 
-                      return (
-                        <div
-                          key={p.id}
-                          onClick={() => setPanierProduits(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))}
+              return (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', margin: 0 }}>
+                      Cliquez sur les articles commandés par le client :
+                    </label>
+                    {Object.keys(panierProduits).some(k => panierProduits[k] > 0) && (
+                      <button
+                        type="button"
+                        onClick={() => setPanierProduits({})}
+                        style={{ fontSize: 11, color: '#ef4444', background: '#fee2e2', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontWeight: 700 }}
+                      >
+                        🗑️ Vider le panier
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Champ de recherche rapide + Filtres catégories */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10 }}>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        value={rechercheProduitModal}
+                        onChange={e => setRechercheProduitModal(e.target.value)}
+                        placeholder="🔍 Rechercher un produit (nom, réference, catégorie)..."
+                        style={{
+                          width: '100%',
+                          padding: '8px 30px 8px 12px',
+                          borderRadius: 8,
+                          border: '1px solid #cbd5e1',
+                          fontSize: 13,
+                          fontWeight: 600,
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      {rechercheProduitModal && (
+                        <button
+                          type="button"
+                          onClick={() => setRechercheProduitModal('')}
                           style={{
-                            background: qte > 0 ? '#f0f9ff' : '#f8fafc',
-                            border: qte > 0 ? '2px solid #0284c7' : '1px solid #e2e8f0',
-                            borderRadius: 10,
-                            padding: 8,
+                            position: 'absolute',
+                            right: 8,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            color: '#94a3b8',
                             cursor: 'pointer',
-                            textAlign: 'center',
-                            position: 'relative'
+                            fontSize: 14
                           }}
                         >
-                          {qte > 0 && (
-                            <span style={{
-                              position: 'absolute',
-                              top: -5,
-                              right: -5,
-                              background: '#0284c7',
-                              color: '#fff',
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    {categoriesModal.length > 0 && (
+                      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+                        <button
+                          type="button"
+                          onClick={() => setCategorieProduitModal('tous')}
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: 12,
+                            fontSize: 11,
+                            fontWeight: 700,
+                            border: 'none',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            background: categorieProduitModal === 'tous' ? '#0284c7' : '#f1f5f9',
+                            color: categorieProduitModal === 'tous' ? '#ffffff' : '#475569'
+                          }}
+                        >
+                          Tous ({produits.length})
+                        </button>
+                        {categoriesModal.map(cat => {
+                          const count = produits.filter((p: any) => p.categorie === cat).length
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => setCategorieProduitModal(cat)}
+                              style={{
+                                padding: '3px 8px',
+                                borderRadius: 12,
+                                fontSize: 11,
+                                fontWeight: 700,
+                                border: 'none',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                background: categorieProduitModal === cat ? '#0284c7' : '#f1f5f9',
+                                color: categorieProduitModal === cat ? '#ffffff' : '#475569'
+                              }}
+                            >
+                              {cat} ({count})
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(130px, 1fr))',
+                    gap: 8,
+                    maxHeight: 240,
+                    overflowY: 'auto',
+                    padding: 2
+                  }}>
+                    {produitsFiltresModal.length === 0 ? (
+                      <div style={{ gridColumn: '1 / -1', fontSize: 12.5, color: '#94a3b8', textAlign: 'center', padding: 20 }}>
+                        {produits.length === 0
+                          ? 'Aucun produit dans le catalogue. Utilisez la saisie libre.'
+                          : 'Aucun produit ne correspond à la recherche.'}
+                      </div>
+                    ) : (
+                      produitsFiltresModal.map((p: any) => {
+                        const qte = panierProduits[p.id] || 0
+                        const prixAff = Number(p.prix_promo || p.prix || 0)
+
+                        return (
+                          <div
+                            key={p.id}
+                            style={{
+                              background: qte > 0 ? '#f0f9ff' : '#f8fafc',
+                              border: qte > 0 ? '2px solid #0284c7' : '1px solid #e2e8f0',
                               borderRadius: 10,
-                              width: 20,
-                              height: 20,
+                              padding: '8px 6px',
+                              textAlign: 'center',
+                              position: 'relative',
                               display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: 11,
-                              fontWeight: 900
-                            }}>
-                              {qte}
-                            </span>
-                          )}
-                          <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {p.nom}
+                              flexDirection: 'column',
+                              justifyContent: 'space-between'
+                            }}
+                          >
+                            <div
+                              onClick={() => setPanierProduits(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.nom}>
+                                {p.nom}
+                              </div>
+                              <div style={{ fontSize: 11.5, color: '#0284c7', fontWeight: 900, marginTop: 2 }}>
+                                {fcfa(prixAff)}
+                              </div>
+                            </div>
+
+                            {qte > 0 ? (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 6, paddingTop: 4, borderTop: '1px dashed #bae6fd' }}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setPanierProduits(prev => {
+                                      const copy = { ...prev }
+                                      if (copy[p.id] > 1) {
+                                        copy[p.id] -= 1
+                                      } else {
+                                        delete copy[p.id]
+                                      }
+                                      return copy
+                                    })
+                                  }}
+                                  style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: '#fee2e2', color: '#ef4444', fontWeight: 900, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  title="Diminuer la quantité (-1) ou supprimer"
+                                >
+                                  -
+                                </button>
+
+                                <span style={{ fontSize: 12, fontWeight: 900, color: '#0369a1', minWidth: 16, textAlign: 'center' }}>
+                                  {qte}
+                                </span>
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setPanierProduits(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))
+                                  }}
+                                  style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: '#e0f2fe', color: '#0284c7', fontWeight: 900, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  title="Augmenter la quantité (+1)"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setPanierProduits(prev => ({ ...prev, [p.id]: 1 }))}
+                                style={{ marginTop: 4, padding: '3px 6px', fontSize: 10.5, fontWeight: 700, background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, color: '#475569', cursor: 'pointer' }}
+                              >
+                                ➕ Ajouter
+                              </button>
+                            )}
                           </div>
-                          <div style={{ fontSize: 11.5, color: '#0284c7', fontWeight: 900, marginTop: 3 }}>
-                            {fcfa(prixAff)}
-                          </div>
-                        </div>
-                      )
-                    })
+                        )
+                      })
+                    )}
+                  </div>
+
+                  {/* Résumé clair du panier sélectionné avec suppression unitaire ou globale */}
+                  {Object.keys(panierProduits).some(k => panierProduits[k] > 0) && (
+                    <div style={{ marginTop: 12, background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 10, padding: 10 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: '#0369a1' }}>
+                          🛒 Articles ajoutés à la vente ({Object.values(panierProduits).reduce((a, b) => a + b, 0)}) :
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setPanierProduits({})}
+                          style={{ fontSize: 11, color: '#ef4444', background: '#fee2e2', border: 'none', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontWeight: 800 }}
+                        >
+                          🗑️ Vider tout le panier
+                        </button>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 110, overflowY: 'auto' }}>
+                        {Object.entries(panierProduits).filter(([_, qte]) => qte > 0).map(([pId, qte]) => {
+                          const prodObj = produits.find((p: any) => p.id === pId)
+                          if (!prodObj) return null
+                          const unitPrice = Number(prodObj.prix_promo || prodObj.prix || 0)
+                          const subtotal = unitPrice * qte
+
+                          return (
+                            <div key={pId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', padding: '4px 8px', borderRadius: 6, border: '1px solid #e0f2fe', fontSize: 12 }}>
+                              <span style={{ fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>
+                                {prodObj.nom}
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ color: '#0284c7', fontWeight: 800 }}>
+                                  {qte} × {fcfa(unitPrice)} = {fcfa(subtotal)}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setPanierProduits(prev => {
+                                    const copy = { ...prev }
+                                    delete copy[pId]
+                                    return copy
+                                  })}
+                                  style={{ background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 4, width: 18, height: 18, cursor: 'pointer', fontWeight: 900, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  title="Supprimer cet article du panier"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             {/* Mode Manuel / Remboursement */}
             {(modeSaisie === 'manuel' || typeTransaction === 'remboursement') && (

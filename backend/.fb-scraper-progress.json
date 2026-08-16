@@ -1,32 +1,16 @@
 {
   "status": "completed",
   "mode": "live",
-  "groupeIndex": 10,
+  "groupeIndex": 1,
   "totalGroupes": 10,
   "pourcentage": 100,
   "groupeActuel": "Terminé",
-  "scrapes": 16,
+  "scrapes": 0,
   "inseres": 0,
   "doublons": 0,
-  "ignores": 1,
+  "ignores": 0,
   "erreurs": [
-    "read ECONNRESET",
-    "Connection terminated due to connection timeout",
-    "Emploi 2: page.evaluate: Execution context was destroyed, most likely because of a navigation",
-    "read ECONNRESET",
-    "read ECONNRESET",
-    "read ECONNRESET",
-    "read ECONNRESET",
-    "read ECONNRESET",
-    "read ECONNRESET",
-    "Emploi 6: page.evaluate: Execution context was destroyed, most likely because of a navigation",
-    "read ECONNRESET",
-    "read ECONNRESET",
-    "read ECONNRESET",
-    "read ECONNRESET",
-    "read ECONNRESET",
-    "read ECONNRESET",
-    "read ECONNRESET"
+    "Ndeye Yacine Seck Faye (Offres Emploi): Session Facebook invalidée (mur de connexion détecté) — relancez : node backend/scripts/fb-login-setup.js"
   ],
-  "updatedAt": "2026-08-15T18:39:29.179Z"
+  "updatedAt": "2026-08-16T17:02:49.675Z"
 }

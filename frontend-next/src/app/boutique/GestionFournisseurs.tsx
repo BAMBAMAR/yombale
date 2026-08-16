@@ -16,6 +16,7 @@ import {
 } from './actions'
 import { fcfa } from '@/lib/format'
 import { StockView } from './Comptabilite'
+import SearchableProductSelect from '@/components/SearchableProductSelect'
 
 export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string }) {
   const [subTab, setSubTab] = useState<'stock' | 'fournisseurs' | 'commandes'>('stock')
@@ -667,21 +668,12 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                               </button>
                             </div>
 
-                            <select
+                            <SearchableProductSelect
+                              produits={produits}
                               value={isCatalogProd ? ligne.produitId : 'custom'}
-                              onChange={e => handleModifierLigneCmd(idx, 'produitId', e.target.value)}
-                              style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, background: '#ffffff' }}
-                              required
-                            >
-                              <option value="custom">✏️ Article hors catalogue / Saisie libre</option>
-                              {produits.length > 0 && (
-                                <optgroup label="Catalogue Produits de la boutique">
-                                  {produits.map(p => (
-                                    <option key={p.id} value={p.id}>{p.nom} (Stock actuel: {p.stock_quantite ?? p.quantite_stock ?? 0})</option>
-                                  ))}
-                                </optgroup>
-                              )}
-                            </select>
+                              onChange={(pId) => handleModifierLigneCmd(idx, 'produitId', pId)}
+                              placeholder="🔍 Rechercher un produit à commander..."
+                            />
 
                             {estCustom && (
                               <input
