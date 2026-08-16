@@ -144,8 +144,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
                         onClick={async () => {
                           try {
                             setLoading(true)
-                            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
-                            const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/credits-clients/approuver-commande`, {
+                            const res = await fetch(`/api/boutiques/${boutiqueId}/credits-clients/approuver-commande`, {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({
@@ -182,6 +181,17 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
                         style={{ padding: '6px 12px', background: '#0284c7', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                       >
                         📒 Approuver & Ajouter au Carnet
+                      </button>
+
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Souhaitez-vous vraiment rejeter la demande d'achat à crédit de ${commande.client_nom} ?`)) return
+                          changeStatut('annulee')
+                        }}
+                        disabled={loading}
+                        style={{ padding: '6px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      >
+                        ❌ Rejeter la demande
                       </button>
                     )}
                   </>

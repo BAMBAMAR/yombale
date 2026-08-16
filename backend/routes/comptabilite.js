@@ -561,6 +561,30 @@ async function creerCommandeBoutique({
     }
   }
 
+  // Vérification si le client est blacklisté pour les achats à crédit
+  if (methodePaiement === 'credit') {
+    const cleanTel = String(clientTelephone || '').replace(/\D/g, '');
+    const shortTel = cleanTel.length >= 9 ? cleanTel.slice(-9) : cleanTel;
+    if (shortTel || clientNom) {
+      const blackRes = await pool.query(
+        `SELECT id, statut, nom FROM caisse_clients_credits
+         WHERE boutique_id = $1
+           AND statut = 'bloque'
+           AND (
+             ($2::text != '' AND REPLACE(REPLACE(telephone, ' ', ''), '+', '') LIKE '%' || $2)
+             OR ($3::text != '' AND LOWER(TRIM(nom)) = LOWER(TRIM($3)))
+           )
+         LIMIT 1`,
+        [actualBoutiqueId, shortTel, (clientNom || '').trim()]
+      );
+      if (blackRes.rows[0]) {
+        const e = new Error('⛔ Votre compte est actuellement bloqué par la boutique pour les achats à crédit.');
+        e.status = 400;
+        throw e;
+      }
+    }
+  }
+
   const montantTotal = prixUnitaire * quantite + fraisLivraison;
   const ref = genRefCommande();
 

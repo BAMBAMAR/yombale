@@ -20,3 +20,21 @@ export async function PUT(
     return NextResponse.json({ error: 'Erreur réseau' }, { status: 500 })
   }
 }
+
+// DELETE /api/boutiques/[id]/credits-clients/[clientId] — Supprimer un client carnet
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string; clientId: string } }
+) {
+  try {
+    const res = await backendFetch(`/api/boutiques/${params.id}/credits-clients/${params.clientId}`, {
+      method: 'DELETE',
+    })
+    const data = await res.json().catch(() => ({}))
+    return NextResponse.json(data, { status: res.status })
+  } catch (err) {
+    console.error('[API Route] DELETE /boutiques/[id]/credits-clients/[clientId] error:', err)
+    return NextResponse.json({ error: 'Erreur réseau' }, { status: 500 })
+  }
+}
+

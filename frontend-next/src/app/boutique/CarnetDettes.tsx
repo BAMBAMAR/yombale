@@ -430,6 +430,55 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     }
   }
 
+  // Blacklister ou Réactiver un client du carnet
+  const handleChangerStatutClient = async (c: ClientCredit, nouveauStatut: 'actif' | 'bloque' | 'archive') => {
+    try {
+      const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/${c.id}/statut`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ statut: nouveauStatut }),
+      })
+      if (res.ok) {
+        await chargerDonnees()
+        if (clientSelectionne?.id === c.id) {
+          setClientSelectionne(prev => prev ? { ...prev, statut: nouveauStatut } : null)
+        }
+        alert(nouveauStatut === 'bloque' ? `⛔ Le client ${c.nom} a été blacklisté.` : `🟢 Le client ${c.nom} a été réactivé.`)
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Erreur lors du changement de statut du client.')
+      }
+    } catch (e) {
+      console.error('Erreur changement statut client:', e)
+      alert('Impossible de joindre le serveur.')
+    }
+  }
+
+  // Supprimer définitivement un client du carnet
+  const handleSupprimerClient = async (c: ClientCredit) => {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer définitivement le client "${c.nom}" du carnet ?\nCette action est irréversible.`)) {
+      return
+    }
+    try {
+      const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/${c.id}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        if (clientSelectionne?.id === c.id) {
+          setClientSelectionne(null)
+        }
+        await chargerDonnees()
+        alert(`🗑️ Client "${c.nom}" supprimé avec succès du carnet.`)
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Erreur lors de la suppression du client.')
+      }
+    } catch (e) {
+      console.error('Erreur suppression client:', e)
+      alert('Impossible de joindre le serveur.')
+    }
+  }
+
   // Filtrage des clients
   const clientsFiltres = clients.filter(c => {
     const textMatch = !recherche.trim() || 
@@ -958,44 +1007,74 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
-                      const res = await fetch(`${backendUrl}/api/boutiques/${boutique.id}/credits-clients/approuver-commande`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          commande_id: cmd.id,
-                          client_nom: cmd.client_nom,
-                          client_telephone: cmd.client_telephone,
-                          montant: cmd.montant_total,
-                          nom_produit: cmd.nom_produit,
-                          quantite: cmd.quantite,
-                          reference: cmd.reference,
-                        }),
-                      })
-                      const data = await res.json()
-                      if (!res.ok) {
-                        alert(data.error || 'Erreur approbation')
-                        return
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/approuver-commande`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            commande_id: cmd.id,
+                            client_nom: cmd.client_nom,
+                            client_telephone: cmd.client_telephone,
+                            montant: cmd.montant_total,
+                            nom_produit: cmd.nom_produit,
+                            quantite: cmd.quantite,
+                            reference: cmd.reference,
+                          }),
+                        })
+                        const data = await res.json()
+                        if (!res.ok) {
+                          alert(data.error || 'Erreur approbation')
+                          return
+                        }
+                        await chargerDonnees()
+                        window.dispatchEvent(new Event('carnet_updated'))
+                        const cleanTel = cmd.client_telephone.replace(/\D/g, '')
+                        const msgWa = encodeURIComponent(`Bonjour ${cmd.client_nom}, votre demande d'achat à crédit de ${fcfa(cmd.montant_total)} (${cmd.nom_produit}) a été approuvée par la boutique et enregistrée dans votre Carnet !`)
+                        if (confirm(`✅ Demande d'achat à crédit de ${cmd.client_nom} approuvée et enregistrée dans son Carnet client avec succès !\n\nSouhaitez-vous lui envoyer le message de confirmation sur WhatsApp ?`)) {
+                          window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
+                        }
+                      } catch (e) {
+                        alert('Erreur lors du traitement.')
                       }
-                      await chargerDonnees()
-                      window.dispatchEvent(new Event('carnet_updated'))
-                      const cleanTel = cmd.client_telephone.replace(/\D/g, '')
-                      const msgWa = encodeURIComponent(`Bonjour ${cmd.client_nom}, votre demande d'achat à crédit de ${fcfa(cmd.montant_total)} (${cmd.nom_produit}) a été approuvée par la boutique et enregistrée dans votre Carnet !`)
-                      if (confirm(`✅ Demande d'achat à crédit de ${cmd.client_nom} approuvée et enregistrée dans son Carnet client avec succès !\n\nSouhaitez-vous lui envoyer le message de confirmation sur WhatsApp ?`)) {
-                        window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
+                    }}
+                    style={{ padding: '8px 14px', background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    ✅ Approuver & Ajouter au Carnet
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirm(`Souhaitez-vous vraiment rejeter la demande d'achat à crédit de ${cmd.client_nom} (${fcfa(cmd.montant_total)}) ?`)) return
+                      try {
+                        const res = await fetch(`/api/comptabilite/${boutique.id}/commandes/${cmd.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ statut: 'annulee' }),
+                        })
+                        if (res.ok) {
+                          await chargerDonnees()
+                          const cleanTel = cmd.client_telephone.replace(/\D/g, '')
+                          const msgWa = encodeURIComponent(`Bonjour ${cmd.client_nom}, votre demande d'achat à crédit de ${fcfa(cmd.montant_total)} (${cmd.nom_produit}) ne peut pas être accordée pour le moment. Merci de votre compréhension.`)
+                          if (confirm(`❌ Demande d'achat à crédit rejetée.\n\nSouhaitez-vous envoyer le message de refus au client sur WhatsApp ?`)) {
+                            window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
+                          }
+                        } else {
+                          alert('Erreur lors du rejet de la demande.')
+                        }
+                      } catch (e) {
+                        alert('Erreur lors du traitement.')
                       }
-                    } catch (e) {
-                      alert('Erreur lors du traitement.')
-                    }
-                  }}
-                  style={{ padding: '8px 14px', background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-                >
-                  ✅ Approuver & Ajouter au Carnet
-                </button>
+                    }}
+                    style={{ padding: '8px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    ❌ Rejeter
+                  </button>
+                </div>
               </div>
             ))}
           </div>
