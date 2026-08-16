@@ -642,7 +642,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     )
   }
 
-  async function handleChangerStatutClient(client: Client, nouveauStatut: 'actif' | 'bloque') {
+  async function handleChangerStatutClient(client: ClientCredit, nouveauStatut: 'actif' | 'bloque') {
     const isBloque = nouveauStatut === 'bloque'
     const actionText = isBloque ? 'blacklister/bloquer' : 'réactiver'
     if (!confirm(`Voulez-vous vraiment ${actionText} le client ${client.nom} ?` + (isBloque ? '\n\nIl ne pourra plus soumettre de demande d\'achat à crédit sur votre boutique.' : ''))) {
@@ -668,7 +668,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     }
   }
 
-  async function handleSupprimerClient(client: Client) {
+  async function handleSupprimerClient(client: ClientCredit) {
     const soldeNum = Number(client.solde || 0)
     if (soldeNum !== 0) {
       if (!confirm(`⚠️ Attention : Le client ${client.nom} a un solde actuel de ${fcfa(soldeNum)}.\n\nVoulez-vous vraiment supprimer définitivement ce profil et tout son historique du carnet ?`)) {
