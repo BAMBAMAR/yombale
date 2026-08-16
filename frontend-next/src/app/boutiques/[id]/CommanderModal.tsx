@@ -326,18 +326,28 @@ export default function CommanderModal({
         ) : (
           /* Mode 2: Formulaire classique */
           success ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <p style={{ fontSize: 48, marginBottom: 16 }}>✅</p>
-              <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 20, marginBottom: 8 }}>Commande envoyée !</h2>
-              <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 8 }}>
-                La boutique a reçu votre commande et vous contactera sur le <strong>{tel}</strong> pour confirmer.
+            <div style={{ textAlign: 'center', padding: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <p style={{ fontSize: 52, margin: 0 }}>{paiement === 'credit' ? '💳' : '✅'}</p>
+              <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 20, margin: 0, color: paiement === 'credit' ? '#0369a1' : '#111827', fontWeight: 900 }}>
+                {paiement === 'credit' ? 'Demande d\'Achat à Crédit Transmise !' : 'Commande envoyée avec succès !'}
+              </h2>
+              <p style={{ fontSize: 13.5, color: '#4b5563', margin: 0, lineHeight: 1.5 }}>
+                {paiement === 'credit' ? (
+                  <>
+                    La boutique <strong>{nomBoutique || 'vendeur'}</strong> a reçu votre demande d&apos;achat à crédit. Le commerçant l&apos;ajoutera à votre Carnet client dès approbation.
+                  </>
+                ) : (
+                  <>
+                    La boutique a reçu votre commande et vous contactera sur le <strong>{tel}</strong> pour confirmer la livraison.
+                  </>
+                )}
               </p>
-              {total && (
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#C75B00', marginBottom: 24 }}>
+              {total ? (
+                <p style={{ fontSize: 16, fontWeight: 800, color: paiement === 'credit' ? '#0284c7' : '#C75B00', margin: 0 }}>
                   Montant total : {fcfa(total)}
                 </p>
-              )}
-              <button onClick={onClose} style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 28px', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+              ) : null}
+              <button onClick={onClose} style={{ background: paiement === 'credit' ? '#0284c7' : '#C75B00', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 28px', fontWeight: 800, fontSize: 14, cursor: 'pointer', marginTop: 8 }}>
                 Fermer
               </button>
             </div>

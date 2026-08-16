@@ -134,6 +134,33 @@ export default function DrawerCart() {
     }
   }
 
+  async function handleCommanderViaWhatsappDirect() {
+    setLoadingCheckout(true)
+    try {
+      await fetch(`${backendUrl}/api/comptabilite/${activeBoutiqueId}/commandes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom_produit: items.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+          prix_unitaire: sousTotal,
+          quantite: 1,
+          client_nom: clientNom.trim() || 'Client WhatsApp',
+          client_telephone: clientTel.trim() || 'Via WhatsApp',
+          client_adresse: clientAdresse.trim() || undefined,
+          methode_paiement: methodePaiement,
+          zone_livraison_id: (zoneId && zoneId.length === 36) ? zoneId : undefined,
+          frais_livraison: fraisLivraison,
+          source: 'whatsapp_panier',
+        }),
+      }).catch(() => {})
+    } finally {
+      setLoadingCheckout(false)
+      window.open(getLienWhatsapp(), '_blank')
+      setCheckoutMode('succes')
+      clearCart(activeBoutiqueId!)
+    }
+  }
+
   return (
     <div className="drawer-cart-overlay" onClick={closeCart}>
       <div className="drawer-cart-container" onClick={e => e.stopPropagation()}>
@@ -223,18 +250,49 @@ export default function DrawerCart() {
           {/* Liste des Articles */}
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
             {checkoutMode === 'succes' ? (
-              <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                <span style={{ fontSize: 54, display: 'block', marginBottom: 12 }}>🎉</span>
-                <h3 style={{ margin: '0 0 8px', fontSize: 18, color: '#166534', fontWeight: 800 }}>Commande Envoyée !</h3>
-                <p style={{ margin: '0 0 20px', fontSize: 14, color: '#374151', lineHeight: 1.5 }}>
-                  Votre commande a été transmise avec succès au marchand <strong>{activeCart.boutiqueNom}</strong>. Il prendra contact avec vous rapidement pour la livraison !
+              <div style={{ textAlign: 'center', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+                <span style={{ fontSize: 54, display: 'block' }}>
+                  {methodePaiement === 'credit' ? '💳' : '🎉'}
+                </span>
+                <h3 style={{ margin: 0, fontSize: 18, color: methodePaiement === 'credit' ? '#0369a1' : '#166534', fontWeight: 900 }}>
+                  {methodePaiement === 'credit' ? 'Demande d\'Achat à Crédit Transmise !' : 'Commande Envoyée avec Succès !'}
+                </h3>
+                <p style={{ margin: 0, fontSize: 13.5, color: '#374151', lineHeight: 1.5 }}>
+                  {methodePaiement === 'credit' ? (
+                    <>
+                      Votre demande d&apos;achat à crédit de <strong style={{ color: '#0284c7' }}>{fcfa(totalGlobal)}</strong> auprès de <strong>{activeCart.boutiqueNom}</strong> a été enregistrée dans le système. Le commerçant la validera dans son Carnet client !
+                    </>
+                  ) : (
+                    <>
+                      Votre commande a été transmise avec succès au marchand <strong>{activeCart.boutiqueNom}</strong>. Il prendra contact avec vous rapidement pour la livraison !
+                    </>
+                  )}
                 </p>
-                <button
-                  onClick={() => { setCheckoutMode('options'); closeCart(); }}
-                  style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 24px', fontWeight: 800, cursor: 'pointer' }}
-                >
-                  Fermer
-                </button>
+                {methodePaiement === 'credit' && (
+                  <p style={{ margin: 0, fontSize: 12, color: '#0284c7', background: '#e0f2fe', padding: '10px 14px', borderRadius: 10, border: '1px solid #bae6fd', fontWeight: 600 }}>
+                    ℹ️ Vous pouvez également contacter le vendeur sur WhatsApp pour valider immédiatement votre demande en boutique.
+                  </p>
+                )}
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
+                  <a
+                    href={getLienWhatsapp()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      width: '100%', padding: '12px 14px', borderRadius: 10, background: '#25D366', color: '#fff',
+                      fontWeight: 800, fontSize: 13.5, textDecoration: 'none', textAlign: 'center', boxSizing: 'border-box',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 12px rgba(37,211,102,0.3)'
+                    }}
+                  >
+                    💬 Signaler sur WhatsApp au vendeur
+                  </a>
+                  <button
+                    onClick={() => { setCheckoutMode('options'); closeCart(); }}
+                    style={{ width: '100%', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 20px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+                  >
+                    Fermer
+                  </button>
+                </div>
               </div>
             ) : (
               <>
@@ -383,18 +441,18 @@ export default function DrawerCart() {
                 </p>
 
                 {/* Option 1: WhatsApp */}
-                <a
-                  href={getLienWhatsapp()}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={handleCommanderViaWhatsappDirect}
+                  disabled={loadingCheckout}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    background: '#25D366', color: '#fff', borderRadius: 10, padding: '12px 14px',
-                    fontWeight: 800, fontSize: 14, textDecoration: 'none', boxShadow: '0 3px 10px rgba(37,211,102,.25)',
+                    background: '#25D366', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 14px',
+                    fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 3px 10px rgba(37,211,102,.25)', width: '100%'
                   }}
                 >
                   <span>💬</span> Commander via WhatsApp Direct →
-                </a>
+                </button>
 
                 {/* Option 2: Formulaire en Ligne Direct */}
                 <button
