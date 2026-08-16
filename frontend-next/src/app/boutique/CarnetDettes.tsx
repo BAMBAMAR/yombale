@@ -95,6 +95,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   // Formulaire Transaction & Sélecteur Catalogue
   const [modeSaisie, setModeSaisie] = useState<'catalogue' | 'manuel'>('catalogue')
   const [panierProduits, setPanierProduits] = useState<Record<string, number>>({}) // produitId -> qte
+  const [itemsCustomPanier, setItemsCustomPanier] = useState<Array<{ id: string; nom: string; prix: number; quantite: number }>>([])
+  const [libelleCustomInput, setLibelleCustomInput] = useState('')
+  const [prixCustomInput, setPrixCustomInput] = useState('')
+  const [qteCustomInput, setQteCustomInput] = useState(1)
   const [rechercheProduitModal, setRechercheProduitModal] = useState('')
   const [categorieProduitModal, setCategorieProduitModal] = useState('tous')
   const [montantManuel, setMontantManuel] = useState('')
@@ -197,15 +201,17 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const totalAvancesClients = clients.reduce((acc, c) => acc + (Number(c.solde) < 0 ? Math.abs(Number(c.solde)) : 0), 0)
   const nbClientsDebiteurs = clients.filter(c => Number(c.solde) > 0).length
 
-  // Calcul du montant total du panier catalogue dans la modale
+  // Calcul du montant total du panier catalogue et saisie libre dans la modale
   const totalPanierCatalogue = Object.entries(panierProduits).reduce((sum, [pId, qte]) => {
     const p = produits.find(item => item.id === pId)
     const prix = p ? Number(p.prix_promo || p.prix || 0) : 0
     return sum + (prix * qte)
   }, 0)
 
-  const totalTransactionCourante = (typeTransaction === 'vente_credit' && modeSaisie === 'catalogue') 
-    ? totalPanierCatalogue 
+  const totalPanierCustom = itemsCustomPanier.reduce((sum, item) => sum + (item.prix * item.quantite), 0)
+
+  const totalTransactionCourante = typeTransaction === 'vente_credit' 
+    ? (totalPanierCatalogue + totalPanierCustom) 
     : (Number(montantManuel) || 0)
 
   // Gestion Création Client
@@ -302,13 +308,13 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
     const montantFinal = totalTransactionCourante
     if (!montantFinal || montantFinal <= 0) {
-      alert('Veuillez ajouter au moins un produit du catalogue ou saisir un montant valide.')
+      alert('Veuillez ajouter au moins un produit ou saisir un montant valide.')
       return
     }
 
     let produitsListe: any[] = []
-    if (typeTransaction === 'vente_credit' && modeSaisie === 'catalogue') {
-      produitsListe = Object.entries(panierProduits).map(([pId, qte]) => {
+    if (typeTransaction === 'vente_credit') {
+      const itemsCatalogue = Object.entries(panierProduits).filter(([_, qte]) => qte > 0).map(([pId, qte]) => {
         const p = produits.find(item => item.id === pId)
         return {
           id: pId,
@@ -317,16 +323,23 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           prix: Number(p?.prix_promo || p?.prix || 0),
         }
       })
+      const itemsCustom = itemsCustomPanier.map(item => ({
+        id: item.id,
+        nom: item.nom,
+        quantite: item.quantite,
+        prix: item.prix,
+      }))
+      produitsListe = [...itemsCatalogue, ...itemsCustom]
     } else {
-      const nomParDefaut = typeTransaction === 'remboursement' ? 'Remboursement' : 'Vente directe'
+      const nomParDefaut = 'Remboursement'
       produitsListe = [{ nom: descriptionManuelle.trim() || nomParDefaut, quantite: 1, prix: montantFinal }]
     }
 
     setSubmittingTrans(true)
     try {
-      const noteFinal = (typeTransaction === 'vente_credit' && modeSaisie === 'catalogue')
-        ? `Achat catalogue (${produitsListe.length} article(s))`
-        : (descriptionManuelle.trim() || (typeTransaction === 'remboursement' ? 'Remboursement client' : 'Vente directe'))
+      const noteFinal = typeTransaction === 'vente_credit'
+        ? `Vente à crédit (${produitsListe.length} article(s))`
+        : (descriptionManuelle.trim() || 'Remboursement client')
 
       const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/${clientSelectionne.id}/transaction`, {
         method: 'POST',
@@ -346,6 +359,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         const data = await res.json()
         setShowModalTransaction(false)
         setPanierProduits({})
+        setItemsCustomPanier([])
+        setLibelleCustomInput('')
+        setPrixCustomInput('')
+        setQteCustomInput(1)
         setMontantManuel('')
         setDescriptionManuelle('')
         setDateEcheance('')
@@ -1906,23 +1923,26 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     )}
                   </div>
 
-                  {/* Résumé clair du panier sélectionné avec suppression unitaire ou globale */}
-                  {Object.keys(panierProduits).some(k => panierProduits[k] > 0) && (
+                  </div>
+
+                  {/* Résumé clair du panier sélectionné (Catalogue + Saisie Libre) */}
+                  {(Object.keys(panierProduits).some(k => panierProduits[k] > 0) || itemsCustomPanier.length > 0) && (
                     <div style={{ marginTop: 12, background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 10, padding: 10 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                         <span style={{ fontSize: 12, fontWeight: 800, color: '#0369a1' }}>
-                          🛒 Articles ajoutés à la vente ({Object.values(panierProduits).reduce((a, b) => a + b, 0)}) :
+                          🛒 Articles dans la vente ({Object.values(panierProduits).reduce((a, b) => a + b, 0) + itemsCustomPanier.reduce((a, b) => a + b.quantite, 0)}) :
                         </span>
                         <button
                           type="button"
-                          onClick={() => setPanierProduits({})}
+                          onClick={() => { setPanierProduits({}); setItemsCustomPanier([]) }}
                           style={{ fontSize: 11, color: '#ef4444', background: '#fee2e2', border: 'none', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontWeight: 800 }}
                         >
                           🗑️ Vider tout le panier
                         </button>
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 110, overflowY: 'auto' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 130, overflowY: 'auto' }}>
+                        {/* 1. Produits Catalogue */}
                         {Object.entries(panierProduits).filter(([_, qte]) => qte > 0).map(([pId, qte]) => {
                           const prodObj = produits.find((p: any) => p.id === pId)
                           if (!prodObj) return null
@@ -1946,7 +1966,35 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                                     return copy
                                   })}
                                   style={{ background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 4, width: 18, height: 18, cursor: 'pointer', fontWeight: 900, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                  title="Supprimer cet article du panier"
+                                  title="Supprimer cet article"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+
+                        {/* 2. Articles Hors Catalogue / Saisie libre */}
+                        {itemsCustomPanier.map((item, idx) => {
+                          const subtotal = item.prix * item.quantite
+                          return (
+                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', padding: '4px 8px', borderRadius: 6, border: '1px dashed #0284c7', fontSize: 12 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+                                <span style={{ fontSize: 9.5, background: '#e0f2fe', color: '#0369a1', fontWeight: 800, padding: '1px 4px', borderRadius: 4 }}>Libre</span>
+                                <span style={{ fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
+                                  {item.nom}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ color: '#0284c7', fontWeight: 800 }}>
+                                  {item.quantite} × {fcfa(item.prix)} = {fcfa(subtotal)}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setItemsCustomPanier(prev => prev.filter((_, i) => i !== idx))}
+                                  style={{ background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 4, width: 18, height: 18, cursor: 'pointer', fontWeight: 900, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  title="Supprimer cet article hors catalogue"
                                 >
                                   ✕
                                 </button>
@@ -1961,12 +2009,102 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               )
             })()}
 
-            {/* Mode Manuel / Remboursement */}
-            {(modeSaisie === 'manuel' || typeTransaction === 'remboursement') && (
+            {/* Mode Saisie Libre (Vente à crédit) */}
+            {typeTransaction === 'vente_credit' && modeSaisie === 'manuel' && (
+              <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+                <label style={{ fontSize: 12, fontWeight: 800, color: '#0369a1', margin: 0 }}>
+                  ✍️ Ajouter un article / prestation hors catalogue au panier :
+                </label>
+                
+                <div>
+                  <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                    Désignation / Nom de l&apos;article ou prestation *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Main d'œuvre réparation, Article spécifique..."
+                    value={libelleCustomInput}
+                    onChange={e => setLibelleCustomInput(e.target.value)}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 600, boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: 8 }}>
+                  <div>
+                    <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                      Prix unitaire (FCFA) *
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Ex: 15000"
+                      value={prixCustomInput}
+                      onChange={e => setPrixCustomInput(e.target.value)}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 700, boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                      Qté *
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={qteCustomInput}
+                      onChange={e => setQteCustomInput(Number(e.target.value))}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 700, boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!libelleCustomInput.trim()) {
+                      alert('Veuillez saisir le nom / la désignation de l\'article.')
+                      return
+                    }
+                    if (!prixCustomInput || Number(prixCustomInput) <= 0) {
+                      alert('Veuillez saisir un prix unitaire valide.')
+                      return
+                    }
+                    const newItem = {
+                      id: 'custom_' + Date.now(),
+                      nom: libelleCustomInput.trim(),
+                      prix: Number(prixCustomInput),
+                      quantite: Number(qteCustomInput || 1)
+                    }
+                    setItemsCustomPanier(prev => [...prev, newItem])
+                    setLibelleCustomInput('')
+                    setPrixCustomInput('')
+                    setQteCustomInput(1)
+                  }}
+                  style={{
+                    padding: '9px 14px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: '#0284c7',
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    fontSize: 12.5,
+                    cursor: 'pointer',
+                    alignSelf: 'flex-end',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}
+                >
+                  ➕ Ajouter cet article au panier
+                </button>
+              </div>
+            )}
+
+            {/* Mode Remboursement */}
+            {typeTransaction === 'remboursement' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                    Montant de l&apos;opération (FCFA) *
+                    Montant du remboursement (FCFA) *
                   </label>
                   <input
                     type="number"
@@ -1980,11 +2118,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                    Description / Note libre
+                    Note / Référence du règlement
                   </label>
                   <input
                     type="text"
-                    placeholder="Ex: 2 sacs de riz 25kg + 1L huile"
+                    placeholder="Ex: Versement Wave / Espèces"
                     value={descriptionManuelle}
                     onChange={e => setDescriptionManuelle(e.target.value)}
                     style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
