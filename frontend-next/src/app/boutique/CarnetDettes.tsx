@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
+import QrCodeShareModal from '@/components/QrCodeShareModal'
 
 
 interface ClientCredit {
@@ -97,6 +98,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const [panierProduits, setPanierProduits] = useState<Record<string, number>>({}) // produitId -> qte
   const [itemsCustomPanier, setItemsCustomPanier] = useState<Array<{ id: string; nom: string; prix: number; quantite: number }>>([])
   const [commandesCreditEnAttente, setCommandesCreditEnAttente] = useState<any[]>([])
+  const [showQrModalComptoir, setShowQrModalComptoir] = useState(false)
   const [libelleCustomInput, setLibelleCustomInput] = useState('')
   const [prixCustomInput, setPrixCustomInput] = useState('')
   const [qteCustomInput, setQteCustomInput] = useState(1)
@@ -698,6 +700,29 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               }}
             >
               👤 + Nouveau Client
+            </button>
+
+            <button
+              onClick={() => setShowQrModalComptoir(true)}
+              style={{
+                flex: isMobile ? 1 : 'none',
+                background: '#e0f2fe',
+                color: '#0369a1',
+                border: 'none',
+                borderRadius: 12,
+                padding: '10px 14px',
+                fontWeight: 800,
+                fontSize: 12.5,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                minHeight: 42
+              }}
+              title="Afficher le QR code à scanner pour les clients présents au comptoir"
+            >
+              📱 QR Code Scan Client
             </button>
 
             <button
@@ -2291,6 +2316,14 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         </div>
       )}
 
+      {/* Modal QR Code Scan Client Comptoir */}
+      <QrCodeShareModal
+        isOpen={showQrModalComptoir}
+        onClose={() => setShowQrModalComptoir(false)}
+        url={typeof window !== 'undefined' ? `${window.location.origin}/boutiques/${boutique.slug || boutique.id}?mode=credit` : `https://nopalou.com/boutiques/${boutique.slug || boutique.id}?mode=credit`}
+        boutiqueNom={boutique.nom}
+        title="📱 QR Code Client en Boutique / Comptoir"
+      />
     </div>
   )
 }

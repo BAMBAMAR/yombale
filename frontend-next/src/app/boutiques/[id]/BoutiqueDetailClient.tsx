@@ -250,6 +250,7 @@ export default function BoutiqueDetailClient({
   
   // 📌 Sticky Bar au défilement
   const [isSticky, setIsSticky] = useState(false)
+  const [isCreditMode, setIsCreditMode] = useState(false)
 
   const { openCart, getCartItemCount, getCartTotal } = useCart()
   const boutiqueKey = boutique.slug || boutique.id
@@ -257,6 +258,10 @@ export default function BoutiqueDetailClient({
   const cartTotal = getCartTotal(boutiqueKey)
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('mode=credit')) {
+      setIsCreditMode(true)
+    }
+
     function handleScroll() {
       if (window.scrollY > 280) {
         setIsSticky(true)
@@ -367,6 +372,29 @@ export default function BoutiqueDetailClient({
               )}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* 💳 BANNIÈRE DEMANDE DE CRÉDIT CLIENT EN BOUTIQUE */}
+      {isCreditMode && (
+        <div style={{ background: '#f0f9ff', border: '1.5px solid #0284c7', padding: '14px 18px', borderRadius: 16, marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 24 }}>💳</span>
+            <div>
+              <p style={{ margin: 0, fontWeight: 900, fontSize: 14.5, color: '#0369a1' }}>
+                Mode Demande d&apos;Achat à Crédit (Carnet Client)
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: 12, color: '#0284c7', fontWeight: 600 }}>
+                Choisissez vos articles, ajoutez-les au panier et sélectionnez &quot;Demande d&apos;Achat à Crédit&quot;. Le commerçant la validera au comptoir !
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => openCart(boutiqueKey)}
+            style={{ background: '#0284c7', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <ShoppingCart size={16} /> Ouvrir mon Panier
+          </button>
         </div>
       )}
 
