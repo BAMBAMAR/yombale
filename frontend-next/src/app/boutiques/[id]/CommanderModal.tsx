@@ -399,11 +399,11 @@ export default function CommanderModal({
                 <label style={labelStyle}>Mode de paiement souhaité</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {[
-                    { value: 'wave', label: '🌊 Wave (Recommandé ⚡)' },
-                    { value: 'cash', label: '💵 Espèces à la livraison' },
-                    { value: 'credit', label: '💳 Demande d\'Achat à Crédit (Carnet)' },
-                    { value: 'manuel', label: '🧾 Dépôt Manuel Wave/OM' },
-                    { value: 'virement', label: '🏦 Virement bancaire' },
+                    { value: 'wave', label: '🌊 Wave (Recommandé ⚡)', disabled: false },
+                    { value: 'cash', label: '💵 Espèces à la livraison', disabled: false },
+                    { value: 'credit', label: '💳 Demande d\'Achat à Crédit (Carnet)', disabled: false },
+                    { value: 'manuel', label: '🧾 Dépôt Manuel Wave/OM', disabled: false },
+                    { value: 'virement', label: '🏦 Virement bancaire', disabled: false },
                   ].map(m => (
                     <button
                       key={m.value}
