@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
   try {
     const { produit_id, marchand_id, stock } = req.query;
     const { rows } = await pool.query(`
-      SELECT o.*, m.nom AS marchand, m.logo_url, m.site_url
+      SELECT o.*, m.nom AS marchand, m.site_url
       FROM offres o JOIN marchands m ON m.id = o.marchand_id
       WHERE ($1::uuid IS NULL OR o.produit_id  = $1::uuid)
         AND ($2::uuid IS NULL OR o.marchand_id = $2::uuid)

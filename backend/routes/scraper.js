@@ -66,6 +66,66 @@ router.get('/diagnostic/:source', adminOnly, async (req, res) => {
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
+// ── POST /api/scraper/sync-annonces ─────────────────────────
+// Reçoit les annonces scrapées localement (Facebook, Expat, etc.) et les insère en BDD
+router.post('/sync-annonces', adminOnly, async (req, res) => {
+  try {
+    const { annonces } = req.body || {};
+    if (!Array.isArray(annonces) || annonces.length === 0) {
+      return res.status(400).json({ error: 'annonces[] requis' });
+    }
+
+    let inseres = 0;
+    let doublons = 0;
+
+    for (const a of annonces) {
+      try {
+        const query = `
+          INSERT INTO annonces_classifiees (
+            titre, description, prix, devise, ville, quartier, photos,
+            contact_tel, contact_whatsapp, contact_email, categorie_slug,
+            source, ref_externe, url_source, caracteristiques, active, moderee
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7,
+            $8, $9, $10, $11,
+            $12, $13, $14, $15, true, true
+          )
+          ON CONFLICT (source, ref_externe) DO NOTHING
+          RETURNING id
+        `;
+        const values = [
+          a.titre || 'Sans titre',
+          a.description || '',
+          a.prix || null,
+          a.devise || 'FCFA',
+          a.ville || 'Dakar',
+          a.quartier || null,
+          a.photos || [],
+          a.contact_tel || null,
+          a.contact_whatsapp || null,
+          a.contact_email || null,
+          a.categorie_slug || 'divers',
+          a.source || 'facebook',
+          a.ref_externe || null,
+          a.url_source || null,
+          JSON.stringify(a.caracteristiques || {}),
+        ];
+
+        const resDb = await pool.query(query, values);
+        if (resDb.rows.length > 0) inseres++;
+        else doublons++;
+      } catch (errDb) {
+        console.error('[SYNC-ANNONCES] Erreur insertion:', errDb.message);
+      }
+    }
+
+    res.json({ success: true, total: annonces.length, inseres, doublons });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // ── POST /api/scraper/run ─────────────────────────────────────
 // Déclenche un scraping manuel
 // Body: { "sources": ["expat", "jumia", "coinafrique"] }  (optionnel, défaut = tout)

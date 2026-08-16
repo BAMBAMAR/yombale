@@ -325,30 +325,53 @@ function texteEstPauvre(texte) {
 // dans plusieurs groupes différents — un vendeur sérieux republie souvent dans 3-5 groupes
 // le même jour, la fenêtre 7j bloquait toutes ces republications comme doublons.
 async function upsertAnnonceClassifiee(a) {
-  // On ne dédoublonne pas par téléphone si c'est la valeur de repli pour les offres d'emploi
-  if (a.contact_tel !== 'Voir sur Facebook') {
-    const { rows } = await pool.query(`
-      SELECT 1 FROM annonces_classifiees
-      WHERE contact_tel = $1 AND source = $2 AND created_at > NOW() - INTERVAL '24 hours'
-      LIMIT 1
-    `, [a.contact_tel, a.source]);
-    if (rows.length > 0) return { doublon: true };
-  }
+  try {
+    // On ne dédoublonne pas par téléphone si c'est la valeur de repli pour les offres d'emploi
+    if (a.contact_tel !== 'Voir sur Facebook') {
+      const { rows } = await pool.query(`
+        SELECT 1 FROM annonces_classifiees
+        WHERE contact_tel = $1 AND source = $2 AND created_at > NOW() - INTERVAL '24 hours'
+        LIMIT 1
+      `, [a.contact_tel, a.source]);
+      if (rows.length > 0) return { doublon: true };
+    }
 
-  await pool.query(`
-    INSERT INTO annonces_classifiees
-      (categorie_slug, titre, description, prix, ville, contact_tel,
-       photos, actif, source, ref_externe, url_source)
-    VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,true,$8,$9,$10)
-    ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
-    DO UPDATE SET
-      prix       = COALESCE(EXCLUDED.prix, annonces_classifiees.prix),
-      updated_at = NOW()
-  `, [
-    a.categorie_slug, a.titre, a.description, a.prix, a.ville, a.contact_tel,
-    JSON.stringify(a.photos || []), a.source, a.ref_externe, a.url_source,
-  ]);
-  return { doublon: false };
+    await pool.query(`
+      INSERT INTO annonces_classifiees
+        (categorie_slug, titre, description, prix, ville, contact_tel,
+         photos, actif, source, ref_externe, url_source)
+      VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,true,$8,$9,$10)
+      ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
+      DO UPDATE SET
+        prix       = COALESCE(EXCLUDED.prix, annonces_classifiees.prix),
+        updated_at = NOW()
+    `, [
+      a.categorie_slug, a.titre, a.description, a.prix, a.ville, a.contact_tel,
+      JSON.stringify(a.photos || []), a.source, a.ref_externe, a.url_source,
+    ]);
+    return { doublon: false };
+  } catch (err) {
+    // Si la connexion directe BDD Postgres (TCP) échoue (ex: ECONNRESET sur Render IP externe),
+    // basculer automatiquement vers l'API HTTPS du backend Render
+    if (err.code === 'ECONNRESET' || (err.message && (err.message.includes('ECONNRESET') || err.message.includes('timeout')))) {
+      const backendUrl = process.env.BACKEND_URL || 'https://yombale.onrender.com';
+      const secret = process.env.ADMIN_SECRET || 'NDIEME@131215';
+      const axios = require('axios');
+      try {
+        const resSync = await axios.post(`${backendUrl}/api/scraper/sync-annonces`, {
+          annonces: [a]
+        }, {
+          headers: { 'x-admin-secret': secret },
+          timeout: 10000
+        });
+        if (resSync.data && resSync.data.inseres > 0) return { doublon: false };
+        return { doublon: true };
+      } catch (httpErr) {
+        console.error('[FB-SCRAPER-SYNC] Erreur fallback HTTP:', httpErr.message);
+      }
+    }
+    throw err;
+  }
 }
 
 // maxGroupes limite le nombre de groupes visités par run (défaut 5) — un navigateur
