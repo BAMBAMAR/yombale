@@ -1281,13 +1281,28 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
         [Number(montant), carnetClient.id]
       );
 
-      // 4. Marquer la commande comme confirmée
+      // 4. Marquer la commande comme confirmée & décrémenter le stock si applicable
       if (commande_id) {
         await dbClient.query(
           `UPDATE commandes_boutique SET statut = 'confirmee', updated_at = NOW() WHERE id = $1 AND boutique_id = $2`,
           [commande_id, boutiqueId]
         );
       }
+
+      if (nom_produit) {
+        await dbClient.query(
+          `UPDATE boutique_produits
+           SET stock_quantite = GREATEST(0, stock_quantite - $1),
+               en_stock = CASE WHEN (stock_quantite - $1) <= 0 THEN false ELSE en_stock END
+           WHERE boutique_id = $2 AND (LOWER(nom) = LOWER($3) OR id::text = $4) AND stock_quantite IS NOT NULL`,
+          [quantite || 1, boutiqueId, nom_produit.trim(), commande_id || '']
+        );
+      }
+
+      await dbClient.query(
+        `INSERT INTO analytics_events (type, boutique_id) VALUES ('vente_credit', $1)`,
+        [boutiqueId]
+      ).catch(() => {});
 
       await dbClient.query('COMMIT');
 

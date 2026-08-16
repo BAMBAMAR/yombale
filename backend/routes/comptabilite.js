@@ -492,7 +492,7 @@ async function notifierVendeurCommande(boutique, {
   }
 
   const { sendWhatsAppText, sendWhatsAppTemplate } = require('../services/whatsapp');
-  const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement' };
+  const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement', credit: '💳 Demande d\'Achat à Crédit (Carnet client)' };
   const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
   const lienCommandes = `${SITE}/boutique?tab=commandes`;
   const msg = `🛒 *Nouvelle commande — ${boutique.nom}*\n\nRéf : *${reference}*\nProduit : ${nomProduit} × ${quantite}${montantTotal > 0 ? `\nMontant : *${new Intl.NumberFormat('fr-FR').format(montantTotal)} FCFA*` : ''}${fraisLivraison > 0 ? `\nLivraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA` : ''}\n💳 Paiement souhaité : ${methodeLabel[methodePaiement] || methodePaiement}\n\n👤 Client : ${clientNom}\n📞 ${clientTelephone}${clientAdresse ? `\n📍 ${clientAdresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\n👉 *Consultez vos commandes ici :*\n${lienCommandes}\n\n⚡ Répondez vite pour confirmer !`;
@@ -573,6 +573,21 @@ async function creerCommandeBoutique({
      clientNom, clientTelephone, clientAdresse || null, note || null, source,
      methodePaiement, validZoneId, fraisLivraison, groupeCommande || null]
   );
+
+  if (validProduitId) {
+    await pool.query(
+      `UPDATE boutique_produits
+       SET stock_quantite = GREATEST(0, stock_quantite - $1),
+           en_stock = CASE WHEN (stock_quantite - $1) <= 0 THEN false ELSE en_stock END
+       WHERE id = $2 AND boutique_id = $3 AND stock_quantite IS NOT NULL`,
+      [quantite, validProduitId, actualBoutiqueId]
+    ).catch(() => {});
+  }
+
+  await pool.query(
+    `INSERT INTO analytics_events (type, boutique_id) VALUES ('commande_web', $1)`,
+    [actualBoutiqueId]
+  ).catch(() => {});
 
   return { commande, boutique };
 }

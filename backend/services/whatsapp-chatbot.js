@@ -567,7 +567,8 @@ async function envoyerRecapCommande(phone, boutique, commande) {
       rows: [
         { id: 'pay_wave', title: '🌊 Wave (Recommandé)' },
         { id: 'pay_cash', title: '💵 Cash à la livraison' },
-        { id: 'pay_om', title: '🟠 Orange Money (Bientôt)' },
+        { id: 'pay_credit', title: '💳 Demande Achat Crédit' },
+        { id: 'pay_om', title: '🟠 Orange Money' },
         { id: 'pay_virement', title: '🏦 Virement' },
       ],
     }]
@@ -576,7 +577,7 @@ async function envoyerRecapCommande(phone, boutique, commande) {
 }
 
 async function envoyerRecapFinal(phone, boutique, commande) {
-  const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement' };
+  const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement', credit: '💳 Demande d\'Achat à Crédit (Carnet client)' };
   const sousTotal = commande.items.reduce((s, it) => s + (it.prix * it.quantite), 0);
   const total = sousTotal + (commande.frais_livraison || 0);
   const lignes = [`📋 *Récapitulatif de votre commande*`, ``];
@@ -680,7 +681,7 @@ async function traiterPanierMeta(phone, order) {
 async function notifierVendeurPanierGroupe(boutique, commandesCreees, groupeCommande) {
   const vendeurTel = boutique.whatsapp || boutique.telephone;
   if (!vendeurTel) return;
-  const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement' };
+  const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement', credit: '💳 Demande d\'Achat à Crédit (Carnet client)' };
   const premiere = commandesCreees[0];
   const totalArticles = commandesCreees.reduce((s, c) => s + Number(c.montant_total) - Number(c.frais_livraison || 0), 0);
   const fraisLivraison = Number(premiere.frais_livraison) || 0;
@@ -1462,7 +1463,7 @@ async function handleIncoming(msg) {
   if (state === 'COMMANDE_PAIEMENT') {
     const boutique = context?.boutique;
     if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
-    const PAIEMENTS = { pay_wave: 'wave', pay_om: 'orange_money', pay_cash: 'cash', pay_virement: 'virement' };
+    const PAIEMENTS = { pay_wave: 'wave', pay_om: 'orange_money', pay_cash: 'cash', pay_virement: 'virement', pay_credit: 'credit' };
     const methode = PAIEMENTS[interactiveId];
     if (!methode) {
       await sendWhatsAppText(phone, 'Choisissez un mode de paiement dans les boutons ci-dessus.');
@@ -1528,7 +1529,9 @@ async function handleIncoming(msg) {
         await notifierVendeurPanierGroupe(boutiqueChargee, creees, groupeCommande);
       }
       const refs = creees.map(c => c.reference).join(', ');
-      let msgFinal = `✅ *Commande ${refs} envoyée !*\n\nLe vendeur *${boutique.nom}* va vous contacter pour finaliser le paiement et la livraison.`;
+      let msgFinal = creees[0]?.methode_paiement === 'credit'
+        ? `✅ *Demande d'Achat à Crédit ${refs} transmise !*\n\nVotre demande d'achat à crédit a été envoyée à la boutique *${boutique.nom}*. Le commerçant la validera dans son Carnet client !`
+        : `✅ *Commande ${refs} envoyée !*\n\nLe vendeur *${boutique.nom}* va vous contacter pour finaliser le paiement et la livraison.`;
       if (creees[0]?.methode_paiement === 'wave' || creees[0]?.methode_paiement === 'pay_wave') {
         let wavePayUrl = `${SITE}/checkout-express?produit=${creees[0]?.produit_id || ''}&boutique=${boutique.id}&phone=${phone}&pay=wave&auto=1`;
         let hasWaveSession = false;
