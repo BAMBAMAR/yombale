@@ -43,7 +43,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   const [cmdEditId, setCmdEditId] = useState<string | null>(null)
   const [cmdFournisseurId, setCmdFournisseurId] = useState<string>('')
   const [cmdJustificatifUrl, setCmdJustificatifUrl] = useState<string>('')
-  const [cmdLignes, setCmdLignes] = useState<Array<{ produitId: string; quantite: number; prixAchat: number }>>([])
+  const [cmdLignes, setCmdLignes] = useState<Array<{ produitId: string; nomLibre?: string; quantite: number; prixAchat: number }>>([])
 
   // Search & Filters State
   const [rechercheFournisseur, setRechercheFournisseur] = useState<string>('')
