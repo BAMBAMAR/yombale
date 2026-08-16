@@ -978,7 +978,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         })
       } else {
         setOcrLoading(false)
-        setScannerStatus('📷 Prenez une photo nette de l’emballage du produit et écrivez le nom.')
+        setScannerStatus('📷 Cadrez l’écriture sur le produit, puis tapez ou vérifiez le nom ci-dessous.')
       }
     }, 400)
   }
@@ -1283,18 +1283,35 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
                   {ocrLoading ? '⏳ Lecture du texte...' : '📸 Capturer & Lire le Nom sur l\'emballage'}
                 </button>
 
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left' }}>
+                  <label style={{ fontSize: 11, fontWeight: 800, color: '#475569' }}>Nom du produit capturé / à valider :</label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input
+                      type="text"
+                      value={nomForm}
+                      onChange={e => setNomForm(e.target.value)}
+                      placeholder="Nom du produit..."
+                      style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid #0284c7', fontSize: 13, fontWeight: 700, outline: 'none' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={arreterFormScanner}
+                      style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '0 14px', fontSize: 13, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      ✅ Valider
+                    </button>
+                  </div>
+                </div>
+
                 {ocrDetections.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left', background: '#f8fafc', padding: 10, borderRadius: 10, border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b' }}>Textes détectés (cliquez pour sélectionner) :</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b' }}>Mots / Textes détectés à l'image (cliquez pour choisir) :</span>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {ocrDetections.map((txt, idx) => (
                         <button
                           key={idx}
                           type="button"
-                          onClick={() => {
-                            setNomForm(txt)
-                            arreterFormScanner()
-                          }}
+                          onClick={() => setNomForm(txt)}
                           style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '6px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                         >
                           {txt}

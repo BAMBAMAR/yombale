@@ -1208,10 +1208,29 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                 <button type="button" onClick={capturerEtLireNomVente} style={{ background: '#0284c7', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
                   📸 Capturer & Lire le Nom sur le produit
                 </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left' }}>
+                  <label style={{ fontSize: 11, fontWeight: 800, color: '#475569' }}>Nom de la vente / article à valider :</label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input
+                      type="text"
+                      value={nomLibre}
+                      onChange={e => setNomLibre(e.target.value)}
+                      placeholder="Nom de l'article..."
+                      style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid #0284c7', fontSize: 13, fontWeight: 700, outline: 'none' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={arreterScannerVente}
+                      style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '0 14px', fontSize: 13, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      ✅ Valider
+                    </button>
+                  </div>
+                </div>
                 {ocrDetectionsVente.length > 0 && (
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', background: '#f8fafc', padding: 10, borderRadius: 10 }}>
                     {ocrDetectionsVente.map((txt, idx) => (
-                      <button key={idx} type="button" onClick={() => { setNomLibre(txt); arreterScannerVente(); }} style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '6px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                      <button key={idx} type="button" onClick={() => setNomLibre(txt)} style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '6px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                         {txt}
                       </button>
                     ))}
