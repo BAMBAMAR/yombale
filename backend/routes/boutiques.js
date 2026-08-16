@@ -1311,17 +1311,28 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
     try {
       await dbClient.query('BEGIN');
 
-      // 1. Chercher ou créer le client dans caisse_clients_credits (recherche flexible par téléphone ou nom)
-      let clientRes = await dbClient.query(
-        `SELECT * FROM caisse_clients_credits
-         WHERE boutique_id = $1
-           AND (
-             REPLACE(REPLACE(telephone, ' ', ''), '+', '') LIKE '%' || $2
-             OR LOWER(TRIM(nom)) = LOWER(TRIM($3))
-           )
-         LIMIT 1`,
-        [boutiqueId, shortTel, client_nom.trim()]
-      );
+      // 1. Chercher le client par numéro de téléphone en priorité dans caisse_clients_credits
+      let clientRes = null;
+      if (shortTel) {
+        clientRes = await dbClient.query(
+          `SELECT * FROM caisse_clients_credits
+           WHERE boutique_id = $1
+             AND REPLACE(REPLACE(telephone, ' ', ''), '+', '') LIKE '%' || $2
+           LIMIT 1`,
+          [boutiqueId, shortTel]
+        );
+      }
+
+      // Si pas trouvé par téléphone et que le numéro était vide, chercher par nom exact
+      if ((!clientRes || clientRes.rows.length === 0) && !shortTel && client_nom) {
+        clientRes = await dbClient.query(
+          `SELECT * FROM caisse_clients_credits
+           WHERE boutique_id = $1
+             AND LOWER(TRIM(nom)) = LOWER(TRIM($2))
+           LIMIT 1`,
+          [boutiqueId, client_nom.trim()]
+        );
+      }
 
       let carnetClient;
       if (clientRes.rows.length === 0) {
