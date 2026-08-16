@@ -976,10 +976,20 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           alert(data.error || 'Erreur approbation')
                           return
                         }
-                        console.log('[CARNET RECHARGEMENT DES DONNÉES...]')
+                        // 1. Retirer immédiatement la commande de la liste en attente
+                        setCommandesCreditEnAttente((prev: any[]) => prev.filter((c: any) => c.id !== cmd.id))
+                        // 2. Ajouter/mettre à jour immédiatement le client dans la liste réactive du carnet
+                        if (data.client) {
+                          setClients((prev: ClientCredit[]) => {
+                            const exists = prev.some(c => c.id === data.client.id)
+                            if (exists) {
+                              return prev.map(c => c.id === data.client.id ? { ...c, solde: data.client.solde } : c)
+                            }
+                            return [data.client, ...prev]
+                          })
+                        }
                         await chargerDonnees()
                         window.dispatchEvent(new Event('carnet_updated'))
-                        console.log('[CARNET DONNÉES RECHARGÉES AVEC SUCCÈS]')
                         const cleanTel = cmd.client_telephone.replace(/\D/g, '')
                         const msgWa = encodeURIComponent(`Bonjour ${cmd.client_nom}, votre demande d'achat à crédit de ${fcfa(cmd.montant_total)} (${cmd.nom_produit}) a été approuvée par la boutique et enregistrée dans votre Carnet !`)
                         if (confirm(`✅ Demande d'achat à crédit de ${cmd.client_nom} approuvée et enregistrée dans son Carnet client avec succès !\n\nSouhaitez-vous lui envoyer le message de confirmation sur WhatsApp ?`)) {
@@ -1006,6 +1016,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           body: JSON.stringify({ statut: 'annulee' }),
                         })
                         if (res.ok) {
+                          setCommandesCreditEnAttente((prev: any[]) => prev.filter((c: any) => c.id !== cmd.id))
                           await chargerDonnees()
                           const cleanTel = cmd.client_telephone.replace(/\D/g, '')
                           const msgWa = encodeURIComponent(`Bonjour ${cmd.client_nom}, votre demande d'achat à crédit de ${fcfa(cmd.montant_total)} (${cmd.nom_produit}) ne peut pas être accordée pour le moment. Merci de votre compréhension.`)
