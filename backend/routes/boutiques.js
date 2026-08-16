@@ -1109,6 +1109,71 @@ router.put('/:id/credits-clients/:clientId', async (req, res) => {
   }
 });
 
+// ── PATCH /api/boutiques/:id/credits-clients/:clientId/statut — Blacklister/Changer statut d'un client (actif, bloque)
+router.patch('/:id/credits-clients/:clientId/statut', async (req, res) => {
+  try {
+    const { id, clientId } = req.params;
+    const { statut } = req.body;
+
+    if (!['actif', 'bloque', 'archive'].includes(statut)) {
+      return res.status(400).json({ error: 'Statut invalide (actif, bloque, archive)' });
+    }
+
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bqCond = isUUID ? 'id = $1' : 'slug = $1';
+    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
+    if (b.rows.length === 0) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const r = await pool.query(
+      `UPDATE caisse_clients_credits 
+       SET statut = $1, updated_at = NOW()
+       WHERE id = $2 AND boutique_id = $3
+       RETURNING *`,
+      [statut, clientId, b.rows[0].id]
+    );
+
+    if (r.rows.length === 0) {
+      return res.status(404).json({ error: 'Client introuvable' });
+    }
+
+    res.json({ success: true, client: r.rows[0], message: statut === 'bloque' ? 'Client blacklisté' : 'Client réactivé' });
+  } catch (err) {
+    console.error('[CREDITS CLIENTS STATUT]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── DELETE /api/boutiques/:id/credits-clients/:clientId — Supprimer un client du carnet
+router.delete('/:id/credits-clients/:clientId', async (req, res) => {
+  try {
+    const { id, clientId } = req.params;
+
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bqCond = isUUID ? 'id = $1' : 'slug = $1';
+    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
+    if (b.rows.length === 0) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    await pool.query(
+      `DELETE FROM caisse_credit_historique WHERE client_id = $1 AND boutique_id = $2`,
+      [clientId, b.rows[0].id]
+    ).catch(() => {});
+
+    const r = await pool.query(
+      `DELETE FROM caisse_clients_credits WHERE id = $1 AND boutique_id = $2 RETURNING *`,
+      [clientId, b.rows[0].id]
+    );
+
+    if (r.rows.length === 0) {
+      return res.status(404).json({ error: 'Client introuvable' });
+    }
+
+    res.json({ success: true, message: 'Client supprimé du carnet avec succès' });
+  } catch (err) {
+    console.error('[CREDITS CLIENTS DELETE]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // ── POST /api/boutiques/:id/credits-clients/:clientId/transaction — Vente à crédit / Remboursement / Dépôt d'avance
 router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
   try {
@@ -1269,6 +1334,11 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
         carnetClient = newClientRes.rows[0];
       } else {
         carnetClient = clientRes.rows[0];
+      }
+
+      if (carnetClient && carnetClient.statut === 'bloque') {
+        await dbClient.query('ROLLBACK');
+        return res.status(400).json({ error: '⛔ Ce client est actuellement blacklisté par la boutique. Impossible de valider un achat à crédit.' });
       }
 
       // 2. Insérer la transaction de vente à crédit dans caisse_credit_historique

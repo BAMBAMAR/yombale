@@ -263,6 +263,7 @@ module.exports = async function migrateInline() {
 
       ALTER TABLE caisse_clients_credits ADD COLUMN IF NOT EXISTS adresse VARCHAR(255);
       ALTER TABLE caisse_clients_credits ADD COLUMN IF NOT EXISTS note_client TEXT;
+      ALTER TABLE caisse_clients_credits ADD COLUMN IF NOT EXISTS statut VARCHAR(20) DEFAULT 'actif';
       ALTER TABLE caisse_clients_credits ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
       CREATE TABLE IF NOT EXISTS caisse_credit_historique (

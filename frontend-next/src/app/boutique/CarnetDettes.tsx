@@ -14,6 +14,7 @@ interface ClientCredit {
   adresse?: string | null
   solde: number
   plafond_max: number
+  statut?: 'actif' | 'bloque' | 'archive'
   note_client?: string | null
   created_at?: string
   historique?: TransactionCredit[]
@@ -641,6 +642,62 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     )
   }
 
+  async function handleChangerStatutClient(client: Client, nouveauStatut: 'actif' | 'bloque') {
+    const isBloque = nouveauStatut === 'bloque'
+    const actionText = isBloque ? 'blacklister/bloquer' : 'réactiver'
+    if (!confirm(`Voulez-vous vraiment ${actionText} le client ${client.nom} ?` + (isBloque ? '\n\nIl ne pourra plus soumettre de demande d\'achat à crédit sur votre boutique.' : ''))) {
+      return
+    }
+
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
+      const res = await fetch(`${backendUrl}/api/boutiques/${boutique.id}/credits-clients/${client.id}/statut`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ statut: nouveauStatut }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        alert(data.error || 'Erreur lors du changement de statut')
+        return
+      }
+      alert(isBloque ? `⛔ Client ${client.nom} blacklisté avec succès.` : `🟢 Client ${client.nom} réactivé avec succès.`)
+      await chargerDonnees()
+    } catch {
+      alert('Impossible de modifier le statut du client')
+    }
+  }
+
+  async function handleSupprimerClient(client: Client) {
+    const soldeNum = Number(client.solde || 0)
+    if (soldeNum !== 0) {
+      if (!confirm(`⚠️ Attention : Le client ${client.nom} a un solde actuel de ${fcfa(soldeNum)}.\n\nVoulez-vous vraiment supprimer définitivement ce profil et tout son historique du carnet ?`)) {
+        return
+      }
+    } else {
+      if (!confirm(`Voulez-vous vraiment supprimer définitivement le profil client ${client.nom} du carnet ?`)) {
+        return
+      }
+    }
+
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
+      const res = await fetch(`${backendUrl}/api/boutiques/${boutique.id}/credits-clients/${client.id}`, {
+        method: 'DELETE',
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        alert(data.error || 'Erreur lors de la suppression')
+        return
+      }
+      alert(`🗑️ Client ${client.nom} supprimé du carnet avec succès.`)
+      if (clientSelectionne?.id === client.id) setClientSelectionne(null)
+      await chargerDonnees()
+    } catch {
+      alert('Impossible de supprimer le client')
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
@@ -1064,6 +1121,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 15, fontWeight: 900, color: '#0f172a' }}>{c.nom}</span>
+                          {c.statut === 'bloque' && (
+                            <span style={{ fontSize: 10.5, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '2px 8px', borderRadius: 10, fontWeight: 800 }}>
+                              ⛔ Blacklisté
+                            </span>
+                          )}
                           {c.adresse && (
                             <span style={{ fontSize: 10.5, background: '#f1f5f9', color: '#475569', padding: '2px 7px', borderRadius: 8, fontWeight: 600 }}>
                               📍 {c.adresse}
@@ -1166,6 +1228,68 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                         }}
                       >
                         📜 Fiche Client
+                      </button>
+
+                      {c.statut === 'bloque' ? (
+                        <button
+                          onClick={() => handleChangerStatutClient(c, 'actif')}
+                          title="Réactiver ce client"
+                          style={{
+                            background: '#dcfce7',
+                            color: '#15803d',
+                            border: '1px solid #bbf7d0',
+                            borderRadius: 8,
+                            padding: '6px 10px',
+                            fontSize: 11.5,
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4
+                          }}
+                        >
+                          🟢 Réactiver
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleChangerStatutClient(c, 'bloque')}
+                          title="Blacklister / Bloquer les crédits de ce client"
+                          style={{
+                            background: '#fef2f2',
+                            color: '#b91c1c',
+                            border: '1px solid #fecaca',
+                            borderRadius: 8,
+                            padding: '6px 10px',
+                            fontSize: 11.5,
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4
+                          }}
+                        >
+                          ⛔ Blacklister
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleSupprimerClient(c)}
+                        title="Supprimer définitivement ce profil du carnet"
+                        style={{
+                          background: '#fff1f2',
+                          color: '#be123c',
+                          border: '1px solid #fecdd3',
+                          borderRadius: 8,
+                          padding: '6px 10px',
+                          fontSize: 11.5,
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4
+                        }}
+                      >
+                        🗑️ Supprimer
                       </button>
 
                       <button
