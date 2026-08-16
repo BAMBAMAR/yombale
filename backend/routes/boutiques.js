@@ -1223,6 +1223,80 @@ router.post('/:id/credits-clients/:clientId/relance-whatsapp', async (req, res) 
   }
 });
 
+// ── POST /api/boutiques/:id/credits-clients/approuver-commande — Approbation d'une demande d'achat à crédit
+router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
+  try {
+    const param = req.params.id;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(param);
+    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
+    const bqRes = await pool.query(`SELECT id, nom, telephone, whatsapp FROM boutiques WHERE ${bqCond}`, [param]);
+    if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bqRes.rows[0].id;
+
+    const { commande_id, client_nom, client_telephone, montant, nom_produit, quantite, reference } = req.body;
+
+    if (!client_nom || !client_telephone || !montant) {
+      return res.status(400).json({ error: 'Nom client, téléphone et montant requis.' });
+    }
+
+    // 1. Chercher ou créer le client dans credits_clients
+    let clientRes = await pool.query(
+      `SELECT * FROM credits_clients WHERE boutique_id = $1 AND (telephone = $2 OR LOWER(nom) = LOWER($3)) LIMIT 1`,
+      [boutiqueId, client_telephone.trim(), client_nom.trim()]
+    );
+
+    let client;
+    if (clientRes.rows.length === 0) {
+      const newClientRes = await pool.query(
+        `INSERT INTO credits_clients (boutique_id, nom, telephone, solde, plafond_max)
+         VALUES ($1, $2, $3, 0, 250000)
+         RETURNING *`,
+        [boutiqueId, client_nom.trim(), client_telephone.trim()]
+      );
+      client = newClientRes.rows[0];
+    } else {
+      client = clientRes.rows[0];
+    }
+
+    // 2. Insérer la transaction vente à crédit dans transactions_credit
+    const noteTrans = `Achat à crédit Web (Réf: ${reference || 'Commande'}, ${nom_produit || 'Article'} x${quantite || 1})`;
+    const prodsTrans = JSON.stringify([{ nom: nom_produit || 'Article', quantite: quantite || 1, prix: Number(montant) / Number(quantite || 1) }]);
+
+    await pool.query(
+      `INSERT INTO transactions_credit (client_id, type, montant, note, produits, mode_paiement)
+       VALUES ($1, 'vente_credit', $2, $3, $4, 'credit')`,
+      [client.id, Number(montant), noteTrans, prodsTrans]
+    );
+
+    // 3. Mettre à jour le solde du client carnet
+    const soldeRes = await pool.query(
+      `UPDATE credits_clients
+       SET solde = solde + $1, updated_at = NOW()
+       WHERE id = $2
+       RETURNING solde`,
+      [Number(montant), client.id]
+    );
+
+    // 4. Marquer la commande comme confirmée
+    if (commande_id) {
+      await pool.query(
+        `UPDATE commandes_boutique SET statut = 'confirmee', updated_at = NOW() WHERE id = $1 AND boutique_id = $2`,
+        [commande_id, boutiqueId]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: `Demande d'achat à crédit approuvée et ajoutée au carnet de ${client.nom} !`,
+      client: { ...client, solde: soldeRes.rows[0].solde },
+      nouveauSolde: soldeRes.rows[0].solde,
+    });
+  } catch (err) {
+    console.error('Erreur approbation commande credit:', err);
+    res.status(500).json({ error: 'Erreur lors de l\'approbation de la commande à crédit.' });
+  }
+});
+
 // ── GET /api/boutiques/:id/produits — catalogue public ou privé marchand
 router.get('/:id/produits', tokenOptional, async (req, res) => {
   try {

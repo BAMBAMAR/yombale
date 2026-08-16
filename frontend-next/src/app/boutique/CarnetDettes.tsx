@@ -96,6 +96,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const [modeSaisie, setModeSaisie] = useState<'catalogue' | 'manuel'>('catalogue')
   const [panierProduits, setPanierProduits] = useState<Record<string, number>>({}) // produitId -> qte
   const [itemsCustomPanier, setItemsCustomPanier] = useState<Array<{ id: string; nom: string; prix: number; quantite: number }>>([])
+  const [commandesCreditEnAttente, setCommandesCreditEnAttente] = useState<any[]>([])
   const [libelleCustomInput, setLibelleCustomInput] = useState('')
   const [prixCustomInput, setPrixCustomInput] = useState('')
   const [qteCustomInput, setQteCustomInput] = useState(1)
@@ -136,6 +137,18 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         const prodsList = dataP.produits || dataP.data || (Array.isArray(dataP) ? dataP : [])
         setProduits(prodsList)
       }
+
+      // 3. Commandes à crédit en attente d'approbation
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
+        const resCmd = await fetch(`${backendUrl}/api/comptabilite/${boutique.id}/commandes`)
+        if (resCmd.ok) {
+          const dataCmd = await resCmd.json()
+          const listCmd = Array.isArray(dataCmd) ? dataCmd : (dataCmd.commandes || [])
+          const enAttenteCredit = listCmd.filter((c: any) => c.statut === 'en_attente' && (c.methode_paiement === 'credit' || c.note?.toLowerCase().includes('crédit')))
+          setCommandesCreditEnAttente(enAttenteCredit)
+        }
+      } catch (eCmd) {}
     } catch (err) {
       console.error('Erreur chargement carnet:', err)
     } finally {
@@ -825,6 +838,75 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           </div>
         </div>
       </div>
+
+      {/* Section Demandes d'Achat à Crédit Reçues depuis le Web / QR Code */}
+      {commandesCreditEnAttente.length > 0 && (
+        <div style={{ background: '#f0f9ff', border: '1.5px solid #0284c7', borderRadius: 16, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 20 }}>💳</span>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: '#0369a1' }}>
+                Demandes d&apos;Achat à Crédit Reçues en Ligne ({commandesCreditEnAttente.length})
+              </h3>
+            </div>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: '#0284c7', background: '#e0f2fe', padding: '2px 8px', borderRadius: 12 }}>
+              Attente d&apos;approbation marchand
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {commandesCreditEnAttente.map((cmd: any) => (
+              <div key={cmd.id} style={{ background: '#ffffff', border: '1px solid #bae6fd', borderRadius: 10, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#0f172a' }}>
+                    👤 {cmd.client_nom} <span style={{ color: '#0284c7', fontWeight: 600, fontSize: 12 }}>({cmd.client_telephone})</span>
+                  </p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#475569' }}>
+                    📦 {cmd.nom_produit} × {cmd.quantite} — <strong style={{ color: '#dc2626' }}>{fcfa(cmd.montant_total)}</strong>
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
+                      const res = await fetch(`${backendUrl}/api/boutiques/${boutique.id}/credits-clients/approuver-commande`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          commande_id: cmd.id,
+                          client_nom: cmd.client_nom,
+                          client_telephone: cmd.client_telephone,
+                          montant: cmd.montant_total,
+                          nom_produit: cmd.nom_produit,
+                          quantite: cmd.quantite,
+                          reference: cmd.reference,
+                        }),
+                      })
+                      const data = await res.json()
+                      if (!res.ok) {
+                        alert(data.error || 'Erreur approbation')
+                        return
+                      }
+                      alert(`Demande d'achat à crédit de ${cmd.client_nom} approuvée et ajoutée à son Carnet !`)
+                      const cleanTel = cmd.client_telephone.replace(/\D/g, '')
+                      const msgWa = encodeURIComponent(`Bonjour ${cmd.client_nom}, votre demande d'achat à crédit de ${fcfa(cmd.montant_total)} (${cmd.nom_produit}) a été approuvée par la boutique et enregistrée dans votre Carnet !`)
+                      window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
+                      await chargerDonnees()
+                    } catch (e) {
+                      alert('Erreur lors du traitement.')
+                    }
+                  }}
+                  style={{ padding: '8px 14px', background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                >
+                  ✅ Approuver & Ajouter au Carnet
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Barre de Recherche & Filtres */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>

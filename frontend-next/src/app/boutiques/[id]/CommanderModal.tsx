@@ -401,10 +401,9 @@ export default function CommanderModal({
                   {[
                     { value: 'wave', label: '🌊 Wave (Recommandé ⚡)' },
                     { value: 'cash', label: '💵 Espèces à la livraison' },
-                    { value: 'orange_money', label: '🟠 Orange Money (Bientôt)', disabled: true },
+                    { value: 'credit', label: '💳 Demande d\'Achat à Crédit (Carnet)' },
                     { value: 'manuel', label: '🧾 Dépôt Manuel Wave/OM' },
                     { value: 'virement', label: '🏦 Virement bancaire' },
-                    { value: 'carte_bancaire', label: '💳 Carte (Bientôt)', disabled: true },
                   ].map(m => (
                     <button
                       key={m.value}

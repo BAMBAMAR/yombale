@@ -110,8 +110,8 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
               <p style={{ margin: 0, fontSize: 13 }}>{commande.quantite} × {fcfa(commande.prix_unitaire)}</p>
               {commande.frais_livraison > 0 && <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>🚚 Livraison : {fcfa(commande.frais_livraison)}</p>}
               {commande.methode_paiement && (
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>
-                  💳 {({ wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement' } as Record<string,string>)[commande.methode_paiement] ?? commande.methode_paiement}
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: commande.methode_paiement === 'credit' ? '#0369a1' : '#6b7280', fontWeight: commande.methode_paiement === 'credit' ? 800 : 400 }}>
+                  💳 {({ wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement', credit: '💳 Demande d\'Achat à Crédit (Carnet)' } as Record<string,string>)[commande.methode_paiement] ?? commande.methode_paiement}
                 </p>
               )}
               {commande.client_adresse && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>📍 {commande.client_adresse}</p>}
@@ -130,13 +130,57 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
               <span style={{ fontSize: 11.5, fontWeight: 800, color: '#334155' }}>⚡ Actions Marchand Instantanées :</span>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {commande.statut === 'en_attente' && (
-                  <button
-                    onClick={() => changeStatut('confirmee')}
-                    disabled={loading}
-                    style={{ padding: '6px 12px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    ✅ Valider la commande
-                  </button>
+                  <>
+                    <button
+                      onClick={() => changeStatut('confirmee')}
+                      disabled={loading}
+                      style={{ padding: '6px 12px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      ✅ Valider la commande
+                    </button>
+
+                    {(commande.methode_paiement === 'credit' || commande.note?.toLowerCase().includes('crédit')) && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            setLoading(true)
+                            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
+                            const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/credits-clients/approuver-commande`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                commande_id: commande.id,
+                                client_nom: commande.client_nom,
+                                client_telephone: commande.client_telephone,
+                                montant: commande.montant_total,
+                                nom_produit: commande.nom_produit,
+                                quantite: commande.quantite,
+                                reference: commande.reference,
+                              }),
+                            })
+                            const data = await res.json()
+                            if (!res.ok) {
+                              alert(data.error || 'Erreur lors de l\'approbation de la demande à crédit.')
+                              return
+                            }
+                            alert(`Demande d'achat à crédit de ${commande.client_nom} approuvée et ajoutée à son Carnet !`)
+                            const cleanTel = commande.client_telephone.replace(/\D/g, '')
+                            const msgWa = encodeURIComponent(`Bonjour ${commande.client_nom}, votre demande d'achat à crédit de ${fcfa(commande.montant_total)} (${commande.nom_produit}) a été approuvée par la boutique et ajoutée à votre Carnet !`)
+                            window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
+                            onUpdate()
+                          } catch (err) {
+                            alert('Erreur lors du traitement de la demande.')
+                          } finally {
+                            setLoading(false)
+                          }
+                        }}
+                        disabled={loading}
+                        style={{ padding: '6px 12px', background: '#0284c7', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      >
+                        📒 Approuver & Ajouter au Carnet
+                      </button>
+                    )}
+                  </>
                 )}
 
                 <button

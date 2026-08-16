@@ -356,7 +356,13 @@ export default function DrawerCart() {
                     <option value="wave">🌊 Wave Mobile Money</option>
                     <option value="orange_money">🍊 Orange Money</option>
                     <option value="especes">💵 Paiement Cash à la livraison</option>
+                    <option value="credit">💳 Demande d&apos;Achat à Crédit (Carnet client)</option>
                   </select>
+                  {methodePaiement === 'credit' && (
+                    <p style={{ margin: '4px 0 0', fontSize: 11.5, color: '#0369a1', fontWeight: 600, background: '#e0f2fe', padding: '6px 8px', borderRadius: 6 }}>
+                      ℹ️ Votre demande sera transmise au commerçant pour approbation et ajout à votre carnet client.
+                    </p>
+                  )}
                 </div>
 
                 <button
