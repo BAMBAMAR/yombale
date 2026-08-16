@@ -141,59 +141,61 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
                     </button>
 
                     {(commande.methode_paiement === 'credit' || commande.note?.toLowerCase().includes('crédit')) && (
-                      <button
-                        onClick={async () => {
-                          try {
-                            setLoading(true)
-                            const res = await fetch(`/api/boutiques/${boutiqueId}/credits-clients/approuver-commande`, {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                commande_id: commande.id,
-                                client_nom: commande.client_nom,
-                                client_telephone: commande.client_telephone,
-                                montant: commande.montant_total,
-                                nom_produit: commande.nom_produit,
-                                quantite: commande.quantite,
-                                reference: commande.reference,
-                              }),
-                            })
-                            const data = await res.json()
-                            if (!res.ok) {
-                              alert(data.error || 'Erreur lors de l\'approbation de la demande à crédit.')
-                              return
-                            }
-                            if (typeof onUpdate === 'function') onUpdate()
-                            window.dispatchEvent(new Event('carnet_updated'))
+                      <>
+                        <button
+                          onClick={async () => {
+                            try {
+                              setLoading(true)
+                              const res = await fetch(`/api/boutiques/${boutiqueId}/credits-clients/approuver-commande`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  commande_id: commande.id,
+                                  client_nom: commande.client_nom,
+                                  client_telephone: commande.client_telephone,
+                                  montant: commande.montant_total,
+                                  nom_produit: commande.nom_produit,
+                                  quantite: commande.quantite,
+                                  reference: commande.reference,
+                                }),
+                              })
+                              const data = await res.json()
+                              if (!res.ok) {
+                                alert(data.error || 'Erreur lors de l\'approbation de la demande à crédit.')
+                                return
+                              }
+                              if (typeof onUpdate === 'function') onUpdate()
+                              window.dispatchEvent(new Event('carnet_updated'))
 
-                            const cleanTel = commande.client_telephone.replace(/\D/g, '')
-                            const msgWa = encodeURIComponent(`Bonjour ${commande.client_nom}, votre demande d'achat à crédit de ${fcfa(commande.montant_total)} (${commande.nom_produit}) a été approuvée par la boutique et ajoutée à votre Carnet !`)
-                            
-                            if (confirm(`✅ Demande d'achat à crédit de ${commande.client_nom} approuvée et ajoutée à son Carnet client avec succès !\n\nSouhaitez-vous ouvrir WhatsApp pour envoyer la confirmation au client ?`)) {
-                              window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
+                              const cleanTel = commande.client_telephone.replace(/\D/g, '')
+                              const msgWa = encodeURIComponent(`Bonjour ${commande.client_nom}, votre demande d'achat à crédit de ${fcfa(commande.montant_total)} (${commande.nom_produit}) a été approuvée par la boutique et ajoutée à votre Carnet !`)
+                              
+                              if (confirm(`✅ Demande d'achat à crédit de ${commande.client_nom} approuvée et ajoutée à son Carnet client avec succès !\n\nSouhaitez-vous ouvrir WhatsApp pour envoyer la confirmation au client ?`)) {
+                                window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
+                              }
+                            } catch (err) {
+                              alert('Erreur lors du traitement de la demande.')
+                            } finally {
+                              setLoading(false)
                             }
-                          } catch (err) {
-                            alert('Erreur lors du traitement de la demande.')
-                          } finally {
-                            setLoading(false)
-                          }
-                        }}
-                        disabled={loading}
-                        style={{ padding: '6px 12px', background: '#0284c7', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                      >
-                        📒 Approuver & Ajouter au Carnet
-                      </button>
+                          }}
+                          disabled={loading}
+                          style={{ padding: '6px 12px', background: '#0284c7', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                        >
+                          📒 Approuver & Ajouter au Carnet
+                        </button>
 
-                      <button
-                        onClick={async () => {
-                          if (!confirm(`Souhaitez-vous vraiment rejeter la demande d'achat à crédit de ${commande.client_nom} ?`)) return
-                          changeStatut('annulee')
-                        }}
-                        disabled={loading}
-                        style={{ padding: '6px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                      >
-                        ❌ Rejeter la demande
-                      </button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`Souhaitez-vous vraiment rejeter la demande d'achat à crédit de ${commande.client_nom} ?`)) return
+                            changeStatut('annulee')
+                          }}
+                          disabled={loading}
+                          style={{ padding: '6px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                        >
+                          ❌ Rejeter la demande
+                        </button>
+                      </>
                     )}
                   </>
                 )}
