@@ -521,11 +521,7 @@ async function creerCommandeBoutique({
   note, source = 'web', methodePaiement = 'wave', zoneLivraisonId,
   nomProduitManuel, prixUnitaireManuel, groupeCommande,
 }) {
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(boutiqueId);
-  const bQuery = isUUID
-    ? 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE id=$1 AND actif=true'
-    : 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE slug=$1 AND actif=true';
-
+  const bQuery = 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (id::text = $1 OR slug = $1)';
   const { rows: [boutique] } = await pool.query(bQuery, [boutiqueId]);
   if (!boutique) {
     const e = new Error('Boutique introuvable');

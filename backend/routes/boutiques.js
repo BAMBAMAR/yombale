@@ -1331,8 +1331,8 @@ router.get('/:id/produits/:prodId', tokenOptional, param('prodId').isUUID(), asy
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
        LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
-       WHERE p.id=$1 AND ${boutiqueCondition} AND (b.actif=true OR b.utilisateur_id=$3 OR bu.utilisateur_id=$3)`,
-      [req.params.prodId, idParam, userId]
+       WHERE p.id=$1 AND ${boutiqueCondition}`,
+      [req.params.prodId, idParam]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
     res.json({ produit: rows[0] });
@@ -3595,10 +3595,7 @@ router.post('/commandes/express', async (req, res) => {
       return res.status(400).json({ error: 'Au moins un article est requis dans le panier.' });
     }
 
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(boutique_id);
-    const bqQuery = isUUID
-      ? 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE id = $1 AND actif = true'
-      : 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (slug = $1 OR id::text = $1) AND actif = true';
+    const bqQuery = 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (id::text = $1 OR slug = $1)';
     const bqRes = await pool.query(bqQuery, [boutique_id]);
     if (!bqRes.rows[0]) {
       return res.status(400).json({ error: 'Boutique introuvable.' });
