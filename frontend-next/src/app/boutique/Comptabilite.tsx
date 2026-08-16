@@ -1005,36 +1005,42 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
     setModalScannerVente(false)
   }
 
-  function capturerEtLireNomVente() {
+  async function capturerEtLireNomVente() {
     if (!videoVenteRef.current) return
-    setStatusScannerVente('🔍 Analyse du texte sur l’emballage...')
+    setStatusScannerVente('🔍 Lecture OCR du nom sur le produit...')
     const canvas = document.createElement('canvas')
     canvas.width = videoVenteRef.current.videoWidth || 640
     canvas.height = videoVenteRef.current.videoHeight || 480
     const ctx = canvas.getContext('2d')
     if (ctx) ctx.drawImage(videoVenteRef.current, 0, 0, canvas.width, canvas.height)
 
-    if (typeof window !== 'undefined' && 'TextDetector' in window) {
-      const detector = new (window as any).TextDetector()
-      detector.detect(canvas).then((texts: any[]) => {
-        if (texts && texts.length > 0) {
-          const trouves = texts.map((t: any) => t.rawValue).filter((t: string) => t && t.trim().length > 1)
-          if (trouves.length > 0) {
-            setOcrDetectionsVente(Array.from(new Set(trouves)).slice(0, 6))
-            const meilleur = trouves.sort((a, b) => b.length - a.length)[0]
-            setNomLibre(meilleur)
-            setStatusScannerVente(`✅ Nom capturé : "${meilleur}"`)
-            return
-          }
-        }
-        setStatusScannerVente('⚠️ Aucun texte détecté automatiquement. Saisissez le nom.')
-      }).catch(() => {
-        setStatusScannerVente('⚠️ Détection indisponible sur ce navigateur.')
+    const imageBase64 = canvas.toDataURL('image/jpeg', 0.85)
+
+    try {
+      const res = await fetch('/api/boutiques/scan-ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64 })
       })
-    } else {
-      setStatusScannerVente('📷 Prenez une photo nette du nom sur le produit.')
+      const data = await res.json()
+
+      if (data.ok && data.nom) {
+        setNomLibre(data.nom)
+        if (data.detections && data.detections.length > 0) {
+          setOcrDetectionsVente(data.detections)
+        }
+        setStatusScannerVente(`✅ Nom capturé : "${data.nom}"`)
+        setTimeout(() => {
+          arreterScannerVente()
+        }, 1200)
+      } else {
+        setStatusScannerVente(`⚠️ ${data.error || 'Aucun texte lisible détecté.'}`)
+      }
+    } catch (err) {
+      setStatusScannerVente('❌ Erreur de lecture OCR. Réessayez.')
     }
   }
+
 
   const handleValiderVenteRapide = async (e: React.FormEvent) => {
     e.preventDefault()

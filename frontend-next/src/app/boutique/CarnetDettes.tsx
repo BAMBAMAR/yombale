@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
+import { exportToCSV, printPDFReport } from '@/lib/export'
+
 
 interface ClientCredit {
   id: string
@@ -400,6 +402,81 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     return true
   })
 
+  // Fonctions d'exportation du carnet
+  const handleExportCSV = () => {
+    if (clients.length === 0) {
+      alert('Aucun client enregistré dans le carnet.')
+      return
+    }
+    const headers = ['Nom du client', 'Téléphone', 'Adresse / Quartier', 'Solde Dû (FCFA)', 'Plafond Max (FCFA)', 'Statut']
+    const rows = clients.map(c => [
+      c.nom,
+      c.telephone,
+      c.adresse || '—',
+      c.solde,
+      c.plafond_max,
+      c.solde > 0 ? 'Dette à encaisser' : c.solde < 0 ? 'Avance client' : 'Solde nul (Réglé)'
+    ])
+    exportToCSV(`Carnet_Dettes_${(boutique.nom || 'Boutique').replace(/\s+/g, '_')}`, headers, rows)
+  }
+
+  const handleExportPDF = () => {
+    if (clients.length === 0) {
+      alert('Aucun client enregistré dans le carnet.')
+      return
+    }
+    const headers = ['Nom du client', 'Téléphone', 'Adresse / Quartier', 'Solde (FCFA)', 'Statut']
+    const rows = clients.map(c => [
+      c.nom,
+      c.telephone,
+      c.adresse || '—',
+      fcfa(c.solde),
+      c.solde > 0 ? 'Dette client' : c.solde < 0 ? 'Avance client' : 'Solde nul'
+    ])
+    const summaryHtml = `
+      <div style="margin-bottom:20px; padding:14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; font-size:13px; color:#0f172a;">
+        <p style="margin:0 0 6px;"><strong>Boutique :</strong> ${boutique.nom}</p>
+        <p style="margin:0 0 6px;"><strong>Total Créances à Encaisser :</strong> <span style="color:#dc2626; font-weight:bold;">${fcfa(totalDettesAEncaisser)}</span></p>
+        <p style="margin:0 0 6px;"><strong>Total Avances Clients :</strong> <span style="color:#16a34a; font-weight:bold;">${fcfa(totalAvancesClients)}</span></p>
+        <p style="margin:0;"><strong>Nombre de Clients Débiteurs :</strong> ${nbClientsDebiteurs} client(s)</p>
+      </div>
+    `
+    printPDFReport(
+      `Carnet de Dettes & Crédits — ${boutique.nom}`,
+      `Rapport de synthèse des crédits clients`,
+      headers,
+      rows,
+      summaryHtml
+    )
+  }
+
+  const handleExportReleveClientPDF = () => {
+    if (!clientSelectionne) return
+    const headers = ['Date & Heure', 'Type Opération', 'Mode Paiement', 'Détails / Description', 'Montant (FCFA)']
+    const rows = historique.map(h => [
+      fmtDateHeure(h.created_at),
+      h.type === 'vente_credit' ? 'Vente à crédit' : h.type === 'remboursement' ? 'Remboursement' : 'Dépôt / Avance',
+      h.mode_paiement || 'Espèces',
+      h.note || (h.produits && h.produits.length > 0 ? h.produits.map((p: any) => `${p.nom} x${p.qte || 1}`).join(', ') : '—'),
+      fcfa(h.montant)
+    ])
+    const summaryHtml = `
+      <div style="margin-bottom:20px; padding:14px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; color:#0f172a;">
+        <p style="margin:0 0 6px;"><strong>Client :</strong> ${clientSelectionne.nom}</p>
+        <p style="margin:0 0 6px;"><strong>Téléphone WhatsApp :</strong> ${clientSelectionne.telephone}</p>
+        <p style="margin:0 0 6px;"><strong>Adresse :</strong> ${clientSelectionne.adresse || '—'}</p>
+        <p style="margin:0;"><strong>Solde Actuel :</strong> <span style="color:${clientSelectionne.solde > 0 ? '#dc2626' : '#16a34a'}; font-weight:bold; font-size:15px;">${fcfa(clientSelectionne.solde)}</span></p>
+      </div>
+    `
+    printPDFReport(
+      `Relevé de Compte Client — ${clientSelectionne.nom}`,
+      `Boutique ${boutique.nom} · Récapitulatif des opérations`,
+      headers,
+      rows,
+      summaryHtml
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
@@ -469,6 +546,53 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             >
               👤 + Nouveau Client
             </button>
+
+            <button
+              onClick={handleExportCSV}
+              style={{
+                flex: isMobile ? 1 : 'none',
+                background: '#0284c7',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 12,
+                padding: '10px 14px',
+                fontWeight: 800,
+                fontSize: 12.5,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                minHeight: 42
+              }}
+              title="Exporter toutes les dettes au format CSV Excel"
+            >
+              📥 Export CSV
+            </button>
+
+            <button
+              onClick={handleExportPDF}
+              style={{
+                flex: isMobile ? 1 : 'none',
+                background: '#7c3aed',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 12,
+                padding: '10px 14px',
+                fontWeight: 800,
+                fontSize: 12.5,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                minHeight: 42
+              }}
+              title="Imprimer ou sauvegarder le rapport PDF du carnet"
+            >
+              🖨️ Imprimer PDF
+            </button>
+
 
             <button
               onClick={() => ouvrirModalTransaction('vente_credit')}
@@ -934,6 +1058,26 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 }}
               >
                 💸 Rembourser
+              </button>
+
+              <button
+                onClick={handleExportReleveClientPDF}
+                style={{
+                  flex: 1,
+                  minWidth: 140,
+                  background: '#7c3aed',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 10,
+                  padding: '10px 12px',
+                  fontWeight: 800,
+                  fontSize: 12.5,
+                  cursor: 'pointer',
+                  minHeight: 42
+                }}
+                title="Imprimer ou enregistrer le relevé de compte de ce client en PDF"
+              >
+                🖨️ Imprimer Relevé PDF
               </button>
 
               {Number(clientSelectionne.solde) > 0 && (

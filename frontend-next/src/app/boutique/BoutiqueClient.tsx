@@ -942,10 +942,10 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
     }
   }
 
-  function capturerEtLireNomTexte() {
+  async function capturerEtLireNomTexte() {
     if (!videoFormRef.current) return
     setOcrLoading(true)
-    setScannerStatus('🔍 Analyse du texte sur l’emballage en cours...')
+    setScannerStatus('🔍 Lecture OCR du nom sur l’emballage en cours...')
 
     const canvas = document.createElement('canvas')
     canvas.width = videoFormRef.current.videoWidth || 640
@@ -955,33 +955,35 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       ctx.drawImage(videoFormRef.current, 0, 0, canvas.width, canvas.height)
     }
 
-    // Utilisation de la détection de texte ou canvas fallback
-    setTimeout(() => {
-      if (typeof window !== 'undefined' && 'TextDetector' in window) {
-        const detector = new (window as any).TextDetector()
-        detector.detect(canvas).then((texts: any[]) => {
-          setOcrLoading(false)
-          if (texts && texts.length > 0) {
-            const trouves = texts.map((t: any) => t.rawValue).filter((t: string) => t && t.trim().length > 1)
-            if (trouves.length > 0) {
-              setOcrDetections(Array.from(new Set(trouves)).slice(0, 6))
-              const meilleurTexte = trouves.sort((a, b) => b.length - a.length)[0]
-              setNomForm(meilleurTexte)
-              setScannerStatus(`✅ Nom capturé : "${meilleurTexte}"`)
-              return
-            }
-          }
-          setScannerStatus('⚠️ Aucun texte lisible automatiquement. Veuillez taper le nom.')
-        }).catch(() => {
-          setOcrLoading(false)
-          setScannerStatus('⚠️ Détection automatique indisponible sur ce navigateur.')
-        })
+    const imageBase64 = canvas.toDataURL('image/jpeg', 0.85)
+
+    try {
+      const res = await fetch('/api/boutiques/scan-ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64 })
+      })
+      const data = await res.json()
+      setOcrLoading(false)
+
+      if (data.ok && data.nom) {
+        setNomForm(data.nom)
+        if (data.detections && data.detections.length > 0) {
+          setOcrDetections(data.detections)
+        }
+        setScannerStatus(`✅ Nom capturé : "${data.nom}"`)
+        setTimeout(() => {
+          arreterFormScanner()
+        }, 1200)
       } else {
-        setOcrLoading(false)
-        setScannerStatus('📷 Cadrez l’écriture sur le produit, puis tapez ou vérifiez le nom ci-dessous.')
+        setScannerStatus(`⚠️ ${data.error || 'Aucun texte lisible capturé. Veuillez réessayer.'}`)
       }
-    }, 400)
+    } catch (err) {
+      setOcrLoading(false)
+      setScannerStatus('❌ Erreur lors de l’analyse OCR. Réessayez.')
+    }
   }
+
 
   function arreterFormScanner() {
     if (videoFormRef.current && (videoFormRef.current as any)._textTimer) {

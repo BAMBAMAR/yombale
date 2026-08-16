@@ -421,58 +421,93 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                   {lignesSelectionnees.map((ligne, idx) => {
                     const isCatalogProd = produits.some(p => p.id === ligne.produitId);
                     const estProduitHorsCatalogue = !isCatalogProd || ligne.produitId === 'custom' || !ligne.produitId;
+                    const totalLigne = Number(ligne.quantite || 0) * Number(ligne.prix || 0);
+
                     return (
-                      <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 8, background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <select
-                            value={isCatalogProd ? ligne.produitId : 'custom'}
-                            onChange={e => handleModifierLigne(idx, 'produitId', e.target.value)}
-                            style={{ flex: '2 1 200px', padding: 8, borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }}
-                          >
-                            <option value="custom">✏️ Article hors catalogue / Saisie libre</option>
-                            {produits.length > 0 && (
-                              <optgroup label="Catalogue Produits">
-                                {produits.map(p => (
-                                  <option key={p.id} value={p.id}>{p.nom} ({fcfa(p.prix)})</option>
-                                ))}
-                              </optgroup>
-                            )}
-                          </select>
-                          <input
-                            type="number"
-                            min="1"
-                            value={ligne.quantite}
-                            onChange={e => handleModifierLigne(idx, 'quantite', Number(e.target.value))}
-                            style={{ width: 80, padding: 8, borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }}
-                            placeholder="Qté"
-                            required
-                          />
-                          <input
-                            type="number"
-                            min="0"
-                            value={ligne.prix}
-                            onChange={e => handleModifierLigne(idx, 'prix', Number(e.target.value))}
-                            style={{ width: 120, padding: 8, borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }}
-                            placeholder="Prix Unit"
-                            required
-                          />
-                          <button type="button" onClick={() => handleSupprimerLigne(idx)} style={{ padding: '8px 12px', background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 6, cursor: 'pointer', fontWeight: 700 }}>
-                            ✕
-                          </button>
+                      <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 10, background: '#f8fafc', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                          
+                          <div style={{ flex: '2 1 180px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <label style={{ fontSize: 11.5, fontWeight: 800, color: '#475569' }}>Article / Produit *</label>
+                            <select
+                              value={isCatalogProd ? ligne.produitId : 'custom'}
+                              onChange={e => handleModifierLigne(idx, 'produitId', e.target.value)}
+                              style={{ width: '100%', padding: '9px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, fontWeight: 600, height: 38 }}
+                            >
+                              <option value="custom">✏️ Article hors catalogue / Saisie libre</option>
+                              {produits.length > 0 && (
+                                <optgroup label="Catalogue Produits">
+                                  {produits.map(p => (
+                                    <option key={p.id} value={p.id}>{p.nom} ({fcfa(p.prix)})</option>
+                                  ))}
+                                </optgroup>
+                              )}
+                            </select>
+                          </div>
+
+                          <div style={{ width: 90, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <label style={{ fontSize: 11.5, fontWeight: 800, color: '#475569' }}>Quantité *</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={ligne.quantite}
+                              onChange={e => handleModifierLigne(idx, 'quantite', Number(e.target.value))}
+                              style={{ width: '100%', padding: '9px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, fontWeight: 700, height: 38 }}
+                              placeholder="Qté"
+                              required
+                            />
+                          </div>
+
+                          <div style={{ width: 130, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <label style={{ fontSize: 11.5, fontWeight: 800, color: '#475569' }}>Prix Unit. (FCFA) *</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={ligne.prix}
+                              onChange={e => handleModifierLigne(idx, 'prix', Number(e.target.value))}
+                              style={{ width: '100%', padding: '9px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, fontWeight: 700, height: 38 }}
+                              placeholder="Prix Unit"
+                              required
+                            />
+                          </div>
+
+                          <div style={{ width: 120, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <label style={{ fontSize: 11.5, fontWeight: 800, color: '#475569' }}>Total (FCFA)</label>
+                            <div style={{ padding: '9px 10px', background: '#e2e8f0', borderRadius: 6, fontSize: 12.5, fontWeight: 900, color: '#0f172a', height: 38, display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                              {fcfa(totalLigne)}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <label style={{ fontSize: 11.5, fontWeight: 800, color: 'transparent' }}>•</label>
+                            <button
+                              type="button"
+                              onClick={() => handleSupprimerLigne(idx)}
+                              style={{ padding: '0 12px', height: 38, background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 6, cursor: 'pointer', fontWeight: 800, fontSize: 14 }}
+                              title="Supprimer cette ligne"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
+
                         {estProduitHorsCatalogue && (
-                          <input
-                            type="text"
-                            value={ligne.nom}
-                            onChange={e => handleModifierLigne(idx, 'nom', e.target.value)}
-                            placeholder="Désignation / Nom de l'article ou prestation hors catalogue..."
-                            style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, background: '#ffffff' }}
-                            required
-                          />
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <label style={{ fontSize: 11.5, fontWeight: 800, color: '#0284c7' }}>Désignation / Nom de l&apos;article ou prestation hors catalogue *</label>
+                            <input
+                              type="text"
+                              value={ligne.nom}
+                              onChange={e => handleModifierLigne(idx, 'nom', e.target.value)}
+                              placeholder="Ex: Prestation réparation écran, Article spécifique..."
+                              style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, background: '#ffffff', fontWeight: 600 }}
+                              required
+                            />
+                          </div>
                         )}
                       </div>
                     )
                   })}
+
                 </div>
               </div>
 

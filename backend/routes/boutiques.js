@@ -4253,6 +4253,56 @@ router.get('/commandes/suivi', async (req, res) => {
   }
 });
 
+// ── POST /api/boutiques/scan-ocr — OCR du nom de produit depuis la caméra ──
+router.post('/scan-ocr', async (req, res) => {
+  try {
+    const { imageBase64 } = req.body || {};
+    if (!imageBase64) {
+      return res.status(400).json({ error: 'Image base64 requise' });
+    }
+
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    const imageBuffer = Buffer.from(base64Data, 'base64');
+
+    let Tesseract;
+    try {
+      Tesseract = require('tesseract.js');
+    } catch (e) {
+      console.warn('[OCR] tesseract.js non disponible:', e.message);
+      return res.status(503).json({ error: 'OCR serveur non disponible' });
+    }
+
+    const result = await Tesseract.recognize(imageBuffer, 'fra+eng');
+    const rawText = result?.data?.text || '';
+
+    const lines = rawText
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length >= 2 && !/^[0-9\W]+$/.test(l));
+
+    if (lines.length === 0) {
+      return res.json({ ok: false, error: 'Aucun texte lisible détecté sur l’emballage.' });
+    }
+
+    // Choisir la ligne la plus représentative (ex: première ligne en majuscules ou la plus longue)
+    const majuscules = lines.filter(l => /[A-Z]{2,}/.test(l));
+    const candidat = majuscules.length > 0 ? majuscules[0] : [...lines].sort((a, b) => b.length - a.length)[0];
+
+    // Nettoyage final du texte
+    const nomPropre = candidat.replace(/[\n\r]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+    return res.json({
+      ok: true,
+      nom: nomPropre,
+      detections: lines.slice(0, 6)
+    });
+  } catch (err) {
+    console.error('[OCR SCAN NOM ERR]', err);
+    return res.status(500).json({ error: 'Erreur lors de la lecture OCR du produit' });
+  }
+});
+
 module.exports = router;
+
 
 

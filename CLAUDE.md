@@ -64,14 +64,19 @@
   * Ajout des boutons d'action rapide **"⚡ Saisie Express Ventes & Dépenses"** et **"📒 Carnet de Dettes Client"** dans le bloc *Raccourcis & Actions Rapides* du tableau de bord de la boutique pour un accès instantané en 1 clic.
   * Permet d'enregistrer instantanément des ventes directes ou des dépenses informelles (achats stock, transport, loyer, salaires, électricité, etc.) en 1 clic sans passer par l'ouverture/clôture de session de caisse POS ni scanner.
 
-## 📌 Mises à jour du 16/08/2026 : Ajout de l'Option "Scan Nom" (Lecture Caméra du Nom écrit sur le Produit/Emballage) & Intégration en Ajout Rapide (`BoutiqueClient.tsx`, `Comptabilite.tsx`)
-- **1. Bouton "📷 Scan Nom" sur le Champ Nom du Produit (`BoutiqueClient.tsx`, `Comptabilite.tsx`)** :
-  * Ajout d'un bouton interactif **`📷 Scan Nom`** à côté du champ *Nom du produit* dans le formulaire de création/édition de produit ainsi que sur le formulaire de *Vente Rapide*.
-  * Au clic sur **Scan Nom**, le scanner caméra s'ouvre avec un cadre de cadrage textuel (*"Placez l'écriture du produit ici"*).
-  * Détection de texte via la caméra pour capturer et lire l'écriture/étiquette présente sur l'emballage ou la bouteille du produit et remplir automatiquement la case *Nom du produit*.
-- **2. Intégration dans le mode Ajout Rapide (`modeRapide`)** :
-  * Affichage systématique du champ **Nom du produit** (avec **`📷 Scan Nom`**) et du champ **Code-Barres EAN-13** (avec **`📷 Scan EAN`** et **`🎲 Générer EAN`**) en mode Ajout Rapide.
-  * Permet aux commerçants d'ajouter des produits en 1 tap avec capture directe du nom et/ou de l'EAN.
+## 📌 Mises à jour du 16/08/2026 : Intégration OCR Réelle "Scan Nom", Refonte Alertes WhatsApp, Export Carnet Dettes (CSV/PDF) & Libellés Documents (`BoutiqueClient.tsx`, `Comptabilite.tsx`, `AlertePrix.tsx`, `CarnetDettes.tsx`, `GestionDocuments.tsx`, `backend/routes/boutiques.js`)
+- **1. Lecture OCR Réelle et Remplissage Automatique "Scan Nom" (`backend/routes/boutiques.js`, `scan-ocr/route.ts`, `BoutiqueClient.tsx`, `Comptabilite.tsx`)** :
+  * **API Backend OCR (`POST /api/boutiques/scan-ocr`)** : Création de la route backend et du proxy Next.js exploitant `tesseract.js` pour analyser les captures d'écran de la caméra et extraire la désignation/marque du produit.
+  * **Remplissage Direct sans Saisie Manuelle** : Suppression du message d'erreur/demande de saisie manuelle. Le nom scanné est désormais injecté automatiquement dans `nomForm` / `nomLibre` avec confirmation visuelle et fermeture automatique.
+- **2. Refonte du Bouton & Retour Visuel Alerte Baisse de Prix WhatsApp (`AlertePrix.tsx`, `globals.css`)** :
+  * **Bouton d'Alerte Dynamique (`.alerte-trigger`)** : Conversion du bouton neutre (qui ressemblait à une boîte d'information avec bordure pointillée) en un bouton d'action d'alerte avec fond dégradé bleu, bordure solide et icône cloche `🔔` mise en relief.
+  * **Confirmation de Création Instantanée** : Affichage d'une bannière de succès verte (`🎉 Alerte créée avec succès !`) et maintien du message de confirmation pour informer l'utilisateur de l'enregistrement de son alerte.
+- **3. Exportation du Carnet de Dettes & Crédits Clients (`CarnetDettes.tsx`, `export.ts`)** :
+  * **Boutons d'Action d'Exportation** : Ajout des boutons **`📥 Export CSV`** (format Excel avec colonnes de soldes, téléphones et plafonds) et **`🖨️ Imprimer PDF`** dans le haut du carnet de dettes.
+  * **Impression de Relevé Client** : Bouton **`🖨️ Imprimer Relevé PDF`** disponible sur chaque fiche individuelle client pour générer et imprimer son historique d'opérations et de règlements.
+- **4. Libellés Explicites sur les Lignes de Documents (`GestionDocuments.tsx`)** :
+  * Ajout des étiquettes explicites au-dessus de chaque champ de ligne d'article dans la modale de création/édition de Factures et Devis (`Article / Produit *`, `Quantité *`, `Prix Unit. (FCFA) *`, `Total (FCFA)`).
+
 - **3. Correction de l'Erreur de Modification Client Carnet (`backend/routes/boutiques.js`, `/api/boutiques/[id]/credits-clients/[clientId]/route.ts`)** :
   * **Cause 1 (Backend SQL Typo)** : Correction d'une coquille dans la requête SQL `UPDATE caisse_clients_credit` dans `backend/routes/boutiques.js` (remplacé par le nom exact de table au pluriel `caisse_clients_credits`).
   * **Cause 2 (Proxy API Next.js)** : Création des routes API dynamiques `src/app/api/boutiques/[id]/credits-clients/[clientId]/route.ts` (PUT pour modifier le profil client, DELETE), ainsi que des sous-routes `historique`, `transaction` et `relance-whatsapp`.
