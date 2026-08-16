@@ -51,10 +51,11 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
 
   function changeStatut(statut: string) {
     setLoading(true)
-    startTransition(async () => {
-      await updateStatutCommande(boutiqueId, commande.id, statut)
-      setLoading(false)
-      onUpdate()
+    startTransition(() => {
+      updateStatutCommande(boutiqueId, commande.id, statut).then(() => {
+        setLoading(false)
+        onUpdate()
+      }).catch(() => setLoading(false))
     })
   }
 

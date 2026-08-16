@@ -691,62 +691,6 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     )
   }
 
-  async function handleChangerStatutClient(client: ClientCredit, nouveauStatut: 'actif' | 'bloque') {
-    const isBloque = nouveauStatut === 'bloque'
-    const actionText = isBloque ? 'blacklister/bloquer' : 'réactiver'
-    if (!confirm(`Voulez-vous vraiment ${actionText} le client ${client.nom} ?` + (isBloque ? '\n\nIl ne pourra plus soumettre de demande d\'achat à crédit sur votre boutique.' : ''))) {
-      return
-    }
-
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutique.id}/credits-clients/${client.id}/statut`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ statut: nouveauStatut }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        alert(data.error || 'Erreur lors du changement de statut')
-        return
-      }
-      alert(isBloque ? `⛔ Client ${client.nom} blacklisté avec succès.` : `🟢 Client ${client.nom} réactivé avec succès.`)
-      await chargerDonnees()
-    } catch {
-      alert('Impossible de modifier le statut du client')
-    }
-  }
-
-  async function handleSupprimerClient(client: ClientCredit) {
-    const soldeNum = Number(client.solde || 0)
-    if (soldeNum !== 0) {
-      if (!confirm(`⚠️ Attention : Le client ${client.nom} a un solde actuel de ${fcfa(soldeNum)}.\n\nVoulez-vous vraiment supprimer définitivement ce profil et tout son historique du carnet ?`)) {
-        return
-      }
-    } else {
-      if (!confirm(`Voulez-vous vraiment supprimer définitivement le profil client ${client.nom} du carnet ?`)) {
-        return
-      }
-    }
-
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutique.id}/credits-clients/${client.id}`, {
-        method: 'DELETE',
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        alert(data.error || 'Erreur lors de la suppression')
-        return
-      }
-      alert(`🗑️ Client ${client.nom} supprimé du carnet avec succès.`)
-      if (clientSelectionne?.id === client.id) setClientSelectionne(null)
-      await chargerDonnees()
-    } catch {
-      alert('Impossible de supprimer le client')
-    }
-  }
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
