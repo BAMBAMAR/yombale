@@ -1290,17 +1290,23 @@ router.post('/:id/credits-clients/:clientId/relance-whatsapp', async (req, res) 
 
 // ── POST /api/boutiques/:id/credits-clients/approuver-commande — Approbation d'une demande d'achat à crédit
 router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
+  console.log('📌 [BACKEND APPROUVER-CMD REÇU]', req.body);
   try {
     const param = req.params.id;
     const isUUID = /^[0-9a-f-]{36}$/i.test(param);
     const bqCond = isUUID ? 'id=$1' : 'slug=$1';
     const bqRes = await pool.query(`SELECT id, nom, telephone, whatsapp FROM boutiques WHERE ${bqCond}`, [param]);
-    if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    if (!bqRes.rows[0]) {
+      console.error('❌ [APPROUVER-CMD] Boutique introuvable:', param);
+      return res.status(404).json({ error: 'Boutique introuvable' });
+    }
     const boutiqueId = bqRes.rows[0].id;
 
     const { commande_id, client_nom, client_telephone, montant, nom_produit, quantite, reference } = req.body;
+    console.log('🔍 [APPROUVER-CMD DONNÉES]', { boutiqueId, commande_id, client_nom, client_telephone, montant, reference });
 
     if (!client_nom || !client_telephone || !montant) {
+      console.error('❌ [APPROUVER-CMD] Champs requis manquants:', { client_nom, client_telephone, montant });
       return res.status(400).json({ error: 'Nom client, téléphone et montant requis.' });
     }
 
@@ -1335,7 +1341,8 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
       }
 
       let carnetClient;
-      if (clientRes.rows.length === 0) {
+      if (!clientRes || clientRes.rows.length === 0) {
+        console.log(`✨ [APPROUVER-CMD] Création d'un NOUVEAU client dans le carnet: "${client_nom}" (${client_telephone})`);
         const newClientRes = await dbClient.query(
           `INSERT INTO caisse_clients_credits (boutique_id, nom, telephone, solde, plafond_max)
            VALUES ($1, $2, $3, 0, 250000)
@@ -1345,10 +1352,12 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
         carnetClient = newClientRes.rows[0];
       } else {
         carnetClient = clientRes.rows[0];
+        console.log(`👤 [APPROUVER-CMD] Client EXISTANT trouvé dans le carnet: "${carnetClient.nom}" (ID: ${carnetClient.id}, Solde actuel: ${carnetClient.solde})`);
       }
 
       if (carnetClient && carnetClient.statut === 'bloque') {
         await dbClient.query('ROLLBACK');
+        console.warn('⛔ [APPROUVER-CMD] Client bloqué:', carnetClient.nom);
         return res.status(400).json({ error: '⛔ Ce client est actuellement blacklisté par la boutique. Impossible de valider un achat à crédit.' });
       }
 
@@ -1356,11 +1365,12 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
       const noteTrans = `Achat à crédit Web (Réf: ${reference || 'Commande'}, ${nom_produit || 'Article'} x${quantite || 1})`;
       const prodsTrans = JSON.stringify([{ nom: nom_produit || 'Article', quantite: quantite || 1, prix: Number(montant) / Number(quantite || 1) }]);
 
-      await dbClient.query(
+      const histRes = await dbClient.query(
         `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, relance_auto_whatsapp)
-         VALUES ($1, $2, 'vente_credit', $3, 'credit', $4, $5, true)`,
+         VALUES ($1, $2, 'vente_credit', $3, 'credit', $4, $5, true) RETURNING id`,
         [carnetClient.id, boutiqueId, Number(montant), noteTrans, prodsTrans]
       );
+      console.log(`📜 [APPROUVER-CMD] Transaction de crédit insérée (ID: ${histRes.rows[0].id}, Montant: ${montant} FCFA)`);
 
       // 3. Mettre à jour le solde du client carnet
       const soldeRes = await dbClient.query(
@@ -1370,6 +1380,7 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
          RETURNING solde`,
         [Number(montant), carnetClient.id]
       );
+      console.log(`💰 [APPROUVER-CMD] Nouveau solde du client ${carnetClient.nom}: ${soldeRes.rows[0].solde} FCFA`);
 
       // 4. Marquer la commande comme confirmée & décrémenter le stock si applicable
       if (commande_id) {
@@ -1379,6 +1390,7 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
           `UPDATE commandes_boutique SET statut = 'confirmee', updated_at = NOW() WHERE ${cmdCond} AND boutique_id = $2`,
           [commande_id, boutiqueId]
         ).catch(eCmd => console.warn('[UPDATE CMD CONFIRMEE WARN]', eCmd.message));
+        console.log(`✅ [APPROUVER-CMD] Commande ${commande_id} marquée comme 'confirmee'`);
       }
 
       if (nom_produit) {
@@ -1397,6 +1409,7 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
       ).catch(() => {});
 
       await dbClient.query('COMMIT');
+      console.log(`🎉 [APPROUVER-CMD SUCCÈS] Client: ${carnetClient.nom}, Nouveau Solde: ${soldeRes.rows[0].solde}`);
 
       res.json({
         success: true,

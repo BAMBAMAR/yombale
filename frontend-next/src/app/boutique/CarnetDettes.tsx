@@ -956,6 +956,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     type="button"
                     onClick={async () => {
                       try {
+                        console.log('[CARNET CLIC APPROUVER]', { boutiqueId: boutique.id, cmd })
                         const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/approuver-commande`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
@@ -970,18 +971,22 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           }),
                         })
                         const data = await res.json()
+                        console.log('[CARNET APPROUVER RÉPONSE SERVER]', { ok: res.ok, status: res.status, data })
                         if (!res.ok) {
                           alert(data.error || 'Erreur approbation')
                           return
                         }
+                        console.log('[CARNET RECHARGEMENT DES DONNÉES...]')
                         await chargerDonnees()
                         window.dispatchEvent(new Event('carnet_updated'))
+                        console.log('[CARNET DONNÉES RECHARGÉES AVEC SUCCÈS]')
                         const cleanTel = cmd.client_telephone.replace(/\D/g, '')
                         const msgWa = encodeURIComponent(`Bonjour ${cmd.client_nom}, votre demande d'achat à crédit de ${fcfa(cmd.montant_total)} (${cmd.nom_produit}) a été approuvée par la boutique et enregistrée dans votre Carnet !`)
                         if (confirm(`✅ Demande d'achat à crédit de ${cmd.client_nom} approuvée et enregistrée dans son Carnet client avec succès !\n\nSouhaitez-vous lui envoyer le message de confirmation sur WhatsApp ?`)) {
                           window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
                         }
                       } catch (e) {
+                        console.error('[CARNET ERREUR APPROUVER]', e)
                         alert('Erreur lors du traitement.')
                       }
                     }}

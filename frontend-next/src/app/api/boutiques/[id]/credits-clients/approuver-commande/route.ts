@@ -8,15 +8,17 @@ export async function POST(
 ) {
   try {
     const body = await request.json().catch(() => ({}))
+    console.log('[NEXT API APPROUVER-CMD INCOMING]', { boutiqueId: params.id, body })
     const res = await backendFetch(`/api/boutiques/${params.id}/credits-clients/approuver-commande`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
     const data = await res.json().catch(() => ({}))
+    console.log('[NEXT API APPROUVER-CMD RESPONSE]', { status: res.status, data })
     return NextResponse.json(data, { status: res.status })
   } catch (err) {
-    console.error('[API Route] POST approuver-commande error:', err)
+    console.error('[NEXT API APPROUVER-CMD ERROR]', err)
     return NextResponse.json({ error: 'Erreur réseau' }, { status: 500 })
   }
 }
