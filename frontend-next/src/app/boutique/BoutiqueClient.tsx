@@ -22,7 +22,7 @@ import ParametresFiscalite from './ParametresFiscalite'
 import GestionDocuments from './GestionDocuments'
 import GestionFournisseurs from './GestionFournisseurs'
 import BoutiqueLogs from './BoutiqueLogs'
-import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2 } from 'lucide-react'
+import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
 
@@ -2487,73 +2487,83 @@ function BoutiqueDashboard({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-      {/* Grille de statistiques clés */}
+      {/* Grille de statistiques clés — Design System Tier-1 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 18 }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 2px 8px rgba(26,22,18,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Commandes en attente</span>
-            <span style={{ fontSize: 20 }}>📋</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>Commandes en attente</span>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ClipboardList size={18} style={{ color: 'var(--navy)' }} />
+            </div>
           </div>
-          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: nbEnAttente > 0 ? '#C75B00' : '#0f172a' }}>{nbEnAttente}</p>
-          <button onClick={() => onNavigate('commandes')} style={{ background: 'none', border: 'none', color: '#C75B00', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10 }}>
+          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--navy)' }}>{nbEnAttente}</p>
+          <button onClick={() => onNavigate('commandes')} style={{ background: 'none', border: 'none', color: 'var(--navy)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10, textDecoration: 'underline' }}>
             Voir les commandes →
           </button>
         </div>
 
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 18 }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 2px 8px rgba(26,22,18,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Catalogue Produits</span>
-            <span style={{ fontSize: 20 }}>🛍️</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>Catalogue Produits</span>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShoppingBag size={18} style={{ color: 'var(--navy)' }} />
+            </div>
           </div>
-          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#0f172a' }}>{loading ? '...' : (produitsCount ?? 0)}</p>
-          <button onClick={() => onNavigate('produits')} style={{ background: 'none', border: 'none', color: '#1d4ed8', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10 }}>
+          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: 'var(--navy)' }}>{loading ? '...' : (produitsCount ?? 0)}</p>
+          <button onClick={() => onNavigate('produits')} style={{ background: 'none', border: 'none', color: 'var(--navy)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10, textDecoration: 'underline' }}>
             Gérer le catalogue →
           </button>
         </div>
 
-        <div style={{ background: stockAlertsCount && stockAlertsCount > 0 ? '#fffbeb' : '#f8fafc', border: stockAlertsCount && stockAlertsCount > 0 ? '1px solid #fcd34d' : '1px solid #e2e8f0', borderRadius: 16, padding: 18 }}>
+        <div style={{ background: stockAlertsCount && stockAlertsCount > 0 ? '#fffbeb' : 'var(--card)', border: stockAlertsCount && stockAlertsCount > 0 ? '1px solid #fcd34d' : '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 2px 8px rgba(26,22,18,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : '#64748b' }}>Alertes Stock</span>
-            <span style={{ fontSize: 20 }}>⚠️</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--text2)' }}>Alertes Stock</span>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: stockAlertsCount && stockAlertsCount > 0 ? '#fef3c7' : 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <AlertTriangle size={18} style={{ color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }} />
+            </div>
           </div>
-          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : '#0f172a' }}>{loading ? '...' : (stockAlertsCount ?? 0)}</p>
-          <button onClick={() => onNavigate('fournisseurs')} style={{ background: 'none', border: 'none', color: '#b45309', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10 }}>
+          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }}>{loading ? '...' : (stockAlertsCount ?? 0)}</p>
+          <button onClick={() => onNavigate('fournisseurs')} style={{ background: 'none', border: 'none', color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10, textDecoration: 'underline' }}>
             Réapprovisionner →
           </button>
         </div>
 
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 18 }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 2px 8px rgba(26,22,18,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Formule Boutique</span>
-            <span style={{ fontSize: 20 }}>⭐</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>Formule Boutique</span>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Star size={18} style={{ color: 'var(--accent)' }} />
+            </div>
           </div>
-          <p style={{ margin: 0, fontSize: 17, fontWeight: 800, color: planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : planActif === 'decouverte' || planActif === 'taf_taf' ? '#16a34a' : '#64748b' }}>
-            {planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'Taf Taf (1 mois offert)' : 'Gratuit'}
+          <p style={{ margin: 0, fontSize: 17, fontWeight: 800, color: planActif === 'business' ? 'var(--navy)' : planActif === 'pro' ? 'var(--accent)' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'var(--price)' : 'var(--text2)' }}>
+            {planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'Taf Taf (1m offert)' : 'Gratuit'}
           </p>
-          <Link href="/boutique/abonnement" style={{ color: '#1d4ed8', fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'inline-block', marginTop: 10 }}>
+          <Link href="/boutique/abonnement" style={{ color: 'var(--navy)', fontSize: 12.5, fontWeight: 700, textDecoration: 'underline', display: 'inline-block', marginTop: 10 }}>
             Gérer mon offre →
           </Link>
         </div>
       </div>
 
-      {/* Raccourcis d'action rapide */}
-      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 20, padding: 22, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-        <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.01em' }}>⚡ Raccourcis & Actions Rapides</h3>
+      {/* Raccourcis d'action rapide — Fond unifié blanc pur & Icônes SVG Tier-1 */}
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 20, padding: 22, boxShadow: '0 4px 20px rgba(26,22,18,0.03)' }}>
+        <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 900, color: 'var(--navy)', letterSpacing: '-0.01em' }}>⚡ Raccourcis & Actions Rapides</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
           
           <button
             onClick={() => onNavigate('compta', 'express')}
             style={{
               display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-              borderRadius: 14, background: '#f0fdf4', border: '1.5px solid #bbf7d0',
+              borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)', transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(26,22,18,0.04)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            <span style={{ fontSize: 26 }}>⚡</span>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Zap size={22} style={{ color: 'var(--price)' }} />
+            </div>
             <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#15803d', letterSpacing: '-0.01em' }}>Saisie Express Ventes & Dépenses</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#166534', fontWeight: 600 }}>Encaissement & sortie 1-clic</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Saisie Express Ventes & Dépenses</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Encaissement & sortie 1-clic</p>
             </div>
           </button>
 
@@ -2561,15 +2571,17 @@ function BoutiqueDashboard({
             onClick={() => onNavigate('carnet')}
             style={{
               display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-              borderRadius: 14, background: '#fef2f2', border: '1.5px solid #fecaca',
+              borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 8px rgba(239, 68, 68, 0.08)', transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(26,22,18,0.04)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            <span style={{ fontSize: 26 }}>📒</span>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <BookOpen size={22} style={{ color: 'var(--red)' }} />
+            </div>
             <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#991b1b', letterSpacing: '-0.01em' }}>Carnet de Dettes Client</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#dc2626', fontWeight: 600 }}>Créances & Relances WhatsApp</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Carnet de Dettes Client</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Créances & Relances WhatsApp</p>
             </div>
           </button>
 
@@ -2577,15 +2589,17 @@ function BoutiqueDashboard({
             onClick={() => onNavigate('produits')}
             style={{
               display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-              borderRadius: 14, background: '#f8fafc', border: '1.5px solid #e2e8f0',
+              borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)', transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(26,22,18,0.04)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            <span style={{ fontSize: 26 }}>🛍️</span>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <PlusCircle size={22} style={{ color: 'var(--accent)' }} />
+            </div>
             <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#0f172a', letterSpacing: '-0.01em' }}>Ajouter un produit</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Photos, prix & détails</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Ajouter un produit</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Photos, prix & détails</p>
             </div>
           </button>
 
@@ -2593,15 +2607,17 @@ function BoutiqueDashboard({
             onClick={() => onNavigate('documents')}
             style={{
               display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-              borderRadius: 14, background: '#eff6ff', border: '1.5px solid #bfdbfe',
+              borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)', transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(26,22,18,0.04)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            <span style={{ fontSize: 26 }}>📄</span>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <FileText size={22} style={{ color: 'var(--navy)' }} />
+            </div>
             <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#1e40af', letterSpacing: '-0.01em' }}>Créer une facture/devis</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#1d4ed8', fontWeight: 600 }}>Document client PDF</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Créer une facture/devis</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Document client PDF</p>
             </div>
           </button>
 
@@ -2610,16 +2626,18 @@ function BoutiqueDashboard({
               href="/boutique/caisse"
               style={{
                 display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-                borderRadius: 14, background: '#faf5ff', border: '1.5px solid #e9d5ff',
+                borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
                 textDecoration: 'none', WebkitFontSmoothing: 'antialiased',
-                boxShadow: '0 2px 8px rgba(168, 85, 247, 0.08)', transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(26,22,18,0.04)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
               onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
             >
-              <span style={{ fontSize: 26 }}>🛒</span>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <ShoppingCart size={22} style={{ color: 'var(--navy)' }} />
+              </div>
               <div>
-                <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#6b21a8', letterSpacing: '-0.01em' }}>Ouvrir Caisse POS</p>
-                <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#7e22ce', fontWeight: 600 }}>Vente sur place</p>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Ouvrir Caisse POS</p>
+                <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Vente sur place</p>
               </div>
             </a>
           )}
@@ -2628,15 +2646,17 @@ function BoutiqueDashboard({
             onClick={() => onNavigate('marketing')}
             style={{
               display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-              borderRadius: 14, background: '#fff7ed', border: '1.5px solid #ffedd5',
+              borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 8px rgba(249, 115, 22, 0.08)', transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(26,22,18,0.04)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            <span style={{ fontSize: 26 }}>📣</span>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Share2 size={22} style={{ color: 'var(--accent)' }} />
+            </div>
             <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#9a3412', letterSpacing: '-0.01em' }}>Partager la boutique</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: '#c2410c', fontWeight: 600 }}>Lien WhatsApp & réseaux</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Partager la boutique</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Lien WhatsApp & réseaux</p>
             </div>
           </button>
         </div>
@@ -3130,22 +3150,31 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             }}
             title={boutique.actif !== false ? 'Cliquez pour désactiver et masquer votre boutique du catalogue public' : 'Cliquez pour réactiver votre boutique'}
             style={{
-              background: boutique.actif !== false ? '#f0fdf4' : '#fef2f2',
-              border: `1px solid ${boutique.actif !== false ? '#bbf7d0' : '#fecaca'}`,
-              color: boutique.actif !== false ? '#15803d' : '#dc2626',
+              background: boutique.actif !== false ? '#F0FDF4' : '#FFF1F2',
+              border: `1.5px solid ${boutique.actif !== false ? '#BBF7D0' : '#FECDD3'}`,
+              color: boutique.actif !== false ? '#166534' : '#991B1B',
               fontSize: 12.5,
               fontWeight: 800,
               padding: '6px 14px',
-              borderRadius: 12,
+              borderRadius: 20,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 8,
-              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+              gap: 6,
+              boxShadow: '0 1px 3px rgba(26,22,18,0.04)'
             }}
           >
-            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: boutique.actif !== false ? '#22c55e' : '#ef4444', display: 'inline-block' }} />
-            {boutique.actif !== false ? '🟢 Boutique Active (En ligne)' : '⚪ Boutique Désactivée (Masquée)'}
+            {boutique.actif !== false ? (
+              <>
+                <CheckCircle2 size={15} style={{ color: '#166534' }} />
+                <span>Boutique Active (En ligne)</span>
+              </>
+            ) : (
+              <>
+                <XCircle size={15} style={{ color: '#991B1B' }} />
+                <span>Boutique Désactivée (Masquée)</span>
+              </>
+            )}
           </button>
         </div>
 
