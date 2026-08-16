@@ -118,8 +118,15 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
     window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+    
+    const handleCarnetUpdate = () => chargerDonnees()
+    window.addEventListener('carnet_updated', handleCarnetUpdate)
+
+    return () => {
+      window.removeEventListener('resize', checkMobile)
+      window.removeEventListener('carnet_updated', handleCarnetUpdate)
+    }
+  }, [boutique.id])
 
   // Charger les données (clients + catalogue)
   const chargerDonnees = async () => {
@@ -917,11 +924,13 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                         alert(data.error || 'Erreur approbation')
                         return
                       }
-                      alert(`Demande d'achat à crédit de ${cmd.client_nom} approuvée et ajoutée à son Carnet !`)
+                      await chargerDonnees()
+                      window.dispatchEvent(new Event('carnet_updated'))
                       const cleanTel = cmd.client_telephone.replace(/\D/g, '')
                       const msgWa = encodeURIComponent(`Bonjour ${cmd.client_nom}, votre demande d'achat à crédit de ${fcfa(cmd.montant_total)} (${cmd.nom_produit}) a été approuvée par la boutique et enregistrée dans votre Carnet !`)
-                      window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
-                      await chargerDonnees()
+                      if (confirm(`✅ Demande d'achat à crédit de ${cmd.client_nom} approuvée et enregistrée dans son Carnet client avec succès !\n\nSouhaitez-vous lui envoyer le message de confirmation sur WhatsApp ?`)) {
+                        window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
+                      }
                     } catch (e) {
                       alert('Erreur lors du traitement.')
                     }

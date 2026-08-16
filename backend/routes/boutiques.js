@@ -1239,14 +1239,23 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
       return res.status(400).json({ error: 'Nom client, téléphone et montant requis.' });
     }
 
+    const cleanTel = String(client_telephone).replace(/\D/g, '');
+    const shortTel = cleanTel.length >= 9 ? cleanTel.slice(-9) : cleanTel;
+
     const dbClient = await pool.connect();
     try {
       await dbClient.query('BEGIN');
 
-      // 1. Chercher ou créer le client dans caisse_clients_credits
+      // 1. Chercher ou créer le client dans caisse_clients_credits (recherche flexible par téléphone ou nom)
       let clientRes = await dbClient.query(
-        `SELECT * FROM caisse_clients_credits WHERE boutique_id = $1 AND (telephone = $2 OR LOWER(nom) = LOWER($3)) LIMIT 1`,
-        [boutiqueId, client_telephone.trim(), client_nom.trim()]
+        `SELECT * FROM caisse_clients_credits
+         WHERE boutique_id = $1
+           AND (
+             REPLACE(REPLACE(telephone, ' ', ''), '+', '') LIKE '%' || $2
+             OR LOWER(TRIM(nom)) = LOWER(TRIM($3))
+           )
+         LIMIT 1`,
+        [boutiqueId, shortTel, client_nom.trim()]
       );
 
       let carnetClient;

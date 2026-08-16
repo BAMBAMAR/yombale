@@ -163,11 +163,15 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
                               alert(data.error || 'Erreur lors de l\'approbation de la demande à crédit.')
                               return
                             }
-                            alert(`Demande d'achat à crédit de ${commande.client_nom} approuvée et ajoutée à son Carnet !`)
+                            if (typeof onUpdate === 'function') onUpdate()
+                            window.dispatchEvent(new Event('carnet_updated'))
+
                             const cleanTel = commande.client_telephone.replace(/\D/g, '')
                             const msgWa = encodeURIComponent(`Bonjour ${commande.client_nom}, votre demande d'achat à crédit de ${fcfa(commande.montant_total)} (${commande.nom_produit}) a été approuvée par la boutique et ajoutée à votre Carnet !`)
-                            window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
-                            onUpdate()
+                            
+                            if (confirm(`✅ Demande d'achat à crédit de ${commande.client_nom} approuvée et ajoutée à son Carnet client avec succès !\n\nSouhaitez-vous ouvrir WhatsApp pour envoyer la confirmation au client ?`)) {
+                              window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
+                            }
                           } catch (err) {
                             alert('Erreur lors du traitement de la demande.')
                           } finally {
