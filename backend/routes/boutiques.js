@@ -993,17 +993,37 @@ router.post('/:id/paniers-abandonnes/:cartId/relancer', verifierToken, async (re
 router.get('/:id/credits-clients', async (req, res) => {
   try {
     const { id } = req.params;
+    const includeHistorique = req.query.include_historique === 'true' || req.query.include_historique === '1';
+
     const isUUID = /^[0-9a-f-]{36}$/i.test(id);
     const bqCond = isUUID ? 'id=$1' : 'slug=$1';
     const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
     if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
 
-    const { rows } = await pool.query(
+    const boutiqueId = b.rows[0].id;
+    const { rows: clients } = await pool.query(
       `SELECT * FROM caisse_clients_credits WHERE boutique_id=$1 ORDER BY nom ASC`,
-      [b.rows[0].id]
+      [boutiqueId]
     );
 
-    res.json({ success: true, clients: rows });
+    if (includeHistorique && clients.length > 0) {
+      const { rows: historiqueRows } = await pool.query(
+        `SELECT * FROM caisse_credit_historique WHERE boutique_id=$1 ORDER BY created_at DESC`,
+        [boutiqueId]
+      );
+      
+      const histMap = new Map();
+      historiqueRows.forEach(h => {
+        if (!histMap.has(h.client_id)) histMap.set(h.client_id, []);
+        histMap.get(h.client_id).push(h);
+      });
+
+      clients.forEach(c => {
+        c.historique = histMap.get(c.id) || [];
+      });
+    }
+
+    res.json({ success: true, clients });
   } catch (err) {
     console.error('[CREDITS CLIENTS GET]', err);
     res.status(500).json({ error: 'Erreur serveur' });

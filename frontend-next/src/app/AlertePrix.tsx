@@ -10,6 +10,7 @@ interface Props {
 }
 
 export default function AlertePrix({ produitId, prixMin, email = '', telephone = '' }: Props) {
+  const [isPending, startTransition] = useTransition()
   const [open, setOpen]               = useState(false)
   const [canal, setCanal]             = useState<'whatsapp' | 'email' | 'les_deux'>('whatsapp')
   const [prixCible, setPrix]          = useState(prixMin ? String(Math.round(prixMin * 0.9)) : '')

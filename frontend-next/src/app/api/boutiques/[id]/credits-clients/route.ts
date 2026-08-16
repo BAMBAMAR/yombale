@@ -7,7 +7,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const res = await backendFetch(`/api/boutiques/${params.id}/credits-clients`)
+    const { searchParams } = new URL(request.url)
+    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : ''
+    const res = await backendFetch(`/api/boutiques/${params.id}/credits-clients${queryString}`)
     if (!res.ok) {
       return NextResponse.json({ clients: [] }, { status: 200 })
     }

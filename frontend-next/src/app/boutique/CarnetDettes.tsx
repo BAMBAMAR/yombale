@@ -15,6 +15,7 @@ interface ClientCredit {
   plafond_max: number
   note_client?: string | null
   created_at?: string
+  historique?: TransactionCredit[]
 }
 
 interface TransactionCredit {
@@ -402,51 +403,170 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     return true
   })
 
-  // Fonctions d'exportation du carnet
-  const handleExportCSV = () => {
-    if (clients.length === 0) {
-      alert('Aucun client enregistré dans le carnet.')
-      return
+  // Charger l'historique complet pour tous les clients du carnet avant export
+  const obtenirClientsAvecHistorique = async (): Promise<ClientCredit[]> => {
+    try {
+      const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients?include_historique=true`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.clients && Array.isArray(data.clients)) {
+          return data.clients
+        }
+      }
+    } catch (err) {
+      console.error('Erreur chargement clients avec historique pour export:', err)
     }
-    const headers = ['Nom du client', 'Téléphone', 'Adresse / Quartier', 'Solde Dû (FCFA)', 'Plafond Max (FCFA)', 'Statut']
-    const rows = clients.map(c => [
-      c.nom,
-      c.telephone,
-      c.adresse || '—',
-      c.solde,
-      c.plafond_max,
-      c.solde > 0 ? 'Dette à encaisser' : c.solde < 0 ? 'Avance client' : 'Solde nul (Réglé)'
-    ])
-    exportToCSV(`Carnet_Dettes_${(boutique.nom || 'Boutique').replace(/\s+/g, '_')}`, headers, rows)
+    return clients
   }
 
-  const handleExportPDF = () => {
+  // Fonctions d'exportation du carnet avec l'historique détaillé de chaque client
+  const handleExportCSV = async () => {
     if (clients.length === 0) {
       alert('Aucun client enregistré dans le carnet.')
       return
     }
-    const headers = ['Nom du client', 'Téléphone', 'Adresse / Quartier', 'Solde (FCFA)', 'Statut']
-    const rows = clients.map(c => [
-      c.nom,
-      c.telephone,
-      c.adresse || '—',
-      fcfa(c.solde),
-      c.solde > 0 ? 'Dette client' : c.solde < 0 ? 'Avance client' : 'Solde nul'
-    ])
+
+    const clientsComplets = await obtenirClientsAvecHistorique()
+    const headers = [
+      'Nom du client',
+      'Téléphone',
+      'Adresse / Quartier',
+      'Statut Client',
+      'Solde Actuel (FCFA)',
+      'Date & Heure Opération',
+      'Type Opération',
+      'Mode Paiement',
+      'Détails / Produits / Notes',
+      'Montant Opération (FCFA)'
+    ]
+
+    const rows: (string | number)[][] = []
+
+    clientsComplets.forEach(c => {
+      const statutClient = c.solde > 0 ? 'Dette à encaisser' : c.solde < 0 ? 'Avance client' : 'Solde nul (Réglé)'
+      const listHist = c.historique || []
+
+      if (listHist.length > 0) {
+        listHist.forEach(h => {
+          const typeOp = h.type === 'vente_credit' ? 'Vente à crédit' : h.type === 'remboursement' ? 'Remboursement' : 'Dépôt / Avance'
+          const details = h.note || (h.produits && h.produits.length > 0 ? h.produits.map((p: any) => `${p.nom} x${p.qte || 1}`).join(', ') : '—')
+          rows.push([
+            c.nom,
+            c.telephone,
+            c.adresse || '—',
+            statutClient,
+            c.solde,
+            fmtDateHeure(h.created_at),
+            typeOp,
+            h.mode_paiement || 'Espèces',
+            details,
+            h.montant
+          ])
+        })
+      } else {
+        rows.push([
+          c.nom,
+          c.telephone,
+          c.adresse || '—',
+          statutClient,
+          c.solde,
+          '—',
+          'Aucune transaction enregistrée',
+          '—',
+          '—',
+          0
+        ])
+      }
+    })
+
+    exportToCSV(`Carnet_Dettes_Detaille_${(boutique.nom || 'Boutique').replace(/\s+/g, '_')}`, headers, rows)
+  }
+
+  const handleExportPDF = async () => {
+    if (clients.length === 0) {
+      alert('Aucun client enregistré dans le carnet.')
+      return
+    }
+
+    const clientsComplets = await obtenirClientsAvecHistorique()
+
     const summaryHtml = `
-      <div style="margin-bottom:20px; padding:14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; font-size:13px; color:#0f172a;">
-        <p style="margin:0 0 6px;"><strong>Boutique :</strong> ${boutique.nom}</p>
-        <p style="margin:0 0 6px;"><strong>Total Créances à Encaisser :</strong> <span style="color:#dc2626; font-weight:bold;">${fcfa(totalDettesAEncaisser)}</span></p>
-        <p style="margin:0 0 6px;"><strong>Total Avances Clients :</strong> <span style="color:#16a34a; font-weight:bold;">${fcfa(totalAvancesClients)}</span></p>
-        <p style="margin:0;"><strong>Nombre de Clients Débiteurs :</strong> ${nbClientsDebiteurs} client(s)</p>
+      <div style="margin-bottom:20px; padding:16px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; font-size:13px; color:#0f172a;">
+        <p style="margin:0 0 6px; font-size:15px; font-weight:bold; color:#15803d;">📊 Synthèse Globale du Carnet — ${boutique.nom}</p>
+        <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:8px;">
+          <div><strong>Total Créances à Encaisser :</strong> <span style="color:#dc2626; font-weight:bold;">${fcfa(totalDettesAEncaisser)}</span></div>
+          <div><strong>Total Avances Clients :</strong> <span style="color:#16a34a; font-weight:bold;">${fcfa(totalAvancesClients)}</span></div>
+          <div><strong>Nombre de Clients Débiteurs :</strong> <span>${nbClientsDebiteurs} client(s)</span></div>
+        </div>
       </div>
     `
+
+    const clientsSectionsHtml = clientsComplets.map(c => {
+      const listHist = c.historique || []
+      const soldeColor = c.solde > 0 ? '#dc2626' : c.solde < 0 ? '#16a34a' : '#475569'
+      const soldeBadge = c.solde > 0 ? 'Dette client' : c.solde < 0 ? 'Avance client' : 'Solde nul'
+
+      const histRowsHtml = listHist.length > 0
+        ? listHist.map(h => {
+            const typeLabel = h.type === 'vente_credit' ? 'Vente à crédit' : h.type === 'remboursement' ? 'Remboursement' : 'Dépôt / Avance'
+            const detailsStr = h.note || (h.produits && h.produits.length > 0 ? h.produits.map((p: any) => `${p.nom} x${p.qte || 1}`).join(', ') : '—')
+            return `
+              <tr>
+                <td style="padding:6px 10px; border:1px solid #e2e8f0; font-size:11.5px;">${fmtDateHeure(h.created_at)}</td>
+                <td style="padding:6px 10px; border:1px solid #e2e8f0; font-size:11.5px; font-weight:bold;">${typeLabel}</td>
+                <td style="padding:6px 10px; border:1px solid #e2e8f0; font-size:11.5px;">${h.mode_paiement || 'Espèces'}</td>
+                <td style="padding:6px 10px; border:1px solid #e2e8f0; font-size:11.5px;">${detailsStr}</td>
+                <td style="padding:6px 10px; border:1px solid #e2e8f0; font-size:11.5px; text-align:right; font-weight:bold;">${fcfa(h.montant)}</td>
+              </tr>
+            `
+          }).join('')
+        : `
+          <tr>
+            <td colspan="5" style="padding:10px; border:1px solid #e2e8f0; font-size:12px; text-align:center; color:#64748b; font-style:italic;">
+              Aucune transaction enregistrée dans l'historique
+            </td>
+          </tr>
+        `
+
+      return `
+        <div class="client-section">
+          <div class="client-header">
+            <div>
+              <span style="font-size:15px; font-weight:bold; color:#0f172a;">👤 ${c.nom}</span>
+              <span style="margin-left:12px; font-size:12.5px; color:#475569;">📱 ${c.telephone}</span>
+              ${c.adresse ? `<span style="margin-left:12px; font-size:12px; color:#64748b;">📍 ${c.adresse}</span>` : ''}
+            </div>
+            <div>
+              <span style="font-size:12px; padding:3px 8px; border-radius:12px; background:#f1f5f9; color:#334155; font-weight:600; margin-right:8px;">${soldeBadge}</span>
+              <span style="font-size:14px; font-weight:bold; color:${soldeColor};">Solde : ${fcfa(c.solde)}</span>
+            </div>
+          </div>
+          
+          <table style="width:100%; border-collapse:collapse; margin-top:8px;">
+            <thead>
+              <tr style="background:#f8fafc;">
+                <th style="padding:6px 10px; border:1px solid #cbd5e1; font-size:11px; text-align:left;">Date & Heure</th>
+                <th style="padding:6px 10px; border:1px solid #cbd5e1; font-size:11px; text-align:left;">Type Opération</th>
+                <th style="padding:6px 10px; border:1px solid #cbd5e1; font-size:11px; text-align:left;">Mode Paiement</th>
+                <th style="padding:6px 10px; border:1px solid #cbd5e1; font-size:11px; text-align:left;">Détails / Description</th>
+                <th style="padding:6px 10px; border:1px solid #cbd5e1; font-size:11px; text-align:right;">Montant</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${histRowsHtml}
+            </tbody>
+          </table>
+        </div>
+      `
+    }).join('')
+
     printPDFReport(
-      `Carnet de Dettes & Crédits — ${boutique.nom}`,
-      `Rapport de synthèse des crédits clients`,
-      headers,
-      rows,
-      summaryHtml
+      `Carnet de Dettes & Crédits (Détaillé) — ${boutique.nom}`,
+      `Rapport complet des comptes et historiques clients`,
+      [],
+      [],
+      summaryHtml,
+      clientsSectionsHtml
     )
   }
 

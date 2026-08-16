@@ -18,12 +18,19 @@ export function exportToCSV(filename: string, headers: string[], rows: (string |
   document.body.removeChild(link)
 }
 
-export function printPDFReport(title: string, subtitle: string, headers: string[], rows: (string | number)[][], summaryHtml?: string) {
+export function printPDFReport(title: string, subtitle: string, headers: string[], rows: (string | number)[][], summaryHtml?: string, customBodyHtml?: string) {
   const printWindow = window.open('', '_blank', 'width=900,height=700')
   if (!printWindow) return
 
   const tableHeaders = headers.map(h => `<th style="padding:8px 12px; border:1px solid #cbd5e1; background:#f8fafc; text-align:left; font-size:12px;">${h}</th>`).join('')
   const tableRows = rows.map(r => `<tr>${r.map(c => `<td style="padding:8px 12px; border:1px solid #e2e8f0; font-size:12px;">${c}</td>`).join('')}</tr>`).join('')
+
+  const bodyContent = customBodyHtml || `
+    <table>
+      <thead><tr>${tableHeaders}</tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+  `
 
   printWindow.document.write(`
     <!DOCTYPE html>
@@ -32,14 +39,17 @@ export function printPDFReport(title: string, subtitle: string, headers: string[
       <title>${title}</title>
       <meta charset="utf-8" />
       <style>
-        body { font-family: system-ui, -apple-system, sans-serif; padding: 30px; color: #0f172a; }
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; color: #0f172a; }
         h1 { margin: 0 0 4px; font-size: 22px; color: #C75B00; }
         p { margin: 0 0 16px; font-size: 13px; color: #64748b; }
-        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; }
         .summary { margin-bottom: 20px; padding: 16px; background: #fff7f0; border: 1px solid #fed7aa; border-radius: 8px; }
+        .client-section { margin-bottom: 28px; page-break-inside: avoid; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; background: #ffffff; }
+        .client-header { background: #f8fafc; margin: -16px -16px 14px -16px; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; border-top-left-radius: 10px; border-top-right-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
         @media print {
           body { padding: 0; }
           .no-print { display: none; }
+          .client-section { page-break-inside: avoid; }
         }
       </style>
     </head>
@@ -52,10 +62,7 @@ export function printPDFReport(title: string, subtitle: string, headers: string[
         <button class="no-print" onclick="window.print()" style="padding:10px 18px; background:#C75B00; color:#fff; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🖨️ Imprimer / Sauvegarder PDF</button>
       </div>
       ${summaryHtml || ''}
-      <table>
-        <thead><tr>${tableHeaders}</tr></thead>
-        <tbody>${tableRows}</tbody>
-      </table>
+      ${bodyContent}
       <script>
         setTimeout(() => { window.print(); }, 500);
       </script>

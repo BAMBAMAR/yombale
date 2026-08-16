@@ -1,3 +1,7 @@
+- **Inclusion de l'Historique Détaillé de Chaque Client dans les Exports du Carnet de Dettes & Crédits (CSV & PDF)** 📒 :
+  * **Backend API (`backend/routes/boutiques.js` & `frontend-next/src/app/api/boutiques/[id]/credits-clients/route.ts`)** : Ajout du support de `?include_historique=true` sur la route `GET /api/boutiques/:id/credits-clients` pour renvoyer en une seule requête SQL optimisée l'ensemble des clients ainsi que leur historique complet de transactions (`caisse_credit_historique`).
+  * **Exportation CSV Détaillée (`CarnetDettes.tsx`)** : Génération d'un export CSV ligne par ligne contenant pour chaque client l'ensemble des transactions de son carnet (`Nom client`, `Téléphone`, `Adresse`, `Statut`, `Solde`, `Date & Heure`, `Type d'opération`, `Mode de paiement`, `Détails / Articles / Notes`, `Montant FCFA`).
+  * **Exportation PDF Multi-Sections (`lib/export.ts` & `CarnetDettes.tsx`)** : Extension de la fonction `printPDFReport` pour accepter un corps HTML personnalisé multi-sections (`customBodyHtml`). L'impression PDF affiche désormais une fiche complète pour chaque client avec le sous-tableau clair de son historique d'opérations.
 - **Audit Global & Vérification de l'Ensemble des Pages de Filtres et Listes (`/boutiques`, `/annonces`, `/immo`, `/categorie/[slug]`)** :
   * **Vérification complète de la cohérence** :
     1. **`/boutiques` (`src/app/boutiques/page.tsx`)** : `buildLink` préserve de manière cumulative la ville, la recherche `q`, la catégorie `cat`, le tri `tri` et le plan marchand (`business`/`pro`).
