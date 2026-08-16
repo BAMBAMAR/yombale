@@ -245,6 +245,9 @@ export default function DrawerCart() {
         </div>
 
         {/* Contenu principal Scrollable (Articles + Formulaires) */}
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          
+          {/* Liste des Articles */}
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
             {checkoutMode === 'succes' ? (
               /* Modale de notification centrée sur la page web pour la confirmation de demande */
