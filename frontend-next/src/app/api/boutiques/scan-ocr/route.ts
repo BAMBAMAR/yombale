@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { backendFetch } from '@/lib/backend-fetch'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
+
   try {
     const body = await req.json()
     const res = await backendFetch('/api/boutiques/scan-ocr', {
