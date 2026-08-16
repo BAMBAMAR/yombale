@@ -64,6 +64,22 @@
   * Ajout des boutons d'action rapide **"⚡ Saisie Express Ventes & Dépenses"** et **"📒 Carnet de Dettes Client"** dans le bloc *Raccourcis & Actions Rapides* du tableau de bord de la boutique pour un accès instantané en 1 clic.
   * Permet d'enregistrer instantanément des ventes directes ou des dépenses informelles (achats stock, transport, loyer, salaires, électricité, etc.) en 1 clic sans passer par l'ouverture/clôture de session de caisse POS ni scanner.
 
+## 📌 Mises à jour du 16/08/2026 : Ajout de l'Option "Scan Nom" (Lecture Caméra du Nom écrit sur le Produit/Emballage) & Intégration en Ajout Rapide (`BoutiqueClient.tsx`, `Comptabilite.tsx`)
+- **1. Bouton "📷 Scan Nom" sur le Champ Nom du Produit (`BoutiqueClient.tsx`, `Comptabilite.tsx`)** :
+  * Ajout d'un bouton interactif **`📷 Scan Nom`** à côté du champ *Nom du produit* dans le formulaire de création/édition de produit ainsi que sur le formulaire de *Vente Rapide*.
+  * Au clic sur **Scan Nom**, le scanner caméra s'ouvre avec un cadre de cadrage textuel (*"Placez l'écriture du produit ici"*).
+  * Détection de texte via la caméra pour capturer et lire l'écriture/étiquette présente sur l'emballage ou la bouteille du produit et remplir automatiquement la case *Nom du produit*.
+- **2. Intégration dans le mode Ajout Rapide (`modeRapide`)** :
+  * Affichage systématique du champ **Nom du produit** (avec **`📷 Scan Nom`**) et du champ **Code-Barres EAN-13** (avec **`📷 Scan EAN`** et **`🎲 Générer EAN`**) en mode Ajout Rapide.
+  * Permet aux commerçants d'ajouter des produits en 1 tap avec capture directe du nom et/ou de l'EAN.
+- **3. Correction de l'Erreur de Modification Client Carnet (`backend/routes/boutiques.js`, `/api/boutiques/[id]/credits-clients/[clientId]/route.ts`)** :
+  * **Cause 1 (Backend SQL Typo)** : Correction d'une coquille dans la requête SQL `UPDATE caisse_clients_credit` dans `backend/routes/boutiques.js` (remplacé par le nom exact de table au pluriel `caisse_clients_credits`).
+  * **Cause 2 (Proxy API Next.js)** : Création des routes API dynamiques `src/app/api/boutiques/[id]/credits-clients/[clientId]/route.ts` (PUT pour modifier le profil client, DELETE), ainsi que des sous-routes `historique`, `transaction` et `relance-whatsapp`.
+- **4. Support des Alertes Baisse de Prix WhatsApp (`AlertePrix.tsx`, `FormAlerte.tsx`, `actions/alertes.ts`, `backend/routes/alertes.js`)** :
+  * **Sélecteur de Canaux (WhatsApp / Email / Les deux)** : Ajout des onglets interactifs `💬 WhatsApp`, `📧 Email` et `🔔 Les deux (WhatsApp + Email)` sur les composants de création d'alertes prix ([`AlertePrix.tsx`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/AlertePrix.tsx) et [`FormAlerte.tsx`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/components/FormAlerte.tsx)).
+  * **Saisie WhatsApp** : Ajout du champ pour saisir son numéro WhatsApp (`telephone`), permettant aux utilisateurs d'être notifiés instantanément sur WhatsApp lors d'une baisse de prix sous leur seuil.
+  * **Mise à jour Backend** : Adaptation de la route `POST /api/alertes` et de la Server Action `createAlerte` pour enregistrer l'email, le téléphone WhatsApp ou les deux en base de données.
+
 ## 📌 Mises à jour du 15/08/2026 : Harmonisation Intégrale, Thème Clair Nopalou & Édition des Fiches Clients (`CarnetDettes.tsx`, `CaisseClient.tsx`, `backend/routes/boutiques.js`)
 - **1. Édition & Modification des Fiches Clients Carnet (`PUT /api/boutiques/:id/credits-clients/:clientId`)** :
   * Ajout du bouton **`✏️ Modifier`** sur chaque carte client et dans l'en-tête des fiches clients (Carnet Boutique & Carnet Caisse POS).

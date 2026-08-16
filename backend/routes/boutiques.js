@@ -1072,7 +1072,7 @@ router.put('/:id/credits-clients/:clientId', async (req, res) => {
     if (b.rows.length === 0) return res.status(404).json({ error: 'Boutique introuvable' });
 
     const r = await pool.query(
-      `UPDATE caisse_clients_credit 
+      `UPDATE caisse_clients_credits 
        SET nom = $1, telephone = $2, adresse = $3, plafond_max = $4, note_client = $5, updated_at = NOW()
        WHERE id = $6 AND boutique_id = $7
        RETURNING *`,

@@ -17,21 +17,29 @@ router.get('/user/:userId', verifierToken, async (req, res) => {
 router.post('/',
   verifierToken,
   limiterEcriture,
-  body('produit_id').notEmpty(),
-  body('prix_cible').isFloat({ gt: 0 }),
-  body('email').isEmail().normalizeEmail(),
   async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    const { produit_id, prix_cible, email, telephone } = req.body;
+    const numPrix = Number(prix_cible);
+    if (!produit_id || !numPrix || numPrix <= 0) {
+      return res.status(400).json({ error: 'ID produit et prix cible valide requis.' });
+    }
+    if (!email?.trim() && !telephone?.trim()) {
+      return res.status(400).json({ error: 'Veuillez saisir un numéro WhatsApp ou un email.' });
+    }
 
-    const { produit_id, prix_cible, email } = req.body;
+    const emailClean = email?.trim() || null;
+    const telClean = telephone?.trim() || null;
+
     const { rows } = await pool.query(
-      'INSERT INTO alertes (utilisateur_id,produit_id,prix_cible,email) VALUES ($1,$2,$3,$4) RETURNING *',
-      [req.user.userId, produit_id, prix_cible, email]
+      'INSERT INTO alertes (utilisateur_id, produit_id, prix_cible, email, telephone) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [req.user.userId, produit_id, numPrix, emailClean, telClean]
     );
     res.status(201).json(rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    console.error('[ALERTES POST]', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.delete('/:id', verifierToken, async (req, res) => {

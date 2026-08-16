@@ -815,16 +815,29 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   const [previews, setPreviews] = useState<string[]>([])
   const [imagesExistantes, setImagesExistantes] = useState<string[]>(produit?.images ?? [])
   const fileRef = useRef<HTMLInputElement>(null)
-
+  const [nomForm, setNomForm] = useState<string>(produit?.nom ?? (modeInitial === 'rapide' ? nomParDefautPourCategorie(cat) : ''))
   const [codeBarreForm, setCodeBarreForm] = useState<string>((produit as any)?.code_barre || '')
 
   useEffect(() => {
+    if (produit?.nom) setNomForm(produit.nom)
     setCodeBarreForm((produit as any)?.code_barre || '')
   }, [produit])
 
+  useEffect(() => {
+    if (cat && (!nomForm || nomForm.trim() === '' || nomForm.includes(' — à modifier'))) {
+      setNomForm(nomParDefautPourCategorie(cat))
+    }
+  }, [cat])
+
   const [modalFormScanner, setModalFormScanner] = useState<boolean>(false)
+  const [scannerTarget, setScannerTarget] = useState<'nom' | 'ean'>('nom')
+  const [scannerStatus, setScannerStatus] = useState<string>('Initialisation de la caméra...')
+  const [ocrDetections, setOcrDetections] = useState<string[]>([])
+  const [ocrLoading, setOcrLoading] = useState<boolean>(false)
+
   const videoFormRef = useRef<HTMLVideoElement | null>(null)
   const streamFormRef = useRef<MediaStream | null>(null)
+  const html5ScannerFormRef = useRef<any>(null)
 
   function genererCodeBarreForm() {
     const prefixe = "200"
@@ -839,37 +852,151 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
     setCodeBarreForm(base12 + check)
   }
 
-  async function demarrerFormScanner() {
+  async function demarrerFormScanner(target: 'nom' | 'ean' = 'nom') {
+    setScannerTarget(target)
     setModalFormScanner(true)
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-      streamFormRef.current = stream
-      if (videoFormRef.current) {
-        videoFormRef.current.srcObject = stream
-        videoFormRef.current.play()
+    setOcrDetections([])
+    setOcrLoading(false)
+    setScannerStatus(target === 'nom' ? '📷 Cadrez le texte du produit...' : '📷 Placez le code-barres dans le cadre...')
+
+    if (target === 'nom') {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        streamFormRef.current = stream
+        if (videoFormRef.current) {
+          videoFormRef.current.srcObject = stream
+          await videoFormRef.current.play().catch(() => {})
+        }
+
+        // Tenter la détection native de texte ou de code si disponible
+        if (typeof window !== 'undefined' && 'TextDetector' in window) {
+          const detector = new (window as any).TextDetector()
+          const timer = setInterval(async () => {
+            if (videoFormRef.current && videoFormRef.current.readyState === 4) {
+              try {
+                const texts = await detector.detect(videoFormRef.current)
+                if (texts && texts.length > 0) {
+                  const extraits = texts.map((t: any) => t.rawValue).filter((t: string) => t && t.length > 2)
+                  if (extraits.length > 0) {
+                    setOcrDetections(prev => Array.from(new Set([...extraits, ...prev])).slice(0, 6))
+                  }
+                }
+              } catch (e) {}
+            }
+          }, 600)
+          ;(videoFormRef.current as any)._textTimer = timer
+        }
+      } catch (e) {
+        setScannerStatus('❌ Impossible d’accéder à la caméra. Vérifiez les permissions de votre navigateur.')
       }
-      if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
-        const detector = new (window as any).BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128', 'qr_code'] })
-        const timer = setInterval(async () => {
-          if (videoFormRef.current && videoFormRef.current.readyState === 4) {
+    } else {
+      // Scanner EAN avec Html5Qrcode
+      setTimeout(async () => {
+        try {
+          const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
+          if (html5ScannerFormRef.current) {
             try {
-              const codes = await detector.detect(videoFormRef.current)
-              if (codes && codes.length > 0 && codes[0].rawValue) {
-                clearInterval(timer)
-                setCodeBarreForm(codes[0].rawValue)
-                arreterFormScanner()
-              }
+              await html5ScannerFormRef.current.stop()
+              html5ScannerFormRef.current.clear()
             } catch (e) {}
+            html5ScannerFormRef.current = null
           }
-        }, 400)
+
+          const container = document.getElementById('produit-form-scanner-reader')
+          if (!container) return
+
+          const scanner = new Html5Qrcode('produit-form-scanner-reader')
+          html5ScannerFormRef.current = scanner
+
+          const config = {
+            fps: 15,
+            qrbox: { width: 250, height: 160 },
+            formatsToSupport: [
+              Html5QrcodeSupportedFormats.EAN_13,
+              Html5QrcodeSupportedFormats.EAN_8,
+              Html5QrcodeSupportedFormats.CODE_128,
+              Html5QrcodeSupportedFormats.CODE_39,
+              Html5QrcodeSupportedFormats.UPC_A,
+              Html5QrcodeSupportedFormats.UPC_E,
+              Html5QrcodeSupportedFormats.QR_CODE
+            ]
+          }
+
+          const onScanSuccess = (decodedText: string) => {
+            setCodeBarreForm(decodedText)
+            setScannerStatus(`✅ Code scanné : ${decodedText}`)
+            setTimeout(() => {
+              arreterFormScanner()
+            }, 600)
+          }
+
+          try {
+            await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
+          } catch (errEnv) {
+            await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
+          }
+        } catch (err) {
+          setScannerStatus('❌ Erreur de chargement du module de scan.')
+        }
+      }, 300)
+    }
+  }
+
+  function capturerEtLireNomTexte() {
+    if (!videoFormRef.current) return
+    setOcrLoading(true)
+    setScannerStatus('🔍 Analyse du texte sur l’emballage en cours...')
+
+    const canvas = document.createElement('canvas')
+    canvas.width = videoFormRef.current.videoWidth || 640
+    canvas.height = videoFormRef.current.videoHeight || 480
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.drawImage(videoFormRef.current, 0, 0, canvas.width, canvas.height)
+    }
+
+    // Utilisation de la détection de texte ou canvas fallback
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && 'TextDetector' in window) {
+        const detector = new (window as any).TextDetector()
+        detector.detect(canvas).then((texts: any[]) => {
+          setOcrLoading(false)
+          if (texts && texts.length > 0) {
+            const trouves = texts.map((t: any) => t.rawValue).filter((t: string) => t && t.trim().length > 1)
+            if (trouves.length > 0) {
+              setOcrDetections(Array.from(new Set(trouves)).slice(0, 6))
+              const meilleurTexte = trouves.sort((a, b) => b.length - a.length)[0]
+              setNomForm(meilleurTexte)
+              setScannerStatus(`✅ Nom capturé : "${meilleurTexte}"`)
+              return
+            }
+          }
+          setScannerStatus('⚠️ Aucun texte lisible automatiquement. Veuillez taper le nom.')
+        }).catch(() => {
+          setOcrLoading(false)
+          setScannerStatus('⚠️ Détection automatique indisponible sur ce navigateur.')
+        })
+      } else {
+        setOcrLoading(false)
+        setScannerStatus('📷 Prenez une photo nette de l’emballage du produit et écrivez le nom.')
       }
-    } catch (e) {}
+    }, 400)
   }
 
   function arreterFormScanner() {
+    if (videoFormRef.current && (videoFormRef.current as any)._textTimer) {
+      clearInterval((videoFormRef.current as any)._textTimer)
+    }
     if (streamFormRef.current) {
       streamFormRef.current.getTracks().forEach(t => t.stop())
       streamFormRef.current = null
+    }
+    if (html5ScannerFormRef.current) {
+      try {
+        html5ScannerFormRef.current.stop()
+        html5ScannerFormRef.current.clear()
+      } catch (e) {}
+      html5ScannerFormRef.current = null
     }
     setModalFormScanner(false)
   }
@@ -1019,7 +1146,10 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
                   const nomInput = document.querySelector('input[name="nom"]') as HTMLInputElement;
                   const prixInput = document.querySelector('input[name="prix"]') as HTMLInputElement;
                   const descInput = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
-                  if (nomInput && data.titre) nomInput.value = data.titre;
+                  if (nomInput && data.titre) {
+                    nomInput.value = data.titre;
+                    setNomForm(data.titre);
+                  }
                   if (prixInput && data.prix > 0) prixInput.value = data.prix;
                   if (descInput && data.description) descInput.value = data.description;
                   if (data.images && Array.isArray(data.images) && data.images.length > 0) {
@@ -1063,60 +1193,125 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         </select>
       </div>
 
-      {/* Nom */}
-      {modeRapide ? (
-        <input type="hidden" name="nom" value={nomParDefautPourCategorie(cat)} />
-      ) : (
-        <div>
-          <label style={labelStyle}>Nom du produit <span style={{ color: '#dc2626' }}>*</span></label>
-          <input name="nom" required maxLength={300} defaultValue={produit?.nom ?? (modeInitial === 'rapide' ? nomParDefautPourCategorie(cat) : undefined)} style={inputStyle} placeholder="Ex: iPhone 14 Pro 256 Go" />
+      {/* Nom du produit (Affiche toujours avec Scan Nom, y compris en Ajout Rapide) */}
+      <div>
+        <label style={labelStyle}>Nom du produit <span style={{ color: '#dc2626' }}>*</span></label>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            name="nom"
+            required
+            maxLength={300}
+            value={nomForm}
+            onChange={e => setNomForm(e.target.value)}
+            style={{ ...inputStyle, flex: 1 }}
+            placeholder="Ex: Eau Minérale Kirène 1.5L (ou scanné)"
+          />
+          <button
+            type="button"
+            onClick={() => demarrerFormScanner('nom')}
+            style={{
+              background: '#0284c7', color: '#fff', border: 'none', borderRadius: 8,
+              padding: '9px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer',
+              whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4
+            }}
+            title="Scanner le nom écrit sur l'emballage du produit"
+          >
+            📷 Scan Nom
+          </button>
         </div>
-      )}
+      </div>
 
-      {/* Code-Barres EAN-13 avec Scan & Génération en 1 clic */}
-      {!modeRapide && (
-        <div>
-          <label style={labelStyle}>Code-Barres EAN-13 (Optionnel)</label>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input
-              value={codeBarreForm}
-              onChange={e => setCodeBarreForm(e.target.value)}
-              style={{ ...inputStyle, flex: 1 }}
-              placeholder="Ex: 600123456789 (Scannez à la douchette ou tapez)"
-            />
-            <button
-              type="button"
-              onClick={genererCodeBarreForm}
-              style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
-              title="Générer un code EAN-13 valide automatiquement"
-            >
-              🎲 Générer EAN
-            </button>
-            <button
-              type="button"
-              onClick={demarrerFormScanner}
-              style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
-              title="Scanner avec la caméra du smartphone/PC"
-            >
-              📷 Scanner
-            </button>
-          </div>
+      {/* Code-Barres EAN-13 (Affiche toujours avec Scan EAN & Générer EAN, y compris en Ajout Rapide) */}
+      <div>
+        <label style={labelStyle}>Code-Barres EAN-13 (Optionnel)</label>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            value={codeBarreForm}
+            onChange={e => setCodeBarreForm(e.target.value)}
+            style={{ ...inputStyle, flex: 1 }}
+            placeholder="Ex: 600123456789 (Scannez à la douchette ou tapez)"
+          />
+          <button
+            type="button"
+            onClick={genererCodeBarreForm}
+            style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            title="Générer un code EAN-13 valide automatiquement"
+          >
+            🎲 Générer EAN
+          </button>
+          <button
+            type="button"
+            onClick={() => demarrerFormScanner('ean')}
+            style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            title="Scanner le code-barres EAN avec la caméra"
+          >
+            📷 Scan EAN
+          </button>
         </div>
-      )}
+      </div>
 
-      {/* Modale scanner caméra dans le formulaire */}
+      {/* Modale scanner caméra (Scan Nom ou Scan EAN) */}
       {modalFormScanner && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.8)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 420, border: '1px solid #e2e8f0', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 440, border: '1px solid #e2e8f0', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner pour le produit</h4>
-              <button onClick={arreterFormScanner} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 18, cursor: 'pointer' }}>✕</button>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
+                {scannerTarget === 'nom' ? '📷 Scan du Nom écrit sur le produit' : '📷 Scanner Code-Barres EAN'}
+              </h4>
+              <button onClick={arreterFormScanner} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
-            <div style={{ width: '100%', height: 240, borderRadius: 12, overflow: 'hidden', background: '#000' }}>
-              <video ref={videoFormRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-            <button onClick={arreterFormScanner} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 8, padding: '10px', fontWeight: 800, cursor: 'pointer' }}>
-              Annuler
+
+            <p style={{ margin: 0, fontSize: 13, color: '#475569', fontWeight: 600 }}>{scannerStatus}</p>
+
+            {scannerTarget === 'nom' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ width: '100%', height: 220, borderRadius: 12, overflow: 'hidden', background: '#000', position: 'relative' }}>
+                  <video ref={videoFormRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'absolute', inset: 30, border: '2px dashed #38bdf8', borderRadius: 12, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ background: 'rgba(15,23,42,0.7)', color: '#fff', fontSize: 11, padding: '4px 8px', borderRadius: 6, fontWeight: 700 }}>
+                      Placez l'écriture du produit ici
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={capturerEtLireNomTexte}
+                  disabled={ocrLoading}
+                  style={{ background: '#0284c7', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                >
+                  {ocrLoading ? '⏳ Lecture du texte...' : '📸 Capturer & Lire le Nom sur l\'emballage'}
+                </button>
+
+                {ocrDetections.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left', background: '#f8fafc', padding: 10, borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b' }}>Textes détectés (cliquez pour sélectionner) :</span>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {ocrDetections.map((txt, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setNomForm(txt)
+                            arreterFormScanner()
+                          }}
+                          style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '6px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          {txt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ width: '100%', height: 220, borderRadius: 12, overflow: 'hidden', background: '#000' }}>
+                <div id="produit-form-scanner-reader" style={{ width: '100%', height: '100%' }} />
+              </div>
+            )}
+
+            <button onClick={arreterFormScanner} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 10, padding: '10px', fontWeight: 800, cursor: 'pointer' }}>
+              Fermer
             </button>
           </div>
         </div>

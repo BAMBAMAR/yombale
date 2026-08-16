@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState, useRef, useTransition } from 'react'
 import {
   listZones, createZone, deleteZone,
   listVentes, declarerVente, deleteVente, updateVente,
@@ -955,6 +955,87 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
     }
   }
 
+  const [modalScannerVente, setModalScannerVente] = useState(false)
+  const videoVenteRef = useRef<HTMLVideoElement | null>(null)
+  const streamVenteRef = useRef<MediaStream | null>(null)
+  const [ocrDetectionsVente, setOcrDetectionsVente] = useState<string[]>([])
+  const [statusScannerVente, setStatusScannerVente] = useState('')
+
+  async function demarrerScannerVente() {
+    setModalScannerVente(true)
+    setOcrDetectionsVente([])
+    setStatusScannerVente('📷 Cadrez le nom sur l’emballage du produit...')
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      streamVenteRef.current = stream
+      if (videoVenteRef.current) {
+        videoVenteRef.current.srcObject = stream
+        await videoVenteRef.current.play().catch(() => {})
+      }
+      if (typeof window !== 'undefined' && 'TextDetector' in window) {
+        const detector = new (window as any).TextDetector()
+        const timer = setInterval(async () => {
+          if (videoVenteRef.current && videoVenteRef.current.readyState === 4) {
+            try {
+              const texts = await detector.detect(videoVenteRef.current)
+              if (texts && texts.length > 0) {
+                const extraits = texts.map((t: any) => t.rawValue).filter((t: string) => t && t.length > 2)
+                if (extraits.length > 0) {
+                  setOcrDetectionsVente(prev => Array.from(new Set([...extraits, ...prev])).slice(0, 6))
+                }
+              }
+            } catch (e) {}
+          }
+        }, 600)
+        ;(videoVenteRef.current as any)._textTimer = timer
+      }
+    } catch (e) {
+      setStatusScannerVente('❌ Impossible d’accéder à la caméra.')
+    }
+  }
+
+  function arreterScannerVente() {
+    if (videoVenteRef.current && (videoVenteRef.current as any)._textTimer) {
+      clearInterval((videoVenteRef.current as any)._textTimer)
+    }
+    if (streamVenteRef.current) {
+      streamVenteRef.current.getTracks().forEach(t => t.stop())
+      streamVenteRef.current = null
+    }
+    setModalScannerVente(false)
+  }
+
+  function capturerEtLireNomVente() {
+    if (!videoVenteRef.current) return
+    setStatusScannerVente('🔍 Analyse du texte sur l’emballage...')
+    const canvas = document.createElement('canvas')
+    canvas.width = videoVenteRef.current.videoWidth || 640
+    canvas.height = videoVenteRef.current.videoHeight || 480
+    const ctx = canvas.getContext('2d')
+    if (ctx) ctx.drawImage(videoVenteRef.current, 0, 0, canvas.width, canvas.height)
+
+    if (typeof window !== 'undefined' && 'TextDetector' in window) {
+      const detector = new (window as any).TextDetector()
+      detector.detect(canvas).then((texts: any[]) => {
+        if (texts && texts.length > 0) {
+          const trouves = texts.map((t: any) => t.rawValue).filter((t: string) => t && t.trim().length > 1)
+          if (trouves.length > 0) {
+            setOcrDetectionsVente(Array.from(new Set(trouves)).slice(0, 6))
+            const meilleur = trouves.sort((a, b) => b.length - a.length)[0]
+            setNomLibre(meilleur)
+            setStatusScannerVente(`✅ Nom capturé : "${meilleur}"`)
+            return
+          }
+        }
+        setStatusScannerVente('⚠️ Aucun texte détecté automatiquement. Saisissez le nom.')
+      }).catch(() => {
+        setStatusScannerVente('⚠️ Détection indisponible sur ce navigateur.')
+      })
+    } else {
+      setStatusScannerVente('📷 Prenez une photo nette du nom sur le produit.')
+    }
+  }
+
   const handleValiderVenteRapide = async (e: React.FormEvent) => {
     e.preventDefault()
     const qteNum = Number(quantite) || 1
@@ -1088,15 +1169,60 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
           <div>
             <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Article / Libellé de la vente *</label>
-            <input
-              type="text"
-              required
-              placeholder="Ex: Sac de riz 25kg, Canette de boisson, Vente comptoir"
-              value={nomLibre}
-              onChange={e => setNomLibre(e.target.value)}
-              style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
-            />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input
+                type="text"
+                required
+                placeholder="Ex: Sac de riz 25kg, Canette de boisson, Vente comptoir"
+                value={nomLibre}
+                onChange={e => setNomLibre(e.target.value)}
+                style={{ ...inputStyle, borderRadius: 12, padding: 12, flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={demarrerScannerVente}
+                style={{ background: '#0284c7', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                title="Scanner le nom écrit sur le produit par caméra"
+              >
+                📷 Scan Nom
+              </button>
+            </div>
           </div>
+
+          {modalScannerVente && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+              <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 440, border: '1px solid #e2e8f0', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner le Nom pour la Vente</h4>
+                  <button type="button" onClick={arreterScannerVente} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
+                </div>
+                <p style={{ margin: 0, fontSize: 13, color: '#475569', fontWeight: 600 }}>{statusScannerVente}</p>
+                <div style={{ width: '100%', height: 220, borderRadius: 12, overflow: 'hidden', background: '#000', position: 'relative' }}>
+                  <video ref={videoVenteRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'absolute', inset: 30, border: '2px dashed #38bdf8', borderRadius: 12, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ background: 'rgba(15,23,42,0.7)', color: '#fff', fontSize: 11, padding: '4px 8px', borderRadius: 6, fontWeight: 700 }}>
+                      Cadrez le texte du produit ici
+                    </span>
+                  </div>
+                </div>
+                <button type="button" onClick={capturerEtLireNomVente} style={{ background: '#0284c7', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
+                  📸 Capturer & Lire le Nom sur le produit
+                </button>
+                {ocrDetectionsVente.length > 0 && (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', background: '#f8fafc', padding: 10, borderRadius: 10 }}>
+                    {ocrDetectionsVente.map((txt, idx) => (
+                      <button key={idx} type="button" onClick={() => { setNomLibre(txt); arreterScannerVente(); }} style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '6px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                        {txt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <button type="button" onClick={arreterScannerVente} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 10, padding: '10px', fontWeight: 800, cursor: 'pointer' }}>
+                  Fermer
+                </button>
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>

@@ -5,12 +5,13 @@ import { backendAuthFetch } from '@/lib/backendFetch'
 export async function createAlerte(
   produit_id: string,
   prix_cible: number,
-  email: string
+  email?: string,
+  telephone?: string
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const res = await backendAuthFetch('/alertes', {
       method: 'POST',
-      body: JSON.stringify({ produit_id, prix_cible, email }),
+      body: JSON.stringify({ produit_id, prix_cible, email, telephone }),
     })
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
