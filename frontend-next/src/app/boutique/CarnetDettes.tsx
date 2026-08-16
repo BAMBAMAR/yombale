@@ -626,12 +626,13 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 Carnet de Crédits & Dettes Clients
               </h1>
               <span style={{
-                background: '#e0f2fe',
-                color: '#0284c7',
+                background: '#FFF3E8',
+                color: 'var(--accent)',
                 padding: '3px 10px',
                 borderRadius: 20,
                 fontSize: 11.5,
-                fontWeight: 800
+                fontWeight: 800,
+                border: '1px solid #FED7AA'
               }}>
                 Tous forfaits
               </span>
@@ -648,7 +649,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               onClick={() => setShowModalNouveauClient(true)}
               style={{
                 flex: isMobile ? 1 : 'none',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                background: 'var(--navy)',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: 12,
@@ -660,7 +661,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 6,
-                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                boxShadow: '0 4px 12px rgba(28, 43, 74, 0.20)',
                 minHeight: 42
               }}
             >
@@ -671,9 +672,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               onClick={handleExportCSV}
               style={{
                 flex: isMobile ? 1 : 'none',
-                background: '#0284c7',
-                color: '#ffffff',
-                border: 'none',
+                background: 'var(--card)',
+                color: 'var(--navy)',
+                border: '1px solid var(--border)',
                 borderRadius: 12,
                 padding: '10px 14px',
                 fontWeight: 800,
@@ -694,9 +695,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               onClick={handleExportPDF}
               style={{
                 flex: isMobile ? 1 : 'none',
-                background: '#7c3aed',
-                color: '#ffffff',
-                border: 'none',
+                background: 'var(--card)',
+                color: 'var(--navy)',
+                border: '1px solid var(--border)',
                 borderRadius: 12,
                 padding: '10px 14px',
                 fontWeight: 800,
@@ -713,12 +714,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               🖨️ Imprimer PDF
             </button>
 
-
             <button
               onClick={() => ouvrirModalTransaction('vente_credit')}
               style={{
                 flex: isMobile ? 1 : 'none',
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                background: 'var(--red)',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: 12,
@@ -730,7 +730,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 6,
-                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.25)',
+                boxShadow: '0 4px 12px rgba(185, 28, 28, 0.25)',
                 minHeight: 42
               }}
             >
@@ -842,9 +842,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               style={{
                 padding: '7px 14px',
                 borderRadius: 20,
-                border: filtreStatus === f.id ? '2px solid #0f172a' : '1px solid #cbd5e1',
-                background: filtreStatus === f.id ? '#0f172a' : '#ffffff',
-                color: filtreStatus === f.id ? '#ffffff' : '#475569',
+                border: filtreStatus === f.id ? '2px solid var(--navy)' : '1px solid var(--border)',
+                background: filtreStatus === f.id ? 'var(--navy)' : 'var(--card)',
+                color: filtreStatus === f.id ? '#ffffff' : 'var(--text2)',
                 fontSize: 12.5,
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -998,9 +998,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       <button
                         onClick={() => ouvrirModalEditClient(c)}
                         style={{
-                          background: '#475569',
-                          color: '#ffffff',
-                          border: 'none',
+                          background: 'var(--card)',
+                          color: 'var(--navy)',
+                          border: '1px solid var(--border)',
                           borderRadius: 8,
                           padding: '6px 10px',
                           fontSize: 11.5,
@@ -1017,9 +1017,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       <button
                         onClick={() => ouvrirFicheClient(c)}
                         style={{
-                          background: '#0284c7',
-                          color: '#ffffff',
-                          border: 'none',
+                          background: 'var(--card)',
+                          color: 'var(--navy)',
+                          border: '1px solid var(--border)',
                           borderRadius: 8,
                           padding: '6px 12px',
                           fontSize: 11.5,
@@ -1033,7 +1033,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       <button
                         onClick={() => ouvrirModalTransaction('remboursement', c)}
                         style={{
-                          background: '#16a34a',
+                          background: 'var(--price)',
                           color: '#ffffff',
                           border: 'none',
                           borderRadius: 8,
