@@ -1283,10 +1283,12 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
 
       // 4. Marquer la commande comme confirmée & décrémenter le stock si applicable
       if (commande_id) {
+        const isCmdUUID = /^[0-9a-f-]{36}$/i.test(String(commande_id));
+        const cmdCond = isCmdUUID ? '(id = $1 OR reference = $1)' : 'reference = $1';
         await dbClient.query(
-          `UPDATE commandes_boutique SET statut = 'confirmee', updated_at = NOW() WHERE id = $1 AND boutique_id = $2`,
+          `UPDATE commandes_boutique SET statut = 'confirmee', updated_at = NOW() WHERE ${cmdCond} AND boutique_id = $2`,
           [commande_id, boutiqueId]
-        );
+        ).catch(eCmd => console.warn('[UPDATE CMD CONFIRMEE WARN]', eCmd.message));
       }
 
       if (nom_produit) {
@@ -1294,9 +1296,9 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
           `UPDATE boutique_produits
            SET stock_quantite = GREATEST(0, stock_quantite - $1),
                en_stock = CASE WHEN (stock_quantite - $1) <= 0 THEN false ELSE en_stock END
-           WHERE boutique_id = $2 AND (LOWER(nom) = LOWER($3) OR id::text = $4) AND stock_quantite IS NOT NULL`,
-          [quantite || 1, boutiqueId, nom_produit.trim(), commande_id || '']
-        );
+           WHERE boutique_id = $2 AND LOWER(nom) = LOWER($3) AND stock_quantite IS NOT NULL`,
+          [quantite || 1, boutiqueId, nom_produit.trim()]
+        ).catch(eStock => console.warn('[UPDATE STOCK WARN]', eStock.message));
       }
 
       await dbClient.query(

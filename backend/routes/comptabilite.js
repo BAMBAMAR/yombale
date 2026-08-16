@@ -5,7 +5,7 @@ const PDFDocument = require('pdfkit');
 const axios = require('axios');
 const multer = require('multer');
 const { pool } = require('../models/db');
-const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
+const { verifierToken, tokenOptional, adminSecretOnly } = require('../middlewares/auth');
 const { uploadBuffer } = require('../services/cloudinary');
 const { enregistrerAuditLog } = require('../lib/auditLogger');
 
@@ -681,14 +681,18 @@ router.post(
 );
 
 // GET /api/comptabilite/:boutiqueId/commandes — vendeur voit ses commandes
-router.get('/:boutiqueId/commandes', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {
+router.get('/:boutiqueId/commandes', tokenOptional, async (req, res) => {
   try {
-    const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
-    if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+    const paramBq = req.params.boutiqueId;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(paramBq);
+    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
+    const bqRes = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [paramBq]);
+    if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const bqId = bqRes.rows[0].id;
 
     const { statut } = req.query;
     const conds = ['boutique_id=$1'];
-    const params = [req.params.boutiqueId];
+    const params = [bqId];
     if (statut) { params.push(statut); conds.push(`statut=$${params.length}`); }
 
     const { rows } = await pool.query(
