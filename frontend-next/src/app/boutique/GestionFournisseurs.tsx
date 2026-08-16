@@ -633,59 +633,112 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               </div>
 
               {/* Lignes d’achats */}
-              <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>Articles à commander</h4>
-                  <button type="button" onClick={handleAjouterLigneCmd} style={{ padding: '4px 8px', background: '#f3f4f6', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                    ➕ Ajouter article
+              <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1f2937' }}>Articles à commander</h4>
+                    <p style={{ margin: '2px 0 0', fontSize: 11, color: '#6b7280' }}>Sélectionnez un produit du catalogue ou saisissez un article libre hors catalogue.</p>
+                  </div>
+                  <button type="button" onClick={handleAjouterLigneCmd} style={{ padding: '6px 12px', background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    ➕ Ajouter un article
                   </button>
                 </div>
 
-                {cmdLignes.length > 0 && (
-                  <div style={{ display: 'flex', gap: 8, fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6, paddingRight: 40 }}>
-                    <div style={{ flex: 2 }}>Désignation Produit *</div>
-                    <div style={{ width: 80 }}>Quantité *</div>
-                    <div style={{ width: 120 }}>Prix Achat Unit. (FCFA) *</div>
+                {cmdLignes.length === 0 ? (
+                  <div style={{ padding: 16, background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 8, textAlign: 'center', fontSize: 13, color: '#64748b' }}>
+                    Aucun article dans ce bon de commande. Cliquez sur <strong>➕ Ajouter un article</strong> pour commencer.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {cmdLignes.map((ligne, idx) => {
+                      const isCatalogProd = produits.some(p => p.id === ligne.produitId) && ligne.produitId !== 'custom'
+                      const estCustom = !isCatalogProd || ligne.produitId === 'custom'
+
+                      return (
+                        <div key={idx} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          {/* Ligne 1: Sélection/Désignation + Supprimer */}
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                              <label style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>
+                                Article / Désignation * <span style={{ fontSize: 11, fontWeight: 500, color: '#6b7280' }}>(Article {idx + 1})</span>
+                              </label>
+                              <button type="button" onClick={() => handleSupprimerLigneCmd(idx)} style={{ background: '#fee2e2', border: 'none', color: '#ef4444', padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                ✕ Supprimer
+                              </button>
+                            </div>
+
+                            <select
+                              value={isCatalogProd ? ligne.produitId : 'custom'}
+                              onChange={e => handleModifierLigneCmd(idx, 'produitId', e.target.value)}
+                              style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, background: '#ffffff' }}
+                              required
+                            >
+                              <option value="custom">✏️ Article hors catalogue / Saisie libre</option>
+                              {produits.length > 0 && (
+                                <optgroup label="Catalogue Produits de la boutique">
+                                  {produits.map(p => (
+                                    <option key={p.id} value={p.id}>{p.nom} (Stock actuel: {p.stock_quantite ?? p.quantite_stock ?? 0})</option>
+                                  ))}
+                                </optgroup>
+                              )}
+                            </select>
+
+                            {estCustom && (
+                              <input
+                                type="text"
+                                value={ligne.nomLibre || ''}
+                                onChange={e => handleModifierLigneCmd(idx, 'nomLibre', e.target.value)}
+                                style={{ width: '100%', marginTop: 8, padding: '8px 10px', borderRadius: 6, border: '1px solid #0284c7', fontSize: 13, background: '#f0f9ff', color: '#0f172a' }}
+                                placeholder="Tapez le nom / la désignation de l'article (ex: Sac de Ciment 50kg, Cartouche d'encre...)"
+                                required
+                              />
+                            )}
+                          </div>
+
+                          {/* Ligne 2: Quantité et Prix Achat Unit avec libellés clairs */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px', gap: 10, alignItems: 'end' }}>
+                            <div>
+                              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 4 }}>
+                                Quantité *
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={ligne.quantite}
+                                onChange={e => handleModifierLigneCmd(idx, 'quantite', Number(e.target.value))}
+                                style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, background: '#ffffff' }}
+                                placeholder="Quantité"
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 4 }}>
+                                Prix Achat Unit. (FCFA) *
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={ligne.prixAchat}
+                                onChange={e => handleModifierLigneCmd(idx, 'prixAchat', Number(e.target.value))}
+                                style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, background: '#ffffff' }}
+                                placeholder="Prix unitaire"
+                                required
+                              />
+                            </div>
+
+                            <div style={{ textAlign: 'right', paddingBottom: 6 }}>
+                              <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>Total Ligne</div>
+                              <div style={{ fontSize: 13, fontWeight: 800, color: '#047857' }}>
+                                {fcfa((Number(ligne.quantite) || 0) * (Number(ligne.prixAchat) || 0))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {cmdLignes.map((ligne, idx) => (
-                    <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <select
-                        value={ligne.produitId}
-                        onChange={e => handleModifierLigneCmd(idx, 'produitId', e.target.value)}
-                        style={{ flex: 2, padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }}
-                        required
-                      >
-                        <option value="">-- Choisir un produit --</option>
-                        {produits.map(p => (
-                          <option key={p.id} value={p.id}>{p.nom} (Stock actuel : {p.stock_quantite ?? p.quantite_stock ?? 0})</option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        min="1"
-                        value={ligne.quantite}
-                        onChange={e => handleModifierLigneCmd(idx, 'quantite', Number(e.target.value))}
-                        style={{ width: 80, padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }}
-                        placeholder="Qte"
-                        required
-                      />
-                      <input
-                        type="number"
-                        value={ligne.prixAchat}
-                        onChange={e => handleModifierLigneCmd(idx, 'prixAchat', Number(e.target.value))}
-                        style={{ width: 120, padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }}
-                        placeholder="Prix Achat Unit"
-                        required
-                      />
-                      <button type="button" onClick={() => handleSupprimerLigneCmd(idx)} style={{ padding: '8px 12px', background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 6, cursor: 'pointer' }}>
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, borderTop: '1px solid #e5e7eb', paddingTop: 14 }}>

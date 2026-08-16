@@ -1068,12 +1068,14 @@ router.put('/:id/credits-clients/:clientId', async (req, res) => {
       return res.status(400).json({ error: 'Nom et téléphone requis' });
     }
 
-    const b = await pool.query('SELECT id FROM boutiques WHERE id = $1 OR slug = $1', [id]);
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bqCond = isUUID ? 'id = $1' : 'slug = $1';
+    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
     if (b.rows.length === 0) return res.status(404).json({ error: 'Boutique introuvable' });
 
     const r = await pool.query(
       `UPDATE caisse_clients_credits 
-       SET nom = $1, telephone = $2, adresse = $3, plafond_max = $4, note_client = $5, updated_at = NOW()
+       SET nom = $1, telephone = $2, adresse = $3, plafond_max = $4, note_client = $5
        WHERE id = $6 AND boutique_id = $7
        RETURNING *`,
       [nom.trim(), telephone.trim(), adresse?.trim() || null, Number(plafond_max || 200000), note_client?.trim() || null, clientId, b.rows[0].id]

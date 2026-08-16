@@ -79,6 +79,9 @@
   * **Sélecteur de Canaux (WhatsApp / Email / Les deux)** : Ajout des onglets interactifs `💬 WhatsApp`, `📧 Email` et `🔔 Les deux (WhatsApp + Email)` sur les composants de création d'alertes prix ([`AlertePrix.tsx`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/AlertePrix.tsx) et [`FormAlerte.tsx`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/components/FormAlerte.tsx)).
   * **Saisie WhatsApp** : Ajout du champ pour saisir son numéro WhatsApp (`telephone`), permettant aux utilisateurs d'être notifiés instantanément sur WhatsApp lors d'une baisse de prix sous leur seuil.
   * **Mise à jour Backend** : Adaptation de la route `POST /api/alertes` et de la Server Action `createAlerte` pour enregistrer l'email, le téléphone WhatsApp ou les deux en base de données.
+- **5. Saisie Libre & Libellés Explicites sur les Bons de Commande d'Achat (`GestionFournisseurs.tsx`)** :
+  * **Option Saisie Libre (`custom`)** : Ajout de l'option `✏️ Article hors catalogue / Saisie libre` dans le menu déroulant du bon de commande d'achat. Permet de commander n'importe quel article non présent dans le catalogue produit de la boutique avec une désignation personnalisée (`nomLibre`).
+  * **Libellés de Champs Explicites** : Ajout de libellés clairs au-dessus de chaque champ de chaque ligne d'article (`Article / Désignation *`, `Quantité *`, `Prix Achat Unit. (FCFA) *`) avec calcul dynamique du total de la ligne (`fcfa(quantité * prix unitaire)`).
 
 ## 📌 Mises à jour du 15/08/2026 : Harmonisation Intégrale, Thème Clair Nopalou & Édition des Fiches Clients (`CarnetDettes.tsx`, `CaisseClient.tsx`, `backend/routes/boutiques.js`)
 - **1. Édition & Modification des Fiches Clients Carnet (`PUT /api/boutiques/:id/credits-clients/:clientId`)** :
