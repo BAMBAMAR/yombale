@@ -701,10 +701,7 @@ router.get('/:id/catalog.json', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const param = req.params.id;
-    // Cherche par UUID d'abord, puis par slug
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(param);
-    const condition = isUUID ? 'b.id=$1' : 'b.slug=$1';
-
+    // Recherche universelle par UUID ou par slug
     const r = await pool.query(
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
               b.logo_url, b.cover_url, b.whatsapp, b.site_web, b.facebook, b.instagram,
@@ -721,7 +718,7 @@ router.get('/:id', async (req, res) => {
          WHERE utilisateur_id = b.utilisateur_id AND statut='actif' AND fin > NOW()
          ORDER BY fin DESC LIMIT 1
        ) a ON true
-       WHERE ${condition} AND b.actif=true`,
+       WHERE (b.id::text = $1 OR b.slug = $1) AND COALESCE(b.actif, true) = true`,
       [param]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -1230,8 +1227,6 @@ router.post('/:id/credits-clients/:clientId/relance-whatsapp', async (req, res) 
 router.get('/:id/produits', tokenOptional, async (req, res) => {
   try {
     const param = req.params.id;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(param);
-    const condition = isUUID ? 'p.boutique_id=$1' : 'b.slug=$1';
     const userId = req.user?.userId || null;
     const { rows } = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes, p.code_barre,
@@ -1239,7 +1234,7 @@ router.get('/:id/produits', tokenOptional, async (req, res) => {
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
        LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
-       WHERE ${condition} AND (b.actif=true OR b.utilisateur_id=$2 OR bu.utilisateur_id=$2)
+       WHERE (b.id::text = $1 OR b.slug = $1) AND (COALESCE(b.actif, true) = true OR b.utilisateur_id = $2 OR bu.utilisateur_id = $2)
        ORDER BY p.ordre ASC, p.created_at DESC`,
       [param, userId]
     );

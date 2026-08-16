@@ -3128,7 +3128,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
       <QrCodeShareModal
         isOpen={showQrModal}
         onClose={() => setShowQrModal(false)}
-        url={typeof window !== 'undefined' ? `${window.location.origin}/boutiques/${boutique.id}` : `https://nopalou.com/boutiques/${boutique.id}`}
+        url={typeof window !== 'undefined' ? `${window.location.origin}/boutiques/${boutique.slug || boutique.id}` : `https://nopalou.com/boutiques/${boutique.slug || boutique.id}`}
         boutiqueNom={boutique.nom}
       />
 
