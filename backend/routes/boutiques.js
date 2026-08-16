@@ -1239,58 +1239,70 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
       return res.status(400).json({ error: 'Nom client, téléphone et montant requis.' });
     }
 
-    // 1. Chercher ou créer le client dans credits_clients
-    let clientRes = await pool.query(
-      `SELECT * FROM credits_clients WHERE boutique_id = $1 AND (telephone = $2 OR LOWER(nom) = LOWER($3)) LIMIT 1`,
-      [boutiqueId, client_telephone.trim(), client_nom.trim()]
-    );
+    const dbClient = await pool.connect();
+    try {
+      await dbClient.query('BEGIN');
 
-    let client;
-    if (clientRes.rows.length === 0) {
-      const newClientRes = await pool.query(
-        `INSERT INTO credits_clients (boutique_id, nom, telephone, solde, plafond_max)
-         VALUES ($1, $2, $3, 0, 250000)
-         RETURNING *`,
-        [boutiqueId, client_nom.trim(), client_telephone.trim()]
+      // 1. Chercher ou créer le client dans caisse_clients_credits
+      let clientRes = await dbClient.query(
+        `SELECT * FROM caisse_clients_credits WHERE boutique_id = $1 AND (telephone = $2 OR LOWER(nom) = LOWER($3)) LIMIT 1`,
+        [boutiqueId, client_telephone.trim(), client_nom.trim()]
       );
-      client = newClientRes.rows[0];
-    } else {
-      client = clientRes.rows[0];
-    }
 
-    // 2. Insérer la transaction vente à crédit dans transactions_credit
-    const noteTrans = `Achat à crédit Web (Réf: ${reference || 'Commande'}, ${nom_produit || 'Article'} x${quantite || 1})`;
-    const prodsTrans = JSON.stringify([{ nom: nom_produit || 'Article', quantite: quantite || 1, prix: Number(montant) / Number(quantite || 1) }]);
+      let carnetClient;
+      if (clientRes.rows.length === 0) {
+        const newClientRes = await dbClient.query(
+          `INSERT INTO caisse_clients_credits (boutique_id, nom, telephone, solde, plafond_max)
+           VALUES ($1, $2, $3, 0, 250000)
+           RETURNING *`,
+          [boutiqueId, client_nom.trim(), client_telephone.trim()]
+        );
+        carnetClient = newClientRes.rows[0];
+      } else {
+        carnetClient = clientRes.rows[0];
+      }
 
-    await pool.query(
-      `INSERT INTO transactions_credit (client_id, type, montant, note, produits, mode_paiement)
-       VALUES ($1, 'vente_credit', $2, $3, $4, 'credit')`,
-      [client.id, Number(montant), noteTrans, prodsTrans]
-    );
+      // 2. Insérer la transaction de vente à crédit dans caisse_credit_historique
+      const noteTrans = `Achat à crédit Web (Réf: ${reference || 'Commande'}, ${nom_produit || 'Article'} x${quantite || 1})`;
+      const prodsTrans = JSON.stringify([{ nom: nom_produit || 'Article', quantite: quantite || 1, prix: Number(montant) / Number(quantite || 1) }]);
 
-    // 3. Mettre à jour le solde du client carnet
-    const soldeRes = await pool.query(
-      `UPDATE credits_clients
-       SET solde = solde + $1, updated_at = NOW()
-       WHERE id = $2
-       RETURNING solde`,
-      [Number(montant), client.id]
-    );
-
-    // 4. Marquer la commande comme confirmée
-    if (commande_id) {
-      await pool.query(
-        `UPDATE commandes_boutique SET statut = 'confirmee', updated_at = NOW() WHERE id = $1 AND boutique_id = $2`,
-        [commande_id, boutiqueId]
+      await dbClient.query(
+        `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, relance_auto_whatsapp)
+         VALUES ($1, $2, 'vente_credit', $3, 'credit', $4, $5, true)`,
+        [carnetClient.id, boutiqueId, Number(montant), noteTrans, prodsTrans]
       );
-    }
 
-    res.json({
-      success: true,
-      message: `Demande d'achat à crédit approuvée et ajoutée au carnet de ${client.nom} !`,
-      client: { ...client, solde: soldeRes.rows[0].solde },
-      nouveauSolde: soldeRes.rows[0].solde,
-    });
+      // 3. Mettre à jour le solde du client carnet
+      const soldeRes = await dbClient.query(
+        `UPDATE caisse_clients_credits
+         SET solde = solde + $1, updated_at = NOW()
+         WHERE id = $2
+         RETURNING solde`,
+        [Number(montant), carnetClient.id]
+      );
+
+      // 4. Marquer la commande comme confirmée
+      if (commande_id) {
+        await dbClient.query(
+          `UPDATE commandes_boutique SET statut = 'confirmee', updated_at = NOW() WHERE id = $1 AND boutique_id = $2`,
+          [commande_id, boutiqueId]
+        );
+      }
+
+      await dbClient.query('COMMIT');
+
+      res.json({
+        success: true,
+        message: `Demande d'achat à crédit approuvée et ajoutée au carnet de ${carnetClient.nom} !`,
+        client: { ...carnetClient, solde: soldeRes.rows[0].solde },
+        nouveauSolde: soldeRes.rows[0].solde,
+      });
+    } catch (e) {
+      await dbClient.query('ROLLBACK');
+      throw e;
+    } finally {
+      dbClient.release();
+    }
   } catch (err) {
     console.error('Erreur approbation commande credit:', err);
     res.status(500).json({ error: 'Erreur lors de l\'approbation de la commande à crédit.' });
