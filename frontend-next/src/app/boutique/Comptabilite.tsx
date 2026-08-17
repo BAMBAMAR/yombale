@@ -2364,7 +2364,16 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             </div>
 
             <div>
-              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Motif / Description (Optionnel)</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569', margin: 0 }}>Motif / Description (Optionnel)</label>
+                <button
+                  type="button"
+                  onClick={demarrerScannerNom}
+                  style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                >
+                  📷 Scan Reçu (OCR)
+                </button>
+              </div>
               <input
                 type="text"
                 placeholder="Ex: Facture Senelec, Achat sacs plastique"
@@ -2372,6 +2381,20 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                 onChange={e => setDescDepense(e.target.value)}
                 style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
               />
+              {ocrDetections.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                  {ocrDetections.map((txt, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setDescDepense(txt)}
+                      style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      {txt}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
