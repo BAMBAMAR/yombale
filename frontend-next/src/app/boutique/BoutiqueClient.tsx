@@ -1135,50 +1135,72 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       )}
 
       {!produit && (
-        <div style={{ background: '#f0fdf4', padding: 16, borderRadius: 12, border: '1px dashed #4ade80', marginBottom: 10 }}>
+        <div style={{ background: '#f0fdf4', padding: 16, borderRadius: 12, border: '1.5px dashed #4ade80', marginBottom: 10, boxSizing: 'border-box' }}>
           <label style={{ fontSize: 13, fontWeight: 800, color: '#166534', display: 'block', marginBottom: 8 }}>
             🌟 Baguette Magique (Import Rapide)
           </label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input id="magic-url" type="url" placeholder="Collez le lien AliExpress, Shein, Amazon..." style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid #bbf7d0', fontSize: 14, outline: 'none' }} />
-            <button type="button" onClick={async (e) => {
-              const btn = e.currentTarget;
-              const inputEl = document.getElementById('magic-url') as HTMLInputElement;
-              const url = inputEl?.value?.trim();
-              if (!url) return;
-              btn.innerText = '⏳ Analyse...';
-              btn.disabled = true;
-              try {
-                const res = await fetch('/api/boutiques/magic-import', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ url }) });
-                if (res.ok) {
-                  const data = await res.json();
-                  const nomInput = document.querySelector('input[name="nom"]') as HTMLInputElement;
-                  const prixInput = document.querySelector('input[name="prix"]') as HTMLInputElement;
-                  const descInput = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
-                  if (nomInput && data.titre) {
-                    nomInput.value = data.titre;
-                    setNomForm(data.titre);
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', width: '100%' }}>
+            <input
+              id="magic-url"
+              type="url"
+              placeholder="Collez le lien AliExpress, Shein, Amazon..."
+              style={{
+                flex: '1 1 200px',
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '10px 14px',
+                borderRadius: 8,
+                border: '1px solid #bbf7d0',
+                fontSize: 13.5,
+                background: '#ffffff',
+                outline: 'none'
+              }}
+            />
+            <button
+              type="button"
+              onClick={async (e) => {
+                const btn = e.currentTarget;
+                const inputEl = document.getElementById('magic-url') as HTMLInputElement;
+                const url = inputEl?.value?.trim();
+                if (!url) return;
+                btn.innerText = '⏳ Analyse...';
+                btn.disabled = true;
+                try {
+                  const res = await fetch('/api/boutiques/magic-import', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ url }) });
+                  if (res.ok) {
+                    const data = await res.json();
+                    const nomInput = document.querySelector('input[name="nom"]') as HTMLInputElement;
+                    const prixInput = document.querySelector('input[name="prix"]') as HTMLInputElement;
+                    const descInput = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
+                    if (nomInput && data.titre) {
+                      nomInput.value = data.titre;
+                      setNomForm(data.titre);
+                    }
+                    if (prixInput && data.prix > 0) prixInput.value = data.prix;
+                    if (descInput && data.description) descInput.value = data.description;
+                    if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+                      setImagesExistantes(data.images);
+                    }
+                    btn.innerText = '✅ Importé !';
+                  } else {
+                    btn.innerText = '❌ Lien invalide';
                   }
-                  if (prixInput && data.prix > 0) prixInput.value = data.prix;
-                  if (descInput && data.description) descInput.value = data.description;
-                  if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-                    setImagesExistantes(data.images);
-                  }
-                  btn.innerText = '✅ Importé !';
-                } else {
-                  btn.innerText = '❌ Lien invalide';
+                } catch(e) {
+                  btn.innerText = '❌ Erreur réseau';
+                } finally {
+                  btn.disabled = false;
+                  setTimeout(() => { btn.innerText = 'Importer' }, 2500);
                 }
-              } catch(e) {
-                btn.innerText = '❌ Erreur réseau';
-              } finally {
-                btn.disabled = false;
-                setTimeout(() => { btn.innerText = 'Importer' }, 2500);
-              }
-            }} style={{ background: '#166534', color: '#fff', border: 'none', padding: '0 18px', borderRadius: 8, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              }}
+              className="npl-btn npl-btn-success npl-btn-md"
+              style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 20px' }}
+            >
               Importer
             </button>
           </div>
-          <p style={{ fontSize: 11, color: '#15803d', margin: '6px 0 0' }}>Récupère automatiquement le titre, le prix estimé, la description et les photos depuis le lien collé.</p>
+          <p style={{ fontSize: 11.5, color: '#15803d', margin: '8px 0 0', lineHeight: 1.4 }}>
+            Récupère automatiquement le titre, le prix estimé, la description et les photos depuis le lien collé.
+          </p>
         </div>
       )}
 
@@ -1205,27 +1227,25 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       {/* Nom du produit (Affiche toujours avec Scan Nom, y compris en Ajout Rapide) */}
       <div>
         <label style={labelStyle}>Nom du produit <span style={{ color: '#dc2626' }}>*</span></label>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             name="nom"
             required
             maxLength={300}
             value={nomForm}
             onChange={e => setNomForm(e.target.value)}
-            style={{ ...inputStyle, flex: 1 }}
+            style={{ ...inputStyle, flex: '1 1 200px', width: '100%', boxSizing: 'border-box' }}
             placeholder="Ex: Eau Minérale Kirène 1.5L (ou scanné)"
           />
           <button
             type="button"
             onClick={() => demarrerFormScanner('nom')}
-            style={{
-              background: '#0284c7', color: '#fff', border: 'none', borderRadius: 8,
-              padding: '9px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer',
-              whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4
-            }}
+            className="npl-btn npl-btn-secondary npl-btn-md"
+            style={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}
             title="Scanner le nom écrit sur l'emballage du produit"
           >
-            📷 Scan Nom
+            <span>📷</span>
+            <span>Scan Nom</span>
           </button>
         </div>
       </div>
@@ -1233,28 +1253,32 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       {/* Code-Barres EAN-13 (Affiche toujours avec Scan EAN & Générer EAN, y compris en Ajout Rapide) */}
       <div>
         <label style={labelStyle}>Code-Barres EAN-13 (Optionnel)</label>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             value={codeBarreForm}
             onChange={e => setCodeBarreForm(e.target.value)}
-            style={{ ...inputStyle, flex: 1 }}
-            placeholder="Ex: 600123456789 (Scannez à la douchette ou tapez)"
+            style={{ ...inputStyle, flex: '1 1 200px', width: '100%', boxSizing: 'border-box' }}
+            placeholder="Ex: 600123456789 (Scannez ou tapez)"
           />
           <button
             type="button"
             onClick={genererCodeBarreForm}
-            style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            className="npl-btn npl-btn-secondary npl-btn-md"
+            style={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}
             title="Générer un code EAN-13 valide automatiquement"
           >
-            🎲 Générer EAN
+            <span>🎲</span>
+            <span>Générer EAN</span>
           </button>
           <button
             type="button"
             onClick={() => demarrerFormScanner('ean')}
-            style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            className="npl-btn npl-btn-secondary npl-btn-md"
+            style={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}
             title="Scanner le code-barres EAN avec la caméra"
           >
-            📷 Scan EAN
+            <span>📷</span>
+            <span>Scan EAN</span>
           </button>
         </div>
       </div>

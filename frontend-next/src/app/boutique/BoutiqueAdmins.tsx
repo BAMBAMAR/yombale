@@ -83,85 +83,135 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
   if (loading && admins.length === 0) return <div style={{ padding: 40, textAlign: 'center' }}>Chargement...</div>
 
   return (
-    <div style={{ padding: 24 }}>
-      <h2 style={{ fontSize: 20, marginBottom: 8 }}>Administrateurs Web</h2>
-      <p style={{ color: 'var(--text3)', fontSize: 14, marginBottom: 24 }}>
-        Ajoutez des utilisateurs (par leur adresse email Nopalou) pour qu&apos;ils puissent gérer votre boutique avec vous.
-      </p>
+    <div style={{ padding: '16px 16px 32px', maxWidth: '100%', boxSizing: 'border-box', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--navy)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+          Administrateurs Web
+        </h2>
+        <p style={{ color: 'var(--text2)', fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
+          Ajoutez des utilisateurs (par leur adresse email Nopalou) pour qu&apos;ils puissent gérer votre boutique avec vous.
+        </p>
+      </div>
 
       {error && (
-        <div style={{ background: '#fef2f2', color: '#dc2626', padding: 12, borderRadius: 8, marginBottom: 24, fontSize: 14 }}>
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '10px 14px', borderRadius: 10, marginBottom: 20, fontSize: 13 }}>
           {error}
         </div>
       )}
 
-      <form onSubmit={handleAddAdmin} style={{ display: 'flex', gap: 12, marginBottom: 32 }}>
-        <input 
-          type="email" 
-          placeholder="Email de l'utilisateur à ajouter"
-          value={newEmail}
-          onChange={e => setNewEmail(e.target.value)}
-          required
-          style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14 }}
-        />
-        <button 
-          type="submit"
-          disabled={adding || !newEmail}
-          style={{ 
-            background: 'var(--navy)', color: '#fff', border: 'none', 
-            padding: '10px 20px', borderRadius: 8, fontWeight: 600, 
-            cursor: adding ? 'not-allowed' : 'pointer', opacity: adding ? 0.7 : 1 
-          }}
-        >
-          {adding ? 'Ajout...' : 'Ajouter un admin'}
-        </button>
+      {/* Formulaire d'Ajout d'Admin (Responsive) */}
+      <form onSubmit={handleAddAdmin} style={{
+        background: '#ffffff',
+        border: '1px solid var(--border)',
+        borderRadius: 14,
+        padding: '16px 18px',
+        marginBottom: 24,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+      }}>
+        <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>
+          Inviter un nouvel administrateur
+        </label>
+        
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', width: '100%' }}>
+          <input 
+            type="email" 
+            placeholder="Email de l'utilisateur à ajouter (ex: contact@exemple.com)"
+            value={newEmail}
+            onChange={e => setNewEmail(e.target.value)}
+            required
+            style={{
+              flex: '1 1 240px',
+              width: '100%',
+              boxSizing: 'border-box',
+              padding: '10px 14px',
+              borderRadius: 8,
+              border: '1px solid #cbd5e1',
+              fontSize: 13.5
+            }}
+          />
+          <button 
+            type="submit"
+            disabled={adding || !newEmail}
+            className="npl-btn npl-btn-primary npl-btn-md"
+            style={{ flex: '1 1 140px', color: '#ffffff', whiteSpace: 'nowrap' }}
+          >
+            <span>{adding ? '⏳' : '👤 +'}</span>
+            <span>{adding ? 'Ajout...' : 'Ajouter un admin'}</span>
+          </button>
+        </div>
       </form>
 
-      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 14, minWidth: 500 }}>
-            <thead>
-              <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Nom</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Email</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Rôle</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {admins.map(admin => (
-                <tr key={admin.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                  <td style={{ padding: '12px 16px' }}>{admin.nom}</td>
-                  <td style={{ padding: '12px 16px' }}>{admin.email}</td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <span style={{ 
-                      background: admin.role === 'propriétaire' ? '#fef3c7' : '#e0e7ff',
-                      color: admin.role === 'propriétaire' ? '#92400e' : '#3730a3',
-                      padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600 
-                    }}>
-                      {admin.role}
+      {/* Liste des Administrateurs (Cards Responsive) */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          Membres de l&apos;équipe ({admins.length})
+        </h3>
+
+        {admins.map(admin => {
+          const isOwner = admin.role === 'propriétaire'
+          return (
+            <div key={admin.id} className="npl-card-subtle" style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 12,
+              padding: '12px 16px',
+              background: '#ffffff'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: '50%',
+                  background: isOwner ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' : '#eff6ff',
+                  border: isOwner ? '1px solid #fcd34d' : '1px solid #bfdbfe',
+                  color: isOwner ? '#92400e' : '#1d4ed8',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 800, fontSize: 16, flexShrink: 0
+                }}>
+                  {(admin.nom || admin.email || 'A').charAt(0).toUpperCase()}
+                </div>
+
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--navy)' }}>
+                      {admin.nom || 'Sans nom'}
                     </span>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    {admin.role !== 'propriétaire' ? (
-                      <button 
-                        type="button"
-                        onClick={() => handleDelete(admin.id)}
-                        style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 600, padding: 0 }}
-                      >
-                        Retirer
-                      </button>
-                    ) : (
-                      <span style={{ color: '#9ca3af', fontSize: 12 }}>Intouchable</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    <span className={`npl-badge ${isOwner ? 'npl-badge-warning' : 'npl-badge-brand'}`} style={{ fontSize: 11 }}>
+                      <span className="npl-badge-dot" />
+                      <span>{admin.role}</span>
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12.5, color: 'var(--text2)', marginTop: 2, wordBreak: 'break-all' }}>
+                    {admin.email}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                {!isOwner ? (
+                  <button 
+                    type="button"
+                    onClick={() => handleDelete(admin.id)}
+                    className="npl-btn npl-btn-danger npl-btn-sm"
+                  >
+                    <span>🗑️</span>
+                    <span>Retirer</span>
+                  </button>
+                ) : (
+                  <span style={{ color: 'var(--text3)', fontSize: 12, fontWeight: 600, padding: '4px 8px' }}>
+                    Propriétaire principal
+                  </span>
+                )}
+              </div>
+            </div>
+          )
+        })}
+
         {admins.length === 0 && !loading && (
-          <div style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>
+          <div style={{ padding: 24, textAlign: 'center', color: 'var(--text3)', background: '#fff', borderRadius: 12, border: '1px solid var(--border)' }}>
             Aucun administrateur trouvé.
           </div>
         )}

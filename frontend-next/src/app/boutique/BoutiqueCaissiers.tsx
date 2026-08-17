@@ -162,48 +162,95 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
   if (loading && caissiers.length === 0) return <div style={{ padding: 40, textAlign: 'center' }}>Chargement...</div>
 
   return (
-    <div style={{ padding: 24 }}>
-      <h2 style={{ fontSize: 20, marginBottom: 8 }}>Caissiers POS (Point de vente physique)</h2>
-      <p style={{ color: 'var(--text3)', fontSize: 14, marginBottom: 24 }}>
-        Gérez les employés qui peuvent utiliser l&apos;application de caisse physique locale. Chaque caissier a besoin d&apos;un code PIN pour ouvrir sa session.
-      </p>
-
-      {/* Bloc Lien Terminal Caissier */}
-      <div style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '1px solid #93c5fd', borderRadius: 14, padding: 20, marginBottom: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <span style={{ fontSize: 24 }}>📱</span>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#1e40af' }}>Lien Terminal Caissier Dédié (Sans Mot de Passe Admin)</h3>
-        </div>
-        <p style={{ margin: '0 0 14px', fontSize: 13, color: '#1e3a5f', lineHeight: 1.5 }}>
-          Ouvrez ce lien une fois sur la tablette ou le PC du magasin et ajoutez-le en Favoris / Écran d&apos;accueil. Vos caissiers pourront déverrouiller leur session avec leur <strong>Code PIN (4 chiffres)</strong> sans jamais avoir accès à votre compte propriétaire ni à vos paramètres.
+    <div style={{ padding: '16px 16px 32px', maxWidth: '100%', boxSizing: 'border-box', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--navy)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+          Caissiers POS (Point de vente physique)
+        </h2>
+        <p style={{ color: 'var(--text2)', fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
+          Gérez les employés autorisés à utiliser la caisse physique locale. Chaque caissier dispose d&apos;un code PIN pour déverrouiller sa session.
         </p>
+      </div>
+
+      {/* Bloc Lien Terminal Caissier (0 Débordement) */}
+      <div style={{
+        background: '#ffffff',
+        border: '1px solid #bfdbfe',
+        borderLeft: '4px solid #2563eb',
+        borderRadius: 16,
+        padding: '16px 18px',
+        marginBottom: 24,
+        boxShadow: '0 2px 10px rgba(37, 99, 235, 0.04)',
+        boxSizing: 'border-box',
+        maxWidth: '100%',
+        overflow: 'hidden'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: 8,
+            background: '#eff6ff', border: '1px solid #bfdbfe',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 18, flexShrink: 0
+          }}>
+            📱
+          </div>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#1e40af' }}>
+            Lien Terminal Caissier Dédié
+          </h3>
+        </div>
+        
+        <p style={{ margin: '0 0 12px', fontSize: 12.5, color: '#334155', lineHeight: 1.5 }}>
+          Ouvrez ce lien une fois sur la tablette ou le PC du magasin et ajoutez-le en Favoris. Vos caissiers pourront déverrouiller leur session avec leur <strong>Code PIN (4 chiffres)</strong> sans jamais avoir accès à votre compte propriétaire ni à vos paramètres.
+        </p>
+
         {terminalUrl && (
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', boxSizing: 'border-box' }}>
             <input
               type="text"
               readOnly
               value={terminalUrl}
-              style={{ flex: 1, minWidth: 260, padding: '10px 14px', borderRadius: 8, border: '1px solid #93c5fd', background: '#fff', fontSize: 13, fontWeight: 600, color: '#1e40af' }}
-            />
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(terminalUrl)
-                setCopie(true)
-                setTimeout(() => setCopie(false), 3000)
+              style={{
+                width: '100%',
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: '1px solid #cbd5e1',
+                background: '#f8fafc',
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: '#1e40af',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
               }}
-              style={{ padding: '10px 18px', background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
-            >
-              {copie ? '✅ Lien copié !' : '📋 Copier le lien terminal'}
-            </button>
-            <a
-              href={terminalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ padding: '10px 18px', background: '#ffffff', color: '#1d4ed8', border: '1px solid #93c5fd', borderRadius: 8, fontWeight: 700, fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap' }}
-            >
-              ↗ Tester le terminal
-            </a>
+            />
+            
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', width: '100%' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(terminalUrl)
+                  setCopie(true)
+                  setTimeout(() => setCopie(false), 3000)
+                }}
+                className="npl-btn npl-btn-primary npl-btn-md"
+                style={{ flex: '1 1 180px', color: '#ffffff' }}
+              >
+                <span>{copie ? '✅' : '📋'}</span>
+                <span>{copie ? 'Lien copié !' : 'Copier le lien terminal'}</span>
+              </button>
+
+              <a
+                href={terminalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="npl-btn npl-btn-secondary npl-btn-md"
+                style={{ flex: '1 1 140px', textDecoration: 'none' }}
+              >
+                <span>↗</span>
+                <span>Tester le terminal</span>
+              </a>
+            </div>
           </div>
         )}
       </div>

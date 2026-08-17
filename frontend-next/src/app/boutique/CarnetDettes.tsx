@@ -887,7 +887,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         background: '#ffffff',
         border: '1px solid #e2e8f0',
         borderRadius: 20,
-        padding: isMobile ? '16px 18px' : '22px 24px',
+        padding: isMobile ? '16px 16px' : '22px 24px',
         color: '#0f172a',
         boxShadow: '0 4px 14px rgba(15, 23, 42, 0.03)',
         display: 'flex',
@@ -899,139 +899,164 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           flexDirection: isMobile ? 'column' : 'row',
           justifyContent: 'space-between',
           alignItems: isMobile ? 'stretch' : 'center',
-          gap: 12
+          gap: 14
         }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 22 }}>📒</span>
-              <h1 style={{ margin: 0, fontSize: isMobile ? 17 : 20, fontWeight: 700, color: 'var(--navy)', letterSpacing: '-0.02em' }}>
-                Carnet de Crédits & Dettes Clients
-              </h1>
-              <span className="npl-badge npl-badge-brand">
-                Tous forfaits
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 20,
+                flexShrink: 0
+              }}>
+                📒
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h1 style={{ margin: 0, fontSize: isMobile ? 17 : 20, fontWeight: 800, color: 'var(--navy)', letterSpacing: '-0.02em' }}>
+                  Carnet de Crédits & Dettes
+                </h1>
+                <span className="npl-badge npl-badge-brand" style={{ fontSize: 11 }}>
+                  Tous forfaits
+                </span>
+              </div>
             </div>
-            {!isMobile && (
-              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text2)' }}>
-                Gestion unifiée des créances, avances clients, remboursements et relances WhatsApp.
-              </p>
-            )}
+            <p style={{ margin: '6px 0 0 48px', fontSize: 12.5, color: 'var(--text2)', fontWeight: 500 }}>
+              {clients.length} compte(s) au registre · {nbClientsDebiteurs} débiteur(s) en attente
+            </p>
           </div>
 
-          {/* Barre d'outils responsive fluide (sans textes coupés) */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', width: isMobile ? '100%' : 'auto' }}>
-            <button
-              onClick={() => setShowModalNouveauClient(true)}
-              className="npl-btn npl-btn-primary npl-btn-md"
-              style={{ flex: isMobile ? '1 1 auto' : 'none' }}
-            >
-              <span>👤</span>
-              <span>+ Nouveau Client</span>
-            </button>
+          {/* Barre d'outils responsive fluide (Hiérarchie visuelle Stripe / Square) */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            width: isMobile ? '100%' : 'auto'
+          }}>
+            {/* Ligne 1 : Bouton Principal d'Ajout */}
+            <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+              <button
+                onClick={() => setShowModalNouveauClient(true)}
+                className="npl-btn npl-btn-primary npl-btn-md"
+                style={{ flex: 1, color: '#ffffff' }}
+              >
+                <span style={{ filter: 'brightness(0) invert(1)' }}>👤</span>
+                <span>+ Nouveau Client</span>
+              </button>
 
-            <button
-              onClick={() => setShowQrModalComptoir(true)}
-              className="npl-btn npl-btn-secondary npl-btn-md"
-              title="Afficher le QR code à scanner pour les clients"
-              style={{ flex: isMobile ? '1 1 auto' : 'none' }}
-            >
-              <span>📱</span>
-              <span>QR Client</span>
-            </button>
+              <button
+                onClick={() => ouvrirModalTransaction('vente_credit')}
+                className="npl-btn npl-btn-accent npl-btn-md"
+                style={{ flex: isMobile ? 1 : 'none' }}
+              >
+                <span>⚡</span>
+                <span>+ Crédit</span>
+              </button>
+            </div>
 
-            <button
-              onClick={() => ouvrirModalTransaction('vente_credit')}
-              className="npl-btn npl-btn-accent npl-btn-md"
-              style={{ flex: isMobile ? '1 1 auto' : 'none' }}
-            >
-              <span>⚡</span>
-              <span>+ Crédit</span>
-            </button>
+            {/* Ligne 2 : Actions secondaires et Utilitaires */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(3, auto)',
+              gap: 6,
+              width: '100%'
+            }}>
+              <button
+                onClick={() => setShowQrModalComptoir(true)}
+                className="npl-btn npl-btn-secondary npl-btn-sm"
+                title="Afficher le QR code à scanner pour les clients"
+              >
+                <span>📱</span>
+                <span>QR Client</span>
+              </button>
 
-            <button
-              onClick={handleExportCSV}
-              className="npl-btn npl-btn-secondary npl-btn-md"
-              title="Exporter toutes les dettes au format CSV Excel"
-              style={{ flex: isMobile ? '1 1 auto' : 'none' }}
-            >
-              <span>📥</span>
-              <span>CSV</span>
-            </button>
+              <button
+                onClick={handleExportCSV}
+                className="npl-btn npl-btn-secondary npl-btn-sm"
+                title="Exporter toutes les dettes au format CSV Excel"
+              >
+                <span>📥</span>
+                <span>CSV</span>
+              </button>
 
-            <button
-              onClick={handleExportPDF}
-              className="npl-btn npl-btn-secondary npl-btn-md"
-              title="Imprimer ou sauvegarder le rapport PDF"
-              style={{ flex: isMobile ? '1 1 auto' : 'none' }}
-            >
-              <span>🖨️</span>
-              <span>PDF</span>
-            </button>
+              <button
+                onClick={handleExportPDF}
+                className="npl-btn npl-btn-secondary npl-btn-sm"
+                title="Imprimer ou sauvegarder le rapport PDF"
+              >
+                <span>🖨️</span>
+                <span>PDF</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Cartes KPI Épurées (Standard Stripe / Square) */}
+        {/* Cartes KPI Épurées (Standard Stripe / Square - 0 Débordement) */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fit, minmax(180px, 1fr))',
+          gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)',
           gap: isMobile ? 8 : 12
         }}>
           {/* KPI 1 : Total Dettes */}
           <div className="npl-card-subtle" style={{
             borderLeft: '3px solid #dc2626',
-            padding: isMobile ? '10px 8px' : '14px 16px'
+            padding: isMobile ? '10px 12px' : '14px 16px',
+            background: '#ffffff'
           }}>
-            <div className="npl-badge npl-badge-danger" style={{ marginBottom: 4, fontSize: isMobile ? 10 : 11 }}>
+            <div className="npl-badge npl-badge-danger" style={{ marginBottom: 6, fontSize: isMobile ? 10 : 11 }}>
               <span className="npl-badge-dot" />
               <span>TOTAL DETTES</span>
             </div>
-            <div style={{ fontSize: isMobile ? 15 : 20, fontWeight: 700, color: '#dc2626', fontVariantNumeric: 'tabular-nums' }}>
+            <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 800, color: '#dc2626', fontVariantNumeric: 'tabular-nums' }}>
               {fcfa(totalDettesAEncaisser)}
             </div>
-            {!isMobile && (
-              <div style={{ fontSize: 11.5, color: 'var(--text2)', marginTop: 4 }}>
-                {nbClientsDebiteurs} client(s) débiteur(s)
-              </div>
-            )}
+            <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 4 }}>
+              {nbClientsDebiteurs} client(s) débiteur(s)
+            </div>
           </div>
 
           {/* KPI 2 : Total Avances */}
           <div className="npl-card-subtle" style={{
             borderLeft: '3px solid #16a34a',
-            padding: isMobile ? '10px 8px' : '14px 16px'
+            padding: isMobile ? '10px 12px' : '14px 16px',
+            background: '#ffffff'
           }}>
-            <div className="npl-badge npl-badge-success" style={{ marginBottom: 4, fontSize: isMobile ? 10 : 11 }}>
+            <div className="npl-badge npl-badge-success" style={{ marginBottom: 6, fontSize: isMobile ? 10 : 11 }}>
               <span className="npl-badge-dot" />
               <span>TOTAL AVANCES</span>
             </div>
-            <div style={{ fontSize: isMobile ? 15 : 20, fontWeight: 700, color: '#16a34a', fontVariantNumeric: 'tabular-nums' }}>
+            <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 800, color: '#16a34a', fontVariantNumeric: 'tabular-nums' }}>
               {fcfa(totalAvancesClients)}
             </div>
-            {!isMobile && (
-              <div style={{ fontSize: 11.5, color: 'var(--text2)', marginTop: 4 }}>
-                Fonds d&apos;avances clients
-              </div>
-            )}
+            <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 4 }}>
+              Avances & acomptes
+            </div>
           </div>
 
-          {/* KPI 3 : Clients Registre */}
-          <div className="npl-card-subtle" style={{
-            borderLeft: '3px solid var(--navy)',
-            padding: isMobile ? '10px 8px' : '14px 16px'
-          }}>
-            <div className="npl-badge npl-badge-neutral" style={{ marginBottom: 4, fontSize: isMobile ? 10 : 11 }}>
-              <span className="npl-badge-dot" />
-              <span>REGISTRE</span>
-            </div>
-            <div style={{ fontSize: isMobile ? 15 : 20, fontWeight: 700, color: 'var(--navy)', fontVariantNumeric: 'tabular-nums' }}>
-              {clients.length} Client(s)
-            </div>
-            {!isMobile && (
-              <div style={{ fontSize: 11.5, color: 'var(--text2)', marginTop: 4 }}>
+          {/* KPI 3 : Clients Registre (affiché sur desktop) */}
+          {!isMobile && (
+            <div className="npl-card-subtle" style={{
+              borderLeft: '3px solid var(--navy)',
+              padding: '14px 16px',
+              background: '#ffffff'
+            }}>
+              <div className="npl-badge npl-badge-neutral" style={{ marginBottom: 6, fontSize: 11 }}>
+                <span className="npl-badge-dot" />
+                <span>REGISTRE ACTIF</span>
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--navy)', fontVariantNumeric: 'tabular-nums' }}>
+                {clients.length} Client(s)
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 4 }}>
                 Comptes de crédits actifs
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -11,7 +11,11 @@
     - **Cartes Clients Épurées (Standard Stripe / Klarna)** : Remplacement des 6 boutons encombrants par **1 CTA Principal dominant** (`💵 Encaisser / Rembourser` ou `⚡ Déduire sur Achat`), **1 bouton rapide WhatsApp Direct** (`📱 Relance`), et **1 menu déroulant contextuel `⋯`** (*Fiche historique, Modifier profil & plafond, Accorder crédit, Blacklister / Réactiver, Supprimer*).
     - **Barre d'Outils Supérieure** : Toolbar fluide responsive (`👤 + Nouveau Client`, `📱 QR Client`, `⚡ + Crédit`, `📥 CSV`, `🖨️ PDF`).
     - **KPIs Simplifiés** : Synthèse financière claire (`TOTAL DETTES`, `TOTAL AVANCES`, `REGISTRE`).
-  * **Phase 4 : Validation Responsive Multi-Résolutions** :
+  * **Phase 4 : Validation Responsive Multi-Résolutions & Éradication des Troncatures Mobiles** :
+    - **Carnet de Dettes & KPIs** : Passage sur mobile à une grille 2 colonnes financières principales (50% / 50%) `Total Dettes` / `Total Avances` sans aucune troncature ni débordement horizontal (la métrique globale registre étant intégrée dans l'en-tête).
+    - **Caissiers POS (`BoutiqueCaissiers.tsx`)** : Suppression du `minWidth: 260px` rigide ; l'URL du terminal s'adapte à 100% de la largeur avec ellipse et boutons d'actions `Copier` / `Tester` alignés en dessous.
+    - **Administrateurs Web (`BoutiqueAdmins.tsx`)** : Résolution de l'écrasement du bouton d'ajout (tronqué en `Ajo un adr`) avec passage en formulaire fluide et affichage en cartes membres (`Propriétaire` / `Admin`) avec avatars.
+    - **Catalogue & Baguette Magique (`BoutiqueClient.tsx`)** : Élimination de l'écrasement du bouton `Importer` (tronqué en `Impor`) avec conteneur `flexWrap: wrap` et boutons d'actions standardisés (`Scan Nom`, `Générer EAN`).
     - Vérification et adaptation sans débordement ni troncature sur les largeurs : **320px**, **375px**, **414px**, **768px**, **1024px** et **1440px**.
   * **Phase 5 : Automatisation & Suite de Tests Vitest (`src/lib/__tests__`, `src/app/boutique/__tests__`)** :
     - **34 tests unitaires et d'intégration réussis (6 suites de tests, 100% verts)** :
