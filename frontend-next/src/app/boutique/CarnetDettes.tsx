@@ -87,8 +87,21 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         setMenuOuvertClientId(null)
       }
     }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMenuOuvertClientId(null)
+        setShowModalNouveauClient(false)
+        setShowModalEditClient(false)
+        setShowModalTransaction(false)
+        setShowQrModalComptoir(false)
+      }
+    }
     document.addEventListener('click', handleClickOutside)
-    return () => document.removeEventListener('click', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
   }, [])
 
   // Formulaire Client (Création)
@@ -1373,15 +1386,18 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           }}
                           className="npl-btn npl-btn-secondary npl-btn-sm npl-btn-icon"
                           title="Plus d'actions"
-                          aria-label="Plus d'actions"
+                          aria-label={`Plus d'actions pour ${formatNomPropre(c.nom)}`}
+                          aria-haspopup="true"
+                          aria-expanded={isMenuOpen}
                         >
                           <span style={{ fontSize: 16, lineHeight: 1 }}>⋯</span>
                         </button>
 
                         {isMenuOpen && (
-                          <div className="npl-dropdown-menu">
+                          <div className="npl-dropdown-menu" role="menu" aria-label={`Actions pour ${formatNomPropre(c.nom)}`}>
                             <button
                               type="button"
+                              role="menuitem"
                               onClick={() => {
                                 setMenuOuvertClientId(null)
                                 ouvrirFicheClient(c)
@@ -1394,6 +1410,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
                             <button
                               type="button"
+                              role="menuitem"
                               onClick={() => {
                                 setMenuOuvertClientId(null)
                                 ouvrirModalEditClient(c)
@@ -1406,6 +1423,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
                             <button
                               type="button"
+                              role="menuitem"
                               onClick={() => {
                                 setMenuOuvertClientId(null)
                                 ouvrirModalTransaction('vente_credit', c)
@@ -1421,6 +1439,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                             {c.statut === 'bloque' ? (
                               <button
                                 type="button"
+                                role="menuitem"
                                 onClick={() => {
                                   setMenuOuvertClientId(null)
                                   handleChangerStatutClient(c, 'actif')
@@ -1433,6 +1452,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                             ) : (
                               <button
                                 type="button"
+                                role="menuitem"
                                 onClick={() => {
                                   setMenuOuvertClientId(null)
                                   handleChangerStatutClient(c, 'bloque')
@@ -1446,6 +1466,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
                             <button
                               type="button"
+                              role="menuitem"
                               onClick={() => {
                                 setMenuOuvertClientId(null)
                                 handleSupprimerClient(c)

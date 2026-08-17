@@ -24,7 +24,7 @@ export function tempsRelatif(d: string | Date | null | undefined): string | null
   return fmtDate(dt);
 }
 
-export function fcfa(prix: number | string | null): string {
+export function fcfa(prix: number | string | null | undefined): string {
   if (prix === null || prix === undefined || prix === '') return '—';
   const num = Number(prix);
   if (isNaN(num)) return '—';

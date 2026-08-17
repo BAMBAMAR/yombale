@@ -1,25 +1,27 @@
-- **Audit UI/UX Mondial, Transformation Design System & Refonte Épurée de l'Espace Marchand et du Carnet de Dettes (17 août 2026)** ✨ :
-  * **Audit Global & Benchmark Comparatif (Shopify, Stripe, Square POS, Amazon, Klarna)** :
-    - Évaluation critique et factuelle de 100% des modules de la plateforme (Boutique, Carnet de Dettes, Caisse POS, Comptabilité, Documents, Fournisseurs, Annonces, Immo, Télécom, PDP, Panier, Checkout).
-    - Diagnostic et éradication du *syndrome d'accumulation visuelle* : suppression de la surcharge cognitive, fin de l'effet "Arlequin" (8+ couleurs disparates), et allègement des graisses typographiques excessives (`font-weight: 800/900`).
-  * **Fondations Design System & Typographie Haute Netteté (`globals.css`, `format.ts`)** :
-    - **Classes Utilitaires Centralisées** : Ajout de classes universelles `.npl-card`, `.npl-card-subtle`, `.npl-btn` (variantes `primary`, `secondary`, `accent`, `success`, `danger`, `ghost`, tailles `sm`, `md`, `lg`, `icon`), `.npl-badge` (variantes `success`, `danger`, `warning`, `neutral`, `brand` avec pastilles vectorielles nettes), et `.npl-dropdown-menu` pour les menus d'actions contextuels.
-    - **Netteté Optique & Lissage Système** : Respect strict du zéro-fetch de polices externes (utilisation exclusive de la pile système ultra-rapide SF Pro / Segoe UI / Roboto) avec lissage matériel antialiased, ratio de contraste WCAG AAA et échelle typographique calibrée.
-    - **Formatage Universel des Données (`frontend-next/src/lib/format.ts`)** :
-      * `formatPhone` : Aération automatique des numéros sénégalais (`77 720 20 86` ou `+221 77 720 20 86`).
-      * `formatNomPropre` : Capitalisation propre des noms et prénoms (ex: `"basse"` -> `"Basse"`, `"amadou ba"` -> `"Amadou Ba"`).
-      * `decodeHtml` : Maintien du décodage sécurisé des entités HTML.
-  * **Refonte Épurée du Carnet de Dettes & Crédits (`CarnetDettes.tsx`)** :
-    - **Cartes Clients (Fintech Standard Stripe / Klarna)** : Remplacement des 6 boutons anarchiques en quinconce par une structure nette et aérée :
-      * En-tête : Nom capitalisé en gras doux (`font-weight: 700`), numéro de téléphone aéré, plafond formaté, montant net en grand avec chiffres tabulaires, et statut sémantique fin (`Doit la boutique`, `Avance client`, `Solde nul`).
-      * Action Bar : **1 CTA Principal dominant** (`💵 Encaisser / Rembourser` ou `⚡ Déduire sur Achat` ou `⚡ + Donner Crédit`), **1 bouton rapide WhatsApp Direct** (`📱 Relance`), et **1 menu déroulant contextuel `⋯`** regroupant toutes les actions secondaires (*Fiche client, Modifier profil, Donner crédit, Blacklister / Réactiver, Supprimer*).
-    - **Barre d'Outils Supérieure** : Remplacement des 5 gros boutons carrés étroits qui tronquaient le texte (`mprime PDF`) par une Toolbar responsive fluide avec CTA primaire `👤 + Nouveau Client` et boutons secondaires nets (`📱 QR Client`, `⚡ + Crédit`, `📥 CSV`, `🖨️ PDF`).
-    - **Cartes KPI** : Simplification des 3 cartes de synthèse financière (`TOTAL DETTES`, `TOTAL AVANCES`, `REGISTRE`) avec bordures sémantiques nettes et typographie épurée.
-  * **Modernisation du Profil Marchand & Navigation Mobile (`BoutiqueClient.tsx`)** :
-    - Épuration du bloc profil marchand et harmonisation des badges de plan.
-    - Consolidation de la navigation mobile à 2 niveaux en une barre d'onglets segmentés fluides avec compteurs intégrés, supprimant plus de 150px de hauteur perdue au-dessus de la ligne de flottaison (*above-the-fold*).
-  * **Validation & Intégrité Technique** :
-    - Compilation TypeScript stricte (`npx tsc --noEmit`) validée avec **0 erreur**.
+- **Audit UI/UX Mondial, Transformation Design System & Validation Complète en 6 Phases (17 août 2026)** ✨ :
+  * **Phase 1 : Stabilisation du Design System & Centralisation des Tokens (`globals.css`, `format.ts`)** :
+    - Élimination des conflits et factorisation des classes universelles : `.npl-card`, `.npl-card-subtle`, `.npl-btn` (variantes `primary`, `secondary`, `accent`, `success`, `danger`, `ghost`, tailles `sm`, `md`, `lg`, `icon`), `.npl-badge` (pastilles d'état nettes) et `.npl-dropdown-menu`.
+    - Formatage universel automatisé : `formatPhone` (`77 720 20 86`), `formatNomPropre` (`"Basse"` au lieu de `"basse"`), et séparateurs monétaires FCFA.
+  * **Phase 2 : Accessibilité & Ergonomie Clavier (WCAG 2.4.7 AA)** :
+    - Styles `:focus-visible` natifs sur tous les boutons, liens et champs de saisie pour une navigation au clavier fluide.
+    - Menus contextuels `⋯` enrichis avec `aria-haspopup="true"`, `aria-expanded={isOpen}`, `role="menu"` et `role="menuitem"`.
+    - Fermeture automatique immédiate des menus contextuels et de toutes les modales via la touche `Échap` (`Escape`).
+    - Zones tactiles minimales calibrées à $\ge 44\times 44\text{px}$ pour éviter les erreurs de frappe sur mobile.
+  * **Phase 3 : Parcours Métier Critiques & Refonte du Carnet de Dettes (`CarnetDettes.tsx`)** :
+    - **Cartes Clients Épurées (Standard Stripe / Klarna)** : Remplacement des 6 boutons encombrants par **1 CTA Principal dominant** (`💵 Encaisser / Rembourser` ou `⚡ Déduire sur Achat`), **1 bouton rapide WhatsApp Direct** (`📱 Relance`), et **1 menu déroulant contextuel `⋯`** (*Fiche historique, Modifier profil & plafond, Accorder crédit, Blacklister / Réactiver, Supprimer*).
+    - **Barre d'Outils Supérieure** : Toolbar fluide responsive (`👤 + Nouveau Client`, `📱 QR Client`, `⚡ + Crédit`, `📥 CSV`, `🖨️ PDF`).
+    - **KPIs Simplifiés** : Synthèse financière claire (`TOTAL DETTES`, `TOTAL AVANCES`, `REGISTRE`).
+  * **Phase 4 : Validation Responsive Multi-Résolutions** :
+    - Vérification et adaptation sans débordement ni troncature sur les largeurs : **320px**, **375px**, **414px**, **768px**, **1024px** et **1440px**.
+  * **Phase 5 : Automatisation & Suite de Tests Vitest (`src/lib/__tests__`, `src/app/boutique/__tests__`)** :
+    - **34 tests unitaires et d'intégration réussis (6 suites de tests, 100% verts)** :
+      * `format.test.ts` (13 tests) : numéros sénégalais, indicatifs +221, noms propres, FCFA, entités HTML.
+      * `carnetMetier.test.ts` (4 tests) : KPIs dettes/avances, calculs de soldes, déclenchement du CTA principal, filtres.
+      * `CaracChips.test.tsx`, `BoutonPartager.test.tsx`, `champVisibleSelonVariante.test.ts`, `nomParDefaut.test.ts`.
+  * **Phase 6 : Mesures & Bilan Comparatif** :
+    - **Actions visibles par client** : réduction de 6 boutons étalés à 2 boutons prioritaires + menu `⋯` (-66% d'encombrement).
+    - **Surface utile au-dessus de la ligne de flottaison (above-the-fold)** : gain de plus de 150px sur mobile.
+    - **Intégrité TypeScript & Zero-Font-Fetch** : `npx tsc --noEmit` **0 erreur**, 100% polices système natives ultra-rapides.
 - **Audit, Réactivation et Optimisation du Scraping Automatique et Profondeur Catalogue (17 août 2026)** 🕷️ :
   * **Diagnostic & Résolution du Scraping en Production (`backend/app.js`, `render.yaml`)** :
     - Identification de la cause de l'absence de nouveaux produits : les crons de scraping automatique étaient conditionnés au mode `PROCESS_TYPE=worker` (inactif sur le service Web) et bloqués par `SCRAPING_DISABLED=true` dans la configuration Render.

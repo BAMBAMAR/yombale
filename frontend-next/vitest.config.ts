@@ -25,6 +25,8 @@ export default defineConfig({
   },
   test: {
     pool: 'threads',
+    fileParallelism: false,
+    environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
   },
 })
