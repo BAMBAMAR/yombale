@@ -15,7 +15,9 @@
     - **Carnet de Dettes & KPIs** : Passage sur mobile à une grille 2 colonnes financières principales (50% / 50%) `Total Dettes` / `Total Avances` sans aucune troncature ni débordement horizontal (la métrique globale registre étant intégrée dans l'en-tête).
     - **Caissiers POS (`BoutiqueCaissiers.tsx`)** : Suppression du `minWidth: 260px` rigide ; l'URL du terminal s'adapte à 100% de la largeur avec ellipse et boutons d'actions `Copier` / `Tester` alignés en dessous.
     - **Administrateurs Web (`BoutiqueAdmins.tsx`)** : Résolution de l'écrasement du bouton d'ajout (tronqué en `Ajo un adr`) avec passage en formulaire fluide et affichage en cartes membres (`Propriétaire` / `Admin`) avec avatars.
-    - **Catalogue & Baguette Magique (`BoutiqueClient.tsx`)** : Élimination de l'écrasement du bouton `Importer` (tronqué en `Impor`) avec conteneur `flexWrap: wrap` et boutons d'actions standardisés (`Scan Nom`, `Générer EAN`).
+    - **Suivi de Commande (`suivi-commande/page.tsx`, `SuiviCommandeClient.tsx`)** : Élimination de l'écrasement du bouton `Rechercher 🔍` (tronqué en `Recherc`) avec conteneur `flexWrap: wrap` fluide et bouton `.npl-btn-primary .npl-btn-lg`.
+    - **API Suivi de Commande (`backend/routes/boutiques.js`)** : Correction du bug SQL 500 (remplacement de la colonne inexistante `b.telephone_whatsapp` par `b.telephone`) et sécurisation du `regexp_replace` avec `COALESCE`.
+    - **API Ingestion Scraper (`backend/routes/scraper.js`)** : Correction du schéma SQL d'insertion dans `POST /api/scraper/sync-annonces` (alignement sur les colonnes réelles `actif`, `payee`, `contact_tel`, `caracteristiques`) permettant la synchronisation directe HTTPS depuis les scrapers locaux sans être bloqué par le pare-feu TCP PostgreSQL Render.
     - Vérification et adaptation sans débordement ni troncature sur les largeurs : **320px**, **375px**, **414px**, **768px**, **1024px** et **1440px**.
   * **Phase 5 : Automatisation & Suite de Tests Vitest (`src/lib/__tests__`, `src/app/boutique/__tests__`)** :
     - **34 tests unitaires et d'intégration réussis (6 suites de tests, 100% verts)** :

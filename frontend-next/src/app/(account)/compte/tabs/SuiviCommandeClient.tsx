@@ -72,26 +72,38 @@ export default function SuiviCommandeClient() {
           Entrez votre numéro de référence (ex: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>CMD-2026-XXXX</code>) ou votre numéro de téléphone client.
         </p>
 
-        <form onSubmit={handleSearch} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', width: '100%' }}>
           <input
             type="text"
             value={refInput}
             onChange={e => setRefInput(e.target.value)}
             placeholder="N° de référence ou Téléphone..."
-            style={{ flex: 1, minWidth: 240, padding: '12px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none' }}
+            style={{
+              flex: '1 1 220px',
+              width: '100%',
+              boxSizing: 'border-box',
+              padding: '12px 14px',
+              borderRadius: 10,
+              border: '1px solid #cbd5e1',
+              fontSize: 14,
+              outline: 'none'
+            }}
           />
           <button
             type="submit"
             disabled={loading}
-            style={{ background: '#C75B00', color: '#ffffff', border: 'none', padding: '12px 20px', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+            className="npl-btn npl-btn-primary npl-btn-lg"
+            style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 22px' }}
           >
-            {loading ? 'Recherche...' : 'Rechercher 🔍'}
+            <span>{loading ? '⏳' : '🔍'}</span>
+            <span>{loading ? 'Recherche...' : 'Rechercher'}</span>
           </button>
         </form>
 
         {error && (
-          <div style={{ marginTop: 16, padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontSize: 13, fontWeight: 600 }}>
-            ⚠️ {error}
+          <div style={{ marginTop: 16, padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, color: '#dc2626', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>⚠️</span>
+            <span>{error}</span>
           </div>
         )}
       </div>

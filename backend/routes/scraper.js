@@ -82,29 +82,30 @@ router.post('/sync-annonces', adminOnly, async (req, res) => {
       try {
         const query = `
           INSERT INTO annonces_classifiees (
-            titre, description, prix, devise, ville, quartier, photos,
-            contact_tel, contact_whatsapp, contact_email, categorie_slug,
-            source, ref_externe, url_source, caracteristiques, active, moderee
+            categorie_slug, titre, description, prix, ville, quartier, photos,
+            contact_nom, contact_tel, source, ref_externe, url_source,
+            caracteristiques, actif, payee
           ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7,
-            $8, $9, $10, $11,
-            $12, $13, $14, $15, true, true
+            $1, $2, $3, $4, $5, $6, $7::jsonb,
+            $8, $9, $10, $11, $12,
+            $13::jsonb, true, true
           )
-          ON CONFLICT (source, ref_externe) DO NOTHING
+          ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
+          DO UPDATE SET
+            prix = COALESCE(EXCLUDED.prix, annonces_classifiees.prix),
+            updated_at = NOW()
           RETURNING id
         `;
         const values = [
-          a.titre || 'Sans titre',
+          a.categorie_slug || 'divers',
+          a.titre || 'Annonce',
           a.description || '',
           a.prix || null,
-          a.devise || 'FCFA',
           a.ville || 'Dakar',
           a.quartier || null,
-          a.photos || [],
-          a.contact_tel || null,
-          a.contact_whatsapp || null,
-          a.contact_email || null,
-          a.categorie_slug || 'divers',
+          JSON.stringify(a.photos || []),
+          a.contact_nom || null,
+          a.contact_tel || 'Voir sur Facebook',
           a.source || 'facebook',
           a.ref_externe || null,
           a.url_source || null,

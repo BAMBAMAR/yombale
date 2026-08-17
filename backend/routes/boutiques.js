@@ -4441,14 +4441,14 @@ router.get('/commandes/suivi', async (req, res) => {
     const query = `
       SELECT c.id, c.reference, c.client_nom, c.client_telephone, c.statut, c.montant_total,
              c.methode_paiement, c.created_at, COALESCE(b.nom, 'Boutique Nopalou') as boutique_nom,
-             COALESCE(b.telephone_whatsapp, b.telephone) as boutique_whatsapp
+             COALESCE(b.telephone, '') as boutique_whatsapp
       FROM commandes_boutique c
       LEFT JOIN boutiques b ON b.id = c.boutique_id
       WHERE (
         c.reference ILIKE $1
         OR c.id::text ILIKE $1
         OR c.client_telephone ILIKE $1
-        OR ($2 <> '%%' AND regexp_replace(c.client_telephone, '[^0-9]', '', 'g') LIKE $2)
+        OR ($2 <> '%%' AND regexp_replace(COALESCE(c.client_telephone, ''), '[^0-9]', '', 'g') LIKE $2)
       )
       ORDER BY c.created_at DESC
       LIMIT 10
@@ -4456,7 +4456,7 @@ router.get('/commandes/suivi', async (req, res) => {
 
     const { rows } = await pool.query(query, [searchPattern, digitsPattern]);
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Aucune commande trouvée. Vérifiez votre numéro de référence ou votre numéro de téléphone.' });
+      return res.status(404).json({ error: 'Aucune commande trouvée pour cette référence ou ce numéro.' });
     }
 
     res.json({
