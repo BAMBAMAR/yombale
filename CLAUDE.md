@@ -10,12 +10,14 @@
        - Fonction `jouerBipScan` : retour sonore synthétisé Web Audio API (bip clair à 880Hz lors d'un scan réussi).
        - Pastilles de détections OCR cliquables instantanément sous le champ libellé pour choisir une alternative en 1 clic.
     3. **Déploiement Universel du Scan Nom** : Disponible dans la création/modification de produit (`BoutiqueClient.tsx`), la vente rapide comptoir (`Comptabilite.tsx`), les documents commerciaux (`GestionDocuments.tsx`), la vente à crédit (`CarnetDettes.tsx`), et les commandes fournisseurs (`GestionFournisseurs.tsx`).
-  * **Scan EAN, Recherche Catalogue, Saisie Libre et Panier Mixte dans la Caisse & Saisie Express (`Comptabilite.tsx`)** :
-    - Refonte complète de la vue **⚡ Saisie Express (Ventes & Dépenses) -> Vente Rapide** :
+  * **Scan EAN, Recherche Catalogue, Saisie Libre et Panier Mixte dans la Caisse, Saisie Express, Ventes et Dépenses (`Comptabilite.tsx`)** :
+    - **⚡ Saisie Express (Ventes & Dépenses) -> Vente Rapide** :
       * `🛍️ Catalogue (${produits.length})` : Recherche textuelle instantanée (nom, code-barres EAN, SKU), filtres par catégories horizontaux avec compteurs, grille visuelle de produits avec niveaux de stock et boutons incrémentaux `+` / `-`.
       * `✍️ Saisie Libre / Prestation` : Saisie d'articles hors-catalogue ou prestations, avec bouton **📷 Scan Nom (OCR)**, suggestions cliquables, prix et quantité.
       * `📷 Scan EAN (Code-barres)` : Scanner caméra avec bip sonore et détection automatique de produit (+1 qté).
       * **Panier Mixte Multi-articles & Total en direct** : composition d'une vente directe avec plusieurs articles variés (catalogue + libre), suppression individuelle, et encaissement en 1-clic avec enregistrement automatique et décrémentation des stocks.
+    - **💰 Onglet Ventes (`VenteForm`)** : Formulaire de vente détaillée avec onglets Catalogue (recherche temps réel + filtres), Saisie Libre avec Scan Nom (OCR) et Scanner EAN caméra.
+    - **📉 Onglet Dépenses (`DepensesView`)** : Formulaire de sortie de caisse enrichi avec bouton **📷 Scan Reçu (OCR)** pour extraire le texte et motif depuis les tickets de caisse et facturettes.
   * **Scan EAN, Recherche Catalogue, Saisie Libre et Panier Mixte dans les Documents Commerciaux (`GestionDocuments.tsx`)** :
     1. **Onglets de Sélection Fluides** :
        - `🛍️ Catalogue (${produits.length})` : Recherche textuelle instantanée (nom, code-barres EAN, SKU), filtres de catégories horizontaux en pilules avec compteurs, grille visuelle de produits avec niveaux de stock, prix en FCFA et boutons d'incrément/décrément rapides `+` / `-`.

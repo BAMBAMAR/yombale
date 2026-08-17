@@ -135,6 +135,10 @@ function DashboardView({ boutiqueId }: { boutiqueId: string }) {
 // ── Formulaire vente ──────────────────────────────────────────────────────────
 
 function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string; produits: Produit[]; zones: Zone[]; onDone: () => void }) {
+  const [modeSelection, setModeSelection] = useState<'catalogue' | 'libre'>('catalogue')
+  const [recherche, setRecherche] = useState('')
+  const [catFiltre, setCatFiltre] = useState('tous')
+  
   const [produitId, setProduitId] = useState('')
   const [nomLibre, setNomLibre] = useState('')
   const [quantite, setQuantite] = useState(1)
@@ -148,22 +152,193 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
+  // Scanner EAN
+  const [modalScannerEan, setModalScannerEan] = useState(false)
+  const [scannerEanStatus, setScannerEanStatus] = useState('Initialisation…')
+  const html5ScannerRef = useRef<any>(null)
+
+  // Scanner Nom OCR
+  const [modalScannerNom, setModalScannerNom] = useState(false)
+  const videoNomRef = useRef<HTMLVideoElement | null>(null)
+  const streamNomRef = useRef<MediaStream | null>(null)
+  const [ocrDetections, setOcrDetections] = useState<string[]>([])
+  const [statusScannerNom, setStatusScannerNom] = useState('')
+  const [ocrLoading, setOcrLoading] = useState(false)
+
   function handleProduit(id: string) {
     setProduitId(id)
     const p = produits.find(p => p.id === id)
+    if (p?.nom) setNomLibre(p.nom)
     if (p?.prix) setPrix(p.prix)
+    jouerBipScan('succes')
+  }
+
+  // ── Scanner EAN ──
+  const demarrerScannerEan = async () => {
+    setModalScannerEan(true)
+    setScannerEanStatus('📷 Initialisation du scanner EAN…')
+
+    setTimeout(async () => {
+      try {
+        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
+        if (html5ScannerRef.current) {
+          try {
+            await html5ScannerRef.current.stop()
+            html5ScannerRef.current.clear()
+          } catch (e) {}
+          html5ScannerRef.current = null
+        }
+
+        const scanner = new Html5Qrcode('vente-ean-scanner-reader')
+        html5ScannerRef.current = scanner
+
+        const config = {
+          fps: 15,
+          qrbox: { width: 260, height: 160 },
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.QR_CODE
+          ]
+        }
+
+        const onScanSuccess = (decodedText: string) => {
+          const code = decodedText.trim().toLowerCase()
+          const prodTrouve = produits.find(
+            (p: any) =>
+              p.barcode?.trim().toLowerCase() === code ||
+              p.sku?.trim().toLowerCase() === code ||
+              p.id?.trim().toLowerCase() === code
+          )
+
+          if (prodTrouve) {
+            handleProduit(prodTrouve.id)
+            setScannerEanStatus(`✅ Produit trouvé : "${prodTrouve.nom}"`)
+            setTimeout(() => arreterScannerEan(), 800)
+          } else {
+            jouerBipScan('alerte')
+            setScannerEanStatus(`⚠️ Code "${decodedText}" inconnu dans le catalogue.`)
+            if (confirm(`Code-barres "${decodedText}" non trouvé. L'ajouter comme article libre ?`)) {
+              setProduitId('')
+              setNomLibre(`Article EAN-${decodedText}`)
+              setModeSelection('libre')
+              arreterScannerEan()
+            }
+          }
+        }
+
+        try {
+          await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
+          setScannerEanStatus('📷 Cadrez le code-barres dans le rectangle.')
+        } catch (errEnv) {
+          await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
+          setScannerEanStatus('📷 Cadrez le code-barres dans le rectangle.')
+        }
+      } catch (err) {
+        setScannerEanStatus('❌ Impossible d’accéder à la caméra.')
+      }
+    }, 200)
+  }
+
+  const arreterScannerEan = () => {
+    if (html5ScannerRef.current) {
+      try {
+        html5ScannerRef.current.stop()
+        html5ScannerRef.current.clear()
+      } catch (e) {}
+      html5ScannerRef.current = null
+    }
+    setModalScannerEan(false)
+  }
+
+  // ── Scanner Nom OCR ──
+  const demarrerScannerNom = async () => {
+    setModalScannerNom(true)
+    setOcrDetections([])
+    setStatusScannerNom('📷 Cadrez le nom sur l’emballage du produit…')
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      streamNomRef.current = stream
+      if (videoNomRef.current) {
+        videoNomRef.current.srcObject = stream
+        await videoNomRef.current.play().catch(() => {})
+      }
+    } catch (e) {
+      setStatusScannerNom('❌ Impossible d’accéder à la caméra.')
+    }
+  }
+
+  const arreterScannerNom = () => {
+    if (streamNomRef.current) {
+      streamNomRef.current.getTracks().forEach(t => t.stop())
+      streamNomRef.current = null
+    }
+    setModalScannerNom(false)
+  }
+
+  const capturerNomOCR = async () => {
+    if (!videoNomRef.current) return
+    setOcrLoading(true)
+    setStatusScannerNom('🔍 Optimisation & lecture OCR en cours…')
+
+    const imageBase64 = capturerEtOptimiserImageOCR(videoNomRef.current, {
+      cropRatioWidth: 0.85,
+      cropRatioHeight: 0.60,
+      rehausserContraste: true
+    })
+
+    if (!imageBase64) {
+      setOcrLoading(false)
+      setStatusScannerNom('❌ Échec de la capture d’image.')
+      return
+    }
+
+    try {
+      const res = await fetch('/api/boutiques/scan-ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64 })
+      })
+      const data = await res.json()
+      setOcrLoading(false)
+
+      if (data.ok && data.nom) {
+        setNomLibre(data.nom)
+        if (data.detections && data.detections.length > 0) {
+          setOcrDetections(data.detections)
+        }
+        jouerBipScan('succes')
+        setStatusScannerNom(`✅ Nom capturé : "${data.nom}"`)
+        setTimeout(() => arreterScannerNom(), 1000)
+      } else {
+        jouerBipScan('alerte')
+        setStatusScannerNom(`⚠️ ${data.error || 'Aucun texte lisible détecté.'}`)
+      }
+    } catch (err) {
+      setOcrLoading(false)
+      jouerBipScan('alerte')
+      setStatusScannerNom('❌ Erreur de lecture OCR.')
+    }
   }
 
   function submit() {
+    if (prix <= 0) {
+      setError('Veuillez renseigner un prix unitaire valide (> 0).')
+      return
+    }
     setError(null)
     startTransition(async () => {
       const res = await declarerVente(boutiqueId, {
         produit_id: produitId || undefined,
-        nom_produit: produitId ? undefined : (nomLibre || 'Produit'),
+        nom_produit: produitId ? undefined : (nomLibre.trim() || 'Produit'),
         quantite, prix_unitaire: prix,
         zone_livraison_id: zoneId || undefined,
-        client_nom: clientNom || undefined,
-        client_telephone: clientTel || undefined,
+        client_nom: clientNom.trim() || undefined,
+        client_telephone: clientTel.trim() || undefined,
         methode_paiement: paiement,
       })
       if (res.error) { setError(res.error); return }
@@ -178,34 +353,180 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
     })
   }
 
+  const categories = Array.from(new Set(produits.map((p: any) => p.categorie).filter(Boolean))) as string[]
+  const qClean = recherche.trim().toLowerCase()
+  const prodsFiltres = produits.filter((p: any) => {
+    const matchCat = catFiltre === 'tous' || p.categorie === catFiltre
+    const matchText = !qClean ||
+      p.nom?.toLowerCase().includes(qClean) ||
+      p.categorie?.toLowerCase().includes(qClean) ||
+      p.barcode?.toLowerCase().includes(qClean) ||
+      p.sku?.toLowerCase().includes(qClean)
+    return matchCat && matchText
+  })
+
   const stock = produits.find(p => p.id === produitId)?.stock_quantite
 
   return (
-    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>Nouvelle vente</p>
-      {error && <div style={{ background: '#fef2f2', borderRadius: 8, padding: '8px 12px', color: '#dc2626', fontSize: 13 }}>{error}</div>}
+    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 10 }}>
+        <p style={{ margin: 0, fontWeight: 900, fontSize: 16, color: '#0f172a' }}>💰 Déclarer une Vente</p>
+        <span style={{ fontSize: 11, background: '#eff6ff', color: '#1d4ed8', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>
+          Vente détaillée
+        </span>
+      </div>
 
-      {produits.length > 0 && (
-        <div>
-          <label style={labelStyle}>Produit du catalogue</label>
-          <select value={produitId} onChange={e => handleProduit(e.target.value)} style={inputStyle}>
-            <option value="">— Sélectionner (ou saisir manuellement) —</option>
-            {produits.map(p => (
-              <option key={p.id} value={p.id}>
-                {p.nom}{p.prix ? ` — ${fcfa(p.prix)}` : ''}{p.stock_quantite !== null ? ` (stock: ${p.stock_quantite})` : ''}
-              </option>
-            ))}
-          </select>
+      {error && <div style={{ background: '#fef2f2', borderRadius: 8, padding: '8px 12px', color: '#dc2626', fontSize: 13, fontWeight: 700 }}>{error}</div>}
+
+      {/* Onglets de sélection du produit */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 6, background: '#e2e8f0', padding: 3, borderRadius: 10, flex: 1 }}>
+          <button
+            type="button"
+            onClick={() => setModeSelection('catalogue')}
+            style={{
+              flex: 1, padding: '7px 10px', borderRadius: 8, border: 'none',
+              background: modeSelection === 'catalogue' ? '#ffffff' : 'transparent',
+              fontWeight: modeSelection === 'catalogue' ? 800 : 600,
+              color: modeSelection === 'catalogue' ? '#0f172a' : '#64748b',
+              fontSize: 12.5, cursor: 'pointer'
+            }}
+          >
+            🛍️ Catalogue ({produits.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setModeSelection('libre')
+              setProduitId('')
+            }}
+            style={{
+              flex: 1, padding: '7px 10px', borderRadius: 8, border: 'none',
+              background: modeSelection === 'libre' ? '#ffffff' : 'transparent',
+              fontWeight: modeSelection === 'libre' ? 800 : 600,
+              color: modeSelection === 'libre' ? '#0f172a' : '#64748b',
+              fontSize: 12.5, cursor: 'pointer'
+            }}
+          >
+            ✍️ Saisie Libre
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={demarrerScannerEan}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            background: '#0284c7', color: '#fff', border: 'none',
+            padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer'
+          }}
+        >
+          📷 Scan EAN
+        </button>
+      </div>
+
+      {modeSelection === 'catalogue' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <input
+            type="text"
+            value={recherche}
+            onChange={e => setRecherche(e.target.value)}
+            placeholder="🔍 Rechercher dans le catalogue (nom, EAN, SKU)..."
+            style={{ ...inputStyle, padding: 8, fontSize: 12.5 }}
+          />
+
+          {categories.length > 0 && (
+            <div style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 2 }}>
+              <button
+                type="button"
+                onClick={() => setCatFiltre('tous')}
+                style={{
+                  padding: '3px 8px', borderRadius: 10, fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer',
+                  background: catFiltre === 'tous' ? '#0284c7' : '#e2e8f0',
+                  color: catFiltre === 'tous' ? '#ffffff' : '#475569'
+                }}
+              >
+                Tous
+              </button>
+              {categories.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCatFiltre(c)}
+                  style={{
+                    padding: '3px 8px', borderRadius: 10, fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer',
+                    background: catFiltre === c ? '#0284c7' : '#e2e8f0',
+                    color: catFiltre === c ? '#ffffff' : '#475569',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4, background: '#ffffff', padding: 6, borderRadius: 8, border: '1px solid #cbd5e1' }}>
+            {prodsFiltres.length === 0 ? (
+              <div style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center', padding: 12 }}>Aucun produit trouvé</div>
+            ) : (
+              prodsFiltres.map((p: any) => {
+                const isSelected = produitId === p.id
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => handleProduit(p.id)}
+                    style={{
+                      padding: '6px 10px', borderRadius: 6, cursor: 'pointer',
+                      background: isSelected ? '#e0f2fe' : 'transparent',
+                      border: isSelected ? '1px solid #0284c7' : '1px solid transparent',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5
+                    }}
+                  >
+                    <span style={{ fontWeight: isSelected ? 800 : 600, color: isSelected ? '#0369a1' : '#0f172a' }}>
+                      {p.nom} {p.stock_quantite !== null ? `(stock: ${p.stock_quantite})` : ''}
+                    </span>
+                    <span style={{ fontWeight: 800, color: '#0284c7' }}>{fcfa(p.prix)}</span>
+                  </div>
+                )
+              })
+            )}
+          </div>
           {stock !== null && stock !== undefined && stock <= 3 && (
-            <p style={{ fontSize: 11, color: '#b45309', margin: '4px 0 0' }}>⚠️ Stock bas : {stock} restant{stock > 1 ? 's' : ''}</p>
+            <p style={{ fontSize: 11, color: '#b45309', margin: 0 }}>⚠️ Stock bas : {stock} restant{stock > 1 ? 's' : ''}</p>
           )}
         </div>
-      )}
-
-      {!produitId && (
-        <div>
-          <label style={labelStyle}>Nom du produit / service</label>
-          <input value={nomLibre} onChange={e => setNomLibre(e.target.value)} style={inputStyle} placeholder="Ex: Réparation téléphone, Robe Wax…" />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <input
+              value={nomLibre}
+              onChange={e => setNomLibre(e.target.value)}
+              style={{ ...inputStyle, flex: 1, padding: 9 }}
+              placeholder="Ex: Réparation téléphone, Robe Wax, Prestation…"
+            />
+            <button
+              type="button"
+              onClick={demarrerScannerNom}
+              style={{ background: '#0284c7', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              📷 Scan Nom
+            </button>
+          </div>
+          {ocrDetections.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+              {ocrDetections.map((txt, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setNomLibre(txt)}
+                  style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  {txt}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -244,16 +565,17 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
       <div>
         <label style={labelStyle}>Mode de paiement</label>
         <select value={paiement} onChange={e => setPaiement(e.target.value)} style={inputStyle}>
-          <option value="cash">Espèces</option>
-          <option value="wave">Wave</option>
-          <option value="orange_money">Orange Money</option>
-          <option value="virement">Virement</option>
+          <option value="cash">💵 Espèces</option>
+          <option value="wave">🌊 Wave</option>
+          <option value="orange_money">🍊 Orange Money</option>
+          <option value="virement">🏦 Virement</option>
         </select>
       </div>
 
       {prix > 0 && (
-        <div style={{ background: '#eff6ff', borderRadius: 8, padding: '10px 14px', fontSize: 14, fontWeight: 700, color: '#1d4ed8' }}>
-          Total : {fcfa(prix * quantite + (zoneId ? (zones.find(z => z.id === zoneId)?.prix ?? 0) : 0))}
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '10px 14px', fontSize: 15, fontWeight: 900, color: '#15803d', display: 'flex', justifyContent: 'space-between' }}>
+          <span>Total Vente :</span>
+          <span>{fcfa(prix * quantite + (zoneId ? (zones.find(z => z.id === zoneId)?.prix ?? 0) : 0))}</span>
         </div>
       )}
 
@@ -267,9 +589,53 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
         {fichier && <p style={{ margin: '4px 0 0', fontSize: 11, color: '#6b7280' }}>📎 {fichier.name}</p>}
       </div>
 
-      <button onClick={submit} disabled={uploading} style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 700, cursor: uploading ? 'not-allowed' : 'pointer', fontSize: 14, opacity: uploading ? 0.7 : 1 }}>
-        {uploading ? 'Envoi du justificatif…' : 'Enregistrer la vente'}
+      <button onClick={submit} disabled={uploading} style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 20px', fontWeight: 900, cursor: uploading ? 'not-allowed' : 'pointer', fontSize: 14, opacity: uploading ? 0.7 : 1 }}>
+        {uploading ? 'Envoi du justificatif…' : '✓ Enregistrer la vente'}
       </button>
+
+      {/* Modal Scanner EAN VenteForm */}
+      {modalScannerEan && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: 16 }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>📷 Scanner Code-barres (EAN)</h4>
+              <button type="button" onClick={arreterScannerEan} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
+            </div>
+            <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{scannerEanStatus}</p>
+            <div style={{ width: '100%', height: 240, background: '#000', borderRadius: 12, overflow: 'hidden' }}>
+              <div id="vente-ean-scanner-reader" style={{ width: '100%', height: '100%' }} />
+            </div>
+            <button type="button" onClick={arreterScannerEan} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 8, padding: '8px', fontWeight: 800, cursor: 'pointer' }}>
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Scanner Nom OCR VenteForm */}
+      {modalScannerNom && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: 16 }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>📷 Scanner le Nom du Produit</h4>
+              <button type="button" onClick={arreterScannerNom} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
+            </div>
+            <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{statusScannerNom}</p>
+            <div style={{ width: '100%', height: 240, background: '#000', borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
+              <video ref={videoNomRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', top: '20%', left: '7.5%', width: '85%', height: '60%', border: '2px dashed #38bdf8', borderRadius: 8, pointerEvents: 'none' }} />
+            </div>
+            <button
+              type="button"
+              disabled={ocrLoading}
+              onClick={capturerNomOCR}
+              style={{ width: '100%', padding: '10px', background: ocrLoading ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 800, fontSize: 13, cursor: ocrLoading ? 'not-allowed' : 'pointer' }}
+            >
+              {ocrLoading ? '⏳ Analyse en cours…' : '📸 Capturer et Extraire'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -629,6 +995,83 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
+  // Scanner OCR Reçu / Dépense
+  const [modalScannerTicket, setModalScannerTicket] = useState(false)
+  const videoTicketRef = useRef<HTMLVideoElement | null>(null)
+  const streamTicketRef = useRef<MediaStream | null>(null)
+  const [ocrDetectionsTicket, setOcrDetectionsTicket] = useState<string[]>([])
+  const [statusScannerTicket, setStatusScannerTicket] = useState('')
+  const [ocrLoadingTicket, setOcrLoadingTicket] = useState(false)
+
+  const demarrerScannerTicket = async () => {
+    setModalScannerTicket(true)
+    setOcrDetectionsTicket([])
+    setStatusScannerTicket('📷 Cadrez le ticket ou la facturette…')
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      streamTicketRef.current = stream
+      if (videoTicketRef.current) {
+        videoTicketRef.current.srcObject = stream
+        await videoTicketRef.current.play().catch(() => {})
+      }
+    } catch (e) {
+      setStatusScannerTicket('❌ Impossible d’accéder à la caméra.')
+    }
+  }
+
+  const arreterScannerTicket = () => {
+    if (streamTicketRef.current) {
+      streamTicketRef.current.getTracks().forEach(t => t.stop())
+      streamTicketRef.current = null
+    }
+    setModalScannerTicket(false)
+  }
+
+  const capturerTicketOCR = async () => {
+    if (!videoTicketRef.current) return
+    setOcrLoadingTicket(true)
+    setStatusScannerTicket('🔍 Lecture OCR du ticket / facturette…')
+
+    const imageBase64 = capturerEtOptimiserImageOCR(videoTicketRef.current, {
+      cropRatioWidth: 0.90,
+      cropRatioHeight: 0.70,
+      rehausserContraste: true
+    })
+
+    if (!imageBase64) {
+      setOcrLoadingTicket(false)
+      setStatusScannerTicket('❌ Échec de la capture d’image.')
+      return
+    }
+
+    try {
+      const res = await fetch('/api/boutiques/scan-ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64 })
+      })
+      const data = await res.json()
+      setOcrLoadingTicket(false)
+
+      if (data.ok && data.nom) {
+        setDescription(data.nom)
+        if (data.detections && data.detections.length > 0) {
+          setOcrDetectionsTicket(data.detections)
+        }
+        jouerBipScan('succes')
+        setStatusScannerTicket(`✅ Texte extrait : "${data.nom}"`)
+        setTimeout(() => arreterScannerTicket(), 1000)
+      } else {
+        jouerBipScan('alerte')
+        setStatusScannerTicket(`⚠️ ${data.error || 'Aucun texte lisible détecté.'}`)
+      }
+    } catch (err) {
+      setOcrLoadingTicket(false)
+      jouerBipScan('alerte')
+      setStatusScannerTicket('❌ Erreur de lecture OCR.')
+    }
+  }
+
   async function load() {
     const cacheKey = `nopalou_offline_compta_depenses_${boutiqueId}`
     const cached = localStorage.getItem(cacheKey)
@@ -740,8 +1183,31 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
             </select>
           </div>
           <div>
-            <label style={labelStyle}>Description</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <label style={{ ...labelStyle, margin: 0 }}>Description / Motif</label>
+              <button
+                type="button"
+                onClick={demarrerScannerTicket}
+                style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                📷 Scan Reçu (OCR)
+              </button>
+            </div>
             <input value={description} onChange={e => setDescription(e.target.value)} style={inputStyle} placeholder="Ex: Achat stock riz, Livraison DHL…" />
+            {ocrDetectionsTicket.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                {ocrDetectionsTicket.map((txt, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setDescription(txt)}
+                    style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    {txt}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div>
             <label style={labelStyle}>Pièce jointe (facture, reçu…)</label>
@@ -760,6 +1226,31 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
               Annuler
             </button>
           </div>
+
+          {/* Modal Scanner Ticket OCR */}
+          {modalScannerTicket && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: 16 }}>
+              <div style={{ background: '#fff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>📷 Scanner Reçu / Facturette</h4>
+                  <button type="button" onClick={arreterScannerTicket} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
+                </div>
+                <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{statusScannerTicket}</p>
+                <div style={{ width: '100%', height: 240, background: '#000', borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
+                  <video ref={videoTicketRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'absolute', top: '15%', left: '5%', width: '90%', height: '70%', border: '2px dashed #38bdf8', borderRadius: 8, pointerEvents: 'none' }} />
+                </div>
+                <button
+                  type="button"
+                  disabled={ocrLoadingTicket}
+                  onClick={capturerTicketOCR}
+                  style={{ width: '100%', padding: '10px', background: ocrLoadingTicket ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 800, fontSize: 13, cursor: ocrLoadingTicket ? 'not-allowed' : 'pointer' }}
+                >
+                  {ocrLoadingTicket ? '⏳ Analyse en cours…' : '📸 Capturer et Extraire'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
