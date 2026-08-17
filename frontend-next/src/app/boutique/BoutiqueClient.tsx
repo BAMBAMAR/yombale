@@ -2921,36 +2921,26 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
               </div>
             )}
             <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: '0 0 3px', fontWeight: 900, fontSize: 14, color: 'var(--pos-navy, #1C2B4A)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.02em' }}>
+              <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 15, color: 'var(--navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.02em' }}>
                 {boutique.nom}
               </p>
-              <button
-                type="button"
-                onClick={() => setShowQrModal(true)}
-                style={{ background: '#e0f2fe', color: '#0369a1', border: 'none', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-              >
-                📱 QR Code & Lien Vitrine
-              </button>
-              {planActif && (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    color: planActif === 'business' ? '#166534' : planActif === 'pro' ? '#9a3412' : '#475569',
-                    background: planActif === 'business' ? '#dcfce7' : planActif === 'pro' ? '#ffedd5' : '#f1f5f9',
-                    padding: '2px 8px',
-                    borderRadius: 12,
-                    border: `1px solid ${planActif === 'business' ? '#bbf7d0' : planActif === 'pro' ? '#fed7aa' : '#e2e8f0'}`,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowQrModal(true)}
+                  className="npl-btn npl-btn-secondary npl-btn-sm"
+                  style={{ height: 26, fontSize: 11, padding: '0 8px' }}
                 >
-                  <span style={{ fontSize: 7 }}>●</span> {planActif}
-                </span>
-              )}
+                  <span>📱</span>
+                  <span>QR & Vitrine</span>
+                </button>
+                {planActif && (
+                  <span className={planActif === 'business' ? 'npl-badge npl-badge-success' : planActif === 'pro' ? 'npl-badge npl-badge-brand' : 'npl-badge npl-badge-neutral'} style={{ fontSize: 10, padding: '2px 6px' }}>
+                    <span className="npl-badge-dot" />
+                    <span>{planActif.toUpperCase()}</span>
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -3002,43 +2992,28 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           })}
         </nav>
 
-        {/* Nav Mobile (2 Niveaux : Sélection du Groupe puis Affichage Clair de Tous Ses Sous-Menus) */}
-        <nav className="bq-nav-mobile">
-          {/* Niveau 1 : Choix du Groupe de Gestion */}
-          <div style={{ padding: '10px 12px 6px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-            <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', color: '#64748b', marginBottom: 6, letterSpacing: '0.05em' }}>
-              📂 Groupes de gestion
-            </div>
-            <div className="nopalou-scroll-tabs" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+        {/* Nav Mobile Épurée (Segmented Tabs Fluides) */}
+        <nav className="bq-nav-mobile" style={{ borderBottom: '1px solid var(--border)', background: 'var(--card)' }}>
+          {/* Niveau 1 : Onglets Groupes */}
+          <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', background: '#faf8f5' }}>
+            <div className="nopalou-scroll-tabs" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
               {NAV_GROUPS.map((group, gIdx) => {
                 const isGroupActive = activeGroupIdx === gIdx
                 return (
                   <button
                     key={gIdx}
                     onClick={() => setActiveGroupIdx(gIdx)}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: 8,
-                      border: isGroupActive ? '1px solid #C75B00' : '1px solid #cbd5e1',
-                      background: isGroupActive ? '#fff7ed' : '#ffffff',
-                      color: isGroupActive ? '#C75B00' : '#475569',
-                      fontSize: 12,
-                      fontWeight: isGroupActive ? 800 : 600,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6
-                    }}
+                    className={isGroupActive ? 'npl-btn npl-btn-primary npl-btn-sm' : 'npl-btn npl-btn-secondary npl-btn-sm'}
+                    style={{ borderRadius: 20, fontSize: 12 }}
                   >
                     <span>{group.title}</span>
                     <span style={{
                       fontSize: 10,
                       padding: '1px 5px',
                       borderRadius: 10,
-                      background: isGroupActive ? '#C75B00' : '#f1f5f9',
-                      color: isGroupActive ? '#ffffff' : '#64748b',
-                      fontWeight: 800
+                      background: isGroupActive ? 'rgba(255,255,255,0.25)' : 'var(--border)',
+                      color: isGroupActive ? '#ffffff' : 'var(--text2)',
+                      fontWeight: 700
                     }}>
                       {group.items.length}
                     </span>
@@ -3048,15 +3023,9 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             </div>
           </div>
 
-          {/* Niveau 2 : Sous-Menus du Groupe Sélectionné (100% Visibles & Déploiement Direct) */}
-          <div style={{ padding: '10px 12px', background: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
-            <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', color: '#64748b', marginBottom: 6, letterSpacing: '0.05em', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>📌 Sous-menus : {NAV_GROUPS[activeGroupIdx]?.title}</span>
-              <span style={{ fontSize: 10, color: '#C75B00', fontWeight: 800 }}>
-                {NAV_GROUPS[activeGroupIdx]?.items.length} disponible{NAV_GROUPS[activeGroupIdx]?.items.length > 1 ? 's' : ''}
-              </span>
-            </div>
-            <div className="nopalou-scroll-tabs" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+          {/* Niveau 2 : Sous-Menus Directs */}
+          <div style={{ padding: '8px 12px', background: 'var(--card)' }}>
+            <div className="nopalou-scroll-tabs" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
               {NAV_GROUPS[activeGroupIdx]?.items.map(item => {
                 const allowed = isAllowed(item.minPlan)
                 const isActive = tab === item.key
@@ -3064,27 +3033,13 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                   <button
                     key={item.key}
                     onClick={() => setTab(item.key)}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: 8,
-                      border: isActive ? '1px solid #1e3a5f' : '1px solid #e2e8f0',
-                      background: isActive ? '#1e3a5f' : '#ffffff',
-                      color: isActive ? '#ffffff' : '#334155',
-                      fontSize: 12,
-                      fontWeight: isActive ? 800 : 600,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6
-                    }}
+                    className={isActive ? 'npl-btn npl-btn-accent npl-btn-sm' : 'npl-btn npl-btn-secondary npl-btn-sm'}
+                    style={{ borderRadius: 8, fontSize: 12.5 }}
                   >
                     <span style={{ fontSize: 14 }}>{item.icon}</span>
                     <span>{item.label}</span>
                     {!allowed && (
-                      <span style={{ fontSize: 9, background: item.minPlan === 'business' ? '#1e3a5f' : '#C75B00', color: '#fff', padding: '1px 4px', borderRadius: 4, fontWeight: 800 }}>
-                        🔒
-                      </span>
+                      <span style={{ fontSize: 9, opacity: 0.8 }}>🔒</span>
                     )}
                     {allowed && item.key === 'commandes' && nbEnAttente > 0 && (
                       <span className="bq-nav-badge" style={{ marginLeft: 2 }}>{nbEnAttente}</span>

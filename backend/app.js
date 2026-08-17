@@ -345,9 +345,15 @@ async function demarrerApp() {
         console.log('[SCRAPER] Désactivé (SCRAPING_DISABLED=true)');
       }
     } else {
-      console.log('⚡ [MODE WEB SERVER] Démarrage de l\'API Web uniquement (Scraping isolé dans le worker)');
-      const { demarrerCronsMetier } = require('./services/scraper');
+      console.log('⚡ [MODE WEB SERVER] Démarrage de l\'API Web & crons');
+      const { demarrerScraping, demarrerCronsMetier } = require('./services/scraper');
       demarrerCronsMetier();
+      if (process.env.SCRAPING_DISABLED !== 'true') {
+        console.log('🕷️ [SCRAPER] Activation du scraping automatique HTTP en arrière-plan');
+        demarrerScraping();
+      } else {
+        console.log('[SCRAPER] Désactivé (SCRAPING_DISABLED=true)');
+      }
       try { require('./services/cron-relances-carnet'); } catch (e) { console.warn('[CRON CARNET] Warning:', e.message); }
     }
   });

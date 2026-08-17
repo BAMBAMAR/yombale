@@ -32,9 +32,8 @@ services:
         sync: false
 
       # ── Scraping ────────────────────────────────────────────────────────────
-      # Garder true sur le plan gratuit (timeouts) ; passer false si plan payant
       - key: SCRAPING_DISABLED
-        value: "true"
+        value: "false"
 
       # ── Emails — Resend (REQUIRED en production) ─────────────────────────────
       - key: RESEND_API_KEY

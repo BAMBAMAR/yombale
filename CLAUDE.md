@@ -1,3 +1,33 @@
+- **Audit UI/UX Mondial, Transformation Design System & Refonte Épurée de l'Espace Marchand et du Carnet de Dettes (17 août 2026)** ✨ :
+  * **Audit Global & Benchmark Comparatif (Shopify, Stripe, Square POS, Amazon, Klarna)** :
+    - Évaluation critique et factuelle de 100% des modules de la plateforme (Boutique, Carnet de Dettes, Caisse POS, Comptabilité, Documents, Fournisseurs, Annonces, Immo, Télécom, PDP, Panier, Checkout).
+    - Diagnostic et éradication du *syndrome d'accumulation visuelle* : suppression de la surcharge cognitive, fin de l'effet "Arlequin" (8+ couleurs disparates), et allègement des graisses typographiques excessives (`font-weight: 800/900`).
+  * **Fondations Design System & Typographie Haute Netteté (`globals.css`, `format.ts`)** :
+    - **Classes Utilitaires Centralisées** : Ajout de classes universelles `.npl-card`, `.npl-card-subtle`, `.npl-btn` (variantes `primary`, `secondary`, `accent`, `success`, `danger`, `ghost`, tailles `sm`, `md`, `lg`, `icon`), `.npl-badge` (variantes `success`, `danger`, `warning`, `neutral`, `brand` avec pastilles vectorielles nettes), et `.npl-dropdown-menu` pour les menus d'actions contextuels.
+    - **Netteté Optique & Lissage Système** : Respect strict du zéro-fetch de polices externes (utilisation exclusive de la pile système ultra-rapide SF Pro / Segoe UI / Roboto) avec lissage matériel antialiased, ratio de contraste WCAG AAA et échelle typographique calibrée.
+    - **Formatage Universel des Données (`frontend-next/src/lib/format.ts`)** :
+      * `formatPhone` : Aération automatique des numéros sénégalais (`77 720 20 86` ou `+221 77 720 20 86`).
+      * `formatNomPropre` : Capitalisation propre des noms et prénoms (ex: `"basse"` -> `"Basse"`, `"amadou ba"` -> `"Amadou Ba"`).
+      * `decodeHtml` : Maintien du décodage sécurisé des entités HTML.
+  * **Refonte Épurée du Carnet de Dettes & Crédits (`CarnetDettes.tsx`)** :
+    - **Cartes Clients (Fintech Standard Stripe / Klarna)** : Remplacement des 6 boutons anarchiques en quinconce par une structure nette et aérée :
+      * En-tête : Nom capitalisé en gras doux (`font-weight: 700`), numéro de téléphone aéré, plafond formaté, montant net en grand avec chiffres tabulaires, et statut sémantique fin (`Doit la boutique`, `Avance client`, `Solde nul`).
+      * Action Bar : **1 CTA Principal dominant** (`💵 Encaisser / Rembourser` ou `⚡ Déduire sur Achat` ou `⚡ + Donner Crédit`), **1 bouton rapide WhatsApp Direct** (`📱 Relance`), et **1 menu déroulant contextuel `⋯`** regroupant toutes les actions secondaires (*Fiche client, Modifier profil, Donner crédit, Blacklister / Réactiver, Supprimer*).
+    - **Barre d'Outils Supérieure** : Remplacement des 5 gros boutons carrés étroits qui tronquaient le texte (`mprime PDF`) par une Toolbar responsive fluide avec CTA primaire `👤 + Nouveau Client` et boutons secondaires nets (`📱 QR Client`, `⚡ + Crédit`, `📥 CSV`, `🖨️ PDF`).
+    - **Cartes KPI** : Simplification des 3 cartes de synthèse financière (`TOTAL DETTES`, `TOTAL AVANCES`, `REGISTRE`) avec bordures sémantiques nettes et typographie épurée.
+  * **Modernisation du Profil Marchand & Navigation Mobile (`BoutiqueClient.tsx`)** :
+    - Épuration du bloc profil marchand et harmonisation des badges de plan.
+    - Consolidation de la navigation mobile à 2 niveaux en une barre d'onglets segmentés fluides avec compteurs intégrés, supprimant plus de 150px de hauteur perdue au-dessus de la ligne de flottaison (*above-the-fold*).
+  * **Validation & Intégrité Technique** :
+    - Compilation TypeScript stricte (`npx tsc --noEmit`) validée avec **0 erreur**.
+- **Audit, Réactivation et Optimisation du Scraping Automatique et Profondeur Catalogue (17 août 2026)** 🕷️ :
+  * **Diagnostic & Résolution du Scraping en Production (`backend/app.js`, `render.yaml`)** :
+    - Identification de la cause de l'absence de nouveaux produits : les crons de scraping automatique étaient conditionnés au mode `PROCESS_TYPE=worker` (inactif sur le service Web) et bloqués par `SCRAPING_DISABLED=true` dans la configuration Render.
+    - Activation du démarrage automatique des crons de scraping HTTP/Axios sécurisés (`demarrerScraping()`) directement sur le serveur Web lorsque `SCRAPING_DISABLED !== 'true'`, protégés par le verrou mémoire anti-OOM `scrapingLock`.
+    - Mise à jour de [render.yaml](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/render.yaml) avec `SCRAPING_DISABLED: "false"`.
+  * **Augmentation de la Profondeur d'Aspiration (`backend/services/scraper.js`)** :
+    - Augmentation du nombre de pages parcourues par catégorie lors des tournées planifiées (`maxPages` étendu de 2 à 4 pages) pour aspirer les catalogues en profondeur sur Jumia, CoinAfrique, Expat-Dakar, Auchan, Kaynoo, Decathlon et Jiji.
+    - Maintien du scraper Facebook (Playwright + OCR Tesseract) en exécution machine locale ou worker dédié pour préserver les ressources RAM (512 Mo) de l'hébergement cloud.
 - **Optimisation Haute Efficacité du Scan Nom (OCR) et Système d'Ajout Mixte (Scan EAN, Catalogue, Saisie Libre) dans les Documents, le Carnet et la Caisse (17 août 2026)** 🚀 :
   * **Amélioration Haute Efficacité du "Scan Nom" (OCR) dans Toutes les Sections (`backend/routes/boutiques.js`, `ocr-helper.ts`, `BoutiqueClient.tsx`, `Comptabilite.tsx`, `GestionDocuments.tsx`, `CarnetDettes.tsx`, `GestionFournisseurs.tsx`)** :
     1. **Backend & Algorithme OCR Intelligent (`POST /api/boutiques/scan-ocr`)** :

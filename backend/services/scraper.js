@@ -1013,7 +1013,7 @@ async function lancerScraping(sources=['expat','jumia','coinafrique','auchan','k
       const stats={inseres:0,mis_a_jour:0,erreurs:0,scrapes:0};
       for(const cat of c.cats){
         try{
-          const items=await c.fn(cat,2); stats.scrapes+=items.length;
+          const items=await c.fn(cat,4); stats.scrapes+=items.length;
           if(items.length>0){ const r=await sauvegarderProduits(items,c.nom,c.url); stats.inseres+=r.inseres; stats.mis_a_jour+=r.mis_a_jour; stats.erreurs+=r.erreurs; }
         }catch(err){ console.error(`[SCRAPER] ${src}/${cat}:`,err.message); stats.erreurs++; }
         await sleep(4000);

@@ -45,6 +45,30 @@ export function lienBoutiqueWhatsapp(slug: string): string {
   return `https://wa.me/${numero}?text=${texte}`
 }
 
+export function formatPhone(tel: string | null | undefined): string {
+  if (!tel) return ''
+  const clean = tel.replace(/[\s\-\.\(\)]/g, '')
+  // Cas numéro sénégalais 9 chiffres (ex: 771234567 ou 70/75/76/78/33...)
+  if (/^(77|78|76|75|70|33)\d{7}$/.test(clean)) {
+    return `${clean.slice(0, 2)} ${clean.slice(2, 5)} ${clean.slice(5, 7)} ${clean.slice(7, 9)}`
+  }
+  // Cas indicatif +221 ou 00221 suivi de 9 chiffres
+  if (/^(?:\+221|00221)(77|78|76|75|70|33)\d{7}$/.test(clean)) {
+    const core = clean.replace(/^(?:\+221|00221)/, '')
+    return `+221 ${core.slice(0, 2)} ${core.slice(2, 5)} ${core.slice(5, 7)} ${core.slice(7, 9)}`
+  }
+  return tel
+}
+
+export function formatNomPropre(nom: string | null | undefined): string {
+  if (!nom) return ''
+  return nom
+    .trim()
+    .split(/\s+/)
+    .map(mot => mot.charAt(0).toUpperCase() + mot.slice(1).toLowerCase())
+    .join(' ')
+}
+
 export function decodeHtml(str: string | null | undefined): string {
   if (!str) return ''
   return str
@@ -58,4 +82,3 @@ export function decodeHtml(str: string | null | undefined): string {
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ')
 }
-

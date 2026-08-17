@@ -12,7 +12,7 @@ import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
 
 interface Zone    { id: string; nom: string; prix: number }
 interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string; justificatif_url: string | null }
-interface Produit { id: string; nom: string; prix: number | null; stock_quantite: number | null; quantite_stock?: number | null }
+interface Produit { id: string; nom: string; prix: number | null; prix_promo?: number | null; stock_quantite: number | null; quantite_stock?: number | null }
 interface Depense { id: string; montant: number; categorie: string; description: string | null; date_depense: string; justificatif_url: string | null }
 interface Dashboard {
   ca_mois: number; ca_mois_precedent: number; nb_ventes_mois: number; ca_total: number

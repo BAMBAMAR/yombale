@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
+import { fcfa, fmtDate, fmtDateHeure, formatNomPropre, formatPhone } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import QrCodeShareModal from '@/components/QrCodeShareModal'
 import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
@@ -73,11 +73,23 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const [historique, setHistorique] = useState<TransactionCredit[]>([])
   const [loadingHist, setLoadingHist] = useState(false)
 
-  // Modales
+  // Modales & Menus contextuels
+  const [menuOuvertClientId, setMenuOuvertClientId] = useState<string | null>(null)
   const [showModalNouveauClient, setShowModalNouveauClient] = useState(false)
   const [showModalEditClient, setShowModalEditClient] = useState(false)
   const [showModalTransaction, setShowModalTransaction] = useState(false)
   const [typeTransaction, setTypeTransaction] = useState<'vente_credit' | 'remboursement'>('vente_credit')
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('.npl-dropdown')) {
+        setMenuOuvertClientId(null)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [])
 
   // Formulaire Client (Création)
   const [nomClient, setNomClient] = useState('')
@@ -874,212 +886,135 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           flexDirection: isMobile ? 'column' : 'row',
           justifyContent: 'space-between',
           alignItems: isMobile ? 'stretch' : 'center',
-          gap: 14
+          gap: 12
         }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 24 }}>📒</span>
-              <h1 style={{ margin: 0, fontSize: isMobile ? 18 : 22, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 22 }}>📒</span>
+              <h1 style={{ margin: 0, fontSize: isMobile ? 17 : 20, fontWeight: 700, color: 'var(--navy)', letterSpacing: '-0.02em' }}>
                 Carnet de Crédits & Dettes Clients
               </h1>
-              <span style={{
-                background: '#FFF3E8',
-                color: 'var(--accent)',
-                padding: '3px 10px',
-                borderRadius: 20,
-                fontSize: 11.5,
-                fontWeight: 800,
-                border: '1px solid #FED7AA'
-              }}>
+              <span className="npl-badge npl-badge-brand">
                 Tous forfaits
               </span>
             </div>
             {!isMobile && (
-              <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
-                Gestion simplifiée des créances, avances clients, modifications de profil et relances WhatsApp.
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text2)' }}>
+                Gestion unifiée des créances, avances clients, remboursements et relances WhatsApp.
               </p>
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
+          {/* Barre d'outils responsive fluide (sans textes coupés) */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', width: isMobile ? '100%' : 'auto' }}>
             <button
               onClick={() => setShowModalNouveauClient(true)}
-              style={{
-                flex: isMobile ? 1 : 'none',
-                background: 'var(--navy)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: 12,
-                padding: '10px 16px',
-                fontWeight: 800,
-                fontSize: 13,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                boxShadow: '0 4px 12px rgba(28, 43, 74, 0.20)',
-                minHeight: 42
-              }}
+              className="npl-btn npl-btn-primary npl-btn-md"
+              style={{ flex: isMobile ? '1 1 auto' : 'none' }}
             >
-              👤 + Nouveau Client
+              <span>👤</span>
+              <span>+ Nouveau Client</span>
             </button>
 
             <button
               onClick={() => setShowQrModalComptoir(true)}
-              style={{
-                flex: isMobile ? 1 : 'none',
-                background: '#e0f2fe',
-                color: '#0369a1',
-                border: 'none',
-                borderRadius: 12,
-                padding: '10px 14px',
-                fontWeight: 800,
-                fontSize: 12.5,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                minHeight: 42
-              }}
-              title="Afficher le QR code à scanner pour les clients présents au comptoir"
+              className="npl-btn npl-btn-secondary npl-btn-md"
+              title="Afficher le QR code à scanner pour les clients"
+              style={{ flex: isMobile ? '1 1 auto' : 'none' }}
             >
-              📱 QR Code Scan Client
-            </button>
-
-            <button
-              onClick={handleExportCSV}
-              style={{
-                flex: isMobile ? 1 : 'none',
-                background: 'var(--card)',
-                color: 'var(--navy)',
-                border: '1px solid var(--border)',
-                borderRadius: 12,
-                padding: '10px 14px',
-                fontWeight: 800,
-                fontSize: 12.5,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                minHeight: 42
-              }}
-              title="Exporter toutes les dettes au format CSV Excel"
-            >
-              📥 Export CSV
-            </button>
-
-            <button
-              onClick={handleExportPDF}
-              style={{
-                flex: isMobile ? 1 : 'none',
-                background: 'var(--card)',
-                color: 'var(--navy)',
-                border: '1px solid var(--border)',
-                borderRadius: 12,
-                padding: '10px 14px',
-                fontWeight: 800,
-                fontSize: 12.5,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                minHeight: 42
-              }}
-              title="Imprimer ou sauvegarder le rapport PDF du carnet"
-            >
-              🖨️ Imprimer PDF
+              <span>📱</span>
+              <span>QR Client</span>
             </button>
 
             <button
               onClick={() => ouvrirModalTransaction('vente_credit')}
-              style={{
-                flex: isMobile ? 1 : 'none',
-                background: 'var(--red)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: 12,
-                padding: '10px 16px',
-                fontWeight: 800,
-                fontSize: 13,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                boxShadow: '0 4px 12px rgba(185, 28, 28, 0.25)',
-                minHeight: 42
-              }}
+              className="npl-btn npl-btn-accent npl-btn-md"
+              style={{ flex: isMobile ? '1 1 auto' : 'none' }}
             >
-              ⚡ + Donner Crédit
+              <span>⚡</span>
+              <span>+ Crédit</span>
+            </button>
+
+            <button
+              onClick={handleExportCSV}
+              className="npl-btn npl-btn-secondary npl-btn-md"
+              title="Exporter toutes les dettes au format CSV Excel"
+              style={{ flex: isMobile ? '1 1 auto' : 'none' }}
+            >
+              <span>📥</span>
+              <span>CSV</span>
+            </button>
+
+            <button
+              onClick={handleExportPDF}
+              className="npl-btn npl-btn-secondary npl-btn-md"
+              title="Imprimer ou sauvegarder le rapport PDF"
+              style={{ flex: isMobile ? '1 1 auto' : 'none' }}
+            >
+              <span>🖨️</span>
+              <span>PDF</span>
             </button>
           </div>
         </div>
 
-        {/* Cartes KPI Claires sur Fond Blanc */}
+        {/* Cartes KPI Épurées (Standard Stripe / Square) */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fit, minmax(180px, 1fr))',
           gap: isMobile ? 8 : 12
         }}>
-          {/* Card 1: On me doit */}
-          <div style={{
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: 12,
-            padding: isMobile ? '10px 10px' : '14px'
+          {/* KPI 1 : Total Dettes */}
+          <div className="npl-card-subtle" style={{
+            borderLeft: '3px solid #dc2626',
+            padding: isMobile ? '10px 8px' : '14px 16px'
           }}>
-            <span style={{ fontSize: isMobile ? 9.5 : 11, color: '#991b1b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
-              🔴 TOTAL DETTES
-            </span>
-            <div style={{ fontSize: isMobile ? 15 : 22, fontWeight: 900, color: '#dc2626', marginTop: 2 }}>
+            <div className="npl-badge npl-badge-danger" style={{ marginBottom: 4, fontSize: isMobile ? 10 : 11 }}>
+              <span className="npl-badge-dot" />
+              <span>TOTAL DETTES</span>
+            </div>
+            <div style={{ fontSize: isMobile ? 15 : 20, fontWeight: 700, color: '#dc2626', fontVariantNumeric: 'tabular-nums' }}>
               {fcfa(totalDettesAEncaisser)}
             </div>
             {!isMobile && (
-              <div style={{ fontSize: 11.5, color: '#7f1d1d', marginTop: 4, fontWeight: 600 }}>
+              <div style={{ fontSize: 11.5, color: 'var(--text2)', marginTop: 4 }}>
                 {nbClientsDebiteurs} client(s) débiteur(s)
               </div>
             )}
           </div>
 
-          {/* Card 2: Avances Clients */}
-          <div style={{
-            background: '#f0fdf4',
-            border: '1px solid #bbf7d0',
-            borderRadius: 12,
-            padding: isMobile ? '10px 10px' : '14px'
+          {/* KPI 2 : Total Avances */}
+          <div className="npl-card-subtle" style={{
+            borderLeft: '3px solid #16a34a',
+            padding: isMobile ? '10px 8px' : '14px 16px'
           }}>
-            <span style={{ fontSize: isMobile ? 9.5 : 11, color: '#166534', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
-              🟢 TOTAL AVANCES
-            </span>
-            <div style={{ fontSize: isMobile ? 15 : 22, fontWeight: 900, color: '#16a34a', marginTop: 2 }}>
+            <div className="npl-badge npl-badge-success" style={{ marginBottom: 4, fontSize: isMobile ? 10 : 11 }}>
+              <span className="npl-badge-dot" />
+              <span>TOTAL AVANCES</span>
+            </div>
+            <div style={{ fontSize: isMobile ? 15 : 20, fontWeight: 700, color: '#16a34a', fontVariantNumeric: 'tabular-nums' }}>
               {fcfa(totalAvancesClients)}
             </div>
             {!isMobile && (
-              <div style={{ fontSize: 11.5, color: '#14532d', marginTop: 4, fontWeight: 600 }}>
-                Fonds d&apos;avances enregistrés
+              <div style={{ fontSize: 11.5, color: 'var(--text2)', marginTop: 4 }}>
+                Fonds d&apos;avances clients
               </div>
             )}
           </div>
 
-          {/* Card 3: Clients Registre */}
-          <div style={{
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            borderRadius: 12,
-            padding: isMobile ? '10px 10px' : '14px'
+          {/* KPI 3 : Clients Registre */}
+          <div className="npl-card-subtle" style={{
+            borderLeft: '3px solid var(--navy)',
+            padding: isMobile ? '10px 8px' : '14px 16px'
           }}>
-            <span style={{ fontSize: isMobile ? 9.5 : 11, color: '#475569', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
-              👥 CLIENTS REGISTRE
-            </span>
-            <div style={{ fontSize: isMobile ? 15 : 22, fontWeight: 900, color: '#0f172a', marginTop: 2 }}>
+            <div className="npl-badge npl-badge-neutral" style={{ marginBottom: 4, fontSize: isMobile ? 10 : 11 }}>
+              <span className="npl-badge-dot" />
+              <span>REGISTRE</span>
+            </div>
+            <div style={{ fontSize: isMobile ? 15 : 20, fontWeight: 700, color: 'var(--navy)', fontVariantNumeric: 'tabular-nums' }}>
               {clients.length} Client(s)
             </div>
             {!isMobile && (
-              <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 4, fontWeight: 600 }}>
+              <div style={{ fontSize: 11.5, color: 'var(--text2)', marginTop: 4 }}>
                 Comptes de crédits actifs
               </div>
             )}
@@ -1303,212 +1238,226 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 const estDebiteur = soldeNum > 0
                 const estAvance = soldeNum < 0
                 const estActif = clientSelectionne?.id === c.id
+                const isMenuOpen = menuOuvertClientId === c.id
 
                 return (
                   <div
                     key={c.id}
+                    className="npl-card"
                     style={{
-                      background: estActif ? '#f0f9ff' : '#ffffff',
-                      border: estActif ? '2px solid #0284c7' : '1px solid #e2e8f0',
-                      borderRadius: 14,
-                      padding: '14px 16px',
-                      boxShadow: estActif ? '0 4px 14px rgba(2, 132, 199, 0.12)' : '0 2px 4px rgba(0,0,0,0.02)',
+                      borderColor: estActif ? 'var(--navy)' : undefined,
+                      boxShadow: estActif ? '0 0 0 1px var(--navy), var(--shadow2)' : undefined,
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: 10
+                      gap: 12,
+                      padding: 14
                     }}
                   >
-                    {/* Infos Client Top */}
+                    {/* En-tête de la Carte Client */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 15, fontWeight: 900, color: '#0f172a' }}>{c.nom}</span>
+                          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy)' }}>
+                            {formatNomPropre(c.nom)}
+                          </span>
                           {c.statut === 'bloque' && (
-                            <span style={{ fontSize: 10.5, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '2px 8px', borderRadius: 10, fontWeight: 800 }}>
-                              ⛔ Blacklisté
+                            <span className="npl-badge npl-badge-danger">
+                              <span className="npl-badge-dot" />
+                              <span>Blacklisté</span>
                             </span>
                           )}
                           {c.adresse && (
-                            <span style={{ fontSize: 10.5, background: '#f1f5f9', color: '#475569', padding: '2px 7px', borderRadius: 8, fontWeight: 600 }}>
+                            <span className="npl-badge npl-badge-neutral" style={{ fontSize: 11 }}>
                               📍 {c.adresse}
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: 12, color: '#64748b', marginTop: 3 }}>
-                          📞 {c.telephone} {c.plafond_max > 0 ? `• Plafond: ${fcfa(c.plafond_max)}` : ''}
+                        <div style={{ fontSize: 12.5, color: 'var(--text2)', marginTop: 3 }}>
+                          📞 {formatPhone(c.telephone)} {c.plafond_max > 0 ? `• Plafond: ${fcfa(c.plafond_max)}` : ''}
                         </div>
                         {c.note_client && (
-                          <div style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', marginTop: 2 }}>
+                          <div style={{ fontSize: 11.5, color: 'var(--text3)', fontStyle: 'italic', marginTop: 2 }}>
                             Note: {c.note_client}
                           </div>
                         )}
                       </div>
 
+                      {/* Montant & Statut */}
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         <div style={{
-                          fontSize: 15,
-                          fontWeight: 900,
-                          color: estDebiteur ? '#dc2626' : estAvance ? '#16a34a' : '#64748b'
+                          fontSize: 16,
+                          fontWeight: 700,
+                          color: estDebiteur ? '#dc2626' : estAvance ? '#16a34a' : 'var(--text2)',
+                          fontVariantNumeric: 'tabular-nums'
                         }}>
                           {estDebiteur ? `+ ${fcfa(soldeNum)}` : estAvance ? `- ${fcfa(Math.abs(soldeNum))}` : '0 FCFA'}
                         </div>
-                        <span style={{
-                          fontSize: 10,
-                          fontWeight: 800,
-                          padding: '2px 8px',
-                          borderRadius: 10,
-                          display: 'inline-block',
-                          marginTop: 4,
-                          background: estDebiteur ? '#fef2f2' : estAvance ? '#f0fdf4' : '#f8fafc',
-                          color: estDebiteur ? '#991b1b' : estAvance ? '#166534' : '#64748b',
-                          border: estDebiteur ? '1px solid #fecaca' : estAvance ? '1px solid #bbf7d0' : '1px solid #e2e8f0'
-                        }}>
-                          {estDebiteur ? '🔴 Doit la boutique' : estAvance ? '🟢 Avance client' : '⚪ Solde nul'}
-                        </span>
+                        <div style={{ marginTop: 4 }}>
+                          {estDebiteur ? (
+                            <span className="npl-badge npl-badge-danger">
+                              <span className="npl-badge-dot" />
+                              <span>Doit la boutique</span>
+                            </span>
+                          ) : estAvance ? (
+                            <span className="npl-badge npl-badge-success">
+                              <span className="npl-badge-dot" />
+                              <span>Avance client</span>
+                            </span>
+                          ) : (
+                            <span className="npl-badge npl-badge-neutral">
+                              <span className="npl-badge-dot" />
+                              <span>Solde nul</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Barre d'Actions Intégrée */}
+                    {/* Barre d'Actions Épurée : 1 CTA Principal + WhatsApp + Menu ⋯ */}
                     <div style={{
                       display: 'flex',
-                      gap: 6,
-                      flexWrap: 'wrap',
-                      paddingTop: 8,
-                      borderTop: '1px solid #f1f5f9',
+                      gap: 8,
+                      paddingTop: 10,
+                      borderTop: '1px solid var(--border)',
                       alignItems: 'center',
-                      justifyContent: 'flex-end'
+                      justifyContent: 'flex-end',
+                      flexWrap: 'wrap'
                     }}>
-                      <button
-                        onClick={() => handleRelancerWhatsApp(c)}
-                        style={{
-                          background: '#25D366',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: 8,
-                          padding: '6px 10px',
-                          fontSize: 11.5,
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4
-                        }}
-                      >
-                        📱 WA Relance
-                      </button>
-
-                      <button
-                        onClick={() => ouvrirModalEditClient(c)}
-                        style={{
-                          background: 'var(--card)',
-                          color: 'var(--navy)',
-                          border: '1px solid var(--border)',
-                          borderRadius: 8,
-                          padding: '6px 10px',
-                          fontSize: 11.5,
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4
-                        }}
-                      >
-                        ✏️ Modifier
-                      </button>
-
-                      <button
-                        onClick={() => ouvrirFicheClient(c)}
-                        style={{
-                          background: 'var(--card)',
-                          color: 'var(--navy)',
-                          border: '1px solid var(--border)',
-                          borderRadius: 8,
-                          padding: '6px 12px',
-                          fontSize: 11.5,
-                          fontWeight: 800,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        📜 Fiche Client
-                      </button>
-
-                      {c.statut === 'bloque' ? (
+                      {/* CTA Principal selon la situation financière */}
+                      {estDebiteur ? (
                         <button
-                          onClick={() => handleChangerStatutClient(c, 'actif')}
-                          title="Réactiver ce client"
-                          style={{
-                            background: '#dcfce7',
-                            color: '#15803d',
-                            border: '1px solid #bbf7d0',
-                            borderRadius: 8,
-                            padding: '6px 10px',
-                            fontSize: 11.5,
-                            fontWeight: 800,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 4
-                          }}
+                          onClick={() => ouvrirModalTransaction('remboursement', c)}
+                          className="npl-btn npl-btn-success npl-btn-sm"
+                          style={{ flex: isMobile ? '1 1 auto' : 'none' }}
                         >
-                          🟢 Réactiver
+                          <span>💵</span>
+                          <span>Encaisser / Rembourser</span>
+                        </button>
+                      ) : estAvance ? (
+                        <button
+                          onClick={() => ouvrirModalTransaction('vente_credit', c)}
+                          className="npl-btn npl-btn-accent npl-btn-sm"
+                          style={{ flex: isMobile ? '1 1 auto' : 'none' }}
+                        >
+                          <span>⚡</span>
+                          <span>Déduire sur Achat</span>
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleChangerStatutClient(c, 'bloque')}
-                          title="Blacklister / Bloquer les crédits de ce client"
-                          style={{
-                            background: '#fef2f2',
-                            color: '#b91c1c',
-                            border: '1px solid #fecaca',
-                            borderRadius: 8,
-                            padding: '6px 10px',
-                            fontSize: 11.5,
-                            fontWeight: 800,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 4
-                          }}
+                          onClick={() => ouvrirModalTransaction('vente_credit', c)}
+                          className="npl-btn npl-btn-primary npl-btn-sm"
+                          style={{ flex: isMobile ? '1 1 auto' : 'none' }}
                         >
-                          ⛔ Blacklister
+                          <span>⚡</span>
+                          <span>+ Donner Crédit</span>
                         </button>
                       )}
 
+                      {/* Bouton Relance WhatsApp Rapide */}
                       <button
-                        onClick={() => handleSupprimerClient(c)}
-                        title="Supprimer définitivement ce profil du carnet"
-                        style={{
-                          background: '#fff1f2',
-                          color: '#be123c',
-                          border: '1px solid #fecdd3',
-                          borderRadius: 8,
-                          padding: '6px 10px',
-                          fontSize: 11.5,
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4
-                        }}
+                        onClick={() => handleRelancerWhatsApp(c)}
+                        className="npl-btn npl-btn-secondary npl-btn-sm"
+                        title="Envoyer le solde et la relance sur WhatsApp"
                       >
-                        🗑️ Supprimer
+                        <span style={{ color: '#25D366' }}>📱</span>
+                        <span>Relance</span>
                       </button>
 
-                      <button
-                        onClick={() => ouvrirModalTransaction('remboursement', c)}
-                        style={{
-                          background: 'var(--price)',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: 8,
-                          padding: '6px 12px',
-                          fontSize: 11.5,
-                          fontWeight: 800,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        💵 Rembourser
-                      </button>
+                      {/* Menu Contextuel d'Actions Secondaires ⋯ */}
+                      <div className="npl-dropdown">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setMenuOuvertClientId(isMenuOpen ? null : c.id)
+                          }}
+                          className="npl-btn npl-btn-secondary npl-btn-sm npl-btn-icon"
+                          title="Plus d'actions"
+                          aria-label="Plus d'actions"
+                        >
+                          <span style={{ fontSize: 16, lineHeight: 1 }}>⋯</span>
+                        </button>
+
+                        {isMenuOpen && (
+                          <div className="npl-dropdown-menu">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenuOuvertClientId(null)
+                                ouvrirFicheClient(c)
+                              }}
+                              className="npl-dropdown-item"
+                            >
+                              <span>📜</span>
+                              <span>Fiche client & historique</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenuOuvertClientId(null)
+                                ouvrirModalEditClient(c)
+                              }}
+                              className="npl-dropdown-item"
+                            >
+                              <span>✏️</span>
+                              <span>Modifier profil & plafond</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenuOuvertClientId(null)
+                                ouvrirModalTransaction('vente_credit', c)
+                              }}
+                              className="npl-dropdown-item"
+                            >
+                              <span>⚡</span>
+                              <span>Accorder un crédit</span>
+                            </button>
+
+                            <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+
+                            {c.statut === 'bloque' ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMenuOuvertClientId(null)
+                                  handleChangerStatutClient(c, 'actif')
+                                }}
+                                className="npl-dropdown-item"
+                              >
+                                <span>🟢</span>
+                                <span>Réactiver le client</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMenuOuvertClientId(null)
+                                  handleChangerStatutClient(c, 'bloque')
+                                }}
+                                className="npl-dropdown-item danger"
+                              >
+                                <span>⛔</span>
+                                <span>Blacklister le client</span>
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenuOuvertClientId(null)
+                                handleSupprimerClient(c)
+                              }}
+                              className="npl-dropdown-item danger"
+                            >
+                              <span>🗑️</span>
+                              <span>Supprimer du carnet</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )
