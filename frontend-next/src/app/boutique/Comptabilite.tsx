@@ -8,6 +8,7 @@ import {
 } from './actions'
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
+import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
 
 interface Zone    { id: string; nom: string; prix: number }
 interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string; justificatif_url: string | null }
@@ -1007,14 +1008,18 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
   async function capturerEtLireNomVente() {
     if (!videoVenteRef.current) return
-    setStatusScannerVente('🔍 Lecture OCR du nom sur le produit...')
-    const canvas = document.createElement('canvas')
-    canvas.width = videoVenteRef.current.videoWidth || 640
-    canvas.height = videoVenteRef.current.videoHeight || 480
-    const ctx = canvas.getContext('2d')
-    if (ctx) ctx.drawImage(videoVenteRef.current, 0, 0, canvas.width, canvas.height)
+    setStatusScannerVente('🔍 Optimisation de l’image & lecture OCR…')
 
-    const imageBase64 = canvas.toDataURL('image/jpeg', 0.85)
+    const imageBase64 = capturerEtOptimiserImageOCR(videoVenteRef.current, {
+      cropRatioWidth: 0.85,
+      cropRatioHeight: 0.60,
+      rehausserContraste: true
+    })
+
+    if (!imageBase64) {
+      setStatusScannerVente('❌ Échec de la capture d’image.')
+      return
+    }
 
     try {
       const res = await fetch('/api/boutiques/scan-ocr', {
@@ -1029,14 +1034,17 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
         if (data.detections && data.detections.length > 0) {
           setOcrDetectionsVente(data.detections)
         }
+        jouerBipScan('succes')
         setStatusScannerVente(`✅ Nom capturé : "${data.nom}"`)
         setTimeout(() => {
           arreterScannerVente()
         }, 1200)
       } else {
+        jouerBipScan('alerte')
         setStatusScannerVente(`⚠️ ${data.error || 'Aucun texte lisible détecté.'}`)
       }
     } catch (err) {
+      jouerBipScan('alerte')
       setStatusScannerVente('❌ Erreur de lecture OCR. Réessayez.')
     }
   }

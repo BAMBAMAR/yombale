@@ -26,6 +26,7 @@ import QrCodeShareModal from '@/components/QrCodeShareModal'
 import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
+import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
 
 import { CATEGORIES, PRODUIT_CATEGORIES } from '@/lib/categories'
 
@@ -946,17 +947,19 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   async function capturerEtLireNomTexte() {
     if (!videoFormRef.current) return
     setOcrLoading(true)
-    setScannerStatus('🔍 Lecture OCR du nom sur l’emballage en cours...')
+    setScannerStatus('🔍 Optimisation de l’image & lecture OCR…')
 
-    const canvas = document.createElement('canvas')
-    canvas.width = videoFormRef.current.videoWidth || 640
-    canvas.height = videoFormRef.current.videoHeight || 480
-    const ctx = canvas.getContext('2d')
-    if (ctx) {
-      ctx.drawImage(videoFormRef.current, 0, 0, canvas.width, canvas.height)
+    const imageBase64 = capturerEtOptimiserImageOCR(videoFormRef.current, {
+      cropRatioWidth: 0.85,
+      cropRatioHeight: 0.60,
+      rehausserContraste: true
+    })
+
+    if (!imageBase64) {
+      setOcrLoading(false)
+      setScannerStatus('❌ Échec de la capture d’image.')
+      return
     }
-
-    const imageBase64 = canvas.toDataURL('image/jpeg', 0.85)
 
     try {
       const res = await fetch('/api/boutiques/scan-ocr', {
@@ -972,15 +975,18 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         if (data.detections && data.detections.length > 0) {
           setOcrDetections(data.detections)
         }
+        jouerBipScan('succes')
         setScannerStatus(`✅ Nom capturé : "${data.nom}"`)
         setTimeout(() => {
           arreterFormScanner()
         }, 1200)
       } else {
+        jouerBipScan('alerte')
         setScannerStatus(`⚠️ ${data.error || 'Aucun texte lisible capturé. Veuillez réessayer.'}`)
       }
     } catch (err) {
       setOcrLoading(false)
+      jouerBipScan('alerte')
       setScannerStatus('❌ Erreur lors de l’analyse OCR. Réessayez.')
     }
   }

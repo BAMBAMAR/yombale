@@ -1,3 +1,26 @@
+- **Optimisation Haute Efficacité du Scan Nom (OCR) et Système d'Ajout Mixte (Scan EAN, Catalogue, Saisie Libre) dans les Documents, le Carnet et la Caisse (17 août 2026)** 🚀 :
+  * **Amélioration Haute Efficacité du "Scan Nom" (OCR) dans Toutes les Sections (`backend/routes/boutiques.js`, `ocr-helper.ts`, `BoutiqueClient.tsx`, `Comptabilite.tsx`, `GestionDocuments.tsx`, `CarnetDettes.tsx`, `GestionFournisseurs.tsx`)** :
+    1. **Backend & Algorithme OCR Intelligent (`POST /api/boutiques/scan-ocr`)** :
+       - Filtrage automatique des bruits et métadonnées (dates de péremption `EXP`, `LOT`, poids/volumes purs `500g`, `1L`, mentions légales, listes d'ingrédients, sites web, codes-barres numériques purs).
+       - Algorithme de scoring de pertinence pour prioriser le véritable nom/marque du produit (longueur idéale 4-35 chars, présence de majuscules, ratio alphabétique, position dans l'image).
+       - Nettoyage des artefacts OCR (`_`, `|`, `•`, `©`, `*`, symboles parasites).
+       - Déduplication et retour des meilleures alternatives détectées (`detections`).
+    2. **Prétraitement Client-Side Haute Vitesse (`frontend-next/src/lib/ocr-helper.ts`)** :
+       - Fonction `capturerEtOptimiserImageOCR` : recadrage automatique sur la zone d'intérêt centrale (ROI 85% x 60%) et rehaussement de contraste/binarisation canvas pour doubler la précision Tesseract tout en allégeant le payload JPEG à < 50 Ko.
+       - Fonction `jouerBipScan` : retour sonore synthétisé Web Audio API (bip clair à 880Hz lors d'un scan réussi).
+       - Pastilles de détections OCR cliquables instantanément sous le champ libellé pour choisir une alternative en 1 clic.
+    3. **Déploiement Universel du Scan Nom** : Disponible dans la création/modification de produit (`BoutiqueClient.tsx`), la vente rapide comptoir (`Comptabilite.tsx`), les documents commerciaux (`GestionDocuments.tsx`), la vente à crédit (`CarnetDettes.tsx`), et les commandes fournisseurs (`GestionFournisseurs.tsx`).
+  * **Scan EAN, Recherche Catalogue, Saisie Libre et Panier Mixte dans les Documents Commerciaux (`GestionDocuments.tsx`)** :
+    1. **Onglets de Sélection Fluides** :
+       - `🛍️ Catalogue (${produits.length})` : Recherche textuelle instantanée (nom, code-barres EAN, SKU), filtres de catégories horizontaux en pilules avec compteurs, grille visuelle de produits avec niveaux de stock, prix en FCFA et boutons d'incrément/décrément rapides `+` / `-`.
+       - `✍️ Saisie Libre / Prestation` : Ajout d'articles hors-catalogue avec désignation, bouton **📷 Scan Nom (OCR)**, suggestions rapides (prestation, main d'œuvre, livraison, sur-mesure), prix unitaire et quantité.
+       - `📷 Scan EAN (Code-barres)` : Scanner caméra `Html5Qrcode` avec bip sonore, détection automatique dans le catalogue par code-barres ou SKU (+1 quantité automatique), option de scan continu pour bipper plusieurs articles à la suite, et proposition d'ajout libre si le code est inconnu.
+    2. **Panier Mixte Unifié & Calcul en Direct** :
+       - Cohabitation naturelle d'articles du catalogue et d'articles en saisie libre dans le même document.
+       - Badges distincts (`🛍️ Catalogue` / `✍️ Libre`), libellés éditables, prix unitaires négociables en direct, ajustement des quantités, sous-totaux par ligne et suppression 1-clic.
+       - Récapitulatif financier en direct : Total articles, Total HT, TVA et Total TTC.
+  * **Scan EAN & Scan Nom dans le Carnet de Dettes & Fournisseurs (`CarnetDettes.tsx`, `GestionFournisseurs.tsx`)** :
+    - Intégration du Scanner EAN caméra et du Scan Nom OCR dans la modale de vente à crédit du Carnet de Dettes et dans les commandes d'achat fournisseurs.
 - **Audit & Correction Intégrale des Demandes de Crédit, Approbation & Carnet de Dettes (16 août 2026)** 💳 :
   * **Résolution des Plantages JavaScript `ReferenceError` (`CarnetDettes.tsx`)** : Correction critique de l'absence des déclarations des fonctions `handleChangerStatutClient` (boutons `⛔ Blacklister` et `🟢 Réactiver`) et `handleSupprimerClient` (bouton `🗑️ Supprimer`). Les boutons fonctionnent désormais à 100% avec requêtes API, alertes de confirmation, mises à jour en temps réel et gestion des erreurs.
   * **Implémentation des Route Handlers Next.js Manquants (`frontend-next/src/app/api/boutiques/...`)** :

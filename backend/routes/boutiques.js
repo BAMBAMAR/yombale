@@ -4469,7 +4469,28 @@ router.get('/commandes/suivi', async (req, res) => {
   }
 });
 
-// ── POST /api/boutiques/scan-ocr — OCR du nom de produit depuis la caméra ──
+// ── POST /api/boutiques/scan-ocr — OCR du nom de produit depuis la caméra (Haute Vitesse) ──
+let ocrWorkerInstance = null;
+let ocrWorkerPromise = null;
+
+async function getOcrWorker() {
+  if (ocrWorkerInstance) return ocrWorkerInstance;
+  if (!ocrWorkerPromise) {
+    ocrWorkerPromise = (async () => {
+      const { createWorker } = require('tesseract.js');
+      const worker = await createWorker('fra+eng');
+      ocrWorkerInstance = worker;
+      return worker;
+    })().catch(err => {
+      console.warn('[OCR] Initialisation Worker Tesseract échouée:', err.message);
+      ocrWorkerPromise = null;
+      ocrWorkerInstance = null;
+      return null;
+    });
+  }
+  return ocrWorkerPromise;
+}
+
 router.post('/scan-ocr', async (req, res) => {
   try {
     const { imageBase64 } = req.body || {};
@@ -4480,37 +4501,104 @@ router.post('/scan-ocr', async (req, res) => {
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     const imageBuffer = Buffer.from(base64Data, 'base64');
 
-    let Tesseract;
+    let rawText = '';
     try {
-      Tesseract = require('tesseract.js');
+      const worker = await getOcrWorker();
+      if (worker) {
+        const result = await worker.recognize(imageBuffer);
+        rawText = result?.data?.text || '';
+      } else {
+        const Tesseract = require('tesseract.js');
+        const result = await Tesseract.recognize(imageBuffer, 'fra+eng');
+        rawText = result?.data?.text || '';
+      }
     } catch (e) {
-      console.warn('[OCR] tesseract.js non disponible:', e.message);
-      return res.status(503).json({ error: 'OCR serveur non disponible' });
+      console.warn('[OCR] Erreur reconnaissance:', e.message);
+      const Tesseract = require('tesseract.js');
+      const result = await Tesseract.recognize(imageBuffer, 'fra+eng');
+      rawText = result?.data?.text || '';
     }
 
-    const result = await Tesseract.recognize(imageBuffer, 'fra+eng');
-    const rawText = result?.data?.text || '';
+    // Liste de motifs parasites à ignorer (mentions légales, nutrition, dates, poids, sites web...)
+    const noisePatterns = [
+      /\b(exp|bb|dluo|dlc|lot|batch|fab|mfg|best before|use by)\b/i,
+      /\b(fabriqu[eé]|made in|conserver|ingr[eé]dients?|nutrition|calories|service client|service conso)\b/i,
+      /\b(distribu[eé]|import[eé]|poids net|net wt|net weight|alc\.|vol\.|tel\b|phone\b|www\.|http|email)\b/i,
+      /\b(copyright|all rights reserved|barcode|code-barres|recyclable|keep refrigerated)\b/i,
+      /^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}$/,
+      /^\d+(\.\d+)?\s*(g|kg|ml|cl|l|oz|lb|pcs|pc|tab|gel|sachet)$/i,
+      /^\d{6,}$/
+    ];
 
-    const lines = rawText
+    // Nettoyage individuel des lignes
+    const cleanedLines = rawText
       .split('\n')
-      .map(l => l.trim())
-      .filter(l => l.length >= 2 && !/^[0-9\W]+$/.test(l));
+      .map(l => {
+        return l
+          .replace(/[_\*~|•©®™«»\<\>\[\]\{\}\\\/]+/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      })
+      .filter(l => {
+        if (l.length < 2) return false;
+        if (/^[0-9\W]+$/.test(l)) return false;
+        if (noisePatterns.some(p => p.test(l))) return false;
+        return true;
+      });
 
-    if (lines.length === 0) {
-      return res.json({ ok: false, error: 'Aucun texte lisible détecté sur l’emballage.' });
+    if (cleanedLines.length === 0) {
+      const fallback = rawText
+        .split('\n')
+        .map(l => l.replace(/[^a-zA-Z0-9À-ÿ\s-]/g, '').trim())
+        .filter(l => l.length >= 3);
+      if (fallback.length === 0) {
+        return res.json({ ok: false, error: 'Aucun nom ou texte lisible détecté sur l’emballage.' });
+      }
+      return res.json({
+        ok: true,
+        nom: fallback[0],
+        detections: fallback.slice(0, 5)
+      });
     }
 
-    // Choisir la ligne la plus représentative (ex: première ligne en majuscules ou la plus longue)
-    const majuscules = lines.filter(l => /[A-Z]{2,}/.test(l));
-    const candidat = majuscules.length > 0 ? majuscules[0] : [...lines].sort((a, b) => b.length - a.length)[0];
+    // Calcul de score de pertinence pour chaque ligne (pour favoriser le vrai nom du produit)
+    const scoredLines = cleanedLines.map((line, index) => {
+      let score = 0;
+      const len = line.length;
 
-    // Nettoyage final du texte
-    const nomPropre = candidat.replace(/[\n\r]+/g, ' ').replace(/\s+/g, ' ').trim();
+      // Longueur idéale pour un nom de produit (entre 4 et 35 caractères)
+      if (len >= 4 && len <= 35) score += 20;
+      else if (len > 35 && len <= 60) score += 10;
+
+      // Présence de majuscules (Marques, Noms de produits)
+      if (/^[A-Z0-9À-Ÿ\s'-]+$/.test(line) && len >= 3) score += 25;
+      else if (/[A-Z]/.test(line)) score += 15;
+
+      // Ratio alphabétique vs chiffres/symboles
+      const alphaCount = (line.match(/[a-zA-ZÀ-ÿ]/g) || []).length;
+      if (alphaCount / len > 0.8) score += 15;
+
+      // Position dans l'image (les premières lignes du haut/centre sont souvent le titre)
+      score += Math.max(0, 10 - index * 2);
+
+      return { line, score };
+    });
+
+    scoredLines.sort((a, b) => b.score - a.score);
+
+    const uniqueDetections = [];
+    for (const item of scoredLines) {
+      if (!uniqueDetections.some(d => d.toLowerCase() === item.line.toLowerCase())) {
+        uniqueDetections.push(item.line);
+      }
+    }
+
+    const meilleurNom = uniqueDetections[0] || cleanedLines[0];
 
     return res.json({
       ok: true,
-      nom: nomPropre,
-      detections: lines.slice(0, 6)
+      nom: meilleurNom,
+      detections: uniqueDetections.slice(0, 6)
     });
   } catch (err) {
     console.error('[OCR SCAN NOM ERR]', err);

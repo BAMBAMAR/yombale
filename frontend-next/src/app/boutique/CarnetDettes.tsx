@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import QrCodeShareModal from '@/components/QrCodeShareModal'
+import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
 
 
 interface ClientCredit {
@@ -111,6 +112,168 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const [dateEcheance, setDateEcheance] = useState('')
   const [relanceAutoWa, setRelanceAutoWa] = useState(true)
   const [submittingTrans, setSubmittingTrans] = useState(false)
+
+  // Scanner EAN Crédit
+  const [modalScannerEanCredit, setModalScannerEanCredit] = useState(false)
+  const [scannerEanStatusCredit, setScannerEanStatusCredit] = useState('Initialisation du scanner…')
+  const [scanContinuCredit, setScanContinuCredit] = useState(true)
+  const html5ScannerCreditRef = useRef<any>(null)
+
+  // Scanner Nom OCR Crédit
+  const [modalScannerNomCredit, setModalScannerNomCredit] = useState(false)
+  const [statusScannerNomCredit, setStatusScannerNomCredit] = useState('')
+  const [ocrLoadingCredit, setOcrLoadingCredit] = useState(false)
+  const [ocrDetectionsCredit, setOcrDetectionsCredit] = useState<string[]>([])
+  const videoNomCreditRef = useRef<HTMLVideoElement | null>(null)
+  const streamNomCreditRef = useRef<MediaStream | null>(null)
+
+  const demarrerScannerEanCredit = async () => {
+    setModalScannerEanCredit(true)
+    setScannerEanStatusCredit('📷 Initialisation du scanner EAN…')
+    setTimeout(async () => {
+      try {
+        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
+        if (html5ScannerCreditRef.current) {
+          try {
+            await html5ScannerCreditRef.current.stop()
+            html5ScannerCreditRef.current.clear()
+          } catch (e) {}
+          html5ScannerCreditRef.current = null
+        }
+        const container = document.getElementById('carnet-ean-scanner-reader')
+        if (!container) return
+        const scanner = new Html5Qrcode('carnet-ean-scanner-reader')
+        html5ScannerCreditRef.current = scanner
+        const config = {
+          fps: 15,
+          qrbox: { width: 260, height: 160 },
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.QR_CODE
+          ]
+        }
+        const onScanSuccess = (decodedText: string) => {
+          handleEanDetecteCredit(decodedText)
+        }
+        try {
+          await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
+          setScannerEanStatusCredit('📷 Caméra active ! Placez le code-barres dans le cadre.')
+        } catch (errEnv) {
+          await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
+          setScannerEanStatusCredit('📷 Caméra active ! Placez le code-barres dans le cadre.')
+        }
+      } catch (err) {
+        setScannerEanStatusCredit('❌ Impossible d’accéder à la caméra.')
+      }
+    }, 200)
+  }
+
+  const arreterScannerEanCredit = () => {
+    if (html5ScannerCreditRef.current) {
+      try {
+        html5ScannerCreditRef.current.stop()
+        html5ScannerCreditRef.current.clear()
+      } catch (e) {}
+      html5ScannerCreditRef.current = null
+    }
+    setModalScannerEanCredit(false)
+  }
+
+  const handleEanDetecteCredit = (barcodeStr: string) => {
+    const code = barcodeStr.trim().toLowerCase()
+    const prodTrouve = produits.find(
+      (p: any) =>
+        p.barcode?.trim().toLowerCase() === code ||
+        p.sku?.trim().toLowerCase() === code ||
+        p.id?.trim().toLowerCase() === code
+    )
+    if (prodTrouve) {
+      setPanierProduits(prev => ({ ...prev, [prodTrouve.id]: (prev[prodTrouve.id] || 0) + 1 }))
+      jouerBipScan('succes')
+      setScannerEanStatusCredit(`✅ Produit ajouté : "${prodTrouve.nom}"`)
+      if (!scanContinuCredit) {
+        setTimeout(() => arreterScannerEanCredit(), 800)
+      }
+    } else {
+      jouerBipScan('alerte')
+      setScannerEanStatusCredit(`⚠️ Code "${barcodeStr}" non répertorié.`)
+      if (confirm(`Le code-barres "${barcodeStr}" n'existe pas dans le catalogue. L'ajouter en article libre ?`)) {
+        setLibelleCustomInput(`Article EAN-${barcodeStr}`)
+        setModeSaisie('manuel')
+        arreterScannerEanCredit()
+      }
+    }
+  }
+
+  const demarrerScannerNomCredit = async () => {
+    setModalScannerNomCredit(true)
+    setOcrDetectionsCredit([])
+    setStatusScannerNomCredit('📷 Cadrez le nom sur l’emballage du produit…')
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      streamNomCreditRef.current = stream
+      if (videoNomCreditRef.current) {
+        videoNomCreditRef.current.srcObject = stream
+        await videoNomCreditRef.current.play().catch(() => {})
+      }
+    } catch (e) {
+      setStatusScannerNomCredit('❌ Impossible d’accéder à la caméra.')
+    }
+  }
+
+  const arreterScannerNomCredit = () => {
+    if (streamNomCreditRef.current) {
+      streamNomCreditRef.current.getTracks().forEach(t => t.stop())
+      streamNomCreditRef.current = null
+    }
+    setModalScannerNomCredit(false)
+  }
+
+  const capturerNomOCRCredit = async () => {
+    if (!videoNomCreditRef.current) return
+    setOcrLoadingCredit(true)
+    setStatusScannerNomCredit('🔍 Optimisation de l’image & lecture OCR…')
+    const imageBase64 = capturerEtOptimiserImageOCR(videoNomCreditRef.current, {
+      cropRatioWidth: 0.85,
+      cropRatioHeight: 0.60,
+      rehausserContraste: true
+    })
+    if (!imageBase64) {
+      setOcrLoadingCredit(false)
+      setStatusScannerNomCredit('❌ Échec de la capture.')
+      return
+    }
+    try {
+      const res = await fetch('/api/boutiques/scan-ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64 })
+      })
+      const data = await res.json()
+      setOcrLoadingCredit(false)
+      if (data.ok && data.nom) {
+        setLibelleCustomInput(data.nom)
+        if (data.detections && data.detections.length > 0) {
+          setOcrDetectionsCredit(data.detections)
+        }
+        jouerBipScan('succes')
+        setStatusScannerNomCredit(`✅ Nom capturé : "${data.nom}"`)
+        setTimeout(() => arreterScannerNomCredit(), 1000)
+      } else {
+        jouerBipScan('alerte')
+        setStatusScannerNomCredit(`⚠️ ${data.error || 'Aucun nom lisible détecté.'}`)
+      }
+    } catch (err) {
+      setOcrLoadingCredit(false)
+      jouerBipScan('alerte')
+      setStatusScannerNomCredit('❌ Erreur de lecture OCR. Réessayez.')
+    }
+  }
 
   // Détection réactive de la largeur d'écran (Mobile < 768px)
   const [isMobile, setIsMobile] = useState(false)
@@ -1949,42 +2112,65 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             </div>
 
             {typeTransaction === 'vente_credit' && (
-              <div style={{ display: 'flex', gap: 6, marginBottom: 14, background: '#f1f5f9', padding: 4, borderRadius: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 6, background: '#f1f5f9', padding: 4, borderRadius: 12, flex: 1 }}>
+                  <button
+                    type="button"
+                    onClick={() => setModeSaisie('catalogue')}
+                    style={{
+                      flex: 1,
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: modeSaisie === 'catalogue' ? '#ffffff' : 'transparent',
+                      fontWeight: modeSaisie === 'catalogue' ? 800 : 600,
+                      color: modeSaisie === 'catalogue' ? '#0f172a' : '#64748b',
+                      fontSize: 12.5,
+                      cursor: 'pointer',
+                      boxShadow: modeSaisie === 'catalogue' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                    }}
+                  >
+                    🛍️ Catalogue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModeSaisie('manuel')}
+                    style={{
+                      flex: 1,
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: modeSaisie === 'manuel' ? '#ffffff' : 'transparent',
+                      fontWeight: modeSaisie === 'manuel' ? 800 : 600,
+                      color: modeSaisie === 'manuel' ? '#0f172a' : '#64748b',
+                      fontSize: 12.5,
+                      cursor: 'pointer',
+                      boxShadow: modeSaisie === 'manuel' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                    }}
+                  >
+                    ✍️ Saisie Libre
+                  </button>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setModeSaisie('catalogue')}
+                  onClick={demarrerScannerEanCredit}
                   style={{
-                    flex: 1,
-                    padding: '8px 10px',
-                    borderRadius: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: '#0284c7',
+                    color: '#ffffff',
                     border: 'none',
-                    background: modeSaisie === 'catalogue' ? '#ffffff' : 'transparent',
-                    fontWeight: modeSaisie === 'catalogue' ? 800 : 600,
-                    color: modeSaisie === 'catalogue' ? '#0f172a' : '#64748b',
-                    fontSize: 12.5,
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 800,
                     cursor: 'pointer',
-                    boxShadow: modeSaisie === 'catalogue' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  🛍️ Catalogue
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModeSaisie('manuel')}
-                  style={{
-                    flex: 1,
-                    padding: '8px 10px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: modeSaisie === 'manuel' ? '#ffffff' : 'transparent',
-                    fontWeight: modeSaisie === 'manuel' ? 800 : 600,
-                    color: modeSaisie === 'manuel' ? '#0f172a' : '#64748b',
-                    fontSize: 12.5,
-                    cursor: 'pointer',
-                    boxShadow: modeSaisie === 'manuel' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
-                  }}
-                >
-                  ✍️ Saisie Libre
+                  📷 Scan EAN
                 </button>
               </div>
             )}
@@ -2292,9 +2478,30 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             {/* Mode Saisie Libre (Vente à crédit) */}
             {typeTransaction === 'vente_credit' && modeSaisie === 'manuel' && (
               <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
-                <label style={{ fontSize: 12, fontWeight: 800, color: '#0369a1', margin: 0 }}>
-                  ✍️ Ajouter un article / prestation hors catalogue au panier :
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#0369a1', margin: 0 }}>
+                    ✍️ Article ou prestation hors catalogue :
+                  </label>
+                  <button
+                    type="button"
+                    onClick={demarrerScannerNomCredit}
+                    style={{
+                      background: '#e0f2fe',
+                      color: '#0369a1',
+                      border: '1px solid #bae6fd',
+                      borderRadius: 6,
+                      padding: '4px 8px',
+                      fontSize: 11,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4
+                    }}
+                  >
+                    📷 Scan Nom (OCR)
+                  </button>
+                </div>
                 
                 <div>
                   <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
@@ -2308,6 +2515,22 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 600, boxSizing: 'border-box' }}
                   />
                 </div>
+
+                {ocrDetectionsCredit.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                    <span style={{ fontSize: 10.5, fontWeight: 800, color: '#64748b' }}>💡 Détections OCR :</span>
+                    {ocrDetectionsCredit.map((txt, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setLibelleCustomInput(txt)}
+                        style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        {txt}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: 8 }}>
                   <div>
@@ -2499,6 +2722,60 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         boutiqueNom={boutique.nom}
         title="📱 QR Code Client en Boutique / Comptoir"
       />
+
+      {/* Modal Scanner EAN Caméra Crédit */}
+      {modalScannerEanCredit && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }}>
+          <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner Code-barres (EAN)</h4>
+              <button type="button" onClick={arreterScannerEanCredit} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
+            </div>
+            <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{scannerEanStatusCredit}</p>
+            <div style={{ width: '100%', height: 260, background: '#000', borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
+              <div id="carnet-ean-scanner-reader" style={{ width: '100%', height: '100%' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: '#475569' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontWeight: 700 }}>
+                <input type="checkbox" checked={scanContinuCredit} onChange={e => setScanContinuCredit(e.target.checked)} />
+                Scanner en continu
+              </label>
+              <button type="button" onClick={arreterScannerEanCredit} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer' }}>
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Scanner Nom OCR Crédit */}
+      {modalScannerNomCredit && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }}>
+          <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner le Nom du Produit</h4>
+              <button type="button" onClick={arreterScannerNomCredit} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
+            </div>
+            <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{statusScannerNomCredit}</p>
+            <div style={{ width: '100%', height: 260, background: '#000', borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
+              <video ref={videoNomCreditRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', top: '20%', left: '7.5%', width: '85%', height: '60%', border: '2px dashed #38bdf8', borderRadius: 8, boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ background: 'rgba(15,23,42,0.75)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>
+                  Cadrez le nom au centre
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={ocrLoadingCredit}
+              onClick={capturerNomOCRCredit}
+              style={{ width: '100%', padding: '12px', background: ocrLoadingCredit ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: ocrLoadingCredit ? 'not-allowed' : 'pointer' }}
+            >
+              {ocrLoadingCredit ? '⏳ Analyse OCR en cours...' : '📸 Capturer et Extraire le Nom'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
