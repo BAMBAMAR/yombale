@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { champVisibleSelonVariante } from '../BoutiqueClient'
+import { champVisibleSelonVariante } from '../boutiqueHelpers'
 
 describe('champVisibleSelonVariante', () => {
   it('reste visible si aucune variante correspondante n\'est active', () => {

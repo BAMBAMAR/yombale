@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { nomParDefautPourCategorie } from '../BoutiqueClient'
+import { nomParDefautPourCategorie } from '../boutiqueHelpers'
 
 describe('nomParDefautPourCategorie', () => {
   it('génère un nom par défaut pour chaque catégorie connue', () => {

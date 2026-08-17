@@ -12,14 +12,13 @@ try {
 const withSerwist = require('@serwist/next').default({
   swSrc: 'src/app/sw.ts',
   swDest: 'public/sw.js',
-  // Désactivé en dev pour éviter les interférences HMR et les faux positifs offline.
-  // Pour tester l'offline en dev : utiliser Chrome DevTools > Application > Service Workers > Offline.
-  disable: process.env.NODE_ENV === 'development',
+  // Désactivé en dev ou sur demande pour isoler les builds
+  disable: process.env.NODE_ENV === 'development' || process.env.DISABLE_SW === 'true',
 });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: process.env.NEXT_OUTPUT_STANDALONE === 'true' || (process.env.NODE_ENV === 'production' && process.platform !== 'win32') ? 'standalone' : undefined,
   compress: true,
   poweredByHeader: false,
   productionBrowserSourceMaps: false, // Désactive l'export des cartes sources du code client React (Anti-Reversing)
@@ -30,10 +29,6 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
-  webpack(config) {
-    config.resolve.alias['@'] = path.resolve(__dirname, 'src')
-    return config
-  },
 
   async redirects() {
     return [
@@ -53,7 +48,7 @@ const nextConfig = {
       fallback: [
         {
           source: '/api/:path*',
-          destination: `${process.env.BACKEND_URL || 'http://127.0.0.1:3000'}/api/:path*`,
+          destination: `${process.env.BACKEND_URL || 'http://127.0.0.1:5000'}/api/:path*`,
         },
       ],
     }
@@ -116,21 +111,8 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 86400,
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
-    imageSizes: [64, 128, 256, 384, 512],
-  },
-
-  experimental: {
-    optimizePackageImports: ['jose'],
   },
 }
 
-module.exports = withSentryConfig(withSerwist(nextConfig), {
-  org: 'nopalou',
-  project: 'nopalou-frontend',
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  silent: !process.env.SENTRY_DSN, // silent si pas de DSN
-  widenClientFileUpload: true,
-  transpileClientSDK: true,
-  tunnelRoute: '/monitoring',
-  hideSourceMaps: true,
-})
+module.exports = withSerwist(nextConfig);
+

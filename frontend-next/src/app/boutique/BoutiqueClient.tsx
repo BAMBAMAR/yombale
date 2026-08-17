@@ -29,6 +29,15 @@ import { useOnlineStatus } from '@/lib/useOnlineStatus'
 import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
 
 import { CATEGORIES, PRODUIT_CATEGORIES } from '@/lib/categories'
+import { CaracChips } from '@/components/CaracChips'
+import {
+  type TypeVarianteId,
+  CHAMP_VERS_TYPE_VARIANTE,
+  champVisibleSelonVariante,
+  nomParDefautPourCategorie,
+} from './boutiqueHelpers'
+
+export { CaracChips, CHAMP_VERS_TYPE_VARIANTE, champVisibleSelonVariante, nomParDefautPourCategorie }
 
 interface Boutique {
   id: string
@@ -112,8 +121,6 @@ const POINTURES_CHAUSSURE = ['36', '37', '38', '39', '40', '41', '42', '43', '44
 const STOCKAGES_RAM = ['4 Go', '8 Go', '16 Go', '32 Go', '64 Go', '128 Go', '256 Go', '512 Go', '1 To']
 const CAPACITES_PUISSANCE = ['0,75 CV', '1 CV', '1,5 CV', '2 CV', '2,5 CV', '3 CV', '100 L', '150 L', '200 L', '300 L', '400 L']
 
-type TypeVarianteId = 'couleur' | 'taille' | 'pointure' | 'stockage' | 'capacite' | 'autre'
-
 interface TypeVariante {
   id: TypeVarianteId
   label: string
@@ -130,16 +137,6 @@ const TYPES_VARIANTE: TypeVariante[] = [
   { id: 'capacite', label: '⚙️ Capacité / Puissance',  nomVariante: 'Capacité',  suggestions: CAPACITES_PUISSANCE,  repetable: false },
   { id: 'autre',    label: '➕ Autre (personnalisé)',   nomVariante: '',          suggestions: [],                   repetable: true },
 ]
-
-export const CHAMP_VERS_TYPE_VARIANTE: Record<'taille' | 'couleur' | 'stockage', TypeVarianteId> = {
-  taille: 'taille',
-  couleur: 'couleur',
-  stockage: 'stockage',
-}
-
-export function champVisibleSelonVariante(champ: 'taille' | 'couleur' | 'stockage', typesVarianteActifs: Set<TypeVarianteId>): boolean {
-  return !typesVarianteActifs.has(CHAMP_VERS_TYPE_VARIANTE[champ])
-}
 
 function CaracField({ label, name, value, onChange, placeholder, required: req = false }: {
   label: string; name: string; value: string; onChange: (k: string, v: string) => void
@@ -167,67 +164,6 @@ function CaracSelect({ label, name, value, onChange, options, required: req = fa
         <option value="">Choisir…</option>
         {options.map(o => <option key={o} value={o.toLowerCase()}>{o}</option>)}
       </select>
-    </div>
-  )
-}
-
-export function CaracChips({ label, name, value, onChange, suggestions, allowAutre = true, required: req = false }: {
-  label: string; name: string; value: string; onChange: (k: string, v: string) => void
-  suggestions: string[]; allowAutre?: boolean; required?: boolean
-}) {
-  const estSuggestion = suggestions.includes(value)
-  const [modeAutre, setModeAutre] = useState(!!value && !estSuggestion)
-
-  function choisir(val: string) {
-    setModeAutre(false)
-    onChange(name, value === val ? '' : val)
-  }
-
-  function activerAutre() {
-    setModeAutre(true)
-    onChange(name, '')
-  }
-
-  return (
-    <div>
-      <label style={labelStyle}>{label}{req && <span style={{ color: '#dc2626' }}> *</span>}</label>
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: modeAutre ? 8 : 0 }}>
-        {suggestions.map(val => {
-          const selectionnee = !modeAutre && value === val
-          return (
-            <button
-              key={val} type="button" onClick={() => choisir(val)}
-              style={{
-                padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                border: selectionnee ? '2px solid #C75B00' : '1px solid #d1d5db',
-                background: selectionnee ? '#fff7f0' : '#fff',
-                color: selectionnee ? '#C75B00' : '#374151',
-              }}
-            >
-              {val}
-            </button>
-          )
-        })}
-        {allowAutre && (
-          <button
-            type="button" onClick={activerAutre}
-            style={{
-              padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              border: modeAutre ? '2px solid #C75B00' : '1px dashed #d1d5db',
-              background: modeAutre ? '#fff7f0' : '#fff',
-              color: modeAutre ? '#C75B00' : '#374151',
-            }}
-          >
-            Autre
-          </button>
-        )}
-      </div>
-      {allowAutre && modeAutre && (
-        <input
-          type="text" value={value} onChange={e => onChange(name, e.target.value)}
-          style={inputStyle} placeholder="Autre valeur…"
-        />
-      )}
     </div>
   )
 }
@@ -739,23 +675,6 @@ function genererSVGCodeBarresEAN13(codeStr: string): string {
 
 // PRODUIT_CATEGORIES is imported from '@/lib/categories'
 
-const NOMS_PAR_DEFAUT: Record<string, string> = {
-  'smartphones':  'Smartphone — à modifier',
-  'informatique': 'Article informatique — à modifier',
-  'tv-electro':   'TV / Électroménager — à modifier',
-  'mode':         'Article mode — à modifier',
-  'maison':       'Article maison — à modifier',
-  'auto-moto':    'Véhicule — à modifier',
-  'jeux':         'Jeu / Console — à modifier',
-  'alimentation': 'Produit alimentaire — à modifier',
-  'beaute':       'Produit beauté — à modifier',
-  'services':     'Service — à modifier',
-  'autre':        'Produit — à modifier',
-}
-
-export function nomParDefautPourCategorie(categorie: string): string {
-  return NOMS_PAR_DEFAUT[categorie] ?? 'Produit — à modifier'
-}
 
 function ValeursLibres({ valeurs, onAjouter, onRetirer }: {
   valeurs: string[]; onAjouter: (v: string) => void; onRetirer: (v: string) => void

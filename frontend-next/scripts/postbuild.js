@@ -16,14 +16,20 @@ function copyDir(src, dest) {
   }
 }
 
-copyDir(
-  path.join(root, 'public'),
-  path.join(root, '.next', 'standalone', 'public')
-);
+const standaloneDir = path.join(root, '.next', 'standalone');
+if (fs.existsSync(standaloneDir)) {
+  copyDir(
+    path.join(root, 'public'),
+    path.join(standaloneDir, 'public')
+  );
 
-copyDir(
-  path.join(root, '.next', 'static'),
-  path.join(root, '.next', 'standalone', '.next', 'static')
-);
+  copyDir(
+    path.join(root, '.next', 'static'),
+    path.join(standaloneDir, '.next', 'static')
+  );
 
-console.log('[postbuild] ✅ Assets copiés dans .next/standalone/');
+  console.log('[postbuild] ✅ Assets copiés dans .next/standalone/');
+} else {
+  console.log('[postbuild] ✅ Build standard complété avec succès.');
+}
+

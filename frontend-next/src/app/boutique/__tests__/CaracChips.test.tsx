@@ -1,7 +1,6 @@
-// @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { CaracChips } from '../BoutiqueClient'
+import { CaracChips } from '@/components/CaracChips'
 
 describe('CaracChips', () => {
   it('affiche les suggestions en boutons cliquables', () => {

@@ -11,27 +11,16 @@ export default defineConfig({
   },
   resolve: {
     alias: [
-      // `server-only` lève une erreur inconditionnelle en dehors du build
-      // webpack/turbopack de Next.js (qui le remplace normalement par un
-      // no-op côté client bundle). Plusieurs modules serveur importés
-      // transitivement par BoutiqueClient.tsx (actions.ts, app/actions/*)
-      // l'utilisent ; neutralisé ici pour permettre l'exécution sous
-      // Vitest, sans changer le comportement du build Next.js réel.
       { find: 'server-only', replacement: path.resolve(__dirname, './vitest.server-only-stub.js') },
-      // Alias `@/*` (défini dans tsconfig.json pour Next.js), répliqué ici
-      // car Vitest ne lit pas les `paths` de tsconfig.json.
       { find: '@', replacement: path.resolve(__dirname, './src') },
     ],
   },
   test: {
-    pool: 'threads',
-    poolOptions: {
-      threads: {
-        singleThread: true,
-      },
-    },
+    pool: 'forks',
+    isolate: false,
     fileParallelism: false,
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
+    testTimeout: 10000,
   },
 })

@@ -33,6 +33,9 @@ backend/.fb-scraper-resume.txt
 
 # Résultats de tests
 test-results/
+playwright-report/
+scratch/
+backend/.fb-scraper-progress.json
 
 # Build Next.js
 frontend-next/.next/
