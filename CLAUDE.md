@@ -8,8 +8,16 @@
     - 4 variantes ergonomiques réutilisables : `pill` (avec drapeau et libellé), `compact` (idéal pour headers et barres d'outils), `dropdown`, et `inline`.
     - Persistance automatique du choix utilisateur sur Cookie (durée 1 an, `SameSite=Lax`) et synchronisation instantanée du DOM (`lang`, `dir`) et de l'état React sans rechargement lourd.
   * **Périmètre Déployé & Composants Intégrés** :
-    1. **Authentification** : Pages `/connexion`, `/inscription`, `/mot-de-passe-oublie` enrichies d'un `LanguageSelector` visible avant connexion, avec traduction complète des formulaires, placeholders, boutons et messages d'erreur.
-    2. **Espace Compte** : Navigation latérale (`AccountNavLinks`, `AccountSidebarClient`), en-tête mobile (`AccountMobileHeader`), bannière d'avertissement email non vérifié (`BannerEmailNonVerifie`), profil et paramètres (`ProfilClient`) incluant une carte dédiée au choix de la langue préférée.
+    1. **Authentification** : Pages `/connexion`, `/inscription`, `/mot-de-passe-oublie` enrichies d'un `LanguageSelector` visible avant connexion, avec traduction complète des formulaires, placeholders, boutons et messages d'erreur et sanitisation des erreurs backend.
+    2. **Espace Compte (100% des sous-sections et onglets traduits)** :
+       - Navigation latérale (`AccountNavLinks`, `AccountSidebarClient`), en-tête mobile (`AccountMobileHeader`), bannière d'avertissement email non vérifié (`BannerEmailNonVerifie`).
+       - Profil et paramètres (`ProfilClient`) incluant le sélecteur de langue préféré.
+       - Programme Apporteur d'Affaires & Ambassadeur (`ApporteurClient`) : codes, liens de partage WhatsApp/réseaux, téléchargements visuels, KPIs commissions, argumentaires et boutiques recrutées entièrement traduits en FR, EN et AR.
+       - Gestion des annonces classifiées (`AnnoncesClient`) : badges de statuts, actions (activer, modifier, booster, supprimer), bannières et empty states.
+       - Gestion des annonces immobilières (`AnnoncesImmoClient`) : types de transactions, filtres et modales.
+       - Suivi de commande (`SuiviCommandeClient`) : formulaire de recherche, étapes de livraison (en attente, en préparation, en livraison, livrée) et contacts vendeurs.
+       - Favoris (`FavorisClient`) : listes, suppression et liens directs.
+       - Fonctionnalités & Abonnements (`FonctionnalitesClient`) : paliers boutique (Gratuit, Pro, Business), badges de statut actif et grilles d'avantages.
     3. **Espace Boutique & Gestion Marchand** : Intégration du sélecteur de langue dans la barre latérale et l'en-tête de gestion (`BoutiqueClient.tsx`).
     4. **Caisse Tactile POS** : En-tête de la caisse (`CaisseClient.tsx`) enrichi du sélecteur compact pour permettre aux caissiers d'opérer dans leur langue de prédilection.
   * **Conformité Typographie Système Native & RTL (Directive AGENTS.md)** :
