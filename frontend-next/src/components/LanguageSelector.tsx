@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { useLocale } from '@/i18n/context'
+import { useTranslation } from '@/i18n/context'
 import { LOCALES, LOCALES_META, type Locale } from '@/i18n/config'
 
 interface LanguageSelectorProps {
@@ -15,7 +15,7 @@ export default function LanguageSelector({
   className = '',
   align = 'end',
 }: LanguageSelectorProps) {
-  const { locale, setLocale, meta, isRtl } = useLocale()
+  const { locale, setLocale, meta, isRtl, t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -38,7 +38,7 @@ export default function LanguageSelector({
       <div
         className={`lang-selector-pill-group ${className}`}
         role="radiogroup"
-        aria-label="Sélection de la langue"
+        aria-label={t('common.selectLanguage')}
         style={{
           display: 'inline-flex',
           background: 'rgba(0, 0, 0, 0.04)',
@@ -132,7 +132,7 @@ export default function LanguageSelector({
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        aria-label={`Langue actuelle : ${meta.nativeLabel}. Cliquer pour modifier.`}
+        aria-label={`${t('common.language')}: ${meta.nativeLabel}`}
         style={{
           display: 'inline-flex',
           alignItems: 'center',

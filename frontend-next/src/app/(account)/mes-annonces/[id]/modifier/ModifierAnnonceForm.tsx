@@ -2,6 +2,7 @@
 import { useState, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateAnnonce } from '@/app/actions/annonces'
+import { useTranslation } from '@/i18n/context'
 
 interface Annonce {
   id: string
@@ -100,6 +101,7 @@ function CaracteristiquesFields({ slug, values, onChange }: CaracteristiquesProp
 }
 
 export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
+  const { t } = useTranslation()
   const router = useRouter()
   const [car, setCar] = useState<Record<string, string>>(annonce.caracteristiques ?? {})
   const [photos, setPhotos] = useState<File[]>([])
@@ -171,7 +173,7 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
       </div>
 
       <div className="form-field">
-        <label className="form-label">Titre de l&apos;annonce <span className="required">*</span></label>
+        <label className="form-label">{t('account.adTitle')} <span className="required">*</span></label>
         <input
           name="titre"
           type="text"
@@ -180,13 +182,13 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
           required
           minLength={8}
           maxLength={150}
-          placeholder="ex: iPhone 13 Pro 256Go Bleu"
+          placeholder={t('account.adTitlePlaceholder')}
         />
-        <span className="form-hint">8 à 150 caractères</span>
+        <span className="form-hint">{t('account.adTitleHint')}</span>
       </div>
 
       <div className="form-field">
-        <label className="form-label">Prix (FCFA)</label>
+        <label className="form-label">{t('account.price')} (FCFA)</label>
         <input
           name="prix"
           type="number"
@@ -194,47 +196,47 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
           max="500000000"
           className="form-input"
           defaultValue={annonce.prix ?? ''}
-          placeholder="Laisser vide si prix à débattre"
+          placeholder={t('account.priceNegotiable')}
         />
       </div>
 
-      <div className="form-section-title">Caractéristiques</div>
+      <div className="form-section-title">{t('account.characteristics')}</div>
       <CaracteristiquesFields slug={annonce.categorie_slug} values={car} onChange={handleCarChange} />
 
-      <div className="form-section-title">Localisation</div>
+      <div className="form-section-title">{t('account.location')}</div>
       <div className="form-row">
         <div className="form-field">
           <label className="form-label">Ville</label>
           <select name="ville" className="form-input" defaultValue={annonce.ville ?? ''}>
-            <option value="">Choisir…</option>
+            <option value="">{t('common.choose')}</option>
             {VILLES.map(v => <option key={v} value={v}>{v}</option>)}
           </select>
         </div>
         <div className="form-field">
-          <label className="form-label">Quartier</label>
+          <label className="form-label">{t('account.neighborhood')}</label>
           <input
             name="quartier"
             type="text"
             className="form-input"
             defaultValue={annonce.quartier ?? ''}
-            placeholder="ex: Plateau, Almadies…"
+            placeholder={t('account.neighborhoodPlaceholder')}
           />
         </div>
       </div>
 
       <div className="form-field">
-        <label className="form-label">Description</label>
+        <label className="form-label">{t('account.description')}</label>
         <textarea
           name="description"
           className="form-input form-textarea"
           rows={4}
           defaultValue={annonce.description ?? ''}
-          placeholder="Décrivez votre article : état, accessoires inclus, raison de vente…"
+          placeholder={t('account.descriptionPlaceholderAd')}
           maxLength={2000}
         />
       </div>
 
-      <div className="form-section-title">Contact</div>
+      <div className="form-section-title">{t('account.contact')}</div>
       <div className="form-row">
         <div className="form-field">
           <label className="form-label">Nom / Pseudo</label>
@@ -248,7 +250,7 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
           />
         </div>
         <div className="form-field">
-          <label className="form-label">Téléphone <span className="required">*</span></label>
+          <label className="form-label">{t('account.yourPhone')} <span className="required">*</span></label>
           <input
             name="contact_tel"
             type="tel"

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { updateProfil } from '@/app/actions/auth'
 import type { AuthState } from '@/app/actions/auth'
 import { useTranslation } from '@/i18n/context'
-import LanguageSelector from '@/components/LanguageSelector'
 
 interface Props {
   nom: string
@@ -131,17 +130,6 @@ export default function ProfilClient({ nom, email }: Props) {
             </div>
           </form>
         )}
-      </div>
-
-      {/* Préférences régionales & Langue */}
-      <div className="profil-section">
-        <h2 className="profil-section-titre">{t('account.languagePreference')}</h2>
-        <p className="profil-note" style={{ marginBottom: 16 }}>
-          {t('account.languagePreferenceDesc')}
-        </p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <LanguageSelector variant="pill" />
-        </div>
       </div>
 
       {/* Sécurité */}

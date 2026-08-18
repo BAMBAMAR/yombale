@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   type Locale,
   DEFAULT_LOCALE,
@@ -51,6 +52,7 @@ export function I18nProvider({
   initialLocale?: Locale
   children: React.ReactNode
 }) {
+  const router = useRouter()
   const [locale, setLocaleState] = useState<Locale>(() => initialLocale || getCookieLocale())
 
   const setLocale = useCallback((newLocale: Locale) => {
@@ -61,8 +63,9 @@ export function I18nProvider({
       document.documentElement.lang = newLocale
       document.documentElement.dir = isRTL(newLocale) ? 'rtl' : 'ltr'
       window.dispatchEvent(new CustomEvent('nopalou-locale-change', { detail: { locale: newLocale } }))
+      router.refresh()
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     const handleLocaleChange = (e: Event) => {

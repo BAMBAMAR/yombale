@@ -1,8 +1,8 @@
-import { fr } from './locales/fr/index.ts'
-import { en } from './locales/en/index.ts'
-import { ar } from './locales/ar/index.ts'
-import type { Locale } from './config.ts'
-import type { TranslationSchema } from './types.ts'
+import { fr } from './locales/fr/index'
+import { en } from './locales/en/index'
+import { ar } from './locales/ar/index'
+import type { Locale } from './config'
+import type { TranslationSchema } from './types'
 
 export const dictionaries: Record<Locale, TranslationSchema> = {
   fr,
@@ -14,5 +14,5 @@ export function getDictionary(locale: Locale): TranslationSchema {
   return dictionaries[locale] || dictionaries.fr
 }
 
-export * from './config.ts'
-export * from './types.ts'
+export * from './config'
+export * from './types'

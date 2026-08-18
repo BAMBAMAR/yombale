@@ -25,7 +25,6 @@ import BoutiqueLogs from './BoutiqueLogs'
 import QrCodeShareModal from '@/components/QrCodeShareModal'
 import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
-import LanguageSelector from '@/components/LanguageSelector'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
 import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
@@ -3032,9 +3031,6 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#1e3a5f', textDecoration: 'none', borderRadius: 6, fontWeight: 700, background: '#f1f5f9' }}>
             {t('shop.merchantAccount')}
           </a>
-          <div style={{ paddingTop: 8, borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'center' }}>
-            <LanguageSelector variant="compact" />
-          </div>
         </div>
       </aside>
 
@@ -3462,7 +3458,6 @@ export default function BoutiqueClient({
 
         {/* Boutons d'Action Clairs & Alignés */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <LanguageSelector variant="compact" />
           <Link href="/boutique/caisse" style={{
             display: 'inline-flex',
             alignItems: 'center',

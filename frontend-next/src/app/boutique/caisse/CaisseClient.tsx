@@ -18,7 +18,6 @@ import {
 } from '@/lib/db-offline'
 import { useSyncOffline } from '@/lib/sync-manager'
 import { useTranslation } from '@/i18n/context'
-import LanguageSelector from '@/components/LanguageSelector'
 
 interface ProduitCaisse {
   id: string
@@ -2309,7 +2308,6 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
         {/* Côté Droit : Caissier + Langue + Outils + Session — groupé compact */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          <LanguageSelector variant="compact" />
 
           {/* Espace Caissier — compact Nopalou */}
           <div style={{

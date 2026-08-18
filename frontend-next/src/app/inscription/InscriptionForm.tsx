@@ -203,7 +203,7 @@ export default function InscriptionForm() {
                 autoComplete="new-password"
                 required
                 minLength={8}
-                placeholder="8 caractères minimum"
+                placeholder={t('auth.passwordMinimum')}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 className="auth-input auth-input--icon auth-input--eye"
@@ -236,9 +236,9 @@ export default function InscriptionForm() {
           {/* Confirmation mot de passe */}
           <div className="auth-field">
             <label htmlFor="confirm" className="auth-label">
-              Confirmer le mot de passe
-              {confirmOk  && <span className="auth-confirm-ok"> ✓ Identiques</span>}
-              {confirmErr && <span className="auth-confirm-err"> ✗ Différents</span>}
+              {t('auth.confirmPassword')}
+              {confirmOk  && <span className="auth-confirm-ok"> ✓ {t('auth.passwordsMatch')}</span>}
+              {confirmErr && <span className="auth-confirm-err"> ✗ {t('auth.passwordsDifferent')}</span>}
             </label>
             <div className="auth-input-wrap">
               <span className="auth-input-icon">🔒</span>
@@ -248,7 +248,7 @@ export default function InscriptionForm() {
                 type={showConfirm ? 'text' : 'password'}
                 autoComplete="new-password"
                 required
-                placeholder="Répétez votre mot de passe"
+                placeholder={t('auth.repeatPassword')}
                 value={confirm}
                 onChange={e => setConfirm(e.target.value)}
                 className={`auth-input auth-input--icon auth-input--eye${confirmErr ? ' auth-input--error' : confirmOk ? ' auth-input--ok' : ''}`}
@@ -262,10 +262,10 @@ export default function InscriptionForm() {
 
           {/* CGU */}
           <p className="auth-cgu">
-            En créant un compte, vous acceptez nos{' '}
+            {t('auth.termsIntro')}{' '}
             <Link href="/cgu" className="auth-link">CGU</Link>
-            {' '}et notre{' '}
-            <Link href="/confidentialite" className="auth-link">politique de confidentialité</Link>.
+            {' '}{t('auth.termsAnd')}{' '}
+            <Link href="/confidentialite" className="auth-link">{t('auth.privacyPolicy')}</Link>.
           </p>
 
           <SubmitButton />

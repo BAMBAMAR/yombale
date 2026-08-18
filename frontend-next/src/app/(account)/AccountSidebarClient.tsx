@@ -1,7 +1,6 @@
 'use client'
 import { usePathname, useSearchParams } from 'next/navigation'
 import AccountNavLinks from './AccountNavLinks'
-import LanguageSelector from '@/components/LanguageSelector'
 import { useTranslation } from '@/i18n/context'
 
 interface Props {
@@ -31,10 +30,6 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
       </div>
       <div className="account-sidebar-nav-wrapper">
         <AccountNavLinks overrideTab={tab} />
-      </div>
-      <div style={{ padding: '16px', borderTop: '1px solid var(--border)', marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 600 }}>{t('common.language')}</span>
-        <LanguageSelector variant="compact" align="start" />
       </div>
     </aside>
   )

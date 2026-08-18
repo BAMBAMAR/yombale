@@ -30,4 +30,7 @@ export const common = {
   refresh: 'Actualiser',
   language: 'Langue',
   selectLanguage: 'Choisir la langue',
+  choose: 'Choisir…',
+  select: 'Sélectionner',
+  perMonth: '/mois',
 }

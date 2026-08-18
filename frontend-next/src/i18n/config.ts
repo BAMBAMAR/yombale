@@ -40,8 +40,8 @@ export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && LOCALES.includes(value as Locale)
 }
 
-export function isRTL(locale: Locale): boolean {
-  return LOCALES_META[locale]?.dir === 'rtl'
+export function isRTL(locale: Locale | string): boolean {
+  return isLocale(locale) && LOCALES_META[locale].dir === 'rtl'
 }
 
 export function getValidLocale(locale?: string | null): Locale {

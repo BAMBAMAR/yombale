@@ -32,4 +32,7 @@ export const common: LocaleTranslations['common'] = {
   refresh: 'تحديث',
   language: 'اللغة',
   selectLanguage: 'اختر اللغة',
+  choose: 'اختر…',
+  select: 'اختيار',
+  perMonth: '/شهريًا',
 }

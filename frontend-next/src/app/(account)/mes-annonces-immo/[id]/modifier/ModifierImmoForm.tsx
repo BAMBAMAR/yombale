@@ -2,6 +2,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateAnnonceImmo } from '@/app/actions/immo'
+import { useTranslation } from '@/i18n/context'
 
 import DeleteImmoButton from '../../DeleteImmoButton'
 
@@ -39,6 +40,7 @@ const TRANSACTIONS = [
 const VILLES = ['Dakar', 'Thiès', 'Ziguinchor', 'Saint-Louis', 'Kaolack', 'Rufisque', 'Pikine', 'Touba', 'Autre']
 
 export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) {
+  const { t } = useTranslation()
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<string[]>([])
@@ -73,7 +75,7 @@ export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) 
       </div>
 
       <div className="form-field">
-        <label className="form-label">Titre <span className="required">*</span></label>
+        <label className="form-label">{t('account.adTitle')} <span className="required">*</span></label>
         <input
           name="titre"
           type="text"
@@ -82,7 +84,7 @@ export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) 
           required
           minLength={5}
           maxLength={150}
-          placeholder="ex: Appartement F3 meublé à Almadies"
+          placeholder={t('account.adTitlePlaceholderImmo')}
         />
       </div>
 
@@ -102,29 +104,29 @@ export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) 
       </div>
 
       <div className="form-field">
-        <label className="form-label">Prix (FCFA)</label>
+          <label className="form-label">{t('account.price')} (FCFA)</label>
         <input
           name="prix"
           type="number"
           min="0"
           className="form-input"
           defaultValue={annonce.prix ?? ''}
-          placeholder="Laisser vide si prix à négocier"
+          placeholder={t('account.priceNegotiable')}
         />
       </div>
 
-      <div className="form-section-title">Caractéristiques</div>
+      <div className="form-section-title">{t('account.characteristics')}</div>
       <div className="form-row">
         <div className="form-field">
-          <label className="form-label">Surface (m²)</label>
+          <label className="form-label">{t('account.surface')}</label>
           <input name="surface_m2" type="number" min="1" className="form-input" defaultValue={annonce.surface_m2 ?? ''} placeholder="ex: 85" />
         </div>
         <div className="form-field">
-          <label className="form-label">Nb pièces</label>
+          <label className="form-label">{t('account.roomsCount')}</label>
           <input name="nb_pieces" type="number" min="1" max="20" className="form-input" defaultValue={annonce.nb_pieces ?? ''} placeholder="ex: 3" />
         </div>
         <div className="form-field">
-          <label className="form-label">Nb chambres</label>
+          <label className="form-label">{t('account.bedroomsCount')}</label>
           <input name="nb_chambres" type="number" min="0" max="20" className="form-input" defaultValue={annonce.nb_chambres ?? ''} placeholder="ex: 2" />
         </div>
       </div>
@@ -137,10 +139,10 @@ export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) 
           defaultChecked={annonce.meuble}
           style={{ width: 18, height: 18, accentColor: 'var(--accent)', cursor: 'pointer' }}
         />
-        <label htmlFor="meuble" className="form-label" style={{ marginBottom: 0, cursor: 'pointer' }}>Meublé</label>
+        <label htmlFor="meuble" className="form-label" style={{ marginBottom: 0, cursor: 'pointer' }}>{t('account.furnished')}</label>
       </div>
 
-      <div className="form-section-title">Localisation</div>
+      <div className="form-section-title">{t('account.location')}</div>
       <div className="form-row">
         <div className="form-field">
           <label className="form-label">Ville <span className="required">*</span></label>
@@ -149,31 +151,31 @@ export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) 
           </select>
         </div>
         <div className="form-field">
-          <label className="form-label">Quartier</label>
-          <input name="quartier" type="text" className="form-input" defaultValue={annonce.quartier ?? ''} placeholder="ex: Almadies, Plateau…" />
+          <label className="form-label">{t('account.neighborhood')}</label>
+          <input name="quartier" type="text" className="form-input" defaultValue={annonce.quartier ?? ''} placeholder={t('account.neighborhoodPlaceholder')} />
         </div>
       </div>
 
       <div className="form-field">
-        <label className="form-label">Description</label>
+        <label className="form-label">{t('account.description')}</label>
         <textarea
           name="description"
           className="form-input form-textarea"
           rows={4}
           defaultValue={annonce.description ?? ''}
-          placeholder="Décrivez le bien, les équipements, l'environnement…"
+          placeholder={t('account.descriptionPlaceholderImmo')}
           maxLength={3000}
         />
       </div>
 
-      <div className="form-section-title">Contact</div>
+      <div className="form-section-title">{t('account.contact')}</div>
       <div className="form-row">
         <div className="form-field">
           <label className="form-label">Nom / Prénom</label>
           <input name="contact_nom" type="text" className="form-input" defaultValue={annonce.contact_nom ?? ''} placeholder="Votre nom" maxLength={80} />
         </div>
         <div className="form-field">
-          <label className="form-label">Téléphone <span className="required">*</span></label>
+          <label className="form-label">{t('account.yourPhone')} <span className="required">*</span></label>
           <input name="contact_tel" type="tel" className="form-input" defaultValue={annonce.contact_tel ?? ''} placeholder="ex: 77 123 45 67" required />
         </div>
       </div>
