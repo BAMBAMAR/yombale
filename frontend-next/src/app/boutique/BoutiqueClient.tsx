@@ -2209,6 +2209,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
   onDelete: () => void
   onManage: () => void
 }) {
+  const { t } = useTranslation()
   const router = useRouter()
   const sponsorActif = boutique.sponsorise && boutique.sponsor_jusqu_au && new Date(boutique.sponsor_jusqu_au) > new Date()
   const [togglingStatut, setTogglingStatut] = useState(false)
@@ -2409,6 +2410,7 @@ function BoutiqueDashboard({
   onNavigate: (tab: ManageTab, subTab?: string) => void
   onOpenQrModal?: () => void
 }) {
+  const { t } = useTranslation()
   const [produitsCount, setProduitsCount] = useState<number | null>(null)
   const [stockAlertsCount, setStockAlertsCount] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
@@ -3172,6 +3174,7 @@ export default function BoutiqueClient({
   userId: string
   settings: Record<string, string>
 }) {
+  const { t } = useTranslation()
   type Mode = 'list' | 'create' | { editing: Boutique } | { managing: Boutique }
   const [mode, setMode] = useState<Mode>('list')
   const [deleteError, setDeleteError] = useState<string | null>(null)
