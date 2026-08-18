@@ -20,8 +20,15 @@
        - Suivi de commande (`SuiviCommandeClient`) : formulaire de recherche, étapes de livraison (en attente, en préparation, en livraison, livrée) et contacts vendeurs.
        - Favoris (`FavorisClient`) : listes, suppression et liens directs.
        - Fonctionnalités & Abonnements (`FonctionnalitesClient`) : paliers boutique (Gratuit, Pro, Business), badges de statut actif et grilles d'avantages.
-    3. **Espace Boutique & Gestion Marchand** : Intégration du sélecteur de langue dans la barre latérale et l'en-tête de gestion (`BoutiqueClient.tsx`).
-    4. **Caisse Tactile POS** : En-tête de la caisse (`CaisseClient.tsx`) enrichi du sélecteur compact pour permettre aux caissiers d'opérer dans leur langue de prédilection.
+    3. **Espace Boutique & Gestion Marchand (`BoutiqueClient.tsx`, `BoutiqueAdmins.tsx`, `BoutiqueCaissiers.tsx`)** :
+       - Cartes boutiques (`BoutiqueCard`) : actions (« Gérer la boutique », « Caisse POS », « Abonnements »), statuts actif/inactif, badges.
+       - Dashboard de gestion (`BoutiqueDashboard`) : indicateurs clés (« Commandes en attente », « Catalogue Produits », « Alertes Stock », « Formule Boutique »), grille d'actions rapides (« Saisie Express », « Carnet de Dettes », « Ajouter un produit », « Créer une facture/devis », « Ouvrir Caisse POS », « Mon QR Code & Lien »).
+       - Barre latérale de gestion multi-onglets (`BoutiqueManage`) : groupes dynamiques (« Ventes & Clients », « Catalogue & Stocks », « Finance & Rapports », « Paramètres & Équipe »), titres et descriptions localisés.
+       - Gestion d'équipe : sous-onglets « Administrateurs » et « Caissiers POS », formulaires d'invitation/création et gestion des accès sécurisés par code PIN.
+       - Bannière Pro et écran de création de boutique pour nouveaux commerçants.
+    4. **Caisse Tactile POS (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
+       - En-tête de caisse : badge terminal caissier, sélecteur compact de langue FR / EN / AR, menu d'outils (« Bilan Session / Rapport X », « Importer Lot », « Historique », « Carnet », « Config PINs »), boutons de verrouillage et de clôture Z.
+       - Navigation mobile : bascule instantanée entre le catalogue et le ticket de caisse.
   * **Conformité Typographie Système Native & RTL (Directive AGENTS.md)** :
     - **Zero External Font Fetch** : Conformité stricte avec l'interdiction de téléchargement de polices externes (Google Fonts, CDN). Utilisation exclusive de la pile système native haute lisibilité (`system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Tahoma, Arial, sans-serif`).
     - **Régles RTL Arabes (`globals.css`)** : Inversion automatique des espacements, flexboxes et alignements textuels en mode `dir="rtl"`.
