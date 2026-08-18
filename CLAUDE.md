@@ -23,12 +23,17 @@
     3. **Espace Boutique & Gestion Marchand (`BoutiqueClient.tsx`, `BoutiqueAdmins.tsx`, `BoutiqueCaissiers.tsx`)** :
        - Cartes boutiques (`BoutiqueCard`) : actions (« Gérer la boutique », « Caisse POS », « Abonnements »), statuts actif/inactif, badges.
        - Dashboard de gestion (`BoutiqueDashboard`) : indicateurs clés (« Commandes en attente », « Catalogue Produits », « Alertes Stock », « Formule Boutique »), grille d'actions rapides (« Saisie Express », « Carnet de Dettes », « Ajouter un produit », « Créer une facture/devis », « Ouvrir Caisse POS », « Mon QR Code & Lien »).
-       - Barre latérale de gestion multi-onglets (`BoutiqueManage`) : groupes dynamiques (« Ventes & Clients », « Catalogue & Stocks », « Finance & Rapports », « Paramètres & Équipe »), titres et descriptions localisés.
+       - Barre latérale de gestion multi-onglets (`BoutiqueManage`) : groupes dynamiques (« Ventes & Clients », « Catalogue & Stocks », « Finance & Rapports », « Paramètres & Équipe »), titres, descriptions et liens d'action rapide (« Caisse POS », « Voir la boutique », « Mon compte marchand », « Mode Pure Player ») localisés.
        - Gestion d'équipe : sous-onglets « Administrateurs » et « Caissiers POS », formulaires d'invitation/création et gestion des accès sécurisés par code PIN.
        - Bannière Pro et écran de création de boutique pour nouveaux commerçants.
        - Résolution du scope React (`const { t } = useTranslation()`) dans tous les sous-composants (`BoutiqueCard`, `BoutiqueDashboard`, `BoutiqueClient`) et ajout du fallback webpack `fs: false` pour les modules QR/SVG.
     4. **Caisse Tactile POS (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
        - En-tête de caisse : badge terminal caissier, sélecteur compact de langue FR / EN / AR, menu d'outils (« Bilan Session / Rapport X », « Importer Lot », « Historique », « Carnet », « Config PINs »), boutons de verrouillage et de clôture Z.
+       - Barre de recherche & scanners : placeholder, scanner caméra (`📷 Scanner Caméra`) et douchette sans fil smartphone (`📱 Douchette Smartphone`).
+       - Catégories de caisse tactiles : 100% des catégories dynamiquement traduites en FR, EN et AR (Téléphonie, Informatique, Électro, Mode, Maison, Auto-Moto, Jeux, Alimentation, Beauté, Sport, Fournitures, Quincaillerie, Rechanges, Bijouterie, Maraîchage, Élevage, Produits Agricoles, Solaire, Santé, Bébé, Services, Immo, Petites Annonces, Autre).
+       - Ticket & panier : en-tête (« Ticket en cours », « En Attente », « Vider »), message d'état vide, compteur d'articles au singulier/pluriel.
+       - Modes de règlement : Espèces, Wave, Orange Money, Carte, Mixte, Crédit/Dette, calcul de la monnaie à rendre.
+       - Récapitulatif taxes & actions : Total HT, TVA (incluse), Remise, boutons DEVIS et PROFORMA, et bouton d'action dominant ENCAISSER.
        - Navigation mobile : bascule instantanée entre le catalogue et le ticket de caisse.
   * **Conformité Typographie Système Native & RTL (Directive AGENTS.md)** :
     - **Zero External Font Fetch** : Conformité stricte avec l'interdiction de téléchargement de polices externes (Google Fonts, CDN). Utilisation exclusive de la pile système native haute lisibilité (`system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Tahoma, Arial, sans-serif`).
