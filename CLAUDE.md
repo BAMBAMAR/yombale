@@ -26,6 +26,7 @@
        - Barre latérale de gestion multi-onglets (`BoutiqueManage`) : groupes dynamiques (« Ventes & Clients », « Catalogue & Stocks », « Finance & Rapports », « Paramètres & Équipe »), titres et descriptions localisés.
        - Gestion d'équipe : sous-onglets « Administrateurs » et « Caissiers POS », formulaires d'invitation/création et gestion des accès sécurisés par code PIN.
        - Bannière Pro et écran de création de boutique pour nouveaux commerçants.
+       - Résolution du scope React (`const { t } = useTranslation()`) dans tous les sous-composants (`BoutiqueCard`, `BoutiqueDashboard`, `BoutiqueClient`) et ajout du fallback webpack `fs: false` pour les modules QR/SVG.
     4. **Caisse Tactile POS (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
        - En-tête de caisse : badge terminal caissier, sélecteur compact de langue FR / EN / AR, menu d'outils (« Bilan Session / Rapport X », « Importer Lot », « Historique », « Carnet », « Config PINs »), boutons de verrouillage et de clôture Z.
        - Navigation mobile : bascule instantanée entre le catalogue et le ticket de caisse.
