@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { useTranslation } from '@/i18n/context'
 // Sous-composants
 
 // Sous-composants
@@ -157,11 +158,13 @@ export default function CompteClient({
 
   const userId = session?.userId || ''
 
+  const { t } = useTranslation()
+
   return (
     <>
       {isOffline && (
         <div style={{ position: 'fixed', bottom: 20, right: 20, background: '#F59E0B', color: '#FFF', padding: '8px 16px', borderRadius: 8, zIndex: 9999, fontWeight: 600, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-          📡 Mode Hors-Ligne
+          📡 {t('common.offlineMode')}
         </div>
       )}
 

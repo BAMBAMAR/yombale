@@ -1,0 +1,56 @@
+export const auth = {
+  loginTitle: 'Bon retour !',
+  loginDesc: 'Connectez-vous à votre compte Nopalou',
+  loginMethodEmail: 'Email',
+  loginMethodWa: 'WhatsApp',
+  emailLabel: 'Adresse email',
+  emailPlaceholder: 'vous@exemple.com',
+  passwordLabel: 'Mot de passe',
+  passwordPlaceholder: 'Votre mot de passe',
+  forgotPassword: 'Mot de passe oublié ?',
+  showPassword: 'Afficher le mot de passe',
+  hidePassword: 'Masquer le mot de passe',
+  loginBtn: 'Se connecter',
+  loggingIn: 'Connexion…',
+  noAccountPrompt: 'Pas encore de compte ?',
+  createAccountLink: 'Créer un compte gratuit',
+  orDivider: 'ou',
+  
+  // WhatsApp OTP
+  waPhoneLabel: 'Numéro WhatsApp',
+  waPhonePlaceholder: 'Ex: 77 123 45 67',
+  waCodeLabel: 'Code reçu sur WhatsApp',
+  waCodePlaceholder: '123456',
+  waChangeNumber: '← Modifier le numéro',
+  waSendCode: 'Recevoir un code',
+  waVerifyLogin: 'Vérifier et se connecter',
+  waInvalidPhone: 'Numéro WhatsApp invalide.',
+  waInvalidCode: 'Code invalide.',
+  waCodeIncorrect: 'Code incorrect.',
+
+  // Register
+  registerTitle: 'Créer un compte',
+  registerDesc: 'Rejoignez des milliers de vendeurs et acheteurs au Sénégal',
+  nomLabel: 'Nom complet ou entreprise',
+  nomPlaceholder: 'Ex: Mamadou Diop',
+  registerBtn: 'Créer mon compte',
+  registering: 'Création du compte…',
+  alreadyAccountPrompt: 'Vous avez déjà un compte ?',
+  loginLink: 'Se connecter',
+
+  // Forgot password
+  forgotTitle: 'Mot de passe oublié',
+  forgotSubtitle: 'Entrez votre adresse email pour recevoir un lien de réinitialisation sécurisé.',
+  sendResetLink: 'Envoyer le lien de réinitialisation',
+  resetLinkSent: 'Un email avec les instructions a été envoyé.',
+  backToLogin: 'Retour à la connexion',
+
+  // Visual side panel
+  visualTitle: 'Comparez.\nÉconomisez.\nChoisissez mieux.',
+  visualDesc: '4 566 produits · 14 marchands · prix mis à jour chaque jour',
+  visualBullet1: 'Alertes de baisse de prix',
+  visualBullet2: 'Comparaison jusqu\'à 3 produits',
+  visualBullet3: 'Déposez vos annonces gratuitement',
+  visualBullet4: 'Gérez votre boutique en ligne',
+  visualFooter: 'Nopalou — Dakar, Sénégal',
+}

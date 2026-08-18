@@ -24,9 +24,12 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const isDev = process.env.NODE_ENV === 'development'
 
-  // ── 1. Vérification session ──────────────────────────────────
+  // ── 1. Vérification session & Langue ─────────────────────────
   const token = req.cookies.get(COOKIE_NAME)?.value
   const session = token ? await verifyToken(token) : null
+
+  const rawLocale = req.cookies.get('nopalou_locale')?.value
+  const locale = (rawLocale === 'en' || rawLocale === 'ar') ? rawLocale : 'fr'
 
   // Redirections pour la refonte SPA Espace Compte
   const legacyToSpa: Record<string, string> = {
@@ -87,6 +90,7 @@ export async function middleware(req: NextRequest) {
 
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('x-locale', locale)
   requestHeaders.set('Content-Security-Policy', csp)
 
   const response = NextResponse.next({ request: { headers: requestHeaders } })

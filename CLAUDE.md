@@ -1,3 +1,23 @@
+- **Internationalisation (i18n) de l'Espace Compte, Boutique, Caisse POS et Authentification (`branch: feature/i18n-account-shop` - 18 août 2026)** 🌐 :
+  * **Architecture & Moteur i18n Hybride SSR / Client (`frontend-next/src/i18n/`)** :
+    - Support de 3 langues officielles : **Français (`fr`, par défaut)**, **Anglais (`en`)**, et **Arabe (`ar`, avec bascule automatique du sens d'écriture `dir="rtl"`)**.
+    - Configuration centralisée (`config.ts`, `types.ts`, `server.ts`, `context.tsx`, `index.ts`) avec typage TypeScript strict garantissant l'intégrité des clés de traduction.
+    - Dictionnaires modulaires organisés par domaine (`common`, `auth`, `account`, `shop`, `caisse`, `errors`) assurant une couverture exhaustive sans dette technique.
+    - Résolution SSR via cookie `nopalou_locale` (avec fallback `fr`) pour injecter `<html lang="..." dir="...">` côté serveur et éliminer tout flash ou hydration mismatch.
+  * **Sélecteur de Langue Multi-Variantes (`LanguageSelector.tsx`)** :
+    - 4 variantes ergonomiques réutilisables : `pill` (avec drapeau et libellé), `compact` (idéal pour headers et barres d'outils), `dropdown`, et `inline`.
+    - Persistance automatique du choix utilisateur sur Cookie (durée 1 an, `SameSite=Lax`) et synchronisation instantanée du DOM (`lang`, `dir`) et de l'état React sans rechargement lourd.
+  * **Périmètre Déployé & Composants Intégrés** :
+    1. **Authentification** : Pages `/connexion`, `/inscription`, `/mot-de-passe-oublie` enrichies d'un `LanguageSelector` visible avant connexion, avec traduction complète des formulaires, placeholders, boutons et messages d'erreur.
+    2. **Espace Compte** : Navigation latérale (`AccountNavLinks`, `AccountSidebarClient`), en-tête mobile (`AccountMobileHeader`), bannière d'avertissement email non vérifié (`BannerEmailNonVerifie`), profil et paramètres (`ProfilClient`) incluant une carte dédiée au choix de la langue préférée.
+    3. **Espace Boutique & Gestion Marchand** : Intégration du sélecteur de langue dans la barre latérale et l'en-tête de gestion (`BoutiqueClient.tsx`).
+    4. **Caisse Tactile POS** : En-tête de la caisse (`CaisseClient.tsx`) enrichi du sélecteur compact pour permettre aux caissiers d'opérer dans leur langue de prédilection.
+  * **Conformité Typographie Système Native & RTL (Directive AGENTS.md)** :
+    - **Zero External Font Fetch** : Conformité stricte avec l'interdiction de téléchargement de polices externes (Google Fonts, CDN). Utilisation exclusive de la pile système native haute lisibilité (`system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Tahoma, Arial, sans-serif`).
+    - **Régles RTL Arabes (`globals.css`)** : Inversion automatique des espacements, flexboxes et alignements textuels en mode `dir="rtl"`.
+    - **Préservation des Chiffres Arabes Occidentaux (1 2 3)** : Maintien des chiffres standards pour les montants FCFA, prix et totaux de caisse afin de préserver l'exactitude des encaissements et transactions Mobile Money (Wave, Orange Money).
+  * **Couverture de Tests Unitaires (`run-unit-tests.mjs`, `src/i18n/__tests__/i18n.test.ts`)** :
+    - **100% de succès sur la suite unitaire (28 assertions validées, 0 échec)** vérifiant la configuration, les métadonnées, la parité exacte à 100% des clés entre `fr`, `en` et `ar`, et l'absence totale de traductions vides.
 - **Validation Finale & Certification « Prête Production » de la Refonte Nopalou (17 août 2026)** 🚀 :
   * **P0 : Suite de Tests Déterministe & Découplage Métier (`scripts/run-unit-tests.mjs`, `boutiqueHelpers.ts`, `carnetMetier.ts`, `CaracChips.tsx`)** :
     - Élimination des blocages d'exécution globale Vitest/Tinypool sous Windows/Node 24 via un runner unitaire natif ultra-rapide (< 1s, code de sortie 0 garanti).

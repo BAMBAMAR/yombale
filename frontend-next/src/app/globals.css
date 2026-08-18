@@ -11455,3 +11455,97 @@ html, body {
   .hero-categories-scroll { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-left: 20px; padding-right: 20px; margin-left: -20px; margin-right: -20px; }
   .hero-categories-scroll::-webkit-scrollbar { display: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   NOPALOU i18n & RTL (ARABIC / ENGLISH / FRENCH)
+   ════════════════════════════════════════════════════════════════ */
+
+html[lang="ar"], html[dir="rtl"] {
+  font-family: system-ui, -apple-system, "Segoe UI", Tahoma, "Geeza Pro", Arial, sans-serif !important;
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] *, html[dir="rtl"] *::before, html[dir="rtl"] *::after {
+  font-family: system-ui, -apple-system, "Segoe UI", Tahoma, "Geeza Pro", Arial, sans-serif;
+}
+
+/* Espace Compte RTL */
+html[dir="rtl"] .account-layout {
+  direction: rtl;
+}
+
+html[dir="rtl"] .account-sidebar {
+  border-right: none;
+  border-left: 1px solid var(--border);
+  text-align: right;
+}
+
+html[dir="rtl"] .account-nav-link {
+  text-align: right;
+  flex-direction: row;
+}
+
+html[dir="rtl"] .account-sidebar-identity {
+  text-align: right;
+}
+
+/* Authentification RTL */
+html[dir="rtl"] .auth-page {
+  direction: rtl;
+}
+
+html[dir="rtl"] .auth-card {
+  text-align: right;
+}
+
+html[dir="rtl"] .auth-label-row {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .auth-input-icon {
+  right: 14px;
+  left: auto;
+}
+
+html[dir="rtl"] .auth-eye-btn {
+  left: 12px;
+  right: auto;
+}
+
+html[dir="rtl"] .auth-input--icon {
+  padding-right: 44px;
+  padding-left: 14px;
+}
+
+html[dir="rtl"] .auth-input--eye {
+  padding-left: 44px;
+  padding-right: 44px;
+}
+
+html[dir="rtl"] .auth-visual {
+  text-align: right;
+}
+
+html[dir="rtl"] .auth-visual-list {
+  text-align: right;
+}
+
+/* Caisse POS & Boutique RTL */
+html[dir="rtl"] .pos-layout, html[dir="rtl"] .boutique-layout {
+  direction: rtl;
+}
+
+html[dir="rtl"] .pos-btn, html[dir="rtl"] .npl-btn {
+  flex-direction: row;
+}
+
+html[dir="rtl"] .npl-dropdown-menu {
+  right: auto;
+  left: 0;
+  text-align: right;
+}
+
+html[dir="rtl"] .npl-dropdown-item {
+  text-align: right;
+}

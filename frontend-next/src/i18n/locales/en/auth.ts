@@ -1,0 +1,58 @@
+import type { LocaleTranslations } from '../fr'
+
+export const auth: LocaleTranslations['auth'] = {
+  loginTitle: 'Welcome back!',
+  loginDesc: 'Log in to your Nopalou account',
+  loginMethodEmail: 'Email',
+  loginMethodWa: 'WhatsApp',
+  emailLabel: 'Email address',
+  emailPlaceholder: 'you@example.com',
+  passwordLabel: 'Password',
+  passwordPlaceholder: 'Your password',
+  forgotPassword: 'Forgot password?',
+  showPassword: 'Show password',
+  hidePassword: 'Hide password',
+  loginBtn: 'Log In',
+  loggingIn: 'Logging in…',
+  noAccountPrompt: 'Don\'t have an account?',
+  createAccountLink: 'Create a free account',
+  orDivider: 'or',
+  
+  // WhatsApp OTP
+  waPhoneLabel: 'WhatsApp Number',
+  waPhonePlaceholder: 'Ex: 77 123 45 67',
+  waCodeLabel: 'Code received on WhatsApp',
+  waCodePlaceholder: '123456',
+  waChangeNumber: '← Change phone number',
+  waSendCode: 'Get verification code',
+  waVerifyLogin: 'Verify and Log In',
+  waInvalidPhone: 'Invalid WhatsApp number.',
+  waInvalidCode: 'Invalid code.',
+  waCodeIncorrect: 'Incorrect code.',
+
+  // Register
+  registerTitle: 'Create an account',
+  registerDesc: 'Join thousands of merchants and buyers in Senegal',
+  nomLabel: 'Full name or business name',
+  nomPlaceholder: 'Ex: Mamadou Diop',
+  registerBtn: 'Create my account',
+  registering: 'Creating account…',
+  alreadyAccountPrompt: 'Already have an account?',
+  loginLink: 'Log In',
+
+  // Forgot password
+  forgotTitle: 'Forgot password',
+  forgotSubtitle: 'Enter your email address to receive a secure reset link.',
+  sendResetLink: 'Send reset link',
+  resetLinkSent: 'An email with instructions has been sent.',
+  backToLogin: 'Back to login',
+
+  // Visual side panel
+  visualTitle: 'Compare.\nSave.\nChoose better.',
+  visualDesc: '4,566 products · 14 merchants · prices updated daily',
+  visualBullet1: 'Price drop alerts',
+  visualBullet2: 'Compare up to 3 products',
+  visualBullet3: 'Post your ads for free',
+  visualBullet4: 'Manage your online store',
+  visualFooter: 'Nopalou — Dakar, Senegal',
+}

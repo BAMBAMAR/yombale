@@ -17,6 +17,8 @@ import {
   ajouterVenteHorsLigne,
 } from '@/lib/db-offline'
 import { useSyncOffline } from '@/lib/sync-manager'
+import { useTranslation } from '@/i18n/context'
+import LanguageSelector from '@/components/LanguageSelector'
 
 interface ProduitCaisse {
   id: string
@@ -72,6 +74,7 @@ interface TicketEnAttente {
 }
 
 export default function CaisseClient({ planActif: planActifProp, initialToken, userId: userIdProp }: { planActif?: string | null; initialToken?: string | null; userId?: string | null }) {
+  const { t, isRtl } = useTranslation()
   // Récupère le userId depuis la prop serveur, avec fallback sur localStorage pour mode terminal
   const userId = userIdProp || (typeof window !== 'undefined' ? localStorage.getItem('nopalou_user_id') || 'anonymous' : 'anonymous')
   // Hook de connectivité fiable (ping /api/ping au lieu de navigator.onLine)
@@ -2304,8 +2307,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           )}
         </div>
 
-        {/* Côté Droit : Caissier + Outils + Session — groupé compact */}
+        {/* Côté Droit : Caissier + Langue + Outils + Session — groupé compact */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <LanguageSelector variant="compact" />
 
           {/* Espace Caissier — compact Nopalou */}
           <div style={{

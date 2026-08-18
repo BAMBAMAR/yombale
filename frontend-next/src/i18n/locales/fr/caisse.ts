@@ -1,0 +1,42 @@
+export const caisse = {
+  posTitle: 'Caisse Enregistreuse POS',
+  searchProduct: 'Rechercher un produit ou scanner un code-barres...',
+  categories: 'Catégories',
+  allCategories: 'Toutes les catégories',
+  cart: 'Panier en cours',
+  emptyCart: 'Le panier est vide',
+  addProductsPrompt: 'Sélectionnez des articles pour commencer une vente',
+  subtotal: 'Sous-total',
+  discount: 'Remise',
+  tax: 'TVA',
+  total: 'Total à payer',
+  itemsCount: 'article(s)',
+  clearCart: 'Vider le panier',
+  checkoutBtn: 'Encaisser',
+
+  // Payment modal
+  paymentTitle: 'Encaissement de la commande',
+  paymentMethod: 'Moyen de paiement',
+  cash: 'Espèces',
+  wave: 'Wave',
+  orangeMoney: 'Orange Money',
+  creditDebt: 'Vente à crédit (Dette)',
+  amountReceived: 'Montant reçu',
+  changeDue: 'Monnaie à rendre',
+  exactAmount: 'Montant exact',
+  confirmPayment: 'Valider le paiement',
+  paymentSuccess: 'Vente enregistrée avec succès !',
+
+  // Receipt
+  receiptTitle: 'Ticket de Caisse',
+  receiptNumber: 'Ticket N°',
+  cashier: 'Caissier',
+  printReceipt: 'Imprimer le ticket',
+  newSale: 'Nouvelle vente',
+  clientPhoneReceipt: 'Téléphone client',
+  thanksMessage: 'Merci pour votre confiance !',
+  
+  // Shortcuts & offline
+  offlineAlert: 'Mode hors-ligne actif. Les ventes seront synchronisées dès le retour de la connexion.',
+  scannerActive: 'Scanner actif',
+}

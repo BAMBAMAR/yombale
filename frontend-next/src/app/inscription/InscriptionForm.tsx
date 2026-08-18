@@ -4,14 +4,18 @@ import { useState, useRef } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { signup, type AuthState, setAuthCookieAction } from '@/app/actions/auth'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { useTranslation } from '@/i18n/context'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
+  const { t } = useTranslation()
+
   return (
     <button type="submit" disabled={pending} className={`auth-submit-btn${pending ? ' auth-submit-btn--pending' : ''}`}>
       {pending ? (
-        <><span className="auth-spinner" />Création du compte…</>
-      ) : 'Créer mon compte gratuitement'}
+        <><span className="auth-spinner" />{t('auth.registering')}</>
+      ) : t('auth.registerBtn')}
     </button>
   )
 }
@@ -39,6 +43,7 @@ export default function InscriptionForm() {
   const [confirm, setConfirm]         = useState('')
   const [clientError, setClientError] = useState('')
   const formRef = useRef<HTMLFormElement>(null)
+  const { t } = useTranslation()
 
   const [signupMethod, setSignupMethod] = useState<'email' | 'whatsapp'>('email')
   
@@ -66,8 +71,8 @@ export default function InscriptionForm() {
 
   const handleSendWaCode = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!nom.trim()) { setErrorWa('Veuillez entrer votre nom.'); return; }
-    if (telephone.length < 9) { setErrorWa('Numéro WhatsApp invalide.'); return; }
+    if (!nom.trim()) { setErrorWa(t('errors.fieldRequired')); return; }
+    if (telephone.length < 9) { setErrorWa(t('auth.waInvalidPhone')); return; }
     setErrorWa('')
     setLoadingWa(true)
     try {
@@ -78,7 +83,7 @@ export default function InscriptionForm() {
         body: JSON.stringify({ telephone })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur lors de l\'envoi du code')
+      if (!res.ok) throw new Error(data.error || t('errors.serverError'))
       setStepWhatsapp('code')
     } catch (err: any) {
       setErrorWa(err.message)
@@ -89,7 +94,7 @@ export default function InscriptionForm() {
 
   const handleVerifyWaCode = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (code.length < 4) { setErrorWa('Code invalide.'); return; }
+    if (code.length < 4) { setErrorWa(t('auth.waInvalidCode')); return; }
     setErrorWa('')
     setLoadingWa(true)
     try {
@@ -100,7 +105,7 @@ export default function InscriptionForm() {
         body: JSON.stringify({ telephone, code, nom })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur lors de l\'inscription')
+      if (!res.ok) throw new Error(data.error || t('errors.serverError'))
       
       if (data.token) {
         await setAuthCookieAction(data.token)
@@ -122,14 +127,14 @@ export default function InscriptionForm() {
           onClick={() => setSignupMethod('email')}
           style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: signupMethod === 'email' ? '#fff' : 'transparent', color: signupMethod === 'email' ? '#C75B00' : '#64748b', fontWeight: signupMethod === 'email' ? 800 : 600, boxShadow: signupMethod === 'email' ? '0 2px 6px rgba(199,91,0,0.12)' : 'none', cursor: 'pointer' }}
         >
-          ✉ Email
+          ✉ {t('auth.loginMethodEmail')}
         </button>
         <button 
           type="button" 
           onClick={() => setSignupMethod('whatsapp')}
           style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: signupMethod === 'whatsapp' ? '#fff' : 'transparent', color: signupMethod === 'whatsapp' ? '#C75B00' : '#64748b', fontWeight: signupMethod === 'whatsapp' ? 800 : 600, boxShadow: signupMethod === 'whatsapp' ? '0 2px 6px rgba(199,91,0,0.12)' : 'none', cursor: 'pointer' }}
         >
-          💬 WhatsApp
+          💬 {t('auth.loginMethodWa')}
         </button>
       </div>
 
@@ -144,7 +149,7 @@ export default function InscriptionForm() {
 
           {/* Nom */}
           <div className="auth-field">
-            <label htmlFor="nom" className="auth-label">Nom complet</label>
+            <label htmlFor="nom" className="auth-label">{t('auth.nomLabel')}</label>
             <div className="auth-input-wrap">
               <span className="auth-input-icon">👤</span>
               <input
@@ -153,7 +158,7 @@ export default function InscriptionForm() {
                 type="text"
                 autoComplete="name"
                 required
-                placeholder="Mamadou Diallo"
+                placeholder={t('auth.nomPlaceholder')}
                 className="auth-input auth-input--icon"
               />
             </div>
@@ -161,7 +166,7 @@ export default function InscriptionForm() {
 
           {/* Email */}
           <div className="auth-field">
-            <label htmlFor="email" className="auth-label">Adresse email</label>
+            <label htmlFor="email" className="auth-label">{t('auth.emailLabel')}</label>
             <div className="auth-input-wrap">
               <span className="auth-input-icon">✉</span>
               <input
@@ -170,7 +175,7 @@ export default function InscriptionForm() {
                 type="email"
                 autoComplete="email"
                 required
-                placeholder="vous@exemple.com"
+                placeholder={t('auth.emailPlaceholder')}
                 className="auth-input auth-input--icon"
               />
             </div>
@@ -178,7 +183,7 @@ export default function InscriptionForm() {
 
           {/* Mot de passe */}
           <div className="auth-field">
-            <label htmlFor="password" className="auth-label">Mot de passe</label>
+            <label htmlFor="password" className="auth-label">{t('auth.passwordLabel')}</label>
             <div className="auth-input-wrap">
               <span className="auth-input-icon">🔒</span>
               <input
@@ -194,7 +199,7 @@ export default function InscriptionForm() {
                 className="auth-input auth-input--icon auth-input--eye"
               />
               <button type="button" className="auth-eye-btn" onClick={() => setShowPwd(v => !v)}
-                aria-label={showPwd ? 'Masquer' : 'Afficher'}>
+                aria-label={showPwd ? t('auth.hidePassword') : t('auth.showPassword')}>
                 {showPwd ? '🙈' : '👁'}
               </button>
             </div>
@@ -239,7 +244,7 @@ export default function InscriptionForm() {
                 className={`auth-input auth-input--icon auth-input--eye${confirmErr ? ' auth-input--error' : confirmOk ? ' auth-input--ok' : ''}`}
               />
               <button type="button" className="auth-eye-btn" onClick={() => setShowConfirm(v => !v)}
-                aria-label={showConfirm ? 'Masquer' : 'Afficher'}>
+                aria-label={showConfirm ? t('auth.hidePassword') : t('auth.showPassword')}>
                 {showConfirm ? '🙈' : '👁'}
               </button>
             </div>
@@ -248,9 +253,9 @@ export default function InscriptionForm() {
           {/* CGU */}
           <p className="auth-cgu">
             En créant un compte, vous acceptez nos{' '}
-            <a href="/cgu" className="auth-link">CGU</a>
+            <Link href="/cgu" className="auth-link">CGU</Link>
             {' '}et notre{' '}
-            <a href="/confidentialite" className="auth-link">politique de confidentialité</a>.
+            <Link href="/confidentialite" className="auth-link">politique de confidentialité</Link>.
           </p>
 
           <SubmitButton />
@@ -267,7 +272,7 @@ export default function InscriptionForm() {
           {stepWhatsapp === 'form' ? (
             <>
               <div className="auth-field">
-                <label htmlFor="nom_wa" className="auth-label">Nom complet</label>
+                <label htmlFor="nom_wa" className="auth-label">{t('auth.nomLabel')}</label>
                 <div className="auth-input-wrap">
                   <span className="auth-input-icon">👤</span>
                   <input
@@ -276,14 +281,14 @@ export default function InscriptionForm() {
                     required
                     value={nom}
                     onChange={e => setNom(e.target.value)}
-                    placeholder="Mamadou Diallo"
+                    placeholder={t('auth.nomPlaceholder')}
                     className="auth-input auth-input--icon"
                   />
                 </div>
               </div>
               
               <div className="auth-field">
-                <label htmlFor="telephone" className="auth-label">Numéro WhatsApp</label>
+                <label htmlFor="telephone" className="auth-label">{t('auth.waPhoneLabel')}</label>
                 <div className="auth-input-wrap">
                   <span className="auth-input-icon">📱</span>
                   <input
@@ -292,7 +297,7 @@ export default function InscriptionForm() {
                     required
                     value={telephone}
                     onChange={e => setTelephone(e.target.value)}
-                    placeholder="Ex: 77 123 45 67"
+                    placeholder={t('auth.waPhonePlaceholder')}
                     className="auth-input auth-input--icon"
                   />
                 </div>
@@ -300,7 +305,7 @@ export default function InscriptionForm() {
             </>
           ) : (
             <div className="auth-field">
-              <label htmlFor="code" className="auth-label">Code reçu sur WhatsApp</label>
+              <label htmlFor="code" className="auth-label">{t('auth.waCodeLabel')}</label>
               <div className="auth-input-wrap">
                 <span className="auth-input-icon">💬</span>
                 <input
@@ -309,7 +314,7 @@ export default function InscriptionForm() {
                   required
                   value={code}
                   onChange={e => setCode(e.target.value)}
-                  placeholder="123456"
+                  placeholder={t('auth.waCodePlaceholder')}
                   maxLength={6}
                   className="auth-input auth-input--icon"
                   autoFocus
@@ -317,29 +322,29 @@ export default function InscriptionForm() {
                 />
               </div>
               <button type="button" onClick={() => setStepWhatsapp('form')} style={{ background: 'none', border: 'none', color: '#64748b', marginTop: 12, cursor: 'pointer', fontSize: 14 }}>
-                ← Modifier mes infos
+                {t('auth.waChangeNumber')}
               </button>
             </div>
           )}
 
           <p className="auth-cgu">
             En créant un compte, vous acceptez nos{' '}
-            <a href="/cgu" className="auth-link">CGU</a>
+            <Link href="/cgu" className="auth-link">CGU</Link>
             {' '}et notre{' '}
-            <a href="/confidentialite" className="auth-link">politique de confidentialité</a>.
+            <Link href="/confidentialite" className="auth-link">politique de confidentialité</Link>.
           </p>
 
           <button type="submit" disabled={loadingWa} className={`auth-submit-btn${loadingWa ? ' auth-submit-btn--pending' : ''}`} style={{ background: '#25D366' }}>
             {loadingWa ? (
-              <><span className="auth-spinner" />Veuillez patienter…</>
-            ) : stepWhatsapp === 'form' ? 'Recevoir un code WhatsApp' : 'Vérifier et créer mon compte'}
+              <><span className="auth-spinner" />{t('common.pleaseWait')}</>
+            ) : stepWhatsapp === 'form' ? t('auth.waSendCode') : t('auth.registerBtn')}
           </button>
         </form>
       )}
 
       <p className="auth-switch">
-        Déjà un compte ?{' '}
-        <a href="/connexion" className="auth-link">Se connecter</a>
+        {t('auth.alreadyAccountPrompt')}{' '}
+        <Link href="/connexion" className="auth-link">{t('auth.loginLink')}</Link>
       </p>
     </div>
   )

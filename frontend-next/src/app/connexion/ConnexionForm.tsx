@@ -5,14 +5,18 @@ import { useFormState, useFormStatus } from 'react-dom'
 import { login, type AuthState } from '@/app/actions/auth'
 import { setAuthCookieAction } from '@/app/actions/auth'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { useTranslation } from '@/i18n/context'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
+  const { t } = useTranslation()
+
   return (
     <button type="submit" disabled={pending} className={`auth-submit-btn${pending ? ' auth-submit-btn--pending' : ''}`}>
       {pending ? (
-        <><span className="auth-spinner" />Connexion…</>
-      ) : 'Se connecter'}
+        <><span className="auth-spinner" />{t('auth.loggingIn')}</>
+      ) : t('auth.loginBtn')}
     </button>
   )
 }
@@ -20,6 +24,7 @@ function SubmitButton() {
 export default function ConnexionForm() {
   const [state, action] = useFormState<AuthState, FormData>(login, {})
   const [showPassword, setShowPassword] = useState(false)
+  const { t } = useTranslation()
   
   const [loginMethod, setLoginMethod] = useState<'email' | 'whatsapp'>('email')
   
@@ -33,7 +38,7 @@ export default function ConnexionForm() {
 
   const handleSendWaCode = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (telephone.length < 9) { setErrorWa('Numéro WhatsApp invalide.'); return; }
+    if (telephone.length < 9) { setErrorWa(t('auth.waInvalidPhone')); return; }
     setErrorWa('')
     setLoadingWa(true)
     try {
@@ -44,7 +49,7 @@ export default function ConnexionForm() {
         body: JSON.stringify({ telephone })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur lors de l\'envoi du code')
+      if (!res.ok) throw new Error(data.error || t('errors.serverError'))
       setStepWhatsapp('code')
     } catch (err: any) {
       setErrorWa(err.message)
@@ -55,7 +60,7 @@ export default function ConnexionForm() {
 
   const handleVerifyWaCode = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (code.length < 4) { setErrorWa('Code invalide.'); return; }
+    if (code.length < 4) { setErrorWa(t('auth.waInvalidCode')); return; }
     setErrorWa('')
     setLoadingWa(true)
     try {
@@ -66,7 +71,7 @@ export default function ConnexionForm() {
         body: JSON.stringify({ telephone, code })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Code incorrect')
+      if (!res.ok) throw new Error(data.error || t('auth.waCodeIncorrect'))
       
       if (data.token) {
         await setAuthCookieAction(data.token)
@@ -86,14 +91,14 @@ export default function ConnexionForm() {
           onClick={() => setLoginMethod('email')}
           style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: loginMethod === 'email' ? '#fff' : 'transparent', color: loginMethod === 'email' ? '#C75B00' : '#64748b', fontWeight: loginMethod === 'email' ? 800 : 600, boxShadow: loginMethod === 'email' ? '0 2px 6px rgba(199,91,0,0.12)' : 'none', cursor: 'pointer' }}
         >
-          ✉ Email
+          ✉ {t('auth.loginMethodEmail')}
         </button>
         <button 
           type="button" 
           onClick={() => setLoginMethod('whatsapp')}
           style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: loginMethod === 'whatsapp' ? '#fff' : 'transparent', color: loginMethod === 'whatsapp' ? '#C75B00' : '#64748b', fontWeight: loginMethod === 'whatsapp' ? 800 : 600, boxShadow: loginMethod === 'whatsapp' ? '0 2px 6px rgba(199,91,0,0.12)' : 'none', cursor: 'pointer' }}
         >
-          💬 WhatsApp
+          💬 {t('auth.loginMethodWa')}
         </button>
       </div>
 
@@ -107,7 +112,7 @@ export default function ConnexionForm() {
           )}
 
           <div className="auth-field">
-            <label htmlFor="email" className="auth-label">Adresse email</label>
+            <label htmlFor="email" className="auth-label">{t('auth.emailLabel')}</label>
             <div className="auth-input-wrap">
               <span className="auth-input-icon">✉</span>
               <input
@@ -116,7 +121,7 @@ export default function ConnexionForm() {
                 type="email"
                 autoComplete="email"
                 required
-                placeholder="vous@exemple.com"
+                placeholder={t('auth.emailPlaceholder')}
                 className="auth-input auth-input--icon"
               />
             </div>
@@ -124,8 +129,8 @@ export default function ConnexionForm() {
 
           <div className="auth-field">
             <div className="auth-label-row">
-              <label htmlFor="password" className="auth-label">Mot de passe</label>
-              <a href="/mot-de-passe-oublie" className="auth-forgot">Mot de passe oublié ?</a>
+              <label htmlFor="password" className="auth-label">{t('auth.passwordLabel')}</label>
+              <Link href="/mot-de-passe-oublie" className="auth-forgot">{t('auth.forgotPassword')}</Link>
             </div>
             <div className="auth-input-wrap">
               <span className="auth-input-icon">🔒</span>
@@ -135,14 +140,14 @@ export default function ConnexionForm() {
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 required
-                placeholder="Votre mot de passe"
+                placeholder={t('auth.passwordPlaceholder')}
                 className="auth-input auth-input--icon auth-input--eye"
               />
               <button
                 type="button"
                 className="auth-eye-btn"
                 onClick={() => setShowPassword(v => !v)}
-                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
               >
                 {showPassword ? '🙈' : '👁'}
               </button>
@@ -162,7 +167,7 @@ export default function ConnexionForm() {
 
           {stepWhatsapp === 'phone' ? (
             <div className="auth-field">
-              <label htmlFor="telephone" className="auth-label">Numéro WhatsApp</label>
+              <label htmlFor="telephone" className="auth-label">{t('auth.waPhoneLabel')}</label>
               <div className="auth-input-wrap">
                 <span className="auth-input-icon">📱</span>
                 <input
@@ -171,7 +176,7 @@ export default function ConnexionForm() {
                   required
                   value={telephone}
                   onChange={e => setTelephone(e.target.value)}
-                  placeholder="Ex: 77 123 45 67"
+                  placeholder={t('auth.waPhonePlaceholder')}
                   className="auth-input auth-input--icon"
                   autoFocus
                 />
@@ -179,7 +184,7 @@ export default function ConnexionForm() {
             </div>
           ) : (
             <div className="auth-field">
-              <label htmlFor="code" className="auth-label">Code reçu sur WhatsApp</label>
+              <label htmlFor="code" className="auth-label">{t('auth.waCodeLabel')}</label>
               <div className="auth-input-wrap">
                 <span className="auth-input-icon">💬</span>
                 <input
@@ -188,7 +193,7 @@ export default function ConnexionForm() {
                   required
                   value={code}
                   onChange={e => setCode(e.target.value)}
-                  placeholder="123456"
+                  placeholder={t('auth.waCodePlaceholder')}
                   maxLength={6}
                   className="auth-input auth-input--icon"
                   autoFocus
@@ -196,24 +201,24 @@ export default function ConnexionForm() {
                 />
               </div>
               <button type="button" onClick={() => setStepWhatsapp('phone')} style={{ background: 'none', border: 'none', color: '#64748b', marginTop: 12, cursor: 'pointer', fontSize: 14 }}>
-                ← Modifier le numéro
+                {t('auth.waChangeNumber')}
               </button>
             </div>
           )}
 
           <button type="submit" disabled={loadingWa} className={`auth-submit-btn${loadingWa ? ' auth-submit-btn--pending' : ''}`} style={{ background: '#25D366' }}>
             {loadingWa ? (
-              <><span className="auth-spinner" />Veuillez patienter…</>
-            ) : stepWhatsapp === 'phone' ? 'Recevoir un code' : 'Vérifier et se connecter'}
+              <><span className="auth-spinner" />{t('common.pleaseWait')}</>
+            ) : stepWhatsapp === 'phone' ? t('auth.waSendCode') : t('auth.waVerifyLogin')}
           </button>
         </form>
       )}
 
-      <div className="auth-divider"><span>ou</span></div>
+      <div className="auth-divider"><span>{t('auth.orDivider')}</span></div>
 
       <p className="auth-switch">
-        Pas encore de compte ?{' '}
-        <a href="/inscription" className="auth-link">Créer un compte gratuit</a>
+        {t('auth.noAccountPrompt')}{' '}
+        <Link href="/inscription" className="auth-link">{t('auth.createAccountLink')}</Link>
       </p>
     </div>
   )

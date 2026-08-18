@@ -2,6 +2,8 @@
 
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { useTranslation } from '@/i18n/context'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
@@ -10,6 +12,7 @@ function FormDemande() {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [err, setErr] = useState('')
+  const { t } = useTranslation()
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -23,7 +26,7 @@ function FormDemande() {
       })
       setDone(true)
     } catch {
-      setErr('Impossible de contacter le serveur. Réessayez.')
+      setErr(t('errors.networkError'))
     } finally {
       setLoading(false)
     }
@@ -33,8 +36,8 @@ function FormDemande() {
     return (
       <div className="auth-success">
         <p className="auth-success-icon">✅</p>
-        <p>Si cette adresse est associée à un compte, vous recevrez un email avec un lien de réinitialisation dans quelques minutes.</p>
-        <a href="/connexion" className="auth-link" style={{ display: 'block', marginTop: 16 }}>Retour à la connexion</a>
+        <p>{t('auth.resetLinkSent')}</p>
+        <Link href="/connexion" className="auth-link" style={{ display: 'block', marginTop: 16 }}>{t('auth.backToLogin')}</Link>
       </div>
     )
   }
@@ -43,7 +46,7 @@ function FormDemande() {
     <form onSubmit={submit} className="auth-form">
       {err && <div className="auth-error" role="alert"><span className="auth-error-icon">⚠</span>{err}</div>}
       <div className="auth-field">
-        <label htmlFor="email" className="auth-label">Adresse email</label>
+        <label htmlFor="email" className="auth-label">{t('auth.emailLabel')}</label>
         <div className="auth-input-wrap">
           <span className="auth-input-icon">✉</span>
           <input
@@ -51,7 +54,7 @@ function FormDemande() {
             type="email"
             required
             autoComplete="email"
-            placeholder="vous@exemple.com"
+            placeholder={t('auth.emailPlaceholder')}
             className="auth-input auth-input--icon"
             value={email}
             onChange={e => setEmail(e.target.value)}
@@ -59,10 +62,10 @@ function FormDemande() {
         </div>
       </div>
       <button type="submit" disabled={loading} className={`auth-submit-btn${loading ? ' auth-submit-btn--pending' : ''}`}>
-        {loading ? <><span className="auth-spinner" />Envoi en cours…</> : 'Envoyer le lien'}
+        {loading ? <><span className="auth-spinner" />{t('common.pleaseWait')}</> : t('auth.sendResetLink')}
       </button>
       <p className="auth-switch" style={{ marginTop: 16 }}>
-        <a href="/connexion" className="auth-link">Retour à la connexion</a>
+        <Link href="/connexion" className="auth-link">{t('auth.backToLogin')}</Link>
       </p>
     </form>
   )
@@ -74,10 +77,11 @@ function FormReinit({ token }: { token: string }) {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [err, setErr] = useState('')
+  const { t } = useTranslation()
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (password.length < 6) { setErr('Le mot de passe doit contenir au moins 6 caractères.'); return }
+    if (password.length < 6) { setErr(t('errors.passwordTooShort')); return }
     setLoading(true)
     setErr('')
     try {
@@ -86,10 +90,10 @@ function FormReinit({ token }: { token: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, mot_de_passe: password }),
       })
-      if (!r.ok) { const d = await r.json(); setErr(d.error || 'Lien invalide ou expiré.'); return }
+      if (!r.ok) { const d = await r.json(); setErr(d.error || t('errors.genericError')); return }
       setDone(true)
     } catch {
-      setErr('Impossible de contacter le serveur. Réessayez.')
+      setErr(t('errors.networkError'))
     } finally {
       setLoading(false)
     }
@@ -99,8 +103,8 @@ function FormReinit({ token }: { token: string }) {
     return (
       <div className="auth-success">
         <p className="auth-success-icon">✅</p>
-        <p>Votre mot de passe a été mis à jour avec succès.</p>
-        <a href="/connexion" className="auth-link" style={{ display: 'block', marginTop: 16 }}>Se connecter</a>
+        <p>{t('account.profileUpdated')}</p>
+        <Link href="/connexion" className="auth-link" style={{ display: 'block', marginTop: 16 }}>{t('auth.loginLink')}</Link>
       </div>
     )
   }
@@ -109,7 +113,7 @@ function FormReinit({ token }: { token: string }) {
     <form onSubmit={submit} className="auth-form">
       {err && <div className="auth-error" role="alert"><span className="auth-error-icon">⚠</span>{err}</div>}
       <div className="auth-field">
-        <label htmlFor="password" className="auth-label">Nouveau mot de passe</label>
+        <label htmlFor="password" className="auth-label">{t('auth.passwordLabel')}</label>
         <div className="auth-input-wrap">
           <span className="auth-input-icon">🔒</span>
           <input
@@ -117,7 +121,7 @@ function FormReinit({ token }: { token: string }) {
             type={showPassword ? 'text' : 'password'}
             required
             minLength={6}
-            placeholder="Minimum 6 caractères"
+            placeholder={t('auth.passwordPlaceholder')}
             className="auth-input auth-input--icon auth-input--eye"
             value={password}
             onChange={e => setPassword(e.target.value)}
@@ -126,14 +130,14 @@ function FormReinit({ token }: { token: string }) {
             type="button"
             className="auth-eye-btn"
             onClick={() => setShowPassword(v => !v)}
-            aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
           >
             {showPassword ? '🙈' : '👁️'}
           </button>
         </div>
       </div>
       <button type="submit" disabled={loading} className={`auth-submit-btn${loading ? ' auth-submit-btn--pending' : ''}`}>
-        {loading ? <><span className="auth-spinner" />Mise à jour…</> : 'Changer le mot de passe'}
+        {loading ? <><span className="auth-spinner" />{t('common.pleaseWait')}</> : t('common.save')}
       </button>
     </form>
   )

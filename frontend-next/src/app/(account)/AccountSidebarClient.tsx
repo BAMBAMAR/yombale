@@ -1,6 +1,8 @@
 'use client'
 import { usePathname, useSearchParams } from 'next/navigation'
 import AccountNavLinks from './AccountNavLinks'
+import LanguageSelector from '@/components/LanguageSelector'
+import { useTranslation } from '@/i18n/context'
 
 interface Props {
   nom: string
@@ -13,11 +15,12 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
   const searchParams = useSearchParams()
   const tab = searchParams.get('tab') || undefined
   const isMainPage = pathname === '/compte'
+  const { t } = useTranslation()
 
   return (
     <aside
       className={`account-sidebar ${isMainPage ? 'account-sidebar--main' : 'account-sidebar--sub'}`}
-      aria-label="Panneau de gestion du compte"
+      aria-label={t('account.navTitle')}
     >
       <div className="account-sidebar-identity">
         <div className="account-avatar" aria-hidden="true">{initiale}</div>
@@ -28,6 +31,10 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
       </div>
       <div className="account-sidebar-nav-wrapper">
         <AccountNavLinks overrideTab={tab} />
+      </div>
+      <div style={{ padding: '16px', borderTop: '1px solid var(--border)', marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 600 }}>{t('common.language')}</span>
+        <LanguageSelector variant="compact" align="start" />
       </div>
     </aside>
   )

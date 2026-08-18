@@ -209,8 +209,87 @@ it('BoutonPartager: lien visuel story et gestion de l action copier', () => {
   assert.equal(lienVisuel.endsWith('/story'), true)
 })
 
+console.log('\n📦 6. Internationalisation i18n (FR / EN / AR)')
+import { LOCALES, DEFAULT_LOCALE, LOCALES_META, isLocale, isRTL, getValidLocale } from '../src/i18n/config.ts'
+import frDict from '../src/i18n/locales/fr/index.ts'
+import enDict from '../src/i18n/locales/en/index.ts'
+import arDict from '../src/i18n/locales/ar/index.ts'
+import { getDictionary } from '../src/i18n/index.ts'
+
+function getDeepKeys(obj, prefix = '') {
+  let keys = []
+  for (const [key, value] of Object.entries(obj)) {
+    const currentPath = prefix ? `${prefix}.${key}` : key
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      keys = keys.concat(getDeepKeys(value, currentPath))
+    } else {
+      keys.push(currentPath)
+    }
+  }
+  return keys.sort()
+}
+
+it('i18n config: 3 langues supportées, français par défaut et RTL arabe', () => {
+  assert.deepEqual(LOCALES, ['fr', 'en', 'ar'])
+  assert.equal(DEFAULT_LOCALE, 'fr')
+  assert.equal(isRTL('ar'), true)
+  assert.equal(isRTL('fr'), false)
+  assert.equal(isRTL('en'), false)
+  assert.equal(isLocale('fr'), true)
+  assert.equal(isLocale('en'), true)
+  assert.equal(isLocale('ar'), true)
+  assert.equal(isLocale('es'), false)
+  assert.equal(getValidLocale('en'), 'en')
+  assert.equal(getValidLocale('inconnu'), 'fr')
+})
+
+it('i18n meta: drapeaux et libellés natifs', () => {
+  assert.equal(LOCALES_META.fr.label, 'Français')
+  assert.equal(LOCALES_META.en.label, 'Anglais')
+  assert.equal(LOCALES_META.en.nativeLabel, 'English')
+  assert.equal(LOCALES_META.ar.label, 'Arabe')
+  assert.equal(LOCALES_META.ar.nativeLabel, 'العربية')
+  assert.equal(LOCALES_META.ar.dir, 'rtl')
+})
+
+const frKeys = getDeepKeys(frDict)
+const enKeys = getDeepKeys(enDict)
+const arKeys = getDeepKeys(arDict)
+
+it('i18n parité FR / EN / AR: 100% des clés présentes et identiques', () => {
+  assert.equal(frKeys.length > 50, true)
+  assert.equal(enKeys.length, frKeys.length)
+  assert.equal(arKeys.length, frKeys.length)
+
+  const missingInEn = frKeys.filter(k => !enKeys.includes(k))
+  assert.deepEqual(missingInEn, [])
+
+  const missingInAr = frKeys.filter(k => !arKeys.includes(k))
+  assert.deepEqual(missingInAr, [])
+})
+
+it('i18n contenu: aucune traduction vide', () => {
+  function verifyNonEmpty(dict) {
+    for (const [k, v] of Object.entries(dict)) {
+      if (typeof v === 'object' && v !== null) verifyNonEmpty(v)
+      else assert.equal(typeof v === 'string' && v.trim().length > 0, true)
+    }
+  }
+  verifyNonEmpty(frDict)
+  verifyNonEmpty(enDict)
+  verifyNonEmpty(arDict)
+})
+
+it('i18n getDictionary: résout et applique le fallback', () => {
+  assert.equal(getDictionary('fr').common.save, 'Enregistrer')
+  assert.equal(getDictionary('en').common.save, 'Save')
+  assert.equal(getDictionary('ar').common.save, 'حفظ')
+  assert.equal(getDictionary('invalid').common.save, 'Enregistrer')
+})
+
 console.log('\n──────────────────────────────────────────────────────────')
 console.log(`Résultats: ${passed} passés, ${failed} échoués (Total: ${passed + failed})`)
 if (failed > 0) process.exit(1)
-console.log('🎉 100% des 34 tests unitaires sont validés avec succès !')
+console.log(`🎉 100% des ${passed} tests unitaires sont validés avec succès !`)
 process.exit(0)
+

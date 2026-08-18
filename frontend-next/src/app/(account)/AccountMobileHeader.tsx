@@ -1,9 +1,11 @@
 'use client'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslation } from '@/i18n/context'
 
 export default function AccountMobileHeader() {
   const pathname = usePathname()
+  const { t, isRtl } = useTranslation()
   if (pathname === '/compte') return null
 
   return (
@@ -26,11 +28,21 @@ export default function AccountMobileHeader() {
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #C75B00)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--accent, #C75B00)"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ transform: isRtl ? 'rotate(180deg)' : 'none' }}
+        >
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
-        <span>Retour à mon compte</span>
+        <span>{t('account.navTitle')}</span>
       </Link>
     </div>
   )

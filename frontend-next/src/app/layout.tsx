@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import Image from 'next/image';
 import './globals.css';
 import { getOptionalSession } from '@/lib/dal';
+import I18nClientProvider from '@/components/I18nClientProvider';
+import { getValidLocale, isRTL } from '@/i18n/config';
 
 // ── Sentry (optionnel, front-end error tracking) ────────────────
 let Sentry;
@@ -165,8 +167,13 @@ export default async function RootLayout({
   const session = await getOptionalSession();
   const nonce = (await headers()).get('x-nonce') ?? undefined;
 
+  const cookieStore = cookies();
+  const rawLocale = cookieStore.get('nopalou_locale')?.value;
+  const locale = getValidLocale(rawLocale);
+  const dir = isRTL(locale) ? 'rtl' : 'ltr';
+
   return (
-    <html lang="fr">
+    <html lang={locale} dir={dir}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="color-scheme" content="light" />
@@ -182,6 +189,7 @@ export default async function RootLayout({
         />
       </head>
       <body>
+        <I18nClientProvider initialLocale={locale}>
         <CartProvider>
         {/* Lien d'évitement pour la navigation au clavier (WCAG 2.4.1) */}
         <a href="#app-main" className="skip-link">
@@ -399,6 +407,7 @@ export default async function RootLayout({
           </div>
         </footer>
         </CartProvider>
+        </I18nClientProvider>
       </body>
     </html>
   );

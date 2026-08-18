@@ -2,11 +2,13 @@
 
 import { useState, useTransition } from 'react'
 import { renvoyerEmailVerification } from '@/app/actions/auth'
+import { useTranslation } from '@/i18n/context'
 
 export default function BannerEmailNonVerifie() {
   const [envoye, setEnvoye]     = useState(false)
   const [erreur, setErreur]     = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const { t } = useTranslation()
 
   function handleRenvoyer() {
     setErreur(null)
@@ -29,19 +31,19 @@ export default function BannerEmailNonVerifie() {
       <span className="email-verif-banner__icon">✉️</span>
       {envoye ? (
         <span className="email-verif-banner__msg">
-          <strong>Email envoyé ✓</strong> Vérifiez votre boîte mail (et vos spams) pour confirmer votre adresse.
+          <strong>{t('account.verificationEmailSent')}</strong>
         </span>
       ) : (
         <span className="email-verif-banner__msg">
-          Vérifiez votre adresse email pour pouvoir publier des annonces.{' '}
+          {t('account.unverifiedEmailBanner')}{' '}
           {erreur && <span className="email-verif-banner__err"> {erreur}</span>}
           <button
             className="email-verif-banner__btn"
             onClick={handleRenvoyer}
             disabled={isPending}
-            aria-label="Renvoyer le lien de confirmation"
+            aria-label={t('account.resendVerificationEmail')}
           >
-            {isPending ? 'Envoi…' : 'Renvoyer le lien'}
+            {isPending ? t('common.pleaseWait') : t('account.resendVerificationEmail')}
           </button>
         </span>
       )}
