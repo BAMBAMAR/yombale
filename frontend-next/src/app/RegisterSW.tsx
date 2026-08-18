@@ -18,6 +18,22 @@ export default function RegisterSW() {
     if (typeof window === 'undefined') return
     if (!('serviceWorker' in navigator)) return
 
+    // En environnement de développement local, désactiver et désinscrire le Service Worker
+    // pour éviter les erreurs de précaching sur les bundles HMR/dev.
+    const isDev =
+      process.env.NODE_ENV === 'development' ||
+      (typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+
+    if (isDev) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister().catch(() => {})
+        }
+      }).catch(() => {})
+      return
+    }
+
     // Écouter l'activation du nouveau SW (controllerchange) pour recharger proprement
     let refreshing = false
     const handleControllerChange = () => {
