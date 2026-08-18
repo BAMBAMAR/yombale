@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { deleteAlerte, fetchUserAlertes } from '@/app/actions/alertes';
+import { useTranslation } from '@/i18n/context';
+import { fcfa } from '@/lib/format';
 
 interface Alerte {
   id: string;
@@ -22,57 +24,58 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchAlertes = async () => {
       try {
         const result = await fetchUserAlertes(userId);
         if (!result.ok) {
-          throw new Error(result.error || 'Erreur chargement');
+          throw new Error(result.error || t('errors.serverError'));
         }
         setAlertes(result.alertes || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erreur chargement');
+        setError(err instanceof Error ? err.message : t('errors.serverError'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchAlertes();
-  }, [userId]);
+  }, [userId, t]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Supprimer cette alerte ?')) return;
+    if (!confirm(t('account.confirmDeleteAlert'))) return;
 
     setDeletingId(id);
     try {
       const result = await deleteAlerte(id);
       if (!result.ok) {
-        throw new Error(result.error || 'Erreur suppression');
+        throw new Error(result.error || t('errors.serverError'));
       }
       setAlertes((prev) => prev.filter((a) => a.id !== id));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erreur suppression');
+      alert(err instanceof Error ? err.message : t('errors.serverError'));
     } finally {
       setDeletingId(null);
     }
   };
 
-  if (loading) return <div className="loading">Chargement...</div>;
+  if (loading) return <div className="loading">{t('common.loading')}</div>;
   if (error) return <div className="error">{error}</div>;
   if (alertes.length === 0)
-    return <div className="empty">Aucune alerte créée.</div>;
+    return <div className="empty">{t('account.noAlertsCreated')}</div>;
 
   return (
     <div className="alertes-list table-alertes-wrap">
       <table className="table-alertes">
         <thead>
           <tr>
-            <th>Produit</th>
-            <th>Prix cible</th>
-            <th>Email</th>
-            <th>Créée</th>
-            <th>Action</th>
+            <th>{t('account.colProduct')}</th>
+            <th>{t('account.colTargetPrice')}</th>
+            <th>{t('account.colEmail')}</th>
+            <th>{t('account.colCreated')}</th>
+            <th>{t('account.colAction')}</th>
           </tr>
         </thead>
         <tbody>
@@ -84,7 +87,7 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
                 </a>
               </td>
               <td className="price">
-                {new Intl.NumberFormat('fr-SN').format(alerte.prix_cible)} FCFA
+                {fcfa(alerte.prix_cible)}
               </td>
               <td className="email-small">{alerte.email}</td>
               <td className="date-small">
@@ -95,6 +98,7 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
                   className="button-danger button-sm"
                   onClick={() => handleDelete(alerte.id)}
                   disabled={deletingId === alerte.id}
+                  aria-label={t('account.adActionDelete')}
                 >
                   {deletingId === alerte.id ? '...' : '✕'}
                 </button>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createAlerte } from '@/app/actions/alertes';
+import { useTranslation } from '@/i18n/context';
 
 interface FormAlerteProps {
   userId: string;
@@ -16,13 +17,14 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
   const [loading, setLoading]     = useState(false);
   const [status, setStatus]       = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage]     = useState('');
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const pCible = parseFloat(prixCible);
     if (!produitId || !pCible || pCible <= 0) {
       setStatus('error');
-      setMessage('Identifiant produit et prix cible valides requis.');
+      setMessage(t('errors.fieldRequired'));
       return;
     }
 
@@ -31,12 +33,12 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
 
     if (needTel && (!telephone || telephone.trim().length < 6)) {
       setStatus('error');
-      setMessage('Veuillez saisir un numéro WhatsApp valide.');
+      setMessage(t('auth.waInvalidPhone'));
       return;
     }
     if (needEmail && (!email || !email.includes('@'))) {
       setStatus('error');
-      setMessage('Veuillez saisir un email valide.');
+      setMessage(t('errors.invalidEmail'));
       return;
     }
 
@@ -50,11 +52,11 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
       );
 
       if (!result.ok) {
-        throw new Error(result.error || 'Erreur serveur');
+        throw new Error(result.error || t('errors.serverError'));
       }
 
       setStatus('success');
-      setMessage('Alerte créée ! Vous recevrez une notification dès que le prix baisse.');
+      setMessage(t('account.alertCreatedSuccess'));
       setProduitId('');
       setPrixCible('');
       setEmail('');
@@ -62,7 +64,7 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
       setTimeout(() => setStatus('idle'), 5000);
     } catch (err) {
       setStatus('error');
-      setMessage(err instanceof Error ? err.message : 'Erreur serveur');
+      setMessage(err instanceof Error ? err.message : t('errors.serverError'));
     } finally {
       setLoading(false);
     }
@@ -71,7 +73,7 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
   return (
     <form onSubmit={handleSubmit} className="form-alerte">
       <div className="form-group">
-        <label htmlFor="produit_id">ID Produit</label>
+        <label htmlFor="produit_id">{t('account.productId')}</label>
         <input
           id="produit_id"
           type="text"
@@ -85,7 +87,7 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
       </div>
 
       <div className="form-group">
-        <label htmlFor="prix_cible">Prix cible (FCFA)</label>
+        <label htmlFor="prix_cible">{t('account.targetPrice')}</label>
         <input
           id="prix_cible"
           type="number"
@@ -100,7 +102,7 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
       </div>
 
       <div className="form-group">
-        <label>Canal de notification</label>
+        <label>{t('account.notificationChannel')}</label>
         <div style={{ display: 'flex', gap: 6, margin: '4px 0 10px', background: '#f1f5f9', padding: 4, borderRadius: 10 }}>
           <button
             type="button"
@@ -136,14 +138,14 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
               color: canal === 'les_deux' ? '#ffffff' : '#475569',
             }}
           >
-            🔔 Les deux
+            {t('account.bothChannels')}
           </button>
         </div>
       </div>
 
       {(canal === 'whatsapp' || canal === 'les_deux') && (
         <div className="form-group">
-          <label htmlFor="telephone">Numéro WhatsApp *</label>
+          <label htmlFor="telephone">{t('account.phoneForWa')}</label>
           <input
             id="telephone"
             type="tel"
@@ -158,7 +160,7 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
 
       {(canal === 'email' || canal === 'les_deux') && (
         <div className="form-group">
-          <label htmlFor="email">Email pour confirmation *</label>
+          <label htmlFor="email">{t('account.emailForConfirmation')}</label>
           <input
             id="email"
             type="email"
@@ -172,7 +174,7 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
       )}
 
       <button type="submit" disabled={loading} className="button-primary">
-        {loading ? 'Création...' : 'Créer alerte'}
+        {loading ? t('account.submitting') : t('account.createAlertBtn')}
       </button>
 
       {status !== 'idle' && (

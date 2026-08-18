@@ -4,6 +4,7 @@ import { getOptionalSession } from '@/lib/dal'
 import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import FormulaireAnnonce from './FormulaireAnnonce'
+import { getServerTranslation } from '@/i18n/server'
 
 export const metadata: Metadata = {
   title: 'Publier une annonce',
@@ -17,22 +18,23 @@ export default async function DeposerAnnoncePage() {
     redirect('/connexion?redirect=/deposer-annonce')
   }
 
+  const { t } = getServerTranslation()
+
   return (
     <div>
       <PageHeader
         breadcrumb={[
-          { label: 'Mes annonces', href: '/mes-annonces' },
-          { label: 'Publier' }
+          { label: t('account.navMyAds'), href: '/mes-annonces' },
+          { label: t('account.navPublishAd') }
         ]}
         emoji="📢"
-        titre="Publier une annonce"
+        titre={t('account.navPublishAd')}
       />
       <FormulaireAnnonce email={session.email ?? ''} />
 
       <p style={{ marginTop: 24, fontSize: 12, color: 'var(--text3)', textAlign: 'center' }}>
-        En publiant, vous acceptez nos{' '}
-        <Link href="/cgu" style={{ color: 'var(--accent)' }}>Conditions Générales d&apos;Utilisation</Link>.
-        Les annonces ne respectant pas nos règles seront supprimées.
+        {t('account.termsNotice')}{' '}
+        <Link href="/cgu" style={{ color: 'var(--accent)' }}>CGU</Link>.
       </p>
     </div>
   )

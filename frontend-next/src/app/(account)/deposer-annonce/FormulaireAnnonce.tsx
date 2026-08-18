@@ -2,14 +2,8 @@
 import { useState, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { creerAnnonce } from '@/app/actions/annonces'
-
 import { CATEGORIES as LIB_CATEGORIES } from '@/lib/categories'
-
-const CATEGORIES = LIB_CATEGORIES.filter(c => c.value !== 'mixte').map(c => ({
-  slug: c.value,
-  label: c.label.replace(/^.*? /, ''),
-  emoji: c.label.split(' ')[0]
-}))
+import { useTranslation } from '@/i18n/context'
 
 const ETATS = ['Neuf', 'Bon état', 'Occasion', 'Pour pièces']
 const PLATEFORMES = ['PS4', 'PS5', 'Xbox One', 'Xbox Series', 'Nintendo Switch', 'PC', 'Mobile']
@@ -23,6 +17,8 @@ interface CaracteristiquesProps {
 }
 
 function CaracteristiquesFields({ slug, values, onChange }: CaracteristiquesProps) {
+  const { t } = useTranslation()
+
   const inp = (k: string, label: string, placeholder = '') => (
     <div className="form-field" key={k}>
       <label className="form-label">{label} <span className="required">*</span></label>
@@ -46,7 +42,7 @@ function CaracteristiquesFields({ slug, values, onChange }: CaracteristiquesProp
         className="form-input"
         required={req}
       >
-        <option value="">Choisir…</option>
+        <option value="">{t('common.select') || 'Choisir…'}</option>
         {opts.map(o => <option key={o} value={o.toLowerCase()}>{o}</option>)}
       </select>
     </div>
@@ -95,8 +91,14 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const fileRef = useRef<HTMLInputElement>(null)
-  // Conserve les champs de l'étape 2 (perdus quand le formulaire est démonté)
   const step2Data = useRef<Record<string, string>>({})
+  const { t } = useTranslation()
+
+  const CATEGORIES = LIB_CATEGORIES.filter(c => c.value !== 'mixte').map(c => ({
+    slug: c.value,
+    label: c.label.replace(/^.*? /, ''),
+    emoji: c.label.split(' ')[0]
+  }))
 
   function handleCarChange(k: string, v: string) {
     setCar(prev => ({ ...prev, [k]: v }))
@@ -120,19 +122,16 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
     const fd = new FormData(e.currentTarget)
     fd.set('categorie_slug', slug)
     fd.set('caracteristiques', JSON.stringify(car))
-    // Réinjecter les champs de l'étape 2 (titre, prix, ville, contact_tel…)
     Object.entries(step2Data.current).forEach(([k, v]) => { if (!fd.has(k) || !fd.get(k)) fd.set(k, v) })
-    // Replace photos in FormData
     fd.delete('photos')
     photos.forEach(f => fd.append('photos', f))
 
     startTransition(async () => {
       const res = await creerAnnonce(fd)
       if (res.ok) {
-        // Redirect to payment page — backend will show "already active" if free quota
         router.push(res.id ? `/payer-annonce/${res.id}` : '/mes-annonces?created=1')
       } else {
-        setError(res.error ?? 'Une erreur est survenue.')
+        setError(res.error ?? t('errors.genericError'))
       }
     })
   }
@@ -143,7 +142,7 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
       <div className="annonce-steps">
         <div className="annonce-step-header">
           <span className="annonce-step-num">1 / 3</span>
-          <h2 className="annonce-step-titre">Choisissez une catégorie</h2>
+          <h2 className="annonce-step-titre">{t('account.chooseCategory')}</h2>
         </div>
         <div className="annonce-cats-grid">
           {CATEGORIES.map(c => (
@@ -168,13 +167,12 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
     return (
       <div className="annonce-steps">
         <div className="annonce-step-header">
-          <button type="button" onClick={() => setStep(1)} className="annonce-back">← Retour</button>
+          <button type="button" onClick={() => setStep(1)} className="annonce-back">{t('account.back')}</button>
           <span className="annonce-step-num">2 / 3</span>
-          <h2 className="annonce-step-titre">{cat.emoji} {cat.label} — Détails</h2>
+          <h2 className="annonce-step-titre">{cat.emoji} {cat.label} — {t('account.stepDetails')}</h2>
         </div>
         <form className="annonce-form" onSubmit={e => {
           e.preventDefault()
-          // Sauvegarder tous les champs de l'étape 2 avant de changer d'étape
           const fd = new FormData(e.currentTarget)
           const saved: Record<string, string> = {}
           fd.forEach((v, k) => { if (typeof v === 'string') saved[k] = v })
@@ -183,58 +181,58 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
         }}>
           {/* Titre */}
           <div className="form-field">
-            <label className="form-label">Titre de l&apos;annonce <span className="required">*</span></label>
-            <input name="titre" type="text" className="form-input" placeholder="ex: iPhone 13 Pro 256Go Bleu" required minLength={8} maxLength={150} />
-            <span className="form-hint">8 à 150 caractères — évitez les majuscules</span>
+            <label className="form-label">{t('account.adTitle')} <span className="required">*</span></label>
+            <input name="titre" type="text" className="form-input" placeholder={t('account.adTitlePlaceholder')} required minLength={8} maxLength={150} />
+            <span className="form-hint">{t('account.adTitleHint')}</span>
           </div>
 
           {/* Prix */}
           <div className="form-field">
-            <label className="form-label">Prix (FCFA)</label>
-            <input name="prix" type="number" min="100" max="500000000" className="form-input" placeholder="Laisser vide si prix à débattre" />
+            <label className="form-label">{t('account.price')} (FCFA)</label>
+            <input name="prix" type="number" min="100" max="500000000" className="form-input" placeholder={t('account.priceNegotiable')} />
           </div>
 
           {/* Caractéristiques catégorie */}
-          <div className="form-section-title">Caractéristiques</div>
+          <div className="form-section-title">{t('account.characteristics')}</div>
           <CaracteristiquesFields slug={slug} values={car} onChange={handleCarChange} />
 
           {/* Localisation */}
-          <div className="form-section-title">Localisation</div>
+          <div className="form-section-title">{t('account.location')}</div>
           <div className="form-row">
             <div className="form-field">
-              <label className="form-label">Ville</label>
+              <label className="form-label">{t('account.city')}</label>
               <select name="ville" className="form-input">
-                <option value="">Choisir…</option>
+                <option value="">{t('common.select') || 'Choisir…'}</option>
                 {VILLES.map(v => <option key={v} value={v}>{v}</option>)}
               </select>
             </div>
             <div className="form-field">
-              <label className="form-label">Quartier</label>
-              <input name="quartier" type="text" className="form-input" placeholder="ex: Plateau, Almadies…" />
+              <label className="form-label">{t('account.neighborhood')}</label>
+              <input name="quartier" type="text" className="form-input" placeholder={t('account.neighborhoodPlaceholder')} />
             </div>
           </div>
 
           {/* Description */}
           <div className="form-field">
-            <label className="form-label">Description</label>
-            <textarea name="description" className="form-input form-textarea" rows={4} placeholder="Décrivez votre article : état, accessoires inclus, raison de vente…" maxLength={2000} />
+            <label className="form-label">{t('account.description')}</label>
+            <textarea name="description" className="form-input form-textarea" rows={4} placeholder={t('account.descriptionPlaceholderAd')} maxLength={2000} />
           </div>
 
           {/* Contact */}
-          <div className="form-section-title">Contact</div>
+          <div className="form-section-title">{t('account.contact')}</div>
           <div className="form-row">
             <div className="form-field">
-              <label className="form-label">Nom / Pseudo</label>
-              <input name="contact_nom" type="text" className="form-input" placeholder="Votre nom" maxLength={80} />
+              <label className="form-label">{t('account.yourName')}</label>
+              <input name="contact_nom" type="text" className="form-input" placeholder={t('account.yourNamePlaceholder')} maxLength={80} />
             </div>
             <div className="form-field">
-              <label className="form-label">Téléphone <span className="required">*</span></label>
+              <label className="form-label">{t('account.yourPhone')} <span className="required">*</span></label>
               <input name="contact_tel" type="tel" className="form-input" placeholder="ex: 77 123 45 67" required />
             </div>
           </div>
 
           <button type="submit" className="annonce-next-btn">
-            Continuer → Photos
+            {t('account.continueToPhotos')}
           </button>
         </form>
       </div>
@@ -246,9 +244,9 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
   return (
     <div className="annonce-steps">
       <div className="annonce-step-header">
-        <button type="button" onClick={() => setStep(2)} className="annonce-back">← Retour</button>
+        <button type="button" onClick={() => setStep(2)} className="annonce-back">{t('account.back')}</button>
         <span className="annonce-step-num">3 / 3</span>
-        <h2 className="annonce-step-titre">{cat.emoji} {cat.label} — Photos</h2>
+        <h2 className="annonce-step-titre">{cat.emoji} {cat.label} — {t('account.stepPhotos')}</h2>
       </div>
 
       <form className="annonce-form" onSubmit={handleSubmit}>
@@ -259,11 +257,11 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
             onKeyDown={e => e.key === 'Enter' && fileRef.current?.click()}
             tabIndex={0}
             role="button"
-            aria-label="Ajouter des photos"
+            aria-label={t('account.photosClickToAdd')}
           >
             <span style={{ fontSize: 32 }}>📷</span>
-            <p>Cliquez pour ajouter des photos</p>
-            <span className="form-hint">Max 5 photos · 5 Mo chacune · JPG / PNG / WebP</span>
+            <p>{t('account.photosClickToAdd')}</p>
+            <span className="form-hint">{t('account.photosHint')}</span>
           </div>
           <input
             ref={fileRef}
@@ -284,7 +282,7 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
                     type="button"
                     className="photo-remove"
                     onClick={() => removePhoto(i)}
-                    aria-label="Supprimer"
+                    aria-label={t('common.delete')}
                   >✕</button>
                 </div>
               ))}
@@ -296,10 +294,10 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
 
         <div className="annonce-submit-row">
           <div className="annonce-quota-info">
-            ℹ️ Les 2 premières annonces sont gratuites et publiées instantanément si elles respectent nos règles.
+            {t('account.freeQuotaNotice')}
           </div>
           <button type="submit" className="annonce-submit-btn" disabled={isPending}>
-            {isPending ? 'Publication en cours…' : '🚀 Publier l\'annonce'}
+            {isPending ? t('account.publishing') : t('account.publishAdBtn')}
           </button>
         </div>
       </form>

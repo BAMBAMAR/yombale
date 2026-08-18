@@ -3,11 +3,13 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteAnnonceImmo } from '@/app/actions/immo'
+import { useTranslation } from '@/i18n/context'
 
 export default function DeleteImmoButton({ id }: { id: string }) {
   const [confirming, setConfirming] = useState(false)
   const [pending, startTransition] = useTransition()
   const router = useRouter()
+  const { t } = useTranslation()
 
   function handleDelete() {
     startTransition(async () => {
@@ -32,7 +34,7 @@ export default function DeleteImmoButton({ id }: { id: string }) {
             border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 600,
           }}
         >
-          {pending ? '…' : 'Confirmer'}
+          {pending ? '…' : t('common.confirm')}
         </button>
         <button
           onClick={() => setConfirming(false)}
@@ -41,7 +43,7 @@ export default function DeleteImmoButton({ id }: { id: string }) {
             border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, cursor: 'pointer',
           }}
         >
-          Annuler
+          {t('common.cancel')}
         </button>
       </div>
     )
@@ -56,7 +58,7 @@ export default function DeleteImmoButton({ id }: { id: string }) {
         cursor: 'pointer', marginTop: 8,
       }}
     >
-      🗑 Supprimer
+      🗑 {t('account.adActionDelete')}
     </button>
   )
 }

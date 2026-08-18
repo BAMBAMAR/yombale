@@ -3,6 +3,7 @@ import { verifySession } from '@/lib/dal';
 import FormAlerte from '@/components/FormAlerte';
 import MesAlertesClient from '@/components/MesAlertesClient';
 import PageHeader from '@/components/PageHeader';
+import { getServerTranslation } from '@/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Mes alertes prix',
@@ -11,27 +12,28 @@ export const metadata: Metadata = {
 
 export default async function MesAlertesPage() {
   const session = await verifySession();
+  const { t } = getServerTranslation();
 
   return (
     <div>
       <PageHeader
         breadcrumb={[
-          { label: 'Mon compte', href: '/compte' },
-          { label: 'Mes alertes prix' }
+          { label: t('account.navTitle'), href: '/compte' },
+          { label: t('account.navPriceAlerts') }
         ]}
         emoji="🔔"
-        titre="Mes alertes prix"
-        compteur="Recevez une alerte WhatsApp ou email quand un prix baisse jusqu'à votre prix cible."
+        titre={t('account.navPriceAlerts')}
+        compteur={t('account.alertsSubtitle')}
       />
 
       <div className="mes-alertes-grid">
         <div>
-          <h2>Créer une alerte</h2>
+          <h2>{t('account.createAlert')}</h2>
           <FormAlerte userId={session.userId} />
         </div>
 
         <div>
-          <h2>Mes alertes actives</h2>
+          <h2>{t('account.myActiveAlerts')}</h2>
           <MesAlertesClient userId={session.userId} />
         </div>
       </div>

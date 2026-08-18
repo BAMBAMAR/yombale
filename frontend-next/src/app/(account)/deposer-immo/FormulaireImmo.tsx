@@ -3,15 +3,7 @@
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deposerAnnonceImmo } from '@/app/actions/immo'
-
-const TYPES_BIEN = [
-  { val: 'appartement', label: 'Appartement', icon: '🏢' },
-  { val: 'villa',       label: 'Villa',       icon: '🏡' },
-  { val: 'maison',      label: 'Maison',      icon: '🏠' },
-  { val: 'studio',      label: 'Studio',      icon: '🛏' },
-  { val: 'terrain',     label: 'Terrain',     icon: '🌿' },
-  { val: 'bureau',      label: 'Bureau',      icon: '🏢' },
-]
+import { useTranslation } from '@/i18n/context'
 
 const VILLES = ['Dakar', 'Pikine', 'Guédiawaye', 'Rufisque', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor', 'Kaolack', 'Touba', 'Autre']
 
@@ -24,6 +16,16 @@ export default function FormulaireImmo() {
   const [photos, setPhotos] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
+  const { t } = useTranslation()
+
+  const TYPES_BIEN = [
+    { val: 'appartement', label: t('account.typeApartment'), icon: '🏢' },
+    { val: 'villa',       label: t('account.typeVilla'),       icon: '🏡' },
+    { val: 'maison',      label: t('account.typeHouse'),      icon: '🏠' },
+    { val: 'studio',      label: t('account.typeStudio'),      icon: '🛏' },
+    { val: 'terrain',     label: t('account.typeLand'),     icon: '🌿' },
+    { val: 'bureau',      label: t('account.typeOffice'),      icon: '🏢' },
+  ]
 
   function handlePhotos(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []).slice(0, 5)
@@ -51,7 +53,7 @@ export default function FormulaireImmo() {
         router.push('/mes-annonces-immo?created=1')
       } else {
         const msgs = res.errors?.map(e => e.msg).join(', ')
-        setError(msgs || res.error || 'Une erreur est survenue.')
+        setError(msgs || res.error || t('errors.genericError'))
       }
     })
   }
@@ -60,16 +62,16 @@ export default function FormulaireImmo() {
     <form onSubmit={handleSubmit} className="deposer-immo-form">
       {/* Transaction */}
       <div className="form-field">
-        <label className="form-label">Type d&apos;offre <span className="required">*</span></label>
+        <label className="form-label">{t('account.offerType')} <span className="required">*</span></label>
         <div style={{ display: 'flex', gap: 8 }}>
-          {['location', 'vente'].map(t => (
+          {['location', 'vente'].map(typeKey => (
             <button
-              key={t}
+              key={typeKey}
               type="button"
-              onClick={() => setTransaction(t)}
-              className={`budget-pill${transaction === t ? ' active' : ''}`}
+              onClick={() => setTransaction(typeKey)}
+              className={`budget-pill${transaction === typeKey ? ' active' : ''}`}
             >
-              {t === 'location' ? '🏠 Location' : '🔑 Vente'}
+              {typeKey === 'location' ? t('account.offerRent') : t('account.offerSale')}
             </button>
           ))}
         </div>
@@ -77,16 +79,16 @@ export default function FormulaireImmo() {
 
       {/* Type de bien */}
       <div className="form-field">
-        <label className="form-label">Type de bien <span className="required">*</span></label>
+        <label className="form-label">{t('account.propertyType')} <span className="required">*</span></label>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {TYPES_BIEN.map(t => (
+          {TYPES_BIEN.map(tOption => (
             <button
-              key={t.val}
+              key={tOption.val}
               type="button"
-              onClick={() => setTypeBien(t.val)}
-              className={`budget-pill${typeBien === t.val ? ' active' : ''}`}
+              onClick={() => setTypeBien(tOption.val)}
+              className={`budget-pill${typeBien === tOption.val ? ' active' : ''}`}
             >
-              {t.icon} {t.label}
+              {tOption.icon} {tOption.label}
             </button>
           ))}
         </div>
@@ -94,23 +96,23 @@ export default function FormulaireImmo() {
 
       {/* Titre */}
       <div className="form-field">
-        <label className="form-label" htmlFor="titre">Titre de l&apos;annonce <span className="required">*</span></label>
+        <label className="form-label" htmlFor="titre">{t('account.adTitle')} <span className="required">*</span></label>
         <input
           id="titre"
           name="titre"
           type="text"
           required
-          placeholder="Ex: Appartement 2 pièces meublé à Almadies"
+          placeholder={t('account.adTitlePlaceholderImmo')}
           className="form-input"
         />
       </div>
 
-      <p className="deposer-immo-section-title">Localisation</p>
+      <p className="deposer-immo-section-title">{t('account.location')}</p>
 
       <div className="deposer-immo-row">
         {/* Ville */}
         <div className="form-field">
-          <label className="form-label" htmlFor="ville">Ville <span className="required">*</span></label>
+          <label className="form-label" htmlFor="ville">{t('account.city')} <span className="required">*</span></label>
           <select id="ville" name="ville" required className="form-input" defaultValue="Dakar">
             {VILLES.map(v => <option key={v} value={v}>{v}</option>)}
           </select>
@@ -118,24 +120,24 @@ export default function FormulaireImmo() {
 
         {/* Quartier */}
         <div className="form-field">
-          <label className="form-label" htmlFor="quartier">Quartier</label>
+          <label className="form-label" htmlFor="quartier">{t('account.neighborhood')}</label>
           <input
             id="quartier"
             name="quartier"
             type="text"
-            placeholder="Ex: Almadies, Plateau…"
+            placeholder={t('account.neighborhoodPlaceholder')}
             className="form-input"
           />
         </div>
       </div>
 
-      <p className="deposer-immo-section-title">Caractéristiques</p>
+      <p className="deposer-immo-section-title">{t('account.characteristics')}</p>
 
       <div className="deposer-immo-row">
         {/* Prix */}
         <div className="form-field">
           <label className="form-label" htmlFor="prix">
-            Prix (FCFA) {transaction === 'location' ? '/mois' : ''}
+            {transaction === 'location' ? t('account.priceMonthly') : t('account.price')}
           </label>
           <input
             id="prix"
@@ -150,7 +152,7 @@ export default function FormulaireImmo() {
 
         {/* Surface */}
         <div className="form-field">
-          <label className="form-label" htmlFor="surface_m2">Surface (m²)</label>
+          <label className="form-label" htmlFor="surface_m2">{t('account.surface')}</label>
           <input
             id="surface_m2"
             name="surface_m2"
@@ -165,7 +167,7 @@ export default function FormulaireImmo() {
       <div className="deposer-immo-row">
         {/* Nb pièces */}
         <div className="form-field">
-          <label className="form-label" htmlFor="nb_pieces">Nombre de pièces</label>
+          <label className="form-label" htmlFor="nb_pieces">{t('account.roomsCount')}</label>
           <input
             id="nb_pieces"
             name="nb_pieces"
@@ -178,7 +180,7 @@ export default function FormulaireImmo() {
 
         {/* Nb chambres */}
         <div className="form-field">
-          <label className="form-label" htmlFor="nb_chambres">Nombre de chambres</label>
+          <label className="form-label" htmlFor="nb_chambres">{t('account.bedroomsCount')}</label>
           <input
             id="nb_chambres"
             name="nb_chambres"
@@ -200,24 +202,24 @@ export default function FormulaireImmo() {
           style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--accent)' }}
         />
         <label htmlFor="meuble" className="form-label" style={{ margin: 0, cursor: 'pointer' }}>
-          Bien meublé / avec mobilier
+          {t('account.furnished')}
         </label>
       </div>
 
       {/* Description */}
       <div className="form-field">
-        <label className="form-label" htmlFor="description">Description</label>
+        <label className="form-label" htmlFor="description">{t('account.description')}</label>
         <textarea
           id="description"
           name="description"
           rows={4}
-          placeholder="Décrivez le bien : état, équipements, accès, conditions…"
+          placeholder={t('account.descriptionPlaceholderImmo')}
           className="form-input"
           style={{ resize: 'vertical', minHeight: 100 }}
         />
       </div>
 
-      <p className="deposer-immo-section-title">Photos</p>
+      <p className="deposer-immo-section-title">{t('account.photos')}</p>
 
       <div className="photos-zone">
         <div
@@ -226,11 +228,11 @@ export default function FormulaireImmo() {
           onKeyDown={e => e.key === 'Enter' && fileRef.current?.click()}
           tabIndex={0}
           role="button"
-          aria-label="Ajouter des photos"
+          aria-label={t('account.photosClickToAdd')}
         >
           <span style={{ fontSize: 32 }}>📷</span>
-          <p>Cliquez pour ajouter des photos</p>
-          <span className="form-hint">Max 5 photos · 5 Mo chacune · JPG / PNG / WebP</span>
+          <p>{t('account.photosClickToAdd')}</p>
+          <span className="form-hint">{t('account.photosHint')}</span>
         </div>
         <input
           ref={fileRef}
@@ -252,7 +254,7 @@ export default function FormulaireImmo() {
                   type="button"
                   className="photo-remove"
                   onClick={() => removePhoto(i)}
-                  aria-label="Supprimer"
+                  aria-label={t('common.delete')}
                 >✕</button>
               </div>
             ))}
@@ -260,22 +262,22 @@ export default function FormulaireImmo() {
         )}
       </div>
 
-      <p className="deposer-immo-section-title">Contact</p>
+      <p className="deposer-immo-section-title">{t('account.contact')}</p>
 
       <div className="deposer-immo-row">
         <div className="form-field">
-          <label className="form-label" htmlFor="contact_nom">Votre nom</label>
+          <label className="form-label" htmlFor="contact_nom">{t('account.yourName')}</label>
           <input
             id="contact_nom"
             name="contact_nom"
             type="text"
-            placeholder="Ex: Mamadou Diallo"
+            placeholder={t('account.yourNamePlaceholder')}
             className="form-input"
           />
         </div>
 
         <div className="form-field">
-          <label className="form-label" htmlFor="contact_tel">Téléphone <span className="required">*</span></label>
+          <label className="form-label" htmlFor="contact_tel">{t('account.yourPhone')} <span className="required">*</span></label>
           <input
             id="contact_tel"
             name="contact_tel"
@@ -292,11 +294,11 @@ export default function FormulaireImmo() {
       )}
 
       <button type="submit" className="form-submit-btn" disabled={isPending}>
-        {isPending ? 'Envoi en cours…' : '📤 Soumettre mon annonce'}
+        {isPending ? t('account.submitting') : t('account.submitAd')}
       </button>
 
       <p style={{ fontSize: 12, color: 'var(--text3)', textAlign: 'center' }}>
-        Votre annonce sera visible après validation par notre équipe (généralement sous 24h).
+        {t('account.submitReviewNotice')}
       </p>
     </form>
   )

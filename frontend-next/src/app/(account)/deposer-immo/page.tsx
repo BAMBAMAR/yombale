@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getOptionalSession } from '@/lib/dal'
 import PageHeader from '@/components/PageHeader'
 import FormulaireImmo from './FormulaireImmo'
+import { getServerTranslation } from '@/i18n/server'
 
 export const metadata: Metadata = {
   title: 'Publier une annonce immobilière',
@@ -16,16 +17,18 @@ export default async function DeposerImmoPage() {
     redirect('/connexion?redirect=/deposer-immo')
   }
 
+  const { t } = getServerTranslation()
+
   return (
     <div>
       <PageHeader
         breadcrumb={[
-          { label: 'Mes biens immo', href: '/mes-annonces-immo' },
-          { label: 'Publier' }
+          { label: t('account.navMyRealEstate'), href: '/mes-annonces-immo' },
+          { label: t('account.navPublishRealEstate') }
         ]}
         emoji="🏡"
-        titre="Publier un bien immobilier"
-        compteur="Gratuit et rapide — votre annonce sera visible après validation par notre équipe."
+        titre={t('account.immoPageTitle')}
+        compteur={t('account.immoPageSubtitle')}
       />
 
       <FormulaireImmo />
