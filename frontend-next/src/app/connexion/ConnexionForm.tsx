@@ -83,6 +83,15 @@ export default function ConnexionForm() {
     }
   }
 
+  const getLocalizedError = (err?: string) => {
+    if (!err) return null
+    if (err === 'Identifiants incorrects' || err === 'Identifiants invalides') return t('errors.unauthorized')
+    if (err.includes('ECONNRESET') || err.includes('Erreur de connexion') || err.includes('Erreur serveur') || err.includes('timeout')) {
+      return t('errors.serverError')
+    }
+    return err
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, background: '#f8fafc', padding: 4, borderRadius: 12, border: '1px solid #e2e8f0' }}>
@@ -107,7 +116,7 @@ export default function ConnexionForm() {
           {state.error && (
             <div className="auth-error" role="alert">
               <span className="auth-error-icon">⚠</span>
-              {state.error}
+              {getLocalizedError(state.error)}
             </div>
           )}
 

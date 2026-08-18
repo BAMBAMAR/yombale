@@ -117,7 +117,17 @@ export default function InscriptionForm() {
     }
   }
 
-  const displayError = clientError || state.error
+  const getLocalizedError = (err?: string) => {
+    if (!err) return null
+    if (err.includes('déjà utilisé') || err.includes('existe déjà')) return t('errors.invalidEmail')
+    if (err.includes('ECONNRESET') || err.includes('Erreur de connexion') || err.includes('Erreur serveur') || err.includes('timeout')) {
+      return t('errors.serverError')
+    }
+    return err
+  }
+
+  const rawError = clientError || state.error
+  const displayError = getLocalizedError(rawError)
 
   return (
     <div>

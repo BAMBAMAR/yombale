@@ -52,7 +52,10 @@ router.post('/inscription',
                <p><a href="${lien}">Cliquez ici pour vérifier votre adresse email</a> (lien valide 24h).</p>
                <p>À bientôt sur Nopalou 👋</p>`,
       }).catch(() => {});
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) {
+      console.error('[AUTH INSCRIPTION]', err.message);
+      res.status(500).json({ error: 'Erreur serveur lors de l\'inscription' });
+    }
   }
 );
 
@@ -89,7 +92,10 @@ router.post('/connexion',
       const token = jwt.sign({ userId: rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
       const { mot_de_passe_hash, suspendu, supprime_le, ...user } = rows[0];
       res.json({ user, token });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) {
+      console.error('[AUTH CONNEXION]', err.message);
+      res.status(500).json({ error: 'Erreur serveur, veuillez réessayer plus tard' });
+    }
   }
 );
 
