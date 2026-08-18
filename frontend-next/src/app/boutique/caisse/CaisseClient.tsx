@@ -2230,7 +2230,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 boxShadow: '0 2px 6px rgba(29,78,216,0.3)'
               }}
             >
-              <span>📱 Terminal Caissier</span>
+              <span>📱 {t('caisse.terminalCashier')}</span>
             </div>
           ) : (
             <Link
@@ -2253,7 +2253,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               }}
             >
               <ArrowLeft size={14} />
-              <span>Boutique</span>
+              <span>{t('caisse.shop')}</span>
             </Link>
           )}
 
@@ -2327,7 +2327,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             </div>
             <button
               onClick={verrouillerCaisseManuellement}
-              title="Verrouiller la caisse"
+              title={t('caisse.lockPos')}
               style={{ background: 'var(--pos-primary-bg)', color: 'var(--pos-primary)', border: '1px solid var(--pos-border)', borderRadius: 5, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
             >
               <Lock size={11} />
@@ -2342,7 +2342,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               style={{ gap: 5, flexShrink: 0, fontWeight: 800 }}
             >
               <Settings size={13} />
-              <span className="caisse-label-desktop">Outils</span>
+              <span className="caisse-label-desktop">{t('caisse.tools')}</span>
               <span style={{ fontSize: 9, opacity: 0.7 }}>▾</span>
             </button>
             {menuOutilsOuvert && (
@@ -2368,7 +2368,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   minWidth: 185,
                 }}>
                   <div style={{ padding: '4px 12px 6px', borderBottom: '1px solid #f1f5f9', marginBottom: 2 }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outils caisse</span>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('caisse.toolsTitle')}</span>
                   </div>
                   <button
                     onClick={() => {
@@ -2384,31 +2384,31 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     }}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: '#fff7ed', border: '1px solid #ffedd5', color: '#c2410c', fontSize: 13, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 4 }}
                   >
-                    <BarChart3 size={14} color="#ea580c" /> Bilan Session (Rapport X)
+                    <BarChart3 size={14} color="#ea580c" /> {t('caisse.reportX')}
                   </button>
                   <button
                     onClick={() => { setModalImportBatch(true); setMenuOutilsOuvert(false); }}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                   >
-                    <Download size={14} /> Importer Lot
+                    <Download size={14} /> {t('caisse.importBatch')}
                   </button>
                   <button
                     onClick={() => { setModalHistorique(true); setMenuOutilsOuvert(false); }}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                   >
-                    <History size={14} /> Historique ({historiqueVentes.length})
+                    <History size={14} /> {t('caisse.history')} ({historiqueVentes.length})
                   </button>
                   <button
                     onClick={() => { setModalCarnet(true); setMenuOutilsOuvert(false); }}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                   >
-                    <Book size={14} /> Carnet ({clientsCredits.length})
+                    <Book size={14} /> {t('caisse.debts')} ({clientsCredits.length})
                   </button>
                   <button
                     onClick={() => { ouvrirConfigPin(); setMenuOutilsOuvert(false); }}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                   >
-                    <Settings size={14} /> Config PINs
+                    <Settings size={14} /> {t('caisse.configPins')}
                   </button>
                 </div>
               </>
@@ -2422,7 +2422,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               className="pos-btn pos-btn-sm pos-btn-danger"
               style={{ flexShrink: 0, fontWeight: 800, gap: 5 }}
             >
-              <Lock size={11} /> <span className="caisse-label-desktop">Clôture Z</span>
+              <Lock size={11} /> <span className="caisse-label-desktop">{t('caisse.closeZ')}</span>
             </button>
           ) : (
             <button
@@ -2430,7 +2430,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               className="pos-btn pos-btn-sm pos-btn-success"
               style={{ flexShrink: 0, fontWeight: 800, gap: 5 }}
             >
-              <Unlock size={11} /> <span className="caisse-label-desktop">Session</span>
+              <Unlock size={11} /> <span className="caisse-label-desktop">{t('caisse.session')}</span>
             </button>
           )}
         </div>

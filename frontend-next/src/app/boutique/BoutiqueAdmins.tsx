@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslation } from '@/i18n/context'
 
 interface Admin {
   id: string
@@ -16,6 +17,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
   
   const [newEmail, setNewEmail] = useState('')
   const [adding, setAdding] = useState(false)
+  const { t } = useTranslation()
 
   async function fetchAdmins() {
     const cached = localStorage.getItem(`nopalou_offline_admins_${boutiqueId}`)
@@ -26,7 +28,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
 
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/admins`)
-      if (!res.ok) throw new Error('Erreur de chargement')
+      if (!res.ok) throw new Error(t('errors.genericError') || 'Erreur de chargement')
       const data = await res.json()
       setAdmins(data.admins || [])
       localStorage.setItem(`nopalou_offline_admins_${boutiqueId}`, JSON.stringify(data.admins || []))
@@ -53,7 +55,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
         body: JSON.stringify({ email: newEmail })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Erreur lors de l'ajout")
+      if (!res.ok) throw new Error(data.error || t('errors.genericError') || "Erreur lors de l'ajout")
       setNewEmail('')
       await fetchAdmins()
     } catch (err: any) {
@@ -64,7 +66,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
   }
 
   async function handleDelete(adminId: string) {
-    if (!confirm('Voulez-vous vraiment retirer cet administrateur ?')) return
+    if (!confirm(t('shop.confirmRemoveAdmin'))) return
     setError(null)
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/admins/${adminId}`, {
@@ -72,7 +74,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
       })
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error || 'Erreur lors de la suppression')
+        throw new Error(data.error || t('errors.genericError') || 'Erreur lors de la suppression')
       }
       await fetchAdmins()
     } catch (err: any) {
@@ -80,16 +82,16 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
     }
   }
 
-  if (loading && admins.length === 0) return <div style={{ padding: 40, textAlign: 'center' }}>Chargement...</div>
+  if (loading && admins.length === 0) return <div style={{ padding: 40, textAlign: 'center' }}>{t('common.loading')}</div>
 
   return (
     <div style={{ padding: '16px 16px 32px', maxWidth: '100%', boxSizing: 'border-box', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--navy)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
-          Administrateurs Web
+          {t('shop.adminsTitle')}
         </h2>
         <p style={{ color: 'var(--text2)', fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
-          Ajoutez des utilisateurs (par leur adresse email Nopalou) pour qu&apos;ils puissent gérer votre boutique avec vous.
+          {t('shop.adminsDescFull')}
         </p>
       </div>
 
@@ -112,13 +114,13 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
         boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
       }}>
         <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>
-          Inviter un nouvel administrateur
+          {t('shop.inviteAdmin')}
         </label>
         
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', width: '100%' }}>
           <input 
             type="email" 
-            placeholder="Email de l'utilisateur à ajouter (ex: contact@exemple.com)"
+            placeholder={t('shop.inviteEmailPlaceholder')}
             value={newEmail}
             onChange={e => setNewEmail(e.target.value)}
             required
@@ -139,7 +141,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
             style={{ flex: '1 1 140px', color: '#ffffff', whiteSpace: 'nowrap' }}
           >
             <span>{adding ? '⏳' : '👤 +'}</span>
-            <span>{adding ? 'Ajout...' : 'Ajouter un admin'}</span>
+            <span>{adding ? t('common.loading') : t('shop.addAdminBtn')}</span>
           </button>
         </div>
       </form>
@@ -147,7 +149,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
       {/* Liste des Administrateurs (Cards Responsive) */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          Membres de l&apos;équipe ({admins.length})
+          {t('shop.teamMembers')} ({admins.length})
         </h3>
 
         {admins.map(admin => {
@@ -198,11 +200,11 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
                     className="npl-btn npl-btn-danger npl-btn-sm"
                   >
                     <span>🗑️</span>
-                    <span>Retirer</span>
+                    <span>{t('shop.removeAdmin')}</span>
                   </button>
                 ) : (
                   <span style={{ color: 'var(--text3)', fontSize: 12, fontWeight: 600, padding: '4px 8px' }}>
-                    Propriétaire principal
+                    {t('shop.ownerBadge')}
                   </span>
                 )}
               </div>
@@ -212,7 +214,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
 
         {admins.length === 0 && !loading && (
           <div style={{ padding: 24, textAlign: 'center', color: 'var(--text3)', background: '#fff', borderRadius: 12, border: '1px solid var(--border)' }}>
-            Aucun administrateur trouvé.
+            {t('shop.noAdminsFound')}
           </div>
         )}
       </div>

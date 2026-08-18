@@ -2334,17 +2334,17 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
               ⭐ Mettre en avant
             </Link>
             <Link href="/boutique/abonnement" className="btn-premium" style={{ flex: 1, minWidth: 120, padding: '8px 12px', fontSize: 13, color: '#1e3a8a', borderColor: '#bfdbfe', backgroundColor: '#eff6ff', fontWeight: 700, textAlign: 'center', textDecoration: 'none' }}>
-              📖 Abonnements
+              📖 {t('shop.subscription')}
             </Link>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {boutique.mode_fonctionnement !== 'pure_player' && (
               <a href="/boutique/caisse" className="btn-premium btn-premium-success" style={{ flex: 1, minWidth: 120, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }} onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}>
-                <Monitor size={16} /> Caisse POS
+                <Monitor size={16} /> {t('shop.pos')}
               </a>
             )}
             <button onClick={onManage} className="btn-premium btn-premium-primary" style={{ flex: boutique.mode_fonctionnement !== 'pure_player' ? 1.5 : 1, minWidth: 140, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
-              Gérer la boutique →
+              {t('shop.manageShop')} →
             </button>
           </div>
         </div>
@@ -2357,6 +2357,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
 
 function BoutiqueEquipe({ boutiqueId }: { boutiqueId: string }) {
   const [subTab, setSubTab] = useState<'admins' | 'caissiers'>('admins')
+  const { t } = useTranslation()
   return (
     <div>
       <div style={{ display: 'flex', gap: 10, marginBottom: 24, borderBottom: '1px solid #e5e7eb', paddingBottom: 12 }}>
@@ -2369,7 +2370,7 @@ function BoutiqueEquipe({ boutiqueId }: { boutiqueId: string }) {
             color: subTab === 'admins' ? '#C75B00' : '#374151',
           }}
         >
-          👥 Administrateurs
+          👥 {t('shop.admins')}
         </button>
         <button
           onClick={() => setSubTab('caissiers')}
@@ -2380,7 +2381,7 @@ function BoutiqueEquipe({ boutiqueId }: { boutiqueId: string }) {
             color: subTab === 'caissiers' ? '#C75B00' : '#374151',
           }}
         >
-          🏪 Caissiers POS
+          🏪 {t('shop.caissiers')}
         </button>
       </div>
 
@@ -2445,46 +2446,46 @@ function BoutiqueDashboard({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 2px 8px rgba(26,22,18,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>Commandes en attente</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>{t('shop.pendingOrdersCount')}</span>
             <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ClipboardList size={18} style={{ color: 'var(--navy)' }} />
             </div>
           </div>
           <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--navy)' }}>{nbEnAttente}</p>
           <button onClick={() => onNavigate('commandes')} style={{ background: 'none', border: 'none', color: 'var(--navy)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10, textDecoration: 'underline' }}>
-            Voir les commandes →
+            {t('shop.viewOrders')}
           </button>
         </div>
 
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 2px 8px rgba(26,22,18,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>Catalogue Produits</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>{t('shop.catalog')}</span>
             <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ShoppingBag size={18} style={{ color: 'var(--navy)' }} />
             </div>
           </div>
           <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: 'var(--navy)' }}>{loading ? '...' : (produitsCount ?? 0)}</p>
           <button onClick={() => onNavigate('produits')} style={{ background: 'none', border: 'none', color: 'var(--navy)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10, textDecoration: 'underline' }}>
-            Gérer le catalogue →
+            {t('shop.manageCatalogBtn')}
           </button>
         </div>
 
         <div style={{ background: stockAlertsCount && stockAlertsCount > 0 ? '#fffbeb' : 'var(--card)', border: stockAlertsCount && stockAlertsCount > 0 ? '1px solid #fcd34d' : '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 2px 8px rgba(26,22,18,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--text2)' }}>Alertes Stock</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--text2)' }}>{t('shop.stockAlerts')}</span>
             <div style={{ width: 34, height: 34, borderRadius: 10, background: stockAlertsCount && stockAlertsCount > 0 ? '#fef3c7' : 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <AlertTriangle size={18} style={{ color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }} />
             </div>
           </div>
           <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }}>{loading ? '...' : (stockAlertsCount ?? 0)}</p>
           <button onClick={() => onNavigate('fournisseurs')} style={{ background: 'none', border: 'none', color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10, textDecoration: 'underline' }}>
-            Réapprovisionner →
+            {t('shop.restockBtn')}
           </button>
         </div>
 
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 2px 8px rgba(26,22,18,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>Formule Boutique</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>{t('shop.shopTierTitle')}</span>
             <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Star size={18} style={{ color: 'var(--accent)' }} />
             </div>
@@ -2493,14 +2494,14 @@ function BoutiqueDashboard({
             {planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'Taf Taf (1m offert)' : 'Gratuit'}
           </p>
           <Link href="/boutique/abonnement" style={{ color: 'var(--navy)', fontSize: 12.5, fontWeight: 700, textDecoration: 'underline', display: 'inline-block', marginTop: 10 }}>
-            Gérer mon offre →
+            {t('shop.manageTierBtn')}
           </Link>
         </div>
       </div>
 
       {/* Raccourcis d'action rapide — Fond unifié blanc pur & Icônes SVG Tier-1 */}
       <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 20, padding: 22, boxShadow: '0 4px 20px rgba(26,22,18,0.03)' }}>
-        <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 900, color: 'var(--navy)', letterSpacing: '-0.01em' }}>⚡ Raccourcis & Actions Rapides</h3>
+        <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 900, color: 'var(--navy)', letterSpacing: '-0.01em' }}>{t('shop.quickActions')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
           
           <button
@@ -2516,8 +2517,8 @@ function BoutiqueDashboard({
               <Zap size={22} style={{ color: 'var(--price)' }} />
             </div>
             <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Saisie Express Ventes & Dépenses</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Encaissement & sortie 1-clic</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>{t('shop.quickSalesExpenses')}</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>{t('shop.quickSalesExpensesDesc')}</p>
             </div>
           </button>
 
@@ -2534,8 +2535,8 @@ function BoutiqueDashboard({
               <BookOpen size={22} style={{ color: 'var(--red)' }} />
             </div>
             <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Carnet de Dettes Client</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Créances & Relances WhatsApp</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>{t('shop.quickDebtBook')}</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>{t('shop.quickDebtBookDesc')}</p>
             </div>
           </button>
 
@@ -2552,7 +2553,7 @@ function BoutiqueDashboard({
               <PlusCircle size={22} style={{ color: 'var(--accent)' }} />
             </div>
             <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Ajouter un produit</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>{t('shop.newProduct')}</p>
               <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Photos, prix & détails</p>
             </div>
           </button>
@@ -2570,7 +2571,7 @@ function BoutiqueDashboard({
               <FileText size={22} style={{ color: 'var(--navy)' }} />
             </div>
             <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Créer une facture/devis</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>{t('shop.documents')}</p>
               <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Document client PDF</p>
             </div>
           </button>
@@ -2590,8 +2591,8 @@ function BoutiqueDashboard({
                 <ShoppingCart size={22} style={{ color: 'var(--navy)' }} />
               </div>
               <div>
-                <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Ouvrir Caisse POS</p>
-                <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Vente sur place</p>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>{t('shop.quickPos')}</p>
+                <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>{t('shop.quickPosDesc')}</p>
               </div>
             </a>
           )}
@@ -2609,8 +2610,8 @@ function BoutiqueDashboard({
               <Share2 size={22} style={{ color: 'var(--accent)' }} />
             </div>
             <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>Mon QR Code & Lien</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Partager QR & Vitrine digital</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>{t('shop.quickQr')}</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>{t('shop.quickQrDesc')}</p>
             </div>
           </button>
         </div>
@@ -2631,43 +2632,6 @@ interface NavGroup {
   items: NavItem[]
 }
 
-const NAV_GROUPS: NavGroup[] = [
-  {
-    title: 'Ventes & Clients',
-    items: [
-      { key: 'dashboard',   icon: '🏠', label: 'Vue d’ensemble' },
-      { key: 'commandes',   icon: '📋', label: 'Commandes & Livraisons' },
-      { key: 'carnet',      icon: '📒', label: 'Carnet de Dettes & Crédits' },
-      { key: 'documents',   icon: '📄', label: 'Factures & Devis', minPlan: 'pro' },
-    ],
-  },
-  {
-    title: 'Catalogue & Stocks',
-    items: [
-      { key: 'produits',     icon: '🛍️', label: 'Catalogue' },
-      { key: 'fournisseurs', icon: '📦', label: 'Stock & Fournisseurs', minPlan: 'pro' },
-    ],
-  },
-  {
-    title: 'Finance & Rapports',
-    items: [
-      { key: 'compta',      icon: '💰', label: 'Comptabilité', minPlan: 'pro' },
-      { key: 'fiscalite',   icon: '⚖️', label: 'Fiscalité Caisse', minPlan: 'pro' },
-      { key: 'analytics',   icon: '📊', label: 'Analytics', minPlan: 'pro' },
-    ],
-  },
-  {
-    title: 'Paramètres & Équipe',
-    items: [
-      { key: 'equipe',      icon: '👥', label: 'Équipe & Accès', minPlan: 'business' },
-      { key: 'journal',     icon: '📜', label: 'Journal d’Audit', minPlan: 'business' },
-      { key: 'developer',   icon: '🔌', label: 'Portail Développeur API', minPlan: 'business' },
-      { key: 'marketing',   icon: '📣', label: 'Marketing' },
-      { key: 'infos',       icon: '⚙️', label: 'Paramètres' },
-    ],
-  },
-]
-
 function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialTab: initialTabProp }: {
   boutique: Boutique
   planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
@@ -2676,8 +2640,46 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   prixPro: number
   initialTab?: string
 }) {
+  const { t } = useTranslation()
   const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer']
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
+
+  const NAV_GROUPS: NavGroup[] = [
+    {
+      title: t('shop.navGroupSalesClients'),
+      items: [
+        { key: 'dashboard',   icon: '🏠', label: t('shop.overview') },
+        { key: 'commandes',   icon: '📋', label: t('shop.orders') },
+        { key: 'carnet',      icon: '📒', label: t('shop.debts') },
+        { key: 'documents',   icon: '📄', label: t('shop.documents'), minPlan: 'pro' },
+      ],
+    },
+    {
+      title: t('shop.navGroupCatalogStock'),
+      items: [
+        { key: 'produits',     icon: '🛍️', label: t('shop.catalog') },
+        { key: 'fournisseurs', icon: '📦', label: t('shop.suppliers'), minPlan: 'pro' },
+      ],
+    },
+    {
+      title: t('shop.navGroupFinanceReports'),
+      items: [
+        { key: 'compta',      icon: '💰', label: t('shop.accounting'), minPlan: 'pro' },
+        { key: 'fiscalite',   icon: '⚖️', label: t('shop.taxSettings'), minPlan: 'pro' },
+        { key: 'analytics',   icon: '📊', label: t('shop.analytics'), minPlan: 'pro' },
+      ],
+    },
+    {
+      title: t('shop.navGroupSettingsTeam'),
+      items: [
+        { key: 'equipe',      icon: '👥', label: t('shop.team'), minPlan: 'business' },
+        { key: 'journal',     icon: '📜', label: t('shop.auditLog'), minPlan: 'business' },
+        { key: 'developer',   icon: '🔌', label: t('shop.developer'), minPlan: 'business' },
+        { key: 'marketing',   icon: '📣', label: t('shop.marketing') },
+        { key: 'infos',       icon: '⚙️', label: t('shop.settings') },
+      ],
+    },
+  ]
 
   const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
   const [subTabCompta, setSubTabCompta] = useState<'dashboard' | 'express' | 'ventes' | 'depenses'>('express')
@@ -2758,22 +2760,22 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   }, [boutique.id])
 
   const tabInfoMap: Record<ManageTab, { title: string; icon: string; desc: string }> = {
-    dashboard:   { icon: '🏠', title: 'Vue d’ensemble', desc: 'Synthèse de votre activité, commandes et indicateurs clés.' },
-    produits:    { icon: '🛍️', title: 'Catalogue produits', desc: 'Gérez vos produits, stocks et tarifs.' },
-    commandes:   { icon: '📋', title: 'Commandes', desc: 'Commandes reçues — web et WhatsApp. Mettez à jour les statuts.' },
-    carnet:      { icon: '📒', title: 'Carnet de Dettes & Crédits', desc: 'Suivi des créances clients, achats fournisseurs, sélection catalogue et relances WhatsApp.' },
-    compta:      { icon: '💰', title: 'Comptabilité', desc: 'Ventes, dépenses, stock et zones de livraison.' },
-    analytics:   { icon: '📊', title: 'Analytics', desc: 'Vues, clics et performances de votre boutique.' },
-    infos:       { icon: '⚙️', title: 'Paramètres boutique', desc: 'Modifiez les informations, contacts et photos.' },
-    marketing:   { icon: '📣', title: 'Marketing', desc: 'Partagez votre catalogue et augmentez vos ventes.' },
-    equipe:      { icon: '👥', title: 'Gestion de l’Équipe (Admins & Caissiers)', desc: 'Gérez les administrateurs de la boutique et les caissiers du point de vente.' },
-    admins:      { icon: '👥', title: 'Gestion des Admins', desc: 'Gérez les administrateurs.' },
-    caissiers:   { icon: '🏪', title: 'Gestion des Caissiers', desc: 'Gérez les caissiers.' },
-    documents:   { icon: '📄', title: 'Documents Clients (Factures, Devis, Proformas)', desc: 'Visualisez, créez et éditez les factures, devis et proformas de vos clients.' },
-    fournisseurs: { icon: '📦', title: 'Fournisseurs & Réapprovisionnement', desc: 'Gérez vos fournisseurs et vos commandes de réapprovisionnement de stock.' },
-    fiscalite:   { icon: '⚖️', title: 'Configuration Fiscalité & Taxes', desc: 'Configurez le régime de TVA de votre commerce et la fiscalité de la caisse POS.' },
-    journal:     { icon: '📜', title: 'Journal d’Audit & Historique des Actions', desc: 'Consultez l’historique des opérations de la boutique et exportez le registre au format CSV (Excel).' },
-    developer:   { icon: '🔌', title: 'Portail Développeur API & Webhooks', desc: 'Génération de clés API REST et gestion des webhooks événements en direct (Formule Business VIP).' },
+    dashboard:   { icon: '🏠', title: t('shop.overview'), desc: t('shop.overviewDesc') },
+    produits:    { icon: '🛍️', title: t('shop.catalog'), desc: t('shop.catalogDesc') },
+    commandes:   { icon: '📋', title: t('shop.orders'), desc: t('shop.ordersDesc') },
+    carnet:      { icon: '📒', title: t('shop.debts'), desc: t('shop.debtsDesc') },
+    compta:      { icon: '💰', title: t('shop.accounting'), desc: t('shop.accountingDesc') },
+    analytics:   { icon: '📊', title: t('shop.analytics'), desc: t('shop.analyticsDesc') },
+    infos:       { icon: '⚙️', title: t('shop.settings'), desc: t('shop.settingsDesc') },
+    marketing:   { icon: '📣', title: t('shop.marketing'), desc: t('shop.marketingDesc') },
+    equipe:      { icon: '👥', title: t('shop.team'), desc: t('shop.teamDesc') },
+    admins:      { icon: '👥', title: t('shop.admins'), desc: t('shop.adminsDesc') },
+    caissiers:   { icon: '🏪', title: t('shop.caissiers'), desc: t('shop.caissiersDesc') },
+    documents:   { icon: '📄', title: t('shop.documents'), desc: t('shop.documentsDesc') },
+    fournisseurs: { icon: '📦', title: t('shop.suppliers'), desc: t('shop.suppliersDesc') },
+    fiscalite:   { icon: '⚖️', title: t('shop.taxSettings'), desc: t('shop.taxSettingsDesc') },
+    journal:     { icon: '📜', title: t('shop.auditLog'), desc: t('shop.auditLogDesc') },
+    developer:   { icon: '🔌', title: t('shop.developer'), desc: t('shop.developerDesc') },
   }
 
   const currentTabInfo = tabInfoMap[tab] ?? tabInfoMap.dashboard
@@ -2833,7 +2835,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
-            <span>Mon compte</span>
+            <span>{t('shop.myAccountBack')}</span>
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -3474,7 +3476,7 @@ export default function BoutiqueClient({
             transition: 'all 0.15s ease'
           }}>
             <Monitor size={16} style={{ color: '#0f172a' }} />
-            <span>Ouvrir ma Caisse POS</span>
+            <span>{t('shop.openPosBtn')}</span>
           </Link>
 
           {canCreate && (
@@ -3494,7 +3496,7 @@ export default function BoutiqueClient({
               transition: 'all 0.15s ease'
             }}>
               <PlusCircle size={16} />
-              <span>Créer une boutique</span>
+              <span>{t('shop.createShop')}</span>
             </button>
           )}
         </div>
@@ -3522,23 +3524,23 @@ export default function BoutiqueClient({
         }}>
           <span style={{ fontSize: 32, flexShrink: 0 }}>⭐</span>
           <div style={{ flex: 1 }}>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#92400e' }}>Passez en Boutique Pro</p>
-            <p style={{ margin: '2px 0 0', fontSize: 13, color: '#b45309' }}>Catalogue · Comptabilité · Analytics · Placement prioritaire — {prixPro.toLocaleString('fr-FR')} FCFA/mois</p>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#92400e' }}>{t('shop.proBannerTitle')}</p>
+            <p style={{ margin: '2px 0 0', fontSize: 13, color: '#b45309' }}>{t('shop.proBannerDesc')} — {prixPro.toLocaleString('fr-FR')} FCFA/mois</p>
           </div>
-          <span style={{ color: '#C75B00', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>Voir les plans →</span>
+          <span style={{ color: '#C75B00', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{t('shop.viewPlans')}</span>
         </Link>
       )}
 
       {boutiquesList.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '64px 20px', background: '#fff', borderRadius: 16, border: '1px dashed #d1d5db' }}>
           <p style={{ fontSize: 48, marginBottom: 16 }}>🏪</p>
-          <p style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Créez votre boutique en ligne</p>
-          <p style={{ fontSize: 14, color: '#9ca3af', marginBottom: 24 }}>Vendez vos produits directement sur Nopalou.</p>
+          <p style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 8 }}>{t('shop.createShopPrompt')}</p>
+          <p style={{ fontSize: 14, color: '#9ca3af', marginBottom: 24 }}>{t('shop.createShopDesc')}</p>
           <button onClick={() => setMode('create')} style={{
             padding: '12px 28px', background: '#1d4ed8', color: '#fff',
             border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer',
           }}>
-            Créer ma boutique
+            {t('shop.createMyFirstShop')}
           </button>
         </div>
       ) : (

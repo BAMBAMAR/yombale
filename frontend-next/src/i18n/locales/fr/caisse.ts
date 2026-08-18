@@ -39,4 +39,18 @@ export const caisse = {
   // Shortcuts & offline
   offlineAlert: 'Mode hors-ligne actif. Les ventes seront synchronisées dès le retour de la connexion.',
   scannerActive: 'Scanner actif',
+
+  // Tools & menu
+  tools: 'Outils',
+  toolsTitle: 'Outils caisse',
+  reportX: 'Bilan Session (Rapport X)',
+  importBatch: 'Importer Lot',
+  history: 'Historique',
+  debts: 'Carnet',
+  configPins: 'Config PINs',
+  closeZ: 'Clôture Z',
+  session: 'Session',
+  lockPos: 'Verrouiller la caisse',
+  terminalCashier: 'Terminal Caissier',
+  shop: 'Boutique',
 }
