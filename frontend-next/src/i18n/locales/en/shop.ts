@@ -82,6 +82,10 @@ export const shop: LocaleTranslations['shop'] = {
   proBannerDesc: 'Catalog · Accounting · Analytics · Priority placement',
   viewPlans: 'View plans →',
   myAccountBack: 'My account',
+  posPhysicalLink: '🛒 POS Register (Physical) ↗',
+  viewPublicShopLink: 'View public shop ↗',
+  merchantAccount: '👤 Merchant account ↗',
+  purePlayerMode: '⚡ Pure Player Web Mode',
 
   // Admins & Caissiers
   adminsTitle: 'Web Administrators',

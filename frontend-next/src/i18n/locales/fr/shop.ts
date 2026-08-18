@@ -80,6 +80,10 @@ export const shop = {
   proBannerDesc: 'Catalogue · Comptabilité · Analytics · Placement prioritaire',
   viewPlans: 'Voir les plans →',
   myAccountBack: 'Mon compte',
+  posPhysicalLink: '🛒 Caisse POS (Physique) ↗',
+  viewPublicShopLink: 'Voir la boutique ↗',
+  merchantAccount: '👤 Mon compte marchand ↗',
+  purePlayerMode: '⚡ Mode Pure Player Web',
 
   // Admins & Caissiers
   adminsTitle: 'Administrateurs Web',

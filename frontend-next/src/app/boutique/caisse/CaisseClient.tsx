@@ -2500,7 +2500,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             <div style={{ flex: 1, position: 'relative' }}>
               <input
                 type="text"
-                placeholder="Scannez ou tapez le nom / code-barres…"
+                placeholder={t('caisse.searchPlaceholder')}
                 value={recherche}
                 onChange={e => setRecherche(e.target.value)}
                 style={{
@@ -2527,7 +2527,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 }}
               >
                 <Camera size={18} />
-                <span>📷 Scanner Caméra</span>
+                <span>📷 {t('caisse.scannerCamera')}</span>
               </button>
 
               <button
@@ -2541,7 +2541,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 }}
                 title="Connecter la caméra de votre smartphone comme douchette sans fil pour votre PC"
               >
-                <span>📱 Douchette Smartphone</span>
+                <span>📱 {t('caisse.scannerSmartphone')}</span>
               </button>
             </div>
           </div>
@@ -2566,28 +2566,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             {/* Barre déroulante des catégories */}
             <div className="nopalou-scroll-tabs caisse-categories-bar" style={{ display: 'flex', gap: 8, overflowX: 'auto', flex: 1, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
               {[
-                { id: 'tous', label: '✨ Tous les articles' },
+                { id: 'tous', label: t('caisse.allArticles') },
               ...CATEGORIES.filter(c => c.value !== 'mixte').map(c => {
-                const cleanLabels: Record<string, string> = {
-                  smartphones: '📱 Téléphonie',
-                  informatique: '💻 Informatique',
-                  'tv-electro': '📺 Électro',
-                  mode: '👗 Mode',
-                  maison: '🏠 Maison',
-                  'auto-moto': '🚗 Auto-Moto',
-                  jeux: '🎮 Jeux',
-                  alimentation: '🍚 Alimentation',
-                  beaute: '💄 Beauté',
-                  sport: '⚽ Sport',
-                  fournitures: '📚 Fournitures',
-                  quincaillerie: '🧱 Quincaillerie',
-                  'pieces-rechange': '⚙️ Rechanges',
-                  services: '🛠 Services',
-                  autre: '📦 Autre'
-                };
+                const catKey = `caisse.cat_${c.value.replace(/-/g, '_')}` as any;
+                const translated = t(catKey);
                 return {
                   id: c.value,
-                  label: cleanLabels[c.value] || c.label
+                  label: (translated && translated !== catKey) ? translated : c.label
                 };
               })
             ].map(c => (
@@ -2735,7 +2720,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 10, gap: 8, flexShrink: 0 }}>
-            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#0f172a', flexShrink: 0 }}>🛒 Ticket en cours</h2>
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#0f172a', flexShrink: 0 }}>🛒 {t('caisse.currentTicket')}</h2>
 
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
               {panier.length > 0 && (
@@ -2744,12 +2729,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   title="Mettre en attente le ticket pour servir le client suivant"
                   style={{ background: '#ea580c', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
-                  ⏸️ En Attente
+                  ⏸️ {t('caisse.onHold')}
                 </button>
               )}
               {panier.length > 0 && (
                 <button onClick={viderPanier} style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 11, fontWeight: 700, cursor: 'pointer', padding: '2px 4px', whiteSpace: 'nowrap' }}>
-                  Vider
+                  {t('caisse.clear')}
                 </button>
               )}
             </div>
@@ -2793,8 +2778,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   </div>
                 )}
                 <span style={{ fontSize: 36, display: 'block', marginBottom: 4 }}>🧾</span>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--pos-text2)' }}>Le ticket de caisse est vide</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11 }}>Scannez un code-barres ou cliquez sur un article.</p>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--pos-text2)' }}>{t('caisse.emptyTicketTitle')}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11 }}>{t('caisse.emptyTicketDesc')}</p>
               </div>
             ) : (
               panier.map(item => (
@@ -2829,7 +2814,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           {/* Mode de Paiement */}
           <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
-              <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', flexShrink: 0 }}>MODE DE RÈGLEMENT</label>
+              <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', flexShrink: 0 }}>{t('caisse.paymentModeTitle')}</label>
               {panier.length > 0 && (
                 <button
                   type="button"
@@ -2842,19 +2827,19 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   }}
                   style={{ background: 'none', border: 'none', color: '#C75B00', fontSize: 10, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
-                  🏷️ Remise ({remisePourcentage}%)
+                  🏷️ {t('caisse.discount')} ({remisePourcentage}%)
                 </button>
               )}
             </div>
 
             <div className="paiement-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
               {[
-                { id: 'especes', label: '💵', text: 'Espèces' },
-                { id: 'wave', label: '🌊', text: 'Wave' },
-                { id: 'orange_money', label: '🍊', text: 'Orange Money' },
-                { id: 'carte', label: '💳', text: 'Carte' },
-                { id: 'mixte', label: '🔀', text: 'Mixte' },
-                { id: 'credit_client', label: '📝', text: 'Crédit' },
+                { id: 'especes', label: '💵', text: t('caisse.cash') },
+                { id: 'wave', label: '🌊', text: t('caisse.wave') },
+                { id: 'orange_money', label: '🍊', text: t('caisse.orangeMoney') },
+                { id: 'carte', label: '💳', text: t('caisse.card') },
+                { id: 'mixte', label: '🔀', text: t('caisse.mixed') },
+                { id: 'credit_client', label: '📝', text: t('caisse.credit') },
               ].map(m => (
                 <button
                   key={m.id}
@@ -2889,7 +2874,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   style={{ flex: 1, padding: '8px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: 13, fontWeight: 700 }}
                 />
                 <div style={{ fontSize: 12, textAlign: 'right' }}>
-                  <span style={{ color: '#64748b', display: 'block' }}>Monnaie à rendre:</span>
+                  <span style={{ color: '#64748b', display: 'block' }}>{t('caisse.changeToReturn')}</span>
                   <span style={{ fontWeight: 900, color: '#16a34a', fontSize: 14 }}>{fcfa(monnaieARendre)}</span>
                 </div>
               </div>
@@ -2992,11 +2977,11 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               {regimeFiscal === 'reel' && !estExonereClient && (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Total HT</span>
+                    <span>{t('caisse.totalHT')}</span>
                     <span>{fcfa(totalHT)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>TVA ({tvaDefaut}%)</span>
+                    <span>{t('caisse.tax')} ({tvaDefaut}%)</span>
                     <span>{fcfa(totalTVA)}</span>
                   </div>
                 </>
@@ -3014,7 +2999,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               )}
               {remisePourcentage > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#dc2626' }}>
-                  <span>Remise ({remisePourcentage}%)</span>
+                  <span>{t('caisse.discount')} ({remisePourcentage}%)</span>
                   <span>-{fcfa(montantRemise)}</span>
                 </div>
               )}
@@ -3026,19 +3011,19 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               {/* Bannière Total Panier — Grand Format */}
               {panier.length > 0 && (
                 <div className="pos-total-banner" style={{ marginBottom: 10 }}>
-                  <span className="pos-total-banner-label">TOTAL À ENCAISSER</span>
+                  <span className="pos-total-banner-label">{t('caisse.totalToCollect')}</span>
                   <span className="pos-total-banner-amount">{fcfa(netAPayer)}</span>
                   <div className="pos-total-banner-details">
-                    <span>{panier.reduce((s, i) => s + i.quantite, 0)} article{panier.reduce((s, i) => s + i.quantite, 0) > 1 ? 's' : ''}</span>
-                    {remisePourcentage > 0 && <span>Remise {remisePourcentage}%</span>}
-                    {regimeFiscal === 'reel' && !estExonereClient && totalTVA > 0 && <span>TVA {tvaDefaut}% incluse</span>}
+                    <span>{panier.reduce((s, i) => s + i.quantite, 0)} {panier.reduce((s, i) => s + i.quantite, 0) > 1 ? t('caisse.articlesPlural') : t('caisse.articleSingle')}</span>
+                    {remisePourcentage > 0 && <span>{t('caisse.discount')} {remisePourcentage}%</span>}
+                    {regimeFiscal === 'reel' && !estExonereClient && totalTVA > 0 && <span>{t('caisse.tax')} {tvaDefaut}% {t('caisse.vatIncluded')}</span>}
                   </div>
                 </div>
               )}
 
               {panier.length === 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, padding: '0 4px' }}>
-                  <span style={{ fontSize: 13, color: 'var(--pos-text3)', fontWeight: 600 }}>Net à payer</span>
+                  <span style={{ fontSize: 13, color: 'var(--pos-text3)', fontWeight: 600 }}>{t('caisse.total')}</span>
                   <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--pos-text3)' }}>0 FCFA</span>
                 </div>
               )}
@@ -3051,7 +3036,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   className="pos-btn pos-btn-md pos-btn-ghost"
                   style={{ flex: 1, fontWeight: 700, fontSize: 12, opacity: netAPayer === 0 ? 0.4 : 1 }}
                 >
-                  📄 DEVIS
+                  📄 {t('caisse.quoteBtn')}
                 </button>
                 <button
                   onClick={() => enregistrerDocumentCaisse('proforma')}
@@ -3059,7 +3044,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   className="pos-btn pos-btn-md pos-btn-ghost"
                   style={{ flex: 1, fontWeight: 700, fontSize: 12, opacity: netAPayer === 0 ? 0.4 : 1 }}
                 >
-                  📄 PROFORMA
+                  📄 {t('caisse.proformaBtn')}
                 </button>
               </div>
 
@@ -3073,14 +3058,14 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   {encaissementEnCours && netAPayer > 0 ? (
                     <>
                       <span className="pos-spinner" />
-                      <span>Encaissement en cours...</span>
+                      <span>{t('common.loading')}</span>
                     </>
                   ) : (
                     <>
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M5 12h14M13 6l6 6-6 6"/>
                       </svg>
-                      ENCAISSER
+                      {t('caisse.checkoutAction')}
                       {netAPayer > 0 && <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginLeft: 2 }}>· {fcfa(netAPayer)}</span>}
                     </>
                   )}

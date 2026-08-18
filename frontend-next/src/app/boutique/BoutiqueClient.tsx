@@ -3004,21 +3004,21 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
         <div style={{ padding: '12px 8px', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 6 }}>
           {boutique.mode_fonctionnement === 'pure_player' ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', fontSize: 12, color: '#C75B00', borderRadius: 6, fontWeight: 800, background: '#fff7ed', border: '1px solid #ffedd5' }}>
-              <span>⚡ Mode Pure Player Web</span>
+              <span>{t('shop.purePlayerMode')}</span>
             </div>
           ) : isAllowed('pro') ? (
             <a href="/boutique/caisse"
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', fontSize: 12, color: '#16a34a', textDecoration: 'none', borderRadius: 6, fontWeight: 700, background: '#f0fdf4' }}
               onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
             >
-              <span>🛒 Caisse POS (Physique) ↗</span>
+              <span>{t('shop.posPhysicalLink')}</span>
             </a>
           ) : (
             <a href="/boutique/abonnement"
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', fontSize: 12, color: '#475569', textDecoration: 'none', borderRadius: 6, fontWeight: 700, background: '#f8fafc', border: '1px dashed #cbd5e1' }}
               title="La Caisse POS (Physique) nécessite la formule Pro ou Business"
             >
-              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>🛒 Caisse POS (Physique)</span>
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('caisse.posTitle')}</span>
               <span style={{ fontSize: 9, background: '#C75B00', color: '#fff', padding: '2px 6px', borderRadius: 4, fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 4 }}>
                 🔒 Pro
               </span>
@@ -3026,11 +3026,11 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           )}
           <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer"
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#6b7280', textDecoration: 'none', borderRadius: 6 }}>
-            Voir la boutique ↗
+            {t('shop.viewPublicShopLink')}
           </a>
           <a href="/compte"
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#1e3a5f', textDecoration: 'none', borderRadius: 6, fontWeight: 700, background: '#f1f5f9' }}>
-            👤 Mon compte marchand ↗
+            {t('shop.merchantAccount')}
           </a>
           <div style={{ paddingTop: 8, borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'center' }}>
             <LanguageSelector variant="compact" />

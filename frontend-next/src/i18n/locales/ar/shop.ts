@@ -82,6 +82,10 @@ export const shop: LocaleTranslations['shop'] = {
   proBannerDesc: 'كتالوج · محاسبة · إحصائيات · ظهور مميز في المقدمة',
   viewPlans: 'عرض الباقات ←',
   myAccountBack: 'حسابي',
+  posPhysicalLink: '🛒 كاشير نقطة البيع (POS) ↗',
+  viewPublicShopLink: 'عرض المتجر ↗',
+  merchantAccount: '👤 حساب التاجر ↗',
+  purePlayerMode: '⚡ نمط التجارة الإلكترونية عبر الويب',
 
   // Admins & Caissiers
   adminsTitle: 'مسؤولو الويب',
