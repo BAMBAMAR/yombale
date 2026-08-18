@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
+import { useTranslation } from '@/i18n/context'
 
 type FavType = 'produit' | 'immo' | 'telecom' | 'annonce' | 'boutique_produit'
 
@@ -96,6 +97,7 @@ export default function FavorisClient() {
   const [entries, setEntries] = useState<FavEntry[]>([])
   const [items, setItems]     = useState<FavItem[]>([])
   const [loading, setLoading] = useState(true)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const stored = lireFavs()
@@ -129,7 +131,7 @@ export default function FavorisClient() {
     return (
       <div className="empty-state">
         <span style={{ fontSize: 36, opacity: .4 }}>♥</span>
-        <p>Chargement…</p>
+        <p>{t('common.loading')}</p>
       </div>
     )
   }
@@ -138,12 +140,12 @@ export default function FavorisClient() {
     return (
       <div className="empty-state">
         <span style={{ fontSize: 48 }}>♥</span>
-        <p>Vous n&apos;avez pas encore de favoris.</p>
+        <p>{t('account.favoritesEmpty')}</p>
         <p style={{ fontSize: 13, color: 'var(--text3)' }}>
-          Cliquez sur ♥ sur un produit, une annonce, un bien immo ou un forfait pour l&apos;ajouter ici.
+          {t('account.favoritesEmptyDesc')}
         </p>
         <Link href="/" className="budget-pill active" style={{ marginTop: 12 }}>
-          Parcourir les produits
+          {t('account.browseProducts')}
         </Link>
       </div>
     )
@@ -160,19 +162,19 @@ export default function FavorisClient() {
             {it.souscategorie && <span className="fav-marque">{it.souscategorie}</span>}
             <h3 className="fav-nom">{it.nom}</h3>
             <p className="fav-prix">
-              {it.prix ? fcfa(it.prix) : 'Prix non disponible'}
+              {it.prix ? fcfa(it.prix) : '—'}
             </p>
           </div>
           <div className="fav-card-actions">
             <Link href={it.href} className="fav-btn-voir">
-              Voir →
+              {t('account.viewItem')}
             </Link>
             <button
               onClick={() => removeFav(it.id, it.type)}
               className="fav-btn-remove"
-              title="Retirer des favoris"
+              title={t('account.removeFavorite')}
             >
-              ♥ Retirer
+              {t('account.removeFavorite')}
             </button>
           </div>
         </div>

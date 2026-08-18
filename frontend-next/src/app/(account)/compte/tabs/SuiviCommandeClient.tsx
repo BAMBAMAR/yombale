@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
+import { useTranslation } from '@/i18n/context'
+import { fcfa } from '@/lib/format'
 
 interface CommandeSuivie {
   id: string
@@ -20,6 +22,7 @@ export default function SuiviCommandeClient() {
   const [loading, setLoading] = useState(false)
   const [commandes, setCommandes] = useState<CommandeSuivie[]>([])
   const [error, setError] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
@@ -36,16 +39,16 @@ export default function SuiviCommandeClient() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || 'Aucune commande trouvée pour ces critères.')
+        setError(data.error || t('account.trackOrderNotFound'))
       } else {
         setCommandes(data.commandes || [])
       }
     } catch {
-      setError('Impossible d\'effectuer la recherche. Vérifiez votre connexion.')
+      setError(t('errors.networkError'))
     } finally {
       setLoading(false)
     }
-  }, [backendUrl])
+  }, [backendUrl, t])
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -60,16 +63,14 @@ export default function SuiviCommandeClient() {
     return 1
   }
 
-  const fcfa = (v: number) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(v) + ' FCFA'
-
   return (
     <div style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', marginBottom: 24 }}>
         <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1C2B4A', margin: '0 0 8px' }}>
-          📦 Suivre ma Commande
+          📦 {t('account.trackOrderTitle')}
         </h2>
         <p style={{ fontSize: 14, color: '#64748b', margin: '0 0 20px', lineHeight: 1.5 }}>
-          Entrez votre numéro de référence (ex: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>CMD-2026-XXXX</code>) ou votre numéro de téléphone client.
+          {t('account.trackOrderDesc')}
         </p>
 
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', width: '100%' }}>
@@ -77,7 +78,7 @@ export default function SuiviCommandeClient() {
             type="text"
             value={refInput}
             onChange={e => setRefInput(e.target.value)}
-            placeholder="N° de référence ou Téléphone..."
+            placeholder={t('account.trackOrderPlaceholder')}
             style={{
               flex: '1 1 220px',
               width: '100%',
@@ -96,7 +97,7 @@ export default function SuiviCommandeClient() {
             style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 22px' }}
           >
             <span>{loading ? '⏳' : '🔍'}</span>
-            <span>{loading ? 'Recherche...' : 'Rechercher'}</span>
+            <span>{loading ? t('account.trackOrderSearching') : t('account.trackOrderSearch')}</span>
           </button>
         </form>
 
@@ -124,10 +125,10 @@ export default function SuiviCommandeClient() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '20px 0', textAlign: 'center' }}>
                   {[
-                    { step: 1, label: 'En attente', icon: '📋' },
-                    { step: 2, label: 'En préparation', icon: '📦' },
-                    { step: 3, label: 'En livraison', icon: '🚚' },
-                    { step: 4, label: 'Livrée', icon: '✅' },
+                    { step: 1, label: t('account.stepPending'), icon: '📋' },
+                    { step: 2, label: t('account.stepPreparing'), icon: '📦' },
+                    { step: 3, label: t('account.stepDelivering'), icon: '🚚' },
+                    { step: 4, label: t('account.stepDelivered'), icon: '✅' },
                   ].map(st => {
                     const isActive = currentStep >= st.step
                     return (
@@ -156,7 +157,7 @@ export default function SuiviCommandeClient() {
                       rel="noopener noreferrer"
                       style={{ color: '#16a34a', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
                     >
-                      💬 Contacter le vendeur / livreur
+                      {t('account.contactSeller')}
                     </a>
                   )}
                 </div>

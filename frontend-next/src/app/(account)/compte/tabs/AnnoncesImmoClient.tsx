@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import DeleteImmoButton from '../../mes-annonces-immo/DeleteImmoButton'
 import ExternalImg from '@/components/ExternalImg'
+import { useTranslation } from '@/i18n/context'
 
 interface AnnonceImmo {
   id: string
@@ -30,6 +31,7 @@ export default function AnnoncesImmoClient({ created, updated }: { created?: boo
   const [annonces, setAnnonces] = useState<AnnonceImmo[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState(false)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const cacheKey = 'nopalou_offline_immo_mine'
@@ -61,39 +63,39 @@ export default function AnnoncesImmoClient({ created, updated }: { created?: boo
     <div>
       <div className="mes-immo-header">
         <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-          {annonces.length} annonce{annonces.length !== 1 ? 's' : ''}
+          {annonces.length} {t('account.adsCount')}
         </p>
         <Link href="/deposer-immo" className="deposer-btn">
-          + Publier un bien
+          + {t('account.navPublishRealEstate')}
         </Link>
       </div>
 
-      {loading && annonces.length === 0 && <p style={{ padding: 20 }}>Chargement de vos annonces immo...</p>}
+      {loading && annonces.length === 0 && <p style={{ padding: 20 }}>{t('common.loading')}</p>}
 
       {created && (
         <div style={{ background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 8, padding: '12px 16px', marginBottom: 24, fontSize: 14, color: '#065F46' }}>
-          ✅ Votre annonce a été soumise — elle sera visible après validation (sous 24h).
+          {t('account.immoSubmittedSuccess')}
         </div>
       )}
 
       {updated && (
         <div style={{ background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 8, padding: '12px 16px', marginBottom: 24, fontSize: 14, color: '#065F46' }}>
-          ✅ Annonce mise à jour — en cours de revalidation.
+          {t('account.immoUpdatedSuccess')}
         </div>
       )}
 
       {fetchError && (
         <div style={{ background: '#FEE2E2', border: '1px solid #FCA5A5', borderRadius: 8, padding: '12px 16px', marginBottom: 24, fontSize: 14, color: '#7F1D1D' }}>
-          ⚠ Impossible de charger vos annonces. Réessayez.
+          {t('account.immoErrorLoading')}
         </div>
       )}
 
       {annonces.length === 0 && !fetchError && !loading ? (
         <div className="empty-state">
           <span style={{ fontSize: 48 }}>🏘</span>
-          <p>Vous n'avez pas encore publié d'annonce immobilière.</p>
+          <p>{t('account.noRealEstate')}</p>
           <Link href="/deposer-immo" className="budget-pill active" style={{ marginTop: 12 }}>
-            Publier mon premier bien
+            {t('account.publishFirstRealEstate')}
           </Link>
         </div>
       ) : (
@@ -109,18 +111,18 @@ export default function AnnoncesImmoClient({ created, updated }: { created?: boo
                   ) : (
                     <div className="mes-immo-img-placeholder">{icon}</div>
                   )}
-                  {!isActive && <span className="mes-immo-badge pending">En attente</span>}
+                  {!isActive && <span className="mes-immo-badge pending">{t('account.adStatusPending')}</span>}
                 </div>
                 <div className="mes-immo-content">
                   <h3 className="mes-immo-title">{a.titre}</h3>
                   <p className="mes-immo-details">
-                    {a.type_bien} {a.transaction === 'vente' ? '(Vente)' : '(Location)'}
+                    {a.type_bien} {a.transaction === 'vente' ? t('account.immoTypeSale') : t('account.immoTypeRent')}
                   </p>
                   <p className="mes-immo-loc">{[a.quartier, a.ville].filter(Boolean).join(', ')}</p>
                   <p className="mes-immo-price">{fcfa(a.prix)}</p>
                   
                   <div className="mes-immo-actions">
-                    <Link href={`/modifier-immo/${a.id}`} className="mes-immo-btn">Modifier</Link>
+                    <Link href={`/modifier-immo/${a.id}`} className="mes-immo-btn">{t('account.adActionEdit')}</Link>
                     <DeleteImmoButton id={a.id} />
                   </div>
                 </div>

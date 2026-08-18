@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { deleteAnnonce } from '@/app/actions/annonces'
 import { cloudinaryHQ } from '@/lib/cloudinary'
+import { useTranslation } from '@/i18n/context'
+import { fcfa } from '@/lib/format'
 
 interface Annonce {
   id: string
@@ -31,16 +33,12 @@ const CAT_LABELS: Record<string, string> = {
   services: '🛠 Services',
 }
 
-function fcfa(n: number | null) {
-  if (n == null) return '—'
-  return new Intl.NumberFormat('fr-FR').format(n) + ' FCFA'
-}
-
 function StatutBadge({ a }: { a: Annonce }) {
-  if (a.rejete)            return <span className="annonce-statut annonce-statut--rejete">Rejetée</span>
-  if (a.actif)             return <span className="annonce-statut annonce-statut--active">Publiée ✓</span>
-  if (a.payee && !a.actif) return <span className="annonce-statut annonce-statut--moderation">En modération</span>
-  return <span className="annonce-statut annonce-statut--attente">En attente</span>
+  const { t } = useTranslation()
+  if (a.rejete)            return <span className="annonce-statut annonce-statut--rejete">{t('account.adStatusRejected')}</span>
+  if (a.actif)             return <span className="annonce-statut annonce-statut--active">{t('account.adStatusPublished')}</span>
+  if (a.payee && !a.actif) return <span className="annonce-statut annonce-statut--moderation">{t('account.adStatusModeration')}</span>
+  return <span className="annonce-statut annonce-statut--attente">{t('account.adStatusPending')}</span>
 }
 
 function AnnonceCard({
@@ -63,10 +61,10 @@ function AnnonceCard({
   const [deleteErr, setDeleteErr]  = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
-
+  const { t } = useTranslation()
 
   function handleDelete() {
-    if (!confirm('Supprimer cette annonce définitivement ?')) return
+    if (!confirm(t('account.adConfirmDelete'))) return
     setDeleteErr(null)
     startTransition(async () => {
       const res = await deleteAnnonce(annonce.id)
@@ -74,8 +72,6 @@ function AnnonceCard({
       else router.refresh()
     })
   }
-
-
 
   const needsPayment = !annonce.payee && !annonce.actif && !annonce.rejete
   const photo = annonce.photos?.[0] ?? null
@@ -113,15 +109,15 @@ function AnnonceCard({
         <div className="annonce-card-actions">
           {needsPayment && (
             <Link href={`/payer-annonce/${annonce.id}`} className="annonce-action-btn annonce-action-btn--pay">
-              💳 Activer ({prixAnnonce.toLocaleString('fr-FR')} FCFA)
+              {t('account.adActionActivate')} ({fcfa(prixAnnonce)})
             </Link>
           )}
           <Link href={`/mes-annonces/${annonce.id}/modifier`} className="annonce-action-btn annonce-action-btn--edit">
-            Modifier
+            {t('account.adActionEdit')}
           </Link>
           {annonce.actif && (
             <Link href={`/payer-boost/${annonce.id}`} className="annonce-action-btn">
-              🚀 Booster 7j
+              {t('account.adActionBoost')}
             </Link>
           )}
           <button
@@ -129,11 +125,9 @@ function AnnonceCard({
             disabled={isPending}
             className="annonce-action-btn annonce-action-btn--delete"
           >
-            {isPending ? '…' : 'Supprimer'}
+            {isPending ? '…' : t('account.adActionDelete')}
           </button>
         </div>
-
-
       </div>
     </div>
   )
@@ -160,6 +154,7 @@ export default function AnnoncesClient({
 }) {
   const [annonces, setAnnonces] = useState<Annonce[]>([])
   const [loading, setLoading] = useState(true)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const cacheKey = `nopalou_offline_annonces_${userId}`
@@ -189,33 +184,33 @@ export default function AnnoncesClient({
 
   return (
     <div>
-      {loading && annonces.length === 0 && <p style={{ padding: 20 }}>Chargement de vos annonces...</p>}
+      {loading && annonces.length === 0 && <p style={{ padding: 20 }}>{t('common.loading')}</p>}
       {created && (
         <div className="annonce-created-banner">
-          ✅ Annonce créée avec succès !
+          {t('account.adCreatedSuccess')}
         </div>
       )}
       {updated && (
         <div className="annonce-created-banner">
-          ✅ Annonce mise à jour — en cours de modération.
+          {t('account.adUpdatedSuccess')}
         </div>
       )}
 
       <div className="mes-annonces-header">
         <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-          {annonces.length} annonce{annonces.length !== 1 ? 's' : ''}
+          {annonces.length} {t('account.adsCount')}
         </p>
         <Link href="/deposer-annonce" className="annonce-new-btn">
-          + Publier une annonce
+          + {t('account.navPublishAd')}
         </Link>
       </div>
 
       {annonces.length === 0 ? (
         <div className="empty-state" style={{ marginTop: 32 }}>
           <span style={{ fontSize: 48 }}>📋</span>
-          <p>Vous n&apos;avez pas encore d&apos;annonces.</p>
+          <p>{t('account.noAds')}</p>
           <Link href="/deposer-annonce" className="budget-pill active" style={{ marginTop: 8 }}>
-            Publier ma première annonce
+            {t('account.publishFirstAd')}
           </Link>
         </div>
       ) : (

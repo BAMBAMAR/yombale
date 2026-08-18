@@ -2,24 +2,7 @@
 import { useState, useTransition, useEffect } from 'react'
 import { devenirApporteur, type StatsApporteur } from './actions'
 import { fcfa } from '@/lib/format'
-
-const ETAPES = [
-  {
-    titre: 'Partagez votre lien',
-    detail: 'Envoyez votre lien unique par WhatsApp, SMS ou en personne à un commerçant, une agence immo ou un vendeur de votre réseau.',
-  },
-  {
-    titre: 'Il crée sa boutique',
-    detail: 'Le commerçant clique sur votre lien et crée sa boutique Nopalou — votre code est enregistré automatiquement, sans rien à faire de votre côté.',
-  },
-  {
-    titre: 'Vous touchez votre commission',
-    detail: 'Dès qu\'il passe en abonnement Pro ou Business payant, vous touchez un pourcentage chaque mois, tant qu\'il reste abonné.',
-  },
-]
-
-const MESSAGE_PARTAGE = (lien: string) =>
-  `Salut ! Je te recommande Nopalou, le comparateur de prix N°1 au Sénégal. Tu peux créer ta boutique en ligne gratuitement (30 jours d'essai Pro offerts) et recevoir tes commandes directement sur WhatsApp. Crée ta boutique ici : ${lien}`
+import { useTranslation } from '@/i18n/context'
 
 export default function ApporteurClient({ statsInitiales }: { statsInitiales?: StatsApporteur | null }) {
   const [stats, setStats] = useState(statsInitiales || null)
@@ -27,6 +10,25 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
   const [isPending, startTransition] = useTransition()
   const [erreur, setErreur] = useState<string | null>(null)
   const [copie, setCopie] = useState(false)
+  const { t } = useTranslation()
+
+  const ETAPES = [
+    {
+      titre: t('account.step1Title'),
+      detail: t('account.step1Detail'),
+    },
+    {
+      titre: t('account.step2Title'),
+      detail: t('account.step2Detail'),
+    },
+    {
+      titre: t('account.step3Title'),
+      detail: t('account.step3Detail'),
+    },
+  ]
+
+  const MESSAGE_PARTAGE = (lien: string) =>
+    `Salut ! Je te recommande Nopalou, le comparateur de prix N°1 au Sénégal. Tu peux créer ta boutique en ligne gratuitement (30 jours d'essai Pro offerts) et recevoir tes commandes directement sur WhatsApp. Crée ta boutique ici : ${lien}`
 
   useEffect(() => {
     if (statsInitiales !== undefined) return
@@ -56,14 +58,14 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
   }
 
   if (loading && !stats) {
-    return <p style={{ padding: 20 }}>Chargement de l'espace Apporteur d'Affaires...</p>
+    return <p style={{ padding: 20 }}>{t('common.loading')}</p>
   }
 
   if (!stats) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Comment ça marche</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{t('account.howItWorks')}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {ETAPES.map((e, i) => (
               <div key={e.titre} style={{
@@ -95,7 +97,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
           style={{ padding: '12px 32px', background: isPending ? '#9ca3af' : '#C75B00', color: '#fff',
             border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: isPending ? 'not-allowed' : 'pointer' }}
         >
-          {isPending ? 'Activation...' : 'Devenir apporteur d\'affaires'}
+          {isPending ? t('account.activating') : t('account.becomeApporteur')}
         </button>
       </div>
     )
@@ -116,10 +118,10 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       {/* Code + lien + actions de partage */}
       <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 20 }}>
-        <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 6px' }}>Votre code apporteur</p>
+        <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 6px' }}>{t('account.apporteurCode')}</p>
         <p style={{ fontSize: 24, fontWeight: 900, color: '#C75B00', margin: '0 0 16px' }}>{stats.code_apporteur}</p>
 
-        <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 6px' }}>Lien à partager</p>
+        <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 6px' }}>{t('account.shareLink')}</p>
         <code style={{ fontSize: 13, background: '#F8FAFC', padding: '8px 12px', borderRadius: 6, display: 'block', marginBottom: 12, wordBreak: 'break-all' }}>
           {lien}
         </code>
@@ -130,7 +132,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
             style={{ padding: '10px 18px', background: copie ? '#16a34a' : '#1C2B4A', color: '#fff',
               border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
           >
-            {copie ? '✓ Copié' : '📋 Copier le lien'}
+            {copie ? t('account.copied') : t('account.copyLink')}
           </button>
           <a
             href={urlWhatsApp}
@@ -140,7 +142,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
               border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
               display: 'inline-flex', alignItems: 'center' }}
           >
-            💬 Partager sur WhatsApp
+            {t('account.shareWhatsApp')}
           </a>
           <a
             href="/assets/apporteur-affaires"
@@ -150,7 +152,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
               border: '1px solid #C75B00', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
               display: 'inline-flex', alignItems: 'center' }}
           >
-            🖼 Télécharger le visuel
+            {t('account.downloadVisual')}
           </a>
           <a
             href="/assets/poster-ecosysteme"
@@ -160,7 +162,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
               border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
               display: 'inline-flex', alignItems: 'center' }}
           >
-            ⭐ Poster Écosystème Tout-en-Un (HD)
+            {t('account.posterEcosystem')}
           </a>
           <a
             href="/brochure-apporteur.pdf"
@@ -170,31 +172,31 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
               border: '1px solid #1C2B4A', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
               display: 'inline-flex', alignItems: 'center' }}
           >
-            📄 Télécharger la brochure PDF (13 p.)
+            {t('account.downloadBrochure')}
           </a>
         </div>
 
         <p style={{ fontSize: 12, color: '#64748B', margin: '16px 0 8px' }}>
-          Visuels par palier d&apos;abonnement, à partager avec le commerçant que vous démarchez :
+          {t('account.tierVisualsPrompt')}
         </p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <a href="/assets/palier/gratuit/carre" target="_blank" rel="noopener noreferrer" style={{
             padding: '8px 14px', background: '#fff', color: '#64748B', border: '1px solid #E2E8F0',
             borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none',
           }}>
-            Gratuit →
+            {t('account.tierFree')}
           </a>
           <a href="/assets/palier/pro/carre" target="_blank" rel="noopener noreferrer" style={{
             padding: '8px 14px', background: '#fff', color: '#C75B00', border: '1px solid #C75B00',
             borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none',
           }}>
-            Pro →
+            {t('account.tierPro')}
           </a>
           <a href="/assets/palier/business/carre" target="_blank" rel="noopener noreferrer" style={{
             padding: '8px 14px', background: '#fff', color: '#1e3a5f', border: '1px solid #1e3a5f',
             borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none',
           }}>
-            Business →
+            {t('account.tierBusiness')}
           </a>
         </div>
       </div>
@@ -202,22 +204,22 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 16 }}>
-          <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 4px' }}>Commission due</p>
+          <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 4px' }}>{t('account.commissionDue')}</p>
           <p style={{ fontSize: 20, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>{fcfa(stats.total_du)}</p>
         </div>
         <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 16 }}>
-          <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 4px' }}>Déjà payé</p>
+          <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 4px' }}>{t('account.alreadyPaid')}</p>
           <p style={{ fontSize: 20, fontWeight: 800, color: '#16a34a', margin: 0 }}>{fcfa(stats.total_paye)}</p>
         </div>
       </div>
 
       <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>
-        Taux de commission actuel : {stats.taux_commission}% · Règlement à partir de {fcfa(stats.seuil_paiement)} cumulés
+        {t('account.commissionRate')} {stats.taux_commission}% · {t('account.payoutThreshold')} {fcfa(stats.seuil_paiement)} {t('account.cumulated')}
       </p>
 
       {/* Comment ça marche */}
       <div>
-        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Comment ça marche</h2>
+        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{t('account.howItWorks')}</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {ETAPES.map((e, i) => (
             <div key={e.titre} style={{
@@ -240,35 +242,31 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
 
       {/* Argumentaire simplifié */}
       <div>
-        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Quoi dire à un commerçant</h2>
+        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>{t('account.pitchTitle')}</h2>
         <div style={{
           border: '1px solid #E2E8F0', borderRadius: 10, padding: '18px 20px', background: '#F8FAFC',
         }}>
           <p style={{ fontSize: 13, color: '#1C2B4A', margin: 0, lineHeight: 1.8 }}>
-            « Je te recommande Nopalou — ça te permet d&apos;avoir une boutique en ligne et de recevoir tes
-            commandes directement sur WhatsApp, l&apos;outil que tu utilises déjà. Le premier mois est
-            gratuit, sans engagement, et il n&apos;y a pas de commission cachée. Je peux t&apos;aider à la
-            créer maintenant si tu veux, ça prend 5 minutes. »
+            {t('account.pitchDetail')}
           </p>
         </div>
         <p style={{ fontSize: 12, color: '#94A3B8', marginTop: 10 }}>
-          Un argumentaire plus complet et un script de présentation détaillé sont disponibles auprès de
-          l&apos;équipe Nopalou si vous démarchez régulièrement.
+          {t('account.pitchNote')}
         </p>
       </div>
 
       {/* Boutiques recrutées */}
       <div>
-        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Boutiques recrutées ({stats.boutiques.length})</h2>
+        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>{t('account.recruitedShops')} ({stats.boutiques.length})</h2>
         {stats.boutiques.length === 0 ? (
-          <p style={{ fontSize: 14, color: '#94A3B8' }}>Aucune boutique recrutée pour l&apos;instant.</p>
+          <p style={{ fontSize: 14, color: '#94A3B8' }}>{t('account.noRecruitedShops')}</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {stats.boutiques.map(b => (
               <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#F8FAFC', borderRadius: 8, fontSize: 14 }}>
                 <span>{b.nom}</span>
                 <span style={{ color: b.abonnement_statut === 'actif' ? '#16a34a' : '#94A3B8' }}>
-                  {b.plan ? `${b.plan} — ${b.abonnement_statut ?? 'inactif'}` : 'Sans abonnement'}
+                  {b.plan ? `${b.plan} — ${b.abonnement_statut ?? 'inactif'}` : t('account.noSubscription')}
                 </span>
               </div>
             ))}

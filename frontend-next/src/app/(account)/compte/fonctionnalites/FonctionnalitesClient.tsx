@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { FONCTIONNALITES_PLATEFORME, PALIERS_BOUTIQUE } from '@/lib/fonctionnalites-data'
+import { useTranslation } from '@/i18n/context'
+import { fcfa } from '@/lib/format'
 
 export default function FonctionnalitesClient() {
   const [planActif, setPlanActif] = useState<{ plan: string; fin: string } | null>(null)
   const [settings, setSettings] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const cacheKey = 'nopalou_offline_fonctionnalites'
@@ -35,21 +38,21 @@ export default function FonctionnalitesClient() {
   const RANG_PALIER: Record<string, number> = { gratuit: 0, pro: 1, business: 2 }
 
   if (loading && !planActif) {
-    return <p style={{ padding: 20 }}>Chargement de vos fonctionnalités...</p>
+    return <p style={{ padding: 20 }}>{t('common.loading')}</p>
   }
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '16px 0' }}>
       <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1C2B4A', marginBottom: 8 }}>
-        Fonctionnalités & abonnements
+        {t('account.featuresTitle')}
       </h1>
       <p style={{ color: '#64748b', marginBottom: 40 }}>
-        Tout ce que propose Nopalou, et ce qui change selon votre abonnement boutique.
+        {t('account.featuresDesc')}
       </p>
 
       <section style={{ marginBottom: 48 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
-          Ce que Nopalou propose
+          {t('account.platformOffers')}
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
           {FONCTIONNALITES_PLATEFORME.map(f => (
@@ -66,7 +69,7 @@ export default function FonctionnalitesClient() {
 
       <section>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1C2B4A', marginBottom: 20 }}>
-          Boutique — choisissez votre palier
+          {t('account.shopChooseTier')}
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
           {PALIERS_BOUTIQUE.map(palier => {
@@ -84,14 +87,14 @@ export default function FonctionnalitesClient() {
                     background: palier.couleur, color: '#fff',
                     fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 20,
                   }}>
-                    VOTRE PALIER ACTUEL
+                    {t('account.currentTierBadge')}
                   </span>
                 )}
                 <h3 style={{ fontSize: 17, fontWeight: 700, color: palier.couleur, marginBottom: 4 }}>
                   {palier.label}
                 </h3>
                 <p style={{ fontSize: 20, fontWeight: 800, margin: '6px 0 16px' }}>
-                  {prix ? `${prix.toLocaleString('fr-FR')} FCFA/mois` : 'Gratuit'}
+                  {prix ? `${fcfa(prix)} / ${t('common.perMonth') || 'mois'}` : t('account.monthFree')}
                 </p>
                 <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {palier.avantages.map(a => (
@@ -106,7 +109,7 @@ export default function FonctionnalitesClient() {
                     display: 'block', textAlign: 'center', background: palier.couleur, color: '#fff',
                     padding: '10px 0', borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14,
                   }}>
-                    Passer à {palier.label.replace('Boutique ', '')}
+                    {t('account.upgradeTo')} {palier.label.replace('Boutique ', '')}
                   </Link>
                 )}
               </div>
