@@ -9,12 +9,14 @@
     - Persistance automatique du choix utilisateur sur Cookie (durée 1 an, `SameSite=Lax`) et synchronisation instantanée du DOM (`lang`, `dir`) et de l'état React sans rechargement lourd.
   * **Périmètre Déployé & Composants Intégrés** :
     1. **Authentification** : Pages `/connexion`, `/inscription`, `/mot-de-passe-oublie` enrichies d'un `LanguageSelector` visible avant connexion, avec traduction complète des formulaires, placeholders, boutons et messages d'erreur et sanitisation des erreurs backend.
-    2. **Espace Compte (100% des sous-sections et onglets traduits)** :
+    2. **Espace Compte (100% des sous-sections, formulaires et onglets traduits)** :
        - Navigation latérale (`AccountNavLinks`, `AccountSidebarClient`), en-tête mobile (`AccountMobileHeader`), bannière d'avertissement email non vérifié (`BannerEmailNonVerifie`).
        - Profil et paramètres (`ProfilClient`) incluant le sélecteur de langue préféré.
        - Programme Apporteur d'Affaires & Ambassadeur (`ApporteurClient`) : codes, liens de partage WhatsApp/réseaux, téléchargements visuels, KPIs commissions, argumentaires et boutiques recrutées entièrement traduits en FR, EN et AR.
        - Gestion des annonces classifiées (`AnnoncesClient`) : badges de statuts, actions (activer, modifier, booster, supprimer), bannières et empty states.
-       - Gestion des annonces immobilières (`AnnoncesImmoClient`) : types de transactions, filtres et modales.
+       - Formulaire de publication d'annonce classifiée (`FormulaireAnnonce.tsx`, `/deposer-annonce`) : wizard 3 étapes (catégories, caractéristiques/prix/contact, photos/quota).
+       - Gestion et publication immobilière (`AnnoncesImmoClient.tsx`, `FormulaireImmo.tsx`, `/deposer-immo`) : type d'offre (Location/Vente), types de biens (Appartement, Villa, Maison, Studio, Terrain, Bureau), caractéristiques, photos et bouton de suppression (`DeleteImmoButton`).
+       - Alertes de prix (`MesAlertesPage`, `FormAlerte.tsx`, `MesAlertesClient.tsx`) : choix des canaux de notification (WhatsApp, Email, Les deux), seuil de prix cible et tableau des alertes actives.
        - Suivi de commande (`SuiviCommandeClient`) : formulaire de recherche, étapes de livraison (en attente, en préparation, en livraison, livrée) et contacts vendeurs.
        - Favoris (`FavorisClient`) : listes, suppression et liens directs.
        - Fonctionnalités & Abonnements (`FonctionnalitesClient`) : paliers boutique (Gratuit, Pro, Business), badges de statut actif et grilles d'avantages.
