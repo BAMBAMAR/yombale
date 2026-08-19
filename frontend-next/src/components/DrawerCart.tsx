@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useCart } from '@/context/CartContext'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
+import { useTranslation } from '@/i18n/context'
 
 interface Zone { id: string; nom: string; prix: number }
 
@@ -14,6 +15,7 @@ const DEFAULT_ZONES: Zone[] = [
 ]
 
 export default function DrawerCart() {
+  const { t, isRtl } = useTranslation()
   const { carts, activeBoutiqueId, isCartOpen, openCart, closeCart, updateQuantity, removeFromCart, clearCart, getCartTotal, getCartItemCount } = useCart()
   const [zones, setZones] = useState<Zone[]>(DEFAULT_ZONES)
   const [zoneId, setZoneId] = useState<string>('dakar-intra')
@@ -62,7 +64,7 @@ export default function DrawerCart() {
         }}
       >
         <span style={{ fontSize: 18 }}>🛒</span>
-        <span>Mon Panier ({getCartItemCount(activeBoutiqueId!)})</span>
+        <span>{t('shop.cartTitle')} ({getCartItemCount(activeBoutiqueId!)})</span>
         <span style={{ background: 'rgba(255,255,255,0.2)', padding: '3px 8px', borderRadius: 12, fontSize: 13 }}>
           {fcfa(sousTotal)}
         </span>

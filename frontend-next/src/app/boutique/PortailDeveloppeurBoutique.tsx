@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslation } from '@/i18n/context'
 
 export interface ApiKey {
   id: string
@@ -20,6 +21,7 @@ export interface Webhook {
 }
 
 export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { boutiqueId: string; planActif: string }) {
+  const { t, isRtl } = useTranslation()
   const [keys, setKeys] = useState<ApiKey[]>([])
   const [webhooks, setWebhooks] = useState<Webhook[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -189,9 +191,9 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 28 }}>🔒</span>
           <div>
-            <h3 style={{ margin: 0, fontSize: 18, color: '#9a3412', fontWeight: 800 }}>Portail Développeur API REST &amp; Webhooks (Formule Business VIP)</h3>
+            <h3 style={{ margin: 0, fontSize: 18, color: '#9a3412', fontWeight: 800 }}>{t('shop.developer')}</h3>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: '#c2410c' }}>
-              L&apos;accès à l&apos;API REST Nopalou et aux Webhooks événementiels en temps réel est réservé aux boutiques abonnées au plan <strong>Business VIP</strong>.
+              {t('shop.developerDesc')}
             </p>
           </div>
         </div>
@@ -205,12 +207,12 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
       <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', borderRadius: 16, padding: 24, color: '#ffffff', boxShadow: '0 10px 25px -5px rgba(15,23,42,0.15)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
           <span style={{ background: '#ff6600', color: '#fff', fontSize: 11, fontWeight: 900, padding: '3px 10px', borderRadius: 20, textTransform: 'uppercase' }}>
-            VIP Active
+            VIP
           </span>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>🔌 Portail Développeur &amp; Intégrations API REST</h2>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>🔌 {t('shop.developer')}</h2>
         </div>
         <p style={{ margin: 0, fontSize: 13, color: '#94a3b8', lineHeight: 1.5 }}>
-          Connectez votre boutique Nopalou à votre site e-commerce externe (WooCommerce, Shopify), votre logiciel de caisse externe ou votre application mobile grâce aux clés API sécurisées (`nopalou_sk_live_...`) et recevez des notifications Webhooks en temps réel.
+          {t('shop.developerDesc')}
         </p>
       </div>
 
@@ -223,14 +225,14 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
       {/* SECTION 1 : CLÉS API REST */}
       <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
         <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-          🔑 Mes Clés API REST
+          🔑 {t('shop.apiKeysTitle')}
         </h3>
 
         {/* Formulaire de génération */}
         <form onSubmit={genererCleApi} style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
           <input
             type="text"
-            placeholder="Nom de l'application (ex: WooCommerce Prod, App Mobile)"
+            placeholder={t('shop.keyNamePlaceholder')}
             value={nomNouvelleCle}
             onChange={e => setNomNouvelleCle(e.target.value)}
             required
@@ -241,7 +243,7 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
             disabled={creationCleEnCours}
             style={{ padding: '10px 20px', background: '#ff6600', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
           >
-            {creationCleEnCours ? 'Génération...' : '⚡ Générer une Clé API'}
+            {creationCleEnCours ? t('common.loading') : `⚡ ${t('shop.generateApiKeyBtn')}`}
           </button>
         </form>
 
@@ -249,10 +251,10 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
         {cleBruteCreee && (
           <div style={{ background: '#f0fdf4', border: '2px solid #22c55e', borderRadius: 12, padding: 18, marginBottom: 24 }}>
             <div style={{ fontWeight: 800, color: '#166534', fontSize: 14, marginBottom: 6 }}>
-              ✅ Clé API générée avec succès !
+              ✅ {t('common.success')}
             </div>
             <p style={{ margin: '0 0 10px', fontSize: 12, color: '#15803d' }}>
-              Copiez cette clé maintenant. Pour votre sécurité, elle ne pourra plus être réaffichée par la suite.
+              {t('shop.copyKeyNotice')}
             </p>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <code style={{ flex: 1, background: '#ffffff', padding: '10px 14px', borderRadius: 8, border: '1px solid #bbf7d0', fontSize: 13, color: '#0f172a', fontWeight: 700, wordBreak: 'break-all' }}>

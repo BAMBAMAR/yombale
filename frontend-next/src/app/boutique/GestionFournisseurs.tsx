@@ -18,8 +18,10 @@ import { fcfa } from '@/lib/format'
 import { StockView } from './Comptabilite'
 import SearchableProductSelect from '@/components/SearchableProductSelect'
 import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
+import { useTranslation } from '@/i18n/context'
 
 export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string }) {
+  const { t, isRtl } = useTranslation()
   const [subTab, setSubTab] = useState<'stock' | 'fournisseurs' | 'commandes'>('stock')
   const [fournisseurs, setFournisseurs] = useState<any[]>([])
   const [commandes, setCommandes] = useState<any[]>([])
@@ -397,13 +399,13 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   }
 
   const handleSupprimerCommande = async (cmdId: string, ref: string) => {
-    if (!confirm(`Supprimer la commande d'achat ${ref} ?`)) return
+    if (!confirm(`${t('shop.deleteDocConfirm')} (${ref})`)) return
     try {
       const res = await supprimerCommandeFournisseur(boutiqueId, cmdId)
       if (res.error) {
         alert(res.error)
       } else {
-        alert('Commande supprimée avec succès !')
+        alert(t('shop.docDeletedSuccess'))
         chargerDonnees()
       }
     } catch (err) {
@@ -412,13 +414,13 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   }
 
   const handleSupprimerFournisseur = async (fId: string, nom: string) => {
-    if (!confirm(`Supprimer le fournisseur ${nom} ?`)) return
+    if (!confirm(`${t('shop.deleteCustomerMenu')} (${nom}) ?`)) return
     try {
       const res = await supprimerFournisseur(boutiqueId, fId)
       if (res.error) {
         alert(res.error)
       } else {
-        alert('Fournisseur supprimé avec succès !')
+        alert(t('shop.docDeletedSuccess'))
         chargerDonnees()
       }
     } catch (err) {
@@ -482,7 +484,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
             color: subTab === 'stock' ? '#C75B00' : '#475569', borderBottom: subTab === 'stock' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
           }}
         >
-          📦 Stock Physique
+          📦 {t('shop.subTabStockInventory')}
         </button>
         <button
           onClick={() => setSubTab('fournisseurs')}
@@ -491,7 +493,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
             color: subTab === 'fournisseurs' ? '#C75B00' : '#475569', borderBottom: subTab === 'fournisseurs' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
           }}
         >
-          👤 Fournisseurs
+          👤 {t('shop.subTabSuppliersList')} ({fournisseurs.length})
         </button>
         <button
           onClick={() => setSubTab('commandes')}
@@ -500,7 +502,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
             color: subTab === 'commandes' ? '#C75B00' : '#475569', borderBottom: subTab === 'commandes' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
           }}
         >
-          📝 Achats / Bons de Commande
+          📝 {t('shop.subTabPurchaseOrders')} ({commandes.length})
         </button>
       </div>
 
@@ -514,19 +516,19 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               type="text"
               value={rechercheFournisseur}
               onChange={e => setRechercheFournisseur(e.target.value)}
-              placeholder="🔍 Rechercher par nom, téléphone, email, adresse..."
+              placeholder={t('shop.searchSupplierPlaceholder')}
               style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, minWidth: 260, flex: 1, outline: 'none' }}
             />
             <button
               onClick={() => { resetFouForm(); setModalFOUOuvert(true); }}
               style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
-              ➕ Ajouter Fournisseur
+              ➕ {t('shop.newSupplierBtn')}
             </button>
           </div>
 
           {loading ? (
-            <p style={{ color: '#6b7280', fontSize: 14 }}>Chargement des fournisseurs...</p>
+            <p style={{ color: '#6b7280', fontSize: 14 }}>{t('common.loading')}</p>
           ) : (() => {
             const qFou = rechercheFournisseur.trim().toLowerCase()
             const fournisseursFiltrés = fournisseurs.filter((f: any) =>
@@ -540,7 +542,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
             if (fournisseursFiltrés.length === 0) {
               return (
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
-                  👤 Aucun fournisseur trouvé.
+                  👤 {t('common.noData')}
                 </div>
               )
             }
@@ -556,15 +558,22 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                         {f.telephone && <span>📞 {f.telephone}</span>}
                         {f.email && <span>✉️ {f.email}</span>}
                         {f.adresse && <span>📍 {f.adresse}</span>}
-                        {!f.telephone && !f.email && !f.adresse && <span style={{ fontStyle: 'italic' }}>Aucune info de contact</span>}
+                        {!f.telephone && !f.email && !f.adresse && <span style={{ fontStyle: 'italic' }}>—</span>}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                       <button
-                        onClick={() => ouvrirEditionFournisseur(f)}
+                        onClick={() => {
+                          setFouEditId(f.id)
+                          setFouNom(f.nom || '')
+                          setFouTel(f.telephone || '')
+                          setFouEmail(f.email || '')
+                          setFouAdr(f.adresse || '')
+                          setModalFOUOuvert(true)
+                        }}
                         style={{ padding: '5px 10px', borderRadius: 6, background: '#f0f9ff', color: '#0284c7', border: '1px solid #bae6fd', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                       >
-                        ✏️ Modifier
+                        ✏️ {t('common.edit')}
                       </button>
                       <button
                         onClick={() => handleSupprimerFournisseur(f.id, f.nom)}
@@ -591,7 +600,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                 type="text"
                 value={rechercheCommande}
                 onChange={e => setRechercheCommande(e.target.value)}
-                placeholder="🔍 Rechercher par référence, fournisseur..."
+                placeholder={t('shop.searchPurchaseOrderPlaceholder')}
                 style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, flex: 1, outline: 'none' }}
               />
               <select
@@ -599,21 +608,21 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                 onChange={e => setFiltreStatutCmd(e.target.value)}
                 style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none' }}
               >
-                <option value="tous">Touts les statuts</option>
-                <option value="attente">⏳ En attente</option>
-                <option value="recue">✅ Reçue</option>
+                <option value="tous">{t('shop.allPurchaseStatuses')}</option>
+                <option value="attente">{t('shop.pendingStatusOption')}</option>
+                <option value="recue">{t('shop.receivedStatusOption')}</option>
               </select>
             </div>
             <button
               onClick={() => { resetCmdForm(); setModalCMDOuvert(true); }}
               style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
-              ➕ Créer Bon de Commande
+              ➕ {t('shop.newPurchaseOrderBtn')}
             </button>
           </div>
 
           {loading ? (
-            <p style={{ color: '#6b7280', fontSize: 14 }}>Chargement des commandes d’achats...</p>
+            <p style={{ color: '#6b7280', fontSize: 14 }}>{t('common.loading')}</p>
           ) : (() => {
             const qCmd = rechercheCommande.trim().toLowerCase()
             const commandesFiltrées = commandes.filter((cmd: any) => {
@@ -627,7 +636,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
             if (commandesFiltrées.length === 0) {
               return (
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
-                  📝 Aucune commande d’achat trouvée.
+                  📝 {t('common.noData')}
                 </div>
               )
             }
@@ -637,12 +646,12 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>
-                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Référence</th>
-                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Fournisseur</th>
-                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Total Achat</th>
-                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Date</th>
-                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Statut</th>
-                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Actions</th>
+                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.colReferenceHeader')}</th>
+                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.colSupplierHeader')}</th>
+                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.colTotalAmountHeader')}</th>
+                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.colDateHeader')}</th>
+                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.orderStatusLabel')}</th>
+                      <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('common.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -655,7 +664,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                     return (
                       <tr key={cmd.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
                         <td style={{ padding: 12, fontWeight: 700 }}>{cmd.reference}</td>
-                        <td style={{ padding: 12 }}>{fou ? fou.nom : 'Inconnu'}</td>
+                        <td style={{ padding: 12 }}>{fou ? fou.nom : '—'}</td>
                         <td style={{ padding: 12, fontWeight: 700 }}>{fcfa(totalVal)}</td>
                         <td style={{ padding: 12 }}>{dateFmt}</td>
                         <td style={{ padding: 12 }}>
@@ -664,7 +673,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                             background: isRecue ? '#d1fae5' : '#fee2e2',
                             color: isRecue ? '#065f46' : '#9a3412'
                           }}>
-                            {isRecue ? 'REÇUE' : 'EN ATTENTE'}
+                            {isRecue ? t('shop.statusReceivedBadge') : t('shop.statusPendingBadge')}
                           </span>
                         </td>
                         <td style={{ padding: 12 }}>
@@ -674,7 +683,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                                 onClick={() => ouvrirModalReception(cmd)}
                                 style={{ padding: '5px 10px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                               >
-                                📥 Réceptionner
+                                📥 {t('shop.receiveNowBtn')}
                               </button>
                             )}
                             {!isRecue && (
@@ -682,19 +691,19 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                                 onClick={() => ouvrirEditionCommande(cmd)}
                                 style={{ padding: '5px 10px', borderRadius: 6, background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                               >
-                                ✏️ Modifier
+                                ✏️ {t('common.edit')}
                               </button>
                             )}
                             <button
                               onClick={() => setCmdDetailsModal(cmd)}
                               style={{ padding: '5px 10px', borderRadius: 6, background: '#f0f9ff', color: '#0284c7', border: '1px solid #bae6fd', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                             >
-                              👁️ Détails
+                              👁️ {t('common.details')}
                             </button>
                             <button
                               onClick={() => handleSupprimerCommande(cmd.id, cmd.reference)}
                               style={{ padding: '5px 10px', borderRadius: 6, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                              title="Supprimer la commande"
+                              title="Supprimer"
                             >
                               🗑️
                             </button>
@@ -715,31 +724,31 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
       {modalFOUOuvert && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
           <div style={{ background: '#ffffff', borderRadius: 12, padding: 24, width: '100%', maxWidth: 500 }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700 }}>{fouEditId ? 'Modifier le fournisseur' : 'Ajouter un fournisseur'}</h3>
+            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700 }}>{fouEditId ? t('shop.editSupplierModalTitle') : t('shop.addSupplierModalTitle')}</h3>
             <form onSubmit={handleSoumettreFormFournisseur} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Nom / Raison Sociale *</label>
-                <input required value={fouNom} onChange={e => setFouNom(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }} placeholder="Ex: ETS Diouf & Frères" />
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{t('shop.nameOrCompanyNameLabel')}</label>
+                <input required value={fouNom} onChange={e => setFouNom(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }} placeholder={t('shop.nameOrCompanyPlaceholder')} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Téléphone</label>
-                <input value={fouTel} onChange={e => setFouTel(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }} placeholder="Ex: +221 77 123 45 67" />
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{t('shop.phoneLabel')}</label>
+                <input value={fouTel} onChange={e => setFouTel(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }} placeholder={t('shop.phoneSupplierPlaceholder')} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Email</label>
-                <input type="email" value={fouEmail} onChange={e => setFouEmail(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }} placeholder="Ex: contact@dioufetfreres.sn" />
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{t('shop.emailLabel')}</label>
+                <input type="email" value={fouEmail} onChange={e => setFouEmail(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }} placeholder={t('shop.emailSupplierPlaceholder')} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Adresse</label>
-                <input value={fouAdr} onChange={e => setFouAdr(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }} placeholder="Ex: Sandaga, Dakar" />
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{t('shop.addressLabel')}</label>
+                <input value={fouAdr} onChange={e => setFouAdr(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }} placeholder={t('shop.addressSupplierPlaceholder')} />
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, borderTop: '1px solid #e5e7eb', paddingTop: 14 }}>
                 <button type="button" onClick={() => setModalFOUOuvert(false)} style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', cursor: 'pointer' }}>
-                  Annuler
+                  {t('common.cancel')}
                 </button>
                 <button type="submit" disabled={isSubmitting} style={{ padding: '8px 16px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, cursor: 'pointer' }}>
-                  {isSubmitting ? (fouEditId ? 'Modification...' : 'Ajout en cours...') : (fouEditId ? 'Enregistrer' : 'Ajouter')}
+                  {isSubmitting ? (fouEditId ? t('shop.editingInProgress') : t('shop.addingInProgress')) : (fouEditId ? t('shop.saveBtn') : t('shop.addBtn'))}
                 </button>
               </div>
             </form>
@@ -752,13 +761,13 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
           <div style={{ background: '#ffffff', borderRadius: 12, padding: 24, width: '100%', maxWidth: 700, maxHeight: '90vh', overflowY: 'auto' }}>
             <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700 }}>
-              {cmdEditId ? 'Modifier le bon de commande d’achat' : 'Nouveau bon de commande d’achat'}
+              {cmdEditId ? t('shop.editPurchaseOrderModalTitle') : t('shop.newPurchaseOrderModalTitle')}
             </h3>
             <form onSubmit={handleCreerCommande} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Sélectionner le fournisseur *</label>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{t('shop.selectSupplierPrompt')}</label>
                 <select value={cmdFournisseurId} onChange={e => setCmdFournisseurId(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }} required>
-                  <option value="">-- Choisir un fournisseur --</option>
+                  <option value="">{t('shop.chooseSupplierDefault')}</option>
                   {fournisseurs.map(f => (
                     <option key={f.id} value={f.id}>{f.nom}</option>
                   ))}
@@ -767,7 +776,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
 
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
-                  📎 Document justificatif (Facture / Reçu PDF ou photo)
+                  {t('shop.justificatifDocLabel')}
                 </label>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                   <input
@@ -777,42 +786,42 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                     style={{ fontSize: 13 }}
                     disabled={uploadingFile}
                   />
-                  {uploadingFile && <span style={{ fontSize: 12, color: '#0284c7', fontWeight: 600 }}>⏳ Envoi du fichier...</span>}
+                  {uploadingFile && <span style={{ fontSize: 12, color: '#0284c7', fontWeight: 600 }}>{t('shop.uploadingFileProgress')}</span>}
                 </div>
                 {cmdJustificatifUrl && (
                   <div style={{ marginTop: 8, padding: '6px 10px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, fontSize: 12, color: '#166534', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span>✅ Document justificatif attaché</span>
+                    <span>{t('shop.justificatifAttachedBadge')}</span>
                     <a href={cmdJustificatifUrl} target="_blank" rel="noreferrer" style={{ color: '#0284c7', fontWeight: 700, textDecoration: 'none' }}>
-                      👁️ Consulter ↗
+                      {t('shop.consultLink')}
                     </a>
                     <button type="button" onClick={() => setCmdJustificatifUrl('')} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 700, marginLeft: 'auto' }}>
-                      ✕ Supprimer
+                      {t('shop.removeAttachmentBtn')}
                     </button>
                   </div>
                 )}
-                <p style={{ fontSize: 11, color: '#6b7280', margin: '4px 0 0' }}>Le document sera automatiquement rattaché à la dépense comptable lors de la réception.</p>
+                <p style={{ fontSize: 11, color: '#6b7280', margin: '4px 0 0' }}>{t('shop.autoAttachAccountingHelp')}</p>
               </div>
 
               {/* Lignes d’achats */}
               <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <div>
-                    <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1f2937' }}>Articles à commander</h4>
-                    <p style={{ margin: '2px 0 0', fontSize: 11, color: '#6b7280' }}>Sélectionnez un produit du catalogue ou saisissez un article libre hors catalogue.</p>
+                    <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1f2937' }}>{t('shop.articlesToOrderHeader')}</h4>
+                    <p style={{ margin: '2px 0 0', fontSize: 11, color: '#6b7280' }}>{t('shop.articlesToOrderHelp')}</p>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button type="button" onClick={demarrerScannerEanCmd} style={{ padding: '6px 12px', background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                      📷 Scan EAN
+                      {t('shop.scanEanBtn')}
                     </button>
                     <button type="button" onClick={handleAjouterLigneCmd} style={{ padding: '6px 12px', background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                      ➕ Ajouter un article
+                      {t('shop.addArticleCmdBtn')}
                     </button>
                   </div>
                 </div>
 
                 {cmdLignes.length === 0 ? (
                   <div style={{ padding: 16, background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 8, textAlign: 'center', fontSize: 13, color: '#64748b' }}>
-                    Aucun article dans ce bon de commande. Cliquez sur <strong>➕ Ajouter un article</strong> pour commencer.
+                    {t('shop.emptyOrderLinesNotice')}
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -826,10 +835,10 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                           <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                               <label style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>
-                                Article / Désignation * <span style={{ fontSize: 11, fontWeight: 500, color: '#6b7280' }}>(Article {idx + 1})</span>
+                                {t('shop.articleDesignationCmdLabel')} <span style={{ fontSize: 11, fontWeight: 500, color: '#6b7280' }}>({idx + 1})</span>
                               </label>
                               <button type="button" onClick={() => handleSupprimerLigneCmd(idx)} style={{ background: '#fee2e2', border: 'none', color: '#ef4444', padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                                ✕ Supprimer
+                                {t('shop.removeAttachmentBtn')}
                               </button>
                             </div>
 
@@ -837,7 +846,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                               produits={produits}
                               value={isCatalogProd ? ligne.produitId : 'custom'}
                               onChange={(pId) => handleModifierLigneCmd(idx, 'produitId', pId)}
-                              placeholder="🔍 Rechercher un produit à commander..."
+                              placeholder={t('shop.searchProductToOrderPrompt')}
                             />
 
                             {estCustom && (
@@ -847,7 +856,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                                   value={ligne.nomLibre || ''}
                                   onChange={e => handleModifierLigneCmd(idx, 'nomLibre', e.target.value)}
                                   style={{ flex: 1, padding: '8px 10px', borderRadius: 6, border: '1px solid #0284c7', fontSize: 13, background: '#f0f9ff', color: '#0f172a' }}
-                                  placeholder="Tapez le nom / la désignation de l'article..."
+                                  placeholder={t('shop.customItemNameCmdPlaceholder')}
                                   required
                                 />
                                 <button
@@ -855,7 +864,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                                   onClick={() => demarrerScannerNomCmd(idx)}
                                   style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '6px 10px', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
                                 >
-                                  📷 Scan Nom
+                                  {t('shop.scanNameCmdBtn')}
                                 </button>
                               </div>
                             )}
@@ -865,7 +874,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px', gap: 10, alignItems: 'end' }}>
                             <div>
                               <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 4 }}>
-                                Quantité *
+                                {t('shop.quantityRequired')}
                               </label>
                               <input
                                 type="number"
@@ -873,14 +882,14 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                                 value={ligne.quantite}
                                 onChange={e => handleModifierLigneCmd(idx, 'quantite', Number(e.target.value))}
                                 style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, background: '#ffffff' }}
-                                placeholder="Quantité"
+                                placeholder={t('shop.quantityLabel')}
                                 required
                               />
                             </div>
 
                             <div>
                               <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 4 }}>
-                                Prix Achat Unit. (FCFA) *
+                                {t('shop.unitPurchasePriceLabel')}
                               </label>
                               <input
                                 type="number"
@@ -888,13 +897,13 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                                 value={ligne.prixAchat}
                                 onChange={e => handleModifierLigneCmd(idx, 'prixAchat', Number(e.target.value))}
                                 style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, background: '#ffffff' }}
-                                placeholder="Prix unitaire"
+                                placeholder={t('shop.unitPriceCmdPlaceholder')}
                                 required
                               />
                             </div>
 
                             <div style={{ textAlign: 'right', paddingBottom: 6 }}>
-                              <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>Total Ligne</div>
+                              <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>{t('shop.lineTotalCmdLabel')}</div>
                               <div style={{ fontSize: 13, fontWeight: 800, color: '#047857' }}>
                                 {fcfa((Number(ligne.quantite) || 0) * (Number(ligne.prixAchat) || 0))}
                               </div>
@@ -909,10 +918,10 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, borderTop: '1px solid #e5e7eb', paddingTop: 14 }}>
                 <button type="button" onClick={() => setModalCMDOuvert(false)} style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', cursor: 'pointer' }}>
-                  Annuler
+                  {t('common.cancel')}
                 </button>
                 <button type="submit" disabled={isSubmitting} style={{ padding: '8px 16px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, cursor: 'pointer' }}>
-                  {isSubmitting ? (cmdEditId ? 'Modification...' : 'Création...') : (cmdEditId ? 'Enregistrer les modifications' : 'Créer Bon de Commande')}
+                  {isSubmitting ? (cmdEditId ? t('shop.editingInProgress') : t('shop.creatingInProgress')) : (cmdEditId ? t('shop.saveOrderModificationsBtn') : t('shop.createOrderConfirmBtn'))}
                 </button>
               </div>
             </form>
@@ -927,10 +936,10 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #e5e7eb', paddingBottom: 12 }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>
-                  Bon de Commande : {cmdDetailsModal.reference}
+                  {t('shop.purchaseOrderDetailsHeader')} {cmdDetailsModal.reference}
                 </h3>
                 <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>
-                  Fournisseur : <strong>{fournisseurs.find(f => f.id === cmdDetailsModal.fournisseur_id)?.nom || 'Inconnu'}</strong>
+                  {t('shop.supplierColonLabel')} <strong>{fournisseurs.find(f => f.id === cmdDetailsModal.fournisseur_id)?.nom || '—'}</strong>
                 </p>
               </div>
               <button
@@ -944,49 +953,49 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
             {/* Informations synthétiques */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 16, background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}>
               <div>
-                <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Statut</div>
+                <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{t('shop.orderStatusLabel')}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: (cmdDetailsModal.statut === 'recu' || cmdDetailsModal.statut === 'recue') ? '#065f46' : '#9a3412' }}>
-                  {(cmdDetailsModal.statut === 'recu' || cmdDetailsModal.statut === 'recue') ? '✅ REÇUE' : '⏳ EN ATTENTE'}
+                  {(cmdDetailsModal.statut === 'recu' || cmdDetailsModal.statut === 'recue') ? t('shop.statusReceivedBadge') : t('shop.statusPendingBadge')}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Date de création</div>
+                <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{t('shop.orderCreationDateLabel')}</div>
                 <div style={{ fontSize: 13, fontWeight: 700 }}>
                   {new Date(cmdDetailsModal.created_at || cmdDetailsModal.date_commande || Date.now()).toLocaleDateString('fr-FR')}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Montant Total</div>
+                <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{t('shop.orderTotalAmountLabel')}</div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: '#047857' }}>
                   {fcfa(cmdDetailsModal.montant_total ?? cmdDetailsModal.total_achat ?? 0)}
                 </div>
               </div>
               {cmdDetailsModal.justificatif_url && (
                 <div>
-                  <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Pièce Justificative</div>
+                  <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{t('shop.orderReceiptProofLabel')}</div>
                   <a href={cmdDetailsModal.justificatif_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 700, color: '#0284c7', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    📎 Voir le justificatif ↗
+                    {t('shop.viewReceiptAttachmentLink')}
                   </a>
                 </div>
               )}
             </div>
 
             {/* Tableau des articles commandés */}
-            <h4 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 10px', color: '#1f2937' }}>Détail des articles commandés</h4>
+            <h4 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 10px', color: '#1f2937' }}>{t('shop.orderedArticlesDetailHeader')}</h4>
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden', marginBottom: 20 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>
-                    <th style={{ padding: 10, color: '#374151', fontWeight: 700 }}>Article</th>
-                    <th style={{ padding: 10, color: '#374151', fontWeight: 700, textAlign: 'right' }}>Quantité</th>
-                    <th style={{ padding: 10, color: '#374151', fontWeight: 700, textAlign: 'right' }}>P.U. Achat</th>
-                    <th style={{ padding: 10, color: '#374151', fontWeight: 700, textAlign: 'right' }}>Total Ligne</th>
+                    <th style={{ padding: 10, color: '#374151', fontWeight: 700 }}>{t('shop.article')}</th>
+                    <th style={{ padding: 10, color: '#374151', fontWeight: 700, textAlign: 'right' }}>{t('shop.quantityLabel')}</th>
+                    <th style={{ padding: 10, color: '#374151', fontWeight: 700, textAlign: 'right' }}>{t('shop.unitPriceLabel')}</th>
+                    <th style={{ padding: 10, color: '#374151', fontWeight: 700, textAlign: 'right' }}>{t('shop.lineTotalCmdLabel')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(typeof cmdDetailsModal.items === 'string' ? JSON.parse(cmdDetailsModal.items || '[]') : (cmdDetailsModal.items || [])).map((item: any, idx: number) => {
                     const pObj = produits.find(p => p.id === item.id || p.id === item.produitId)
-                    const nomArt = item.nom || pObj?.nom || 'Article inconnu'
+                    const nomArt = item.nom || pObj?.nom || '—'
                     const qteArt = Number(item.quantite || 1)
                     const puArt = Number(item.prix_achat || item.prixAchat || item.prix || 0)
                     return (
@@ -1012,14 +1021,14 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                   }}
                   style={{ padding: '8px 16px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, cursor: 'pointer' }}
                 >
-                  📥 Réceptionner maintenant
+                  {t('shop.receiveNowBtn')}
                 </button>
               )}
               <button
                 onClick={() => setCmdDetailsModal(null)}
                 style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', cursor: 'pointer' }}
               >
-                Fermer
+                {t('common.close')}
               </button>
             </div>
           </div>
@@ -1031,15 +1040,15 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
           <div style={{ background: '#ffffff', borderRadius: 12, padding: 24, width: '100%', maxWidth: 550, maxHeight: '90vh', overflowY: 'auto' }}>
             <h3 style={{ margin: '0 0 12px', fontSize: 18, fontWeight: 700, color: '#111827' }}>
-              Réceptionner la commande {modalRecevoirCmd.reference}
+              {t('shop.receiveOrderModalTitle')} {modalRecevoirCmd.reference}
             </h3>
             <p style={{ fontSize: 13, color: '#4b5563', margin: '0 0 16px', lineHeight: 1.5 }}>
-              La confirmation de cette réception augmentera automatiquement les quantités en stock de vos produits et générera une dépense comptable d'achat de <strong>{fcfa(modalRecevoirCmd.montant_total ?? modalRecevoirCmd.total_achat ?? 0)}</strong>.
+              {t('shop.receiveOrderModalHelp')} <strong>{fcfa(modalRecevoirCmd.montant_total ?? modalRecevoirCmd.total_achat ?? 0)}</strong>.
             </p>
 
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: '#374151' }}>
-                📎 Pièce justificative de réception (Facture fournisseur / Bon de livraison PDF ou photo)
+                {t('shop.receptionReceiptLabel')}
               </label>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                 <input
@@ -1049,13 +1058,13 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                   style={{ fontSize: 13 }}
                   disabled={uploadingFile}
                 />
-                {uploadingFile && <span style={{ fontSize: 12, color: '#0284c7', fontWeight: 600 }}>⏳ Envoi du fichier...</span>}
+                {uploadingFile && <span style={{ fontSize: 12, color: '#0284c7', fontWeight: 600 }}>{t('shop.uploadingFileProgress')}</span>}
               </div>
               {receptionJustificatifUrl && (
                 <div style={{ marginTop: 8, padding: '6px 10px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, fontSize: 12, color: '#166534', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span>✅ Justificatif de réception attaché</span>
+                  <span>{t('shop.receptionReceiptAttachedBadge')}</span>
                   <a href={receptionJustificatifUrl} target="_blank" rel="noreferrer" style={{ color: '#0284c7', fontWeight: 700, textDecoration: 'none' }}>
-                    👁️ Consulter ↗
+                    {t('shop.consultLink')}
                   </a>
                   <button type="button" onClick={() => setReceptionJustificatifUrl('')} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 700, marginLeft: 'auto' }}>
                     ✕
@@ -1070,7 +1079,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                 onClick={() => setModalRecevoirCmd(null)}
                 style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', cursor: 'pointer' }}
               >
-                Annuler
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -1078,7 +1087,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                 disabled={isSubmitting}
                 style={{ padding: '8px 16px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, cursor: 'pointer' }}
               >
-                {isSubmitting ? 'Réception en cours...' : '✅ Confirmer la Réception'}
+                {isSubmitting ? t('shop.receptionInProgressMsg') : t('shop.confirmReceptionSubmitBtn')}
               </button>
             </div>
           </div>
@@ -1090,7 +1099,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner Code-barres (EAN)</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{t('shop.scanBarcodeModalTitle')}</h4>
               <button type="button" onClick={arreterScannerEanCmd} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
             <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{scannerEanStatusCmd}</p>
@@ -1099,7 +1108,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button type="button" onClick={arreterScannerEanCmd} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer' }}>
-                Fermer
+                {t('common.close')}
               </button>
             </div>
           </div>
@@ -1111,7 +1120,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner le Nom du Produit</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{t('shop.scanProductNameModalTitle')}</h4>
               <button type="button" onClick={arreterScannerNomCmd} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
             <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{statusScannerNomCmd}</p>
@@ -1119,7 +1128,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               <video ref={videoNomCmdRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <div style={{ position: 'absolute', top: '20%', left: '7.5%', width: '85%', height: '60%', border: '2px dashed #38bdf8', borderRadius: 8, boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ background: 'rgba(15,23,42,0.75)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>
-                  Cadrez le nom au centre
+                  {t('shop.frameNameCenterDoc')}
                 </span>
               </div>
             </div>
@@ -1129,7 +1138,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               onClick={capturerNomOCRCmd}
               style={{ width: '100%', padding: '12px', background: ocrLoadingCmd ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: ocrLoadingCmd ? 'not-allowed' : 'pointer' }}
             >
-              {ocrLoadingCmd ? '⏳ Analyse OCR en cours...' : '📸 Capturer et Extraire le Nom'}
+              {ocrLoadingCmd ? t('shop.ocrAnalyzingDoc') : t('shop.extractNameDocBtn')}
             </button>
           </div>
         </div>
@@ -1137,3 +1146,4 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
     </div>
   )
 }
+

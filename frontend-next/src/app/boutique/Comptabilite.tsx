@@ -9,6 +9,7 @@ import {
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
+import { useTranslation } from '@/i18n/context'
 
 interface Zone    { id: string; nom: string; prix: number }
 interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string; justificatif_url: string | null }
@@ -41,6 +42,7 @@ function KpiCard({ label, value, sub, color }: { label: string; value: string; s
 }
 
 function DashboardView({ boutiqueId }: { boutiqueId: string }) {
+  const { t } = useTranslation()
   const [data, setData] = useState<Dashboard | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -88,29 +90,29 @@ function DashboardView({ boutiqueId }: { boutiqueId: string }) {
       {/* KPIs principaux */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         <KpiCard
-          label="CA ce mois"
+          label={t('shop.monthlyRevenue')}
           value={fcfa(data.ca_mois)}
-          sub={evol ? `${Number(evol) >= 0 ? '▲' : '▼'} ${Math.abs(Number(evol))}% vs mois dernier` : undefined}
+          sub={evol ? `${Number(evol) >= 0 ? '▲' : '▼'} ${Math.abs(Number(evol))}% ${t('shop.prevMonthComparison')}` : undefined}
           color="#1d4ed8"
         />
-        <KpiCard label="Dépenses mois" value={fcfa(data.depenses_mois)} color="#dc2626" />
+        <KpiCard label={t('shop.expenses')} value={fcfa(data.depenses_mois)} color="#dc2626" />
         <KpiCard
-          label="Bénéfice net"
+          label={t('shop.netProfit')}
           value={fcfa(data.benefice_mois)}
           color={data.benefice_mois >= 0 ? '#16a34a' : '#dc2626'}
         />
-        <KpiCard label="Ventes mois" value={String(data.nb_ventes_mois)} sub="transactions" />
+        <KpiCard label={t('shop.totalSales')} value={String(data.nb_ventes_mois)} sub={t('shop.totalOrders')} />
       </div>
 
       {/* Top produits */}
       {data.top_produits.length > 0 && (
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 20px' }}>
-          <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#374151' }}>🏆 Top produits ce mois</p>
+          <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#374151' }}>🏆 {t('shop.topSellingProducts')}</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {data.top_produits.map((p, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
                 <span style={{ color: '#374151' }}>{i + 1}. {p.nom_produit}</span>
-                <span style={{ color: '#6b7280' }}>{p.total_vendu} vendu{p.total_vendu > 1 ? 's' : ''} · {fcfa(p.ca)}</span>
+                <span style={{ color: '#6b7280' }}>{p.total_vendu} · {fcfa(p.ca)}</span>
               </div>
             ))}
           </div>
@@ -120,10 +122,10 @@ function DashboardView({ boutiqueId }: { boutiqueId: string }) {
       {/* Alertes stock */}
       {data.stock_alerte.length > 0 && (
         <div style={{ background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 12, padding: '16px 20px' }}>
-          <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: '#92400e' }}>⚠️ Stock bas</p>
+          <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: '#92400e' }}>⚠️ {t('shop.stockAlertsTitle')}</p>
           {data.stock_alerte.map(p => (
             <p key={p.id} style={{ margin: '4px 0', fontSize: 13, color: '#b45309' }}>
-              {p.nom} — <strong>{p.stock_quantite} restant{p.stock_quantite > 1 ? 's' : ''}</strong>
+              {p.nom} — <strong>{p.stock_quantite} {t('shop.productStock')}</strong>
             </p>
           ))}
         </div>
@@ -365,14 +367,15 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
     return matchCat && matchText
   })
 
+  const { t } = useTranslation()
   const stock = produits.find(p => p.id === produitId)?.stock_quantite
 
   return (
     <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 10 }}>
-        <p style={{ margin: 0, fontWeight: 900, fontSize: 16, color: '#0f172a' }}>💰 Déclarer une Vente</p>
+        <p style={{ margin: 0, fontWeight: 900, fontSize: 16, color: '#0f172a' }}>💰 {t('shop.declareSaleBtn')}</p>
         <span style={{ fontSize: 11, background: '#eff6ff', color: '#1d4ed8', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>
-          Vente détaillée
+          {t('shop.transactionSale')}
         </span>
       </div>
 
@@ -392,7 +395,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
               fontSize: 12.5, cursor: 'pointer'
             }}
           >
-            🛍️ Catalogue ({produits.length})
+            {t('shop.catalogModeTab')} ({produits.length})
           </button>
           <button
             type="button"
@@ -408,7 +411,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
               fontSize: 12.5, cursor: 'pointer'
             }}
           >
-            ✍️ Saisie Libre
+            {t('shop.manualModeTab')}
           </button>
         </div>
 
@@ -421,7 +424,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
             padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer'
           }}
         >
-          📷 Scan EAN
+          {t('shop.scanEanBtn')}
         </button>
       </div>
 
@@ -431,7 +434,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
             type="text"
             value={recherche}
             onChange={e => setRecherche(e.target.value)}
-            placeholder="🔍 Rechercher dans le catalogue (nom, EAN, SKU)..."
+            placeholder={t('shop.searchProductPrompt')}
             style={{ ...inputStyle, padding: 8, fontSize: 12.5 }}
           />
 
@@ -446,7 +449,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
                   color: catFiltre === 'tous' ? '#ffffff' : '#475569'
                 }}
               >
-                Tous
+                {t('common.all')}
               </button>
               {categories.map(c => (
                 <button
@@ -468,7 +471,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
 
           <div style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4, background: '#ffffff', padding: 6, borderRadius: 8, border: '1px solid #cbd5e1' }}>
             {prodsFiltres.length === 0 ? (
-              <div style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center', padding: 12 }}>Aucun produit trouvé</div>
+              <div style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center', padding: 12 }}>{t('common.noData')}</div>
             ) : (
               prodsFiltres.map((p: any) => {
                 const isSelected = produitId === p.id
@@ -484,7 +487,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
                     }}
                   >
                     <span style={{ fontWeight: isSelected ? 800 : 600, color: isSelected ? '#0369a1' : '#0f172a' }}>
-                      {p.nom} {p.stock_quantite !== null ? `(stock: ${p.stock_quantite})` : ''}
+                      {p.nom} {p.stock_quantite !== null ? `(${t('shop.productStock')}: ${p.stock_quantite})` : ''}
                     </span>
                     <span style={{ fontWeight: 800, color: '#0284c7' }}>{fcfa(p.prix)}</span>
                   </div>
@@ -493,7 +496,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
             )}
           </div>
           {stock !== null && stock !== undefined && stock <= 3 && (
-            <p style={{ fontSize: 11, color: '#b45309', margin: 0 }}>⚠️ Stock bas : {stock} restant{stock > 1 ? 's' : ''}</p>
+            <p style={{ fontSize: 11, color: '#b45309', margin: 0 }}>⚠️ {t('shop.lowStockAlert')} : {stock} {t('shop.remainingLabel')}</p>
           )}
         </div>
       ) : (
@@ -510,7 +513,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
               onClick={demarrerScannerNom}
               style={{ background: '#0284c7', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
-              📷 Scan Nom
+              {t('shop.scanNameOcrBtn')}
             </button>
           </div>
           {ocrDetections.length > 0 && (
@@ -532,20 +535,20 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div>
-          <label style={labelStyle}>Quantité</label>
+          <label style={labelStyle}>{t('shop.quantityLabel')}</label>
           <input type="number" min={1} value={quantite} onChange={e => setQuantite(Number(e.target.value))} style={inputStyle} />
         </div>
         <div>
-          <label style={labelStyle}>Prix unitaire (FCFA)</label>
+          <label style={labelStyle}>{t('shop.unitPriceLabel')}</label>
           <input type="number" min={0} value={prix} onChange={e => setPrix(Number(e.target.value))} style={inputStyle} />
         </div>
       </div>
 
       {zones.length > 0 && (
         <div>
-          <label style={labelStyle}>Zone de livraison</label>
+          <label style={labelStyle}>{t('shop.deliveryZoneLabel')}</label>
           <select value={zoneId} onChange={e => setZoneId(e.target.value)} style={inputStyle}>
-            <option value="">— Sans livraison —</option>
+            <option value="">— {t('common.none')} —</option>
             {zones.map(z => <option key={z.id} value={z.id}>{z.nom} — {fcfa(z.prix)}</option>)}
           </select>
         </div>
@@ -553,17 +556,17 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div>
-          <label style={labelStyle}>Nom client</label>
-          <input value={clientNom} onChange={e => setClientNom(e.target.value)} style={inputStyle} placeholder="Optionnel" />
+          <label style={labelStyle}>{t('shop.customerFullNameLabel')}</label>
+          <input value={clientNom} onChange={e => setClientNom(e.target.value)} style={inputStyle} placeholder={t('common.optional')} />
         </div>
         <div>
-          <label style={labelStyle}>Téléphone client</label>
+          <label style={labelStyle}>{t('shop.customerPhoneLabel')}</label>
           <input value={clientTel} onChange={e => setClientTel(e.target.value)} style={inputStyle} placeholder="77 000 00 00" />
         </div>
       </div>
 
       <div>
-        <label style={labelStyle}>Mode de paiement</label>
+        <label style={labelStyle}>{t('shop.paymentModePrompt')}</label>
         <select value={paiement} onChange={e => setPaiement(e.target.value)} style={inputStyle}>
           <option value="cash">💵 Espèces</option>
           <option value="wave">🌊 Wave</option>
@@ -574,13 +577,13 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
 
       {prix > 0 && (
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '10px 14px', fontSize: 15, fontWeight: 900, color: '#15803d', display: 'flex', justifyContent: 'space-between' }}>
-          <span>Total Vente :</span>
+          <span>{t('shop.totalSales')} :</span>
           <span>{fcfa(prix * quantite + (zoneId ? (zones.find(z => z.id === zoneId)?.prix ?? 0) : 0))}</span>
         </div>
       )}
 
       <div>
-        <label style={labelStyle}>Pièce jointe (facture, reçu…)</label>
+        <label style={labelStyle}>{t('shop.attachReceiptLabel')}</label>
         <input
           type="file" accept="image/*,application/pdf"
           onChange={e => setFichier(e.target.files?.[0] ?? null)}
@@ -590,7 +593,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
       </div>
 
       <button onClick={submit} disabled={uploading} style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 20px', fontWeight: 900, cursor: uploading ? 'not-allowed' : 'pointer', fontSize: 14, opacity: uploading ? 0.7 : 1 }}>
-        {uploading ? 'Envoi du justificatif…' : '✓ Enregistrer la vente'}
+        {uploading ? t('common.loading') : `✓ ${t('shop.saveSaleBtn')}`}
       </button>
 
       {/* Modal Scanner EAN VenteForm */}
@@ -598,7 +601,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: 16 }}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>📷 Scanner Code-barres (EAN)</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>{t('shop.scanBarcodeModalTitle')}</h4>
               <button type="button" onClick={arreterScannerEan} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
             <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{scannerEanStatus}</p>
@@ -606,7 +609,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
               <div id="vente-ean-scanner-reader" style={{ width: '100%', height: '100%' }} />
             </div>
             <button type="button" onClick={arreterScannerEan} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 8, padding: '8px', fontWeight: 800, cursor: 'pointer' }}>
-              Fermer
+              {t('common.close')}
             </button>
           </div>
         </div>
@@ -617,7 +620,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: 16 }}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>📷 Scanner le Nom du Produit</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>{t('shop.scanProductNameModalTitle')}</h4>
               <button type="button" onClick={arreterScannerNom} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
             <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{statusScannerNom}</p>
@@ -631,7 +634,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
               onClick={capturerNomOCR}
               style={{ width: '100%', padding: '10px', background: ocrLoading ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 800, fontSize: 13, cursor: ocrLoading ? 'not-allowed' : 'pointer' }}
             >
-              {ocrLoading ? '⏳ Analyse en cours…' : '📸 Capturer et Extraire'}
+              {ocrLoading ? t('common.loading') : t('shop.captureAndExtractNameBtn')}
             </button>
           </div>
         </div>
@@ -643,6 +646,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
 // ── Ventes ────────────────────────────────────────────────────────────────────
 
 function EditVenteModal({ vente, boutiqueId, onClose, onDone }: { vente: Vente; boutiqueId: string; onClose: () => void; onDone: () => void }) {
+  const { t } = useTranslation()
   const [nomProduit, setNomProduit] = useState(vente.nom_produit)
   const [quantite, setQuantite] = useState(vente.quantite)
   const [prix, setPrix] = useState(vente.prix_unitaire)
@@ -670,28 +674,28 @@ function EditVenteModal({ vente, boutiqueId, onClose, onDone }: { vente: Vente; 
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={onClose}>
       <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ margin: 0, fontWeight: 800, fontSize: 16 }}>Modifier la vente</p>
+          <p style={{ margin: 0, fontWeight: 800, fontSize: 16 }}>{t('shop.editSaleModalTitle')}</p>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#6b7280' }}>✕</button>
         </div>
         {error && <div style={{ background: '#fef2f2', borderRadius: 8, padding: '8px 12px', color: '#dc2626', fontSize: 13 }}>{error}</div>}
         <div>
-          <label style={labelStyle}>Produit / service</label>
+          <label style={labelStyle}>{t('shop.articleDesignationLabel')}</label>
           <input value={nomProduit} onChange={e => setNomProduit(e.target.value)} style={inputStyle} />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div><label style={labelStyle}>Quantité</label><input type="number" min={1} value={quantite} onChange={e => setQuantite(Number(e.target.value))} style={inputStyle} /></div>
-          <div><label style={labelStyle}>Prix unitaire (FCFA)</label><input type="number" min={0} value={prix} onChange={e => setPrix(Number(e.target.value))} style={inputStyle} /></div>
+          <div><label style={labelStyle}>{t('shop.quantityLabel')}</label><input type="number" min={1} value={quantite} onChange={e => setQuantite(Number(e.target.value))} style={inputStyle} /></div>
+          <div><label style={labelStyle}>{t('shop.unitPriceLabel')}</label><input type="number" min={0} value={prix} onChange={e => setPrix(Number(e.target.value))} style={inputStyle} /></div>
         </div>
         <div>
-          <label style={labelStyle}>Frais de livraison (FCFA)</label>
+          <label style={labelStyle}>{t('shop.deliveryFeeLabel')}</label>
           <input type="number" min={0} value={frais} onChange={e => setFrais(Number(e.target.value))} style={inputStyle} />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div><label style={labelStyle}>Nom client</label><input value={clientNom} onChange={e => setClientNom(e.target.value)} style={inputStyle} placeholder="Optionnel" /></div>
-          <div><label style={labelStyle}>Téléphone</label><input value={clientTel} onChange={e => setClientTel(e.target.value)} style={inputStyle} placeholder="Optionnel" /></div>
+          <div><label style={labelStyle}>{t('shop.customerFullNameLabel')}</label><input value={clientNom} onChange={e => setClientNom(e.target.value)} style={inputStyle} placeholder={t('common.optional')} /></div>
+          <div><label style={labelStyle}>{t('shop.customerPhoneLabel')}</label><input value={clientTel} onChange={e => setClientTel(e.target.value)} style={inputStyle} placeholder={t('common.optional')} /></div>
         </div>
         <div>
-          <label style={labelStyle}>Mode de paiement</label>
+          <label style={labelStyle}>{t('shop.paymentModePrompt')}</label>
           <select value={paiement} onChange={e => setPaiement(e.target.value)} style={inputStyle}>
             <option value="cash">Espèces</option>
             <option value="wave">Wave</option>
@@ -700,11 +704,11 @@ function EditVenteModal({ vente, boutiqueId, onClose, onDone }: { vente: Vente; 
           </select>
         </div>
         <div style={{ background: '#eff6ff', borderRadius: 8, padding: '10px 14px', fontSize: 14, fontWeight: 700, color: '#1d4ed8' }}>
-          Nouveau total : {fcfa(prix * quantite + frais)}
+          {t('shop.newTotalLabel')} : {fcfa(prix * quantite + frais)}
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={submit} style={{ flex: 1, background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>Enregistrer</button>
-          <button onClick={onClose} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', cursor: 'pointer' }}>Annuler</button>
+          <button onClick={submit} style={{ flex: 1, background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>{t('common.save')}</button>
+          <button onClick={onClose} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', cursor: 'pointer' }}>{t('common.cancel')}</button>
         </div>
       </div>
     </div>
@@ -712,6 +716,7 @@ function EditVenteModal({ vente, boutiqueId, onClose, onDone }: { vente: Vente; 
 }
 
 function VentesView({ boutiqueId }: { boutiqueId: string }) {
+  const { t } = useTranslation()
   const [ventes, setVentes] = useState<Vente[]>([])
   const [zones, setZones] = useState<Zone[]>([])
   const [produits, setProduits] = useState<Produit[]>([])
@@ -750,7 +755,7 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
   useEffect(() => { load() }, [boutiqueId])
 
   function removeVente(id: string) {
-    if (!confirm('Supprimer cette vente ? Elle ne sera plus comptabilisée.')) return
+    if (!confirm(t('common.confirmDelete') || 'Supprimer cette vente ? Elle ne sera plus comptabilisée.')) return
     setDeleting(id)
     startTransition(async () => {
       await deleteVente(boutiqueId, id)
@@ -802,16 +807,16 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {editingVente && <EditVenteModal vente={editingVente} boutiqueId={boutiqueId} onClose={() => setEditingVente(null)} onDone={load} />}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{ventes.length} vente{ventes.length !== 1 ? 's' : ''} enregistrée{ventes.length !== 1 ? 's' : ''}</p>
+        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{ventes.length} {t('shop.totalSales').toLowerCase()}</p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button onClick={exportVentesCSV} style={{ fontSize: 12, color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
-            📥 Excel (CSV)
+            📥 {t('common.exportCsv')}
           </button>
           <button onClick={exportVentesPDF} style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
-            📄 Imprimer PDF
+            📄 {t('common.exportPdf')}
           </button>
           <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 13, background: '#C75B00', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer' }}>
-            + Déclarer une vente
+            + {t('shop.declareSaleBtn')}
           </button>
         </div>
       </div>
@@ -821,10 +826,10 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
       )}
 
       {loading ? (
-        <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p>
+        <p style={{ color: '#9ca3af', fontSize: 14 }}>{t('common.loading')}</p>
       ) : ventes.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '32px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db', color: '#9ca3af', fontSize: 14 }}>
-          Aucune vente enregistrée. Cliquez sur &quot;+ Déclarer une vente&quot; pour commencer.
+          {t('shop.noSalesRegistered')}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -843,7 +848,7 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
                 </p>
                 {v.justificatif_url && (
                   <a href={v.justificatif_url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#1d4ed8', textDecoration: 'none' }}>
-                    📎 Justificatif ↗
+                    📎 {t('shop.attachReceiptLabel')} ↗
                   </a>
                 )}
               </div>
@@ -878,6 +883,7 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
 function DepenseCard({ depense: d, boutiqueId, onDelete, onUpdated }: {
   depense: Depense; boutiqueId: string; onDelete: (id: string) => void; onUpdated: () => void
 }) {
+  const { t } = useTranslation()
   const [uploading, setUploading] = useState(false)
   const [editing, setEditing] = useState(false)
   const [eMontant, setEMontant] = useState(String(d.montant))
@@ -889,7 +895,7 @@ function DepenseCard({ depense: d, boutiqueId, onDelete, onUpdated }: {
   const fileRef = { current: null as HTMLInputElement | null }
 
   function saveEdit() {
-    if (!eMontant || Number(eMontant) <= 0) { setEError('Montant invalide'); return }
+    if (!eMontant || Number(eMontant) <= 0) { setEError(t('errors.invalidAmount') || 'Montant invalide'); return }
     setEError(null)
     startTransition(async () => {
       const res = await updateDepense(boutiqueId, d.id, {
@@ -921,18 +927,18 @@ function DepenseCard({ depense: d, boutiqueId, onDelete, onUpdated }: {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {eError && <div style={{ background: '#fef2f2', borderRadius: 6, padding: '6px 10px', color: '#dc2626', fontSize: 12 }}>{eError}</div>}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div><label style={labelStyle}>Montant (FCFA)</label><input type="number" min={1} value={eMontant} onChange={e => setEMontant(e.target.value)} style={inputStyle} /></div>
-            <div><label style={labelStyle}>Date</label><input type="date" value={eDate} onChange={e => setEDate(e.target.value)} style={inputStyle} /></div>
+            <div><label style={labelStyle}>{t('shop.expenseAmountLabel')}</label><input type="number" min={1} value={eMontant} onChange={e => setEMontant(e.target.value)} style={inputStyle} /></div>
+            <div><label style={labelStyle}>{t('common.date') || 'Date'}</label><input type="date" value={eDate} onChange={e => setEDate(e.target.value)} style={inputStyle} /></div>
           </div>
-          <div><label style={labelStyle}>Catégorie</label>
+          <div><label style={labelStyle}>{t('shop.productCategory')}</label>
             <select value={eCategorie} onChange={e => setECategorie(e.target.value)} style={inputStyle}>
               {CAT_DEPENSES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
             </select>
           </div>
-          <div><label style={labelStyle}>Description</label><input value={eDesc} onChange={e => setEDesc(e.target.value)} style={inputStyle} placeholder="Optionnel" /></div>
+          <div><label style={labelStyle}>{t('shop.descriptionLabel')}</label><input value={eDesc} onChange={e => setEDesc(e.target.value)} style={inputStyle} placeholder={t('common.optional')} /></div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={saveEdit} style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>Enregistrer</button>
-            <button onClick={() => setEditing(false)} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: 7, padding: '8px 12px', cursor: 'pointer', fontSize: 13 }}>Annuler</button>
+            <button onClick={saveEdit} style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>{t('common.save')}</button>
+            <button onClick={() => setEditing(false)} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: 7, padding: '8px 12px', cursor: 'pointer', fontSize: 13 }}>{t('common.cancel')}</button>
           </div>
         </div>
       ) : (
@@ -950,7 +956,7 @@ function DepenseCard({ depense: d, boutiqueId, onDelete, onUpdated }: {
             {d.justificatif_url ? (
               <a href={d.justificatif_url} target="_blank" rel="noreferrer"
                 style={{ fontSize: 11, color: '#1d4ed8', textDecoration: 'none' }}>
-                📎 Justificatif ↗
+                📎 {t('shop.attachReceiptLabel')} ↗
               </a>
             ) : (
               <>
@@ -965,7 +971,7 @@ function DepenseCard({ depense: d, boutiqueId, onDelete, onUpdated }: {
                   disabled={uploading}
                   style={{ fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
                 >
-                  {uploading ? 'Envoi…' : '+ Ajouter justificatif'}
+                  {uploading ? t('common.loading') : `+ ${t('shop.attachReceiptLabel')}`}
                 </button>
               </>
             )}
@@ -973,8 +979,8 @@ function DepenseCard({ depense: d, boutiqueId, onDelete, onUpdated }: {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <span style={{ fontWeight: 800, fontSize: 15, color: '#dc2626' }}>{fcfa(d.montant)}</span>
-          <button onClick={() => setEditing(true)} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8', borderRadius: 6, padding: '4px 7px', cursor: 'pointer', fontSize: 12 }} title="Modifier">✎</button>
-          <button onClick={() => onDelete(d.id)} style={{ background: 'none', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }} title="Archiver">✕</button>
+          <button onClick={() => setEditing(true)} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8', borderRadius: 6, padding: '4px 7px', cursor: 'pointer', fontSize: 12 }} title={t('common.edit')}>✎</button>
+          <button onClick={() => onDelete(d.id)} style={{ background: 'none', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }} title={t('common.delete')}>✕</button>
         </div>
       </div>
       )}
@@ -983,6 +989,7 @@ function DepenseCard({ depense: d, boutiqueId, onDelete, onUpdated }: {
 }
 
 function DepensesView({ boutiqueId }: { boutiqueId: string }) {
+  const { t } = useTranslation()
   const [depenses, setDepenses] = useState<Depense[]>([])
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -1093,7 +1100,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
   useEffect(() => { load() }, [boutiqueId])
 
   function submit() {
-    if (!montant || Number(montant) <= 0) { setError('Montant invalide'); return }
+    if (!montant || Number(montant) <= 0) { setError(t('errors.invalidAmount') || 'Montant invalide'); return }
     setError(null)
     startTransition(async () => {
       const res = await addDepense(boutiqueId, { montant: Number(montant), categorie, description: description || undefined, date_depense: date })
@@ -1111,7 +1118,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
   }
 
   function remove(id: string) {
-    if (!confirm('Supprimer cette dépense ?')) return
+    if (!confirm(t('common.confirmDelete') || 'Supprimer cette dépense ?')) return
     startTransition(async () => { await deleteDepense(boutiqueId, id); load() })
   }
 
@@ -1149,16 +1156,16 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Total affiché : <strong style={{ color: '#dc2626' }}>{fcfa(total)}</strong></p>
+        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{t('shop.expenses')} : <strong style={{ color: '#dc2626' }}>{fcfa(total)}</strong></p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button onClick={exportDepensesCSV} style={{ fontSize: 12, color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
-            📥 Excel (CSV)
+            📥 {t('common.exportCsv')}
           </button>
           <button onClick={exportDepensesPDF} style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
-            📄 Imprimer PDF
+            📄 {t('common.exportPdf')}
           </button>
           <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 13, background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer' }}>
-            + Ajouter une dépense
+            + {t('shop.declareExpenseBtn')}
           </button>
         </div>
       </div>
@@ -1168,29 +1175,29 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
           {error && <div style={{ background: '#fef2f2', borderRadius: 8, padding: '8px 12px', color: '#dc2626', fontSize: 13 }}>{error}</div>}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label style={labelStyle}>Montant (FCFA) *</label>
+              <label style={labelStyle}>{t('shop.expenseAmountLabel')}</label>
               <input type="number" min={1} value={montant} onChange={e => setMontant(e.target.value)} style={inputStyle} placeholder="Ex: 25000" />
             </div>
             <div>
-              <label style={labelStyle}>Date</label>
+              <label style={labelStyle}>{t('common.date') || 'Date'}</label>
               <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inputStyle} />
             </div>
           </div>
           <div>
-            <label style={labelStyle}>Catégorie</label>
+            <label style={labelStyle}>{t('shop.productCategory')}</label>
             <select value={categorie} onChange={e => setCategorie(e.target.value)} style={inputStyle}>
               {CAT_DEPENSES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
             </select>
           </div>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <label style={{ ...labelStyle, margin: 0 }}>Description / Motif</label>
+              <label style={{ ...labelStyle, margin: 0 }}>{t('shop.expenseReasonLabel')}</label>
               <button
                 type="button"
                 onClick={demarrerScannerTicket}
                 style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
               >
-                📷 Scan Reçu (OCR)
+                {t('shop.scanReceiptOcrBtn')}
               </button>
             </div>
             <input value={description} onChange={e => setDescription(e.target.value)} style={inputStyle} placeholder="Ex: Achat stock riz, Livraison DHL…" />
@@ -1210,7 +1217,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
             )}
           </div>
           <div>
-            <label style={labelStyle}>Pièce jointe (facture, reçu…)</label>
+            <label style={labelStyle}>{t('shop.attachReceiptLabel')}</label>
             <input
               type="file" accept="image/*,application/pdf"
               onChange={e => setFichier(e.target.files?.[0] ?? null)}
@@ -1220,10 +1227,10 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={submit} disabled={uploading} style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontWeight: 700, cursor: uploading ? 'not-allowed' : 'pointer', fontSize: 13, opacity: uploading ? 0.7 : 1 }}>
-              {uploading ? 'Envoi du justificatif…' : 'Enregistrer'}
+              {uploading ? t('common.loading') : t('common.save')}
             </button>
             <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: 8, padding: '9px 16px', cursor: 'pointer', fontSize: 13 }}>
-              Annuler
+              {t('common.cancel')}
             </button>
           </div>
 
@@ -1232,7 +1239,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
             <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: 16 }}>
               <div style={{ background: '#fff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>📷 Scanner Reçu / Facturette</h4>
+                  <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>{t('shop.scanReceiptOcrBtn')}</h4>
                   <button type="button" onClick={arreterScannerTicket} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
                 </div>
                 <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{statusScannerTicket}</p>
@@ -1246,7 +1253,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
                   onClick={capturerTicketOCR}
                   style={{ width: '100%', padding: '10px', background: ocrLoadingTicket ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 800, fontSize: 13, cursor: ocrLoadingTicket ? 'not-allowed' : 'pointer' }}
                 >
-                  {ocrLoadingTicket ? '⏳ Analyse en cours…' : '📸 Capturer et Extraire'}
+                  {ocrLoadingTicket ? t('common.loading') : t('shop.captureAndExtractNameBtn')}
                 </button>
               </div>
             </div>
@@ -1255,10 +1262,10 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
       )}
 
       {loading ? (
-        <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p>
+        <p style={{ color: '#9ca3af', fontSize: 14 }}>{t('common.loading')}</p>
       ) : depenses.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '32px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db', color: '#9ca3af', fontSize: 14 }}>
-          Aucune dépense enregistrée.
+          {t('shop.noExpensesRegistered')}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1274,6 +1281,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
 // ── Stock ─────────────────────────────────────────────────────────────────────
 
 export function StockView({ boutiqueId }: { boutiqueId: string }) {
+  const { t } = useTranslation()
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<string | null>(null)
@@ -1347,24 +1355,24 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
     printPDFReport('Inventaire État des Stocks', `Boutique ${boutiqueId}`, headers, rows)
   }
 
-  if (loading) return <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p>
+  if (loading) return <p style={{ color: '#9ca3af', fontSize: 14 }}>{t('common.loading')}</p>
 
   if (produits.length === 0) return (
     <div style={{ textAlign: 'center', padding: '32px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db', color: '#9ca3af', fontSize: 14 }}>
-      Aucun produit dans le catalogue. Ajoutez des produits via l&apos;onglet &quot;Catalogue produits&quot;.
+      {t('shop.noProductsInInventory')}
     </div>
   )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Inventaire ({produits.length} références)</p>
+        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{t('shop.inventoryRefTitle')} ({produits.length} {t('shop.catalog').toLowerCase()})</p>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={exportStockCSV} style={{ fontSize: 12, color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
-            📥 Excel (CSV)
+            📥 {t('common.exportCsv')}
           </button>
           <button onClick={exportStockPDF} style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
-            📄 Imprimer PDF
+            📄 {t('common.exportPdf')}
           </button>
         </div>
       </div>
@@ -1399,11 +1407,11 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
                 background: (p.quantite_stock ?? p.stock_quantite) === null ? '#f1f5f9' : (p.quantite_stock ?? p.stock_quantite)! <= 3 ? '#fef2f2' : '#dcfce7',
                 color: (p.quantite_stock ?? p.stock_quantite) === null ? '#9ca3af' : (p.quantite_stock ?? p.stock_quantite)! <= 3 ? '#dc2626' : '#16a34a',
               }}>
-                {(p.quantite_stock ?? p.stock_quantite) === null ? 'Non suivi' : `${(p.quantite_stock ?? p.stock_quantite)} en stock`}
+                {(p.quantite_stock ?? p.stock_quantite) === null ? t('shop.notTrackedBadge') : `${(p.quantite_stock ?? p.stock_quantite)} ${t('shop.inStockLabel')}`}
               </span>
               <button onClick={() => { setEditing(p.id); setStockVal(prev => ({ ...prev, [p.id]: String((p.quantite_stock ?? p.stock_quantite) ?? '') })) }}
                 style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', fontSize: 12 }}>
-                Modifier
+                {t('common.edit')}
               </button>
             </div>
           )}
@@ -1416,9 +1424,8 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
 
 // ── Saisie Express ───────────────────────────────────────────────────────────
 
-// ── Saisie Express ───────────────────────────────────────────────────────────
-
 function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
+  const { t } = useTranslation()
   const [mode, setMode] = useState<'vente' | 'depense'>('vente')
   const [produits, setProduits] = useState<Produit[]>([])
   
@@ -1515,7 +1522,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
   const handleViderPanier = () => {
     if (Object.keys(panierProduits).length === 0 && itemsCustomPanier.length === 0) return
-    if (confirm('Voulez-vous vider tous les articles de cette vente ?')) {
+    if (confirm(t('shop.confirmEmptyCart') || 'Voulez-vous vider tous les articles de cette vente ?')) {
       setPanierProduits({})
       setItemsCustomPanier([])
     }
@@ -1794,7 +1801,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             transition: 'all 0.2s ease',
           }}
         >
-          ⚡ + Vente Rapide (Encaissement)
+          ⚡ + {t('shop.quickSaleEncashment')}
         </button>
 
         <button
@@ -1810,7 +1817,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             transition: 'all 0.2s ease',
           }}
         >
-          ⚡ - Dépense Rapide (Sortie Caisse)
+          ⚡ - {t('shop.quickExpenseCashOut')}
         </button>
       </div>
 
@@ -1825,14 +1832,14 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: 14, flexWrap: 'wrap', gap: 10 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                💰 Encaissement Vente Directe (Catalogue & Libre)
+                💰 {t('shop.quickSaleTitle')}
               </h3>
               <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
-                Ajout par Catalogue, Saisie Libre et Scan EAN / Code-barres
+                {t('shop.quickSaleSubtitle')}
               </p>
             </div>
             <span style={{ fontSize: 11, fontWeight: 800, background: '#f0fdf4', color: '#16a34a', padding: '4px 10px', borderRadius: 12, border: '1px solid #bbf7d0' }}>
-              ⚡ Saisie 1-Clic Sans POS
+              ⚡ {t('shop.expressEntryTitle')}
             </span>
           </div>
 
@@ -1855,7 +1862,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                   boxShadow: modeSaisie === 'catalogue' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
                 }}
               >
-                🛍️ Catalogue ({produits.length})
+                {t('shop.catalogModeTab')} ({produits.length})
               </button>
               <button
                 type="button"
@@ -1873,7 +1880,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                   boxShadow: modeSaisie === 'libre' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
                 }}
               >
-                ✍️ Saisie Libre / Prestation
+                {t('shop.manualModeTab')}
               </button>
             </div>
 
@@ -1896,7 +1903,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                 whiteSpace: 'nowrap'
               }}
             >
-              📷 Scan EAN
+              {t('shop.scanEanBtn')}
             </button>
           </div>
 
@@ -1909,7 +1916,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                   type="text"
                   value={rechercheProduit}
                   onChange={e => setRechercheProduit(e.target.value)}
-                  placeholder="🔍 Rechercher un produit par nom, référence, code-barres EAN..."
+                  placeholder={t('shop.searchProductPrompt')}
                   style={{
                     width: '100%',
                     padding: '9px 36px 9px 12px',
@@ -1950,7 +1957,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                       color: categorieFiltre === 'tous' ? '#ffffff' : '#475569'
                     }}
                   >
-                    Tous ({produits.length})
+                    {t('common.all')} ({produits.length})
                   </button>
                   {categoriesCatalogue.map(cat => {
                     const count = produits.filter((p: any) => p.categorie === cat).length
@@ -1990,8 +1997,8 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                 {produitsFiltres.length === 0 ? (
                   <div style={{ gridColumn: '1 / -1', fontSize: 12.5, color: '#94a3b8', textAlign: 'center', padding: '24px 10px' }}>
                     {produits.length === 0
-                      ? 'Aucun produit dans le catalogue. Utilisez la saisie libre.'
-                      : 'Aucun produit ne correspond à cette recherche.'}
+                      ? t('shop.noProductsInCatalog')
+                      : t('shop.noProductsMatchSearch')}
                   </div>
                 ) : (
                   produitsFiltres.map((p: any) => {
@@ -2026,7 +2033,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                             </span>
                             {stock !== undefined && stock !== null && (
                               <span style={{ fontSize: 9.5, fontWeight: 700, color: stock > 0 ? '#10b981' : '#ef4444' }}>
-                                {stock > 0 ? `${stock} en stock` : 'Rupture'}
+                                {stock > 0 ? `${stock} ${t('shop.inStockLabel')}` : t('shop.outOfStockBadge')}
                               </span>
                             )}
                           </div>
@@ -2041,7 +2048,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                                 handleAjouterProduitCatalogue(p, -1)
                               }}
                               style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: '#fee2e2', color: '#ef4444', fontWeight: 900, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                              title="Diminuer la quantité (-1)"
+                              title="-"
                             >
                               -
                             </button>
@@ -2055,7 +2062,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                                 handleAjouterProduitCatalogue(p, 1)
                               }}
                               style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: '#e0f2fe', color: '#0284c7', fontWeight: 900, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                              title="Augmenter la quantité (+1)"
+                              title="+"
                             >
                               +
                             </button>
@@ -2066,7 +2073,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                             onClick={() => handleAjouterProduitCatalogue(p, 1)}
                             style={{ marginTop: 6, padding: '3px 6px', fontSize: 11, fontWeight: 700, background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, color: '#475569', cursor: 'pointer' }}
                           >
-                            ➕ Ajouter
+                            ➕ {t('common.add')}
                           </button>
                         )}
                       </div>
@@ -2082,7 +2089,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             <div style={{ background: '#f8fafc', padding: 14, borderRadius: 12, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label style={{ fontSize: 12, fontWeight: 800, color: '#0369a1', margin: 0 }}>
-                  ✍️ Article ou prestation hors catalogue :
+                  ✍️ {t('shop.customServicePrompt')} :
                 </label>
                 <button
                   type="button"
@@ -2101,17 +2108,17 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                     gap: 4
                   }}
                 >
-                  📷 Scan Nom (OCR)
+                  {t('shop.scanNameOcrBtn')}
                 </button>
               </div>
 
               <div>
                 <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                  Désignation / Libellé de l’article *
+                  {t('shop.articleDesignationLabel')} *
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex: Réparation téléphone, Robe sur-mesure, Vente occasionnelle..."
+                  placeholder={t('shop.articleDesignationPlaceholder')}
                   value={libelleCustomInput}
                   onChange={e => setLibelleCustomInput(e.target.value)}
                   style={{ ...inputStyle, borderRadius: 8, padding: 10 }}
@@ -2120,7 +2127,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
               {ocrDetections.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
-                  <span style={{ fontSize: 10.5, fontWeight: 800, color: '#64748b' }}>💡 Détections OCR :</span>
+                  <span style={{ fontSize: 10.5, fontWeight: 800, color: '#64748b' }}>{t('shop.ocrDetectionsLabel')}</span>
                   {ocrDetections.map((txt, idx) => (
                     <button
                       key={idx}
@@ -2137,12 +2144,12 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px auto', gap: 8, alignItems: 'flex-end' }}>
                 <div>
                   <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                    Prix Unitaire (FCFA) *
+                    {t('shop.unitPriceLabel')} *
                   </label>
                   <input
                     type="number"
                     min="1"
-                    placeholder="Ex: 15000"
+                    placeholder={t('shop.unitPricePlaceholder')}
                     value={prixCustomInput}
                     onChange={e => setPrixCustomInput(e.target.value)}
                     style={{ ...inputStyle, borderRadius: 8, padding: 10, fontWeight: 700 }}
@@ -2150,7 +2157,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                 </div>
                 <div>
                   <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                    Qté *
+                    {t('shop.quantityLabel')} *
                   </label>
                   <input
                     type="number"
@@ -2175,7 +2182,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  ➕ Ajouter
+                  ➕ {t('common.add')}
                 </button>
               </div>
             </div>
@@ -2185,7 +2192,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <span style={{ fontSize: 12.5, fontWeight: 800, color: '#0369a1' }}>
-                🛒 Articles dans la vente ({nbArticlesTotal} articles • Total : {fcfa(totalVente)}) :
+                🛒 {t('shop.articlesInSale')} ({nbArticlesTotal} {t('shop.catalog').toLowerCase()} • {t('shop.totalCollectedLabel')} : {fcfa(totalVente)}) :
               </span>
               {nbArticlesTotal > 0 && (
                 <button
@@ -2193,14 +2200,14 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                   onClick={handleViderPanier}
                   style={{ fontSize: 11, color: '#ef4444', background: '#fee2e2', border: 'none', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontWeight: 800 }}
                 >
-                  🗑️ Vider le panier
+                  {t('shop.emptyCartBtn')}
                 </button>
               )}
             </div>
 
             {nbArticlesTotal === 0 ? (
               <div style={{ padding: '16px 10px', textAlign: 'center', color: '#94a3b8', fontSize: 12.5 }}>
-                Aucun article sélectionné. Cliquez sur un produit ou saisissez un article libre ci-dessus.
+                {t('shop.addFirstCustomerPrompt')}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 160, overflowY: 'auto' }}>
@@ -2214,7 +2221,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                   return (
                     <div key={pId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', padding: '6px 10px', borderRadius: 8, border: '1px solid #e0f2fe', fontSize: 12.5 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 9.5, background: '#f0fdf4', color: '#16a34a', fontWeight: 800, padding: '1px 5px', borderRadius: 4 }}>Catalogue</span>
+                        <span style={{ fontSize: 9.5, background: '#f0fdf4', color: '#16a34a', fontWeight: 800, padding: '1px 5px', borderRadius: 4 }}>{t('shop.catalog')}</span>
                         <span style={{ fontWeight: 700, color: '#0f172a' }}>{prodObj.nom}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -2225,7 +2232,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                           type="button"
                           onClick={() => handleAjouterProduitCatalogue(prodObj, -qte)}
                           style={{ background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 4, width: 20, height: 20, cursor: 'pointer', fontWeight: 900, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          title="Supprimer cet article"
+                          title={t('shop.deleteItemTitle')}
                         >
                           ✕
                         </button>
@@ -2240,7 +2247,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                   return (
                     <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', padding: '6px 10px', borderRadius: 8, border: '1px dashed #0284c7', fontSize: 12.5 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 9.5, background: '#e0f2fe', color: '#0369a1', fontWeight: 800, padding: '1px 5px', borderRadius: 4 }}>Libre</span>
+                        <span style={{ fontSize: 9.5, background: '#e0f2fe', color: '#0369a1', fontWeight: 800, padding: '1px 5px', borderRadius: 4 }}>{t('shop.freeItemBadge')}</span>
                         <span style={{ fontWeight: 700, color: '#0f172a' }}>{item.nom}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -2251,7 +2258,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                           type="button"
                           onClick={() => setItemsCustomPanier(prev => prev.filter((_, i) => i !== idx))}
                           style={{ background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 4, width: 20, height: 20, cursor: 'pointer', fontWeight: 900, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          title="Supprimer cet article"
+                          title={t('shop.deleteItemTitle')}
                         >
                           ✕
                         </button>
@@ -2266,7 +2273,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           {/* Mode de Paiement & Client */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Mode de Paiement Reçu</label>
+              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>{t('shop.paymentModePrompt')}</label>
               <select
                 value={methodePaiement}
                 onChange={e => setMethodePaiement(e.target.value)}
@@ -2281,7 +2288,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             </div>
 
             <div>
-              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Nom du Client (Optionnel)</label>
+              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>{t('shop.customerFullNameLabel')} ({t('common.optional')})</label>
               <input
                 type="text"
                 placeholder="Ex: Client comptoir"
@@ -2294,7 +2301,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
           {/* Total Calculé en Direct */}
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Total Encaissé ({nbArticlesTotal} articles)</span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>{t('shop.totalCollectedLabel')} ({nbArticlesTotal} {t('shop.catalog').toLowerCase()})</span>
             <span style={{ fontSize: 22, fontWeight: 900, color: '#10b981' }}>{fcfa(totalVente)}</span>
           </div>
 
@@ -2318,22 +2325,22 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
               transition: 'all 0.2s ease',
             }}
           >
-            {loading ? '⏳ Enregistrement...' : `⚡ Valider l'Encaissement (${fcfa(totalVente)})`}
+            {loading ? t('common.loading') : `⚡ ${t('shop.validateCashInBtn')} (${fcfa(totalVente)})`}
           </button>
         </form>
       ) : (
         <form onSubmit={handleValiderDepenseRapide} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 8px 25px rgba(0,0,0,0.04)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: 14 }}>
             <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-              💸 Déclaration d&apos;une Sortie de Caisse / Dépense
+              💸 {t('shop.quickExpenseTitle')}
             </h3>
             <span style={{ fontSize: 11, fontWeight: 800, background: '#fef2f2', color: '#dc2626', padding: '4px 10px', borderRadius: 12, border: '1px solid #fecaca' }}>
-              ⚡ Débit Rapide
+              ⚡ {t('shop.expressExpenseTitle')}
             </span>
           </div>
 
           <div>
-            <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Montant de la Dépense (FCFA) *</label>
+            <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>{t('shop.expenseAmountLabel')}</label>
             <input
               type="number"
               required
@@ -2347,31 +2354,32 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>Catégorie</label>
+              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>{t('shop.productCategory')}</label>
               <select
                 value={catDepense}
                 onChange={e => setCatDepense(e.target.value)}
                 style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
               >
-                <option value="stock">📦 Achat de Stock / Marchandises</option>
-                <option value="loyer">🏠 Loyer Local / Boutique</option>
-                <option value="salaire">👥 Salaire & Avances Personnel</option>
-                <option value="transport">🚚 Transport & Logistique</option>
-                <option value="factures">💡 Électricité, Eau & Internet</option>
-                <option value="marketing">📣 Publicité & Réseaux Sociaux</option>
-                <option value="autre">🔖 Autre Charge Divers</option>
+                <option value="stock">📦 {t('shop.catStock')}</option>
+                <option value="loyer">🏠 {t('shop.catRent')}</option>
+                <option value="salaire">👥 {t('shop.catSalaries')}</option>
+                <option value="transport">🚚 {t('shop.catTransport')}</option>
+                <option value="marketing">📣 {t('shop.catMarketing')}</option>
+                <option value="fournitures">📑 {t('shop.catOfficeSupplies')}</option>
+                <option value="taxes">🏛️ {t('shop.catTaxes')}</option>
+                <option value="autre">🔖 {t('shop.catOther')}</option>
               </select>
             </div>
 
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569', margin: 0 }}>Motif / Description (Optionnel)</label>
+                <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569', margin: 0 }}>{t('shop.expenseReasonLabel')}</label>
                 <button
                   type="button"
                   onClick={demarrerScannerNom}
                   style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
                 >
-                  📷 Scan Reçu (OCR)
+                  {t('shop.scanReceiptOcrBtn')}
                 </button>
               </div>
               <input
@@ -2418,7 +2426,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
               transition: 'all 0.2s ease',
             }}
           >
-            {loading ? '⏳ Enregistrement...' : '⚡ Enregistrer la Dépense'}
+            {loading ? t('common.loading') : `⚡ ${t('shop.validateExpenseBtn')}`}
           </button>
         </form>
       )}
@@ -2428,7 +2436,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: 16 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner Code-barres (EAN)</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{t('shop.scanBarcodeModalTitle')}</h4>
               <button type="button" onClick={arreterScannerEan} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
             <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{scannerEanStatus}</p>
@@ -2438,10 +2446,10 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: '#475569' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontWeight: 700 }}>
                 <input type="checkbox" checked={scanContinu} onChange={e => setScanContinu(e.target.checked)} />
-                Scanner en continu
+                {t('shop.continuousScanCheckbox')}
               </label>
               <button type="button" onClick={arreterScannerEan} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer' }}>
-                Fermer
+                {t('common.close')}
               </button>
             </div>
           </div>
@@ -2453,7 +2461,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: 16 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner le Nom du Produit</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{t('shop.scanProductNameModalTitle')}</h4>
               <button type="button" onClick={arreterScannerNom} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
             <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{statusScannerNom}</p>
@@ -2461,7 +2469,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
               <video ref={videoNomRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <div style={{ position: 'absolute', top: '20%', left: '7.5%', width: '85%', height: '60%', border: '2px dashed #38bdf8', borderRadius: 8, boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ background: 'rgba(15,23,42,0.75)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>
-                  Cadrez le nom au centre
+                  {t('shop.centerNamePrompt')}
                 </span>
               </div>
             </div>
@@ -2471,7 +2479,7 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
               onClick={capturerNomOCR}
               style={{ width: '100%', padding: '12px', background: ocrLoading ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: ocrLoading ? 'not-allowed' : 'pointer' }}
             >
-              {ocrLoading ? '⏳ Analyse OCR en cours...' : '📸 Capturer et Extraire le Nom'}
+              {ocrLoading ? t('common.loading') : t('shop.captureAndExtractNameBtn')}
             </button>
           </div>
         </div>
@@ -2503,13 +2511,15 @@ export default function Comptabilite({ boutiqueId, initialTab = 'dashboard' }: {
     </button>
   )
 
+  const { t } = useTranslation()
+
   return (
     <div>
       <div className="nopalou-scroll-tabs" style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-        {tabBtn('dashboard', '📊 Tableau de bord')}
-        {tabBtn('express',   '⚡ Saisie Express (Ventes & Dépenses)')}
-        {tabBtn('ventes',    '💰 Ventes')}
-        {tabBtn('depenses',  '📉 Dépenses')}
+        {tabBtn('dashboard', `📊 ${t('shop.overview')}`)}
+        {tabBtn('express',   `⚡ ${t('shop.quickSalesExpenses')}`)}
+        {tabBtn('ventes',    `💰 ${t('shop.totalSales')}`)}
+        {tabBtn('depenses',  `📉 ${t('shop.expenses')}`)}
       </div>
 
       {tab === 'dashboard' && <DashboardView boutiqueId={boutiqueId} />}
@@ -2523,6 +2533,7 @@ export default function Comptabilite({ boutiqueId, initialTab = 'dashboard' }: {
 // ── Zones de livraison ────────────────────────────────────────────────────────
 
 export function ZonesView({ boutiqueId }: { boutiqueId: string }) {
+  const { t } = useTranslation()
   const [zones, setZones] = useState<Zone[]>([])
   const [loading, setLoading] = useState(true)
   const [nom, setNom] = useState('')
@@ -2549,29 +2560,29 @@ export function ZonesView({ boutiqueId }: { boutiqueId: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{zones.length} zone{zones.length !== 1 ? 's' : ''} de livraison</p>
+        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{zones.length} {t('shop.deliveryZonesTitle')}</p>
         <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 13, background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer' }}>
-          + Ajouter une zone
+          + {t('shop.addDeliveryZone')}
         </button>
       </div>
 
       {showForm && (
         <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, display: 'flex', gap: 10, alignItems: 'flex-end' }}>
           <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Nom de la zone</label>
+            <label style={labelStyle}>{t('shop.zoneName')}</label>
             <input value={nom} onChange={e => setNom(e.target.value)} style={inputStyle} placeholder="Ex: Dakar Plateau, Banlieue…" />
           </div>
           <div style={{ width: 130 }}>
-            <label style={labelStyle}>Frais (FCFA)</label>
+            <label style={labelStyle}>{t('shop.zoneFee')}</label>
             <input type="number" min={0} value={prix} onChange={e => setPrix(e.target.value)} style={inputStyle} placeholder="0" />
           </div>
-          <button onClick={submit} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>Ajouter</button>
+          <button onClick={submit} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>{t('common.save')}</button>
         </div>
       )}
 
-      {loading ? <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p> : zones.length === 0 ? (
+      {loading ? <p style={{ color: '#9ca3af', fontSize: 14 }}>{t('common.loading')}</p> : zones.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '24px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db', color: '#9ca3af', fontSize: 14 }}>
-          Aucune zone de livraison. Ajoutez-en pour calculer les frais automatiquement.
+          {t('common.noData')}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

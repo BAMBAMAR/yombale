@@ -1,46 +1,69 @@
-- **Internationalisation (i18n) de l'Espace Compte, Boutique, Caisse POS et Authentification (`branch: feature/i18n-account-shop` - 18 août 2026)** 🌐 :
-  * **Architecture & Moteur i18n Hybride SSR / Client (`frontend-next/src/i18n/`)** :
-    - Support de 3 langues officielles : **Français (`fr`, par défaut)**, **Anglais (`en`)**, et **Arabe (`ar`, avec bascule automatique du sens d'écriture `dir="rtl"`)**.
-    - Configuration centralisée (`config.ts`, `types.ts`, `server.ts`, `context.tsx`, `index.ts`) avec typage TypeScript strict garantissant l'intégrité des clés de traduction.
-    - Dictionnaires modulaires organisés par domaine (`common`, `auth`, `account`, `shop`, `caisse`, `errors`) assurant une couverture exhaustive sans dette technique.
-    - Résolution SSR via cookie `nopalou_locale` (avec fallback `fr`) pour injecter `<html lang="..." dir="...">` côté serveur et éliminer tout flash ou hydration mismatch.
-  * **Sélecteur de Langue Multi-Variantes (`LanguageSelector.tsx`)** :
-    - 4 variantes ergonomiques réutilisables : `pill` (avec drapeau et libellé), `compact` (idéal pour headers et barres d'outils), `dropdown`, et `inline`.
-    - Persistance automatique du choix utilisateur sur Cookie (durée 1 an, `SameSite=Lax`) et synchronisation instantanée du DOM (`lang`, `dir`) et de l'état React sans rechargement lourd.
-  * **Périmètre Déployé & Composants Intégrés** :
-    1. **Authentification** : Pages `/connexion`, `/inscription`, `/mot-de-passe-oublie` enrichies d'un `LanguageSelector` visible avant connexion, avec traduction complète des formulaires, placeholders, boutons et messages d'erreur et sanitisation des erreurs backend.
-    2. **Espace Compte (100% des sous-sections, formulaires et onglets traduits)** :
-       - Navigation latérale (`AccountNavLinks`, `AccountSidebarClient`), en-tête mobile (`AccountMobileHeader`), bannière d'avertissement email non vérifié (`BannerEmailNonVerifie`).
-       - Profil et paramètres (`ProfilClient`) incluant le sélecteur de langue préféré.
-       - Programme Apporteur d'Affaires & Ambassadeur (`ApporteurClient`) : codes, liens de partage WhatsApp/réseaux, téléchargements visuels, KPIs commissions, argumentaires et boutiques recrutées entièrement traduits en FR, EN et AR.
-       - Gestion des annonces classifiées (`AnnoncesClient`) : badges de statuts, actions (activer, modifier, booster, supprimer), bannières et empty states.
-       - Formulaire de publication d'annonce classifiée (`FormulaireAnnonce.tsx`, `/deposer-annonce`) : wizard 3 étapes (catégories, caractéristiques/prix/contact, photos/quota).
-       - Gestion et publication immobilière (`AnnoncesImmoClient.tsx`, `FormulaireImmo.tsx`, `/deposer-immo`) : type d'offre (Location/Vente), types de biens (Appartement, Villa, Maison, Studio, Terrain, Bureau), caractéristiques, photos et bouton de suppression (`DeleteImmoButton`).
-       - Alertes de prix (`MesAlertesPage`, `FormAlerte.tsx`, `MesAlertesClient.tsx`) : choix des canaux de notification (WhatsApp, Email, Les deux), seuil de prix cible et tableau des alertes actives.
-       - Suivi de commande (`SuiviCommandeClient`) : formulaire de recherche, étapes de livraison (en attente, en préparation, en livraison, livrée) et contacts vendeurs.
-       - Favoris (`FavorisClient`) : listes, suppression et liens directs.
-       - Fonctionnalités & Abonnements (`FonctionnalitesClient`) : paliers boutique (Gratuit, Pro, Business), badges de statut actif et grilles d'avantages.
-    3. **Espace Boutique & Gestion Marchand (`BoutiqueClient.tsx`, `BoutiqueAdmins.tsx`, `BoutiqueCaissiers.tsx`)** :
-       - Cartes boutiques (`BoutiqueCard`) : actions (« Gérer la boutique », « Caisse POS », « Abonnements »), statuts actif/inactif, badges.
-       - Dashboard de gestion (`BoutiqueDashboard`) : indicateurs clés (« Commandes en attente », « Catalogue Produits », « Alertes Stock », « Formule Boutique »), grille d'actions rapides (« Saisie Express », « Carnet de Dettes », « Ajouter un produit », « Créer une facture/devis », « Ouvrir Caisse POS », « Mon QR Code & Lien »).
-       - Barre latérale de gestion multi-onglets (`BoutiqueManage`) : groupes dynamiques (« Ventes & Clients », « Catalogue & Stocks », « Finance & Rapports », « Paramètres & Équipe »), titres, descriptions et liens d'action rapide (« Caisse POS », « Voir la boutique », « Mon compte marchand », « Mode Pure Player ») localisés.
-       - Gestion d'équipe : sous-onglets « Administrateurs » et « Caissiers POS », formulaires d'invitation/création et gestion des accès sécurisés par code PIN.
-       - Bannière Pro et écran de création de boutique pour nouveaux commerçants.
-       - Résolution du scope React (`const { t } = useTranslation()`) dans tous les sous-composants (`BoutiqueCard`, `BoutiqueDashboard`, `BoutiqueClient`) et ajout du fallback webpack `fs: false` pour les modules QR/SVG.
-    4. **Caisse Tactile POS (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
-       - En-tête de caisse : badge terminal caissier, sélecteur compact de langue FR / EN / AR, menu d'outils (« Bilan Session / Rapport X », « Importer Lot », « Historique », « Carnet », « Config PINs »), boutons de verrouillage et de clôture Z.
-       - Barre de recherche & scanners : placeholder, scanner caméra (`📷 Scanner Caméra`) et douchette sans fil smartphone (`📱 Douchette Smartphone`).
-       - Catégories de caisse tactiles : 100% des catégories dynamiquement traduites en FR, EN et AR (Téléphonie, Informatique, Électro, Mode, Maison, Auto-Moto, Jeux, Alimentation, Beauté, Sport, Fournitures, Quincaillerie, Rechanges, Bijouterie, Maraîchage, Élevage, Produits Agricoles, Solaire, Santé, Bébé, Services, Immo, Petites Annonces, Autre).
-       - Ticket & panier : en-tête (« Ticket en cours », « En Attente », « Vider »), message d'état vide, compteur d'articles au singulier/pluriel.
-       - Modes de règlement : Espèces, Wave, Orange Money, Carte, Mixte, Crédit/Dette, calcul de la monnaie à rendre.
-       - Récapitulatif taxes & actions : Total HT, TVA (incluse), Remise, boutons DEVIS et PROFORMA, et bouton d'action dominant ENCAISSER.
-       - Navigation mobile : bascule instantanée entre le catalogue et le ticket de caisse.
-  * **Conformité Typographie Système Native & RTL (Directive AGENTS.md)** :
-    - **Zero External Font Fetch** : Conformité stricte avec l'interdiction de téléchargement de polices externes (Google Fonts, CDN). Utilisation exclusive de la pile système native haute lisibilité (`system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Tahoma, Arial, sans-serif`).
-    - **Régles RTL Arabes (`globals.css`)** : Inversion automatique des espacements, flexboxes et alignements textuels en mode `dir="rtl"`.
-    - **Préservation des Chiffres Arabes Occidentaux (1 2 3)** : Maintien des chiffres standards pour les montants FCFA, prix et totaux de caisse afin de préserver l'exactitude des encaissements et transactions Mobile Money (Wave, Orange Money).
-  * **Couverture de Tests Unitaires (`run-unit-tests.mjs`, `src/i18n/__tests__/i18n.test.ts`)** :
-    - **100% de succès sur la suite unitaire (28 assertions validées, 0 échec)** vérifiant la configuration, les métadonnées, la parité exacte à 100% des clés entre `fr`, `en` et `ar`, et l'absence totale de traductions vides.
+- **Refonte Ergonomique & Visibilité Maximale des Menus (Boutique, Compte, Navbar) (`branch: feature/i18n-account-shop` - 19 août 2026)** 🎨 :
+  * **Menu de Gestion de Boutique (`BoutiqueClient.tsx` & `globals.css`)** :
+    - Déploiement automatique de tous les groupes et sous-menus par défaut pour rendre les 14 outils marchands visibles immédiatement dès l'arrivée de l'utilisateur.
+    - Transformation des en-têtes de catégorie en véritables cartes interactives contrastées : icônes thématiques (🛒 Ventes & Clients, 📦 Catalogue & Stocks, 💰 Finance & Rapports, ⚙️ Paramètres & Équipe), typographie contrastée bleu marine `#1C2B4A` en gras 800, badges de décompte d'outils et chevrons de rotation animés bien visibles.
+    - Maintien automatique de l'ouverture du groupe actif lors du changement d'onglet et surbrillance nette de l'élément sélectionné (`#FFF3E8` / `#C75B00`).
+  * **Menu Mon Compte & Espace Utilisateur (`AccountNavLinks.tsx` & `globals.css`)** :
+    - En-têtes de sections assombris en bleu marine `#1C2B4A` avec séparateurs clairs pour une hiérarchie visuelle immédiate.
+    - Mise en avant stratégique de la section **"Ma Boutique"** sous forme d'encart carte chaleureux avec badge d'accès direct `GÉRER ↗`.
+    - Distinctions visuelles des actions rapides de publication (`+ Publier une annonce`, `🏡 Publier un bien`).
+  * **Barre de Navigation Principale Desktop (`globals.css`)** :
+    - Contraste renforcé des liens de navigation (`#1C2B4A`, `font-weight: 650`) avec micro-interactions fluides au survol.
+  * **Fiabilisation des Hooks & Conformité Linter/Build** :
+    - Correction de l'appel du hook `useTranslation` au niveau du composant `DashboardView` dans `Comptabilite.tsx` et élimination de l'appel de hook dans le handler `onClick` de `BoutiqueDetailClient.tsx`.
+    - Validation intégrale du build Next.js 14 (`npm run build` : 88/88 pages statiques générées avec succès, code 0).
+
+- **Audit & Finalisation de l'Internationalisation (i18n) Complète en Arabe (`ar`), Français (`fr`) et Anglais (`en`) sur l'Espace Compte, Boutique & Caisse (`branch: feature/i18n-account-shop` - 19 août 2026)** 🌐 :
+  * **Audit Exhaustif Bouton par Bouton & Parité Clés 100% (`src/i18n/locales/{fr,en,ar}/`)** :
+    - Audit minutieux de chaque bouton, modale, formulaire, dropdown, menu d'actions, tableau, badge et infobulle à travers tous les modules marchands.
+    - Synchronisation stricte et typage TypeScript sans faille (`LocaleTranslations` contract) de plus de 320 clés de traduction dans `shop.ts` et `common.ts` avec parité intégrale entre `fr`, `ar` (arabe littéraire standardisé) et `en`.
+    - Support RTL complet (`dir="rtl"`) avec inversion des dispositions et typographies système natives sans aucun téléchargement externe de polices.
+  * **Composants Boutique & Commerce 100% Traduits avec `useTranslation()`** :
+    1. **Fournisseurs & Réapprovisionnement (`GestionFournisseurs.tsx`)** :
+       - Sous-onglets localisés (Aperçu des stocks, Répertoire fournisseurs, Bons de commande).
+       - Barre de recherche et filtres de statut de commande (Tous, En attente, Reçue).
+       - Modale de création / édition de fournisseur, modale de création / modification de bon de commande avec lignes de catalogue et articles libres hors catalogue.
+       - Modale de détails de bon de commande, modale de confirmation de réception de stock (avec génération comptable automatique) et modales de scan OCR et code-barres EAN.
+    2. **Import par Lot CSV / Excel (`BatchImportModal.tsx`)** :
+       - Modale d'importation par lot, sélecteur de filtres par catégories, bannière de téléchargement du modèle CSV / Excel pré-formaté.
+       - Zone glisser-déposer (`drag-and-drop`) avec consignes de formatage de colonnes, prévisualisation des articles détectés, barre de recherche de modèles et bouton de validation par lot.
+    3. **Facturation & Devis OHADA (`GestionDocuments.tsx`)** :
+       - Filtres par type de document (Factures, Devis, Factures Proforma) et par statut (Brouillon, Émis, Payé, Annulé).
+       - Menu contextuel d'actions sur chaque ligne (Télécharger PDF, Modifier, Convertir en Facture, Supprimer).
+       - Modale complète de création / édition de document avec onglets catalogue & articles libres, scanner OCR / EAN, panier d'articles, calcul automatique TTC et gestion des acomptes.
+    4. **Comptabilité & Trésorerie (`Comptabilite.tsx`)** :
+       - KPIs du tableau de bord (Chiffre d'affaires mensuel, Bénéfice net, Dépenses, Total des ventes), top produits, alertes de stock faible.
+       - VenteForm, EditVenteModal, VentesView, DepenseCard, DepensesView, StockView, SaisieExpressView intégralement localisés.
+    5. **Carnet de Dettes & Crédit Client (`CarnetDettes.tsx`)** :
+       - KPIs financiers (Total dettes, Avances clients, Registre actif), barre de recherche, filtres créances/avances, exports CSV/PDF.
+       - Workflow d'approbation et de rejet des ventes à crédit passées en ligne par les clients.
+    6. **Gestion des Caissiers POS (`BoutiqueCaissiers.tsx`)** :
+       - En-tête, explication du fonctionnement caisse hors-ligne PWA, tableau des caissiers, création de compte caissier, suppression et réinitialisation de code PIN.
+    7. **Commandes Marchand (`Commandes.tsx`)** :
+       - Statuts de commande localisés (En attente, Confirmée, En préparation, En livraison, Livrée, Annulée).
+       - Modales de transition de statut, notification WhatsApp du client, actions rapides et liste des paniers abandonnés avec relance promo WhatsApp.
+    8. **Catalogue & Fiche Produit (`BoutiqueClient.tsx`)** :
+       - Menu déroulant des actions sur chaque carte produit (Scan / EAN, Imprimer Étiquette, Dupliquer le produit, Publier en Annonce, Supprimer).
+       - Formulaire de création et modification de produit (`ProduitForm`), sélecteur de catégorie, nom, description, prix, prix barré, photos, variantes, statut de stock.
+       - Barre latérale de gestion (`BoutiqueManage`) avec groupes traduits en Arabe, Français et Anglais.
+    9. **Fiscalité & Mentions Légales (`ParametresFiscalite.tsx`)** :
+       - Choix du régime fiscal, taux de TVA par défaut, bascule TTC/HT, droit de timbre fiscal pour les espèces.
+       - Identification juridique OHADA (RCCM, NINEA, Capital social), coordonnées bancaires et insertion des CGV types.
+    10. **Portail Développeur & Clés API (`PortailDeveloppeurBoutique.tsx`)** :
+        - Avis de restriction VIP/Business, formulaire de génération de clé API, avertissement de sécurité et en-tête des webhooks en direct.
+    11. **Journal d'Audit & Traçabilité (`BoutiqueLogs.tsx`)** :
+        - En-tête, description de conformité interne, placeholder de recherche, bouton d'export CSV / Excel du journal.
+    12. **Panier Public Client Storefront (`DrawerCart.tsx`)** :
+        - Tiroir panier flottant (`Mon Panier` / `🛒`), en-tête, sélection de zone de livraison, bouton WhatsApp direct et commande en ligne.
+    13. **Statistiques Web & Tracking ROAS (`AnalyticsClient.tsx`)** :
+        - En-tête analytics, indicateurs de trafic, conversions, panier moyen, ventes et statut des pixels Meta / TikTok / Google Analytics GA4.
+    14. **Abonnements & Formules Marchand (`AbonnementClient.tsx`)** :
+        - En-tête d'abonnement, sélecteur de durée (1, 3, 6, 12 mois avec badges de réduction), formules Pro / Business, paiement Wave / Manuel.
+  * **Conformité Typographie Système Native & Zero-Font-Fetch (Directive AGENTS.md)** :
+    - Utilisation exclusive de `system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif` garantissant 0 fetch dynamique de polices externes.
+  * **Validation Complète des Tests & du Build de Production (`npm test` & `npm run build`)** :
+    - **28/28 tests unitaires passés avec 100% de succès** incluant les tests d'intégrité i18n, parité des dictionnaires FR / EN / AR, helpers de formats et calculs métier.
+    - **Build Next.js 14 et postbuild validés à 100% avec code de sortie 0** (`✓ Compiled successfully`, `✓ Generating static pages (88/88)`).
 - **Validation Finale & Certification « Prête Production » de la Refonte Nopalou (17 août 2026)** 🚀 :
   * **P0 : Suite de Tests Déterministe & Découplage Métier (`scripts/run-unit-tests.mjs`, `boutiqueHelpers.ts`, `carnetMetier.ts`, `CaracChips.tsx`)** :
     - Élimination des blocages d'exécution globale Vitest/Tinypool sous Windows/Node 24 via un runner unitaire natif ultra-rapide (< 1s, code de sortie 0 garanti).

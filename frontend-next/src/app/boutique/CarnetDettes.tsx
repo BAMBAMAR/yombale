@@ -5,7 +5,7 @@ import { fcfa, fmtDate, fmtDateHeure, formatNomPropre, formatPhone } from '@/lib
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import QrCodeShareModal from '@/components/QrCodeShareModal'
 import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
-
+import { useTranslation } from '@/i18n/context'
 
 interface ClientCredit {
   id: string
@@ -61,6 +61,7 @@ interface CarnetDettesProps {
 }
 
 export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps) {
+  const { t, isRtl } = useTranslation()
   // États principaux
   const [clients, setClients] = useState<ClientCredit[]>([])
   const [produits, setProduits] = useState<ProduitBoutique[]>([])
@@ -919,15 +920,15 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <h1 style={{ margin: 0, fontSize: isMobile ? 17 : 20, fontWeight: 800, color: 'var(--navy)', letterSpacing: '-0.02em' }}>
-                  Carnet de Crédits & Dettes
+                  {t('shop.debtBookTitle')}
                 </h1>
                 <span className="npl-badge npl-badge-brand" style={{ fontSize: 11 }}>
-                  Tous forfaits
+                  {t('common.all')}
                 </span>
               </div>
             </div>
             <p style={{ margin: '6px 0 0 48px', fontSize: 12.5, color: 'var(--text2)', fontWeight: 500 }}>
-              {clients.length} compte(s) au registre · {nbClientsDebiteurs} débiteur(s) en attente
+              {clients.length} {t('shop.debts')} · {nbClientsDebiteurs} {t('shop.debtorsCount')}
             </p>
           </div>
 
@@ -946,7 +947,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 style={{ flex: 1, color: '#ffffff' }}
               >
                 <span style={{ filter: 'brightness(0) invert(1)' }}>👤</span>
-                <span>+ Nouveau Client</span>
+                <span>+ {t('shop.newCustomerBtn')}</span>
               </button>
 
               <button
@@ -955,7 +956,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 style={{ flex: isMobile ? 1 : 'none' }}
               >
                 <span>⚡</span>
-                <span>+ Crédit</span>
+                <span>+ {t('shop.transactionCreditSale')}</span>
               </button>
             </div>
 
@@ -969,7 +970,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               <button
                 onClick={() => setShowQrModalComptoir(true)}
                 className="npl-btn npl-btn-secondary npl-btn-sm"
-                title="Afficher le QR code à scanner pour les clients"
+                title="QR Code"
               >
                 <span>📱</span>
                 <span>QR Client</span>
@@ -978,7 +979,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               <button
                 onClick={handleExportCSV}
                 className="npl-btn npl-btn-secondary npl-btn-sm"
-                title="Exporter toutes les dettes au format CSV Excel"
+                title={t('common.exportCsv')}
               >
                 <span>📥</span>
                 <span>CSV</span>
@@ -987,7 +988,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               <button
                 onClick={handleExportPDF}
                 className="npl-btn npl-btn-secondary npl-btn-sm"
-                title="Imprimer ou sauvegarder le rapport PDF"
+                title={t('common.exportPdf')}
               >
                 <span>🖨️</span>
                 <span>PDF</span>
@@ -996,7 +997,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           </div>
         </div>
 
-        {/* Cartes KPI Épurées (Standard Stripe / Square - 0 Débordement) */}
+        {/* Cartes KPI Épurées */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)',
@@ -1010,13 +1011,13 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           }}>
             <div className="npl-badge npl-badge-danger" style={{ marginBottom: 6, fontSize: isMobile ? 10 : 11 }}>
               <span className="npl-badge-dot" />
-              <span>TOTAL DETTES</span>
+              <span>{t('shop.totalOwed').toUpperCase()}</span>
             </div>
             <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 800, color: '#dc2626', fontVariantNumeric: 'tabular-nums' }}>
               {fcfa(totalDettesAEncaisser)}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 4 }}>
-              {nbClientsDebiteurs} client(s) débiteur(s)
+              {nbClientsDebiteurs} {t('shop.debtorsCount')}
             </div>
           </div>
 
@@ -1028,13 +1029,13 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           }}>
             <div className="npl-badge npl-badge-success" style={{ marginBottom: 6, fontSize: isMobile ? 10 : 11 }}>
               <span className="npl-badge-dot" />
-              <span>TOTAL AVANCES</span>
+              <span>{t('shop.advancesCount').toUpperCase()}</span>
             </div>
             <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 800, color: '#16a34a', fontVariantNumeric: 'tabular-nums' }}>
               {fcfa(totalAvancesClients)}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 4 }}>
-              Avances & acomptes
+              {t('shop.advancesCount')}
             </div>
           </div>
 
@@ -1047,13 +1048,13 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             }}>
               <div className="npl-badge npl-badge-neutral" style={{ marginBottom: 6, fontSize: 11 }}>
                 <span className="npl-badge-dot" />
-                <span>REGISTRE ACTIF</span>
+                <span>{t('shop.debts').toUpperCase()}</span>
               </div>
               <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--navy)', fontVariantNumeric: 'tabular-nums' }}>
-                {clients.length} Client(s)
+                {clients.length} {t('shop.clientLabel')}
               </div>
               <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 4 }}>
-                Comptes de crédits actifs
+                {t('shop.debtBookTitle')}
               </div>
             </div>
           )}
@@ -1067,11 +1068,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 20 }}>💳</span>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: '#0369a1' }}>
-                Demandes d&apos;Achat à Crédit Reçues en Ligne ({commandesCreditEnAttente.length})
+                {t('shop.onlineCreditPurchasesTitle')} ({commandesCreditEnAttente.length})
               </h3>
             </div>
             <span style={{ fontSize: 11.5, fontWeight: 700, color: '#0284c7', background: '#e0f2fe', padding: '2px 8px', borderRadius: 12 }}>
-              Attente d&apos;approbation marchand
+              {t('shop.statusPending')}
             </span>
           </div>
 
@@ -1092,7 +1093,6 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     type="button"
                     onClick={async () => {
                       try {
-                        console.log('[CARNET CLIC APPROUVER]', { boutiqueId: boutique.id, cmd })
                         const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/approuver-commande`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
@@ -1107,14 +1107,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           }),
                         })
                         const data = await res.json()
-                        console.log('[CARNET APPROUVER RÉPONSE SERVER]', { ok: res.ok, status: res.status, data })
                         if (!res.ok) {
                           alert(data.error || 'Erreur approbation')
                           return
                         }
-                        // 1. Retirer immédiatement la commande de la liste en attente
                         setCommandesCreditEnAttente((prev: any[]) => prev.filter((c: any) => c.id !== cmd.id))
-                        // 2. Ajouter/mettre à jour immédiatement le client dans la liste réactive du carnet
                         if (data.client) {
                           setClients((prev: ClientCredit[]) => {
                             const exists = prev.some(c => c.id === data.client.id)
@@ -1132,13 +1129,12 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
                         }
                       } catch (e) {
-                        console.error('[CARNET ERREUR APPROUVER]', e)
                         alert('Erreur lors du traitement.')
                       }
                     }}
                     style={{ padding: '8px 14px', background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                   >
-                    ✅ Approuver & Ajouter au Carnet
+                    ✅ {t('common.confirm')}
                   </button>
 
                   <button
@@ -1154,11 +1150,6 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                         if (res.ok) {
                           setCommandesCreditEnAttente((prev: any[]) => prev.filter((c: any) => c.id !== cmd.id))
                           await chargerDonnees()
-                          const cleanTel = cmd.client_telephone.replace(/\D/g, '')
-                          const msgWa = encodeURIComponent(`Bonjour ${cmd.client_nom}, votre demande d'achat à crédit de ${fcfa(cmd.montant_total)} (${cmd.nom_produit}) ne peut pas être accordée pour le moment. Merci de votre compréhension.`)
-                          if (confirm(`❌ Demande d'achat à crédit rejetée.\n\nSouhaitez-vous envoyer le message de refus au client sur WhatsApp ?`)) {
-                            window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
-                          }
                         } else {
                           alert('Erreur lors du rejet de la demande.')
                         }
@@ -1168,7 +1159,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     }}
                     style={{ padding: '8px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                   >
-                    ❌ Rejeter
+                    ❌ {t('shop.cancelOrder')}
                   </button>
                 </div>
               </div>
@@ -1182,7 +1173,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         <div style={{ flex: '1 1 220px', position: 'relative' }}>
           <input
             type="text"
-            placeholder="🔍 Rechercher client, téléphone ou quartier..."
+            placeholder={`🔍 ${t('common.search')}...`}
             value={recherche}
             onChange={e => setRecherche(e.target.value)}
             style={{
@@ -1202,9 +1193,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, WebkitOverflowScrolling: 'touch' }}>
           {[
-            { id: 'tous', label: `Tous (${clients.length})` },
-            { id: 'retard', label: `🔴 Débiteurs (${nbClientsDebiteurs})` },
-            { id: 'credits', label: `🟢 En Avance` },
+            { id: 'tous', label: `${t('common.all')} (${clients.length})` },
+            { id: 'retard', label: `🔴 ${t('shop.filterDebtors')} (${nbClientsDebiteurs})` },
+            { id: 'credits', label: `🟢 ${t('shop.filterAdvances')}` },
           ].map(f => (
             <button
               key={f.id}
@@ -1239,7 +1230,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         {(!isMobile || !clientSelectionne) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {loading ? (
-              <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 14 }}>Chargement du carnet...</div>
+              <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 14 }}>{t('common.loading')}</div>
             ) : clientsFiltres.length === 0 ? (
               <div style={{
                 textAlign: 'center',
@@ -1250,9 +1241,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 color: '#64748b'
               }}>
                 <span style={{ fontSize: 36, display: 'block', marginBottom: 8 }}>📒</span>
-                <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>Aucun client trouvé dans le carnet</p>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>{t('shop.noCustomersFound')}</p>
                 <p style={{ margin: '4px 0 14px', fontSize: 12.5, color: '#94a3b8' }}>
-                  Ajoutez votre premier client pour enregistrer ses crédits et avances.
+                  {t('shop.addFirstCustomerPrompt')}
                 </p>
                 <button
                   onClick={() => setShowModalNouveauClient(true)}
@@ -1267,7 +1258,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     cursor: 'pointer'
                   }}
                 >
-                  + Créer un client
+                  {t('shop.createCustomerShortBtn')}
                 </button>
               </div>
             ) : (
@@ -1301,7 +1292,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           {c.statut === 'bloque' && (
                             <span className="npl-badge npl-badge-danger">
                               <span className="npl-badge-dot" />
-                              <span>Blacklisté</span>
+                              <span>{t('shop.blacklistedBadge')}</span>
                             </span>
                           )}
                           {c.adresse && (
@@ -1311,11 +1302,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           )}
                         </div>
                         <div style={{ fontSize: 12.5, color: 'var(--text2)', marginTop: 3 }}>
-                          📞 {formatPhone(c.telephone)} {c.plafond_max > 0 ? `• Plafond: ${fcfa(c.plafond_max)}` : ''}
+                          📞 {formatPhone(c.telephone)} {c.plafond_max > 0 ? `• ${t('shop.creditLimitPrefix')}: ${fcfa(c.plafond_max)}` : ''}
                         </div>
                         {c.note_client && (
                           <div style={{ fontSize: 11.5, color: 'var(--text3)', fontStyle: 'italic', marginTop: 2 }}>
-                            Note: {c.note_client}
+                            {t('common.notes')}: {c.note_client}
                           </div>
                         )}
                       </div>
@@ -1334,17 +1325,17 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           {estDebiteur ? (
                             <span className="npl-badge npl-badge-danger">
                               <span className="npl-badge-dot" />
-                              <span>Doit la boutique</span>
+                              <span>{t('shop.owesShopBadge')}</span>
                             </span>
                           ) : estAvance ? (
                             <span className="npl-badge npl-badge-success">
                               <span className="npl-badge-dot" />
-                              <span>Avance client</span>
+                              <span>{t('shop.advanceBadge')}</span>
                             </span>
                           ) : (
                             <span className="npl-badge npl-badge-neutral">
                               <span className="npl-badge-dot" />
-                              <span>Solde nul</span>
+                              <span>{t('shop.zeroBalanceBadge')}</span>
                             </span>
                           )}
                         </div>
@@ -1369,7 +1360,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           style={{ flex: isMobile ? '1 1 auto' : 'none' }}
                         >
                           <span>💵</span>
-                          <span>Encaisser / Rembourser</span>
+                          <span>{t('shop.collectRepayBtn')}</span>
                         </button>
                       ) : estAvance ? (
                         <button
@@ -1378,7 +1369,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           style={{ flex: isMobile ? '1 1 auto' : 'none' }}
                         >
                           <span>⚡</span>
-                          <span>Déduire sur Achat</span>
+                          <span>{t('shop.deductOnPurchaseBtn')}</span>
                         </button>
                       ) : (
                         <button
@@ -1387,7 +1378,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           style={{ flex: isMobile ? '1 1 auto' : 'none' }}
                         >
                           <span>⚡</span>
-                          <span>+ Donner Crédit</span>
+                          <span>{t('shop.giveCreditBtn')}</span>
                         </button>
                       )}
 
@@ -1395,10 +1386,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       <button
                         onClick={() => handleRelancerWhatsApp(c)}
                         className="npl-btn npl-btn-secondary npl-btn-sm"
-                        title="Envoyer le solde et la relance sur WhatsApp"
+                        title="WhatsApp"
                       >
                         <span style={{ color: '#25D366' }}>📱</span>
-                        <span>Relance</span>
+                        <span>{t('shop.remindWhatsappBtn')}</span>
                       </button>
 
                       {/* Menu Contextuel d'Actions Secondaires ⋯ */}
@@ -1410,8 +1401,8 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                             setMenuOuvertClientId(isMenuOpen ? null : c.id)
                           }}
                           className="npl-btn npl-btn-secondary npl-btn-sm npl-btn-icon"
-                          title="Plus d'actions"
-                          aria-label={`Plus d'actions pour ${formatNomPropre(c.nom)}`}
+                          title={t('shop.moreActionsBtn')}
+                          aria-label={t('shop.moreActionsBtn')}
                           aria-haspopup="true"
                           aria-expanded={isMenuOpen}
                         >
@@ -1419,7 +1410,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                         </button>
 
                         {isMenuOpen && (
-                          <div className="npl-dropdown-menu" role="menu" aria-label={`Actions pour ${formatNomPropre(c.nom)}`}>
+                          <div className="npl-dropdown-menu" role="menu">
                             <button
                               type="button"
                               role="menuitem"
@@ -1430,7 +1421,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                               className="npl-dropdown-item"
                             >
                               <span>📜</span>
-                              <span>Fiche client & historique</span>
+                              <span>{t('shop.viewCustomerFileMenu')}</span>
                             </button>
 
                             <button
@@ -1443,7 +1434,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                               className="npl-dropdown-item"
                             >
                               <span>✏️</span>
-                              <span>Modifier profil & plafond</span>
+                              <span>{t('shop.editProfileLimitMenu')}</span>
                             </button>
 
                             <button
@@ -1456,7 +1447,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                               className="npl-dropdown-item"
                             >
                               <span>⚡</span>
-                              <span>Accorder un crédit</span>
+                              <span>{t('shop.grantCreditAction')}</span>
                             </button>
 
                             <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
@@ -1472,7 +1463,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                                 className="npl-dropdown-item"
                               >
                                 <span>🟢</span>
-                                <span>Réactiver le client</span>
+                                <span>{t('shop.reactivateCustomerMenu')}</span>
                               </button>
                             ) : (
                               <button
@@ -1485,7 +1476,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                                 className="npl-dropdown-item danger"
                               >
                                 <span>⛔</span>
-                                <span>Blacklister le client</span>
+                                <span>{t('shop.blacklistCustomerMenu')}</span>
                               </button>
                             )}
 
@@ -1499,7 +1490,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                               className="npl-dropdown-item danger"
                             >
                               <span>🗑️</span>
-                              <span>Supprimer du carnet</span>
+                              <span>{t('shop.deleteCustomerMenu')}</span>
                             </button>
                           </div>
                         )}
@@ -1544,7 +1535,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   minHeight: 38
                 }}
               >
-                ← Retour à la liste des clients
+                {t('shop.backToCustomerListBtn')}
               </button>
             )}
 
@@ -1566,7 +1557,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       cursor: 'pointer'
                     }}
                   >
-                    ✏️ Modifier
+                    ✏️ {t('common.edit')}
                   </button>
                   {!isMobile && (
                     <button
@@ -1582,13 +1573,13 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 </p>
                 {clientSelectionne.note_client && (
                   <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#94a3b8', fontStyle: 'italic' }}>
-                    Note: {clientSelectionne.note_client}
+                    {t('common.notes')}: {clientSelectionne.note_client}
                   </p>
                 )}
               </div>
 
               <div style={{ textAlign: isMobile ? 'left' : 'right' }}>
-                <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Solde Actuel</span>
+                <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{t('shop.currentBalanceLabel')}</span>
                 <div style={{
                   fontSize: 19,
                   fontWeight: 900,
@@ -1617,7 +1608,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   minHeight: 42
                 }}
               >
-                + Crédit (Dette)
+                + {t('shop.transactionCreditSale')}
               </button>
 
               <button
@@ -1636,7 +1627,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   minHeight: 42
                 }}
               >
-                💸 Rembourser
+                💸 {t('shop.transactionRepayment')}
               </button>
 
               <button
@@ -1654,9 +1645,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   cursor: 'pointer',
                   minHeight: 42
                 }}
-                title="Imprimer ou enregistrer le relevé de compte de ce client en PDF"
+                title={t('shop.printPdfStatementBtn')}
               >
-                🖨️ Imprimer Relevé PDF
+                {t('shop.printPdfStatementBtn')}
               </button>
 
               {Number(clientSelectionne.solde) > 0 && (
@@ -1680,7 +1671,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     minHeight: 42
                   }}
                 >
-                  📱 Relance WA
+                  📱 {t('shop.remindWhatsappBtn')}
                 </button>
               )}
             </div>
@@ -1688,14 +1679,14 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             {/* Historique des opérations */}
             <div>
               <h3 style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', margin: '0 0 10px' }}>
-                📜 Historique des Opérations
+                {t('shop.operationsHistoryTitle')}
               </h3>
 
               {loadingHist ? (
-                <div style={{ fontSize: 13, color: '#64748b' }}>Chargement de l&apos;historique...</div>
+                <div style={{ fontSize: 13, color: '#64748b' }}>{t('common.loading')}</div>
               ) : historique.length === 0 ? (
                 <div style={{ fontSize: 12.5, color: '#94a3b8', fontStyle: 'italic', padding: '12px 0' }}>
-                  Aucune transaction enregistrée pour ce client.
+                  {t('shop.noTransactionsForCustomer')}
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 340, overflowY: 'auto' }}>
@@ -1729,7 +1720,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                               color: estVente ? '#991b1b' : '#166534',
                               border: estVente ? '1px solid #fecaca' : '1px solid #bbf7d0'
                             }}>
-                              {estVente ? '🔴 Achat à crédit' : '🟢 Remboursement'}
+                              {estVente ? `🔴 ${t('shop.transactionCreditSale')}` : `🟢 ${t('shop.transactionRepayment')}`}
                             </span>
                             <span style={{ fontSize: 11.5, color: '#64748b' }}>
                               {fmtDateHeure(h.created_at)}
@@ -1754,7 +1745,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
                           {h.date_echeance && (
                             <div style={{ fontSize: 11, marginTop: 4, color: estEnRetard ? '#dc2626' : '#0284c7', fontWeight: 700 }}>
-                              📅 Échéance : {fmtDate(h.date_echeance)} {estEnRetard ? ' (🔴 En retard)' : ''}
+                              📅 {t('shop.dueDateLabel')} : {fmtDate(h.date_echeance)} {estEnRetard ? ` (🔴 ${t('shop.overdueBadge')})` : ''}
                             </div>
                           )}
                         </div>
@@ -1807,7 +1798,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a' }}>
-                👤 Créer une nouvelle fiche client
+                {t('shop.createCustomerModalTitle')}
               </h3>
               <button
                 type="button"
@@ -1827,7 +1818,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}
-                title="Fermer la fenêtre"
+                title={t('common.close')}
               >
                 ✕
               </button>
@@ -1835,11 +1826,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
             <form onSubmit={handleCreerClient} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Nom complet du client *</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>{t('shop.customerFullNameLabel')}</label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Fatou Sow, Modou Ndiaye"
+                  placeholder={t('shop.customerFullNamePlaceholder')}
                   value={nomClient}
                   onChange={e => setNomClient(e.target.value)}
                   style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
@@ -1847,11 +1838,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Numéro Téléphone (WhatsApp) *</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>{t('shop.customerPhoneLabel')}</label>
                 <input
                   type="tel"
                   required
-                  placeholder="Ex: 771234567"
+                  placeholder={t('shop.customerPhonePlaceholder')}
                   value={telClient}
                   onChange={e => setTelClient(e.target.value)}
                   style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
@@ -1860,10 +1851,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Adresse / Quartier</label>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>{t('shop.customerAddressLabel')}</label>
                   <input
                     type="text"
-                    placeholder="Ex: Medina, Rue 10"
+                    placeholder={t('shop.customerAddressPlaceholder')}
                     value={adresseClient}
                     onChange={e => setAdresseClient(e.target.value)}
                     style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
@@ -1871,10 +1862,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Plafond Crédit (FCFA)</label>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>{t('shop.customerCreditLimitLabel')}</label>
                   <input
                     type="number"
-                    placeholder="200000"
+                    placeholder={t('shop.customerCreditLimitPlaceholder')}
                     value={plafondClient}
                     onChange={e => setPlafondClient(e.target.value)}
                     style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
@@ -1883,10 +1874,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Note / Remarque confidentielle</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>{t('shop.customerNotesLabel')}</label>
                 <input
                   type="text"
-                  placeholder="Ex: Voisine d'en face, confiance 100%"
+                  placeholder={t('shop.customerNotesPlaceholder')}
                   value={noteClient}
                   onChange={e => setNoteClient(e.target.value)}
                   style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
@@ -1908,7 +1899,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   minHeight: 44
                 }}
               >
-                ✓ Enregistrer le Client
+                {t('shop.saveCustomerBtn')}
               </button>
             </form>
           </div>
@@ -1940,7 +1931,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a' }}>
-                ✏️ Modifier la fiche client
+                {t('shop.editCustomerModalTitle')}
               </h3>
               <button
                 type="button"
@@ -1960,7 +1951,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}
-                title="Fermer la fenêtre"
+                title={t('common.close')}
               >
                 ✕
               </button>
@@ -1968,11 +1959,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
             <form onSubmit={handleEnregistrerEditClient} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Nom complet du client *</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>{t('shop.customerFullNameLabel')}</label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Fatou Sow"
+                  placeholder={t('shop.customerFullNamePlaceholder')}
                   value={editNom}
                   onChange={e => setEditNom(e.target.value)}
                   style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
@@ -1980,11 +1971,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Numéro Téléphone (WhatsApp) *</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>{t('shop.customerPhoneLabel')}</label>
                 <input
                   type="tel"
                   required
-                  placeholder="Ex: 771234567"
+                  placeholder={t('shop.customerPhonePlaceholder')}
                   value={editTel}
                   onChange={e => setEditTel(e.target.value)}
                   style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
@@ -1993,10 +1984,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Adresse / Quartier</label>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>{t('shop.customerAddressLabel')}</label>
                   <input
                     type="text"
-                    placeholder="Ex: Medina Rue 11"
+                    placeholder={t('shop.customerAddressPlaceholder')}
                     value={editAdresse}
                     onChange={e => setEditAdresse(e.target.value)}
                     style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
@@ -2004,10 +1995,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Plafond Crédit (FCFA)</label>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>{t('shop.customerCreditLimitLabel')}</label>
                   <input
                     type="number"
-                    placeholder="200000"
+                    placeholder={t('shop.customerCreditLimitPlaceholder')}
                     value={editPlafond}
                     onChange={e => setEditPlafond(e.target.value)}
                     style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
@@ -2016,10 +2007,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Note / Remarque confidentielle</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>{t('shop.customerNotesLabel')}</label>
                 <input
                   type="text"
-                  placeholder="Note confidentielle..."
+                  placeholder={t('shop.customerNotesPlaceholder')}
                   value={editNote}
                   onChange={e => setEditNote(e.target.value)}
                   style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
@@ -2043,7 +2034,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   opacity: submittingEdit ? 0.7 : 1
                 }}
               >
-                {submittingEdit ? 'Enregistrement...' : '✓ Enregistrer les modifications'}
+                {submittingEdit ? t('shop.savingProgress') : t('shop.saveChangesBtn')}
               </button>
             </form>
           </div>
@@ -2076,10 +2067,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: isMobile ? 15.5 : 18, fontWeight: 900, color: '#0f172a' }}>
-                  {typeTransaction === 'vente_credit' ? '⚡ Nouvelle Vente à Crédit' : '💸 Encaisser un Remboursement'}
+                  {typeTransaction === 'vente_credit' ? t('shop.newCreditSaleModalTitle') : t('shop.collectRepaymentModalTitle')}
                 </h3>
                 <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
-                  Client : <strong>{clientSelectionne.nom}</strong> ({clientSelectionne.telephone})
+                  {t('shop.clientLabel')} : <strong>{clientSelectionne.nom}</strong> ({clientSelectionne.telephone})
                 </p>
               </div>
               <button
@@ -2100,7 +2091,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}
-                title="Fermer la fenêtre"
+                title={t('common.close')}
               >
                 ✕
               </button>
@@ -2125,7 +2116,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       boxShadow: modeSaisie === 'catalogue' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
                     }}
                   >
-                    🛍️ Catalogue
+                    {t('shop.catalogModeTab')}
                   </button>
                   <button
                     type="button"
@@ -2143,7 +2134,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       boxShadow: modeSaisie === 'manuel' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
                     }}
                   >
-                    ✍️ Saisie Libre
+                    {t('shop.manualModeTab')}
                   </button>
                 </div>
 
@@ -2165,7 +2156,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  📷 Scan EAN
+                  {t('shop.scanEanBtn')}
                 </button>
               </div>
             )}
@@ -2188,7 +2179,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
                     <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', margin: 0 }}>
-                      Cliquez sur les articles commandés par le client :
+                      {t('shop.clickArticlesPrompt')}
                     </label>
                     {Object.keys(panierProduits).some(k => panierProduits[k] > 0) && (
                       <button
@@ -2196,7 +2187,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                         onClick={() => setPanierProduits({})}
                         style={{ fontSize: 11, color: '#ef4444', background: '#fee2e2', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontWeight: 700 }}
                       >
-                        🗑️ Vider le panier
+                        {t('shop.emptyCartBtn')}
                       </button>
                     )}
                   </div>
@@ -2208,7 +2199,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                         type="text"
                         value={rechercheProduitModal}
                         onChange={e => setRechercheProduitModal(e.target.value)}
-                        placeholder="🔍 Rechercher un produit (nom, réference, catégorie)..."
+                        placeholder={t('shop.searchProductPrompt')}
                         style={{
                           width: '100%',
                           padding: '8px 30px 8px 12px',
@@ -2258,7 +2249,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                             color: categorieProduitModal === 'tous' ? '#ffffff' : '#475569'
                           }}
                         >
-                          Tous ({produits.length})
+                          {t('common.all')} ({produits.length})
                         </button>
                         {categoriesModal.map(cat => {
                           const count = produits.filter((p: any) => p.categorie === cat).length
@@ -2298,8 +2289,8 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     {produitsFiltresModal.length === 0 ? (
                       <div style={{ gridColumn: '1 / -1', fontSize: 12.5, color: '#94a3b8', textAlign: 'center', padding: 20 }}>
                         {produits.length === 0
-                          ? 'Aucun produit dans le catalogue. Utilisez la saisie libre.'
-                          : 'Aucun produit ne correspond à la recherche.'}
+                          ? t('shop.noProductsInCatalog')
+                          : t('shop.noProductsMatchSearch')}
                       </div>
                     ) : (
                       produitsFiltresModal.map((p: any) => {
@@ -2350,7 +2341,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                                     })
                                   }}
                                   style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: '#fee2e2', color: '#ef4444', fontWeight: 900, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                  title="Diminuer la quantité (-1) ou supprimer"
+                                  title="-"
                                 >
                                   -
                                 </button>
@@ -2366,7 +2357,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                                     setPanierProduits(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))
                                   }}
                                   style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: '#e0f2fe', color: '#0284c7', fontWeight: 900, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                  title="Augmenter la quantité (+1)"
+                                  title="+"
                                 >
                                   +
                                 </button>
@@ -2377,7 +2368,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                                 onClick={() => setPanierProduits(prev => ({ ...prev, [p.id]: 1 }))}
                                 style={{ marginTop: 4, padding: '3px 6px', fontSize: 10.5, fontWeight: 700, background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, color: '#475569', cursor: 'pointer' }}
                               >
-                                ➕ Ajouter
+                                ➕ {t('common.add')}
                               </button>
                             )}
                           </div>
@@ -2391,14 +2382,14 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     <div style={{ marginTop: 12, background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 10, padding: 10 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                         <span style={{ fontSize: 12, fontWeight: 800, color: '#0369a1' }}>
-                          🛒 Articles dans la vente ({Object.values(panierProduits).reduce((a, b) => a + b, 0) + itemsCustomPanier.reduce((a, b) => a + b.quantite, 0)}) :
+                          🛒 {t('shop.articlesInSale')} ({Object.values(panierProduits).reduce((a, b) => a + b, 0) + itemsCustomPanier.reduce((a, b) => a + b.quantite, 0)}) :
                         </span>
                         <button
                           type="button"
                           onClick={() => { setPanierProduits({}); setItemsCustomPanier([]) }}
                           style={{ fontSize: 11, color: '#ef4444', background: '#fee2e2', border: 'none', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontWeight: 800 }}
                         >
-                          🗑️ Vider tout le panier
+                          {t('shop.emptyAllCartBtn')}
                         </button>
                       </div>
 
@@ -2427,7 +2418,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                                     return copy
                                   })}
                                   style={{ background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 4, width: 18, height: 18, cursor: 'pointer', fontWeight: 900, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                  title="Supprimer cet article"
+                                  title={t('shop.deleteItemTitle')}
                                 >
                                   ✕
                                 </button>
@@ -2442,7 +2433,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           return (
                             <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', padding: '4px 8px', borderRadius: 6, border: '1px dashed #0284c7', fontSize: 12 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
-                                <span style={{ fontSize: 9.5, background: '#e0f2fe', color: '#0369a1', fontWeight: 800, padding: '1px 4px', borderRadius: 4 }}>Libre</span>
+                                <span style={{ fontSize: 9.5, background: '#e0f2fe', color: '#0369a1', fontWeight: 800, padding: '1px 4px', borderRadius: 4 }}>{t('shop.freeItemBadge')}</span>
                                 <span style={{ fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
                                   {item.nom}
                                 </span>
@@ -2455,7 +2446,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                                   type="button"
                                   onClick={() => setItemsCustomPanier(prev => prev.filter((_, i) => i !== idx))}
                                   style={{ background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 4, width: 18, height: 18, cursor: 'pointer', fontWeight: 900, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                  title="Supprimer cet article hors catalogue"
+                                  title={t('shop.deleteItemTitle')}
                                 >
                                   ✕
                                 </button>
@@ -2475,7 +2466,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label style={{ fontSize: 12, fontWeight: 800, color: '#0369a1', margin: 0 }}>
-                    ✍️ Article ou prestation hors catalogue :
+                    {t('shop.addCustomArticlePrompt')}
                   </label>
                   <button
                     type="button"
@@ -2494,17 +2485,17 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       gap: 4
                     }}
                   >
-                    📷 Scan Nom (OCR)
+                    {t('shop.scanNameOcrBtn')}
                   </button>
                 </div>
                 
                 <div>
                   <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                    Désignation / Nom de l&apos;article ou prestation *
+                    {t('shop.articleDesignationLabel')}
                   </label>
                   <input
                     type="text"
-                    placeholder="Ex: Main d'œuvre réparation, Article spécifique..."
+                    placeholder={t('shop.articleDesignationPlaceholder')}
                     value={libelleCustomInput}
                     onChange={e => setLibelleCustomInput(e.target.value)}
                     style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 600, boxSizing: 'border-box' }}
@@ -2513,7 +2504,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
                 {ocrDetectionsCredit.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
-                    <span style={{ fontSize: 10.5, fontWeight: 800, color: '#64748b' }}>💡 Détections OCR :</span>
+                    <span style={{ fontSize: 10.5, fontWeight: 800, color: '#64748b' }}>{t('shop.ocrDetectionsLabel')}</span>
                     {ocrDetectionsCredit.map((txt, idx) => (
                       <button
                         key={idx}
@@ -2530,12 +2521,12 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: 8 }}>
                   <div>
                     <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                      Prix unitaire (FCFA) *
+                      {t('shop.unitPriceLabel')}
                     </label>
                     <input
                       type="number"
                       min="0"
-                      placeholder="Ex: 15000"
+                      placeholder={t('shop.unitPricePlaceholder')}
                       value={prixCustomInput}
                       onChange={e => setPrixCustomInput(e.target.value)}
                       style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 700, boxSizing: 'border-box' }}
@@ -2543,7 +2534,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   </div>
                   <div>
                     <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                      Qté *
+                      {t('shop.quantityLabel')}
                     </label>
                     <input
                       type="number"
@@ -2592,7 +2583,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     gap: 6
                   }}
                 >
-                  ➕ Ajouter cet article au panier
+                  {t('shop.addArticleToCartBtn')}
                 </button>
               </div>
             )}
@@ -2602,12 +2593,12 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                    Montant du remboursement (FCFA) *
+                    {t('shop.repaymentAmountLabel')}
                   </label>
                   <input
                     type="number"
                     required
-                    placeholder="Ex: 5000"
+                    placeholder={t('shop.repaymentAmountPlaceholder')}
                     value={montantManuel}
                     onChange={e => setMontantManuel(e.target.value)}
                     style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, fontWeight: 800, boxSizing: 'border-box' }}
@@ -2616,11 +2607,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                    Note / Référence du règlement
+                    {t('shop.paymentNoteLabel')}
                   </label>
                   <input
                     type="text"
-                    placeholder="Ex: Versement Wave / Espèces"
+                    placeholder={t('shop.paymentNotePlaceholder')}
                     value={descriptionManuelle}
                     onChange={e => setDescriptionManuelle(e.target.value)}
                     style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
@@ -2635,7 +2626,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8 }}>
                   <div>
                     <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                      📅 Date d&apos;échéance
+                      {t('shop.dueDatePrompt')}
                     </label>
                     <input
                       type="date"
@@ -2647,14 +2638,14 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
                   <div>
                     <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                      Règlement / Mode
+                      {t('shop.paymentModePrompt')}
                     </label>
                     <select
                       value={modePaiement}
                       onChange={e => setModePaiement(e.target.value)}
                       style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
                     >
-                      <option value="especes">💵 Crédit simple</option>
+                      <option value="especes">{t('shop.cashCreditOption')}</option>
                       <option value="wave">🌊 Wave</option>
                       <option value="orange_money">🍊 Orange Money</option>
                     </select>
@@ -2670,7 +2661,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     style={{ width: 16, height: 16, cursor: 'pointer' }}
                   />
                   <label htmlFor="relanceWaCheck" style={{ fontSize: 11.5, color: '#0f172a', fontWeight: 700, cursor: 'pointer' }}>
-                    🔔 Relance automatique WhatsApp à l&apos;échéance
+                    {t('shop.autoWaReminderCheckbox')}
                   </label>
                 </div>
               </div>
@@ -2679,7 +2670,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             {/* Total et Bouton de Validation */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
               <div>
-                <span style={{ fontSize: 11, color: '#64748b' }}>TOTAL TRANSACTION</span>
+                <span style={{ fontSize: 11, color: '#64748b' }}>{t('shop.totalTransactionLabel')}</span>
                 <div style={{ fontSize: 19, fontWeight: 900, color: typeTransaction === 'vente_credit' ? '#dc2626' : '#16a34a' }}>
                   {fcfa(totalTransactionCourante)}
                 </div>
@@ -2701,7 +2692,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   minHeight: 44
                 }}
               >
-                {submittingTrans ? 'Enregistrement...' : typeTransaction === 'vente_credit' ? '✓ Valider Dette' : '✓ Encaisser'}
+                {submittingTrans ? t('shop.savingProgress') : typeTransaction === 'vente_credit' ? t('shop.validateCreditSaleBtn') : t('shop.validateRepaymentBtn')}
               </button>
             </div>
 
@@ -2723,7 +2714,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner Code-barres (EAN)</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{t('shop.scanBarcodeModalTitle')}</h4>
               <button type="button" onClick={arreterScannerEanCredit} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
             <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{scannerEanStatusCredit}</p>
@@ -2733,10 +2724,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: '#475569' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontWeight: 700 }}>
                 <input type="checkbox" checked={scanContinuCredit} onChange={e => setScanContinuCredit(e.target.checked)} />
-                Scanner en continu
+                {t('shop.continuousScanCheckbox')}
               </label>
               <button type="button" onClick={arreterScannerEanCredit} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer' }}>
-                Fermer
+                {t('common.close')}
               </button>
             </div>
           </div>
@@ -2748,7 +2739,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner le Nom du Produit</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{t('shop.scanProductNameModalTitle')}</h4>
               <button type="button" onClick={arreterScannerNomCredit} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
             <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{statusScannerNomCredit}</p>
@@ -2756,7 +2747,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               <video ref={videoNomCreditRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <div style={{ position: 'absolute', top: '20%', left: '7.5%', width: '85%', height: '60%', border: '2px dashed #38bdf8', borderRadius: 8, boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ background: 'rgba(15,23,42,0.75)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>
-                  Cadrez le nom au centre
+                  {t('shop.centerNamePrompt')}
                 </span>
               </div>
             </div>
@@ -2766,7 +2757,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               onClick={capturerNomOCRCredit}
               style={{ width: '100%', padding: '12px', background: ocrLoadingCredit ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: ocrLoadingCredit ? 'not-allowed' : 'pointer' }}
             >
-              {ocrLoadingCredit ? '⏳ Analyse OCR en cours...' : '📸 Capturer et Extraire le Nom'}
+              {ocrLoadingCredit ? t('shop.savingProgress') : t('shop.captureAndExtractNameBtn')}
             </button>
           </div>
         </div>

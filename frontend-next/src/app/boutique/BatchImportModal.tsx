@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { CATEGORIES } from '@/lib/categories'
+import { useTranslation } from '@/i18n/context'
 
 interface TemplateProduit {
   id: string
@@ -35,6 +36,7 @@ export default function BatchImportModal({
   onClose: () => void
   onSuccess: () => void
 }) {
+  const { t, isRtl } = useTranslation()
   const [modeImport, setModeImport] = useState<'catalogue' | 'fichier'>('catalogue')
   const [categorieActive, setCategorieActive] = useState<string>('alimentation')
   const [catalogues, setCatalogues] = useState<Record<string, TemplateProduit[]>>({})
@@ -300,7 +302,7 @@ export default function BatchImportModal({
         <div style={{ padding: '20px 24px', borderBottom: '1px solid #e5e7eb', background: '#fafafa' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#111827' }}>
-              📦 Importation par Lot (Batch Intake)
+              📦 {t('shop.batchImportTitle')}
             </h2>
             <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#9ca3af' }}>✕</button>
           </div>
@@ -316,7 +318,7 @@ export default function BatchImportModal({
                 fontWeight: modeImport === 'catalogue' ? 800 : 500, fontSize: 13, cursor: 'pointer',
               }}
             >
-              ⚡ 1. Catalogue Standard Prédéterminé (Sans fichier)
+              ⚡ 1. {t('shop.templateCatalogTab')}
             </button>
             <button
               onClick={() => setModeImport('fichier')}
@@ -327,7 +329,7 @@ export default function BatchImportModal({
                 fontWeight: modeImport === 'fichier' ? 800 : 500, fontSize: 13, cursor: 'pointer',
               }}
             >
-              📊 2. Import Fichier Excel / CSV (Fichier d&apos;inventaire)
+              📊 2. {t('shop.fileUploadTab')}
             </button>
           </div>
         </div>
@@ -351,7 +353,7 @@ export default function BatchImportModal({
                 boxShadow: categorieActive === 'tous' ? '0 4px 10px rgba(29,78,216,0.25)' : 'none',
               }}
             >
-              📁 Tous les produits
+              {t('shop.allProductsFilterBtn')}
             </button>
             {CATEGORIES.filter(c => c.value !== 'mixte').map(c => (
               <button
@@ -392,15 +394,15 @@ export default function BatchImportModal({
               {/* Bouton de Téléchargement du Modèle Excel / CSV */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff7ed', border: '1px solid #fed7aa', padding: '12px 16px', borderRadius: 12, flexWrap: 'wrap', gap: 10 }}>
                 <div>
-                  <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#9a3412' }}>📥 Modèle d'Inventaire Prêt à Remplir</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#c2410c' }}>Téléchargez le modèle d'exemple au format CSV/Excel pré-formaté.</p>
+                  <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#9a3412' }}>{t('shop.inventoryReadyModelTitle')}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#c2410c' }}>{t('shop.inventoryReadyModelDesc')}</p>
                 </div>
                 <button
                   type="button"
                   onClick={telechargerModeleCSV}
                   style={{ background: '#C75B00', color: '#ffffff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
-                  📥 Télécharger le modèle exemple (.csv)
+                  {t('shop.downloadCsvModelBtn')}
                 </button>
               </div>
 
@@ -408,10 +410,10 @@ export default function BatchImportModal({
               <div style={{ border: '2px dashed #93c5fd', background: '#eff6ff', borderRadius: 12, padding: 24, textAlign: 'center' }}>
                 <p style={{ fontSize: 30, margin: '0 0 8px' }}>📑</p>
                 <p style={{ margin: '0 0 6px', fontWeight: 700, fontSize: 15, color: '#1e3a8a' }}>
-                  Glissez-déposez votre fichier d&apos;inventaire (.csv ou .txt)
+                  {t('shop.dragDropInventoryTitle')}
                 </p>
                 <p style={{ margin: '0 0 16px', fontSize: 12, color: '#3b82f6' }}>
-                  Colonnes : <strong>Nom ; Prix ; Quantité ; Catégorie ; Code-Barres EAN</strong>
+                  {t('shop.inventoryColumnsFormatHint')}
                 </p>
                 <input
                   type="file"
@@ -426,9 +428,9 @@ export default function BatchImportModal({
                 <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                     <span style={{ fontWeight: 800, fontSize: 14, color: '#111827' }}>
-                      📋 {lignesFichier.length} articles détectés prêt à importer :
+                      📋 {lignesFichier.length} {t('shop.detectedArticlesToImport')}
                     </span>
-                    <button onClick={() => setLignesFichier([])} style={{ fontSize: 12, color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>Effacer</button>
+                    <button onClick={() => setLignesFichier([])} style={{ fontSize: 12, color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>{t('shop.clearListBtn')}</button>
                   </div>
 
                   <div style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -437,7 +439,7 @@ export default function BatchImportModal({
                         <span style={{ fontWeight: 700, color: '#1e293b' }}>{idx + 1}. {l.nom}</span>
                         <div style={{ display: 'flex', gap: 12 }}>
                           <span style={{ color: '#059669', fontWeight: 800 }}>{l.prix} FCFA</span>
-                          <span style={{ color: '#6b7280' }}>Stock: {l.quantite}</span>
+                          <span style={{ color: '#6b7280' }}>{t('shop.stockCountLabel')} {l.quantite}</span>
                         </div>
                       </div>
                     ))}
@@ -446,13 +448,13 @@ export default function BatchImportModal({
               )}
             </div>
           ) : loading ? (
-            <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>Chargement du catalogue standard…</div>
+            <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>{t('common.loading')}</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Barre de Recherche dans le catalogue */}
               <input
                 type="text"
-                placeholder="🔍 Rechercher un produit modèle (ex: Riz, Chargeur, Parfum, Ciment, Sac...)"
+                placeholder={t('shop.searchTemplateModelPlaceholder')}
                 value={rechercheCatalogue}
                 onChange={e => setRechercheCatalogue(e.target.value)}
                 style={{
@@ -462,12 +464,12 @@ export default function BatchImportModal({
               />
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))', gap: 14 }}>
-                {templatesAffiches.map(t => {
-                  const item = saisies[t.id]
+                {templatesAffiches.map(tItem => {
+                  const item = saisies[tItem.id]
                   if (!item) return null
                   return (
                   <div
-                    key={t.id}
+                    key={tItem.id}
                     style={{
                       background: '#fff', border: item.selectionne ? '2px solid #C75B00' : '1px solid #e5e7eb',
                       borderRadius: 12, padding: 14, display: 'flex', gap: 12, alignItems: 'center',
@@ -478,27 +480,27 @@ export default function BatchImportModal({
                     <input
                       type="checkbox"
                       checked={item.selectionne}
-                      onChange={() => toggleSelection(t.id)}
+                      onChange={() => toggleSelection(tItem.id)}
                       style={{ width: 18, height: 18, accentColor: '#C75B00', cursor: 'pointer' }}
                     />
 
                     <img
-                      src={t.photo_defaut}
-                      alt={t.nom}
+                      src={tItem.photo_defaut}
+                      alt={tItem.nom}
                       style={{ width: 54, height: 54, borderRadius: 8, objectFit: 'cover', background: '#f3f4f6' }}
                     />
 
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: '#111827' }}>{t.nom}</p>
+                      <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: '#111827' }}>{tItem.nom}</p>
                       
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <div style={{ flex: 1 }}>
-                          <label style={{ fontSize: 10, color: '#6b7280', fontWeight: 600, display: 'block' }}>Prix unitaire (FCFA)</label>
+                          <label style={{ fontSize: 10, color: '#6b7280', fontWeight: 600, display: 'block' }}>{t('shop.unitPriceLabel')}</label>
                           <input
                             type="number"
                             placeholder="ex: 2500"
                             value={item.prix}
-                            onChange={e => updatePrix(t.id, e.target.value)}
+                            onChange={e => updatePrix(tItem.id, e.target.value)}
                             style={{
                               width: '100%', padding: '6px 8px', border: '1px solid #d1d5db',
                               borderRadius: 6, fontSize: 13, fontWeight: 600, boxSizing: 'border-box',
@@ -507,12 +509,12 @@ export default function BatchImportModal({
                         </div>
 
                         <div style={{ width: 70 }}>
-                          <label style={{ fontSize: 10, color: '#6b7280', fontWeight: 600, display: 'block' }}>Stock</label>
+                          <label style={{ fontSize: 10, color: '#6b7280', fontWeight: 600, display: 'block' }}>{t('shop.stockCountLabel')}</label>
                           <input
                             type="number"
                             min={1}
                             value={item.quantite}
-                            onChange={e => updateQuantite(t.id, Number(e.target.value))}
+                            onChange={e => updateQuantite(tItem.id, Number(e.target.value))}
                             style={{
                               width: '100%', padding: '6px 8px', border: '1px solid #d1d5db',
                               borderRadius: 6, fontSize: 13, textAlign: 'center', boxSizing: 'border-box',
@@ -532,7 +534,7 @@ export default function BatchImportModal({
         {/* Pied de modale */}
         <div style={{ padding: '16px 24px', borderTop: '1px solid #e5e7eb', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>
-            <span>{produitsAEnvoyer.length} produit(s) sélectionné(s)</span>
+            <span>{produitsAEnvoyer.length} {t('shop.selectedProductsCountText')}</span>
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
@@ -540,7 +542,7 @@ export default function BatchImportModal({
               onClick={onClose}
               style={{ padding: '10px 18px', background: '#f3f4f6', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#4b5563' }}
             >
-              Annuler
+              {t('common.cancel')}
             </button>
             <button
               onClick={validerBatch}
@@ -552,7 +554,7 @@ export default function BatchImportModal({
                 boxShadow: '0 2px 6px rgba(199,91,0,.25)',
               }}
             >
-              {submitting ? 'Ajout en cours…' : `Ajouter les ${produitsAEnvoyer.length} article(s) →`}
+              {submitting ? t('shop.batchImportInProgress') : `${t('shop.addArticlesBatchSubmitBtn')} (${produitsAEnvoyer.length})`}
             </button>
           </div>
         </div>
@@ -560,3 +562,4 @@ export default function BatchImportModal({
     </div>
   )
 }
+

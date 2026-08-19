@@ -5,6 +5,7 @@ import { getBoutiqueDocuments, creerBoutiqueDocument, modifierBoutiqueDocument, 
 import { fcfa } from '@/lib/format'
 import SearchableClientSelect from '@/components/SearchableClientSelect'
 import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
+import { useTranslation } from '@/i18n/context'
 
 interface LigneDocument {
   produitId: string
@@ -17,6 +18,7 @@ interface LigneDocument {
 }
 
 export default function GestionDocuments({ boutiqueId }: { boutiqueId: string }) {
+  const { t, isRtl } = useTranslation()
   const [documents, setDocuments] = useState<any[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [typeFiltre, setTypeFiltre] = useState<string>('tous')
@@ -496,13 +498,13 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
   }
 
   const handleSupprimerDocument = async (docId: string, ref: string) => {
-    if (!confirm(`Voulez-vous supprimer définitivement le document ${ref} ?`)) return
+    if (!confirm(`${t('shop.deleteDocConfirm')} (${ref})`)) return
     try {
       const res = await supprimerBoutiqueDocument(boutiqueId, docId)
       if (res.error) {
         alert(res.error)
       } else {
-        alert('Document supprimé avec succès !')
+        alert(t('shop.docDeletedSuccess'))
         chargerDonnees()
       }
     } catch (err) {
@@ -571,22 +573,27 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
             type="text"
             value={rechercheDoc}
             onChange={e => setRechercheDoc(e.target.value)}
-            placeholder="🔍 Rechercher par référence, nom client..."
+            placeholder={`🔍 ${t('common.search')}...`}
             style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, minWidth: 200, flex: 1, outline: 'none' }}
           />
           <div className="nopalou-scroll-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {['tous', 'facture', 'devis', 'proforma'].map(t => (
+            {[
+              { key: 'tous', label: `📁 ${t('shop.filterDocAll')}` },
+              { key: 'facture', label: `🧾 ${t('shop.filterDocInvoices')}` },
+              { key: 'devis', label: `📝 ${t('shop.filterDocQuotes')}` },
+              { key: 'proforma', label: `📋 ${t('shop.filterDocProformas')}` },
+            ].map(item => (
               <button
-                key={t}
-                onClick={() => setTypeFiltre(t)}
+                key={item.key}
+                onClick={() => setTypeFiltre(item.key)}
                 style={{
                   padding: '6px 12px', borderRadius: 8, border: '1px solid #e5e7eb',
-                  background: typeFiltre === t ? '#1e3a5f' : '#ffffff',
-                  color: typeFiltre === t ? '#ffffff' : '#475569',
+                  background: typeFiltre === item.key ? '#1e3a5f' : '#ffffff',
+                  color: typeFiltre === item.key ? '#ffffff' : '#475569',
                   fontWeight: 600, fontSize: 13, cursor: 'pointer', textTransform: 'capitalize', whiteSpace: 'nowrap'
                 }}
               >
-                {t === 'tous' ? '📁 Tous' : t === 'facture' ? '🧾 Factures' : t === 'devis' ? '📝 Devis' : '📋 Proformas'}
+                {item.label}
               </button>
             ))}
           </div>
@@ -595,40 +602,40 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
             onChange={e => setStatutFiltreDoc(e.target.value)}
             style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none' }}
           >
-            <option value="tous">Tous statuts</option>
-            <option value="brouillon">⏳ Brouillon</option>
-            <option value="valide">✅ Validé</option>
-            <option value="paye">💵 Payé</option>
-            <option value="envoye">📩 Envoyé</option>
+            <option value="tous">{t('common.all')}</option>
+            <option value="brouillon">⏳ {t('shop.statusDraft')}</option>
+            <option value="valide">✅ {t('shop.statusValidated')}</option>
+            <option value="paye">💵 {t('shop.statusPaid')}</option>
+            <option value="envoye">📩 {t('shop.statusShipped')}</option>
           </select>
         </div>
         <button
           onClick={() => { setDocumentEnEdition(null); resetForm(); setModalOuvert(true); }}
           style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
         >
-          ➕ Nouveau Document
+          ➕ {t('shop.newDocumentBtn')}
         </button>
       </div>
 
       {loading ? (
-        <p style={{ color: '#6b7280', fontSize: 14 }}>Chargement des documents de vente...</p>
+        <p style={{ color: '#6b7280', fontSize: 14 }}>{t('common.loading')}</p>
       ) : documentsFiltrés.length === 0 ? (
         <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
-          📂 Aucun document enregistré pour le moment.
+          📂 {t('common.noData')}
         </div>
       ) : (
         <div style={{ overflowX: 'auto', background: '#ffffff', borderRadius: 12, border: '1px solid #e5e7eb' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Référence</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Type</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Client</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Montant HT</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>TVA</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>TTC</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Statut</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>Actions</th>
+                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.orderReference')}</th>
+                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.documentType')}</th>
+                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.documentClient')}</th>
+                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.subtotalHt')}</th>
+                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.vatAmount')}</th>
+                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.totalTtc')}</th>
+                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.orderStatus')}</th>
+                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -646,7 +653,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                         {doc.type.toUpperCase()}
                       </span>
                     </td>
-                    <td style={{ padding: 12 }}>{client ? client.nom : 'Passant (Anonyme)'}</td>
+                    <td style={{ padding: 12 }}>{client ? client.nom : t('shop.anonymousWalkInClient')}</td>
                     <td style={{ padding: 12 }}>{fcfa(doc.total_ht)}</td>
                     <td style={{ padding: 12 }}>{fcfa(doc.total_tva)}</td>
                     <td style={{ padding: 12, fontWeight: 700 }}>{fcfa(doc.total_ttc)}</td>
@@ -682,13 +689,13 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                           outline: 'none'
                         }}
                       >
-                        <option value="" disabled>⚡ Actions ▾</option>
-                        <option value="pdf">🖨️ Télécharger / Imprimer PDF</option>
-                        <option value="edit">✏️ Modifier le document</option>
+                        <option value="" disabled>{t('shop.docActionsDropdown')}</option>
+                        <option value="pdf">{t('shop.actionDownloadPdf')}</option>
+                        <option value="edit">{t('shop.actionEditDoc')}</option>
                         {(doc.type === 'devis' || doc.type === 'proforma') && (
-                          <option value="convert">🔄 Convertir en Facture</option>
+                          <option value="convert">{t('shop.actionConvertToInvoice')}</option>
                         )}
-                        <option value="delete">🗑️ Supprimer</option>
+                        <option value="delete">{t('shop.actionDeleteDoc')}</option>
                       </select>
                     </td>
                   </tr>
@@ -708,10 +715,10 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: '#0f172a' }}>
-                  {documentEnEdition ? `✏️ Modifier le document ${documentEnEdition.reference}` : '🧾 Créer un nouveau document'}
+                  {documentEnEdition ? `✏️ ${t('shop.editDocumentModalTitle')} ${documentEnEdition.reference}` : t('shop.newDocumentModalTitle')}
                 </h3>
                 <p style={{ margin: '2px 0 0', fontSize: 12.5, color: '#64748b' }}>
-                  Facture, Devis ou Proforma avec ajout mixte Catalogue, Saisie Libre et Scan EAN
+                  {t('shop.docModalSubtitle')}
                 </p>
               </div>
               <button
@@ -727,28 +734,28 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
               {/* Type, Statut et Client */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, background: '#f8fafc', padding: 12, borderRadius: 12, border: '1px solid #e2e8f0' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11.5, fontWeight: 800, color: '#334155', marginBottom: 4 }}>Type de document *</label>
+                  <label style={{ display: 'block', fontSize: 11.5, fontWeight: 800, color: '#334155', marginBottom: 4 }}>{t('shop.documentType')} *</label>
                   <select value={typeDoc} onChange={e => setTypeDoc(e.target.value as any)} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 700, background: '#fff' }}>
-                    <option value="facture">🧾 Facture de vente</option>
-                    <option value="devis">📝 Devis commercial</option>
-                    <option value="proforma">📋 Facture Proforma</option>
+                    <option value="facture">{t('shop.invoiceSaleOption')}</option>
+                    <option value="devis">{t('shop.quoteOption')}</option>
+                    <option value="proforma">{t('shop.proformaOption')}</option>
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11.5, fontWeight: 800, color: '#334155', marginBottom: 4 }}>Statut initial *</label>
+                  <label style={{ display: 'block', fontSize: 11.5, fontWeight: 800, color: '#334155', marginBottom: 4 }}>{t('shop.initialStatusLabel')}</label>
                   <select value={statutDoc} onChange={e => setStatutDoc(e.target.value as any)} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 700, background: '#fff' }}>
-                    <option value="brouillon">⏳ Brouillon</option>
-                    <option value="valide">✅ Validé</option>
-                    {typeDoc === 'facture' && <option value="paye">💵 Payé (encaissé)</option>}
+                    <option value="brouillon">{t('shop.statusDraftOption')}</option>
+                    <option value="valide">{t('shop.statusValidatedOption')}</option>
+                    {typeDoc === 'facture' && <option value="paye">{t('shop.statusPaidOption')}</option>}
                   </select>
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ display: 'block', fontSize: 11.5, fontWeight: 800, color: '#334155', marginBottom: 4 }}>Client associé (Facultatif)</label>
+                  <label style={{ display: 'block', fontSize: 11.5, fontWeight: 800, color: '#334155', marginBottom: 4 }}>{t('shop.associatedClientLabel')}</label>
                   <SearchableClientSelect
                     clients={clients}
                     value={clientIdSelected}
                     onChange={(cId) => setClientIdSelected(cId)}
-                    placeholder="-- Client Passant (Anonyme) --"
+                    placeholder={t('shop.anonymousWalkInClient')}
                   />
                 </div>
               </div>
@@ -772,7 +779,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                         boxShadow: modeAjout === 'catalogue' ? '0 2px 5px rgba(0,0,0,0.08)' : 'none'
                       }}
                     >
-                      🛍️ Catalogue ({produits.length})
+                      {t('shop.catalogCountTab')} ({produits.length})
                     </button>
                     <button
                       type="button"
@@ -789,7 +796,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                         boxShadow: modeAjout === 'libre' ? '0 2px 5px rgba(0,0,0,0.08)' : 'none'
                       }}
                     >
-                      ✍️ Saisie Libre / Prestation
+                      {t('shop.manualServiceTab')}
                     </button>
                   </div>
 
@@ -811,7 +818,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                       boxShadow: '0 2px 6px rgba(2,132,199,0.25)'
                     }}
                   >
-                    📷 Scan EAN (Code-barres)
+                    {t('shop.scanEanBarcodeBtn')}
                   </button>
                 </div>
 
@@ -824,7 +831,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                         type="text"
                         value={rechercheProduitModal}
                         onChange={e => setRechercheProduitModal(e.target.value)}
-                        placeholder="🔍 Rechercher par nom, code-barres EAN, SKU ou catégorie..."
+                        placeholder={t('shop.catalogSearchPlaceholder')}
                         style={{
                           width: '100%',
                           padding: '9px 36px 9px 12px',
@@ -875,7 +882,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                             color: categorieProduitModal === 'tous' ? '#ffffff' : '#475569'
                           }}
                         >
-                          Tous ({produits.length})
+                          {t('common.all')} ({produits.length})
                         </button>
                         {categoriesCatalogue.map(cat => {
                           const count = produits.filter((p: any) => p.categorie === cat).length
@@ -915,8 +922,8 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                       {produitsFiltresModal.length === 0 ? (
                         <div style={{ gridColumn: '1 / -1', fontSize: 12.5, color: '#94a3b8', textAlign: 'center', padding: '24px 10px' }}>
                           {produits.length === 0
-                            ? 'Aucun produit dans le catalogue. Utilisez la saisie libre pour ajouter vos articles.'
-                            : 'Aucun produit ne correspond à cette recherche.'}
+                            ? t('shop.noProductsInDocCatalog')
+                            : t('shop.noProductsMatchSearch')}
                         </div>
                       ) : (
                         produitsFiltresModal.map((p: any) => {
@@ -952,7 +959,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                                   </span>
                                   {stock !== undefined && stock !== null && (
                                     <span style={{ fontSize: 9.5, fontWeight: 700, color: stock > 0 ? '#10b981' : '#ef4444' }}>
-                                      {stock > 0 ? `${stock} en stock` : 'Rupture'}
+                                      {stock > 0 ? `${stock} ${t('shop.inStockLabel')}` : t('shop.outOfStockBadge')}
                                     </span>
                                   )}
                                 </div>
@@ -967,7 +974,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                                       handleDiminuerProduitCatalogue(p.id)
                                     }}
                                     style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: '#fee2e2', color: '#ef4444', fontWeight: 900, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                    title="Diminuer la quantité (-1)"
+                                    title="Diminuer"
                                   >
                                     -
                                   </button>
@@ -981,7 +988,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                                       handleAjouterProduitCatalogue(p, 1)
                                     }}
                                     style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: '#e0f2fe', color: '#0284c7', fontWeight: 900, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                    title="Augmenter la quantité (+1)"
+                                    title="Augmenter"
                                   >
                                     +
                                   </button>
@@ -992,7 +999,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                                   onClick={() => handleAjouterProduitCatalogue(p, 1)}
                                   style={{ marginTop: 6, padding: '3px 6px', fontSize: 11, fontWeight: 700, background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, color: '#475569', cursor: 'pointer' }}
                                 >
-                                  ➕ Ajouter
+                                  {t('shop.addDocLineBtn')}
                                 </button>
                               )}
                             </div>
@@ -1008,7 +1015,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                   <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <label style={{ fontSize: 12, fontWeight: 800, color: '#0369a1', margin: 0 }}>
-                        ✍️ Article ou prestation hors catalogue :
+                        {t('shop.customArticlePrompt')}
                       </label>
                       <button
                         type="button"
@@ -1027,17 +1034,17 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                           gap: 4
                         }}
                       >
-                        📷 Scan Nom (OCR)
+                        {t('shop.scanNameOcrBtnAlt')}
                       </button>
                     </div>
 
                     <div>
                       <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                        Désignation / Nom de l’article ou prestation *
+                        {t('shop.designationLabel')}
                       </label>
                       <input
                         type="text"
-                        placeholder="Ex: Main d'œuvre réparation écran, Tissu bazin sur-mesure, Livraison..."
+                        placeholder={t('shop.designationPlaceholder')}
                         value={libelleLibreInput}
                         onChange={e => setLibelleLibreInput(e.target.value)}
                         style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 600, boxSizing: 'border-box' }}
@@ -1047,7 +1054,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                     {/* Suggestions OCR ou fréquentes */}
                     {ocrDetections.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
-                        <span style={{ fontSize: 10.5, fontWeight: 800, color: '#64748b' }}>💡 Détections OCR :</span>
+                        <span style={{ fontSize: 10.5, fontWeight: 800, color: '#64748b' }}>{t('shop.ocrDetectionsLabel')}</span>
                         {ocrDetections.map((txt, idx) => (
                           <button
                             key={idx}
@@ -1062,8 +1069,8 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                     )}
 
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
-                      <span style={{ fontSize: 10.5, fontWeight: 700, color: '#94a3b8' }}>Suggestions :</span>
-                      {['🔧 Prestation de service', '🛠️ Main d’œuvre', '🚚 Frais de livraison', '📦 Article sur-mesure'].map((sug, idx) => (
+                      <span style={{ fontSize: 10.5, fontWeight: 700, color: '#94a3b8' }}>{t('shop.suggestionsPrefix')}</span>
+                      {[t('shop.serviceSuggestion'), t('shop.laborSuggestion'), t('shop.deliverySuggestion'), t('shop.customItemSuggestion')].map((sug, idx) => (
                         <button
                           key={idx}
                           type="button"
@@ -1078,7 +1085,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px auto', gap: 8, alignItems: 'flex-end' }}>
                       <div>
                         <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                          Prix unitaire (FCFA) *
+                          {t('shop.unitPriceDocLabel')}
                         </label>
                         <input
                           type="number"
@@ -1091,7 +1098,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                       </div>
                       <div>
                         <label style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                          Qté *
+                          {t('shop.quantityDocLabel')}
                         </label>
                         <input
                           type="number"
@@ -1116,7 +1123,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        ➕ Ajouter
+                        {t('shop.addDocLineBtn')}
                       </button>
                     </div>
                   </div>
@@ -1127,7 +1134,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                   <span style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
-                    🛒 Articles dans le document ({totalArticles} articles • Total : {fcfa(totalTTC)})
+                    {t('shop.articlesInDocCart')} ({totalArticles} {t('shop.articlesTotalCount')} • {t('shop.totalTtc')}: {fcfa(totalTTC)})
                   </span>
                   {lignesSelectionnees.length > 0 && (
                     <button
@@ -1135,14 +1142,14 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                       onClick={handleViderPanier}
                       style={{ fontSize: 11, color: '#ef4444', background: '#fee2e2', border: 'none', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontWeight: 800 }}
                     >
-                      🗑️ Vider tout
+                      {t('shop.emptyCartBtn')}
                     </button>
                   )}
                 </div>
 
                 {lignesSelectionnees.length === 0 ? (
                   <div style={{ padding: '24px 10px', textAlign: 'center', color: '#94a3b8', fontSize: 12.5 }}>
-                    Aucun article ajouté pour le moment. Utilisez le catalogue, la saisie libre ou le scan EAN ci-dessus.
+                    {t('shop.emptyDocCartMsg')}
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto' }}>
@@ -1175,7 +1182,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                               color: estLibre ? '#0369a1' : '#16a34a',
                               whiteSpace: 'nowrap'
                             }}>
-                              {estLibre ? '✍️ Libre' : '🛍️ Catalogue'}
+                              {estLibre ? t('shop.freeItemTag') : t('shop.catalogItemTag')}
                             </span>
                             
                             {estLibre ? (
@@ -1194,7 +1201,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <label style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Prix :</label>
+                              <label style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{t('common.price')} :</label>
                               <input
                                 type="number"
                                 min="0"
@@ -1205,7 +1212,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <label style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Qté :</label>
+                              <label style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{t('shop.quantityLabel')} :</label>
                               <input
                                 type="number"
                                 min="1"
@@ -1237,20 +1244,20 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
 
               {/* Notes et Conditions */}
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>Notes / Conditions commerciales (Optionnel)</label>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>{t('shop.notesTermsDocLabel')}</label>
                 <textarea
                   value={noteDoc}
                   onChange={e => setNoteDoc(e.target.value)}
                   style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 12.5, resize: 'vertical', boxSizing: 'border-box' }}
                   rows={2}
-                  placeholder="Ex: Validité du devis : 15 jours. Modalités de règlement : 50% à la commande..."
+                  placeholder={t('shop.notesTermsDocPlaceholder')}
                 />
               </div>
 
               {/* Actions Footer */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', paddingTop: 14 }}>
                 <div style={{ fontSize: 15, fontWeight: 900, color: '#0f172a' }}>
-                  Total TTC : <span style={{ color: '#0284c7' }}>{fcfa(totalTTC)}</span>
+                  {t('shop.totalTtcColon')} <span style={{ color: '#0284c7' }}>{fcfa(totalTTC)}</span>
                 </div>
 
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -1259,7 +1266,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                     onClick={() => setModalOuvert(false)}
                     style={{ padding: '9px 16px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#ffffff', color: '#475569', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}
                   >
-                    Annuler
+                    {t('common.cancel')}
                   </button>
                   <button
                     type="submit"
@@ -1275,7 +1282,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                       fontSize: 13
                     }}
                   >
-                    {isSubmitting ? 'Enregistrement...' : documentEnEdition ? 'Sauvegarder les modifications' : `Créer le document (${fcfa(totalTTC)})`}
+                    {isSubmitting ? t('shop.savingDocInProgress') : documentEnEdition ? t('shop.saveDocChangesBtn') : `${t('shop.createDocumentBtnTotal')} (${fcfa(totalTTC)})`}
                   </button>
                 </div>
               </div>
@@ -1289,7 +1296,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner Code-barres (EAN)</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{t('shop.scanBarcodeModalTitle')}</h4>
               <button type="button" onClick={arreterScannerEan} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
 
@@ -1306,14 +1313,14 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                   checked={scanContinu}
                   onChange={e => setScanContinu(e.target.checked)}
                 />
-                Scanner en continu (bipper plusieurs)
+                {t('shop.scanContinuousDocCheckbox')}
               </label>
               <button
                 type="button"
                 onClick={arreterScannerEan}
                 style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer' }}
               >
-                Fermer
+                {t('common.close')}
               </button>
             </div>
           </div>
@@ -1325,7 +1332,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>📷 Scanner le Nom du Produit</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{t('shop.scanProductNameModalTitle')}</h4>
               <button type="button" onClick={arreterScannerNom} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
 
@@ -1355,7 +1362,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                 justifyContent: 'center'
               }}>
                 <span style={{ background: 'rgba(15,23,42,0.75)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>
-                  Cadrez le nom au centre
+                  {t('shop.frameNameCenterDoc')}
                 </span>
               </div>
             </div>
@@ -1376,7 +1383,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                 cursor: ocrLoading ? 'not-allowed' : 'pointer'
               }}
             >
-              {ocrLoading ? '⏳ Analyse OCR en cours...' : '📸 Capturer et Extraire le Nom'}
+              {ocrLoading ? t('shop.ocrAnalyzingDoc') : t('shop.extractNameDocBtn')}
             </button>
           </div>
         </div>
@@ -1384,3 +1391,4 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     </div>
   )
 }
+

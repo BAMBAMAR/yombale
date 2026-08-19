@@ -202,7 +202,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
         </div>
         
         <p style={{ margin: '0 0 12px', fontSize: 12.5, color: '#334155', lineHeight: 1.5 }}>
-          Ouvrez ce lien sur la tablette ou le PC du magasin. Vos caissiers déverrouilleront leur session avec leur <strong>Code PIN (4 chiffres)</strong>.
+          {t('shop.terminalHelpText')}
         </p>
 
         {terminalUrl && (
@@ -250,7 +250,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
                 style={{ flex: '1 1 140px', textDecoration: 'none' }}
               >
                 <span>↗</span>
-                <span>Ouvrir terminal</span>
+                <span>{t('shop.openTerminalBtn')}</span>
               </a>
             </div>
           </div>
@@ -282,7 +282,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, width: '100%' }}>
           <input 
             type="text" 
-            placeholder="Nom (ex: Diop)"
+            placeholder={t('shop.lastNamePlaceholder')}
             value={newNom}
             onChange={e => setNewNom(e.target.value)}
             required
@@ -297,7 +297,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
           />
           <input 
             type="text" 
-            placeholder="Prénom (ex: Aminata)"
+            placeholder={t('shop.firstNamePlaceholder')}
             value={newPrenom}
             onChange={e => setNewPrenom(e.target.value)}
             style={{
@@ -338,8 +338,8 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
               boxSizing: 'border-box'
             }}
           >
-            <option value="caissier">Caissier Standard</option>
-            <option value="superviseur">Superviseur / Responsable</option>
+            <option value="caissier">{t('shop.roleCashierStandard')}</option>
+            <option value="superviseur">{t('shop.roleCashierSupervisor')}</option>
           </select>
         </div>
 
@@ -357,7 +357,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
       {/* Liste des Caissiers (Cards Responsive) */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          Caissiers Enregistrés ({caissiers.length})
+          {t('shop.registeredCashiersTitle')} ({caissiers.length})
         </h3>
 
         {caissiers.map(caissier => (
@@ -393,7 +393,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
                   </span>
                   {caissier.role === 'superviseur' && (
                     <span className="npl-badge npl-badge-warning" style={{ fontSize: 11 }}>
-                      Superviseur
+                      {t('shop.roleCashierSupervisor')}
                     </span>
                   )}
                 </div>
@@ -453,7 +453,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
 
         {caissiers.length === 0 && !loading && (
           <div style={{ padding: 24, textAlign: 'center', color: 'var(--text3)', background: '#fff', borderRadius: 12, border: '1px solid var(--border)' }}>
-            Aucun caissier enregistré pour cette boutique.
+            {t('shop.noCashiersFound')}
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslation } from '@/i18n/context'
 
 interface Stats {
   vues_total: string
@@ -27,6 +28,7 @@ interface Historique {
 }
 
 export default function AnalyticsClient({ boutiques }: { boutiques: { id: string; nom: string }[] }) {
+  const { t, isRtl } = useTranslation()
   const [boutiqueId, setBoutiqueId] = useState(boutiques[0]?.id ?? '')
   const [stats, setStats]           = useState<Stats | null>(null)
   const [historique, setHistorique] = useState<Historique[]>([])
@@ -77,9 +79,9 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
 
   return (
     <div style={{ maxWidth: 800, margin: '32px auto', padding: '0 20px' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Analytics boutique</h1>
+      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>{t('shop.analytics')}</h1>
       <p style={{ color: '#64748b', marginBottom: 24, fontSize: 14 }}>
-        Suivez les performances de votre boutique en temps réel.
+        {t('shop.analyticsDesc')}
       </p>
 
       {/* Sélecteur boutique */}
@@ -93,7 +95,7 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
         </select>
       )}
 
-      {loading && <p style={{ color: '#94a3b8' }}>Chargement…</p>}
+      {loading && <p style={{ color: '#94a3b8' }}>{t('common.loading')}</p>}
 
       {erreur && (
         <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: '16px 20px', color: '#dc2626' }}>

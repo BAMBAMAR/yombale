@@ -252,7 +252,7 @@ export default function BoutiqueDetailClient({
   const [isSticky, setIsSticky] = useState(false)
   const [isCreditMode, setIsCreditMode] = useState(false)
 
-  const { openCart, getCartItemCount, getCartTotal } = useCart()
+  const { openCart, getCartItemCount, getCartTotal, addToCart } = useCart()
   const boutiqueKey = boutique.slug || boutique.id
   const cartCount = getCartItemCount(boutiqueKey)
   const cartTotal = getCartTotal(boutiqueKey)
@@ -847,7 +847,7 @@ export default function BoutiqueDetailClient({
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   onClick={() => {
-                    useCart().addToCart(boutiqueKey, boutique.nom, quickViewProduct, boutique.whatsapp)
+                    addToCart(boutiqueKey, boutique.nom, quickViewProduct, boutique.whatsapp)
                     setQuickViewProduct(null)
                   }}
                   disabled={!quickViewProduct.en_stock}

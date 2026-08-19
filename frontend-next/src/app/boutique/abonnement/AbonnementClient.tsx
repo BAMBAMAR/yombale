@@ -4,6 +4,7 @@ import { initierWaveAbonnement } from '@/app/actions/paiement'
 import ModalPaiementManuel from '@/components/ModalPaiementManuel'
 import { PALIERS_BOUTIQUE } from '@/lib/fonctionnalites-data'
 import { Sparkles, Check, Zap, Gift, ShieldCheck } from 'lucide-react'
+import { useTranslation } from '@/i18n/context'
 
 const PLANS_DEFAUT = {
   pro: 5000,
@@ -28,6 +29,7 @@ const DUREES = [
 ]
 
 export default function AbonnementClient({ planActif, userId, settings }: Props) {
+  const { t, isRtl } = useTranslation()
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)

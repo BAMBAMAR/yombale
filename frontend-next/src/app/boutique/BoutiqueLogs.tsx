@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Download, Search, RefreshCw, User } from 'lucide-react'
+import { useTranslation } from '@/i18n/context'
 
 interface LogEntry {
   id: string
@@ -13,6 +14,7 @@ interface LogEntry {
 }
 
 export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
+  const { t, isRtl } = useTranslation()
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -106,10 +108,10 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 10 }}>
-            📜 Journal d&apos;Audit &amp; Historique des Actions
+            📜 {t('shop.auditLogsTitle')}
           </h2>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
-            Registre chronologique inaltérable pour enquêtes, contrôle interne et traçabilité des opérations.
+            {t('shop.auditLogDesc')}
           </p>
         </div>
 
@@ -131,7 +133,7 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
             boxShadow: '0 2px 8px rgba(30, 58, 95, 0.2)'
           }}
         >
-          <Download size={16} /> {downloadingCsv ? 'Génération du CSV...' : 'Exporter le Journal (CSV / Excel)'}
+          <Download size={16} /> {downloadingCsv ? t('common.loading') : t('common.exportCsv')}
         </button>
       </div>
 
@@ -141,7 +143,7 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
           <Search size={16} style={{ position: 'absolute', left: 12, top: 12, color: '#94a3b8' }} />
           <input
             type="text"
-            placeholder="Rechercher par auteur, action ou mot-clé..."
+            placeholder={`🔍 ${t('common.search')}...`}
             value={recherche}
             onChange={e => setRecherche(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && fetchLogs()}

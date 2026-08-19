@@ -4,6 +4,7 @@ import { useFormState } from 'react-dom'
 import { useEffect, useState, useRef } from 'react'
 import { updateBoutique } from './actions'
 import type { ActionState } from '@/lib/backend-fetch'
+import { useTranslation } from '@/i18n/context'
 
 const labelStyle: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 5 }
 const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, outline: 'none', background: '#fff' }
@@ -25,6 +26,7 @@ const CGV_DEFAUT = `CONDITIONS GÉNÉRALES DE VENTE
 5. JURIDICTION : En cas de litige, les tribunaux de Dakar sont seuls compétents, conformément au droit OHADA.`
 
 export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: any; onUpdate: () => void }) {
+  const { t, isRtl } = useTranslation()
   const action = updateBoutique.bind(null, boutique.id)
   const [state, formAction] = useFormState<ActionState, FormData>(action, {})
 
@@ -47,7 +49,7 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
   useEffect(() => {
     if (state.success && handledRef.current !== state) {
       handledRef.current = state
-      setSavedMessage('✅ Paramètres juridiques et fiscaux enregistrés avec succès !')
+      setSavedMessage(`✅ ${t('shop.taxSavedSuccess')}`)
       if (typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'smooth' })
       }
@@ -55,8 +57,8 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
         fiscTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
       onUpdate()
-      const t = setTimeout(() => setSavedMessage(null), 6000)
-      return () => clearTimeout(t)
+      const tId = setTimeout(() => setSavedMessage(null), 6000)
+      return () => clearTimeout(tId)
     } else if (state.error && handledRef.current !== state) {
       handledRef.current = state
       if (typeof window !== 'undefined') {
@@ -66,14 +68,14 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
         fiscTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
     }
-  }, [state, onUpdate])
+  }, [state, onUpdate, t])
 
   return (
     <div style={{ maxWidth: 700, background: '#ffffff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', paddingBottom: 80 }}>
       <div ref={fiscTopRef} />
       <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-          ⚖️ Paramètres Fiscalité & Infos Légales
+          ⚖️ {t('shop.taxLegalTitle')}
         </h3>
 
         {savedMessage && (
@@ -101,25 +103,25 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
 
         {/* ══════════ SECTION 1 — CONFIGURATION FISCALE ══════════ */}
         <div style={sectionStyle}>
-          <h4 style={{ ...sectionTitleStyle, borderTop: 'none', paddingTop: 0 }}>📊 Régime & Application de la TVA</h4>
+          <h4 style={{ ...sectionTitleStyle, borderTop: 'none', paddingTop: 0 }}>📊 {t('shop.taxSettings')}</h4>
           
           <div>
-            <label style={labelStyle}>Régime fiscal de l'entreprise *</label>
+            <label style={labelStyle}>{t('shop.taxRegimeLabel')} *</label>
             <select 
               name="regime_fiscal" 
               value={regime} 
               onChange={e => setRegime(e.target.value)}
               style={inputStyle}
             >
-              <option value="reel">Régime Réel / Général (Assujetti à la TVA 18%)</option>
-              <option value="non_assujetti">Régime de la Franche / Non Assujetti (Exonéré de TVA selon Art. 286 CGI)</option>
-              <option value="exonere">Exonération Fiscale Spécifique (Agrément Code des Investissements)</option>
+              <option value="reel">{t('shop.regimeReal')}</option>
+              <option value="non_assujetti">{t('shop.regimeNonSubject')}</option>
+              <option value="exonere">{t('shop.regimeExempt')}</option>
             </select>
           </div>
 
           {regime === 'reel' && (
             <div>
-              <label style={labelStyle}>Taux de TVA par défaut (%)</label>
+              <label style={labelStyle}>{t('shop.defaultVatRate')}</label>
               <input 
                 type="number" 
                 name="tva_taux_defaut" 
@@ -145,7 +147,7 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
               />
               <div>
                 <label htmlFor="prix_tva_incluse_cb" style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>
-                  Mes prix de vente en catalogue incluent déjà la TVA (Prix TTC)
+                  {t('shop.priceIncludesVatLabel')}
                 </label>
                 <p style={{ ...helpText, margin: '2px 0 0 0' }}>
                   Si décoché, la caisse calculera les prix HT + TVA en sus.
@@ -165,7 +167,7 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
             />
             <div>
               <label htmlFor="timbre_fiscal_applicable_cb" style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>
-                Appliquer le timbre fiscal de 1% sur les règlements en espèces (Cash)
+                {t('shop.cashStampDutyLabel')}
               </label>
               <p style={{ ...helpText, margin: '2px 0 0 0' }}>
                 Calcul automatique de 1% (plafonné à 5 000 FCFA) requis par la réglementation fiscale pour les paiements en cash.
@@ -176,14 +178,14 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
 
         {/* ══════════ SECTION 2 — IDENTITÉ JURIDIQUE ══════════ */}
         <div style={sectionStyle}>
-          <h4 style={sectionTitleStyle}>📋 Identité Juridique</h4>
+          <h4 style={sectionTitleStyle}>📋 {t('shop.taxLegalTitle')}</h4>
           <p style={{ ...helpText, margin: '-6px 0 4px 0' }}>
             Ces informations apparaîtront sur vos factures, devis et proformas. Obligatoire pour les documents conformes OHADA.
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
             <div>
-              <label style={labelStyle}>N° RCCM</label>
+              <label style={labelStyle}>{t('shop.rccmLabel')}</label>
               <input 
                 type="text" 
                 name="rccm" 
@@ -195,7 +197,7 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
             </div>
 
             <div>
-              <label style={labelStyle}>N° NINEA</label>
+              <label style={labelStyle}>{t('shop.nineaLabel')}</label>
               <input 
                 type="text" 
                 name="ninea" 
@@ -209,7 +211,7 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
             <div>
-              <label style={labelStyle}>Forme Juridique</label>
+              <label style={labelStyle}>{t('shop.legalFormLabel')}</label>
               <select 
                 name="forme_juridique" 
                 defaultValue={boutique.forme_juridique || ''} 
@@ -228,7 +230,7 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
             </div>
 
             <div>
-              <label style={labelStyle}>Capital Social</label>
+              <label style={labelStyle}>{t('shop.shareCapitalLabel')}</label>
               <input 
                 type="text" 
                 name="capital_social" 
@@ -242,13 +244,13 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
 
         {/* ══════════ SECTION 3 — COORDONNÉES BANCAIRES ══════════ */}
         <div style={sectionStyle}>
-          <h4 style={sectionTitleStyle}>🏦 Coordonnées Bancaires</h4>
+          <h4 style={sectionTitleStyle}>🏦 {t('shop.bankCoordinatesTitle')}</h4>
           <p style={{ ...helpText, margin: '-6px 0 4px 0' }}>
             Vos coordonnées bancaires pour les règlements par virement. Affichées en bas de vos factures.
           </p>
 
           <div>
-            <label style={labelStyle}>Informations bancaires</label>
+            <label style={labelStyle}>{t('shop.bankAccountDetailsLabel')}</label>
             <textarea 
               name="compte_bancaire" 
               defaultValue={boutique.compte_bancaire || ''} 
@@ -261,13 +263,13 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
 
         {/* ══════════ SECTION 4 — CONDITIONS DE VENTE ══════════ */}
         <div style={sectionStyle}>
-          <h4 style={sectionTitleStyle}>📄 Conditions Générales de Vente</h4>
+          <h4 style={sectionTitleStyle}>📄 {t('shop.salesTermsTitle')}</h4>
           <p style={{ ...helpText, margin: '-6px 0 4px 0' }}>
             Texte affiché en bas de vos documents commerciaux (factures, devis, proformas).
           </p>
 
           <div>
-            <label style={labelStyle}>Conditions de vente</label>
+            <label style={labelStyle}>{t('shop.salesTermsTitle')}</label>
             <textarea 
               name="conditions_vente" 
               value={conditionsVente}
@@ -285,13 +287,13 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
                   fontSize: 12, fontWeight: 700, cursor: 'pointer'
                 }}
               >
-                📝 Utiliser le modèle standard OHADA
+                📝 {t('shop.salesTermsStandardModel')}
               </button>
             )}
           </div>
 
           <div>
-            <label style={labelStyle}>Pied de page personnalisé (optionnel)</label>
+            <label style={labelStyle}>{t('shop.customFooterLabel')}</label>
             <textarea 
               name="pied_de_page_document" 
               defaultValue={boutique.pied_de_page_document || ''} 
@@ -319,7 +321,7 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
             type="submit" 
             style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg, #1e3a5f 0%, #111827 100%)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
           >
-            💾 Enregistrer les paramètres juridiques & fiscaux
+            💾 {t('common.save')}
           </button>
         </div>
       </form>

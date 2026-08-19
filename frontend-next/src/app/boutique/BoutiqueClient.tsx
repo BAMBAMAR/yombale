@@ -723,6 +723,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   onCancel: () => void
   onSuccess: () => void
 }) {
+  const { t, isRtl } = useTranslation()
   const action = produit
     ? updateProduit.bind(null, boutiqueId, produit.id)
     : createProduit.bind(null, boutiqueId)
@@ -1039,7 +1040,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
     <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 60 }}>
       <div ref={produitFormTopRef} />
       <h3 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 16, margin: 0 }}>
-        {produit ? 'Modifier le produit' : 'Ajouter un produit'}
+        {produit ? t('shop.editProductTitle') : t('shop.addProductTitle')}
       </h3>
 
       {successMsg && (
@@ -1133,20 +1134,20 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
 
       {/* Catégorie */}
       <div>
-        <label style={labelStyle}>Catégorie du produit</label>
+        <label style={labelStyle}>{t('shop.productCategory')}</label>
         <select
           value={cat}
           onChange={e => { setCat(e.target.value); setCarac({}) }}
           style={inputStyle}
         >
-          <option value="">— Sélectionner une catégorie —</option>
+          <option value="">— {t('shop.productCategory')} —</option>
           {PRODUIT_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
       </div>
 
       {/* Nom du produit (Affiche toujours avec Scan Nom, y compris en Ajout Rapide) */}
       <div>
-        <label style={labelStyle}>Nom du produit <span style={{ color: '#dc2626' }}>*</span></label>
+        <label style={labelStyle}>{t('shop.productName')} <span style={{ color: '#dc2626' }}>*</span></label>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             name="nom"
@@ -1396,7 +1397,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       {/* Description */}
       {!modeRapide && (
         <div>
-          <label style={labelStyle}>Description</label>
+          <label style={labelStyle}>{t('shop.descriptionLabel')}</label>
           <textarea name="description" rows={3} defaultValue={produit?.description ?? ''} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Détails supplémentaires, accessoires inclus, garantie…" />
         </div>
       )}
@@ -1404,12 +1405,12 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       {/* Prix */}
       <div className={modeRapide ? '' : 'bq-form-grid-2'} style={modeRapide ? { display: 'grid' } : undefined}>
         <div>
-          <label style={labelStyle}>Prix (FCFA) <span style={{ color: '#dc2626' }}>*</span></label>
+          <label style={labelStyle}>{t('shop.productPrice')} (FCFA) <span style={{ color: '#dc2626' }}>*</span></label>
           <input name="prix" type="number" min={0} required defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 350 000" />
         </div>
         {!modeRapide && (
           <div>
-            <label style={labelStyle}>Prix barré <span style={{ fontSize: 11, color: '#9ca3af' }}>(ancien prix)</span></label>
+            <label style={labelStyle}>{t('shop.productPriceStrikethrough')}</label>
             <input name="prix_barre" type="number" min={0} defaultValue={produit?.prix_barre ?? ''} style={inputStyle} placeholder="Ex: 400 000" />
           </div>
         )}
@@ -1417,7 +1418,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
 
       {/* Photos */}
       <div>
-        <label style={labelStyle}>Photos du produit <span style={{ fontSize: 11, color: '#9ca3af' }}>(max 5, 5 Mo chacune)</span></label>
+        <label style={labelStyle}>{t('shop.photosLabel')} <span style={{ fontSize: 11, color: '#9ca3af' }}>({t('shop.photosHelpText')})</span></label>
         <div className="photos-zone">
           {imagesExistantes.length + photos.length < 5 && (
             <div
@@ -1486,7 +1487,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
             }} />
           </button>
           <span style={{ fontSize: 13, color: '#374151' }}>
-            {enStock ? '✅ En stock' : '❌ Rupture de stock'}
+            {enStock ? `✅ ${t('shop.inStock')}` : `❌ ${t('shop.outOfStock')}`}
           </span>
         </div>
       )}
@@ -1509,12 +1510,12 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         marginTop: 16,
         marginBottom: 20,
       }}>
-        <SubmitButton label={produit ? '💾 Enregistrer le produit' : '➕ Ajouter le produit'} disabled={imagesExistantes.length === 0 && photos.length === 0} />
+        <SubmitButton label={produit ? `💾 ${t('shop.saveProductBtn')}` : `➕ ${t('shop.newProduct')}`} disabled={imagesExistantes.length === 0 && photos.length === 0} />
         <button type="button" onClick={onCancel} style={{
           padding: '10px 20px', background: '#f3f4f6', border: '1px solid #d1d5db',
           borderRadius: 8, fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer',
         }}>
-          Annuler
+          {t('common.cancel')}
         </button>
       </div>
     </form>
@@ -2058,7 +2059,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                     onClick={() => setMode({ editing: p })}
                     style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                   >
-                    ✏️ Modifier
+                    ✏️ {t('common.edit')}
                   </button>
 
                   <BoutonPartager
@@ -2082,7 +2083,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                       padding: '6px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4
                     }}
                   >
-                    <span>Actions</span> ▾
+                    <span>{t('shop.actionsMenu')}</span> ▾
                   </button>
 
                   {menuActionsOuvertId === p.id && (
@@ -2100,7 +2101,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                           onClick={() => { setMenuActionsOuvertId(null); setMode({ editing: p }); }}
                           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
                         >
-                          🏷️ Scan / EAN
+                          🏷️ {t('shop.scanBarcodeModalTitle')}
                         </button>
                         <button
                           onClick={(e) => {
@@ -2141,7 +2142,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                           }}
                           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#0284c7', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
                         >
-                          🖨️ Imprimer Étiquette
+                          🖨️ {t('shop.printBarcodeLabels')}
                         </button>
                         <button
                           onClick={() => {
@@ -2153,7 +2154,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                           }}
                           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
                         >
-                          📄 Dupliquer le produit
+                          📄 {t('shop.duplicateProduct')}
                         </button>
                         <button
                           onClick={() => {
@@ -2168,7 +2169,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                           }}
                           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#b45309', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
                         >
-                          📢 Publier en Annonce
+                          📢 {t('shop.publishAd')}
                         </button>
                         <div style={{ height: 1, background: '#f1f5f9', margin: '2px 0' }} />
                         <button
@@ -2184,7 +2185,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                           }}
                           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 700, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
                         >
-                          🗑️ Supprimer
+                          🗑️ {t('common.delete')}
                         </button>
                       </div>
                     </>
@@ -2196,6 +2197,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
         </div>
       )}
     </div>
+
   )
 }
 
@@ -2629,6 +2631,7 @@ interface NavItem {
 }
 
 interface NavGroup {
+  icon: string
   title: string
   items: NavItem[]
 }
@@ -2647,6 +2650,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
 
   const NAV_GROUPS: NavGroup[] = [
     {
+      icon: '🛒',
       title: t('shop.navGroupSalesClients'),
       items: [
         { key: 'dashboard',   icon: '🏠', label: t('shop.overview') },
@@ -2656,6 +2660,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
       ],
     },
     {
+      icon: '📦',
       title: t('shop.navGroupCatalogStock'),
       items: [
         { key: 'produits',     icon: '🛍️', label: t('shop.catalog') },
@@ -2663,6 +2668,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
       ],
     },
     {
+      icon: '💰',
       title: t('shop.navGroupFinanceReports'),
       items: [
         { key: 'compta',      icon: '💰', label: t('shop.accounting'), minPlan: 'pro' },
@@ -2671,6 +2677,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
       ],
     },
     {
+      icon: '⚙️',
       title: t('shop.navGroupSettingsTeam'),
       items: [
         { key: 'equipe',      icon: '👥', label: t('shop.team'), minPlan: 'business' },
@@ -2694,9 +2701,8 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   }
   const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>(() => {
     const defaultExpanded: Record<number, boolean> = {};
-    NAV_GROUPS.forEach((g, idx) => {
-      const hasActive = g.items.some(i => i.key === resolvedInitialTab);
-      defaultExpanded[idx] = hasActive || idx === 0; // Ouvre le premier groupe ou celui contenant l'onglet actif par défaut
+    NAV_GROUPS.forEach((_, idx) => {
+      defaultExpanded[idx] = true; // Déplié par défaut pour que l'utilisateur découvre immédiatement tous les outils
     });
     return defaultExpanded;
   })
@@ -2709,6 +2715,8 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   useEffect(() => {
     const gIdx = getGroupIdxForTab(tab)
     setActiveGroupIdx(gIdx)
+    // S'assure que le groupe actif reste ouvert
+    setExpandedGroups(prev => ({ ...prev, [gIdx]: true }))
   }, [tab])
 
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
@@ -2893,34 +2901,117 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           </div>
         </div>
 
-        {/* Nav Desktop (Hiérarchie verticale classique) */}
-        <nav className="bq-nav bq-nav-desktop">
+        {/* Nav Desktop (Hiérarchie verticale claire, contrastée et intuitive) */}
+        <nav className="bq-nav bq-nav-desktop" style={{ padding: '8px 4px' }}>
           {NAV_GROUPS.map((group, gIdx) => {
-            const isExpanded = expandedGroups[gIdx] ?? false;
+            const isExpanded = expandedGroups[gIdx] !== false;
+            const hasActiveItem = group.items.some(i => i.key === tab);
             return (
-            <div key={gIdx} className="bq-nav-group">
-              <div 
-                className="bq-nav-group-title" 
-                onClick={() => setExpandedGroups(prev => ({ ...prev, [gIdx]: !prev[gIdx] }))}
-                style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none', paddingRight: 8 }}
+            <div key={gIdx} className="bq-nav-group" style={{ marginBottom: 12 }}>
+              <button 
+                type="button"
+                className={`bq-nav-group-header${hasActiveItem ? ' bq-nav-group-header--active' : ''}`}
+                onClick={() => setExpandedGroups(prev => ({ ...prev, [gIdx]: !isExpanded }))}
+                aria-expanded={isExpanded}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  padding: '9px 12px',
+                  background: hasActiveItem ? 'linear-gradient(135deg, #FFF9F5 0%, #FFF3E8 100%)' : '#FAF8F5',
+                  border: hasActiveItem ? '1.5px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease',
+                  userSelect: 'none',
+                  boxShadow: hasActiveItem ? '0 2px 6px rgba(199,91,0,0.12)' : '0 1px 2px rgba(26,22,18,0.03)',
+                }}
               >
-                <span>{group.title}</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: '#94a3b8' }}>
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-              <div style={{ display: isExpanded ? 'block' : 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <span style={{ fontSize: 14, flexShrink: 0 }}>{group.icon}</span>
+                  <span style={{
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    color: hasActiveItem ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}>
+                    {group.title}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                  <span style={{
+                    fontSize: 10.5,
+                    fontWeight: 750,
+                    padding: '2px 6px',
+                    borderRadius: 12,
+                    background: hasActiveItem ? '#FED7AA' : 'rgba(28,43,74,0.08)',
+                    color: hasActiveItem ? '#9A3412' : '#334155',
+                  }}>
+                    {group.items.length}
+                  </span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={hasActiveItem ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)'}
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                  >
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </button>
+
+              <div style={{
+                display: isExpanded ? 'flex' : 'none',
+                flexDirection: 'column',
+                gap: 2,
+                marginTop: 4,
+                paddingLeft: 6,
+                borderLeft: hasActiveItem ? '2.5px solid var(--accent, #C75B00)' : '2px solid #E8DDD2',
+                marginLeft: 8,
+              }}>
                 {group.items.map(item => {
                   const allowed = isAllowed(item.minPlan)
+                  const isActive = tab === item.key
                   return (
                     <button
                       key={item.key}
                       onClick={() => setTab(item.key)}
-                      className={`bq-nav-item${tab === item.key ? ' active' : ''}`}
-                      style={{ opacity: allowed ? 1 : 0.9, display: 'flex', alignItems: 'center', width: '100%', gap: 6, padding: '8px 8px' }}
+                      className={`bq-nav-item${isActive ? ' active' : ''}`}
+                      style={{
+                        opacity: allowed ? 1 : 0.85,
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        gap: 8,
+                        padding: '8px 10px',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        fontWeight: isActive ? 750 : 600,
+                        color: isActive ? 'var(--accent, #C75B00)' : '#1F2937',
+                        background: isActive ? '#FFF3E8' : 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'background 0.12s, color 0.12s',
+                      }}
                     >
                       <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
-                      <span style={{ textAlign: 'left', whiteSpace: 'nowrap', fontSize: 12.5, fontWeight: tab === item.key ? 700 : 500, flex: 1, minWidth: 0 }}>
+                      <span style={{ whiteSpace: 'nowrap', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {item.label}
                       </span>
                       {!allowed && (
@@ -2952,8 +3043,9 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                     key={gIdx}
                     onClick={() => setActiveGroupIdx(gIdx)}
                     className={isGroupActive ? 'npl-btn npl-btn-primary npl-btn-sm' : 'npl-btn npl-btn-secondary npl-btn-sm'}
-                    style={{ borderRadius: 20, fontSize: 12 }}
+                    style={{ borderRadius: 20, fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
                   >
+                    <span>{group.icon}</span>
                     <span>{group.title}</span>
                     <span style={{
                       fontSize: 10,
