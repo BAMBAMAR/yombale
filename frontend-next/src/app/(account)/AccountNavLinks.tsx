@@ -3,11 +3,27 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslation } from '@/i18n/context'
 
+interface NavLinkItem {
+  href: string
+  label: string
+  emoji: string
+  tab?: string
+  isCta?: boolean
+  isShop?: boolean
+}
+
+interface NavGroup {
+  label: string
+  icon: string
+  isShopGroup?: boolean
+  liens: NavLinkItem[]
+}
+
 export default function AccountNavLinks({ overrideTab }: { overrideTab?: string }) {
   const pathname = usePathname()
   const { t } = useTranslation()
 
-  const groupes = [
+  const groupes: NavGroup[] = [
     {
       label: t('account.groupAdsPurchases'),
       icon: '📦',
@@ -89,7 +105,7 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
                       borderRadius: 10,
                       fontWeight: 800,
                     }}>
-                      GÉRER ↗
+                      {t('account.manageShopBadge')}
                     </span>
                   </Link>
                 )
@@ -106,7 +122,7 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
                   <span style={{ flex: 1 }}>{lien.label}</span>
                   {lien.isCta && (
                     <span style={{ fontSize: 10, fontWeight: 750, color: 'var(--accent)', background: '#FFF3E8', padding: '1px 6px', borderRadius: 6 }}>
-                      Nouveau
+                      {t('common.new')}
                     </span>
                   )}
                 </Link>

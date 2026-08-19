@@ -2,11 +2,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { lireCompare, GROUPE_LABELS, type CompareEntry } from '@/lib/comparaison'
+import { useTranslation } from '@/i18n/context'
 
 // Bandeau affiché sur les pages liste produits quand une comparaison produit est active.
 // Rôle double : expliquer pourquoi la liste est filtrée, et synchroniser le filtre
 // d'URL si la comparaison a été démarrée ailleurs (ex: autre page, autre session).
 export default function CompareFilterBanner() {
+  const { t } = useTranslation()
   const router       = useRouter()
   const pathname     = usePathname()
   const [items, setItems] = useState<CompareEntry[]>([])
@@ -50,13 +52,13 @@ export default function CompareFilterBanner() {
 
   return (
     <div className="compare-filter-banner" role="status">
-      <span className="compare-filter-banner-titre">⚖ Comparaison active</span>
+      <span className="compare-filter-banner-titre">{t('common.activeComparison')}</span>
       <span className="compare-filter-banner-texte">
         {label
           ? <>Affichage limité aux <strong>{label}</strong> (similaires à « {premier} »)</>
           : <>Sélection en cours : « {premier} »</>}
       </span>
-      <button onClick={vider} className="compare-filter-banner-vider">✕ Vider</button>
+      <button onClick={vider} className="compare-filter-banner-vider">✕ {t('common.clear')}</button>
     </div>
   )
 }

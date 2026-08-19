@@ -41,6 +41,7 @@ interface CaracteristiquesProps {
 }
 
 function CaracteristiquesFields({ slug, values, onChange }: CaracteristiquesProps) {
+  const { t } = useTranslation()
   const inp = (k: string, label: string, placeholder = '', type = 'text') => (
     <div className="form-field" key={k}>
       <label className="form-label">{label}</label>
@@ -64,38 +65,38 @@ function CaracteristiquesFields({ slug, values, onChange }: CaracteristiquesProp
         onChange={e => onChange(k, e.target.value)}
         className="form-input"
       >
-        <option value="">Choisir…</option>
+        <option value="">{t('common.choose')}</option>
         {opts.map(o => <option key={o} value={o.toLowerCase()}>{o}</option>)}
       </select>
     </div>
   )
 
   if (slug === 'smartphones' || slug === 'informatique' || slug === 'tv-electro') {
-    return <>{inp('marque', 'Marque', 'ex: Samsung, Apple…')}{sel('etat', 'État', ETATS)}</>
+    return <>{inp('marque', t('account.brand'), 'ex: Samsung, Apple…')}{sel('etat', t('account.condition'), ETATS)}</>
   }
   if (slug === 'auto-moto') {
     return <>
-      {inp('marque', 'Marque', 'ex: Toyota…')}
-      {inp('modele', 'Modèle', 'ex: Corolla…')}
-      {inp('annee', 'Année', 'ex: 2019', 'number')}
-      {sel('etat', 'État', ETATS)}
+      {inp('marque', t('account.brand'), 'ex: Toyota…')}
+      {inp('modele', t('account.model'), 'ex: Corolla…')}
+      {inp('annee', t('account.year'), 'ex: 2019', 'number')}
+      {sel('etat', t('account.condition'), ETATS)}
     </>
   }
   if (slug === 'jeux') {
-    return <>{sel('plateforme', 'Plateforme', PLATEFORMES)}{sel('etat', 'État', ETATS)}</>
+    return <>{sel('plateforme', t('account.platform'), PLATEFORMES)}{sel('etat', t('account.condition'), ETATS)}</>
   }
   if (slug === 'mode') {
     return <>
-      {inp('taille', 'Taille', 'ex: M, 42, XL…')}
-      {sel('genre', 'Genre', GENRES)}
-      {sel('etat', 'État', ETATS)}
+      {inp('taille', t('account.size'), 'ex: M, 42, XL…')}
+      {sel('genre', t('account.gender'), GENRES)}
+      {sel('etat', t('account.condition'), ETATS)}
     </>
   }
   if (slug === 'maison') {
-    return <>{inp('type_article', 'Type d\'article', 'ex: Canapé, Réfrigérateur…')}{sel('etat', 'État', ETATS)}</>
+    return <>{inp('type_article', t('account.itemType'), 'ex: Canapé, Réfrigérateur…')}{sel('etat', t('account.condition'), ETATS)}</>
   }
   if (slug === 'services') {
-    return <>{inp('type_service', 'Type de service', 'ex: Plomberie, Cours, Transport…')}</>
+    return <>{inp('type_service', t('account.serviceType'), 'ex: Plomberie, Cours, Transport…')}</>
   }
   return null
 }
@@ -164,11 +165,11 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
   return (
     <form className="annonce-form" onSubmit={handleSubmit}>
       <div className="modifier-annonce-warning">
-        ⚠️ Toute modification soumettra votre annonce à une nouvelle modération.
+        {t('account.editAdWarning')}
       </div>
 
       <div className="form-field">
-        <label className="form-label">Catégorie</label>
+        <label className="form-label">{t('account.category')}</label>
         <div className="modifier-cat-badge">{catLabel}</div>
       </div>
 
@@ -206,7 +207,7 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
       <div className="form-section-title">{t('account.location')}</div>
       <div className="form-row">
         <div className="form-field">
-          <label className="form-label">Ville</label>
+          <label className="form-label">{t('account.city')}</label>
           <select name="ville" className="form-input" defaultValue={annonce.ville ?? ''}>
             <option value="">{t('common.choose')}</option>
             {VILLES.map(v => <option key={v} value={v}>{v}</option>)}
@@ -239,13 +240,13 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
       <div className="form-section-title">{t('account.contact')}</div>
       <div className="form-row">
         <div className="form-field">
-          <label className="form-label">Nom / Pseudo</label>
+          <label className="form-label">{t('account.nameOrPseudo')}</label>
           <input
             name="contact_nom"
             type="text"
             className="form-input"
             defaultValue={annonce.contact_nom ?? ''}
-            placeholder="Votre nom"
+            placeholder={t('account.yourName')}
             maxLength={80}
           />
         </div>
@@ -262,11 +263,11 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
         </div>
       </div>
 
-      <div className="form-section-title">Photos ({totalPhotos}/5)</div>
+      <div className="form-section-title">{t('account.photos')} ({totalPhotos}/5)</div>
 
       {keepPhotos.length > 0 && (
         <div className="modifier-photos-current">
-          <p className="form-hint" style={{ marginBottom: 8 }}>Photos actuelles (cliquer ✕ pour supprimer)</p>
+          <p className="form-hint" style={{ marginBottom: 8 }}>{t('account.currentPhotosHint')}</p>
           <div className="photos-previews">
             {keepPhotos.map(url => (
               <div key={url} className="photo-thumb">
@@ -276,7 +277,7 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
                   type="button"
                   className="photo-remove"
                   onClick={() => removeExistingPhoto(url)}
-                  aria-label="Supprimer cette photo"
+                  aria-label={t('common.delete')}
                 >✕</button>
               </div>
             ))}
@@ -292,11 +293,11 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
             onKeyDown={e => e.key === 'Enter' && fileRef.current?.click()}
             tabIndex={0}
             role="button"
-            aria-label="Ajouter des photos"
+            aria-label={t('account.addPhotos')}
           >
             <span style={{ fontSize: 28 }}>📷</span>
-            <p>Ajouter des photos</p>
-            <span className="form-hint">Max {5 - keepPhotos.length} nouvelles · 5 Mo · JPG/PNG/WebP</span>
+            <p>{t('account.addPhotos')}</p>
+            <span className="form-hint">Max {5 - keepPhotos.length} · 5 Mo · JPG/PNG/WebP</span>
           </div>
           <input
             ref={fileRef}
@@ -316,7 +317,7 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
                     type="button"
                     className="photo-remove"
                     onClick={() => removeNewPhoto(i)}
-                    aria-label="Supprimer"
+                    aria-label={t('common.delete')}
                   >✕</button>
                 </div>
               ))}
@@ -334,10 +335,10 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
 
       <div className="annonce-submit-row" style={{ marginTop: 24 }}>
         <a href="/mes-annonces" className="annonce-action-btn annonce-action-btn--delete" style={{ textDecoration: 'none', lineHeight: '1' }}>
-          Annuler
+          {t('common.cancel')}
         </a>
         <button type="submit" className="annonce-submit-btn" disabled={isPending}>
-          {isPending ? 'Enregistrement…' : '💾 Enregistrer les modifications'}
+          {isPending ? t('common.loading') : t('account.saveModifications')}
         </button>
       </div>
     </form>

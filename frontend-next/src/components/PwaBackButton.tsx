@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
+import { useTranslation } from '@/i18n/context'
 
 export default function PwaBackButton() {
+  const { t } = useTranslation()
   const pathname = usePathname()
   const router = useRouter()
   const [isStandalone, setIsStandalone] = useState(false)
@@ -41,7 +43,7 @@ export default function PwaBackButton() {
   return (
     <button
       onClick={handleBack}
-      aria-label="Retour à la page précédente"
+      aria-label={t('common.back')}
       style={{
         position: 'fixed',
         bottom: '80px', // juste au-dessus des barres mobiles
@@ -64,7 +66,7 @@ export default function PwaBackButton() {
       }}
     >
       <ArrowLeft size={16} />
-      <span>Retour</span>
+      <span>{t('common.back')}</span>
     </button>
   )
 }

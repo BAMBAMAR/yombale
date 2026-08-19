@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useCart } from '@/context/CartContext'
 import { fcfa } from '@/lib/format'
+import { useTranslation } from '@/i18n/context'
 
 interface ProduitCross {
   id: string
@@ -21,6 +22,7 @@ export default function CrossSelling({
   produitActuel: { id: string; nom: string; prix: number | null; images?: string[] }
   whatsapp?: string | null
 }) {
+  const { t } = useTranslation()
   const { addToCart } = useCart()
   const [recommandations, setRecommandations] = useState<ProduitCross[]>([])
   const [selectionnes, setSelectionnes] = useState<string[]>([])
@@ -73,14 +75,14 @@ export default function CrossSelling({
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
         <span style={{ fontSize: 20 }}>💡</span>
         <h3 style={{ margin: 0, fontSize: 16, fontFamily: 'var(--font-archivo), sans-serif', color: '#111827' }}>
-          Souvent achetés ensemble (-5% sur le lot)
+          {t('shop.bundleTitle')}
         </h3>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         {/* Produit Principal */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8fafc', padding: '10px 14px', borderRadius: 10, border: '1px solid #e2e8f0' }}>
-          <span style={{ fontWeight: 800, color: '#C75B00', fontSize: 13 }}>Cet article</span>
+          <span style={{ fontWeight: 800, color: '#C75B00', fontSize: 13 }}>{t('common.thisItem')}</span>
           <span style={{ fontWeight: 700, fontSize: 13, color: '#1e293b' }}>{produitActuel.nom}</span>
           <span style={{ fontWeight: 800, fontSize: 13, color: '#059669' }}>{fcfa(produitActuel.prix)}</span>
         </div>
@@ -111,11 +113,15 @@ export default function CrossSelling({
       {/* Prix total du lot & Bouton d'action */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fafafa', padding: 14, borderRadius: 10, border: '1px solid #f3f4f6', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <span style={{ fontSize: 12, color: '#6b7280', display: 'block' }}>Prix du lot ({itemsChoisis.length + 1} articles) :</span>
+          <span style={{ fontSize: 12, color: '#6b7280', display: 'block' }}>
+            {t('shop.bundlePriceLabel')} ({itemsChoisis.length + 1} {t('common.details').toLowerCase()}) :
+          </span>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ fontSize: 20, fontWeight: 900, color: '#C75B00' }}>{fcfa(totalRemise)}</span>
             <span style={{ fontSize: 13, color: '#9ca3af', textDecoration: 'line-through' }}>{fcfa(totalSansRemise)}</span>
-            <span style={{ fontSize: 11, background: '#dcfce7', color: '#166534', fontWeight: 800, padding: '2px 8px', borderRadius: 12 }}>Économisez 5%</span>
+            <span style={{ fontSize: 11, background: '#dcfce7', color: '#166534', fontWeight: 800, padding: '2px 8px', borderRadius: 12 }}>
+              {t('common.savePercent')} 5%
+            </span>
           </div>
         </div>
 
@@ -127,7 +133,7 @@ export default function CrossSelling({
             boxShadow: '0 4px 12px rgba(199,91,0,.25)', transition: 'all 0.2s ease',
           }}
         >
-          {addedSuccess ? '✅ Lot ajouté au panier !' : '🛒 Ajouter les articles au panier →'}
+          {addedSuccess ? t('shop.bundleAddedToCartSuccess') : t('shop.addBundleToCartBtn')}
         </button>
       </div>
     </div>

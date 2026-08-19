@@ -11,4 +11,5 @@ export const errors: LocaleTranslations['errors'] = {
   passwordTooShort: 'Password must be at least 6 characters.',
   notFound: 'Item not found.',
   serverError: 'Remote server returned an error.',
+  invalidAmount: 'Invalid amount.',
 }

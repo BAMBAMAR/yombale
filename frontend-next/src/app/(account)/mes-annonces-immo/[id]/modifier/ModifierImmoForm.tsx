@@ -71,7 +71,7 @@ export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) 
   return (
     <form className="annonce-form" onSubmit={handleSubmit}>
       <div className="modifier-annonce-warning">
-        ⚠️ Toute modification soumettra votre annonce à une nouvelle validation admin.
+        {t('account.editAdWarning')}
       </div>
 
       <div className="form-field">
@@ -90,21 +90,21 @@ export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) 
 
       <div className="form-row">
         <div className="form-field">
-          <label className="form-label">Type de bien <span className="required">*</span></label>
+          <label className="form-label">{t('account.propertyType')} <span className="required">*</span></label>
           <select name="type_bien" className="form-input" defaultValue={annonce.type_bien ?? 'appartement'} required>
-            {TYPES_BIEN.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            {TYPES_BIEN.map(tb => <option key={tb.value} value={tb.value}>{tb.label}</option>)}
           </select>
         </div>
         <div className="form-field">
-          <label className="form-label">Transaction <span className="required">*</span></label>
+          <label className="form-label">{t('account.transaction')} <span className="required">*</span></label>
           <select name="transaction" className="form-input" defaultValue={annonce.transaction ?? 'location'} required>
-            {TRANSACTIONS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            {TRANSACTIONS.map(tr => <option key={tr.value} value={tr.value}>{tr.label}</option>)}
           </select>
         </div>
       </div>
 
       <div className="form-field">
-          <label className="form-label">{t('account.price')} (FCFA)</label>
+        <label className="form-label">{t('account.price')} (FCFA)</label>
         <input
           name="prix"
           type="number"
@@ -145,7 +145,7 @@ export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) 
       <div className="form-section-title">{t('account.location')}</div>
       <div className="form-row">
         <div className="form-field">
-          <label className="form-label">Ville <span className="required">*</span></label>
+          <label className="form-label">{t('account.city')} <span className="required">*</span></label>
           <select name="ville" className="form-input" defaultValue={annonce.ville ?? 'Dakar'} required>
             {VILLES.map(v => <option key={v} value={v}>{v}</option>)}
           </select>
@@ -171,8 +171,8 @@ export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) 
       <div className="form-section-title">{t('account.contact')}</div>
       <div className="form-row">
         <div className="form-field">
-          <label className="form-label">Nom / Prénom</label>
-          <input name="contact_nom" type="text" className="form-input" defaultValue={annonce.contact_nom ?? ''} placeholder="Votre nom" maxLength={80} />
+          <label className="form-label">{t('account.fullName')}</label>
+          <input name="contact_nom" type="text" className="form-input" defaultValue={annonce.contact_nom ?? ''} placeholder={t('account.yourName')} maxLength={80} />
         </div>
         <div className="form-field">
           <label className="form-label">{t('account.yourPhone')} <span className="required">*</span></label>
@@ -190,12 +190,12 @@ export default function ModifierImmoForm({ annonce }: { annonce: AnnonceImmo }) 
       <div className="annonce-submit-row" style={{ marginTop: 24, display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <a href="/mes-annonces-immo" className="annonce-action-btn annonce-action-btn--delete" style={{ textDecoration: 'none', lineHeight: '1' }}>
-            Annuler
+            {t('common.cancel')}
           </a>
           <DeleteImmoButton id={annonce.id} />
         </div>
         <button type="submit" className="annonce-submit-btn" disabled={isPending}>
-          {isPending ? 'Enregistrement…' : '💾 Enregistrer les modifications'}
+          {isPending ? t('common.loading') : t('account.saveModifications')}
         </button>
       </div>
     </form>

@@ -211,10 +211,36 @@ it('BoutonPartager: lien visuel story et gestion de l action copier', () => {
 
 console.log('\n📦 6. Internationalisation i18n (FR / EN / AR)')
 import { LOCALES, DEFAULT_LOCALE, LOCALES_META, isLocale, isRTL, getValidLocale } from '../src/i18n/config.ts'
-import frDict from '../src/i18n/locales/fr/index.ts'
-import enDict from '../src/i18n/locales/en/index.ts'
-import arDict from '../src/i18n/locales/ar/index.ts'
-import { getDictionary } from '../src/i18n/index.ts'
+
+import { common as frCommon } from '../src/i18n/locales/fr/common.ts'
+import { auth as frAuth } from '../src/i18n/locales/fr/auth.ts'
+import { account as frAccount } from '../src/i18n/locales/fr/account.ts'
+import { shop as frShop } from '../src/i18n/locales/fr/shop.ts'
+import { caisse as frCaisse } from '../src/i18n/locales/fr/caisse.ts'
+import { errors as frErrors } from '../src/i18n/locales/fr/errors.ts'
+
+import { common as enCommon } from '../src/i18n/locales/en/common.ts'
+import { auth as enAuth } from '../src/i18n/locales/en/auth.ts'
+import { account as enAccount } from '../src/i18n/locales/en/account.ts'
+import { shop as enShop } from '../src/i18n/locales/en/shop.ts'
+import { caisse as enCaisse } from '../src/i18n/locales/en/caisse.ts'
+import { errors as enErrors } from '../src/i18n/locales/en/errors.ts'
+
+import { common as arCommon } from '../src/i18n/locales/ar/common.ts'
+import { auth as arAuth } from '../src/i18n/locales/ar/auth.ts'
+import { account as arAccount } from '../src/i18n/locales/ar/account.ts'
+import { shop as arShop } from '../src/i18n/locales/ar/shop.ts'
+import { caisse as arCaisse } from '../src/i18n/locales/ar/caisse.ts'
+import { errors as arErrors } from '../src/i18n/locales/ar/errors.ts'
+
+const frDict = { common: frCommon, auth: frAuth, account: frAccount, shop: frShop, caisse: frCaisse, errors: frErrors }
+const enDict = { common: enCommon, auth: enAuth, account: enAccount, shop: enShop, caisse: enCaisse, errors: enErrors }
+const arDict = { common: arCommon, auth: arAuth, account: arAccount, shop: arShop, caisse: arCaisse, errors: arErrors }
+
+const dictionaries = { fr: frDict, en: enDict, ar: arDict }
+function getDictionary(locale) {
+  return dictionaries[locale] || dictionaries.fr
+}
 
 function getDeepKeys(obj, prefix = '') {
   let keys = []

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslation } from '@/i18n/context'
 
 interface Avis {
   id: string
@@ -12,6 +13,7 @@ interface Avis {
 }
 
 export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: string; produitId?: string }) {
+  const { t } = useTranslation()
   const [avisList, setAvisList] = useState<Avis[]>([])
   const [noteMoyenne, setNoteMoyenne] = useState<string>('5.0')
   const [totalAvis, setTotalAvis] = useState<number>(0)
@@ -65,9 +67,9 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur lors de l’envoi de l’avis')
+      if (!res.ok) throw new Error(data.error || t('common.error'))
 
-      setSuccessMsg('Merci ! Votre avis a été publié avec succès ⭐')
+      setSuccessMsg(t('shop.reviewPublishedSuccess'))
       setNomClient('')
       setCommentaire('')
       loadAvis()
@@ -76,7 +78,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
         setSuccessMsg(null)
       }, 1500)
     } catch (err: any) {
-      setErrorMsg(err.message || 'Erreur lors de la soumission')
+      setErrorMsg(err.message || t('common.error'))
     } finally {
       setSubmitting(false)
     }
@@ -89,14 +91,14 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <div>
           <h3 style={{ margin: 0, fontSize: 16, fontFamily: 'var(--font-archivo), sans-serif', color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>⭐</span> Avis & Notes Clients ({totalAvis})
+            <span>⭐</span> {t('shop.reviewsAndRatingsTitle')} ({totalAvis})
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
             <span style={{ fontSize: 20, fontWeight: 900, color: '#f59e0b' }}>{noteMoyenne}</span>
             <div style={{ color: '#f59e0b', fontSize: 14 }}>
               {'★'.repeat(Math.round(Number(noteMoyenne)))}{'☆'.repeat(5 - Math.round(Number(noteMoyenne)))}
             </div>
-            <span style={{ fontSize: 12, color: '#6b7280' }}>({totalAvis} évaluation{totalAvis > 1 ? 's' : ''})</span>
+            <span style={{ fontSize: 12, color: '#6b7280' }}>({totalAvis} {t('shop.evaluationsCount')})</span>
           </div>
         </div>
 
@@ -108,15 +110,15 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
             boxShadow: '0 1px 3px rgba(0,0,0,.05)',
           }}
         >
-          ✍️ Laisser un avis
+          {t('shop.leaveReviewBtn')}
         </button>
       </div>
 
       {/* Liste des avis */}
       {loading ? (
-        <p style={{ color: '#9ca3af', fontSize: 13 }}>Chargement des avis…</p>
+        <p style={{ color: '#9ca3af', fontSize: 13 }}>{t('common.loadingReviews')}</p>
       ) : avisList.length === 0 ? (
-        <p style={{ color: '#6b7280', fontSize: 13, fontStyle: 'italic', margin: 0 }}>Soyez le premier à donner votre avis sur cette boutique !</p>
+        <p style={{ color: '#6b7280', fontSize: 13, fontStyle: 'italic', margin: 0 }}>{t('common.firstReviewPrompt')}</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {avisList.map(a => (
@@ -126,7 +128,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
                   <span style={{ fontWeight: 700, fontSize: 14, color: '#1e293b' }}>{a.nom_client}</span>
                   {a.verifie && (
                     <span style={{ fontSize: 10, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>
-                      ✓ Achat Vérifié
+                      {t('shop.verifiedPurchase')}
                     </span>
                   )}
                 </div>
@@ -136,7 +138,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
               </div>
 
               {a.produit_nom && (
-                <p style={{ margin: '0 0 4px', fontSize: 11, color: '#64748b', fontWeight: 600 }}>Article : {a.produit_nom}</p>
+                <p style={{ margin: '0 0 4px', fontSize: 11, color: '#64748b', fontWeight: 600 }}>{t('shop.article')} : {a.produit_nom}</p>
               )}
 
               {a.commentaire && (
@@ -152,7 +154,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 440, boxShadow: '0 20px 50px rgba(0,0,0,.2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 17, fontFamily: 'var(--font-archivo), sans-serif' }}>Évaluer cette boutique</h3>
+              <h3 style={{ margin: 0, fontSize: 17, fontFamily: 'var(--font-archivo), sans-serif' }}>{t('common.rateShop')}</h3>
               <button onClick={() => setModalAvis(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9ca3af' }}>✕</button>
             </div>
 
@@ -169,7 +171,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
                 )}
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Votre Prénom & Nom *</label>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>{t('common.fullNameRequired')}</label>
                   <input
                     required
                     type="text"
@@ -181,7 +183,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Votre Note *</label>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>{t('common.yourRatingRequired')}</label>
                   <div style={{ display: 'flex', gap: 8 }}>
                     {[1, 2, 3, 4, 5].map(star => (
                       <button
@@ -200,7 +202,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Votre Commentaire</label>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>{t('common.yourComment')}</label>
                   <textarea
                     rows={3}
                     placeholder="Qu'avez-vous pensé de la qualité des produits et du service de livraison ?"
@@ -219,7 +221,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
                     boxShadow: '0 2px 8px rgba(199,91,0,.3)',
                   }}
                 >
-                  {submitting ? 'Publication…' : 'Publier mon avis ⭐'}
+                  {submitting ? t('common.loading') : `${t('shop.publishReviewBtn')} ⭐`}
                 </button>
               </form>
             )}

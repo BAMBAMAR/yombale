@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import QRCode from 'qrcode-svg'
+import { useTranslation } from '@/i18n/context'
 
 interface QrCodeShareModalProps {
   isOpen: boolean
@@ -15,15 +16,18 @@ export default function QrCodeShareModal({
   isOpen,
   onClose,
   url,
-  title = '📱 QR Code & Lien de la Boutique',
+  title,
   boutiqueNom = 'Ma Boutique'
 }: QrCodeShareModalProps) {
+  const { t } = useTranslation()
   const [activeMode, setActiveMode] = useState<'vitrine' | 'credit'>('vitrine')
   const [copied, setCopied] = useState(false)
   const [qrSvg, setQrSvg] = useState<string>('')
   const [qrDataUrl, setQrDataUrl] = useState<string>('')
   const [telClientInShop, setTelClientInShop] = useState('')
   const [isGrandEcran, setIsGrandEcran] = useState(false)
+
+  const modalTitle = title || `📱 ${t('common.qrCode')} & ${t('account.groupShop')}`
 
   const finalUrl = activeMode === 'credit' 
     ? (url.includes('?') ? `${url}&mode=credit` : `${url}?mode=credit`)
@@ -130,16 +134,17 @@ export default function QrCodeShareModal({
             fontWeight: 800,
             color: '#64748b'
           }}
+          title={t('common.close')}
         >
           ✕
         </button>
 
         <div style={{ textAlign: 'center', width: '100%' }}>
           <h3 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 900, color: '#0f172a' }}>
-            {title}
+            {modalTitle}
           </h3>
           <p style={{ margin: 0, fontSize: 12.5, color: '#64748b' }}>
-            Présentez le QR Code au client au comptoir ou partagez le lien direct.
+            {t('shop.qrScanHelp')}
           </p>
         </div>
 
@@ -161,7 +166,7 @@ export default function QrCodeShareModal({
               boxShadow: activeMode === 'vitrine' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
             }}
           >
-            🏪 Vitrine & Catalogue
+            {t('shop.qrVitrineOption')}
           </button>
           <button
             type="button"
@@ -179,7 +184,7 @@ export default function QrCodeShareModal({
               boxShadow: activeMode === 'credit' ? '0 2px 6px rgba(2,132,199,0.3)' : 'none'
             }}
           >
-            💳 Demande de Crédit
+            {t('shop.qrCreditOption')}
           </button>
         </div>
 
@@ -206,7 +211,7 @@ export default function QrCodeShareModal({
             />
           ) : (
             <div style={{ width: 210, height: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 13 }}>
-              Génération du QR Code...
+              {t('shop.qrGenerating')}
             </div>
           )}
 
@@ -224,19 +229,19 @@ export default function QrCodeShareModal({
               cursor: 'pointer'
             }}
           >
-            {isGrandEcran ? '🔍 Réduire la taille' : '🔍 Mode Grand Écran pour Scan au Comptoir'}
+            {isGrandEcran ? t('shop.qrNormalScreenBtn') : t('shop.qrFullScreenBtn')}
           </button>
         </div>
 
         {/* Partage direct vers le WhatsApp du client présent en boutique */}
         <form onSubmit={handleEnvoyerAuClientDirect} style={{ width: '100%', background: '#f8fafc', padding: 12, borderRadius: 12, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <label style={{ fontSize: 11.5, fontWeight: 800, color: '#334155', margin: 0 }}>
-            📱 Envoyer le lien directement sur le téléphone du client :
+            {t('shop.sendDirectToClientWaLabel')}
           </label>
           <div style={{ display: 'flex', gap: 6 }}>
             <input
               type="tel"
-              placeholder="N° WhatsApp client (Ex: 77 123 45 67)"
+              placeholder={t('shop.clientWaPlaceholder')}
               value={telClientInShop}
               onChange={e => setTelClientInShop(e.target.value)}
               style={{
@@ -264,7 +269,7 @@ export default function QrCodeShareModal({
                 whiteSpace: 'nowrap'
               }}
             >
-              💬 Envoyer au client
+              {t('shop.sendToClientBtn')}
             </button>
           </div>
         </form>
@@ -304,7 +309,7 @@ export default function QrCodeShareModal({
                 transition: 'background 0.15s ease'
               }}
             >
-              {copied ? '✓ Copié !' : '📋 Copier'}
+              {copied ? `✓ ${t('common.copied')}` : `📋 ${t('common.copy')}`}
             </button>
           </div>
         </div>
@@ -331,7 +336,7 @@ export default function QrCodeShareModal({
               boxShadow: '0 4px 12px rgba(37, 211, 102, 0.25)'
             }}
           >
-            📲 Partager le lien en général (WhatsApp)
+            {t('shop.shareGeneralWaBtn')}
           </button>
 
           {qrDataUrl && (
@@ -353,7 +358,7 @@ export default function QrCodeShareModal({
                 display: 'block'
               }}
             >
-              ⬇️ Télécharger le QR Code Imprimable (SVG)
+              {t('shop.downloadPrintableQrSvg')}
             </a>
           )}
         </div>

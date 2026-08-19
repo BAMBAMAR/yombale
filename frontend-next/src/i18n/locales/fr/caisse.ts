@@ -103,4 +103,11 @@ export const caisse = {
   cat_immo: '🏢 Immobilier & Terrains',
   cat_annonces: '📢 Petites Annonces',
   cat_autre: '📦 Autre',
+  paymentWave: '🌊 Wave Mobile Money',
+  paymentOrangeMoney: '🍊 Orange Money',
+  paymentCashOnDelivery: '💵 Paiement Cash à la livraison',
+  paymentCreditRequest: "💳 Demande d'Achat à Crédit (Carnet client)",
+  creditRequestSentTitle: "Demande d'Achat à Crédit Transmise !",
+  orderSuccessTitle: 'Commande Envoyée avec Succès !',
+  closeCart: 'Fermer le panier',
 }

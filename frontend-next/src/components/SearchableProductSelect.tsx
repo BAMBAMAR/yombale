@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { fcfa } from '@/lib/format'
+import { useTranslation } from '@/i18n/context'
 
 export interface ProduitOption {
   id: string
@@ -30,11 +31,15 @@ export default function SearchableProductSelect({
   produits,
   value,
   onChange,
-  placeholder = '🔍 Rechercher un produit...',
+  placeholder,
   allowCustom = true,
-  customLabel = '✏️ Article hors catalogue / Saisie libre',
+  customLabel,
   disabled = false
 }: SearchableProductSelectProps) {
+  const { t } = useTranslation()
+  const displayPlaceholder = placeholder || t('shop.searchProductPrompt')
+  const displayCustomLabel = customLabel || t('shop.customArticleOption')
+
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('tous')
@@ -111,29 +116,23 @@ export default function SearchableProductSelect({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-          {value === 'custom' || !value ? (
-            <span style={{ color: value === 'custom' ? '#0284c7' : '#64748b', fontWeight: value === 'custom' ? 700 : 500 }}>
-              {value === 'custom' ? customLabel : placeholder}
+          {!value ? (
+            <span style={{ color: '#64748b', fontWeight: 500 }}>{displayPlaceholder}</span>
+          ) : value === 'custom' ? (
+            <span style={{ color: '#0284c7', fontWeight: 700 }}>
+              {displayCustomLabel}
             </span>
           ) : selectedProduct ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
               <span style={{ fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {selectedProduct.nom}
               </span>
-              <span style={{ fontSize: 11, fontWeight: 800, background: '#e0f2fe', color: '#0369a1', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>
-                {fcfa(selectedProduct.prix)}
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#0284c7', flexShrink: 0 }}>
+                ({fcfa(selectedProduct.prix)})
               </span>
-              {(selectedProduct.stock_quantite !== undefined || selectedProduct.quantite_stock !== undefined) && (
-                <span style={{
-                  fontSize: 10.5,
-                  fontWeight: 700,
-                  color: (selectedProduct.stock_quantite ?? selectedProduct.quantite_stock ?? 0) > 0 ? '#166534' : '#991b1b',
-                  background: (selectedProduct.stock_quantite ?? selectedProduct.quantite_stock ?? 0) > 0 ? '#dcfce7' : '#fee2e2',
-                  padding: '1px 5px',
-                  borderRadius: 4,
-                  flexShrink: 0
-                }}>
-                  Stock: {selectedProduct.stock_quantite ?? selectedProduct.quantite_stock ?? 0}
+              {selectedProduct.categorie && (
+                <span style={{ fontSize: 11, color: '#64748b', background: '#f1f5f9', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>
+                  {selectedProduct.categorie}
                 </span>
               )}
             </div>
@@ -142,12 +141,12 @@ export default function SearchableProductSelect({
           )}
         </div>
 
-        <span style={{ fontSize: 11, color: '#64748b', marginLeft: 6, flexShrink: 0 }}>
-          {isOpen ? '▲' : '▼'}
+        <span style={{ fontSize: 12, color: '#64748b', marginLeft: 8, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}>
+          ▼
         </span>
       </div>
 
-      {/* Menu / Dropdown Overlay */}
+      {/* Dropdown Menu */}
       {isOpen && (
         <div
           style={{
@@ -155,7 +154,7 @@ export default function SearchableProductSelect({
             top: 'calc(100% + 4px)',
             left: 0,
             right: 0,
-            zIndex: 999,
+            zIndex: 9999,
             background: '#ffffff',
             borderRadius: 12,
             border: '1px solid #cbd5e1',
@@ -164,17 +163,17 @@ export default function SearchableProductSelect({
             display: 'flex',
             flexDirection: 'column',
             gap: 8,
-            maxHeight: 360
+            maxHeight: 350
           }}
         >
-          {/* Champ de recherche */}
+          {/* Recherche */}
           <div style={{ position: 'relative' }}>
             <input
               ref={inputSearchRef}
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder={placeholder}
+              placeholder={displayPlaceholder}
               style={{
                 width: '100%',
                 padding: '8px 30px 8px 12px',
@@ -226,7 +225,7 @@ export default function SearchableProductSelect({
                   color: selectedCategory === 'tous' ? '#ffffff' : '#475569'
                 }}
               >
-                Tous ({produits.length})
+                {t('common.all')} ({produits.length})
               </button>
               {categories.map(cat => {
                 const count = produits.filter(p => p.categorie === cat).length
@@ -272,8 +271,10 @@ export default function SearchableProductSelect({
                 justifyContent: 'space-between'
               }}
             >
-              <span>{customLabel}</span>
-              <span style={{ fontSize: 10, background: '#0284c7', color: '#fff', padding: '1px 5px', borderRadius: 4 }}>Libre</span>
+              <span>{displayCustomLabel}</span>
+              <span style={{ fontSize: 10, background: '#0284c7', color: '#fff', padding: '1px 5px', borderRadius: 4 }}>
+                {t('shop.freeItemTag')}
+              </span>
             </div>
           )}
 
@@ -281,7 +282,7 @@ export default function SearchableProductSelect({
           <div style={{ overflowY: 'auto', maxHeight: 220, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {produitsFiltres.length === 0 ? (
               <div style={{ padding: '14px 10px', textAlign: 'center', color: '#94a3b8', fontSize: 12 }}>
-                Aucun produit correspondant à la recherche.
+                {t('shop.noProductsMatchSearch')}
               </div>
             ) : (
               produitsFiltres.map(p => {
@@ -327,11 +328,11 @@ export default function SearchableProductSelect({
                       </span>
                       {stock > 0 ? (
                         <span style={{ fontSize: 10, background: '#dcfce7', color: '#15803d', fontWeight: 700, padding: '1px 5px', borderRadius: 4 }}>
-                          Stock: {stock}
+                          {t('shop.stockCountLabel')} {stock}
                         </span>
                       ) : (
                         <span style={{ fontSize: 10, background: '#fee2e2', color: '#b91c1c', fontWeight: 700, padding: '1px 5px', borderRadius: 4 }}>
-                          Rupture
+                          {t('shop.outOfStockBadge')}
                         </span>
                       )}
                     </div>

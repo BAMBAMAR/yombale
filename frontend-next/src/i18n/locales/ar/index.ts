@@ -1,9 +1,9 @@
-import { common } from './common.ts'
-import { auth } from './auth.ts'
-import { account } from './account.ts'
-import { shop } from './shop.ts'
-import { caisse } from './caisse.ts'
-import { errors } from './errors.ts'
+import { common } from './common'
+import { auth } from './auth'
+import { account } from './account'
+import { shop } from './shop'
+import { caisse } from './caisse'
+import { errors } from './errors'
 
 export const ar = {
   common,

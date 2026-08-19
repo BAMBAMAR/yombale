@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useTranslation } from '@/i18n/context';
 
 interface Props {
   type: string;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function ModalWhatsApp({ type, id, onClose }: Props) {
+  const { t } = useTranslation();
   const [phone, setPhone]     = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent]       = useState(false);
@@ -18,7 +20,7 @@ export default function ModalWhatsApp({ type, id, onClose }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
-      setError('Numéro invalide (ex: 771234567)');
+      setError(t('errors.invalidPhone') || 'Numéro invalide (ex: 771234567)');
       return;
     }
     setLoading(true);
@@ -37,10 +39,10 @@ export default function ModalWhatsApp({ type, id, onClose }: Props) {
         setSent(true);
         setTimeout(onClose, 2000);
       } else {
-        setError(data.error || 'Erreur envoi');
+        setError(data.error || t('common.error'));
       }
     } catch {
-      setError('Impossible de contacter le serveur');
+      setError(t('errors.serverError') || 'Impossible de contacter le serveur');
     } finally {
       setLoading(false);
     }
@@ -49,13 +51,13 @@ export default function ModalWhatsApp({ type, id, onClose }: Props) {
   return (
     <div className="modal-whatsapp-overlay" onClick={onClose}>
       <div className="modal-whatsapp-box" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-whatsapp-close" onClick={onClose} aria-label="Fermer">✕</button>
-        <h3>Recevoir par WhatsApp</h3>
+        <button className="modal-whatsapp-close" onClick={onClose} aria-label={t('common.close')}>✕</button>
+        <h3>{t('common.sendOnWhatsApp')}</h3>
         {sent ? (
-          <p className="modal-whatsapp-success">✅ Fiche envoyée sur WhatsApp !</p>
+          <p className="modal-whatsapp-success">{t('common.sheetSentWhatsApp')}</p>
         ) : (
           <form onSubmit={handleSubmit}>
-            <label htmlFor="wa-phone">Votre numéro WhatsApp</label>
+            <label htmlFor="wa-phone">{t('common.yourWhatsAppNumber')}</label>
             <input
               id="wa-phone"
               type="tel"
@@ -67,7 +69,7 @@ export default function ModalWhatsApp({ type, id, onClose }: Props) {
             />
             {error && <p className="modal-whatsapp-error">{error}</p>}
             <button type="submit" disabled={loading || !phone}>
-              {loading ? 'Envoi…' : 'Envoyer'}
+              {loading ? t('common.loading') : t('common.publish')}
             </button>
           </form>
         )}

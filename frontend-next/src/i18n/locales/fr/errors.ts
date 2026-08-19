@@ -9,4 +9,5 @@ export const errors = {
   passwordTooShort: 'Le mot de passe doit comporter au moins 6 caractères.',
   notFound: 'Élément introuvable.',
   serverError: 'Le serveur distant a renvoyé une erreur.',
+  invalidAmount: 'Montant invalide.',
 }

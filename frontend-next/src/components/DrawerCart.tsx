@@ -226,10 +226,10 @@ export default function DrawerCart() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h2 style={{ margin: 0, fontSize: 17, color: '#111827', fontWeight: 800 }}>
-                🛒 Panier — {activeCart.boutiqueNom}
+                🛒 {t('caisse.cart')} — {activeCart.boutiqueNom}
               </h2>
               <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>
-                {items.length} article{items.length > 1 ? 's' : ''} sélectionné{items.length > 1 ? 's' : ''}
+                {items.length} {t('shop.selectedProductsCountText')}
               </p>
             </div>
             <button
@@ -239,7 +239,7 @@ export default function DrawerCart() {
                 border: 'none', fontSize: 16, cursor: 'pointer', color: '#475569',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800,
               }}
-              title="Fermer le panier"
+              title={t('common.close')}
             >
               ✕
             </button>
@@ -266,7 +266,7 @@ export default function DrawerCart() {
                     {methodePaiement === 'credit' ? '💳' : '🎉'}
                   </span>
                   <h3 style={{ margin: 0, fontSize: 20, color: methodePaiement === 'credit' ? '#0369a1' : '#166534', fontWeight: 900 }}>
-                    {methodePaiement === 'credit' ? 'Demande d\'Achat à Crédit Transmise !' : 'Commande Envoyée avec Succès !'}
+                    {methodePaiement === 'credit' ? t('caisse.creditRequestSentTitle') : t('caisse.orderSuccessTitle')}
                   </h3>
                   <p style={{ margin: 0, fontSize: 14, color: '#334155', lineHeight: 1.5 }}>
                     {methodePaiement === 'credit' ? (
@@ -295,13 +295,13 @@ export default function DrawerCart() {
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 14px rgba(37,211,102,0.35)'
                       }}
                     >
-                      💬 WhatsApp Direct (Notifier le vendeur)
+                      {t('shop.notifyVendorWhatsApp')}
                     </a>
                     <button
                       onClick={() => { setCheckoutMode('options'); closeCart(); }}
                       style={{ width: '100%', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 20px', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
                     >
-                      Fermer et Retourner au site
+                      {t('common.close')}
                     </button>
                   </div>
                 </div>
@@ -339,13 +339,13 @@ export default function DrawerCart() {
             {/* Choix zone de livraison */}
             {zones.length > 0 && (
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Zone de livraison</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>{t('shop.deliveryZoneLabel')}</label>
                 <select
                   value={zoneId}
                   onChange={e => setZoneId(e.target.value)}
                   style={{ width: '100%', padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, background: '#fff' }}
                 >
-                  <option value="">— Retrait gratuit en boutique —</option>
+                  <option value="">{t('shop.freeShopPickup')}</option>
                   {zones.map(z => (
                     <option key={z.id} value={z.id}>{z.nom} ({z.prix > 0 ? fcfa(z.prix) : 'Gratuit'})</option>
                   ))}
@@ -356,17 +356,17 @@ export default function DrawerCart() {
             {/* Récapitulatif Prix */}
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6b7280' }}>
-                <span>Sous-total articles</span>
+                <span>{t('common.subtotal')}</span>
                 <span>{fcfa(sousTotal)}</span>
               </div>
               {fraisLivraison > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6b7280' }}>
-                  <span>Livraison</span>
+                  <span>{t('shop.deliveryLabel')}</span>
                   <span>{fcfa(fraisLivraison)}</span>
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, fontWeight: 900, color: '#C75B00', borderTop: '1px solid #e5e7eb', paddingTop: 8, marginTop: 2 }}>
-                <span>Total Global</span>
+                <span>{t('common.total')}</span>
                 <span>{fcfa(totalGlobal)}</span>
               </div>
             </div>
@@ -375,14 +375,14 @@ export default function DrawerCart() {
             {checkoutMode === 'formulaire' ? (
               <form onSubmit={validerCommandeEnLigne} style={{ display: 'flex', flexDirection: 'column', gap: 10, background: '#fff', border: '1px solid #fed7aa', padding: 14, borderRadius: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#92400e' }}>📋 Commande Directe en Ligne</p>
-                  <button type="button" onClick={() => setCheckoutMode('options')} style={{ background: 'none', border: 'none', fontSize: 12, color: '#6b7280', cursor: 'pointer' }}>← Retour</button>
+                  <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#92400e' }}>{t('shop.directOnlineOrder')}</p>
+                  <button type="button" onClick={() => setCheckoutMode('options')} style={{ background: 'none', border: 'none', fontSize: 12, color: '#6b7280', cursor: 'pointer' }}>← {t('common.back')}</button>
                 </div>
 
                 {errorMsg && <p style={{ margin: 0, color: '#ef4444', fontSize: 12, fontWeight: 600 }}>{errorMsg}</p>}
 
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: '#4b5563', display: 'block', marginBottom: 2 }}>NOM & PRÉNOM *</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: '#4b5563', display: 'block', marginBottom: 2 }}>{t('account.fullName')} *</label>
                   <input
                     type="text"
                     required
@@ -394,7 +394,7 @@ export default function DrawerCart() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: '#4b5563', display: 'block', marginBottom: 2 }}>TÉLÉPHONE *</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: '#4b5563', display: 'block', marginBottom: 2 }}>{t('common.phone')} *</label>
                   <input
                     type="tel"
                     required
@@ -406,7 +406,7 @@ export default function DrawerCart() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: '#4b5563', display: 'block', marginBottom: 2 }}>ADRESSE DE LIVRAISON</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: '#4b5563', display: 'block', marginBottom: 2 }}>{t('shop.deliveryAddress')}</label>
                   <input
                     type="text"
                     placeholder="Ex: Sacré-Cœur 3, près du rond-point"
@@ -417,16 +417,16 @@ export default function DrawerCart() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: '#4b5563', display: 'block', marginBottom: 2 }}>MODE DE PAIEMENT</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: '#4b5563', display: 'block', marginBottom: 2 }}>{t('common.paymentMethod')}</label>
                   <select
                     value={methodePaiement}
                     onChange={e => setMethodePaiement(e.target.value)}
                     style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, background: '#fff' }}
                   >
-                    <option value="wave">🌊 Wave Mobile Money</option>
-                    <option value="orange_money">🍊 Orange Money</option>
-                    <option value="especes">💵 Paiement Cash à la livraison</option>
-                    <option value="credit">💳 Demande d&apos;Achat à Crédit (Carnet client)</option>
+                    <option value="wave">{t('caisse.paymentWave')}</option>
+                    <option value="orange_money">{t('caisse.paymentOrangeMoney')}</option>
+                    <option value="especes">{t('caisse.paymentCashOnDelivery')}</option>
+                    <option value="credit">{t('caisse.paymentCreditRequest')}</option>
                   </select>
                   {methodePaiement === 'credit' && (
                     <p style={{ margin: '4px 0 0', fontSize: 11.5, color: '#0369a1', fontWeight: 600, background: '#e0f2fe', padding: '6px 8px', borderRadius: 6 }}>
@@ -443,13 +443,13 @@ export default function DrawerCart() {
                     padding: '12px', fontWeight: 800, fontSize: 14, cursor: 'pointer', textAlign: 'center',
                   }}
                 >
-                  {loadingCheckout ? 'Envoi en cours...' : '⚡ Valider et Payer la commande →'}
+                  {loadingCheckout ? t('common.pleaseWait') : t('shop.validateAndPayBtn')}
                 </button>
               </form>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <p style={{ margin: '0 0 2px', fontSize: 12, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Choisissez votre mode de commande :
+                  {t('shop.chooseOrderMode')}
                 </p>
 
                 {/* Option 1: WhatsApp */}
@@ -463,7 +463,7 @@ export default function DrawerCart() {
                     fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 3px 10px rgba(37,211,102,.25)', width: '100%'
                   }}
                 >
-                  <span>💬</span> Commander via WhatsApp Direct →
+                  <span>💬</span> {t('shop.orderViaWhatsAppDirect')}
                 </button>
 
                 {/* Option 2: Formulaire en Ligne Direct */}
@@ -476,7 +476,7 @@ export default function DrawerCart() {
                     fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 3px 10px rgba(28,43,74,.25)',
                   }}
                 >
-                  <span>📋</span> Formulaire en ligne (Wave / OM / Cash) →
+                  <span>📋</span> {t('shop.onlineFormOption')}
                 </button>
 
                 {/* Option 3: Appeler la boutique */}
@@ -488,7 +488,7 @@ export default function DrawerCart() {
                     fontWeight: 700, fontSize: 13, textDecoration: 'none', textAlign: 'center',
                   }}
                 >
-                  <span>📞</span> Appeler le vendeur directement
+                  <span>📞</span> {t('shop.callSellerDirect')}
                 </a>
               </div>
             )}

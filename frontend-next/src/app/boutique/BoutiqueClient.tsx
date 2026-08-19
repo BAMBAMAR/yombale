@@ -1644,6 +1644,7 @@ function MarketingBoutique({ boutique, onVoirJamaisPartages, planActif }: { bout
 // ── Gestionnaire de catalogue produits ───────────────────────────────────────
 
 function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId: userIdProp }: { boutique: Boutique; planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null; prixPro: number; filtreInitial?: 'jamais_partage'; userId?: string }) {
+  const { t, isRtl } = useTranslation()
   const userId = userIdProp || 'anonymous'
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)

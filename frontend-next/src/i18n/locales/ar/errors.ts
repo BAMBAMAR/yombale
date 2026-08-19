@@ -11,4 +11,5 @@ export const errors: LocaleTranslations['errors'] = {
   passwordTooShort: 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.',
   notFound: 'العنصر غير موجود.',
   serverError: 'أرجع الخادم البعيد خطأ.',
+  invalidAmount: 'المبلغ غير صالح.',
 }

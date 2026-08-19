@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import { useTranslation } from '@/i18n/context'
 
 export interface ClientOption {
   id: string
@@ -24,9 +25,11 @@ export default function SearchableClientSelect({
   clients,
   value,
   onChange,
-  placeholder = '-- Client Passant (Anonyme) --',
+  placeholder,
   disabled = false
 }: SearchableClientSelectProps) {
+  const { t } = useTranslation()
+  const displayPlaceholder = placeholder || t('shop.anonymousWalkInClient')
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const containerRef = useRef<HTMLDivElement>(null)
@@ -92,19 +95,19 @@ export default function SearchableClientSelect({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
           {!value || !selectedClient ? (
-            <span style={{ color: '#64748b', fontWeight: 500 }}>{placeholder}</span>
+            <span style={{ color: '#64748b', fontWeight: 500 }}>{displayPlaceholder}</span>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
               <span style={{ fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 👤 {selectedClient.prenom} {selectedClient.nom}
               </span>
               {selectedClient.telephone && (
-                <span style={{ fontSize: 11, fontWeight: 700, background: '#f1f5f9', color: '#475569', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>
-                  📞 {selectedClient.telephone}
+                <span style={{ fontSize: 11, color: '#64748b', background: '#f1f5f9', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>
+                  {selectedClient.telephone}
                 </span>
               )}
               {selectedClient.entreprise && (
-                <span style={{ fontSize: 10.5, fontWeight: 700, background: '#e0f2fe', color: '#0369a1', padding: '1px 5px', borderRadius: 4, flexShrink: 0 }}>
+                <span style={{ fontSize: 11, color: '#0284c7', background: '#e0f2fe', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>
                   🏢 {selectedClient.entreprise}
                 </span>
               )}
@@ -112,12 +115,12 @@ export default function SearchableClientSelect({
           )}
         </div>
 
-        <span style={{ fontSize: 11, color: '#64748b', marginLeft: 6, flexShrink: 0 }}>
-          {isOpen ? '▲' : '▼'}
+        <span style={{ fontSize: 12, color: '#64748b', marginLeft: 8, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}>
+          ▼
         </span>
       </div>
 
-      {/* Overlay Dropdown */}
+      {/* Dropdown Menu */}
       {isOpen && (
         <div
           style={{
@@ -125,7 +128,7 @@ export default function SearchableClientSelect({
             top: 'calc(100% + 4px)',
             left: 0,
             right: 0,
-            zIndex: 999,
+            zIndex: 9999,
             background: '#ffffff',
             borderRadius: 12,
             border: '1px solid #cbd5e1',
@@ -144,7 +147,7 @@ export default function SearchableClientSelect({
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder="🔍 Rechercher un client (nom, prénom, téléphone...)"
+              placeholder={t('shop.searchClientPlaceholder')}
               style={{
                 width: '100%',
                 padding: '8px 30px 8px 12px',
@@ -195,15 +198,17 @@ export default function SearchableClientSelect({
               justifyContent: 'space-between'
             }}
           >
-            <span>{placeholder}</span>
-            <span style={{ fontSize: 10, background: '#cbd5e1', color: '#334155', padding: '1px 5px', borderRadius: 4 }}>Par défaut</span>
+            <span>{displayPlaceholder}</span>
+            <span style={{ fontSize: 10, background: '#cbd5e1', color: '#334155', padding: '1px 5px', borderRadius: 4 }}>
+              {t('shop.byDefault')}
+            </span>
           </div>
 
           {/* Liste Scrollable */}
           <div style={{ overflowY: 'auto', maxHeight: 200, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {clientsFiltres.length === 0 ? (
               <div style={{ padding: '14px 10px', textAlign: 'center', color: '#94a3b8', fontSize: 12 }}>
-                Aucun client ne correspond à la recherche.
+                {t('shop.noClientFoundSearch')}
               </div>
             ) : (
               clientsFiltres.map(c => {

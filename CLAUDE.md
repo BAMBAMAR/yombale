@@ -71,11 +71,30 @@
   * **Validation Complète des Tests & du Build de Production (`npm test` & `npm run build`)** :
     - **28/28 tests unitaires passés avec 100% de succès** incluant les tests d'intégrité i18n, parité des dictionnaires FR / EN / AR, helpers de formats et calculs métier.
     - **Build Next.js 14 et postbuild validés à 100% avec code de sortie 0** (`✓ Compiled successfully`, `✓ Generating static pages (88/88)`).
-=======
-  * **Conformité & Zero-Font-Fetch (Directive AGENTS.md)** :
-    - Utilisation exclusive des polices système natives et validation du build de production sans erreur.
 
->>>>>>> main
+- **Couverture i18n Exhaustive (842 Clés, 100% Parité FR / EN / AR) & Internationalisation des Composants Partagés (19 août 2026)** 🌐 :
+  * **Parité Complète des Dictionnaires (842 clés dans `src/i18n/locales/{fr,en,ar}/`)** :
+    - 0 clé manquante sur l'ensemble des 6 namespaces (`common`, `auth`, `account`, `shop`, `caisse`, `errors`).
+    - Dictionnaires strictement typés via le contrat TypeScript `LocaleTranslations`.
+  * **Composants Partagés & Formulaires 100% Traduits avec `useTranslation()`** :
+    - `SearchableProductSelect.tsx` & `SearchableClientSelect.tsx` : recherche dynamique, badges de stock, articles libres et filtres par catégorie.
+    - `ModifierAnnonceForm.tsx` & `ModifierImmoForm.tsx` : avertissements de modération, caractéristiques, villes, types de biens, boutons d'action.
+    - `DrawerCart.tsx` : panier flottant, zones de livraison, formulaires de commande directe, méthodes de paiement (Wave, OM, Cash, Crédit), modales de confirmation.
+    - `QrCodeShareModal.tsx` : QR Code vitrine et crédit, mode grand écran pour scan au comptoir, envoi direct par WhatsApp au client.
+    - `GarantiesAcheteurBadge.tsx` : garanties acheteur, paiement sécurisé et livraison rapide.
+    - `PartnerLogos.tsx` : partenaires de confiance.
+    - `SocialProof.tsx` : preuves sociales dynamiques avec formatage localisé des nombres.
+    - `ModalWhatsApp.tsx` : formulaire d'envoi de fiche par WhatsApp avec validation de numéro localisé.
+    - `PriceTag.tsx` : affichage des prix et badge vérifié avec formatage localisé.
+    - `PwaBackButton.tsx` : bouton de retour universel pour PWA autonome.
+    - `CompareFilterBanner.tsx` : bandeau de comparaison active et vidage de filtre.
+    - `CrossSelling.tsx` : suggestions d'achats groupés (bundles), remise calculée et ajout au panier.
+    - `AvisClients.tsx` : avis clients, note moyenne, publication d'avis et modale d'évaluation.
+  * **Validation & Conformité** :
+    - **28/28 tests unitaires validés (100%)**.
+    - Typage TypeScript sans erreur (`tsc --noEmit`).
+    - Conformité stricte à la directive Zero-Font-Fetch (`AGENTS.md`).
+
 - **Validation Finale & Certification « Prête Production » de la Refonte Nopalou (17 août 2026)** 🚀 :
   * **P0 : Suite de Tests Déterministe & Découplage Métier (`scripts/run-unit-tests.mjs`, `boutiqueHelpers.ts`, `carnetMetier.ts`, `CaracChips.tsx`)** :
     - Élimination des blocages d'exécution globale Vitest/Tinypool sous Windows/Node 24 via un runner unitaire natif ultra-rapide (< 1s, code de sortie 0 garanti).

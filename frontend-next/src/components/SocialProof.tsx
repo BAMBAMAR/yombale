@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from '@/i18n/context';
 
 export interface SocialProofProps {
   comparaisonsAujourdhui?: number;
@@ -13,6 +14,7 @@ export default function SocialProof({
   personnesFollowent = 1543,
   boutiquesPartenaires = 89,
 }: SocialProofProps) {
+  const { t, locale } = useTranslation();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -27,21 +29,23 @@ export default function SocialProof({
 
   if (!mounted) return null; // Évite hydration mismatch
 
+  const numberLocale = locale === 'ar' ? 'ar-EG' : locale === 'en' ? 'en-US' : 'fr-SN';
+
   return (
     <div className="social-proof-strip">
       <div className="social-proof-item">
-        <span className="social-proof-number">{comparaisonsAujourdhui.toLocaleString('fr-SN')}</span>
-        <span className="social-proof-label">comparaisons aujourd&apos;hui</span>
+        <span className="social-proof-number">{comparaisonsAujourdhui.toLocaleString(numberLocale)}</span>
+        <span className="social-proof-label">{t('common.todayComparisons')}</span>
       </div>
       <div className="social-proof-separator">·</div>
       <div className="social-proof-item">
         <span className="social-proof-number">{boutiquesPartenaires}</span>
-        <span className="social-proof-label">boutiques partenaires</span>
+        <span className="social-proof-label">{t('common.partnerShops')}</span>
       </div>
       <div className="social-proof-separator">·</div>
       <div className="social-proof-item">
-        <span className="social-proof-number">{personnesFollowent.toLocaleString('fr-SN')}</span>
-        <span className="social-proof-label">utilisateurs actifs</span>
+        <span className="social-proof-number">{personnesFollowent.toLocaleString(numberLocale)}</span>
+        <span className="social-proof-label">{t('common.activeUsers')}</span>
       </div>
     </div>
   );
