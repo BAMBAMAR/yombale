@@ -90,11 +90,15 @@
     - `CompareFilterBanner.tsx` : bandeau de comparaison active et vidage de filtre.
     - `CrossSelling.tsx` : suggestions d'achats groupés (bundles), remise calculée et ajout au panier.
     - `AvisClients.tsx` : avis clients, note moyenne, publication d'avis et modale d'évaluation.
+  * **Cloisonnement Strict du Périmètre i18n & RTL (`isI18nScopedRoute`)** :
+    - Mode multilingue (`ar`, `en`) et disposition RTL strictement restreints à l'Espace Compte (`/compte/*`), Boutique marchand (`/boutique/*`), Dépôt d'annonces (`/deposer-*`, `/mes-annonces*`) et Authentification (`/connexion`, `/inscription`, `/mot-de-passe-oublie`).
+    - Toutes les pages publiques (Accueil `/`, Fiches produits `/produit/*`, Annuaire `/boutiques`, Immobilier, Télécom, Guides, CGU) restent en **Français standard LTR**, préservant une disposition 100% naturelle et non inversée.
+    - Synchronisation dynamique de `document.documentElement.lang` et `document.documentElement.dir` lors des transitions de navigation entre pages publiques et espace compte.
   * **Support des Chiffres Arabo-Orientaux (٠, ١, ٢, ٣, ٤, ٥, ٦, ٧, ٨, ٩)** :
-    - `fcfa(prix, 'ar')` et `formatNombre(val, 'ar')` formatent désormais automatiquement les nombres et prix avec les chiffres arabo-orientaux en locale arabe.
+    - `fcfa(prix, 'ar')` et `formatNombre(val, 'ar')` formatent automatiquement les nombres et prix avec les chiffres arabo-orientaux en locale arabe sur l'espace compte/boutique.
     - Helpers `formatPrice` et `formatNumber` exposés dans `useTranslation()` pour un rendu instantané et réactif selon la langue choisie.
   * **Validation & Conformité** :
-    - **30/30 tests unitaires validés (100%)**.
+    - **31/31 tests unitaires validés (100%)**.
     - Typage TypeScript sans erreur (`tsc --noEmit`).
     - Conformité stricte à la directive Zero-Font-Fetch (`AGENTS.md`).
 

@@ -1,5 +1,26 @@
 const MOIS = ['jan', 'fév', 'mar', 'avr', 'mai', 'jun', 'jul', 'aoû', 'sep', 'oct', 'nov', 'déc']
 
+export function isI18nScopedRoute(pathname: string | null | undefined): boolean {
+  if (!pathname) return false
+  const cleanPath = pathname.split('?')[0].split('#')[0]
+  if (cleanPath.startsWith('/boutiques')) {
+    return false
+  }
+  const scopedPrefixes = [
+    '/compte',
+    '/boutique',
+    '/mes-annonces',
+    '/mes-annonces-immo',
+    '/mes-alertes',
+    '/deposer-annonce',
+    '/deposer-immo',
+    '/connexion',
+    '/inscription',
+    '/mot-de-passe-oublie',
+  ]
+  return scopedPrefixes.some(prefix => cleanPath === prefix || cleanPath.startsWith(prefix + '/'))
+}
+
 // Formatage de date sans toLocaleDateString (évite les erreurs d'hydratation SSR/client)
 export function fmtDate(d: string | Date): string {
   const dt = typeof d === 'string' ? new Date(d) : d
@@ -27,6 +48,9 @@ export function tempsRelatif(d: string | Date | null | undefined): string | null
 function detectActiveLocale(locale?: string): string {
   if (locale) return locale;
   if (typeof document !== 'undefined') {
+    if (typeof window !== 'undefined' && !isI18nScopedRoute(window.location.pathname)) {
+      return 'fr';
+    }
     const docLang = document.documentElement.lang;
     if (docLang === 'ar' || docLang === 'en' || docLang === 'fr') return docLang;
     const match = document.cookie.match(/(?:^|;\s*)nopalou_locale=([^;]+)/);

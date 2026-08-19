@@ -48,3 +48,33 @@ export function getValidLocale(locale?: string | null): Locale {
   if (locale && isLocale(locale)) return locale
   return DEFAULT_LOCALE
 }
+
+/**
+ * Détermine si une route fait partie du périmètre internationalisé (Compte, Boutique, Auth, Dépôt d'annonces).
+ * Toutes les autres routes publiques (Accueil, Fiche Produit, Immobilier, Télécom, Annonces publiques)
+ * restent strictement en français (LTR).
+ */
+export function isI18nScopedRoute(pathname: string | null | undefined): boolean {
+  if (!pathname) return false
+  const cleanPath = pathname.split('?')[0].split('#')[0]
+  
+  // Cas spécifique : /boutiques (au pluriel) est l'annuaire public, /boutique (au singulier) est l'espace marchand
+  if (cleanPath.startsWith('/boutiques')) {
+    return false
+  }
+
+  const scopedPrefixes = [
+    '/compte',
+    '/boutique',
+    '/mes-annonces',
+    '/mes-annonces-immo',
+    '/mes-alertes',
+    '/deposer-annonce',
+    '/deposer-immo',
+    '/connexion',
+    '/inscription',
+    '/mot-de-passe-oublie',
+  ]
+
+  return scopedPrefixes.some(prefix => cleanPath === prefix || cleanPath.startsWith(prefix + '/'))
+}

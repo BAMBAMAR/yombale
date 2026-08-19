@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
+import { isI18nScopedRoute } from './i18n/config'
 
 const key = new TextEncoder().encode(process.env.SESSION_SECRET)
 const COOKIE_NAME = 'nopalou_session'
@@ -88,9 +89,13 @@ export async function middleware(req: NextRequest) {
 
   const csp = cspDirectives.join('; ')
 
+  const isScoped = isI18nScopedRoute(pathname)
+  const effectiveLocale = isScoped ? locale : 'fr'
+
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-nonce', nonce)
-  requestHeaders.set('x-locale', locale)
+  requestHeaders.set('x-pathname', pathname)
+  requestHeaders.set('x-locale', effectiveLocale)
   requestHeaders.set('Content-Security-Policy', csp)
 
   const response = NextResponse.next({ request: { headers: requestHeaders } })

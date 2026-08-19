@@ -223,7 +223,7 @@ it('BoutonPartager: lien visuel story et gestion de l action copier', () => {
 })
 
 console.log('\n📦 6. Internationalisation i18n (FR / EN / AR)')
-import { LOCALES, DEFAULT_LOCALE, LOCALES_META, isLocale, isRTL, getValidLocale } from '../src/i18n/config.ts'
+import { LOCALES, DEFAULT_LOCALE, LOCALES_META, isLocale, isRTL, getValidLocale, isI18nScopedRoute } from '../src/i18n/config.ts'
 
 import { common as frCommon } from '../src/i18n/locales/fr/common.ts'
 import { auth as frAuth } from '../src/i18n/locales/fr/auth.ts'
@@ -280,6 +280,35 @@ it('i18n config: 3 langues supportées, français par défaut et RTL arabe', () 
   assert.equal(isLocale('es'), false)
   assert.equal(getValidLocale('en'), 'en')
   assert.equal(getValidLocale('inconnu'), 'fr')
+})
+
+it('i18n routes: cloisonnement strict des routes publiques (FR/LTR) vs Compte/Boutique/Auth (i18n)', () => {
+  // Routes publiques -> false (doivent rester en français et LTR)
+  assert.equal(isI18nScopedRoute('/'), false)
+  assert.equal(isI18nScopedRoute('/produit/123'), false)
+  assert.equal(isI18nScopedRoute('/boutiques'), false)
+  assert.equal(isI18nScopedRoute('/boutiques/my-shop-id'), false)
+  assert.equal(isI18nScopedRoute('/categorie/telephones'), false)
+  assert.equal(isI18nScopedRoute('/immo'), false)
+  assert.equal(isI18nScopedRoute('/telecom'), false)
+  assert.equal(isI18nScopedRoute('/cgu'), false)
+  assert.equal(isI18nScopedRoute('/confidentialite'), false)
+  assert.equal(isI18nScopedRoute('/comparaison'), false)
+
+  // Routes Compte / Boutique / Auth -> true (traduites avec support RTL)
+  assert.equal(isI18nScopedRoute('/compte'), true)
+  assert.equal(isI18nScopedRoute('/compte/profil'), true)
+  assert.equal(isI18nScopedRoute('/boutique'), true)
+  assert.equal(isI18nScopedRoute('/boutique/caisse'), true)
+  assert.equal(isI18nScopedRoute('/boutique/analytics'), true)
+  assert.equal(isI18nScopedRoute('/mes-annonces'), true)
+  assert.equal(isI18nScopedRoute('/mes-annonces-immo'), true)
+  assert.equal(isI18nScopedRoute('/mes-alertes'), true)
+  assert.equal(isI18nScopedRoute('/deposer-annonce'), true)
+  assert.equal(isI18nScopedRoute('/deposer-immo'), true)
+  assert.equal(isI18nScopedRoute('/connexion'), true)
+  assert.equal(isI18nScopedRoute('/inscription'), true)
+  assert.equal(isI18nScopedRoute('/mot-de-passe-oublie'), true)
 })
 
 it('i18n meta: drapeaux et libellés natifs', () => {

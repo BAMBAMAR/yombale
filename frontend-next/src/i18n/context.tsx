@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import {
   type Locale,
   DEFAULT_LOCALE,
@@ -10,6 +10,7 @@ import {
   isRTL,
   LOCALES_META,
   type LocaleMeta,
+  isI18nScopedRoute,
 } from './config'
 import { dictionaries } from './index'
 import type { TranslationKey, TranslationSchema } from './types'
@@ -57,19 +58,23 @@ export function I18nProvider({
   children: React.ReactNode
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [locale, setLocaleState] = useState<Locale>(() => initialLocale || getCookieLocale())
+
+  const isScoped = isI18nScopedRoute(pathname)
 
   const setLocale = useCallback((newLocale: Locale) => {
     if (!isLocale(newLocale)) return
     setLocaleState(newLocale)
     if (typeof document !== 'undefined') {
       document.cookie = `${LOCALE_COOKIE_NAME}=${encodeURIComponent(newLocale)}; path=/; max-age=31536000; SameSite=Lax`
-      document.documentElement.lang = newLocale
-      document.documentElement.dir = isRTL(newLocale) ? 'rtl' : 'ltr'
+      const scoped = isI18nScopedRoute(pathname)
+      document.documentElement.lang = scoped ? newLocale : 'fr'
+      document.documentElement.dir = (scoped && isRTL(newLocale)) ? 'rtl' : 'ltr'
       window.dispatchEvent(new CustomEvent('nopalou-locale-change', { detail: { locale: newLocale } }))
       router.refresh()
     }
-  }, [router])
+  }, [pathname, router])
 
   useEffect(() => {
     const handleLocaleChange = (e: Event) => {
@@ -82,14 +87,26 @@ export function I18nProvider({
     return () => window.removeEventListener('nopalou-locale-change', handleLocaleChange)
   }, [])
 
-  const isRtl = useMemo(() => isRTL(locale), [locale])
-  const meta = useMemo(() => LOCALES_META[locale] || LOCALES_META.fr, [locale])
+  // Synchroniser la balise html (lang et dir) lors de la navigation entre pages publiques et espace compte
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const scoped = isI18nScopedRoute(pathname)
+    const activeLang = scoped ? locale : 'fr'
+    const activeDir = (scoped && isRTL(locale)) ? 'rtl' : 'ltr'
+    document.documentElement.lang = activeLang
+    document.documentElement.dir = activeDir
+  }, [pathname, locale])
+
+  const effectiveLocale = isScoped ? locale : 'fr'
+  const isRtl = isScoped && isRTL(locale)
+  const meta = isScoped ? (LOCALES_META[locale] || LOCALES_META.fr) : LOCALES_META.fr
 
   const t = useCallback(
     (key: TranslationKey, params?: Record<string, string | number>): string => {
-      const dict = dictionaries[locale] || dictionaries.fr
+      const activeLang = isI18nScopedRoute(pathname) ? locale : 'fr'
+      const dict = dictionaries[activeLang] || dictionaries.fr
       let raw = resolveNestedKey(dict, key)
-      if (raw === undefined && locale !== 'fr') {
+      if (raw === undefined && activeLang !== 'fr') {
         raw = resolveNestedKey(dictionaries.fr, key)
       }
       if (raw === undefined) {
@@ -98,22 +115,29 @@ export function I18nProvider({
       if (params) {
         let formatted = raw
         Object.entries(params).forEach(([k, v]) => {
-          const valStr = (locale === 'ar' && typeof v === 'number') ? formatNombre(v, 'ar') : String(v)
+          const valStr = (activeLang === 'ar' && typeof v === 'number') ? formatNombre(v, 'ar') : String(v)
           formatted = formatted.replace(new RegExp(`\\{${k}\\}`, 'g'), valStr)
         })
         return formatted
       }
       return raw
     },
-    [locale]
+    [pathname, locale]
   )
 
-  const formatPrice = useCallback((price: number | string | null | undefined) => fcfa(price, locale), [locale])
-  const formatNumber = useCallback((val: number | string | null | undefined) => formatNombre(val, locale), [locale])
+  const formatPrice = useCallback((price: number | string | null | undefined) => {
+    const activeLang = isI18nScopedRoute(pathname) ? locale : 'fr'
+    return fcfa(price, activeLang)
+  }, [pathname, locale])
+
+  const formatNumber = useCallback((val: number | string | null | undefined) => {
+    const activeLang = isI18nScopedRoute(pathname) ? locale : 'fr'
+    return formatNombre(val, activeLang)
+  }, [pathname, locale])
 
   const value = useMemo(
     () => ({
-      locale,
+      locale: effectiveLocale,
       setLocale,
       t,
       formatPrice,
@@ -121,7 +145,7 @@ export function I18nProvider({
       isRtl,
       meta,
     }),
-    [locale, setLocale, t, formatPrice, formatNumber, isRtl, meta]
+    [effectiveLocale, setLocale, t, formatPrice, formatNumber, isRtl, meta]
   )
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
@@ -131,11 +155,14 @@ export function useTranslation() {
   const context = useContext(I18nContext)
   if (!context) {
     // Fallback safe for components rendered outside provider
-    const fallbackLocale = getCookieLocale()
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
+    const isScoped = isI18nScopedRoute(currentPath)
+    const fallbackUserLocale = getCookieLocale()
+    const fallbackLocale = isScoped ? fallbackUserLocale : 'fr'
     return {
       locale: fallbackLocale,
       setLocale: () => {},
-      isRtl: isRTL(fallbackLocale),
+      isRtl: isScoped && isRTL(fallbackLocale),
       meta: LOCALES_META[fallbackLocale] || LOCALES_META.fr,
       formatPrice: (price: number | string | null | undefined) => fcfa(price, fallbackLocale),
       formatNumber: (val: number | string | null | undefined) => formatNombre(val, fallbackLocale),

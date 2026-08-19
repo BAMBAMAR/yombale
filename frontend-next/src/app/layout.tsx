@@ -5,7 +5,7 @@ import Image from 'next/image';
 import './globals.css';
 import { getOptionalSession } from '@/lib/dal';
 import I18nClientProvider from '@/components/I18nClientProvider';
-import { getValidLocale, isRTL } from '@/i18n/config';
+import { getValidLocale, isRTL, isI18nScopedRoute } from '@/i18n/config';
 
 // ── Sentry (optionnel, front-end error tracking) ────────────────
 let Sentry;
@@ -165,12 +165,18 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await getOptionalSession();
-  const nonce = (await headers()).get('x-nonce') ?? undefined;
+  const headerList = await headers();
+  const nonce = headerList.get('x-nonce') ?? undefined;
+  const pathname = headerList.get('x-pathname') || '';
+  const isScoped = isI18nScopedRoute(pathname);
 
   const cookieStore = cookies();
   const rawLocale = cookieStore.get('nopalou_locale')?.value;
-  const locale = getValidLocale(rawLocale);
-  const dir = isRTL(locale) ? 'rtl' : 'ltr';
+  const userLocale = getValidLocale(rawLocale);
+  
+  // Les pages publiques restent strictement en français et en LTR
+  const locale = isScoped ? userLocale : 'fr';
+  const dir = (isScoped && isRTL(userLocale)) ? 'rtl' : 'ltr';
 
   return (
     <html lang={locale} dir={dir}>
