@@ -50,14 +50,14 @@ function statutStyle(statut: string) {
 }
 
 function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; boutiqueId: string; onUpdate: () => void }) {
-  const { t } = useTranslation()
+  const { t, formatPrice, formatNumber } = useTranslation()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [correcting, setCorrecting] = useState(false)
   const [correctStatut, setCorrectStatut] = useState(commande.statut)
   const [, startTransition] = useTransition()
   const next = TRANSITIONS[commande.statut] ?? []
-  const fcfa = (n: number) => n > 0 ? new Intl.NumberFormat('fr-FR').format(n) + ' FCFA' : '—'
+  const fcfa = (n: number) => formatPrice(n)
 
   function changeStatut(statut: string) {
     setLoading(true)
@@ -315,9 +315,9 @@ function regrouperCommandes(commandes: Commande[]): (Commande | Commande[])[] {
 }
 
 function CommandeGroupeCard({ commandes, boutiqueId, onUpdate }: { commandes: Commande[]; boutiqueId: string; onUpdate: () => void }) {
-  const { t } = useTranslation()
+  const { t, formatPrice, formatNumber } = useTranslation()
   const [open, setOpen] = useState(false)
-  const fcfa = (n: number) => n > 0 ? new Intl.NumberFormat('fr-FR').format(n) + ' FCFA' : '—'
+  const fcfa = (n: number) => formatPrice(n)
   const premiere = commandes[0]
   const total = commandes.reduce((s, c) => s + Number(c.montant_total), 0)
   const statuts = new Set(commandes.map(c => c.statut))
@@ -331,7 +331,7 @@ function CommandeGroupeCard({ commandes, boutiqueId, onUpdate }: { commandes: Co
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
           <span style={{ background: '#C75B00', color: '#fff', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
-            🛒 {t('shop.cartTitle')} · {commandes.length} {t('common.details')}
+            🛒 {t('shop.cartTitle')} · {formatNumber(commandes.length)} {t('common.details')}
           </span>
           <div style={{ minWidth: 0 }}>
             <p style={{ margin: 0, fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -371,7 +371,7 @@ interface PanierAbandonne {
 }
 
 export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
-  const { t } = useTranslation()
+  const { t, formatPrice, formatNumber } = useTranslation()
   const [subTab, setSubTab] = useState<'commandes' | 'zones'>('commandes')
   const [commandes, setCommandes] = useState<Commande[]>([])
   const [paniersAbandonnes, setPaniersAbandonnes] = useState<PanierAbandonne[]>([])
@@ -535,7 +535,7 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
           {/* Stats rapides */}
       {stats.en_attente > 0 && filtre !== 'abandonne' && (
         <div style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 10, padding: '10px 16px', fontSize: 13, color: '#92400e', fontWeight: 600 }}>
-          ⏳ {stats.en_attente} {t('shop.pendingOrdersCount')}
+          ⏳ {formatNumber(stats.en_attente)} {t('shop.pendingOrdersCount')}
         </div>
       )}
 
@@ -551,7 +551,7 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
               color: filtreCanal === 'tous' ? '#fff' : '#475569',
               fontSize: 12, fontWeight: 700, cursor: 'pointer',
             }}>
-              {t('common.all')} ({commandes.length})
+              {t('common.all')} ({formatNumber(commandes.length)})
             </button>
             <button onClick={() => setFiltreCanal('web')} style={{
               padding: '4px 12px', borderRadius: 16, border: '1px solid',
@@ -650,7 +650,7 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <span style={{ fontSize: 16, fontWeight: 900, color: '#dc2626' }}>
-                    {new Intl.NumberFormat('fr-FR').format(p.total)} FCFA
+                    {formatPrice(p.total)}
                   </span>
 
                   <button

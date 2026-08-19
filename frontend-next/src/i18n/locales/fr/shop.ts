@@ -62,6 +62,7 @@ export const shop = {
   viewOrders: 'Voir les commandes →',
   pendingOrdersCount: 'Commandes en attente',
   stockAlerts: 'Alertes Stock',
+  stockQty: 'Stock',
   restockBtn: 'Réapprovisionner →',
   manageCatalogBtn: 'Gérer le catalogue →',
   shopTierTitle: 'Formule Boutique',

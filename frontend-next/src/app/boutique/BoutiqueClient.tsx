@@ -1644,7 +1644,7 @@ function MarketingBoutique({ boutique, onVoirJamaisPartages, planActif }: { bout
 // ── Gestionnaire de catalogue produits ───────────────────────────────────────
 
 function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId: userIdProp }: { boutique: Boutique; planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null; prixPro: number; filtreInitial?: 'jamais_partage'; userId?: string }) {
-  const { t, isRtl } = useTranslation()
+  const { t, isRtl, formatNumber, formatPrice } = useTranslation()
   const userId = userIdProp || 'anonymous'
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
@@ -2035,7 +2035,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                         style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: p.en_stock ? '#f0fdf4' : '#fef2f2', color: p.en_stock ? '#15803d' : '#dc2626', fontWeight: 800, cursor: 'pointer', border: p.en_stock ? '1px solid #bbf7d0' : '1px solid #fecaca' }}
                         title="Cliquez pour modifier le stock"
                       >
-                        📦 Stock: {p.quantite_stock ?? p.stock_quantite ?? 0} ✏️
+                        📦 {t('shop.stockQty')}: {formatNumber(p.quantite_stock ?? p.stock_quantite ?? 0)} ✏️
                       </span>
                     )}
 
@@ -2412,7 +2412,7 @@ function BoutiqueDashboard({
   onNavigate: (tab: ManageTab, subTab?: string) => void
   onOpenQrModal?: () => void
 }) {
-  const { t } = useTranslation()
+  const { t, formatNumber } = useTranslation()
   const [produitsCount, setProduitsCount] = useState<number | null>(null)
   const [stockAlertsCount, setStockAlertsCount] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
@@ -2455,7 +2455,7 @@ function BoutiqueDashboard({
               <ClipboardList size={18} style={{ color: 'var(--navy)' }} />
             </div>
           </div>
-          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--navy)' }}>{nbEnAttente}</p>
+          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--navy)' }}>{formatNumber(nbEnAttente)}</p>
           <button onClick={() => onNavigate('commandes')} style={{ background: 'none', border: 'none', color: 'var(--navy)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10, textDecoration: 'underline' }}>
             {t('shop.viewOrders')}
           </button>
@@ -2468,7 +2468,7 @@ function BoutiqueDashboard({
               <ShoppingBag size={18} style={{ color: 'var(--navy)' }} />
             </div>
           </div>
-          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: 'var(--navy)' }}>{loading ? '...' : (produitsCount ?? 0)}</p>
+          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: 'var(--navy)' }}>{loading ? '...' : formatNumber(produitsCount ?? 0)}</p>
           <button onClick={() => onNavigate('produits')} style={{ background: 'none', border: 'none', color: 'var(--navy)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10, textDecoration: 'underline' }}>
             {t('shop.manageCatalogBtn')}
           </button>
@@ -2481,7 +2481,7 @@ function BoutiqueDashboard({
               <AlertTriangle size={18} style={{ color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }} />
             </div>
           </div>
-          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }}>{loading ? '...' : (stockAlertsCount ?? 0)}</p>
+          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }}>{loading ? '...' : formatNumber(stockAlertsCount ?? 0)}</p>
           <button onClick={() => onNavigate('fournisseurs')} style={{ background: 'none', border: 'none', color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10, textDecoration: 'underline' }}>
             {t('shop.restockBtn')}
           </button>
@@ -2645,7 +2645,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   prixPro: number
   initialTab?: string
 }) {
-  const { t } = useTranslation()
+  const { t, formatNumber } = useTranslation()
   const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer']
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
 
@@ -2999,7 +2999,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                     background: hasActiveItem ? '#FED7AA' : 'rgba(28,43,74,0.08)',
                     color: hasActiveItem ? '#9A3412' : '#334155',
                   }}>
-                    {group.items.length}
+                    {formatNumber(group.items.length)}
                   </span>
                   <svg
                     width="14"
@@ -3066,7 +3066,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                         </span>
                       )}
                       {allowed && item.key === 'commandes' && nbEnAttente > 0 && (
-                        <span className="bq-nav-badge">{nbEnAttente}</span>
+                        <span className="bq-nav-badge">{formatNumber(nbEnAttente)}</span>
                       )}
                     </button>
                   )
@@ -3101,7 +3101,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                       color: isGroupActive ? '#ffffff' : 'var(--text2)',
                       fontWeight: 700
                     }}>
-                      {group.items.length}
+                      {formatNumber(group.items.length)}
                     </span>
                   </button>
                 )
@@ -3128,7 +3128,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                       <span style={{ fontSize: 9, opacity: 0.8 }}>🔒</span>
                     )}
                     {allowed && item.key === 'commandes' && nbEnAttente > 0 && (
-                      <span className="bq-nav-badge" style={{ marginLeft: 2 }}>{nbEnAttente}</span>
+                      <span className="bq-nav-badge" style={{ marginLeft: 2 }}>{formatNumber(nbEnAttente)}</span>
                     )}
                   </button>
                 )
@@ -3261,12 +3261,12 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             {boutique.actif !== false ? (
               <>
                 <CheckCircle2 size={15} style={{ color: '#166534' }} />
-                <span>Boutique Active (En ligne)</span>
+                <span>{t('shop.shopActive')}</span>
               </>
             ) : (
               <>
                 <XCircle size={15} style={{ color: '#991B1B' }} />
-                <span>Boutique Désactivée (Masquée)</span>
+                <span>{t('shop.shopInactive')}</span>
               </>
             )}
           </button>
@@ -3276,18 +3276,18 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 20, padding: '40px 24px', textAlign: 'center', maxWidth: 560, margin: '40px auto', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
             <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0f172a', margin: '0 0 8px' }}>
-              Fonctionnalité réservée au Plan {currentNavItem?.minPlan === 'business' ? 'Business' : 'Pro'}
+              {t('shop.featureLockedTitle', { plan: currentNavItem?.minPlan === 'business' ? 'Business' : 'Pro' })}
             </h3>
             <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
               {currentNavItem?.minPlan === 'business' 
-                ? "La gestion de l'équipe (Multi-caissiers, Admins) et le Journal d'Audit sont réservés aux abonnés de la formule Business."
-                : "Les factures PDF, la gestion de stock, la comptabilité et les analytics avancés nécessitent la formule Pro ou Business."}
+                ? t('shop.featureLockedDesc')
+                : t('shop.featureLockedDesc')}
             </p>
             <a 
               href="/boutique/abonnement"
               style={{ display: 'inline-block', background: currentNavItem?.minPlan === 'business' ? '#1e3a5f' : '#C75B00', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 14px rgba(0,0,0,0.15)' }}
             >
-              Faire évoluer mon offre →
+              {t('shop.upgradePlanBtn')}
             </a>
           </div>
         ) : (

@@ -104,7 +104,17 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
               <a href="/compte/apporteur" className="mobile-nav-link" onClick={close}>💼 Apporteur d&apos;affaires</a>
               <a href="/compte/fonctionnalites" className="mobile-nav-link" onClick={close}>📖 Forfaits &amp; Fonctionnalités</a>
               <form action={logout} style={{ margin: 0 }}>
-                <button type="submit" className="mobile-nav-link mobile-nav-link--logout">
+                <button
+                  type="submit"
+                  className="mobile-nav-link mobile-nav-link--logout"
+                  onClick={() => {
+                    if (typeof document !== 'undefined') {
+                      document.cookie = 'nopalou_locale=fr; path=/; max-age=31536000; SameSite=Lax'
+                      document.documentElement.lang = 'fr'
+                      document.documentElement.dir = 'ltr'
+                    }
+                  }}
+                >
                   Déconnexion
                 </button>
               </form>

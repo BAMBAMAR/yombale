@@ -73,7 +73,7 @@ interface TicketEnAttente {
 }
 
 export default function CaisseClient({ planActif: planActifProp, initialToken, userId: userIdProp }: { planActif?: string | null; initialToken?: string | null; userId?: string | null }) {
-  const { t, isRtl } = useTranslation()
+  const { t, isRtl, formatPrice, formatNumber } = useTranslation()
   // Récupère le userId depuis la prop serveur, avec fallback sur localStorage pour mode terminal
   const userId = userIdProp || (typeof window !== 'undefined' ? localStorage.getItem('nopalou_user_id') || 'anonymous' : 'anonymous')
   // Hook de connectivité fiable (ping /api/ping au lieu de navigator.onLine)
@@ -3606,7 +3606,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                       cursor: 'pointer',
                     }}
                   >
-                    {new Intl.NumberFormat('fr-FR').format(Number(montant))} F
+                    {formatPrice(Number(montant))}
                   </button>
                 ))}
               </div>

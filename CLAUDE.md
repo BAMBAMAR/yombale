@@ -94,10 +94,14 @@
     - Mode multilingue (`ar`, `en`) et disposition RTL strictement restreints à l'Espace Compte (`/compte/*`), Boutique marchand (`/boutique/*`), Dépôt d'annonces (`/deposer-*`, `/mes-annonces*`) et Authentification (`/connexion`, `/inscription`, `/mot-de-passe-oublie`).
     - Toutes les pages publiques (Accueil `/`, Fiches produits `/produit/*`, Annuaire `/boutiques`, Immobilier, Télécom, Guides, CGU) restent en **Français standard LTR**, préservant une disposition 100% naturelle et non inversée.
     - Synchronisation dynamique de `document.documentElement.lang` et `document.documentElement.dir` lors des transitions de navigation entre pages publiques et espace compte.
-  * **Support des Chiffres Arabo-Orientaux (٠, ١, ٢, ٣, ٤, ٥, ٦, ٧, ٨, ٩)** :
-    - `fcfa(prix, 'ar')` et `formatNombre(val, 'ar')` formatent automatiquement les nombres et prix avec les chiffres arabo-orientaux en locale arabe sur l'espace compte/boutique.
+  * **Support des Chiffres Arabo-Orientaux (٠, ١, ٢, ٣, ٤, ٥, ٦, ٧, ٨, ٩) & Badges** :
+    - `fcfa(prix, 'ar')` et `formatNombre(val, 'ar')` formatent automatiquement les nombres, prix, KPIs et badges avec les chiffres arabo-orientaux en locale arabe sur l'espace compte/boutique (commandes en attente, alertes de stock, nombre d'articles du catalogue, badges de menus).
+    - Traduction intégrale des statuts de visibilité boutique (`t('shop.shopActive')`, `t('shop.shopInactive')`) et des bannières de fonctionnalités verrouillées.
     - Helpers `formatPrice` et `formatNumber` exposés dans `useTranslation()` pour un rendu instantané et réactif selon la langue choisie.
+  * **Réinitialisation Automatique en Français dès la Déconnexion** :
+    - À la déconnexion (`logout()` / `deleteSession()`), le cookie `nopalou_locale` est automatiquement réinitialisé à `'fr'` et `document.documentElement.lang` repasse instantanément en français (`fr`) et `ltr`, garantissant un affichage par défaut du site public.
   * **Validation & Conformité** :
+    - **848/848 clés i18n présentes avec 100% de parité FR / EN / AR**.
     - **31/31 tests unitaires validés (100%)**.
     - Typage TypeScript sans erreur (`tsc --noEmit`).
     - Conformité stricte à la directive Zero-Font-Fetch (`AGENTS.md`).

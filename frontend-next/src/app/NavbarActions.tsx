@@ -30,6 +30,13 @@ export default function NavbarActions({ nom }: Props) {
       <form action={logout} style={{ margin: 0 }}>
         <button
           type="submit"
+          onClick={() => {
+            if (typeof document !== 'undefined') {
+              document.cookie = 'nopalou_locale=fr; path=/; max-age=31536000; SameSite=Lax'
+              document.documentElement.lang = 'fr'
+              document.documentElement.dir = 'ltr'
+            }
+          }}
           style={{
             padding: '6px 10px',
             borderRadius: '8px',

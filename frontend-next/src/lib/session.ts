@@ -63,6 +63,12 @@ export async function updateSession(): Promise<void> {
 export async function deleteSession(): Promise<void> {
   const store = await cookies()
   store.delete(COOKIE_NAME)
+  store.delete('nopalou_locale')
+  store.set('nopalou_locale', 'fr', {
+    path: '/',
+    maxAge: 31536000,
+    sameSite: 'lax',
+  })
 }
 
 export async function getSession(): Promise<SessionPayload | null> {

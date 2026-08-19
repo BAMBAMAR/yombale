@@ -64,6 +64,7 @@ export const shop: LocaleTranslations['shop'] = {
   viewOrders: 'View orders →',
   pendingOrdersCount: 'Pending orders',
   stockAlerts: 'Stock Alerts',
+  stockQty: 'Stock',
   restockBtn: 'Restock →',
   manageCatalogBtn: 'Manage catalog →',
   shopTierTitle: 'Shop Plan',
