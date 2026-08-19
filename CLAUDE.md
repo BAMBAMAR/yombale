@@ -1,4 +1,8 @@
-- **Refonte Ergonomique, Volatilité des Sous-menus & Scrollbars Invisibles sur les Menus Verticaux (`main` - 19 août 2026)** 🎨 :
+- **Refonte Ergonomique, Masquage Complet du Menu Latéral & Scrollbars Invisibles (`main` - 19 août 2026)** 🎨 :
+  * **Fermeture Complète du Menu Latéral (`BoutiqueClient.tsx` & `globals.css`)** :
+    - Bouton **« ✕ Fermer le menu »** intégré dans l'en-tête de la barre latérale pour masquer complètement tout le panneau de navigation et libérer l'espace de travail.
+    - Bouton **« ☰ Afficher le menu »** réactif placé en haut de l'espace de travail pour réafficher le menu latéral d'un simple clic.
+    - L'espace de travail s'étend à 100% de la largeur du conteneur actuel sans dépasser les limites de mise en page.
   * **Menus Verticaux Volatils & Auto-fermeture (`BoutiqueClient.tsx` & `globals.css`)** :
     - Comportement volatil ultra-fluide : les sous-menus d'une catégorie s'ouvrent immédiatement au survol (`onMouseEnter`) et **se referment automatiquement dès que le curseur quitte la catégorie ou sort du menu vertical (`onMouseLeave`)**.
     - Seul le groupe contenant l'onglet actif reste ouvert en permanence, maintenant une barre latérale compacte et élégante.

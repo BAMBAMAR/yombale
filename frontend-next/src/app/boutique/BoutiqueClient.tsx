@@ -2686,6 +2686,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   const [subTabCompta, setSubTabCompta] = useState<'dashboard' | 'express' | 'ventes' | 'depenses'>('express')
   const [showQrModal, setShowQrModal] = useState(false)
   const [hoveredGroupIdx, setHoveredGroupIdx] = useState<number | null>(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   const handleNavigateFromDashboard = (targetTab: ManageTab, subTab?: string) => {
     if (targetTab === 'compta') {
@@ -2811,35 +2812,61 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
     <div className="bq-manage-layout">
 
       {/* Sidebar */}
-      <aside className="bq-sidebar">
+      <aside className={`bq-sidebar${!isSidebarOpen ? ' bq-sidebar--hidden' : ''}`}>
         {/* Boutique header dans sidebar — Design System Nopalou Premium */}
         <div className="bq-sidebar-header" style={{ paddingBottom: 16, borderBottom: '1px solid var(--pos-border, #E8DDD2)', marginBottom: 16 }}>
-          <button
-            onClick={onBack}
-            className="bq-back-btn"
-            style={{
-              background: 'var(--pos-surface2, #FAF8F5)',
-              border: '1.5px solid var(--pos-border, #E8DDD2)',
-              borderRadius: 10,
-              cursor: 'pointer',
-              fontSize: 12,
-              color: 'var(--pos-navy, #1C2B4A)',
-              fontWeight: 800,
-              padding: '6px 12px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              marginBottom: 14,
-              boxShadow: '0 1px 3px rgba(26,22,18,0.05)',
-              transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #C75B00)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            <span>Mon compte</span>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
+            <button
+              onClick={onBack}
+              className="bq-back-btn"
+              style={{
+                background: 'var(--pos-surface2, #FAF8F5)',
+                border: '1.5px solid var(--pos-border, #E8DDD2)',
+                borderRadius: 10,
+                cursor: 'pointer',
+                fontSize: 12,
+                color: 'var(--pos-navy, #1C2B4A)',
+                fontWeight: 800,
+                padding: '6px 12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 1px 3px rgba(26,22,18,0.05)',
+                transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #C75B00)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              <span>Mon compte</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(false)}
+              className="bq-sidebar-close-btn"
+              title="Fermer tout le menu pour agrandir l'espace de travail"
+              style={{
+                background: 'var(--pos-surface2, #FAF8F5)',
+                border: '1.5px solid var(--pos-border, #E8DDD2)',
+                borderRadius: 10,
+                padding: '6px 10px',
+                cursor: 'pointer',
+                color: 'var(--pos-navy, #1C2B4A)',
+                fontSize: 11.5,
+                fontWeight: 800,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                boxShadow: '0 1px 3px rgba(26,22,18,0.05)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span>✕</span>
+              <span>Fermer le menu</span>
+            </button>
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {boutique.logo_url ? (
@@ -3144,7 +3171,36 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
       />
 
       {/* Contenu principal */}
-      <main className="bq-main">
+      <main className={`bq-main${!isSidebarOpen ? ' bq-main--expanded' : ''}`}>
+        {!isSidebarOpen && (
+          <div style={{ marginBottom: 16 }}>
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(true)}
+              className="bq-sidebar-open-btn"
+              title="Réafficher le menu de la boutique"
+              style={{
+                background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #2D3E6B 100%)',
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 10,
+                padding: '8px 16px',
+                fontSize: 13,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                boxShadow: '0 3px 10px rgba(28,43,74,0.18)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span style={{ fontSize: 14 }}>☰</span>
+              <span>Afficher le menu ({boutique.nom})</span>
+            </button>
+          </div>
+        )}
+
         {/* Titre de section & Statut Visibilité Boutique */}
         <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>

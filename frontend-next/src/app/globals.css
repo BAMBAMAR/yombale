@@ -9664,6 +9664,22 @@ button:focus-visible,
   overflow-y: auto;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
+  transition: all 0.2s ease;
+}
+
+.bq-sidebar--hidden {
+  display: none !important;
+}
+
+.bq-sidebar-close-btn:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: var(--accent) !important;
+}
+
+.bq-sidebar-open-btn:hover {
+  background: var(--accent) !important;
+  transform: translateY(-1px);
 }
 
 .bq-sidebar::-webkit-scrollbar {
