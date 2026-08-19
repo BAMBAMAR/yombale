@@ -2685,6 +2685,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
   const [subTabCompta, setSubTabCompta] = useState<'dashboard' | 'express' | 'ventes' | 'depenses'>('express')
   const [showQrModal, setShowQrModal] = useState(false)
+  const [hoveredGroupIdx, setHoveredGroupIdx] = useState<number | null>(null)
 
   const handleNavigateFromDashboard = (targetTab: ManageTab, subTab?: string) => {
     if (targetTab === 'compta') {
@@ -2692,24 +2693,24 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
     }
     setTab(targetTab)
   }
-  const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>(() => {
-    const defaultExpanded: Record<number, boolean> = {};
-    NAV_GROUPS.forEach((_, idx) => {
-      defaultExpanded[idx] = true; // Déplié par défaut pour que l'utilisateur découvre immédiatement tous les outils
-    });
-    return defaultExpanded;
-  })
   const getGroupIdxForTab = (t: ManageTab): number => {
     const idx = NAV_GROUPS.findIndex(g => g.items.some(i => i.key === t))
     return idx >= 0 ? idx : 0
   }
   const [activeGroupIdx, setActiveGroupIdx] = useState<number>(() => getGroupIdxForTab(resolvedInitialTab))
 
+  const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>(() => {
+    const defaultExpanded: Record<number, boolean> = {};
+    const initialActiveIdx = getGroupIdxForTab(resolvedInitialTab);
+    defaultExpanded[initialActiveIdx] = true; // Seul le groupe actif est déplié pour un menu compact et volatil
+    return defaultExpanded;
+  })
+
   useEffect(() => {
     const gIdx = getGroupIdxForTab(tab)
     setActiveGroupIdx(gIdx)
-    // S'assure que le groupe actif reste ouvert
-    setExpandedGroups(prev => ({ ...prev, [gIdx]: true }))
+    // S'assure que seul le groupe actif reste ouvert
+    setExpandedGroups({ [gIdx]: true })
   }, [tab])
 
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
@@ -2894,13 +2895,28 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           </div>
         </div>
 
-        {/* Nav Desktop (Hiérarchie verticale claire, contrastée et intuitive) */}
-        <nav className="bq-nav bq-nav-desktop" style={{ padding: '8px 4px' }}>
+        {/* Nav Desktop (Hiérarchie verticale volatile, compacte et sans barre de défilement) */}
+        <nav 
+          className="bq-nav bq-nav-desktop" 
+          style={{ padding: '8px 4px' }}
+          onMouseLeave={() => {
+            setHoveredGroupIdx(null)
+            // Se referme automatiquement dès que le curseur quitte la zone du menu vertical
+            setExpandedGroups({ [activeGroupIdx]: true })
+          }}
+        >
           {NAV_GROUPS.map((group, gIdx) => {
-            const isExpanded = expandedGroups[gIdx] !== false;
-            const hasActiveItem = group.items.some(i => i.key === tab);
+            const hasActiveItem = group.items.some(i => i.key === tab)
+            // Volatile : ouvert au survol, ou si c'est le groupe actif, ou s'il a été cliqué
+            const isExpanded = hoveredGroupIdx === gIdx || (hoveredGroupIdx === null && (expandedGroups[gIdx] ?? hasActiveItem))
             return (
-            <div key={gIdx} className="bq-nav-group" style={{ marginBottom: 12 }}>
+            <div 
+              key={gIdx} 
+              className="bq-nav-group" 
+              style={{ marginBottom: 8 }}
+              onMouseEnter={() => setHoveredGroupIdx(gIdx)}
+              onMouseLeave={() => setHoveredGroupIdx(null)}
+            >
               <button 
                 type="button"
                 className={`bq-nav-group-header${hasActiveItem ? ' bq-nav-group-header--active' : ''}`}
@@ -2912,7 +2928,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: 8,
-                  padding: '9px 12px',
+                  padding: '8px 11px',
                   background: hasActiveItem ? 'linear-gradient(135deg, #FFF9F5 0%, #FFF3E8 100%)' : '#FAF8F5',
                   border: hasActiveItem ? '1.5px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
                   borderRadius: 10,
@@ -2976,6 +2992,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                 paddingLeft: 6,
                 borderLeft: hasActiveItem ? '2.5px solid var(--accent, #C75B00)' : '2px solid #E8DDD2',
                 marginLeft: 8,
+                animation: 'fadeSlideDown 0.15s ease-out',
               }}>
                 {group.items.map(item => {
                   const allowed = isAllowed(item.minPlan)

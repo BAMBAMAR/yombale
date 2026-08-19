@@ -1,8 +1,11 @@
-- **Refonte Ergonomique & Visibilité Maximale des Menus (Boutique, Compte, Navbar) (`main` - 19 août 2026)** 🎨 :
-  * **Menu de Gestion de Boutique (`BoutiqueClient.tsx` & `globals.css`)** :
-    - Déploiement automatique de tous les groupes et sous-menus par défaut pour rendre les 14 outils marchands immédiatement visibles dès l'accès à la boutique.
-    - Transformation des en-têtes de catégorie en véritables cartes interactives contrastées : icônes thématiques (🛒 Ventes & Clients, 📦 Catalogue & Stocks, 💰 Finance & Rapports, ⚙️ Paramètres & Équipe), typographie bleu marine `#1C2B4A` en gras 800, badges de décompte d'outils (`4`, `2`, `3`, `5`) et chevrons de rotation animés bien visibles.
-    - Maintien automatique de l'ouverture du groupe actif lors du changement d'onglet et surbrillance nette de l'élément sélectionné (`#FFF3E8` / `#C75B00`).
+- **Refonte Ergonomique, Volatilité des Sous-menus & Scrollbars Invisibles sur les Menus Verticaux (`main` - 19 août 2026)** 🎨 :
+  * **Menus Verticaux Volatils & Auto-fermeture (`BoutiqueClient.tsx` & `globals.css`)** :
+    - Comportement volatil ultra-fluide : les sous-menus d'une catégorie s'ouvrent immédiatement au survol (`onMouseEnter`) et **se referment automatiquement dès que le curseur quitte la catégorie ou sort du menu vertical (`onMouseLeave`)**.
+    - Seul le groupe contenant l'onglet actif reste ouvert en permanence, maintenant une barre latérale compacte et élégante.
+    - Animation d'apparition/disparition fluide `@keyframes fadeSlideDown` avec transition d'opacité.
+  * **Suppression Complète des Barres de Défilement Visibles sur les Menus Verticaux (`globals.css`)** :
+    - Masquage des barres de scroll disgracieuses sur `.bq-sidebar`, `.account-nav-container`, `.account-sidebar` (`scrollbar-width: none; ::-webkit-scrollbar { display: none; }`) tout en préservant le défilement fluide.
+    - Aucune altération du scroll de la page d'accueil ou des vues générales.
   * **Menu Mon Compte & Espace Utilisateur (`AccountNavLinks.tsx` & `globals.css`)** :
     - En-têtes de sections assombris en bleu marine `#1C2B4A` avec séparateurs clairs pour une hiérarchie visuelle immédiate.
     - Mise en avant stratégique de la section **"Ma Boutique"** sous forme d'encart carte chaleureux avec badge d'accès direct `GÉRER ↗`.

@@ -6597,6 +6597,19 @@ a {
   flex-shrink: 0;
 }
 
+.account-nav-container,
+.account-sidebar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.account-nav-container::-webkit-scrollbar,
+.account-sidebar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 .account-nav-group {
   margin-bottom: 18px;
 }
@@ -9649,6 +9662,25 @@ button:focus-visible,
   align-self: flex-start;
   max-height: calc(100vh - 120px);
   overflow-y: auto;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.bq-sidebar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+@keyframes fadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .bq-sidebar-header {
