@@ -1,3 +1,17 @@
+- **Refonte Ergonomique & Visibilité Maximale des Menus (Boutique, Compte, Navbar) (`main` - 19 août 2026)** 🎨 :
+  * **Menu de Gestion de Boutique (`BoutiqueClient.tsx` & `globals.css`)** :
+    - Déploiement automatique de tous les groupes et sous-menus par défaut pour rendre les 14 outils marchands immédiatement visibles dès l'accès à la boutique.
+    - Transformation des en-têtes de catégorie en véritables cartes interactives contrastées : icônes thématiques (🛒 Ventes & Clients, 📦 Catalogue & Stocks, 💰 Finance & Rapports, ⚙️ Paramètres & Équipe), typographie bleu marine `#1C2B4A` en gras 800, badges de décompte d'outils (`4`, `2`, `3`, `5`) et chevrons de rotation animés bien visibles.
+    - Maintien automatique de l'ouverture du groupe actif lors du changement d'onglet et surbrillance nette de l'élément sélectionné (`#FFF3E8` / `#C75B00`).
+  * **Menu Mon Compte & Espace Utilisateur (`AccountNavLinks.tsx` & `globals.css`)** :
+    - En-têtes de sections assombris en bleu marine `#1C2B4A` avec séparateurs clairs pour une hiérarchie visuelle immédiate.
+    - Mise en avant stratégique de la section **"Ma Boutique"** sous forme d'encart carte chaleureux avec badge d'accès direct `GÉRER ↗`.
+    - Distinctions visuelles des actions rapides de publication (`+ Publier une annonce`, `🏡 Publier un bien`).
+  * **Barre de Navigation Principale Desktop (`globals.css`)** :
+    - Contraste renforcé des liens de navigation (`#1C2B4A`, `font-weight: 650`) avec micro-interactions fluides au survol.
+  * **Conformité & Zero-Font-Fetch (Directive AGENTS.md)** :
+    - Utilisation exclusive des polices système natives et validation du build de production sans erreur.
+
 - **Validation Finale & Certification « Prête Production » de la Refonte Nopalou (17 août 2026)** 🚀 :
   * **P0 : Suite de Tests Déterministe & Découplage Métier (`scripts/run-unit-tests.mjs`, `boutiqueHelpers.ts`, `carnetMetier.ts`, `CaracChips.tsx`)** :
     - Élimination des blocages d'exécution globale Vitest/Tinypool sous Windows/Node 24 via un runner unitaire natif ultra-rapide (< 1s, code de sortie 0 garanti).

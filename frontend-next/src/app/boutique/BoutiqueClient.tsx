@@ -2625,12 +2625,14 @@ interface NavItem {
 }
 
 interface NavGroup {
+  icon: string
   title: string
   items: NavItem[]
 }
 
 const NAV_GROUPS: NavGroup[] = [
   {
+    icon: '🛒',
     title: 'Ventes & Clients',
     items: [
       { key: 'dashboard',   icon: '🏠', label: 'Vue d’ensemble' },
@@ -2640,6 +2642,7 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    icon: '📦',
     title: 'Catalogue & Stocks',
     items: [
       { key: 'produits',     icon: '🛍️', label: 'Catalogue' },
@@ -2647,6 +2650,7 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    icon: '💰',
     title: 'Finance & Rapports',
     items: [
       { key: 'compta',      icon: '💰', label: 'Comptabilité', minPlan: 'pro' },
@@ -2655,6 +2659,7 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    icon: '⚙️',
     title: 'Paramètres & Équipe',
     items: [
       { key: 'equipe',      icon: '👥', label: 'Équipe & Accès', minPlan: 'business' },
@@ -2689,9 +2694,8 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   }
   const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>(() => {
     const defaultExpanded: Record<number, boolean> = {};
-    NAV_GROUPS.forEach((g, idx) => {
-      const hasActive = g.items.some(i => i.key === resolvedInitialTab);
-      defaultExpanded[idx] = hasActive || idx === 0; // Ouvre le premier groupe ou celui contenant l'onglet actif par défaut
+    NAV_GROUPS.forEach((_, idx) => {
+      defaultExpanded[idx] = true; // Déplié par défaut pour que l'utilisateur découvre immédiatement tous les outils
     });
     return defaultExpanded;
   })
@@ -2704,6 +2708,8 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   useEffect(() => {
     const gIdx = getGroupIdxForTab(tab)
     setActiveGroupIdx(gIdx)
+    // S'assure que le groupe actif reste ouvert
+    setExpandedGroups(prev => ({ ...prev, [gIdx]: true }))
   }, [tab])
 
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
@@ -2888,34 +2894,117 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           </div>
         </div>
 
-        {/* Nav Desktop (Hiérarchie verticale classique) */}
-        <nav className="bq-nav bq-nav-desktop">
+        {/* Nav Desktop (Hiérarchie verticale claire, contrastée et intuitive) */}
+        <nav className="bq-nav bq-nav-desktop" style={{ padding: '8px 4px' }}>
           {NAV_GROUPS.map((group, gIdx) => {
-            const isExpanded = expandedGroups[gIdx] ?? false;
+            const isExpanded = expandedGroups[gIdx] !== false;
+            const hasActiveItem = group.items.some(i => i.key === tab);
             return (
-            <div key={gIdx} className="bq-nav-group">
-              <div 
-                className="bq-nav-group-title" 
-                onClick={() => setExpandedGroups(prev => ({ ...prev, [gIdx]: !prev[gIdx] }))}
-                style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none', paddingRight: 8 }}
+            <div key={gIdx} className="bq-nav-group" style={{ marginBottom: 12 }}>
+              <button 
+                type="button"
+                className={`bq-nav-group-header${hasActiveItem ? ' bq-nav-group-header--active' : ''}`}
+                onClick={() => setExpandedGroups(prev => ({ ...prev, [gIdx]: !isExpanded }))}
+                aria-expanded={isExpanded}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  padding: '9px 12px',
+                  background: hasActiveItem ? 'linear-gradient(135deg, #FFF9F5 0%, #FFF3E8 100%)' : '#FAF8F5',
+                  border: hasActiveItem ? '1.5px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease',
+                  userSelect: 'none',
+                  boxShadow: hasActiveItem ? '0 2px 6px rgba(199,91,0,0.12)' : '0 1px 2px rgba(26,22,18,0.03)',
+                }}
               >
-                <span>{group.title}</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: '#94a3b8' }}>
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-              <div style={{ display: isExpanded ? 'block' : 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <span style={{ fontSize: 14, flexShrink: 0 }}>{group.icon}</span>
+                  <span style={{
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    color: hasActiveItem ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}>
+                    {group.title}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                  <span style={{
+                    fontSize: 10.5,
+                    fontWeight: 750,
+                    padding: '2px 6px',
+                    borderRadius: 12,
+                    background: hasActiveItem ? '#FED7AA' : 'rgba(28,43,74,0.08)',
+                    color: hasActiveItem ? '#9A3412' : '#334155',
+                  }}>
+                    {group.items.length}
+                  </span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={hasActiveItem ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)'}
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                  >
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </button>
+
+              <div style={{
+                display: isExpanded ? 'flex' : 'none',
+                flexDirection: 'column',
+                gap: 2,
+                marginTop: 4,
+                paddingLeft: 6,
+                borderLeft: hasActiveItem ? '2.5px solid var(--accent, #C75B00)' : '2px solid #E8DDD2',
+                marginLeft: 8,
+              }}>
                 {group.items.map(item => {
                   const allowed = isAllowed(item.minPlan)
+                  const isActive = tab === item.key
                   return (
                     <button
                       key={item.key}
                       onClick={() => setTab(item.key)}
-                      className={`bq-nav-item${tab === item.key ? ' active' : ''}`}
-                      style={{ opacity: allowed ? 1 : 0.9, display: 'flex', alignItems: 'center', width: '100%', gap: 6, padding: '8px 8px' }}
+                      className={`bq-nav-item${isActive ? ' active' : ''}`}
+                      style={{
+                        opacity: allowed ? 1 : 0.85,
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        gap: 8,
+                        padding: '8px 10px',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        fontWeight: isActive ? 750 : 600,
+                        color: isActive ? 'var(--accent, #C75B00)' : '#1F2937',
+                        background: isActive ? '#FFF3E8' : 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'background 0.12s, color 0.12s',
+                      }}
                     >
                       <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
-                      <span style={{ textAlign: 'left', whiteSpace: 'nowrap', fontSize: 12.5, fontWeight: tab === item.key ? 700 : 500, flex: 1, minWidth: 0 }}>
+                      <span style={{ whiteSpace: 'nowrap', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {item.label}
                       </span>
                       {!allowed && (
@@ -2947,8 +3036,9 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                     key={gIdx}
                     onClick={() => setActiveGroupIdx(gIdx)}
                     className={isGroupActive ? 'npl-btn npl-btn-primary npl-btn-sm' : 'npl-btn npl-btn-secondary npl-btn-sm'}
-                    style={{ borderRadius: 20, fontSize: 12 }}
+                    style={{ borderRadius: 20, fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
                   >
+                    <span>{group.icon}</span>
                     <span>{group.title}</span>
                     <span style={{
                       fontSize: 10,
