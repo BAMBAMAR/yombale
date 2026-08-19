@@ -53,7 +53,7 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
               const actif = overrideTab && lien.tab === overrideTab 
                 ? true 
                 : (!overrideTab && (pathname === lien.href || pathname.startsWith(lien.href + '/')))
-              
+
               if (lien.isShop) {
                 return (
                   <Link

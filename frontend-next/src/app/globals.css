@@ -6613,6 +6613,19 @@ a {
   flex-shrink: 0;
 }
 
+.account-nav-container,
+.account-sidebar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.account-nav-container::-webkit-scrollbar,
+.account-sidebar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 .account-nav-group {
   margin-bottom: 18px;
 }
@@ -9751,6 +9764,41 @@ button:focus-visible,
   align-self: flex-start;
   max-height: calc(100vh - 120px);
   overflow-y: auto;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  transition: all 0.2s ease;
+}
+
+.bq-sidebar--hidden {
+  display: none !important;
+}
+
+.bq-sidebar-close-btn:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: var(--accent) !important;
+}
+
+.bq-sidebar-open-btn:hover {
+  background: var(--accent) !important;
+  transform: translateY(-1px);
+}
+
+.bq-sidebar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+@keyframes fadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .bq-sidebar-header {
@@ -9764,15 +9812,28 @@ button:focus-visible,
 }
 
 .bq-nav-group {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+}
+
+.bq-nav-group-header {
+  transition: all 0.15s ease;
+}
+
+.bq-nav-group-header:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.bq-nav-group-header--active {
+  box-shadow: 0 2px 8px rgba(199, 91, 0, 0.14) !important;
 }
 
 .bq-nav-group-title {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: var(--navy);
   padding: 6px 12px 4px;
   margin: 0;
 }
@@ -9781,27 +9842,32 @@ button:focus-visible,
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 8px 10px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   background: none;
-  color: #374151;
-  font-weight: 500;
+  color: #2D3748;
+  font-weight: 600;
   font-size: 13px;
   margin-bottom: 2px;
   text-align: left;
-  border-left: 3px solid transparent;
   position: relative;
   white-space: nowrap;
+  transition: all 0.12s ease;
+}
+
+.bq-nav-item:hover {
+  background: rgba(199, 91, 0, 0.06);
+  color: var(--navy);
+  transform: translateX(2px);
 }
 
 .bq-nav-item.active {
-  background: #fff7f0;
-  color: #C75B00;
-  font-weight: 700;
-  border-left: 3px solid #C75B00;
+  background: #FFF3E8 !important;
+  color: var(--accent) !important;
+  font-weight: 750 !important;
 }
 
 .bq-nav-badge {

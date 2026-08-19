@@ -1,8 +1,15 @@
-- **Refonte Ergonomique & Visibilité Maximale des Menus (Boutique, Compte, Navbar) (`branch: feature/i18n-account-shop` - 19 août 2026)** 🎨 :
-  * **Menu de Gestion de Boutique (`BoutiqueClient.tsx` & `globals.css`)** :
-    - Déploiement automatique de tous les groupes et sous-menus par défaut pour rendre les 14 outils marchands visibles immédiatement dès l'arrivée de l'utilisateur.
-    - Transformation des en-têtes de catégorie en véritables cartes interactives contrastées : icônes thématiques (🛒 Ventes & Clients, 📦 Catalogue & Stocks, 💰 Finance & Rapports, ⚙️ Paramètres & Équipe), typographie contrastée bleu marine `#1C2B4A` en gras 800, badges de décompte d'outils et chevrons de rotation animés bien visibles.
-    - Maintien automatique de l'ouverture du groupe actif lors du changement d'onglet et surbrillance nette de l'élément sélectionné (`#FFF3E8` / `#C75B00`).
+- **Refonte Ergonomique, Masquage Complet du Menu Latéral & Scrollbars Invisibles (`main` / `feature/i18n-account-shop` - 19 août 2026)** 🎨 :
+  * **Fermeture Complète du Menu Latéral (`BoutiqueClient.tsx` & `globals.css`)** :
+    - Bouton **« ✕ Fermer le menu »** intégré dans l'en-tête de la barre latérale pour masquer complètement tout le panneau de navigation et libérer l'espace de travail.
+    - Bouton **« ☰ Afficher le menu »** réactif placé en haut de l'espace de travail pour réafficher le menu latéral d'un simple clic.
+    - L'espace de travail s'étend à 100% de la largeur du conteneur actuel sans dépasser les limites de mise en page.
+  * **Menus Verticaux Volatils & Auto-fermeture (`BoutiqueClient.tsx` & `globals.css`)** :
+    - Comportement volatil ultra-fluide : les sous-menus d'une catégorie s'ouvrent immédiatement au survol (`onMouseEnter`) et **se referment automatiquement dès que le curseur quitte la catégorie ou sort du menu vertical (`onMouseLeave`)**.
+    - Seul le groupe contenant l'onglet actif reste ouvert en permanence, maintenant une barre latérale compacte et élégante.
+    - Animation d'apparition/disparition fluide `@keyframes fadeSlideDown` avec transition d'opacité.
+  * **Suppression Complète des Barres de Défilement Visibles sur les Menus Verticaux (`globals.css`)** :
+    - Masquage des barres de scroll disgracieuses sur `.bq-sidebar`, `.account-nav-container`, `.account-sidebar` (`scrollbar-width: none; ::-webkit-scrollbar { display: none; }`) tout en préservant le défilement fluide.
+    - Aucune altération du scroll de la page d'accueil ou des vues générales.
   * **Menu Mon Compte & Espace Utilisateur (`AccountNavLinks.tsx` & `globals.css`)** :
     - En-têtes de sections assombris en bleu marine `#1C2B4A` avec séparateurs clairs pour une hiérarchie visuelle immédiate.
     - Mise en avant stratégique de la section **"Ma Boutique"** sous forme d'encart carte chaleureux avec badge d'accès direct `GÉRER ↗`.
@@ -64,6 +71,11 @@
   * **Validation Complète des Tests & du Build de Production (`npm test` & `npm run build`)** :
     - **28/28 tests unitaires passés avec 100% de succès** incluant les tests d'intégrité i18n, parité des dictionnaires FR / EN / AR, helpers de formats et calculs métier.
     - **Build Next.js 14 et postbuild validés à 100% avec code de sortie 0** (`✓ Compiled successfully`, `✓ Generating static pages (88/88)`).
+=======
+  * **Conformité & Zero-Font-Fetch (Directive AGENTS.md)** :
+    - Utilisation exclusive des polices système natives et validation du build de production sans erreur.
+
+>>>>>>> main
 - **Validation Finale & Certification « Prête Production » de la Refonte Nopalou (17 août 2026)** 🚀 :
   * **P0 : Suite de Tests Déterministe & Découplage Métier (`scripts/run-unit-tests.mjs`, `boutiqueHelpers.ts`, `carnetMetier.ts`, `CaracChips.tsx`)** :
     - Élimination des blocages d'exécution globale Vitest/Tinypool sous Windows/Node 24 via un runner unitaire natif ultra-rapide (< 1s, code de sortie 0 garanti).
