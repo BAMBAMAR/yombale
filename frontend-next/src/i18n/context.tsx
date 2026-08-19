@@ -98,7 +98,8 @@ export function I18nProvider({
       if (params) {
         let formatted = raw
         Object.entries(params).forEach(([k, v]) => {
-          formatted = formatted.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v))
+          const valStr = (locale === 'ar' && typeof v === 'number') ? formatNombre(v, 'ar') : String(v)
+          formatted = formatted.replace(new RegExp(`\\{${k}\\}`, 'g'), valStr)
         })
         return formatted
       }
@@ -143,7 +144,8 @@ export function useTranslation() {
         let raw = resolveNestedKey(dict, key) || resolveNestedKey(dictionaries.fr, key) || key
         if (params) {
           Object.entries(params).forEach(([k, v]) => {
-            raw = raw.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v))
+            const valStr = (fallbackLocale === 'ar' && typeof v === 'number') ? formatNombre(v, 'ar') : String(v)
+            raw = raw.replace(new RegExp(`\\{${k}\\}`, 'g'), valStr)
           })
         }
         return raw

@@ -6,7 +6,7 @@ import {
   getDashboard, listDepenses, addDepense, deleteDepense, updateDepense,
   updateStock, getBoutiqueProduits
 } from './actions'
-import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
+import { fcfa, formatNombre, fmtDate, fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
 import { useTranslation } from '@/i18n/context'
@@ -92,7 +92,7 @@ function DashboardView({ boutiqueId }: { boutiqueId: string }) {
         <KpiCard
           label={t('shop.monthlyRevenue')}
           value={fcfa(data.ca_mois)}
-          sub={evol ? `${Number(evol) >= 0 ? '▲' : '▼'} ${Math.abs(Number(evol))}% ${t('shop.prevMonthComparison')}` : undefined}
+          sub={evol ? `${Number(evol) >= 0 ? '▲' : '▼'} ${formatNombre(Math.abs(Number(evol)))}% ${t('shop.prevMonthComparison')}` : undefined}
           color="#1d4ed8"
         />
         <KpiCard label={t('shop.expenses')} value={fcfa(data.depenses_mois)} color="#dc2626" />
@@ -101,7 +101,7 @@ function DashboardView({ boutiqueId }: { boutiqueId: string }) {
           value={fcfa(data.benefice_mois)}
           color={data.benefice_mois >= 0 ? '#16a34a' : '#dc2626'}
         />
-        <KpiCard label={t('shop.totalSales')} value={String(data.nb_ventes_mois)} sub={t('shop.totalOrders')} />
+        <KpiCard label={t('shop.totalSales')} value={formatNombre(data.nb_ventes_mois)} sub={t('shop.totalOrders')} />
       </div>
 
       {/* Top produits */}
@@ -111,8 +111,8 @@ function DashboardView({ boutiqueId }: { boutiqueId: string }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {data.top_produits.map((p, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
-                <span style={{ color: '#374151' }}>{i + 1}. {p.nom_produit}</span>
-                <span style={{ color: '#6b7280' }}>{p.total_vendu} · {fcfa(p.ca)}</span>
+                <span style={{ color: '#374151' }}>{formatNombre(i + 1)}. {p.nom_produit}</span>
+                <span style={{ color: '#6b7280' }}>{formatNombre(p.total_vendu)} · {fcfa(p.ca)}</span>
               </div>
             ))}
           </div>

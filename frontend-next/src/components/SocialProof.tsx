@@ -29,7 +29,7 @@ export default function SocialProof({
 
   if (!mounted) return null; // Évite hydration mismatch
 
-  const numberLocale = locale === 'ar' ? 'ar-EG' : locale === 'en' ? 'en-US' : 'fr-SN';
+  const numberLocale = locale === 'ar' ? 'ar-EG-u-nu-arab' : locale === 'en' ? 'en-US' : 'fr-SN';
 
   return (
     <div className="social-proof-strip">
@@ -39,7 +39,7 @@ export default function SocialProof({
       </div>
       <div className="social-proof-separator">·</div>
       <div className="social-proof-item">
-        <span className="social-proof-number">{boutiquesPartenaires}</span>
+        <span className="social-proof-number">{boutiquesPartenaires.toLocaleString(numberLocale)}</span>
         <span className="social-proof-label">{t('common.partnerShops')}</span>
       </div>
       <div className="social-proof-separator">·</div>

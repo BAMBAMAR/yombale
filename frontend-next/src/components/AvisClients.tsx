@@ -13,7 +13,7 @@ interface Avis {
 }
 
 export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: string; produitId?: string }) {
-  const { t } = useTranslation()
+  const { t, formatNumber } = useTranslation()
   const [avisList, setAvisList] = useState<Avis[]>([])
   const [noteMoyenne, setNoteMoyenne] = useState<string>('5.0')
   const [totalAvis, setTotalAvis] = useState<number>(0)
@@ -91,14 +91,14 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <div>
           <h3 style={{ margin: 0, fontSize: 16, fontFamily: 'var(--font-archivo), sans-serif', color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>⭐</span> {t('shop.reviewsAndRatingsTitle')} ({totalAvis})
+            <span>⭐</span> {t('shop.reviewsAndRatingsTitle')} ({formatNumber(totalAvis)})
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-            <span style={{ fontSize: 20, fontWeight: 900, color: '#f59e0b' }}>{noteMoyenne}</span>
+            <span style={{ fontSize: 20, fontWeight: 900, color: '#f59e0b' }}>{formatNumber(noteMoyenne)}</span>
             <div style={{ color: '#f59e0b', fontSize: 14 }}>
               {'★'.repeat(Math.round(Number(noteMoyenne)))}{'☆'.repeat(5 - Math.round(Number(noteMoyenne)))}
             </div>
-            <span style={{ fontSize: 12, color: '#6b7280' }}>({totalAvis} {t('shop.evaluationsCount')})</span>
+            <span style={{ fontSize: 12, color: '#6b7280' }}>({formatNumber(totalAvis)} {t('shop.evaluationsCount')})</span>
           </div>
         </div>
 

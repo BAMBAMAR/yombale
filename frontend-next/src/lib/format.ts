@@ -24,11 +24,26 @@ export function tempsRelatif(d: string | Date | null | undefined): string | null
   return fmtDate(dt);
 }
 
+function detectActiveLocale(locale?: string): string {
+  if (locale) return locale;
+  if (typeof document !== 'undefined') {
+    const docLang = document.documentElement.lang;
+    if (docLang === 'ar' || docLang === 'en' || docLang === 'fr') return docLang;
+    const match = document.cookie.match(/(?:^|;\s*)nopalou_locale=([^;]+)/);
+    if (match && match[1]) {
+      const val = decodeURIComponent(match[1]);
+      if (val === 'ar' || val === 'en' || val === 'fr') return val;
+    }
+  }
+  return 'fr';
+}
+
 export function fcfa(prix: number | string | null | undefined, locale?: string): string {
   if (prix === null || prix === undefined || prix === '') return '—';
   const num = Number(prix);
   if (isNaN(num)) return '—';
-  const loc = locale === 'ar' ? 'ar-EG-u-nu-arab' : locale === 'en' ? 'en-US' : 'fr-FR';
+  const activeLoc = detectActiveLocale(locale);
+  const loc = activeLoc === 'ar' ? 'ar-EG-u-nu-arab' : activeLoc === 'en' ? 'en-US' : 'fr-FR';
   return new Intl.NumberFormat(loc).format(Math.round(num)) + ' FCFA';
 }
 
@@ -36,7 +51,8 @@ export function formatNombre(val: number | string | null | undefined, locale?: s
   if (val === null || val === undefined || val === '') return '0';
   const num = Number(val);
   if (isNaN(num)) return '0';
-  const loc = locale === 'ar' ? 'ar-EG-u-nu-arab' : locale === 'en' ? 'en-US' : 'fr-FR';
+  const activeLoc = detectActiveLocale(locale);
+  const loc = activeLoc === 'ar' ? 'ar-EG-u-nu-arab' : activeLoc === 'en' ? 'en-US' : 'fr-FR';
   return new Intl.NumberFormat(loc).format(num);
 }
 
