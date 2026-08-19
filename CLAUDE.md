@@ -90,8 +90,11 @@
     - `CompareFilterBanner.tsx` : bandeau de comparaison active et vidage de filtre.
     - `CrossSelling.tsx` : suggestions d'achats groupés (bundles), remise calculée et ajout au panier.
     - `AvisClients.tsx` : avis clients, note moyenne, publication d'avis et modale d'évaluation.
+  * **Support des Chiffres Arabo-Orientaux (٠, ١, ٢, ٣, ٤, ٥, ٦, ٧, ٨, ٩)** :
+    - `fcfa(prix, 'ar')` et `formatNombre(val, 'ar')` formatent désormais automatiquement les nombres et prix avec les chiffres arabo-orientaux en locale arabe.
+    - Helpers `formatPrice` et `formatNumber` exposés dans `useTranslation()` pour un rendu instantané et réactif selon la langue choisie.
   * **Validation & Conformité** :
-    - **28/28 tests unitaires validés (100%)**.
+    - **30/30 tests unitaires validés (100%)**.
     - Typage TypeScript sans erreur (`tsc --noEmit`).
     - Conformité stricte à la directive Zero-Font-Fetch (`AGENTS.md`).
 

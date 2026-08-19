@@ -24,11 +24,20 @@ export function tempsRelatif(d: string | Date | null | undefined): string | null
   return fmtDate(dt);
 }
 
-export function fcfa(prix: number | string | null | undefined): string {
+export function fcfa(prix: number | string | null | undefined, locale?: string): string {
   if (prix === null || prix === undefined || prix === '') return '—';
   const num = Number(prix);
   if (isNaN(num)) return '—';
-  return new Intl.NumberFormat('fr-FR').format(Math.round(num)) + ' FCFA';
+  const loc = locale === 'ar' ? 'ar-EG-u-nu-arab' : locale === 'en' ? 'en-US' : 'fr-FR';
+  return new Intl.NumberFormat(loc).format(Math.round(num)) + ' FCFA';
+}
+
+export function formatNombre(val: number | string | null | undefined, locale?: string): string {
+  if (val === null || val === undefined || val === '') return '0';
+  const num = Number(val);
+  if (isNaN(num)) return '0';
+  const loc = locale === 'ar' ? 'ar-EG-u-nu-arab' : locale === 'en' ? 'en-US' : 'fr-FR';
+  return new Intl.NumberFormat(loc).format(num);
 }
 
 export function escapeHtml(s: string | null | undefined): string {

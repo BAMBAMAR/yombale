@@ -2,7 +2,7 @@
  * Tests Unitaires Métier Nopalou — Suite Complète (34 tests)
  */
 import assert from 'node:assert/strict'
-import { formatPhone, formatNomPropre, fcfa, decodeHtml, escapeHtml } from '../src/lib/format.ts'
+import { formatPhone, formatNomPropre, fcfa, formatNombre, decodeHtml, escapeHtml } from '../src/lib/format.ts'
 import {
   calculerKpisCarnet,
   determinerActionClient,
@@ -93,6 +93,19 @@ it('fcfa: tiret cadratin pour valeurs invalides ou nulles', () => {
   assert.equal(fcfa(undefined), '—')
   assert.equal(fcfa(''), '—')
   assert.equal(fcfa('invalide'), '—')
+})
+
+it('fcfa & formatNombre: support arabe avec chiffres arabo-orientaux (٠, ١, ٢...)', () => {
+  const prixArabe = fcfa(250000, 'ar')
+  assert.ok(prixArabe.includes('FCFA'))
+  assert.match(prixArabe, /[٠-٩]/)
+  const nombreArabe = formatNombre(2847, 'ar')
+  assert.match(nombreArabe, /[٠-٩]/)
+})
+
+it('fcfa & formatNombre: support anglais avec separateur virgule', () => {
+  assert.equal(fcfa(250000, 'en'), '250,000 FCFA')
+  assert.equal(formatNombre(2847, 'en'), '2,847')
 })
 
 it('escapeHtml & decodeHtml: encodage et décodage sécurisé', () => {

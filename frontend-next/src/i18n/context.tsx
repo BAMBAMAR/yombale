@@ -14,10 +14,14 @@ import {
 import { dictionaries } from './index'
 import type { TranslationKey, TranslationSchema } from './types'
 
+import { fcfa, formatNombre } from '@/lib/format'
+
 interface I18nContextValue {
   locale: Locale
   setLocale: (newLocale: Locale) => void
   t: (key: TranslationKey, params?: Record<string, string | number>) => string
+  formatPrice: (price: number | string | null | undefined) => string
+  formatNumber: (val: number | string | null | undefined) => string
   isRtl: boolean
   meta: LocaleMeta
 }
@@ -103,15 +107,20 @@ export function I18nProvider({
     [locale]
   )
 
+  const formatPrice = useCallback((price: number | string | null | undefined) => fcfa(price, locale), [locale])
+  const formatNumber = useCallback((val: number | string | null | undefined) => formatNombre(val, locale), [locale])
+
   const value = useMemo(
     () => ({
       locale,
       setLocale,
       t,
+      formatPrice,
+      formatNumber,
       isRtl,
       meta,
     }),
-    [locale, setLocale, t, isRtl, meta]
+    [locale, setLocale, t, formatPrice, formatNumber, isRtl, meta]
   )
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
@@ -127,6 +136,8 @@ export function useTranslation() {
       setLocale: () => {},
       isRtl: isRTL(fallbackLocale),
       meta: LOCALES_META[fallbackLocale] || LOCALES_META.fr,
+      formatPrice: (price: number | string | null | undefined) => fcfa(price, fallbackLocale),
+      formatNumber: (val: number | string | null | undefined) => formatNombre(val, fallbackLocale),
       t: (key: TranslationKey, params?: Record<string, string | number>) => {
         const dict = dictionaries[fallbackLocale] || dictionaries.fr
         let raw = resolveNestedKey(dict, key) || resolveNestedKey(dictionaries.fr, key) || key
