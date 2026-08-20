@@ -16,10 +16,15 @@
     - Ouverture fluide par le bas avec glissement amorti (`mobileBsSlideUp`), poignée supérieure de glissement (*drag handle*), bouton de fermeture rapide ✕ et flou d'arrière-plan (`backdrop-filter: blur(2px)`).
     - Affichage hiérarchique clair de l'ensemble des groupes et sous-menus avec titres de catégories, icônes, compteurs et bordures actives (`var(--accent)`).
     - Conservation intégrale des badges d'accès forfait (`🔒 Pro`, `🔒 Business`) et des compteurs dynamiques de commandes.
-  * **Intégration & Responsive CSS (`globals.css`)** :
-    - Activation ciblée uniquement sous les breakpoints mobiles (`max-width: 768px` pour le Compte, `max-width: 640px` pour la Boutique).
-    - Préservation totale de l'arborescence et de la barre latérale accordéon sur grand écran (Desktop).
-    - Verrouillage automatique du défilement du corps de page (`overflow: hidden`) à l'ouverture du tiroir pour une expérience native.
+  * **Harmonisation du Fil d'Ariane & Retours Espace Boutique (`BoutiqueClient.tsx`)** :
+    - Remplacement de l'ancien fil d'Ariane texte brut `← Mon compte / Mes boutiques` par la pastille badge standard du Design System Nopalou (`Mon compte > Mes boutiques` avec fond crème `var(--orange2)`, bordure douce et chevron orange).
+  * **Adaptabilité Mobile du Guide d'Utilisation (`GuideUtilisationClient.tsx` & `globals.css`)** :
+    - Remplacement du layout rigide en 2 colonnes par `.guide-container-grid` (1 colonne fluide sous 860px).
+    - Ajout d'un sélecteur déroulant de module optimisé mobile (`.guide-selector-mobile`) permettant de passer instantanément d'un module à l'autre sans subir le scroll vertical des 12 éléments de sommaire.
+  * **Optimisation Anti-Débordement du Carnet de Dettes (`CarnetDettes.tsx`)** :
+    - Boutons d'action `+ Nouveau client` et `+ Vente à crédit (Dette)` : passage en flex wrap fluide avec `minWidth: 0` et `textOverflow: ellipsis`.
+    - Cartes KPI synthétiques : `repeat(auto-fit, minmax(130px, 1fr))` avec troncature sécurisée des libellés et montants.
+    - Onglets de filtrage : défilement horizontal fluide tactile avec masquage de la barre de scroll.
   * **Contrôle Qualité & Tests Automatisés** :
     - Compilation TypeScript stricte (`npx tsc --noEmit`) : 0 erreur (code 0).
     - Suite de tests unitaires (`npm test`) : 31/31 tests passés avec succès.

@@ -881,7 +881,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
       {/* En-tête Synthétique Harmonisé (Couleurs Claires du Site) */}
       <div style={{
@@ -937,33 +937,34 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             display: 'flex',
             flexDirection: 'column',
             gap: 8,
-            width: isMobile ? '100%' : 'auto'
+            width: isMobile ? '100%' : 'auto',
+            minWidth: 0
           }}>
             {/* Ligne 1 : Bouton Principal d'Ajout */}
-            <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+            <div style={{ display: 'flex', gap: 8, width: '100%', flexWrap: 'wrap' }}>
               <button
                 onClick={() => setShowModalNouveauClient(true)}
                 className="npl-btn npl-btn-primary npl-btn-md"
-                style={{ flex: 1, color: '#ffffff' }}
+                style={{ flex: '1 1 135px', minWidth: 0, color: '#ffffff', justifyContent: 'center' }}
               >
                 <span style={{ filter: 'brightness(0) invert(1)' }}>👤</span>
-                <span>+ {t('shop.newCustomerBtn')}</span>
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>+ {t('shop.newCustomerBtn')}</span>
               </button>
 
               <button
                 onClick={() => ouvrirModalTransaction('vente_credit')}
                 className="npl-btn npl-btn-accent npl-btn-md"
-                style={{ flex: isMobile ? 1 : 'none' }}
+                style={{ flex: '1 1 135px', minWidth: 0, justifyContent: 'center' }}
               >
                 <span>⚡</span>
-                <span>+ {t('shop.transactionCreditSale')}</span>
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>+ {t('shop.transactionCreditSale')}</span>
               </button>
             </div>
 
             {/* Ligne 2 : Actions secondaires et Utilitaires */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(3, auto)',
+              gridTemplateColumns: 'repeat(3, 1fr)',
               gap: 6,
               width: '100%'
             }}>
@@ -971,15 +972,17 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 onClick={() => setShowQrModalComptoir(true)}
                 className="npl-btn npl-btn-secondary npl-btn-sm"
                 title="QR Code"
+                style={{ minWidth: 0, padding: '6px 4px', justifyContent: 'center' }}
               >
                 <span>📱</span>
-                <span>QR Client</span>
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>QR Client</span>
               </button>
 
               <button
                 onClick={handleExportCSV}
                 className="npl-btn npl-btn-secondary npl-btn-sm"
                 title={t('common.exportCsv')}
+                style={{ minWidth: 0, padding: '6px 4px', justifyContent: 'center' }}
               >
                 <span>📥</span>
                 <span>CSV</span>
@@ -989,6 +992,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 onClick={handleExportPDF}
                 className="npl-btn npl-btn-secondary npl-btn-sm"
                 title={t('common.exportPdf')}
+                style={{ minWidth: 0, padding: '6px 4px', justifyContent: 'center' }}
               >
                 <span>🖨️</span>
                 <span>PDF</span>
@@ -1000,23 +1004,26 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         {/* Cartes KPI Épurées */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)',
-          gap: isMobile ? 8 : 12
+          gridTemplateColumns: isMobile ? 'repeat(auto-fit, minmax(130px, 1fr))' : 'repeat(3, 1fr)',
+          gap: isMobile ? 8 : 12,
+          width: '100%'
         }}>
           {/* KPI 1 : Total Dettes */}
           <div className="npl-card-subtle" style={{
             borderLeft: '3px solid #dc2626',
             padding: isMobile ? '10px 12px' : '14px 16px',
-            background: '#ffffff'
+            background: '#ffffff',
+            minWidth: 0,
+            overflow: 'hidden'
           }}>
-            <div className="npl-badge npl-badge-danger" style={{ marginBottom: 6, fontSize: isMobile ? 10 : 11 }}>
+            <div className="npl-badge npl-badge-danger" style={{ marginBottom: 6, fontSize: isMobile ? 10 : 11, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               <span className="npl-badge-dot" />
               <span>{t('shop.totalOwed').toUpperCase()}</span>
             </div>
-            <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 800, color: '#dc2626', fontVariantNumeric: 'tabular-nums' }}>
+            <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 800, color: '#dc2626', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {fcfa(totalDettesAEncaisser)}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {nbClientsDebiteurs} {t('shop.debtorsCount')}
             </div>
           </div>
@@ -1025,16 +1032,18 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           <div className="npl-card-subtle" style={{
             borderLeft: '3px solid #16a34a',
             padding: isMobile ? '10px 12px' : '14px 16px',
-            background: '#ffffff'
+            background: '#ffffff',
+            minWidth: 0,
+            overflow: 'hidden'
           }}>
-            <div className="npl-badge npl-badge-success" style={{ marginBottom: 6, fontSize: isMobile ? 10 : 11 }}>
+            <div className="npl-badge npl-badge-success" style={{ marginBottom: 6, fontSize: isMobile ? 10 : 11, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               <span className="npl-badge-dot" />
               <span>{t('shop.advancesCount').toUpperCase()}</span>
             </div>
-            <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 800, color: '#16a34a', fontVariantNumeric: 'tabular-nums' }}>
+            <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 800, color: '#16a34a', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {fcfa(totalAvancesClients)}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {t('shop.advancesCount')}
             </div>
           </div>
@@ -1044,7 +1053,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             <div className="npl-card-subtle" style={{
               borderLeft: '3px solid var(--navy)',
               padding: '14px 16px',
-              background: '#ffffff'
+              background: '#ffffff',
+              minWidth: 0,
+              overflow: 'hidden'
             }}>
               <div className="npl-badge npl-badge-neutral" style={{ marginBottom: 6, fontSize: 11 }}>
                 <span className="npl-badge-dot" />
@@ -1169,8 +1180,8 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
       )}
 
       {/* Barre de Recherche & Filtres */}
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ flex: '1 1 220px', position: 'relative' }}>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        <div style={{ flex: '1 1 200px', minWidth: 0, width: '100%', position: 'relative' }}>
           <input
             type="text"
             placeholder={`🔍 ${t('common.search')}...`}
@@ -1191,7 +1202,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           />
         </div>
 
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '100%', paddingBottom: 2, WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
           {[
             { id: 'tous', label: `${t('common.all')} (${clients.length})` },
             { id: 'retard', label: `🔴 ${t('shop.filterDebtors')} (${nbClientsDebiteurs})` },
@@ -1201,16 +1212,17 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               key={f.id}
               onClick={() => setFiltreStatus(f.id as any)}
               style={{
-                padding: '7px 14px',
+                padding: '7px 12px',
                 borderRadius: 20,
                 border: filtreStatus === f.id ? '2px solid var(--navy)' : '1px solid var(--border)',
                 background: filtreStatus === f.id ? 'var(--navy)' : 'var(--card)',
                 color: filtreStatus === f.id ? '#ffffff' : 'var(--text2)',
-                fontSize: 12.5,
+                fontSize: 12,
                 fontWeight: 700,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                minHeight: 36
+                minHeight: 34,
+                flexShrink: 0
               }}
             >
               {f.label}

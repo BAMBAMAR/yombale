@@ -79,10 +79,10 @@ export default function GuideUtilisationClient() {
       </div>
 
       {/* Disposition Navigation Latérale + Contenu */}
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 32, alignItems: 'start' }}>
+      <div className="guide-container-grid">
         
-        {/* Menu Latéral des Sections */}
-        <aside style={{
+        {/* Menu Latéral des Sections (Desktop) */}
+        <aside className="guide-sidebar-desktop" style={{
           background: '#fff', border: '1px solid #E2E8F0', borderRadius: 18, padding: '16px',
           boxShadow: '0 4px 16px rgba(0,0,0,0.03)', position: 'sticky', top: 20,
         }}>
@@ -130,11 +130,46 @@ export default function GuideUtilisationClient() {
           </div>
         </aside>
 
+        {/* Sélecteur de Section Mobile Déroulant */}
+        <div className="guide-selector-mobile">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>
+              📖 Module Actuel :
+            </span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#C75B00', background: '#FFF7ED', padding: '2px 8px', borderRadius: 10 }}>
+              {SECTIONS.findIndex(s => s.id === activeTab) + 1} / {SECTIONS.length}
+            </span>
+          </div>
+
+          <select
+            value={activeTab}
+            onChange={(e) => {
+              setActiveTab(e.target.value)
+              window.scrollTo({ top: 320, behavior: 'smooth' })
+            }}
+            style={{
+              width: '100%',
+              padding: '12px 14px',
+              borderRadius: 12,
+              border: '2px solid #C75B00',
+              background: '#FFF7ED',
+              color: '#1C2B4A',
+              fontWeight: 800,
+              fontSize: 14,
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+          >
+            {SECTIONS.map((sec, idx) => (
+              <option key={sec.id} value={sec.id}>
+                {idx + 1}. {sec.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Panneau Principal de Contenu */}
-        <main style={{
-          background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, padding: '36px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-        }}>
+        <main className="guide-content-panel">
 
           {/* 1. DÉMARRAGE & INSCRIPTION */}
           {(activeTab === 'intro' || searchQuery) && (

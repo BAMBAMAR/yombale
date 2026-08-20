@@ -4449,17 +4449,41 @@ export default function BoutiqueClient({
   // Vue liste
   return (
     <main style={{ maxWidth: 1200, margin: '32px auto', padding: '0 20px 80px', overflowX: 'hidden' }}>
-      {/* Navigation Fil d Ariane */}
-      <nav aria-label="Fil d Ariane" style={{ marginBottom: 16 }}>
-        <ol style={{ display: 'flex', alignItems: 'center', gap: 8, listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#64748b' }}>
-          <li>
-            <Link href="/compte" style={{ color: '#64748b', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-              <ArrowLeft size={14} /> Mon compte
-            </Link>
-          </li>
-          <li style={{ color: '#cbd5e1' }}>/</li>
-          <li style={{ fontWeight: 700, color: '#0f172a' }}>Mes boutiques</li>
-        </ol>
+      {/* Navigation Fil d'Ariane Standard Nopalou */}
+      <nav
+        aria-label="Fil d'Ariane"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: 12,
+          fontWeight: 600,
+          background: 'var(--orange2, #FFF3E8)',
+          padding: '5px 14px',
+          borderRadius: '20px',
+          border: '1px solid rgba(199, 91, 0, 0.12)',
+          boxShadow: '0 1px 3px rgba(199, 91, 0, 0.05)',
+          marginBottom: 16,
+        }}
+      >
+        <Link
+          href="/compte"
+          style={{
+            color: 'var(--text2, #6B5E52)',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
+          Mon compte
+        </Link>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #C75B00)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+        <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 700 }}>
+          Mes boutiques
+        </span>
       </nav>
 
       {/* Header Principal Harmonisé & Unifié */}
