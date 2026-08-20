@@ -6584,20 +6584,20 @@ a {
 /* ── Dashboard compte utilisateur (/compte/*) ── */
 .account-layout {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 24px;
+  grid-template-columns: 280px 1fr;
+  gap: 28px;
   align-items: start;
   padding: 24px 20px 80px;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
 }
 
 .account-sidebar {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(26, 22, 18, 0.05);
+  padding: 18px;
   position: sticky;
   top: 84px; /* sous la navbar sticky (62px) + marge */
 }

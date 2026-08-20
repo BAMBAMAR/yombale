@@ -37,9 +37,15 @@
       4. *🏪 Caisse POS & Vente Web* (Digitalisation boutique, caisse hors-ligne, dettes, factures OHADA).
     - Contrôles manuels (flèches gauche/droite, dots de pagination) et pause automatique au survol ou au toucher.
     - **Affichage Mobile Dédié (`.hero-mobile-carousel-wrap`)** : Intégration soignée sous la barre de recherche sur smartphone, parfaitement dimensionnée et lisible.
+  * **Modernisation & Harmonisation du Menu Espace Compte (`AccountNavLinks.tsx`, `AccountSidebarClient.tsx`)** :
+    - Refonte complète de la barre latérale du compte (`/compte`) alignée sur le design system de la Boutique.
+    - Navigation en **4 groupes accordéons interactifs** avec indicateurs de comptage, chevrons animés et dépliage automatique du groupe actif.
+    - Carte d'identité utilisateur enrichie avec avatar en dégradé chaud Nopalou, nom, email et badges de statut.
+    - Boutons d'action rapide pleine largeur (*Déposer une annonce*, *Publier un bien immo*) sans rupture de ligne.
+    - Footer de navigation rapide : accès direct au *Guide d'utilisation*, à l'*Espace Boutique* et à la *Déconnexion*.
   * **Qualité & Tests de Validation** :
     - Compilation TypeScript stricte (`npx tsc --noEmit`) : 0 erreur (code 0).
-    - Couverture i18n 100% (830/830 clés présentes en FR, EN, AR).
+    - Couverture i18n 100% (831/831 clés présentes en FR, EN, AR).
     - Respect absolu de la directive AGENTS.md (polices système natives, 0 font-fetch externe).
 
 - **Hub « Marketing & Visibilité », Partage Instantané Post-Création & Visuels 100% Marque Blanche Marchand (`main` - 20 août 2026)** 📣 :
