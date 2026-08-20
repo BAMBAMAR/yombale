@@ -26,8 +26,22 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
   const [selectedCat, setSelectedCat] = useState<CategorieCommerce>('superette')
   const [selectedEquip, setSelectedEquip] = useState<StatutEquipement>('sans_app')
 
-  // Simulateur State
-  const [simulShops, setSimulShops] = useState(20)
+  // Simulateur Multi-Forfaits State
+  const [nbTafTaf, setNbTafTaf] = useState(5)
+  const [nbPro, setNbPro] = useState(12)
+  const [nbBusiness, setNbBusiness] = useState(3)
+
+  const PRIX_TAFTAF = 2500
+  const PRIX_PRO = 5000
+  const PRIX_BUSINESS = 10000
+  const TAUX_COMMISSION = 0.20 // 20%
+
+  const comTafTaf = nbTafTaf * PRIX_TAFTAF * TAUX_COMMISSION
+  const comPro = nbPro * PRIX_PRO * TAUX_COMMISSION
+  const comBusiness = nbBusiness * PRIX_BUSINESS * TAUX_COMMISSION
+  const totalBoutiquesSimul = nbTafTaf + nbPro + nbBusiness
+  const totalComMensuelle = comTafTaf + comPro + comBusiness
+  const totalComAnnuelle = totalComMensuelle * 12
 
   const ETAPES = [
     {
@@ -93,10 +107,12 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
                   fontSize: 13, fontWeight: 800, color: '#C75B00', background: '#FFF7ED',
                   borderRadius: '50%', width: 26, height: 26, display: 'flex',
                   alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>{i + 1}</span>
+                }}>
+                  {i + 1}
+                </span>
                 <div>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', margin: '0 0 4px' }}>{e.titre}</p>
-                  <p style={{ fontSize: 13, color: '#64748B', margin: 0, lineHeight: 1.6 }}>{e.detail}</p>
+                  <h3 style={{ fontSize: 15, fontWeight: 800, color: '#1C2B4A', margin: '0 0 4px' }}>{e.titre}</h3>
+                  <p style={{ fontSize: 13, color: '#64748B', margin: 0, lineHeight: 1.5 }}>{e.detail}</p>
                 </div>
               </div>
             ))}
@@ -131,7 +147,6 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
     })
   }
 
-  // Matrice Pitchs Adaptés avec le Code Apporteur Réel
   const MATRICE_PITCHS: Record<CategorieCommerce, {
     label: string
     emoji: string
@@ -218,15 +233,15 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
       },
       avec_app: {
         pitch: `« Bonjour ! Économisez les 20% à 30% de commission des plateformes de livraison en faisant commander vos clients en direct à 0% : ${lien} »`,
-        demo: 'Calculateur d\'économies sur les commissions de livraison.',
-        objection: 'Gardez 100% de votre marge sur vos clients réguliers.',
+        demo: 'Impression ticket de caisse thermique Bluetooth en cuisine.',
+        objection: 'Évitez les intermédiaires et conservez 100% de votre marge.',
       },
     },
     grossiste: {
-      label: 'Grossistes & Enseignes',
+      label: 'Grossiste & Demi-Gros',
       emoji: '📦',
       sans_app: {
-        pitch: `« Salam alaykoum ! Import de catalogue Excel par lot, gestion multi-caissiers PIN et facturation OHADA sécurisée : ${lien} »`,
+        pitch: `« Salam alaykoum chef ! Gérez vos prix de gros par quantité, vos acomptes clients et votre inventaire sans erreur sur smartphone : ${lien} »`,
         demo: 'Import de 1 000 articles Excel en 3 secondes.',
         objection: 'Sécurise vos encaissements et dettes clients sans risque de perte.',
       },
@@ -273,8 +288,19 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
         </div>
       </div>
 
-      {/* Navigation Sous-Onglets Apporteur */}
-      <div style={{ display: 'flex', gap: 8, borderBottom: '2px solid #E2E8F0', paddingBottom: 2 }}>
+      {/* Navigation Sous-Onglets Apporteur (avec défilement fluide sans troncature) */}
+      <div
+        className="nopalou-scroll-tabs"
+        style={{
+          display: 'flex',
+          gap: 6,
+          borderBottom: '2px solid #E2E8F0',
+          paddingBottom: 2,
+          overflowX: 'auto',
+          scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
         {[
           { id: 'kit', label: '🚀 Boîte à Outils Terrain', icon: Zap },
           { id: 'pitchs', label: '💬 Pitchs Personnalisés', icon: MessageSquare },
@@ -288,11 +314,19 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
               key={t.id}
               onClick={() => setActiveSubTab(t.id as any)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px',
-                border: 'none', background: 'none', cursor: 'pointer',
-                fontSize: 13, fontWeight: isActive ? 800 : 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '10px 16px',
+                border: 'none',
+                background: 'none',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: isActive ? 800 : 600,
                 color: isActive ? '#C75B00' : '#64748B',
                 borderBottom: isActive ? '3px solid #C75B00' : '3px solid transparent',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
                 transition: 'all 0.15s',
               }}
             >
@@ -349,26 +383,184 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
             </div>
           </div>
 
-          {/* Simulateur Rapide de Gains Apporteur */}
-          <div style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 14, padding: '20px' }}>
-            <span style={{ fontSize: 14, fontWeight: 900, color: '#1C2B4A', display: 'block', marginBottom: 8 }}>
-              💰 Vos Revenus Passifs Estimés (20% Récurrent) :
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
-              <span style={{ fontSize: 13, color: '#64748B' }}>Nombre de boutiques recrutées :</span>
-              <input
-                type="number"
-                min="1"
-                value={simulShops}
-                onChange={(e) => setSimulShops(Math.max(1, parseInt(e.target.value) || 1))}
-                style={{ width: 80, padding: '6px 10px', borderRadius: 6, border: '1px solid #CBD5E1', fontWeight: 800, fontSize: 14 }}
-              />
-            </div>
-            <div style={{ background: '#1C2B4A', borderRadius: 10, padding: '14px 20px', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 13, color: '#94A3B8' }}>Revenu mensuel récurrent versé par Wave :</span>
-              <span style={{ fontSize: 22, fontWeight: 900, color: '#4ADE80' }}>
-                {fcfa(simulShops * 5000 * 0.2)} / mois
+          {/* Simulateur Multi-Forfaits de Gains Apporteur (20% Récurrent) */}
+          <div style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 14, padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+              <div>
+                <span style={{ fontSize: 15, fontWeight: 900, color: '#1C2B4A', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>💰</span>
+                  <span>Simulateur de Revenus Passifs (20% Récurrent)</span>
+                </span>
+                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>
+                  Ajustez le nombre de boutiques selon chaque forfait d&apos;abonnement mensuel :
+                </p>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 800, background: '#FFEDD5', color: '#9A3412', padding: '3px 8px', borderRadius: 8 }}>
+                20% à vie par abonnement
               </span>
+            </div>
+
+            {/* Grille des 3 Forfaits */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+              {/* Forfait 1 : Taf Taf */}
+              <div style={{ background: '#ffffff', border: '1px solid #FED7AA', borderRadius: 12, padding: '14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#1C2B4A' }}>🚀 Forfait Taf Taf</span>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: '#C75B00', background: '#FFF7ED', padding: '2px 6px', borderRadius: 6 }}>
+                    2 500 F/m
+                  </span>
+                </div>
+                <div style={{ fontSize: 11.5, color: '#64748B' }}>
+                  Gain 20% : <strong style={{ color: '#16A34A' }}>500 FCFA / boutique / mois</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>Boutiques :</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      type="button"
+                      onClick={() => setNbTafTaf(prev => Math.max(0, prev - 1))}
+                      style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #CBD5E1', background: '#F1F5F9', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      value={nbTafTaf}
+                      onChange={(e) => setNbTafTaf(Math.max(0, parseInt(e.target.value) || 0))}
+                      style={{ width: 50, textAlign: 'center', padding: '4px', borderRadius: 6, border: '1px solid #CBD5E1', fontWeight: 800, fontSize: 13 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setNbTafTaf(prev => prev + 1)}
+                      style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #CBD5E1', background: '#F1F5F9', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 750, color: '#1C2B4A', textAlign: 'right', borderTop: '1px dashed #E2E8F0', paddingTop: 6 }}>
+                  = {fcfa(comTafTaf)} / mois
+                </div>
+              </div>
+
+              {/* Forfait 2 : Pro */}
+              <div style={{ background: '#ffffff', border: '1.5px solid #C75B00', borderRadius: 12, padding: '14px', display: 'flex', flexDirection: 'column', gap: 10, position: 'relative', boxShadow: '0 2px 8px rgba(199,91,0,0.08)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 900, color: '#1C2B4A' }}>⭐ Forfait Pro</span>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: '#ffffff', background: '#C75B00', padding: '2px 6px', borderRadius: 6 }}>
+                    5 000 F/m
+                  </span>
+                </div>
+                <div style={{ fontSize: 11.5, color: '#64748B' }}>
+                  Gain 20% : <strong style={{ color: '#16A34A' }}>1 000 FCFA / boutique / mois</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>Boutiques :</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      type="button"
+                      onClick={() => setNbPro(prev => Math.max(0, prev - 1))}
+                      style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #CBD5E1', background: '#F1F5F9', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      value={nbPro}
+                      onChange={(e) => setNbPro(Math.max(0, parseInt(e.target.value) || 0))}
+                      style={{ width: 50, textAlign: 'center', padding: '4px', borderRadius: 6, border: '1.5px solid #C75B00', fontWeight: 800, fontSize: 13 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setNbPro(prev => prev + 1)}
+                      style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #CBD5E1', background: '#F1F5F9', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#C75B00', textAlign: 'right', borderTop: '1px dashed #E2E8F0', paddingTop: 6 }}>
+                  = {fcfa(comPro)} / mois
+                </div>
+              </div>
+
+              {/* Forfait 3 : Business VIP */}
+              <div style={{ background: '#ffffff', border: '1px solid #BAE6FD', borderRadius: 12, padding: '14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#1C2B4A' }}>👑 Business VIP</span>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: '#0369A1', background: '#E0F2FE', padding: '2px 6px', borderRadius: 6 }}>
+                    10 000 F/m
+                  </span>
+                </div>
+                <div style={{ fontSize: 11.5, color: '#64748B' }}>
+                  Gain 20% : <strong style={{ color: '#16A34A' }}>2 000 FCFA / boutique / mois</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>Boutiques :</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      type="button"
+                      onClick={() => setNbBusiness(prev => Math.max(0, prev - 1))}
+                      style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #CBD5E1', background: '#F1F5F9', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      value={nbBusiness}
+                      onChange={(e) => setNbBusiness(Math.max(0, parseInt(e.target.value) || 0))}
+                      style={{ width: 50, textAlign: 'center', padding: '4px', borderRadius: 6, border: '1px solid #CBD5E1', fontWeight: 800, fontSize: 13 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setNbBusiness(prev => prev + 1)}
+                      style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #CBD5E1', background: '#F1F5F9', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 750, color: '#1C2B4A', textAlign: 'right', borderTop: '1px dashed #E2E8F0', paddingTop: 6 }}>
+                  = {fcfa(comBusiness)} / mois
+                </div>
+              </div>
+            </div>
+
+            {/* Synthèse des Gains Récurrents */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #1C2B4A 0%, #0F172A 100%)',
+                borderRadius: 12,
+                padding: '16px 20px',
+                color: '#fff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 12,
+                boxShadow: '0 4px 14px rgba(15,23,42,0.2)',
+              }}
+            >
+              <div>
+                <span style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
+                  Total {totalBoutiquesSimul} boutique{totalBoutiquesSimul > 1 ? 's' : ''} active{totalBoutiquesSimul > 1 ? 's' : ''}
+                </span>
+                <span style={{ fontSize: 13, color: '#CBD5E1' }}>
+                  Revenu mensuel récurrent versé par Wave :
+                </span>
+              </div>
+
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: 24, fontWeight: 900, color: '#4ADE80', display: 'block', lineHeight: 1.1 }}>
+                  {fcfa(totalComMensuelle)} <span style={{ fontSize: 14, fontWeight: 600, color: '#86EFAC' }}>/ mois</span>
+                </span>
+                <span style={{ fontSize: 11, color: '#94A3B8' }}>
+                  soit <strong>{fcfa(totalComAnnuelle)}</strong> / an de revenus passifs
+                </span>
+              </div>
             </div>
           </div>
         </div>

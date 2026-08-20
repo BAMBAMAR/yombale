@@ -45,6 +45,13 @@
       * *Niveau 1* : Pilules de sélection des grands groupes (Annonces & Achats, Espace Boutique, Compte & Parrainage, Publier) avec compteurs.
       * *Niveau 2* : Sous-menus directs défilants horizontalement avec indicateur actif accentué, badges et icônes.
     - Élimination des conflits CSS mobiles qui déformaient les accordéons.
+  * **Optimisation & Simulateur Multi-Forfaits Espace Apporteur (`ApporteurClient.tsx`)** :
+    - Élimination des troncatures de texte sur les sous-onglets (*Boîte à Outils Terrain, Pitchs Personnalisés, Supports Imprimables, Boutiques Recrutées*) grâce à un défilement tactile fluide horizontal (`overflowX: auto`, `whiteSpace: nowrap`).
+    - Refonte complète du **Simulateur de Revenus Passifs** pour intégrer les **3 forfaits réels** :
+      * *Forfait Taf Taf (2 500 F/m)* : 500 FCFA / boutique / mois (20%).
+      * *Forfait Pro (5 000 F/m)* : 1 000 FCFA / boutique / mois (20%).
+      * *Forfait Business VIP (10 000 F/m)* : 2 000 FCFA / boutique / mois (20%).
+    - Répartition interactive par forfait avec boutons +/- et calculs automatiques des totaux mensuels et annuels estimés.
   * **Qualité & Tests de Validation** :
     - Compilation TypeScript stricte (`npx tsc --noEmit`) : 0 erreur (code 0).
     - Couverture i18n 100% (831/831 clés présentes en FR, EN, AR).
