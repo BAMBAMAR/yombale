@@ -1,3 +1,16 @@
+- **Micro-Balancement Périodique (1x/min) & Centrage Fluide au Clic (`main` - 20 août 2026)** 🔄📱 :
+  * **Création du Hook Universel `useScrollNudge` (`src/hooks/useScrollNudge.ts`)** :
+    - **Micro-Balancement Périodique (Toutes les 60 secondes)** : Dès l'ouverture (1.5s) puis toutes les 60 secondes sur smartphone (`window.innerWidth ≤ 768px`), le ruban effectue un balancement imperceptible de **+35px vers la droite pendant 550ms avant de revenir**, rappelant silencieusement que le contenu est défilable.
+    - **Conditions Intelligentes Anti-Perturbation** : Ne se déclenche que s'il y a un réel débordement (`scrollWidth > clientWidth`), que l'utilisateur n'est pas déjà au bout à droite, et se met en pause immédiate dès que l'utilisateur touche l'écran (`touchstart` / `mouseenter`).
+    - **Centrage Fluide au Clic (`scrollToCenter`)** : Dès qu'un marchand touche un filtre de statut (ex: *« En préparation »*, *« Livrée »*, *« Abandonnés »*), le bouton glisse automatiquement au centre du champ de vision avec animation ultra-douce.
+  * **Intégration & Propagation Globale** :
+    - Connecté sur les filtres de statuts de commandes (`Commandes.tsx`).
+    - Connecté sur les rubans d'accueil (`page.tsx`) et onglets comptables/caisse (`.nopalou-scroll-tabs`, `.hero-categories-scroll`, `.caisse-categories-bar`).
+  * **Validation & Contrôle Qualité** :
+    - TypeScript strict (`npx tsc --noEmit`) : 0 erreur (code 0).
+    - Tests unitaires (`npm test`) : 31/31 tests validés avec succès (100%).
+    - Respect des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Résolution Débordements Hub Marketing & Affordance Défilement Horizontal (`main` - 20 août 2026)** 🎨📱 :
   * **Élimination des Débordements dans « Marketing & Visibilité » (`BoutiqueClient.tsx` & `globals.css`)** :
     - **Classes Responsives Dédiées (`.mkt-banner`, `.mkt-card`, `.mkt-grid-2`)** : Remplacement des colonnes rigides `minmax(320px)` et `minmax(300px)` (qui excédaient les écrans mobiles < 380px) par des conteneurs fluides 1 colonne sur smartphone avec marges resserrées (`14px 12px` au lieu de `24px 28px`).

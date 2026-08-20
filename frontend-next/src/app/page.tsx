@@ -337,7 +337,7 @@ export default async function HomePage({
           
           {/* LIGNE 1 STRICTE : Budget + État (Gauche) | Bouton Boutique (Droite) */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%', flexWrap: 'nowrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
+            <div className="horizontal-scroll-fade" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', whiteSpace: 'nowrap', marginRight: 2 }}>Budget :</span>
               {BUDGETS.map((b) => {
                 const isActive = (b.prixMin === prixMin && b.prixMax === prixMax) || (b.label === 'Tout' && !prixMin && !prixMax);
@@ -387,7 +387,7 @@ export default async function HomePage({
 
           {/* LIGNE 2 STRICTE : Trier + Tendances (Gauche) | Effacer (Droite) */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%', flexWrap: 'nowrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
+            <div className="horizontal-scroll-fade" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', whiteSpace: 'nowrap', marginRight: 2 }}>Trier :</span>
               {TRIS.map((t) => {
                 const isActive = tri === t.val;

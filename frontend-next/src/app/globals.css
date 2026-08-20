@@ -10115,7 +10115,10 @@ button:focus-visible,
 
   /* ── Ruban de Défilement Horizontal avec Affordance de Dégradé (Edge Fade & Peeking) ── */
   .commandes-status-scroll,
-  .horizontal-scroll-fade {
+  .horizontal-scroll-fade,
+  .nopalou-scroll-tabs,
+  .hero-categories-scroll,
+  .caisse-categories-bar {
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
     padding-bottom: 6px !important;
@@ -10127,12 +10130,18 @@ button:focus-visible,
   }
 
   .commandes-status-scroll::-webkit-scrollbar,
-  .horizontal-scroll-fade::-webkit-scrollbar {
+  .horizontal-scroll-fade::-webkit-scrollbar,
+  .nopalou-scroll-tabs::-webkit-scrollbar,
+  .hero-categories-scroll::-webkit-scrollbar,
+  .caisse-categories-bar::-webkit-scrollbar {
     display: none;
   }
 
-  .commandes-status-scroll > button,
-  .horizontal-scroll-fade > * {
+  .commandes-status-scroll > *,
+  .horizontal-scroll-fade > *,
+  .nopalou-scroll-tabs > *,
+  .hero-categories-scroll > *,
+  .caisse-categories-bar > * {
     flex-shrink: 0 !important;
     white-space: nowrap !important;
   }

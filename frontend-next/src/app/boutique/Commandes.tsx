@@ -1,10 +1,11 @@
 'use client'
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition, useRef } from 'react'
 import { listCommandes, updateStatutCommande, creerBoutiqueDocument } from './actions'
 import { fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import { ZonesView } from './Comptabilite'
 import { useTranslation } from '@/i18n/context'
+import { useScrollNudge } from '@/hooks/useScrollNudge'
 
 interface Commande {
   id: string; reference: string; nom_produit: string; quantite: number
@@ -381,6 +382,8 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
+  const { scrollRef, scrollToCenter } = useScrollNudge()
+
   const filtreStatuts = [
     { key: '', label: t('common.all') },
     { key: 'en_attente', label: t('shop.statusPending') },
@@ -584,23 +587,34 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
         </div>
       )}
 
-      {/* Filtres statut + Onglet Paniers Abandonnés (Défilement horizontal fluide sur mobile) */}
-      <div className="commandes-status-scroll" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      {/* Filtres statut + Onglet Paniers Abandonnés (Défilement horizontal fluide sur mobile avec Nudge 1x/min) */}
+      <div ref={scrollRef} className="commandes-status-scroll" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {filtreStatuts.map(f => (
-          <button key={f.key} onClick={() => setFiltre(f.key)} style={{
-            padding: '5px 12px', borderRadius: 20, border: '1px solid',
-            borderColor: filtre === f.key ? '#C75B00' : '#e5e7eb',
-            background: filtre === f.key ? '#fff7f0' : '#fff',
-            color: filtre === f.key ? '#C75B00' : '#374151',
-            fontWeight: filtre === f.key ? 700 : 500,
-            fontSize: 12, cursor: 'pointer',
-          }}>
+          <button
+            key={f.key}
+            onClick={(e) => {
+              setFiltre(f.key)
+              scrollToCenter(e.currentTarget)
+            }}
+            style={{
+              padding: '5px 12px', borderRadius: 20, border: '1px solid',
+              borderColor: filtre === f.key ? '#C75B00' : '#e5e7eb',
+              background: filtre === f.key ? '#fff7f0' : '#fff',
+              color: filtre === f.key ? '#C75B00' : '#374151',
+              fontWeight: filtre === f.key ? 700 : 500,
+              fontSize: 12, cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
             {f.label}
           </button>
         ))}
 
         <button
-          onClick={() => setFiltre('abandonne')}
+          onClick={(e) => {
+            setFiltre('abandonne')
+            scrollToCenter(e.currentTarget)
+          }}
           style={{
             padding: '5px 14px', borderRadius: 20, border: '1px solid',
             borderColor: filtre === 'abandonne' ? '#dc2626' : '#fecaca',
@@ -608,6 +622,7 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
             color: filtre === 'abandonne' ? '#dc2626' : '#991b1b',
             fontWeight: filtre === 'abandonne' ? 800 : 600,
             fontSize: 12, cursor: 'pointer',
+            transition: 'all 0.15s ease',
           }}
         >
           📢 {t('shop.cartTitle')} (Abandonnés)
