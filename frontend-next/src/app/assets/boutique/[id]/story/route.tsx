@@ -9,6 +9,9 @@ interface BoutiqueDetail {
   categorie: string | null
   ville: string
   logo_url: string | null
+  whatsapp?: string | null
+  telephone?: string | null
+  adresse?: string | null
 }
 
 export async function GET(
@@ -17,16 +20,19 @@ export async function GET(
 ) {
   let boutique: BoutiqueDetail | null = null
   try {
-    const data = await apiFetch<{ id: string; nom: string; categorie: string | null; ville: string; logo_url: string | null }>(
+    const data = await apiFetch<{ id: string; nom: string; categorie: string | null; ville: string; logo_url: string | null; whatsapp?: string | null; telephone?: string | null; adresse?: string | null }>(
       `/boutiques/${params.id}`
     )
     boutique = data as BoutiqueDetail
-  } catch { /* fallback générique ci-dessous */ }
+  } catch { /* fallback générique */ }
 
-  const nom = boutique?.nom ?? 'Boutique'
-  const categorie = boutique?.categorie ?? ''
-  const ville = boutique?.ville ?? 'Sénégal'
+  const nom = boutique?.nom ?? 'Notre Boutique'
+  const categorie = boutique?.categorie ?? 'Commerce & Vente'
+  const ville = boutique?.ville ?? 'Dakar, Sénégal'
   const logo = boutique?.logo_url ?? null
+  const contact = boutique?.whatsapp || boutique?.telephone || null
+  const adresse = boutique?.adresse || null
+  const initiale = nom.trim().charAt(0).toUpperCase() || '🏪'
 
   return new ImageResponse(
     (
@@ -36,233 +42,284 @@ export async function GET(
           height: 1920,
           display: 'flex',
           flexDirection: 'column',
-          background: 'linear-gradient(165deg, #1C2B4A 0%, #16223B 48%, #0F1D35 100%)',
-          fontFamily: 'system-ui, sans-serif',
+          background: 'linear-gradient(165deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           position: 'relative',
           overflow: 'hidden',
+          padding: '80px 70px 90px',
+          boxSizing: 'border-box',
+          justifyContent: 'space-between',
         }}
       >
-        {/* Halos décoratifs — profondeur atmosphérique */}
+        {/* Halos décoratifs atmosphériques */}
         <div
           style={{
             position: 'absolute',
-            right: -260,
-            top: -220,
-            width: 760,
-            height: 760,
+            right: -240,
+            top: -160,
+            width: 700,
+            height: 700,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(199,91,0,0.38) 0%, transparent 68%)',
+            background: 'radial-gradient(circle, rgba(2,132,199,0.25) 0%, transparent 68%)',
             display: 'flex',
           }}
         />
         <div
           style={{
             position: 'absolute',
-            left: -300,
-            bottom: 120,
-            width: 720,
-            height: 720,
+            left: -260,
+            bottom: 140,
+            width: 700,
+            height: 700,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(232,185,138,0.14) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(16,185,129,0.22) 0%, transparent 70%)',
             display: 'flex',
           }}
         />
 
-        {/* Bande d'accent diagonale, signature de la carte */}
+        {/* ── 1. EN-TÊTE DE LA VITRINE ── */}
         <div
           style={{
-            position: 'absolute',
-            right: -160,
-            top: 780,
-            width: 900,
-            height: 260,
-            background: 'linear-gradient(90deg, transparent 0%, rgba(199,91,0,0.55) 100%)',
-            transform: 'rotate(-14deg)',
             display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
           }}
-        />
-
-        {/* En-tête Nopalou */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '78px 80px 0' }}>
+        >
           <div
             style={{
-              width: 64,
-              height: 64,
-              borderRadius: 16,
-              background: '#C75B00',
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(12px)',
+              border: '1.5px solid rgba(255, 255, 255, 0.18)',
+              borderRadius: 20,
+              padding: '12px 26px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 38,
-              fontWeight: 900,
-              color: '#fff',
+              gap: 10,
             }}
           >
-            N
+            <span style={{ fontSize: 24 }}>🏪</span>
+            <span
+              style={{
+                fontSize: 22,
+                fontWeight: 800,
+                color: '#ffffff',
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
+              }}
+            >
+              VITRINE OFFICIELLE
+            </span>
           </div>
-          <span style={{ fontSize: 42, fontWeight: 900, color: '#fff', display: 'flex' }}>
-            Nopa<span style={{ color: '#C75B00', display: 'flex' }}>lou</span>
-          </span>
-          <div style={{ flex: 1, display: 'flex' }} />
-          <span
+
+          <div
             style={{
-              fontSize: 22,
+              background: '#10b981',
+              padding: '10px 24px',
+              borderRadius: 20,
+              fontSize: 18,
               fontWeight: 800,
-              letterSpacing: 6,
-              color: 'rgba(255,255,255,0.55)',
+              color: '#ffffff',
               display: 'flex',
+              boxShadow: '0 4px 15px rgba(16,185,129,0.35)',
             }}
           >
-            LA BOUTIQUE
-          </span>
+            ✓ COMMERCE VÉRIFIÉ
+          </div>
         </div>
 
-        {/* Bloc titre — nom de boutique dominant, aligné à gauche */}
-        <div style={{ display: 'flex', flexDirection: 'column', padding: '150px 80px 0' }}>
+        {/* ── 2. BLOC TITRE ET NOM ── */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            marginTop: 40,
+          }}
+        >
           <span
             style={{
-              fontSize: 30,
+              fontSize: 26,
               fontWeight: 800,
-              letterSpacing: 10,
-              color: '#C75B00',
+              letterSpacing: 6,
+              color: '#38bdf8',
               display: 'flex',
+              textTransform: 'uppercase',
             }}
           >
-            DÉCOUVREZ
+            BIENVENUE CHEZ
           </span>
           <span
             style={{
-              fontSize: 108,
+              fontSize: 90,
               fontWeight: 900,
-              color: '#fff',
-              lineHeight: 1.02,
-              marginTop: 18,
+              color: '#ffffff',
+              lineHeight: 1.05,
               display: '-webkit-box',
-              WebkitLineClamp: 3,
+              WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
-              maxWidth: 900,
             }}
           >
             {nom}
           </span>
         </div>
 
-        {/* Carte vitrine — logo débordant en haut, tiltée */}
+        {/* ── 3. CARTE VITRINE CENTRALE AVEC LOGO ── */}
         <div
           style={{
-            flex: 1,
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '120px 80px 40px',
+            background: '#ffffff',
+            borderRadius: 44,
+            padding: '70px 50px',
+            position: 'relative',
+            boxShadow: '0 35px 80px rgba(0,0,0,0.5)',
+            border: '3px solid rgba(255,255,255,0.15)',
+            width: '100%',
+            boxSizing: 'border-box',
+            margin: '40px 0',
           }}
         >
+          {/* Logo Boutique */}
           <div
             style={{
-              position: 'relative',
+              width: 240,
+              height: 240,
+              borderRadius: 48,
+              overflow: 'hidden',
+              background: '#0f172a',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              width: 720,
-              background: '#FFF7EF',
-              borderRadius: 44,
-              padding: '210px 56px 60px',
-              transform: 'rotate(-2.5deg)',
-              boxShadow: '0 40px 90px rgba(0,0,0,0.5)',
+              justifyContent: 'center',
+              border: '6px solid #f1f5f9',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              marginBottom: 36,
             }}
           >
-            {/* Logo boutique, débordant le bord haut de la carte */}
-            <div
-              style={{
-                position: 'absolute',
-                top: -140,
-                width: 300,
-                height: 300,
-                borderRadius: '50%',
-                overflow: 'hidden',
-                background: '#1C2B4A',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '10px solid #FFF7EF',
-                boxShadow: '0 24px 50px rgba(0,0,0,0.4)',
-              }}
-            >
-              {logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={logo} alt={nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <span style={{ fontSize: 150, display: 'flex' }}>🏪</span>
-              )}
-            </div>
+            {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logo}
+                alt={nom}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <span style={{ fontSize: 96, color: '#ffffff', fontWeight: 900 }}>
+                {initiale}
+              </span>
+            )}
+          </div>
 
-            {/* Badges catégorie + ville */}
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-              {categorie ? (
-                <span
-                  style={{
-                    fontSize: 30,
-                    fontWeight: 800,
-                    color: '#C75B00',
-                    background: 'rgba(199,91,0,0.10)',
-                    border: '2px solid rgba(199,91,0,0.35)',
-                    borderRadius: 999,
-                    padding: '14px 34px',
-                    display: 'flex',
-                  }}
-                >
-                  {categorie}
-                </span>
-              ) : null}
+          {/* Badges Catégorie et Localisation */}
+          <div
+            style={{
+              display: 'flex',
+              gap: 16,
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+            }}
+          >
+            {categorie ? (
               <span
                 style={{
-                  fontSize: 30,
+                  fontSize: 26,
                   fontWeight: 800,
-                  color: '#1C2B4A',
-                  background: 'rgba(28,43,74,0.08)',
-                  border: '2px solid rgba(28,43,74,0.22)',
+                  color: '#0284c7',
+                  background: '#f0f9ff',
+                  border: '2px solid #bae6fd',
                   borderRadius: 999,
-                  padding: '14px 34px',
+                  padding: '12px 30px',
                   display: 'flex',
                 }}
               >
-                📍 {ville}
+                🏷️ {categorie}
               </span>
-            </div>
+            ) : null}
 
             <span
               style={{
                 fontSize: 26,
-                fontWeight: 600,
-                color: '#5A6478',
-                marginTop: 34,
-                textAlign: 'center',
+                fontWeight: 800,
+                color: '#0f172a',
+                background: '#f8fafc',
+                border: '2px solid #e2e8f0',
+                borderRadius: 999,
+                padding: '12px 30px',
                 display: 'flex',
               }}
             >
-              Commandez directement sur WhatsApp
+              📍 {adresse ? `${adresse}, ${ville}` : ville}
             </span>
           </div>
-        </div>
 
-        {/* CTA bas */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '0 80px 110px' }}>
-          <div
+          <span
             style={{
+              fontSize: 28,
+              fontWeight: 700,
+              color: '#475569',
+              marginTop: 34,
+              textAlign: 'center',
               display: 'flex',
-              alignItems: 'center',
-              gap: 18,
-              background: '#C75B00',
-              borderRadius: 24,
-              padding: '30px 66px',
-              boxShadow: '0 20px 50px rgba(199,91,0,0.45)',
             }}
           >
-            <span style={{ fontSize: 40, display: 'flex' }}>🛒</span>
-            <span style={{ fontSize: 40, fontWeight: 900, color: '#fff', display: 'flex' }}>
-              Voir la boutique sur Nopalou
+            Catalogue complet &amp; Commandes en direct
+          </span>
+        </div>
+
+        {/* ── 4. PIED DE PAGE CALL-TO-ACTION (CONTACT DIRECT) ── */}
+        <div
+          style={{
+            width: '100%',
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            borderRadius: 30,
+            padding: '26px 40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 25px 50px rgba(16,185,129,0.4)',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span
+              style={{
+                fontSize: 30,
+                fontWeight: 900,
+                color: '#ffffff',
+                display: 'flex',
+              }}
+            >
+              💬 Contactez-nous sur WhatsApp
             </span>
+            <span
+              style={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: 'rgba(255,255,255,0.92)',
+                display: 'flex',
+              }}
+            >
+              {contact ? `Numéro direct : ${contact}` : 'Commandes & Renseignements'} · 🚚 Livraison rapide
+            </span>
+          </div>
+
+          <div
+            style={{
+              background: '#ffffff',
+              color: '#047857',
+              borderRadius: 20,
+              padding: '16px 30px',
+              fontSize: 24,
+              fontWeight: 900,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <span>Commander →</span>
           </div>
         </div>
       </div>

@@ -1,3 +1,30 @@
+- **Hub « Marketing & Visibilité », Partage Instantané Post-Création & Visuels 100% Marque Blanche Marchand (`main` - 20 août 2026)** 📣 :
+  * **Regroupement et Refonte du Hub « Marketing & Visibilité » (`BoutiqueClient.tsx`)** :
+    - Unification complète de toutes les fonctionnalités de diffusion, promotion et visibilité dans un tableau de bord structuré en 6 sections :
+      1. *Vitrine & Partage Rapide* : Liens de la vitrine officielle et de l'assistant WhatsApp Catalogue 24/7, téléchargement de la Story HD 1080×1920, copie 1-clic de lien.
+      2. *Boîte à Outils de Messages Prêts à l'Emploi (Générateur 1-Clic)* : 4 modèles de messages rédigés au nom du commerçant (Lancement & Présentation, Vente Flash & Promo Week-End, Nouveaux Arrivages, Fêtes & Événements comme Tabaski/Magal/Fin d'année) avec boutons d'envoi direct sur WhatsApp et copie de message.
+      3. *Suivi & Diffusion des Produits* : Compteur dynamique des produits "Jamais partagés" avec alerte et accès filtré direct au catalogue.
+      4. *Réseaux Sociaux & Pixels Publicitaires* : Statuts des pixels publicitaires Meta Facebook Pixel et TikTok Pixel, des pages Facebook et Instagram, avec raccourci de configuration.
+      5. *Supports Physiques & Print* : Accès et téléchargement du QR Code vectoriel SVG pour les comptoirs physiques et vitrines.
+      6. *Booster de Visibilité* : Statut sponsoring et activation en 1 clic via paiement Wave.
+  * **Visuels Générés 100% Marque Blanche Marchand (`/assets/produit-boutique/[id]/story` & `/assets/boutique/[id]/story`)** :
+    - Élimination intégrale de toute marque, logo ou mention Nopalou sur les visuels Story 1080×1920.
+    - Story Produit : Logo/initiale de la boutique, nom officiel, localisation 📍, photo produit HD, badge promo/nouveauté, tarif grand format contrasté et appel direct WhatsApp/Téléphone du commerçant.
+    - Story Vitrine : Logo officiel, nom, catégories, adresse et coordonnées de contact direct du commerçant.
+  * **Modale de Partage Immédiat à l'Ajout de Produit (`ModalPartageProduit.tsx`)** :
+    - Déclenchement automatique dès l'ajout d'un produit dans le catalogue ou à la demande via le bouton « 🚀 Partager ».
+    - 4 modèles de messages personnalisables (Promo/Nouveauté, Statut WhatsApp, Achat/Crédit, Post/Reel Instagram & TikTok avec hashtags ciblés).
+    - Partage en 1 clic sur WhatsApp, Web Share API natif (mobile), Téléchargement de la Story HD, Copie du message complet, Facebook, Telegram et publication en annonce classifiée.
+  * **Partage Groupé Multi-Produits dans le Catalogue (`BoutiqueClient.tsx`)** :
+    - Sélection multiple par cases à cocher sur les fiches produits.
+    - Barre d'actions groupées avec génération instantanée d'un message WhatsApp récapitulatif formaté pour tous les produits sélectionnés et copie en un clic.
+  * **Bouton de Partage sur la Vitrine Publique (`BoutiqueDetailClient.tsx` & `boutiques/[id]/page.tsx`)** :
+    - Intégration du composant `BoutonPartager` avec support Web Share API et multi-réseaux.
+  * **Qualité & Tests de Validation** :
+    - Vérification stricte TypeScript (`npx tsc --noEmit`) : 0 erreur.
+    - Suite complète de tests unitaires (`npm test`) : 31/31 tests validés avec succès (100%).
+    - Respect absolu de la directive AGENTS.md (polices système natives, 0 font-fetch externe).
+
 - **Mise à Jour du Kit de Communication, Gestion & Recherche des Abonnements et Contrôle des Boosts d'Annonces (`main` - 20 août 2026)** 🚀 :
   * **Actualisation Complète du Kit de Communication & Visuels Marketing (`produit-promo/route.tsx`, `KitComClient.tsx`, `page.tsx`, `brochure-apporteur/route.tsx`)** :
     - Mise à jour des forfaits réels sur tous les générateurs d'affiches OG/ImageResponse : **Taf Taf (2 500 FCFA/mois)**, **Boutique Pro (5 000 FCFA/mois)**, **Boutique Business VIP (10 000 FCFA/mois)**, avec 1er mois 100% offert sur tous les plans.

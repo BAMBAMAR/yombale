@@ -66,14 +66,14 @@ export async function createProduit(
   boutiqueId: string,
   prevState: ActionState,
   formData: FormData
-): Promise<ActionState> {
+): Promise<ActionState & { produit?: any }> {
   try {
     const res = await backendFetch(`/api/boutiques/${boutiqueId}/produits`, { method: 'POST', body: formData })
+    const data = await res.json().catch(() => ({}))
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
       return { error: data.error ?? 'Impossible d\'ajouter le produit' }
     }
-    return { success: true }
+    return { success: true, produit: data.produit }
   } catch {
     return { error: 'Erreur de connexion au serveur' }
   }
@@ -84,14 +84,14 @@ export async function updateProduit(
   produitId: string,
   prevState: ActionState,
   formData: FormData
-): Promise<ActionState> {
+): Promise<ActionState & { produit?: any }> {
   try {
     const res = await backendFetch(`/api/boutiques/${boutiqueId}/produits/${produitId}`, { method: 'PUT', body: formData })
+    const data = await res.json().catch(() => ({}))
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
       return { error: data.error ?? 'Impossible de modifier le produit' }
     }
-    return { success: true }
+    return { success: true, produit: data.produit }
   } catch {
     return { error: 'Erreur de connexion au serveur' }
   }
@@ -114,17 +114,17 @@ export async function duplicateProduit(
   boutiqueId: string,
   produitId: string,
   data?: { nom?: string; prix?: number; stock_quantite?: number }
-): Promise<ActionState> {
+): Promise<ActionState & { produit?: any }> {
   try {
     const res = await backendFetch(`/api/boutiques/${boutiqueId}/produits/${produitId}/dupliquer`, {
       method: 'POST',
       body: JSON.stringify(data || {})
     })
+    const resData = await res.json().catch(() => ({}))
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
-      return { error: data.error ?? 'Impossible de dupliquer le produit' }
+      return { error: resData.error ?? 'Impossible de dupliquer le produit' }
     }
-    return { success: true }
+    return { success: true, produit: resData.produit }
   } catch {
     return { error: 'Erreur de connexion au serveur' }
   }

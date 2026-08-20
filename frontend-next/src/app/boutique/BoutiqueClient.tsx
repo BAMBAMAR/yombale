@@ -23,7 +23,8 @@ import GestionDocuments from './GestionDocuments'
 import GestionFournisseurs from './GestionFournisseurs'
 import BoutiqueLogs from './BoutiqueLogs'
 import QrCodeShareModal from '@/components/QrCodeShareModal'
-import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
+import ModalPartageProduit from '@/components/ModalPartageProduit'
+import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, Check, Download, ExternalLink, MessageCircle, Flame, Send, CheckSquare, Square } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
@@ -721,7 +722,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   produit?: Produit
   modeInitial?: 'rapide' | 'detaille'
   onCancel: () => void
-  onSuccess: () => void
+  onSuccess: (produitCree?: any) => void
 }) {
   const { t, isRtl } = useTranslation()
   const action = produit
@@ -1017,7 +1018,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       if (produitFormTopRef.current) {
         produitFormTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
-      onSuccess()
+      onSuccess((state as any)?.produit)
       const t = setTimeout(() => setSuccessMsg(null), 6000)
       return () => clearTimeout(t)
     } else if (state.error) {
@@ -1522,120 +1523,718 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   )
 }
 
-// ── Marketing / partage de la boutique ────────────────────────────────────────
+// ── Hub Marketing & Visibilité de la boutique ──────────────────────────────────
 
-function MarketingBoutique({ boutique, onVoirJamaisPartages, planActif }: { boutique: Boutique; onVoirJamaisPartages: () => void; planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null }) {
+function MarketingBoutique({
+  boutique,
+  onVoirJamaisPartages,
+  planActif,
+  onOpenQrModal,
+  onNavigate,
+}: {
+  boutique: Boutique
+  onVoirJamaisPartages: () => void
+  planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
+  onOpenQrModal?: () => void
+  onNavigate?: (tab: ManageTab) => void
+}) {
+  const { t } = useTranslation()
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
   const lienBoutique = `${siteUrl}/boutiques/${boutique.slug || boutique.id}`
-  const messageBoutique = `Découvrez ${boutique.nom} sur Nopalou !\n\n${lienBoutique}`
   const lienAssistant = lienBoutiqueWhatsapp(boutique.slug || boutique.id)
-  const messageAssistant = `Découvrez ${boutique.nom} sur Nopalou et commandez directement sur WhatsApp !\n\n${lienAssistant}`
+  const contactTel = boutique.whatsapp || boutique.telephone || ''
+  const ville = boutique.ville || 'Dakar'
 
   const [nbJamaisPartages, setNbJamaisPartages] = useState<number | null>(null)
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
+  const [totalProduits, setTotalProduits] = useState<number>(0)
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [sponsoringEnCours, setSponsoringEnCours] = useState(false)
 
   useEffect(() => {
     let annule = false
     getBoutiqueProduits(boutique.id)
       .then(produits => {
         if (annule) return
+        setTotalProduits(produits.length)
         setNbJamaisPartages(produits.filter(p => !p.partage_le).length)
       })
-      .catch(() => { if (!annule) setNbJamaisPartages(0) })
+      .catch(() => {
+        if (!annule) {
+          setTotalProduits(0)
+          setNbJamaisPartages(0)
+        }
+      })
     return () => { annule = true }
   }, [boutique.id])
 
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 2500)
+  }
+
+  const handleSendWhatsApp = (text: string) => {
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleActiverSponsoring = async () => {
+    setSponsoringEnCours(true)
+    try {
+      const res = await initierWaveBoutiqueSponsoring(boutique.id)
+      if (res.url) {
+        window.location.href = res.url
+      } else if (res.error) {
+        alert(res.error)
+      }
+    } catch {
+      alert('Impossible d\'initier le sponsoring Wave')
+    } finally {
+      setSponsoringEnCours(false)
+    }
+  }
+
+  // Modèles de messages de campagne 100% Marque Blanche (au nom du marchand)
+  const modelesCampagnes = [
+    {
+      id: 'lancement',
+      icon: '🚀',
+      titre: 'Lancement & Présentation de la vitrine',
+      desc: 'Idéal pour annoncer votre vitrine à tous vos contacts et groupes WhatsApp.',
+      message: `Bonjour ! 👋\n\nDécouvrez notre vitrine officielle en ligne chez *${boutique.nom}* !\n\n🛍️ Retrouvez tous nos articles avec photos, prix et stock à jour.\n👉 Accéder au catalogue et commander : ${lienBoutique}\n\n🚚 Livraison rapide disponible à ${ville} et partout au Sénégal.\n${contactTel ? `💬 Contact WhatsApp direct : ${contactTel}` : ''}`,
+    },
+    {
+      id: 'promo',
+      icon: '🔥',
+      titre: 'Vente Flash & Promo du Week-End',
+      desc: 'Pour booster vos ventes rapidement avec une offre à durée limitée.',
+      message: `🔥 *VENTE FLASH CHEZ ${boutique.nom.toUpperCase()} !* 🔥\n\nProfitez de réductions exclusives sur notre sélection d'articles en stock ce week-end !\n\n👉 Découvrez les promotions ici : ${lienBoutique}\n\n⚠️ Offre valable dans la limite des stocks disponibles.\n💬 Commandez directement en répondant à ce message ou sur notre vitrine !`,
+    },
+    {
+      id: 'arrivage',
+      icon: '📦',
+      titre: 'Nouvel Arrivage & Nouveautés',
+      desc: 'Pour notifier vos clients fidèles de l\'arrivée de nouveaux articles.',
+      message: `✨ *NOUVEAUX ARRIVAGES DISPONIBLES !* ✨\n\nDe nouveaux articles viennent d'arriver chez *${boutique.nom}* !\n\n👉 Découvrez toutes les nouveautés en photo : ${lienBoutique}\n\n📦 Stock limité — premier arrivé, premier servi !\n${contactTel ? `💬 WhatsApp : ${contactTel}` : ''}`,
+    },
+    {
+      id: 'fetes',
+      icon: '🎉',
+      titre: 'Fêtes & Événements (Tabaski / Magal / Fin d\'année)',
+      desc: 'Pour souhaiter de bonnes fêtes et proposer votre sélection spéciale.',
+      message: `✨ Toute l'équipe de *${boutique.nom}* vous souhaite d'excellentes fêtes !\n\nPour préparer vos cadeaux et vos achats en toute sérénité, découvrez notre sélection spéciale :\n👉 ${lienBoutique}\n\n🚚 Livraison garantie à ${ville} et dans toutes les régions.\n💬 Écrivez-nous pour réserver dès maintenant !`,
+    },
+  ]
+
+  const isSponsorise = boutique.sponsorise && boutique.sponsor_jusqu_au && new Date(boutique.sponsor_jusqu_au) > new Date()
+  const dateFinSponsoring = boutique.sponsor_jusqu_au ? new Date(boutique.sponsor_jusqu_au).toLocaleDateString('fr-FR') : null
+
   return (
-    <div>
-      {nbJamaisPartages === null ? null : nbJamaisPartages > 0 ? (
-        <div style={{
-          background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 12,
-          padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-        }}>
-          <span style={{ fontSize: 20 }}>📢</span>
-          <p style={{ margin: 0, fontSize: 13, color: '#78350f', flex: 1, minWidth: 200 }}>
-            <strong>{nbJamaisPartages} produit{nbJamaisPartages > 1 ? 's' : ''}</strong> n&apos;{nbJamaisPartages > 1 ? 'ont' : 'a'} jamais été partagé{nbJamaisPartages > 1 ? 's' : ''} — un partage régulier aide vos produits à être vus.
-          </p>
-          <button
-            onClick={onVoirJamaisPartages}
-            style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1050 }}>
+      {/* ── BANNIÈRE EN-TÊTE DU HUB ── */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #1C2B4A 0%, #0F1D35 100%)',
+          borderRadius: 20,
+          padding: '24px 28px',
+          color: '#ffffff',
+          boxShadow: '0 10px 30px rgba(15, 29, 53, 0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 16,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 18,
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1.5px solid rgba(255, 255, 255, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 32,
+              flexShrink: 0,
+            }}
           >
-            Voir ces produits →
-          </button>
+            📣
+          </div>
+          <div>
+            <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 900, color: '#ffffff' }}>
+              Hub Marketing &amp; Visibilité
+            </h2>
+            <p style={{ margin: 0, fontSize: 13.5, color: '#94a3b8' }}>
+              Diffusez votre vitrine, animez vos réseaux sociaux et multipliez vos ventes en quelques clics.
+            </p>
+          </div>
         </div>
-      ) : (
-        <div style={{
-          background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12,
-          padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12,
-        }}>
-          <span style={{ fontSize: 20 }}>✅</span>
-          <p style={{ margin: 0, fontSize: 13, color: '#166534' }}>
-            Tous vos produits ont déjà été partagés au moins une fois.
-          </p>
-        </div>
-      )}
 
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 16,
-        background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '20px',
-        marginBottom: 16,
-      }}>
-        <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {boutique.logo_url
-            ? <ExternalImg src={boutique.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : <span style={{ fontSize: 28 }}>🏪</span>
-          }
-        </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>{boutique.nom}</p>
-          <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{lienBoutique}</p>
-        </div>
-        <BoutonPartager
-          lien={lienBoutique}
-          message={messageBoutique}
-          lienVisuel={`/assets/boutique/${boutique.id}/story`}
-        />
+        {isSponsorise ? (
+          <div
+            style={{
+              background: 'rgba(234, 179, 8, 0.18)',
+              border: '1.5px solid #eab308',
+              borderRadius: 12,
+              padding: '8px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <Star size={18} style={{ color: '#facc15' }} />
+            <span style={{ fontSize: 12.5, fontWeight: 800, color: '#fef08a' }}>
+              ⭐ Sponsorisé actif jusqu&apos;au {dateFinSponsoring}
+            </span>
+          </div>
+        ) : null}
       </div>
 
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 16,
-        background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '20px',
-      }}>
-        <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: 28 }}>🤖</span>
+      {/* ── SECTION 1 : VITRINE & DIFFUSION RAPIDE ── */}
+      <div
+        style={{
+          background: '#ffffff',
+          borderRadius: 18,
+          border: '1px solid #e2e8f0',
+          padding: '22px 24px',
+          boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <span style={{ fontSize: 20 }}>🌐</span>
+          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>
+            1. Liens de la Vitrine &amp; Partage 1-Clic
+          </h3>
         </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>Assistant WhatsApp de la boutique</p>
-          <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
-            Ce lien ouvre directement votre catalogue dans l&apos;assistant Nopalou — vos clients peuvent chercher, voir vos produits et commander sans quitter WhatsApp.
-          </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+          {/* Carte Vitrine Marchand */}
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1.5px solid #e2e8f0',
+              borderRadius: 14,
+              padding: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: 14,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  background: '#e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {boutique.logo_url ? (
+                  <ExternalImg src={boutique.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: 24 }}>🏪</span>
+                )}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 14, color: '#0f172a' }}>{boutique.nom}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {lienBoutique}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <BoutonPartager
+                lien={lienBoutique}
+                message={`Découvrez notre vitrine officielle ${boutique.nom} !\n\n${lienBoutique}`}
+                lienVisuel={`/assets/boutique/${boutique.id}/story`}
+              />
+              <button
+                type="button"
+                onClick={() => copyToClipboard(lienBoutique, 'lien_boutique')}
+                style={{
+                  padding: '7px 12px',
+                  background: copiedKey === 'lien_boutique' ? '#10b981' : '#ffffff',
+                  color: copiedKey === 'lien_boutique' ? '#ffffff' : '#334155',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {copiedKey === 'lien_boutique' ? <Check size={14} /> : <Copy size={14} />}
+                <span>{copiedKey === 'lien_boutique' ? 'Copié !' : 'Copier lien'}</span>
+              </button>
+              <a
+                href={`/assets/boutique/${boutique.id}/story`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '7px 12px',
+                  background: '#f1f5f9',
+                  color: '#0f172a',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <Download size={14} style={{ color: '#0284c7' }} />
+                <span>Story HD (1080×1920)</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Carte Assistant WhatsApp Bot */}
+          <div
+            style={{
+              background: '#f0fdf4',
+              border: '1.5px solid #bbf7d0',
+              borderRadius: 14,
+              padding: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: 14,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 12,
+                  background: '#dcfce7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <span style={{ fontSize: 24 }}>🤖</span>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 14, color: '#166534' }}>
+                  Assistant WhatsApp Catalogue 24/7
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#15803d' }}>
+                  Vos clients consultent vos articles et commandent directement dans WhatsApp.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <BoutonPartager
+                lien={lienAssistant}
+                message={`Découvrez le catalogue de ${boutique.nom} et commandez directement sur WhatsApp !\n\n${lienAssistant}`}
+                lienVisuel={`/assets/boutique/${boutique.id}/story`}
+              />
+              <button
+                type="button"
+                onClick={() => copyToClipboard(lienAssistant, 'lien_assistant')}
+                style={{
+                  padding: '7px 12px',
+                  background: copiedKey === 'lien_assistant' ? '#10b981' : '#ffffff',
+                  color: copiedKey === 'lien_assistant' ? '#ffffff' : '#166534',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {copiedKey === 'lien_assistant' ? <Check size={14} /> : <Copy size={14} />}
+                <span>{copiedKey === 'lien_assistant' ? 'Copié !' : 'Copier lien'}</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <BoutonPartager
-          lien={lienAssistant}
-          message={messageAssistant}
-          lienVisuel={`/assets/boutique/${boutique.id}/story`}
-        />
       </div>
 
-      <div style={{
-        marginTop: 16, padding: '16px 20px', background: '#f8fafc',
-        border: '1px solid #e2e8f0', borderRadius: 12,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
-      }}>
-        <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>
-          Un visuel prêt à partager pour votre palier actuel ({planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : 'Gratuit'}) :
+      {/* ── SECTION 2 : BOÎTE À OUTILS DE MESSAGES PRÊTS À L'EMPLOI ── */}
+      <div
+        style={{
+          background: '#ffffff',
+          borderRadius: 18,
+          border: '1px solid #e2e8f0',
+          padding: '22px 24px',
+          boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <span style={{ fontSize: 20 }}>⚡</span>
+          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>
+            2. Messages Prêts à l&apos;Emploi (Générateur 1-Clic)
+          </h3>
+        </div>
+        <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748b' }}>
+          Gagnez du temps : choisissez un modèle déjà rédigé au nom de votre boutique et envoyez-le directement sur WhatsApp ou vos statuts.
         </p>
-        <a
-          href={`/assets/palier/${planActif ?? 'gratuit'}/carre`}
-          target="_blank"
-          rel="noopener noreferrer"
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
+          {modelesCampagnes.map(campagne => (
+            <div
+              key={campagne.id}
+              style={{
+                background: '#f8fafc',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: 14,
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontSize: 18 }}>{campagne.icon}</span>
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#0f172a' }}>
+                    {campagne.titre}
+                  </h4>
+                </div>
+                <p style={{ margin: '0 0 10px', fontSize: 11.5, color: '#64748b' }}>
+                  {campagne.desc}
+                </p>
+                <div
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: 10,
+                    padding: '10px 12px',
+                    fontSize: 12,
+                    lineHeight: 1.45,
+                    color: '#334155',
+                    maxHeight: 110,
+                    overflowY: 'auto',
+                    whiteSpace: 'pre-line',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  {campagne.message}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => handleSendWhatsApp(campagne.message)}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: '#25D366',
+                    color: '#ffffff',
+                    fontSize: 12.5,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <MessageCircle size={15} />
+                  <span>Envoyer (WhatsApp)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(campagne.message, campagne.id)}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid #cbd5e1',
+                    background: copiedKey === campagne.id ? '#10b981' : '#ffffff',
+                    color: copiedKey === campagne.id ? '#ffffff' : '#334155',
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {copiedKey === campagne.id ? <Check size={15} /> : <Copy size={15} />}
+                  <span>{copiedKey === campagne.id ? 'Copié !' : 'Copier'}</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── SECTION 3 : DIFFUSION & RELANCE DES PRODUITS ── */}
+      <div
+        style={{
+          background: '#ffffff',
+          borderRadius: 18,
+          border: '1px solid #e2e8f0',
+          padding: '22px 24px',
+          boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <span style={{ fontSize: 20 }}>📢</span>
+          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>
+            3. Suivi &amp; Diffusion des Produits du Catalogue
+          </h3>
+        </div>
+
+        {nbJamaisPartages === null ? (
+          <p style={{ color: '#94a3b8', fontSize: 13 }}>Chargement des statistiques de partage…</p>
+        ) : nbJamaisPartages > 0 ? (
+          <div
+            style={{
+              background: '#fffbeb',
+              border: '1.5px solid #fcd34d',
+              borderRadius: 14,
+              padding: '16px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 12,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 24 }}>⚠️</span>
+              <div>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 14, color: '#92400e' }}>
+                  {nbJamaisPartages} produit{nbJamaisPartages > 1 ? 's' : ''} sur {totalProduits} n&apos;{nbJamaisPartages > 1 ? 'ont' : 'a'} jamais été partagé{nbJamaisPartages > 1 ? 's' : ''}
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#b45309' }}>
+                  Un partage régulier de vos fiches produits augmente vos ventes de +40% sur WhatsApp et les réseaux.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onVoirJamaisPartages}
+              style={{
+                background: '#C75B00',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 10,
+                padding: '9px 18px',
+                fontSize: 13,
+                fontWeight: 800,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Voir ces {nbJamaisPartages} produits →
+            </button>
+          </div>
+        ) : (
+          <div
+            style={{
+              background: '#f0fdf4',
+              border: '1.5px solid #bbf7d0',
+              borderRadius: 14,
+              padding: '16px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <span style={{ fontSize: 24 }}>✅</span>
+            <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: '#166534' }}>
+              Bravo ! Tous vos produits ({totalProduits}) ont déjà été partagés au moins une fois.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* ── SECTION 4 : RÉSEAUX SOCIAUX & PIXELS PUBLICITAIRES ── */}
+      <div
+        style={{
+          background: '#ffffff',
+          borderRadius: 18,
+          border: '1px solid #e2e8f0',
+          padding: '22px 24px',
+          boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }}>🎯</span>
+            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>
+              4. Réseaux Sociaux &amp; Pixels Publicitaires
+            </h3>
+          </div>
+          {onNavigate && (
+            <button
+              onClick={() => onNavigate('fiscalite')}
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                borderRadius: 8,
+                padding: '6px 12px',
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#0f172a',
+                cursor: 'pointer',
+              }}
+            >
+              ⚙️ Configurer mes pixels &amp; réseaux
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+          {/* Pixel Meta Facebook */}
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 14px' }}>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: '#1e3a8a' }}>📘 Meta Facebook Pixel</p>
+            <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: (boutique as any).meta_pixel_id ? '#16a34a' : '#94a3b8' }}>
+              {(boutique as any).meta_pixel_id ? `✓ Actif (${(boutique as any).meta_pixel_id})` : '⚪ Non configuré'}
+            </p>
+          </div>
+
+          {/* Pixel TikTok */}
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 14px' }}>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: '#0f172a' }}>🎵 TikTok Pixel</p>
+            <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: (boutique as any).tiktok_pixel_id ? '#16a34a' : '#94a3b8' }}>
+              {(boutique as any).tiktok_pixel_id ? `✓ Actif (${(boutique as any).tiktok_pixel_id})` : '⚪ Non configuré'}
+            </p>
+          </div>
+
+          {/* Page Facebook */}
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 14px' }}>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: '#1d4ed8' }}>🌐 Page Facebook</p>
+            <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: (boutique as any).facebook ? '#16a34a' : '#94a3b8' }}>
+              {(boutique as any).facebook ? '✓ Connectée' : '⚪ Non renseignée'}
+            </p>
+          </div>
+
+          {/* Compte Instagram */}
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 14px' }}>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: '#e11d48' }}>📸 Instagram</p>
+            <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: (boutique as any).instagram ? '#16a34a' : '#94a3b8' }}>
+              {(boutique as any).instagram ? '✓ Connecté' : '⚪ Non renseigné'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── SECTION 5 : SUPPORTS PHYSIQUES & BOOSTER ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+        {/* QR Code & Comptoir Physique */}
+        <div
           style={{
-            padding: '8px 16px', background: '#1C2B4A', color: '#fff', borderRadius: 8,
-            fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap',
+            background: '#ffffff',
+            borderRadius: 18,
+            border: '1px solid #e2e8f0',
+            padding: '22px 24px',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            gap: 14,
           }}
         >
-          🖼 Voir le visuel →
-        </a>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <span style={{ fontSize: 20 }}>📱</span>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>
+                QR Code Comptoir &amp; Vitrine
+              </h3>
+            </div>
+            <p style={{ margin: 0, fontSize: 12.5, color: '#64748b', lineHeight: 1.45 }}>
+              Imprimez un QR Code haute définition pour votre comptoir physique. Vos clients scannent et accèdent à votre vitrine ou demandent un crédit client.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onOpenQrModal?.()}
+            style={{
+              padding: '10px 16px',
+              borderRadius: 10,
+              border: 'none',
+              background: '#1C2B4A',
+              color: '#ffffff',
+              fontSize: 13,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <span>📱 Ouvrir &amp; Télécharger le QR Code</span>
+          </button>
+        </div>
+
+        {/* Booster de Visibilité Sponsoring */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+            borderRadius: 18,
+            border: '1.5px solid #fde68a',
+            padding: '22px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            gap: 14,
+          }}
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <span style={{ fontSize: 20 }}>⭐</span>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#92400e' }}>
+                Booster de Visibilité (Sponsoring)
+              </h3>
+            </div>
+            <p style={{ margin: 0, fontSize: 12.5, color: '#78350f', lineHeight: 1.45 }}>
+              Placez votre boutique en tête de liste des recherches à Dakar et sur la page d&apos;accueil pour maximiser vos visites.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            disabled={sponsoringEnCours}
+            onClick={handleActiverSponsoring}
+            style={{
+              padding: '10px 16px',
+              borderRadius: 10,
+              border: 'none',
+              background: '#C75B00',
+              color: '#ffffff',
+              fontSize: 13,
+              fontWeight: 800,
+              cursor: sponsoringEnCours ? 'default' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <span>{sponsoringEnCours ? 'Initialisation…' : '🚀 Activer le Sponsoring Wave'}</span>
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -1663,6 +2262,8 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
   const [dupPrix, setDupPrix] = useState<string>('')
   const [dupStock, setDupStock] = useState<string>('')
   const [menuActionsOuvertId, setMenuActionsOuvertId] = useState<string | null>(null)
+  const [partageModalData, setPartageModalData] = useState<{ produit: Produit; isNew?: boolean } | null>(null)
+  const [selectedProdIds, setSelectedProdIds] = useState<Set<string>>(new Set())
 
   async function saveStock(produitId: string) {
     const val = Number(stockInputVal)
@@ -1800,10 +2401,13 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
           produit={editing}
           modeInitial={'creating' in mode ? mode.creating : 'detaille'}
           onCancel={() => setMode('list')}
-          onSuccess={() => {
+          onSuccess={(produitCree) => {
             setMode('list')
-            setSuccessMsg(editing ? '✅ Produit modifié !' : '✅ Produit ajouté !')
+            setSuccessMsg(editing ? '✅ Produit modifié !' : '✅ Produit ajouté au catalogue !')
             loadProduits()
+            if (!editing && produitCree) {
+              setPartageModalData({ produit: produitCree, isNew: true })
+            }
           }}
         />
       </div>
@@ -1979,6 +2583,106 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
         </div>
       )}
 
+      {/* ── BARRE D'ACTIONS GROUPÉES DE SÉLECTION MULTIPLE ── */}
+      {selectedProdIds.size > 0 && (
+        <div
+          style={{
+            position: 'sticky',
+            top: 10,
+            zIndex: 30,
+            background: 'linear-gradient(135deg, #1C2B4A 0%, #0F1D35 100%)',
+            color: '#ffffff',
+            borderRadius: 14,
+            padding: '12px 18px',
+            marginBottom: 16,
+            boxShadow: '0 10px 25px rgba(15,29,53,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 10,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }}>🛍️</span>
+            <span style={{ fontSize: 13.5, fontWeight: 800 }}>
+              {selectedProdIds.size} produit{selectedProdIds.size > 1 ? 's' : ''} sélectionné{selectedProdIds.size > 1 ? 's' : ''}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => {
+                const prods = produits.filter(p => selectedProdIds.has(p.id))
+                const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+                const contact = boutique.whatsapp || boutique.telephone || ''
+                const msg = `🛍️ *Découvrez notre sélection chez ${boutique.nom} !*\n\n` +
+                  prods.map((p, i) => `${i + 1}. *${p.nom}* — ${p.prix ? fcfa(p.prix) : 'Prix sur demande'}\n👉 ${siteUrl}/boutiques/${boutique.slug || boutique.id}/produits/${p.id}`).join('\n\n') +
+                  `\n\n🚚 Livraison disponible à ${boutique.ville || 'Dakar'}\n${contact ? `💬 Commandez directement au ${contact} !` : ''}`
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+              }}
+              style={{
+                background: '#25D366',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '7px 14px',
+                fontSize: 12.5,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <MessageCircle size={15} />
+              <span>Partager sur WhatsApp</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const prods = produits.filter(p => selectedProdIds.has(p.id))
+                const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+                const msg = `🛍️ *Sélection ${boutique.nom}* :\n\n` +
+                  prods.map((p, i) => `• ${p.nom} : ${p.prix ? fcfa(p.prix) : 'Prix sur demande'} (${siteUrl}/boutiques/${boutique.slug || boutique.id}/produits/${p.id})`).join('\n')
+                navigator.clipboard.writeText(msg)
+                alert('Liste copiée dans le presse-papier !')
+              }}
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.25)',
+                borderRadius: 8,
+                padding: '7px 12px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              <Copy size={14} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedProdIds(new Set())}
+              style={{
+                background: 'none',
+                color: '#94a3b8',
+                border: 'none',
+                padding: '7px 8px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              ✕ Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p>
       ) : produits.length === 0 ? (
@@ -1996,12 +2700,28 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {produitsFiltres.map(p => (
             <div key={p.id} className="bq-produit-card" style={{
-              background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14,
+              background: '#ffffff', border: selectedProdIds.has(p.id) ? '1.5px solid #0284c7' : '1px solid #e2e8f0', borderRadius: 14,
               padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
               boxShadow: '0 2px 8px rgba(0,0,0,0.03)', transition: 'all 0.15s ease'
             }}>
-              {/* Ligne Supérieure : Image + Nom + Prix + Badges */}
-              <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+              {/* Ligne Supérieure : Checkbox + Image + Nom + Prix + Badges */}
+              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                {/* Case à cocher pour partage groupé */}
+                <div style={{ display: 'flex', alignItems: 'center', height: 60 }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedProdIds.has(p.id)}
+                    onChange={() => {
+                      const next = new Set(selectedProdIds)
+                      if (next.has(p.id)) next.delete(p.id)
+                      else next.add(p.id)
+                      setSelectedProdIds(next)
+                    }}
+                    style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#0284c7' }}
+                    title="Sélectionner pour le partage groupé"
+                  />
+                </div>
+
                 {/* Image */}
                 <div style={{ width: 60, height: 60, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: '#f8fafc', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <ExternalImg src={p.images?.[0]} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -2063,15 +2783,24 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                     ✏️ {t('common.edit')}
                   </button>
 
+                  <button
+                    onClick={() => setPartageModalData({ produit: p, isNew: false })}
+                    style={{ background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                    title="Partager ce produit (4 modèles de messages + Story HD)"
+                  >
+                    🚀 {t('common.share') || 'Partager'}
+                  </button>
+
                   <BoutonPartager
-                    lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`}
+                    lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.slug || boutique.id}/produits/${p.id}`}
                     message={
                       p.prix_barre && p.prix && p.prix_barre > p.prix
-                        ? `🔥 ${p.nom} en promo : ${fcfa(p.prix)} au lieu de ${fcfa(p.prix_barre)} !\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`
-                        : `${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.id}/produits/${p.id}`
+                        ? `🔥 ${p.nom} en promo : ${fcfa(p.prix)} au lieu de ${fcfa(p.prix_barre)} !\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.slug || boutique.id}/produits/${p.id}`
+                        : `${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.slug || boutique.id}/produits/${p.id}`
                     }
                     lienVisuel={`/assets/produit-boutique/${p.id}/story?boutiqueId=${boutique.id}`}
                     onPartage={() => { marquerProduitPartage(boutique.id, p.id).catch(() => {}) }}
+                    onOpenFullModal={() => setPartageModalData({ produit: p, isNew: false })}
                   />
                 </div>
 
@@ -2196,6 +2925,17 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
             </div>
           ))}
         </div>
+      )}
+
+      {/* ── MODALE DE PARTAGE PRODUIT 1-CLIC (100% MARQUE BLANCHE) ── */}
+      {partageModalData && (
+        <ModalPartageProduit
+          isOpen={!!partageModalData}
+          onClose={() => setPartageModalData(null)}
+          produit={partageModalData.produit}
+          boutique={boutique}
+          isNewlyCreated={partageModalData.isNew}
+        />
       )}
     </div>
 
@@ -3303,7 +4043,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                 <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={() => router.refresh()} />
               </div>
             )}
-            {tab === 'marketing'   && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} planActif={planActif} />}
+            {tab === 'marketing'   && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} onOpenQrModal={() => setShowQrModal(true)} onNavigate={(t) => setTab(t)} planActif={planActif} />}
             {tab === 'equipe'      && <BoutiqueEquipe boutiqueId={boutique.id} />}
             {tab === 'admins'      && <BoutiqueAdmins boutiqueId={boutique.id} />}
             {tab === 'caissiers'   && <BoutiqueCaissiers boutiqueId={boutique.id} />}

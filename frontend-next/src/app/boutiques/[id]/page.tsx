@@ -10,6 +10,7 @@ import { cloudinaryHQ } from '@/lib/cloudinary'
 import BoutiqueDetailClient, { type Produit, type Annonce } from './BoutiqueDetailClient'
 import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
 import ExternalImg from '@/components/ExternalImg'
+import BoutonPartager from '@/components/BoutonPartager'
 
 interface Boutique {
   id: string
@@ -187,6 +188,11 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
                 🌐 Site web
               </a>
             )}
+            <BoutonPartager
+              lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${b.slug || b.id}`}
+              message={`Découvrez notre vitrine officielle chez ${b.nom} !\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${b.slug || b.id}`}
+              lienVisuel={`/assets/boutique/${b.id}/story`}
+            />
           </div>
         </div>
       </div>
