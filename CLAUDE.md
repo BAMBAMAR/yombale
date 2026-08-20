@@ -20,6 +20,9 @@
     - Barre d'actions groupées avec génération instantanée d'un message WhatsApp récapitulatif formaté pour tous les produits sélectionnés et copie en un clic.
   * **Bouton de Partage sur la Vitrine Publique (`BoutiqueDetailClient.tsx` & `boutiques/[id]/page.tsx`)** :
     - Intégration du composant `BoutonPartager` avec support Web Share API et multi-réseaux.
+  * **Suppression de la Redondance des Boutons & Résolution Robuste des Stories Marchand (`BoutiqueClient.tsx` & `/assets/produit-boutique/[id]/story/route.tsx`)** :
+    - Unification du bouton d'action sur chaque fiche produit en un seul bouton vert élégant « 💬 Partager » qui ouvre directement la modale complète `ModalPartageProduit`.
+    - Résolution automatique et résiliente du produit par ID dans le générateur de story (`/assets/produit-boutique/[id]/story`) avec récupération automatique de l'identité de la boutique (logo, nom, ville, WhatsApp), éliminant tout visuel générique.
   * **Qualité & Tests de Validation** :
     - Vérification stricte TypeScript (`npx tsc --noEmit`) : 0 erreur.
     - Suite complète de tests unitaires (`npm test`) : 31/31 tests validés avec succès (100%).

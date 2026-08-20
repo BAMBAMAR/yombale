@@ -35,7 +35,58 @@ export async function GET(
         `/boutiques/${boutiqueId}/produits/${params.id}`
       )
       produit = data.produit
-    } catch { /* fallback générique */ }
+    } catch { /* fallback */ }
+  }
+
+  if (!produit) {
+    try {
+      const data = await apiFetch<{
+        id: string
+        nom: string
+        prix_min?: number
+        images?: string[]
+        image_url?: string
+        boutique_nom?: string
+        boutique_id?: string
+        boutique_slug?: string
+      }>(`/produits/${params.id}`)
+      if (data) {
+        let bLogo: string | null = null
+        let bWa: string | null = null
+        let bTel: string | null = null
+        let bVille: string | null = null
+
+        if (data.boutique_id || data.boutique_slug) {
+          try {
+            const bData = await apiFetch<{
+              logo_url?: string | null
+              whatsapp?: string | null
+              telephone?: string | null
+              ville?: string | null
+            }>(`/boutiques/${data.boutique_id || data.boutique_slug}`)
+            if (bData) {
+              bLogo = bData.logo_url || null
+              bWa = bData.whatsapp || null
+              bTel = bData.telephone || null
+              bVille = bData.ville || null
+            }
+          } catch { /* ignore */ }
+        }
+
+        produit = {
+          id: data.id,
+          nom: data.nom,
+          prix: data.prix_min ?? null,
+          prix_barre: null,
+          images: data.images || (data.image_url ? [data.image_url] : []),
+          boutique_nom: data.boutique_nom,
+          boutique_logo: bLogo,
+          boutique_whatsapp: bWa,
+          boutique_telephone: bTel,
+          boutique_ville: bVille,
+        }
+      }
+    } catch { /* fallback */ }
   }
 
   const nom = produit?.nom ?? 'Nouveauté en Boutique'

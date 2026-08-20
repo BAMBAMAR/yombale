@@ -2785,23 +2785,25 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
 
                   <button
                     onClick={() => setPartageModalData({ produit: p, isNew: false })}
-                    style={{ background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                    title="Partager ce produit (4 modèles de messages + Story HD)"
+                    style={{
+                      background: '#25D366',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: 8,
+                      padding: '6px 14px',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      boxShadow: '0 1px 3px rgba(37,211,102,0.3)',
+                    }}
+                    title="Partager ce produit (WhatsApp, Story HD, Réseaux)"
                   >
-                    🚀 {t('common.share') || 'Partager'}
+                    <MessageCircle size={14} />
+                    <span>{t('common.share') || 'Partager'}</span>
                   </button>
-
-                  <BoutonPartager
-                    lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.slug || boutique.id}/produits/${p.id}`}
-                    message={
-                      p.prix_barre && p.prix && p.prix_barre > p.prix
-                        ? `🔥 ${p.nom} en promo : ${fcfa(p.prix)} au lieu de ${fcfa(p.prix_barre)} !\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.slug || boutique.id}/produits/${p.id}`
-                        : `${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${boutique.slug || boutique.id}/produits/${p.id}`
-                    }
-                    lienVisuel={`/assets/produit-boutique/${p.id}/story?boutiqueId=${boutique.id}`}
-                    onPartage={() => { marquerProduitPartage(boutique.id, p.id).catch(() => {}) }}
-                    onOpenFullModal={() => setPartageModalData({ produit: p, isNew: false })}
-                  />
                 </div>
 
                 {/* Menu Déroulant Actions Secondaires */}
