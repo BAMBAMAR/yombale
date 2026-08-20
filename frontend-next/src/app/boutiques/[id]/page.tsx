@@ -43,13 +43,38 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   try {
     const { id } = await params
     const b = await apiFetch<Boutique>(`/boutiques/${id}`)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+    const ogImageUrl = `${siteUrl}/assets/boutique/${b.id}/og`
+    const desc = b.description ? b.description.slice(0, 160) : `Découvrez le catalogue, les nouveautés et les promotions de ${b.nom} à ${b.ville}.`
+
     return {
-      title: `${b.nom} — Boutique sur Nopalou`,
-      description: b.description ?? `Boutique de ${b.ville} sur Nopalou`,
-      openGraph: b.logo_url ? { images: [b.logo_url] } : undefined,
+      title: `${b.nom} — Vitrine Officielle`,
+      description: desc,
+      openGraph: {
+        title: `${b.nom} — Vitrine Officielle`,
+        description: desc,
+        url: `${siteUrl}/boutiques/${b.slug || b.id}`,
+        siteName: b.nom,
+        type: 'website',
+        images: [
+          {
+            url: ogImageUrl,
+            width: 1200,
+            height: 630,
+            alt: `${b.nom} — Vitrine Officielle`,
+          },
+          ...(b.logo_url ? [{ url: b.logo_url, alt: b.nom }] : []),
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `${b.nom} — Vitrine Officielle`,
+        description: desc,
+        images: [ogImageUrl],
+      },
     }
   } catch {
-    return { title: 'Boutique' }
+    return { title: 'Vitrine Boutique' }
   }
 }
 

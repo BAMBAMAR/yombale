@@ -50,10 +50,35 @@ export async function generateMetadata(
     const { produit } = await apiFetch<{ produit: ProduitDetail }>(
       `/boutiques/${id}/produits/${produitId}`
     )
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+    const ogImageUrl = `${siteUrl}/assets/produit-boutique/${produit.id}/og?boutiqueId=${id}`
+    const desc = produit.description ? produit.description.slice(0, 160) : `${produit.nom} disponible chez ${produit.boutique_nom} à ${produit.boutique_ville}.`
+
     return {
       title: `${produit.nom} — ${produit.boutique_nom}`,
-      description: produit.description ?? `${produit.nom} disponible chez ${produit.boutique_nom} à ${produit.boutique_ville}`,
-      openGraph: produit.images?.[0] ? { images: [produit.images[0]] } : undefined,
+      description: desc,
+      openGraph: {
+        title: `${produit.nom} — ${produit.boutique_nom}`,
+        description: desc,
+        url: `${siteUrl}/boutiques/${id}/produits/${produitId}`,
+        siteName: produit.boutique_nom,
+        type: 'website',
+        images: [
+          {
+            url: ogImageUrl,
+            width: 1200,
+            height: 630,
+            alt: `${produit.nom} — ${produit.boutique_nom}`,
+          },
+          ...(produit.images?.[0] ? [{ url: produit.images[0], alt: produit.nom }] : []),
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `${produit.nom} — ${produit.boutique_nom}`,
+        description: desc,
+        images: [ogImageUrl],
+      },
     }
   } catch {
     return { title: 'Produit' }

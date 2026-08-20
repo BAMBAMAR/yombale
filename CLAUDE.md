@@ -23,6 +23,9 @@
   * **Suppression de la Redondance des Boutons & Résolution Robuste des Stories Marchand (`BoutiqueClient.tsx` & `/assets/produit-boutique/[id]/story/route.tsx`)** :
     - Unification du bouton d'action sur chaque fiche produit en un seul bouton vert élégant « 💬 Partager » qui ouvre directement la modale complète `ModalPartageProduit`.
     - Résolution automatique et résiliente du produit par ID dans le générateur de story (`/assets/produit-boutique/[id]/story`) avec récupération automatique de l'identité de la boutique (logo, nom, ville, WhatsApp), éliminant tout visuel générique.
+  * **Bannières OpenGraph 1200×630 Paysage 100% Marque Blanche pour Facebook & Réseaux Sociaux (`/assets/produit-boutique/[id]/og` & `/assets/boutique/[id]/og`)** :
+    - Création des générateurs d'images OpenGraph au format paysage 1200×630 pour les aperçus de partage de liens sur Facebook, Twitter, Telegram, LinkedIn, WhatsApp et SMS.
+    - Configuration complète de `generateMetadata` (`openGraph.images`, `openGraph.siteName`, `twitter.images`, `twitter.card`) sur les fiches produits (`/boutiques/[id]/produits/[produitId]`) et les vitrines (`/boutiques/[id]`), remplaçant l'image générique racine par l'identité exclusive du marchand.
   * **Qualité & Tests de Validation** :
     - Vérification stricte TypeScript (`npx tsc --noEmit`) : 0 erreur.
     - Suite complète de tests unitaires (`npm test`) : 31/31 tests validés avec succès (100%).
