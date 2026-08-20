@@ -1,3 +1,18 @@
+- **Modernisation UI/UX Espace Boutique : Grille 2 Colonnes KPIs & Raccourcis Tactiles (`main` - 20 août 2026)** ✨📱 :
+  * **Grille KPIs 2x2 Responsive (`VueEnsembleTab` dans `BoutiqueClient.tsx` & `globals.css`)** :
+    - **Fin du Gâchis d'Espace Horizontal** : Remplacement de l'empilement vertical 1 colonne rigide par une grille `.bq-kpi-grid` fluide (4 colonnes sur desktop, 2 colonnes sur tablette/mobile `≤ 768px`).
+    - **Cartes KPIs Compactes & Scannables** : Format optimisé avec padding resserré (`10px 12px`), chiffres clés bien contrastés (`20px`) et libellés protégés contre le débordement.
+  * **Grille d'Actions Rapides 2 Colonnes & Suppression de l'Effet « Boîtes dans des boîtes »** :
+    - **Conteneur Allégé** : Suppression du conteneur parent lourd avec bordure grise sur mobile (`background: transparent`, `border: none`, `padding: 0`), libérant 30-40px de largeur utile.
+    - **Tuiles Tactiles 2x2/2x3** : Boutons d'actions rapides sous forme de tuiles ergonomiques avec icônes colorées compactes (`32x32px`), titres clairs et sous-titres percutants.
+    - **Gain de Scroll Vertical Majeur** : Économie de **~650 pixels de défilement**, permettant d'afficher l'intégralité du tableau de bord au-dessus de la ligne de flottaison dès l'ouverture.
+  * **Optimisation de l'En-tête d'Onglet Actif (`.bq-main-tab-header`)** :
+    - Espacement vertical et typographie harmonisés sur smartphone (titre 17px, marges réduites).
+  * **Validation & Contrôle Qualité** :
+    - TypeScript strict (`npx tsc --noEmit`) : 0 erreur (code 0).
+    - Tests unitaires (`npm test`) : 31/31 tests validés avec succès (100%).
+    - Respect des règles AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Allègement Accueil, Correction Carrousel Mobile & Nettoyage En-têtes Boutique/Compte (`main` - 20 août 2026)** 🚀📱 :
   * **Optimisation de l'Accueil Mobile (`page.tsx`)** :
     - **Suppression du Carrousel Intermédiaire sur Mobile** : Élimination du carrousel WhatsApp/Parrainage qui s'intercalait entre la barre de recherche et les pilules de catégories, permettant un accès immédiat et direct aux catégories de produits dès la saisie.

@@ -9947,6 +9947,26 @@ button:focus-visible,
   padding: 12px 14px;
 }
 
+/* ── Grille KPIs et Actions Rapides Boutique ── */
+.bq-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.bq-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1024px) {
+  .bq-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
 @media (max-width: 768px) {
   .bq-manage-layout {
     flex-direction: column;
@@ -9994,9 +10014,72 @@ button:focus-visible,
     margin-left: 4px;
   }
 
+  /* ── Grille KPIs 2x2 et Raccourcis tactiles fluides sur mobile ── */
+  .bq-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .bq-kpi-card {
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .bq-kpi-card p {
+    font-size: 20px !important;
+  }
+
+  .bq-actions-container {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .bq-actions-container h3 {
+    margin-bottom: 8px !important;
+    font-size: 14px !important;
+  }
+
+  .bq-actions-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .bq-action-btn {
+    padding: 10px 10px !important;
+    gap: 8px !important;
+    border-radius: 10px !important;
+  }
+
+  .bq-action-btn > div:first-child {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+  }
+
+  .bq-action-btn > div:first-child svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .bq-main-tab-header {
+    margin-bottom: 12px !important;
+    padding-bottom: 10px !important;
+    gap: 8px !important;
+  }
+
+  .bq-main-tab-header h2 {
+    font-size: 17px !important;
+  }
+
+  .bq-main-tab-header p {
+    font-size: 12px !important;
+  }
+
   /* ── bq-main : padding réduit sur mobile ── */
   .bq-main {
-    padding: 14px 12px;
+    padding: 12px 10px;
     overflow-x: hidden;
     min-width: 0;
     width: 100%;

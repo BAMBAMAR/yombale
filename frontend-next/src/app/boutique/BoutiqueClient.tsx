@@ -3187,177 +3187,191 @@ function BoutiqueDashboard({
   }, [boutique.id])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-      {/* Grille de statistiques clés — Design System Tier-1 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 2px 8px rgba(26,22,18,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>{t('shop.pendingOrdersCount')}</span>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ClipboardList size={18} style={{ color: 'var(--navy)' }} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      {/* Grille de statistiques clés — 4 colonnes Desktop / 2 colonnes Mobile */}
+      <div className="bq-kpi-grid">
+        <div className="bq-kpi-card" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 8px rgba(26,22,18,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.pendingOrdersCount')}</span>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <ClipboardList size={16} style={{ color: 'var(--navy)' }} />
+              </div>
             </div>
+            <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--navy)' }}>{formatNumber(nbEnAttente)}</p>
           </div>
-          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--navy)' }}>{formatNumber(nbEnAttente)}</p>
-          <button onClick={() => onNavigate('commandes')} style={{ background: 'none', border: 'none', color: 'var(--navy)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10, textDecoration: 'underline' }}>
+          <button onClick={() => onNavigate('commandes')} style={{ background: 'none', border: 'none', color: 'var(--navy)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 8, textDecoration: 'underline', textAlign: 'left' }}>
             {t('shop.viewOrders')}
           </button>
         </div>
 
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 2px 8px rgba(26,22,18,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>{t('shop.catalog')}</span>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ShoppingBag size={18} style={{ color: 'var(--navy)' }} />
+        <div className="bq-kpi-card" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 8px rgba(26,22,18,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.catalog')}</span>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <ShoppingBag size={16} style={{ color: 'var(--navy)' }} />
+              </div>
             </div>
+            <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: 'var(--navy)' }}>{loading ? '...' : formatNumber(produitsCount ?? 0)}</p>
           </div>
-          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: 'var(--navy)' }}>{loading ? '...' : formatNumber(produitsCount ?? 0)}</p>
-          <button onClick={() => onNavigate('produits')} style={{ background: 'none', border: 'none', color: 'var(--navy)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10, textDecoration: 'underline' }}>
+          <button onClick={() => onNavigate('produits')} style={{ background: 'none', border: 'none', color: 'var(--navy)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 8, textDecoration: 'underline', textAlign: 'left' }}>
             {t('shop.manageCatalogBtn')}
           </button>
         </div>
 
-        <div style={{ background: stockAlertsCount && stockAlertsCount > 0 ? '#fffbeb' : 'var(--card)', border: stockAlertsCount && stockAlertsCount > 0 ? '1px solid #fcd34d' : '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 2px 8px rgba(26,22,18,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--text2)' }}>{t('shop.stockAlerts')}</span>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: stockAlertsCount && stockAlertsCount > 0 ? '#fef3c7' : 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <AlertTriangle size={18} style={{ color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }} />
+        <div className="bq-kpi-card" style={{ background: stockAlertsCount && stockAlertsCount > 0 ? '#fffbeb' : 'var(--card)', border: stockAlertsCount && stockAlertsCount > 0 ? '1px solid #fcd34d' : '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 8px rgba(26,22,18,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--text2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.stockAlerts')}</span>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: stockAlertsCount && stockAlertsCount > 0 ? '#fef3c7' : 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <AlertTriangle size={16} style={{ color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }} />
+              </div>
             </div>
+            <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }}>{loading ? '...' : formatNumber(stockAlertsCount ?? 0)}</p>
           </div>
-          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }}>{loading ? '...' : formatNumber(stockAlertsCount ?? 0)}</p>
-          <button onClick={() => onNavigate('fournisseurs')} style={{ background: 'none', border: 'none', color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 10, textDecoration: 'underline' }}>
+          <button onClick={() => onNavigate('fournisseurs')} style={{ background: 'none', border: 'none', color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 8, textDecoration: 'underline', textAlign: 'left' }}>
             {t('shop.restockBtn')}
           </button>
         </div>
 
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 2px 8px rgba(26,22,18,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>{t('shop.shopTierTitle')}</span>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Star size={18} style={{ color: 'var(--accent)' }} />
+        <div className="bq-kpi-card" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 8px rgba(26,22,18,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.shopTierTitle')}</span>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Star size={16} style={{ color: 'var(--accent)' }} />
+              </div>
             </div>
+            <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: planActif === 'business' ? 'var(--navy)' : planActif === 'pro' ? 'var(--accent)' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'var(--price)' : 'var(--text2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'Taf Taf' : 'Gratuit'}
+            </p>
           </div>
-          <p style={{ margin: 0, fontSize: 17, fontWeight: 800, color: planActif === 'business' ? 'var(--navy)' : planActif === 'pro' ? 'var(--accent)' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'var(--price)' : 'var(--text2)' }}>
-            {planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'Taf Taf (1m offert)' : 'Gratuit'}
-          </p>
-          <Link href="/boutique/abonnement" style={{ color: 'var(--navy)', fontSize: 12.5, fontWeight: 700, textDecoration: 'underline', display: 'inline-block', marginTop: 10 }}>
+          <Link href="/boutique/abonnement" style={{ color: 'var(--navy)', fontSize: 11.5, fontWeight: 700, textDecoration: 'underline', display: 'inline-block', marginTop: 8 }}>
             {t('shop.manageTierBtn')}
           </Link>
         </div>
       </div>
 
-      {/* Raccourcis d'action rapide — Fond unifié blanc pur & Icônes SVG Tier-1 */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 20, padding: 22, boxShadow: '0 4px 20px rgba(26,22,18,0.03)' }}>
-        <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 900, color: 'var(--navy)', letterSpacing: '-0.01em' }}>{t('shop.quickActions')}</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
+      {/* Raccourcis d'action rapide — Grille fluide 2 colonnes sans conteneur lourd */}
+      <div className="bq-actions-container" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 4px 16px rgba(26,22,18,0.03)' }}>
+        <h3 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 900, color: 'var(--navy)', letterSpacing: '-0.01em' }}>⚡ {t('shop.quickActions')}</h3>
+        <div className="bq-actions-grid">
           
           <button
             onClick={() => onNavigate('compta', 'express')}
+            className="bq-action-btn"
             style={{
-              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-              borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
+              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+              borderRadius: 12, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 8px rgba(26,22,18,0.04)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '0 2px 6px rgba(26,22,18,0.03)', transition: 'all 0.15s ease',
             }}
           >
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Zap size={22} style={{ color: 'var(--price)' }} />
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Zap size={19} style={{ color: 'var(--price)' }} />
             </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>{t('shop.quickSalesExpenses')}</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>{t('shop.quickSalesExpensesDesc')}</p>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 12.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickSalesExpenses')}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickSalesExpensesDesc')}</p>
             </div>
           </button>
 
           <button
             onClick={() => onNavigate('carnet')}
+            className="bq-action-btn"
             style={{
-              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-              borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
+              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+              borderRadius: 12, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 8px rgba(26,22,18,0.04)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '0 2px 6px rgba(26,22,18,0.03)', transition: 'all 0.15s ease',
             }}
           >
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <BookOpen size={22} style={{ color: 'var(--red)' }} />
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <BookOpen size={19} style={{ color: 'var(--red)' }} />
             </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>{t('shop.quickDebtBook')}</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>{t('shop.quickDebtBookDesc')}</p>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 12.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickDebtBook')}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickDebtBookDesc')}</p>
             </div>
           </button>
 
           <button
             onClick={() => onNavigate('produits')}
+            className="bq-action-btn"
             style={{
-              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-              borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
+              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+              borderRadius: 12, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 8px rgba(26,22,18,0.04)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '0 2px 6px rgba(26,22,18,0.03)', transition: 'all 0.15s ease',
             }}
           >
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <PlusCircle size={22} style={{ color: 'var(--accent)' }} />
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <PlusCircle size={19} style={{ color: 'var(--accent)' }} />
             </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>{t('shop.newProduct')}</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Photos, prix & détails</p>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 12.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.newProduct')}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Photos, prix & détails</p>
             </div>
           </button>
 
           <button
             onClick={() => onNavigate('documents')}
+            className="bq-action-btn"
             style={{
-              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-              borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
+              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+              borderRadius: 12, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 8px rgba(26,22,18,0.04)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '0 2px 6px rgba(26,22,18,0.03)', transition: 'all 0.15s ease',
             }}
           >
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <FileText size={22} style={{ color: 'var(--navy)' }} />
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <FileText size={19} style={{ color: 'var(--navy)' }} />
             </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>{t('shop.documents')}</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>Document client PDF</p>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 12.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.documents')}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Document client PDF</p>
             </div>
           </button>
 
           {boutique.mode_fonctionnement !== 'pure_player' && (
             <a
               href="/boutique/caisse"
+              className="bq-action-btn"
               style={{
-                display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-                borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
+                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+                borderRadius: 12, background: 'var(--card)', border: '1.5px solid var(--border)',
                 textDecoration: 'none', WebkitFontSmoothing: 'antialiased',
-                boxShadow: '0 2px 8px rgba(26,22,18,0.04)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 2px 6px rgba(26,22,18,0.03)', transition: 'all 0.15s ease',
               }}
               onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
             >
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <ShoppingCart size={22} style={{ color: 'var(--navy)' }} />
+              <div style={{ width: 38, height: 38, borderRadius: 10, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <ShoppingCart size={19} style={{ color: 'var(--navy)' }} />
               </div>
-              <div>
-                <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>{t('shop.quickPos')}</p>
-                <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>{t('shop.quickPosDesc')}</p>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 12.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickPos')}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickPosDesc')}</p>
               </div>
             </a>
           )}
 
           <button
             onClick={() => onOpenQrModal ? onOpenQrModal() : onNavigate('marketing')}
+            className="bq-action-btn"
             style={{
-              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-              borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)',
+              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+              borderRadius: 12, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 8px rgba(26,22,18,0.04)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '0 2px 6px rgba(26,22,18,0.03)', transition: 'all 0.15s ease',
             }}
           >
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Share2 size={22} style={{ color: 'var(--accent)' }} />
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Share2 size={19} style={{ color: 'var(--accent)' }} />
             </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em' }}>{t('shop.quickQr')}</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--text2)', fontWeight: 600 }}>{t('shop.quickQrDesc')}</p>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 12.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickQr')}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickQrDesc')}</p>
             </div>
           </button>
         </div>
@@ -4089,7 +4103,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
         )}
 
         {/* Titre de section & Statut Visibilité Boutique */}
-        <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <div className="bq-main-tab-header" style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h2 style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 20, margin: 0, color: '#111', fontWeight: 900 }}>
               {currentTabInfo.icon} {currentTabInfo.title}
