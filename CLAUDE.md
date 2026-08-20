@@ -1,3 +1,29 @@
+- **Refonte Ergonomique & Navigation Mobile : Bottom Sheet, Menu Principal & Déconnexion (`main` - 20 août 2026)** 📱 :
+  * **Optimisation & Allègement du Menu Principal Mobile (`MobileNav.tsx`)** :
+    - **Carte Utilisateur en Tête de Menu** : Affichage direct du profil connecté avec avatar initial, nom et bouton de déconnexion rapide 🚪 rouge bien visible en haut (au lieu d'être relégué après 25 liens).
+    - **Accordéon pour les Guides & Tutoriels** : Regroupement des 9 guides sous un bouton dépliable unique `📖 Guides & Tutoriels (9) ▼` (replié par défaut), libérant 9 lignes de scroll vertical.
+    - **Suppression des Doublons & Hiérarchie Nette** : Élimination des redondances (*Suivre ma commande, Annonces, Dépôts*) et organisation en sections claires (*Services, Mon Espace, Aide & Guides*).
+    - **Raccourcis Pro & Caisse POS** : Accès direct 1-clic à « 🏪 Ma Boutique Pro » et « 🛒 POS » mis en avant dès la connexion.
+  * **Bouton Déconnexion Direct dans l'Espace Compte (`AccountNavLinks.tsx`)** :
+    - Intégration d'un pied de tiroir dans le Bottom Sheet mobile du compte (`MobileBottomSheetNav`) avec accès direct à la **Déconnexion 🚪**, au **Guide d'utilisation 📖** et à **l'Espace Boutique 🏪**.
+    - Permet de se déconnecter instantanément depuis n'importe quelle sous-page du compte sur mobile sans chercher la sidebar masquée.
+  * **Suppression des 2 Niveaux de Pilules Horizontales Confus (`AccountNavLinks.tsx` & `BoutiqueClient.tsx`)** :
+    - Remplacement du système problématique de doubles rangées de *segmented tabs* horizontales défilantes par un pattern **Bottom Sheet moderne et contextuel** inspiré des meilleures applications mobiles.
+    - Élimination complète de la désorientation utilisateur, du double-scroll horizontal et du gaspillage d'espace vertical (~120px récupérés pour le contenu utile).
+  * **Barre Contextuelle Compacte Mobile (`.mobile-nav-compact`)** :
+    - Barre supérieure fixe avec bouton retour rapide, badge d'état indiquant clairement l'onglet actif (+ badge notifications/commandes en attente pour la boutique) et bouton menu ☰ tactile avec ombre portée.
+  * **Tiroir de Navigation Bottom Sheet (`.mobile-bs-panel` & `.mobile-bs-overlay`)** :
+    - Ouverture fluide par le bas avec glissement amorti (`mobileBsSlideUp`), poignée supérieure de glissement (*drag handle*), bouton de fermeture rapide ✕ et flou d'arrière-plan (`backdrop-filter: blur(2px)`).
+    - Affichage hiérarchique clair de l'ensemble des groupes et sous-menus avec titres de catégories, icônes, compteurs et bordures actives (`var(--accent)`).
+    - Conservation intégrale des badges d'accès forfait (`🔒 Pro`, `🔒 Business`) et des compteurs dynamiques de commandes.
+  * **Intégration & Responsive CSS (`globals.css`)** :
+    - Activation ciblée uniquement sous les breakpoints mobiles (`max-width: 768px` pour le Compte, `max-width: 640px` pour la Boutique).
+    - Préservation totale de l'arborescence et de la barre latérale accordéon sur grand écran (Desktop).
+    - Verrouillage automatique du défilement du corps de page (`overflow: hidden`) à l'ouverture du tiroir pour une expérience native.
+  * **Contrôle Qualité & Tests** :
+    - Compilation TypeScript stricte (`npx tsc --noEmit`) : 0 erreur (code 0).
+    - Respect absolu de la directive AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Package Force de Vente Commerciale Terrain, Académie & Guide d'Utilisation Simplifié (`main` - 20 août 2026)** 🚀 :
   * **Module Dédié Force de Vente dans l'Administration (`/admin/force-de-vente` & `ForceDeVenteClient.tsx`)** :
     - Nouvelle section complète intégrée dans la navigation latérale Admin (*Marketing & Partenaires*) articulée en 7 onglets :

@@ -314,121 +314,193 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
         })}
       </div>
 
-      {/* ── 2. AFFICHAGE MOBILE (Segmented Tabs à 2 Niveaux comme Boutique) ── */}
+      {/* ── 2. AFFICHAGE MOBILE (Bottom-Sheet compact + tiroir) ── */}
       <div className="account-nav-mobile">
-        {/* Niveau 1 : Onglets des Grands Groupes */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 6,
-            overflowX: 'auto',
-            paddingBottom: 6,
-            borderBottom: '1px solid #E8DDD2',
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch',
-          }}
-        >
-          {groupes.map((group, gIdx) => {
-            const isSelected = mobileGroupIdx === gIdx
-            return (
-              <button
-                key={group.id}
-                type="button"
-                onClick={() => setMobileGroupIdx(gIdx)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '7px 12px',
-                  borderRadius: 20,
-                  fontSize: 12,
-                  fontWeight: isSelected ? 800 : 600,
-                  background: isSelected ? 'var(--navy, #1C2B4A)' : '#F1F5F9',
-                  color: isSelected ? '#ffffff' : '#475569',
-                  border: isSelected ? '1px solid var(--navy, #1C2B4A)' : '1px solid #E2E8F0',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  boxShadow: isSelected ? '0 2px 6px rgba(28,43,74,0.18)' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span>{group.icon}</span>
-                <span>{group.title}</span>
-                <span
-                  style={{
-                    fontSize: 10,
-                    padding: '1px 5px',
-                    borderRadius: 10,
-                    background: isSelected ? 'rgba(255,255,255,0.25)' : '#E2E8F0',
-                    color: isSelected ? '#ffffff' : '#64748B',
-                    fontWeight: 700,
-                  }}
-                >
-                  {formatNumber(group.items.length)}
-                </span>
-              </button>
-            )
-          })}
+        {/* Ancien 2 niveaux masqué par CSS, remplacé par mobile-nav-compact */}
+      </div>
+
+      {/* ── Bottom-Sheet Mobile Navigation ── */}
+      <MobileBottomSheetNav
+        groupes={groupes}
+        isItemActive={isItemActive}
+        backHref={undefined}
+        sheetTitle={t('account.navTitle')}
+        variant="account"
+      />
+    </nav>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPOSANT BOTTOM-SHEET — Navigation mobile unifiée
+   ════════════════════════════════════════════════════════════════ */
+
+function MobileBottomSheetNav({
+  groupes,
+  isItemActive,
+  backHref,
+  sheetTitle,
+  variant,
+}: {
+  groupes: NavGroup[]
+  isItemActive: (item: NavLinkItem) => boolean
+  backHref?: string
+  sheetTitle: string
+  variant: 'account' | 'boutique'
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
+
+  // Trouver l'item actif pour la barre compacte
+  const activeItem = groupes.flatMap(g => g.items).find(item => isItemActive(item))
+  const currentIcon = activeItem?.emoji || '📋'
+  const currentLabel = activeItem?.label || sheetTitle
+
+  function openSheet() {
+    setIsOpen(true)
+    setIsClosing(false)
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = 'hidden'
+    }
+  }
+
+  function closeSheet() {
+    setIsClosing(true)
+    setTimeout(() => {
+      setIsOpen(false)
+      setIsClosing(false)
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = ''
+      }
+    }, 200)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = ''
+      }
+    }
+  }, [])
+
+  return (
+    <div className={`mobile-nav-compact mobile-nav-compact--${variant}`}>
+      {/* Barre compacte */}
+      <div className="mobile-nav-compact-bar">
+        {backHref && (
+          <Link href={backHref} className="mobile-nav-compact-back" aria-label="Retour">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+          </Link>
+        )}
+
+        <div className="mobile-nav-compact-current">
+          <span className="mobile-nav-compact-current-icon">{currentIcon}</span>
+          <span className="mobile-nav-compact-current-label">{currentLabel}</span>
         </div>
 
-        {/* Niveau 2 : Sous-Menus Directs Défilants */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 6,
-            overflowX: 'auto',
-            paddingTop: 8,
-            paddingBottom: 4,
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch',
-          }}
+        <button
+          type="button"
+          className="mobile-nav-compact-toggle"
+          onClick={openSheet}
+          aria-label="Ouvrir la navigation"
         >
-          {groupes[mobileGroupIdx]?.items.map(item => {
-            const actif = isItemActive(item)
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '8px 12px',
-                  borderRadius: 10,
-                  fontSize: 12.5,
-                  fontWeight: actif ? 800 : 600,
-                  background: actif ? '#FFF3E8' : '#FAF8F5',
-                  color: actif ? 'var(--accent, #C75B00)' : '#1E293B',
-                  border: actif ? '1.5px solid var(--accent, #C75B00)' : '1px solid #E8DDD2',
-                  textDecoration: 'none',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  boxShadow: actif ? '0 2px 6px rgba(199,91,0,0.15)' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span style={{ fontSize: 14 }}>{item.emoji}</span>
-                <span>{item.label}</span>
-                {item.badgeText && (
-                  <span
-                    style={{
-                      fontSize: 9.5,
-                      fontWeight: 800,
-                      padding: '1px 5px',
-                      borderRadius: 6,
-                      background: item.badgeBg || '#FED7AA',
-                      color: item.badgeColor || '#9A3412',
-                    }}
-                  >
-                    {item.badgeText}
-                  </span>
-                )}
-              </Link>
-            )
-          })}
-        </div>
+          ☰
+        </button>
       </div>
-    </nav>
+
+      {/* Bottom Sheet */}
+      {isOpen && (
+        <>
+          <div className="mobile-bs-overlay" onClick={closeSheet} aria-hidden="true" />
+          <div className={`mobile-bs-panel${isClosing ? ' mobile-bs-panel--closing' : ''}`}>
+            <div className="mobile-bs-handle">
+              <div className="mobile-bs-handle-bar" />
+            </div>
+
+            <div className="mobile-bs-header">
+              <span className="mobile-bs-title">{sheetTitle}</span>
+              <button type="button" className="mobile-bs-close" onClick={closeSheet} aria-label="Fermer">
+                ✕
+              </button>
+            </div>
+
+            <div className="mobile-bs-body">
+              {groupes.map((group, gIdx) => {
+                const hasActive = group.items.some(item => isItemActive(item))
+                return (
+                  <div key={group.id} className={`mobile-bs-group${hasActive ? ' mobile-bs-group--active' : ''}`}>
+                    <div className="mobile-bs-group-title">
+                      <span className="mobile-bs-group-title-icon">{group.icon}</span>
+                      <span>{group.title}</span>
+                    </div>
+                    <div className="mobile-bs-group-items">
+                      {group.items.map(item => {
+                        const actif = isItemActive(item)
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`mobile-bs-item${actif ? ' mobile-bs-item--active' : ''}`}
+                            onClick={closeSheet}
+                          >
+                            <span className="mobile-bs-item-icon">{item.emoji}</span>
+                            <span className="mobile-bs-item-label">{item.label}</span>
+                            {item.badgeText && (
+                              <span
+                                className="mobile-bs-item-badge mobile-bs-item-badge--brand"
+                                style={{ background: item.badgeBg, color: item.badgeColor }}
+                              >
+                                {item.badgeText}
+                              </span>
+                            )}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="mobile-bs-footer" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', gap: 6, width: '100%' }}>
+                <Link
+                  href="/guide-utilisation"
+                  target="_blank"
+                  className="mobile-bs-footer-link"
+                  style={{ flex: 1, background: '#FFF7ED', color: '#C75B00', border: '1px solid #FFEDD5', justifyContent: 'center' }}
+                  onClick={closeSheet}
+                >
+                  <span>📖</span>
+                  <span>Guide</span>
+                </Link>
+                <Link
+                  href="/boutique"
+                  className="mobile-bs-footer-link"
+                  style={{ flex: 1, background: '#F1F5F9', color: 'var(--navy, #1C2B4A)', border: '1px solid #E2E8F0', justifyContent: 'center' }}
+                  onClick={closeSheet}
+                >
+                  <span>🏪</span>
+                  <span>Boutique</span>
+                </Link>
+              </div>
+
+              <a
+                href="/api/auth/deconnexion"
+                className="mobile-bs-footer-link"
+                style={{ width: '100%', boxSizing: 'border-box', background: '#FEF2F2', color: '#DC2626', border: '1px solid #FEE2E2', justifyContent: 'center', fontWeight: 800 }}
+                onClick={closeSheet}
+              >
+                <span>🚪</span>
+                <span>Se déconnecter</span>
+              </a>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   )
 }

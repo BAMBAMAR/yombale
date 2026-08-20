@@ -3379,6 +3379,188 @@ interface NavGroup {
   items: NavItem[]
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   COMPOSANT BOTTOM-SHEET — Navigation mobile Boutique
+   ════════════════════════════════════════════════════════════════ */
+
+function BoutiqueMobileBottomSheet({
+  navGroups,
+  activeTab,
+  onSetTab,
+  isAllowed,
+  nbEnAttente,
+  formatNumber,
+  sheetTitle,
+  onBack,
+}: {
+  navGroups: NavGroup[]
+  activeTab: ManageTab
+  onSetTab: (tab: ManageTab) => void
+  isAllowed: (minPlan?: 'pro' | 'business') => boolean
+  nbEnAttente: number
+  formatNumber: (n: number) => string
+  sheetTitle: string
+  onBack: () => void
+}) {
+  const { t } = useTranslation()
+  const [isOpen, setIsOpen] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
+
+  // Trouver l'item actif
+  const activeItem = navGroups.flatMap(g => g.items).find(i => i.key === activeTab)
+  const currentIcon = activeItem?.icon || '🏠'
+  const currentLabel = activeItem?.label || sheetTitle
+
+  function openSheet() {
+    setIsOpen(true)
+    setIsClosing(false)
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = 'hidden'
+    }
+  }
+
+  function closeSheet() {
+    setIsClosing(true)
+    setTimeout(() => {
+      setIsOpen(false)
+      setIsClosing(false)
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = ''
+      }
+    }, 200)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = ''
+      }
+    }
+  }, [])
+
+  return (
+    <div className="mobile-nav-compact mobile-nav-compact--boutique">
+      {/* Barre compacte */}
+      <div className="mobile-nav-compact-bar">
+        <button
+          type="button"
+          className="mobile-nav-compact-back"
+          onClick={onBack}
+          aria-label="Retour aux boutiques"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+        </button>
+
+        <div className="mobile-nav-compact-current">
+          <span className="mobile-nav-compact-current-icon">{currentIcon}</span>
+          <span className="mobile-nav-compact-current-label">{currentLabel}</span>
+          {nbEnAttente > 0 && (
+            <span className="mobile-bs-item-badge mobile-bs-item-badge--count" style={{ fontSize: 10, padding: '1px 6px' }}>
+              {formatNumber(nbEnAttente)}
+            </span>
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="mobile-nav-compact-toggle"
+          onClick={openSheet}
+          aria-label="Ouvrir la navigation"
+        >
+          ☰
+        </button>
+      </div>
+
+      {/* Bottom Sheet */}
+      {isOpen && (
+        <>
+          <div className="mobile-bs-overlay" onClick={closeSheet} aria-hidden="true" />
+          <div className={`mobile-bs-panel${isClosing ? ' mobile-bs-panel--closing' : ''}`}>
+            <div className="mobile-bs-handle">
+              <div className="mobile-bs-handle-bar" />
+            </div>
+
+            <div className="mobile-bs-header">
+              <span className="mobile-bs-title">🏪 {sheetTitle}</span>
+              <button type="button" className="mobile-bs-close" onClick={closeSheet} aria-label="Fermer">
+                ✕
+              </button>
+            </div>
+
+            <div className="mobile-bs-body">
+              {navGroups.map((group, gIdx) => {
+                const hasActive = group.items.some(i => i.key === activeTab)
+                return (
+                  <div key={gIdx} className={`mobile-bs-group${hasActive ? ' mobile-bs-group--active' : ''}`}>
+                    <div className="mobile-bs-group-title">
+                      <span className="mobile-bs-group-title-icon">{group.icon}</span>
+                      <span>{group.title}</span>
+                    </div>
+                    <div className="mobile-bs-group-items">
+                      {group.items.map(item => {
+                        const allowed = isAllowed(item.minPlan)
+                        const isActive = activeTab === item.key
+                        return (
+                          <button
+                            key={item.key}
+                            type="button"
+                            className={`mobile-bs-item${isActive ? ' mobile-bs-item--active' : ''}`}
+                            onClick={() => {
+                              onSetTab(item.key)
+                              closeSheet()
+                            }}
+                          >
+                            <span className="mobile-bs-item-icon">{item.icon}</span>
+                            <span className="mobile-bs-item-label">{item.label}</span>
+                            {!allowed && (
+                              <span className={`mobile-bs-item-badge ${item.minPlan === 'business' ? 'mobile-bs-item-badge--lock-business' : 'mobile-bs-item-badge--lock'}`}>
+                                🔒 {item.minPlan === 'business' ? 'Business' : 'Pro'}
+                              </span>
+                            )}
+                            {allowed && item.key === 'commandes' && nbEnAttente > 0 && (
+                              <span className="mobile-bs-item-badge mobile-bs-item-badge--count">
+                                {formatNumber(nbEnAttente)}
+                              </span>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="mobile-bs-footer">
+              <a
+                href="/boutique/caisse"
+                className="mobile-bs-footer-link"
+                style={{ background: '#F0FDF4', color: '#16a34a', border: '1px solid #BBF7D0' }}
+                onClick={closeSheet}
+              >
+                <span>🛒</span>
+                <span>{t('caisse.posTitle') || 'Caisse POS'}</span>
+              </a>
+              <a
+                href="/compte"
+                className="mobile-bs-footer-link"
+                style={{ background: '#F1F5F9', color: '#1e3a5f', border: '1px solid #E2E8F0' }}
+                onClick={closeSheet}
+              >
+                <span>👤</span>
+                <span>{t('shop.merchantAccount')}</span>
+              </a>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialTab: initialTabProp }: {
   boutique: Boutique
   planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
@@ -3812,65 +3994,22 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           })}
         </nav>
 
-        {/* Nav Mobile Épurée (Segmented Tabs Fluides) */}
+        {/* Nav Mobile — Bottom-Sheet (remplace les 2 niveaux de pills) */}
         <nav className="bq-nav-mobile" style={{ borderBottom: '1px solid var(--border)', background: 'var(--card)' }}>
-          {/* Niveau 1 : Onglets Groupes */}
-          <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', background: '#faf8f5' }}>
-            <div className="nopalou-scroll-tabs" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
-              {NAV_GROUPS.map((group, gIdx) => {
-                const isGroupActive = activeGroupIdx === gIdx
-                return (
-                  <button
-                    key={gIdx}
-                    onClick={() => setActiveGroupIdx(gIdx)}
-                    className={isGroupActive ? 'npl-btn npl-btn-primary npl-btn-sm' : 'npl-btn npl-btn-secondary npl-btn-sm'}
-                    style={{ borderRadius: 20, fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                  >
-                    <span>{group.icon}</span>
-                    <span>{group.title}</span>
-                    <span style={{
-                      fontSize: 10,
-                      padding: '1px 5px',
-                      borderRadius: 10,
-                      background: isGroupActive ? 'rgba(255,255,255,0.25)' : 'var(--border)',
-                      color: isGroupActive ? '#ffffff' : 'var(--text2)',
-                      fontWeight: 700
-                    }}>
-                      {formatNumber(group.items.length)}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Niveau 2 : Sous-Menus Directs */}
-          <div style={{ padding: '8px 12px', background: 'var(--card)' }}>
-            <div className="nopalou-scroll-tabs" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
-              {NAV_GROUPS[activeGroupIdx]?.items.map(item => {
-                const allowed = isAllowed(item.minPlan)
-                const isActive = tab === item.key
-                return (
-                  <button
-                    key={item.key}
-                    onClick={() => setTab(item.key)}
-                    className={isActive ? 'npl-btn npl-btn-accent npl-btn-sm' : 'npl-btn npl-btn-secondary npl-btn-sm'}
-                    style={{ borderRadius: 8, fontSize: 12.5 }}
-                  >
-                    <span style={{ fontSize: 14 }}>{item.icon}</span>
-                    <span>{item.label}</span>
-                    {!allowed && (
-                      <span style={{ fontSize: 9, opacity: 0.8 }}>🔒</span>
-                    )}
-                    {allowed && item.key === 'commandes' && nbEnAttente > 0 && (
-                      <span className="bq-nav-badge" style={{ marginLeft: 2 }}>{formatNumber(nbEnAttente)}</span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+          {/* Ancien 2 niveaux masqué par CSS */}
         </nav>
+
+        {/* Bottom-Sheet Mobile Navigation — Boutique */}
+        <BoutiqueMobileBottomSheet
+          navGroups={NAV_GROUPS}
+          activeTab={tab}
+          onSetTab={setTab}
+          isAllowed={isAllowed}
+          nbEnAttente={nbEnAttente}
+          formatNumber={formatNumber}
+          sheetTitle={boutique.nom}
+          onBack={onBack}
+        />
 
         {/* Liens rapides */}
         <div style={{ padding: '12px 8px', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 6 }}>
