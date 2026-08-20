@@ -584,8 +584,8 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
         </div>
       )}
 
-      {/* Filtres statut + Onglet Paniers Abandonnés */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      {/* Filtres statut + Onglet Paniers Abandonnés (Défilement horizontal fluide sur mobile) */}
+      <div className="commandes-status-scroll" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {filtreStatuts.map(f => (
           <button key={f.key} onClick={() => setFiltre(f.key)} style={{
             padding: '5px 12px', borderRadius: 20, border: '1px solid',

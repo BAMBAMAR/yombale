@@ -1,3 +1,17 @@
+- **Audit & Nettoyage Complet des Sous-Menus Boutique (`main` - 20 août 2026)** 🔍📱 :
+  * **Suppression des Doublons de Titres & En-têtes (`AnalyticsClient.tsx` & `BoutiqueClient.tsx`)** :
+    - **Élimination du Double En-tête sur « Statistiques & Ventes »** : Suppression du `<h1>` et `<p>` redondants dans `AnalyticsClient.tsx` qui faisaient doublon avec l'en-tête de section parent (`.bq-main-tab-header`), libérant l'espace et étendant le contenu sur 100% de la largeur sans marges restrictives (`margin: '32px auto'` supprimé).
+    - **Grille 2x2 des KPIs de Vente et Trafic** : Conversion des 4 indicateurs de performance en grille responsive `.bq-kpi-grid` (Panier moyen, Total ventes, Coupons, Vues) sur mobile au lieu d'un empilement 1 colonne lourd.
+  * **Optimisation de la Barre de Filtres Commandes (`Commandes.tsx` & `globals.css`)** :
+    - **Défilement Horizontal Tactile des Statuts (`.commandes-status-scroll`)** : Transformation des 8 boutons de filtres de statut (qui s'enroulaient de façon chaotique sur 4 lignes verticales) en un ruban de pilules défilant horizontalement avec fluidité et scrollbar masquée.
+    - **Gain d'Espace Vertical** : Économie immédiate de **~90 pixels de hauteur** sur l'écran des commandes.
+  * **Optimisation des Marges Extérieures Globales (`.bq-manage-outer-wrap` & `.bq-list-outer-wrap`)** :
+    - Réduction des marges et paddings extérieurs sur mobile (8px au lieu de 24px) afin de maximiser la surface d'affichage utile sur tous les smartphones (320px à 412px).
+  * **Validation & Contrôle Qualité** :
+    - TypeScript strict (`npx tsc --noEmit`) : 0 erreur (code 0).
+    - Tests unitaires (`npm test`) : 31/31 tests validés avec succès (100%).
+    - Respect des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Modernisation UI/UX Espace Boutique : Grille 2 Colonnes KPIs & Raccourcis Tactiles (`main` - 20 août 2026)** ✨📱 :
   * **Grille KPIs 2x2 Responsive (`VueEnsembleTab` dans `BoutiqueClient.tsx` & `globals.css`)** :
     - **Fin du Gâchis d'Espace Horizontal** : Remplacement de l'empilement vertical 1 colonne rigide par une grille `.bq-kpi-grid` fluide (4 colonnes sur desktop, 2 colonnes sur tablette/mobile `≤ 768px`).

@@ -4437,7 +4437,7 @@ export default function BoutiqueClient({
   // Mode gestion — layout pleine largeur avec sidebar
   if (typeof mode === 'object' && 'managing' in mode) {
     return (
-      <div style={{ maxWidth: 1360, margin: '32px auto', padding: '0 24px' }}>
+      <div className="bq-manage-outer-wrap" style={{ maxWidth: 1360, margin: '32px auto', padding: '0 24px' }}>
         <BoutiqueManage
           boutique={mode.managing}
           planActif={planActifEffectif ?? null}
@@ -4462,7 +4462,7 @@ export default function BoutiqueClient({
 
   // Vue liste
   return (
-    <main style={{ maxWidth: 1200, margin: '32px auto', padding: '0 20px 80px', overflowX: 'hidden' }}>
+    <main className="bq-list-outer-wrap" style={{ maxWidth: 1200, margin: '32px auto', padding: '0 20px 80px', overflowX: 'hidden' }}>
       {/* Navigation Fil d'Ariane Standard Nopalou */}
       <nav
         aria-label="Fil d'Ariane"

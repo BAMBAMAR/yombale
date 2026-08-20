@@ -78,18 +78,13 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '32px auto', padding: '0 20px' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>{t('shop.analytics')}</h1>
-      <p style={{ color: '#64748b', marginBottom: 24, fontSize: 14 }}>
-        {t('shop.analyticsDesc')}
-      </p>
-
-      {/* Sélecteur boutique */}
+    <div style={{ width: '100%', maxWidth: '100%', margin: 0, padding: 0 }}>
+      {/* Sélecteur boutique (si plusieurs boutiques) */}
       {boutiques.length > 1 && (
         <select
           value={boutiqueId}
           onChange={e => setBoutiqueId(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, marginBottom: 24 }}
+          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, marginBottom: 16, maxWidth: 280 }}
         >
           {boutiques.map(b => <option key={b.id} value={b.id}>{b.nom}</option>)}
         </select>
@@ -98,7 +93,7 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
       {loading && <p style={{ color: '#94a3b8' }}>{t('common.loading')}</p>}
 
       {erreur && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: '16px 20px', color: '#dc2626' }}>
+        <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: '14px 18px', color: '#dc2626', marginBottom: 16 }}>
           {erreur}
         </div>
       )}
@@ -106,11 +101,11 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
       {stats && !loading && (
         <>
           {/* Mode d'exploitation badge */}
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 18 }}>{stats.mode_fonctionnement === 'pure_player' ? '⚡' : '🏪'}</span>
               <div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#1f2937' }}>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1f2937' }}>
                   Mode actif : {stats.mode_fonctionnement === 'pure_player' ? 'Pure Player E-Commerce (100% Web)' : 'Hybride POS (Commerce Physique + Web)'}
                 </span>
                 <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748b' }}>
@@ -120,20 +115,22 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
             </div>
           </div>
 
-          {/* KPIs Trafic & Conversions */}
-          <h2 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 12px', color: '#1f2937' }}>📊 Performances Trafic & Ventes Web</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14, marginBottom: 24 }}>
+          {/* KPIs Trafic & Conversions — Grille 4 colonnes Desktop / 2 colonnes Mobile */}
+          <h3 style={{ fontSize: 14, fontWeight: 800, margin: '0 0 10px', color: '#1f2937' }}>📊 Performances Trafic & Ventes Web</h3>
+          <div className="bq-kpi-grid" style={{ marginBottom: 20 }}>
             {[
               { label: 'Panier moyen (AOV)', value: `${n(stats.panier_moyen || 0)} FCFA`, sub: 'Panier boosté par le Cross-Sell', emoji: '🛒' },
               { label: 'Ventes enregistrées', value: `${n(stats.total_ventes || 0)} FCFA`, sub: `${n(stats.nb_commandes || 0)} commandes web 1-page`, emoji: '💰' },
               { label: 'Coupons réductions', value: n(stats.utilisations_promo || 0), sub: `${n(stats.nb_promotions || 0)} codes promo créés`, emoji: '🏷️' },
               { label: 'Vues boutique',  value: n(stats.vues_total),       sub: `${n(stats.vues_7j)} cette semaine`,    emoji: '👁️' },
             ].map(({ label, value, sub, emoji }) => (
-              <div key={label} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px' }}>
-                <div style={{ fontSize: 22 }}>{emoji}</div>
-                <div style={{ fontSize: 20, fontWeight: 800, margin: '4px 0 2px', color: '#111827' }}>{value}</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{label}</div>
-                <div style={{ fontSize: 11, color: '#94a3b8' }}>{sub}</div>
+              <div key={label} className="bq-kpi-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 20 }}>{emoji}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, margin: '4px 0 2px', color: '#111827', wordBreak: 'break-word' }}>{value}</div>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+                </div>
+                <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 4 }}>{sub}</div>
               </div>
             ))}
           </div>

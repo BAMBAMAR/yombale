@@ -10086,6 +10086,33 @@ button:focus-visible,
     box-sizing: border-box;
   }
 
+  .bq-manage-outer-wrap {
+    margin: 8px auto !important;
+    padding: 0 8px !important;
+  }
+
+  .bq-list-outer-wrap {
+    margin: 12px auto !important;
+    padding: 0 10px 60px !important;
+  }
+
+  .commandes-status-scroll {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .commandes-status-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .commandes-status-scroll > button {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+
   /* Forcer tous les enfants directs de bq-main à ne pas dépasser */
   .bq-main > * {
     max-width: 100%;
