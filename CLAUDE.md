@@ -1,3 +1,32 @@
+- **Mise à Jour du Kit de Communication, Gestion & Recherche des Abonnements et Contrôle des Boosts d'Annonces (`main` - 20 août 2026)** 🚀 :
+  * **Actualisation Complète du Kit de Communication & Visuels Marketing (`produit-promo/route.tsx`, `KitComClient.tsx`, `page.tsx`, `brochure-apporteur/route.tsx`)** :
+    - Mise à jour des forfaits réels sur tous les générateurs d'affiches OG/ImageResponse : **Taf Taf (2 500 FCFA/mois)**, **Boutique Pro (5 000 FCFA/mois)**, **Boutique Business VIP (10 000 FCFA/mois)**, avec 1er mois 100% offert sur tous les plans.
+    - Correction de la grille de gains apporteurs d'affaires (20% récurrents) : 500 F/mois (Taf Taf), 1 000 F/mois (Pro), 2 000 F/mois (Business).
+    - Intégration du barème des remises multi-durées pour les commerçants : -10% (3 mois), -15% (6 mois), -25% / 3 mois offerts (12 mois).
+    - Mise en avant des fonctionnalités marchandes récentes dans les arguments B2B et visuels : Facturation & Devis OHADA en PDF (NINEA, RCCM, TVA), Mode Caisse PWA Hors-Ligne (Offline First sans coupure), Gestion des Fournisseurs & Scan OCR, Import catalogue par lot CSV/Excel, 3 Scanners (Caméra, Cloud <100ms, Douchette USB).
+    - Ajout de nouveaux templates de publications sociales : Facturation OHADA PME, Comparateur de Forfaits Télécom (Orange, Yas, Expresso, Promobile) et Caisse POS PWA Offline.
+  * **Refonte avec Recherche & Filtres sur la Gestion des Abonnements Admin (`/admin/abonnements`)** :
+    - Ajout d'une barre de recherche instantanée multi-critères (Nom, E-mail, Téléphone, Nom de boutique, Réf de commande Wave/OM/Manuel).
+    - Ajout d'onglets de filtrage par statut : `Tous`, `🟢 Actifs`, `⏳ Expire bientôt (< 7j)`, `⚫ Expirés`, `🚫 Annulés` avec compteurs dynamiques.
+    - Ajout du filtre déroulant par formule (`Boutique Pro`, `Boutique Business`, `Taf Taf`) et tri paramétrable (Échéance proche/lointaine, Date de création, Montant).
+    - Affichage direct du nom de la boutique reliée avec lien cliquable vers sa vitrine en ligne (`/boutiques/[slug]`).
+    - Indicateur visuel d'échéance (badge vert avec jours restants, badge d'alerte orange si < 7 jours, badge gris/rouge si expiré ou annulé).
+    - Bouton d'export CSV instantané de la liste filtrée.
+    - Enrichissement de l'API backend (`GET /api/abonnements/admin`) avec jointure sur la table `boutiques` (`boutique_nom`, `boutique_slug`, `boutique_id`) et comptabilisation des plans Taf Taf dans les KPIs.
+  * **Correction & Contrôle des Boosts d'Annonces (Site Public & Administration)** :
+    - **Tri public prioritaire (`backend/routes/annonces.js`)** : Dans `GET /api/annonces`, intégration de la clause prioritaire `ORDER BY (a.boost_until IS NOT NULL AND a.boost_until > NOW()) DESC` pour propulser immédiatement en 1ère position les annonces ayant payé un boost de 7 jours.
+    - **Badge visuel sur le site (`frontend-next/src/app/annonces/page.tsx`)** : Affichage d'un badge distinctif `⚡ BOOSTÉ` avec dégradé ambre/doré sur la carte de l'annonce pour valoriser la visibilité acquise.
+    - **Administration & Modération (`/admin/annonces` & `AdminAnnoncesClient.tsx`)** :
+      - Nouvel onglet de filtrage `⚡ Boostées` avec compteur dédié.
+      - Badge de statut avec date d'expiration exacte du boost (`⚡ Boosté (JJ/MM/AAAA)`).
+      - Bouton d'action directe `⚡ Booster 7j` / `⚡ +7j Boost` sur chaque annonce.
+      - Action par lot `⚡ Booster 7 jours` pour propulser plusieurs annonces en un clic.
+      - Nouvelle route backend `POST /api/annonces/admin/:id/boost` et action serveur `boosterAnnonce`.
+  * **Qualité & Tests de Validation** :
+    - Vérification stricte TypeScript (`npx tsc --noEmit`) : 0 erreur.
+    - Suite de tests unitaires (`npm test`) : 31/31 tests validés avec succès (100%).
+    - Compilation Next.js (`npm run build`) : Build standard complété avec succès (code 0).
+
 - **Refonte Ergonomique, Masquage Complet du Menu Latéral & Scrollbars Invisibles (`main` / `feature/i18n-account-shop` - 19 août 2026)** 🎨 :
   * **Fermeture Complète du Menu Latéral (`BoutiqueClient.tsx` & `globals.css`)** :
     - Bouton **« ✕ Fermer le menu »** intégré dans l'en-tête de la barre latérale pour masquer complètement tout le panneau de navigation et libérer l'espace de travail.

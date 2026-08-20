@@ -197,6 +197,53 @@ Simple, ultra-sécurisé et instantané.
 #Nopalou #WhatsAppAuth #Meta #Innovation #Dakar #Sénégal #Sécurité`,
   },
   {
+    titre: '🧾 Post Facturation & Devis OHADA (Pour PME & Marchands)',
+    texte: `⚡ Émettez vos Factures & Devis aux normes OHADA en 1 clic !
+
+Commerçants, prestataires et PME à Dakar : simplifiez votre gestion avec Nopalou :
+
+📄 Factures Proforma, Devis & Factures Définitives en PDF professionnel
+⚖️ Mentions légales sénégalaises conformes (NINEA, RCCM, TVA & Timbre fiscal)
+🔄 Conversion immédiate de Devis en Facture après encaissement
+📱 Envoi instantané du PDF par WhatsApp ou E-mail au client
+
+👉 1er mois d'essai 100% gratuit sans engagement !
+👉 Créez votre compte sur nopalou.com/boutique
+
+#Nopalou #FacturationOHADA #PMEsenegal #Comptabilite #Dakar #Entreprendre`,
+  },
+  {
+    titre: '📶 Post Comparatif Forfaits Télécom (Orange, Yas, Expresso, Promobile)',
+    texte: `📡 Quel est le Pass Internet le moins cher du Sénégal ?
+
+Ne payez plus vos données au hasard ! Nopalou compare en direct tous les forfaits et pass internet à Dakar :
+
+🍊 Orange (Pass Illimix, Max, Fiber)
+🟡 Yas ex-Free (Pass 4G+, Voix & Roaming)
+🔴 Expresso (Pass Chrono & Data)
+🟢 Promobile (Forfaits hybrides)
+
+💡 Utilisez notre Guide de scoring interactif pour trouver le meilleur Pass au Go le moins cher !
+
+👉 Comparez maintenant sur nopalou.com/telecom ou nopalou.com/guide-forfait
+
+#Nopalou #ForfaitInternet #PassOrange #YasSenegal #Expresso #Dakar #BonPlan`,
+  },
+  {
+    titre: '📶 Post Caisse POS Mode PWA Hors-Ligne (Zéro Coupure)',
+    texte: `⚡ Coupure d'Internet à Dakar ? Votre Caisse POS continue d'encaisser !
+
+Avec la Caisse Tactile Nopalou (PWA Offline First) :
+🛒 Vos ventes comptoir et scans de codes-barres fonctionnent sans Internet
+💾 Toutes les données restent sauvegardées en sécurité sur votre appareil
+🔄 Synchronisation automatique dès que la 4G ou le Wi-Fi revient
+
+👉 Idéal pour les boutiques, magasins et superettes à Dakar et en région.
+👉 Testez la démo sur nopalou.com/demo
+
+#NopalouPOS #CaisseEnregistreuse #PWA #CommerceSenegal #Dakar`,
+  },
+  {
     titre: '🔥 Post Bon Plan Produit & Vente Flash (Template)',
     texte: `🔥 BON PLAN DU JOUR À DAKAR
 

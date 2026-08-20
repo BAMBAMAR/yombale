@@ -77,6 +77,7 @@ interface Annonce {
   photos: string[]
   contact_nom: string | null
   contact_tel: string
+  boost_until?: string | null
   created_at: string
 }
 
@@ -243,10 +244,23 @@ export default async function AnnoncesPage({
         <div id="resultats" className="annonces-grid">
           {(annonces as Annonce[]).map(a => {
             const photo = Array.isArray(a.photos) ? a.photos[0] : null
+            const isBooste = a.boost_until && new Date(a.boost_until) > new Date()
             return (
               <Link href={`/annonces/${a.id}`} key={a.id} className="annonce-pub-card" style={{ position: 'relative' }}>
                 <CardActions id={a.id} nom={a.titre} type="annonce" />
                 <div className="annonce-pub-img-wrap">
+                  {isBooste && (
+                    <span style={{
+                      position: 'absolute', top: 8, left: 8, zIndex: 2,
+                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                      color: '#fff', fontSize: 11, fontWeight: 900,
+                      padding: '3px 8px', borderRadius: 6,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                      display: 'flex', alignItems: 'center', gap: 3
+                    }}>
+                      ⚡ BOOSTÉ
+                    </span>
+                  )}
                   {photo
                     // eslint-disable-next-line @next/next/no-img-element
                     ? <img src={cloudinaryHQ(photo, { width: 400 })} alt={a.titre} className="annonce-pub-img" />

@@ -141,20 +141,20 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     if (source === 'facebook') { conds.push(`source LIKE 'facebook-%'`); }
     else if (source === 'manuel') { conds.push(`(source IS NULL OR source NOT LIKE 'facebook-%')`); }
 
-    const orderBy = tri === 'prix_asc'  ? 'prix ASC NULLS LAST'
-                  : tri === 'prix_desc' ? 'prix DESC NULLS LAST'
-                  :                       'CASE WHEN utilisateur_id IS NOT NULL THEN 0 ELSE 1 END, created_at DESC';
+    const orderBy = tri === 'prix_asc'  ? '(a.boost_until IS NOT NULL AND a.boost_until > NOW()) DESC, a.prix ASC NULLS LAST'
+                  : tri === 'prix_desc' ? '(a.boost_until IS NOT NULL AND a.boost_until > NOW()) DESC, a.prix DESC NULLS LAST'
+                  :                       '(a.boost_until IS NOT NULL AND a.boost_until > NOW()) DESC, CASE WHEN a.utilisateur_id IS NOT NULL THEN 0 ELSE 1 END, a.created_at DESC';
 
     const where = 'WHERE ' + conds.join(' AND ');
     const [rows, cnt] = await Promise.all([
       pool.query(
-        `SELECT id, categorie_slug, titre, description, prix, ville, quartier,
-                contact_nom, contact_tel, photos, caracteristiques, source, created_at
-         FROM annonces_classifiees ${where}
+        `SELECT a.id, a.categorie_slug, a.titre, a.description, a.prix, a.ville, a.quartier,
+                a.contact_nom, a.contact_tel, a.photos, a.caracteristiques, a.source, a.boost_until, a.created_at
+         FROM annonces_classifiees a ${where}
          ORDER BY ${orderBy} LIMIT $${vals.length+1} OFFSET $${vals.length+2}`,
         [...vals, lim, offset]
       ),
-      pool.query(`SELECT COUNT(*) FROM annonces_classifiees ${where}`, vals),
+      pool.query(`SELECT COUNT(*) FROM annonces_classifiees a ${where}`, vals),
     ]);
     res.json({ annonces: rows.rows, total: parseInt(cnt.rows[0].count), page: parseInt(page) });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
@@ -165,7 +165,7 @@ router.get('/mine', verifierToken, async (req, res) => {
   try {
     const rows = await pool.query(
       `SELECT id, categorie_slug, titre, description, prix, ville, quartier,
-              contact_nom, contact_tel, actif, payee, supprimee,
+              contact_nom, contact_tel, actif, payee, supprimee, boost_until,
               rejete, photos, caracteristiques, created_at
        FROM annonces_classifiees
        WHERE utilisateur_id=$1 AND supprimee=false
@@ -179,7 +179,7 @@ router.get('/mine', verifierToken, async (req, res) => {
 // ── GET /api/annonces/admin/en-attente (admin) — toutes les annonces non supprimées avec filtres
 router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
   try {
-    const { q, categorie, statut, ville, payee, tri, limit = 5000 } = req.query;
+    const { q, categorie, statut, ville, payee, booste, tri, limit = 5000 } = req.query;
     const conds = ['a.supprimee = false'];
     const vals = [];
 
@@ -195,6 +195,11 @@ router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
       conds.push(`a.payee = true`);
     } else if (payee === 'false') {
       conds.push(`a.payee = false`);
+    }
+    if (booste === 'true') {
+      conds.push(`(a.boost_until IS NOT NULL AND a.boost_until > NOW())`);
+    } else if (booste === 'false') {
+      conds.push(`(a.boost_until IS NULL OR a.boost_until <= NOW())`);
     }
     if (statut === 'attente') {
       conds.push(`(a.actif = false AND (a.rejete IS NOT TRUE))`);
@@ -220,7 +225,7 @@ router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
       )`);
     }
 
-    let orderBy = 'a.created_at DESC';
+    let orderBy = '(a.boost_until IS NOT NULL AND a.boost_until > NOW()) DESC, a.created_at DESC';
     if (tri === 'ancien') {
       orderBy = 'a.created_at ASC';
     } else if (tri === 'prix_asc') {
@@ -235,7 +240,7 @@ router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
     const where = 'WHERE ' + conds.join(' AND ');
     const rows = await pool.query(
       `SELECT a.id, a.categorie_slug, a.titre, a.description, a.prix, a.ville, a.quartier,
-              a.contact_nom, a.contact_tel, a.photos, a.actif, a.payee, a.rejete,
+              a.contact_nom, a.contact_tel, a.photos, a.actif, a.payee, a.rejete, a.boost_until,
               a.created_at, a.updated_at,
               u.nom AS auteur_nom, u.email AS auteur_email
        FROM annonces_classifiees a
@@ -248,6 +253,37 @@ router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
   } catch (err) {
     console.error('[ADMIN GET /annonces]', err.message);
     res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/annonces/admin/:id/boost — booster ou prolonger le boost d'une annonce (admin)
+router.post('/admin/:id/boost', adminSecretOnly, async (req, res) => {
+  try {
+    const { jours = 7 } = req.body;
+    const nbJours = parseInt(jours) || 7;
+    let query = '';
+    let params = [];
+
+    if (nbJours <= 0) {
+      query = `UPDATE annonces_classifiees SET boost_until = NULL, updated_at = NOW() WHERE id = $1 RETURNING id, titre, boost_until, actif`;
+      params = [req.params.id];
+    } else {
+      query = `UPDATE annonces_classifiees
+               SET boost_until = GREATEST(COALESCE(boost_until, NOW()), NOW()) + ($2 || ' days')::INTERVAL,
+                   actif = true,
+                   rejete = false,
+                   updated_at = NOW()
+               WHERE id = $1
+               RETURNING id, titre, boost_until, actif`;
+      params = [req.params.id, Math.max(1, Math.min(365, nbJours))];
+    }
+
+    const { rows } = await pool.query(query, params);
+    if (!rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
+    res.json({ success: true, annonce: rows[0] });
+  } catch (err) {
+    console.error('[ADMIN BOOST ANNONCE]', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 

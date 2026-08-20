@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useTransition } from 'react'
-import { modererAnnonce, supprimerAnnonce, batchModererAnnonces, batchSupprimerAnnonces } from '@/app/actions/admin'
+import { modererAnnonce, supprimerAnnonce, batchModererAnnonces, batchSupprimerAnnonces, boosterAnnonce } from '@/app/actions/admin'
 import BatchActionBar, { BatchActionConfig } from '@/components/admin/BatchActionBar'
 
 interface Annonce {
@@ -14,6 +14,7 @@ interface Annonce {
   actif: boolean
   payee: boolean
   rejete: boolean
+  boost_until?: string | null
   auteur_nom: string | null
   auteur_email: string | null
   contact_tel: string
@@ -21,7 +22,7 @@ interface Annonce {
   created_at: string
 }
 
-type TabStatus = 'toutes' | 'attente' | 'actives' | 'rejetees'
+type TabStatus = 'toutes' | 'attente' | 'actives' | 'boostees' | 'rejetees'
 type TriOption = 'recent' | 'ancien' | 'prix_asc' | 'prix_desc'
 
 const CATEGORIES_LABELS: Record<string, string> = {
@@ -59,9 +60,33 @@ function statutClass(annonce: Annonce) {
 }
 
 function StatutBadge({ annonce }: { annonce: Annonce }) {
-  if (annonce.rejete) return <span className="admin-annonce-statut admin-annonce-statut--rejete">Rejetée</span>
-  if (annonce.actif)  return <span className="admin-annonce-statut admin-annonce-statut--active">Active</span>
-  return <span className="admin-annonce-statut admin-annonce-statut--attente">En attente</span>
+  const isBooste = Boolean(annonce.boost_until && new Date(annonce.boost_until) > new Date())
+  return (
+    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+      {annonce.rejete ? (
+        <span className="admin-annonce-statut admin-annonce-statut--rejete">Rejetée</span>
+      ) : annonce.actif ? (
+        <span className="admin-annonce-statut admin-annonce-statut--active">Active</span>
+      ) : (
+        <span className="admin-annonce-statut admin-annonce-statut--attente">En attente</span>
+      )}
+      {isBooste && (
+        <span style={{
+          background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+          color: '#fff',
+          fontSize: 11,
+          fontWeight: 800,
+          padding: '2px 8px',
+          borderRadius: 6,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4
+        }}>
+          ⚡ Boosté ({new Date(annonce.boost_until!).toLocaleDateString('fr-FR')})
+        </span>
+      )}
+    </div>
+  )
 }
 
 function AnnonceRow({
@@ -85,6 +110,13 @@ function AnnonceRow({
     })
   }
 
+  function handleBoost(jours = 7) {
+    startTransition(async () => {
+      await boosterAnnonce(annonce.id, jours)
+      onAction()
+    })
+  }
+
   function handleSupprimer() {
     if (!window.confirm('Supprimer définitivement cette annonce ?')) return
     startTransition(async () => {
@@ -96,6 +128,7 @@ function AnnonceRow({
   const allPhotos = Array.isArray(annonce.photos) ? annonce.photos : []
   const photo = allPhotos[0] ?? null
   const prix = formatPrix(annonce.prix)
+  const isBooste = Boolean(annonce.boost_until && new Date(annonce.boost_until) > new Date())
 
   return (
     <div className={`admin-annonce-row ${statutClass(annonce)}${pending ? ' admin-annonce-row--loading' : ''}`} style={{ position: 'relative' }}>
@@ -189,6 +222,24 @@ function AnnonceRow({
               ↩ Réactiver
             </button>
           )}
+
+          {/* Action Booster / Prolonger Boost */}
+          <button
+            onClick={() => handleBoost(7)}
+            disabled={pending}
+            className="admin-btn"
+            style={{
+              background: isBooste ? '#fef3c7' : '#fffbeb',
+              color: '#b45309',
+              border: '1px solid #fcd34d',
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: 'pointer'
+            }}
+          >
+            {isBooste ? '⚡ +7j Boost' : '⚡ Booster 7j'}
+          </button>
+
           <button
             onClick={handleSupprimer}
             disabled={pending}
@@ -264,6 +315,8 @@ export default function AdminAnnoncesClient({
       list = list.filter(a => !a.actif && !a.rejete)
     } else if (activeTab === 'actives') {
       list = list.filter(a => a.actif)
+    } else if (activeTab === 'boostees') {
+      list = list.filter(a => Boolean(a.boost_until && new Date(a.boost_until) > new Date()))
     } else if (activeTab === 'rejetees') {
       list = list.filter(a => a.rejete)
     }
@@ -325,6 +378,7 @@ export default function AdminAnnoncesClient({
     return {
       attente: initial.filter(a => !a.actif && !a.rejete).length,
       actives: initial.filter(a => a.actif).length,
+      boostees: initial.filter(a => Boolean(a.boost_until && new Date(a.boost_until) > new Date())).length,
       rejetees: initial.filter(a => a.rejete).length,
       toutes: initial.length,
     }
@@ -368,6 +422,19 @@ export default function AdminAnnoncesClient({
     }
   }
 
+  const handleBatchBoost = async () => {
+    setLoadingBatch(true)
+    try {
+      for (const id of selectedIds) {
+        await boosterAnnonce(id, 7)
+      }
+      setSelectedIds([])
+      refresh()
+    } finally {
+      setLoadingBatch(false)
+    }
+  }
+
   const handleBatchDesactiver = async () => {
     setLoadingBatch(true)
     try {
@@ -397,6 +464,13 @@ export default function AdminAnnoncesClient({
       icon: '✅',
       color: 'green',
       onClick: handleBatchApprouver,
+    },
+    {
+      key: 'booster',
+      label: '⚡ Booster 7 jours',
+      icon: '⚡',
+      color: 'amber',
+      onClick: handleBatchBoost,
     },
     {
       key: 'desactiver',
@@ -634,6 +708,34 @@ export default function AdminAnnoncesClient({
             padding: '2px 8px', borderRadius: 12, fontSize: 12
           }}>
             {counts.actives}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('boostees')}
+          style={{
+            padding: '10px 18px',
+            borderRadius: '10px 10px 0 0',
+            border: 'none',
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: 'pointer',
+            background: activeTab === 'boostees' ? '#d97706' : '#f8fafc',
+            color: activeTab === 'boostees' ? '#fff' : '#475569',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            boxShadow: activeTab === 'boostees' ? '0 4px 12px rgba(217, 119, 6, 0.25)' : 'none',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          ⚡ Boostées
+          <span style={{
+            background: activeTab === 'boostees' ? 'rgba(255,255,255,0.3)' : '#e2e8f0',
+            padding: '2px 8px', borderRadius: 12, fontSize: 12
+          }}>
+            {counts.boostees}
           </span>
         </button>
 

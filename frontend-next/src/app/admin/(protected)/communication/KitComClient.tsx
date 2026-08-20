@@ -108,28 +108,28 @@ export default function KitComClient({
   const agentCodeFormatted = codeAgent ? codeAgent : '[VOTRE_CODE]'
 
   const scriptOralPerso = `[Accroche — 15 sec]
-Bonjour, je m'appelle ${agentNameFormatted}, je représente Nopalou, le comparateur de prix N°1 au Sénégal (produits, immobilier, télécom).
+Bonjour, je m'appelle ${agentNameFormatted}, je représente Nopalou, le super-comparateur & solution de commerce digital N°1 au Sénégal.
 
 [Problème — 20 sec]
-Vos clients comparent déjà les prix sur Facebook ou en passant en magasin. Nopalou centralise tout cela et vous rend visible gratuitement auprès d'acheteurs prêts à commander.
+Vos clients comparent déjà les prix en ligne ou sur les réseaux. Nopalou vous apporte à la fois une vitrine marketplace et un outil complet pour votre magasin physique.
 
-[Solution & Caisse POS — 40 sec]
-Vous créez votre boutique en 2 min, avec Caisse Enregistreuse POS Tactile, 3 Scanners (Caméra, Cloud, USB), Carnet de Dettes Client & Relances WhatsApp 1-Clic. Les commandes arrivent directement sur votre WhatsApp.
+[Solution Caisse POS & Gestion — 40 sec]
+Vous profitez d'une Caisse POS Tactile (3 Scanners: Caméra, Cloud <100ms, USB), du Mode Hors-Ligne PWA sans coupure, de la Facturation OHADA (Factures & Devis PDF conformes NINEA/RCCM), du Carnet de Dettes Client et des commandes WhatsApp directes.
 
-[Offre Essai — 20 sec]
-Actuellement, nous offrons 30 jours d'essai Pro gratuits sans engagement. Vous testez, vous observez les vues et contacts, et vous décidez ensuite.
+[Offre & Tarifs — 20 sec]
+Le 1er mois est 100% OFFERT sans aucun engagement. Ensuite, seulement ${fcfa(prixPro)}/mois sur la formule Pro ou ${fcfa(prixBusiness)}/mois en Business multi-caissiers, avec jusqu'à 25% de remise sur l'abonnement annuel.
 
 [Clôture & Code — 15 sec]
-Créons votre boutique ensemble en 5 min. Utilisez mon code partenaire : ${agentCodeFormatted} ou contactez-moi sur WhatsApp au ${agentPhoneFormatted}.`
+Créons votre boutique ensemble en 2 min sur nopalou.com/boutique avec mon code partenaire : ${agentCodeFormatted} ou contactez-moi sur WhatsApp au ${agentPhoneFormatted}.`
 
   const apporteurTextePerso = `💼 Devenez apporteur d'affaires Nopalou
 
 Vous connaissez des commerçants ou agences à Dakar ? Présentez-leur Nopalou et touchez ${tauxApporteur}% de commission récurrente sur chaque abonnement Pro ou Business recruté — chaque mois, tant que la boutique reste active !
 
 Comment ça marche :
-1. Présentez Nopalou à votre réseau avec le code : ${agentCodeFormatted}
+1. Présentez Nopalou à votre réseau avec votre code : ${agentCodeFormatted}
 2. Le commerçant crée sa boutique sur nopalou.com/boutique
-3. Touchez ${tauxApporteur}% par Wave ou Orange Money chaque mois.
+3. Touchez ${tauxApporteur}% par Wave ou Orange Money chaque mois (${fcfa(Math.round(prixPro * tauxApporteur / 100))} à ${fcfa(Math.round(prixBusiness * tauxApporteur / 100))}/mois par boutique).
 
 📲 Contact Apporteur (${agentNameFormatted}) : ${agentPhoneFormatted}`
 
@@ -148,21 +148,21 @@ Comment ça marche :
   // Légende automatique associée au visuel
   let legendePublication = ''
   if (typeVisuel === 'forfait_pro') {
-    legendePublication = `🖥️ Digitalisez votre magasin avec Nopalou POS !\n\nVous gérez une boutique à Dakar ? Profitez de la Caisse Enregistreuse Tactile POS pour ${fcfa(prixPro)}/mois avec :\n✅ 3 Scanners inclus (Caméra Smartphone, Cloud Sync <100ms, Douchette USB)\n✅ Carnet de Dettes Client & Relance WhatsApp 1-Clic\n✅ Impression Stickers Codes-Barres EAN-13 GS1\n✅ 0% Commission sur vos ventes !\n\n🎁 30 jours d'essai Pro gratuits sans engagement !\n👉 Créez votre boutique sur nopalou.com/boutique`
+    legendePublication = `🖥️ Digitalisez votre magasin avec Nopalou POS !\n\nVous gérez une boutique à Dakar ? Profitez de la Caisse POS Tactile pour seulement ${fcfa(prixPro)}/mois avec :\n✅ 3 Scanners inclus (Caméra Smartphone, Cloud Sync <100ms, Douchette USB)\n✅ Mode Caisse PWA Hors-Ligne (Fonctionne même sans connexion Internet)\n✅ Facturation & Devis OHADA en PDF (NINEA, RCCM & TVA)\n✅ Carnet de Dettes Client & Relance WhatsApp 1-Clic\n✅ Impression Stickers Codes-Barres EAN-13 GS1\n✅ 0% Commission sur vos ventes !\n\n🎁 1er mois 100% OFFERT sans carte !\n👉 Créez votre boutique sur nopalou.com/boutique`
   } else if (typeVisuel === 'forfait_taftaf') {
-    legendePublication = `⚡ Lancez votre Vitrine Web en 30 secondes pour seulement ${fcfa(prixDecouverte)}/mois !\n\n✅ URL personnalisée nopalou.com/boutiques/votre-nom\n✅ Commandes reçues directement sur votre WhatsApp\n✅ Gestionnaire de commandes Web\n\n👉 Créez votre boutique sur nopalou.com/creer-boutique`
+    legendePublication = `⚡ Lancez votre Vitrine Web en 30 secondes pour seulement ${fcfa(prixDecouverte)}/mois !\n\n✅ URL personnalisée nopalou.com/boutiques/votre-nom\n✅ Commandes reçues directement sur votre WhatsApp\n✅ Carnet de Dettes Client inclus\n✅ Import AliExpress & 1688 en 1-clic\n✅ 0% Commission sur vos ventes\n\n🎁 1er mois 100% OFFERT !\n👉 Créez votre boutique sur nopalou.com/creer-boutique`
   } else if (typeVisuel === 'forfait_business') {
-    legendePublication = `👑 Caisse POS Multi-Vendeurs pour Grandes Enseignes !\n\n✅ Multi-Caissiers sécurisés par code PIN\n✅ Clôtures de Caisse Z automatiques\n✅ Emplacement prioritaire catégorie sur Nopalou\n\n👉 Contactez-nous pour une démo sur nopalou.com/boutique`
+    legendePublication = `👑 Caisse POS Multi-Vendeurs pour Grandes Enseignes !\n\n✅ Multi-Caissiers sécurisés par code PIN\n✅ Clôtures de Caisse Z automatiques & rapports de marges\n✅ Gestion des Fournisseurs & Scan OCR de factures\n✅ Import de catalogue par lot Excel / CSV\n✅ Portail Développeur API REST & Webhooks\n\n🎁 1er mois 100% OFFERT !\n👉 Contactez-nous pour une démo sur nopalou.com/boutique`
   } else if (typeVisuel === 'chatbot_wa') {
-    legendePublication = `🤖 Découvrez l'Assistant Chatbot WhatsApp Meta Nopalou 24h/24 !\n\nBesoin de trouver un produit, comparer les prix ou suivre une commande au Sénégal ?\n\n💬 Envoyez "MENU" au +221 70 871 79 42 (ou wa.me/221708717942)\n\n✅ Recherche instantanée de téléphones, TV, électro & biens immo\n✅ Alertes baisse de prix envoyées sur WhatsApp\n✅ Panier multi-produits 1-clic`
+    legendePublication = `🤖 Découvrez l'Assistant Chatbot WhatsApp Meta Nopalou 24h/24 !\n\nBesoin de trouver un produit, comparer les prix ou suivre une commande au Sénégal ?\n\n💬 Envoyez "MENU" au +221 70 871 79 42 (ou wa.me/221708717942)\n\n✅ Recherche instantanée de téléphones, TV, électro & biens immo\n✅ Alertes baisse de prix envoyées sur WhatsApp\n✅ Panier multi-produits 1-clic & Suivi de commande`
   } else if (typeVisuel === 'immo') {
     legendePublication = `🏢 Trouvez votre appartement, villa ou terrain à Dakar sur Nopalou Immo !\n\nAnnonces vérifiées à Almadies, Mermoz, Plateau, Fann, Yoff, Saly & Petite Côte.\n\n🔑 Photos HD, coordonnées directes du bailleur sans intermédiaire masqué !\n👉 Consultez les offres sur nopalou.com/immo`
   } else if (typeVisuel === 'telecom') {
-    legendePublication = `📡 Comparez tous les Forfaits & Pass Télécom au Sénégal !\n\nOrange, Yas (ex-Free), Expresso & Promobile — trouvez le Pass Internet, Voix & SMS le plus avantageux à Dakar !\n\n👉 Comparez les pass sur nopalou.com/telecom`
+    legendePublication = `📡 Comparez tous les Forfaits & Pass Télécom au Sénégal !\n\nOrange, Yas (ex-Free), Expresso & Promobile — trouvez le Pass Internet, Voix & SMS le plus avantageux à Dakar !\n\n💡 Utilisez notre Guide interactif de scoring pour trouver le meilleur Pass au Go le moins cher !\n👉 Comparez sur nopalou.com/telecom ou nopalou.com/guide-forfait`
   } else if (typeVisuel === 'apporteur') {
     legendePublication = `💰 Devenez Apporteur d'Affaires Nopalou (${tauxApporteur}% de commission récurrente) !\n\nRecommandez Nopalou aux commerçants & agences et touchez chaque mois votre commission par Wave ou Orange Money.\n\n📄 Brochure PDF 13 pages disponible !\n👉 Activez votre compte sur nopalou.com/compte/apporteur`
   } else if (typeVisuel === 'comparatif_paliers') {
-    legendePublication = `📊 Quelle formule Nopalou correspond à votre commerce ?\n\n1️⃣ Taf Taf (${fcfa(prixDecouverte)}/mois) : Vitrine web rapide\n2️⃣ Pro (${fcfa(prixPro)}/mois) : Caisse Enregistreuse POS Tactile + 3 Scanners\n3️⃣ Business (${fcfa(prixBusiness)}/mois) : Multi-caissiers & Clôtures Z\n\n🎁 30 Jours d'essai gratuit sur la formule Pro !\n👉 Comparez sur nopalou.com/boutique`
+    legendePublication = `📊 Quelle formule Nopalou correspond à votre commerce ?\n\n1️⃣ Taf Taf (${fcfa(prixDecouverte)}/mois) : Vitrine web & commandes WhatsApp\n2️⃣ Pro (${fcfa(prixPro)}/mois) : Caisse POS Tactile + Factures OHADA + PWA Offline\n3️⃣ Business (${fcfa(prixBusiness)}/mois) : Multi-caissiers PIN + Fournisseurs OCR + API REST\n\n🎁 1er Mois 100% OFFERT sur toutes les formules !\n🏷️ Remises : -10% (3 mois), -15% (6 mois), -25% (12 mois / 3 mois offerts)\n👉 Comparez sur nopalou.com/boutique`
   } else {
     legendePublication = `🔥 BON PLAN PRIX NOPALOU !\n\n📱 ${genNom}\n💰 ${fcfa(parseInt(genPrix) || 0)} (au lieu de ${fcfa(parseInt(genPrixBarre) || 0)})\n🏪 Vendeur : ${genBoutique}\n\n👉 Comparez tous les prix sur nopalou.com`
   }
@@ -414,18 +414,20 @@ Comment ça marche :
       {tab === 'demarchage' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
           
-          {/* Argumentaire POS */}
+          {/* Argumentaire POS & Commerce */}
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
-              💼 5 Arguments Vendeurs POS & Magasin
+              💼 7 Arguments Vendeurs POS, OHADA &amp; Magasin
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { t: 'Caisse Enregistreuse POS Tactile intégrée', d: 'Ventes en magasin, 3 Scanners (Caméra smartphone, Cloud Sync <100ms, Douchette USB) et tickets de caisse.' },
-                { t: 'Carnet de Dettes Client & Relances WhatsApp', d: 'Enregistrement des crédits clients et relance en 1-clic sur WhatsApp avec solde exact.' },
-                { t: 'Multi-Caissiers & Clôtures de Caisse Z', d: 'Chaque vendeur a son code PIN. Historique des ventes et clôture Z en fin de journée.' },
-                { t: '0% Commission sur la Formule Pro', d: `Formule Pro fixe (${fcfa(prixPro)}/mois) sans aucune commission sur les ventes — contre 5 à 15% chez Jumia.` },
-                { t: '30 Jours d\'Essai Gratuits sans carte', d: 'Testez la boutique et la caisse POS pendant 1 mois sans aucun engagement.' },
+                { t: '🖥️ Caisse Enregistreuse POS Tactile & 3 Scanners', d: 'Ventes en magasin, scan Caméra Smartphone, Cloud Sync (<100ms) ou Douchette USB + impression tickets.' },
+                { t: '📶 Mode Caisse PWA Hors-Ligne (Offline First)', d: 'Continuez d\'encaisser même en cas de coupure Internet ou 4G à Dakar. Synchronisation automatique au retour de la connexion.' },
+                { t: '🧾 Factures Proforma & Devis OHADA en PDF', d: 'Émission de documents fiscaux sénégalais conformes (NINEA, RCCM, TVA, Timbre fiscal) avec envoi WhatsApp immédiat.' },
+                { t: '📦 Gestion Fournisseurs & Scan OCR', d: 'Enregistrez vos fournisseurs, créez des bons de commande et scannez automatiquement les factures d\'achat avec l\'IA.' },
+                { t: '📓 Carnet de Dettes Client & Relances WhatsApp', d: 'Enregistrement des crédits clients et relance en 1-clic sur WhatsApp avec solde exact et lien de paiement.' },
+                { t: '👥 Multi-Caissiers & Clôtures de Caisse Z', d: 'Chaque vendeur a son code PIN. Historique des ventes, contrôle des écarts de caisse et clôture Z automatique.' },
+                { t: '🎁 1er Mois 100% Offert & Remises -25%', d: `Démarrez sans payer le 1er mois. Formule Pro à ${fcfa(prixPro)}/mois ou Business à ${fcfa(prixBusiness)}/mois avec jusqu'à 3 mois offerts sur l'abonnement annuel.` },
               ].map((a, i) => (
                 <div key={a.t} style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: 18, background: '#fff', display: 'flex', gap: 14 }}>
                   <span style={{ width: 28, height: 28, borderRadius: '50%', background: '#FFF7ED', color: '#C75B00', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -471,7 +473,7 @@ Comment ça marche :
               <div style={{ width: 180, height: 240, border: '3px solid #C75B00', borderRadius: 16, background: '#FFF7ED', padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center' }}>
                 <span style={{ fontSize: 14, fontWeight: 900, color: '#C75B00' }}>Nopalou POS</span>
                 <span style={{ fontSize: 48 }}>📲</span>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#1C2B4A' }}>Scannez pour payer par Wave/OM ou comparer nos prix</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#1C2B4A' }}>Scannez pour payer par Wave/OM ou voir le catalogue</span>
               </div>
               <div style={{ flex: 1, minWidth: 240 }}>
                 <h3 style={{ fontSize: 15, fontWeight: 800, color: '#1C2B4A', margin: '0 0 8px' }}>
@@ -502,33 +504,47 @@ Comment ça marche :
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
               💰 Grille de Commission Récurrente (${tauxApporteur}%)
             </h2>
-            <div style={{ border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', background: '#fff' }}>
+            <div style={{ border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', background: '#fff', marginBottom: 16 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
                     <th style={{ padding: 12, textAlign: 'left', color: '#64748B' }}>Formule Recrutée</th>
-                    <th style={{ padding: 12, textAlign: 'left', color: '#64748B' }}>Prix Abonnement</th>
+                    <th style={{ padding: 12, textAlign: 'left', color: '#64748B' }}>Prix Mensuel</th>
                     <th style={{ padding: 12, textAlign: 'left', color: '#64748B' }}>Vos Gains / Mois (${tauxApporteur}%)</th>
+                    <th style={{ padding: 12, textAlign: 'left', color: '#64748B' }}>Gain sur Paiement Annuel (-25%)</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
                     <td style={{ padding: 12, fontWeight: 700 }}>Boutique Taf Taf</td>
                     <td style={{ padding: 12 }}>{fcfa(prixDecouverte)}/mois</td>
-                    <td style={{ padding: 12, fontWeight: 800, color: '#C75B00' }}>{fcfa(Math.round(prixDecouverte * tauxApporteur / 100))}/mois par boutique</td>
+                    <td style={{ padding: 12, fontWeight: 800, color: '#C75B00' }}>{fcfa(Math.round(prixDecouverte * tauxApporteur / 100))}/mois</td>
+                    <td style={{ padding: 12, color: '#16a34a', fontWeight: 700 }}>{fcfa(Math.round(prixDecouverte * 12 * 0.75 * tauxApporteur / 100))} / an</td>
                   </tr>
                   <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
                     <td style={{ padding: 12, fontWeight: 700 }}>Boutique Pro</td>
                     <td style={{ padding: 12 }}>{fcfa(prixPro)}/mois</td>
-                    <td style={{ padding: 12, fontWeight: 800, color: '#C75B00' }}>{fcfa(Math.round(prixPro * tauxApporteur / 100))}/mois par boutique</td>
+                    <td style={{ padding: 12, fontWeight: 800, color: '#C75B00' }}>{fcfa(Math.round(prixPro * tauxApporteur / 100))}/mois</td>
+                    <td style={{ padding: 12, color: '#16a34a', fontWeight: 700 }}>{fcfa(Math.round(prixPro * 12 * 0.75 * tauxApporteur / 100))} / an</td>
                   </tr>
                   <tr>
                     <td style={{ padding: 12, fontWeight: 700 }}>Boutique Business</td>
                     <td style={{ padding: 12 }}>{fcfa(prixBusiness)}/mois</td>
-                    <td style={{ padding: 12, fontWeight: 800, color: '#C75B00' }}>{fcfa(Math.round(prixBusiness * tauxApporteur / 100))}/mois par boutique</td>
+                    <td style={{ padding: 12, fontWeight: 800, color: '#C75B00' }}>{fcfa(Math.round(prixBusiness * tauxApporteur / 100))}/mois</td>
+                    <td style={{ padding: 12, color: '#16a34a', fontWeight: 700 }}>{fcfa(Math.round(prixBusiness * 12 * 0.75 * tauxApporteur / 100))} / an</td>
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            {/* Remises multi-durées appliquées aux commerçants */}
+            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: 14, display: 'flex', gap: 20, alignItems: 'center', fontSize: 13, color: '#475569' }}>
+              <span style={{ fontWeight: 800, color: '#1C2B4A' }}>🏷️ Remises commerçants :</span>
+              <span>3 mois (-10%)</span>
+              <span>·</span>
+              <span>6 mois (-15%)</span>
+              <span>·</span>
+              <span style={{ fontWeight: 800, color: '#C75B00' }}>12 mois (-25% / 3 mois offerts)</span>
             </div>
           </section>
 

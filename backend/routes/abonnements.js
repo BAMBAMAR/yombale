@@ -77,11 +77,13 @@ router.get('/admin', adminSecretOnly, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT a.id, a.plan, a.statut, a.prix_mensuel, a.debut, a.fin, a.commande_ref, a.created_at,
-             u.nom AS utilisateur_nom, u.email AS utilisateur_email, u.telephone
+             u.nom AS utilisateur_nom, u.email AS utilisateur_email, u.telephone,
+             b.id AS boutique_id, b.nom AS boutique_nom, b.slug AS boutique_slug
       FROM abonnements a
       JOIN utilisateurs u ON u.id = a.utilisateur_id
+      LEFT JOIN boutiques b ON b.utilisateur_id = u.id
       ORDER BY a.created_at DESC
-      LIMIT 200
+      LIMIT 300
     `);
     res.json({ abonnements: rows });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -95,8 +97,9 @@ router.get('/admin/stats', adminSecretOnly, async (req, res) => {
         COUNT(*) FILTER (WHERE statut='actif' AND fin > NOW())       AS actifs,
         COUNT(*) FILTER (WHERE plan='pro' AND statut='actif' AND fin > NOW())   AS pro_actifs,
         COUNT(*) FILTER (WHERE plan='business' AND statut='actif' AND fin > NOW()) AS business_actifs,
+        COUNT(*) FILTER (WHERE plan='decouverte' AND statut='actif' AND fin > NOW()) AS decouverte_actifs,
         COALESCE(SUM(prix_mensuel) FILTER (WHERE statut='actif' AND fin > NOW()), 0) AS mrr,
-        COUNT(*) FILTER (WHERE statut='expire')                       AS expires,
+        COUNT(*) FILTER (WHERE statut='expire' OR (statut='actif' AND fin <= NOW())) AS expires,
         COUNT(*) FILTER (WHERE created_at >= DATE_TRUNC('month', NOW())) AS nouveaux_ce_mois
       FROM abonnements
     `);

@@ -264,13 +264,14 @@ export async function GET(request: Request) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 36, flex: 1 }}>
             {[
-              { t: '🏪 Boutique Pro (15 000 F/mois)', d: 'Vous gagnez 3 000 FCFA / mois par boutique' },
-              { t: '👑 Boutique Business (35 000 F/mois)', d: 'Vous gagnez 7 000 FCFA / mois par boutique' },
-              { t: '📄 Brochure PDF 13 p. Incluses', d: 'Support de vente imprimable pour démarcher' },
-              { t: '📱 Retrait Direct Wave & OM', d: 'Paiement mensuel automatique des commissions' },
+              { t: '🏪 Boutique Pro (5 000 F/mois)', d: 'Vous gagnez 1 000 FCFA / mois par boutique' },
+              { t: '👑 Boutique Business (10 000 F/mois)', d: 'Vous gagnez 2 000 FCFA / mois par boutique' },
+              { t: '⚡ Boutique Taf Taf (2 500 F/mois)', d: 'Vous gagnez 500 FCFA / mois par boutique' },
+              { t: '📄 Brochure PDF (13 P.) & Démo POS', d: 'Support de vente imprimable + Démo 1-clic' },
+              { t: '📱 Retrait Direct Wave & OM', d: 'Paiement mensuel automatique des commissions 20%' },
             ].map(f => (
-              <div key={f.t} style={{ background: C.fondVert, border: '1.5px solid #BBF7D0', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 22, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
+              <div key={f.t} style={{ background: C.fondVert, border: '1.5px solid #BBF7D0', borderRadius: 16, padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
                 <span style={{ fontSize: 16, color: C.vert, fontWeight: 700, display: 'flex' }}>{f.d}</span>
               </div>
             ))}
@@ -314,34 +315,34 @@ export async function GET(request: Request) {
             </span>
           </div>
 
-          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <h1 style={{ fontSize: 46, fontWeight: 900, margin: 0, color: C.marine, display: 'flex', lineHeight: 1.15 }}>
-              Caisse Enregistreuse POS Tactile + Boutique en Ligne
+          <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <h1 style={{ fontSize: 44, fontWeight: 900, margin: 0, color: C.marine, display: 'flex', lineHeight: 1.15 }}>
+              Caisse POS Tactile + Facturation OHADA + PWA Offline
             </h1>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 6 }}>
-              <span style={{ fontSize: 56, fontWeight: 900, color: C.vert, display: 'flex' }}>{prix || '15 000 FCFA'}</span>
-              <span style={{ fontSize: 22, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · 0% commission sur ventes</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 4 }}>
+              <span style={{ fontSize: 52, fontWeight: 900, color: C.vert, display: 'flex' }}>{prix || '5 000 FCFA'}</span>
+              <span style={{ fontSize: 20, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · 0% commission · -25% sur 12 mois</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 36, flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 28, flex: 1 }}>
             {[
-              { t: '🖥️ Caisse Tactile Magasin & Tickets', d: 'Ventes comptoir, gestion stocks & clôtures' },
-              { t: '📦 3 Scanners Inclus', d: 'Caméra Smartphone, Cloud Sync <100ms & Douchette USB' },
-              { t: '📓 Carnet de Dettes Client & Relance WA', d: 'Enregistrez les crédits & relancez en 1-clic' },
-              { t: '🏷️ Impression Stickers Codes-Barres EAN-13', d: 'Générez & imprimez vos codes-barres GS1' },
-              { t: '🛍️ Boutique Web & Commandes WhatsApp', d: 'Visibilité marketplace + commandes directes' },
+              { t: '🖥️ Caisse POS & 3 Scanners', d: 'Scan Caméra Smartphone, Cloud (<100ms) & Douchette USB' },
+              { t: '📶 Mode Caisse PWA Hors-Ligne', d: 'Fonctionne même sans connexion Internet / coupure 4G' },
+              { t: '🧾 Factures & Devis OHADA PDF', d: 'Normes fiscales sénégalaises, NINEA, RCCM & TVA' },
+              { t: '📓 Carnet Dettes Client & Relance WA', d: 'Enregistrez les crédits & relancez en 1-clic sur WhatsApp' },
+              { t: '🏷️ Impression Stickers Codes-Barres GS1', d: 'Générez & imprimez vos étiquettes EAN-13' },
             ].map(f => (
-              <div key={f.t} style={{ background: C.fondOrange, border: `1.5px solid ${C.borderOrange}`, borderRadius: 16, padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 20, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
-                <span style={{ fontSize: 16, color: C.orange, fontWeight: 700, display: 'flex' }}>{f.d}</span>
+              <div key={f.t} style={{ background: C.fondOrange, border: `1.5px solid ${C.borderOrange}`, borderRadius: 16, padding: '12px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 19, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 15, color: C.orange, fontWeight: 700, display: 'flex' }}>{f.d}</span>
               </div>
             ))}
           </div>
 
-          <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
-            <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🎁 30 Jours d&apos;Essai Gratuits sans carte</span>
-            <span style={{ fontSize: 24, fontWeight: 900, color: '#FED7AA', display: 'flex' }}>nopalou.com/boutique</span>
+          <div style={{ background: C.marine, borderRadius: 20, padding: '18px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
+            <span style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🎁 1er Mois 100% Offert sans carte</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#FED7AA', display: 'flex' }}>nopalou.com/boutique</span>
           </div>
         </div>
       ),
@@ -383,25 +384,26 @@ export async function GET(request: Request) {
             </h1>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 10 }}>
               <span style={{ fontSize: 60, fontWeight: 900, color: C.vert, display: 'flex' }}>{prix || '2 500 FCFA'}</span>
-              <span style={{ fontSize: 24, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois seulement</span>
+              <span style={{ fontSize: 24, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · 1er mois 100% offert</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 45, flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 36, flex: 1 }}>
             {[
               { t: '🔗 URL Personnalisée', d: 'nopalou.com/boutiques/votre-nom' },
               { t: '📲 Commandes WhatsApp 1-Clic', d: 'Recevez les acheteurs directement sur votre mobile' },
-              { t: '📋 Gestionnaire de Commandes Web', d: 'Suivi des ventes, statuts et clients' },
-              { t: '🔍 Visibilité Marketplace Dakar', d: 'Référenciation de vos produits sur le comparateur' },
+              { t: '📓 Carnet de Dettes Client Inclus', d: 'Suivi de vos créances clients et historique' },
+              { t: '✨ Import AliExpress & 1688', d: 'Ajoutez vos produits en 1-clic avec photos et descriptif' },
+              { t: '🔍 Visibilité Marketplace Dakar', d: '0% de commission sur vos ventes' },
             ].map(f => (
-              <div key={f.t} style={{ background: C.fondBleu, border: '1.5px solid #BFDBFE', borderRadius: 16, padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 22, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
-                <span style={{ fontSize: 16, color: '#1D4ED8', fontWeight: 700, display: 'flex' }}>{f.d}</span>
+              <div key={f.t} style={{ background: C.fondBleu, border: '1.5px solid #BFDBFE', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 15, color: '#1D4ED8', fontWeight: 700, display: 'flex' }}>{f.d}</span>
               </div>
             ))}
           </div>
 
-          <div style={{ background: C.orange, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
+          <div style={{ background: C.orange, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
             <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🚀 Lancez votre boutique aujourd&apos;hui</span>
             <span style={{ fontSize: 24, fontWeight: 900, color: '#ffffff', display: 'flex' }}>nopalou.com/creer-boutique</span>
           </div>
@@ -435,38 +437,38 @@ export async function GET(request: Request) {
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
             <span style={{ background: '#7E22CE', padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#ffffff', display: 'flex' }}>
-              👑 FORMULE BUSINESS MULTI-CAISSIERS
+              👑 FORMULE BUSINESS VIP
             </span>
           </div>
 
-          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <h1 style={{ fontSize: 46, fontWeight: 900, margin: 0, color: C.marine, display: 'flex', lineHeight: 1.15 }}>
-              Solution Caisse POS Multi-Vendeurs &amp; Grandes Enseignes
+          <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <h1 style={{ fontSize: 44, fontWeight: 900, margin: 0, color: C.marine, display: 'flex', lineHeight: 1.15 }}>
+              Caisse Multi-Caissiers + Fournisseurs OCR + API REST
             </h1>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 10 }}>
-              <span style={{ fontSize: 56, fontWeight: 900, color: C.vert, display: 'flex' }}>{prix || '35 000 FCFA'}</span>
-              <span style={{ fontSize: 24, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · Tout Inclus Pro</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 4 }}>
+              <span style={{ fontSize: 52, fontWeight: 900, color: C.vert, display: 'flex' }}>{prix || '10 000 FCFA'}</span>
+              <span style={{ fontSize: 20, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · Tout Inclus Pro + VIP</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 36, flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 28, flex: 1 }}>
             {[
-              { t: '👥 Multi-Caissiers & Codes PIN', d: 'Chaque caissier possède ses accès sécurisés' },
-              { t: '📊 Clôtures de Caisse Z', d: 'Rapports journaliers automatiques & contrôle écarts' },
-              { t: '⭐ Emplacement Prioritaire Catégorie', d: 'Bannière mise en avant sur Nopalou' },
-              { t: '🔗 URL Dédiée Personnalisée', d: 'nopalou.com/boutiques/votre-enseigne' },
-              { t: '📞 Support Prioritaire WhatsApp Meta 24/7', d: 'Assistance dédiée pour vos équipes' },
+              { t: '👥 Multi-Caissiers & Codes PIN', d: 'Chaque vendeur possède son PIN et ses droits' },
+              { t: '📊 Clôtures de Caisse Z & Marges', d: 'Rapports journaliers automatiques & contrôle des écarts' },
+              { t: '🧾 Achats Fournisseurs & Scan OCR', d: 'Bons de commande & scan automatique de factures' },
+              { t: '📥 Import par Lot Excel / CSV', d: 'Importez tout votre catalogue en 1-clic' },
+              { t: '🔌 Portail Développeur API & Webhooks', d: 'Connectez vos logiciels tiers (ERP, Shopify, WooCommerce)' },
             ].map(f => (
-              <div key={f.t} style={{ background: '#FDF4FF', border: '1.5px solid #F5D0FE', borderRadius: 16, padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 20, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
-                <span style={{ fontSize: 16, color: '#7E22CE', fontWeight: 700, display: 'flex' }}>{f.d}</span>
+              <div key={f.t} style={{ background: '#FDF4FF', border: '1.5px solid #F5D0FE', borderRadius: 16, padding: '12px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 19, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 15, color: '#7E22CE', fontWeight: 700, display: 'flex' }}>{f.d}</span>
               </div>
             ))}
           </div>
 
-          <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
-            <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🏢 Demandez votre démo Grands Comptes</span>
-            <span style={{ fontSize: 24, fontWeight: 900, color: '#E9D5FF', display: 'flex' }}>nopalou.com/boutique</span>
+          <div style={{ background: C.marine, borderRadius: 20, padding: '18px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
+            <span style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🏢 Demandez votre démo VIP Grands Comptes</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#E9D5FF', display: 'flex' }}>nopalou.com/boutique</span>
           </div>
         </div>
       ),
@@ -486,73 +488,85 @@ export async function GET(request: Request) {
             flexDirection: 'column',
             background: C.bgPage,
             fontFamily: 'system-ui, -apple-system, sans-serif',
-            padding: 50,
+            padding: 44,
             boxSizing: 'border-box',
             color: C.marine,
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 50, height: 50, borderRadius: 12, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: '#fff' }}>N</div>
-              <span style={{ fontSize: 32, fontWeight: 900, color: C.marine, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
+              <div style={{ width: 46, height: 46, borderRadius: 12, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 900, color: '#fff' }}>N</div>
+              <span style={{ fontSize: 30, fontWeight: 900, color: C.marine, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
-            <h1 style={{ fontSize: 28, fontWeight: 900, color: C.marine, margin: 0, display: 'flex' }}>
-              📊 Comparatif des Formules Boutiques Nopalou
+            <h1 style={{ fontSize: 24, fontWeight: 900, color: C.marine, margin: 0, display: 'flex' }}>
+              📊 Formules Boutiques &amp; Caisse POS
             </h1>
           </div>
 
-          <div style={{ display: 'flex', gap: 20, flex: 1 }}>
+          <div style={{ display: 'flex', gap: 16, flex: 1 }}>
             
             {/* Taf Taf */}
-            <div style={{ flex: 1, background: C.cardBg, border: '1.5px solid #CBD5E1', borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: '#1D4ED8', textTransform: 'uppercase', display: 'flex' }}>Vitrine Web</span>
-              <h2 style={{ fontSize: 26, fontWeight: 900, margin: '6px 0 0', color: C.marine, display: 'flex' }}>Taf Taf</h2>
-              <span style={{ fontSize: 32, fontWeight: 900, color: C.vert, margin: '8px 0 16px', display: 'flex' }}>2 500 F <span style={{ fontSize: 14, color: C.gris, fontWeight: 600 }}>/mois</span></span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, color: C.marine, fontWeight: 600 }}>
+            <div style={{ flex: 1, background: C.cardBg, border: '1.5px solid #CBD5E1', borderRadius: 18, padding: 18, display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#1D4ED8', textTransform: 'uppercase', display: 'flex' }}>Vitrine Web</span>
+              <h2 style={{ fontSize: 22, fontWeight: 900, margin: '4px 0 0', color: C.marine, display: 'flex' }}>Taf Taf</h2>
+              <span style={{ fontSize: 26, fontWeight: 900, color: C.vert, margin: '6px 0 12px', display: 'flex' }}>2 500 F <span style={{ fontSize: 12, color: C.gris, fontWeight: 600 }}>/mois</span></span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12, color: C.marine, fontWeight: 600 }}>
                 <span>✓ Vitrine web en 30 sec</span>
-                <span>✓ Lien nopalou.com/shop</span>
                 <span>✓ Commandes WhatsApp</span>
-                <span>✓ Gestionnaire commandes</span>
-                <span>✓ Visibilité comparateur</span>
+                <span>✓ Carnet de dettes client</span>
+                <span>✓ Import AliExpress / 1688</span>
+                <span>✓ 0% de commission</span>
+                <span style={{ color: '#16a34a', fontWeight: 800 }}>🎁 1er mois OFFERT</span>
               </div>
             </div>
 
             {/* Pro */}
-            <div style={{ flex: 1.1, background: '#FFF7ED', border: '3px solid #C75B00', borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-              <span style={{ position: 'absolute', top: -14, right: 20, background: C.orange, color: '#fff', padding: '4px 12px', borderRadius: 12, fontSize: 11, fontWeight: 900, display: 'flex' }}>RECOMMANDE</span>
-              <span style={{ fontSize: 13, fontWeight: 800, color: C.orange, textTransform: 'uppercase', display: 'flex' }}>Caisse POS Magasin</span>
-              <h2 style={{ fontSize: 28, fontWeight: 900, margin: '6px 0 0', color: C.marine, display: 'flex' }}>Boutique Pro</h2>
-              <span style={{ fontSize: 34, fontWeight: 900, color: C.orange, margin: '8px 0 16px', display: 'flex' }}>15 000 F <span style={{ fontSize: 14, color: C.gris, fontWeight: 600 }}>/mois</span></span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, color: C.marine, fontWeight: 800 }}>
+            <div style={{ flex: 1.15, background: '#FFF7ED', border: '3px solid #C75B00', borderRadius: 18, padding: 18, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+              <span style={{ position: 'absolute', top: -12, right: 16, background: C.orange, color: '#fff', padding: '3px 10px', borderRadius: 10, fontSize: 10, fontWeight: 900, display: 'flex' }}>RECOMMANDE</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: C.orange, textTransform: 'uppercase', display: 'flex' }}>Caisse POS Magasin</span>
+              <h2 style={{ fontSize: 24, fontWeight: 900, margin: '4px 0 0', color: C.marine, display: 'flex' }}>Boutique Pro</h2>
+              <span style={{ fontSize: 28, fontWeight: 900, color: C.orange, margin: '6px 0 12px', display: 'flex' }}>5 000 F <span style={{ fontSize: 12, color: C.gris, fontWeight: 600 }}>/mois</span></span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12, color: C.marine, fontWeight: 800 }}>
                 <span>✓ Tout ce qui est dans Taf Taf</span>
-                <span>✓ Caisse Enregistreuse POS</span>
-                <span>✓ 3 Scanners (Caméra, Cloud, USB)</span>
-                <span>✓ Carnet Dettes WhatsApp 1-clic</span>
+                <span>✓ Caisse POS &amp; 3 Scanners</span>
+                <span>✓ Mode Caisse PWA Offline</span>
+                <span>✓ Factures &amp; Devis OHADA PDF</span>
+                <span>✓ Relance Dettes WhatsApp</span>
                 <span>✓ Impression Stickers EAN-13</span>
-                <span>✓ 0% commission sur ventes</span>
+                <span style={{ color: '#C75B00', fontWeight: 900 }}>🎁 1er mois OFFERT</span>
               </div>
             </div>
 
             {/* Business */}
-            <div style={{ flex: 1, background: C.cardBg, border: '1.5px solid #CBD5E1', borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: '#7E22CE', textTransform: 'uppercase', display: 'flex' }}>Multi-Vendeurs</span>
-              <h2 style={{ fontSize: 26, fontWeight: 900, margin: '6px 0 0', color: C.marine, display: 'flex' }}>Business</h2>
-              <span style={{ fontSize: 32, fontWeight: 900, color: '#7E22CE', margin: '8px 0 16px', display: 'flex' }}>35 000 F <span style={{ fontSize: 14, color: C.gris, fontWeight: 600 }}>/mois</span></span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, color: C.marine, fontWeight: 600 }}>
+            <div style={{ flex: 1, background: C.cardBg, border: '1.5px solid #CBD5E1', borderRadius: 18, padding: 18, display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#7E22CE', textTransform: 'uppercase', display: 'flex' }}>Multi-Caissiers</span>
+              <h2 style={{ fontSize: 22, fontWeight: 900, margin: '4px 0 0', color: C.marine, display: 'flex' }}>Business VIP</h2>
+              <span style={{ fontSize: 26, fontWeight: 900, color: '#7E22CE', margin: '6px 0 12px', display: 'flex' }}>10 000 F <span style={{ fontSize: 12, color: C.gris, fontWeight: 600 }}>/mois</span></span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12, color: C.marine, fontWeight: 600 }}>
                 <span>✓ Tout ce qui est dans Pro</span>
                 <span>✓ Multi-Caissiers Code PIN</span>
                 <span>✓ Clôtures de Caisse Z</span>
-                <span>✓ URL dédiée enseigne</span>
-                <span>✓ Bannière mise en avant</span>
-                <span>✓ Support prioritaire 24/7</span>
+                <span>✓ Fournisseurs &amp; Scan OCR</span>
+                <span>✓ Import par lot Excel / CSV</span>
+                <span>✓ API REST &amp; Webhooks</span>
+                <span style={{ color: '#7E22CE', fontWeight: 800 }}>🎁 1er mois OFFERT</span>
               </div>
             </div>
 
           </div>
 
-          <div style={{ background: C.orange, borderRadius: 16, padding: '16px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
-            <span style={{ fontSize: 20, fontWeight: 900, color: '#fff', display: 'flex' }}>🎁 30 Jours d&apos;Essai Gratuits sans carte</span>
-            <span style={{ fontSize: 22, fontWeight: 900, color: '#fff', display: 'flex' }}>nopalou.com/boutique</span>
+          {/* Bandeau remises multi-durées */}
+          <div style={{ background: '#F1F5F9', borderRadius: 12, padding: '10px 20px', display: 'flex', justifyContent: 'space-around', alignItems: 'center', marginTop: 14, fontSize: 12, fontWeight: 800, color: C.marine }}>
+            <span>3 mois : -10%</span>
+            <span>·</span>
+            <span>6 mois : -15%</span>
+            <span>·</span>
+            <span style={{ color: '#C75B00' }}>🔥 12 mois : -25% (3 mois offerts)</span>
+          </div>
+
+          <div style={{ background: C.marine, borderRadius: 14, padding: '12px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+            <span style={{ fontSize: 16, fontWeight: 900, color: '#fff', display: 'flex' }}>🎁 Testez 1 Mois Gratuitement</span>
+            <span style={{ fontSize: 17, fontWeight: 900, color: '#FED7AA', display: 'flex' }}>nopalou.com/boutique</span>
           </div>
         </div>
       ),

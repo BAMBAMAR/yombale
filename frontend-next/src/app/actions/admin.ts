@@ -70,6 +70,29 @@ export async function modererAnnonce(
   return {}
 }
 
+// ── Booster annonce classifiée (7 jours ou personnalisé) ────────────
+export async function boosterAnnonce(
+  id: string,
+  jours = 7
+): Promise<{ error?: string; boost_until?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  const r = await fetch(`${BACKEND}/api/annonces/admin/${id}/boost`, {
+    method: 'POST',
+    headers: adminHeaders(secret),
+    body: JSON.stringify({ jours }),
+    cache: 'no-store',
+  })
+
+  if (!r.ok) return { error: 'Erreur lors du boost de l\'annonce' }
+  const data = await r.json()
+  revalidatePath('/admin/annonces')
+  revalidatePath('/annonces')
+  return { boost_until: data.annonce?.boost_until }
+}
+
 // ── Modérer partenaire ─────────────────────────────────────────────
 export async function modererPartenaire(
   id: string,

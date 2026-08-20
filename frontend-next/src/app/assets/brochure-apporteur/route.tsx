@@ -62,13 +62,15 @@ const ETAPES_BOUTIQUE = [
 
 const PALIERS = [
   {
-    nom: 'Gratuit',
-    prixLabel: '0 FCFA',
+    nom: 'Gratuit / Taf Taf',
+    prixLabel: '2 500 FCFA',
     couleur: COULEURS.gris,
     items: [
       'Page boutique visible sur /boutiques',
-      'Coordonnées et lien WhatsApp affichés',
-      'Jusqu\'à 2 annonces classées incluses',
+      'Coordonnées et commandes WhatsApp directes',
+      'Carnet de dettes client & historique',
+      'Import produits AliExpress & 1688 en 1-clic',
+      '1er mois 100% OFFERT',
     ],
   },
   {
@@ -76,14 +78,14 @@ const PALIERS = [
     prixLabel: null, // rempli dynamiquement
     couleur: COULEURS.orange,
     items: [
-      'Placement prioritaire dans /boutiques',
-      'Badge "Vendeur Pro" sur toutes vos annonces',
-      'Caisse Enregistreuse POS Tactile (3 Scanners: Caméra, Cloud <100ms, USB)',
+      'Placement prioritaire dans /boutiques & badge Pro',
+      'Caisse Enregistreuse POS Tactile (3 Scanners)',
+      'Mode Caisse PWA Hors-Ligne (Zéro Coupure)',
+      'Facturation & Devis OHADA en PDF (NINEA/RCCM)',
       'Carnet Dettes Client & Relance WhatsApp 1-Clic',
-      'Impression Stickers Codes-Barres EAN-13 GS1 Modulo 10',
-      'Catalogue produits avec photos et prix',
-      '5 annonces classées incluses par mois',
-      'Tableau de bord analytics & statistiques concurrents',
+      'Impression Stickers Codes-Barres EAN-13 GS1',
+      '0% de commission sur vos ventes',
+      '1er mois 100% OFFERT & -25% sur l\'année',
     ],
   },
   {
@@ -92,11 +94,13 @@ const PALIERS = [
     couleur: COULEURS.marine,
     items: [
       'Tout ce qui est inclus dans Pro',
-      'Caisse POS multi-caissiers & clôtures de caisse Z (sécurité PIN)',
-      'URL dédiée nopalou.com/boutiques/votre-nom',
-      '15 annonces classées incluses par mois',
-      'Bannière mise en avant dans une page catégorie',
-      'Support prioritaire par WhatsApp',
+      'Caisse POS Multi-Caissiers sécurisés par PIN',
+      'Clôtures de Caisse Z automatiques & marges',
+      'Gestion Fournisseurs & Scan OCR de factures',
+      'Import par lot Excel / CSV de catalogue',
+      'Portail Développeur API REST & Webhooks',
+      'Support prioritaire dédié 24/7',
+      '1er mois 100% OFFERT & -25% sur l\'année',
     ],
   },
 ]

@@ -1,29 +1,15 @@
 import { cookies } from 'next/headers'
 import ActiverPlanClient from './ActiverPlanClient'
-import AbonnementRowActions from './AbonnementRowActions'
-import AbonnementsTableClient from './AbonnementsTableClient'
+import AbonnementsTableClient, { Abonnement } from './AbonnementsTableClient'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 const COOKIE  = 'nopalou_admin'
-
-interface Abonnement {
-  id: string
-  plan: 'pro' | 'business'
-  statut: 'actif' | 'expire' | 'annule'
-  prix_mensuel: string
-  debut: string
-  fin: string
-  commande_ref: string | null
-  created_at: string
-  utilisateur_nom: string
-  utilisateur_email: string
-  telephone: string | null
-}
 
 interface Stats {
   actifs: string
   pro_actifs: string
   business_actifs: string
+  decouverte_actifs?: string
   mrr: string
   expires: string
   nouveaux_ce_mois: string
@@ -63,12 +49,6 @@ export default async function AdminAbonnementsPage() {
     }
   } catch {}
 
-  const badge = (plan: string) => plan === 'business'
-    ? <span style={{ background: '#1e3a5f', color: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>BUSINESS</span>
-    : <span style={{ background: '#C75B00', color: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>PRO</span>
-
-  const statutColor = (s: string) => s === 'actif' ? '#16a34a' : s === 'annule' ? '#dc2626' : '#94a3b8'
-
   return (
     <div style={{ padding: 24 }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>Abonnements</h1>
@@ -81,7 +61,8 @@ export default async function AdminAbonnementsPage() {
           {[
             { label: 'Abonnés actifs',  value: stats.actifs,           emoji: '🟢' },
             { label: 'Plan Pro',         value: stats.pro_actifs,       emoji: '🟠' },
-            { label: 'Plan Business',    value: stats.business_actifs,  emoji: '🔵' },
+            { label: 'Plan Business',    value: stats.business_actifs,  emoji: '👑' },
+            ...(Number(stats.decouverte_actifs) > 0 ? [{ label: 'Plan Taf Taf', value: stats.decouverte_actifs!, emoji: '⚡' }] : []),
             { label: 'MRR (estimé)',     value: fcfa(stats.mrr),        emoji: '💰' },
             { label: 'Expirés',          value: stats.expires,          emoji: '⚫' },
             { label: 'Ce mois',          value: stats.nouveaux_ce_mois, emoji: '📅' },
