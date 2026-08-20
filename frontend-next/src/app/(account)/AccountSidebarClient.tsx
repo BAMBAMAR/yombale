@@ -26,12 +26,11 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 16,
+        gap: 14,
         background: '#ffffff',
-        borderRight: '1px solid var(--border, #E8DDD2)',
-        padding: '20px 14px',
-        minWidth: 260,
-        maxWidth: 300,
+        padding: '16px',
+        width: '100%',
+        boxSizing: 'border-box',
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }}
     >
@@ -41,7 +40,7 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          padding: '12px 14px',
+          padding: '10px 14px',
           background: 'linear-gradient(135deg, #FAF8F5 0%, #F5EFE6 100%)',
           borderRadius: 14,
           border: '1px solid #E8DDD2',
@@ -51,15 +50,15 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
         <div
           aria-hidden="true"
           style={{
-            width: 42,
-            height: 42,
+            width: 40,
+            height: 40,
             borderRadius: '50%',
             background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, var(--accent, #C75B00) 100%)',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 18,
+            fontSize: 17,
             fontWeight: 900,
             boxShadow: '0 3px 8px rgba(28,43,74,0.2)',
             flexShrink: 0,
@@ -99,13 +98,14 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
         </div>
       </div>
 
-      {/* Navigation Accordéon */}
-      <div className="account-sidebar-nav-wrapper" style={{ flex: 1, minHeight: 0 }}>
+      {/* Navigation Accordéon Desktop / Tabs Mobile */}
+      <div className="account-sidebar-nav-wrapper" style={{ flex: 1, minHeight: 0, width: '100%' }}>
         <AccountNavLinks overrideTab={tab} />
       </div>
 
       {/* Footer Accès Rapides & Aide */}
       <div
+        className="account-sidebar-footer"
         style={{
           borderTop: '1px solid #E8DDD2',
           paddingTop: 12,

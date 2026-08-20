@@ -6637,8 +6637,18 @@ a {
   height: 0 !important;
 }
 
+.account-nav-desktop {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.account-nav-mobile {
+  display: none;
+}
+
 .account-nav-group {
-  margin-bottom: 18px;
+  margin-bottom: 8px;
 }
 
 .account-nav-group-label {
@@ -10527,62 +10537,23 @@ span.ripple {
     display: none !important;
   }
 
-  /* Sur /compte mobile, afficher les liens sous forme d'onglets défilants horizontaux bord-à-bord */
+  /* Sur /compte mobile, navigation en 2 niveaux fluides */
+  .account-nav-desktop {
+    display: none !important;
+  }
+
+  .account-nav-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
   .account-sidebar--main .account-sidebar-nav-wrapper {
     display: block !important;
-    margin: 10px -12px -4px -12px !important;
-    padding: 4px 12px 8px 12px !important;
-    overflow-x: auto !important;
-    scrollbar-width: none !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-
-  .account-nav-container {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    gap: 8px !important;
-  }
-
-  .account-nav-container::-webkit-scrollbar {
-    display: none !important;
-  }
-
-  .account-nav-group {
-    margin-bottom: 0 !important;
-    display: flex !important;
-    flex-shrink: 0 !important;
-  }
-
-  .account-nav-group-label {
-    display: none !important;
-  }
-
-  .account-nav-links-list {
-    display: flex !important;
-    gap: 8px !important;
-    flex-shrink: 0 !important;
-  }
-
-  .account-nav-link {
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
-    padding: 8px 14px !important;
-    border-radius: 20px !important;
-    border-left: none !important;
-    background: #f1f5f9 !important;
-    color: #475569 !important;
-    font-size: 13px !important;
-    font-weight: 700 !important;
-    transition: all 0.15s ease !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-  }
-
-  .account-nav-link--active {
-    background: #C75B00 !important;
-    color: #ffffff !important;
-    box-shadow: 0 3px 8px rgba(199, 91, 0, 0.25) !important;
+    margin: 8px 0 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
   }
 
   /* Cartes d'annonces mobiles — éliminer tout débordement horizontal des boutons */

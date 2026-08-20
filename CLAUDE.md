@@ -37,21 +37,14 @@
       4. *🏪 Caisse POS & Vente Web* (Digitalisation boutique, caisse hors-ligne, dettes, factures OHADA).
     - Contrôles manuels (flèches gauche/droite, dots de pagination) et pause automatique au survol ou au toucher.
     - **Affichage Mobile Dédié (`.hero-mobile-carousel-wrap`)** : Intégration soignée sous la barre de recherche sur smartphone, parfaitement dimensionnée et lisible.
-  * **Modernisation & Harmonisation du Menu Espace Compte (`AccountNavLinks.tsx`, `AccountSidebarClient.tsx`)** :
-    - Refonte complète de la barre latérale du compte (`/compte`) alignée sur le design system de la Boutique.
-    - Navigation en **4 groupes accordéons interactifs** avec indicateurs de comptage, chevrons animés et dépliage automatique du groupe actif.
-    - Carte d'identité utilisateur enrichie avec avatar en dégradé chaud Nopalou, nom, email et badges de statut.
-    - Boutons d'action rapide pleine largeur (*Déposer une annonce*, *Publier un bien immo*) sans rupture de ligne.
-    - Footer de navigation rapide : accès direct au *Guide d'utilisation*, à l'*Espace Boutique* et à la *Déconnexion*.
-  * **Note Déploiement & Incident Hébergeur Render (20 août 2026 - 16:12 UTC)** ⚠️ :
-    - Incident mondial officiel en cours sur la plateforme Render ([Incident Render #fjlpr1yfdv63](https://status.render.com/incidents/fjlpr1yfdv63)) : *« Free Web Services: Builds/deploys and spin-up have been temporarily disabled while we work to mitigate an upstream Google Cloud issue »*.
-    - L'ensemble des commits de la session sont 100% testés (**0 erreur TypeScript**, **831/831 clés i18n**) et synchronisés sur la branche `origin/main` :
-      * `0e75a82` : *Package Force de vente terrain, Académie, Matrice pitchs, Guide d'utilisation, Carrousel WhatsApp & Parrainage 20%*
-      * `e6b11d8` : *Déclencheur build frontend (v0.1.1)*
-      * `2490b60` : *Fix autoDeploy & branch: main dans render.yaml*
-      * `65c23da` : *Modernisation du menu Espace Compte (accordéons dynamiques & design boutique)*
-      * `371d856` : *Documentation de l'incident Render*
-    - Le déploiement de production du service `nopalou-frontend` sur Render se finalisera automatiquement dès la réactivation des builds par les équipes de Render.
+  * **Calibrage & Harmonisation Visuelle du Carrousel WhatsApp (`HeroWhatsAppCarousel.tsx`)** :
+    - Alignement rigoureux de la hauteur et des proportions du carrousel sur la carte *Boutique Taf Taf* de droite.
+    - Intégration de l'icône dans la ligne badge, regroupement du CTA et des dots de pagination sur une seule rangée inférieure compacte.
+  * **Navigation Mobile du Compte en Segmented Tabs à 2 Niveaux (`AccountNavLinks.tsx`, `globals.css`)** :
+    - Remplacement de l'ancien affichage vertical par un système d'onglets défilants à deux niveaux identique à la Boutique :
+      * *Niveau 1* : Pilules de sélection des grands groupes (Annonces & Achats, Espace Boutique, Compte & Parrainage, Publier) avec compteurs.
+      * *Niveau 2* : Sous-menus directs défilants horizontalement avec indicateur actif accentué, badges et icônes.
+    - Élimination des conflits CSS mobiles qui déformaient les accordéons.
   * **Qualité & Tests de Validation** :
     - Compilation TypeScript stricte (`npx tsc --noEmit`) : 0 erreur (code 0).
     - Couverture i18n 100% (831/831 clés présentes en FR, EN, AR).
