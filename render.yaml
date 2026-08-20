@@ -4,6 +4,8 @@ services:
     name: yombale-backend
     runtime: node
     plan: free
+    branch: main
+    autoDeploy: true
     buildCommand: npm install
     startCommand: node backend/app.js
     healthCheckPath: /health
@@ -108,6 +110,8 @@ services:
     name: nopalou-frontend
     runtime: node
     plan: free
+    branch: main
+    autoDeploy: true
     rootDir: frontend-next
     buildCommand: npm install --include=dev && npm run build
     # npm run build exécute next build + scripts/postbuild.js (copie public/ et .next/static/ dans standalone)
