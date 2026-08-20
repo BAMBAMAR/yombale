@@ -1,3 +1,15 @@
+- **Résolution Débordements Hub Marketing & Affordance Défilement Horizontal (`main` - 20 août 2026)** 🎨📱 :
+  * **Élimination des Débordements dans « Marketing & Visibilité » (`BoutiqueClient.tsx` & `globals.css`)** :
+    - **Classes Responsives Dédiées (`.mkt-banner`, `.mkt-card`, `.mkt-grid-2`)** : Remplacement des colonnes rigides `minmax(320px)` et `minmax(300px)` (qui excédaient les écrans mobiles < 380px) par des conteneurs fluides 1 colonne sur smartphone avec marges resserrées (`14px 12px` au lieu de `24px 28px`).
+    - **Boutons Partage & Campagnes Flexibles** : `min-width: 0` et `flex-wrap: wrap` pour éviter tout dépassement de texte ou rognage de boutons sur petits écrans (iPhone SE / 360px).
+  * **Affordance Visuelle & Découvrabilité du Défilement Horizontal (Edge Fade Gradient & Peeking)** :
+    - **Masque Dégradé CSS (`mask-image: linear-gradient(to right, black 0%, black calc(100% - 32px), transparent 100%)`)** : Appliqué sur `.commandes-status-scroll` et `.horizontal-scroll-fade`. Un estompement progressif à droite indique immédiatement à l'œil que la liste continue et invite naturellement au balayage tactile (swipe).
+    - **Effet de Découpe ("Peeking")** : Marge de droite (`padding-right: 28px`) qui laisse dépasser le début de la pilule suivante pour éliminer l'illusion d'une liste terminée.
+  * **Validation & Contrôle Qualité** :
+    - TypeScript strict (`npx tsc --noEmit`) : 0 erreur (code 0).
+    - Tests unitaires (`npm test`) : 31/31 tests validés avec succès (100%).
+    - Respect des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Audit & Nettoyage Complet des Sous-Menus Boutique (`main` - 20 août 2026)** 🔍📱 :
   * **Suppression des Doublons de Titres & En-têtes (`AnalyticsClient.tsx` & `BoutiqueClient.tsx`)** :
     - **Élimination du Double En-tête sur « Statistiques & Ventes »** : Suppression du `<h1>` et `<p>` redondants dans `AnalyticsClient.tsx` qui faisaient doublon avec l'en-tête de section parent (`.bq-main-tab-header`), libérant l'espace et étendant le contenu sur 100% de la largeur sans marges restrictives (`margin: '32px auto'` supprimé).

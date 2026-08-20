@@ -1630,9 +1630,10 @@ function MarketingBoutique({
   const dateFinSponsoring = boutique.sponsor_jusqu_au ? new Date(boutique.sponsor_jusqu_au).toLocaleDateString('fr-FR') : null
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1050 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 1050, width: '100%' }}>
       {/* ── BANNIÈRE EN-TÊTE DU HUB ── */}
       <div
+        className="mkt-banner"
         style={{
           background: 'linear-gradient(135deg, #1C2B4A 0%, #0F1D35 100%)',
           borderRadius: 20,
@@ -1646,28 +1647,28 @@ function MarketingBoutique({
           gap: 16,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
           <div
             style={{
-              width: 64,
-              height: 64,
-              borderRadius: 18,
+              width: 52,
+              height: 52,
+              borderRadius: 14,
               background: 'rgba(255, 255, 255, 0.1)',
               border: '1.5px solid rgba(255, 255, 255, 0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 32,
+              fontSize: 26,
               flexShrink: 0,
             }}
           >
             📣
           </div>
-          <div>
-            <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 900, color: '#ffffff' }}>
+          <div style={{ minWidth: 0 }}>
+            <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 900, color: '#ffffff' }}>
               Hub Marketing &amp; Visibilité
             </h2>
-            <p style={{ margin: 0, fontSize: 13.5, color: '#94a3b8' }}>
+            <p style={{ margin: 0, fontSize: 13, color: '#94a3b8' }}>
               Diffusez votre vitrine, animez vos réseaux sociaux et multipliez vos ventes en quelques clics.
             </p>
           </div>
@@ -1695,6 +1696,7 @@ function MarketingBoutique({
 
       {/* ── SECTION 1 : VITRINE & DIFFUSION RAPIDE ── */}
       <div
+        className="mkt-card"
         style={{
           background: '#ffffff',
           borderRadius: 18,
@@ -1705,23 +1707,24 @@ function MarketingBoutique({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <span style={{ fontSize: 20 }}>🌐</span>
-          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>
+          <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 800, color: '#0f172a' }}>
             1. Liens de la Vitrine &amp; Partage 1-Clic
           </h3>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+        <div className="mkt-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
           {/* Carte Vitrine Marchand */}
           <div
             style={{
               background: '#f8fafc',
               border: '1.5px solid #e2e8f0',
               borderRadius: 14,
-              padding: 16,
+              padding: 14,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              gap: 14,
+              gap: 12,
+              minWidth: 0,
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -1874,6 +1877,7 @@ function MarketingBoutique({
 
       {/* ── SECTION 2 : BOÎTE À OUTILS DE MESSAGES PRÊTS À L'EMPLOI ── */}
       <div
+        className="mkt-card"
         style={{
           background: '#ffffff',
           borderRadius: 18,
@@ -1884,7 +1888,7 @@ function MarketingBoutique({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
           <span style={{ fontSize: 20 }}>⚡</span>
-          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>
+          <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 800, color: '#0f172a' }}>
             2. Messages Prêts à l&apos;Emploi (Générateur 1-Clic)
           </h3>
         </div>
@@ -1892,7 +1896,7 @@ function MarketingBoutique({
           Gagnez du temps : choisissez un modèle déjà rédigé au nom de votre boutique et envoyez-le directement sur WhatsApp ou vos statuts.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
+        <div className="mkt-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
           {modelesCampagnes.map(campagne => (
             <div
               key={campagne.id}
@@ -1900,11 +1904,12 @@ function MarketingBoutique({
                 background: '#f8fafc',
                 border: '1.5px solid #e2e8f0',
                 borderRadius: 14,
-                padding: 16,
+                padding: 14,
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 gap: 12,
+                minWidth: 0,
               }}
             >
               <div>
@@ -1936,12 +1941,13 @@ function MarketingBoutique({
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   onClick={() => handleSendWhatsApp(campagne.message)}
                   style={{
                     flex: 1,
+                    minWidth: 140,
                     padding: '8px 12px',
                     borderRadius: 8,
                     border: 'none',
@@ -1988,6 +1994,7 @@ function MarketingBoutique({
 
       {/* ── SECTION 3 : DIFFUSION & RELANCE DES PRODUITS ── */}
       <div
+        className="mkt-card"
         style={{
           background: '#ffffff',
           borderRadius: 18,
@@ -1998,7 +2005,7 @@ function MarketingBoutique({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <span style={{ fontSize: 20 }}>📢</span>
-          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>
+          <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 800, color: '#0f172a' }}>
             3. Suivi &amp; Diffusion des Produits du Catalogue
           </h3>
         </div>
@@ -2011,7 +2018,7 @@ function MarketingBoutique({
               background: '#fffbeb',
               border: '1.5px solid #fcd34d',
               borderRadius: 14,
-              padding: '16px 20px',
+              padding: '14px 16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -2019,13 +2026,13 @@ function MarketingBoutique({
               gap: 12,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 24 }}>⚠️</span>
-              <div>
-                <p style={{ margin: 0, fontWeight: 800, fontSize: 14, color: '#92400e' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+              <span style={{ fontSize: 24, flexShrink: 0 }}>⚠️</span>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#92400e' }}>
                   {nbJamaisPartages} produit{nbJamaisPartages > 1 ? 's' : ''} sur {totalProduits} n&apos;{nbJamaisPartages > 1 ? 'ont' : 'a'} jamais été partagé{nbJamaisPartages > 1 ? 's' : ''}
                 </p>
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#b45309' }}>
+                <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#b45309' }}>
                   Un partage régulier de vos fiches produits augmente vos ventes de +40% sur WhatsApp et les réseaux.
                 </p>
               </div>
@@ -2037,8 +2044,8 @@ function MarketingBoutique({
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: 10,
-                padding: '9px 18px',
-                fontSize: 13,
+                padding: '8px 16px',
+                fontSize: 12.5,
                 fontWeight: 800,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
@@ -2053,14 +2060,14 @@ function MarketingBoutique({
               background: '#f0fdf4',
               border: '1.5px solid #bbf7d0',
               borderRadius: 14,
-              padding: '16px 20px',
+              padding: '14px 16px',
               display: 'flex',
               alignItems: 'center',
               gap: 12,
             }}
           >
-            <span style={{ fontSize: 24 }}>✅</span>
-            <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: '#166534' }}>
+            <span style={{ fontSize: 24, flexShrink: 0 }}>✅</span>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#166534' }}>
               Bravo ! Tous vos produits ({totalProduits}) ont déjà été partagés au moins une fois.
             </p>
           </div>
@@ -2069,6 +2076,7 @@ function MarketingBoutique({
 
       {/* ── SECTION 4 : RÉSEAUX SOCIAUX & PIXELS PUBLICITAIRES ── */}
       <div
+        className="mkt-card"
         style={{
           background: '#ffffff',
           borderRadius: 18,
@@ -2080,7 +2088,7 @@ function MarketingBoutique({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 20 }}>🎯</span>
-            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>
+            <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 800, color: '#0f172a' }}>
               4. Réseaux Sociaux &amp; Pixels Publicitaires
             </h3>
           </div>
@@ -2103,35 +2111,35 @@ function MarketingBoutique({
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
           {/* Pixel Meta Facebook */}
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 14px' }}>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: '#1e3a8a' }}>📘 Meta Facebook Pixel</p>
-            <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: (boutique as any).meta_pixel_id ? '#16a34a' : '#94a3b8' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 12px' }}>
+            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#1e3a8a' }}>📘 Meta Facebook Pixel</p>
+            <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 700, color: (boutique as any).meta_pixel_id ? '#16a34a' : '#94a3b8' }}>
               {(boutique as any).meta_pixel_id ? `✓ Actif (${(boutique as any).meta_pixel_id})` : '⚪ Non configuré'}
             </p>
           </div>
 
           {/* Pixel TikTok */}
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 14px' }}>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: '#0f172a' }}>🎵 TikTok Pixel</p>
-            <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: (boutique as any).tiktok_pixel_id ? '#16a34a' : '#94a3b8' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 12px' }}>
+            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#0f172a' }}>🎵 TikTok Pixel</p>
+            <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 700, color: (boutique as any).tiktok_pixel_id ? '#16a34a' : '#94a3b8' }}>
               {(boutique as any).tiktok_pixel_id ? `✓ Actif (${(boutique as any).tiktok_pixel_id})` : '⚪ Non configuré'}
             </p>
           </div>
 
           {/* Page Facebook */}
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 14px' }}>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: '#1d4ed8' }}>🌐 Page Facebook</p>
-            <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: (boutique as any).facebook ? '#16a34a' : '#94a3b8' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 12px' }}>
+            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#1d4ed8' }}>🌐 Page Facebook</p>
+            <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 700, color: (boutique as any).facebook ? '#16a34a' : '#94a3b8' }}>
               {(boutique as any).facebook ? '✓ Connectée' : '⚪ Non renseignée'}
             </p>
           </div>
 
           {/* Compte Instagram */}
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 14px' }}>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: '#e11d48' }}>📸 Instagram</p>
-            <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: (boutique as any).instagram ? '#16a34a' : '#94a3b8' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 12px' }}>
+            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#e11d48' }}>📸 Instagram</p>
+            <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 700, color: (boutique as any).instagram ? '#16a34a' : '#94a3b8' }}>
               {(boutique as any).instagram ? '✓ Connecté' : '⚪ Non renseigné'}
             </p>
           </div>
@@ -2139,9 +2147,10 @@ function MarketingBoutique({
       </div>
 
       {/* ── SECTION 5 : SUPPORTS PHYSIQUES & BOOSTER ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+      <div className="mkt-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
         {/* QR Code & Comptoir Physique */}
         <div
+          className="mkt-card"
           style={{
             background: '#ffffff',
             borderRadius: 18,
@@ -2152,6 +2161,7 @@ function MarketingBoutique({
             flexDirection: 'column',
             justifyContent: 'space-between',
             gap: 14,
+            minWidth: 0,
           }}
         >
           <div>
@@ -2190,6 +2200,7 @@ function MarketingBoutique({
 
         {/* Booster de Visibilité Sponsoring */}
         <div
+          className="mkt-card"
           style={{
             background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
             borderRadius: 18,
@@ -2199,6 +2210,7 @@ function MarketingBoutique({
             flexDirection: 'column',
             justifyContent: 'space-between',
             gap: 14,
+            minWidth: 0,
           }}
         >
           <div>

@@ -10096,19 +10096,43 @@ button:focus-visible,
     padding: 0 10px 60px !important;
   }
 
-  .commandes-status-scroll {
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    padding-bottom: 4px !important;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+  /* ── Hub Marketing & Visibilité Mobile ── */
+  .mkt-banner {
+    padding: 16px 14px !important;
+    border-radius: 14px !important;
+  }
+  .mkt-banner h2 {
+    font-size: 17px !important;
+  }
+  .mkt-card {
+    padding: 14px 12px !important;
+    border-radius: 14px !important;
+  }
+  .mkt-grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
   }
 
-  .commandes-status-scroll::-webkit-scrollbar {
+  /* ── Ruban de Défilement Horizontal avec Affordance de Dégradé (Edge Fade & Peeking) ── */
+  .commandes-status-scroll,
+  .horizontal-scroll-fade {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 6px !important;
+    padding-right: 28px !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, black 0%, black calc(100% - 32px), transparent 100%);
+    mask-image: linear-gradient(to right, black 0%, black calc(100% - 32px), transparent 100%);
+  }
+
+  .commandes-status-scroll::-webkit-scrollbar,
+  .horizontal-scroll-fade::-webkit-scrollbar {
     display: none;
   }
 
-  .commandes-status-scroll > button {
+  .commandes-status-scroll > button,
+  .horizontal-scroll-fade > * {
     flex-shrink: 0 !important;
     white-space: nowrap !important;
   }
