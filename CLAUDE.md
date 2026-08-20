@@ -43,6 +43,10 @@
     - Carte d'identité utilisateur enrichie avec avatar en dégradé chaud Nopalou, nom, email et badges de statut.
     - Boutons d'action rapide pleine largeur (*Déposer une annonce*, *Publier un bien immo*) sans rupture de ligne.
     - Footer de navigation rapide : accès direct au *Guide d'utilisation*, à l'*Espace Boutique* et à la *Déconnexion*.
+  * **Note Déploiement & Incident Hébergeur Render (20 août 2026 - 16:12 UTC)** ⚠️ :
+    - Incident mondial officiel en cours sur la plateforme Render ([Incident Render #fjlpr1yfdv63](https://status.render.com/incidents/fjlpr1yfdv63)) : *« Free Web Services: Builds/deploys and spin-up have been temporarily disabled while we work to mitigate an upstream Google Cloud issue »*.
+    - Les commits `2490b60` (*fix autoDeploy & branch: main*) et `65c23da` (*modernisation menu Espace Compte*) sont 100% testés (0 erreur tsc, 831/831 i18n) et enregistrés sur la branche `origin/main`.
+    - Le déploiement de production du service `nopalou-frontend` se finalisera automatiquement dès la résolution de l'incident par les équipes de Render.
   * **Qualité & Tests de Validation** :
     - Compilation TypeScript stricte (`npx tsc --noEmit`) : 0 erreur (code 0).
     - Couverture i18n 100% (831/831 clés présentes en FR, EN, AR).
