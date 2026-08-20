@@ -20,6 +20,9 @@
     - Barre d'actions groupées avec génération instantanée d'un message WhatsApp récapitulatif formaté pour tous les produits sélectionnés et copie en un clic.
   * **Bouton de Partage sur la Vitrine Publique (`BoutiqueDetailClient.tsx` & `boutiques/[id]/page.tsx`)** :
     - Intégration du composant `BoutonPartager` avec support Web Share API et multi-réseaux.
+  * **Navigation Latérale Boutique : Dépliage par Défaut des Catégories & Suppression du Survol (`BoutiqueClient.tsx`)** :
+    - Suppression complète de l'ouverture et fermeture automatique au survol de la souris (`onMouseEnter` / `onMouseLeave`) pour une expérience stable et prévisible.
+    - Toutes les catégories de navigation sont désormais **dépliées par défaut** à l'ouverture de l'espace marchand, avec possibilité pour le marchand de replier ou déplier individuellement chaque catégorie au clic.
   * **Suppression de la Redondance des Boutons & Résolution Robuste des Stories Marchand (`BoutiqueClient.tsx` & `/assets/produit-boutique/[id]/story/route.tsx`)** :
     - Unification du bouton d'action sur chaque fiche produit en un seul bouton vert élégant « 💬 Partager » qui ouvre directement la modale complète `ModalPartageProduit`.
     - Résolution automatique et résiliente du produit par ID dans le générateur de story (`/assets/produit-boutique/[id]/story`) avec récupération automatique de l'identité de la boutique (logo, nom, ville, WhatsApp), éliminant tout visuel générique.

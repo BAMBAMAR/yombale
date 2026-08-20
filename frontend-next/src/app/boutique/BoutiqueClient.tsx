@@ -3435,7 +3435,6 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
   const [subTabCompta, setSubTabCompta] = useState<'dashboard' | 'express' | 'ventes' | 'depenses'>('express')
   const [showQrModal, setShowQrModal] = useState(false)
-  const [hoveredGroupIdx, setHoveredGroupIdx] = useState<number | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   const handleNavigateFromDashboard = (targetTab: ManageTab, subTab?: string) => {
@@ -3451,18 +3450,18 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   }
   const [activeGroupIdx, setActiveGroupIdx] = useState<number>(() => getGroupIdxForTab(resolvedInitialTab))
 
+  // Par défaut, tous les groupes de catégories sont dépliés
   const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>(() => {
-    const defaultExpanded: Record<number, boolean> = {};
-    const initialActiveIdx = getGroupIdxForTab(resolvedInitialTab);
-    defaultExpanded[initialActiveIdx] = true; // Seul le groupe actif est déplié pour un menu compact et volatil
-    return defaultExpanded;
+    const defaultExpanded: Record<number, boolean> = {}
+    NAV_GROUPS.forEach((_, idx) => {
+      defaultExpanded[idx] = true
+    })
+    return defaultExpanded
   })
 
   useEffect(() => {
     const gIdx = getGroupIdxForTab(tab)
     setActiveGroupIdx(gIdx)
-    // S'assure que seul le groupe actif reste ouvert
-    setExpandedGroups({ [gIdx]: true })
   }, [tab])
 
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
@@ -3673,27 +3672,19 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           </div>
         </div>
 
-        {/* Nav Desktop (Hiérarchie verticale volatile, compacte et sans barre de défilement) */}
+        {/* Nav Desktop (Toutes catégories dépliées par défaut, ouverture/fermeture manuelle au clic uniquement) */}
         <nav 
           className="bq-nav bq-nav-desktop" 
           style={{ padding: '8px 4px' }}
-          onMouseLeave={() => {
-            setHoveredGroupIdx(null)
-            // Se referme automatiquement dès que le curseur quitte la zone du menu vertical
-            setExpandedGroups({ [activeGroupIdx]: true })
-          }}
         >
           {NAV_GROUPS.map((group, gIdx) => {
             const hasActiveItem = group.items.some(i => i.key === tab)
-            // Volatile : ouvert au survol, ou si c'est le groupe actif, ou s'il a été cliqué
-            const isExpanded = hoveredGroupIdx === gIdx || (hoveredGroupIdx === null && (expandedGroups[gIdx] ?? hasActiveItem))
+            const isExpanded = expandedGroups[gIdx] ?? true
             return (
             <div 
               key={gIdx} 
               className="bq-nav-group" 
               style={{ marginBottom: 8 }}
-              onMouseEnter={() => setHoveredGroupIdx(gIdx)}
-              onMouseLeave={() => setHoveredGroupIdx(null)}
             >
               <button 
                 type="button"
