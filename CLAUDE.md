@@ -45,8 +45,13 @@
     - Footer de navigation rapide : accès direct au *Guide d'utilisation*, à l'*Espace Boutique* et à la *Déconnexion*.
   * **Note Déploiement & Incident Hébergeur Render (20 août 2026 - 16:12 UTC)** ⚠️ :
     - Incident mondial officiel en cours sur la plateforme Render ([Incident Render #fjlpr1yfdv63](https://status.render.com/incidents/fjlpr1yfdv63)) : *« Free Web Services: Builds/deploys and spin-up have been temporarily disabled while we work to mitigate an upstream Google Cloud issue »*.
-    - Les commits `2490b60` (*fix autoDeploy & branch: main*) et `65c23da` (*modernisation menu Espace Compte*) sont 100% testés (0 erreur tsc, 831/831 i18n) et enregistrés sur la branche `origin/main`.
-    - Le déploiement de production du service `nopalou-frontend` se finalisera automatiquement dès la résolution de l'incident par les équipes de Render.
+    - L'ensemble des commits de la session sont 100% testés (**0 erreur TypeScript**, **831/831 clés i18n**) et synchronisés sur la branche `origin/main` :
+      * `0e75a82` : *Package Force de vente terrain, Académie, Matrice pitchs, Guide d'utilisation, Carrousel WhatsApp & Parrainage 20%*
+      * `e6b11d8` : *Déclencheur build frontend (v0.1.1)*
+      * `2490b60` : *Fix autoDeploy & branch: main dans render.yaml*
+      * `65c23da` : *Modernisation du menu Espace Compte (accordéons dynamiques & design boutique)*
+      * `371d856` : *Documentation de l'incident Render*
+    - Le déploiement de production du service `nopalou-frontend` sur Render se finalisera automatiquement dès la réactivation des builds par les équipes de Render.
   * **Qualité & Tests de Validation** :
     - Compilation TypeScript stricte (`npx tsc --noEmit`) : 0 erreur (code 0).
     - Couverture i18n 100% (831/831 clés présentes en FR, EN, AR).
