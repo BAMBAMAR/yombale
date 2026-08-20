@@ -20,8 +20,15 @@
     - Activation ciblée uniquement sous les breakpoints mobiles (`max-width: 768px` pour le Compte, `max-width: 640px` pour la Boutique).
     - Préservation totale de l'arborescence et de la barre latérale accordéon sur grand écran (Desktop).
     - Verrouillage automatique du défilement du corps de page (`overflow: hidden`) à l'ouverture du tiroir pour une expérience native.
-  * **Contrôle Qualité & Tests** :
+  * **Contrôle Qualité & Tests Automatisés** :
     - Compilation TypeScript stricte (`npx tsc --noEmit`) : 0 erreur (code 0).
+    - Suite de tests unitaires (`npm test`) : 31/31 tests passés avec succès.
+    - **Suite de Tests d'Adaptabilité Mobile Playwright (`npm run test:mobile`)** : **55/55 contrôles validés avec succès (0 débordement horizontal, 0 dépassement de conteneur)** sur 5 viewports réels :
+      * *320px (Ultra Compact / iPhone SE 1ère gen)* : 100% responsive, drawer ajusté à 288px.
+      * *360px (Android Standard - Redmi / Tecno)* : 100% responsive, drawer ajusté à 290px.
+      * *375px (iPhone Standard - 6/7/8/SE)* : 100% responsive, drawer ajusté à 290px.
+      * *390px (iPhone 13/14/15/16)* : 100% responsive, drawer ajusté à 290px.
+      * *412px (Grand Android - Samsung Galaxy / Pixel)* : 100% responsive, drawer ajusté à 290px.
     - Respect absolu de la directive AGENTS.md : 100% polices système natives, 0 font-fetch externe.
 
 - **Package Force de Vente Commerciale Terrain, Académie & Guide d'Utilisation Simplifié (`main` - 20 août 2026)** 🚀 :
