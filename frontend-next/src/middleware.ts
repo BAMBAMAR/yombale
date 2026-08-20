@@ -55,6 +55,16 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Si un visiteur non connecté arrive sur /boutique avec un code apporteur/parrain, l'envoyer directement sur la création de boutique
+  if (pathname === '/boutique' && !session) {
+    const apporteur = req.nextUrl.searchParams.get('apporteur') || req.nextUrl.searchParams.get('ref')
+    if (apporteur) {
+      const url = new URL('/creer-boutique', req.nextUrl)
+      url.searchParams.set('apporteur', apporteur)
+      return NextResponse.redirect(url)
+    }
+  }
+
   const isProtected = PROTECTED_ROUTES.some(r => pathname.startsWith(r)) ||
                      PROTECTED_EXACT.some(r => pathname === r)
   const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r))

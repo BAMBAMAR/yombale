@@ -310,7 +310,7 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
 // POST /api/boutiques/taf-taf - Création ultra-rapide (Dropshipping / Taf Taf)
 router.post('/taf-taf', async (req, res) => {
   try {
-    let { nom, email, mot_de_passe, telephone, couleur, couleur_theme, categorie } = req.body;
+    let { nom, email, mot_de_passe, telephone, couleur, couleur_theme, categorie, code_apporteur } = req.body;
     if (!nom || !telephone) return res.status(400).json({ error: 'Nom et téléphone requis' });
     
     // Normaliser téléphone
@@ -320,7 +320,7 @@ router.post('/taf-taf', async (req, res) => {
     }
     
     // 1. Gérer l'utilisateur
-    let { rows } = await pool.query('SELECT id, nom, email FROM utilisateurs WHERE telephone=$1 OR email=$2', [telephone, email || '']);
+    let { rows } = await pool.query('SELECT id, nom, email, code_apporteur FROM utilisateurs WHERE telephone=$1 OR email=$2', [telephone, email || '']);
     let user;
     if (rows.length) {
       user = rows[0];
@@ -329,10 +329,12 @@ router.post('/taf-taf', async (req, res) => {
       const plainPassword = mot_de_passe || require('crypto').randomBytes(16).toString('hex');
       const bcrypt = require('bcryptjs');
       const hash = await bcrypt.hash(plainPassword, 12);
+      const { genererCodeUnique } = require('../lib/codeApporteur');
+      const codeApp = await genererCodeUnique();
       
       const insertRes = await pool.query(
-        'INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie) VALUES ($1, $2, $3, $4, true) RETURNING id',
-        [nom, userEmail, hash, telephone]
+        'INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie, est_apporteur, code_apporteur) VALUES ($1, $2, $3, $4, true, true, $5) RETURNING id, nom, email, code_apporteur',
+        [nom, userEmail, hash, telephone, codeApp]
       );
       user = insertRes.rows[0];
     }
@@ -343,11 +345,22 @@ router.post('/taf-taf', async (req, res) => {
       return res.status(400).json({ error: quotaCheck.error });
     }
 
+    // Résoudre le code apporteur (optionnel) en apporteur_id
+    let apporteurId = null;
+    const codeApporteurFinal = (code_apporteur || req.body.apporteur || req.body.ref_code)?.toString().trim().toUpperCase();
+    if (codeApporteurFinal) {
+      const apporteurRow = await pool.query(
+        'SELECT id FROM utilisateurs WHERE code_apporteur=$1 AND est_apporteur=true',
+        [codeApporteurFinal]
+      );
+      if (apporteurRow.rows[0]) apporteurId = apporteurRow.rows[0].id;
+    }
+
     // 2. Créer la boutique
     const insertBoutique = await pool.query(
-      `INSERT INTO boutiques (utilisateur_id, nom, telephone, ville, categorie, couleur_theme, actif)
-       VALUES ($1, $2, $3, 'Dakar', $4, $5, true) RETURNING id`,
-      [user.id, nom, telephone, categorie || 'Divers', couleur_theme || couleur || '#25D366']
+      `INSERT INTO boutiques (utilisateur_id, nom, telephone, ville, categorie, couleur_theme, apporteur_id, actif)
+       VALUES ($1, $2, $3, 'Dakar', $4, $5, $6, true) RETURNING id`,
+      [user.id, nom, telephone, categorie || 'Divers', couleur_theme || couleur || '#25D366', apporteurId]
     );
     const boutiqueId = insertBoutique.rows[0].id;
 

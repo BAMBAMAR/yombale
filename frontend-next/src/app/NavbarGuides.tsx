@@ -89,6 +89,24 @@ export default function NavbarGuides() {
               <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--text3)' }}>Alibaba, AliExpress &amp; Vente WhatsApp</span>
             </span>
           </Link>
+          <Link href="/guide-utilisation" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)} style={{ background: '#f0fdf4', borderRadius: 8 }}>
+            <span>📖</span>
+            <span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: '#16a34a' }}>
+                Guide d&apos;utilisation <span style={{ background: '#16a34a', color: '#FFF', fontSize: 9, padding: '1px 6px', borderRadius: 10 }}>COMPLET</span>
+              </span>
+              <span style={{ fontWeight: 500, fontSize: 10, color: 'var(--text2)' }}>Compte, Caisse POS, Dettes &amp; Factures</span>
+            </span>
+          </Link>
+          <Link href="/compte/apporteur" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)} style={{ background: '#fff7ed', borderRadius: 8 }}>
+            <span>💼</span>
+            <span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: 'var(--accent)' }}>
+                Programme Apporteur <span style={{ background: '#C75B00', color: '#FFF', fontSize: 9, padding: '1px 6px', borderRadius: 10 }}>20% À VIE</span>
+              </span>
+              <span style={{ fontWeight: 500, fontSize: 10, color: 'var(--text2)' }}>Gagnez des commissions chaque mois</span>
+            </span>
+          </Link>
           <Link href="/demo" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)} style={{ background: '#FFF7ED', borderRadius: 8 }}>
             <span>🚀</span>
             <span>

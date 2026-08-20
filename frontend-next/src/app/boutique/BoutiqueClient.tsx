@@ -3896,6 +3896,10 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
               </span>
             </a>
           )}
+          <a href="/guide-utilisation" target="_blank"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#C75B00', textDecoration: 'none', borderRadius: 6, fontWeight: 750, background: '#fff7ed', border: '1px solid #ffedd5' }}>
+            <span>📖 Guide d&apos;utilisation</span>
+          </a>
           <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer"
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 12, color: '#6b7280', textDecoration: 'none', borderRadius: 6 }}>
             {t('shop.viewPublicShopLink')}

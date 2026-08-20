@@ -3,6 +3,15 @@ import { useState, useTransition, useEffect } from 'react'
 import { devenirApporteur, type StatsApporteur } from './actions'
 import { fcfa } from '@/lib/format'
 import { useTranslation } from '@/i18n/context'
+import Link from 'next/link'
+import {
+  Store, Award, MessageSquare, BookOpen, Printer, CheckCircle2,
+  Copy, Check, Phone, Download, ExternalLink, Calculator, DollarSign,
+  TrendingUp, ShieldCheck, Zap
+} from 'lucide-react'
+
+type CategorieCommerce = 'mode' | 'tech' | 'superette' | 'quincaillerie' | 'cosmetique' | 'resto' | 'grossiste'
+type StatutEquipement = 'sans_app' | 'avec_app'
 
 export default function ApporteurClient({ statsInitiales }: { statsInitiales?: StatsApporteur | null }) {
   const [stats, setStats] = useState(statsInitiales || null)
@@ -10,7 +19,15 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
   const [isPending, startTransition] = useTransition()
   const [erreur, setErreur] = useState<string | null>(null)
   const [copie, setCopie] = useState(false)
+  const [activeSubTab, setActiveSubTab] = useState<'kit' | 'pitchs' | 'supports' | 'stats'>('kit')
   const { t } = useTranslation()
+
+  // Matrice Pitchs State
+  const [selectedCat, setSelectedCat] = useState<CategorieCommerce>('superette')
+  const [selectedEquip, setSelectedEquip] = useState<StatutEquipement>('sans_app')
+
+  // Simulateur State
+  const [simulShops, setSimulShops] = useState(20)
 
   const ETAPES = [
     {
@@ -65,7 +82,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{t('account.howItWorks')}</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>{t('account.howItWorks')}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {ETAPES.map((e, i) => (
               <div key={e.titre} style={{
@@ -94,8 +111,8 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
         <button
           onClick={activer}
           disabled={isPending}
-          style={{ padding: '12px 32px', background: isPending ? '#9ca3af' : '#C75B00', color: '#fff',
-            border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: isPending ? 'not-allowed' : 'pointer' }}
+          style={{ padding: '14px 32px', background: isPending ? '#9ca3af' : '#C75B00', color: '#fff',
+            border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 800, cursor: isPending ? 'not-allowed' : 'pointer' }}
         >
           {isPending ? t('account.activating') : t('account.becomeApporteur')}
         </button>
@@ -103,7 +120,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
     )
   }
 
-  const lien = `https://nopalou.com/boutique?apporteur=${stats.code_apporteur}`
+  const lien = `https://nopalou.com/creer-boutique?ref=${stats.code_apporteur}`
   const messageWhatsApp = MESSAGE_PARTAGE(lien)
   const urlWhatsApp = `https://wa.me/?text=${encodeURIComponent(messageWhatsApp)}`
 
@@ -114,165 +131,426 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
     })
   }
 
+  // Matrice Pitchs Adaptés avec le Code Apporteur Réel
+  const MATRICE_PITCHS: Record<CategorieCommerce, {
+    label: string
+    emoji: string
+    sans_app: { pitch: string; demo: string; objection: string }
+    avec_app: { pitch: string; demo: string; objection: string }
+  }> = {
+    mode: {
+      label: 'Mode & Prêt-à-Porter',
+      emoji: '👗',
+      sans_app: {
+        pitch: `« Bonjour ! Fini d'envoyer vos photos et tailles une par une sur WhatsApp. Avec Nopalou, vous avez votre vitrine en ligne et vos clientes commandent directement sur votre WhatsApp. 🎁 1er mois 100% offert : ${lien} »`,
+        demo: 'Créer un article avec 3 tailles (S, M, L) en 20s et générer la Story HD marque blanche.',
+        objection: 'Générez des stories automatiques sans logo Nopalou pour vos statuts WhatsApp.',
+      },
+      avec_app: {
+        pitch: `« Bonjour ! Nopalou synchronise votre caisse physique avec votre vitrine WhatsApp à 0% de commission. Vos clientes voient votre stock en temps réel : ${lien} »`,
+        demo: 'Import immédiat de fichier Excel + suivi à distance sur smartphone.',
+        objection: 'Testez en parallèle pendant 30 jours gratuits sans rien modifier à votre caisse.',
+      },
+    },
+    tech: {
+      label: 'Téléphonie & High-Tech',
+      emoji: '📱',
+      sans_app: {
+        pitch: `« Bonjour chef ! Soyez visible sur le comparateur N°1 au Sénégal, scannez les codes-barres par caméra et gérez vos garanties sans carnet papier. 🎁 1er mois offert : ${lien} »`,
+        demo: 'Scanner un code-barres par caméra en 0.5s pour afficher le prix.',
+        objection: 'Sécurise vos ventes et stocks même quand vous n\'êtes pas au magasin.',
+      },
+      avec_app: {
+        pitch: `« Bonjour ! Nopalou vous apporte de nouveaux clients qualifiés depuis le comparateur web et offre 3 scanners (Caméra, Cloud, USB) à 5 000 F/mois : ${lien} »`,
+        demo: 'Factures proforma et devis légaux OHADA en PDF en 10 secondes.',
+        objection: 'Utilisez Nopalou comme canal d\'acquisition client à 0% de commission.',
+      },
+    },
+    superette: {
+      label: 'Supérette & Alimentation',
+      emoji: '🛒',
+      sans_app: {
+        pitch: `« Salam alaykoum ! Transformez votre smartphone en Caisse tactile ultrarapide qui marche même sans connexion internet, avec carnet de dettes et relance WhatsApp 1-clic : ${lien} »`,
+        demo: 'Faire une vente hors-ligne en mode avion et relancer une dette par WhatsApp.',
+        objection: 'Fonctionne 100% sans internet grâce au mode Offline First.',
+      },
+      avec_app: {
+        pitch: `« Bonjour ! Caisse tactile moderne avec codes PIN multi-caissiers et compatibilité douchette USB à seulement 5 000 F/mois : ${lien} »`,
+        demo: 'Clôture de caisse Z automatique avec calcul des bénéfices nets.',
+        objection: 'Gardez vos douchettes et imprimantes existantes.',
+      },
+    },
+    quincaillerie: {
+      label: 'Quincaillerie & Matériaux',
+      emoji: '🔨',
+      sans_app: {
+        pitch: `« Bonjour chef ! Émettez des factures et devis légaux OHADA en PDF avec NINEA et RCCM pour les chantiers et entreprises en 10 secondes : ${lien} »`,
+        demo: 'Création d\'un devis ciment/fer converti en facture PDF avec NINEA.',
+        objection: 'Les factures PDF professionnelles vous font gagner les marchés d\'entreprises.',
+      },
+      avec_app: {
+        pitch: `« Bonjour ! Scan OCR des factures d'achat fournisseurs pour mise à jour automatique des stocks volumineux : ${lien} »`,
+        demo: 'Scan OCR d\'un bordereau de livraison fournisseur pour incrémenter le stock.',
+        objection: 'Envoi instantané de la facture par WhatsApp au chef de chantier.',
+      },
+    },
+    cosmetique: {
+      label: 'Cosmétique & Beauté',
+      emoji: '💄',
+      sans_app: {
+        pitch: `« Bonjour madame ! Mettez vos produits de beauté en valeur sur votre vitrine web et recevez vos commandes sur WhatsApp sans commission : ${lien} »`,
+        demo: 'Catalogue visuel avec fiches conseils et commande directe.',
+        objection: 'Donnez votre lien aux clientes pour qu\'elles recommandent depuis chez elles.',
+      },
+      avec_app: {
+        pitch: `« Bonjour ! Lien unique pour bio Instagram et suivi des dettes/acomptes clientes en direct : ${lien} »`,
+        demo: 'Story 1080×1920 avec logo de la boutique et prix promo.',
+        objection: 'Fini les pertes de temps en messages privés Instagram.',
+      },
+    },
+    resto: {
+      label: 'Restauration & Snacks',
+      emoji: '🍽️',
+      sans_app: {
+        pitch: `« Bonjour chef ! Menu interactif avec QR code et commande WhatsApp sans commission sur vos repas de midi : ${lien} »`,
+        demo: 'Scan du menu QR code et commande directe sur WhatsApp.',
+        objection: 'Mise à jour du plat du jour en 5 secondes sur votre smartphone.',
+      },
+      avec_app: {
+        pitch: `« Bonjour ! Économisez les 20% à 30% de commission des plateformes de livraison en faisant commander vos clients en direct à 0% : ${lien} »`,
+        demo: 'Calculateur d\'économies sur les commissions de livraison.',
+        objection: 'Gardez 100% de votre marge sur vos clients réguliers.',
+      },
+    },
+    grossiste: {
+      label: 'Grossistes & Enseignes',
+      emoji: '📦',
+      sans_app: {
+        pitch: `« Salam alaykoum ! Import de catalogue Excel par lot, gestion multi-caissiers PIN et facturation OHADA sécurisée : ${lien} »`,
+        demo: 'Import de 1 000 articles Excel en 3 secondes.',
+        objection: 'Sécurise vos encaissements et dettes clients sans risque de perte.',
+      },
+      avec_app: {
+        pitch: `« Bonjour ! Connectez vos commerciaux terrain en direct sur smartphone avec codes PIN et décrémentation de stock centralisée : ${lien} »`,
+        demo: 'Prise de commande mobile par les vendeurs sur le terrain.',
+        objection: 'Permissions sécurisées par code PIN pour chaque vendeur.',
+      },
+    },
+  }
+
+  const pitchActuel = MATRICE_PITCHS[selectedCat][selectedEquip]
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-      {/* Code + lien + actions de partage */}
-      <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 20 }}>
-        <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 6px' }}>{t('account.apporteurCode')}</p>
-        <p style={{ fontSize: 24, fontWeight: 900, color: '#C75B00', margin: '0 0 16px' }}>{stats.code_apporteur}</p>
-
-        <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 6px' }}>{t('account.shareLink')}</p>
-        <code style={{ fontSize: 13, background: '#F8FAFC', padding: '8px 12px', borderRadius: 6, display: 'block', marginBottom: 12, wordBreak: 'break-all' }}>
-          {lien}
-        </code>
-
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button
-            onClick={copierLien}
-            style={{ padding: '10px 18px', background: copie ? '#16a34a' : '#1C2B4A', color: '#fff',
-              border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-          >
-            {copie ? t('account.copied') : t('account.copyLink')}
-          </button>
-          <a
-            href={urlWhatsApp}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ padding: '10px 18px', background: '#25D366', color: '#fff',
-              border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
-              display: 'inline-flex', alignItems: 'center' }}
-          >
-            {t('account.shareWhatsApp')}
-          </a>
-          <a
-            href="/assets/apporteur-affaires"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ padding: '10px 18px', background: '#fff', color: '#C75B00',
-              border: '1px solid #C75B00', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
-              display: 'inline-flex', alignItems: 'center' }}
-          >
-            {t('account.downloadVisual')}
-          </a>
-          <a
-            href="/assets/poster-ecosysteme"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ padding: '10px 18px', background: '#7C3AED', color: '#fff',
-              border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
-              display: 'inline-flex', alignItems: 'center' }}
-          >
-            {t('account.posterEcosystem')}
-          </a>
-          <a
-            href="/brochure-apporteur.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ padding: '10px 18px', background: '#fff', color: '#1C2B4A',
-              border: '1px solid #1C2B4A', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
-              display: 'inline-flex', alignItems: 'center' }}
-          >
-            {t('account.downloadBrochure')}
-          </a>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      
+      {/* Header & Stats Principales */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1C2B4A 0%, #0F172A 100%)',
+        borderRadius: 16, padding: '24px 28px', color: '#fff',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16,
+      }}>
+        <div>
+          <span style={{ fontSize: 12, fontWeight: 800, color: '#FDBA74', letterSpacing: '0.05em' }}>
+            ESPACE PARRAINAGE &amp; APPORTEUR D&apos;AFFAIRES
+          </span>
+          <h2 style={{ fontSize: 24, fontWeight: 900, margin: '4px 0' }}>
+            Code Parrain / Agent : <span style={{ color: '#F97316' }}>{stats.code_apporteur}</span>
+          </h2>
+          <p style={{ fontSize: 13, color: '#CBD5E1', margin: 0 }}>
+            Commission : <strong>{stats.taux_commission}% récurrent à vie</strong> sur chaque abonnement mensuel parrainé.
+          </p>
         </div>
 
-        <p style={{ fontSize: 12, color: '#64748B', margin: '16px 0 8px' }}>
-          {t('account.tierVisualsPrompt')}
-        </p>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <a href="/assets/palier/gratuit/carre" target="_blank" rel="noopener noreferrer" style={{
-            padding: '8px 14px', background: '#fff', color: '#64748B', border: '1px solid #E2E8F0',
-            borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none',
-          }}>
-            {t('account.tierFree')}
-          </a>
-          <a href="/assets/palier/pro/carre" target="_blank" rel="noopener noreferrer" style={{
-            padding: '8px 14px', background: '#fff', color: '#C75B00', border: '1px solid #C75B00',
-            borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none',
-          }}>
-            {t('account.tierPro')}
-          </a>
-          <a href="/assets/palier/business/carre" target="_blank" rel="noopener noreferrer" style={{
-            padding: '8px 14px', background: '#fff', color: '#1e3a5f', border: '1px solid #1e3a5f',
-            borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none',
-          }}>
-            {t('account.tierBusiness')}
-          </a>
+        <div style={{ display: 'flex', gap: 16 }}>
+          <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 18px', textAlign: 'center' }}>
+            <span style={{ fontSize: 11, color: '#94A3B8', display: 'block' }}>Total Dû</span>
+            <span style={{ fontSize: 20, fontWeight: 900, color: '#38BDF8' }}>{fcfa(stats.total_du)}</span>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 18px', textAlign: 'center' }}>
+            <span style={{ fontSize: 11, color: '#94A3B8', display: 'block' }}>Déjà Versé</span>
+            <span style={{ fontSize: 20, fontWeight: 900, color: '#4ADE80' }}>{fcfa(stats.total_paye)}</span>
+          </div>
         </div>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 16 }}>
-          <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 4px' }}>{t('account.commissionDue')}</p>
-          <p style={{ fontSize: 20, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>{fcfa(stats.total_du)}</p>
-        </div>
-        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 16 }}>
-          <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 4px' }}>{t('account.alreadyPaid')}</p>
-          <p style={{ fontSize: 20, fontWeight: 800, color: '#16a34a', margin: 0 }}>{fcfa(stats.total_paye)}</p>
-        </div>
+      {/* Navigation Sous-Onglets Apporteur */}
+      <div style={{ display: 'flex', gap: 8, borderBottom: '2px solid #E2E8F0', paddingBottom: 2 }}>
+        {[
+          { id: 'kit', label: '🚀 Boîte à Outils Terrain', icon: Zap },
+          { id: 'pitchs', label: '💬 Pitchs Personnalisés', icon: MessageSquare },
+          { id: 'supports', label: '📄 Supports Imprimables', icon: Printer },
+          { id: 'stats', label: `🏪 Boutiques Recrutées (${stats.boutiques.length})`, icon: Store },
+        ].map((t) => {
+          const Icon = t.icon
+          const isActive = activeSubTab === t.id
+          return (
+            <button
+              key={t.id}
+              onClick={() => setActiveSubTab(t.id as any)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px',
+                border: 'none', background: 'none', cursor: 'pointer',
+                fontSize: 13, fontWeight: isActive ? 800 : 600,
+                color: isActive ? '#C75B00' : '#64748B',
+                borderBottom: isActive ? '3px solid #C75B00' : '3px solid transparent',
+                transition: 'all 0.15s',
+              }}
+            >
+              <Icon size={16} color={isActive ? '#C75B00' : '#64748B'} />
+              <span>{t.label}</span>
+            </button>
+          )
+        })}
       </div>
 
-      <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>
-        {t('account.commissionRate')} {stats.taux_commission}% · {t('account.payoutThreshold')} {fcfa(stats.seuil_paiement)} {t('account.cumulated')}
-      </p>
+      {/* ──────────────────────────────────────────────────────────────────────────
+          SOUS-ONGLET 1 : BOÎTE À OUTILS & LIENS
+      ────────────────────────────────────────────────────────────────────────── */}
+      {activeSubTab === 'kit' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Bloc Lien de Partage */}
+          <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '20px' }}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: '#1C2B4A', display: 'block', marginBottom: 6 }}>
+              🔗 Votre Lien de Parrainage Officiel :
+            </span>
+            <code style={{ fontSize: 13, background: '#F8FAFC', padding: '10px 14px', borderRadius: 8, display: 'block', marginBottom: 14, wordBreak: 'break-all', color: '#C75B00', fontWeight: 700 }}>
+              {lien}
+            </code>
 
-      {/* Comment ça marche */}
-      <div>
-        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{t('account.howItWorks')}</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {ETAPES.map((e, i) => (
-            <div key={e.titre} style={{
-              border: '1px solid #E2E8F0', borderRadius: 10, padding: '16px 20px',
-              background: '#fff', display: 'flex', gap: 14,
-            }}>
-              <span style={{
-                fontSize: 13, fontWeight: 800, color: '#C75B00', background: '#FFF7ED',
-                borderRadius: '50%', width: 26, height: 26, display: 'flex',
-                alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>{i + 1}</span>
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#1C2B4A', margin: '0 0 4px' }}>{e.titre}</p>
-                <p style={{ fontSize: 13, color: '#64748B', margin: 0, lineHeight: 1.6 }}>{e.detail}</p>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button
+                onClick={copierLien}
+                style={{ padding: '10px 18px', background: copie ? '#16a34a' : '#1C2B4A', color: '#fff',
+                  border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                {copie ? <Check size={16} /> : <Copy size={16} />}
+                {copie ? 'Lien copié !' : 'Copier mon lien'}
+              </button>
+
+              <a
+                href={urlWhatsApp}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ padding: '10px 18px', background: '#25D366', color: '#fff',
+                  border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
+                  display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <Phone size={16} /> Partager sur WhatsApp
+              </a>
+
+              <Link
+                href="/guide-utilisation"
+                target="_blank"
+                style={{ padding: '10px 18px', background: '#FFF7ED', color: '#C75B00', border: '1px solid #FED7AA',
+                  borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <BookOpen size={16} /> Guide Marchand Simplifié
+              </Link>
+            </div>
+          </div>
+
+          {/* Simulateur Rapide de Gains Apporteur */}
+          <div style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 14, padding: '20px' }}>
+            <span style={{ fontSize: 14, fontWeight: 900, color: '#1C2B4A', display: 'block', marginBottom: 8 }}>
+              💰 Vos Revenus Passifs Estimés (20% Récurrent) :
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+              <span style={{ fontSize: 13, color: '#64748B' }}>Nombre de boutiques recrutées :</span>
+              <input
+                type="number"
+                min="1"
+                value={simulShops}
+                onChange={(e) => setSimulShops(Math.max(1, parseInt(e.target.value) || 1))}
+                style={{ width: 80, padding: '6px 10px', borderRadius: 6, border: '1px solid #CBD5E1', fontWeight: 800, fontSize: 14 }}
+              />
+            </div>
+            <div style={{ background: '#1C2B4A', borderRadius: 10, padding: '14px 20px', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, color: '#94A3B8' }}>Revenu mensuel récurrent versé par Wave :</span>
+              <span style={{ fontSize: 22, fontWeight: 900, color: '#4ADE80' }}>
+                {fcfa(simulShops * 5000 * 0.2)} / mois
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────────────────────
+          SOUS-ONGLET 2 : PITCHS PERSONNALISÉS PAR CATÉGORIE & ÉQUIPEMENT
+      ────────────────────────────────────────────────────────────────────────── */}
+      {activeSubTab === 'pitchs' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Sélecteurs */}
+          <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
+                1. Type de Commerce :
+              </span>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {(Object.keys(MATRICE_PITCHS) as CategorieCommerce[]).map((catKey) => {
+                  const c = MATRICE_PITCHS[catKey]
+                  const isSel = selectedCat === catKey
+                  return (
+                    <button
+                      key={catKey}
+                      onClick={() => setSelectedCat(catKey)}
+                      style={{
+                        padding: '6px 12px', borderRadius: 8,
+                        border: isSel ? '2px solid #C75B00' : '1px solid #CBD5E1',
+                        background: isSel ? '#FFF7ED' : '#F8FAFC',
+                        color: isSel ? '#C75B00' : '#1C2B4A',
+                        fontWeight: isSel ? 800 : 600, fontSize: 12, cursor: 'pointer',
+                      }}
+                    >
+                      {c.emoji} {c.label}
+                    </button>
+                  )
+                })}
               </div>
+            </div>
+
+            <div>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
+                2. Situation du Commerçant :
+              </span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => setSelectedEquip('sans_app')}
+                  style={{
+                    flex: 1, padding: '8px 12px', borderRadius: 8,
+                    border: selectedEquip === 'sans_app' ? '2px solid #16A34A' : '1px solid #E2E8F0',
+                    background: selectedEquip === 'sans_app' ? '#F0FDF4' : '#fff',
+                    color: selectedEquip === 'sans_app' ? '#166534' : '#64748B',
+                    fontWeight: 800, fontSize: 12, cursor: 'pointer',
+                  }}
+                >
+                  ❌ N&apos;a pas d&apos;application
+                </button>
+                <button
+                  onClick={() => setSelectedEquip('avec_app')}
+                  style={{
+                    flex: 1, padding: '8px 12px', borderRadius: 8,
+                    border: selectedEquip === 'avec_app' ? '2px solid #2563EB' : '1px solid #E2E8F0',
+                    background: selectedEquip === 'avec_app' ? '#EFF6FF' : '#fff',
+                    color: selectedEquip === 'avec_app' ? '#1E40AF' : '#64748B',
+                    fontWeight: 800, fontSize: 12, cursor: 'pointer',
+                  }}
+                >
+                  ✅ A déjà un logiciel / Excel
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Fiche Pitch Personnalisée */}
+          <div style={{ background: '#fff', border: '2px solid #C75B00', borderRadius: 14, padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 15, fontWeight: 900, color: '#1C2B4A' }}>
+                {MATRICE_PITCHS[selectedCat].emoji} {MATRICE_PITCHS[selectedCat].label}
+              </span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(pitchActuel.pitch)
+                    alert('Pitch copié !')
+                  }}
+                  style={{ padding: '6px 12px', background: '#1C2B4A', color: '#fff', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Copier
+                </button>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(pitchActuel.pitch)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ padding: '6px 12px', background: '#25D366', color: '#fff', borderRadius: 6, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}
+                >
+                  WhatsApp
+                </a>
+              </div>
+            </div>
+
+            <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '14px', fontSize: 14, color: '#1C2B4A', lineHeight: 1.5, fontWeight: 600 }}>
+              {pitchActuel.pitch}
+            </div>
+
+            <div style={{ fontSize: 13, color: '#475569' }}>
+              <strong>📱 Démo à montrer :</strong> {pitchActuel.demo}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────────────────────
+          SOUS-ONGLET 3 : SUPPORTS IMPRIMABLES
+      ────────────────────────────────────────────────────────────────────────── */}
+      {activeSubTab === 'supports' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          {[
+            {
+              titre: 'Flyer Démarchage A5',
+              desc: 'Flyer officiel avec votre code parrainage et QR code démo.',
+              url: `/assets/flyer-commercial-a5?code=${stats.code_apporteur}`,
+            },
+            {
+              titre: 'Fiche Tarifs Officielle A4',
+              desc: 'Grille tarifaire (Taf Taf 2 500 F, Pro 5 000 F, Business 10 000 F).',
+              url: `/assets/fiche-tarifs-a4?code=${stats.code_apporteur}`,
+            },
+            {
+              titre: 'Mémo de Poche Commercial',
+              desc: 'Guide résumé des pitchs et des 10 objections de terrain.',
+              url: `/assets/memo-poche-commercial?code=${stats.code_apporteur}`,
+            },
+            {
+              titre: 'Badge Conseiller Officiel',
+              desc: 'Carte d\'accréditation officielle avec QR code de vérification.',
+              url: `/assets/badge-commercial?code=${stats.code_apporteur}`,
+            },
+          ].map((s, idx) => (
+            <div key={idx} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <h3 style={{ fontSize: 15, fontWeight: 800, color: '#1C2B4A', margin: '0 0 4px' }}>{s.titre}</h3>
+                <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 12px', lineHeight: 1.4 }}>{s.desc}</p>
+              </div>
+              <a
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '8px 12px', background: '#1C2B4A', color: '#fff', borderRadius: 8,
+                  fontSize: 12, fontWeight: 700, textDecoration: 'none', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}
+              >
+                <Download size={14} /> Télécharger HD
+              </a>
             </div>
           ))}
         </div>
-      </div>
+      )}
 
-      {/* Argumentaire simplifié */}
-      <div>
-        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>{t('account.pitchTitle')}</h2>
-        <div style={{
-          border: '1px solid #E2E8F0', borderRadius: 10, padding: '18px 20px', background: '#F8FAFC',
-        }}>
-          <p style={{ fontSize: 13, color: '#1C2B4A', margin: 0, lineHeight: 1.8 }}>
-            {t('account.pitchDetail')}
-          </p>
+      {/* ──────────────────────────────────────────────────────────────────────────
+          SOUS-ONGLET 4 : BOUTIQUES RECRUTÉES
+      ────────────────────────────────────────────────────────────────────────── */}
+      {activeSubTab === 'stats' && (
+        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '20px' }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: '0 0 14px' }}>
+            Vos Boutiques Recrutées ({stats.boutiques.length})
+          </h3>
+          {stats.boutiques.length === 0 ? (
+            <p style={{ fontSize: 14, color: '#94A3B8', margin: 0 }}>Aucune boutique recrutée pour l&apos;instant. Utilisez vos pitchs et votre lien pour inscrire vos premiers commerçants !</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {stats.boutiques.map(b => (
+                <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#F8FAFC', borderRadius: 8, fontSize: 14 }}>
+                  <span style={{ fontWeight: 700, color: '#1C2B4A' }}>{b.nom}</span>
+                  <span style={{ color: b.abonnement_statut === 'actif' ? '#16a34a' : '#94A3B8', fontWeight: 700 }}>
+                    {b.plan ? `${b.plan} — ${b.abonnement_statut ?? 'inactif'}` : 'Essai / Gratuit'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <p style={{ fontSize: 12, color: '#94A3B8', marginTop: 10 }}>
-          {t('account.pitchNote')}
-        </p>
-      </div>
-
-      {/* Boutiques recrutées */}
-      <div>
-        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>{t('account.recruitedShops')} ({stats.boutiques.length})</h2>
-        {stats.boutiques.length === 0 ? (
-          <p style={{ fontSize: 14, color: '#94A3B8' }}>{t('account.noRecruitedShops')}</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {stats.boutiques.map(b => (
-              <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#F8FAFC', borderRadius: 8, fontSize: 14 }}>
-                <span>{b.nom}</span>
-                <span style={{ color: b.abonnement_statut === 'actif' ? '#16a34a' : '#94A3B8' }}>
-                  {b.plan ? `${b.plan} — ${b.abonnement_statut ?? 'inactif'}` : t('account.noSubscription')}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }

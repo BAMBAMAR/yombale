@@ -13,6 +13,8 @@ import CompareFilterBanner from '@/components/CompareFilterBanner'
 import ShowcaseTabs from './ShowcaseTabs'
 import { apiFetch } from '@/lib/api'
 
+import HeroWhatsAppCarousel from './HeroWhatsAppCarousel'
+
 export const metadata: Metadata = {
   title: 'Comparateur de prix au Sénégal · Dakar',
   description:
@@ -166,29 +168,9 @@ export default async function HomePage({
         {/* Layout en 3 colonnes pour utiliser l'espace Desktop (Gauche, Centre, Droite) */}
         <div style={{ maxWidth: 1440, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 40, position: 'relative', zIndex: 2 }}>
           
-          {/* COLONNE GAUCHE (Desktop seulement) */}
-          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, textAlign: 'left', background: '#fff', padding: 20, borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 24, marginBottom: 8, color: '#25D366' }}>
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.489-1.761-1.663-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a5.22 5.22 0 0 0-.571-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.052 0C5.495 0 .16 5.333.158 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.332 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
-              </svg>
-            </div>
-            <h3 style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', marginBottom: 8 }}>Commandez sur WhatsApp</h3>
-            <p style={{ fontSize: 12, color: '#64748b', margin: 0, lineHeight: 1.5, marginBottom: 16 }}>Trouvez le produit et passez commande directement au vendeur en un clic.</p>
-            
-            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <li style={{ fontSize: 12, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: '#25D366' }}>✓</span> Sans inscription
-              </li>
-              <li style={{ fontSize: 12, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: '#25D366' }}>✓</span> Contact direct vendeur
-              </li>
-              <li style={{ fontSize: 12, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: '#25D366' }}>✓</span> Suivi de livraison en temps réel
-              </li>
-            </ul>
-
-            <Link href="/assistant-whatsapp" style={{ display: 'inline-block', marginTop: 16, fontSize: 13, fontWeight: 800, color: '#25D366', textDecoration: 'none' }}>Comment ça marche ? →</Link>
+          {/* COLONNE GAUCHE (Desktop seulement : Carrousel dynamique WhatsApp & Parrainage) */}
+          <div className="hero-side-card" style={{ flex: '1 1 250px', maxWidth: 300, display: 'flex' }}>
+            <HeroWhatsAppCarousel />
           </div>
 
           {/* COLONNE CENTRALE */}
@@ -213,6 +195,11 @@ export default async function HomePage({
           {/* BARRE DE RECHERCHE PRINCIPALE */}
           <div style={{ maxWidth: 640, margin: '0 auto' }}>
             <SearchBar defaultValue={q} />
+          </div>
+
+          {/* CARROUSEL WHATSAPP & PARRAINAGE DÉDIÉ MOBILE */}
+          <div className="hero-mobile-carousel-wrap">
+            <HeroWhatsAppCarousel isMobile={true} />
           </div>
 
           {/* CATÉGORIES EN PILULES FLUIDES (Défilement horizontal sur mobile) */}
@@ -523,6 +510,8 @@ export default async function HomePage({
             <div className="chip-row" style={{ marginBottom: 24 }}>
               {[
                 { href: '/creer-boutique', label: 'Créer sa boutique en ligne (1m offert)', emoji: '🚀' },
+                { href: '/compte/apporteur', label: 'Programme Apporteur (20% récurrent à vie)', emoji: '💼' },
+                { href: '/guide-utilisation', label: 'Guide d\'utilisation complet (Site & Boutique)', emoji: '📖' },
                 { href: '/tarifs-boutique', label: 'Tarifs & Forfaits Vendeurs Sénégal', emoji: '🏷️' },
                 { href: '/guide-creer-boutique', label: 'Alternative Shopify & Sourcing Alibaba', emoji: '📦' },
               ].map(l => (

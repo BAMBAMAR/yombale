@@ -13,7 +13,7 @@ export const account = {
   navPublishRealEstate: 'Publier un bien',
   navMyShop: 'Ma boutique',
   navMyProfile: 'Mon profil',
-  navBusinessPartner: 'Apporteur d\'affaires',
+  navBusinessPartner: 'Parrainage & Apporteur (20%)',
   navFeaturesPlans: 'Fonctionnalités & abonnements',
   navLogout: 'Déconnexion',
 

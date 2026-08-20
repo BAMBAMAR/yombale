@@ -39,8 +39,19 @@ img, video, iframe {
   .page-container { padding: 0 12px 60px; }
 }
 
+.hero-mobile-carousel-wrap {
+  display: none;
+}
+
 @media (max-width: 1023px) {
   .hero-side-card { display: none !important; }
+  .hero-mobile-carousel-wrap {
+    display: block;
+    width: 100%;
+    max-width: 480px;
+    margin: 16px auto 8px;
+    padding: 0 4px;
+  }
 }
 
 :root {

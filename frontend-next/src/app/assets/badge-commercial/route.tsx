@@ -1,0 +1,129 @@
+import { ImageResponse } from 'next/og'
+import QRCode from 'qrcode-svg'
+
+export const dynamic = 'force-dynamic'
+
+function qrDataUri(text: string) {
+  const svg = new QRCode({ content: text, padding: 0, width: 140, height: 140, color: '#1C2B4A', background: '#ffffff' }).svg()
+  const base64 = Buffer.from(svg).toString('base64')
+  return `data:image/svg+xml;base64,${base64}`
+}
+
+// Badge d'Accréditation & Carte Commercial Officiel (1050 × 650 px)
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const agentNom = searchParams.get('nom') || 'CONSEILLER COMMERCIAL'
+  const codeAgent = searchParams.get('code') || 'AGENT-221'
+  const agentPhone = searchParams.get('phone') || '+221 70 871 79 42'
+
+  const qr = qrDataUri(`https://nopalou.com/creer-boutique?ref=${encodeURIComponent(codeAgent)}`)
+
+  return new ImageResponse(
+    (
+      <div style={{
+        width: 1050, height: 650,
+        display: 'flex',
+        background: 'linear-gradient(135deg, #1C2B4A 0%, #0F172A 100%)',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Bande latérale orange */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, bottom: 0, width: 12,
+          background: '#C75B00', display: 'flex',
+        }} />
+
+        {/* Forme décorative */}
+        <div style={{
+          position: 'absolute', right: -60, top: -60,
+          width: 320, height: 320, borderRadius: '50%',
+          background: 'rgba(199, 91, 0, 0.12)', display: 'flex',
+        }} />
+
+        {/* Contenu gauche */}
+        <div style={{
+          flex: 1, display: 'flex', flexDirection: 'column',
+          justifyContent: 'space-between', padding: '48px 48px 48px 64px',
+        }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{
+                width: 60, height: 60, borderRadius: 16,
+                background: '#C75B00', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 34, fontWeight: 900, color: '#fff',
+              }}>N</div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: 36, fontWeight: 900, color: '#fff' }}>
+                  Nopa<span style={{ color: '#C75B00' }}>lou</span>
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em' }}>
+                  REPRÉSENTANT OFFICIEL TERRAIN
+                </span>
+              </div>
+            </div>
+
+            <div style={{
+              background: '#16A34A', color: '#fff', fontSize: 12, fontWeight: 900,
+              padding: '6px 14px', borderRadius: 20, letterSpacing: '0.05em',
+            }}>
+              ACCRÉDITÉ 2026
+            </div>
+          </div>
+
+          {/* Identité de l'Agent */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 14, color: '#C75B00', fontWeight: 800, letterSpacing: '0.08em' }}>
+              CONSEILLER MARCHANDS &amp; DIGITALISATION
+            </span>
+            <span style={{ fontSize: 38, fontWeight: 900, color: '#fff' }}>
+              {agentNom}
+            </span>
+            <div style={{ display: 'flex', gap: 20, marginTop: 4 }}>
+              <span style={{ fontSize: 18, color: '#38BDF8', fontWeight: 800 }}>
+                📞 {agentPhone}
+              </span>
+              <span style={{ fontSize: 18, color: '#E2E8F0', fontWeight: 700 }}>
+                ID : {codeAgent}
+              </span>
+            </div>
+          </div>
+
+          {/* Footer de la carte */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: 16,
+          }}>
+            <span style={{ fontSize: 13, color: '#94A3B8' }}>
+              Plateforme N°1 de Commerce &amp; Caisse POS au Sénégal · nopalou.com
+            </span>
+            <span style={{ fontSize: 13, color: '#C75B00', fontWeight: 800 }}>
+              Scannez pour valider l&apos;accréditation
+            </span>
+          </div>
+        </div>
+
+        {/* Bloc QR Code Droite */}
+        <div style={{
+          width: 260, background: 'rgba(255,255,255,0.04)',
+          borderLeft: '1px solid rgba(255,255,255,0.1)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 16, padding: '32px',
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 16, padding: '12px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qr} width={140} height={140} alt="QR Code" />
+          </div>
+          <span style={{ fontSize: 13, color: '#CBD5E1', textAlign: 'center', fontWeight: 700 }}>
+            Scanner pour créer votre boutique avec ce conseiller
+          </span>
+        </div>
+      </div>
+    ),
+    { width: 1050, height: 650 }
+  )
+}

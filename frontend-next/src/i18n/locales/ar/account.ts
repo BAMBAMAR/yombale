@@ -15,7 +15,7 @@ export const account: LocaleTranslations['account'] = {
   navPublishRealEstate: 'نشر عقار',
   navMyShop: 'متجري',
   navMyProfile: 'ملفي الشخصي',
-  navBusinessPartner: 'وسيط أعمال',
+  navBusinessPartner: 'الإحالة ووسيط الأعمال (20%)',
   navFeaturesPlans: 'الميزات والاشتراكات',
   navLogout: 'تسجيل الخروج',
 

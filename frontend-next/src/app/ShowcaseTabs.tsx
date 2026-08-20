@@ -420,7 +420,7 @@ export default function ShowcaseTabs({
             {/* Blocs Apporteurs */}
             <div style={{ background: 'rgba(255,255,255,0.05)', padding: 20, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 800, color: '#25D366', marginBottom: 12 }}>
-                <span>💼 Pour les Apporteurs</span>
+                <span>💼 Pour les Apporteurs &amp; Parrains</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <li>🔗 <strong>Partage Statut &amp; Groupes WhatsApp :</strong> Diffusez votre lien de parrainage en 1 clic à vos contacts commerçants.</li>

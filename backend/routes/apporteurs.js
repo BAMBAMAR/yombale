@@ -3,22 +3,7 @@ const { pool } = require('../models/db');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
 const settingsCache = require('../lib/settingsCache');
 
-const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // pas de 0/O/1/I pour lisibilité
-
-function genererCode() {
-  let code = '';
-  for (let i = 0; i < 6; i++) code += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
-  return code;
-}
-
-async function genererCodeUnique() {
-  for (let tentative = 0; tentative < 10; tentative++) {
-    const code = genererCode();
-    const { rows } = await pool.query('SELECT id FROM utilisateurs WHERE code_apporteur=$1', [code]);
-    if (!rows[0]) return code;
-  }
-  throw new Error('Impossible de générer un code apporteur unique');
-}
+const { genererCode, genererCodeUnique } = require('../lib/codeApporteur');
 
 // POST /api/apporteurs/devenir — active le statut apporteur pour l'utilisateur connecté
 router.post('/devenir', verifierToken, async (req, res) => {
@@ -43,13 +28,18 @@ router.post('/devenir', verifierToken, async (req, res) => {
   }
 });
 
-// GET /api/apporteurs/mes-stats — recrutements et commissions de l'apporteur connecté
+// GET /api/apporteurs/mes-stats — recrutements et commissions de l'apporteur connecté (auto-activation transparente)
 router.get('/mes-stats', verifierToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const user = await pool.query('SELECT est_apporteur, code_apporteur FROM utilisateurs WHERE id=$1', [userId]);
-    if (!user.rows[0]?.est_apporteur) {
-      return res.status(403).json({ error: 'Vous n\'êtes pas encore apporteur d\'affaires.' });
+    let user = await pool.query('SELECT est_apporteur, code_apporteur FROM utilisateurs WHERE id=$1', [userId]);
+    if (!user.rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+    // Auto-activation transparente si pas encore de code apporteur
+    let codeApporteur = user.rows[0].code_apporteur;
+    if (!user.rows[0].est_apporteur || !codeApporteur) {
+      codeApporteur = await genererCodeUnique();
+      await pool.query('UPDATE utilisateurs SET est_apporteur=true, code_apporteur=$1 WHERE id=$2', [codeApporteur, userId]);
     }
 
     const boutiques = await pool.query(
@@ -73,7 +63,7 @@ router.get('/mes-stats', verifierToken, async (req, res) => {
     const seuil = await settingsCache.getNum('apporteur_seuil_paiement');
 
     res.json({
-      code_apporteur: user.rows[0].code_apporteur,
+      code_apporteur: codeApporteur,
       boutiques: boutiques.rows,
       total_du: Number(totaux.rows[0].total_du),
       total_paye: Number(totaux.rows[0].total_paye),

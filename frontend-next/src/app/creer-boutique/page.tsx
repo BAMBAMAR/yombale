@@ -166,11 +166,14 @@ export default function CreerBoutiqueWizard() {
     setLoading(true)
     setError('')
     try {
+      const storedApporteur = typeof window !== 'undefined' ? localStorage.getItem('nopalou_apporteur_code') : null
+      const code_apporteur = searchParams?.get('apporteur') || searchParams?.get('ref') || searchParams?.get('code') || storedApporteur || ''
+
       const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
       const res = await fetch(`${BACKEND}/api/boutiques/taf-taf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom, telephone, couleur, plan, categorie })
+        body: JSON.stringify({ nom, telephone, couleur, plan, categorie, code_apporteur })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur lors de la création de la boutique.')

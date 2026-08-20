@@ -11,6 +11,8 @@ const { verifierToken } = require('../middlewares/auth');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:8080';
 
+const { genererCodeUnique } = require('../lib/codeApporteur');
+
 router.post('/inscription',
   limiterAuth,
   body('email').isEmail().normalizeEmail(),
@@ -24,9 +26,10 @@ router.post('/inscription',
       const exist = await pool.query('SELECT id FROM utilisateurs WHERE email=$1', [email]);
       if (exist.rows.length) return res.status(409).json({ error: 'Email déjà utilisé' });
       const hash = await bcrypt.hash(mot_de_passe, 12);
+      const codeApporteur = await genererCodeUnique();
       const { rows } = await pool.query(
-        'INSERT INTO utilisateurs (nom,email,mot_de_passe_hash) VALUES ($1,$2,$3) RETURNING id,nom,email',
-        [nom, email, hash]
+        'INSERT INTO utilisateurs (nom,email,mot_de_passe_hash,est_apporteur,code_apporteur) VALUES ($1,$2,$3,true,$4) RETURNING id,nom,email,code_apporteur',
+        [nom, email, hash, codeApporteur]
       );
       const token = jwt.sign({ userId: rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
       res.status(201).json({ user: rows[0], token });
@@ -372,9 +375,10 @@ router.post('/whatsapp-otp-register', limiterAuth, async (req, res) => {
     const bcrypt = require('bcryptjs');
     const hash = await bcrypt.hash(plainPassword, 12);
     
+    const codeApporteur = await genererCodeUnique();
     const insertRes = await pool.query(
-      'INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie) VALUES ($1, $2, $3, $4, true) RETURNING id, nom, email, telephone',
-      [nom, email, hash, telephone]
+      'INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie, est_apporteur, code_apporteur) VALUES ($1, $2, $3, $4, true, true, $5) RETURNING id, nom, email, telephone, code_apporteur',
+      [nom, email, hash, telephone, codeApporteur]
     );
     const user = insertRes.rows[0];
     
@@ -397,7 +401,7 @@ router.post('/whatsapp-login', limiterAuth, async (req, res) => {
     telephone = normalisePhone(telephone);
     if (telephone.length < 9) return res.status(400).json({ error: 'Numéro invalide' });
 
-    const { rows } = await pool.query('SELECT id, nom, email FROM utilisateurs WHERE telephone=$1', [telephone]);
+    const { rows } = await pool.query('SELECT id, nom, email, code_apporteur FROM utilisateurs WHERE telephone=$1', [telephone]);
     let user;
     
     if (rows.length) {
@@ -406,10 +410,11 @@ router.post('/whatsapp-login', limiterAuth, async (req, res) => {
       const dummyEmail = `${telephone}@whatsapp.nopalou.com`;
       const randomPassword = crypto.randomBytes(16).toString('hex');
       const hash = await bcrypt.hash(randomPassword, 12);
+      const codeApporteur = await genererCodeUnique();
       
       const insertRes = await pool.query(
-        'INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie) VALUES ($1, $2, $3, $4, true) RETURNING id, nom, email',
-        [nom || 'Utilisateur WhatsApp', dummyEmail, hash, telephone]
+        'INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie, est_apporteur, code_apporteur) VALUES ($1, $2, $3, $4, true, true, $5) RETURNING id, nom, email, code_apporteur',
+        [nom || 'Utilisateur WhatsApp', dummyEmail, hash, telephone, codeApporteur]
       );
       user = insertRes.rows[0];
     }

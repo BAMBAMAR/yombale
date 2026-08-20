@@ -1,3 +1,47 @@
+- **Package Force de Vente Commerciale Terrain, Académie & Guide d'Utilisation Simplifié (`main` - 20 août 2026)** 🚀 :
+  * **Module Dédié Force de Vente dans l'Administration (`/admin/force-de-vente` & `ForceDeVenteClient.tsx`)** :
+    - Nouvelle section complète intégrée dans la navigation latérale Admin (*Marketing & Partenaires*) articulée en 7 onglets :
+      1. *Stratégie & Quadrillage Terrain* : Funnel de prospection 5 étapes (>40% de conversion), cartographie des zones marchandes prioritaires à Dakar (Sandaga, HLM, Tilène, Colobane, etc.) et planning de la journée type (15-20 visites/jour, 5-8 onboardings/jour).
+      2. *Académie & Formation Commerciale* : Les 10 règles d'or du commercial d'élite, protocole d'onboarding 3 minutes sur place et quiz interactif de validation des connaissances (4 questions avec scoring dynamique).
+      3. *Matrice Interactive des Pitchs & Objections* : Arbre de décision croisant 7 catégories de commerce (Mode, High-Tech, Supérette, Quincaillerie, Cosmétique, Restauration, Grossiste) et 2 niveaux d'équipement (Sans application vs Avec application/Excel), générant instantanément le pitch personnalisé, 3 questions de diagnostic, la démo live 60s, la réponse aux objections et la phrase de closing, avec copie et partage WhatsApp en 1 clic.
+      4. *Guide Marchand Simplifié* : Accès direct au guide pédagogique complet couvrant toutes les sections du site, du compte et de la boutique.
+      5. *Supports Imprimables (Print HD)* : Galerie de téléchargement et aperçu des 6 supports haute définition.
+      6. *Générateur de Kit Personnalisé Agent* : Saisie du nom, WhatsApp et code apporteur -> génération instantanée des liens d'affiliation, messages de prospection WhatsApp et QR codes sur-mesure.
+      7. *Simulateur de Rémunération & Commissions* : Calculateur en temps réel des commissions récurrentes 20% + primes d'activation par palier.
+  * **Guide d'Utilisation Simplifié du Site, du Compte & de la Boutique (`/guide-utilisation` & `GuideUtilisationClient.tsx`)** :
+    - Page publique interactive structurée en 11 modules détaillés (Inscription express WhatsApp, Espace Compte, Catalogue & Variantes, Caisse POS Offline First & 3 Scanners EAN, Carnet de Dettes & Relance WhatsApp, Factures & Devis OHADA PDF, Fournisseurs & Scan OCR, Commandes Web sans commission, Saisie Express, Marketing & Stories HD, Forfaits & FAQ).
+    - Intégration d'un bouton d'accès direct « 📖 Guide d'utilisation » dans la barre latérale de gestion boutique (`BoutiqueClient.tsx`).
+  * **5 Nouveaux Générateurs d'Images Dynamiques Haute Résolution (`/assets/*`)** :
+    - `/assets/flyer-commercial-a5` : Flyer A5 recto-verso (1240 × 1748 px) avec QR démo et coordonnées agent.
+    - `/assets/fiche-tarifs-a4` : Grille tarifaire A4 comparative officielle (1240 × 1754 px) avec forfaits Taf Taf (2 500 F), Pro (5 000 F), Business VIP (10 000 F), remises multi-durées et 1er mois offert.
+    - `/assets/memo-poche-commercial` : Fiche mémo format poche (1050 × 1485 px) avec pitch éclair 30s, matrice et 5 parades.
+    - `/assets/badge-commercial` : Badge d'accréditation officiel agent terrain (1050 × 650 px) avec QR code.
+    - `/assets/affiche-vitrine` : Affiche vitrine partenaire pour comptoir et devanture (1240 × 1748 px).
+    - Conformité stricte à la directive AGENTS.md : 100% polices système natives, 0 fetch externe de polices.
+  * **Enrichissement de l'Espace Apporteur d'Affaires (`/compte/apporteur` & `ApporteurClient.tsx`)** :
+    - Intégration directe de la Boîte à Outils Terrain, de la matrice de pitchs avec le code apporteur personnel et les liens automatiquement injectés, du téléchargement des supports HD et du simulateur de gains 20%.
+  * **Adhésion Automatique & Universelle au Parrainage (Tout Compte = Parrain / Apporteur)** :
+    - Génération automatique d'un `code_apporteur` unique à 6 caractères et activation transparente (`est_apporteur = true`) dès l'inscription (web standard, WhatsApp OTP ou Magic Login).
+    - Auto-activation transparente lors de l'accès à l'espace `/compte/apporteur` pour les comptes plus anciens sans étape bloquante.
+    - Adoption du terme grand public **« Parrainage & Apporteur d'Affaires »** (Code Parrain / Code Agent) dans la navigation compte, les guides et les communications pour une clarté maximale.
+  * **Fonctionnement Intégral du Lien Partagé & Association des Boutiques (`/creer-boutique` & `POST /api/boutiques/taf-taf`)** :
+    - Prise en charge des paramètres d'URL `?apporteur=CODE`, `?ref=CODE` et persistance en `localStorage` (`nopalou_apporteur_code`).
+    - Transmission automatique du code lors de la création de la boutique via le parcours Wizard Taf-Taf.
+    - Résolution du code en `apporteur_id` dans `POST /api/boutiques/taf-taf` et persistance dans `boutiques.apporteur_id` pour le versement automatique de la commission récurrente de 20% à chaque paiement d'abonnement.
+  * **Carrousel Dynamique WhatsApp, Parrainage & Solutions Vendeurs (`HeroWhatsAppCarousel.tsx` & `page.tsx`)** :
+    - Remplacement de la grande bannière sombre par un **carrousel fluide et automatique (défilement doux 7 secondes)** intégré directement dans le bloc Hero.
+    - 4 volets interactifs :
+      1. *💬 Commandez sur WhatsApp* (Zéro inscription, contact direct vendeur, suivi en direct).
+      2. *🤝 Parrainez & Gagnez 20%* (Recommandez aux commerçants, 1er mois offert aux boutiques, gains Wave/OM).
+      3. *🤖 Assistant Prix WhatsApp 24/7* (Comparateur automatique au +221 70 871 79 42).
+      4. *🏪 Caisse POS & Vente Web* (Digitalisation boutique, caisse hors-ligne, dettes, factures OHADA).
+    - Contrôles manuels (flèches gauche/droite, dots de pagination) et pause automatique au survol ou au toucher.
+    - **Affichage Mobile Dédié (`.hero-mobile-carousel-wrap`)** : Intégration soignée sous la barre de recherche sur smartphone, parfaitement dimensionnée et lisible.
+  * **Qualité & Tests de Validation** :
+    - Compilation TypeScript stricte (`npx tsc --noEmit`) : 0 erreur (code 0).
+    - Couverture i18n 100% (830/830 clés présentes en FR, EN, AR).
+    - Respect absolu de la directive AGENTS.md (polices système natives, 0 font-fetch externe).
+
 - **Hub « Marketing & Visibilité », Partage Instantané Post-Création & Visuels 100% Marque Blanche Marchand (`main` - 20 août 2026)** 📣 :
   * **Regroupement et Refonte du Hub « Marketing & Visibilité » (`BoutiqueClient.tsx`)** :
     - Unification complète de toutes les fonctionnalités de diffusion, promotion et visibilité dans un tableau de bord structuré en 6 sections :

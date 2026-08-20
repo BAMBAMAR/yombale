@@ -49,7 +49,7 @@ async function montantAttendu(reference, montantDeclare) {
     const parts = reference.split('_');
     const plan = parts[2];
     const dureeMois = parseInt(parts[3] || '1', 10) || 1;
-    const prixMensuel = { pro: prix.pro, business: prix.business }[plan] ?? montantDeclare;
+    const prixMensuel = { decouverte: prix.decouverte, pro: prix.pro, business: prix.business }[plan] ?? montantDeclare;
     let remise = 0;
     if (dureeMois === 3) remise = 0.10;
     else if (dureeMois === 6) remise = 0.15;
@@ -132,7 +132,7 @@ async function appliquerPaiementReussi(reference, montant, methode) {
     const plan   = parts[2];
     const dureeMois = parseInt(parts[3] || '1', 10) || 1;
     const pxAbmt = await getPrix();
-    const PRIX   = { pro: pxAbmt.pro, business: pxAbmt.business };
+    const PRIX   = { decouverte: pxAbmt.decouverte, pro: pxAbmt.pro, business: pxAbmt.business };
     if (userId && plan && PRIX[plan]) {
       const fin = new Date(Date.now() + dureeMois * 30 * 24 * 60 * 60 * 1000).toISOString();
       const abonnementRow = await pool.query(

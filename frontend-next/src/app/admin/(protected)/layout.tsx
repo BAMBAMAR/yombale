@@ -41,6 +41,7 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
 
           <div className="admin-nav-group">
             <span className="admin-nav-group-title">Marketing &amp; Partenaires</span>
+            <a href="/admin/force-de-vente" className="admin-nav-link" style={{ fontWeight: 700, color: '#C75B00' }}>🚀 Force de Vente Terrain</a>
             <a href="/admin/partenaires" className="admin-nav-link">🤝 Partenaires</a>
             <a href="/admin/affiliation" className="admin-nav-link">🖱 Affiliation</a>
             <a href="/admin/affiliates/tracking" className="admin-nav-link">🔗 Tracking Affiliates</a>
