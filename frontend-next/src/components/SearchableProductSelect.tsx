@@ -209,7 +209,7 @@ export default function SearchableProductSelect({
 
           {/* Catégories Quick Filter */}
           {categories.length > 0 && (
-            <div style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+            <div className="horizontal-scroll-fade" style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
               <button
                 type="button"
                 onClick={() => setSelectedCategory('tous')}

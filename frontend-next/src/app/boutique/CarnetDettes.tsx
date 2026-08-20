@@ -1202,7 +1202,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           />
         </div>
 
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '100%', paddingBottom: 2, WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+        <div className="horizontal-scroll-fade" style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '100%', paddingBottom: 2, WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
           {[
             { id: 'tous', label: `${t('common.all')} (${clients.length})` },
             { id: 'retard', label: `🔴 ${t('shop.filterDebtors')} (${nbClientsDebiteurs})` },
@@ -2245,7 +2245,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     </div>
 
                     {categoriesModal.length > 0 && (
-                      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+                      <div className="horizontal-scroll-fade" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
                         <button
                           type="button"
                           onClick={() => setCategorieProduitModal('tous')}

@@ -6,6 +6,7 @@ import { fcfa } from '@/lib/format'
 import SearchableClientSelect from '@/components/SearchableClientSelect'
 import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
 import { useTranslation } from '@/i18n/context'
+import { useScrollNudge } from '@/hooks/useScrollNudge'
 
 interface LigneDocument {
   produitId: string
@@ -19,6 +20,7 @@ interface LigneDocument {
 
 export default function GestionDocuments({ boutiqueId }: { boutiqueId: string }) {
   const { t, isRtl } = useTranslation()
+  const { scrollRef: docFilterRef, scrollToCenter: scrollDocToCenter } = useScrollNudge()
   const [documents, setDocuments] = useState<any[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [typeFiltre, setTypeFiltre] = useState<string>('tous')
@@ -576,7 +578,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
             placeholder={`🔍 ${t('common.search')}...`}
             style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, minWidth: 200, flex: 1, outline: 'none' }}
           />
-          <div className="nopalou-scroll-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div ref={docFilterRef} className="nopalou-scroll-tabs horizontal-scroll-fade" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {[
               { key: 'tous', label: `📁 ${t('shop.filterDocAll')}` },
               { key: 'facture', label: `🧾 ${t('shop.filterDocInvoices')}` },
@@ -585,12 +587,16 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
             ].map(item => (
               <button
                 key={item.key}
-                onClick={() => setTypeFiltre(item.key)}
+                onClick={(e) => {
+                  setTypeFiltre(item.key)
+                  scrollDocToCenter(e.currentTarget)
+                }}
                 style={{
                   padding: '6px 12px', borderRadius: 8, border: '1px solid #e5e7eb',
                   background: typeFiltre === item.key ? '#1e3a5f' : '#ffffff',
                   color: typeFiltre === item.key ? '#ffffff' : '#475569',
-                  fontWeight: 600, fontSize: 13, cursor: 'pointer', textTransform: 'capitalize', whiteSpace: 'nowrap'
+                  fontWeight: 600, fontSize: 13, cursor: 'pointer', textTransform: 'capitalize', whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease',
                 }}
               >
                 {item.label}

@@ -1,3 +1,15 @@
+- **Généralisation Universelle du Défilement Horizontal & Nudge sur Tous les Sous-Menus 3+ Éléments (`main` - 20 août 2026)** 🔄📱 :
+  * **Branchement Complet de `useScrollNudge` & Centrage Fluide au Clic** :
+    - **Documents & Facturation (`GestionDocuments.tsx`)** : Connecté sur le ruban des filtres de documents `[📁 Tous]`, `[🧾 Factures]`, `[📝 Devis]`, `[📋 Proformas]` avec centrage automatique au clic.
+    - **Fournisseurs, Stock & Achats (`GestionFournisseurs.tsx`)** : Connecté sur les 3 sous-onglets `[📦 Stock]`, `[👤 Fournisseurs]`, `[📝 Commandes d'Achat]`.
+    - **Comptabilité & Bilan (`Comptabilite.tsx`)** : Connecté sur les sous-onglets `[📊 Tableau de Bord]`, `[⚡ Saisie Express]`, `[💰 Ventes]`, `[📉 Dépenses]`.
+    - **Programme Apporteur (`ApporteurClient.tsx`)** : Connecté sur les sous-onglets `[🚀 Boîte à Outils]`, `[💬 Pitchs]`, `[📄 Supports]`, `[🏪 Boutiques Recrutées]`.
+    - **Carnet de Dettes & Sélecteurs Produits (`CarnetDettes.tsx`, `SearchableProductSelect.tsx`, `BoutiqueDetailClient.tsx`)** : Application de la classe `.horizontal-scroll-fade` avec masque dégradé et dépassement *Peeking* sur toutes les barres de catégories.
+  * **Validation & Contrôle Qualité** :
+    - TypeScript strict (`npx tsc --noEmit`) : 0 erreur (code 0).
+    - Tests unitaires (`npm test`) : 31/31 tests validés avec succès (100%).
+    - Respect des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Micro-Balancement Périodique (1x/min) & Centrage Fluide au Clic (`main` - 20 août 2026)** 🔄📱 :
   * **Création du Hook Universel `useScrollNudge` (`src/hooks/useScrollNudge.ts`)** :
     - **Micro-Balancement Périodique (Toutes les 60 secondes)** : Dès l'ouverture (1.5s) puis toutes les 60 secondes sur smartphone (`window.innerWidth ≤ 768px`), le ruban effectue un balancement imperceptible de **+35px vers la droite pendant 550ms avant de revenir**, rappelant silencieusement que le contenu est défilable.

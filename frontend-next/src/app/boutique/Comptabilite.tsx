@@ -10,6 +10,7 @@ import { fcfa, formatNombre, fmtDate, fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
 import { useTranslation } from '@/i18n/context'
+import { useScrollNudge } from '@/hooks/useScrollNudge'
 
 interface Zone    { id: string; nom: string; prix: number }
 interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string; justificatif_url: string | null }
@@ -2492,6 +2493,8 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
 export default function Comptabilite({ boutiqueId, initialTab = 'dashboard' }: { boutiqueId: string; initialTab?: 'dashboard' | 'express' | 'ventes' | 'depenses' }) {
   const [tab, setTab] = useState<'dashboard' | 'express' | 'ventes' | 'depenses'>(initialTab)
+  const { scrollRef: comptaTabRef, scrollToCenter: scrollComptaToCenter } = useScrollNudge()
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (initialTab) {
@@ -2500,22 +2503,28 @@ export default function Comptabilite({ boutiqueId, initialTab = 'dashboard' }: {
   }, [initialTab])
 
   const tabBtn = (t: typeof tab, label: string) => (
-    <button type="button" onClick={() => setTab(t)} style={{
-      padding: '8px 16px', border: 'none', background: 'none', cursor: 'pointer',
-      fontSize: 13, fontWeight: tab === t ? 700 : 500,
-      color: tab === t ? '#C75B00' : '#6b7280',
-      borderBottom: tab === t ? '2px solid #C75B00' : '2px solid transparent',
-      whiteSpace: 'nowrap',
-    }}>
+    <button
+      type="button"
+      onClick={(e) => {
+        setTab(t)
+        scrollComptaToCenter(e.currentTarget)
+      }}
+      style={{
+        padding: '8px 16px', border: 'none', background: 'none', cursor: 'pointer',
+        fontSize: 13, fontWeight: tab === t ? 700 : 500,
+        color: tab === t ? '#C75B00' : '#6b7280',
+        borderBottom: tab === t ? '2px solid #C75B00' : '2px solid transparent',
+        whiteSpace: 'nowrap',
+        transition: 'all 0.15s ease',
+      }}
+    >
       {label}
     </button>
   )
 
-  const { t } = useTranslation()
-
   return (
     <div>
-      <div className="nopalou-scroll-tabs" style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+      <div ref={comptaTabRef} className="nopalou-scroll-tabs horizontal-scroll-fade" style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
         {tabBtn('dashboard', `📊 ${t('shop.overview')}`)}
         {tabBtn('express',   `⚡ ${t('shop.quickSalesExpenses')}`)}
         {tabBtn('ventes',    `💰 ${t('shop.totalSales')}`)}

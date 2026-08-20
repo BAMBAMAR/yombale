@@ -19,9 +19,11 @@ import { StockView } from './Comptabilite'
 import SearchableProductSelect from '@/components/SearchableProductSelect'
 import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
 import { useTranslation } from '@/i18n/context'
+import { useScrollNudge } from '@/hooks/useScrollNudge'
 
 export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string }) {
   const { t, isRtl } = useTranslation()
+  const { scrollRef: fouTabRef, scrollToCenter: scrollFouToCenter } = useScrollNudge()
   const [subTab, setSubTab] = useState<'stock' | 'fournisseurs' | 'commandes'>('stock')
   const [fournisseurs, setFournisseurs] = useState<any[]>([])
   const [commandes, setCommandes] = useState<any[]>([])
@@ -475,31 +477,43 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Sub Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', gap: 16, paddingBottom: 4 }}>
+      {/* Sub Tabs (Défilement horizontal fluide avec Nudge 1x/min sur mobile) */}
+      <div ref={fouTabRef} className="nopalou-scroll-tabs horizontal-scroll-fade" style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', gap: 12, paddingBottom: 4, overflowX: 'auto' }}>
         <button
-          onClick={() => setSubTab('stock')}
+          onClick={(e) => {
+            setSubTab('stock')
+            scrollFouToCenter(e.currentTarget)
+          }}
           style={{
-            background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'stock' ? 700 : 500,
-            color: subTab === 'stock' ? '#C75B00' : '#475569', borderBottom: subTab === 'stock' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
+            background: 'none', border: 'none', padding: '6px 12px', fontSize: 13.5, fontWeight: subTab === 'stock' ? 700 : 500,
+            color: subTab === 'stock' ? '#C75B00' : '#475569', borderBottom: subTab === 'stock' ? '2px solid #C75B00' : 'none', cursor: 'pointer',
+            whiteSpace: 'nowrap', transition: 'all 0.15s ease',
           }}
         >
           📦 {t('shop.subTabStockInventory')}
         </button>
         <button
-          onClick={() => setSubTab('fournisseurs')}
+          onClick={(e) => {
+            setSubTab('fournisseurs')
+            scrollFouToCenter(e.currentTarget)
+          }}
           style={{
-            background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'fournisseurs' ? 700 : 500,
-            color: subTab === 'fournisseurs' ? '#C75B00' : '#475569', borderBottom: subTab === 'fournisseurs' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
+            background: 'none', border: 'none', padding: '6px 12px', fontSize: 13.5, fontWeight: subTab === 'fournisseurs' ? 700 : 500,
+            color: subTab === 'fournisseurs' ? '#C75B00' : '#475569', borderBottom: subTab === 'fournisseurs' ? '2px solid #C75B00' : 'none', cursor: 'pointer',
+            whiteSpace: 'nowrap', transition: 'all 0.15s ease',
           }}
         >
           👤 {t('shop.subTabSuppliersList')} ({fournisseurs.length})
         </button>
         <button
-          onClick={() => setSubTab('commandes')}
+          onClick={(e) => {
+            setSubTab('commandes')
+            scrollFouToCenter(e.currentTarget)
+          }}
           style={{
-            background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'commandes' ? 700 : 500,
-            color: subTab === 'commandes' ? '#C75B00' : '#475569', borderBottom: subTab === 'commandes' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
+            background: 'none', border: 'none', padding: '6px 12px', fontSize: 13.5, fontWeight: subTab === 'commandes' ? 700 : 500,
+            color: subTab === 'commandes' ? '#C75B00' : '#475569', borderBottom: subTab === 'commandes' ? '2px solid #C75B00' : 'none', cursor: 'pointer',
+            whiteSpace: 'nowrap', transition: 'all 0.15s ease',
           }}
         >
           📝 {t('shop.subTabPurchaseOrders')} ({commandes.length})

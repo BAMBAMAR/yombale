@@ -3,6 +3,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { devenirApporteur, type StatsApporteur } from './actions'
 import { fcfa } from '@/lib/format'
 import { useTranslation } from '@/i18n/context'
+import { useScrollNudge } from '@/hooks/useScrollNudge'
 import Link from 'next/link'
 import {
   Store, Award, MessageSquare, BookOpen, Printer, CheckCircle2,
@@ -14,6 +15,7 @@ type CategorieCommerce = 'mode' | 'tech' | 'superette' | 'quincaillerie' | 'cosm
 type StatutEquipement = 'sans_app' | 'avec_app'
 
 export default function ApporteurClient({ statsInitiales }: { statsInitiales?: StatsApporteur | null }) {
+  const { scrollRef: appTabRef, scrollToCenter: scrollAppToCenter } = useScrollNudge()
   const [stats, setStats] = useState(statsInitiales || null)
   const [loading, setLoading] = useState(statsInitiales === undefined)
   const [isPending, startTransition] = useTransition()
@@ -288,9 +290,10 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
         </div>
       </div>
 
-      {/* Navigation Sous-Onglets Apporteur (avec défilement fluide sans troncature) */}
+      {/* Navigation Sous-Onglets Apporteur (avec défilement fluide et Nudge 1x/min) */}
       <div
-        className="nopalou-scroll-tabs"
+        ref={appTabRef}
+        className="nopalou-scroll-tabs horizontal-scroll-fade"
         style={{
           display: 'flex',
           gap: 6,
@@ -312,7 +315,10 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
           return (
             <button
               key={t.id}
-              onClick={() => setActiveSubTab(t.id as any)}
+              onClick={(e) => {
+                setActiveSubTab(t.id as any)
+                scrollAppToCenter(e.currentTarget)
+              }}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

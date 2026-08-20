@@ -504,7 +504,7 @@ export default function BoutiqueDetailClient({
 
               {/* Filtres par Catégorie Internes (Pastilles) */}
               {categoriesInternes.length > 0 && (
-                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+                <div className="horizontal-scroll-fade" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
                   <button
                     onClick={() => setCatFilter('')}
                     style={{
