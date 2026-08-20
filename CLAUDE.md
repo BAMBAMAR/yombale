@@ -20,6 +20,10 @@
     - Barre d'actions groupées avec génération instantanée d'un message WhatsApp récapitulatif formaté pour tous les produits sélectionnés et copie en un clic.
   * **Bouton de Partage sur la Vitrine Publique (`BoutiqueDetailClient.tsx` & `boutiques/[id]/page.tsx`)** :
     - Intégration du composant `BoutonPartager` avec support Web Share API et multi-réseaux.
+  * **Ajout de « Saisie Express » dans le Sous-Menu Finance & Rapports (`BoutiqueClient.tsx` & `i18n`)** :
+    - Intégration de l'onglet direct « ⚡ Saisie Express (Ventes / Dépenses) » dans le groupe de navigation *Finance & Rapports*.
+    - Accès immédiat en 1 clic à la vue de saisie ultra-rapide des flux journaliers et du scan OCR de reçus/justificatifs sans avoir à naviguer d'abord sur la comptabilité globale.
+    - Support i18n complet (FR, EN, AR) avec parité 100% respectée.
   * **Navigation Latérale Boutique : Dépliage par Défaut des Catégories & Suppression du Survol (`BoutiqueClient.tsx`)** :
     - Suppression complète de l'ouverture et fermeture automatique au survol de la souris (`onMouseEnter` / `onMouseLeave`) pour une expérience stable et prévisible.
     - Toutes les catégories de navigation sont désormais **dépliées par défaut** à l'ouverture de l'espace marchand, avec possibilité pour le marchand de replier ou déplier individuellement chaque catégorie au clic.

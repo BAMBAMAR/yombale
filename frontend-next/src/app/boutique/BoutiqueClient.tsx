@@ -3139,7 +3139,7 @@ function BoutiqueEquipe({ boutiqueId }: { boutiqueId: string }) {
   )
 }
 
-type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer'
+type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer'
 
 function BoutiqueDashboard({
   boutique,
@@ -3388,7 +3388,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   initialTab?: string
 }) {
   const { t, formatNumber } = useTranslation()
-  const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer']
+  const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','express','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer']
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
 
   const NAV_GROUPS: NavGroup[] = [
@@ -3414,6 +3414,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
       icon: '💰',
       title: t('shop.navGroupFinanceReports'),
       items: [
+        { key: 'express',     icon: '⚡', label: t('shop.saisieExpress') || 'Saisie Express', minPlan: 'pro' },
         { key: 'compta',      icon: '💰', label: t('shop.accounting'), minPlan: 'pro' },
         { key: 'fiscalite',   icon: '⚖️', label: t('shop.taxSettings'), minPlan: 'pro' },
         { key: 'analytics',   icon: '📊', label: t('shop.analytics'), minPlan: 'pro' },
@@ -3518,6 +3519,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
     produits:    { icon: '🛍️', title: t('shop.catalog'), desc: t('shop.catalogDesc') },
     commandes:   { icon: '📋', title: t('shop.orders'), desc: t('shop.ordersDesc') },
     carnet:      { icon: '📒', title: t('shop.debts'), desc: t('shop.debtsDesc') },
+    express:     { icon: '⚡', title: t('shop.saisieExpress') || 'Saisie Express', desc: t('shop.saisieExpressDesc') || 'Enregistrement ultra-rapide des ventes et dépenses du jour avec scan OCR.' },
     compta:      { icon: '💰', title: t('shop.accounting'), desc: t('shop.accountingDesc') },
     analytics:   { icon: '📊', title: t('shop.analytics'), desc: t('shop.analyticsDesc') },
     infos:       { icon: '⚙️', title: t('shop.settings'), desc: t('shop.settingsDesc') },
@@ -4029,7 +4031,8 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             {tab === 'produits'    && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
             {tab === 'commandes'   && <Commandes boutiqueId={boutique.id} />}
             {tab === 'carnet'      && <CarnetDettes boutique={boutique} planActif={planActif} />}
-            {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} initialTab={subTabCompta} />}
+            {tab === 'express'     && <Comptabilite boutiqueId={boutique.id} initialTab="express" />}
+            {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} initialTab={subTabCompta === 'express' ? 'dashboard' : subTabCompta} />}
             {tab === 'analytics'   && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
             {tab === 'infos'       && (
               <div style={{ maxWidth: 580 }}>

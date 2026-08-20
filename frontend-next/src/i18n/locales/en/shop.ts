@@ -11,6 +11,8 @@ export const shop: LocaleTranslations['shop'] = {
   ordersDesc: 'Orders received — web and WhatsApp. Update statuses.',
   debts: 'Debt Book & Credits',
   debtsDesc: 'Track customer receivables, supplier purchases, catalog selections, and WhatsApp reminders.',
+  saisieExpress: 'Quick Entry (Sales / Expenses)',
+  saisieExpressDesc: 'Ultra-fast recording of daily sales and expenses with OCR scan.',
   accounting: 'Accounting',
   accountingDesc: 'Sales, expenses, stock, and delivery zones.',
   pos: 'POS Cash Register',

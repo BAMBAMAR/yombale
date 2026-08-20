@@ -9,6 +9,8 @@ export const shop = {
   ordersDesc: 'Commandes reçues — web et WhatsApp. Mettez à jour les statuts.',
   debts: 'Carnet de dettes & Crédits',
   debtsDesc: 'Suivi des créances clients, achats fournisseurs, sélection catalogue et relances WhatsApp.',
+  saisieExpress: 'Saisie Express (Ventes / Dépenses)',
+  saisieExpressDesc: 'Enregistrement ultra-rapide des ventes et dépenses du jour avec scan OCR.',
   accounting: 'Comptabilité',
   accountingDesc: 'Ventes, dépenses, stock et zones de livraison.',
   pos: 'Caisse POS',
