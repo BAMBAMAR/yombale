@@ -4011,8 +4011,8 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           onBack={onBack}
         />
 
-        {/* Liens rapides */}
-        <div style={{ padding: '12px 8px', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {/* Liens rapides (Desktop seulement) */}
+        <div className="bq-sidebar-quick-links" style={{ padding: '12px 8px', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 6 }}>
           {boutique.mode_fonctionnement === 'pure_player' ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', fontSize: 12, color: '#C75B00', borderRadius: 6, fontWeight: 800, background: '#fff7ed', border: '1px solid #ffedd5' }}>
               <span>{t('shop.purePlayerMode')}</span>

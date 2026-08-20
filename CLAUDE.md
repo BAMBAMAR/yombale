@@ -1,3 +1,19 @@
+- **Allègement Accueil, Correction Carrousel Mobile & Nettoyage En-têtes Boutique/Compte (`main` - 20 août 2026)** 🚀📱 :
+  * **Optimisation de l'Accueil Mobile (`page.tsx`)** :
+    - **Suppression du Carrousel Intermédiaire sur Mobile** : Élimination du carrousel WhatsApp/Parrainage qui s'intercalait entre la barre de recherche et les pilules de catégories, permettant un accès immédiat et direct aux catégories de produits dès la saisie.
+  * **Harmonisation & Compacité des Cartes Hero Web Desktop (`page.tsx` & `HeroWhatsAppCarousel.tsx`)** :
+    - **Réduction de la Hauteur des Cartes Latérales** : Ajustement du padding (`14px 16px`), des marges et du nombre de points clés (2 puces concises par slide et sur la carte *Boutique Taf Taf*) pour éviter tout étirement vertical excessif sur grand écran.
+    - **Alignement Visuel Parfait** : Hauteur compacte d'environ 200px parfaitement proportionnée avec le bloc central de recherche.
+  * **Résolution de l'Erreur 404 sur le Programme Apporteur (`/compte/apporteur/page.tsx`)** :
+    - Création du `page.tsx` manquant dans `src/app/(account)/compte/apporteur/` reliant `ApporteurClient`, éliminant l'erreur 404 console au prefetch et ouvrant l'accès complet au tableau de bord d'affiliation et simulateur de gains 20%.
+  * **Nettoyage de l'En-tête Mobile de Gestion Boutique (`BoutiqueClient.tsx` & `globals.css`)** :
+    - **Élimination du Double Bouton Retour** : Masquage de la rangée supérieure `← Mon compte` et `✕ Fermer le menu` sur mobile (`≤ 768px`), la navigation étant entièrement assurée par la barre compacte `.mobile-nav-compact` et le Bottom Sheet.
+    - **Suppression des Liens Rapides Parasites** : Masquage des liens sidebar desktop (`.bq-sidebar-quick-links`) qui s'empilaient avant le contenu principal.
+  * **Validation & Contrôle Qualité** :
+    - TypeScript strict (`npx tsc --noEmit`) : 0 erreur (code 0).
+    - Tests unitaires (`npm test`) : 31/31 tests validés avec succès (100%).
+    - Respect des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Refonte Ergonomique & Navigation Mobile : Bottom Sheet, Menu Principal & Déconnexion (`main` - 20 août 2026)** 📱 :
   * **Optimisation & Allègement du Menu Principal Mobile (`MobileNav.tsx`)** :
     - **Carte Utilisateur en Tête de Menu** : Affichage direct du profil connecté avec avatar initial, nom et bouton de déconnexion rapide 🚪 rouge bien visible en haut (au lieu d'être relégué après 25 liens).

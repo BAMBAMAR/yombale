@@ -9947,7 +9947,7 @@ button:focus-visible,
   padding: 12px 14px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .bq-manage-layout {
     flex-direction: column;
     border-radius: 12px;
@@ -9960,10 +9960,22 @@ button:focus-visible,
     border-bottom: 1px solid #e5e7eb;
     position: static; /* Annuler sticky sur mobile */
     max-height: none;
+    padding: 0;
   }
 
   .bq-sidebar-header {
-    padding: 12px 14px 10px;
+    padding: 12px 14px 8px;
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Masquer la ligne des boutons [← Mon compte] et [✕ Fermer le menu] ainsi que les liens sidebar desktop sur mobile */
+  .bq-sidebar-header > div:first-child,
+  .bq-sidebar-close-btn,
+  .bq-sidebar-open-btn,
+  .bq-back-btn,
+  .bq-sidebar-quick-links {
+    display: none !important;
   }
 
   .bq-nav-desktop {
