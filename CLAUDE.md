@@ -1,3 +1,13 @@
+- **Harmonisation & Réduction de la Hauteur des Cartes Latérales du Hero Desktop (`main` - 21 août 2026)** 📐✨ :
+  * **Harmonisation Parfaite des Cartes Latérales** :
+    - **Alignement Dimensionnel & Hauteur Symétrique** : La carte Carrousel WhatsApp/Parrainage (`HeroWhatsAppCarousel.tsx`) et la carte Boutique Taf Taf (`page.tsx`) partagent désormais des dimensions strictement identiques (`flex: '0 0 275px'`, `width: 275px`, `minHeight: 148px`, `padding: 11px 14px`, `borderRadius: 14px`).
+    - **Optimisation des Textes & Structure Verticale** : Raccourcissement et fluidification des puces d'avantages de la Boutique Taf Taf (*« Vitrine web & lien personnalisé »*, *« Commandes directes WhatsApp & Web »*), alignement des en-têtes (badges + contrôles) et des pieds de cartes (CTA + pastille `30j offerts` / indicateurs carrousel).
+  * **Réduction de l'Empreinte Verticale du Hero** :
+    - Réduction du padding vertical de la section hero (`20px 20px 14px` au lieu de `24px 20px 16px`) et des espacements (`gap: 28px` au lieu de `40px`) pour un rendu compact, élégant et sans décalage visuel.
+  * **Validation & Contrôle Qualité** :
+    - Tests unitaires (`npm test`) : 31/31 tests validés avec succès (100%).
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Refonte Complète de l'Identité Visuelle & Système de Logos Propriétaires Nopalou (`main` - 21 août 2026)** 🎨✨ :
   * **Création du Monogramme « N » Géométrique Propriétaire** :
     - **Tracés Vectoriels Purs (SVG Compound Path)** : Remplacement du `<text>N</text>` dépendant des polices du système client par un tracé SVG pur avec `fill-rule="evenodd"`. Élimine tout risque d'affichage asymétrique ou d'échec de rendu selon les OS.
