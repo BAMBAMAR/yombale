@@ -1503,11 +1503,12 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
       }
     }
 
-    const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
+    const { nom, description, prix, prix_barre, prix_achat, en_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
     if (!nom?.trim()) return res.status(400).json({ error: 'Nom requis' });
 
     const safePrix = (prix !== undefined && prix !== null && String(prix).trim() !== '' && !isNaN(Number(prix))) ? Number(prix) : null;
     const safePrixBarre = (prix_barre !== undefined && prix_barre !== null && String(prix_barre).trim() !== '' && !isNaN(Number(prix_barre))) ? Number(prix_barre) : null;
+    const safePrixAchat = (prix_achat !== undefined && prix_achat !== null && String(prix_achat).trim() !== '' && !isNaN(Number(prix_achat))) ? Number(prix_achat) : null;
 
     let images = [];
     if (req.body.images) {
@@ -1544,9 +1545,9 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
     const codeBarrePostVal = rawCodeBarrePost && typeof rawCodeBarrePost === 'string' && rawCodeBarrePost.trim() ? rawCodeBarrePost.trim() : null;
 
     const r = await pool.query(
-      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, images, en_stock, categorie, caracteristiques, variantes, code_barre)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-      [id, nom.trim(), description||null, safePrix, safePrixBarre,
+      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, prix_achat, images, en_stock, categorie, caracteristiques, variantes, code_barre)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      [id, nom.trim(), description||null, safePrix, safePrixBarre, safePrixAchat,
        images, en_stock !== 'false', categorie||null, caracJson, JSON.stringify(variantesJson), codeBarrePostVal]
     );
     res.status(201).json({ success: true, produit: r.rows[0] });
@@ -1578,7 +1579,7 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     const existing = await pool.query('SELECT * FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
     if (!existing.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
 
-    const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
+    const { nom, description, prix, prix_barre, prix_achat, en_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
     let images = existing.rows[0].images;
     if (req.files && req.files.length) {
       images = [];
@@ -1605,12 +1606,13 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
 
     const safePrix = (prix !== undefined && prix !== null && String(prix).trim() !== '' && !isNaN(Number(prix))) ? Number(prix) : (prix === '' ? null : existing.rows[0].prix);
     const safePrixBarre = (prix_barre !== undefined && prix_barre !== null && String(prix_barre).trim() !== '' && !isNaN(Number(prix_barre))) ? Number(prix_barre) : (prix_barre === '' ? null : existing.rows[0].prix_barre);
+    const safePrixAchat = (prix_achat !== undefined && prix_achat !== null && String(prix_achat).trim() !== '' && !isNaN(Number(prix_achat))) ? Number(prix_achat) : (prix_achat === '' ? null : existing.rows[0].prix_achat);
 
     const r = await pool.query(
-      `UPDATE boutique_produits SET nom=$1, description=$2, prix=$3, prix_barre=$4,
-       images=$5, en_stock=$6, categorie=$7, caracteristiques=$8, variantes=$9, code_barre=$10, updated_at=NOW()
-       WHERE id=$11 AND boutique_id=$12 RETURNING *`,
-      [nom||existing.rows[0].nom, description||null, safePrix, safePrixBarre,
+      `UPDATE boutique_produits SET nom=$1, description=$2, prix=$3, prix_barre=$4, prix_achat=$5,
+       images=$6, en_stock=$7, categorie=$8, caracteristiques=$9, variantes=$10, code_barre=$11, updated_at=NOW()
+       WHERE id=$12 AND boutique_id=$13 RETURNING *`,
+      [nom||existing.rows[0].nom, description||null, safePrix, safePrixBarre, safePrixAchat,
        images, en_stock !== 'false', categorie||existing.rows[0].categorie||null,
        caracJson, JSON.stringify(variantesJson), codeBarreVal, prodId, id]
     );
@@ -2262,10 +2264,9 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           const totalLigne = prixUnitaire * qte;
           const prodIdReal = pRes?.rows[0]?.id || (item.id && /^[0-9a-f-]{36}$/i.test(item.id) ? item.id : null);
 
-          // 2. Insérer dans la table des ventes pour la Comptabilité & Analytics
           await dbClient.query(
-            `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, methode_paiement, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, NOW())`,
+            `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, methode_paiement, caissier_nom, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, $10, NOW())`,
             [
               refVente,
               boutiqueId,
@@ -2275,11 +2276,11 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
               prixUnitaire,
               totalLigne,
               caissier ? `Caisse POS (${caissier})` : 'Caisse POS',
-              modePaiement || 'cash'
+              modePaiement || 'cash',
+              caissier || 'Caissier Principal'
             ]
           );
 
-          // 3. Insérer dans le journal des commandes_boutique
           await dbClient.query(
             `INSERT INTO commandes_boutique (reference, boutique_id, client_nom, statut, nom_produit, quantite, montant_total, mode_paiement, created_at)
              VALUES ($1, $2, $3, 'livree', $4, $5, $6, $7, NOW())`,
@@ -2295,7 +2296,6 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           );
         }
 
-        // 4. Insérer dans caisse_documents (Facture Payée) — avec ON CONFLICT pour double sécurité idempotence
         await dbClient.query(
           `INSERT INTO caisse_documents (
             boutique_id, client_id, caissier_id, type, reference, statut,
@@ -2310,7 +2310,6 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           ]
         );
 
-        // 5. Mettre à jour la session active de caisse de la boutique si elle existe
         const activeSessionRes = await dbClient.query(
           `SELECT id FROM boutique_pos_sessions WHERE boutique_id = $1 AND statut = 'ouverte' ORDER BY date_ouverture DESC LIMIT 1`,
           [boutiqueId]
@@ -2318,18 +2317,21 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
         if (activeSessionRes.rows[0]) {
           const activeSessionId = activeSessionRes.rows[0].id;
           const mode = (modePaiement || 'cash').toLowerCase();
+          const isEspeces = mode === 'cash' || mode === 'especes';
+          const isWave = mode === 'wave';
+          const isOm = mode === 'om' || mode === 'orange_money';
+          const isCarte = mode === 'carte' || mode === 'cb';
 
           await dbClient.query(
             `UPDATE boutique_pos_sessions
              SET ventes_total = COALESCE(ventes_total, 0) + $1,
+                 nb_ventes = COALESCE(nb_ventes, 0) + 1,
                  ventes_especes = COALESCE(ventes_especes, 0) + $2,
                  ventes_wave = COALESCE(ventes_wave, 0) + $3,
                  ventes_orange_money = COALESCE(ventes_orange_money, 0) + $4,
-                 ventes_carte = COALESCE(ventes_carte, 0) + $5,
-                 nb_ventes = COALESCE(nb_ventes, 0) + 1
+                 ventes_carte = COALESCE(ventes_carte, 0) + $5
              WHERE id = $6`,
             [
-              calculation.total_ttc,
               mode === 'cash' || mode === 'especes' || mode === 'espece' ? calculation.total_ttc : 0,
               mode === 'wave' ? calculation.total_ttc : 0,
               mode === 'orange_money' || mode === 'orange' ? calculation.total_ttc : 0,
@@ -2470,26 +2472,38 @@ router.get('/:id/caissiers', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    const bRes = await pool.query(`SELECT id, nom, utilisateur_id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
     const boutiqueId = bRes.rows[0].id;
+    const utilisateurId = bRes.rows[0].utilisateur_id;
 
     const r = await pool.query(
       `SELECT id, nom, prenom, code_pin, role, actif, created_at
        FROM boutique_caissiers
        WHERE boutique_id = $1
-       ORDER BY created_at DESC`,
+       ORDER BY created_at ASC`,
       [boutiqueId]
     );
 
-    // Caissiers par défaut si la table est vide
+    // Caissiers par défaut personnalisés si la table est vide
     if (r.rows.length === 0) {
+      let gerantNom = 'Propriétaire';
+      let gerantPrenom = 'Gérant';
+
+      if (utilisateurId) {
+        try {
+          const uRes = await pool.query('SELECT nom, prenom FROM utilisateurs WHERE id=$1', [utilisateurId]);
+          if (uRes.rows[0]?.nom) gerantNom = uRes.rows[0].nom;
+          if (uRes.rows[0]?.prenom) gerantPrenom = uRes.rows[0].prenom;
+        } catch (eU) {}
+      }
+
       const def1 = await pool.query(
         `INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role)
-         VALUES ($1, 'Bamba', 'Caissier 1', '1234', 'caissier'),
-                ($1, 'Superviseur', 'Gérant', '9999', 'superviseur')
+         VALUES ($1, $2, $3, '0000', 'superviseur'),
+                ($1, 'Principal', 'Caissier', '1234', 'caissier')
          RETURNING id, nom, prenom, code_pin, role, actif, created_at`,
-        [boutiqueId]
+        [boutiqueId, gerantNom, gerantPrenom]
       );
       return res.json({ caissiers: def1.rows });
     }
@@ -2501,8 +2515,8 @@ router.get('/:id/caissiers', tokenOptional, async (req, res) => {
   }
 });
 
-// POST /api/boutiques/:id/caissiers — Créer caissier (Business VIP requis)
-router.post('/:id/caissiers', verifierToken, checkAbonnement, requireBusiness, async (req, res) => {
+// POST /api/boutiques/:id/caissiers — Créer caissier
+router.post('/:id/caissiers', verifierToken, checkAbonnement, async (req, res) => {
   try {
     const idParam = req.params.id;
     const { nom, prenom, code_pin, role } = req.body;
@@ -2530,7 +2544,7 @@ router.post('/:id/caissiers', verifierToken, checkAbonnement, requireBusiness, a
 // PUT /api/boutiques/:id/caissiers/:caissierId
 router.put('/:id/caissiers/:caissierId', verifierToken, async (req, res) => {
   try {
-    const { code_pin, actif } = req.body;
+    const { code_pin, actif, nom, prenom, role } = req.body;
     const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
     if (!bq) return res.status(403).json({ error: 'Accès refusé' });
 
@@ -2538,13 +2552,25 @@ router.put('/:id/caissiers/:caissierId', verifierToken, async (req, res) => {
     let values = [req.params.caissierId, bq.id];
     let vIndex = 3;
 
-    if (code_pin !== undefined) {
+    if (nom !== undefined && String(nom).trim()) {
+      queryParts.push(`nom = $${vIndex++}`);
+      values.push(String(nom).trim());
+    }
+    if (prenom !== undefined) {
+      queryParts.push(`prenom = $${vIndex++}`);
+      values.push(prenom ? String(prenom).trim() : null);
+    }
+    if (role !== undefined && (role === 'caissier' || role === 'superviseur')) {
+      queryParts.push(`role = $${vIndex++}`);
+      values.push(role);
+    }
+    if (code_pin !== undefined && String(code_pin).trim()) {
       queryParts.push(`code_pin = $${vIndex++}`);
-      values.push(code_pin);
+      values.push(String(code_pin).trim());
     }
     if (actif !== undefined) {
       queryParts.push(`actif = $${vIndex++}`);
-      values.push(actif);
+      values.push(Boolean(actif));
     }
 
     if (queryParts.length === 0) return res.json({ success: true });

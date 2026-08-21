@@ -673,4 +673,43 @@ export async function verifierBonAchat(boutiqueId: string, code: string): Promis
   }
 }
 
+export async function getBilanComptable(
+  boutiqueId: string,
+  filters?: { from?: string; to?: string; caissier?: string; mode_paiement?: string }
+): Promise<any> {
+  try {
+    const params = new URLSearchParams()
+    if (filters?.from) params.set('from', filters.from)
+    if (filters?.to) params.set('to', filters.to)
+    if (filters?.caissier) params.set('caissier', filters.caissier)
+    if (filters?.mode_paiement) params.set('mode_paiement', filters.mode_paiement)
+
+    const queryStr = params.toString() ? `?${params.toString()}` : ''
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/bilan${queryStr}`)
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de récupérer le bilan' }
+    }
+    return await res.json()
+  } catch (err) {
+    console.error('[GET_BILAN_COMPTABLE_ERR]', err)
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
+export async function getInventaireValorise(boutiqueId: string): Promise<any> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/inventaire`)
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de récupérer l\'inventaire' }
+    }
+    return await res.json()
+  } catch (err) {
+    console.error('[GET_INVENTAIRE_VALORISE_ERR]', err)
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
+
 

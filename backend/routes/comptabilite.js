@@ -917,6 +917,200 @@ router.get('/:boutiqueId/dashboard', verifierToken, param('boutiqueId').isUUID()
   }
 });
 
+// ── 📊 Bilan Financier Consolidé Périodique & Multi-Critères ───────────────────
+// GET /api/comptabilite/:boutiqueId/bilan
+router.get('/:boutiqueId/bilan', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {
+  try {
+    const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+    if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+    const id = req.params.boutiqueId;
+    const { from, to, caissier, mode_paiement } = req.query;
+
+    // Conditions pour les ventes
+    const vConds = ['boutique_id=$1', 'archivee IS NOT TRUE'];
+    const vParams = [id];
+    if (from) { vParams.push(from); vConds.push(`created_at >= $${vParams.length}`); }
+    if (to) { vParams.push(to); vConds.push(`created_at <= $${vParams.length}`); }
+    if (caissier) {
+      vParams.push(caissier);
+      vConds.push(`(caissier_nom = $${vParams.length} OR client_nom LIKE '%' || $${vParams.length} || '%')`);
+    }
+    if (mode_paiement) {
+      vParams.push(mode_paiement);
+      vConds.push(`methode_paiement = $${vParams.length}`);
+    }
+
+    // Conditions pour les dépenses
+    const dConds = ['boutique_id=$1', 'archivee IS NOT TRUE'];
+    const dParams = [id];
+    if (from) { dParams.push(from); dConds.push(`date_depense >= $${dParams.length}`); }
+    if (to) { dParams.push(to); dConds.push(`date_depense <= $${dParams.length}`); }
+
+    const [statsVentes, statsDepenses, statsPaiements, topProduits, statsStock, statsCaissiers, timelineVentes] = await Promise.all([
+      // 1. Agrégats globaux ventes
+      pool.query(`
+        SELECT
+          COUNT(*)::int AS nb_ventes,
+          COALESCE(SUM(montant_total), 0) AS ca_total,
+          COALESCE(AVG(montant_total), 0) AS panier_moyen,
+          COALESCE(SUM(quantite), 0)::int AS total_articles_vendus
+        FROM ventes WHERE ${vConds.join(' AND ')}
+      `, vParams),
+
+      // 2. Agrégats dépenses
+      pool.query(`
+        SELECT
+          COUNT(*)::int AS nb_depenses,
+          COALESCE(SUM(montant), 0) AS depenses_total,
+          json_object_agg(COALESCE(categorie, 'autre'), cat_total) FILTER (WHERE categorie IS NOT NULL) AS par_categorie
+        FROM (
+          SELECT categorie, SUM(montant) AS cat_total
+          FROM depenses WHERE ${dConds.join(' AND ')}
+          GROUP BY categorie
+        ) sub
+      `, dParams),
+
+      // 3. Répartition par mode de paiement
+      pool.query(`
+        SELECT
+          COALESCE(methode_paiement, 'cash') AS mode,
+          COUNT(*)::int AS count,
+          COALESCE(SUM(montant_total), 0) AS total
+        FROM ventes WHERE ${vConds.join(' AND ')}
+        GROUP BY COALESCE(methode_paiement, 'cash')
+        ORDER BY total DESC
+      `, vParams),
+
+      // 4. Top articles vendus
+      pool.query(`
+        SELECT nom_produit, SUM(quantite)::int AS total_vendu, SUM(montant_total) AS ca_genere
+        FROM ventes WHERE ${vConds.join(' AND ')}
+        GROUP BY nom_produit ORDER BY ca_genere DESC LIMIT 10
+      `, vParams),
+
+      // 5. Valorisation d'inventaire & Stocks
+      pool.query(`
+        SELECT
+          COUNT(*)::int AS total_references,
+          COALESCE(SUM(stock_quantite), 0)::int AS total_quantite_stock,
+          COALESCE(SUM(COALESCE(stock_quantite, 0) * COALESCE(prix_achat, 0)), 0) AS valeur_stock_achat,
+          COALESCE(SUM(COALESCE(stock_quantite, 0) * COALESCE(prix, 0)), 0) AS valeur_stock_vente,
+          COUNT(CASE WHEN stock_quantite IS NOT NULL AND stock_quantite <= 3 THEN 1 END)::int AS stock_alertes_count,
+          COUNT(CASE WHEN stock_quantite IS NOT NULL AND stock_quantite = 0 THEN 1 END)::int AS stock_ruptures_count
+        FROM boutique_produits WHERE boutique_id = $1
+      `, [id]),
+
+      // 6. Performances Caissiers
+      pool.query(`
+        SELECT
+          COALESCE(NULLIF(TRIM(caissier_nom), ''), 'Caissier Principal') AS nom,
+          COUNT(*)::int AS nb_ventes,
+          COALESCE(SUM(montant_total), 0) AS ca_total,
+          COALESCE(AVG(montant_total), 0) AS panier_moyen,
+          COALESCE(SUM(CASE WHEN methode_paiement IN ('cash', 'especes') THEN montant_total ELSE 0 END), 0) AS ca_especes,
+          COALESCE(SUM(CASE WHEN methode_paiement NOT IN ('cash', 'especes') THEN montant_total ELSE 0 END), 0) AS ca_digital
+        FROM ventes WHERE ${vConds.join(' AND ')}
+        GROUP BY COALESCE(NULLIF(TRIM(caissier_nom), ''), 'Caissier Principal')
+        ORDER BY ca_total DESC
+      `, vParams),
+
+      // 7. Évolution chronologique des ventes (par jour)
+      pool.query(`
+        SELECT
+          to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS jour,
+          COUNT(*)::int AS nb_ventes,
+          COALESCE(SUM(montant_total), 0) AS ca
+        FROM ventes WHERE ${vConds.join(' AND ')}
+        GROUP BY date_trunc('day', created_at)
+        ORDER BY jour ASC
+      `, vParams),
+    ]);
+
+    const vRes = statsVentes.rows[0] || {};
+    const dRes = statsDepenses.rows[0] || {};
+    const sRes = statsStock.rows[0] || {};
+
+    const caTotal = Number(vRes.ca_total || 0);
+    const depensesTotal = Number(dRes.depenses_total || 0);
+    const beneficeNet = caTotal - depensesTotal;
+    const margeNettePct = caTotal > 0 ? Number(((beneficeNet / caTotal) * 100).toFixed(1)) : 0;
+
+    const valeurStockAchat = Number(sRes.valeur_stock_achat || 0);
+    const valeurStockVente = Number(sRes.valeur_stock_vente || 0);
+    const margeStockPotentielle = valeurStockVente - valeurStockAchat;
+    const margeStockPct = valeurStockVente > 0 ? Number(((margeStockPotentielle / valeurStockVente) * 100).toFixed(1)) : 0;
+
+    res.json({
+      periode: { from: from || null, to: to || null },
+      financier: {
+        ca_total: caTotal,
+        depenses_total: depensesTotal,
+        benefice_net: beneficeNet,
+        marge_nette_pct: margeNettePct,
+        nb_ventes: Number(vRes.nb_ventes || 0),
+        panier_moyen: Math.round(Number(vRes.panier_moyen || 0)),
+        total_articles_vendus: Number(vRes.total_articles_vendus || 0),
+        modes_paiement: statsPaiements.rows,
+        depenses_par_categorie: dRes.par_categorie || {},
+        top_produits: topProduits.rows,
+        timeline: timelineVentes.rows
+      },
+      inventaire: {
+        total_references: Number(sRes.total_references || 0),
+        total_quantite_stock: Number(sRes.total_quantite_stock || 0),
+        valeur_stock_achat: valeurStockAchat,
+        valeur_stock_vente: valeurStockVente,
+        marge_stock_potentielle: margeStockPotentielle,
+        marge_stock_pct: margeStockPct,
+        stock_alertes_count: Number(sRes.stock_alertes_count || 0),
+        stock_ruptures_count: Number(sRes.stock_ruptures_count || 0),
+      },
+      caissiers: statsCaissiers.rows.map(c => ({
+        ...c,
+        ca_total: Number(c.ca_total || 0),
+        panier_moyen: Math.round(Number(c.panier_moyen || 0)),
+        ca_especes: Number(c.ca_especes || 0),
+        ca_digital: Number(c.ca_digital || 0),
+        part_ca_pct: caTotal > 0 ? Number(((Number(c.ca_total) / caTotal) * 100).toFixed(1)) : 0,
+      }))
+    });
+  } catch (err) {
+    console.error('[BILAN COMPTA ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la génération du bilan' });
+  }
+});
+
+// ── 📦 Inventaire Détaillé & Valorisation du Stock ─────────────────────────────
+// GET /api/comptabilite/:boutiqueId/inventaire
+router.get('/:boutiqueId/inventaire', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {
+  try {
+    const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+    if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+    const id = req.params.boutiqueId;
+
+    const { rows } = await pool.query(`
+      SELECT 
+        id, nom, categorie, code_barre, stock_quantite, prix, prix_achat, en_stock,
+        (COALESCE(stock_quantite, 0) * COALESCE(prix_achat, 0)) AS valeur_achat_totale,
+        (COALESCE(stock_quantite, 0) * COALESCE(prix, 0)) AS valeur_vente_totale,
+        (COALESCE(prix, 0) - COALESCE(prix_achat, 0)) AS marge_unitaire,
+        CASE 
+          WHEN COALESCE(prix, 0) > 0 THEN ROUND(((COALESCE(prix, 0) - COALESCE(prix_achat, 0)) / COALESCE(prix, 0) * 100)::numeric, 1)
+          ELSE 0 
+        END AS marge_pct,
+        CASE WHEN stock_quantite IS NOT NULL AND stock_quantite <= 3 THEN true ELSE false END AS alerte_stock
+      FROM boutique_produits
+      WHERE boutique_id = $1
+      ORDER BY stock_quantite ASC NULLS LAST, nom ASC
+    `, [id]);
+
+    res.json(rows);
+  } catch (err) {
+    console.error('[INVENTAIRE ERR]', err);
+    res.status(500).json({ error: 'Erreur lors du chargement de l\'inventaire' });
+  }
+});
+
 // ── Dépenses ──────────────────────────────────────────────────────────────────
 
 // GET /api/comptabilite/:boutiqueId/depenses

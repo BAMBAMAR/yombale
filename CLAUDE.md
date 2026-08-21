@@ -1,3 +1,32 @@
+- **Hub Financier Complet : Bilan Comptable Périodique, Inventaire Valorisé, Performances Caissiers & Exports Multi-Formats (`main` - 21 août 2026)** 📊💰📦 :
+  * **Architecture Base de Données & Schéma SQL (`backend/migrate-inline.js`)** :
+    - Ajout de la colonne `prix_achat NUMERIC(12,2) DEFAULT NULL` sur `boutique_produits` pour le suivi du coût de revient et le calcul dynamique des marges brutes.
+    - Ajout de `caissier_id UUID REFERENCES boutique_caissiers(id)` et `caissier_nom VARCHAR(150)` sur `ventes` pour attribuer précisément chaque ticket au vendeur en caisse.
+  * **API Backend Comptabilité & Caissiers (`backend/routes/comptabilite.js`, `backend/routes/boutiques.js`)** :
+    - **Endpoint Bilan Multi-Critères (`GET /api/comptabilite/:boutiqueId/bilan`)** :
+      - Filtrage dynamique par plage temporelle (`from`, `to`), par caissier spécifique (`caissier`) et par mode de règlement (`mode_paiement` : Wave, Orange Money, Espèces, Virement, Carte).
+      - Agrégation en temps réel : Chiffre d'Affaires total, Dépenses d'exploitation, Bénéfice Net, Taux de Marge Nette (%), Panier Moyen (AOV), Volume de ventes et total d'articles vendus.
+      - Répartition des modes de paiement avec montants et pourcentages, Top 10 des produits les plus vendus et rentables, et ventilation chronologique des ventes journalières.
+    - **Endpoint Inventaire Valorisé (`GET /api/comptabilite/:boutiqueId/inventaire`)** :
+      - Retourne le catalogue valorisé avec stock physique, coût d'achat unitaire, prix de vente, valeur totale du stock au prix d'achat, valeur marchande totale et marge brute dormante prévisionnelle.
+    - **Gestion & Initialisation des Caissiers (`backend/routes/boutiques.js`)** :
+      - Correction de l'initialisation automatique des caissiers par défaut : remplacement des noms fictifs par le profil réel du propriétaire de la boutique (`Gérant / Superviseur`, PIN `0000`) et un `Caissier Principal` (PIN `1234`).
+      - Traçabilité automatique du nom du caissier (`caissier_nom`) lors de la validation des ventes en caisse POS.
+  * **Interface Utilisateur & Expérience Marchand (`frontend-next/src/app/boutique/Comptabilite.tsx`, `BoutiqueClient.tsx`)** :
+    - **Barre Universelle de Période & Filtres Rapides** : Boutons de sélection instantanée (*Aujourd'hui*, *Hier*, *7 derniers jours*, *30 derniers jours*, *Ce mois-ci*, *Mois dernier*, *Cette année*, *Période libre*) avec sélecteurs de dates personnalisées, filtre par caissier et filtre par mode de paiement.
+    - **Sous-Onglet 📈 Bilan Financier** : Cartes de KPIs interactives (CA, Dépenses, Bénéfice Net & Marge %, Panier Moyen), jauges de répartition des encaissements par couleur, Top 10 articles.
+    - **Sous-Onglet 📦 Inventaire & Stocks** : Tableau de pointage complet avec indicateurs de santé du stock, alertes de rupture (≤ 3 unités), marge unitaire/totale, et bouton d'ajustement direct du stock physique.
+    - **Sous-Onglet 👤 Performances Caissiers** : Podium et classement comparatif des vendeurs (🥇 🥈 🥉) avec nombre de tickets, CA encaissé, panier moyen, part de marché boutique (%) et répartition Espèces vs Digital.
+    - **Champ Prix d'Achat dans `ProduitForm`** : Intégration du champ *« Prix d'achat / Coût (Optionnel) »* dans l'ajout et l'édition de produits.
+  * **Moteur d'Exportation PDF & Tableurs Excel/CSV (`frontend-next/src/lib/export.ts`)** :
+    - `printBilanComptablePDF` : Génération et impression d'un compte de résultat officiel et structuré avec KPIs, répartition des règlements et tableau des caissiers.
+    - `printInventairePDF` : Impression de la fiche de pointage physique de l'inventaire avec cases à cocher, colonnes stock système et valorisations.
+    - `exportToCSV` : Exportation instantanée au format CSV/Excel pour le Bilan financier, l'Inventaire complet et le Classement des caissiers.
+  * **Validation & Contrôle Qualité** :
+    - Compilation TypeScript (`npx tsc --noEmit`) : 100% sans erreur (code 0).
+    - Build Next.js (`npm run build`) : 91/91 pages et routes compilées avec succès (code 0).
+    - Respect strict des règles AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Robustesse & Cohérence du Chatbot WhatsApp : Navigation Boutiques & Sélections Numériques (`main` - 21 août 2026)** 🤖🏪 :
   * **Conformité & Limitation Stricte des Messages Interactifs Meta / WhatsApp API (`whatsapp.js`)** :
     - Découverte et correction du dépassement de la limite WhatsApp API (10 rows max par message interactif de type `list`) : auparavant, l'envoi de 10 boutiques + le bouton de filtrage par secteur créait 11 lignes et provoquait une erreur 400 rejetée silencieusement par Meta.

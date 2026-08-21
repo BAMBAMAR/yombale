@@ -763,9 +763,10 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Colonne boutique_produits.partage_le OK');
   } catch (e) { console.warn('[MIGRATE] bp_partage_le:', e.message); }
 
-  // Comptabilité boutique — stock, zones de livraison, ventes
+  // Comptabilité boutique — stock, zones de livraison, ventes, valorisation inventaire & caissiers
   try {
     await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS stock_quantite INT`);
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS prix_achat NUMERIC(12,2) DEFAULT NULL`);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS zones_livraison (
@@ -799,7 +800,9 @@ module.exports = async function migrateInline() {
     `);
     await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS archivee BOOLEAN DEFAULT false`);
     await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS justificatif_url TEXT`);
-    console.log('[MIGRATE] ✅ Tables comptabilité boutique (stock, zones_livraison, ventes) OK');
+    await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS caissier_id UUID REFERENCES boutique_caissiers(id) ON DELETE SET NULL`);
+    await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS caissier_nom VARCHAR(150)`);
+    console.log('[MIGRATE] ✅ Tables comptabilité boutique (stock, prix_achat, zones_livraison, ventes, caissiers) OK');
   } catch (e) { console.warn('[MIGRATE] comptabilite_boutique:', e.message); }
 
   // Commandes boutique

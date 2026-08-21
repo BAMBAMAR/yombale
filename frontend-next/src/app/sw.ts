@@ -338,7 +338,7 @@ self.addEventListener("push", (event: any) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title, {
+    (self as any).registration.showNotification(data.title, {
       body: data.body,
       icon: data.icon,
       badge: data.badge,

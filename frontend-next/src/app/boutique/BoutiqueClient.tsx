@@ -1403,16 +1403,20 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         </div>
       )}
 
-      {/* Prix */}
-      <div className={modeRapide ? '' : 'bq-form-grid-2'} style={modeRapide ? { display: 'grid' } : undefined}>
+      {/* Prix de Vente, Prix d'Achat (Coût) & Prix Barré */}
+      <div className={modeRapide ? '' : 'bq-form-grid-2'} style={{ display: 'grid', gridTemplateColumns: modeRapide ? '1fr 1fr' : 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
         <div>
           <label style={labelStyle}>{t('shop.productPrice')} (FCFA) <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></label>
-          <input name="prix" type="number" min={0} defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 350 000 (Optionnel)" />
+          <input name="prix" type="number" min={0} defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 15 000 (Vente)" />
+        </div>
+        <div>
+          <label style={labelStyle}>Prix d&apos;achat / Coût (FCFA) <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></label>
+          <input name="prix_achat" type="number" min={0} defaultValue={(produit as any)?.prix_achat ?? ''} style={inputStyle} placeholder="Ex: 10 000 (Coût)" title="Utilisé pour calculer vos marges et la valeur de votre stock" />
         </div>
         {!modeRapide && (
           <div>
             <label style={labelStyle}>{t('shop.productPriceStrikethrough')}</label>
-            <input name="prix_barre" type="number" min={0} defaultValue={produit?.prix_barre ?? ''} style={inputStyle} placeholder="Ex: 400 000" />
+            <input name="prix_barre" type="number" min={0} defaultValue={produit?.prix_barre ?? ''} style={inputStyle} placeholder="Ex: 20 000" />
           </div>
         )}
       </div>
@@ -4197,8 +4201,8 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             {tab === 'produits'    && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
             {tab === 'commandes'   && <Commandes boutiqueId={boutique.id} />}
             {tab === 'carnet'      && <CarnetDettes boutique={boutique} planActif={planActif} />}
-            {tab === 'express'     && <Comptabilite boutiqueId={boutique.id} initialTab="express" />}
-            {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} initialTab={subTabCompta === 'express' ? 'dashboard' : subTabCompta} />}
+            {tab === 'express'     && <Comptabilite boutiqueId={boutique.id} boutiqueNom={boutique.nom} initialTab="express" />}
+            {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} boutiqueNom={boutique.nom} initialTab={subTabCompta === 'express' ? 'bilan' : (subTabCompta as any)} />}
             {tab === 'analytics'   && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
             {tab === 'infos'       && (
               <div style={{ maxWidth: 580 }}>

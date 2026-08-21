@@ -4,23 +4,59 @@ import {
   listZones, createZone, deleteZone,
   listVentes, declarerVente, deleteVente, updateVente,
   getDashboard, listDepenses, addDepense, deleteDepense, updateDepense,
-  updateStock, getBoutiqueProduits
+  updateStock, getBoutiqueProduits, getBilanComptable, getInventaireValorise
 } from './actions'
 import { fcfa, formatNombre, fmtDate, fmtDateHeure } from '@/lib/format'
-import { exportToCSV, printPDFReport } from '@/lib/export'
+import { exportToCSV, printPDFReport, printBilanComptablePDF, printInventairePDF } from '@/lib/export'
 import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
 import { useTranslation } from '@/i18n/context'
 import { useScrollNudge } from '@/hooks/useScrollNudge'
 
 interface Zone    { id: string; nom: string; prix: number }
 interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string; justificatif_url: string | null }
-interface Produit { id: string; nom: string; prix: number | null; prix_promo?: number | null; stock_quantite: number | null; quantite_stock?: number | null }
+interface Produit { id: string; nom: string; prix: number | null; prix_promo?: number | null; prix_achat?: number | null; stock_quantite: number | null; quantite_stock?: number | null; code_barre?: string | null; categorie?: string | null }
 interface Depense { id: string; montant: number; categorie: string; description: string | null; date_depense: string; justificatif_url: string | null }
 interface Dashboard {
   ca_mois: number; ca_mois_precedent: number; nb_ventes_mois: number; ca_total: number
   depenses_mois: number; depenses_total: number; benefice_mois: number
   top_produits: { nom_produit: string; total_vendu: number; ca: number }[]
   stock_alerte: { id: string; nom: string; stock_quantite: number }[]
+}
+
+interface BilanData {
+  periode: { from: string | null; to: string | null }
+  financier: {
+    ca_total: number
+    depenses_total: number
+    benefice_net: number
+    marge_nette_pct: number
+    nb_ventes: number
+    panier_moyen: number
+    total_articles_vendus: number
+    modes_paiement: { mode: string; count: number; total: number }[]
+    depenses_par_categorie: Record<string, number>
+    top_produits: { nom_produit: string; total_vendu: number; ca_genere: number }[]
+    timeline: { jour: string; nb_ventes: number; ca: number }[]
+  }
+  inventaire: {
+    total_references: number
+    total_quantite_stock: number
+    valeur_stock_achat: number
+    valeur_stock_vente: number
+    marge_stock_potentielle: number
+    marge_stock_pct: number
+    stock_alertes_count: number
+    stock_ruptures_count: number
+  }
+  caissiers: {
+    nom: string
+    nb_ventes: number
+    ca_total: number
+    panier_moyen: number
+    ca_especes: number
+    ca_digital: number
+    part_ca_pct: number
+  }[]
 }
 
 const MOIS_NOMS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
@@ -30,110 +66,816 @@ const labelStyle = { fontSize: 13, fontWeight: 600 as const, color: '#374151', d
 
 const CAT_DEPENSES = ['loyer', 'stock', 'transport', 'salaires', 'marketing', 'fournitures', 'taxes', 'autre']
 
-// ── Dashboard ─────────────────────────────────────────────────────────────────
+type DatePreset = 'today' | 'yesterday' | '7d' | '30d' | 'this_month' | 'last_month' | 'this_year' | 'custom'
 
-function KpiCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
+function getDateRangeForPreset(preset: DatePreset): { from: string; to: string; label: string } {
+  const now = new Date()
+  const todayStr = now.toISOString().slice(0, 10)
+  
+  if (preset === 'today') {
+    return { from: todayStr + 'T00:00:00.000Z', to: todayStr + 'T23:59:59.999Z', label: 'Aujourd\'hui' }
+  }
+  if (preset === 'yesterday') {
+    const yest = new Date(now.getTime() - 24 * 3600 * 1000)
+    const yStr = yest.toISOString().slice(0, 10)
+    return { from: yStr + 'T00:00:00.000Z', to: yStr + 'T23:59:59.999Z', label: 'Hier' }
+  }
+  if (preset === '7d') {
+    const d7 = new Date(now.getTime() - 7 * 24 * 3600 * 1000)
+    return { from: d7.toISOString().slice(0, 10) + 'T00:00:00.000Z', to: todayStr + 'T23:59:59.999Z', label: '7 derniers jours' }
+  }
+  if (preset === '30d') {
+    const d30 = new Date(now.getTime() - 30 * 24 * 3600 * 1000)
+    return { from: d30.toISOString().slice(0, 10) + 'T00:00:00.000Z', to: todayStr + 'T23:59:59.999Z', label: '30 derniers jours' }
+  }
+  if (preset === 'this_month') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+    return { from: firstDay + 'T00:00:00.000Z', to: todayStr + 'T23:59:59.999Z', label: 'Ce mois-ci' }
+  }
+  if (preset === 'last_month') {
+    const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10)
+    const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10)
+    return { from: firstDayLastMonth + 'T00:00:00.000Z', to: lastDayLastMonth + 'T23:59:59.999Z', label: 'Mois dernier' }
+  }
+  if (preset === 'this_year') {
+    const firstDayYear = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10)
+    return { from: firstDayYear + 'T00:00:00.000Z', to: todayStr + 'T23:59:59.999Z', label: 'Cette année' }
+  }
+  return { from: '', to: '', label: 'Période personnalisée' }
+}
+
+// ── Dashboard / Bilan Périodique & Multi-Critères ──────────────────────────────
+
+function KpiCard({ label, value, sub, color, bg }: { label: string; value: string; sub?: string; color?: string; bg?: string }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '14px 16px', flex: '1 1 120px', minWidth: 120, boxSizing: 'border-box' }}>
-      <p style={{ margin: '0 0 4px', fontSize: 12, color: '#6b7280', fontWeight: 600 }}>{label}</p>
-      <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: color ?? '#111' }}>{value}</p>
-      {sub && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9ca3af' }}>{sub}</p>}
+    <div style={{ background: bg || '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '14px 16px', flex: '1 1 140px', minWidth: 130, boxSizing: 'border-box', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+      <p style={{ margin: '0 0 4px', fontSize: 11.5, color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{label}</p>
+      <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: color ?? '#111827' }}>{value}</p>
+      {sub && <p style={{ margin: '3px 0 0', fontSize: 11, color: '#94a3b8' }}>{sub}</p>}
     </div>
   )
 }
 
-function DashboardView({ boutiqueId }: { boutiqueId: string }) {
+function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: string; boutiqueNom?: string }) {
   const { t } = useTranslation()
-  const [data, setData] = useState<Dashboard | null>(null)
+  const [preset, setPreset] = useState<DatePreset>('this_month')
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
+  const [selectedCaissier, setSelectedCaissier] = useState('')
+  const [selectedMode, setSelectedMode] = useState('')
+
+  const [bilan, setBilan] = useState<BilanData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const cacheKey = `nopalou_offline_compta_dash_${boutiqueId}`
+  const activeRange = preset === 'custom' 
+    ? { from: customFrom ? customFrom + 'T00:00:00.000Z' : '', to: customTo ? customTo + 'T23:59:59.999Z' : '', label: 'Période personnalisée' }
+    : getDateRangeForPreset(preset)
+
+  const loadBilan = async () => {
+    setLoading(true)
+    const cacheKey = `nopalou_bilan_${boutiqueId}_${preset}_${activeRange.from}_${activeRange.to}_${selectedCaissier}_${selectedMode}`
     const cached = localStorage.getItem(cacheKey)
     if (cached) {
       try {
-        const parsed = JSON.parse(cached)
-        if (parsed) {
-          setData(parsed)
-          setLoading(false)
-        }
-      } catch(e) {}
+        setBilan(JSON.parse(cached))
+        setLoading(false)
+      } catch (e) {}
     }
 
-    getDashboard(boutiqueId)
-      .then(d => { 
-        if (d) {
-          setData(d)
-          localStorage.setItem(cacheKey, JSON.stringify(d))
-        }
+    try {
+      const data = await getBilanComptable(boutiqueId, {
+        from: activeRange.from || undefined,
+        to: activeRange.to || undefined,
+        caissier: selectedCaissier || undefined,
+        mode_paiement: selectedMode || undefined,
       })
-      .catch(() => {})
-      .finally(() => {
-        setLoading(false)
-      })
-  }, [boutiqueId])
+      if (data && !data.error) {
+        setBilan(data)
+        localStorage.setItem(cacheKey, JSON.stringify(data))
+      }
+    } catch (e) {
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  if (loading) return (
-    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }} aria-busy="true" aria-label="Chargement du tableau de bord comptable">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="skeleton" style={{ height: 86, flex: 1, minWidth: 140, borderRadius: 12 }} />
-      ))}
-    </div>
-  )
-  if (!data)   return <p style={{ color: '#dc2626', fontSize: 14 }}>Impossible de charger le tableau de bord.</p>
+  useEffect(() => {
+    loadBilan()
+  }, [boutiqueId, preset, customFrom, customTo, selectedCaissier, selectedMode])
 
-  const evol = data.ca_mois_precedent > 0
-    ? ((data.ca_mois - data.ca_mois_precedent) / data.ca_mois_precedent * 100).toFixed(0)
-    : null
+  const handleExportCSV = () => {
+    if (!bilan) return
+    const headers = ['Métrique', 'Valeur', 'Détails']
+    const rows: (string | number)[][] = [
+      ['Période analysée', activeRange.label, `${activeRange.from || 'Début'} au ${activeRange.to || 'Fin'}`],
+      ['Chiffre d\'Affaires Total', bilan.financier.ca_total, 'FCFA'],
+      ['Total Dépenses', bilan.financier.depenses_total, 'FCFA'],
+      ['Bénéfice Net', bilan.financier.benefice_net, 'FCFA'],
+      ['Taux de Marge Nette', `${bilan.financier.marge_nette_pct}%`, ''],
+      ['Nombre de Ventes', bilan.financier.nb_ventes, 'tickets'],
+      ['Panier Moyen', bilan.financier.panier_moyen, 'FCFA / transaction'],
+      ['Articles Vendus', bilan.financier.total_articles_vendus, 'unités'],
+      ['---', '---', '---'],
+      ['Valeur Stock Achat', bilan.inventaire.valeur_stock_achat, 'FCFA'],
+      ['Valeur Stock Vente', bilan.inventaire.valeur_stock_vente, 'FCFA'],
+      ['Marge Stock Potentielle', bilan.inventaire.marge_stock_potentielle, `${bilan.inventaire.marge_stock_pct}%`],
+    ]
+
+    exportToCSV(`bilan_${boutiqueNom.replace(/\s+/g, '_')}_${preset}`, headers, rows)
+  }
+
+  const handleExportPDF = () => {
+    if (!bilan) return
+    printBilanComptablePDF({
+      boutiqueNom,
+      periodeLabel: activeRange.label + (preset === 'custom' && customFrom && customTo ? ` (${customFrom} au ${customTo})` : ''),
+      financier: bilan.financier,
+      inventaire: bilan.inventaire,
+      caissiers: bilan.caissiers,
+    })
+  }
+
+  const presetsList: { id: DatePreset; label: string }[] = [
+    { id: 'today', label: '⚡ Aujourd\'hui' },
+    { id: 'yesterday', label: '📅 Hier' },
+    { id: '7d', label: '🗓️ 7 jours' },
+    { id: '30d', label: '🗓️ 30 jours' },
+    { id: 'this_month', label: '📊 Ce mois-ci' },
+    { id: 'last_month', label: '📆 Mois dernier' },
+    { id: 'this_year', label: '🏛️ Cette année' },
+    { id: 'custom', label: '⚙️ Période libre' },
+  ]
+
+  const modeLabels: Record<string, string> = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement', carte: 'Carte bancaire' }
+  const modeColors: Record<string, string> = { wave: '#00c3e3', orange_money: '#ff7900', cash: '#16a34a', virement: '#1e3a8a', carte: '#9333ea' }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* KPIs principaux */}
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <KpiCard
-          label={t('shop.monthlyRevenue')}
-          value={fcfa(data.ca_mois)}
-          sub={evol ? `${Number(evol) >= 0 ? '▲' : '▼'} ${formatNombre(Math.abs(Number(evol)))}% ${t('shop.prevMonthComparison')}` : undefined}
-          color="#1d4ed8"
-        />
-        <KpiCard label={t('shop.expenses')} value={fcfa(data.depenses_mois)} color="#dc2626" />
-        <KpiCard
-          label={t('shop.netProfit')}
-          value={fcfa(data.benefice_mois)}
-          color={data.benefice_mois >= 0 ? '#16a34a' : '#dc2626'}
-        />
-        <KpiCard label={t('shop.totalSales')} value={formatNombre(data.nb_ventes_mois)} sub={t('shop.totalOrders')} />
-      </div>
+      {/* ── Barre Universelle de Période & Filtres ── */}
+      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px', display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 18 }}>📅</span>
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#1e293b' }}>
+              Période d&apos;analyse : <span style={{ color: '#C75B00' }}>{activeRange.label}</span>
+            </h3>
+          </div>
 
-      {/* Top produits */}
-      {data.top_produits.length > 0 && (
-        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 20px' }}>
-          <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#374151' }}>🏆 {t('shop.topSellingProducts')}</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {data.top_produits.map((p, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
-                <span style={{ color: '#374151' }}>{formatNombre(i + 1)}. {p.nom_produit}</span>
-                <span style={{ color: '#6b7280' }}>{formatNombre(p.total_vendu)} · {fcfa(p.ca)}</span>
-              </div>
-            ))}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={handleExportPDF}
+              disabled={loading || !bilan}
+              style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <span>📄</span>
+              <span>Bilan PDF</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              disabled={loading || !bilan}
+              style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #16a34a', background: '#f0fdf4', color: '#15803d', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <span>📊</span>
+              <span>Export CSV</span>
+            </button>
           </div>
         </div>
-      )}
 
-      {/* Alertes stock */}
-      {data.stock_alerte.length > 0 && (
-        <div style={{ background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 12, padding: '16px 20px' }}>
-          <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: '#92400e' }}>⚠️ {t('shop.stockAlertsTitle')}</p>
-          {data.stock_alerte.map(p => (
-            <p key={p.id} style={{ margin: '4px 0', fontSize: 13, color: '#b45309' }}>
-              {p.nom} — <strong>{p.stock_quantite} {t('shop.productStock')}</strong>
-            </p>
+        {/* Pilules de raccourcis temporels */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', overflowX: 'auto', paddingBottom: 2 }}>
+          {presetsList.map(p => {
+            const isActive = preset === p.id
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPreset(p.id)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 20,
+                  fontSize: 12,
+                  fontWeight: isActive ? 800 : 600,
+                  border: isActive ? '1px solid #C75B00' : '1px solid #e2e8f0',
+                  background: isActive ? '#fff7ed' : '#f8fafc',
+                  color: isActive ? '#C75B00' : '#475569',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {p.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Ligne filtres spécifiques (Dates libres + Caissier + Mode) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, paddingTop: 10, borderTop: '1px solid #f1f5f9' }}>
+          {preset === 'custom' && (
+            <>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 2 }}>Du (Date début)</label>
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={e => setCustomFrom(e.target.value)}
+                  style={{ ...inputStyle, padding: '6px 10px', fontSize: 13 }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 2 }}>Au (Date fin)</label>
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={e => setCustomTo(e.target.value)}
+                  style={{ ...inputStyle, padding: '6px 10px', fontSize: 13 }}
+                />
+              </div>
+            </>
+          )}
+
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 2 }}>Filtrer par Caissier</label>
+            <select
+              value={selectedCaissier}
+              onChange={e => setSelectedCaissier(e.target.value)}
+              style={{ ...inputStyle, padding: '7px 10px', fontSize: 13 }}
+            >
+              <option value="">Tous les caissiers</option>
+              {bilan?.caissiers?.map(c => (
+                <option key={c.nom} value={c.nom}>{c.nom} ({fcfa(c.ca_total)})</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 2 }}>Mode de règlement</label>
+            <select
+              value={selectedMode}
+              onChange={e => setSelectedMode(e.target.value)}
+              style={{ ...inputStyle, padding: '7px 10px', fontSize: 13 }}
+            >
+              <option value="">Tous les règlements</option>
+              <option value="wave">🌊 Wave</option>
+              <option value="orange_money">🍊 Orange Money</option>
+              <option value="cash">💵 Espèces</option>
+              <option value="carte">💳 Carte Bancaire</option>
+              <option value="virement">🏦 Virement</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {loading && !bilan ? (
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="skeleton" style={{ height: 90, flex: 1, minWidth: 140, borderRadius: 12 }} />
           ))}
+        </div>
+      ) : !bilan ? (
+        <p style={{ color: '#dc2626', fontSize: 14 }}>Impossible de charger le bilan comptable.</p>
+      ) : (
+        <>
+          {/* ── KPIs Financiers Principaux ── */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <KpiCard
+              label="Chiffre d'Affaires (CA)"
+              value={fcfa(bilan.financier.ca_total)}
+              sub={`${bilan.financier.nb_ventes} ventes (${bilan.financier.total_articles_vendus} articles)`}
+              color="#1e3a8a"
+              bg="#eff6ff"
+            />
+            <KpiCard
+              label="Total Dépenses"
+              value={fcfa(bilan.financier.depenses_total)}
+              sub="Charges d'exploitation"
+              color="#dc2626"
+              bg="#fef2f2"
+            />
+            <KpiCard
+              label="Bénéfice Net Réalisé"
+              value={fcfa(bilan.financier.benefice_net)}
+              sub={`Marge nette : ${bilan.financier.marge_nette_pct}%`}
+              color={bilan.financier.benefice_net >= 0 ? '#15803d' : '#b91c1c'}
+              bg={bilan.financier.benefice_net >= 0 ? '#f0fdf4' : '#fef2f2'}
+            />
+            <KpiCard
+              label="Panier Moyen (AOV)"
+              value={fcfa(bilan.financier.panier_moyen)}
+              sub="Moyenne par client"
+              color="#b45309"
+              bg="#fffbeb"
+            />
+          </div>
+
+          {/* ── Grille Intermédiaire : Règlements & Top Articles ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+            {/* Répartition des encaissements */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <p style={{ margin: 0, fontSize: 13.5, fontWeight: 800, color: '#1e293b' }}>💳 Modes de Règlement</p>
+                <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Total : {fcfa(bilan.financier.ca_total)}</span>
+              </div>
+
+              {bilan.financier.modes_paiement.length === 0 ? (
+                <p style={{ color: '#94a3b8', fontSize: 12.5, margin: 0 }}>Aucun encaissement sur la période sélectionnée.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {bilan.financier.modes_paiement.map(m => {
+                    const pct = bilan.financier.ca_total > 0 ? Math.round((m.total / bilan.financier.ca_total) * 100) : 0
+                    const barColor = modeColors[m.mode] || '#64748b'
+                    return (
+                      <div key={m.mode}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 4 }}>
+                          <span style={{ fontWeight: 700, color: '#334155' }}>
+                            {modeLabels[m.mode] || m.mode} <span style={{ color: '#94a3b8', fontWeight: 500 }}>({m.count}x)</span>
+                          </span>
+                          <span style={{ fontWeight: 800, color: '#0f172a' }}>
+                            {fcfa(m.total)} <span style={{ color: '#64748b', fontWeight: 600 }}>({pct}%)</span>
+                          </span>
+                        </div>
+                        <div style={{ width: '100%', height: 7, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                          <div style={{ width: `${pct}%`, height: '100%', background: barColor, borderRadius: 4, transition: 'width 0.4s ease' }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Top Produits Vendus */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px 20px' }}>
+              <p style={{ margin: '0 0 14px', fontSize: 13.5, fontWeight: 800, color: '#1e293b' }}>🏆 Top Articles sur la période</p>
+              {bilan.financier.top_produits.length === 0 ? (
+                <p style={{ color: '#94a3b8', fontSize: 12.5, margin: 0 }}>Aucune vente d&apos;article sur la période sélectionnée.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {bilan.financier.top_produits.map((p, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5, paddingBottom: 6, borderBottom: idx < bilan.financier.top_produits.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 20, height: 20, borderRadius: 6, background: idx === 0 ? '#fef3c7' : '#f1f5f9', color: idx === 0 ? '#b45309' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>
+                          {idx + 1}
+                        </span>
+                        <span style={{ fontWeight: 600, color: '#334155' }}>{p.nom_produit}</span>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontWeight: 800, color: '#0f172a' }}>{fcfa(p.ca_genere)}</span>
+                        <span style={{ display: 'block', fontSize: 10.5, color: '#64748b' }}>{p.total_vendu} vendus</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── 📦 Vue Inventaire & Valorisation du Stock ──────────────────────────────────
+
+function InventaireView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: string; boutiqueNom?: string }) {
+  const { t } = useTranslation()
+  const [produits, setProduits] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filtreRecherche, setFiltreRecherche] = useState('')
+  const [filtreStatut, setFiltreStatut] = useState<'tous' | 'alerte' | 'en_stock'>('tous')
+  const [ajustantId, setAjustantId] = useState<string | null>(null)
+  const [nouveauStock, setNouveauStock] = useState<number>(0)
+  const [, startTransition] = useTransition()
+
+  const loadInventaire = async () => {
+    setLoading(true)
+    const cacheKey = `nopalou_inventaire_${boutiqueId}`
+    const cached = localStorage.getItem(cacheKey)
+    if (cached) {
+      try {
+        setProduits(JSON.parse(cached))
+        setLoading(false)
+      } catch (e) {}
+    }
+
+    try {
+      const data = await getInventaireValorise(boutiqueId)
+      if (Array.isArray(data)) {
+        setProduits(data)
+        localStorage.setItem(cacheKey, JSON.stringify(data))
+      }
+    } catch (e) {
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadInventaire()
+  }, [boutiqueId])
+
+  const totalReferences = produits.length
+  const totalQuantiteStock = produits.reduce((acc, p) => acc + (Number(p.stock_quantite) || 0), 0)
+  const valeurStockAchat = produits.reduce((acc, p) => acc + (Number(p.valeur_achat_totale) || 0), 0)
+  const valeurStockVente = produits.reduce((acc, p) => acc + (Number(p.valeur_vente_totale) || 0), 0)
+  const margeStockPotentielle = valeurStockVente - valeurStockAchat
+  const margeStockPct = valeurStockVente > 0 ? Math.round((margeStockPotentielle / valeurStockVente) * 100) : 0
+  const stockAlertesCount = produits.filter(p => p.stock_quantite !== null && p.stock_quantite <= 3).length
+
+  const produitsFiltres = produits.filter(p => {
+    if (filtreRecherche.trim()) {
+      const q = filtreRecherche.trim().toLowerCase()
+      const matchNom = p.nom?.toLowerCase().includes(q)
+      const matchCat = p.categorie?.toLowerCase().includes(q)
+      const matchCode = p.code_barre?.toLowerCase().includes(q)
+      if (!matchNom && !matchCat && !matchCode) return false
+    }
+    if (filtreStatut === 'alerte') {
+      if (p.stock_quantite === null || p.stock_quantite > 3) return false
+    }
+    if (filtreStatut === 'en_stock') {
+      if (p.stock_quantite !== null && p.stock_quantite <= 0) return false
+    }
+    return true
+  })
+
+  const handleExportExcel = () => {
+    const headers = ['Référence / ID', 'Désignation Article', 'Catégorie', 'Code-barres', 'Stock Disponible', 'Prix d\'Achat (Coût)', 'Prix de Vente', 'Valeur Stock Achat', 'Valeur Marchande Vente', 'Marge Unitaire', 'Marge %']
+    const rows = produits.map(p => [
+      p.id,
+      p.nom,
+      p.categorie || 'Non classé',
+      p.code_barre || '',
+      p.stock_quantite ?? 0,
+      p.prix_achat ?? 0,
+      p.prix ?? 0,
+      p.valeur_achat_totale ?? 0,
+      p.valeur_vente_totale ?? 0,
+      p.marge_unitaire ?? 0,
+      `${p.marge_pct ?? 0}%`,
+    ])
+
+    exportToCSV(`inventaire_valorise_${boutiqueNom.replace(/\s+/g, '_')}`, headers, rows)
+  }
+
+  const handlePrintPDF = () => {
+    printInventairePDF({
+      boutiqueNom,
+      inventaireStats: {
+        total_references: totalReferences,
+        total_quantite_stock: totalQuantiteStock,
+        valeur_stock_achat: valeurStockAchat,
+        valeur_stock_vente: valeurStockVente,
+        marge_stock_potentielle: margeStockPotentielle,
+      },
+      produits: produitsFiltres,
+    })
+  }
+
+  const submitAjustementStock = (prodId: string) => {
+    startTransition(async () => {
+      await updateStock(boutiqueId, prodId, nouveauStock)
+      setAjustantId(null)
+      loadInventaire()
+    })
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* ── KPIs Valorisation du Stock ── */}
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <KpiCard
+          label="Valeur Coût d'Achat"
+          value={fcfa(valeurStockAchat)}
+          sub="Capital immobilisé dans le stock"
+          color="#0f172a"
+          bg="#f8fafc"
+        />
+        <KpiCard
+          label="Valeur Marchande (Vente)"
+          value={fcfa(valeurStockVente)}
+          sub="CA potentiel si tout est vendu"
+          color="#1e3a8a"
+          bg="#eff6ff"
+        />
+        <KpiCard
+          label="Marge Brute Potentielle"
+          value={fcfa(margeStockPotentielle)}
+          sub={`Taux de marge prévisionnel : ${margeStockPct}%`}
+          color="#15803d"
+          bg="#f0fdf4"
+        />
+        <KpiCard
+          label="Articles en Stock"
+          value={`${formatNombre(totalQuantiteStock)} pcs`}
+          sub={`${totalReferences} références (${stockAlertesCount} en alerte)`}
+          color={stockAlertesCount > 0 ? '#b45309' : '#0f172a'}
+          bg={stockAlertesCount > 0 ? '#fffbeb' : '#ffffff'}
+        />
+      </div>
+
+      {/* ── Barre d'Actions & Filtres ── */}
+      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flex: '1 1 240px' }}>
+            <input
+              type="text"
+              placeholder="🔍 Rechercher un article, catégorie, code-barres…"
+              value={filtreRecherche}
+              onChange={e => setFiltreRecherche(e.target.value)}
+              style={{ ...inputStyle, padding: '8px 12px', fontSize: 13 }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={handlePrintPDF}
+              style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #0284c7', background: '#f0f9ff', color: '#0369a1', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <span>🖨️</span>
+              <span>Fiche Pointage PDF</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #16a34a', background: '#f0fdf4', color: '#15803d', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <span>📊</span>
+              <span>Export Excel</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Pilules de statut stock */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[
+            { id: 'tous', label: `Tous (${totalReferences})` },
+            { id: 'alerte', label: `⚠️ Ruptures & Alertes (${stockAlertesCount})` },
+            { id: 'en_stock', label: `✅ En stock normal` },
+          ].map(f => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setFiltreStatut(f.id as any)}
+              style={{
+                padding: '4px 10px',
+                borderRadius: 16,
+                fontSize: 12,
+                fontWeight: filtreStatut === f.id ? 800 : 600,
+                border: filtreStatut === f.id ? '1px solid #0284c7' : '1px solid #e2e8f0',
+                background: filtreStatut === f.id ? '#e0f2fe' : '#f8fafc',
+                color: filtreStatut === f.id ? '#0369a1' : '#64748b',
+                cursor: 'pointer',
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Tableau d'Inventaire Détaillé ── */}
+      {loading && produits.length === 0 ? (
+        <p style={{ color: '#94a3b8' }}>Chargement de l&apos;inventaire…</p>
+      ) : (
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <th style={{ padding: '12px 16px' }}>Article</th>
+                  <th style={{ padding: '12px 12px' }}>Catégorie</th>
+                  <th style={{ padding: '12px 12px', textAlign: 'center' }}>Stock</th>
+                  <th style={{ padding: '12px 12px', textAlign: 'right' }}>Prix Achat</th>
+                  <th style={{ padding: '12px 12px', textAlign: 'right' }}>Prix Vente</th>
+                  <th style={{ padding: '12px 12px', textAlign: 'right' }}>Valeur Vente</th>
+                  <th style={{ padding: '12px 12px', textAlign: 'right' }}>Marge (%)</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {produitsFiltres.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{ padding: 24, textAlign: 'center', color: '#94a3b8' }}>
+                      Aucun article correspondant trouvé.
+                    </td>
+                  </tr>
+                ) : (
+                  produitsFiltres.map(p => {
+                    const isAlert = p.stock_quantite !== null && p.stock_quantite <= 3
+                    const isEditing = ajustantId === p.id
+                    return (
+                      <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '12px 16px', fontWeight: 700, color: '#0f172a' }}>
+                          <div>{p.nom}</div>
+                          {p.code_barre && <span style={{ fontSize: 10.5, color: '#64748b', fontFamily: 'monospace' }}>EAN: {p.code_barre}</span>}
+                        </td>
+                        <td style={{ padding: '12px 12px', color: '#64748b', fontSize: 12 }}>{p.categorie || '—'}</td>
+                        <td style={{ padding: '12px 12px', textAlign: 'center' }}>
+                          {isEditing ? (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                              <input
+                                type="number"
+                                min={0}
+                                value={nouveauStock}
+                                onChange={e => setNouveauStock(Number(e.target.value))}
+                                style={{ width: 60, padding: '4px 6px', borderRadius: 6, border: '1px solid #0284c7', fontSize: 12, textAlign: 'center' }}
+                              />
+                              <button onClick={() => submitAjustementStock(p.id)} style={{ padding: '4px 8px', borderRadius: 6, background: '#16a34a', color: '#fff', border: 'none', fontSize: 11, cursor: 'pointer' }}>✓</button>
+                              <button onClick={() => setAjustantId(null)} style={{ padding: '4px 8px', borderRadius: 6, background: '#e2e8f0', color: '#0f172a', border: 'none', fontSize: 11, cursor: 'pointer' }}>✕</button>
+                            </div>
+                          ) : (
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '2px 8px',
+                              borderRadius: 12,
+                              fontSize: 12,
+                              fontWeight: 800,
+                              background: isAlert ? '#fef3c7' : '#f1f5f9',
+                              color: isAlert ? '#b45309' : '#0f172a',
+                            }}>
+                              {p.stock_quantite ?? 0}
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px 12px', textAlign: 'right', color: '#64748b' }}>
+                          {p.prix_achat ? fcfa(p.prix_achat) : '—'}
+                        </td>
+                        <td style={{ padding: '12px 12px', textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>
+                          {p.prix ? fcfa(p.prix) : '—'}
+                        </td>
+                        <td style={{ padding: '12px 12px', textAlign: 'right', fontWeight: 800, color: '#1e3a8a' }}>
+                          {fcfa(p.valeur_vente_totale || ((p.prix || 0) * (p.stock_quantite || 0)))}
+                        </td>
+                        <td style={{ padding: '12px 12px', textAlign: 'right', fontWeight: 700, color: p.marge_pct > 0 ? '#16a34a' : '#64748b' }}>
+                          {p.marge_pct ? `${p.marge_pct}%` : '—'}
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          {!isEditing && (
+                            <button
+                              type="button"
+                              onClick={() => { setAjustantId(p.id); setNouveauStock(p.stock_quantite ?? 0) }}
+                              style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#f8fafc', fontSize: 11, fontWeight: 700, color: '#475569', cursor: 'pointer' }}
+                            >
+                              Ajuster
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
   )
 }
+
+// ── 👤 Vue Performances des Caissiers ─────────────────────────────────────────
+
+function PerformancesCaissiersView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: string; boutiqueNom?: string }) {
+  const { t } = useTranslation()
+  const [preset, setPreset] = useState<DatePreset>('this_month')
+  const [bilan, setBilan] = useState<BilanData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const activeRange = getDateRangeForPreset(preset)
+
+  useEffect(() => {
+    setLoading(true)
+    getBilanComptable(boutiqueId, { from: activeRange.from, to: activeRange.to })
+      .then(data => { if (data && !data.error) setBilan(data) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [boutiqueId, preset])
+
+  const handleExportCaissiers = () => {
+    if (!bilan) return
+    const headers = ['Caissier / Vendeur', 'Tickets Encaissés', 'Chiffre d\'Affaires Total', 'Panier Moyen', 'Part du CA Global', 'Encaissements Espèces', 'Encaissements Digitaux']
+    const rows = bilan.caissiers.map(c => [
+      c.nom,
+      c.nb_ventes,
+      c.ca_total,
+      c.panier_moyen,
+      `${c.part_ca_pct}%`,
+      c.ca_especes,
+      c.ca_digital,
+    ])
+    exportToCSV(`performances_caissiers_${boutiqueNom.replace(/\s+/g, '_')}_${preset}`, headers, rows)
+  }
+
+  const presetsList: { id: DatePreset; label: string }[] = [
+    { id: 'today', label: 'Aujourd\'hui' },
+    { id: 'yesterday', label: 'Hier' },
+    { id: '7d', label: '7 jours' },
+    { id: '30d', label: '30 jours' },
+    { id: 'this_month', label: 'Ce mois-ci' },
+    { id: 'this_year', label: 'Cette année' },
+  ]
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Barre de sélection période */}
+      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {presetsList.map(p => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setPreset(p.id)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 20,
+                fontSize: 12,
+                fontWeight: preset === p.id ? 800 : 600,
+                border: preset === p.id ? '1px solid #1e3a8a' : '1px solid #e2e8f0',
+                background: preset === p.id ? '#eff6ff' : '#f8fafc',
+                color: preset === p.id ? '#1e3a8a' : '#475569',
+                cursor: 'pointer',
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleExportCaissiers}
+          disabled={loading || !bilan}
+          style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #16a34a', background: '#f0fdf4', color: '#15803d', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          <span>📊</span>
+          <span>Export Classement CSV</span>
+        </button>
+      </div>
+
+      {/* Tableau comparatif des caissiers */}
+      {loading && !bilan ? (
+        <p style={{ color: '#94a3b8' }}>Chargement des statistiques caissiers…</p>
+      ) : !bilan || bilan.caissiers.length === 0 ? (
+        <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 12, padding: 32, textAlign: 'center', color: '#64748b' }}>
+          <p style={{ fontSize: 24, margin: '0 0 8px' }}>👤</p>
+          <p style={{ margin: 0, fontWeight: 700 }}>Aucune vente enregistrée par un caissier sur cette période.</p>
+        </div>
+      ) : (
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <th style={{ padding: '12px 16px' }}>Rang & Caissier</th>
+                  <th style={{ padding: '12px 12px', textAlign: 'right' }}>Tickets Ventes</th>
+                  <th style={{ padding: '12px 12px', textAlign: 'right' }}>CA Encaissé</th>
+                  <th style={{ padding: '12px 12px', textAlign: 'right' }}>Panier Moyen</th>
+                  <th style={{ padding: '12px 12px', textAlign: 'right' }}>Part Boutique</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'right' }}>Espèces vs Digital</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bilan.caissiers.map((c, idx) => {
+                  const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`
+                  return (
+                    <tr key={c.nom} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '12px 16px', fontWeight: 800, color: '#0f172a' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 16 }}>{medal}</span>
+                          <span>{c.nom}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '12px 12px', textAlign: 'right', fontWeight: 700, color: '#334155' }}>
+                        {c.nb_ventes} tickets
+                      </td>
+                      <td style={{ padding: '12px 12px', textAlign: 'right', fontWeight: 900, color: '#1e3a8a' }}>
+                        {fcfa(c.ca_total)}
+                      </td>
+                      <td style={{ padding: '12px 12px', textAlign: 'right', color: '#475569' }}>
+                        {fcfa(c.panier_moyen)}
+                      </td>
+                      <td style={{ padding: '12px 12px', textAlign: 'right', fontWeight: 800, color: '#15803d' }}>
+                        {c.part_ca_pct}%
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, color: '#64748b' }}>
+                        <span>💵 {fcfa(c.ca_especes)}</span> · <span style={{ color: '#0284c7' }}>📱 {fcfa(c.ca_digital)}</span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 
 // ── Formulaire vente ──────────────────────────────────────────────────────────
 
@@ -2491,29 +3233,38 @@ function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
 // ── Composant principal ───────────────────────────────────────────────────────
 
-export default function Comptabilite({ boutiqueId, initialTab = 'dashboard' }: { boutiqueId: string; initialTab?: 'dashboard' | 'express' | 'ventes' | 'depenses' }) {
-  const [tab, setTab] = useState<'dashboard' | 'express' | 'ventes' | 'depenses'>(initialTab)
+export default function Comptabilite({
+  boutiqueId,
+  boutiqueNom = 'Ma Boutique',
+  initialTab = 'bilan'
+}: {
+  boutiqueId: string
+  boutiqueNom?: string
+  initialTab?: 'dashboard' | 'bilan' | 'inventaire' | 'caissiers' | 'express' | 'ventes' | 'depenses' | 'zones'
+}) {
+  const resolvedTab = (initialTab === 'dashboard' ? 'bilan' : initialTab) as 'bilan' | 'inventaire' | 'caissiers' | 'express' | 'ventes' | 'depenses' | 'zones'
+  const [tab, setTab] = useState<'bilan' | 'inventaire' | 'caissiers' | 'express' | 'ventes' | 'depenses' | 'zones'>(resolvedTab)
   const { scrollRef: comptaTabRef, scrollToCenter: scrollComptaToCenter } = useScrollNudge()
   const { t } = useTranslation()
 
   useEffect(() => {
     if (initialTab) {
-      setTab(initialTab)
+      setTab(initialTab === 'dashboard' ? 'bilan' : (initialTab as any))
     }
   }, [initialTab])
 
-  const tabBtn = (t: typeof tab, label: string) => (
+  const tabBtn = (tId: typeof tab, label: string) => (
     <button
       type="button"
       onClick={(e) => {
-        setTab(t)
+        setTab(tId)
         scrollComptaToCenter(e.currentTarget)
       }}
       style={{
-        padding: '8px 16px', border: 'none', background: 'none', cursor: 'pointer',
-        fontSize: 13, fontWeight: tab === t ? 700 : 500,
-        color: tab === t ? '#C75B00' : '#6b7280',
-        borderBottom: tab === t ? '2px solid #C75B00' : '2px solid transparent',
+        padding: '10px 18px', border: 'none', background: 'none', cursor: 'pointer',
+        fontSize: 13.5, fontWeight: tab === tId ? 800 : 600,
+        color: tab === tId ? '#C75B00' : '#64748b',
+        borderBottom: tab === tId ? '3px solid #C75B00' : '3px solid transparent',
         whiteSpace: 'nowrap',
         transition: 'all 0.15s ease',
       }}
@@ -2524,17 +3275,23 @@ export default function Comptabilite({ boutiqueId, initialTab = 'dashboard' }: {
 
   return (
     <div>
-      <div ref={comptaTabRef} className="nopalou-scroll-tabs horizontal-scroll-fade" style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-        {tabBtn('dashboard', `📊 ${t('shop.overview')}`)}
-        {tabBtn('express',   `⚡ ${t('shop.quickSalesExpenses')}`)}
-        {tabBtn('ventes',    `💰 ${t('shop.totalSales')}`)}
-        {tabBtn('depenses',  `📉 ${t('shop.expenses')}`)}
+      <div ref={comptaTabRef} className="nopalou-scroll-tabs horizontal-scroll-fade" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: 20, overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', gap: 4 }}>
+        {tabBtn('bilan',      `📈 Bilan & Rapports`)}
+        {tabBtn('inventaire', `📦 Inventaire & Stocks`)}
+        {tabBtn('caissiers',  `👤 Performances Caissiers`)}
+        {tabBtn('express',    `⚡ Saisie Express`)}
+        {tabBtn('ventes',     `💰 Journal des Ventes`)}
+        {tabBtn('depenses',   `📉 Dépenses`)}
+        {tabBtn('zones',      `🚚 Zones de Livraison`)}
       </div>
 
-      {tab === 'dashboard' && <DashboardView boutiqueId={boutiqueId} />}
-      {tab === 'express'   && <SaisieExpressView boutiqueId={boutiqueId} />}
-      {tab === 'ventes'    && <VentesView    boutiqueId={boutiqueId} />}
-      {tab === 'depenses'  && <DepensesView  boutiqueId={boutiqueId} />}
+      {tab === 'bilan'      && <BilanView boutiqueId={boutiqueId} boutiqueNom={boutiqueNom} />}
+      {tab === 'inventaire' && <InventaireView boutiqueId={boutiqueId} boutiqueNom={boutiqueNom} />}
+      {tab === 'caissiers'  && <PerformancesCaissiersView boutiqueId={boutiqueId} boutiqueNom={boutiqueNom} />}
+      {tab === 'express'    && <SaisieExpressView boutiqueId={boutiqueId} />}
+      {tab === 'ventes'     && <VentesView boutiqueId={boutiqueId} />}
+      {tab === 'depenses'   && <DepensesView boutiqueId={boutiqueId} />}
+      {tab === 'zones'      && <ZonesView boutiqueId={boutiqueId} />}
     </div>
   )
 }
