@@ -2227,8 +2227,25 @@ router.get('/:id/scanner-remote', async (req, res) => {
 });
 
 // ── POST /api/boutiques/:id/pos-vente — Enregistrer vente POS & déduire le stock + alimenter la Comptabilité PostgreSQL
+
+// Auto-migration de sécurité : s'assure que les colonnes reference ont bien VARCHAR(100) en production
+let _refColMigrated = false;
+async function ensureRefColSize() {
+  if (_refColMigrated) return;
+  try {
+    await pool.query(`ALTER TABLE ventes ALTER COLUMN reference TYPE VARCHAR(100)`);
+    await pool.query(`ALTER TABLE commandes_boutique ALTER COLUMN reference TYPE VARCHAR(100)`);
+    await pool.query(`ALTER TABLE caisse_documents ALTER COLUMN reference TYPE VARCHAR(100)`);
+    _refColMigrated = true;
+  } catch (e) {
+    // Ignore si déjà correcte ou si erreur de permission
+    _refColMigrated = true;
+  }
+}
+
 router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
   try {
+    await ensureRefColSize();
     const idParam = req.params.id;
     const { items, caissier, modePaiement, client_id, idempotency_key } = req.body;
 
@@ -2243,6 +2260,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
     const idempotencyKey = typeof idempotency_key === 'string' && idempotency_key.length > 0 && idempotency_key.length <= 128
       ? idempotency_key
       : null;
+
 
     // Une réponse peut être perdue après l'enregistrement d'une vente offline.
     // La même clé doit alors être reconnue avant toute nouvelle déduction de stock.
@@ -2428,7 +2446,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
         await dbClient.query('COMMIT');
       } catch (txErr) {
         await dbClient.query('ROLLBACK');
-        console.error('[POS VENTE TX ROLLBACK]', txErr.message);
+        console.error('[POS VENTE TX ROLLBACK]', txErr.code, txErr.message, txErr.detail || '');
         throw txErr;
       } finally {
         dbClient.release();
@@ -2437,8 +2455,12 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Stock, Comptabilité et Facture POS sauvegardés' });
   } catch (err) {
-    console.error('[BOUTIQUE POS VENTE]', err);
-    res.status(500).json({ error: 'Erreur serveur' });
+    const isDev = process.env.NODE_ENV !== 'production';
+    console.error('[BOUTIQUE POS VENTE]', err.code, err.message, err.detail || '');
+    res.status(500).json({
+      error: 'Erreur serveur',
+      detail: isDev ? `[${err.code}] ${err.message}` : undefined
+    });
   }
 });
 
