@@ -22,6 +22,10 @@
     - `printBilanComptablePDF` : Génération et impression d'un compte de résultat officiel et structuré avec KPIs, répartition des règlements et tableau des caissiers.
     - `printInventairePDF` : Impression de la fiche de pointage physique de l'inventaire avec cases à cocher, colonnes stock système et valorisations.
     - `exportToCSV` : Exportation instantanée au format CSV/Excel pour le Bilan financier, l'Inventaire complet et le Classement des caissiers.
+  * **Adaptabilité Mobile & Ergonomie Tactile (`frontend-next/src/app/boutique/Comptabilite.tsx`)** :
+    - **Grilles Dynamiques Écrans Étroits** : Adaptation des breakpoints CSS (`repeat(auto-fit, minmax(130px, 1fr))` pour les dates et `minmax(260px, 1fr)` pour les cartes intermédiaires) garantissant un affichage fluide de 320px (iPhone SE) à 412px+ sans débordement horizontal.
+    - **Conteneurs Défilants Tactiles (`WebkitOverflowScrolling: 'touch'`)** : Support du swipe horizontal naturel sur les tables de données denses (Inventaire, Performances Caissiers, Journal des Ventes).
+    - **Wrapping Fluide des Raccourcis et Filtres** : `flexWrap: 'wrap'` sur l'ensemble des boutons pilules temporels et statuts de stock.
   * **Validation & Contrôle Qualité** :
     - Compilation TypeScript (`npx tsc --noEmit`) : 100% sans erreur (code 0).
     - Build Next.js (`npm run build`) : 91/91 pages et routes compilées avec succès (code 0).

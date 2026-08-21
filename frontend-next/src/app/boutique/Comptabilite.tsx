@@ -272,7 +272,7 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
         </div>
 
         {/* Ligne filtres spécifiques (Dates libres + Caissier + Mode) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, paddingTop: 10, borderTop: '1px solid #f1f5f9' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, paddingTop: 10, borderTop: '1px solid #f1f5f9' }}>
           {preset === 'custom' && (
             <>
               <div>
@@ -339,7 +339,7 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
       ) : (
         <>
           {/* ── KPIs Financiers Principaux ── */}
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <KpiCard
               label="Chiffre d'Affaires (CA)"
               value={fcfa(bilan.financier.ca_total)}
@@ -370,10 +370,10 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
             />
           </div>
 
-          {/* ── Grille Intermédiaire : Règlements & Top Articles ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+          {/* ── Grille Intermédiaire : Règlements & Top Articles (Auto-fit mobile) ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
             {/* Répartition des encaissements */}
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px 20px' }}>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <p style={{ margin: 0, fontSize: 13.5, fontWeight: 800, color: '#1e293b' }}>💳 Modes de Règlement</p>
                 <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Total : {fcfa(bilan.financier.ca_total)}</span>
@@ -610,7 +610,7 @@ function InventaireView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueI
         </div>
 
         {/* Pilules de statut stock */}
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {[
             { id: 'tous', label: `Tous (${totalReferences})` },
             { id: 'alerte', label: `⚠️ Ruptures & Alertes (${stockAlertesCount})` },
@@ -637,13 +637,13 @@ function InventaireView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueI
         </div>
       </div>
 
-      {/* ── Tableau d'Inventaire Détaillé ── */}
+      {/* ── Tableau d'Inventaire Détaillé (Touch Scroll) ── */}
       {loading && produits.length === 0 ? (
         <p style={{ color: '#94a3b8' }}>Chargement de l&apos;inventaire…</p>
       ) : (
         <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left', minWidth: 620 }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   <th style={{ padding: '12px 16px' }}>Article</th>
@@ -826,8 +826,8 @@ function PerformancesCaissiersView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: 
         </div>
       ) : (
         <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left', minWidth: 540 }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   <th style={{ padding: '12px 16px' }}>Rang & Caissier</th>
