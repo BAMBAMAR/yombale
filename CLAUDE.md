@@ -1,4 +1,13 @@
-- **Hub Financier Complet : Bilan Comptable Périodique, Inventaire Valorisé, Performances Caissiers & Exports Multi-Formats (`main` - 21 août 2026)** 📊💰📦 :
+- **Correctifs PWA, Bilan Comptable Résilient & Encaissement Caisse POS Multi-Articles (`main` - 21 août 2026)** 🛠️✨ :
+  * **Manifest PWA (`frontend-next/public/manifest.json`)** :
+    - Ajout explicite de `"enctype": "application/x-www-form-urlencoded"` dans la section `share_target` pour éliminer le warning console PWA W3C/Chromium.
+  * **Résilience & Permissions Bilan Comptable (`backend/routes/comptabilite.js`)** :
+    - Extension de `ownsBoutique` : Prise en charge des collaborateurs et gérants enregistrés dans `boutique_utilisateurs`, des accès administrateurs globaux et des requêtes par `slug` ou `UUID`.
+    - Sécurisation des agrégats SQL de bilan (`/api/comptabilite/:boutiqueId/bilan`) : Normalisation des formats de dates `date_depense::date` et protection `COALESCE` sur `json_object_agg` en cas d'absence de dépenses d'exploitation.
+    - Ajout d'un bloc de diagnostic visuel d'erreur avec bouton de rechargement direct (*🔄 Réessayer*) dans `BilanView`.
+  * **Encaissement POS Multi-Articles & Unicité des Commandes (`backend/routes/boutiques.js`)** :
+    - Résolution du blocage transactionnel lors des ventes de paniers multi-articles : Attribution de références d'articles distinctes (`POS-XXXX-1`, `POS-XXXX-2`) dans `ventes` et consolidation d'une seule entrée globale dans `commandes_boutique` avec clause `ON CONFLICT (reference) DO NOTHING`.
+    - Déclenchement automatique des migrations `prix_achat`, `caissier_nom` et `caissier_id` dans `migrate-inline.js`.
   * **Architecture Base de Données & Schéma SQL (`backend/migrate-inline.js`)** :
     - Ajout de la colonne `prix_achat NUMERIC(12,2) DEFAULT NULL` sur `boutique_produits` pour le suivi du coût de revient et le calcul dynamique des marges brutes.
     - Ajout de `caissier_id UUID REFERENCES boutique_caissiers(id)` et `caissier_nom VARCHAR(150)` sur `ventes` pour attribuer précisément chaque ticket au vendeur en caisse.

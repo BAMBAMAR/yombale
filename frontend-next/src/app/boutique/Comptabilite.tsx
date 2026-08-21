@@ -126,6 +126,7 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
 
   const [bilan, setBilan] = useState<BilanData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const activeRange = preset === 'custom' 
     ? { from: customFrom ? customFrom + 'T00:00:00.000Z' : '', to: customTo ? customTo + 'T23:59:59.999Z' : '', label: 'Période personnalisée' }
@@ -133,6 +134,7 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
 
   const loadBilan = async () => {
     setLoading(true)
+    setErrorMessage(null)
     const cacheKey = `nopalou_bilan_${boutiqueId}_${preset}_${activeRange.from}_${activeRange.to}_${selectedCaissier}_${selectedMode}`
     const cached = localStorage.getItem(cacheKey)
     if (cached) {
@@ -151,9 +153,13 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
       })
       if (data && !data.error) {
         setBilan(data)
+        setErrorMessage(null)
         localStorage.setItem(cacheKey, JSON.stringify(data))
+      } else if (data?.error) {
+        setErrorMessage(data.error)
       }
-    } catch (e) {
+    } catch (e: any) {
+      setErrorMessage(e?.message || 'Erreur de communication avec le serveur')
     } finally {
       setLoading(false)
     }
@@ -335,7 +341,18 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
           ))}
         </div>
       ) : !bilan ? (
-        <p style={{ color: '#dc2626', fontSize: 14 }}>Impossible de charger le bilan comptable.</p>
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <p style={{ color: '#b91c1c', fontSize: 13.5, margin: 0, fontWeight: 600 }}>
+            ⚠️ {errorMessage || 'Impossible de charger le bilan comptable pour le moment.'}
+          </p>
+          <button
+            type="button"
+            onClick={loadBilan}
+            style={{ padding: '6px 14px', borderRadius: 8, background: '#dc2626', color: '#fff', border: 'none', fontWeight: 700, fontSize: 12.5, cursor: 'pointer' }}
+          >
+            🔄 Réessayer
+          </button>
+        </div>
       ) : (
         <>
           {/* ── KPIs Financiers Principaux ── */}

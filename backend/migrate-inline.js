@@ -1077,6 +1077,11 @@ module.exports = async function migrateInline() {
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS caisse_token VARCHAR(100);
       UPDATE boutiques SET caisse_token = uuid_generate_v4()::text WHERE caisse_token IS NULL;
 
+      -- Colonnes comptabilité & performances caissiers
+      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS prix_achat NUMERIC(12,2) DEFAULT NULL;
+      ALTER TABLE ventes ADD COLUMN IF NOT EXISTS caissier_id UUID REFERENCES boutique_caissiers(id) ON DELETE SET NULL;
+      ALTER TABLE ventes ADD COLUMN IF NOT EXISTS caissier_nom VARCHAR(150);
+
       CREATE TABLE IF NOT EXISTS boutique_logs (
         id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         boutique_id     UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
@@ -1092,7 +1097,7 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_boutique_logs_date ON boutique_logs(created_at DESC);
     `);
 
-    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs OK');
+    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite OK');
   } catch (err) {
     console.warn('[MIGRATE] POS Avancé échec:', err.message);
   }

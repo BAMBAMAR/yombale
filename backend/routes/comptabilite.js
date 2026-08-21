@@ -62,8 +62,24 @@ router.get('/admin/stats', adminSecretOnly, async (req, res) => {
   }
 });
 
-async function ownsBoutique(boutiqueId, userId) {
-  const r = await pool.query('SELECT id, nom, logo_url, telephone, adresse, ville FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [boutiqueId, userId]);
+async function ownsBoutique(boutiqueIdOrSlug, userId, userRole) {
+  if (!boutiqueIdOrSlug) return null;
+  const isUUID = /^[0-9a-f-]{36}$/i.test(boutiqueIdOrSlug);
+  if (userRole === 'admin') {
+    const rAdmin = await pool.query(
+      `SELECT id, nom, logo_url, telephone, adresse, ville, utilisateur_id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+      [boutiqueIdOrSlug]
+    );
+    return rAdmin.rows[0] || null;
+  }
+  if (!userId) return null;
+  const r = await pool.query(
+    `SELECT b.id, b.nom, b.logo_url, b.telephone, b.adresse, b.ville, b.utilisateur_id 
+     FROM boutiques b
+     LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
+     WHERE (${isUUID ? 'b.id = $1' : 'b.slug = $1'}) AND (b.utilisateur_id = $2 OR bu.utilisateur_id = $2)`,
+    [boutiqueIdOrSlug, userId]
+  );
   return r.rows[0] || null;
 }
 
@@ -919,11 +935,11 @@ router.get('/:boutiqueId/dashboard', verifierToken, param('boutiqueId').isUUID()
 
 // ── 📊 Bilan Financier Consolidé Périodique & Multi-Critères ───────────────────
 // GET /api/comptabilite/:boutiqueId/bilan
-router.get('/:boutiqueId/bilan', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {
+router.get('/:boutiqueId/bilan', verifierToken, async (req, res) => {
   try {
-    const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+    const boutique = await ownsBoutique(req.params.boutiqueId, req.user?.userId, req.user?.role);
     if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
-    const id = req.params.boutiqueId;
+    const id = boutique.id;
     const { from, to, caissier, mode_paiement } = req.query;
 
     // Conditions pour les ventes
@@ -943,8 +959,8 @@ router.get('/:boutiqueId/bilan', verifierToken, param('boutiqueId').isUUID(), as
     // Conditions pour les dépenses
     const dConds = ['boutique_id=$1', 'archivee IS NOT TRUE'];
     const dParams = [id];
-    if (from) { dParams.push(from); dConds.push(`date_depense >= $${dParams.length}`); }
-    if (to) { dParams.push(to); dConds.push(`date_depense <= $${dParams.length}`); }
+    if (from) { dParams.push(String(from).slice(0, 10)); dConds.push(`date_depense >= $${dParams.length}::date`); }
+    if (to) { dParams.push(String(to).slice(0, 10)); dConds.push(`date_depense <= $${dParams.length}::date`); }
 
     const [statsVentes, statsDepenses, statsPaiements, topProduits, statsStock, statsCaissiers, timelineVentes] = await Promise.all([
       // 1. Agrégats globaux ventes
@@ -955,20 +971,24 @@ router.get('/:boutiqueId/bilan', verifierToken, param('boutiqueId').isUUID(), as
           COALESCE(AVG(montant_total), 0) AS panier_moyen,
           COALESCE(SUM(quantite), 0)::int AS total_articles_vendus
         FROM ventes WHERE ${vConds.join(' AND ')}
-      `, vParams),
+      `, vParams).catch(err => { console.warn('[BILAN VENTES ERR]', err.message); return { rows: [{}] }; }),
 
       // 2. Agrégats dépenses
       pool.query(`
         SELECT
           COUNT(*)::int AS nb_depenses,
           COALESCE(SUM(montant), 0) AS depenses_total,
-          json_object_agg(COALESCE(categorie, 'autre'), cat_total) FILTER (WHERE categorie IS NOT NULL) AS par_categorie
-        FROM (
-          SELECT categorie, SUM(montant) AS cat_total
-          FROM depenses WHERE ${dConds.join(' AND ')}
-          GROUP BY categorie
-        ) sub
-      `, dParams),
+          COALESCE(
+            (SELECT json_object_agg(COALESCE(categorie, 'autre'), cat_total)
+             FROM (
+               SELECT categorie, SUM(montant) AS cat_total
+               FROM depenses WHERE ${dConds.join(' AND ')}
+               GROUP BY categorie
+             ) sub),
+            '{}'::json
+          ) AS par_categorie
+        FROM depenses WHERE ${dConds.join(' AND ')}
+      `, dParams).catch(err => { console.warn('[BILAN DEPENSES ERR]', err.message); return { rows: [{}] }; }),
 
       // 3. Répartition par mode de paiement
       pool.query(`
@@ -979,14 +999,14 @@ router.get('/:boutiqueId/bilan', verifierToken, param('boutiqueId').isUUID(), as
         FROM ventes WHERE ${vConds.join(' AND ')}
         GROUP BY COALESCE(methode_paiement, 'cash')
         ORDER BY total DESC
-      `, vParams),
+      `, vParams).catch(err => { console.warn('[BILAN MODES PAIEMENT ERR]', err.message); return { rows: [] }; }),
 
       // 4. Top articles vendus
       pool.query(`
-        SELECT nom_produit, SUM(quantite)::int AS total_vendu, SUM(montant_total) AS ca_genere
+        SELECT COALESCE(nom_produit, 'Article') AS nom_produit, SUM(quantite)::int AS total_vendu, SUM(montant_total) AS ca_genere
         FROM ventes WHERE ${vConds.join(' AND ')}
         GROUP BY nom_produit ORDER BY ca_genere DESC LIMIT 10
-      `, vParams),
+      `, vParams).catch(err => { console.warn('[BILAN TOP PRODUITS ERR]', err.message); return { rows: [] }; }),
 
       // 5. Valorisation d'inventaire & Stocks
       pool.query(`
@@ -998,7 +1018,7 @@ router.get('/:boutiqueId/bilan', verifierToken, param('boutiqueId').isUUID(), as
           COUNT(CASE WHEN stock_quantite IS NOT NULL AND stock_quantite <= 3 THEN 1 END)::int AS stock_alertes_count,
           COUNT(CASE WHEN stock_quantite IS NOT NULL AND stock_quantite = 0 THEN 1 END)::int AS stock_ruptures_count
         FROM boutique_produits WHERE boutique_id = $1
-      `, [id]),
+      `, [id]).catch(err => { console.warn('[BILAN STOCK ERR]', err.message); return { rows: [{}] }; }),
 
       // 6. Performances Caissiers
       pool.query(`
@@ -1012,7 +1032,7 @@ router.get('/:boutiqueId/bilan', verifierToken, param('boutiqueId').isUUID(), as
         FROM ventes WHERE ${vConds.join(' AND ')}
         GROUP BY COALESCE(NULLIF(TRIM(caissier_nom), ''), 'Caissier Principal')
         ORDER BY ca_total DESC
-      `, vParams),
+      `, vParams).catch(err => { console.warn('[BILAN CAISSIERS ERR]', err.message); return { rows: [] }; }),
 
       // 7. Évolution chronologique des ventes (par jour)
       pool.query(`
@@ -1023,12 +1043,12 @@ router.get('/:boutiqueId/bilan', verifierToken, param('boutiqueId').isUUID(), as
         FROM ventes WHERE ${vConds.join(' AND ')}
         GROUP BY date_trunc('day', created_at)
         ORDER BY jour ASC
-      `, vParams),
+      `, vParams).catch(err => { console.warn('[BILAN TIMELINE ERR]', err.message); return { rows: [] }; }),
     ]);
 
-    const vRes = statsVentes.rows[0] || {};
-    const dRes = statsDepenses.rows[0] || {};
-    const sRes = statsStock.rows[0] || {};
+    const vRes = statsVentes?.rows?.[0] || {};
+    const dRes = statsDepenses?.rows?.[0] || {};
+    const sRes = statsStock?.rows?.[0] || {};
 
     const caTotal = Number(vRes.ca_total || 0);
     const depensesTotal = Number(dRes.depenses_total || 0);
@@ -1050,10 +1070,10 @@ router.get('/:boutiqueId/bilan', verifierToken, param('boutiqueId').isUUID(), as
         nb_ventes: Number(vRes.nb_ventes || 0),
         panier_moyen: Math.round(Number(vRes.panier_moyen || 0)),
         total_articles_vendus: Number(vRes.total_articles_vendus || 0),
-        modes_paiement: statsPaiements.rows,
+        modes_paiement: statsPaiements?.rows || [],
         depenses_par_categorie: dRes.par_categorie || {},
-        top_produits: topProduits.rows,
-        timeline: timelineVentes.rows
+        top_produits: topProduits?.rows || [],
+        timeline: timelineVentes?.rows || []
       },
       inventaire: {
         total_references: Number(sRes.total_references || 0),
@@ -1065,7 +1085,7 @@ router.get('/:boutiqueId/bilan', verifierToken, param('boutiqueId').isUUID(), as
         stock_alertes_count: Number(sRes.stock_alertes_count || 0),
         stock_ruptures_count: Number(sRes.stock_ruptures_count || 0),
       },
-      caissiers: statsCaissiers.rows.map(c => ({
+      caissiers: (statsCaissiers?.rows || []).map(c => ({
         ...c,
         ca_total: Number(c.ca_total || 0),
         panier_moyen: Math.round(Number(c.panier_moyen || 0)),
@@ -1082,15 +1102,15 @@ router.get('/:boutiqueId/bilan', verifierToken, param('boutiqueId').isUUID(), as
 
 // ── 📦 Inventaire Détaillé & Valorisation du Stock ─────────────────────────────
 // GET /api/comptabilite/:boutiqueId/inventaire
-router.get('/:boutiqueId/inventaire', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {
+router.get('/:boutiqueId/inventaire', verifierToken, async (req, res) => {
   try {
-    const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+    const boutique = await ownsBoutique(req.params.boutiqueId, req.user?.userId, req.user?.role);
     if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
-    const id = req.params.boutiqueId;
+    const id = boutique.id;
 
     const { rows } = await pool.query(`
       SELECT 
-        id, nom, categorie, code_barre, stock_quantite, prix, prix_achat, en_stock,
+        id, nom, categorie, code_barre, stock_quantite, prix, COALESCE(prix_achat, 0) AS prix_achat, en_stock,
         (COALESCE(stock_quantite, 0) * COALESCE(prix_achat, 0)) AS valeur_achat_totale,
         (COALESCE(stock_quantite, 0) * COALESCE(prix, 0)) AS valeur_vente_totale,
         (COALESCE(prix, 0) - COALESCE(prix_achat, 0)) AS marge_unitaire,

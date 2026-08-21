@@ -2232,7 +2232,8 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
       try {
         await dbClient.query('BEGIN');
 
-        for (const item of calculation.items) {
+        for (let idx = 0; idx < calculation.items.length; idx++) {
+          const item = calculation.items[idx];
           const qte = Number(item.quantite || 1);
 
           // 1. Décrémenter le stock dans la base PostgreSQL
@@ -2263,12 +2264,13 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           const prixUnitaire = Number(item.prix_unitaire || pRes?.rows[0]?.prix || 0);
           const totalLigne = prixUnitaire * qte;
           const prodIdReal = pRes?.rows[0]?.id || (item.id && /^[0-9a-f-]{36}$/i.test(item.id) ? item.id : null);
+          const itemRef = calculation.items.length > 1 ? `${refVente}-${idx + 1}` : refVente;
 
           await dbClient.query(
             `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, methode_paiement, caissier_nom, created_at)
              VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, $10, NOW())`,
             [
-              refVente,
+              itemRef,
               boutiqueId,
               prodIdReal,
               nomProduit,
@@ -2280,21 +2282,25 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
               caissier || 'Caissier Principal'
             ]
           );
-
-          await dbClient.query(
-            `INSERT INTO commandes_boutique (reference, boutique_id, client_nom, statut, nom_produit, quantite, montant_total, mode_paiement, created_at)
-             VALUES ($1, $2, $3, 'livree', $4, $5, $6, $7, NOW())`,
-            [
-              refVente,
-              boutiqueId,
-              caissier ? `Caisse POS (${caissier})` : 'Caisse POS',
-              nomProduit,
-              qte,
-              totalLigne,
-              modePaiement || 'cash'
-            ]
-          );
         }
+
+        // Insertion consolidée unique dans commandes_boutique
+        const resumeNoms = calculation.items.map(i => `${i.nom} × ${i.quantite || 1}`).join(', ');
+        const totalQteGlobale = calculation.items.reduce((acc, i) => acc + Number(i.quantite || 1), 0);
+        await dbClient.query(
+          `INSERT INTO commandes_boutique (reference, boutique_id, client_nom, statut, nom_produit, quantite, montant_total, mode_paiement, created_at)
+           VALUES ($1, $2, $3, 'livree', $4, $5, $6, $7, NOW())
+           ON CONFLICT (reference) DO NOTHING`,
+          [
+            refVente,
+            boutiqueId,
+            caissier ? `Caisse POS (${caissier})` : 'Caisse POS',
+            resumeNoms.slice(0, 200),
+            totalQteGlobale,
+            netAPayer,
+            modePaiement || 'cash'
+          ]
+        );
 
         await dbClient.query(
           `INSERT INTO caisse_documents (
