@@ -2778,8 +2778,19 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                     </span>
 
                     {/* WhatsApp */}
-                    <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: p.whatsapp_sync_statut === 'synchronise' || !p.whatsapp_sync_statut ? '#f0fdf4' : '#fef2f2', color: p.whatsapp_sync_statut === 'synchronise' || !p.whatsapp_sync_statut ? '#166534' : '#991b1b', border: '1px solid #e2e8f0' }}>
-                      💬 {p.whatsapp_sync_statut === 'echec' ? 'Échec WhatsApp' : 'WhatsApp'}
+                    <span
+                      style={{
+                        fontSize: 11,
+                        padding: '2px 8px',
+                        borderRadius: 6,
+                        fontWeight: 700,
+                        background: '#f0fdf4',
+                        color: '#166534',
+                        border: '1px solid #bbf7d0',
+                      }}
+                      title="Actif sur le Chatbot & prêt au partage WhatsApp 1-Clic"
+                    >
+                      💬 WhatsApp
                     </span>
                   </div>
                 </div>

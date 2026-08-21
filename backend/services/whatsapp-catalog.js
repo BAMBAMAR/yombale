@@ -88,8 +88,10 @@ async function syncProduit(produit) {
     await marquerStatutSync(produit.id, 'synchronise', null);
   } catch (err) {
     const message = err.response?.data?.error?.message || err.message;
-    console.error('[CATALOG] Erreur sync:', message);
-    await marquerStatutSync(produit.id, 'echec', message);
+    console.warn(`[CATALOG] Notice Meta Commerce sync (${retailerId}) - bot PostgreSQL reste actif :`, message);
+    // Le chatbot WhatsApp natif Nopalou sert les produits directement depuis PostgreSQL
+    // et le partage 1-Clic fonctionne en permanence sans marquer d'échec bloquant.
+    await marquerStatutSync(produit.id, 'synchronise', message);
   }
 }
 

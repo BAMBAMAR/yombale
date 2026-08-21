@@ -1,0 +1,155 @@
+// scripts/test-chatbot-boutique.js
+const assert = require('node:assert/strict');
+
+// Mock dependencies
+const mockDbCalls = [];
+let mockQueryResult = { rows: [] };
+const mockPool = {
+  query: async (sql, params) => {
+    mockDbCalls.push({ sql, params });
+    if (typeof mockQueryResult === 'function') {
+      return mockQueryResult(sql, params);
+    }
+    return mockQueryResult;
+  },
+};
+
+const mockWhatsAppCalls = {
+  text: [],
+  interactive: [],
+  buttons3: [],
+  product: [],
+  menuOuFin: [],
+};
+
+const mockWhatsApp = {
+  sendWhatsAppText: async (phone, text) => { mockWhatsAppCalls.text.push({ phone, text }); },
+  sendWhatsAppInteractive: async (phone, header, body, sections) => { mockWhatsAppCalls.interactive.push({ phone, header, body, sections }); },
+  sendWhatsAppButtons3: async (phone, body, buttons) => { mockWhatsAppCalls.buttons3.push({ phone, body, buttons }); },
+  sendWhatsAppProduct: async (phone, productId, body) => { mockWhatsAppCalls.product.push({ phone, productId, body }); },
+  sendWhatsAppMenuOuFin: async (phone, body) => { mockWhatsAppCalls.menuOuFin.push({ phone, body }); },
+  sendWhatsAppButton: async () => {},
+  sendWhatsAppCarousel: async () => {},
+  sendReadReceipt: async () => {},
+  normalisePhone: (p) => String(p).replace(/\D/g, ''),
+  ajouterBlacklist: async () => {},
+  retirerBlacklist: async () => {},
+  estDesinscrit: async () => false,
+};
+
+// Replace require cache for testing
+require.cache[require.resolve('../backend/models/db')] = {
+  exports: { pool: mockPool },
+};
+require.cache[require.resolve('../backend/services/whatsapp')] = {
+  exports: mockWhatsApp,
+};
+
+const chatbot = require('../backend/services/whatsapp-chatbot');
+
+let passed = 0;
+let failed = 0;
+
+function it(name, fn) {
+  try {
+    fn();
+    passed++;
+    console.log(`  ✓ ${name}`);
+  } catch (e) {
+    failed++;
+    console.error(`  ✗ ${name}:`, e.message);
+  }
+}
+
+async function runAsyncTests() {
+  console.log('🧪 Test des fonctionnalités WhatsApp Chatbot (Recherche Boutique & Bouton Suivant)...');
+
+  // Test 1: envoyerFicheProduitBoutique inclut toujours le bouton Suivant
+  console.log('\n📦 1. Bouton "Suivant" dans la fiche produit boutique');
+  mockWhatsAppCalls.buttons3 = [];
+  const fakeProduit = { id: 'prod-123', nom: 'Robe Wax', prix: 15000, description: 'Belle robe', stock_quantite: 5 };
+  const fakeBoutiqueAvecTel = { id: 'btq-1', nom: 'Dakar Couture', telephone: '771234567', whatsapp: '771234567' };
+  
+  await chatbot.envoyerFicheProduitBoutique('221770000000', fakeProduit, fakeBoutiqueAvecTel);
+  it('envoyerFicheProduitBoutique: inclut le bouton ⏩ Suivant même quand le vendeur a un téléphone', () => {
+    assert.equal(mockWhatsAppCalls.buttons3.length, 1);
+    const btns = mockWhatsAppCalls.buttons3[0].buttons;
+    assert.equal(btns.length, 3);
+    assert.equal(btns[0].id, 'commander_prod-123');
+    assert.equal(btns[1].id, 'prod_suivant_prod-123');
+    assert.equal(btns[1].title, '⏩ Suivant');
+    assert.equal(btns[2].id, 'contact_vendeur_prod-123');
+  });
+
+  const fakeBoutiqueSansTel = { id: 'btq-2', nom: 'Boutique Sans Tel', telephone: null, whatsapp: null };
+  mockWhatsAppCalls.buttons3 = [];
+  await chatbot.envoyerFicheProduitBoutique('221770000000', fakeProduit, fakeBoutiqueSansTel);
+  it('envoyerFicheProduitBoutique: inclut le bouton ⏩ Suivant quand la boutique n a pas de téléphone', () => {
+    assert.equal(mockWhatsAppCalls.buttons3.length, 1);
+    const btns = mockWhatsAppCalls.buttons3[0].buttons;
+    assert.equal(btns.length, 3);
+    assert.equal(btns[0].id, 'commander_prod-123');
+    assert.equal(btns[1].id, 'prod_suivant_prod-123');
+    assert.equal(btns[2].id, 'boutique_recherche');
+  });
+
+  // Test 2: Option "Chercher par nom" présente dans envoyerToutesLesBoutiques
+  console.log('\n📦 2. Liste des boutiques avec option de recherche par nom');
+  mockWhatsAppCalls.interactive = [];
+  mockQueryResult = {
+    rows: [
+      { id: 'b1', nom: 'Touba Shop', slug: 'touba-shop', categorie: 'Mode', ville: 'Dakar' },
+      { id: 'b2', nom: 'Electro Dakar', slug: 'electro-dakar', categorie: 'Tech', ville: 'Dakar' },
+    ],
+  };
+
+  await chatbot.envoyerToutesLesBoutiques('221770000000');
+  it('envoyerToutesLesBoutiques: inclut l option boutique_recherche_nom dans les rangées interactives', () => {
+    assert.equal(mockWhatsAppCalls.interactive.length, 1);
+    const sections = mockWhatsAppCalls.interactive[0].sections;
+    const rows = sections[0].rows;
+    const searchRow = rows.find(r => r.id === 'boutique_recherche_nom');
+    assert.ok(searchRow, 'boutique_recherche_nom doit être présent');
+    assert.equal(searchRow.title, '🔍 Chercher par nom');
+  });
+
+  // Test 3: Recherche de boutique par nom avec résultats
+  console.log('\n📦 3. Fonction rechercherBoutiquesParNom');
+  mockWhatsAppCalls.text = [];
+  mockWhatsAppCalls.interactive = [];
+  mockQueryResult = {
+    rows: [
+      { id: 'b1', nom: 'Touba Shop', slug: 'touba-shop', categorie: 'Mode', ville: 'Dakar', description: 'Vêtements' },
+      { id: 'b2', nom: 'Touba Electro', slug: 'touba-electro', categorie: 'Tech', ville: 'Touba', description: 'Smartphones' },
+    ],
+  };
+
+  await chatbot.rechercherBoutiquesParNom('221770000000', 'Touba');
+  it('rechercherBoutiquesParNom: renvoie les résultats et le menu interactif', () => {
+    assert.ok(mockWhatsAppCalls.text.some(t => t.text.includes('Résultats pour "Touba"') || t.text.includes('Boutiques correspondant à "Touba"')));
+    assert.equal(mockWhatsAppCalls.interactive.length, 1);
+    const rows = mockWhatsAppCalls.interactive[0].sections[0].rows;
+    assert.ok(rows.some(r => r.id === 'boutique_choisie_b1'));
+    assert.ok(rows.some(r => r.id === 'boutique_choisie_b2'));
+  });
+
+  // Test 4: Recherche de boutique par nom sans résultat
+  mockWhatsAppCalls.text = [];
+  mockQueryResult = { rows: [] };
+  await chatbot.rechercherBoutiquesParNom('221770000000', 'IntrouvableXYZ');
+  it('rechercherBoutiquesParNom: affiche un message propre en cas d absence de résultat', () => {
+    assert.ok(mockWhatsAppCalls.text.some(t => t.text.includes('Aucune boutique trouvée pour *"IntrouvableXYZ"*')));
+  });
+
+  console.log('\n──────────────────────────────────────────────────────────');
+  console.log(`Résultats: ${passed} passés, ${failed} échoués (Total: ${passed + failed})`);
+  if (failed > 0) process.exit(1);
+  console.log('🎉 100% des tests de fonctionnalités chatbot sont validés avec succès !');
+  process.exit(0);
+}
+
+runAsyncTests().catch(err => {
+  console.error('Test runner failed:', err);
+  process.exit(1);
+});
+

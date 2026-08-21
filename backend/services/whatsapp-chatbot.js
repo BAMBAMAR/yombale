@@ -298,7 +298,7 @@ async function envoyerToutesLesBoutiques(phone, excludeIds = []) {
   const r = await pool.query(
     `SELECT id, nom, slug, categorie, ville FROM boutiques
      WHERE actif=true AND id::text <> ALL($1::text[])
-     ORDER BY created_at DESC LIMIT 9`,
+     ORDER BY created_at DESC LIMIT 7`,
     [excludeIds]
   );
   if (!r.rows.length) {
@@ -326,28 +326,37 @@ async function envoyerToutesLesBoutiques(phone, excludeIds = []) {
     `Tapez le numéro (1, 2...), le nom d'une boutique, ou choisissez ci-dessous :`
   );
 
-  const rows = r.rows.map((b, i) => ({
-    id: `boutique_choisie_${b.id}`,
-    title: `${i + 1}. ${b.nom}`.slice(0, 24),
-    description: [b.categorie, b.ville].filter(Boolean).join(' — ') || undefined,
-  }));
+  const rows = [
+    {
+      id: 'boutique_recherche_nom',
+      title: '🔍 Chercher par nom',
+      description: 'Rechercher une boutique par son nom',
+    },
+    {
+      id: 'boutique_secteur_liste',
+      title: '📂 Choisir par secteur',
+      description: 'Filtrer les boutiques par catégorie',
+    },
+    ...r.rows.map((b, i) => ({
+      id: `boutique_choisie_${b.id}`,
+      title: `${i + 1}. ${b.nom}`.slice(0, 24),
+      description: [b.categorie, b.ville].filter(Boolean).join(' — ') || undefined,
+    })),
+  ];
 
-  rows.push({
-    id: 'boutique_secteur_liste',
-    title: '📂 Choisir par secteur',
-    description: 'Filtrer les boutiques par catégorie',
-  });
-
-  await sendWhatsAppInteractive(phone, 'Boutiques Nopalou', 'Cliquez sur une boutique ci-dessous :', [
+  await sendWhatsAppInteractive(phone, 'Boutiques Nopalou', 'Cliquez sur une option ci-dessous :', [
     { title: 'Boutiques Nopalou', rows },
   ]).catch(() => {});
+
+  await attendre(400);
+  await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres boutiques, ou cherchez par nom :').catch(() => {});
 }
 
 async function envoyerListeBoutiques(phone, secteur, excludeIds = []) {
   const r = await pool.query(
     `SELECT id, nom, slug, categorie, ville FROM boutiques
      WHERE actif=true AND (categorie ILIKE $1 OR categorie ILIKE '%' || $1 || '%') AND id::text <> ALL($2::text[])
-     ORDER BY created_at DESC LIMIT 9`,
+     ORDER BY created_at DESC LIMIT 7`,
     [secteur, excludeIds]
   );
   if (!r.rows.length) {
@@ -376,11 +385,18 @@ async function envoyerListeBoutiques(phone, secteur, excludeIds = []) {
     `Tapez le numéro (1, 2...), le nom d'une boutique, ou choisissez ci-dessous :`
   );
 
-  const rows = r.rows.map((b, i) => ({
-    id: `boutique_choisie_${b.id}`,
-    title: `${i + 1}. ${b.nom}`.slice(0, 24),
-    description: b.ville || undefined,
-  }));
+  const rows = [
+    {
+      id: 'boutique_recherche_nom',
+      title: '🔍 Chercher par nom',
+      description: 'Rechercher une boutique par nom',
+    },
+    ...r.rows.map((b, i) => ({
+      id: `boutique_choisie_${b.id}`,
+      title: `${i + 1}. ${b.nom}`.slice(0, 24),
+      description: b.ville || undefined,
+    })),
+  ];
 
   await sendWhatsAppInteractive(phone, 'Boutiques', `Boutiques du secteur *${secteur}* :`, [
     { title: String(secteur).slice(0, 24), rows },
@@ -390,8 +406,89 @@ async function envoyerListeBoutiques(phone, secteur, excludeIds = []) {
   await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres boutiques, ou choisissez-en une ci-dessus :').catch(() => {});
 }
 
+// ── Recherche de boutiques par nom (mot-clé) ─────────────────────────────────
+async function rechercherBoutiquesParNom(phone, query, excludeIds = []) {
+  const cleanQ = (query || '').trim();
+  if (!cleanQ || cleanQ.length < 2) {
+    await sendWhatsAppText(phone, '⚠️ Entrez au moins 2 lettres pour rechercher une boutique (ou tapez *menu*).');
+    await setSession(phone, 'BOUTIQUE_SEARCH_SHOP', {});
+    return;
+  }
+
+  const r = await pool.query(
+    `SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp
+     FROM boutiques
+     WHERE actif=true
+       AND (
+         nom ILIKE $1
+         OR slug ILIKE $1
+         OR COALESCE(description, '') ILIKE $1
+         OR COALESCE(categorie, '') ILIKE $1
+       )
+       AND id::text <> ALL($2::text[])
+     ORDER BY created_at DESC LIMIT 7`,
+    [`%${cleanQ}%`, excludeIds]
+  );
+
+  if (!r.rows.length) {
+    await sendWhatsAppText(
+      phone,
+      excludeIds.length
+        ? `✅ Vous avez vu toutes les boutiques correspondant à *"${cleanQ}"*. Tapez *menu* pour revenir.`
+        : `😕 Aucune boutique trouvée pour *"${cleanQ}"*.\n\nVous pouvez entrer un autre nom, ou taper *menu*.`
+    );
+    await sendWhatsAppMenuOuFin(phone, 'Tapez un autre nom de boutique ou :').catch(() => {});
+    await setSession(phone, 'BOUTIQUE_SEARCH_SHOP', {});
+    return;
+  }
+
+  if (r.rows.length === 1 && excludeIds.length === 0) {
+    const b = r.rows[0];
+    await sendWhatsAppText(phone, `🏪 J'ai trouvé la boutique *${b.nom}* (${b.categorie || 'commerce'}${b.ville ? ` — ${b.ville}` : ''}) !`);
+    await envoyerMenuBoutique(phone, b);
+    return;
+  }
+
+  await setSession(phone, 'BOUTIQUE_LISTE', {
+    boutiquesAffichees: r.rows,
+    last: { type: 'boutique_search_shop', query: cleanQ, shownIds: excludeIds.concat(r.rows.map(b => String(b.id))) },
+  });
+
+  const lines = r.rows.map((b, i) => `${i + 1}. *${b.nom}* (${b.categorie || 'commerce'}${b.ville ? ` — ${b.ville}` : ''})`);
+  await sendWhatsAppText(
+    phone,
+    `🔍 *Boutiques correspondant à "${cleanQ}" :*\n\n${lines.join('\n')}\n\n` +
+    `Tapez le numéro (1, 2...), le nom d'une boutique, ou choisissez ci-dessous :`
+  );
+
+  const rows = [
+    {
+      id: 'boutique_recherche_nom',
+      title: '🔍 Autre recherche nom',
+      description: 'Chercher un autre nom de boutique',
+    },
+    {
+      id: 'boutique_secteur_liste',
+      title: '📂 Choisir par secteur',
+      description: 'Filtrer les boutiques par catégorie',
+    },
+    ...r.rows.map((b, i) => ({
+      id: `boutique_choisie_${b.id}`,
+      title: `${i + 1}. ${b.nom}`.slice(0, 24),
+      description: [b.categorie, b.ville].filter(Boolean).join(' — ') || undefined,
+    })),
+  ];
+
+  await sendWhatsAppInteractive(phone, 'Boutiques', `Résultats pour "${cleanQ}" :`, [
+    { title: 'Boutiques trouvées', rows },
+  ]).catch(() => {});
+
+  await attendre(400);
+  await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres résultats, ou tapez un autre nom :').catch(() => {});
+}
+
 // ── Fiche produit complète (boutique) ───────────────────────────────────────
-// Product Message Meta native + message texte détaillé + 3 boutons (Commander, Suivant, Rechercher).
+// Product Message Meta native + message texte détaillé + 3 boutons (Commander, Suivant, Vendeur/Rechercher).
 async function envoyerFicheProduitBoutique(phone, produit, boutique) {
   await sendWhatsAppProduct(
     phone,
@@ -429,15 +526,15 @@ async function envoyerFicheProduitBoutique(phone, produit, boutique) {
   const contactVendeur = boutique.whatsapp || boutique.telephone;
   const buttons = [
     { id: `commander_${produit.id}`, title: '🛒 Commander' },
+    { id: `prod_suivant_${produit.id}`, title: '⏩ Suivant' },
   ];
   if (contactVendeur) {
-    buttons.push({ id: `contact_vendeur_${produit.id}`, title: '💬 Contact Vendeur' });
+    buttons.push({ id: `contact_vendeur_${produit.id}`, title: '💬 Vendeur' });
   } else {
-    buttons.push({ id: `prod_suivant_${produit.id}`, title: '⏩ Suivant' });
+    buttons.push({ id: 'boutique_recherche', title: '🔍 Rechercher' });
   }
-  buttons.push({ id: 'boutique_recherche', title: '🔍 Rechercher' });
 
-  await sendWhatsAppButtons3(phone, 'Que souhaitez-vous faire ?', buttons).catch(() => {});
+  await sendWhatsAppButtons3(phone, 'Que souhaitez-vous faire ? (ou tapez *suivant*)', buttons).catch(() => {});
 }
 
 // ── Recherche / navigation par catégorie dans une boutique précise ─────────────
@@ -833,8 +930,8 @@ async function handleIncoming(msg) {
   // générique et renvoient "boutique introuvable". Cette exclusion s'applique aussi
   // bien au texte libre (un client ne tape normalement pas ces ids internes à la main,
   // mais on reste défensif) qu'aux clics bouton.
-  const estIdInterne = /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste)/.test(text) ||
-    /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste)/.test(interactiveId);
+  const estIdInterne = /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste|recherche_nom)/.test(text) ||
+    /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste|recherche_nom)/.test(interactiveId);
   const matchBoutique = !estIdInterne &&
     (text.match(/^boutique_(.+)$/i) || interactiveId.match(/^boutique_(.+)$/i));
   if (matchBoutique) {
@@ -857,7 +954,7 @@ async function handleIncoming(msg) {
   const CLOTURE = ['merci', 'merci beaucoup', 'ok merci', 'c\'est bon', 'cest bon', 'au revoir', 'bye', 'a bientot', 'à bientôt', 'non merci', 'ça ira', 'ca ira', 'c\'est tout', 'cest tout'];
   // Mots de pagination : montrer la suite des derniers résultats (spec 2026-07-13).
   // "ok"/"oui" = réponse naturelle à "Envie de continuer ?". "ok merci" reste une clôture (CLOTURE testée avant).
-  const MOTS_PLUS = ['plus', 'encore', 'd\'autres', 'dautres', 'autres', 'autre', 'voir plus', 'la suite', 'suivant', 'ok', 'oui'];
+  const MOTS_PLUS = ['plus', 'encore', 'd\'autres', 'dautres', 'autres', 'autre', 'voir plus', 'la suite', 'suivant', 'suivante', 'next', 'suite', 'ok', 'oui'];
 
   // ── IDLE → présentation puis menu (nouvelle session ou session expirée) ────
   if (state === 'IDLE') {
@@ -1178,8 +1275,14 @@ async function handleIncoming(msg) {
     return;
   }
 
-  // ── BOUTIQUE_LISTE → choix d'une boutique ou pagination ─────────────────────
+  // ── BOUTIQUE_LISTE → choix d'une boutique, recherche par nom, secteur ou pagination ─
   if (state === 'BOUTIQUE_LISTE') {
+    if (interactiveId === 'boutique_recherche_nom' || normText === 'chercher par nom' || normText === 'recherche' || normText === 'rechercher' || normText === 'chercher' || normText === 'chercher boutique' || normText === 'rechercher boutique') {
+      await setSession(phone, 'BOUTIQUE_SEARCH_SHOP', {});
+      await sendWhatsAppText(phone, '🔍 *Recherche de boutique*\n\nQuel est le nom ou mot-clé de la boutique que vous cherchez ? (ex: Dakar Mode, Touba Phone, Épicerie...)');
+      return;
+    }
+
     if (interactiveId === 'boutique_secteur_liste' || normText === 'secteur' || normText === 'secteurs' || normText === 'categorie' || normText === 'categories') {
       const r = await pool.query(
         `SELECT DISTINCT categorie FROM boutiques WHERE actif=true AND categorie IS NOT NULL ORDER BY categorie LIMIT 10`
@@ -1202,6 +1305,8 @@ async function handleIncoming(msg) {
       const shownIds = Array.isArray(context?.last?.shownIds) ? context.last.shownIds : [];
       if (context?.last?.type === 'boutiques_toutes') {
         await envoyerToutesLesBoutiques(phone, shownIds);
+      } else if (context?.last?.type === 'boutique_search_shop') {
+        await rechercherBoutiquesParNom(phone, context?.last?.query, shownIds);
       } else {
         await envoyerListeBoutiques(phone, context.secteur, shownIds);
       }
@@ -1226,16 +1331,14 @@ async function handleIncoming(msg) {
       if (!isNaN(num) && num >= 1 && num <= boutiques.length) {
         targetBoutiqueId = boutiques[num - 1].id;
       } else {
-        const rName = await pool.query(
-          'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE (nom ILIKE $1 OR slug ILIKE $1) AND actif=true LIMIT 1',
-          [`%${text.trim()}%`]
-        );
-        if (rName.rows[0]) targetBoutiqueId = rName.rows[0].id;
+        // Recherche automatique par nom tapé
+        await rechercherBoutiquesParNom(phone, text.trim());
+        return;
       }
     }
 
     if (!targetBoutiqueId) {
-      await sendWhatsAppText(phone, 'Choisissez une boutique dans la liste ci-dessus, tapez son numéro (1, 2...), ou tapez *menu*.');
+      await sendWhatsAppText(phone, 'Choisissez une boutique dans la liste ci-dessus, tapez son numéro (1, 2...), son nom, ou tapez *menu*.');
       return;
     }
 
@@ -1250,6 +1353,16 @@ async function handleIncoming(msg) {
       return;
     }
     await envoyerMenuBoutique(phone, r.rows[0]);
+    return;
+  }
+
+  // ── BOUTIQUE_SEARCH_SHOP → recherche textuelle de boutique par nom ──────────
+  if (state === 'BOUTIQUE_SEARCH_SHOP') {
+    if (!text || text.trim().length < 2) {
+      await sendWhatsAppText(phone, '⚠️ Entrez au moins 2 lettres pour le nom de la boutique (ou tapez *menu*).');
+      return;
+    }
+    await rechercherBoutiquesParNom(phone, text.trim());
     return;
   }
 
@@ -1880,4 +1993,14 @@ async function handleSearchQuery(phone, query, excludeIds = []) {
   });
 }
 
-module.exports = { handleIncoming, cleanupOldMessages, resetInactiveSessions, handleSearchQuery };
+module.exports = {
+  handleIncoming,
+  cleanupOldMessages,
+  resetInactiveSessions,
+  handleSearchQuery,
+  rechercherBoutiquesParNom,
+  envoyerFicheProduitBoutique,
+  envoyerProduitsBoutique,
+  envoyerToutesLesBoutiques,
+};
+

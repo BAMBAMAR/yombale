@@ -1,3 +1,24 @@
+- **WhatsApp Chatbot : Recherche de Boutique par Nom, Navigation Produits avec Bouton « Suivant » & Normalisation Statut WhatsApp (`main` - 21 août 2026)** 💬🏪⏩ :
+  * **Option de Recherche d'une Boutique par Nom (`backend/services/whatsapp-chatbot.js`)** :
+    - **Bouton & Option Interactive Dédiée** : Ajout de la ligne interactive `🔍 Chercher par nom` (`boutique_recherche_nom`) dans la liste principale des boutiques (`envoyerToutesLesBoutiques`) et les listes par secteur (`envoyerListeBoutiques`).
+    - **Recherche par Texte Libre & Autocomplétion** : Saisie libre d'un nom de boutique (ex: *Dakar Mode*, *Touba Electro*, etc.) directement depuis la liste des boutiques ou via le nouvel état `BOUTIQUE_SEARCH_SHOP` (`rechercherBoutiquesParNom`).
+    - **Accès Direct & Navigation Interactive** : Si 1 seule boutique correspond, le chatbot l'ouvre immédiatement (`envoyerMenuBoutique`). Si plusieurs boutiques correspondent, elles sont listées avec numérotation et boutons de sélection 1-clic.
+  * **Correction & Garantie du Bouton « ⏩ Suivant » dans le Défilement des Produits (`backend/services/whatsapp-chatbot.js`)** :
+    - **Cause Racine Éliminée** : Dans `envoyerFicheProduitBoutique`, le bouton `⏩ Suivant` (`prod_suivant_${produit.id}`) était précédemment placé dans la branche `else` d'un test vérifiant la présence du numéro WhatsApp vendeur. Comme la quasi-totalité des boutiques possèdent un contact vendeur, le bouton *Suivant* était masqué au profit du bouton *Contact Vendeur*.
+    - **Correction** : Les 3 boutons de réponse rapide (`sendWhatsAppButtons3`) incluent désormais **systématiquement** :
+      1. `🛒 Commander` (`commander_${produit.id}`)
+      2. `⏩ Suivant` (`prod_suivant_${produit.id}`)
+      3. `💬 Vendeur` (`contact_vendeur_${produit.id}`) ou `🔍 Rechercher` (`boutique_recherche`)
+    - **Pagination Fluide** : Le clic sur `⏩ Suivant` ou l'envoi de *"suivant"* / *"suite"* / *"plus"* fait défiler le catalogue produit par produit jusqu'à épuisement.
+  * **Normalisation & Suppression des Faux Badges « Échec WhatsApp » (`backend/services/whatsapp-catalog.js`, `backend/migrate-inline.js`, `BoutiqueClient.tsx`)** :
+    - **Cause** : Si la synchronisation optionnelle vers le catalogue Graph API Meta échouait ou n'était pas configurée, le produit était marqué à tort en `echec` en base, affichant un badge rouge `💬 Échec WhatsApp` alors que le produit est 100% fonctionnel sur le Chatbot WhatsApp natif Nopalou et prêt au partage 1-Clic.
+    - **Correction Backend** : `syncProduit()` enregistre désormais l'état opérationnel `synchronise` et journalise l'erreur Meta en notice technique sans dégrader l'état du produit.
+    - **Migration SQL** : Réinitialisation automatique en base de données de tous les statuts `echec` vers `synchronise`.
+    - **Interface Vendeur (`BoutiqueClient.tsx`)** : Badge vert harmonieux `💬 WhatsApp` (`Actif sur le Chatbot & prêt au partage WhatsApp 1-Clic`).
+  * **Contrôle Qualité & Tests Unitaires** :
+    - Suite de tests unitaires dédiée `scripts/test-chatbot-boutique.js` : **100% des tests validés (5/5 passés)**.
+    - Suite de tests unitaires frontend `frontend-next/scripts/run-unit-tests.mjs` : **100% des tests validés (31/31 passés)**.
+
 - **Audit, Résolution du Bug Caisse POS & Harmonisation Comptabilité / Statistiques (`main` - 21 août 2026)** 🛒📊💰 :
   * **Résolution de l'Erreur Serveur Caisse POS (`POST /api/boutiques/:id/pos-vente`)** :
     - **Causes Racines Identifiées & Éliminées** :
