@@ -1,3 +1,12 @@
+- **Cache-Busting PWA & Forçage d'Actualisation des Icônes / Logos (`main` - 21 août 2026)** ⚡📱✨ :
+  * **Purge & Invalidation Immédiate des Anciens Caches PWA** :
+    - **Incrémentation du Service Worker (`sw.ts`)** : Passage à `CACHE_VERSION = 'v7'` forçant la purge automatique et irréversible de tous les conteneurs de cache obsolètes (`nopalou-assets-cache-v6`, `nopalou-html-cache-v6`, etc.) dès l'activation du nouveau worker.
+    - **Versionnage du Manifest PWA (`manifest.json`)** : Passage à `"version": "6"` avec injection du paramètre de cache-busting `?v=2` sur l'ensemble des chemins d'icônes (`icon-192.png?v=2`, `icon-512.png?v=2`, `icon-maskable-512.png?v=2`, `icon-512.svg?v=2` et raccourcis).
+    - **Métadonnées Globales (`layout.tsx`)** : Ajout du paramètre `?v=2` sur les balises de favicons et `apple-touch-icon` (`apple-icon.png?v=2`, 180×180).
+  * **Validation & Contrôle Qualité** :
+    - Build Next.js (`npm run build`) : 91/91 pages et assets compilés avec succès (code 0).
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Élimination Définitive des Textes Tronqués & Rendu Vectoriel Pur SVG sur Tous les Visuels (`main` - 21 août 2026)** 🎨🛡️✨ :
   * **Identification de la Cause Racine de Troncature dans le Moteur Satori (`@vercel/og`)** :
     - **Incompatibilité des Balises `<br />` dans Satori** : Lorsqu'une balise `<br />` était insérée dans un titre HTML (`Prenez le contrôle de votre boutique.<br /><span>Vendez en magasin...</span>`), le moteur Satori ignorait le saut de ligne et forçait le rendu sur une seule ligne horizontale continue, provoquant le débordement et le rognage du texte à droite (*« Vendez e... »*).
