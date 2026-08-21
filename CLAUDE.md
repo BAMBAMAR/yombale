@@ -1,10 +1,15 @@
 - **Audit, Résolution du Bug Caisse POS & Harmonisation Comptabilité / Statistiques (`main` - 21 août 2026)** 🛒📊💰 :
   * **Résolution de l'Erreur Serveur Caisse POS (`POST /api/boutiques/:id/pos-vente`)** :
-    - **Cause Racine Éliminée** : Les clés d'idempotence UUID (`POS-${crypto.randomUUID()}`) et les références d'articles multi-lignes dépassaient la limite `VARCHAR(30)` des tables `ventes` et `commandes_boutique`, provoquant un crash PostgreSQL 500 (`value too long for type character varying(30)`), un repli en boucle sur IndexedDB et l'absence totale des ventes POS en comptabilité.
-    - **Migrations SQL Schéma (`backend/migrate-inline.js`)** :
+    - **Causes Racines Identifiées & Éliminées** :
+      1. Les clés d'idempotence UUID (`POS-${crypto.randomUUID()}`) dépassaient la limite `VARCHAR(30)` des tables `ventes` et `commandes_boutique`, provoquant un crash PostgreSQL 500 (`value too long for type character varying(30)`).
+      2. Incohérence de nom de colonne dans la requête `INSERT INTO commandes_boutique` (`mode_paiement` au lieu de `methode_paiement`), provoquant une erreur PostgreSQL `[42703] column "mode_paiement" does not exist`.
+      3. Absence du champ `client_telephone` dans l'insertion consolidée de `commandes_boutique`, provoquant une violation de contrainte `[23502] null value in column "client_telephone" violates not-null constraint`.
+    - **Migrations SQL Schéma & Auto-migration de Sécurité (`backend/migrate-inline.js`, `backend/routes/boutiques.js`)** :
       - `ALTER TABLE ventes ALTER COLUMN reference TYPE VARCHAR(100)`
       - `ALTER TABLE commandes_boutique ALTER COLUMN reference TYPE VARCHAR(100)`
       - `ALTER TABLE caisse_documents ALTER COLUMN reference TYPE VARCHAR(100)`
+      - Auto-migration `ensureRefColSize()` intégrée pour garantir le schéma à chaud en production.
+      - Ajout de `client?.telephone || 'POS'` et correction de `methode_paiement` dans `INSERT INTO commandes_boutique`.
     - **Génération Sécurisée de Référence Caisse POS (`CaisseClient.tsx`)** : Clé compacte et robuste `POS-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`.
     - **Ventilation des Paiements Mixtes (`backend/routes/boutiques.js`)** : Prise en charge des montants séparés (`especes_mixte`, `second_mode_mixte`, `montant_mixte2`) pour ventiler fidèlement les encaissements espèces et digitaux dans les compteurs de session `boutique_pos_sessions`.
   * **Synchronisation Automatique du Carnet de Dettes avec le Stock et la Comptabilité (`backend/routes/boutiques.js`)** :

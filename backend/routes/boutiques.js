@@ -2367,13 +2367,14 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
         const resumeNoms = calculation.items.map(i => `${i.nom} × ${i.quantite || 1}`).join(', ');
         const totalQteGlobale = calculation.items.reduce((acc, i) => acc + Number(i.quantite || 1), 0);
         await dbClient.query(
-          `INSERT INTO commandes_boutique (reference, boutique_id, client_nom, statut, nom_produit, quantite, montant_total, methode_paiement, created_at)
-           VALUES ($1, $2, $3, 'livree', $4, $5, $6, $7, NOW())
+          `INSERT INTO commandes_boutique (reference, boutique_id, client_nom, client_telephone, statut, nom_produit, quantite, montant_total, methode_paiement, created_at)
+           VALUES ($1, $2, $3, $4, 'livree', $5, $6, $7, $8, NOW())
            ON CONFLICT (reference) DO NOTHING`,
           [
             refVente,
             boutiqueId,
             caissier ? `Caisse POS (${caissier})` : 'Caisse POS',
+            client?.telephone || 'POS',
             resumeNoms.slice(0, 200),
             totalQteGlobale,
             netAPayer,
