@@ -1506,6 +1506,9 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
     const { nom, description, prix, prix_barre, en_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
     if (!nom?.trim()) return res.status(400).json({ error: 'Nom requis' });
 
+    const safePrix = (prix !== undefined && prix !== null && String(prix).trim() !== '' && !isNaN(Number(prix))) ? Number(prix) : null;
+    const safePrixBarre = (prix_barre !== undefined && prix_barre !== null && String(prix_barre).trim() !== '' && !isNaN(Number(prix_barre))) ? Number(prix_barre) : null;
+
     let images = [];
     if (req.body.images) {
       try {
@@ -1543,7 +1546,7 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
     const r = await pool.query(
       `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, images, en_stock, categorie, caracteristiques, variantes, code_barre)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-      [id, nom.trim(), description||null, prix||null, prix_barre||null,
+      [id, nom.trim(), description||null, safePrix, safePrixBarre,
        images, en_stock !== 'false', categorie||null, caracJson, JSON.stringify(variantesJson), codeBarrePostVal]
     );
     res.status(201).json({ success: true, produit: r.rows[0] });
@@ -1600,11 +1603,14 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     const rawCodeBarre = Array.isArray(code_barre) ? code_barre[0] : code_barre;
     const codeBarreVal = rawCodeBarre !== undefined ? (rawCodeBarre && typeof rawCodeBarre === 'string' && rawCodeBarre.trim() ? rawCodeBarre.trim() : null) : existing.rows[0].code_barre;
 
+    const safePrix = (prix !== undefined && prix !== null && String(prix).trim() !== '' && !isNaN(Number(prix))) ? Number(prix) : (prix === '' ? null : existing.rows[0].prix);
+    const safePrixBarre = (prix_barre !== undefined && prix_barre !== null && String(prix_barre).trim() !== '' && !isNaN(Number(prix_barre))) ? Number(prix_barre) : (prix_barre === '' ? null : existing.rows[0].prix_barre);
+
     const r = await pool.query(
       `UPDATE boutique_produits SET nom=$1, description=$2, prix=$3, prix_barre=$4,
        images=$5, en_stock=$6, categorie=$7, caracteristiques=$8, variantes=$9, code_barre=$10, updated_at=NOW()
        WHERE id=$11 AND boutique_id=$12 RETURNING *`,
-      [nom||existing.rows[0].nom, description||null, prix||null, prix_barre||null,
+      [nom||existing.rows[0].nom, description||null, safePrix, safePrixBarre,
        images, en_stock !== 'false', categorie||existing.rows[0].categorie||null,
        caracJson, JSON.stringify(variantesJson), codeBarreVal, prodId, id]
     );
@@ -2078,11 +2084,12 @@ router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (r
       await client.query('BEGIN');
       const insere = [];
       for (const p of produits) {
-        if (!p.nom?.trim() || p.prix === undefined || p.prix === null || isNaN(Number(p.prix))) continue;
+        if (!p.nom?.trim()) continue;
         const images = p.images || (p.photo_defaut ? [p.photo_defaut] : []);
         const stockQty = p.quantite_stock !== undefined && p.quantite_stock !== null
           ? Number(p.quantite_stock)
           : (p.stock_quantite !== undefined && p.stock_quantite !== null ? Number(p.stock_quantite) : 1);
+        const prixNum = (p.prix !== undefined && p.prix !== null && String(p.prix).trim() !== '' && !isNaN(Number(p.prix))) ? Number(p.prix) : null;
 
         const r = await client.query(
           `INSERT INTO boutique_produits (boutique_id, nom, description, prix, images, en_stock, stock_quantite, categorie, whatsapp_sync_statut)
@@ -2091,7 +2098,7 @@ router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (r
             id,
             p.nom.trim(),
             p.description || null,
-            Number(p.prix),
+            prixNum,
             images,
             p.en_stock !== false,
             stockQty,

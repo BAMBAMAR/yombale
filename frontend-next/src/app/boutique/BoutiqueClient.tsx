@@ -1406,8 +1406,8 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       {/* Prix */}
       <div className={modeRapide ? '' : 'bq-form-grid-2'} style={modeRapide ? { display: 'grid' } : undefined}>
         <div>
-          <label style={labelStyle}>{t('shop.productPrice')} (FCFA) <span style={{ color: '#dc2626' }}>*</span></label>
-          <input name="prix" type="number" min={0} required defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 350 000" />
+          <label style={labelStyle}>{t('shop.productPrice')} (FCFA) <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></label>
+          <input name="prix" type="number" min={0} defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 350 000 (Optionnel)" />
         </div>
         {!modeRapide && (
           <div>
@@ -1419,7 +1419,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
 
       {/* Photos */}
       <div>
-        <label style={labelStyle}>{t('shop.photosLabel')} <span style={{ fontSize: 11, color: '#9ca3af' }}>({t('shop.photosHelpText')})</span></label>
+        <label style={labelStyle}>{t('shop.photosLabel')} <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'} — {t('shop.photosHelpText')})</span></label>
         <div className="photos-zone">
           {imagesExistantes.length + photos.length < 5 && (
             <div
@@ -1431,7 +1431,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
               aria-label="Ajouter des photos"
             >
               <span style={{ fontSize: 28 }}>📷</span>
-              <p>Cliquez pour ajouter des photos</p>
+              <p>Cliquez pour ajouter des photos (Optionnel)</p>
             </div>
           )}
           <input
@@ -1493,9 +1493,6 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         </div>
       )}
 
-      {imagesExistantes.length === 0 && photos.length === 0 && (
-        <p style={{ color: '#dc2626', fontSize: 12, margin: 0 }}>Ajoutez au moins une photo.</p>
-      )}
       <div style={{
         position: 'sticky',
         bottom: 12,
@@ -1511,7 +1508,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         marginTop: 16,
         marginBottom: 20,
       }}>
-        <SubmitButton label={produit ? `💾 ${t('shop.saveProductBtn')}` : `➕ ${t('shop.newProduct')}`} disabled={imagesExistantes.length === 0 && photos.length === 0} />
+        <SubmitButton label={produit ? `💾 ${t('shop.saveProductBtn')}` : `➕ ${t('shop.newProduct')}`} />
         <button type="button" onClick={onCancel} style={{
           padding: '10px 20px', background: '#f3f4f6', border: '1px solid #d1d5db',
           borderRadius: 8, fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer',

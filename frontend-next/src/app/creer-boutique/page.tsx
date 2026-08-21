@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { setAuthCookieAction } from '@/app/actions/auth'
+import { CATEGORIES } from '@/lib/categories'
 
 export default function CreerBoutiqueWizard() {
   const router = useRouter()
@@ -18,7 +19,7 @@ export default function CreerBoutiqueWizard() {
   const [telephone, setTelephone] = useState('')
   const [code, setCode] = useState('')
   const [plan, setPlan] = useState<'decouverte' | 'pro' | 'business'>(initialPlan)
-  const [categorie, setCategorie] = useState('Mode & Vêtements')
+  const [categorie, setCategorie] = useState(CATEGORIES[0]?.value || 'mixte')
   const [couleur, setCouleur] = useState('#C75B00')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -443,13 +444,11 @@ export default function CreerBoutiqueWizard() {
                     ...fontStyle
                   }}
                 >
-                  <option value="Mode & Vêtements">Mode & Vêtements</option>
-                  <option value="Électronique & High-Tech">Électronique & High-Tech</option>
-                  <option value="Cosmétique & Beauté">Cosmétique & Beauté</option>
-                  <option value="Alimentation & Restauration">Alimentation & Restauration</option>
-                  <option value="Maison & Décoration">Maison & Décoration</option>
-                  <option value="Services">Services</option>
-                  <option value="Divers">Divers (Autre)</option>
+                  {CATEGORIES.map(c => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 

@@ -174,14 +174,29 @@ async function sendWhatsAppCarousel(phone, templateName, cards) {
 // ── Interactive List Message (menu chatbot) ───────────────────────────────────
 // sections = [{ title, rows: [{ id, title, description }] }]
 async function sendWhatsAppInteractive(phone, headerText, bodyText, sections) {
-  const sanitizedSections = (sections || []).map(s => ({
-    title: (s.title || '').slice(0, 24),
-    rows: (s.rows || []).map(r => ({
-      id: r.id,
-      title: (r.title || '').slice(0, 24),
-      ...(r.description ? { description: r.description.slice(0, 72) } : {}),
-    })),
-  }));
+  let totalRows = 0;
+  const sanitizedSections = [];
+
+  for (const s of (sections || [])) {
+    if (totalRows >= 10) break;
+    const remaining = 10 - totalRows;
+    const sectionRows = (s.rows || []).slice(0, remaining).map(r => ({
+      id: String(r.id || '').slice(0, 200),
+      title: String(r.title || 'Option').trim().slice(0, 24) || 'Option',
+      ...(r.description ? { description: String(r.description).slice(0, 72) } : {}),
+    }));
+    if (sectionRows.length > 0) {
+      totalRows += sectionRows.length;
+      sanitizedSections.push({
+        title: String(s.title || '').slice(0, 24),
+        rows: sectionRows,
+      });
+    }
+  }
+
+  if (sanitizedSections.length === 0) {
+    return sendWhatsAppText(phone, bodyText);
+  }
 
   return post({
     messaging_product: 'whatsapp',

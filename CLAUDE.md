@@ -1,3 +1,33 @@
+- **Robustesse & Cohérence du Chatbot WhatsApp : Navigation Boutiques & Sélections Numériques (`main` - 21 août 2026)** 🤖🏪 :
+  * **Conformité & Limitation Stricte des Messages Interactifs Meta / WhatsApp API (`whatsapp.js`)** :
+    - Découverte et correction du dépassement de la limite WhatsApp API (10 rows max par message interactif de type `list`) : auparavant, l'envoi de 10 boutiques + le bouton de filtrage par secteur créait 11 lignes et provoquait une erreur 400 rejetée silencieusement par Meta.
+    - Ajout d'un limiteur défensif dans `sendWhatsAppInteractive` pour plafonner automatiquement le total des lignes à 10 maximum à travers toutes les sections.
+  * **Sauvegarde Systématique de Session & Support du Choix par Numéro (`whatsapp-chatbot.js`)** :
+    - `envoyerToutesLesBoutiques` & `envoyerListeBoutiques` : Enregistrement immédiat de l'état `BOUTIQUE_LISTE` et de la liste `boutiquesAffichees` dans `whatsapp_sessions` avant l'envoi des messages.
+    - Formatage clair et numéroté des titres de boutiques (`1. Nom`, `2. Nom`...) pour une sélection sans ambiguïté.
+    - Parser intelligent des réponses numériques : extraction souple gérant `1`, `01`, `1.`, `N°1`, `#1`, `boutique 1` ou saisie textuelle du nom/slug de la boutique.
+    - Fallback de récupération résiliente des dernières boutiques actives même en cas d'expiration de session contextuelle.
+  * **Navigation Fluide dans les Menus Boutiques (`BOUTIQUE_MENU`) & Menus Principaux (`MENU`)** :
+    - Support complet des sélections par numéros de raccourcis (`1` à `5` dans une boutique : Voir les produits, Rechercher, Par catégorie, Contacter le vendeur, Changer de boutique).
+    - Détection automatique et prioritaire des boutiques Nopalou par nom dans la recherche libre pour ouvrir immédiatement leur vitrine.
+    - Messages d'aide conviviaux évitant les blocages ou réponses de recherche incohérentes.
+
+- **Disponibilité Intégrale des Catégories (Création Boutique) & Flexibilité Produit (Prix & Photos Optionnels) (`main` - 21 août 2026)** 🛍️📦 :
+  * **Intégration Complète des 25 Catégories Officielles dans le Wizard de Création de Boutique (`src/app/creer-boutique/page.tsx`)** :
+    - Remplacement de la liste restreinte de 7 catégories hardcodées par l'import dynamique de l'ensemble des 25 catégories officielles Nopalou définies dans `@/lib/categories`.
+    - Initialisation par défaut fluide (`mixte` / généraliste ou première catégorie) et transmission exacte des slugs et libellés au backend (`POST /api/boutiques/taf-taf`).
+  * **Prix et Photos Optionnels lors de l'Ajout et de la Modification de Produit (`ProduitForm` & Backend)** :
+    - **Frontend (`src/app/boutique/BoutiqueClient.tsx`)** :
+      - Suppression de l'attribut `required` et de l'astérisque obligatoire rouge sur le champ de prix de vente (`prix`).
+      - Suppression de la condition bloquante désactivant le bouton de soumission (`SubmitButton`) en l'absence de photos.
+      - Suppression du message d'erreur d'obligation de photo (« Ajoutez au moins une photo ») et indication claire « (Optionnel) ».
+    - **Backend (`backend/routes/boutiques.js`)** :
+      - Sécurisation du parsing de `safePrix` et `safePrixBarre` dans `POST /api/boutiques/:id/produits` et `PUT /api/boutiques/:id/produits/:prodId` pour autoriser `null` sans erreur SQL.
+      - Mise à jour du parsing dans le batch d'import de produits (`POST /api/boutiques/:id/produits/batch`) pour accepter les produits sans prix.
+  * **Validation & Contrôle Qualité** :
+    - Build Next.js (`npm run build`) : 100% validé sans erreur (code 0).
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Enrichissement PWA Complet, Service Worker Avancé & App Capabilities Microsoft PWABuilder (`main` - 21 août 2026)** 📱⚡ :
   * **Service Worker Haute Robustesse (`src/app/sw.ts`)** :
     - **Periodic Background Sync (`periodicsync`)** : Écouteur `nopalou-price-alerts-sync` et `nopalou-daily-catalog-sync` pour l'actualisation silencieuse des baisses de prix et du catalogue hors-ligne.
