@@ -1,4 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="112" fill="#C75B00"/>
-  <text x="256" y="357" font-family="Sora, Arial, sans-serif" font-size="314" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="-5">N</text>
+  <!--
+    N propriétaire Nopalou — tracés vectoriels purs
+    ════════════════════════════════════════════════
+    Compound path avec evenodd :
+    1. Rectangle englobant (CW) = le corps de la lettre
+    2. Triangle haut-droite (CCW) = encoche supérieure
+    3. Triangle bas-gauche (CCW) = encoche inférieure
+    
+    Proportions :
+    • Jambages : 68 px de large (x: 120→188 et 324→392)
+    • Diagonale : ~55 px d'épaisseur perpendiculaire (81 % du jambage)
+    • Encoches égales et symétriques
+  -->
+  <path fill-rule="evenodd" d="
+    M120 108h272v296H120Z
+    M324 108H188l136 198Z
+    M188 404h136L188 206Z
+  " fill="#fff"/>
 </svg>

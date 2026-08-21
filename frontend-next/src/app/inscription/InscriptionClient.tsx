@@ -16,7 +16,7 @@ export default function InscriptionClient() {
       <div className="auth-visual">
         <Link href="/" className="auth-visual-logo">
           <Image src="/icons/logo-mark.svg" alt="" width={32} height={32} style={{ borderRadius: 7, flexShrink: 0 }} priority />
-          <span className="auth-logo-name" data-suffix="lou">Nopa</span>
+          <span className="auth-logo-name"><span style={{ color: '#fff' }}>Nopa</span><span style={{ color: '#C75B00' }}>lou</span></span>
         </Link>
         <div className="auth-visual-body">
           <h2 className="auth-visual-titre" style={{ whiteSpace: 'pre-line' }}>

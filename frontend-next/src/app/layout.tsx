@@ -240,7 +240,7 @@ export default async function RootLayout({
             <div className="navbar-top-row">
               <a href="/" className="logo" aria-label="Nopalou - Comparateur de prix au Sénégal">
                 <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
-                <span className="logo-name" data-suffix="lou">Nopa</span>
+                <span className="logo-name"><span className="logo-nopa">Nopa</span><span className="logo-lou">lou</span></span>
               </a>
               <div className="navbar-links" role="menubar" style={{ whiteSpace: 'nowrap' }}>
                 <a href="/" className="navbar-link" role="menuitem">Produits</a>
@@ -306,7 +306,7 @@ export default async function RootLayout({
             <div className="footer-brand">
               <a href="/" className="footer-logo">
                 <Image src="/icons/logo-mark.svg" alt="" width={28} height={28} style={{ borderRadius: 7, flexShrink: 0 }} />
-                <span className="footer-logo-name" data-suffix="lou">Nopa</span>
+                <span className="footer-logo-name"><span style={{ color: '#fff' }}>Nopa</span><span style={{ color: '#C75B00' }}>lou</span></span>
               </a>
               <p className="footer-tagline">Le premier comparateur de prix dédié au marché sénégalais — produits, immobilier, forfaits télécom.</p>
               <div className="footer-social" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>

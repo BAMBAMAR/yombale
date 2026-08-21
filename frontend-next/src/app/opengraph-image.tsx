@@ -32,7 +32,7 @@ export default function OgImage() {
           display: 'flex',
         }} />
 
-        {/* Logo */}
+        {/* Logo — monogramme vectoriel + wordmark */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 20, marginBottom: 40,
         }}>
@@ -40,10 +40,21 @@ export default function OgImage() {
             width: 72, height: 72, borderRadius: 16,
             background: '#C75B00',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 40, fontWeight: 900, color: '#fff',
-          }}>N</div>
-          <span style={{ fontSize: 52, fontWeight: 800, color: '#fff', letterSpacing: -1 }}>
-            Nopa<span style={{ color: '#C75B00' }}>lou</span>
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            {/* N vectoriel via SVG */}
+            <svg width="72" height="72" viewBox="0 0 512 512" style={{ position: 'absolute', top: 0, left: 0 }}>
+              <path
+                fillRule="evenodd"
+                d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z"
+                fill="#FFFFFF"
+              />
+            </svg>
+          </div>
+          <span style={{ fontSize: 52, fontWeight: 800, letterSpacing: -1, display: 'flex' }}>
+            <span style={{ color: '#fff' }}>Nopa</span>
+            <span style={{ color: '#C75B00' }}>lou</span>
           </span>
         </div>
 

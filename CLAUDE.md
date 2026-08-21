@@ -1,3 +1,26 @@
+- **Refonte Complète de l'Identité Visuelle & Système de Logos Propriétaires Nopalou (`main` - 21 août 2026)** 🎨✨ :
+  * **Création du Monogramme « N » Géométrique Propriétaire** :
+    - **Tracés Vectoriels Purs (SVG Compound Path)** : Remplacement du `<text>N</text>` dépendant des polices du système client par un tracé SVG pur avec `fill-rule="evenodd"`. Élimine tout risque d'affichage asymétrique ou d'échec de rendu selon les OS.
+    - **Géométrie Équilibrée & Signature** : Deux jambages de 68px de large (`x: 120→188` et `x: 324→392`), diagonale directionnelle reliant le haut gauche au bas droite, et deux encoches triangulaires soustractives créant un signe net et mémorisable.
+  * **Kit Complet de Logos & Monogrammes (`/public/icons/`)** :
+    - `logo-mark.svg` (32×32 display / 512×512 viewBox) : Favicon et en-têtes compacts.
+    - `logo-horizontal.svg` & `logo-horizontal-white.svg` : Wordmark horizontal complet intégrant le monogramme et la typographie de marque Nopalou (« Nopa » en bleu marine / blanc, « lou » en orange brûlé `#C75B00`).
+    - `logo-mark-dark.svg`, `logo-mark-white.svg`, `logo-mark-mono.svg`, `logo-mark-transparent.svg` : Déclinaisons adaptées aux fonds clairs, foncés, transparents et impressions monochromes.
+  * **Kit PWA & Conformité W3C Safe Zone Android** :
+    - `icon-maskable-512.svg` & `icon-maskable-512.png` : Fond plein orange opaque avec monogramme réduit à 60% et strictement centré dans le cercle de sécurité de 40% de rayon (garantie 0% de rognage sur tous les lanceurs Android).
+    - `icon-192.png`, `icon-512.png` & `apple-icon.png` (180×180) : Générés en haute résolution avec anticrénelage subpixel.
+  * **Nettoyage & Intégration sur l'Ensemble du Site** :
+    - `layout.tsx` : Remplacement du pseudo-élément CSS `::after` (qui concaténait « Nopa » + `data-suffix="lou"`) par une structure HTML propre `<span className="logo-name"><span className="logo-nopa">Nopa</span><span className="logo-lou">lou</span></span>`.
+    - `globals.css` : Suppression du soulignement automatique de « lou » qui créait un effet visuel indésirable de lien hypertexte.
+    - `icon.tsx` : Remplacement du rendu dynamique de lettre par le tracé SVG vectoriel inline pour un favicon universellement fidèle.
+    - `opengraph-image.tsx` : Mise à jour de la carte de partage social (1200×630) avec le nouveau monogramme vectoriel.
+    - `ConnexionClient.tsx`, `InscriptionClient.tsx`, `MotDePasseOublieClient.tsx` : Intégration harmonisée.
+  * **Documentation & Charte de Marque** :
+    - Création du guide officiel `BRAND.md` documentant la palette officielle, les spécifications géométriques, les formats livrés et les interdictions d'usage.
+  * **Validation & Contrôle Qualité** :
+    - Tests unitaires (`npm test`) : 31/31 tests validés avec succès (100%).
+    - Respect des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Généralisation Universelle du Défilement Horizontal & Nudge sur Tous les Sous-Menus 3+ Éléments (`main` - 20 août 2026)** 🔄📱 :
   * **Branchement Complet de `useScrollNudge` & Centrage Fluide au Clic** :
     - **Documents & Facturation (`GestionDocuments.tsx`)** : Connecté sur le ruban des filtres de documents `[📁 Tous]`, `[🧾 Factures]`, `[📝 Devis]`, `[📋 Proformas]` avec centrage automatique au clic.

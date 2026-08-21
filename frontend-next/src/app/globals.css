@@ -824,15 +824,15 @@ a {
 
 .logo-name {
   color: var(--navy);
+  display: inline;
 }
 
-.logo-name::after {
-  content: attr(data-suffix);
+.logo-nopa {
+  color: var(--navy);
+}
+
+.logo-lou {
   color: var(--accent);
-  text-decoration: underline;
-  text-decoration-color: var(--accent);
-  text-underline-offset: 4px;
-  text-decoration-thickness: 2px;
 }
 
 /* ── Page titre ────────────────────────────────────────────────── */

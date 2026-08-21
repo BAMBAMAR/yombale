@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="40" viewBox="0 0 220 40">
+  <!-- Logo horizontal Nopalou — Monogramme vectoriel + Wordmark -->
+  
+  <!-- Monogramme N sur carré orange (40×40) -->
+  <rect x="0" y="0" width="40" height="40" rx="9" fill="#C75B00"/>
+  <path fill-rule="evenodd" d="
+    M9.4 8.4h21.2v23.2H9.4Z
+    M25.3 8.4H14.7l10.6 15.5Z
+    M14.7 31.6h10.6L14.7 16.1Z
+  " fill="#fff"/>
+  
+  <!-- Wordmark "Nopalou" — police système (universellement disponible) -->
+  <text x="50" y="30" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="26" font-weight="800" letter-spacing="-0.5">
+    <tspan fill="#1C2B4A">Nopa</tspan><tspan fill="#C75B00">lou</tspan>
+  </text>
+</svg>
