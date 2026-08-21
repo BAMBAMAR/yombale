@@ -1,3 +1,16 @@
+- **Élimination Définitive des Textes Tronqués & Rendu Vectoriel Pur SVG sur Tous les Visuels (`main` - 21 août 2026)** 🎨🛡️✨ :
+  * **Identification de la Cause Racine de Troncature dans le Moteur Satori (`@vercel/og`)** :
+    - **Incompatibilité des Balises `<br />` dans Satori** : Lorsqu'une balise `<br />` était insérée dans un titre HTML (`Prenez le contrôle de votre boutique.<br /><span>Vendez en magasin...</span>`), le moteur Satori ignorait le saut de ligne et forçait le rendu sur une seule ligne horizontale continue, provoquant le débordement et le rognage du texte à droite (*« Vendez e... »*).
+    - **Résolution Universelle** : Remplacement systématique de tous les `<br />` par des conteneurs `flexDirection: 'column'` avec des éléments `<span>` distincts dimensionnés dynamiquement.
+  * **Suppression des Artefacts de Rendu Emojis & Passage au Vectoriel Pur SVG** :
+    - **Cause des Carrés de Rognage Colorés** : Les emojis bruts Unicode sans police couleur chargée dans Satori généraient des pavés de fond et des contours coupés.
+    - **Résolution** : Remplacement de tous les emojis par des tracés vectoriels inline purs SVG (`<svg viewBox="0 0 24 24">`) avec styles nets et contrastés, et intégration du monogramme géométrique propriétaire Nopalou.
+  * **Rééquilibrage de la Hauteur & Suppression des Vides Verticaux (`flyer-commercial-a5`, `flyer-demarchage`, `fiche-tarifs-a4`, `story-instagram`, `post-instagram`, `memo-poche-commercial`, `banniere-hero-mobile`, `apporteur-affaires`)** :
+    - Distribution verticale avec `justifyContent: 'space-between'` et hauteurs proportionnelles au format A5 (1240 × 1748 px), éliminant tout espacement disproportionné entre les sections.
+  * **Validation & Contrôle Qualité** :
+    - Build Next.js (`npm run build`) : 91/91 pages et routes d'assets générées avec succès (code 0).
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **WhatsApp Chatbot : Recherche de Boutique par Nom, Navigation Produits avec Bouton « Suivant » & Normalisation Statut WhatsApp (`main` - 21 août 2026)** 💬🏪⏩ :
   * **Option de Recherche d'une Boutique par Nom (`backend/services/whatsapp-chatbot.js`)** :
     - **Bouton & Option Interactive Dédiée** : Ajout de la ligne interactive `🔍 Chercher par nom` (`boutique_recherche_nom`) dans la liste principale des boutiques (`envoyerToutesLesBoutiques`) et les listes par secteur (`envoyerListeBoutiques`).

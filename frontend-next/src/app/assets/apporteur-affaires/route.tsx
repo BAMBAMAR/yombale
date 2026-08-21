@@ -15,6 +15,7 @@ export async function GET() {
         overflow: 'hidden',
         padding: 52,
         boxSizing: 'border-box',
+        justifyContent: 'space-between',
       }}>
         {/* Top Accent Line */}
         <div style={{ height: 10, background: 'linear-gradient(90deg, #C75B00 0%, #7C3AED 50%, #1C2B4A 100%)', display: 'flex', position: 'absolute', top: 0, left: 0, right: 0 }} />
@@ -22,22 +23,30 @@ export async function GET() {
         {/* Header Branding */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 18,
-          marginBottom: 28,
+          marginBottom: 16,
         }}>
           <div style={{
-            width: 72, height: 72, borderRadius: 20,
+            width: 68, height: 68, borderRadius: 18,
             background: '#C75B00',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 44, fontWeight: 900, color: '#FFFFFF',
-          }}>N</div>
-          <span style={{ fontSize: 50, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1.5 }}>
-            Nopa<span style={{ color: '#C75B00' }}>lou</span>
-          </span>
+          }}>
+            <svg width="42" height="42" viewBox="0 0 512 512">
+              <path
+                fillRule="evenodd"
+                d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z"
+                fill="#FFFFFF"
+              />
+            </svg>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 46, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1 }}>Nopa</span>
+            <span style={{ fontSize: 46, fontWeight: 900, color: '#C75B00', letterSpacing: -1 }}>lou</span>
+          </div>
         </div>
 
         {/* Contenu central */}
         <div style={{
-          flex: 1, display: 'flex', flexDirection: 'column',
+          display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
           padding: '0 20px',
         }}>
@@ -45,44 +54,45 @@ export async function GET() {
             background: '#F3E8FF',
             border: '2px solid #7C3AED',
             borderRadius: 9999, padding: '10px 32px',
-            fontSize: 20, color: '#7C3AED', fontWeight: 900,
-            marginBottom: 20, display: 'flex', letterSpacing: 0.5,
+            fontSize: 18, color: '#7C3AED', fontWeight: 900,
+            marginBottom: 16, display: 'flex', letterSpacing: 0.5,
           }}>
             💼 PROGRAMME APPORTEUR D&apos;AFFAIRES
           </div>
 
-          <p style={{
-            fontSize: 106, fontWeight: 900, color: '#C75B00',
-            textAlign: 'center', margin: '0 0 2px', lineHeight: 1,
+          <span style={{
+            fontSize: 104, fontWeight: 900, color: '#C75B00',
+            textAlign: 'center', lineHeight: 1,
             letterSpacing: -3,
           }}>
             20%
-          </p>
-          <p style={{
-            fontSize: 36, fontWeight: 900, color: '#1C2B4A',
-            textAlign: 'center', margin: '0 0 24px', letterSpacing: -1,
+          </span>
+          <span style={{
+            fontSize: 34, fontWeight: 900, color: '#1C2B4A',
+            textAlign: 'center', margin: '6px 0 20px', letterSpacing: -1,
           }}>
             de commission récurrente mensuelle
-          </p>
+          </span>
 
-          <p style={{
-            fontSize: 24, color: '#334155',
-            textAlign: 'center', margin: 0, lineHeight: 1.45, maxWidth: 860, fontWeight: 650,
-          }}>
-            Présentez Nopalou aux commerçants de votre réseau.<br />
-            Chaque boutique Pro ou Business que vous recrutez<br />
-            vous rapporte 20% de son abonnement, chaque mois sur Wave / OM.
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, maxWidth: 900 }}>
+            <span style={{ fontSize: 22, color: '#334155', textAlign: 'center', fontWeight: 650, lineHeight: 1.4 }}>
+              Présentez Nopalou aux commerçants et boutiques de votre réseau.
+            </span>
+            <span style={{ fontSize: 22, color: '#334155', textAlign: 'center', fontWeight: 650, lineHeight: 1.4 }}>
+              Chaque abonnement actif vous rapporte 20% chaque mois par Wave / OM.
+            </span>
+          </div>
 
           <div style={{
-            marginTop: 40,
+            marginTop: 36,
             background: '#1C2B4A',
             border: '2.5px solid #C75B00',
-            borderRadius: 18, padding: '18px 48px',
-            fontSize: 26, fontWeight: 900, color: '#FFFFFF',
+            borderRadius: 9999, padding: '18px 48px',
+            fontSize: 24, fontWeight: 900, color: '#FFFFFF',
             display: 'flex', letterSpacing: -0.5,
+            boxShadow: '0 8px 24px rgba(28, 43, 74, 0.25)',
           }}>
-            nopalou.com/apporteur
+            👉 nopalou.com/compte/apporteur
           </div>
         </div>
 
@@ -90,8 +100,8 @@ export async function GET() {
         <div style={{
           display: 'flex', justifyContent: 'center', alignItems: 'center',
         }}>
-          <span style={{ fontSize: 19, color: '#C75B00', fontWeight: 900 }}>
-            0 FCFA d&apos;Investissement · Paiement mensuel Wave / OM · Sans limite
+          <span style={{ fontSize: 18, color: '#C75B00', fontWeight: 900 }}>
+            0 FCFA d&apos;Investissement · Paiement mensuel direct Wave / OM · Sans plafond
           </span>
         </div>
       </div>

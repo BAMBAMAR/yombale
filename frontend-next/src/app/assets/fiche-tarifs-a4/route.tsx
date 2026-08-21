@@ -25,163 +25,172 @@ export async function GET(request: Request) {
         background: '#ffffff',
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         position: 'relative',
+        justifyContent: 'space-between',
       }}>
-        {/* Bande supérieure */}
-        <div style={{ height: 16, background: '#C75B00', display: 'flex' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+          {/* Bande supérieure */}
+          <div style={{ height: 16, background: '#C75B00', width: '100%', display: 'flex' }} />
 
-        {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '36px 72px 16px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          {/* Header */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '36px 72px 16px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+              <div style={{
+                width: 70, height: 70, borderRadius: 18,
+                background: '#C75B00',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="42" height="42" viewBox="0 0 512 512">
+                  <path
+                    fillRule="evenodd"
+                    d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z"
+                    fill="#FFFFFF"
+                  />
+                </svg>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                  <span style={{ fontSize: 44, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1 }}>Nopa</span>
+                  <span style={{ fontSize: 44, fontWeight: 900, color: '#C75B00', letterSpacing: -1 }}>lou</span>
+                </div>
+                <span style={{ fontSize: 16, fontWeight: 800, color: '#64748B', letterSpacing: '0.05em' }}>
+                  GRILLE TARIFAIRE OFFICIELLE &amp; FORMULES MARCHANDS
+                </span>
+              </div>
+            </div>
+
             <div style={{
-              width: 70, height: 70, borderRadius: 18,
-              background: '#C75B00',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 40, fontWeight: 900, color: '#fff',
-            }}>N</div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 44, fontWeight: 900, color: '#1C2B4A', lineHeight: 1.1, letterSpacing: -1.5 }}>
-                Nopa<span style={{ color: '#C75B00' }}>lou</span>
-              </span>
-              <span style={{ fontSize: 17, fontWeight: 700, color: '#64748B', letterSpacing: '0.05em' }}>
-                GRILLE TARIFAIRE OFFICIELLE &amp; FORMULES MARCHANDS
+              background: '#DCFCE7', border: '1.5px solid #16A34A',
+              borderRadius: 9999, padding: '10px 22px',
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <span style={{ fontSize: 18, fontWeight: 900, color: '#15803D' }}>
+                🎁 1er Mois 100% Offert sur Tous les Plans
               </span>
             </div>
           </div>
 
-          <div style={{
-            background: '#DCFCE7', border: '1.5px solid #16A34A',
-            borderRadius: 9999, padding: '10px 22px',
-            display: 'flex', alignItems: 'center', gap: 10,
-          }}>
-            <span style={{ fontSize: 19, fontWeight: 900, color: '#15803D' }}>
-              🎁 1er Mois 100% Offert sur Tous les Plans
+          {/* Titre */}
+          <div style={{ padding: '16px 72px 0', display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: 36, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1.2 }}>
+              Choisissez la formule adaptée à la taille de votre commerce
+            </span>
+            <span style={{ fontSize: 18, color: '#64748B', marginTop: 6, fontWeight: 600 }}>
+              Zéro frais cachés · Zéro commission sur vos ventes · Paiement sécurisé Wave &amp; Orange Money
             </span>
           </div>
-        </div>
 
-        {/* Titre */}
-        <div style={{ padding: '16px 72px 0', display: 'flex', flexDirection: 'column' }}>
-          <h2 style={{ fontSize: 36, fontWeight: 900, color: '#1C2B4A', margin: 0, letterSpacing: -1.2 }}>
-            Choisissez la formule adaptée à la taille de votre commerce
-          </h2>
-          <p style={{ fontSize: 19, color: '#64748B', marginTop: 6, fontWeight: 600 }}>
-            Zéro frais cachés · Zéro commission sur vos ventes · Paiement sécurisé Wave &amp; Orange Money
-          </p>
-        </div>
-
-        {/* 3 Cartes de Formules */}
-        <div style={{
-          display: 'flex', gap: 24, padding: '24px 72px 0',
-        }}>
-          {/* Formule 1 : Taf Taf */}
+          {/* 3 Cartes de Formules */}
           <div style={{
-            flex: 1, background: '#F8FAFC', border: '1.5px solid #CBD5E1',
-            borderRadius: 20, padding: '24px 20px', display: 'flex', flexDirection: 'column',
+            display: 'flex', gap: 24, padding: '24px 72px 0',
           }}>
-            <span style={{ fontSize: 15, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>DÉCOUVERTE &amp; WEB</span>
-            <span style={{ fontSize: 30, fontWeight: 900, color: '#1C2B4A', marginTop: 4, letterSpacing: -0.5 }}>Taf Taf</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 10 }}>
-              <span style={{ fontSize: 38, fontWeight: 900, color: '#C75B00', letterSpacing: -1 }}>2 500</span>
-              <span style={{ fontSize: 17, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
-            </div>
-            <span style={{ fontSize: 14, color: '#16A34A', fontWeight: 800, marginTop: 4 }}>
-              1er mois offert
-            </span>
-            <hr style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '16px 0' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#334155', fontWeight: 600 }}>
-              <span>✓ Vitrine web personnalisée</span>
-              <span>✓ Commandes directes WhatsApp</span>
-              <span>✓ Carnet de dettes client</span>
-              <span>✓ Partage de stories marque blanche</span>
-              <span>✓ 0% commission sur les ventes</span>
-            </div>
-          </div>
-
-          {/* Formule 2 : Boutique Pro (Star) */}
-          <div style={{
-            flex: 1, background: '#FFF7ED', border: '2.5px solid #C75B00',
-            borderRadius: 20, padding: '24px 20px', display: 'flex', flexDirection: 'column',
-            position: 'relative',
-          }}>
+            {/* Formule 1 : Taf Taf */}
             <div style={{
-              position: 'absolute', top: -14, right: 20,
-              background: '#C75B00', color: '#fff', fontSize: 11, fontWeight: 900,
-              padding: '4px 12px', borderRadius: 9999, letterSpacing: 0.5,
-            }}>⭐ LE PLUS POPULAIRE</div>
-            <span style={{ fontSize: 15, fontWeight: 800, color: '#C75B00', textTransform: 'uppercase', letterSpacing: 0.5 }}>MAGASIN PHYSIQUE</span>
-            <span style={{ fontSize: 30, fontWeight: 900, color: '#1C2B4A', marginTop: 4, letterSpacing: -0.5 }}>Boutique Pro</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 10 }}>
-              <span style={{ fontSize: 38, fontWeight: 900, color: '#C75B00', letterSpacing: -1 }}>5 000</span>
-              <span style={{ fontSize: 17, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
+              flex: 1, background: '#F8FAFC', border: '1.5px solid #CBD5E1',
+              borderRadius: 20, padding: '24px 20px', display: 'flex', flexDirection: 'column',
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>DÉCOUVERTE &amp; WEB</span>
+              <span style={{ fontSize: 30, fontWeight: 900, color: '#1C2B4A', marginTop: 4, letterSpacing: -0.5 }}>Taf Taf</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 10 }}>
+                <span style={{ fontSize: 38, fontWeight: 900, color: '#C75B00', letterSpacing: -1 }}>2 500</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
+              </div>
+              <span style={{ fontSize: 13.5, color: '#16A34A', fontWeight: 800, marginTop: 4 }}>
+                1er mois offert
+              </span>
+              <hr style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '16px 0' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#334155', fontWeight: 600 }}>
+                <span>✓ Vitrine web personnalisée</span>
+                <span>✓ Commandes directes WhatsApp</span>
+                <span>✓ Carnet de dettes client</span>
+                <span>✓ Partage de stories marque blanche</span>
+                <span>✓ 0% commission sur les ventes</span>
+              </div>
             </div>
-            <span style={{ fontSize: 14, color: '#16A34A', fontWeight: 800, marginTop: 4 }}>
-              1er mois offert · Rentabilisé dès la 1ère vente
-            </span>
-            <hr style={{ border: 'none', borderTop: '1px solid #FED7AA', margin: '16px 0' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#1C2B4A', fontWeight: 700 }}>
-              <span>✓ <strong>Tout le plan Taf Taf inclus</strong></span>
-              <span>✓ <strong>Caisse POS Tactile Magasin</strong></span>
-              <span>✓ <strong>Mode PWA Hors-Ligne (sans internet)</strong></span>
-              <span>✓ <strong>3 Scanners (Caméra, Cloud, USB)</strong></span>
-              <span>✓ <strong>Factures &amp; Devis OHADA (PDF)</strong></span>
-              <span>✓ <strong>Codes-Barres EAN-13 GS1</strong></span>
-              <span>✓ <strong>Saisie Express flux financiers</strong></span>
+
+            {/* Formule 2 : Boutique Pro (Star) */}
+            <div style={{
+              flex: 1, background: '#FFF7ED', border: '2.5px solid #C75B00',
+              borderRadius: 20, padding: '24px 20px', display: 'flex', flexDirection: 'column',
+              position: 'relative', boxShadow: '0 4px 16px rgba(199, 91, 0, 0.12)',
+            }}>
+              <div style={{
+                position: 'absolute', top: -14, right: 20,
+                background: '#C75B00', color: '#fff', fontSize: 11, fontWeight: 900,
+                padding: '4px 12px', borderRadius: 9999, letterSpacing: 0.5,
+              }}>⭐ LE PLUS POPULAIRE</div>
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#C75B00', textTransform: 'uppercase', letterSpacing: 0.5 }}>MAGASIN PHYSIQUE</span>
+              <span style={{ fontSize: 30, fontWeight: 900, color: '#1C2B4A', marginTop: 4, letterSpacing: -0.5 }}>Boutique Pro</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 10 }}>
+                <span style={{ fontSize: 38, fontWeight: 900, color: '#C75B00', letterSpacing: -1 }}>5 000</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
+              </div>
+              <span style={{ fontSize: 13.5, color: '#16A34A', fontWeight: 800, marginTop: 4 }}>
+                1er mois offert · Rentabilisé dès la 1ère vente
+              </span>
+              <hr style={{ border: 'none', borderTop: '1px solid #FED7AA', margin: '16px 0' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#1C2B4A', fontWeight: 700 }}>
+                <span>✓ <strong>Tout le plan Taf Taf inclus</strong></span>
+                <span>✓ <strong>Caisse POS Tactile Magasin</strong></span>
+                <span>✓ <strong>Mode PWA Hors-Ligne (sans internet)</strong></span>
+                <span>✓ <strong>3 Scanners (Caméra, Cloud, USB)</strong></span>
+                <span>✓ <strong>Factures &amp; Devis OHADA (PDF)</strong></span>
+                <span>✓ <strong>Codes-Barres EAN-13 GS1</strong></span>
+                <span>✓ <strong>Saisie Express flux financiers</strong></span>
+              </div>
+            </div>
+
+            {/* Formule 3 : Business VIP */}
+            <div style={{
+              flex: 1, background: '#F8FAFC', border: '1.5px solid #1E293B',
+              borderRadius: 20, padding: '24px 20px', display: 'flex', flexDirection: 'column',
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#1E293B', textTransform: 'uppercase', letterSpacing: 0.5 }}>PME &amp; ENSEIGNES</span>
+              <span style={{ fontSize: 30, fontWeight: 900, color: '#1C2B4A', marginTop: 4, letterSpacing: -0.5 }}>Business VIP</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 10 }}>
+                <span style={{ fontSize: 38, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1 }}>10 000</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
+              </div>
+              <span style={{ fontSize: 13.5, color: '#16A34A', fontWeight: 800, marginTop: 4 }}>
+                1er mois offert
+              </span>
+              <hr style={{ border: 'none', borderTop: '1px solid #CBD5E1', margin: '16px 0' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#334155', fontWeight: 600 }}>
+                <span>✓ <strong>Tout le plan Pro inclus</strong></span>
+                <span>✓ <strong>Multi-Caissiers sécurisés PIN</strong></span>
+                <span>✓ <strong>Fournisseurs &amp; Scan OCR</strong></span>
+                <span>✓ <strong>Import lot Excel/CSV illimité</strong></span>
+                <span>✓ <strong>Clôtures de Caisse Z &amp; Marges</strong></span>
+                <span>✓ <strong>Portail API REST &amp; Webhooks</strong></span>
+                <span>✓ <strong>Support commercial prioritaire 24/7</strong></span>
+              </div>
             </div>
           </div>
 
-          {/* Formule 3 : Business VIP */}
+          {/* Remises Multi-Durées */}
           <div style={{
-            flex: 1, background: '#F8FAFC', border: '1.5px solid #1E293B',
-            borderRadius: 20, padding: '24px 20px', display: 'flex', flexDirection: 'column',
+            margin: '24px 72px 0', background: '#FEF3C7', border: '1.5px solid #F59E0B',
+            borderRadius: 18, padding: '16px 28px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
-            <span style={{ fontSize: 15, fontWeight: 800, color: '#1E293B', textTransform: 'uppercase', letterSpacing: 0.5 }}>PME &amp; ENSEIGNES</span>
-            <span style={{ fontSize: 30, fontWeight: 900, color: '#1C2B4A', marginTop: 4, letterSpacing: -0.5 }}>Business VIP</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 10 }}>
-              <span style={{ fontSize: 38, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1 }}>10 000</span>
-              <span style={{ fontSize: 17, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
-            </div>
-            <span style={{ fontSize: 14, color: '#16A34A', fontWeight: 800, marginTop: 4 }}>
-              1er mois offert
+            <span style={{ fontSize: 18, fontWeight: 900, color: '#92400E', letterSpacing: -0.3 }}>
+              🏷️ Barème des Remises Commerçants :
             </span>
-            <hr style={{ border: 'none', borderTop: '1px solid #CBD5E1', margin: '16px 0' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#334155', fontWeight: 600 }}>
-              <span>✓ <strong>Tout le plan Pro inclus</strong></span>
-              <span>✓ <strong>Multi-Caissiers sécurisés PIN</strong></span>
-              <span>✓ <strong>Fournisseurs &amp; Scan OCR</strong></span>
-              <span>✓ <strong>Import lot Excel/CSV illimité</strong></span>
-              <span>✓ <strong>Clôtures de Caisse Z &amp; Marges</strong></span>
-              <span>✓ <strong>Portail API REST &amp; Webhooks</strong></span>
-              <span>✓ <strong>Support commercial prioritaire 24/7</strong></span>
+            <div style={{ display: 'flex', gap: 24 }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: '#B45309' }}>
+                3 mois : <strong>-10%</strong>
+              </span>
+              <span style={{ fontSize: 16, fontWeight: 800, color: '#B45309' }}>
+                6 mois : <strong>-15%</strong>
+              </span>
+              <span style={{ fontSize: 16, fontWeight: 900, color: '#15803D', background: '#DCFCE7', padding: '4px 12px', borderRadius: 9999 }}>
+                12 mois : <strong>-25% (3 mois offerts !)</strong>
+              </span>
             </div>
           </div>
         </div>
-
-        {/* Remises Multi-Durées */}
-        <div style={{
-          margin: '28px 72px 0', background: '#FEF3C7', border: '1.5px solid #F59E0B',
-          borderRadius: 18, padding: '16px 28px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <span style={{ fontSize: 19, fontWeight: 900, color: '#92400E', letterSpacing: -0.3 }}>
-            🏷️ Barème des Remises Commerçants :
-          </span>
-          <div style={{ display: 'flex', gap: 24 }}>
-            <span style={{ fontSize: 16.5, fontWeight: 800, color: '#B45309' }}>
-              3 mois : <strong>-10%</strong>
-            </span>
-            <span style={{ fontSize: 16.5, fontWeight: 800, color: '#B45309' }}>
-              6 mois : <strong>-15%</strong>
-            </span>
-            <span style={{ fontSize: 16.5, fontWeight: 900, color: '#15803D', background: '#DCFCE7', padding: '4px 12px', borderRadius: 9999 }}>
-              12 mois : <strong>-25% (3 mois offerts !)</strong>
-            </span>
-          </div>
-        </div>
-
-        <div style={{ flex: 1, display: 'flex' }} />
 
         {/* Footer Contact & Onboarding */}
         <div style={{

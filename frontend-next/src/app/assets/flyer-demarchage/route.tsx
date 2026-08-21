@@ -10,87 +10,103 @@ export async function GET() {
         width: 1240, height: 1748,
         display: 'flex', flexDirection: 'column',
         background: '#ffffff',
-        fontFamily: 'system-ui, sans-serif',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         position: 'relative',
+        justifyContent: 'space-between',
       }}>
-        {/* Bande orange top */}
-        <div style={{ height: 16, background: '#C75B00', display: 'flex' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+          {/* Bande orange top */}
+          <div style={{ height: 16, background: '#C75B00', width: '100%', display: 'flex' }} />
 
-        {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 20,
-          padding: '56px 80px 0',
-        }}>
+          {/* Header */}
           <div style={{
-            width: 84, height: 84, borderRadius: 20,
-            background: '#C75B00',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 48, fontWeight: 900, color: '#fff',
-          }}>N</div>
-          <span style={{ fontSize: 52, fontWeight: 900, color: '#1C2B4A' }}>
-            Nopa<span style={{ color: '#C75B00' }}>lou</span>
-          </span>
-        </div>
-
-        {/* Titre accroche */}
-        <div style={{ padding: '48px 80px 0', display: 'flex', flexDirection: 'column' }}>
-          <p style={{
-            fontSize: 56, fontWeight: 900, color: '#1C2B4A',
-            margin: 0, lineHeight: 1.15,
+            display: 'flex', alignItems: 'center', gap: 20,
+            padding: '56px 80px 0',
           }}>
-            Votre boutique visible.<br />Vos clients sur WhatsApp.
-          </p>
-          <p style={{ fontSize: 26, color: '#64748B', marginTop: 24, lineHeight: 1.5 }}>
-            Rejoignez Nopalou, le comparateur de prix N°1 au Sénégal
-          </p>
-        </div>
-
-        {/* Avantages */}
-        <div style={{
-          display: 'flex', flexDirection: 'column', gap: 20,
-          padding: '56px 80px 0',
-        }}>
-          {[
-            '30 jours d\'essai Pro offerts',
-            'Caisse POS Tactile (3 Scanners: Caméra, Cloud <100ms, USB)',
-            'Carnet de Dettes Client & Relance WhatsApp 1-Clic',
-            'Stickers Codes-Barres EAN-13 GS1 Modulo 10',
-            'Commandes clients reçues directement sur WhatsApp',
-            'Démo Commerciale POS en 1-clic : nopalou.com/demo',
-          ].map(txt => (
-            <div key={txt} style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: '50%',
-                background: '#FFF7ED', border: '2px solid #C75B00',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C75B00" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              </div>
-              <span style={{ fontSize: 28, color: '#1C2B4A', fontWeight: 800 }}>{txt}</span>
+            <div style={{
+              width: 80, height: 80, borderRadius: 20,
+              background: '#C75B00',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="48" height="48" viewBox="0 0 512 512">
+                <path
+                  fillRule="evenodd"
+                  d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z"
+                  fill="#FFFFFF"
+                />
+              </svg>
             </div>
-          ))}
-        </div>
+            <div style={{ display: 'flex', alignItems: 'baseline' }}>
+              <span style={{ fontSize: 52, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1 }}>Nopa</span>
+              <span style={{ fontSize: 52, fontWeight: 900, color: '#C75B00', letterSpacing: -1 }}>lou</span>
+            </div>
+          </div>
 
-        {/* Spacer */}
-        <div style={{ flex: 1, display: 'flex' }} />
+          {/* Titre accroche sans <br/> */}
+          <div style={{ padding: '48px 80px 0', display: 'flex', flexDirection: 'column' }}>
+            <span style={{
+              fontSize: 52, fontWeight: 900, color: '#1C2B4A',
+              lineHeight: 1.15, letterSpacing: -1.2,
+            }}>
+              Votre boutique visible.
+            </span>
+            <span style={{
+              fontSize: 52, fontWeight: 900, color: '#C75B00',
+              lineHeight: 1.15, letterSpacing: -1.2, marginTop: 4,
+            }}>
+              Vos clients sur WhatsApp.
+            </span>
+            <p style={{ fontSize: 26, color: '#64748B', marginTop: 20, lineHeight: 1.5, fontWeight: 600 }}>
+              Rejoignez Nopalou, le super-comparateur de prix et caisse POS N°1 au Sénégal
+            </p>
+          </div>
+
+          {/* Avantages */}
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: 22,
+            padding: '48px 80px 0',
+          }}>
+            {[
+              '🎁 30 jours d\'essai Formule Pro 100% offerts',
+              '⚡ Caisse POS Tactile (3 Scanners : Caméra, Cloud <100ms, Douchette USB)',
+              '📒 Carnet de Dettes Client & Relance WhatsApp 1-Clic',
+              '🏷️ Générateur de Stickers Codes-Barres EAN-13 GS1 Modulo 10',
+              '🛍️ Commandes clients reçues directement sur WhatsApp sans commission',
+              '🌐 Démo Commerciale POS interactive en 1-clic : nopalou.com/demo',
+            ].map(txt => (
+              <div key={txt} style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  background: '#FFF7ED', border: '2px solid #C75B00',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C75B00" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <span style={{ fontSize: 25, color: '#1C2B4A', fontWeight: 800 }}>{txt}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Bloc CTA + contact */}
         <div style={{
           margin: '0 80px 56px',
           background: '#1C2B4A',
-          borderRadius: 24, padding: '48px 56px',
-          display: 'flex', flexDirection: 'column', gap: 12,
+          borderRadius: 24, padding: '40px 48px',
+          display: 'flex', flexDirection: 'column', gap: 10,
+          border: '2px solid #C75B00',
+          boxShadow: '0 12px 30px rgba(15, 23, 42, 0.25)',
         }}>
-          <span style={{ fontSize: 30, color: '#fff', fontWeight: 800 }}>
-            Découvrez la Démo POS &amp; Créez votre boutique
+          <span style={{ fontSize: 26, color: '#fff', fontWeight: 800 }}>
+            Découvrez la Démo POS &amp; Créez votre boutique gratuitement
           </span>
-          <span style={{ fontSize: 34, color: '#C75B00', fontWeight: 900 }}>
-            nopalou.com/demo · nopalou.com/boutique
+          <span style={{ fontSize: 32, color: '#C75B00', fontWeight: 900, letterSpacing: -0.5 }}>
+            nopalou.com/demo · nopalou.com/creer-boutique
           </span>
-          <span style={{ fontSize: 22, color: '#94A3B8', marginTop: 8 }}>
+          <span style={{ fontSize: 20, color: '#94A3B8', marginTop: 4 }}>
             Ou contactez-nous directement sur WhatsApp (+221 70 871 79 42)
           </span>
         </div>
