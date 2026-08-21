@@ -2302,6 +2302,8 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           ]
         );
 
+        const validClientId = (client_id && /^[0-9a-f-]{36}$/i.test(String(client_id))) ? String(client_id) : null;
+
         await dbClient.query(
           `INSERT INTO caisse_documents (
             boutique_id, client_id, caissier_id, type, reference, statut,
@@ -2310,7 +2312,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           ) VALUES ($1, $2, null, 'facture', $3, 'paye', $4, $5, $6, $7, $8, $9, $10, 'Vente directe caisse POS', $11, NOW(), NOW())
           ON CONFLICT (reference) DO NOTHING`,
           [
-            boutiqueId, client_id || null, refVente,
+            boutiqueId, validClientId, refVente,
             calculation.total_ht, calculation.total_tva, timbre, retenueBRS, calculation.total_ttc, netAPayer,
             modePaiement || 'cash', JSON.stringify(calculation.items)
           ]
@@ -2323,9 +2325,9 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
         if (activeSessionRes.rows[0]) {
           const activeSessionId = activeSessionRes.rows[0].id;
           const mode = (modePaiement || 'cash').toLowerCase();
-          const isEspeces = mode === 'cash' || mode === 'especes';
+          const isEspeces = mode === 'cash' || mode === 'especes' || mode === 'espece';
           const isWave = mode === 'wave';
-          const isOm = mode === 'om' || mode === 'orange_money';
+          const isOm = mode === 'om' || mode === 'orange_money' || mode === 'orange';
           const isCarte = mode === 'carte' || mode === 'cb';
 
           await dbClient.query(
@@ -2338,10 +2340,11 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
                  ventes_carte = COALESCE(ventes_carte, 0) + $5
              WHERE id = $6`,
             [
-              mode === 'cash' || mode === 'especes' || mode === 'espece' ? calculation.total_ttc : 0,
-              mode === 'wave' ? calculation.total_ttc : 0,
-              mode === 'orange_money' || mode === 'orange' ? calculation.total_ttc : 0,
-              mode === 'carte' ? calculation.total_ttc : 0,
+              netAPayer,
+              isEspeces ? netAPayer : 0,
+              isWave ? netAPayer : 0,
+              isOm ? netAPayer : 0,
+              isCarte ? netAPayer : 0,
               activeSessionId
             ]
           );
@@ -2645,7 +2648,57 @@ router.post('/:id/caissiers/verifier-pin', tokenOptional, async (req, res) => {
   }
 });
 
-// GET /api/boutiques/:id/pos-sessions/active
+// GET /api/boutiques/:id/pos-sessions — Historique filtrable des sessions de caisse (Rapports Z)
+router.get('/:id/pos-sessions', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    const { limit = 100, page = 1, from, to, caissier, statut } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    const conds = ['boutique_id = $1'];
+    const params = [boutiqueId];
+
+    if (from) {
+      params.push(from);
+      conds.push(`date_ouverture >= $${params.length}`);
+    }
+    if (to) {
+      params.push(to);
+      conds.push(`date_ouverture <= $${params.length}`);
+    }
+    if (caissier) {
+      params.push(caissier);
+      conds.push(`(caissier_nom = $${params.length} OR caissier_id::text = $${params.length})`);
+    }
+    if (statut && statut !== 'tous') {
+      params.push(statut);
+      conds.push(`statut = $${params.length}`);
+    }
+
+    params.push(Number(limit));
+    params.push(offset);
+
+    const { rows } = await pool.query(
+      `SELECT * FROM boutique_pos_sessions 
+       WHERE ${conds.join(' AND ')} 
+       ORDER BY date_ouverture DESC 
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+
+    res.json({ sessions: rows });
+  } catch (err) {
+    console.error('[GET ALL SESSIONS ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération des sessions de caisse' });
+  }
+});
+
+// GET /api/boutiques/:id/pos-sessions/active — Session en cours
 router.get('/:id/pos-sessions/active', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
@@ -2654,7 +2707,6 @@ router.get('/:id/pos-sessions/active', tokenOptional, async (req, res) => {
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
     const boutiqueId = bRes.rows[0].id;
 
-    // Récupérer la session ouverte pour cette boutique
     const r = await pool.query(
       `SELECT * FROM boutique_pos_sessions 
        WHERE boutique_id = $1 AND statut = 'ouverte'
@@ -2666,6 +2718,41 @@ router.get('/:id/pos-sessions/active', tokenOptional, async (req, res) => {
   } catch (err) {
     console.error('[GET ACTIVE SESSION ERR]', err);
     res.status(500).json({ error: 'Erreur de récupération de la session active' });
+  }
+});
+
+// GET /api/boutiques/:id/pos-sessions/:sessionId — Détail et ventes d'une session
+router.get('/:id/pos-sessions/:sessionId', tokenOptional, async (req, res) => {
+  try {
+    const { id: idParam, sessionId } = req.params;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    const sRes = await pool.query(
+      `SELECT * FROM boutique_pos_sessions WHERE id = $1 AND boutique_id = $2`,
+      [sessionId, boutiqueId]
+    );
+    if (!sRes.rows[0]) return res.status(404).json({ error: 'Session introuvable' });
+    const session = sRes.rows[0];
+
+    // Récupérer les ventes enregistrées durant cette session
+    const dateFin = session.date_cloture || new Date();
+    const vRes = await pool.query(
+      `SELECT * FROM ventes 
+       WHERE boutique_id = $1 
+         AND created_at >= $2 
+         AND created_at <= $3
+         AND archivee IS NOT TRUE
+       ORDER BY created_at ASC`,
+      [boutiqueId, session.date_ouverture, dateFin]
+    );
+
+    res.json({ session, ventes: vRes.rows });
+  } catch (err) {
+    console.error('[GET SESSION DETAIL ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération du détail de session' });
   }
 });
 

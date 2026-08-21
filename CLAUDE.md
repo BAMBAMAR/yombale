@@ -1,4 +1,17 @@
-- **Correctifs PWA, Bilan Comptable Résilient & Encaissement Caisse POS Multi-Articles (`main` - 21 août 2026)** 🛠️✨ :
+- **Module Rapports Z & Clôtures de Caisse dans la Comptabilité (`main` - 21 août 2026)** 🧾📊✨ :
+  * **Sous-Onglet « 🧾 Clôtures & Rapports Z » (`frontend-next/src/app/boutique/Comptabilite.tsx`)** :
+    - Consultation chronologique de toutes les sessions de caisse avec filtres de dates rapides (*Aujourd'hui*, *Hier*, *7j*, *30j*, *Ce mois-ci*, *Période libre*), filtre par caissier et filtre par statut (*Clôturées Z*, *En cours*).
+    - KPIs consolidés de la période : Chiffre d'Affaires total encaissé, nombre de tickets, sessions ouvertes/fermées et écart de caisse cumulé (coloration dynamique vert/bleu/rouge).
+    - Tableau détaillé avec identifiant, caissier, fond initial, CA total, espèces comptées physiquement et écart net calculé.
+    - **Actions interactives par session** :
+      - 🧾 **Impression / Export PDF du Rapport Z** via `printPosSessionRapportZ_PDF` avec détail complet des ventes de la session et lignes de signatures.
+      - 👁️ **Visualisation modale des tickets** de chaque session avec détail article par article.
+      - 📥 **Export CSV unitaire** des ventes de la session.
+      - 📊 **Export CSV global** de la synthèse de toutes les sessions filtrées.
+  * **API Backend des Sessions (`backend/routes/boutiques.js`)** :
+    - `GET /api/boutiques/:id/pos-sessions` : Prise en charge des filtres `from`, `to`, `caissier`, `statut` avec pagination.
+    - `GET /api/boutiques/:id/pos-sessions/:sessionId` : Retourne la session et la liste complète des articles vendus pendant sa durée de service.
+    - Correction du mapping des 6 paramètres de requête SQL lors de l'incrémentation en temps réel de `boutique_pos_sessions` dans `POST /api/boutiques/:id/pos-vente`.
   * **Manifest PWA (`frontend-next/public/manifest.json`)** :
     - Ajout explicite de `"enctype": "application/x-www-form-urlencoded"` dans la section `share_target` pour éliminer le warning console PWA W3C/Chromium.
   * **Résilience & Permissions Bilan Comptable (`backend/routes/comptabilite.js`)** :

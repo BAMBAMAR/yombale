@@ -453,5 +453,140 @@ export function printInventairePDF({
   printWindow.document.close()
 }
 
+/**
+ * Impression et export PDF officiel du Rapport Z / Clôture de Session de Caisse POS
+ */
+export function printPosSessionRapportZ_PDF({
+  boutiqueNom,
+  session,
+  ventes = [],
+}: {
+  boutiqueNom: string
+  session: any
+  ventes?: any[]
+}) {
+  const printWindow = window.open('', '_blank', 'width=850,height=750')
+  if (!printWindow) return
+
+  const f = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n || 0)) + ' FCFA'
+  const dateOuv = session.date_ouverture ? new Date(session.date_ouverture).toLocaleString('fr-FR') : '—'
+  const dateClot = session.date_cloture ? new Date(session.date_cloture).toLocaleString('fr-FR') : 'En cours'
+  const ecart = Number(session.ecart_caisse || 0)
+
+  const ventesRowsHtml = (ventes || []).map((v, i) => `
+    <tr>
+      <td style="padding:6px 8px; border:1px solid #e2e8f0; text-align:center; font-size:11px;">${i + 1}</td>
+      <td style="padding:6px 8px; border:1px solid #e2e8f0; font-size:11px; font-weight:700;">${v.reference || '—'}</td>
+      <td style="padding:6px 8px; border:1px solid #e2e8f0; font-size:11px;">${v.nom_produit || 'Article'}</td>
+      <td style="padding:6px 8px; border:1px solid #e2e8f0; font-size:11px; text-align:center;">${v.quantite || 1}</td>
+      <td style="padding:6px 8px; border:1px solid #e2e8f0; font-size:11px; text-align:right; font-weight:700;">${f(v.montant_total)}</td>
+      <td style="padding:6px 8px; border:1px solid #e2e8f0; font-size:11px; text-align:center; text-transform:uppercase;">${v.methode_paiement || 'cash'}</td>
+    </tr>
+  `).join('')
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <title>Rapport Z — Session Caisse ${session.id?.slice(0, 8) || ''}</title>
+      <meta charset="utf-8" />
+      <style>
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; color: #0f172a; }
+        .header { border-bottom: 2px solid #C75B00; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; }
+        h1 { margin: 0 0 4px; font-size: 20px; color: #C75B00; }
+        .grid-kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+        .kpi { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; }
+        .kpi span { font-size: 11px; color: #64748b; font-weight: 600; display: block; margin-bottom: 2px; }
+        .kpi strong { font-size: 15px; color: #0f172a; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; font-size: 11px; text-align: left; }
+        @media print {
+          body { padding: 0; }
+          .no-print { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div>
+          <h1>🧾 Rapport Z — Clôture de Caisse POS</h1>
+          <p style="margin:0; font-size:12.5px; color:#64748b;">
+            Boutique : <strong>${boutiqueNom}</strong> · Caissier : <strong>${session.caissier_nom || 'Caissier Principal'}</strong><br/>
+            Ouverture : <strong>${dateOuv}</strong> · Clôture : <strong>${dateClot}</strong>
+          </p>
+        </div>
+        <button class="no-print" onclick="window.print()" style="padding:8px 16px; background:#C75B00; color:#fff; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🖨️ Imprimer Rapport</button>
+      </div>
+
+      <div class="grid-kpi">
+        <div class="kpi">
+          <span>Chiffre d'Affaires Total</span>
+          <strong style="color:#1e3a8a;">${f(session.ventes_total)}</strong>
+        </div>
+        <div class="kpi">
+          <span>Nombre de Ventes</span>
+          <strong>${session.nb_ventes || 0} tickets</strong>
+        </div>
+        <div class="kpi">
+          <span>Fond de Caisse Initial</span>
+          <strong>${f(session.fond_caisse_initial)}</strong>
+        </div>
+        <div class="kpi">
+          <span>Encaissements Espèces</span>
+          <strong>${f(session.ventes_especes)}</strong>
+        </div>
+        <div class="kpi">
+          <span>Encaissements Wave</span>
+          <strong style="color:#0284c7;">${f(session.ventes_wave)}</strong>
+        </div>
+        <div class="kpi">
+          <span>Encaissements Orange Money</span>
+          <strong style="color:#ea580c;">${f(session.ventes_orange_money)}</strong>
+        </div>
+        <div class="kpi">
+          <span>Espèces Comptées Physiquement</span>
+          <strong>${f(session.especes_comptees)}</strong>
+        </div>
+        <div class="kpi" style="background:${ecart === 0 ? '#f0fdf4' : ecart > 0 ? '#eff6ff' : '#fef2f2'}; border-color:${ecart === 0 ? '#86efac' : ecart > 0 ? '#93c5fd' : '#fca5a5'};">
+          <span>Écart de Caisse Constaté</span>
+          <strong style="color:${ecart === 0 ? '#15803d' : ecart > 0 ? '#1d4ed8' : '#b91c1c'};">${ecart >= 0 ? '+' : ''}${f(ecart)}</strong>
+        </div>
+        <div class="kpi">
+          <span>Statut Session</span>
+          <strong style="text-transform:uppercase; color:${session.statut === 'cloturee' ? '#15803d' : '#C75B00'};">${session.statut || 'ouverte'}</strong>
+        </div>
+      </div>
+
+      ${ventes.length > 0 ? `
+        <h3 style="font-size:14px; margin:16px 0 6px; color:#1e293b;">📋 Détail des Ventes Réalisées (${ventes.length} articles)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:30px; text-align:center;">#</th>
+              <th>Référence</th>
+              <th>Produit</th>
+              <th style="text-align:center;">Qté</th>
+              <th style="text-align:right;">Montant</th>
+              <th style="text-align:center;">Règlement</th>
+            </tr>
+          </thead>
+          <tbody>${ventesRowsHtml}</tbody>
+        </table>
+      ` : ''}
+
+      <div style="margin-top:30px; display:flex; justify-content:space-between; font-size:12px; color:#64748b;">
+        <div>Signature du Caissier : ___________________</div>
+        <div>Visa du Responsable / Gérant : ___________________</div>
+      </div>
+
+      <script>
+        setTimeout(() => { window.print(); }, 500);
+      </script>
+    </body>
+    </html>
+  `)
+  printWindow.document.close()
+}
+
 
 

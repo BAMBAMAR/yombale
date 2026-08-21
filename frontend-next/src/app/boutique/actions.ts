@@ -711,5 +711,45 @@ export async function getInventaireValorise(boutiqueId: string): Promise<any> {
   }
 }
 
+export async function getPosSessions(
+  boutiqueId: string,
+  filters?: { from?: string; to?: string; caissier?: string; statut?: string; page?: number; limit?: number }
+): Promise<any> {
+  try {
+    const params = new URLSearchParams()
+    if (filters?.page) params.set('page', String(filters.page))
+    if (filters?.limit) params.set('limit', String(filters.limit))
+    if (filters?.from) params.set('from', filters.from)
+    if (filters?.to) params.set('to', filters.to)
+    if (filters?.caissier) params.set('caissier', filters.caissier)
+    if (filters?.statut) params.set('statut', filters.statut)
+
+    const queryStr = params.toString() ? `?${params.toString()}` : ''
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/pos-sessions${queryStr}`)
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de récupérer l\'historique des sessions' }
+    }
+    return await res.json()
+  } catch (err) {
+    console.error('[GET_POS_SESSIONS_ERR]', err)
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
+export async function getPosSessionDetail(boutiqueId: string, sessionId: string): Promise<any> {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/pos-sessions/${sessionId}`)
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de récupérer le détail de la session' }
+    }
+    return await res.json()
+  } catch (err) {
+    console.error('[GET_POS_SESSION_DETAIL_ERR]', err)
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
 
 
