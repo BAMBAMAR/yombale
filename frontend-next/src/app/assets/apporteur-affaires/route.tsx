@@ -10,10 +10,10 @@ export async function GET() {
         width: 1080, height: 1080,
         display: 'flex', flexDirection: 'column',
         background: 'linear-gradient(160deg, #FFFFFF 0%, #F8FAFC 55%, #FFF7ED 100%)',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         position: 'relative',
         overflow: 'hidden',
-        padding: 56,
+        padding: 52,
         boxSizing: 'border-box',
       }}>
         {/* Top Accent Line */}
@@ -22,7 +22,7 @@ export async function GET() {
         {/* Header Branding */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 18,
-          marginBottom: 36,
+          marginBottom: 28,
         }}>
           <div style={{
             width: 72, height: 72, borderRadius: 20,
@@ -30,7 +30,7 @@ export async function GET() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 44, fontWeight: 900, color: '#FFFFFF',
           }}>N</div>
-          <span style={{ fontSize: 52, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1 }}>
+          <span style={{ fontSize: 50, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1.5 }}>
             Nopa<span style={{ color: '#C75B00' }}>lou</span>
           </span>
         </div>
@@ -43,30 +43,31 @@ export async function GET() {
         }}>
           <div style={{
             background: '#F3E8FF',
-            border: '2.5px solid #7C3AED',
-            borderRadius: 40, padding: '12px 36px',
-            fontSize: 22, color: '#7C3AED', fontWeight: 900,
-            marginBottom: 24, display: 'flex',
+            border: '2px solid #7C3AED',
+            borderRadius: 9999, padding: '10px 32px',
+            fontSize: 20, color: '#7C3AED', fontWeight: 900,
+            marginBottom: 20, display: 'flex', letterSpacing: 0.5,
           }}>
             💼 PROGRAMME APPORTEUR D&apos;AFFAIRES
           </div>
 
           <p style={{
-            fontSize: 110, fontWeight: 900, color: '#C75B00',
-            textAlign: 'center', margin: '0 0 4px', lineHeight: 1,
+            fontSize: 106, fontWeight: 900, color: '#C75B00',
+            textAlign: 'center', margin: '0 0 2px', lineHeight: 1,
+            letterSpacing: -3,
           }}>
             20%
           </p>
           <p style={{
-            fontSize: 38, fontWeight: 900, color: '#1C2B4A',
-            textAlign: 'center', margin: '0 0 28px',
+            fontSize: 36, fontWeight: 900, color: '#1C2B4A',
+            textAlign: 'center', margin: '0 0 24px', letterSpacing: -1,
           }}>
             de commission récurrente mensuelle
           </p>
 
           <p style={{
-            fontSize: 26, color: '#334155',
-            textAlign: 'center', margin: 0, lineHeight: 1.5, maxWidth: 860, fontWeight: 700,
+            fontSize: 24, color: '#334155',
+            textAlign: 'center', margin: 0, lineHeight: 1.45, maxWidth: 860, fontWeight: 650,
           }}>
             Présentez Nopalou aux commerçants de votre réseau.<br />
             Chaque boutique Pro ou Business que vous recrutez<br />
@@ -74,12 +75,12 @@ export async function GET() {
           </p>
 
           <div style={{
-            marginTop: 48,
+            marginTop: 40,
             background: '#1C2B4A',
-            border: '3px solid #C75B00',
-            borderRadius: 20, padding: '22px 56px',
-            fontSize: 28, fontWeight: 900, color: '#FFFFFF',
-            display: 'flex',
+            border: '2.5px solid #C75B00',
+            borderRadius: 18, padding: '18px 48px',
+            fontSize: 26, fontWeight: 900, color: '#FFFFFF',
+            display: 'flex', letterSpacing: -0.5,
           }}>
             nopalou.com/apporteur
           </div>
@@ -89,7 +90,7 @@ export async function GET() {
         <div style={{
           display: 'flex', justifyContent: 'center', alignItems: 'center',
         }}>
-          <span style={{ fontSize: 20, color: '#C75B00', fontWeight: 900 }}>
+          <span style={{ fontSize: 19, color: '#C75B00', fontWeight: 900 }}>
             0 FCFA d&apos;Investissement · Paiement mensuel Wave / OM · Sans limite
           </span>
         </div>

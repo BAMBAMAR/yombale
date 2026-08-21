@@ -357,11 +357,11 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
               {lien}
             </code>
 
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
               <button
                 onClick={copierLien}
                 style={{ padding: '10px 18px', background: copie ? '#16a34a' : '#1C2B4A', color: '#fff',
-                  border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                  border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
                 {copie ? <Check size={16} /> : <Copy size={16} />}
                 {copie ? 'Lien copié !' : 'Copier mon lien'}
@@ -373,7 +373,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
                 rel="noopener noreferrer"
                 style={{ padding: '10px 18px', background: '#25D366', color: '#fff',
                   border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none',
-                  display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
                 <Phone size={16} /> Partager sur WhatsApp
               </a>
@@ -382,9 +382,9 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
                 href="/guide-utilisation"
                 target="_blank"
                 style={{ padding: '10px 18px', background: '#FFF7ED', color: '#C75B00', border: '1px solid #FED7AA',
-                  borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
-                <BookOpen size={16} /> Guide Marchand Simplifié
+                <BookOpen size={16} /> Guide Marchand
               </Link>
             </div>
           </div>

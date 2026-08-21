@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     fondVert: '#F0FDF4',      // Fond doux vert
     fondBleu: '#EFF6FF',      // Fond doux bleu
     fondImmo: '#EEF2FF',      // Fond doux indigo
-    borderOrange: '#FFEDD5',
+    borderOrange: '#FED7AA',
   }
 
   // 1. VISUEL CHATBOT WHATSAPP META 24/7 (FOND CLAIR)
@@ -49,8 +49,8 @@ export async function GET(request: Request) {
             display: 'flex',
             flexDirection: 'column',
             background: C.bgPage,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            padding: 60,
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            padding: 56,
             boxSizing: 'border-box',
             color: C.marine,
             position: 'relative',
@@ -59,26 +59,26 @@ export async function GET(request: Request) {
           {/* Header Nopalou */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 14, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
-              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
+              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
-            <span style={{ background: '#25D366', padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#ffffff', display: 'flex' }}>
+            <span style={{ background: '#25D366', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
               💬 CHATBOT WHATSAPP META 24/7
             </span>
           </div>
 
           {/* Titre & Description */}
-          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <h1 style={{ fontSize: 46, fontWeight: 900, margin: 0, color: C.marine, display: 'flex', lineHeight: 1.15 }}>
+          <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <h1 style={{ fontSize: 44, fontWeight: 900, margin: 0, color: C.marine, letterSpacing: -1.2, display: 'flex', lineHeight: 1.15 }}>
               Votre Assistant d&apos;Achat Intelligent sur WhatsApp !
             </h1>
-            <p style={{ fontSize: 22, color: C.gris, margin: 0, display: 'flex', fontWeight: 600 }}>
+            <p style={{ fontSize: 20, color: C.gris, margin: 0, display: 'flex', fontWeight: 600, lineHeight: 1.4 }}>
               Recherchez des produits, comparez les prix &amp; suivez vos commandes sans quitter WhatsApp.
             </p>
           </div>
 
           {/* Cartes Fonctionnalités Chatbot (Fonds clairs haute visibilité) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 36, flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 32, flex: 1 }}>
             {[
               { t: '🔍 Recherche Unifiée Instantanée', d: 'Prix comparés marketplace, boutiques & immo' },
               { t: '🛍️ Panier Multi-Produits WhatsApp', d: 'Commandez directement depuis votre chat' },
@@ -86,14 +86,14 @@ export async function GET(request: Request) {
               { t: '📓 Carnet de Dettes Client POS', d: 'Envoi automatique du solde client par message' },
             ].map(f => (
               <div key={f.t} style={{ background: C.fondVert, border: '1.5px solid #BBF7D0', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 22, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 21, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
                 <span style={{ fontSize: 16, color: C.vert, fontWeight: 700, display: 'flex' }}>{f.d}</span>
               </div>
             ))}
           </div>
 
           {/* Footer CTA Haute Lisibilité */}
-          <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
+          <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
             <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>📲 Tapez &quot;MENU&quot; au +221 70 871 79 42</span>
             <span style={{ fontSize: 24, fontWeight: 900, color: '#25D366', display: 'flex' }}>wa.me/221708717942</span>
           </div>
@@ -114,8 +114,8 @@ export async function GET(request: Request) {
             display: 'flex',
             flexDirection: 'column',
             background: C.bgPage,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            padding: 60,
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            padding: 56,
             boxSizing: 'border-box',
             color: C.marine,
             position: 'relative',
@@ -123,24 +123,24 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 14, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
-              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou Immo</span></span>
+              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou Immo</span></span>
             </div>
-            <span style={{ background: '#4338CA', padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#ffffff', display: 'flex' }}>
+            <span style={{ background: '#4338CA', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
               🏠 IMMOBILIER DAKAR &amp; SÉNÉGAL
             </span>
           </div>
 
-          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <h1 style={{ fontSize: 46, fontWeight: 900, margin: 0, color: C.marine, display: 'flex', lineHeight: 1.15 }}>
+          <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <h1 style={{ fontSize: 44, fontWeight: 900, margin: 0, color: C.marine, letterSpacing: -1.2, display: 'flex', lineHeight: 1.15 }}>
               Location &amp; Vente d&apos;Appartements, Villas &amp; Terrains
             </h1>
-            <p style={{ fontSize: 22, color: C.gris, margin: 0, display: 'flex', fontWeight: 600 }}>
+            <p style={{ fontSize: 20, color: C.gris, margin: 0, display: 'flex', fontWeight: 600, lineHeight: 1.4 }}>
               Annonces vérifiées avec photos HD, prix clairs et contact direct bailleur/agence.
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 36, flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 32, flex: 1 }}>
             {[
               { t: '🏢 Appartements & Studios Dakar', d: 'Almadies, Mermoz, Plateau, Fann, Yoff' },
               { t: '🏡 Villas & Maisons avec Piscine', d: 'Saly, Somone, Ngaparou, Petite Côte' },
@@ -148,13 +148,13 @@ export async function GET(request: Request) {
               { t: '📲 Contact Direct WhatsApp Propriétaire', d: 'Zéro intermédiaire masqué · Photos HD' },
             ].map(f => (
               <div key={f.t} style={{ background: C.fondImmo, border: '1.5px solid #C7D2FE', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 22, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 21, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
                 <span style={{ fontSize: 16, color: '#4338CA', fontWeight: 700, display: 'flex' }}>{f.d}</span>
               </div>
             ))}
           </div>
 
-          <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
+          <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
             <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🔑 Trouvez votre bien immobilier</span>
             <span style={{ fontSize: 24, fontWeight: 900, color: '#818CF8', display: 'flex' }}>nopalou.com/immo</span>
           </div>
@@ -175,8 +175,8 @@ export async function GET(request: Request) {
             display: 'flex',
             flexDirection: 'column',
             background: C.bgPage,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            padding: 60,
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            padding: 56,
             boxSizing: 'border-box',
             color: C.marine,
             position: 'relative',
@@ -184,24 +184,24 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 14, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
-              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou Télécom</span></span>
+              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou Télécom</span></span>
             </div>
-            <span style={{ background: '#0284C7', padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#ffffff', display: 'flex' }}>
+            <span style={{ background: '#0284C7', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
               📶 FORFAITS &amp; PASS INTERNET
             </span>
           </div>
 
-          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <h1 style={{ fontSize: 46, fontWeight: 900, margin: 0, color: C.marine, display: 'flex', lineHeight: 1.15 }}>
+          <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <h1 style={{ fontSize: 44, fontWeight: 900, margin: 0, color: C.marine, letterSpacing: -1.2, display: 'flex', lineHeight: 1.15 }}>
               Comparez les Forfaits Orange, Yas, Expresso &amp; Promobile
             </h1>
-            <p style={{ fontSize: 22, color: C.gris, margin: 0, display: 'flex', fontWeight: 600 }}>
+            <p style={{ fontSize: 20, color: C.gris, margin: 0, display: 'flex', fontWeight: 600, lineHeight: 1.4 }}>
               Trouvez le meilleur Pass Internet, Minutes &amp; SMS au Go le moins cher au Sénégal !
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 36, flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 32, flex: 1 }}>
             {[
               { t: '🍊 Orange Sénégal', d: 'Pass Illimix, Max, Fiber & Kirene' },
               { t: '🟡 Yas Sénégal (ex-Free)', d: 'Pass Internet 4G+, Voix & Roaming' },
@@ -209,13 +209,13 @@ export async function GET(request: Request) {
               { t: '🟢 Promobile Sénégal', d: 'Forfaits hybrides & Voix/Data' },
             ].map(f => (
               <div key={f.t} style={{ background: C.fondBleu, border: '1.5px solid #BAE6FD', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 22, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 21, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
                 <span style={{ fontSize: 16, color: '#0284C7', fontWeight: 700, display: 'flex' }}>{f.d}</span>
               </div>
             ))}
           </div>
 
-          <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
+          <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
             <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>📡 Comparez tous les Pass Télécom</span>
             <span style={{ fontSize: 24, fontWeight: 900, color: '#38BDF8', display: 'flex' }}>nopalou.com/telecom</span>
           </div>
@@ -236,8 +236,8 @@ export async function GET(request: Request) {
             display: 'flex',
             flexDirection: 'column',
             background: C.bgPage,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            padding: 60,
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            padding: 56,
             boxSizing: 'border-box',
             color: C.marine,
             position: 'relative',
@@ -245,24 +245,24 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 14, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
-              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou Partner</span></span>
+              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou Partner</span></span>
             </div>
-            <span style={{ background: C.vert, padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#ffffff', display: 'flex' }}>
+            <span style={{ background: C.vert, padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
               💼 APPORTEURS D&apos;AFFAIRES
             </span>
           </div>
 
-          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <h1 style={{ fontSize: 46, fontWeight: 900, margin: 0, color: C.marine, display: 'flex', lineHeight: 1.15 }}>
+          <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <h1 style={{ fontSize: 44, fontWeight: 900, margin: 0, color: C.marine, letterSpacing: -1.2, display: 'flex', lineHeight: 1.15 }}>
               Gagnez 20% de Commission Récurrente Chaque Mois à Vie !
             </h1>
-            <p style={{ fontSize: 22, color: C.gris, margin: 0, display: 'flex', fontWeight: 600 }}>
+            <p style={{ fontSize: 20, color: C.gris, margin: 0, display: 'flex', fontWeight: 600, lineHeight: 1.4 }}>
               Recrutez des commerçants &amp; agences à Dakar et touchez vos gains par Wave ou Orange Money.
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 36, flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 28, flex: 1 }}>
             {[
               { t: '🏪 Boutique Pro (5 000 F/mois)', d: 'Vous gagnez 1 000 FCFA / mois par boutique' },
               { t: '👑 Boutique Business (10 000 F/mois)', d: 'Vous gagnez 2 000 FCFA / mois par boutique' },
@@ -270,16 +270,16 @@ export async function GET(request: Request) {
               { t: '📄 Brochure PDF (13 P.) & Démo POS', d: 'Support de vente imprimable + Démo 1-clic' },
               { t: '📱 Retrait Direct Wave & OM', d: 'Paiement mensuel automatique des commissions 20%' },
             ].map(f => (
-              <div key={f.t} style={{ background: C.fondVert, border: '1.5px solid #BBF7D0', borderRadius: 16, padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 20, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
-                <span style={{ fontSize: 16, color: C.vert, fontWeight: 700, display: 'flex' }}>{f.d}</span>
+              <div key={f.t} style={{ background: C.fondVert, border: '1.5px solid #BBF7D0', borderRadius: 16, padding: '13px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 19, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 15, color: C.vert, fontWeight: 700, display: 'flex' }}>{f.d}</span>
               </div>
             ))}
           </div>
 
-          <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
-            <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>💼 Devenez Apporteur d&apos;Affaires</span>
-            <span style={{ fontSize: 24, fontWeight: 900, color: '#4ADE80', display: 'flex' }}>nopalou.com/compte/apporteur</span>
+          <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
+            <span style={{ fontSize: 21, fontWeight: 900, color: '#ffffff', display: 'flex' }}>💼 Devenez Apporteur d&apos;Affaires</span>
+            <span style={{ fontSize: 23, fontWeight: 900, color: '#4ADE80', display: 'flex' }}>nopalou.com/compte/apporteur</span>
           </div>
         </div>
       ),
@@ -298,8 +298,8 @@ export async function GET(request: Request) {
             display: 'flex',
             flexDirection: 'column',
             background: C.bgPage,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            padding: 60,
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            padding: 56,
             boxSizing: 'border-box',
             color: C.marine,
             position: 'relative',
@@ -307,25 +307,25 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 14, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
-              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
+              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
-            <span style={{ background: C.orange, padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#ffffff', display: 'flex' }}>
+            <span style={{ background: C.orange, padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
               ⭐ FORMULE PRO MAGASIN
             </span>
           </div>
 
-          <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <h1 style={{ fontSize: 44, fontWeight: 900, margin: 0, color: C.marine, display: 'flex', lineHeight: 1.15 }}>
+          <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <h1 style={{ fontSize: 42, fontWeight: 900, margin: 0, color: C.marine, letterSpacing: -1.2, display: 'flex', lineHeight: 1.15 }}>
               Caisse POS Tactile + Facturation OHADA + PWA Offline
             </h1>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 4 }}>
-              <span style={{ fontSize: 52, fontWeight: 900, color: C.vert, display: 'flex' }}>{prix || '5 000 FCFA'}</span>
-              <span style={{ fontSize: 20, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · 0% commission · -25% sur 12 mois</span>
+              <span style={{ fontSize: 50, fontWeight: 900, color: C.vert, letterSpacing: -1, display: 'flex' }}>{prix || '5 000 FCFA'}</span>
+              <span style={{ fontSize: 19, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · 0% commission · -25% sur 12 mois</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 28, flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 24, flex: 1 }}>
             {[
               { t: '🖥️ Caisse POS & 3 Scanners', d: 'Scan Caméra Smartphone, Cloud (<100ms) & Douchette USB' },
               { t: '📶 Mode Caisse PWA Hors-Ligne', d: 'Fonctionne même sans connexion Internet / coupure 4G' },
@@ -334,13 +334,13 @@ export async function GET(request: Request) {
               { t: '🏷️ Impression Stickers Codes-Barres GS1', d: 'Générez & imprimez vos étiquettes EAN-13' },
             ].map(f => (
               <div key={f.t} style={{ background: C.fondOrange, border: `1.5px solid ${C.borderOrange}`, borderRadius: 16, padding: '12px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 19, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 19, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
                 <span style={{ fontSize: 15, color: C.orange, fontWeight: 700, display: 'flex' }}>{f.d}</span>
               </div>
             ))}
           </div>
 
-          <div style={{ background: C.marine, borderRadius: 20, padding: '18px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
+          <div style={{ background: C.marine, borderRadius: 20, padding: '18px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18 }}>
             <span style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🎁 1er Mois 100% Offert sans carte</span>
             <span style={{ fontSize: 22, fontWeight: 900, color: '#FED7AA', display: 'flex' }}>nopalou.com/boutique</span>
           </div>
@@ -361,8 +361,8 @@ export async function GET(request: Request) {
             display: 'flex',
             flexDirection: 'column',
             background: C.bgPage,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            padding: 60,
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            padding: 56,
             boxSizing: 'border-box',
             color: C.marine,
             position: 'relative',
@@ -370,25 +370,25 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 14, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
-              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
+              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
-            <span style={{ background: '#1D4ED8', padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#ffffff', display: 'flex' }}>
+            <span style={{ background: '#1D4ED8', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
               ⚡ BOUTIQUE TAF TAF
             </span>
           </div>
 
-          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <h1 style={{ fontSize: 48, fontWeight: 900, margin: 0, color: C.marine, display: 'flex', lineHeight: 1.15 }}>
+          <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <h1 style={{ fontSize: 44, fontWeight: 900, margin: 0, color: C.marine, letterSpacing: -1.2, display: 'flex', lineHeight: 1.15 }}>
               Créez votre Vitrine Web en 30 Secondes Chrono !
             </h1>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 10 }}>
-              <span style={{ fontSize: 60, fontWeight: 900, color: C.vert, display: 'flex' }}>{prix || '2 500 FCFA'}</span>
-              <span style={{ fontSize: 24, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · 1er mois 100% offert</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 6 }}>
+              <span style={{ fontSize: 54, fontWeight: 900, color: C.vert, letterSpacing: -1, display: 'flex' }}>{prix || '2 500 FCFA'}</span>
+              <span style={{ fontSize: 22, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · 1er mois 100% offert</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 36, flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 32, flex: 1 }}>
             {[
               { t: '🔗 URL Personnalisée', d: 'nopalou.com/boutiques/votre-nom' },
               { t: '📲 Commandes WhatsApp 1-Clic', d: 'Recevez les acheteurs directement sur votre mobile' },
@@ -396,16 +396,16 @@ export async function GET(request: Request) {
               { t: '✨ Import AliExpress & 1688', d: 'Ajoutez vos produits en 1-clic avec photos et descriptif' },
               { t: '🔍 Visibilité Marketplace Dakar', d: '0% de commission sur vos ventes' },
             ].map(f => (
-              <div key={f.t} style={{ background: C.fondBleu, border: '1.5px solid #BFDBFE', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 20, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
+              <div key={f.t} style={{ background: C.fondBleu, border: '1.5px solid #BFDBFE', borderRadius: 16, padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
                 <span style={{ fontSize: 15, color: '#1D4ED8', fontWeight: 700, display: 'flex' }}>{f.d}</span>
               </div>
             ))}
           </div>
 
-          <div style={{ background: C.orange, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
-            <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🚀 Lancez votre boutique aujourd&apos;hui</span>
-            <span style={{ fontSize: 24, fontWeight: 900, color: '#ffffff', display: 'flex' }}>nopalou.com/creer-boutique</span>
+          <div style={{ background: C.orange, borderRadius: 20, padding: '18px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
+            <span style={{ fontSize: 21, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🚀 Lancez votre boutique aujourd&apos;hui</span>
+            <span style={{ fontSize: 23, fontWeight: 900, color: '#ffffff', display: 'flex' }}>nopalou.com/creer-boutique</span>
           </div>
         </div>
       ),
@@ -424,8 +424,8 @@ export async function GET(request: Request) {
             display: 'flex',
             flexDirection: 'column',
             background: C.bgPage,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            padding: 60,
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            padding: 56,
             boxSizing: 'border-box',
             color: C.marine,
             position: 'relative',
@@ -433,25 +433,25 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 14, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
-              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
+              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
-            <span style={{ background: '#7E22CE', padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#ffffff', display: 'flex' }}>
+            <span style={{ background: '#7E22CE', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
               👑 FORMULE BUSINESS VIP
             </span>
           </div>
 
-          <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <h1 style={{ fontSize: 44, fontWeight: 900, margin: 0, color: C.marine, display: 'flex', lineHeight: 1.15 }}>
+          <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <h1 style={{ fontSize: 42, fontWeight: 900, margin: 0, color: C.marine, letterSpacing: -1.2, display: 'flex', lineHeight: 1.15 }}>
               Caisse Multi-Caissiers + Fournisseurs OCR + API REST
             </h1>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 4 }}>
-              <span style={{ fontSize: 52, fontWeight: 900, color: C.vert, display: 'flex' }}>{prix || '10 000 FCFA'}</span>
-              <span style={{ fontSize: 20, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · Tout Inclus Pro + VIP</span>
+              <span style={{ fontSize: 50, fontWeight: 900, color: C.vert, letterSpacing: -1, display: 'flex' }}>{prix || '10 000 FCFA'}</span>
+              <span style={{ fontSize: 19, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · Tout Inclus Pro + VIP</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 28, flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 24, flex: 1 }}>
             {[
               { t: '👥 Multi-Caissiers & Codes PIN', d: 'Chaque vendeur possède son PIN et ses droits' },
               { t: '📊 Clôtures de Caisse Z & Marges', d: 'Rapports journaliers automatiques & contrôle des écarts' },
@@ -460,13 +460,13 @@ export async function GET(request: Request) {
               { t: '🔌 Portail Développeur API & Webhooks', d: 'Connectez vos logiciels tiers (ERP, Shopify, WooCommerce)' },
             ].map(f => (
               <div key={f.t} style={{ background: '#FDF4FF', border: '1.5px solid #F5D0FE', borderRadius: 16, padding: '12px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 19, fontWeight: 800, color: C.marine, display: 'flex' }}>{f.t}</span>
+                <span style={{ fontSize: 19, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
                 <span style={{ fontSize: 15, color: '#7E22CE', fontWeight: 700, display: 'flex' }}>{f.d}</span>
               </div>
             ))}
           </div>
 
-          <div style={{ background: C.marine, borderRadius: 20, padding: '18px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
+          <div style={{ background: C.marine, borderRadius: 20, padding: '18px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18 }}>
             <span style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🏢 Demandez votre démo VIP Grands Comptes</span>
             <span style={{ fontSize: 22, fontWeight: 900, color: '#E9D5FF', display: 'flex' }}>nopalou.com/boutique</span>
           </div>
@@ -487,7 +487,7 @@ export async function GET(request: Request) {
             display: 'flex',
             flexDirection: 'column',
             background: C.bgPage,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             padding: 44,
             boxSizing: 'border-box',
             color: C.marine,
@@ -495,10 +495,10 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 46, height: 46, borderRadius: 12, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 900, color: '#fff' }}>N</div>
-              <span style={{ fontSize: 30, fontWeight: 900, color: C.marine, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
+              <div style={{ width: 46, height: 46, borderRadius: 14, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 900, color: '#fff' }}>N</div>
+              <span style={{ fontSize: 30, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
-            <h1 style={{ fontSize: 24, fontWeight: 900, color: C.marine, margin: 0, display: 'flex' }}>
+            <h1 style={{ fontSize: 24, fontWeight: 900, color: C.marine, letterSpacing: -0.5, margin: 0, display: 'flex' }}>
               📊 Formules Boutiques &amp; Caisse POS
             </h1>
           </div>
@@ -507,9 +507,9 @@ export async function GET(request: Request) {
             
             {/* Taf Taf */}
             <div style={{ flex: 1, background: C.cardBg, border: '1.5px solid #CBD5E1', borderRadius: 18, padding: 18, display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: '#1D4ED8', textTransform: 'uppercase', display: 'flex' }}>Vitrine Web</span>
-              <h2 style={{ fontSize: 22, fontWeight: 900, margin: '4px 0 0', color: C.marine, display: 'flex' }}>Taf Taf</h2>
-              <span style={{ fontSize: 26, fontWeight: 900, color: C.vert, margin: '6px 0 12px', display: 'flex' }}>2 500 F <span style={{ fontSize: 12, color: C.gris, fontWeight: 600 }}>/mois</span></span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#1D4ED8', textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex' }}>Vitrine Web</span>
+              <h2 style={{ fontSize: 22, fontWeight: 900, margin: '4px 0 0', color: C.marine, letterSpacing: -0.5, display: 'flex' }}>Taf Taf</h2>
+              <span style={{ fontSize: 26, fontWeight: 900, color: C.vert, letterSpacing: -0.5, margin: '6px 0 12px', display: 'flex' }}>2 500 F <span style={{ fontSize: 12, color: C.gris, fontWeight: 600 }}>/mois</span></span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12, color: C.marine, fontWeight: 600 }}>
                 <span>✓ Vitrine web en 30 sec</span>
                 <span>✓ Commandes WhatsApp</span>
@@ -521,11 +521,11 @@ export async function GET(request: Request) {
             </div>
 
             {/* Pro */}
-            <div style={{ flex: 1.15, background: '#FFF7ED', border: '3px solid #C75B00', borderRadius: 18, padding: 18, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-              <span style={{ position: 'absolute', top: -12, right: 16, background: C.orange, color: '#fff', padding: '3px 10px', borderRadius: 10, fontSize: 10, fontWeight: 900, display: 'flex' }}>RECOMMANDE</span>
-              <span style={{ fontSize: 12, fontWeight: 800, color: C.orange, textTransform: 'uppercase', display: 'flex' }}>Caisse POS Magasin</span>
-              <h2 style={{ fontSize: 24, fontWeight: 900, margin: '4px 0 0', color: C.marine, display: 'flex' }}>Boutique Pro</h2>
-              <span style={{ fontSize: 28, fontWeight: 900, color: C.orange, margin: '6px 0 12px', display: 'flex' }}>5 000 F <span style={{ fontSize: 12, color: C.gris, fontWeight: 600 }}>/mois</span></span>
+            <div style={{ flex: 1.15, background: '#FFF7ED', border: '2.5px solid #C75B00', borderRadius: 18, padding: 18, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+              <span style={{ position: 'absolute', top: -12, right: 16, background: C.orange, color: '#fff', padding: '3px 10px', borderRadius: 9999, fontSize: 10, fontWeight: 900, display: 'flex' }}>RECOMMANDE</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: C.orange, textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex' }}>Caisse POS Magasin</span>
+              <h2 style={{ fontSize: 24, fontWeight: 900, margin: '4px 0 0', color: C.marine, letterSpacing: -0.5, display: 'flex' }}>Boutique Pro</h2>
+              <span style={{ fontSize: 28, fontWeight: 900, color: C.orange, letterSpacing: -0.5, margin: '6px 0 12px', display: 'flex' }}>5 000 F <span style={{ fontSize: 12, color: C.gris, fontWeight: 600 }}>/mois</span></span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12, color: C.marine, fontWeight: 800 }}>
                 <span>✓ Tout ce qui est dans Taf Taf</span>
                 <span>✓ Caisse POS &amp; 3 Scanners</span>
@@ -539,9 +539,9 @@ export async function GET(request: Request) {
 
             {/* Business */}
             <div style={{ flex: 1, background: C.cardBg, border: '1.5px solid #CBD5E1', borderRadius: 18, padding: 18, display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: '#7E22CE', textTransform: 'uppercase', display: 'flex' }}>Multi-Caissiers</span>
-              <h2 style={{ fontSize: 22, fontWeight: 900, margin: '4px 0 0', color: C.marine, display: 'flex' }}>Business VIP</h2>
-              <span style={{ fontSize: 26, fontWeight: 900, color: '#7E22CE', margin: '6px 0 12px', display: 'flex' }}>10 000 F <span style={{ fontSize: 12, color: C.gris, fontWeight: 600 }}>/mois</span></span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#7E22CE', textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex' }}>Multi-Caissiers</span>
+              <h2 style={{ fontSize: 22, fontWeight: 900, margin: '4px 0 0', color: C.marine, letterSpacing: -0.5, display: 'flex' }}>Business VIP</h2>
+              <span style={{ fontSize: 26, fontWeight: 900, color: '#7E22CE', letterSpacing: -0.5, margin: '6px 0 12px', display: 'flex' }}>10 000 F <span style={{ fontSize: 12, color: C.gris, fontWeight: 600 }}>/mois</span></span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12, color: C.marine, fontWeight: 600 }}>
                 <span>✓ Tout ce qui est dans Pro</span>
                 <span>✓ Multi-Caissiers Code PIN</span>
@@ -575,6 +575,14 @@ export async function GET(request: Request) {
   }
 
   // 9. VISUEL DÉFAUT : BON PLAN DU JOUR / PRODUIT COMPARATIF NOPALOU (FOND CLAIR)
+  // Calcul adaptatif pour éviter tout débordement ou texte tronqué
+  const nomAffichage = nom || 'Meilleur Prix Détecté à Dakar'
+  const nomFontSize = nomAffichage.length > 50 ? 28 : nomAffichage.length > 30 ? 34 : 40
+  const nomLineHeight = nomAffichage.length > 50 ? 1.15 : 1.2
+
+  const boutiqueAffichage = boutique || 'Vendeur Vérifié Nopalou'
+  const boutiqueFontSize = boutiqueAffichage.length > 25 ? 15 : 18
+
   return new ImageResponse(
     (
       <div
@@ -584,8 +592,8 @@ export async function GET(request: Request) {
           display: 'flex',
           flexDirection: 'column',
           background: C.bgPage,
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          padding: 60,
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          padding: 56,
           boxSizing: 'border-box',
           color: C.marine,
           position: 'relative',
@@ -593,41 +601,41 @@ export async function GET(request: Request) {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ width: 56, height: 56, borderRadius: 14, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 900, color: '#fff' }}>N</div>
-            <span style={{ fontSize: 36, fontWeight: 900, color: C.marine, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 900, color: '#fff' }}>N</div>
+            <span style={{ fontSize: 36, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
           </div>
-          <span style={{ background: C.orange, padding: '10px 24px', borderRadius: 30, fontSize: 18, fontWeight: 900, color: '#fff', display: 'flex' }}>
+          <span style={{ background: C.orange, padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#fff', letterSpacing: 0.5, display: 'flex' }}>
             🔥 BON PLAN PRIX NOPALOU
           </span>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 40, marginTop: 30 }}>
-          <div style={{ width: 380, height: 380, borderRadius: 24, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.08)', border: '4px solid #E2E8F0', flexShrink: 0 }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 36, marginTop: 24 }}>
+          <div style={{ width: 380, height: 380, borderRadius: 24, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.08)', border: '3px solid #E2E8F0', flexShrink: 0 }}>
             {image ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={image} alt={nom || 'Produit'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={image} alt={nomAffichage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
                 <span style={{ fontSize: 80, display: 'flex' }}>🛍️</span>
-                <span style={{ fontSize: 18, fontWeight: 800, color: C.marine }}>{boutique || 'Nopalou'}</span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: C.marine, textAlign: 'center', padding: '0 20px' }}>{boutiqueAffichage}</span>
               </div>
             )}
           </div>
 
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: C.orange, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10, display: 'flex' }}>
-              {boutique || 'Vendeur Vérifié Nopalou'}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
+            <span style={{ fontSize: boutiqueFontSize, fontWeight: 800, color: C.orange, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 10, display: 'flex' }}>
+              {boutiqueAffichage}
             </span>
-            <h2 style={{ fontSize: 42, fontWeight: 900, color: C.marine, margin: 0, lineHeight: 1.2, display: 'flex' }}>
-              {nom || 'Meilleur Prix Détecté à Dakar'}
+            <h2 style={{ fontSize: nomFontSize, fontWeight: 900, color: C.marine, margin: 0, lineHeight: nomLineHeight, letterSpacing: -0.8, display: 'flex' }}>
+              {nomAffichage}
             </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', marginTop: 24, gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', marginTop: 20, gap: 6 }}>
               {prixBarre && (
-                <span style={{ fontSize: 26, color: C.gris, textDecoration: 'line-through', fontWeight: 700, display: 'flex' }}>
+                <span style={{ fontSize: 24, color: C.gris, textDecoration: 'line-through', fontWeight: 700, display: 'flex' }}>
                   {prixBarre}
                 </span>
               )}
-              <span style={{ fontSize: 54, fontWeight: 900, color: C.vert, display: 'flex', lineHeight: 1 }}>
+              <span style={{ fontSize: 50, fontWeight: 900, color: C.vert, letterSpacing: -1, display: 'flex', lineHeight: 1 }}>
                 {prix || '15 000 FCFA'}
               </span>
             </div>

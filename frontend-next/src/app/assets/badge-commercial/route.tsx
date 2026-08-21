@@ -18,6 +18,9 @@ export async function GET(request: Request) {
 
   const qr = qrDataUri(`https://nopalou.com/creer-boutique?ref=${encodeURIComponent(codeAgent)}`)
 
+  // Calcul adaptatif pour éviter tout débordement de nom
+  const nomFontSize = agentNom.length > 25 ? 26 : agentNom.length > 18 ? 32 : 38
+
   return new ImageResponse(
     (
       <div style={{
@@ -45,6 +48,7 @@ export async function GET(request: Request) {
         <div style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           justifyContent: 'space-between', padding: '48px 48px 48px 64px',
+          minWidth: 0,
         }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -55,7 +59,7 @@ export async function GET(request: Request) {
                 fontSize: 34, fontWeight: 900, color: '#fff',
               }}>N</div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: 36, fontWeight: 900, color: '#fff' }}>
+                <span style={{ fontSize: 36, fontWeight: 900, color: '#fff', letterSpacing: -1 }}>
                   Nopa<span style={{ color: '#C75B00' }}>lou</span>
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em' }}>
@@ -66,7 +70,7 @@ export async function GET(request: Request) {
 
             <div style={{
               background: '#16A34A', color: '#fff', fontSize: 12, fontWeight: 900,
-              padding: '6px 14px', borderRadius: 20, letterSpacing: '0.05em',
+              padding: '6px 14px', borderRadius: 9999, letterSpacing: '0.05em',
             }}>
               ACCRÉDITÉ 2026
             </div>
@@ -74,10 +78,10 @@ export async function GET(request: Request) {
 
           {/* Identité de l'Agent */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={{ fontSize: 14, color: '#C75B00', fontWeight: 800, letterSpacing: '0.08em' }}>
+            <span style={{ fontSize: 13, color: '#F97316', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               CONSEILLER MARCHANDS &amp; DIGITALISATION
             </span>
-            <span style={{ fontSize: 38, fontWeight: 900, color: '#fff' }}>
+            <span style={{ fontSize: nomFontSize, fontWeight: 900, color: '#fff', letterSpacing: -0.5, lineHeight: 1.15 }}>
               {agentNom}
             </span>
             <div style={{ display: 'flex', gap: 20, marginTop: 4 }}>
@@ -98,7 +102,7 @@ export async function GET(request: Request) {
             <span style={{ fontSize: 13, color: '#94A3B8' }}>
               Plateforme N°1 de Commerce &amp; Caisse POS au Sénégal · nopalou.com
             </span>
-            <span style={{ fontSize: 13, color: '#C75B00', fontWeight: 800 }}>
+            <span style={{ fontSize: 13, color: '#F97316', fontWeight: 800 }}>
               Scannez pour valider l&apos;accréditation
             </span>
           </div>

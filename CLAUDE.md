@@ -1,3 +1,17 @@
+- **Optimisation Typographique, Rendu HD & Blindage Anti-Débordement sur Tous les Visuels (`main` - 21 août 2026)** 🎨📐 :
+  * **Blindage & Adaptation Dynamique des Textes dans le Générateur d'Affiches (`produit-promo/route.tsx`)** :
+    - **Calcul Dynamique de Police** : Adaptation automatique de la taille (`28px` à `40px`) et du `lineHeight` pour les noms de produits et boutiques longs dans le mode *Bon Plan*, éliminant tout risque de texte tronqué ou de débordement hors du cadre 1080×1080.
+    - **Ajustement du Rythme Typographique (Tracking)** : Application d'un `letterSpacing` resserré (`-1.2px` à `-1.8px` sur les H1, `-0.5px` à `-1px` sur les prix et sous-titres) inspiré des standards éditoriaux de Stripe et Apple.
+    - **Uniformisation des Badges et Bordures** : Adoucissement des bordures de cartes (`1.5px` / `2px` avec contrastes pastel) et standardisation des badges de statuts en pilules arrondies (`borderRadius: 9999px`).
+  * **Harmonisation des Supports Imprimables & Badges (`flyer-commercial-a5`, `fiche-tarifs-a4`, `badge-commercial`, `memo-poche-commercial`, `poster-ecosysteme`, `pilier-apporteur`, `apporteur-affaires`)** :
+    - **Badge Commercial Accrédité** : Dimensionnement adaptatif du nom de l'agent conseiller pour garantir un rendu parfait quel que soit le nombre de caractères.
+    - **Fiche Tarifs A4 & Flyer A5** : Alignement rigoureux des grilles tarifaires et intégration des QR codes vectoriels SVG ultra-nets sans interpolation.
+  * **Espace Parrainage & Apporteur (`ApporteurClient.tsx`)** :
+    - **Grid Responsive des Boutons de Partage** : Remplacement des conteneurs à risque de chevauchement par une grille adaptative fluide (`repeat(auto-fit, minmax(180px, 1fr))`) sur mobile.
+  * **Validation & Contrôle Qualité** :
+    - Build Next.js (`npm run build`) : 91/91 pages et routes d'assets générées avec succès (code 0).
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Architecture Hero Pleine Largeur & Élargissement des Cartes Latérales (`main` - 21 août 2026)** 📐✨ :
   * **Disposition en Étage Unique & Zéro Espace Vide** :
     - **Trio Supérieur 3 Colonnes Harmonisé** : Cartes latérales élargies à `310px` (`HeroWhatsAppCarousel.tsx` & `page.tsx`) avec padding `12px 16px` et hauteur minimale unifiée (`148px`), encadrant le bloc central de recherche (`maxWidth: 760px`) sans aucun vide supérieur ou inférieur.

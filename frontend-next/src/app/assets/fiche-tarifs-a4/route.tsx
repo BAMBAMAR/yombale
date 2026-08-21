@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '40px 72px 20px',
+          padding: '36px 72px 16px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
             <div style={{
@@ -42,21 +42,21 @@ export async function GET(request: Request) {
               fontSize: 40, fontWeight: 900, color: '#fff',
             }}>N</div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 44, fontWeight: 900, color: '#1C2B4A', lineHeight: 1.1 }}>
+              <span style={{ fontSize: 44, fontWeight: 900, color: '#1C2B4A', lineHeight: 1.1, letterSpacing: -1.5 }}>
                 Nopa<span style={{ color: '#C75B00' }}>lou</span>
               </span>
-              <span style={{ fontSize: 18, fontWeight: 700, color: '#64748B' }}>
+              <span style={{ fontSize: 17, fontWeight: 700, color: '#64748B', letterSpacing: '0.05em' }}>
                 GRILLE TARIFAIRE OFFICIELLE &amp; FORMULES MARCHANDS
               </span>
             </div>
           </div>
 
           <div style={{
-            background: '#DCFCE7', border: '2px solid #16A34A',
-            borderRadius: 14, padding: '10px 20px',
+            background: '#DCFCE7', border: '1.5px solid #16A34A',
+            borderRadius: 9999, padding: '10px 22px',
             display: 'flex', alignItems: 'center', gap: 10,
           }}>
-            <span style={{ fontSize: 20, fontWeight: 900, color: '#15803D' }}>
+            <span style={{ fontSize: 19, fontWeight: 900, color: '#15803D' }}>
               🎁 1er Mois 100% Offert sur Tous les Plans
             </span>
           </div>
@@ -64,10 +64,10 @@ export async function GET(request: Request) {
 
         {/* Titre */}
         <div style={{ padding: '16px 72px 0', display: 'flex', flexDirection: 'column' }}>
-          <h2 style={{ fontSize: 38, fontWeight: 900, color: '#1C2B4A', margin: 0 }}>
+          <h2 style={{ fontSize: 36, fontWeight: 900, color: '#1C2B4A', margin: 0, letterSpacing: -1.2 }}>
             Choisissez la formule adaptée à la taille de votre commerce
           </h2>
-          <p style={{ fontSize: 20, color: '#64748B', marginTop: 8 }}>
+          <p style={{ fontSize: 19, color: '#64748B', marginTop: 6, fontWeight: 600 }}>
             Zéro frais cachés · Zéro commission sur vos ventes · Paiement sécurisé Wave &amp; Orange Money
           </p>
         </div>
@@ -78,20 +78,20 @@ export async function GET(request: Request) {
         }}>
           {/* Formule 1 : Taf Taf */}
           <div style={{
-            flex: 1, background: '#F8FAFC', border: '2px solid #CBD5E1',
+            flex: 1, background: '#F8FAFC', border: '1.5px solid #CBD5E1',
             borderRadius: 20, padding: '24px 20px', display: 'flex', flexDirection: 'column',
           }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: '#64748B' }}>DÉCOUVERTE &amp; WEB</span>
-            <span style={{ fontSize: 32, fontWeight: 900, color: '#1C2B4A', marginTop: 4 }}>Taf Taf</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 12 }}>
-              <span style={{ fontSize: 40, fontWeight: 900, color: '#C75B00' }}>2 500</span>
-              <span style={{ fontSize: 18, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>DÉCOUVERTE &amp; WEB</span>
+            <span style={{ fontSize: 30, fontWeight: 900, color: '#1C2B4A', marginTop: 4, letterSpacing: -0.5 }}>Taf Taf</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 10 }}>
+              <span style={{ fontSize: 38, fontWeight: 900, color: '#C75B00', letterSpacing: -1 }}>2 500</span>
+              <span style={{ fontSize: 17, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
             </div>
             <span style={{ fontSize: 14, color: '#16A34A', fontWeight: 800, marginTop: 4 }}>
               1er mois offert
             </span>
             <hr style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '16px 0' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#334155' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#334155', fontWeight: 600 }}>
               <span>✓ Vitrine web personnalisée</span>
               <span>✓ Commandes directes WhatsApp</span>
               <span>✓ Carnet de dettes client</span>
@@ -102,26 +102,26 @@ export async function GET(request: Request) {
 
           {/* Formule 2 : Boutique Pro (Star) */}
           <div style={{
-            flex: 1, background: '#FFF7ED', border: '3px solid #C75B00',
+            flex: 1, background: '#FFF7ED', border: '2.5px solid #C75B00',
             borderRadius: 20, padding: '24px 20px', display: 'flex', flexDirection: 'column',
             position: 'relative',
           }}>
             <div style={{
               position: 'absolute', top: -14, right: 20,
-              background: '#C75B00', color: '#fff', fontSize: 12, fontWeight: 900,
-              padding: '4px 12px', borderRadius: 8,
+              background: '#C75B00', color: '#fff', fontSize: 11, fontWeight: 900,
+              padding: '4px 12px', borderRadius: 9999, letterSpacing: 0.5,
             }}>⭐ LE PLUS POPULAIRE</div>
-            <span style={{ fontSize: 18, fontWeight: 800, color: '#C75B00' }}>MAGASIN PHYSIQUE</span>
-            <span style={{ fontSize: 32, fontWeight: 900, color: '#1C2B4A', marginTop: 4 }}>Boutique Pro</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 12 }}>
-              <span style={{ fontSize: 40, fontWeight: 900, color: '#C75B00' }}>5 000</span>
-              <span style={{ fontSize: 18, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: '#C75B00', textTransform: 'uppercase', letterSpacing: 0.5 }}>MAGASIN PHYSIQUE</span>
+            <span style={{ fontSize: 30, fontWeight: 900, color: '#1C2B4A', marginTop: 4, letterSpacing: -0.5 }}>Boutique Pro</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 10 }}>
+              <span style={{ fontSize: 38, fontWeight: 900, color: '#C75B00', letterSpacing: -1 }}>5 000</span>
+              <span style={{ fontSize: 17, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
             </div>
             <span style={{ fontSize: 14, color: '#16A34A', fontWeight: 800, marginTop: 4 }}>
               1er mois offert · Rentabilisé dès la 1ère vente
             </span>
             <hr style={{ border: 'none', borderTop: '1px solid #FED7AA', margin: '16px 0' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#1C2B4A', fontWeight: 600 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#1C2B4A', fontWeight: 700 }}>
               <span>✓ <strong>Tout le plan Taf Taf inclus</strong></span>
               <span>✓ <strong>Caisse POS Tactile Magasin</strong></span>
               <span>✓ <strong>Mode PWA Hors-Ligne (sans internet)</strong></span>
@@ -134,20 +134,20 @@ export async function GET(request: Request) {
 
           {/* Formule 3 : Business VIP */}
           <div style={{
-            flex: 1, background: '#F8FAFC', border: '2px solid #1E293B',
+            flex: 1, background: '#F8FAFC', border: '1.5px solid #1E293B',
             borderRadius: 20, padding: '24px 20px', display: 'flex', flexDirection: 'column',
           }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: '#1E293B' }}>PME &amp; ENSEIGNES</span>
-            <span style={{ fontSize: 32, fontWeight: 900, color: '#1C2B4A', marginTop: 4 }}>Business VIP</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 12 }}>
-              <span style={{ fontSize: 40, fontWeight: 900, color: '#1C2B4A' }}>10 000</span>
-              <span style={{ fontSize: 18, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: '#1E293B', textTransform: 'uppercase', letterSpacing: 0.5 }}>PME &amp; ENSEIGNES</span>
+            <span style={{ fontSize: 30, fontWeight: 900, color: '#1C2B4A', marginTop: 4, letterSpacing: -0.5 }}>Business VIP</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 10 }}>
+              <span style={{ fontSize: 38, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1 }}>10 000</span>
+              <span style={{ fontSize: 17, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
             </div>
             <span style={{ fontSize: 14, color: '#16A34A', fontWeight: 800, marginTop: 4 }}>
               1er mois offert
             </span>
             <hr style={{ border: 'none', borderTop: '1px solid #CBD5E1', margin: '16px 0' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#334155' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#334155', fontWeight: 600 }}>
               <span>✓ <strong>Tout le plan Pro inclus</strong></span>
               <span>✓ <strong>Multi-Caissiers sécurisés PIN</strong></span>
               <span>✓ <strong>Fournisseurs &amp; Scan OCR</strong></span>
@@ -161,21 +161,21 @@ export async function GET(request: Request) {
 
         {/* Remises Multi-Durées */}
         <div style={{
-          margin: '28px 72px 0', background: '#FEF3C7', border: '2px solid #F59E0B',
+          margin: '28px 72px 0', background: '#FEF3C7', border: '1.5px solid #F59E0B',
           borderRadius: 18, padding: '16px 28px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <span style={{ fontSize: 20, fontWeight: 900, color: '#92400E' }}>
+          <span style={{ fontSize: 19, fontWeight: 900, color: '#92400E', letterSpacing: -0.3 }}>
             🏷️ Barème des Remises Commerçants :
           </span>
           <div style={{ display: 'flex', gap: 24 }}>
-            <span style={{ fontSize: 17, fontWeight: 800, color: '#B45309' }}>
+            <span style={{ fontSize: 16.5, fontWeight: 800, color: '#B45309' }}>
               3 mois : <strong>-10%</strong>
             </span>
-            <span style={{ fontSize: 17, fontWeight: 800, color: '#B45309' }}>
+            <span style={{ fontSize: 16.5, fontWeight: 800, color: '#B45309' }}>
               6 mois : <strong>-15%</strong>
             </span>
-            <span style={{ fontSize: 17, fontWeight: 900, color: '#15803D', background: '#DCFCE7', padding: '4px 12px', borderRadius: 8 }}>
+            <span style={{ fontSize: 16.5, fontWeight: 900, color: '#15803D', background: '#DCFCE7', padding: '4px 12px', borderRadius: 9999 }}>
               12 mois : <strong>-25% (3 mois offerts !)</strong>
             </span>
           </div>
@@ -185,11 +185,12 @@ export async function GET(request: Request) {
 
         {/* Footer Contact & Onboarding */}
         <div style={{
-          margin: '0 72px 40px', background: '#1C2B4A', borderRadius: 20, padding: '24px 36px',
+          margin: '0 72px 36px', background: '#1C2B4A', borderRadius: 20, padding: '22px 36px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          border: '2.5px solid #C75B00',
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#fff', letterSpacing: -0.5 }}>
               Démarrez votre essai gratuit dès aujourd&apos;hui
             </span>
             <span style={{ fontSize: 18, color: '#38BDF8', fontWeight: 800 }}>

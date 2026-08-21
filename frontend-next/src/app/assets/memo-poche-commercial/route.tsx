@@ -30,7 +30,7 @@ export async function GET(request: Request) {
               fontSize: 28, fontWeight: 900, color: '#fff',
             }}>N</div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 26, fontWeight: 900, color: '#1C2B4A' }}>
+              <span style={{ fontSize: 25, fontWeight: 900, color: '#1C2B4A', letterSpacing: -0.8 }}>
                 MÉMO DE POCHE COMMERCIAL TERRAIN
               </span>
               <span style={{ fontSize: 13, fontWeight: 700, color: '#64748B' }}>
@@ -39,8 +39,8 @@ export async function GET(request: Request) {
             </div>
           </div>
           <div style={{
-            background: '#1C2B4A', color: '#fff', fontSize: 13, fontWeight: 800,
-            padding: '6px 14px', borderRadius: 8,
+            background: '#1C2B4A', color: '#fff', fontSize: 12, fontWeight: 800,
+            padding: '6px 14px', borderRadius: 9999, letterSpacing: 0.5,
           }}>
             NOPALOU SÉNÉGAL
           </div>
@@ -48,13 +48,13 @@ export async function GET(request: Request) {
 
         {/* 1. L'Accroche en 30 Secondes */}
         <div style={{
-          background: '#FFF7ED', border: '2px solid #FFEDD5',
+          background: '#FFF7ED', border: '1.5px solid #FED7AA',
           borderRadius: 14, padding: '14px 18px', marginBottom: 16,
         }}>
-          <span style={{ fontSize: 16, fontWeight: 900, color: '#C75B00' }}>
+          <span style={{ fontSize: 15, fontWeight: 900, color: '#C75B00', letterSpacing: 0.3 }}>
             ⚡ PITCH ÉCLAIR (30 SECONDES) :
           </span>
-          <p style={{ fontSize: 14, color: '#1C2B4A', margin: '6px 0 0', lineHeight: 1.4, fontWeight: 600 }}>
+          <p style={{ fontSize: 14, color: '#1C2B4A', margin: '6px 0 0', lineHeight: 1.45, fontWeight: 650 }}>
             « Bonjour ! Je suis avec Nopalou. On aide les boutiques du quartier à digitaliser leur caisse sur leur propre smartphone, gérer les dettes clients par WhatsApp et avoir une vitrine en ligne sans commission. Le 1er mois est 100% offert, je vous montre en 1 minute ? »
           </p>
         </div>
@@ -62,13 +62,13 @@ export async function GET(request: Request) {
         {/* 2. Arbre de Décision : Sans Appli vs Avec Appli */}
         <div style={{ display: 'flex', gap: 14, marginBottom: 16 }}>
           <div style={{
-            flex: 1, background: '#F0FDF4', border: '2px solid #BBF7D0',
+            flex: 1, background: '#F0FDF4', border: '1.5px solid #BBF7D0',
             borderRadius: 12, padding: '12px 14px', display: 'flex', flexDirection: 'column',
           }}>
             <span style={{ fontSize: 14, fontWeight: 900, color: '#166534' }}>
               ❌ S&apos;il n&apos;a PAS d&apos;application :
             </span>
-            <span style={{ fontSize: 12, color: '#334155', marginTop: 4, lineHeight: 1.35 }}>
+            <span style={{ fontSize: 12.5, color: '#334155', marginTop: 4, lineHeight: 1.4, fontWeight: 600 }}>
               • Insister sur la <strong>simplicité</strong> et le <strong>zéro investissement</strong>.<br />
               • Caisse PWA Offline (fonctionne même sans connexion).<br />
               • Carnet de dettes client avec relance WhatsApp en 1 clic.
@@ -76,13 +76,13 @@ export async function GET(request: Request) {
           </div>
 
           <div style={{
-            flex: 1, background: '#EFF6FF', border: '2px solid #BFDBFE',
+            flex: 1, background: '#EFF6FF', border: '1.5px solid #BFDBFE',
             borderRadius: 12, padding: '12px 14px', display: 'flex', flexDirection: 'column',
           }}>
             <span style={{ fontSize: 14, fontWeight: 900, color: '#1E40AF' }}>
               ✅ S&apos;il A DÉJÀ une application :
             </span>
-            <span style={{ fontSize: 12, color: '#334155', marginTop: 4, lineHeight: 1.35 }}>
+            <span style={{ fontSize: 12.5, color: '#334155', marginTop: 4, lineHeight: 1.4, fontWeight: 600 }}>
               • Insister sur le <strong>double canal</strong> (Caisse + Vitrine Web synchronisée).<br />
               • Mobilité (suivi à distance sur mobile partout).<br />
               • 0% de commission et import Excel en 1 clic.
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
 
         {/* 3. Top 5 Objections & Parades Choc */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-          <span style={{ fontSize: 15, fontWeight: 900, color: '#1C2B4A' }}>
+          <span style={{ fontSize: 15, fontWeight: 900, color: '#1C2B4A', letterSpacing: -0.3 }}>
             🛡️ PARADES AUX OBJECTIONS TERRAIN :
           </span>
           {[
@@ -132,10 +132,10 @@ export async function GET(request: Request) {
           background: '#1C2B4A', borderRadius: 14, padding: '14px 18px', color: '#fff',
           display: 'flex', flexDirection: 'column', gap: 6,
         }}>
-          <span style={{ fontSize: 14, fontWeight: 900, color: '#38BDF8' }}>
+          <span style={{ fontSize: 14, fontWeight: 900, color: '#38BDF8', letterSpacing: 0.3 }}>
             ⏱️ ONBOARDING 3 MINUTES SUR PLACE :
           </span>
-          <span style={{ fontSize: 12, color: '#E2E8F0', lineHeight: 1.4 }}>
+          <span style={{ fontSize: 12, color: '#E2E8F0', lineHeight: 1.45 }}>
             1. Ouvrir <strong>nopalou.com/creer-boutique</strong> avec votre lien ou code parrain.<br />
             2. Saisir son numéro WhatsApp + nom de boutique.<br />
             3. Prendre en photo 1 vrai produit de sa boutique avec le prix.<br />

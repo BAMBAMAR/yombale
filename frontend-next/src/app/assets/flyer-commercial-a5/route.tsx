@@ -19,6 +19,8 @@ export async function GET(request: Request) {
   const targetUrl = `https://nopalou.com/creer-boutique?ref=${encodeURIComponent(codeAgent)}`
   const qr = qrDataUri(targetUrl)
 
+  const nomFontSize = agentNom.length > 25 ? 22 : 28
+
   return new ImageResponse(
     (
       <div style={{
@@ -29,13 +31,13 @@ export async function GET(request: Request) {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Bande supérieure orange et bleue */}
+        {/* Bande supérieure orange */}
         <div style={{ height: 18, background: '#C75B00', display: 'flex' }} />
         
         {/* Header avec Logo & Badge Offre */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '48px 72px 24px',
+          padding: '44px 72px 20px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             <div style={{
@@ -45,10 +47,10 @@ export async function GET(request: Request) {
               fontSize: 46, fontWeight: 900, color: '#fff',
             }}>N</div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 50, fontWeight: 900, color: '#1C2B4A', lineHeight: 1.1 }}>
+              <span style={{ fontSize: 50, fontWeight: 900, color: '#1C2B4A', lineHeight: 1.1, letterSpacing: -1.5 }}>
                 Nopa<span style={{ color: '#C75B00' }}>lou</span>
               </span>
-              <span style={{ fontSize: 20, fontWeight: 700, color: '#64748B', letterSpacing: '0.05em' }}>
+              <span style={{ fontSize: 19, fontWeight: 700, color: '#64748B', letterSpacing: '0.05em' }}>
                 COMMERCE &amp; CAISSE POS SÉNÉGAL
               </span>
             </div>
@@ -59,25 +61,25 @@ export async function GET(request: Request) {
             borderRadius: 16, padding: '12px 24px',
             display: 'flex', flexDirection: 'column', alignItems: 'center',
           }}>
-            <span style={{ fontSize: 22, fontWeight: 900, color: '#B45309' }}>
+            <span style={{ fontSize: 21, fontWeight: 900, color: '#B45309', letterSpacing: 0.5 }}>
               🎁 1er MOIS 100% OFFERT
             </span>
-            <span style={{ fontSize: 15, fontWeight: 700, color: '#92400E' }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#92400E', marginTop: 2 }}>
               Sans engagement · 0 carte bancaire
             </span>
           </div>
         </div>
 
         {/* Titre Principal Choc */}
-        <div style={{ padding: '24px 72px 0', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '20px 72px 0', display: 'flex', flexDirection: 'column' }}>
           <h1 style={{
-            fontSize: 54, fontWeight: 900, color: '#1C2B4A',
-            margin: 0, lineHeight: 1.15,
+            fontSize: 52, fontWeight: 900, color: '#1C2B4A',
+            margin: 0, lineHeight: 1.15, letterSpacing: -1.8,
           }}>
             Prenez le contrôle de votre boutique.<br />
             <span style={{ color: '#C75B00' }}>Vendez en magasin &amp; sur WhatsApp.</span>
           </h1>
-          <p style={{ fontSize: 24, color: '#475569', marginTop: 16, lineHeight: 1.4 }}>
+          <p style={{ fontSize: 23, color: '#475569', marginTop: 14, lineHeight: 1.4, fontWeight: 600 }}>
             La solution tout-en-un pour les commerçants de Dakar et du Sénégal : caisse tactile, gestion des dettes, facturation légale et vitrine web.
           </p>
         </div>
@@ -85,7 +87,7 @@ export async function GET(request: Request) {
         {/* Grille des 6 Piliers Majeurs */}
         <div style={{
           display: 'flex', flexWrap: 'wrap', gap: 20,
-          padding: '36px 72px 0',
+          padding: '32px 72px 0',
         }}>
           {[
             {
@@ -128,7 +130,7 @@ export async function GET(request: Request) {
             <div key={idx} style={{
               width: 535,
               background: item.bg,
-              border: `2px solid ${item.border}`,
+              border: `1.5px solid ${item.border}`,
               borderRadius: 18,
               padding: '20px 24px',
               display: 'flex',
@@ -137,10 +139,10 @@ export async function GET(request: Request) {
             }}>
               <span style={{ fontSize: 36 }}>{item.icon}</span>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: 22, fontWeight: 900, color: item.color }}>
+                <span style={{ fontSize: 21, fontWeight: 900, color: item.color, letterSpacing: -0.5 }}>
                   {item.titre}
                 </span>
-                <span style={{ fontSize: 16, color: '#475569', marginTop: 4, lineHeight: 1.35 }}>
+                <span style={{ fontSize: 15.5, color: '#475569', marginTop: 4, lineHeight: 1.35, fontWeight: 600 }}>
                   {item.desc}
                 </span>
               </div>
@@ -150,23 +152,23 @@ export async function GET(request: Request) {
 
         {/* Section Tarifs Clairs */}
         <div style={{
-          margin: '32px 72px 0',
-          background: '#F8FAFC', border: '2px solid #E2E8F0',
-          borderRadius: 20, padding: '20px 32px',
+          margin: '28px 72px 0',
+          background: '#F8FAFC', border: '1.5px solid #CBD5E1',
+          borderRadius: 20, padding: '18px 32px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: 20, fontWeight: 800, color: '#1C2B4A' }}>
+            <span style={{ fontSize: 19, fontWeight: 800, color: '#1C2B4A', letterSpacing: -0.3 }}>
               Tarifs ultra-accessibles après le mois d&apos;essai :
             </span>
-            <span style={{ fontSize: 16, color: '#64748B', marginTop: 4 }}>
+            <span style={{ fontSize: 15, color: '#64748B', marginTop: 4 }}>
               Taf Taf : 2 500 F/mois · Boutique Pro : 5 000 F/mois · Business VIP : 10 000 F/mois
             </span>
           </div>
           <div style={{
             background: '#16A34A', color: '#fff',
-            padding: '10px 20px', borderRadius: 12,
-            fontSize: 18, fontWeight: 900,
+            padding: '10px 20px', borderRadius: 9999,
+            fontSize: 16, fontWeight: 900,
           }}>
             0% de commission sur vos ventes
           </div>
@@ -176,29 +178,30 @@ export async function GET(request: Request) {
 
         {/* Footer / Bloc Action & QR Code */}
         <div style={{
-          margin: '0 72px 48px',
+          margin: '0 72px 44px',
           background: '#1C2B4A',
-          borderRadius: 24, padding: '32px 40px',
+          borderRadius: 24, padding: '28px 36px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          border: '3px solid #C75B00',
+          border: '2.5px solid #C75B00',
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 680 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 680, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{
                 background: '#C75B00', color: '#fff',
-                fontSize: 14, fontWeight: 900, padding: '4px 12px', borderRadius: 8,
+                fontSize: 13, fontWeight: 900, padding: '4px 12px', borderRadius: 6,
+                letterSpacing: 0.5,
               }}>
                 AGENT CONSEILLER TERRAIN
               </span>
-              <span style={{ fontSize: 18, color: '#CBD5E1' }}>Code : {codeAgent}</span>
+              <span style={{ fontSize: 17, color: '#CBD5E1' }}>Code : {codeAgent}</span>
             </div>
-            <span style={{ fontSize: 28, color: '#fff', fontWeight: 900 }}>
+            <span style={{ fontSize: nomFontSize, color: '#fff', fontWeight: 900, letterSpacing: -0.5 }}>
               {agentNom}
             </span>
-            <span style={{ fontSize: 24, color: '#38BDF8', fontWeight: 800 }}>
+            <span style={{ fontSize: 22, color: '#38BDF8', fontWeight: 800 }}>
               📞 WhatsApp direct : {agentPhone}
             </span>
-            <span style={{ fontSize: 16, color: '#94A3B8' }}>
+            <span style={{ fontSize: 15, color: '#94A3B8' }}>
               Démo live immédiate en 1 clic : nopalou.com/demo
             </span>
           </div>
@@ -206,7 +209,7 @@ export async function GET(request: Request) {
           <div style={{
             background: '#fff', borderRadius: 18,
             padding: '12px', display: 'flex', flexDirection: 'column',
-            alignItems: 'center', gap: 8,
+            alignItems: 'center', gap: 6, flexShrink: 0,
           }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={qr} width={180} height={180} alt="QR Code" />
