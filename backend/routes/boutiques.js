@@ -2248,6 +2248,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
     await ensureRefColSize();
     const idParam = req.params.id;
     const { items, caissier, modePaiement, client_id, idempotency_key } = req.body;
+    console.log('[POS VENTE] ▶ Requête reçue:', { idParam, nbItems: items?.length, caissier, modePaiement, hasIdempotency: !!idempotency_key });
 
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const bRes = await pool.query(
@@ -2257,6 +2258,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
     const boutique = bRes.rows[0];
     const boutiqueId = boutique.id;
+    console.log('[POS VENTE] ✓ Boutique trouvée:', boutiqueId);
     const idempotencyKey = typeof idempotency_key === 'string' && idempotency_key.length > 0 && idempotency_key.length <= 128
       ? idempotency_key
       : null;
@@ -2302,9 +2304,11 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
       const netAPayer = calculation.total_ttc + timbre - retenueBRS;
 
       // ── TRANSACTION ATOMIQUE : stock + ventes + commandes + facture + session ──
+      console.log('[POS VENTE] ✓ Calcul fiscal OK. ref:', refVente, 'netAPayer:', netAPayer, 'items:', calculation.items.length);
       const dbClient = await pool.connect();
       try {
         await dbClient.query('BEGIN');
+        console.log('[POS VENTE] ✓ BEGIN transaction');
 
         for (let idx = 0; idx < calculation.items.length; idx++) {
           const item = calculation.items[idx];
@@ -2358,6 +2362,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           );
         }
 
+        console.log('[POS VENTE] ✓ INSERT ventes OK pour', calculation.items.length, 'articles');
         // Insertion consolidée unique dans commandes_boutique
         const resumeNoms = calculation.items.map(i => `${i.nom} × ${i.quantite || 1}`).join(', ');
         const totalQteGlobale = calculation.items.reduce((acc, i) => acc + Number(i.quantite || 1), 0);
@@ -2392,6 +2397,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           ]
         );
 
+        console.log('[POS VENTE] ✓ INSERT commandes_boutique + caisse_documents OK');
         const activeSessionRes = await dbClient.query(
           `SELECT id FROM boutique_pos_sessions WHERE boutique_id = $1 AND statut = 'ouverte' ORDER BY date_ouverture DESC LIMIT 1`,
           [boutiqueId]
@@ -2455,11 +2461,10 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Stock, Comptabilité et Facture POS sauvegardés' });
   } catch (err) {
-    const isDev = process.env.NODE_ENV !== 'production';
-    console.error('[BOUTIQUE POS VENTE]', err.code, err.message, err.detail || '');
+    console.error('[BOUTIQUE POS VENTE ERREUR]', err.code, err.message, err.detail || '', err.stack?.split('\n').slice(0, 5).join(' | '));
     res.status(500).json({
       error: 'Erreur serveur',
-      detail: isDev ? `[${err.code}] ${err.message}` : undefined
+      detail: `[${err.code || 'ERR'}] ${err.message}`
     });
   }
 });

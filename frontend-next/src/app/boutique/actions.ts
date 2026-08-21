@@ -412,7 +412,9 @@ export async function creerPosVente(boutiqueId: string, body: any): Promise<Acti
     })
     if (!res.ok) {
       const d = await res.json().catch(() => ({}))
-      return { error: d.error ?? 'Impossible d\'enregistrer la vente' }
+      const errorMsg = d.detail ? `${d.error} — ${d.detail}` : (d.error ?? 'Impossible d\'enregistrer la vente')
+      console.error('[CREER_POS_VENTE]', res.status, errorMsg)
+      return { error: errorMsg }
     }
     return { success: true }
   } catch (err) {
