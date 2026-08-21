@@ -782,7 +782,7 @@ module.exports = async function migrateInline() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS ventes (
         id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        reference         VARCHAR(30) UNIQUE NOT NULL,
+        reference         VARCHAR(100) UNIQUE NOT NULL,
         boutique_id       UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
         produit_id        UUID REFERENCES boutique_produits(id) ON DELETE SET NULL,
         nom_produit       VARCHAR(300) NOT NULL,
@@ -798,6 +798,7 @@ module.exports = async function migrateInline() {
       );
       CREATE INDEX IF NOT EXISTS idx_ventes_boutique ON ventes(boutique_id, created_at DESC);
     `);
+    await pool.query(`ALTER TABLE ventes ALTER COLUMN reference TYPE VARCHAR(100)`);
     await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS archivee BOOLEAN DEFAULT false`);
     await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS justificatif_url TEXT`);
     await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS caissier_id UUID REFERENCES boutique_caissiers(id) ON DELETE SET NULL`);
@@ -810,7 +811,7 @@ module.exports = async function migrateInline() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS commandes_boutique (
         id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        reference        VARCHAR(30) UNIQUE NOT NULL,
+        reference        VARCHAR(100) UNIQUE NOT NULL,
         boutique_id      UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
         produit_id       UUID REFERENCES boutique_produits(id) ON DELETE SET NULL,
         nom_produit      VARCHAR(300) NOT NULL,
@@ -829,6 +830,7 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_commandes_boutique ON commandes_boutique(boutique_id, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_commandes_statut   ON commandes_boutique(boutique_id, statut);
     `);
+    await pool.query(`ALTER TABLE commandes_boutique ALTER COLUMN reference TYPE VARCHAR(100)`);
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS methode_paiement VARCHAR(20) DEFAULT 'wave'`);
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS zone_livraison_id UUID REFERENCES zones_livraison(id) ON DELETE SET NULL`);
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS frais_livraison NUMERIC(12,2) DEFAULT 0`);
@@ -1008,7 +1010,7 @@ module.exports = async function migrateInline() {
         client_id           UUID REFERENCES caisse_clients_credits(id) ON DELETE SET NULL,
         caissier_id         UUID REFERENCES boutique_caissiers(id) ON DELETE SET NULL,
         type                VARCHAR(30) NOT NULL, -- 'devis', 'proforma', 'bon_commande_client', 'facture'
-        reference           VARCHAR(50) UNIQUE NOT NULL,
+        reference           VARCHAR(100) UNIQUE NOT NULL,
         statut              VARCHAR(30) NOT NULL DEFAULT 'brouillon', -- 'brouillon', 'valide', 'paye', 'annule'
         total_ht            NUMERIC(12,2) NOT NULL DEFAULT 0,
         total_tva           NUMERIC(12,2) NOT NULL DEFAULT 0,
@@ -1024,6 +1026,7 @@ module.exports = async function migrateInline() {
         updated_at          TIMESTAMPTZ DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_caisse_docs_bq ON caisse_documents(boutique_id, type, created_at DESC);
+      ALTER TABLE caisse_documents ALTER COLUMN reference TYPE VARCHAR(100);
     `);
 
     // 4. Bons d'achat (Avoirs)

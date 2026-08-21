@@ -1237,8 +1237,64 @@ router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
       const hist = await client.query(
         `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-        [clientId, bqId, type, numMontant, mode_paiement || 'especes', note || null, JSON.stringify(produits || []), date_echeance || null, autoRelance]
+        [clientId, bqId, type, numMontant, mode_paiement || 'credit', note || null, JSON.stringify(produits || []), date_echeance || null, autoRelance]
       );
+
+      // Si c'est une vente à crédit avec des articles du catalogue, décrémenter le stock et alimenter la Comptabilité
+      if (type === 'vente_credit') {
+        const clientNom = c.rows[0].nom || 'Client Carnet';
+        const clientTel = c.rows[0].telephone || null;
+        const refCredit = `CR-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+        if (Array.isArray(produits) && produits.length > 0) {
+          for (let idx = 0; idx < produits.length; idx++) {
+            const item = produits[idx];
+            const qte = Number(item.quantite || 1);
+            const pId = item.id;
+            let pRes = null;
+
+            if (pId && /^[0-9a-f-]{36}$/i.test(String(pId))) {
+              pRes = await client.query(
+                `UPDATE boutique_produits
+                 SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
+                     en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
+                 WHERE id = $2 AND boutique_id = $3
+                 RETURNING id, nom, prix`,
+                [qte, pId, bqId]
+              );
+            } else if (item.nom) {
+              pRes = await client.query(
+                `UPDATE boutique_produits
+                 SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
+                     en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
+                 WHERE LOWER(nom) = LOWER($2) AND boutique_id = $3
+                 RETURNING id, nom, prix`,
+                [qte, item.nom.trim(), bqId]
+              );
+            }
+
+            const itemNom = item.nom || pRes?.rows[0]?.nom || 'Article Crédit';
+            const itemPrix = Number(item.prix || pRes?.rows[0]?.prix || 0);
+            const totalLigne = itemPrix * qte;
+            const itemRef = produits.length > 1 ? `${refCredit}-${idx + 1}` : refCredit;
+
+            await client.query(
+              `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, client_telephone, methode_paiement, created_at)
+               VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, 'credit', NOW())
+               ON CONFLICT (reference) DO NOTHING`,
+              [itemRef, bqId, pRes?.rows[0]?.id || null, itemNom, qte, itemPrix, totalLigne, clientNom, clientTel]
+            );
+          }
+        } else {
+          // Vente à crédit globale sans détail article
+          await client.query(
+            `INSERT INTO ventes (reference, boutique_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, client_telephone, methode_paiement, created_at)
+             VALUES ($1, $2, $3, 1, $4, 0, $4, $5, $6, 'credit', NOW())
+             ON CONFLICT (reference) DO NOTHING`,
+            [refCredit, bqId, note || 'Vente à crédit (Carnet)', numMontant, clientNom, clientTel]
+          );
+        }
+      }
 
       await client.query('COMMIT');
       res.json({ success: true, nouveauSolde, transaction: hist.rows[0] });
@@ -2325,10 +2381,29 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
         if (activeSessionRes.rows[0]) {
           const activeSessionId = activeSessionRes.rows[0].id;
           const mode = (modePaiement || 'cash').toLowerCase();
-          const isEspeces = mode === 'cash' || mode === 'especes' || mode === 'espece';
-          const isWave = mode === 'wave';
-          const isOm = mode === 'om' || mode === 'orange_money' || mode === 'orange';
-          const isCarte = mode === 'carte' || mode === 'cb';
+          let espAmt = 0;
+          let waveAmt = 0;
+          let omAmt = 0;
+          let carteAmt = 0;
+
+          if (mode === 'mixte') {
+            espAmt = Number(req.body.especes_mixte) || 0;
+            const digitalAmt = Number(req.body.montant_mixte2) || Math.max(0, netAPayer - espAmt);
+            const secondMode = (req.body.second_mode_mixte || 'wave').toLowerCase();
+            if (secondMode === 'wave') waveAmt = digitalAmt;
+            else if (secondMode === 'om' || secondMode === 'orange_money' || secondMode === 'orange') omAmt = digitalAmt;
+            else if (secondMode === 'carte' || secondMode === 'cb') carteAmt = digitalAmt;
+          } else {
+            const isEspeces = mode === 'cash' || mode === 'especes' || mode === 'espece';
+            const isWave = mode === 'wave';
+            const isOm = mode === 'om' || mode === 'orange_money' || mode === 'orange';
+            const isCarte = mode === 'carte' || mode === 'cb';
+
+            if (isEspeces) espAmt = netAPayer;
+            if (isWave) waveAmt = netAPayer;
+            if (isOm) omAmt = netAPayer;
+            if (isCarte) carteAmt = netAPayer;
+          }
 
           await dbClient.query(
             `UPDATE boutique_pos_sessions
@@ -2341,10 +2416,10 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
              WHERE id = $6`,
             [
               netAPayer,
-              isEspeces ? netAPayer : 0,
-              isWave ? netAPayer : 0,
-              isOm ? netAPayer : 0,
-              isCarte ? netAPayer : 0,
+              espAmt,
+              waveAmt,
+              omAmt,
+              carteAmt,
               activeSessionId
             ]
           );

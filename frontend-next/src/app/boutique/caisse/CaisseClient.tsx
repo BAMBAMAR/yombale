@@ -1607,13 +1607,17 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       }
 
       if (boutiqueActiveId) {
+        const uniquePosRef = `POS-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
         const payloadVente = {
-          idempotency_key: `POS-${crypto.randomUUID()}`,
+          idempotency_key: uniquePosRef,
           items: panier.map(i => ({ id: i.produit.id, quantite: i.quantite, nom: i.produit.nom, prix: i.prixUnitaire })),
           caissier: caissierNom,
           modePaiement,
           client_id: clientCreditIdPOS || null,
           total: netAPayer,
+          especes_mixte: modePaiement === 'mixte' ? especesMixteNum : undefined,
+          second_mode_mixte: modePaiement === 'mixte' ? secondModeMixte : undefined,
+          montant_mixte2: modePaiement === 'mixte' ? resteAPayerMixte : undefined,
         }
 
         if (!isReallyOnline || offlineModeActive) {

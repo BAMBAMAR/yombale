@@ -116,13 +116,13 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
           </div>
 
           {/* KPIs Trafic & Conversions — Grille 4 colonnes Desktop / 2 colonnes Mobile */}
-          <h3 style={{ fontSize: 14, fontWeight: 800, margin: '0 0 10px', color: '#1f2937' }}>📊 Performances Trafic & Ventes Web</h3>
+          <h3 style={{ fontSize: 14, fontWeight: 800, margin: '0 0 10px', color: '#1f2937' }}>📊 Performances Trafic & Ventes</h3>
           <div className="bq-kpi-grid" style={{ marginBottom: 20 }}>
             {[
-              { label: 'Panier moyen (AOV)', value: `${n(stats.panier_moyen || 0)} FCFA`, sub: 'Panier boosté par le Cross-Sell', emoji: '🛒' },
-              { label: 'Ventes enregistrées', value: `${n(stats.total_ventes || 0)} FCFA`, sub: `${n(stats.nb_commandes || 0)} commandes web 1-page`, emoji: '💰' },
-              { label: 'Coupons réductions', value: n(stats.utilisations_promo || 0), sub: `${n(stats.nb_promotions || 0)} codes promo créés`, emoji: '🏷️' },
-              { label: 'Vues boutique',  value: n(stats.vues_total),       sub: `${n(stats.vues_7j)} cette semaine`,    emoji: '👁️' },
+              { label: 'Chiffre d\'Affaires Total', value: `${n(stats.total_ventes || 0)} FCFA`, sub: `Comptabilité globale (POS + Web)`, emoji: '💰' },
+              { label: 'Ventes Web 1-Page', value: `${n(stats.total_ventes_web ?? stats.total_ventes ?? 0)} FCFA`, sub: `${n(stats.nb_commandes || 0)} commandes web actives`, emoji: '🛒' },
+              { label: 'Vues Boutique', value: n(stats.vues_total), sub: `${n(stats.vues_7j)} cette semaine · ${n(stats.clics_tel_total || 0)} clics contact`, emoji: '👁️' },
+              { label: 'Coupons Réductions', value: n(stats.utilisations_promo || 0), sub: `${n(stats.nb_promotions || 0)} codes promo créés`, emoji: '🏷️' },
             ].map(({ label, value, sub, emoji }) => (
               <div key={label} className="bq-kpi-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>

@@ -1,3 +1,27 @@
+- **Audit, Résolution du Bug Caisse POS & Harmonisation Comptabilité / Statistiques (`main` - 21 août 2026)** 🛒📊💰 :
+  * **Résolution de l'Erreur Serveur Caisse POS (`POST /api/boutiques/:id/pos-vente`)** :
+    - **Cause Racine Éliminée** : Les clés d'idempotence UUID (`POS-${crypto.randomUUID()}`) et les références d'articles multi-lignes dépassaient la limite `VARCHAR(30)` des tables `ventes` et `commandes_boutique`, provoquant un crash PostgreSQL 500 (`value too long for type character varying(30)`), un repli en boucle sur IndexedDB et l'absence totale des ventes POS en comptabilité.
+    - **Migrations SQL Schéma (`backend/migrate-inline.js`)** :
+      - `ALTER TABLE ventes ALTER COLUMN reference TYPE VARCHAR(100)`
+      - `ALTER TABLE commandes_boutique ALTER COLUMN reference TYPE VARCHAR(100)`
+      - `ALTER TABLE caisse_documents ALTER COLUMN reference TYPE VARCHAR(100)`
+    - **Génération Sécurisée de Référence Caisse POS (`CaisseClient.tsx`)** : Clé compacte et robuste `POS-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`.
+    - **Ventilation des Paiements Mixtes (`backend/routes/boutiques.js`)** : Prise en charge des montants séparés (`especes_mixte`, `second_mode_mixte`, `montant_mixte2`) pour ventiler fidèlement les encaissements espèces et digitaux dans les compteurs de session `boutique_pos_sessions`.
+  * **Synchronisation Automatique du Carnet de Dettes avec le Stock et la Comptabilité (`backend/routes/boutiques.js`)** :
+    - Lorsque le commerçant enregistre une vente à crédit depuis le carnet de dettes (`type === 'vente_credit'`), le backend décrémente désormais automatiquement le stock des articles catalogue dans `boutique_produits` et génère l'écriture de vente correspondante dans `ventes` (`methode_paiement = 'credit_client'`).
+  * **Épuration Ergonomique & Structuration des 4 Piliers Comptables (`frontend-next/src/app/boutique/Comptabilite.tsx`)** :
+    - Rationalisation des 8 sous-onglets encombrants vers **4 piliers financiers essentiels et intuitifs** :
+      1. 📈 **Bilan & Rentabilité** (CA consolidé, Dépenses, Bénéfice Net, Marges %, Top produits, Timeline)
+      2. 💰 **Journal des Ventes** (Toutes les ventes réelles POS + Web + Express + Factures avec exports CSV/PDF)
+      3. 📉 **Dépenses** (Charges, Loyer, Salaires, Achats stock avec scan OCR de tickets)
+      4. 🧾 **Clôtures Caisse (Rapport Z)** (Sessions caissiers, écarts de caisse, ventilation espèces/Wave/OM/Carte)
+  * **Harmonisation et Fiabilisation des Statistiques & Analytics (`backend/routes/analytics.js`, `AnalyticsClient.tsx`)** :
+    - `backend/routes/analytics.js` : Exclusion stricte des commandes annulées (`statut != 'annulee'`) et distinction nette entre le **Chiffre d'Affaires Global Réel** (issu de `ventes`) et le **Volume Web E-Commerce**.
+    - `AnalyticsClient.tsx` : Cartes KPIs clarifiées avec libellés explicites (*Chiffre d'Affaires Total (POS + Web)*, *Ventes Web 1-Page*, *Vues Boutique & Trafic*, *Coupons Réductions*).
+  * **Contrôle Qualité & Tests** :
+    - Tests Unitaires Jest Comptabilité (`tests/unit/comptabilite.test.js`) : **24/24 tests passés avec succès (code 0)**.
+    - Build Next.js (`npm run build`) : **91/91 routes compilées sans aucune erreur (code 0)**.
+
 - **Module Rapports Z & Clôtures de Caisse dans la Comptabilité (`main` - 21 août 2026)** 🧾📊✨ :
   * **Sous-Onglet « 🧾 Clôtures & Rapports Z » (`frontend-next/src/app/boutique/Comptabilite.tsx`)** :
     - Consultation chronologique de toutes les sessions de caisse avec filtres de dates rapides (*Aujourd'hui*, *Hier*, *7j*, *30j*, *Ce mois-ci*, *Période libre*), filtre par caissier et filtre par statut (*Clôturées Z*, *En cours*).

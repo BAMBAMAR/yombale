@@ -44,14 +44,24 @@ router.get('/boutique/:id', verifierToken, async (req, res) => {
       WHERE boutique_id=$1
     `, [req.params.id]);
 
-    // Commandes web & panier moyen
+    // Commandes web validées (hors annulées)
     const { rows: cmdRows } = await pool.query(`
       SELECT
-        COALESCE(SUM(montant_total), 0) AS total_ventes,
-        COALESCE(AVG(montant_total), 0) AS panier_moyen,
-        COUNT(*) AS nb_commandes
+        COALESCE(SUM(montant_total), 0) AS total_ventes_web,
+        COALESCE(AVG(montant_total), 0) AS panier_moyen_web,
+        COUNT(*) AS nb_commandes_web
       FROM commandes_boutique
-      WHERE boutique_id=$1
+      WHERE boutique_id=$1 AND statut != 'annulee'
+    `, [req.params.id]);
+
+    // Chiffre d'affaires global réel (Comptabilité - Ventes directes POS, livrées, express)
+    const { rows: comptaRows } = await pool.query(`
+      SELECT
+        COALESCE(SUM(montant_total), 0) AS ca_global_total,
+        COALESCE(AVG(montant_total), 0) AS panier_moyen_global,
+        COUNT(*) AS nb_ventes_global
+      FROM ventes
+      WHERE boutique_id=$1 AND archivee IS NOT TRUE
     `, [req.params.id]);
 
     // Promotions & coupons
@@ -83,9 +93,11 @@ router.get('/boutique/:id', verifierToken, async (req, res) => {
     res.json({
       stats: {
         ...rows[0],
-        total_ventes: cmdRows[0]?.total_ventes || 0,
-        panier_moyen: Math.round(cmdRows[0]?.panier_moyen || 0),
-        nb_commandes: cmdRows[0]?.nb_commandes || 0,
+        total_ventes: Number(comptaRows[0]?.ca_global_total || cmdRows[0]?.total_ventes_web || 0),
+        total_ventes_web: Number(cmdRows[0]?.total_ventes_web || 0),
+        panier_moyen: Math.round(Number(comptaRows[0]?.panier_moyen_global || cmdRows[0]?.panier_moyen_web || 0)),
+        nb_commandes: Number(cmdRows[0]?.nb_commandes_web || 0),
+        nb_ventes_global: Number(comptaRows[0]?.nb_ventes_global || 0),
         nb_promotions: promoRows[0]?.nb_promotions || 0,
         utilisations_promo: promoRows[0]?.utilisations_promo || 0,
         mode_fonctionnement: bqRows[0]?.mode_fonctionnement || 'hybride_pos',

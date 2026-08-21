@@ -3844,23 +3844,22 @@ export default function Comptabilite({
   return (
     <div>
       <div ref={comptaTabRef} className="nopalou-scroll-tabs horizontal-scroll-fade" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: 20, overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', gap: 4 }}>
-        {tabBtn('bilan',      `📈 Bilan & Rapports`)}
-        {tabBtn('sessions',   `🧾 Clôtures & Rapports Z`)}
-        {tabBtn('inventaire', `📦 Inventaire & Stocks`)}
-        {tabBtn('caissiers',  `👤 Performances Caissiers`)}
-        {tabBtn('express',    `⚡ Saisie Express`)}
+        {tabBtn('bilan',      `📈 Bilan & Rentabilité`)}
         {tabBtn('ventes',     `💰 Journal des Ventes`)}
         {tabBtn('depenses',   `📉 Dépenses`)}
-        {tabBtn('zones',      `🚚 Zones de Livraison`)}
+        {tabBtn('sessions',   `🧾 Clôtures Caisse (Rapport Z)`)}
+        {(tab === 'inventaire' || tab === 'caissiers' || tab === 'express' || tab === 'zones') && (
+          tabBtn(tab, tab === 'inventaire' ? '📦 Inventaire' : tab === 'caissiers' ? '👤 Caissiers' : tab === 'express' ? '⚡ Saisie Express' : '🚚 Zones de Livraison')
+        )}
       </div>
 
       {tab === 'bilan'      && <BilanView boutiqueId={boutiqueId} boutiqueNom={boutiqueNom} />}
+      {tab === 'ventes'     && <VentesView boutiqueId={boutiqueId} />}
+      {tab === 'depenses'   && <DepensesView boutiqueId={boutiqueId} />}
       {tab === 'sessions'   && <RapportsZView boutiqueId={boutiqueId} boutiqueNom={boutiqueNom} />}
       {tab === 'inventaire' && <InventaireView boutiqueId={boutiqueId} boutiqueNom={boutiqueNom} />}
       {tab === 'caissiers'  && <PerformancesCaissiersView boutiqueId={boutiqueId} boutiqueNom={boutiqueNom} />}
       {tab === 'express'    && <SaisieExpressView boutiqueId={boutiqueId} />}
-      {tab === 'ventes'     && <VentesView boutiqueId={boutiqueId} />}
-      {tab === 'depenses'   && <DepensesView boutiqueId={boutiqueId} />}
       {tab === 'zones'      && <ZonesView boutiqueId={boutiqueId} />}
     </div>
   )
