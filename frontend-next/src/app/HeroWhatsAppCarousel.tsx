@@ -132,10 +132,10 @@ export default function HeroWhatsAppCarousel({ isMobile = false }: { isMobile?: 
       onTouchEnd={() => setIsPaused(false)}
       style={{
         width: '100%',
-        maxWidth: isMobile ? '100%' : 275,
+        maxWidth: isMobile ? '100%' : 310,
         textAlign: 'left',
         background: '#ffffff',
-        padding: '11px 14px',
+        padding: '12px 16px',
         borderRadius: 14,
         border: '1px solid #e2e8f0',
         boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',

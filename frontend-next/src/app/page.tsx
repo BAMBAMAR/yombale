@@ -160,21 +160,21 @@ export default async function HomePage({
       <section style={{
         background: 'linear-gradient(135deg, #ffffff 0%, #fffdfa 50%, #fff7ed 100%)',
         borderBottom: '1px solid #fed7aa',
-        padding: '20px 20px 14px',
+        padding: '20px 20px 16px',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden',
       }}>
         {/* Layout en 3 colonnes pour utiliser l'espace Desktop (Gauche, Centre, Droite) */}
-        <div style={{ maxWidth: 1440, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 28, position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: 1440, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, position: 'relative', zIndex: 2 }}>
           
           {/* COLONNE GAUCHE (Desktop seulement : Carrousel dynamique WhatsApp & Parrainage) */}
-          <div className="hero-side-card" style={{ flex: '0 0 275px', width: 275, display: 'flex' }}>
+          <div className="hero-side-card" style={{ flex: '0 0 310px', width: 310, display: 'flex' }}>
             <HeroWhatsAppCarousel />
           </div>
 
           {/* COLONNE CENTRALE */}
-          <div style={{ flex: '1 1 auto', width: '100%', maxWidth: 880, minWidth: 0 }}>
+          <div style={{ flex: '1 1 auto', width: '100%', maxWidth: 760, minWidth: 0 }}>
           
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -184,100 +184,29 @@ export default async function HomePage({
             <span>✨ Comparateur N°1 de prix & vendeurs au Sénégal</span>
           </div>
 
-          <h1 style={{ fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 900, color: '#0f172a', margin: '0 0 10px', lineHeight: 1.2, letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: 'clamp(24px, 3.8vw, 36px)', fontWeight: 900, color: '#0f172a', margin: '0 0 8px', lineHeight: 1.2, letterSpacing: '-0.02em' }}>
             Comparez les prix & trouvez les meilleurs vendeurs au <span style={{ color: '#C75B00' }}>Sénégal</span>
           </h1>
 
-          <p style={{ fontSize: 15, color: '#475569', margin: '0 auto 16px', maxWidth: 640, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 14.5, color: '#475569', margin: '0 auto 14px', maxWidth: 600, lineHeight: 1.45 }}>
             Accédez instantanément à des milliers de produits, téléphones, électroménager et boutiques vérifiées à Dakar et dans toutes les régions.
           </p>
 
           {/* BARRE DE RECHERCHE PRINCIPALE */}
-          <div style={{ maxWidth: 640, margin: '0 auto' }}>
+          <div style={{ maxWidth: 620, margin: '0 auto' }}>
             <SearchBar defaultValue={q} />
-          </div>
-
-          {/* CATÉGORIES EN PILULES FLUIDES (Défilement horizontal sur mobile) */}
-          <div className="hero-categories-scroll" style={{ maxWidth: 840, margin: '14px auto 0', position: 'relative', zIndex: 2 }}>
-            {CATEGORIES.map((c) => {
-              if (
-                categoriesActives !== null &&
-                !categoriesActives.includes(c.slug) &&
-                c.slug !== 'telecom' &&
-                c.slug !== 'immo' &&
-                c.slug !== 'annonces'
-              ) {
-                return null;
-              }
-              const isSelected = categorie === c.slug
-
-              if (c.slug === 'immo') {
-                return (
-                  <Link key={c.slug} href="/immo" className="categ-pill" style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
-                    whiteSpace: 'nowrap', flexShrink: 0
-                  }}>
-                    <span>🏢</span> <span>Immobilier & Terrains</span>
-                  </Link>
-                )
-              }
-
-              if (c.slug === 'annonces') {
-                return (
-                  <Link key={c.slug} href="/annonces" className="categ-pill" style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
-                    whiteSpace: 'nowrap', flexShrink: 0
-                  }}>
-                    <span>📢</span> <span>Petites Annonces</span>
-                  </Link>
-                )
-              }
-
-              if (c.slug === 'telecom') {
-                return (
-                  <Link key={c.slug} href="/telecom" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
-                    whiteSpace: 'nowrap', flexShrink: 0
-                  }}>
-                    <span>{c.emoji}</span> <span>{c.label}</span>
-                  </Link>
-                )
-              }
-
-              return (
-                <Link
-                  key={c.slug}
-                  href={isSelected ? '/#resultats' : `/?categorie=${c.slug}#resultats`}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13,
-                    fontWeight: isSelected ? 800 : 600, textDecoration: 'none',
-                    background: isSelected ? '#C75B00' : '#fff',
-                    color: isSelected ? '#fff' : '#334155',
-                    border: isSelected ? '1px solid #C75B00' : '1px solid #e2e8f0',
-                    boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : '0 2px 4px rgba(0,0,0,0.03)',
-                    transition: 'all 0.15s ease',
-                    whiteSpace: 'nowrap', flexShrink: 0
-                  }}
-                >
-                  <span>{c.emoji}</span> <span>{c.label}</span>
-                </Link>
-              )
-            })}
           </div>
 
           </div>
 
           {/* COLONNE DROITE (Desktop seulement : Boutique Taf Taf compacte) */}
-          <div className="hero-side-card" style={{ flex: '0 0 275px', width: 275, display: 'flex' }}>
+          <div className="hero-side-card" style={{ flex: '0 0 310px', width: 310, display: 'flex' }}>
             <div style={{
               width: '100%',
-              maxWidth: 275,
+              maxWidth: 310,
               textAlign: 'left',
               background: '#0f172a',
-              padding: '11px 14px',
+              padding: '12px 16px',
               borderRadius: 14,
               color: '#f8fafc',
               border: '1px solid #1e293b',
@@ -319,6 +248,77 @@ export default async function HomePage({
             </div>
           </div>
 
+        </div>
+
+        {/* CATÉGORIES EN PILULES FLUIDES SUR TOUTE LA LARGEUR DU HERO (Dans le même rectangle) */}
+        <div className="hero-categories-scroll" style={{ maxWidth: 1380, margin: '16px auto 0', position: 'relative', zIndex: 2 }}>
+          {CATEGORIES.map((c) => {
+            if (
+              categoriesActives !== null &&
+              !categoriesActives.includes(c.slug) &&
+              c.slug !== 'telecom' &&
+              c.slug !== 'immo' &&
+              c.slug !== 'annonces'
+            ) {
+              return null;
+            }
+            const isSelected = categorie === c.slug
+
+            if (c.slug === 'immo') {
+              return (
+                <Link key={c.slug} href="/immo" className="categ-pill" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                  background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  whiteSpace: 'nowrap', flexShrink: 0
+                }}>
+                  <span>🏢</span> <span>Immobilier & Terrains</span>
+                </Link>
+              )
+            }
+
+            if (c.slug === 'annonces') {
+              return (
+                <Link key={c.slug} href="/annonces" className="categ-pill" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                  background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  whiteSpace: 'nowrap', flexShrink: 0
+                }}>
+                  <span>📢</span> <span>Petites Annonces</span>
+                </Link>
+              )
+            }
+
+            if (c.slug === 'telecom') {
+              return (
+                <Link key={c.slug} href="/telecom" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                  background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  whiteSpace: 'nowrap', flexShrink: 0
+                }}>
+                  <span>{c.emoji}</span> <span>{c.label}</span>
+                </Link>
+              )
+            }
+
+            return (
+              <Link
+                key={c.slug}
+                href={isSelected ? '/#resultats' : `/?categorie=${c.slug}#resultats`}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13,
+                  fontWeight: isSelected ? 800 : 600, textDecoration: 'none',
+                  background: isSelected ? '#C75B00' : '#fff',
+                  color: isSelected ? '#fff' : '#334155',
+                  border: isSelected ? '1px solid #C75B00' : '1px solid #e2e8f0',
+                  boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : '0 2px 4px rgba(0,0,0,0.03)',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap', flexShrink: 0
+                }}
+              >
+                <span>{c.emoji}</span> <span>{c.label}</span>
+              </Link>
+            )
+          })}
         </div>
       </section>
 
