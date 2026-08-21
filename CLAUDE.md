@@ -1,3 +1,19 @@
+- **Enrichissement PWA Complet, Service Worker Avancé & App Capabilities Microsoft PWABuilder (`main` - 21 août 2026)** 📱⚡ :
+  * **Service Worker Haute Robustesse (`src/app/sw.ts`)** :
+    - **Periodic Background Sync (`periodicsync`)** : Écouteur `nopalou-price-alerts-sync` et `nopalou-daily-catalog-sync` pour l'actualisation silencieuse des baisses de prix et du catalogue hors-ligne.
+    - **Background Sync (`sync`)** : Écouteur `nopalou-sync-offline-sales` pour la synchronisation automatique des encaissements caisse POS dès le retour de la connexion Internet.
+    - **Notifications Push & Interaction (`push` / `notificationclick`)** : Réception des alertes de prix en arrière-plan avec vibration et redirection contextuelle intelligente vers la fenêtre existante ou nouvelle.
+  * **Manifest PWA & App Capabilities W3C (`public/manifest.json`)** :
+    - **Captures d'Écran Riches Dédiées (`screenshots/`)** : Génération des visuels Desktop (`1280x720` - wide) et Mobile (`750x1334` - narrow) pour la boîte d'installation et les stores (Play Store / Microsoft Store).
+    - **Partage Direct vers Nopalou (`share_target`)** : Réception de texte, liens et produits partagés depuis WhatsApp ou d'autres applications vers `/recherche`.
+    - **Gestion de Fichiers (`file_handlers`)** : Déclaration pour l'import de fichiers CSV et tableurs Excel (`.csv`, `.xlsx`) directement dans la caisse POS.
+    - **Contrôles Fenêtrés & Titre Intégré (`display_override`)** : Activation de `window-controls-overlay`, `standalone` et `minimal-ui`.
+    - **Gestion du Cycle de Vie (`launch_handler`)** : `client_mode: ["focus-existing", "auto"]` pour éviter les doublons de fenêtres.
+    - **Protocole & Panneau Latéral (`protocol_handlers`, `edge_side_panel`, `widgets`)** : Déclaration de `web+nopalou`, barre latérale Edge (`440px`) et widget Windows.
+  * **Validation & Contrôle Qualité** :
+    - Build Next.js (`npm run build`) : 91/91 pages et routes compilées avec succès (code 0).
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Optimisation Typographique, Rendu HD & Blindage Anti-Débordement sur Tous les Visuels (`main` - 21 août 2026)** 🎨📐 :
   * **Blindage & Adaptation Dynamique des Textes dans le Générateur d'Affiches (`produit-promo/route.tsx`)** :
     - **Calcul Dynamique de Police** : Adaptation automatique de la taille (`28px` à `40px`) et du `lineHeight` pour les noms de produits et boutiques longs dans le mode *Bon Plan*, éliminant tout risque de texte tronqué ou de débordement hors du cadre 1080×1080.

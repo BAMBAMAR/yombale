@@ -27,8 +27,9 @@ backend/.fb-scraper-resume.txt
 *.png
 *.jpg
 *.jpeg
-# ...mais les assets d'app sont versionnés (icônes PWA, apple-touch-icon)
+# ...mais les assets d'app sont versionnés (icônes PWA, apple-touch-icon, screenshots manifest)
 !frontend-next/public/icons/*.png
+!frontend-next/public/screenshots/*.png
 !frontend-next/src/app/apple-icon.png
 
 # Résultats de tests

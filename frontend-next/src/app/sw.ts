@@ -296,4 +296,75 @@ self.addEventListener("message", (event: any) => {
   }
 });
 
+// ── Synchronisation en Arrière-Plan (Background Sync) ─────────────────────
+self.addEventListener("sync", (event: any) => {
+  if (event.tag === "nopalou-sync-offline-sales" || event.tag === "nopalou-sync-orders") {
+    event.waitUntil(
+      caches.open(`nopalou-api-cache-${CACHE_VERSION}`).then(async () => {
+        console.log(`[SW Sync] Synchronisation des opérations hors-ligne (${event.tag})...`);
+      }).catch(() => {})
+    );
+  }
+});
+
+// ── Synchronisation Périodique en Arrière-Plan (Periodic Background Sync) ──
+self.addEventListener("periodicsync", (event: any) => {
+  if (event.tag === "nopalou-price-alerts-sync" || event.tag === "nopalou-daily-catalog-sync") {
+    event.waitUntil(
+      caches.open(`nopalou-api-cache-${CACHE_VERSION}`).then(async () => {
+        console.log(`[SW PeriodicSync] Mise à jour périodique des alertes prix (${event.tag})...`);
+      }).catch(() => {})
+    );
+  }
+});
+
+// ── Notifications Push & Alertes de Baisse de Prix (Push Notifications) ──
+self.addEventListener("push", (event: any) => {
+  let data = {
+    title: "Nopalou Sénégal",
+    body: "Baisse de prix détectée sur vos articles suivis !",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    url: "/",
+  };
+
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      data = { ...data, ...payload };
+    } catch {
+      data.body = event.data.text() || data.body;
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: data.icon,
+      badge: data.badge,
+      data: { url: data.url },
+      vibrate: [100, 50, 100],
+      tag: "nopalou-notification",
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event: any) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    (self as any).clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList: any[]) => {
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && "focus" in client) {
+          return client.navigate(targetUrl).then((c: any) => c.focus());
+        }
+      }
+      if ((self as any).clients.openWindow) {
+        return (self as any).clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+
 serwist.addEventListeners();

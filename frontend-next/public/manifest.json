@@ -1,15 +1,23 @@
 {
-  "name": "Nopalou — Comparateur de prix Sénégal",
+  "id": "https://nopalou.com/",
+  "name": "Nopalou — Super-Comparateur & Caisse POS Sénégal",
   "short_name": "Nopalou",
-  "version": "4",
-  "description": "Comparez les prix de milliers de produits au Sénégal. Économisez en trouvant les meilleures offres.",
+  "version": "5",
+  "description": "Comparez les prix de milliers de produits au Sénégal. Caisse POS tactile, gestion des dettes et commandes WhatsApp directes.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
   "background_color": "#F8F5F0",
   "theme_color": "#C75B00",
   "lang": "fr",
   "dir": "ltr",
-  "categories": ["shopping", "finance"],
+  "categories": ["shopping", "finance", "business", "utilities"],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": ["focus-existing", "auto"]
+  },
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -36,24 +44,110 @@
       "purpose": "any"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Nopalou — Super-Comparateur de Prix à Dakar (Desktop)"
+    },
+    {
+      "src": "/screenshots/mobile-1.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Nopalou — Recherche et Caisse POS sur Smartphone (Mobile)"
+    }
+  ],
   "shortcuts": [
     {
-      "name": "Caisse (POS)",
-      "short_name": "Caisse",
+      "name": "Caisse Tactile POS",
+      "short_name": "Caisse POS",
       "url": "/boutique/caisse",
-      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+      "description": "Accéder directement à la caisse tactile du magasin",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Déposer une annonce",
       "short_name": "Déposer",
       "url": "/deposer-annonce",
-      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+      "description": "Publier une nouvelle offre de vente",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Mes favoris",
       "short_name": "Favoris",
       "url": "/favoris",
-      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+      "description": "Consulter les articles et prix sauvegardés",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Assistant WhatsApp",
+      "short_name": "WhatsApp",
+      "url": "/assistant-whatsapp",
+      "description": "Ouvrir le chatbot comparateur WhatsApp",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "share_target": {
+    "action": "/recherche",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "q",
+      "url": "url"
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "/boutique/caisse",
+      "name": "Importer Catalogue ou Facture Nopalou",
+      "accept": {
+        "text/csv": [".csv"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
+      },
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+nopalou",
+      "url": "/recherche?q=%s"
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 440
+  },
+  "widgets": [
+    {
+      "name": "Bons Plans Nopalou",
+      "description": "Suivez les meilleures réductions et comparatifs de prix en direct à Dakar",
+      "tag": "nopalou-bons-plans",
+      "template": "widget-template",
+      "ms_ac_template": "/widget.json",
+      "data": "/api/widgets/bons-plans",
+      "type": "application/json",
+      "screenshots": [
+        {
+          "src": "/icons/icon-512.png",
+          "sizes": "512x512",
+          "label": "Bons Plans Nopalou"
+        }
+      ],
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ],
+      "auth": false,
+      "update": 3600
     }
   ]
 }
