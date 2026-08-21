@@ -11,6 +11,7 @@ interface Stats {
   vues_annonces_total: string
   vues_annonces_mois: string
   total_ventes?: number
+  total_ventes_web?: number
   panier_moyen?: number
   nb_commandes?: number
   nb_promotions?: number

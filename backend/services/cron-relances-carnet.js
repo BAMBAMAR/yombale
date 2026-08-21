@@ -1,7 +1,7 @@
 // backend/services/cron-relances-carnet.js
 // Service d'arrière-plan pour la relance automatique WhatsApp selon les dates d'échéance du carnet
 
-const pool = require('../lib/db');
+const pool = require('../models/db');
 let sendWhatsAppText;
 try {
   const ws = require('./whatsapp');
