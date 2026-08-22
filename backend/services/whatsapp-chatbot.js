@@ -24,14 +24,14 @@ const attendre = (ms) => new Promise(r => setTimeout(r, ms));
 // ── Téléchargement des médias WhatsApp (Photos produits) vers Cloudinary ──────
 async function telechargerMediaWhatsApp(mediaId) {
   try {
-    const token = process.env.WHATSAPP_TOKEN;
+    const token = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_TOKEN;
     if (!token || !mediaId) {
       console.warn('[TELECHARGER MEDIA WA]: Token ou mediaId manquant', { hasToken: !!token, mediaId });
       return null;
     }
 
     console.log('[TELECHARGER MEDIA WA]: Récupération URL temporaire pour mediaId', mediaId);
-    const resMeta = await fetch(`https://graph.facebook.com/v19.0/${mediaId}`, {
+    const resMeta = await fetch(`https://graph.facebook.com/v18.0/${mediaId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         'User-Agent': 'curl/7.64.1',

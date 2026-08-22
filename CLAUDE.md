@@ -19,7 +19,7 @@
   * **Validation & Contrôle Qualité** :
     - Correction de la requête SQL d'auto-sourcing et de scraping (alignement strict sur les colonnes `contact_tel`, `contact_nom`, `categorie_slug` de `annonces_classifiees` et construction dynamique des paramètres SQL pour l'option *Tout Dakar & Régions*).
     - Correction des requêtes SQL de création de boutique (`adresse`, `couleur_theme` au lieu de `quartier`/`plan`), d'utilisateurs (`email_verifie` au lieu de `role`) et d'ajout de produit (`en_stock` au lieu de `actif`/`stock`) dans le chatbot WhatsApp avec liaison `boutique_utilisateurs`.
-    - Support du téléchargement automatique des photos WhatsApp via Meta Graph API (User-Agent `curl/7.64.1`) & Cloudinary et enregistrement dans `boutique_produits.images`.
+    - Support du téléchargement automatique des photos WhatsApp via Meta Graph API v18.0 (`WHATSAPP_API_TOKEN` & User-Agent `curl/7.64.1`) & Cloudinary et enregistrement direct dans `boutique_produits.images`.
     - Menu principal WhatsApp épuré et général (Rechercher, Boutiques, Immo, Télécom, Créer ma boutique, Support) ; l'option « ➕ Ajouter un produit » est exclusivement réservée à l'intérieur du menu de sa propre boutique pour le propriétaire vérifié.
     - **Ajout Express en 1 Seul Message** : Envoi direct d'une photo avec nom et prix en légende (ex: *Sac cuir 2000*) publiant immédiatement le produit sans questionnaire.
     - Sélection 1-clic des catégories marchandes via menu interactif WhatsApp lors de la création de boutique.
