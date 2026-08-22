@@ -19,6 +19,7 @@
   * **Validation & Contrôle Qualité** :
     - Correction de la requête SQL d'auto-sourcing et de scraping (alignement strict sur les colonnes `contact_tel`, `contact_nom`, `categorie_slug` de `annonces_classifiees` et construction dynamique des paramètres SQL pour l'option *Tout Dakar & Régions*).
     - Correction des requêtes SQL de création de boutique (`adresse`, `couleur_theme` au lieu de `quartier`/`plan`) et d'ajout de produit (`en_stock` au lieu de `actif`/`stock`) dans le chatbot WhatsApp.
+    - Ajout des boutons interactifs 1-clic pour l'ajout de produit dans le menu principal WhatsApp, le menu boutique et le message de succès de création avec lien direct vers `/cgu`.
     - Suite de tests unitaires prospection & STOP : **100% validée (11/11 tests passés)**.
     - Suite de tests frontend : **100% validée (31/31 tests passés)**.
     - Typecheck TypeScript (`npx tsc --noEmit`) : **0 erreur**.

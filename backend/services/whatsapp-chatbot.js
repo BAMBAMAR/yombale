@@ -137,7 +137,8 @@ async function sendMenu(phone) {
       {
         title: 'Marchands & Compte',
         rows: [
-          { id: 'creer_boutique', title: '🛍️ Créer ma boutique', description: 'Vendre sur Nopalou, espace marchand' },
+          { id: 'creer_boutique', title: '🛍️ Créer ma boutique', description: 'Vendre sur Nopalou (30j offerts)' },
+          { id: 'marchand_ajout_produit', title: '➕ Ajouter un produit', description: 'Publier un article à votre boutique' },
           { id: 'forfaits', title: '💎 Forfaits Boutiques', description: 'Tarifs des formules Pro & Business' },
           { id: 'order', title: '📦 Suivre commande', description: 'Statut de votre paiement' },
           { id: 'alert', title: '🔔 Alerte prix', description: 'Être notifié d\'une baisse' },
@@ -167,6 +168,13 @@ async function envoyerMenuBoutique(phone, boutique) {
           { id: 'boutique_produits_tous', title: '🛍️ Voir les produits', description: 'Défiler les produits un par un' },
           { id: 'boutique_recherche', title: '🔍 Rechercher', description: 'Chercher un produit dans cette boutique' },
           { id: 'boutique_categorie', title: '📂 Par catégorie', description: 'Parcourir les catégories de produits' },
+        ],
+      },
+      {
+        title: 'Gestion Marchand',
+        rows: [
+          { id: `boutique_ajout_prod_${boutique.id}`, title: '➕ Ajouter un produit', description: 'Ajouter un article à ce catalogue' },
+          { id: 'creer_boutique', title: '🏪 Créer une boutique', description: 'Lancer un nouveau commerce' },
         ],
       },
       {
@@ -993,26 +1001,47 @@ async function handleIncoming(msg) {
     return;
   }
 
-  // Déclencheur Ajout de Produit Sécurisé (+produit)
+  // Déclencheur Ajout de Produit Sécurisé (+produit ou clic sur bouton interactif)
   if (
     normTxtLower === '+produit' ||
     normTxtLower === 'ajouter produit' ||
     normTxtLower === 'nouveau produit' ||
     normTxtLower === 'ajout produit' ||
     normTxtLower === 'creer produit' ||
-    interactiveId === 'marchand_ajout_produit'
+    interactiveId === 'marchand_ajout_produit' ||
+    interactiveId === 'ajouter_produit' ||
+    interactiveId?.startsWith('boutique_ajout_prod_')
   ) {
     const normPh = normalisePhone(phone);
-    // Vérification de sécurité : le numéro doit être associé à une boutique active
-    const rBq = await pool.query(
-      `SELECT b.id, b.nom, b.slug
-       FROM boutiques b
-       LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
-       WHERE (b.telephone = $1 OR b.whatsapp = $1 OR u.telephone = $1 OR u.telephone LIKE '%' || $2)
-         AND b.actif = true
-       ORDER BY b.created_at DESC LIMIT 1`,
-      [normPh, phone.replace(/\D/g, '').slice(-9)]
-    );
+    const targetBqId = interactiveId?.startsWith('boutique_ajout_prod_')
+      ? interactiveId.replace('boutique_ajout_prod_', '')
+      : null;
+
+    let rBq;
+    if (targetBqId) {
+      rBq = await pool.query(
+        `SELECT b.id, b.nom, b.slug
+         FROM boutiques b
+         LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+         WHERE b.id = $1
+           AND (b.telephone = $2 OR b.whatsapp = $2 OR u.telephone = $2 OR u.telephone LIKE '%' || $3)
+           AND b.actif = true
+         LIMIT 1`,
+        [targetBqId, normPh, phone.replace(/\D/g, '').slice(-9)]
+      );
+    }
+
+    if (!rBq || !rBq.rows.length) {
+      rBq = await pool.query(
+        `SELECT b.id, b.nom, b.slug
+         FROM boutiques b
+         LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+         WHERE (b.telephone = $1 OR b.whatsapp = $1 OR u.telephone = $1 OR u.telephone LIKE '%' || $2)
+           AND b.actif = true
+         ORDER BY b.created_at DESC LIMIT 1`,
+        [normPh, phone.replace(/\D/g, '').slice(-9)]
+      );
+    }
 
     if (!rBq.rows.length) {
       await sendWhatsAppText(
@@ -2076,23 +2105,46 @@ async function handleIncoming(msg) {
 
       // 4. Créer l'abonnement d'essai de 30 jours offerts
       const finEssai = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-      await pool.query(
-        `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
-         VALUES ($1, 'decouverte', 'actif', 2500, $2, $3)`,
-        [userId, finEssai, `wa_trial_${normPh}`]
-      );
+      try {
+        await pool.query(
+          `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
+          [userId]
+        );
+        await pool.query(
+          `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
+           VALUES ($1, 'decouverte', 'actif', 2500, $2, $3)`,
+          [userId, finEssai, `wa_trial_${normPh}_${Date.now().toString(36)}`]
+        );
+      } catch (eAbon) {
+        console.warn('[ABONNEMENT ESSAI WA WARN]:', eAbon.message);
+      }
 
-      // 5. Message de confirmation enthousiaste
+      // 5. Message de confirmation enthousiaste & Boutons 1-Clic
       const msgSucces =
         `🎉 *FÉLICITATIONS ! VOTRE BOUTIQUE EST CRÉÉE !* 🎉\n\n` +
         `🏪 *${bqCreee.nom}*\n` +
         `📍 ${quartier} — 0% de commission\n` +
         `🎁 *1er mois (30 jours) 100% OFFERT*\n\n` +
         `🌐 *Lien de votre vitrine web :*\n${SITE}/boutiques/${bqCreee.slug}\n\n` +
-        `👉 *Pour ajouter votre premier article tout de suite :*\n` +
-        `Tapez simplement *+produit* !`;
+        `📜 *Charte Vendeur & CGU :*\n${SITE}/cgu`;
 
       await sendWhatsAppText(phone, msgSucces);
+
+      await sendWhatsAppInteractive(
+        phone,
+        bqCreee.nom,
+        '🚀 Que souhaitez-vous faire ?',
+        [
+          {
+            title: 'Action Immédiate',
+            rows: [
+              { id: `boutique_ajout_prod_${bqCreee.id}`, title: '➕ Ajouter un produit', description: 'Publier votre premier article (1-clic)' },
+              { id: 'boutique_produits_tous', title: '🛍️ Voir le catalogue', description: 'Consulter votre vitrine' },
+            ],
+          },
+        ]
+      );
+
       await setSession(phone, 'IDLE', {});
       return;
     } catch (errCreate) {
