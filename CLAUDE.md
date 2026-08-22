@@ -23,6 +23,7 @@
     - Menu principal WhatsApp épuré et général (Rechercher, Boutiques, Immo, Télécom, Créer ma boutique, Support) ; l'option « ➕ Ajouter un produit » est exclusivement réservée à l'intérieur du menu de sa propre boutique pour le propriétaire vérifié.
     - **Ajout Express en 1 Seul Message** : Envoi direct d'une photo avec nom et prix en légende (ex: *Sac cuir 2000*) publiant immédiatement le produit sans questionnaire.
     - Sélection 1-clic des catégories marchandes via menu interactif WhatsApp lors de la création de boutique.
+    - Nettoyage intelligent des noms de prospects (détection et remplacement automatique des titres d'annonces par *Cher commerçant*) et exclusion automatique des lignes fixes (`33...`) pour les campagnes WhatsApp.
     - Correction du routeur WhatsApp (`matchBoutique`) : exclusion stricte des IDs de boutons interactifs (`boutique_ajout_prod_`, `creer_boutique`) pour empêcher qu'ils soient interceptés à tort comme des slugs de boutique.
     - Suite de tests unitaires prospection & WhatsApp : **100% validée (12/12 tests passés)**.
     - Suite de tests frontend : **100% validée (31/31 tests passés)**.

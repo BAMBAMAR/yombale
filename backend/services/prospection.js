@@ -155,8 +155,24 @@ L'équipe Déploiement Nopalou Sénégal
 // ── Interpolation dynamique de message ───────────────────────────────────────
 function interpolerMessage(template, lead) {
   if (!template) return '';
-  const nomBoutique = lead.nom_boutique || 'votre boutique';
-  const prenom = lead.contact_nom || lead.nom_boutique || 'Cher commerçant';
+  let nomBoutique = lead.nom_boutique || 'votre boutique';
+  let prenom = lead.contact_nom || '';
+
+  // Nettoyage intelligent si le nom de boutique est un fragment d'annonce scrapée
+  if (
+    /^vendeur\s+/i.test(nomBoutique) ||
+    /^\.\.\./.test(nomBoutique) ||
+    /^(prix|disponible|à vendre|a vendre|cherche|contact|suivre|recrutement|appartement|peugeot|mercedes|hyundai|kia|daewoo|service de livraison|10 h|terrains|chambre|bana bana|tout nickel)/i.test(nomBoutique) ||
+    nomBoutique.includes('·') ||
+    nomBoutique.includes('http') ||
+    /\d{6,}/.test(nomBoutique)
+  ) {
+    nomBoutique = 'votre boutique';
+    if (!prenom) prenom = 'Cher commerçant';
+  }
+
+  if (!prenom) prenom = nomBoutique !== 'votre boutique' ? nomBoutique : 'Cher commerçant';
+
   const quartier = lead.quartier || lead.ville || 'Dakar';
   const secteur = lead.categorie || 'commerce';
   const tel = lead.telephone || '';
@@ -200,7 +216,7 @@ function extraireLeadsDepuisTexte(rawText, defauts = {}) {
 
     for (const rawNum of phoneMatches) {
       const norm = normaliserTelephoneSenegal(rawNum);
-      if (norm.valide && !telVus.has(norm.national)) {
+      if (norm.valide && !telVus.has(norm.national) && norm.operateur !== 'Fixe') {
         telVus.add(norm.national);
 
         // Extraction du nom de boutique (nettoyage de la ligne)
