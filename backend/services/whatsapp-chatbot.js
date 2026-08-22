@@ -927,38 +927,7 @@ async function handleIncoming(msg) {
     return;
   }
 
-  // ── Lien direct partagé par un marchand : "boutique_{slug}" (texte ou bouton) ─
-  // Traité comme un mot-clé global (au même titre que "menu"/"aide") : actif depuis
-  // n'importe quel état, y compris pendant une recherche ou une navigation catégorie
-  // déjà en cours dans une AUTRE boutique — un client qui reçoit/retape ce lien veut
-  // changer de boutique, pas continuer son action précédente. Seule exception : les ids
-  // internes du chatbot qui commencent aussi par "boutique_" (menu boutique :
-  // boutique_recherche/categorie/contact/quitter ; sélection dans une liste :
-  // boutique_choisie_{id}) — sinon ces boutons sont interceptés à tort par ce regex
-  // générique et renvoient "boutique introuvable". Cette exclusion s'applique aussi
-  // bien au texte libre (un client ne tape normalement pas ces ids internes à la main,
-  // mais on reste défensif) qu'aux clics bouton.
-  const estIdInterne = /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste|recherche_nom)/.test(text) ||
-    /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste|recherche_nom)/.test(interactiveId);
-  const matchBoutique = !estIdInterne &&
-    (text.match(/^boutique_(.+)$/i) || interactiveId.match(/^boutique_(.+)$/i));
-  if (matchBoutique) {
-    const slug = matchBoutique[1].trim();
-    const r = await pool.query(
-      'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE slug=$1 AND actif=true',
-      [slug]
-    );
-    if (!r.rows[0]) {
-      await sendWhatsAppText(phone, '😕 Cette boutique est introuvable ou n\'est plus active.');
-      await setSession(phone, 'MENU', {});
-      await sendMenu(phone);
-      return;
-    }
-    await envoyerMenuBoutique(phone, r.rows[0]);
-    return;
-  }
-
-  // ── MOT-CLÉ PRIORITAIRE DE DÉSINSCRIPTION / OPTOUT (STOP / ARRET / REFUS) ──
+  // ── 1. MOT-CLÉ PRIORITAIRE DE DÉSINSCRIPTION / OPTOUT (STOP / ARRET / REFUS) ──
   const MOTS_OPTOUT = ['stop', 'arret', 'desinscrire', 'desinscription', 'annuler', 'bloquer', 'supprimer', 'ne plus recevoir', 'refus'];
   if (MOTS_OPTOUT.includes(normaliserTexte(text).trim())) {
     const normPh = normalisePhone(phone);
@@ -978,7 +947,7 @@ async function handleIncoming(msg) {
     return;
   }
 
-  // ── DÉCLENCHEURS MARCHANDS WHATSAPP : CRÉATION DE BOUTIQUE & AJOUT DE PRODUIT ─
+  // ── 2. DÉCLENCHEURS MARCHANDS WHATSAPP : CRÉATION DE BOUTIQUE & AJOUT PRODUIT ─
   const normTxtLower = normaliserTexte(text).trim();
 
   // Déclencheur Création de Boutique Taf-Taf
@@ -1060,6 +1029,27 @@ async function handleIncoming(msg) {
       `🛍️ *Ajout de Produit — ${maBoutique.nom}*\n\n` +
       'Quel est le *nom ou titre du produit* que vous souhaitez ajouter ? (ex: Robe Soirée Soie, iPhone 14 Pro 128Go, Sandales Cuir...)'
     );
+    return;
+  }
+
+  // ── 3. LIEN DIRECT BOUTIQUE : "boutique_{slug}" (texte ou bouton) ─────────────
+  const estIdInterne = /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste|recherche_nom|ajout_prod|ajouter_produit|creer_boutique|partager)/.test(text) ||
+    /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste|recherche_nom|ajout_prod|ajouter_produit|creer_boutique|partager)/.test(interactiveId);
+  const matchBoutique = !estIdInterne &&
+    (text.match(/^boutique_(.+)$/i) || interactiveId.match(/^boutique_(.+)$/i));
+  if (matchBoutique) {
+    const slug = matchBoutique[1].trim();
+    const r = await pool.query(
+      'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE slug=$1 AND actif=true',
+      [slug]
+    );
+    if (!r.rows[0]) {
+      await sendWhatsAppText(phone, '😕 Cette boutique est introuvable ou n\'est plus active.');
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    await envoyerMenuBoutique(phone, r.rows[0]);
     return;
   }
 

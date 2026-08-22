@@ -126,5 +126,20 @@ describe('Moteur de Prospection & Normalisation Leads Sénégal', () => {
       expect(typeof traiterRelancesMarchands).toBe('function');
     });
   });
+
+  describe('8. Routage Sécurisé des Actions & Boutons Marchands WhatsApp', () => {
+    test('exclut strictement les actions internes (boutique_ajout_prod_, creer_boutique) du lookup de slug', () => {
+      const regexInternes = /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste|recherche_nom|ajout_prod|ajouter_produit|creer_boutique|partager)/;
+      
+      expect(regexInternes.test('boutique_ajout_prod_12345')).toBe(true);
+      expect(regexInternes.test('boutique_ajouter_produit')).toBe(true);
+      expect(regexInternes.test('boutique_produits_tous')).toBe(true);
+      expect(regexInternes.test('boutique_creer_boutique')).toBe(true);
+      
+      // Un vrai slug de boutique n'est pas un ID d'action interne
+      expect(regexInternes.test('boutique_astou-frip')).toBe(false);
+      expect(regexInternes.test('boutique_dakar-fashion')).toBe(false);
+    });
+  });
 });
 
