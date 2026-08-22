@@ -1239,13 +1239,25 @@ Boutique Parcelles, 70 111 22 33`}
               </button>
 
               {scrapingResult && (
-                <div style={{ padding: 14, background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, fontSize: 13, color: '#1E40AF' }}>
-                  <strong>✅ Résultat du Scraping :</strong>
-                  <ul style={{ margin: '6px 0 0', paddingLeft: 18, lineHeight: 1.5 }}>
-                    <li><strong>{scrapingResult.ajoutes}</strong> nouveaux leads injectés dans le CRM</li>
-                    <li><strong>{scrapingResult.ignores}</strong> doublons ou numéros invalides écartés</li>
-                    <li>Zone traitée : <strong>{scrapingResult.zone}</strong></li>
-                  </ul>
+                <div style={{
+                  padding: 14,
+                  background: scrapingResult.succes === false ? '#FEF2F2' : '#EFF6FF',
+                  border: scrapingResult.succes === false ? '1px solid #FECACA' : '1px solid #BFDBFE',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  color: scrapingResult.succes === false ? '#991B1B' : '#1E40AF',
+                }}>
+                  <strong>{scrapingResult.succes === false ? '❌ Erreur de Scraping :' : '✅ Résultat du Scraping :'}</strong>
+                  {scrapingResult.error ? (
+                    <p style={{ margin: '4px 0 0' }}>{scrapingResult.error}</p>
+                  ) : (
+                    <ul style={{ margin: '6px 0 0', paddingLeft: 18, lineHeight: 1.5 }}>
+                      <li><strong>{scrapingResult.ajoutes}</strong> nouveaux leads injectés dans le CRM</li>
+                      <li><strong>{scrapingResult.ignores}</strong> doublons ou numéros invalides écartés</li>
+                      <li>Total annonces analysées : <strong>{scrapingResult.totalScrapes ?? 0}</strong></li>
+                      <li>Zone traitée : <strong>{scrapingResult.zone}</strong></li>
+                    </ul>
+                  )}
                 </div>
               )}
             </div>
