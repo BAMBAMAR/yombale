@@ -207,48 +207,6 @@ async function estProprietaireBoutique(phone, boutique) {
 
 // ── Menu principal ────────────────────────────────────────────────────────────
 async function sendMenu(phone) {
-  const normPh = normalisePhone(phone);
-  const shortPh = phone.replace(/\D/g, '').slice(-9);
-
-  let aUneBoutique = false;
-  try {
-    const rBq = await pool.query(
-      `SELECT b.id FROM boutiques b
-       LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
-       WHERE (b.telephone = $1 OR b.whatsapp = $1 OR u.telephone = $1 OR u.telephone LIKE '%' || $2)
-         AND b.actif = true
-       LIMIT 1`,
-      [normPh, shortPh]
-    );
-    aUneBoutique = rBq.rows.length > 0;
-  } catch {}
-
-  const sectionMarchand = {
-    title: aUneBoutique ? 'Gestion Marchand (Votre Compte)' : 'Marchands & Compte',
-    rows: [],
-  };
-
-  if (aUneBoutique) {
-    sectionMarchand.rows.push({
-      id: 'marchand_ajout_produit',
-      title: '➕ Ajouter un produit',
-      description: 'Publier un article à votre catalogue',
-    });
-  } else {
-    sectionMarchand.rows.push({
-      id: 'creer_boutique',
-      title: '🛍️ Créer ma boutique',
-      description: 'Vendre sur Nopalou (30j offerts)',
-    });
-  }
-
-  sectionMarchand.rows.push(
-    { id: 'forfaits', title: '💎 Forfaits Boutiques', description: 'Tarifs des formules Pro & Business' },
-    { id: 'order', title: '📦 Suivre commande', description: 'Statut de votre paiement' },
-    { id: 'alert', title: '🔔 Alerte prix', description: 'Être notifié d\'une baisse' },
-    { id: 'support', title: '💬 Support', description: 'Contacter l\'équipe Nopalou' }
-  );
-
   await sendWhatsAppInteractive(
     phone,
     '🛍️ Nopalou',
@@ -263,7 +221,16 @@ async function sendMenu(phone) {
           { id: 'telecom', title: '📱 Offres télécom', description: 'Mobile, internet, forfaits' },
         ],
       },
-      sectionMarchand,
+      {
+        title: 'Marchands & Compte',
+        rows: [
+          { id: 'creer_boutique', title: '🛍️ Créer ma boutique', description: 'Vendre sur Nopalou (30j offerts)' },
+          { id: 'forfaits', title: '💎 Forfaits Boutiques', description: 'Tarifs des formules Pro & Business' },
+          { id: 'order', title: '📦 Suivre commande', description: 'Statut de votre paiement' },
+          { id: 'alert', title: '🔔 Alerte prix', description: 'Être notifié d\'une baisse' },
+          { id: 'support', title: '💬 Support', description: 'Contacter l\'équipe Nopalou' },
+        ],
+      },
     ]
   );
 }
