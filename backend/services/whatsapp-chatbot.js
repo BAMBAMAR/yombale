@@ -25,24 +25,52 @@ const attendre = (ms) => new Promise(r => setTimeout(r, ms));
 async function telechargerMediaWhatsApp(mediaId) {
   try {
     const token = process.env.WHATSAPP_TOKEN;
-    if (!token || !mediaId) return null;
+    if (!token || !mediaId) {
+      console.warn('[TELECHARGER MEDIA WA]: Token ou mediaId manquant', { hasToken: !!token, mediaId });
+      return null;
+    }
 
+    console.log('[TELECHARGER MEDIA WA]: Récupération URL temporaire pour mediaId', mediaId);
     const resMeta = await fetch(`https://graph.facebook.com/v19.0/${mediaId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'User-Agent': 'curl/7.64.1',
+      },
     });
-    if (!resMeta.ok) return null;
-    const dataMeta = await resMeta.json();
-    if (!dataMeta.url) return null;
 
+    if (!resMeta.ok) {
+      const errTxt = await resMeta.text().catch(() => '');
+      console.error('[TELECHARGER MEDIA WA META ERR]:', resMeta.status, errTxt);
+      return null;
+    }
+
+    const dataMeta = await resMeta.json();
+    if (!dataMeta.url) {
+      console.error('[TELECHARGER MEDIA WA]: URL manquante dans la réponse Meta', dataMeta);
+      return null;
+    }
+
+    console.log('[TELECHARGER MEDIA WA]: Téléchargement binaire...');
     const resImg = await fetch(dataMeta.url, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'User-Agent': 'curl/7.64.1',
+      },
     });
-    if (!resImg.ok) return null;
+
+    if (!resImg.ok) {
+      const errTxt = await resImg.text().catch(() => '');
+      console.error('[TELECHARGER MEDIA WA IMG ERR]:', resImg.status, errTxt);
+      return null;
+    }
+
     const arrayBuffer = await resImg.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+    console.log('[TELECHARGER MEDIA WA]: Téléchargé avec succès, taille =', buffer.length, 'octets');
 
     const { uploadBuffer } = require('./cloudinary');
     const url = await uploadBuffer(buffer, 'boutique_produits');
+    console.log('[TELECHARGER MEDIA WA]: Image Cloudinary uploadée =', url);
     return url;
   } catch (err) {
     console.error('[TELECHARGER MEDIA WHATSAPP ERR]:', err.message);
@@ -147,8 +175,80 @@ async function isDuplicate(messageId) {
   return r.rows.length === 0; // true = déjà traité
 }
 
+// Vérification si un numéro WhatsApp est propriétaire d'une boutique
+async function estProprietaireBoutique(phone, boutique) {
+  if (!phone || !boutique) return false;
+  const normPh = normalisePhone(phone);
+  const shortPh = phone.replace(/\D/g, '').slice(-9);
+
+  if (
+    (boutique.telephone && normalisePhone(boutique.telephone) === normPh) ||
+    (boutique.whatsapp && normalisePhone(boutique.whatsapp) === normPh) ||
+    (boutique.telephone && boutique.telephone.includes(shortPh)) ||
+    (boutique.whatsapp && boutique.whatsapp.includes(shortPh))
+  ) {
+    return true;
+  }
+
+  try {
+    const res = await pool.query(
+      `SELECT b.id FROM boutiques b
+       LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+       WHERE b.id = $1
+         AND (b.telephone = $2 OR b.whatsapp = $2 OR u.telephone = $2 OR u.telephone LIKE '%' || $3)
+       LIMIT 1`,
+      [boutique.id, normPh, shortPh]
+    );
+    return res.rows.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 // ── Menu principal ────────────────────────────────────────────────────────────
 async function sendMenu(phone) {
+  const normPh = normalisePhone(phone);
+  const shortPh = phone.replace(/\D/g, '').slice(-9);
+
+  let aUneBoutique = false;
+  try {
+    const rBq = await pool.query(
+      `SELECT b.id FROM boutiques b
+       LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+       WHERE (b.telephone = $1 OR b.whatsapp = $1 OR u.telephone = $1 OR u.telephone LIKE '%' || $2)
+         AND b.actif = true
+       LIMIT 1`,
+      [normPh, shortPh]
+    );
+    aUneBoutique = rBq.rows.length > 0;
+  } catch {}
+
+  const sectionMarchand = {
+    title: aUneBoutique ? 'Gestion Marchand (Votre Compte)' : 'Marchands & Compte',
+    rows: [],
+  };
+
+  if (aUneBoutique) {
+    sectionMarchand.rows.push({
+      id: 'marchand_ajout_produit',
+      title: '➕ Ajouter un produit',
+      description: 'Publier un article à votre catalogue',
+    });
+  } else {
+    sectionMarchand.rows.push({
+      id: 'creer_boutique',
+      title: '🛍️ Créer ma boutique',
+      description: 'Vendre sur Nopalou (30j offerts)',
+    });
+  }
+
+  sectionMarchand.rows.push(
+    { id: 'forfaits', title: '💎 Forfaits Boutiques', description: 'Tarifs des formules Pro & Business' },
+    { id: 'order', title: '📦 Suivre commande', description: 'Statut de votre paiement' },
+    { id: 'alert', title: '🔔 Alerte prix', description: 'Être notifié d\'une baisse' },
+    { id: 'support', title: '💬 Support', description: 'Contacter l\'équipe Nopalou' }
+  );
+
   await sendWhatsAppInteractive(
     phone,
     '🛍️ Nopalou',
@@ -163,57 +263,55 @@ async function sendMenu(phone) {
           { id: 'telecom', title: '📱 Offres télécom', description: 'Mobile, internet, forfaits' },
         ],
       },
-      {
-        title: 'Marchands & Compte',
-        rows: [
-          { id: 'creer_boutique', title: '🛍️ Créer ma boutique', description: 'Vendre sur Nopalou (30j offerts)' },
-          { id: 'marchand_ajout_produit', title: '➕ Ajouter un produit', description: 'Publier un article à votre boutique' },
-          { id: 'forfaits', title: '💎 Forfaits Boutiques', description: 'Tarifs des formules Pro & Business' },
-          { id: 'order', title: '📦 Suivre commande', description: 'Statut de votre paiement' },
-          { id: 'alert', title: '🔔 Alerte prix', description: 'Être notifié d\'une baisse' },
-          { id: 'support', title: '💬 Support', description: 'Contacter l\'équipe Nopalou' },
-        ],
-      },
+      sectionMarchand,
     ]
   );
 }
 
 // ── Menu d'une boutique précise (état BOUTIQUE_MENU) ───────────────────────────
 async function envoyerMenuBoutique(phone, boutique) {
+  const isOwner = await estProprietaireBoutique(phone, boutique);
+
   const infos = [boutique.categorie, boutique.ville].filter(Boolean).join(' — ');
   let entete = `🏪 *${boutique.nom}*`;
   if (infos) entete += `\n${infos}`;
   if (boutique.description) entete += `\n${boutique.description}`;
   await sendWhatsAppText(phone, entete);
 
+  const sections = [
+    {
+      title: 'Catalogue',
+      rows: [
+        { id: 'boutique_produits_tous', title: '🛍️ Voir les produits', description: 'Défiler les produits un par un' },
+        { id: 'boutique_recherche', title: '🔍 Rechercher', description: 'Chercher un produit dans cette boutique' },
+        { id: 'boutique_categorie', title: '📂 Par catégorie', description: 'Parcourir les catégories de produits' },
+      ],
+    },
+  ];
+
+  // ⚠️ Option "➕ Ajouter un produit" UNIQUEMENT si le numéro correspond au propriétaire de CETTE boutique
+  if (isOwner) {
+    sections.push({
+      title: 'Gestion Marchand (Votre Boutique)',
+      rows: [
+        { id: `boutique_ajout_prod_${boutique.id}`, title: '➕ Ajouter un produit', description: 'Ajouter un article à votre boutique' },
+      ],
+    });
+  }
+
+  sections.push({
+    title: 'Autre',
+    rows: [
+      { id: 'boutique_contact', title: '📞 Contacter le vendeur', description: 'Ouvrir une conversation directe' },
+      { id: 'boutique_quitter', title: '⬅️ Changer de boutique', description: 'Retour au menu principal' },
+    ],
+  });
+
   await sendWhatsAppInteractive(
     phone,
     boutique.nom,
     'Que voulez-vous faire ?',
-    [
-      {
-        title: 'Catalogue',
-        rows: [
-          { id: 'boutique_produits_tous', title: '🛍️ Voir les produits', description: 'Défiler les produits un par un' },
-          { id: 'boutique_recherche', title: '🔍 Rechercher', description: 'Chercher un produit dans cette boutique' },
-          { id: 'boutique_categorie', title: '📂 Par catégorie', description: 'Parcourir les catégories de produits' },
-        ],
-      },
-      {
-        title: 'Gestion Marchand',
-        rows: [
-          { id: `boutique_ajout_prod_${boutique.id}`, title: '➕ Ajouter un produit', description: 'Ajouter un article à ce catalogue' },
-          { id: 'creer_boutique', title: '🏪 Créer une boutique', description: 'Lancer un nouveau commerce' },
-        ],
-      },
-      {
-        title: 'Autre',
-        rows: [
-          { id: 'boutique_contact', title: '📞 Contacter le vendeur', description: 'Ouvrir une conversation directe' },
-          { id: 'boutique_quitter', title: '⬅️ Changer de boutique', description: 'Retour au menu principal' },
-        ],
-      },
-    ]
+    sections
   );
 
   await setSession(phone, 'BOUTIQUE_MENU', { boutique });
