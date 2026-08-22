@@ -33,13 +33,14 @@ async function lancerScrapingProspection(options = {}) {
   try {
     // 1. Collecte et analyse croisée depuis les annonces classifiées et marchands existants
     const requeteAnnonces = `
-      SELECT DISTINCT telephone, nom_vendeur, ville, quartier, categorie, titre
+      SELECT DISTINCT contact_tel AS telephone, contact_nom AS nom_vendeur, ville, quartier, categorie_slug AS categorie, titre
       FROM annonces_classifiees
-      WHERE telephone IS NOT NULL 
-        AND telephone <> ''
+      WHERE contact_tel IS NOT NULL 
+        AND contact_tel <> ''
+        AND contact_tel <> 'Voir sur Facebook'
         AND actif = true
         ${zone !== 'all' ? "AND (quartier ILIKE '%' || $1 || '%' OR ville ILIKE '%' || $1 || '%' OR titre ILIKE '%' || $1 || '%')" : ''}
-      ORDER BY telephone
+      ORDER BY contact_tel
       LIMIT $2
     `;
 

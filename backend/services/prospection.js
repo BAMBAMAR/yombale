@@ -239,7 +239,7 @@ function extraireLeadsDepuisTexte(rawText, defauts = {}) {
 async function autoSourcerDepuisAnnonces() {
   try {
     const resAnnonces = await pool.query(`
-      SELECT contact_nom, contact_tel, titre, categorie_slug, quartier, ville, source
+      SELECT contact_nom, contact_tel, titre, categorie_slug, quartier, ville
       FROM annonces_classifiees
       WHERE contact_tel IS NOT NULL AND contact_tel != '' AND contact_tel != 'Voir sur Facebook'
       ORDER BY created_at DESC
@@ -253,10 +253,12 @@ async function autoSourcerDepuisAnnonces() {
       const norm = normaliserTelephoneSenegal(a.contact_tel);
       if (!norm.valide) continue;
 
+      if (estDesinscrit && (await estDesinscrit(norm.national))) continue;
+
       const nomBoutique = a.contact_nom || `Vendeur ${a.categorie_slug || 'Annonce'}`;
       const categorie = a.categorie_slug || 'mode';
       const quartier = a.quartier || a.ville || 'Dakar';
-      const source = `annonce_${a.source || 'nopalou'}`;
+      const source = 'annonces_classifiees';
 
       try {
         const query = `
