@@ -2072,10 +2072,10 @@ async function handleIncoming(msg) {
       if (userRes.rows.length > 0) {
         userId = userRes.rows[0].id;
       } else {
-        const emailTemp = `marchand_${normPh}_${Date.now().toString(36)}@nopalou.sn`;
+        const emailTemp = `marchand_${normPh.replace(/\D/g, '')}_${Date.now().toString(36)}@nopalou.sn`;
         const newUser = await pool.query(
-          `INSERT INTO utilisateurs (nom, email, telephone, role, mot_de_passe_hash)
-           VALUES ($1, $2, $3, 'marchand', 'wa_autocreated')
+          `INSERT INTO utilisateurs (nom, email, telephone, email_verifie, mot_de_passe_hash)
+           VALUES ($1, $2, $3, true, 'wa_autocreated')
            RETURNING id`,
           [nomBoutique, emailTemp, normPh]
         );
@@ -2102,6 +2102,18 @@ async function handleIncoming(msg) {
       );
 
       const bqCreee = resBq.rows[0];
+
+      // Lier dans boutique_utilisateurs
+      try {
+        await pool.query(
+          `INSERT INTO boutique_utilisateurs (boutique_id, utilisateur_id, role)
+           VALUES ($1, $2, 'admin')
+           ON CONFLICT (boutique_id, utilisateur_id) DO NOTHING`,
+          [bqCreee.id, userId]
+        );
+      } catch (eBu) {
+        console.warn('[BOUTIQUE UTILISATEURS WA WARN]:', eBu.message);
+      }
 
       // 4. Créer l'abonnement d'essai de 30 jours offerts
       const finEssai = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
