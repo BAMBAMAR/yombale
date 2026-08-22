@@ -2,11 +2,15 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
 const { limiterRecherche } = require('../middlewares/rateLimit');
+const { recordSearch } = require('../lib/searchLogger');
 
 // GET /api/search?q=…&limit=10
 router.get('/', limiterRecherche, async (req, res) => {
   const q = (req.query.q || '').trim();
   if (!q || q.length < 2) return res.json({ q, produits: [], boutiques: [], annonces: [], immo: [] });
+
+  // Enregistrement asynchrone non bloquant des tendances
+  recordSearch(q);
 
   const limit = Math.min(parseInt(req.query.limit) || 10, 30);
   const like = `%${q}%`;

@@ -1,3 +1,46 @@
+- **Centre de Contrôle Admin, Assistant Marchand WhatsApp Taf-Taf, Ajout Produit Sécurisé & Moteur de Relances Crons (`main` - 22 août 2026)** 🎛️🤖📱⚡ :
+  * **🎛️ Centre de Contrôle & Monitoring des Crons (`/admin/prospection` — Onglet 5)** :
+    - **Pilotage du Scraping en 1 Clic** : Sélecteur de zones et marchés de Dakar (*Sandaga, HLM, Centenaire, Colobane, Maristes, Plateau, Tilène, Thiès, Touba*), limite paramétrable et injection directe dans le CRM avec rapport en direct.
+    - **Déclencheur de Relances Immédiates** : Boutons d'exécution instantanée pour les relances marchands (*J+1 Onboarding, J+7 Carnet/Caisse, J+25 Offre -25% Wave*) et relances de dettes du Carnet (*Bor*).
+    - **Tableau de Bord des Crons** : Monitoring en direct des 4 processus d'arrière-plan avec fréquence d'exécution et indicateur de numéros inscrits en blacklist.
+  * **🤖 Assistant Marchand WhatsApp & Création de Boutique Conversationnelle ("Bot Taf-Taf")** :
+    - Création de boutique 100% sur WhatsApp en 30s (`creer boutique`) : nom, quartier, catégorie, génération du slug, attribution de 30 jours offerts et lien de vitrine web.
+    - **Ajout de Produit Sécurisé (`+produit`)** : Vérification stricte en BDD que le numéro expéditeur est bien le propriétaire de la boutique avant d'autoriser la saisie du nom, du prix et de la photo de l'article.
+  * **🛡️ Gestion Stricte de l'Opt-Out & Anti-Spam (Blacklist & Mention STOP)** :
+    - Mention obligatoire de désinscription ajoutée sur 100% des templates de prospection : `\n\n_Pour ne plus recevoir de message de notre part, répondez simplement STOP._`.
+    - Interception instantanée du mot-clé `STOP` / `ARRET` / `DESINSCRIRE` dans le chatbot WhatsApp : inscription immédiate dans `whatsapp_blacklist` et mise à jour automatique du lead en `desinscrit`.
+    - Contrôle préalable systématique (`estDesinscrit`) avant tout envoi de campagne ou de relance d'arrière-plan.
+  * **🔔 Moteur de Relances Marchands (`backend/services/cron-relances-marchands.js`)** :
+    - J+1 : Partage du lien de vitrine en Statut WhatsApp.
+    - J+7 : Découverte de la Caisse POS et du Carnet de Dettes.
+    - J+25 : Notification d'expiration et offre de renouvellement annuel -25% avec paiement direct Wave.
+  * **🕷️ Scraper & Sourcing Continu de Prospection (`backend/services/scraper-prospection.js`)** :
+    - Collecteur ciblé par marché dakarais avec normalisation +221, détection opérateur mobile et déduplication.
+  * **Validation & Contrôle Qualité** :
+    - Suite de tests unitaires prospection & STOP : **100% validée (11/11 tests passés)**.
+    - Suite de tests frontend : **100% validée (31/31 tests passés)**.
+    - Typecheck TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Build Next.js (`npm run build`) : **100% des routes compilées sans aucune erreur (code 0)**.
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
+- **Tendances de Recherche 100% Dynamiques & Tracking Automatique en Temps Réel (`main` - 22 août 2026)** 🔥🔍⚡ :
+  * **Table Dédiée & Migration Idempotente (`backend/migrate-inline.js`)** :
+    - Création de la table `recherches_logs` avec colonnes `id`, `query`, `normalized_query UNIQUE`, `count`, `last_searched_at`, `created_at` et index composite `idx_recherches_logs_count (count DESC, last_searched_at DESC)`.
+    - Insertion initiale de requêtes populaires de départ (*iPhone 15*, *Climatiseurs*, *Samsung S24*, *Smart TV 4K*, *PlayStation 5*, *MacBook Pro*).
+  * **Module Logger de Recherche Asynchrone (`backend/lib/searchLogger.js`)** :
+    - `recordSearch(query)` : Enregistrement et incrémentation atomique des requêtes utilisateurs (nettoyage anti-spam, filtrage des requêtes < 2 caractères ou suspectes, exécution non-bloquante à coût 0 sur le temps de réponse).
+    - `getTopTendances(limit)` : Calcul automatique des termes les plus recherchés et récents avec fallback dynamique résilient.
+  * **Endpoints API & Intégration Backend (`backend/routes/produits.js`, `backend/routes/search.js`)** :
+    - Nouvel endpoint public avec mise en cache HTTP : `GET /api/produits/tendances?limit=4`.
+    - Déclenchement automatique de `recordSearch()` lors des requêtes de catalogue (`GET /api/produits?q=...`), de l'autocomplétion instantanée (`GET /api/produits/instantanee?q=...`) et de la recherche globale (`GET /api/search?q=...`).
+  * **Affichage Dynamique SSR (`frontend-next/src/app/page.tsx`)** :
+    - Récupération parallèle des tendances au niveau du composant serveur (`HomePage`).
+    - Remplacement des 3 liens statiques en dur par une boucle dynamique `.map()` des tendances populaires avec filtrage 1-clic direct.
+  * **Validation & Contrôle Qualité** :
+    - Test de migration et de rotation des tendances validé avec succès en base PostgreSQL.
+    - Build Next.js (`npm run build`) : 100% des routes compilées sans aucune erreur (code 0).
+    - Respect strict des directives AGENTS.md : polices système natives, 0 font-fetch externe.
+
 - **Cache-Busting PWA & Forçage d'Actualisation des Icônes / Logos (`main` - 21 août 2026)** ⚡📱✨ :
   * **Purge & Invalidation Immédiate des Anciens Caches PWA** :
     - **Incrémentation du Service Worker (`sw.ts`)** : Passage à `CACHE_VERSION = 'v7'` forçant la purge automatique et irréversible de tous les conteneurs de cache obsolètes (`nopalou-assets-cache-v6`, `nopalou-html-cache-v6`, etc.) dès l'activation du nouveau worker.

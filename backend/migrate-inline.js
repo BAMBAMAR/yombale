@@ -1098,11 +1098,88 @@ module.exports = async function migrateInline() {
       );
       CREATE INDEX IF NOT EXISTS idx_boutique_logs_bq ON boutique_logs(boutique_id);
       CREATE INDEX IF NOT EXISTS idx_boutique_logs_date ON boutique_logs(created_at DESC);
+
+      -- Table des recherches populaires / tendances automatiques
+      CREATE TABLE IF NOT EXISTS recherches_logs (
+        id               BIGSERIAL PRIMARY KEY,
+        query            VARCHAR(150) NOT NULL,
+        normalized_query VARCHAR(150) NOT NULL UNIQUE,
+        count            INT NOT NULL DEFAULT 1,
+        last_searched_at TIMESTAMPTZ DEFAULT NOW(),
+        created_at       TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_recherches_logs_count ON recherches_logs(count DESC, last_searched_at DESC);
+
+      -- Insertion initiale de termes de recherche populaires
+      INSERT INTO recherches_logs (query, normalized_query, count, last_searched_at) VALUES
+        ('iPhone 15', 'iphone 15', 50, NOW()),
+        ('Climatiseurs', 'climatiseurs', 45, NOW()),
+        ('Samsung S24', 'samsung s24', 40, NOW()),
+        ('Smart TV 4K', 'smart tv 4k', 35, NOW()),
+        ('PlayStation 5', 'playstation 5', 30, NOW()),
+        ('MacBook Pro', 'macbook pro', 25, NOW())
+      ON CONFLICT (normalized_query) DO NOTHING;
+
+      -- ── TABLES DE PROSPECTION COMMERCIALE & CRM LEADS (NOPALOU OUTREACH) ──
+      CREATE TABLE IF NOT EXISTS prospection_leads (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        nom_boutique       VARCHAR(255) NOT NULL,
+        contact_nom        VARCHAR(150),
+        telephone          VARCHAR(50) NOT NULL UNIQUE,
+        telephone_brut     VARCHAR(100),
+        operateur          VARCHAR(50) DEFAULT 'Orange',
+        email              VARCHAR(255),
+        categorie          VARCHAR(100) DEFAULT 'mode',
+        ville              VARCHAR(100) DEFAULT 'Dakar',
+        quartier           VARCHAR(150),
+        source             VARCHAR(100) DEFAULT 'manuel',
+        statut             VARCHAR(50) DEFAULT 'nouveau',
+        score              INT DEFAULT 0,
+        notes              TEXT,
+        derniere_action_at TIMESTAMPTZ,
+        created_at         TIMESTAMPTZ DEFAULT NOW(),
+        updated_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_prospection_leads_tel ON prospection_leads(telephone);
+      CREATE INDEX IF NOT EXISTS idx_prospection_leads_statut ON prospection_leads(statut);
+      CREATE INDEX IF NOT EXISTS idx_prospection_leads_cat ON prospection_leads(categorie);
+      CREATE INDEX IF NOT EXISTS idx_prospection_leads_date ON prospection_leads(created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS prospection_campagnes (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        titre              VARCHAR(255) NOT NULL,
+        canal              VARCHAR(50) NOT NULL DEFAULT 'whatsapp',
+        statut             VARCHAR(50) NOT NULL DEFAULT 'brouillon',
+        template_message   TEXT NOT NULL,
+        sujet_email        VARCHAR(255),
+        nb_total           INT DEFAULT 0,
+        nb_envoyes         INT DEFAULT 0,
+        nb_succes          INT DEFAULT 0,
+        nb_echecs          INT DEFAULT 0,
+        metadonnees        JSONB DEFAULT '{}',
+        created_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_prospection_campagnes_date ON prospection_campagnes(created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS prospection_messages_log (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        campagne_id        UUID REFERENCES prospection_campagnes(id) ON DELETE CASCADE,
+        lead_id            UUID REFERENCES prospection_leads(id) ON DELETE CASCADE,
+        canal              VARCHAR(50) NOT NULL,
+        destinataire       VARCHAR(255) NOT NULL,
+        message_envoye     TEXT NOT NULL,
+        statut             VARCHAR(50) DEFAULT 'envoye',
+        erreur             TEXT,
+        created_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_prospection_log_campagne ON prospection_messages_log(campagne_id);
+      CREATE INDEX IF NOT EXISTS idx_prospection_log_lead ON prospection_messages_log(lead_id);
+      CREATE INDEX IF NOT EXISTS idx_prospection_log_date ON prospection_messages_log(created_at DESC);
     `);
 
-    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite OK');
+    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection OK');
   } catch (err) {
-    console.warn('[MIGRATE] POS Avancé échec:', err.message);
+    console.warn('[MIGRATE] POS Avancé & Recherches échec:', err.message);
   }
 
   try { await pool.end(); } catch (_) {}

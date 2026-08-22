@@ -950,10 +950,92 @@ async function handleIncoming(msg) {
     return;
   }
 
+  // ── MOT-CLÉ PRIORITAIRE DE DÉSINSCRIPTION / OPTOUT (STOP / ARRET / REFUS) ──
+  const MOTS_OPTOUT = ['stop', 'arret', 'desinscrire', 'desinscription', 'annuler', 'bloquer', 'supprimer', 'ne plus recevoir', 'refus'];
+  if (MOTS_OPTOUT.includes(normaliserTexte(text).trim())) {
+    const normPh = normalisePhone(phone);
+    await ajouterBlacklist(normPh, 'demande_utilisateur_stop');
+    try {
+      await pool.query(
+        "UPDATE prospection_leads SET statut = 'desinscrit', updated_at = NOW() WHERE telephone = $1",
+        [normPh]
+      );
+    } catch (_) {}
+
+    await sendWhatsAppText(
+      phone,
+      '✅ *Désinscription confirmée*\n\nC\'est bien noté ! Votre numéro a été retiré avec succès de nos listes. Vous ne recevrez plus aucun message de prospection ou de notification de notre part.\n\nSi vous souhaitez revenir plus tard, il vous suffira de taper *menu*.'
+    );
+    await setSession(phone, 'IDLE', {});
+    return;
+  }
+
+  // ── DÉCLENCHEURS MARCHANDS WHATSAPP : CRÉATION DE BOUTIQUE & AJOUT DE PRODUIT ─
+  const normTxtLower = normaliserTexte(text).trim();
+
+  // Déclencheur Création de Boutique Taf-Taf
+  if (
+    interactiveId === 'creer_boutique' ||
+    normTxtLower === 'creer boutique' ||
+    normTxtLower === 'creer ma boutique' ||
+    normTxtLower === 'ouvrir boutique' ||
+    normTxtLower === 'vendre sur nopalou' ||
+    normTxtLower === 'boutique taf taf'
+  ) {
+    await setSession(phone, 'CREER_BOUTIQUE_NOM', {});
+    await sendWhatsAppText(
+      phone,
+      '🏪 *Création de votre Boutique en Ligne Nopalou*\n\n' +
+      'Lancez votre commerce en 30 secondes chrono !\n' +
+      '🎁 *30 jours offerts* & 0% de commission sur vos ventes.\n\n' +
+      '👉 Quel est le *nom de votre boutique* ? (ex: Dakar Fashion, Touba Tech, Keur Fatou...)'
+    );
+    return;
+  }
+
+  // Déclencheur Ajout de Produit Sécurisé (+produit)
+  if (
+    normTxtLower === '+produit' ||
+    normTxtLower === 'ajouter produit' ||
+    normTxtLower === 'nouveau produit' ||
+    normTxtLower === 'ajout produit' ||
+    normTxtLower === 'creer produit' ||
+    interactiveId === 'marchand_ajout_produit'
+  ) {
+    const normPh = normalisePhone(phone);
+    // Vérification de sécurité : le numéro doit être associé à une boutique active
+    const rBq = await pool.query(
+      `SELECT b.id, b.nom, b.slug
+       FROM boutiques b
+       LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+       WHERE (b.telephone = $1 OR b.whatsapp = $1 OR u.telephone = $1 OR u.telephone LIKE '%' || $2)
+         AND b.actif = true
+       ORDER BY b.created_at DESC LIMIT 1`,
+      [normPh, phone.replace(/\D/g, '').slice(-9)]
+    );
+
+    if (!rBq.rows.length) {
+      await sendWhatsAppText(
+        phone,
+        '⚠️ *Accès Refusé / Boutique introuvable*\n\n' +
+        `Aucune boutique active n'est associée à votre numéro (${phone}).\n\n` +
+        '👉 Pour créer votre boutique gratuitement dès maintenant, tapez *créer boutique* !'
+      );
+      return;
+    }
+
+    const maBoutique = rBq.rows[0];
+    await setSession(phone, 'AJOUT_PRODUIT_NOM', { boutique: maBoutique });
+    await sendWhatsAppText(
+      phone,
+      `🛍️ *Ajout de Produit — ${maBoutique.nom}*\n\n` +
+      'Quel est le *nom ou titre du produit* que vous souhaitez ajouter ? (ex: Robe Soirée Soie, iPhone 14 Pro 128Go, Sandales Cuir...)'
+    );
+    return;
+  }
+
   const SALUTATIONS = ['menu', 'aide', 'help', '0', 'bonjour', 'bonsoir', 'salut', 'slt', 'hello', 'coucou'];
   const CLOTURE = ['merci', 'merci beaucoup', 'ok merci', 'c\'est bon', 'cest bon', 'au revoir', 'bye', 'a bientot', 'à bientôt', 'non merci', 'ça ira', 'ca ira', 'c\'est tout', 'cest tout'];
-  // Mots de pagination : montrer la suite des derniers résultats (spec 2026-07-13).
-  // "ok"/"oui" = réponse naturelle à "Envie de continuer ?". "ok merci" reste une clôture (CLOTURE testée avant).
   const MOTS_PLUS = ['plus', 'encore', 'd\'autres', 'dautres', 'autres', 'autre', 'voir plus', 'la suite', 'suivant', 'suivante', 'next', 'suite', 'ok', 'oui'];
 
   // ── IDLE → présentation puis menu (nouvelle session ou session expirée) ────
@@ -1897,6 +1979,206 @@ async function handleIncoming(msg) {
     }
     await setSession(phone, 'MENU', {});
     return;
+  }
+
+  // ── CREER_BOUTIQUE_NOM → Nom de la boutique ────────────────────────────────
+  if (state === 'CREER_BOUTIQUE_NOM') {
+    if (!text || text.trim().length < 2) {
+      await sendWhatsAppText(phone, '⚠️ Veuillez entrer un nom valide pour votre boutique (au moins 2 caractères).');
+      return;
+    }
+    const nomBoutique = text.trim();
+    await setSession(phone, 'CREER_BOUTIQUE_QUARTIER', { nom_boutique: nomBoutique });
+    await sendWhatsAppText(
+      phone,
+      `📍 Parfait pour *${nomBoutique}* !\n\nDans quel *quartier ou ville* se trouve votre commerce ? (ex: Sandaga, HLM, Maristes, Plateau, Thiès, Mbour, Touba...)`
+    );
+    return;
+  }
+
+  // ── CREER_BOUTIQUE_QUARTIER → Quartier / Ville ──────────────────────────────
+  if (state === 'CREER_BOUTIQUE_QUARTIER') {
+    const quartier = (text || 'Dakar').trim();
+    const nomBoutique = context?.nom_boutique || 'Ma Boutique';
+    await setSession(phone, 'CREER_BOUTIQUE_CATEGORIE', { nom_boutique: nomBoutique, quartier });
+
+    await sendWhatsAppText(
+      phone,
+      `🏷️ Quelle est votre *catégorie principale d'articles* ?\n\n` +
+      `1️⃣ Mode & Prêt-à-porter\n` +
+      `2️⃣ Téléphonie & High-Tech\n` +
+      `3️⃣ Alimentation & Supérette\n` +
+      `4️⃣ Quincaillerie & Matériaux\n` +
+      `5️⃣ Cosmétique & Beauté\n` +
+      `6️⃣ Généraliste / Arrivages\n\n` +
+      `👉 Répondez avec le chiffre (1-6) ou tapez le nom de votre catégorie.`
+    );
+    return;
+  }
+
+  // ── CREER_BOUTIQUE_CATEGORIE → Finalisation Création Boutique ────────────────
+  if (state === 'CREER_BOUTIQUE_CATEGORIE') {
+    const num = parseInt(text.trim(), 10);
+    const CATS = {
+      1: 'mode',
+      2: 'telephonie',
+      3: 'alimentation',
+      4: 'quincaillerie',
+      5: 'beaute-sante',
+      6: 'mixte',
+    };
+    const categorieSlug = CATS[num] || normaliserTexte(text).trim().slice(0, 50) || 'mode';
+    const nomBoutique = context?.nom_boutique || 'Ma Boutique';
+    const quartier = context?.quartier || 'Dakar';
+    const normPh = normalisePhone(phone);
+
+    try {
+      // 1. Trouver ou créer l'utilisateur marchand
+      let userId;
+      const userRes = await pool.query(
+        'SELECT id FROM utilisateurs WHERE telephone = $1 OR telephone = $2 LIMIT 1',
+        [normPh, phone.replace(/\D/g, '').slice(-9)]
+      );
+
+      if (userRes.rows.length > 0) {
+        userId = userRes.rows[0].id;
+      } else {
+        const emailTemp = `marchand_${normPh}_${Date.now().toString(36)}@nopalou.sn`;
+        const newUser = await pool.query(
+          `INSERT INTO utilisateurs (nom, email, telephone, role, mot_de_passe_hash)
+           VALUES ($1, $2, $3, 'marchand', 'wa_autocreated')
+           RETURNING id`,
+          [nomBoutique, emailTemp, normPh]
+        );
+        userId = newUser.rows[0].id;
+      }
+
+      // 2. Générer le slug unique
+      let baseSlug = normaliserTexte(nomBoutique).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'boutique';
+      let slug = baseSlug;
+      let suffix = 1;
+      while (true) {
+        const existSlug = await pool.query('SELECT id FROM boutiques WHERE slug = $1', [slug]);
+        if (!existSlug.rows.length) break;
+        slug = `${baseSlug}-${suffix++}`;
+      }
+
+      // 3. Créer la boutique
+      const resBq = await pool.query(
+        `INSERT INTO boutiques (
+          utilisateur_id, nom, slug, telephone, whatsapp, categorie, ville, quartier, actif, plan
+        ) VALUES ($1, $2, $3, $4, $5, $6, 'Dakar', $7, true, 'decouverte')
+        RETURNING id, nom, slug`,
+        [userId, nomBoutique, slug, normPh, normPh, categorieSlug, quartier]
+      );
+
+      const bqCreee = resBq.rows[0];
+
+      // 4. Créer l'abonnement d'essai de 30 jours offerts
+      const finEssai = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      await pool.query(
+        `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
+         VALUES ($1, 'decouverte', 'actif', 2500, $2, $3)`,
+        [userId, finEssai, `wa_trial_${normPh}`]
+      );
+
+      // 5. Message de confirmation enthousiaste
+      const msgSucces =
+        `🎉 *FÉLICITATIONS ! VOTRE BOUTIQUE EST CRÉÉE !* 🎉\n\n` +
+        `🏪 *${bqCreee.nom}*\n` +
+        `📍 ${quartier} — 0% de commission\n` +
+        `🎁 *1er mois (30 jours) 100% OFFERT*\n\n` +
+        `🌐 *Lien de votre vitrine web :*\n${SITE}/boutiques/${bqCreee.slug}\n\n` +
+        `👉 *Pour ajouter votre premier article tout de suite :*\n` +
+        `Tapez simplement *+produit* !`;
+
+      await sendWhatsAppText(phone, msgSucces);
+      await setSession(phone, 'IDLE', {});
+      return;
+    } catch (errCreate) {
+      console.error('[CREER BOUTIQUE WA ERR]:', errCreate);
+      await sendWhatsAppText(phone, '😕 Une erreur est survenue lors de la création. Réessayez en tapant *créer boutique* ou contactez le support.');
+      await setSession(phone, 'IDLE', {});
+      return;
+    }
+  }
+
+  // ── AJOUT_PRODUIT_NOM → Nom du produit ──────────────────────────────────────
+  if (state === 'AJOUT_PRODUIT_NOM') {
+    if (!text || text.trim().length < 2) {
+      await sendWhatsAppText(phone, '⚠️ Veuillez entrer un nom de produit valide (au moins 2 caractères).');
+      return;
+    }
+    const prodNom = text.trim();
+    const boutique = context?.boutique;
+    await setSession(phone, 'AJOUT_PRODUIT_PRIX', { boutique, produit_nom: prodNom });
+    await sendWhatsAppText(
+      phone,
+      `💰 Quel est le *prix de vente en FCFA* pour *${prodNom}* ? (ex: 15000, 25000, 5000...)`
+    );
+    return;
+  }
+
+  // ── AJOUT_PRODUIT_PRIX → Prix du produit ────────────────────────────────────
+  if (state === 'AJOUT_PRODUIT_PRIX') {
+    const rawPrix = text.replace(/[^\d]/g, '');
+    const prixNum = parseInt(rawPrix, 10);
+    if (isNaN(prixNum) || prixNum <= 0) {
+      await sendWhatsAppText(phone, '⚠️ Veuillez entrer un montant numérique valide en FCFA (ex: 15000).');
+      return;
+    }
+
+    const boutique = context?.boutique;
+    const prodNom = context?.produit_nom;
+    await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix: prixNum });
+
+    await sendWhatsAppText(
+      phone,
+      `📸 *Photo du produit :*\n\n` +
+      `Envoyez la photo de votre article ou tapez *passer* pour publier sans photo.`
+    );
+    return;
+  }
+
+  // ── AJOUT_PRODUIT_PHOTO → Finalisation Ajout Produit ─────────────────────────
+  if (state === 'AJOUT_PRODUIT_PHOTO') {
+    const boutique = context?.boutique;
+    const prodNom = context?.produit_nom;
+    const prix = context?.prix || 0;
+
+    if (!boutique || !prodNom) {
+      await setSession(phone, 'IDLE', {});
+      await sendMenu(phone);
+      return;
+    }
+
+    try {
+      const resProd = await pool.query(
+        `INSERT INTO boutique_produits (boutique_id, nom, prix, actif, stock, statut_whatsapp)
+         VALUES ($1, $2, $3, true, 10, 'synchronise')
+         RETURNING id, nom, prix`,
+        [boutique.id, prodNom, prix]
+      );
+
+      const prodCree = resProd.rows[0];
+
+      const msgProdSucces =
+        `✅ *Article ajouté avec succès à votre catalogue !*\n\n` +
+        `🛍️ *${prodCree.nom}*\n` +
+        `💰 Prix : *${prixFmt(prodCree.prix)}*\n` +
+        `🏪 Boutique : *${boutique.nom}*\n\n` +
+        `🔗 *Fiche produit en ligne :*\n${SITE}/boutiques/${boutique.slug}\n\n` +
+        `👉 Pour ajouter un autre article, tapez *+produit* !`;
+
+      await sendWhatsAppText(phone, msgProdSucces);
+      await setSession(phone, 'IDLE', {});
+      return;
+    } catch (errAddProd) {
+      console.error('[AJOUT PRODUIT WA ERR]:', errAddProd);
+      await sendWhatsAppText(phone, '😕 Impossible d\'enregistrer le produit pour le moment. Réessayez avec *+produit*.');
+      await setSession(phone, 'IDLE', {});
+      return;
+    }
   }
 
   // ── Fallback ──────────────────────────────────────────────────────────────

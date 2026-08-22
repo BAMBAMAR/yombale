@@ -257,6 +257,7 @@ app.use('/api/settings',        require('./routes/settings'));
 app.use('/api/apporteurs',      require('./routes/apporteurs'));
 app.use('/api/affiliates',      require('./routes/affiliates'));
 app.use('/api/qualite',         require('./routes/qualite'));
+app.use('/api/prospection',     require('./routes/prospection'));
 
 // ── Health check (Diagnostics & Liveness/Readiness Probes) ─────
 app.get(['/health', '/api/health'], async (req, res) => {

@@ -1,0 +1,1540 @@
+'use client'
+
+import { useState } from 'react'
+import {
+  Users, UserPlus, Send, History, Sparkles, Filter, Search,
+  Download, Trash2, Phone, MessageSquare, ExternalLink, CheckCircle2,
+  Copy, RefreshCw, Layers, ShieldCheck, Zap
+} from 'lucide-react'
+import type { Lead, StatsLeads, TemplateMsg, DorkingRequete } from './page'
+
+interface Props {
+  initialLeads: Lead[]
+  initialStats: StatsLeads
+  templates: TemplateMsg[]
+  dorking: DorkingRequete[]
+  secret: string
+}
+
+type TabType = 'crm' | 'import' | 'campagnes' | 'logs' | 'control'
+
+const STATUT_LABELS: Record<string, { label: string; color: string; bg: string }> = {
+  nouveau: { label: 'Nouveau', color: '#2563EB', bg: '#EFF6FF' },
+  contacte_wa: { label: 'Contacté WhatsApp', color: '#16A34A', bg: '#F0FDF4' },
+  contacte_email: { label: 'Contacté Email', color: '#7C3AED', bg: '#F5F3FF' },
+  en_discussion: { label: 'En Discussion', color: '#D97706', bg: '#FFFBEB' },
+  converti: { label: 'Converti (Boutique Active)', color: '#059669', bg: '#ECFDF5' },
+  desinscrit: { label: 'Désinscrit / Refus', color: '#DC2626', bg: '#FEF2F2' },
+}
+
+const OPERATEUR_COLORS: Record<string, { color: string; bg: string }> = {
+  Orange: { color: '#C75B00', bg: '#FFF7ED' },
+  'Free (Yas)': { color: '#2563EB', bg: '#EFF6FF' },
+  Expresso: { color: '#9333EA', bg: '#FAF5FF' },
+  Promobile: { color: '#16A34A', bg: '#F0FDF4' },
+  Autre: { color: '#64748B', bg: '#F1F5F9' },
+}
+
+export default function ProspectionClient({
+  initialLeads,
+  initialStats,
+  templates,
+  dorking,
+  secret,
+}: Props) {
+  const [activeTab, setActiveTab] = useState<TabType>('crm')
+  const [leads, setLeads] = useState<Lead[]>(initialLeads)
+  const [stats, setStats] = useState<StatsLeads>(initialStats)
+  const [toast, setToast] = useState<string | null>(null)
+
+  // Filtres CRM
+  const [search, setSearch] = useState('')
+  const [catFilter, setCatFilter] = useState('tous')
+  const [statutFilter, setStatutFilter] = useState('tous')
+  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([])
+
+  // Modal Ajout Unique
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [addForm, setAddForm] = useState({
+    nom_boutique: '',
+    contact_nom: '',
+    telephone: '',
+    email: '',
+    categorie: 'mode',
+    ville: 'Dakar',
+    quartier: 'Dakar',
+    notes: '',
+  })
+
+  // Import Vrac
+  const [rawImportText, setRawImportText] = useState('')
+  const [importCat, setImportCat] = useState('mode')
+  const [importVille, setImportVille] = useState('Dakar')
+  const [importQuartier, setImportQuartier] = useState('Dakar')
+  const [isImporting, setIsImporting] = useState(false)
+
+  // Auto-Sourcing
+  const [isAutoSourcing, setIsAutoSourcing] = useState(false)
+
+  // Campagne Dispatcher
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateMsg>(templates[0] || {
+    id: 'custom',
+    titre: 'Message Personnalisé',
+    canal: 'whatsapp',
+    categorie: 'general',
+    texte: 'Salam {nom_boutique} ! Découvrez notre solution : https://nopalou.com'
+  })
+  const [campagneMessage, setCampagneMessage] = useState(selectedTemplate.texte)
+  const [campagneCanal, setCampagneCanal] = useState<'whatsapp' | 'email'>('whatsapp')
+  const [campagneTitre, setCampagneTitre] = useState('Campagne WhatsApp Prospection Dakar')
+  const [isSending, setIsSending] = useState(false)
+
+  // Logs
+  const [logs, setLogs] = useState<any[]>([])
+  const [loadingLogs, setLoadingLogs] = useState(false)
+
+  // Centre de Contrôle & Crons
+  const [scrapingZone, setScrapingZone] = useState('Sandaga')
+  const [scrapingLimite, setScrapingLimite] = useState(30)
+  const [isScraping, setIsScraping] = useState(false)
+  const [scrapingResult, setScrapingResult] = useState<any>(null)
+
+  const [isRelancing, setIsRelancing] = useState(false)
+  const [relancesResult, setRelancesResult] = useState<any>(null)
+
+  const [cronData, setCronData] = useState<any>(null)
+  const [loadingCronData, setLoadingCronData] = useState(false)
+
+  const showToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3500)
+  }
+
+  const fetchCronStatus = async () => {
+    setLoadingCronData(true)
+    try {
+      const res = await fetch('/api/prospection/crons/status', {
+        headers: { 'x-admin-secret': secret },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setCronData(data)
+      }
+    } catch (_) {}
+    finally {
+      setLoadingCronData(false)
+    }
+  }
+
+  const handleRunScraping = async () => {
+    setIsScraping(true)
+    setScrapingResult(null)
+    try {
+      const res = await fetch('/api/prospection/scraper/lancer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({ zone: scrapingZone, limite: scrapingLimite }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setScrapingResult(data)
+        showToast(`🎉 Scraping terminé : ${data.ajoutes} nouveaux leads ajoutés`)
+        await reloadLeads()
+        await fetchCronStatus()
+      } else {
+        showToast(`❌ Erreur scraping: ${data.error}`)
+      }
+    } catch (e: any) {
+      showToast(`❌ Erreur: ${e.message}`)
+    } finally {
+      setIsScraping(false)
+    }
+  }
+
+  const handleRunRelances = async (type: string = 'tout') => {
+    setIsRelancing(true)
+    setRelancesResult(null)
+    try {
+      const res = await fetch('/api/prospection/relances/lancer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({ type }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setRelancesResult(data)
+        const total = (data.resultats?.marchands?.stats?.total || 0) + (data.resultats?.dettes?.relancesEnvoyees || 0)
+        showToast(`✅ Relances exécutées : ${total} messages WhatsApp envoyés`)
+        await fetchCronStatus()
+      } else {
+        showToast(`❌ Erreur relances: ${data.error}`)
+      }
+    } catch (e: any) {
+      showToast(`❌ Erreur: ${e.message}`)
+    } finally {
+      setIsRelancing(false)
+    }
+  }
+
+  const reloadLeads = async () => {
+    try {
+      const res = await fetch(`/api/prospection/leads?limit=200`, {
+        headers: { 'x-admin-secret': secret },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setLeads(data.leads || [])
+        setStats(data.stats || stats)
+      }
+    } catch (_) {}
+  }
+
+  // Filtrage local
+  const filteredLeads = leads.filter((l) => {
+    if (catFilter !== 'tous' && l.categorie !== catFilter) return false
+    if (statutFilter !== 'tous' && l.statut !== statutFilter) return false
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      const matchNom = (l.nom_boutique || '').toLowerCase().includes(q)
+      const matchContact = (l.contact_nom || '').toLowerCase().includes(q)
+      const matchTel = (l.telephone || '').includes(q)
+      const matchQuartier = (l.quartier || '').toLowerCase().includes(q)
+      if (!matchNom && !matchContact && !matchTel && !matchQuartier) return false
+    }
+    return true
+  })
+
+  // Sélections
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedLeadIds(filteredLeads.map((l) => l.id))
+    } else {
+      setSelectedLeadIds([])
+    }
+  }
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedLeadIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    )
+  }
+
+  // Changement de statut unitaire
+  const handleStatutChange = async (leadId: string, newStatut: string) => {
+    try {
+      const res = await fetch(`/api/prospection/leads/${leadId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({ statut: newStatut }),
+      })
+      if (res.ok) {
+        setLeads((prev) =>
+          prev.map((l) => (l.id === leadId ? { ...l, statut: newStatut } : l))
+        )
+        showToast('✅ Statut du prospect mis à jour')
+      }
+    } catch (_) {
+      showToast('❌ Erreur lors de la mise à jour')
+    }
+  }
+
+  // Suppression unitaire
+  const handleDeleteLead = async (leadId: string) => {
+    if (!confirm('Supprimer ce prospect de la base ?')) return
+    try {
+      const res = await fetch(`/api/prospection/leads/${leadId}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-secret': secret },
+      })
+      if (res.ok) {
+        setLeads((prev) => prev.filter((l) => l.id !== leadId))
+        showToast('✅ Prospect supprimé')
+      }
+    } catch (_) {}
+  }
+
+  // Suppression groupée
+  const handleBatchDelete = async () => {
+    if (!selectedLeadIds.length) return
+    if (!confirm(`Supprimer les ${selectedLeadIds.length} prospects sélectionnés ?`)) return
+    try {
+      const res = await fetch('/api/prospection/leads/batch-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({ ids: selectedLeadIds }),
+      })
+      if (res.ok) {
+        setLeads((prev) => prev.filter((l) => !selectedLeadIds.includes(l.id)))
+        setSelectedLeadIds([])
+        showToast(`✅ ${selectedLeadIds.length} prospects supprimés`)
+      }
+    } catch (_) {}
+  }
+
+  // Auto-Sourcing
+  const handleAutoSource = async () => {
+    setIsAutoSourcing(true)
+    try {
+      const res = await fetch('/api/prospection/leads/auto-source', {
+        method: 'POST',
+        headers: { 'x-admin-secret': secret },
+      })
+      const data = await res.json()
+      if (res.ok) {
+        showToast(`🎉 Auto-sourcing terminé : ${data.inseres} nouveaux leads ajoutés (${data.doublons} déjà existants)`)
+        await reloadLeads()
+      } else {
+        showToast(`❌ Erreur: ${data.error}`)
+      }
+    } catch (e: any) {
+      showToast(`❌ Échec de l'auto-sourcing: ${e.message}`)
+    } finally {
+      setIsAutoSourcing(false)
+    }
+  }
+
+  // Import Vrac
+  const handleImportVrac = async () => {
+    if (!rawImportText.trim()) {
+      showToast('⚠️ Veuillez coller du texte ou une liste de numéros')
+      return
+    }
+    setIsImporting(true)
+    try {
+      const res = await fetch('/api/prospection/leads/import-vrac', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({
+          rawText: rawImportText,
+          categorie: importCat,
+          ville: importVille,
+          quartier: importQuartier,
+          source: 'import_vrac',
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        showToast(`🎉 ${data.inseres} nouveaux prospects importés avec succès (${data.doublons} doublons ignorés)`)
+        setRawImportText('')
+        await reloadLeads()
+        setActiveTab('crm')
+      } else {
+        showToast(`❌ ${data.error}`)
+      }
+    } catch (e: any) {
+      showToast(`❌ Erreur d'importation: ${e.message}`)
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
+  // Ajout Manuel
+  const handleAddSingle = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const res = await fetch('/api/prospection/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify(addForm),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        showToast('✅ Prospect ajouté avec succès !')
+        setShowAddModal(false)
+        setAddForm({
+          nom_boutique: '',
+          contact_nom: '',
+          telephone: '',
+          email: '',
+          categorie: 'mode',
+          ville: 'Dakar',
+          quartier: 'Dakar',
+          notes: '',
+        })
+        await reloadLeads()
+      } else {
+        showToast(`❌ ${data.error}`)
+      }
+    } catch (err: any) {
+      showToast(`❌ ${err.message}`)
+    }
+  }
+
+  // Lancement de Campagne
+  const handleLancerCampagne = async (simulation: boolean) => {
+    const targetIds = selectedLeadIds.length > 0 ? selectedLeadIds : filteredLeads.map((l) => l.id)
+    if (!targetIds.length) {
+      showToast('⚠️ Aucun prospect sélectionné pour cette campagne')
+      return
+    }
+
+    if (!confirm(`${simulation ? 'Simuler' : 'LANCER EN RÉEL'} l'envoi de la campagne sur ${targetIds.length} prospects ?`)) {
+      return
+    }
+
+    setIsSending(true)
+    try {
+      const res = await fetch('/api/prospection/campagnes/lancer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({
+          titre: campagneTitre,
+          canal: campagneCanal,
+          templateMessage: campagneMessage,
+          leadIds: targetIds,
+          simulation,
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        showToast(`🎉 Campagne terminée : ${data.resultat.nbSucces} envoyés (${data.resultat.nbEchecs} échecs)`)
+        await reloadLeads()
+      } else {
+        showToast(`❌ ${data.error}`)
+      }
+    } catch (e: any) {
+      showToast(`❌ Erreur de campagne: ${e.message}`)
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  // Chargement des logs
+  const loadLogs = async () => {
+    setLoadingLogs(true)
+    try {
+      const res = await fetch('/api/prospection/logs', {
+        headers: { 'x-admin-secret': secret },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setLogs(data.logs || [])
+      }
+    } catch (_) {}
+    setLoadingLogs(false)
+  }
+
+  // Interpolation de prévisualisation
+  const previewLead = filteredLeads[0] || {
+    nom_boutique: 'Dakar Chic Boutique',
+    contact_nom: 'Fatou',
+    quartier: 'HLM 5',
+    categorie: 'mode',
+    telephone: '221771234567',
+  }
+  const previewText = campagneMessage
+    .replace(/\{nom_boutique\}/gi, previewLead.nom_boutique || 'votre boutique')
+    .replace(/\{prenom\}/gi, previewLead.contact_nom || previewLead.nom_boutique || 'Cher commerçant')
+    .replace(/\{quartier\}/gi, previewLead.quartier || 'Dakar')
+    .replace(/\{secteur\}/gi, previewLead.categorie || 'commerce')
+    .replace(/\{lien_demo\}/gi, 'https://nopalou.com/guide-creer-boutique')
+    .replace(/\{lien_boutique\}/gi, 'https://nopalou.com/creer-boutique')
+    .replace(/\{lien_tarifs\}/gi, 'https://nopalou.com/tarifs-boutique')
+
+  // Export CSV
+  const exportLeadsCSV = () => {
+    const headers = ['Nom Boutique', 'Contact', 'Téléphone', 'Opérateur', 'Email', 'Catégorie', 'Quartier', 'Statut', 'Source']
+    const rows = filteredLeads.map((l) => [
+      `"${l.nom_boutique || ''}"`,
+      `"${l.contact_nom || ''}"`,
+      `"${l.telephone || ''}"`,
+      `"${l.operateur || ''}"`,
+      `"${l.email || ''}"`,
+      `"${l.categorie || ''}"`,
+      `"${l.quartier || ''}"`,
+      `"${l.statut || ''}"`,
+      `"${l.source || ''}"`,
+    ])
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `leads_prospection_nopalou_${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    showToast('📥 Fichier CSV exporté avec succès !')
+  }
+
+  return (
+    <div style={{ maxWidth: 1240, margin: '0 auto', padding: '24px 20px 80px', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
+      
+      {/* Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
+          background: '#1C2B4A', color: '#fff', padding: '12px 24px',
+          borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.25)',
+          fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          {toast}
+        </div>
+      )}
+
+      {/* Header Principal */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1C2B4A 0%, #0F172A 100%)',
+        borderRadius: 20, padding: '32px 36px', color: '#fff', marginBottom: 28,
+        border: '2px solid rgba(22,163,74,0.3)', position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', right: -30, top: -30, width: 220, height: 220, borderRadius: '50%', background: 'rgba(22,163,74,0.15)' }} />
+
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(22,163,74,0.2)', padding: '6px 14px', borderRadius: 20, marginBottom: 12 }}>
+          <Zap size={16} color="#4ADE80" />
+          <span style={{ fontSize: 13, fontWeight: 800, color: '#DCFCE7', letterSpacing: '0.05em' }}>
+            AUTOMATISATION &amp; PROSPECTION COMMERCIALE SÉNÉGAL
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <h1 style={{ fontSize: 30, fontWeight: 900, margin: '0 0 8px' }}>
+              🎯 CRM Leads &amp; Moteur de Prospection Automatisée
+            </h1>
+            <p style={{ fontSize: 15, color: '#CBD5E1', maxWidth: 840, lineHeight: 1.5, margin: 0 }}>
+              Collectez des contacts qualifiés de commerçants à Dakar, normalisez les numéros (+221 Orange / Free / Expresso), générez des requêtes Dorking et dispatchez des messages WhatsApp &amp; E-mail personnalisés.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={handleAutoSource}
+              disabled={isAutoSourcing}
+              style={{
+                background: '#16A34A', color: '#fff', border: 'none', padding: '12px 18px',
+                borderRadius: 12, fontWeight: 800, fontSize: 14, cursor: isAutoSourcing ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 14px rgba(22,163,74,0.3)',
+              }}
+            >
+              <Sparkles size={18} />
+              <span>{isAutoSourcing ? 'Auto-Sourcing en cours...' : '⚡ Auto-Sourcing Annonces'}</span>
+            </button>
+
+            <button
+              onClick={() => setShowAddModal(true)}
+              style={{
+                background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)',
+                padding: '12px 18px', borderRadius: 12, fontWeight: 800, fontSize: 14, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}
+            >
+              <UserPlus size={18} />
+              <span>+ Nouveau Lead</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Cartes KPIs Statistiques */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 28 }}>
+        {[
+          { label: 'Total Prospects Collectés', val: stats.total, color: '#1C2B4A', bg: '#F8FAFC', icon: Users },
+          { label: 'Nouveaux à Contacter', val: stats.nouveaux, color: '#2563EB', bg: '#EFF6FF', icon: UserPlus },
+          { label: 'Prospects Contactés', val: stats.contactes, color: '#C75B00', bg: '#FFF7ED', icon: Send },
+          { label: 'Boutiques Converties', val: stats.convertis, color: '#16A34A', bg: '#F0FDF4', icon: CheckCircle2 },
+        ].map((kpi, idx) => {
+          const Icon = kpi.icon
+          return (
+            <div key={idx} style={{
+              background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16,
+              padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                  {kpi.label}
+                </span>
+                <span style={{ fontSize: 28, fontWeight: 900, color: kpi.color }}>
+                  {kpi.val}
+                </span>
+              </div>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: kpi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon size={22} color={kpi.color} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Onglets Navigation (5 Tabs) */}
+      <div style={{
+        display: 'flex', gap: 8, overflowX: 'auto', borderBottom: '2px solid #E2E8F0',
+        paddingBottom: 2, marginBottom: 28,
+      }}>
+        {[
+          { id: 'crm', label: `📋 1. Base CRM Leads (${filteredLeads.length})`, icon: Users },
+          { id: 'import', label: '📥 2. Collecteur & Import Vrac', icon: Layers },
+          { id: 'campagnes', label: '💬 3. Dispatcher & Campagnes', icon: Send },
+          { id: 'logs', label: '📊 4. Historique d\'Envois', icon: History },
+          { id: 'control', label: '🎛️ 5. Centre de Contrôle & Crons', icon: ShieldCheck },
+        ].map((t) => {
+          const Icon = t.icon
+          const isActive = activeTab === t.id
+          return (
+            <button
+              key={t.id}
+              onClick={() => {
+                setActiveTab(t.id as TabType)
+                if (t.id === 'logs') loadLogs()
+                if (t.id === 'control') fetchCronStatus()
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '12px 18px',
+                border: 'none', background: 'none', cursor: 'pointer',
+                fontSize: 14, fontWeight: isActive ? 800 : 600,
+                color: isActive ? '#16A34A' : '#64748B',
+                borderBottom: isActive ? '3px solid #16A34A' : '3px solid transparent',
+                whiteSpace: 'nowrap', transition: 'all 0.15s',
+              }}
+            >
+              <Icon size={18} color={isActive ? '#16A34A' : '#64748B'} />
+              <span>{t.label}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* ──────────────────────────────────────────────────────────────────────────
+          ONGLET 1 : BASE CRM LEADS
+      ────────────────────────────────────────────────────────────────────────── */}
+      {activeTab === 'crm' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Barre de Filtres & Actions */}
+          <div style={{
+            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '16px 20px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 260 }}>
+              <Search size={18} color="#94A3B8" />
+              <input
+                type="text"
+                placeholder="Rechercher par nom de boutique, contact, téléphone ou quartier..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1',
+                  fontSize: 14, outline: 'none',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <select
+                value={catFilter}
+                onChange={(e) => setCatFilter(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, fontWeight: 600 }}
+              >
+                <option value="tous">Toutes les catégories</option>
+                <option value="mode">Mode &amp; Prêt-à-porter</option>
+                <option value="tech">Téléphonie &amp; Tech</option>
+                <option value="superette">Alimentation &amp; Supérette</option>
+                <option value="quincaillerie">Quincaillerie &amp; BTP</option>
+                <option value="cosmetique">Cosmétique &amp; Beauté</option>
+                <option value="grossiste">Grossistes &amp; Chine</option>
+              </select>
+
+              <select
+                value={statutFilter}
+                onChange={(e) => setStatutFilter(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, fontWeight: 600 }}
+              >
+                <option value="tous">Tous les statuts</option>
+                <option value="nouveau">Nouveau</option>
+                <option value="contacte_wa">Contacté WhatsApp</option>
+                <option value="en_discussion">En discussion</option>
+                <option value="converti">Converti (Actif)</option>
+                <option value="desinscrit">Désinscrit</option>
+              </select>
+
+              <button
+                onClick={exportLeadsCSV}
+                style={{
+                  padding: '8px 14px', background: '#F8FAFC', border: '1px solid #CBD5E1',
+                  borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6, color: '#334155',
+                }}
+              >
+                <Download size={15} /> Export CSV
+              </button>
+
+              {selectedLeadIds.length > 0 && (
+                <button
+                  onClick={handleBatchDelete}
+                  style={{
+                    padding: '8px 14px', background: '#FEE2E2', border: '1px solid #F87171',
+                    borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6, color: '#DC2626',
+                  }}
+                >
+                  <Trash2 size={15} /> Supprimer ({selectedLeadIds.length})
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Tableau des Prospects */}
+          <div style={{
+            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, overflow: 'hidden',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+          }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0', color: '#475569' }}>
+                    <th style={{ padding: '14px 16px', width: 40 }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedLeadIds.length === filteredLeads.length && filteredLeads.length > 0}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                      />
+                    </th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800 }}>Boutique &amp; Contact</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800 }}>Numéro &amp; Opérateur</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800 }}>Catégorie / Zone</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800 }}>Statut</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800 }}>Source</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800, textAlign: 'right' }}>Actions 1-Clic</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLeads.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '40px 20px', textAlign: 'center', color: '#94A3B8' }}>
+                        Aucun prospect trouvé. Utilisez <strong>« ⚡ Auto-Sourcing Annonces »</strong> ou <strong>« 📥 Import Vrac »</strong> pour alimenter votre base.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredLeads.map((lead) => {
+                      const isSelected = selectedLeadIds.includes(lead.id)
+                      const st = STATUT_LABELS[lead.statut] || STATUT_LABELS.nouveau
+                      const op = OPERATEUR_COLORS[lead.operateur] || OPERATEUR_COLORS.Autre
+                      const waDirectUrl = `https://wa.me/${lead.telephone}?text=${encodeURIComponent(
+                        `Salam ${lead.nom_boutique} ! J'ai vu vos magnifiques articles. Avez-vous pensé à créer votre boutique en ligne avec paiement Wave direct et 0% commission ? 30 jours offerts : https://nopalou.com`
+                      )}`
+
+                      return (
+                        <tr
+                          key={lead.id}
+                          style={{
+                            borderBottom: '1px solid #F1F5F9',
+                            background: isSelected ? '#F0FDF4' : 'transparent',
+                          }}
+                        >
+                          <td style={{ padding: '14px 16px' }}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleSelect(lead.id)}
+                            />
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <strong style={{ fontSize: 14, color: '#1C2B4A', display: 'block' }}>
+                              {lead.nom_boutique}
+                            </strong>
+                            {lead.contact_nom && (
+                              <span style={{ fontSize: 12, color: '#64748B' }}>👤 {lead.contact_nom}</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontWeight: 800, color: '#1C2B4A' }}>+{lead.telephone}</span>
+                              <span style={{
+                                fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 6,
+                                background: op.bg, color: op.color,
+                              }}>
+                                {lead.operateur}
+                              </span>
+                            </div>
+                            {lead.email && (
+                              <span style={{ fontSize: 11, color: '#64748B', display: 'block' }}>✉️ {lead.email}</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', textTransform: 'capitalize' }}>
+                              🏷️ {lead.categorie}
+                            </span>
+                            <span style={{ fontSize: 12, color: '#94A3B8' }}>📍 {lead.quartier || lead.ville}</span>
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <select
+                              value={lead.statut}
+                              onChange={(e) => handleStatutChange(lead.id, e.target.value)}
+                              style={{
+                                padding: '4px 8px', borderRadius: 8, fontSize: 12, fontWeight: 800,
+                                background: st.bg, color: st.color, border: `1px solid ${st.color}40`,
+                                cursor: 'pointer', outline: 'none',
+                              }}
+                            >
+                              <option value="nouveau">Nouveau</option>
+                              <option value="contacte_wa">Contacté WA</option>
+                              <option value="contacte_email">Contacté Email</option>
+                              <option value="en_discussion">En discussion</option>
+                              <option value="converti">Converti</option>
+                              <option value="desinscrit">Désinscrit</option>
+                            </select>
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <span style={{ fontSize: 11, color: '#64748B', background: '#F1F5F9', padding: '3px 8px', borderRadius: 6 }}>
+                              {lead.source}
+                            </span>
+                          </td>
+                          <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', gap: 6 }}>
+                              <a
+                                href={waDirectUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  padding: '6px 10px', background: '#16A34A', color: '#fff', borderRadius: 8,
+                                  fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4,
+                                }}
+                              >
+                                <MessageSquare size={13} /> WA 1-Clic
+                              </a>
+                              <button
+                                onClick={() => handleDeleteLead(lead.id)}
+                                style={{
+                                  padding: '6px 8px', background: '#FEE2E2', color: '#DC2626', border: 'none',
+                                  borderRadius: 8, cursor: 'pointer',
+                                }}
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────────────────────
+          ONGLET 2 : COLLECTEUR & IMPORT AUTOMATIQUE
+      ────────────────────────────────────────────────────────────────────────── */}
+      {activeTab === 'import' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+          {/* Bloc 1 : Importateur de texte brut & Groupes WhatsApp */}
+          <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '24px' }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Layers size={20} color="#16A34A" /> Importeur Intelligent (Numéros &amp; Textes en Vrac)
+            </h2>
+            <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 16px' }}>
+              Collez une liste de contacts exportés d&apos;un groupe WhatsApp, d&apos;un fichier CSV ou d&apos;un message brut. Le système extrait et normalise automatiquement les numéros <strong>+221 (Orange, Free, Expresso)</strong> sans doublon.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <textarea
+                rows={8}
+                placeholder={`Collez vos contacts ici, par exemple :
+Fatou Mode HLM - 77 123 45 67
+Ibrahima Tech Sandaga - 78 555 44 33
++221 76 987 65 43, contact@boutique.sn
+Boutique Parcelles, 70 111 22 33`}
+                value={rawImportText}
+                onChange={(e) => setRawImportText(e.target.value)}
+                style={{
+                  width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #CBD5E1',
+                  fontSize: 13, fontFamily: 'monospace', outline: 'none', resize: 'vertical',
+                }}
+              />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Catégorie par défaut
+                  </label>
+                  <select
+                    value={importCat}
+                    onChange={(e) => setImportCat(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  >
+                    <option value="mode">Mode &amp; Prêt-à-porter</option>
+                    <option value="tech">Téléphonie &amp; Tech</option>
+                    <option value="superette">Alimentation</option>
+                    <option value="quincaillerie">Quincaillerie</option>
+                    <option value="cosmetique">Cosmétique</option>
+                    <option value="grossiste">Grossiste Chine</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Ville
+                  </label>
+                  <input
+                    type="text"
+                    value={importVille}
+                    onChange={(e) => setImportVille(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Quartier / Marché
+                  </label>
+                  <input
+                    type="text"
+                    value={importQuartier}
+                    onChange={(e) => setImportQuartier(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleImportVrac}
+                disabled={isImporting}
+                style={{
+                  background: '#16A34A', color: '#fff', border: 'none', padding: '12px 18px',
+                  borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: isImporting ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                {isImporting ? 'Extraction en cours...' : '⚡ Extraire & Importer les Leads'}
+              </button>
+            </div>
+          </div>
+
+          {/* Bloc 2 : Requêtes Google Dorking & Réseaux Sociaux */}
+          <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '24px' }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Search size={20} color="#C75B00" /> Générateur de Requêtes Dorking (Dakar &amp; Sénégal)
+            </h2>
+            <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 16px' }}>
+              Cliquez pour lancer des recherches ciblées sur Google, Instagram et TikTok qui révèlent directement les numéros WhatsApp de vendeurs à Dakar.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {dorking.map((req, idx) => (
+                <div key={idx} style={{
+                  background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12,
+                  padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                }}>
+                  <div>
+                    <strong style={{ fontSize: 13, color: '#1C2B4A', display: 'block', marginBottom: 2 }}>
+                      {req.titre}
+                    </strong>
+                    <span style={{ fontSize: 11, color: '#64748B', fontFamily: 'monospace' }}>
+                      {req.plateforme} · {req.query.slice(0, 45)}...
+                    </span>
+                  </div>
+
+                  <a
+                    href={req.urlGoogle}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      padding: '6px 12px', background: '#FFF7ED', color: '#C75B00',
+                      border: '1px solid #FED7AA', borderRadius: 8, fontSize: 12,
+                      fontWeight: 800, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4,
+                    }}
+                  >
+                    Ouvrir <ExternalLink size={13} />
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────────────────────
+          ONGLET 3 : DISPATCHER DE CAMPAGNES & TEMPLATES
+      ────────────────────────────────────────────────────────────────────────── */}
+      {activeTab === 'campagnes' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 24 }}>
+          {/* Éditeur de Campagne */}
+          <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '24px' }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Send size={20} color="#16A34A" /> Configuration de la Campagne de Prospection
+            </h2>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 6 }}>
+                  1. Titre de la Campagne
+                </label>
+                <input
+                  type="text"
+                  value={campagneTitre}
+                  onChange={(e) => setCampagneTitre(e.target.value)}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 14, fontWeight: 700 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 6 }}>
+                  2. Choisir un Modèle Pré-Rédigé Adapté au Marché Sénégalais
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {templates.map((tpl) => (
+                    <button
+                      key={tpl.id}
+                      onClick={() => {
+                        setSelectedTemplate(tpl)
+                        setCampagneMessage(tpl.texte)
+                        setCampagneCanal(tpl.canal as any)
+                      }}
+                      style={{
+                        padding: '10px 14px', borderRadius: 10, textAlign: 'left',
+                        border: selectedTemplate.id === tpl.id ? '2px solid #16A34A' : '1px solid #E2E8F0',
+                        background: selectedTemplate.id === tpl.id ? '#F0FDF4' : '#F8FAFC',
+                        color: selectedTemplate.id === tpl.id ? '#166534' : '#1C2B4A',
+                        fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                      }}
+                    >
+                      {tpl.titre}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 6 }}>
+                  3. Corps du Message (Variables : {'{nom_boutique}'}, {'{prenom}'}, {'{quartier}'}, {'{lien_boutique}'})
+                </label>
+                <textarea
+                  rows={9}
+                  value={campagneMessage}
+                  onChange={(e) => setCampagneMessage(e.target.value)}
+                  style={{
+                    width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #CBD5E1',
+                    fontSize: 13, outline: 'none', lineHeight: 1.5,
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button
+                  onClick={() => handleLancerCampagne(true)}
+                  disabled={isSending}
+                  style={{
+                    flex: 1, padding: '12px 18px', background: '#F8FAFC', color: '#1C2B4A',
+                    border: '1px solid #CBD5E1', borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: 'pointer',
+                  }}
+                >
+                  🧪 Tester en Mode Simulation
+                </button>
+
+                <button
+                  onClick={() => handleLancerCampagne(false)}
+                  disabled={isSending}
+                  style={{
+                    flex: 1, padding: '12px 18px', background: '#16A34A', color: '#fff',
+                    border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 14,
+                    cursor: isSending ? 'not-allowed' : 'pointer', boxShadow: '0 4px 14px rgba(22,163,74,0.3)',
+                  }}
+                >
+                  {isSending ? 'Envoi en cours...' : '🚀 Lancer la Campagne Réelle'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Aperçu en direct du message rendu */}
+          <div style={{ background: '#FFF7ED', border: '2px solid #FFEDD5', borderRadius: 16, padding: '24px' }}>
+            <h2 style={{ fontSize: 16, fontWeight: 900, color: '#C75B00', margin: '0 0 12px' }}>
+              📱 Aperçu WhatsApp Réel (Destinataire Exemple : {previewLead.nom_boutique})
+            </h2>
+
+            <div style={{
+              background: '#DCF8C6', borderRadius: 12, padding: '16px', color: '#000',
+              fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            }}>
+              {previewText}
+            </div>
+
+            <div style={{ marginTop: 20, padding: '12px 16px', background: '#fff', borderRadius: 12, border: '1px solid #FED7AA' }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#9A3412', display: 'block', marginBottom: 4 }}>
+                💡 Recommandations Anti-Ban WhatsApp Sénégal :
+              </span>
+              <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: '#475569', lineHeight: 1.5 }}>
+                <li>Envoyez par vagues de 30 à 50 contacts par jour.</li>
+                <li>Le système applique automatiquement une temporisation de 1.5s entre chaque message.</li>
+                <li>Privilégiez les messages chaleureux mentionnant le nom de la boutique.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────────────────────
+          ONGLET 4 : HISTORIQUE & LOGS D'ENVOIS
+      ────────────────────────────────────────────────────────────────────────── */}
+      {activeTab === 'logs' && (
+        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <History size={20} color="#64748B" /> Journal des Messages &amp; Campagnes Envoyés
+            </h2>
+            <button
+              onClick={loadLogs}
+              style={{
+                padding: '6px 12px', background: '#F8FAFC', border: '1px solid #CBD5E1',
+                borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+              }}
+            >
+              <RefreshCw size={13} /> Actualiser
+            </button>
+          </div>
+
+          {loadingLogs ? (
+            <p style={{ color: '#94A3B8', textAlign: 'center', padding: '30px' }}>Chargement des logs...</p>
+          ) : logs.length === 0 ? (
+            <p style={{ color: '#94A3B8', textAlign: 'center', padding: '30px' }}>Aucun message envoyé pour l&apos;instant.</p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
+                    <th style={{ padding: '12px 16px', fontWeight: 800 }}>Date</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 800 }}>Destinataire</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 800 }}>Canal</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 800 }}>Statut</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 800 }}>Extrait Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.map((log) => (
+                    <tr key={log.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 12, color: '#64748B' }}>
+                        {new Date(log.created_at).toLocaleString('fr-FR')}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontWeight: 700, color: '#1C2B4A' }}>
+                        {log.nom_boutique || log.destinataire}
+                      </td>
+                      <td style={{ padding: '12px 16px', textTransform: 'uppercase', fontSize: 11, fontWeight: 800 }}>
+                        {log.canal}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{
+                          fontSize: 11, fontWeight: 800, padding: '3px 8px', borderRadius: 6,
+                          background: log.statut === 'envoye' ? '#DCFCE7' : log.statut === 'simule' ? '#EFF6FF' : '#FEE2E2',
+                          color: log.statut === 'envoye' ? '#166534' : log.statut === 'simule' ? '#1E40AF' : '#991B1B',
+                        }}>
+                          {log.statut}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: 12, color: '#64748B', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {log.message_envoye}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────────────────────
+          ONGLET 5 : CENTRE DE CONTRÔLE & CRONS
+      ────────────────────────────────────────────────────────────────────────── */}
+      {activeTab === 'control' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Top Actions & Refresh */}
+          <div style={{
+            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '20px 24px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16,
+          }}>
+            <div>
+              <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: '0 0 4px' }}>
+                🎛️ Centre de Contrôle &amp; Automatisations en Direct
+              </h2>
+              <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>
+                Déclenchez manuellement le scraping de prospection, lancez les vagues de relance WhatsApp et suivez l&apos;état des crons d&apos;arrière-plan.
+              </p>
+            </div>
+
+            <button
+              onClick={fetchCronStatus}
+              disabled={loadingCronData}
+              style={{
+                background: '#F1F5F9', border: '1px solid #CBD5E1', padding: '10px 16px',
+                borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#334155', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}
+            >
+              <RefreshCw size={16} className={loadingCronData ? 'animate-spin' : ''} />
+              <span>{loadingCronData ? 'Actualisation...' : 'Actualiser le statut'}</span>
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 24 }}>
+            {/* CARTE 1 : SCRAPER DE PROSPECTION DAKAR */}
+            <div style={{
+              background: '#fff', border: '1px solid #E2E8F0', borderRadius: 18, padding: '24px',
+              display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={22} color="#2563EB" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>
+                    🚀 Scraping &amp; Sourcing de Marchés
+                  </h3>
+                  <span style={{ fontSize: 12, color: '#64748B' }}>
+                    Collecte de commerces ciblés par zone
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 4 }}>
+                    Zone / Marché cible
+                  </label>
+                  <select
+                    value={scrapingZone}
+                    onChange={(e) => setScrapingZone(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  >
+                    <option value="Sandaga">Marché Sandaga (Tech / Téléphonie)</option>
+                    <option value="HLM">Marché HLM (Mode / Bazin)</option>
+                    <option value="Centenaire">Centenaire / Allées (Grossistes Chine)</option>
+                    <option value="Colobane">Colobane (Électronique)</option>
+                    <option value="Plateau">Dakar Plateau (Boutiques &amp; Luxe)</option>
+                    <option value="Maristes">Les Maristes (Alimentation &amp; Supérettes)</option>
+                    <option value="Tilène">Marché Tilène (Cosmétique &amp; Beauté)</option>
+                    <option value="Thiès">Thiès (Commerce Général)</option>
+                    <option value="Touba">Touba (Commerces &amp; Quincaillerie)</option>
+                    <option value="all">🌐 Tout Dakar &amp; Régions</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 4 }}>
+                    Limite
+                  </label>
+                  <select
+                    value={scrapingLimite}
+                    onChange={(e) => setScrapingLimite(Number(e.target.value))}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  >
+                    <option value={10}>10 leads</option>
+                    <option value={30}>30 leads</option>
+                    <option value={50}>50 leads</option>
+                    <option value={100}>100 leads</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                onClick={handleRunScraping}
+                disabled={isScraping}
+                style={{
+                  padding: '12px 18px', background: '#2563EB', color: '#fff', border: 'none',
+                  borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: isScraping ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                <Zap size={18} />
+                <span>{isScraping ? 'Scraping en cours...' : 'Lancer le Scraping Immédiat'}</span>
+              </button>
+
+              {scrapingResult && (
+                <div style={{ padding: 14, background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, fontSize: 13, color: '#1E40AF' }}>
+                  <strong>✅ Résultat du Scraping :</strong>
+                  <ul style={{ margin: '6px 0 0', paddingLeft: 18, lineHeight: 1.5 }}>
+                    <li><strong>{scrapingResult.ajoutes}</strong> nouveaux leads injectés dans le CRM</li>
+                    <li><strong>{scrapingResult.ignores}</strong> doublons ou numéros invalides écartés</li>
+                    <li>Zone traitée : <strong>{scrapingResult.zone}</strong></li>
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* CARTE 2 : DÉCLENCHEUR DES RELANCES AUTOMATIQUES */}
+            <div style={{
+              background: '#fff', border: '1px solid #E2E8F0', borderRadius: 18, padding: '24px',
+              display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Send size={22} color="#16A34A" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>
+                    🔔 Relances Automatisées WhatsApp
+                  </h3>
+                  <span style={{ fontSize: 12, color: '#64748B' }}>
+                    Dettes clients &amp; Abonnements marchands
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button
+                  onClick={() => handleRunRelances('marchands')}
+                  disabled={isRelancing}
+                  style={{
+                    padding: '11px 16px', background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#1E293B',
+                    borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: isRelancing ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}
+                >
+                  <span>⏰ Relances Marchands (J+1, J+7, J+25)</span>
+                  <span style={{ fontSize: 11, background: '#E2E8F0', padding: '2px 8px', borderRadius: 6, fontWeight: 800 }}>Exécuter</span>
+                </button>
+
+                <button
+                  onClick={() => handleRunRelances('dettes')}
+                  disabled={isRelancing}
+                  style={{
+                    padding: '11px 16px', background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#1E293B',
+                    borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: isRelancing ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}
+                >
+                  <span>📒 Relances Carnet de Dettes (&quot;Bor&quot;)</span>
+                  <span style={{ fontSize: 11, background: '#E2E8F0', padding: '2px 8px', borderRadius: 6, fontWeight: 800 }}>Exécuter</span>
+                </button>
+
+                <button
+                  onClick={() => handleRunRelances('tout')}
+                  disabled={isRelancing}
+                  style={{
+                    padding: '12px 18px', background: '#16A34A', color: '#fff', border: 'none',
+                    borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: isRelancing ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4,
+                  }}
+                >
+                  <RefreshCw size={18} className={isRelancing ? 'animate-spin' : ''} />
+                  <span>{isRelancing ? 'Envoi en cours...' : '⚡ Tout Exécuter Maintenant'}</span>
+                </button>
+              </div>
+
+              {relancesResult && (
+                <div style={{ padding: 14, background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 10, fontSize: 13, color: '#065F46' }}>
+                  <strong>✅ Rapport d&apos;exécution des relances :</strong>
+                  <ul style={{ margin: '6px 0 0', paddingLeft: 18, lineHeight: 1.5 }}>
+                    {relancesResult.resultats?.marchands?.stats && (
+                      <li>
+                        Marchands relancés : <strong>{relancesResult.resultats.marchands.stats.total}</strong> (J+1: {relancesResult.resultats.marchands.stats.j1}, J+7: {relancesResult.resultats.marchands.stats.j7}, J+25: {relancesResult.resultats.marchands.stats.j25})
+                      </li>
+                    )}
+                    {relancesResult.resultats?.dettes && (
+                      <li>
+                        Clients débiteurs relancés : <strong>{relancesResult.resultats.dettes.relancesEnvoyees}</strong>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* SECTION 3 : ASSISTANT MARCHAND & SÉCURITÉ */}
+          <div style={{
+            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 18, padding: '24px',
+            display: 'flex', flexDirection: 'column', gap: 16,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FAF5FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <MessageSquare size={22} color="#9333EA" />
+              </div>
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>
+                  🤖 Assistant Marchand WhatsApp (&quot;Bot Taf-Taf&quot; &amp; &quot;+produit&quot;)
+                </h3>
+                <span style={{ fontSize: 12, color: '#64748B' }}>
+                  Commandes conversationnelles directes et gestion de catalogue
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+              <div style={{ padding: 16, background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 18 }}>🏪</span>
+                  <strong style={{ fontSize: 14, color: '#1E293B' }}>Création de Boutique en 30s</strong>
+                </div>
+                <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 8px', lineHeight: 1.5 }}>
+                  Un commerçant tape <code>créer boutique</code> sur WhatsApp. Le bot lui demande son nom, quartier et secteur, puis génère automatiquement sa vitrine en ligne avec 30 jours offerts.
+                </p>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#16A34A', background: '#DCFCE7', padding: '3px 8px', borderRadius: 6 }}>
+                  🟢 Opérationnel 24h/24
+                </span>
+              </div>
+
+              <div style={{ padding: 16, background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 18 }}>🛍️</span>
+                  <strong style={{ fontSize: 14, color: '#1E293B' }}>Ajout de Produit Sécurisé (+produit)</strong>
+                </div>
+                <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 8px', lineHeight: 1.5 }}>
+                  Un marchand tape <code>+produit</code> pour ajouter un article à son catalogue. Le système vérifie en base que son numéro est bien celui du propriétaire avant d&apos;autoriser l&apos;ajout.
+                </p>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#2563EB', background: '#EFF6FF', padding: '3px 8px', borderRadius: 6 }}>
+                  🔒 Contrôle de Propriété Sécurisé
+                </span>
+              </div>
+
+              <div style={{ padding: 16, background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 18 }}>🛡️</span>
+                  <strong style={{ fontSize: 14, color: '#1E293B' }}>Désinscription Stricte (STOP)</strong>
+                </div>
+                <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 8px', lineHeight: 1.5 }}>
+                  Si un destinataire répond <code>STOP</code>, son numéro est immédiatement inscrit dans la table de blacklist et marqué <em>désinscrit</em> dans le CRM. Aucun message futur ne lui est envoyé.
+                </p>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#DC2626', background: '#FEE2E2', padding: '3px 8px', borderRadius: 6 }}>
+                  🚫 Blacklist Instantanée
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 4 : MONITORING DES CRONS SYSTÈME */}
+          {cronData && (
+            <div style={{
+              background: '#fff', border: '1px solid #E2E8F0', borderRadius: 18, padding: '24px',
+              display: 'flex', flexDirection: 'column', gap: 16,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>
+                  📊 État des Crons d&apos;Arrière-Plan &amp; Statistiques Globales
+                </h3>
+                <span style={{ fontSize: 12, color: '#64748B' }}>
+                  Blacklist active : <strong>{cronData.stats?.blacklist || 0}</strong> numéros protégés
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
+                {cronData.crons && Object.entries(cronData.crons).map(([key, item]: [string, any]) => (
+                  <div key={key} style={{ padding: 14, background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                      <strong style={{ fontSize: 13, color: '#1E293B' }}>{item.nom}</strong>
+                      <span style={{ fontSize: 10, fontWeight: 800, color: '#166534', background: '#DCFCE7', padding: '2px 6px', borderRadius: 4 }}>
+                        {item.statut}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 6px' }}>{item.description}</p>
+                    <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Fréquence : {item.frequence}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MODAL AJOUT PROSPECT UNIQUE */}
+      {showAddModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 20, padding: '28px', maxWidth: 500, width: '100%',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+          }}>
+            <h3 style={{ fontSize: 20, fontWeight: 900, color: '#1C2B4A', margin: '0 0 16px' }}>
+              ➕ Ajouter un Nouveau Prospect
+            </h3>
+
+            <form onSubmit={handleAddSingle} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                  Nom de la boutique *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Dakar Fashion Store"
+                  value={addForm.nom_boutique}
+                  onChange={(e) => setAddForm({ ...addForm, nom_boutique: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Numéro WhatsApp / Tel *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: 77 123 45 67"
+                    value={addForm.telephone}
+                    onChange={(e) => setAddForm({ ...addForm, telephone: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Contact Responsable
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Modou Fall"
+                    value={addForm.contact_nom}
+                    onChange={(e) => setAddForm({ ...addForm, contact_nom: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Catégorie
+                  </label>
+                  <select
+                    value={addForm.categorie}
+                    onChange={(e) => setAddForm({ ...addForm, categorie: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  >
+                    <option value="mode">Mode &amp; Habits</option>
+                    <option value="tech">Téléphonie &amp; Tech</option>
+                    <option value="superette">Alimentation</option>
+                    <option value="quincaillerie">Quincaillerie</option>
+                    <option value="cosmetique">Cosmétique</option>
+                    <option value="grossiste">Grossiste Chine</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Quartier / Marché
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Sandaga / HLM"
+                    value={addForm.quartier}
+                    onChange={(e) => setAddForm({ ...addForm, quartier: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  style={{ padding: '10px 16px', background: '#F1F5F9', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: '10px 18px', background: '#16A34A', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Enregistrer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

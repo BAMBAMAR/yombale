@@ -2,12 +2,26 @@ const router = require('express').Router();
 const { pool } = require('../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly } = require('../middlewares/auth');
 const { blockScraperUA, limiterRecherche, limiterBulk } = require('../middlewares/rateLimit');
+const { recordSearch, getTopTendances, FALLBACK_TENDANCES } = require('../lib/searchLogger');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function checkUUID(req, res, next) {
   if (!UUID_RE.test(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
   next();
 }
+
+// GET /api/produits/tendances — Tendances de recherche dynamiques et populaires
+router.get('/tendances', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 4, 1), 10);
+    const tendances = await getTopTendances(limit);
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120');
+    res.json(tendances);
+  } catch (err) {
+    console.error('[GET /api/produits/tendances]', err.message);
+    res.json(FALLBACK_TENDANCES);
+  }
+});
 
 // GET /api/produits/instantanee — Auto-complétion instantanée visuelle (Typeahead)
 router.get('/instantanee', async (req, res) => {
@@ -16,6 +30,9 @@ router.get('/instantanee', async (req, res) => {
     if (!q || q.length < 2) {
       return res.json({ success: true, produits: [], boutiques: [] });
     }
+
+    // Enregistrement asynchrone non bloquant pour alimenter les tendances
+    recordSearch(q);
 
     const term = `%${q}%`;
 
@@ -81,6 +98,9 @@ router.get('/categories-actives', async (req, res) => {
 router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
   try {
     const { q, categorie, sousType, limit = 20, page = 1, tri, prixMax, prixMin, etat } = req.query;
+    if (q && String(q).trim().length >= 2) {
+      recordSearch(String(q).trim());
+    }
     const offset = (page - 1) * limit;
 
     // Défaut = meilleur prix d'abord (demande produit, 17/07/2026). L'ancien défaut

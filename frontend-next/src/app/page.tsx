@@ -69,6 +69,17 @@ interface Produit {
   image_url: string | null
 }
 
+interface TendanceItem {
+  label: string
+  q: string
+}
+
+const DEFAULT_TENDANCES: TendanceItem[] = [
+  { label: 'iPhone 15', q: 'iphone' },
+  { label: 'Climatiseurs', q: 'climatiseur' },
+  { label: 'Samsung S24', q: 'samsung' },
+]
+
 interface ApiResponse {
   produits?: Produit[]
   data?: Produit[]
@@ -140,13 +151,18 @@ export default async function HomePage({
 
   let settings: Record<string, string> = {}
   let categoriesActives: string[] | null = null
+  let tendances: TendanceItem[] = DEFAULT_TENDANCES
   try {
-    const [stg, catAct] = await Promise.all([
+    const [stg, catAct, tendRes] = await Promise.all([
       apiFetch<Record<string, string>>('/settings/public').catch(() => ({})),
       apiFetch<string[]>('/produits/categories-actives').catch(() => null),
+      apiFetch<TendanceItem[]>('/produits/tendances?limit=4').catch(() => null),
     ])
     if (stg) settings = stg
     if (catAct) categoriesActives = catAct
+    if (tendRes && Array.isArray(tendRes) && tendRes.length > 0) {
+      tendances = tendRes
+    }
   } catch {
     // valeurs par défaut ci-dessous
   }
@@ -434,9 +450,16 @@ export default async function HomePage({
               <div style={{ width: 1, height: 16, background: '#cbd5e1', margin: '0 4px', flexShrink: 0 }} className="hidden-mobile" />
 
               <span className="hidden-mobile" style={{ fontSize: 12, fontWeight: 800, color: '#C75B00', whiteSpace: 'nowrap', marginLeft: 2 }}>🔥 Tendances :</span>
-              <Link href={buildFilterUrl({ q: 'iphone' })} className="budget-pill hidden-mobile" style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}>iPhone 15</Link>
-              <Link href={buildFilterUrl({ q: 'climatiseur' })} className="budget-pill hidden-mobile" style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}>Climatiseurs</Link>
-              <Link href={buildFilterUrl({ q: 'samsung' })} className="budget-pill hidden-mobile" style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}>Samsung S24</Link>
+              {tendances.map((item, idx) => (
+                <Link
+                  key={`${item.q}-${idx}`}
+                  href={buildFilterUrl({ q: item.q })}
+                  className="budget-pill hidden-mobile"
+                  style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
+                >
+                  {item.label}
+                </Link>
+              ))}
             </div>
 
             {hasFiltre ? (
