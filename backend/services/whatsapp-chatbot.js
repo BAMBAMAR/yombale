@@ -2066,8 +2066,8 @@ async function handleIncoming(msg) {
       // 3. Créer la boutique
       const resBq = await pool.query(
         `INSERT INTO boutiques (
-          utilisateur_id, nom, slug, telephone, whatsapp, categorie, ville, quartier, actif, plan
-        ) VALUES ($1, $2, $3, $4, $5, $6, 'Dakar', $7, true, 'decouverte')
+          utilisateur_id, nom, slug, telephone, whatsapp, categorie, adresse, ville, couleur_theme, actif
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'Dakar', '#16A34A', true)
         RETURNING id, nom, slug`,
         [userId, nomBoutique, slug, normPh, normPh, categorieSlug, quartier]
       );
@@ -2154,8 +2154,8 @@ async function handleIncoming(msg) {
 
     try {
       const resProd = await pool.query(
-        `INSERT INTO boutique_produits (boutique_id, nom, prix, actif, stock, statut_whatsapp)
-         VALUES ($1, $2, $3, true, 10, 'synchronise')
+        `INSERT INTO boutique_produits (boutique_id, nom, prix, en_stock)
+         VALUES ($1, $2, $3, true)
          RETURNING id, nom, prix`,
         [boutique.id, prodNom, prix]
       );
