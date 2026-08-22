@@ -21,6 +21,35 @@ const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 const prixFmt = (p) => p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' : 'N/C';
 const attendre = (ms) => new Promise(r => setTimeout(r, ms));
 
+// ── Téléchargement des médias WhatsApp (Photos produits) vers Cloudinary ──────
+async function telechargerMediaWhatsApp(mediaId) {
+  try {
+    const token = process.env.WHATSAPP_TOKEN;
+    if (!token || !mediaId) return null;
+
+    const resMeta = await fetch(`https://graph.facebook.com/v19.0/${mediaId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!resMeta.ok) return null;
+    const dataMeta = await resMeta.json();
+    if (!dataMeta.url) return null;
+
+    const resImg = await fetch(dataMeta.url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!resImg.ok) return null;
+    const arrayBuffer = await resImg.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { uploadBuffer } = require('./cloudinary');
+    const url = await uploadBuffer(buffer, 'boutique_produits');
+    return url;
+  } catch (err) {
+    console.error('[TELECHARGER MEDIA WHATSAPP ERR]:', err.message);
+    return null;
+  }
+}
+
 // ── FAQ par mots-clés — questions sur le fonctionnement du site ───────────────
 // Chaque entrée : mots-clés à détecter dans le texte libre (sans accents, minuscule) + réponse.
 // Testée avant la recherche produit/annonce pour éviter des requêtes SQL inutiles.
@@ -838,8 +867,9 @@ async function handleIncoming(msg) {
   await sendReadReceipt(msg.id, true).catch(() => {});
 
   const { state, context } = await getSession(phone);
-  const text = msg.text?.body?.trim() || '';
+  const text = (msg.text?.body || msg.image?.caption || '').trim();
   const interactiveId = msg.interactive?.list_reply?.id || msg.interactive?.button_reply?.id || '';
+  const mediaId = msg.type === 'image' ? msg.image?.id : null;
 
   const normText = normaliserTexte(text);
   const normInteractive = normaliserTexte(interactiveId);
@@ -1030,6 +1060,60 @@ async function handleIncoming(msg) {
       'Quel est le *nom ou titre du produit* que vous souhaitez ajouter ? (ex: Robe Soirée Soie, iPhone 14 Pro 128Go, Sandales Cuir...)'
     );
     return;
+  }
+
+  // ── DÉCLENCHEUR AJOUT EXPRESS (Photo avec nom et prix dans la légende) ──────
+  if (msg.type === 'image' && msg.image?.caption && state !== 'AJOUT_PRODUIT_PHOTO') {
+    const caption = msg.image.caption.trim();
+    // Ex: "Sac à main 2000" ou "Robe Bazin 15000 FCFA"
+    const matchPrix = caption.match(/(\d{3,9})\s*(fcfa|f|cfa)?\s*$/i) || caption.match(/(\d{3,9})/);
+    if (matchPrix) {
+      const prixNum = parseInt(matchPrix[1], 10);
+      const prodNom = caption.replace(matchPrix[0], '').replace(/[-:–—]/g, ' ').trim();
+
+      if (prodNom.length >= 2 && prixNum > 0) {
+        const normPh = normalisePhone(phone);
+        const rBq = await pool.query(
+          `SELECT b.id, b.nom, b.slug
+           FROM boutiques b
+           LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+           WHERE (b.telephone = $1 OR b.whatsapp = $1 OR u.telephone = $1 OR u.telephone LIKE '%' || $2)
+             AND b.actif = true
+           ORDER BY b.created_at DESC LIMIT 1`,
+          [normPh, phone.replace(/\D/g, '').slice(-9)]
+        );
+
+        if (rBq.rows.length > 0) {
+          const maBoutique = rBq.rows[0];
+          let imageUrl = null;
+          if (msg.image?.id) {
+            imageUrl = await telechargerMediaWhatsApp(msg.image.id);
+          }
+          const imagesArray = imageUrl ? [imageUrl] : [];
+
+          const resProd = await pool.query(
+            `INSERT INTO boutique_produits (boutique_id, nom, prix, images, en_stock)
+             VALUES ($1, $2, $3, $4, true)
+             RETURNING id, nom, prix`,
+            [maBoutique.id, prodNom, prixNum, imagesArray]
+          );
+
+          const prodCree = resProd.rows[0];
+          await sendWhatsAppText(
+            phone,
+            `⚡ *Ajout Express Réussi en 1 Clic !* ⚡\n\n` +
+            `🛍️ *${prodCree.nom}*\n` +
+            `💰 Prix : *${prixFmt(prodCree.prix)}*\n` +
+            `📸 Photo : *${imageUrl ? 'Photo enregistrée avec succès' : 'Sans photo'}*\n` +
+            `🏪 Boutique : *${maBoutique.nom}*\n\n` +
+            `🔗 *Fiche produit en ligne :*\n${SITE}/boutiques/${maBoutique.slug}\n\n` +
+            `👉 *Pour publier le prochain produit :*\nEnvoyez simplement la photo avec le nom et le prix en légende !`
+          );
+          await setSession(phone, 'IDLE', {});
+          return;
+        }
+      }
+    }
   }
 
   // ── 3. LIEN DIRECT BOUTIQUE : "boutique_{slug}" (texte ou bouton) ─────────────
@@ -2021,24 +2105,39 @@ async function handleIncoming(msg) {
     const nomBoutique = context?.nom_boutique || 'Ma Boutique';
     await setSession(phone, 'CREER_BOUTIQUE_CATEGORIE', { nom_boutique: nomBoutique, quartier });
 
-    await sendWhatsAppText(
+    await sendWhatsAppInteractive(
       phone,
-      `🏷️ Quelle est votre *catégorie principale d'articles* ?\n\n` +
-      `1️⃣ Mode & Prêt-à-porter\n` +
-      `2️⃣ Téléphonie & High-Tech\n` +
-      `3️⃣ Alimentation & Supérette\n` +
-      `4️⃣ Quincaillerie & Matériaux\n` +
-      `5️⃣ Cosmétique & Beauté\n` +
-      `6️⃣ Généraliste / Arrivages\n\n` +
-      `👉 Répondez avec le chiffre (1-6) ou tapez le nom de votre catégorie.`
+      nomBoutique,
+      '🏷️ Choisissez votre catégorie principale (1 clic) :',
+      [
+        {
+          title: 'Catégories Populaires',
+          rows: [
+            { id: 'cat_mode', title: '1️⃣ Mode & Vêtements', description: 'Prêt-à-porter, tissus, chaussures, sacs' },
+            { id: 'cat_telephonie', title: '2️⃣ Téléphonie & Tech', description: 'Smartphones, TV, ordinateurs' },
+            { id: 'cat_alimentation', title: '3️⃣ Alimentation & Supérette', description: 'Épicerie, boissons, bio' },
+            { id: 'cat_quincaillerie', title: '4️⃣ Quincaillerie & Matériaux', description: 'Outillage, bâtiment, peinture' },
+            { id: 'cat_beaute', title: '5️⃣ Cosmétique & Beauté', description: 'Parfums, mèches, soins, maquillage' },
+            { id: 'cat_mixte', title: '6️⃣ Généraliste / Arrivages', description: 'Import-export, bazar, divers' },
+          ],
+        },
+      ]
     );
     return;
   }
 
   // ── CREER_BOUTIQUE_CATEGORIE → Finalisation Création Boutique ────────────────
   if (state === 'CREER_BOUTIQUE_CATEGORIE') {
+    const CATS_ID = {
+      'cat_mode': 'mode',
+      'cat_telephonie': 'telephonie',
+      'cat_alimentation': 'alimentation',
+      'cat_quincaillerie': 'quincaillerie',
+      'cat_beaute': 'beaute-sante',
+      'cat_mixte': 'mixte',
+    };
     const num = parseInt(text.trim(), 10);
-    const CATS = {
+    const CATS_NUM = {
       1: 'mode',
       2: 'telephonie',
       3: 'alimentation',
@@ -2046,7 +2145,7 @@ async function handleIncoming(msg) {
       5: 'beaute-sante',
       6: 'mixte',
     };
-    const categorieSlug = CATS[num] || normaliserTexte(text).trim().slice(0, 50) || 'mode';
+    const categorieSlug = CATS_ID[interactiveId] || CATS_NUM[num] || normaliserTexte(text).trim().slice(0, 50) || 'mode';
     const nomBoutique = context?.nom_boutique || 'Ma Boutique';
     const quartier = context?.quartier || 'Dakar';
     const normPh = normalisePhone(phone);
@@ -2207,11 +2306,20 @@ async function handleIncoming(msg) {
     }
 
     try {
+      let imageUrl = null;
+      if (mediaId) {
+        imageUrl = await telechargerMediaWhatsApp(mediaId);
+      } else if (text && text.toLowerCase() !== 'passer' && (text.startsWith('http://') || text.startsWith('https://'))) {
+        imageUrl = text.trim();
+      }
+
+      const imagesArray = imageUrl ? [imageUrl] : [];
+
       const resProd = await pool.query(
-        `INSERT INTO boutique_produits (boutique_id, nom, prix, en_stock)
-         VALUES ($1, $2, $3, true)
+        `INSERT INTO boutique_produits (boutique_id, nom, prix, images, en_stock)
+         VALUES ($1, $2, $3, $4, true)
          RETURNING id, nom, prix`,
-        [boutique.id, prodNom, prix]
+        [boutique.id, prodNom, prix, imagesArray]
       );
 
       const prodCree = resProd.rows[0];
@@ -2220,9 +2328,10 @@ async function handleIncoming(msg) {
         `✅ *Article ajouté avec succès à votre catalogue !*\n\n` +
         `🛍️ *${prodCree.nom}*\n` +
         `💰 Prix : *${prixFmt(prodCree.prix)}*\n` +
+        `📸 Photo : *${imageUrl ? 'Photo enregistrée avec succès' : 'Sans photo'}*\n` +
         `🏪 Boutique : *${boutique.nom}*\n\n` +
         `🔗 *Fiche produit en ligne :*\n${SITE}/boutiques/${boutique.slug}\n\n` +
-        `👉 Pour ajouter un autre article, tapez *+produit* !`;
+        `👉 *Pour ajouter le prochain article plus vite :*\nEnvoyez simplement la photo avec le nom et le prix en légende (ex: *Sac cuir 5000*) !`;
 
       await sendWhatsAppText(phone, msgProdSucces);
       await setSession(phone, 'IDLE', {});

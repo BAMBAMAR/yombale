@@ -19,6 +19,9 @@
   * **Validation & Contrôle Qualité** :
     - Correction de la requête SQL d'auto-sourcing et de scraping (alignement strict sur les colonnes `contact_tel`, `contact_nom`, `categorie_slug` de `annonces_classifiees` et construction dynamique des paramètres SQL pour l'option *Tout Dakar & Régions*).
     - Correction des requêtes SQL de création de boutique (`adresse`, `couleur_theme` au lieu de `quartier`/`plan`), d'utilisateurs (`email_verifie` au lieu de `role`) et d'ajout de produit (`en_stock` au lieu de `actif`/`stock`) dans le chatbot WhatsApp avec liaison `boutique_utilisateurs`.
+    - Support du téléchargement automatique des photos WhatsApp via Meta Graph API & Cloudinary et enregistrement dans `boutique_produits.images`.
+    - **Ajout Express en 1 Seul Message** : Envoi direct d'une photo avec nom et prix en légende (ex: *Sac cuir 2000*) publiant immédiatement le produit sans questionnaire.
+    - Sélection 1-clic des catégories marchandes via menu interactif WhatsApp lors de la création de boutique.
     - Correction du routeur WhatsApp (`matchBoutique`) : exclusion stricte des IDs de boutons interactifs (`boutique_ajout_prod_`, `creer_boutique`) pour empêcher qu'ils soient interceptés à tort comme des slugs de boutique.
     - Suite de tests unitaires prospection & WhatsApp : **100% validée (12/12 tests passés)**.
     - Suite de tests frontend : **100% validée (31/31 tests passés)**.
