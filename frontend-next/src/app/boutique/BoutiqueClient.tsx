@@ -5,7 +5,7 @@ import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import ExternalImg from '@/components/ExternalImg'
 import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage, publierProduitAnnonce, getBoutiqueProduits, updateStock, duplicateProduit } from './actions'
-import Comptabilite from './Comptabilite'
+import Comptabilite, { SaisieExpressView } from './Comptabilite'
 import CarnetDettes from './CarnetDettes'
 import Commandes from './Commandes'
 import AnalyticsClient from './analytics/AnalyticsClient'
@@ -3513,7 +3513,7 @@ function BoutiqueDashboard({
         <div className="bq-actions-grid">
           
           <button
-            onClick={() => onNavigate('compta', 'express')}
+            onClick={() => onNavigate('express')}
             className="bq-action-btn"
             style={{
               display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
@@ -3893,7 +3893,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
 
   const handleNavigateFromDashboard = (targetTab: ManageTab, subTab?: string) => {
     if (targetTab === 'compta') {
-      setSubTabCompta(subTab === 'dashboard' ? 'dashboard' : 'express')
+      setSubTabCompta((subTab as any) || 'bilan')
     }
     setTab(targetTab)
   }
@@ -4022,53 +4022,63 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
         <div className="bq-sidebar-header" style={{ paddingBottom: 16, borderBottom: '1px solid var(--pos-border, #E8DDD2)', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
             <button
-              onClick={onBack}
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.location.href = '/compte'
+                } else {
+                  router.push('/compte')
+                }
+              }}
               className="bq-back-btn"
+              title="Retourner au menu Mon compte"
               style={{
-                background: 'var(--pos-surface2, #FAF8F5)',
-                border: '1.5px solid var(--pos-border, #E8DDD2)',
+                background: '#ffffff',
+                border: '1.5px solid #E2E8F0',
                 borderRadius: 10,
                 cursor: 'pointer',
                 fontSize: 12,
-                color: 'var(--pos-navy, #1C2B4A)',
+                color: '#1C2B4A',
                 fontWeight: 800,
-                padding: '6px 12px',
+                padding: '7px 12px',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                boxShadow: '0 1px 3px rgba(26,22,18,0.05)',
-                transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'all 0.15s ease',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #C75B00)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C75B00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
-              <span>{t('shop.myAccountBack')}</span>
+              <span>{t('shop.myAccountBack') || 'Mon compte'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsSidebarOpen(false)}
               className="bq-sidebar-close-btn"
-              title="Fermer tout le menu pour agrandir l'espace de travail"
+              title="Fermer le menu latéral pour agrandir l'espace de travail"
               style={{
-                background: 'var(--pos-surface2, #FAF8F5)',
-                border: '1.5px solid var(--pos-border, #E8DDD2)',
+                background: '#ffffff',
+                border: '1.5px solid #E2E8F0',
                 borderRadius: 10,
-                padding: '6px 10px',
+                padding: '7px 12px',
                 cursor: 'pointer',
-                color: 'var(--pos-navy, #1C2B4A)',
-                fontSize: 11.5,
-                fontWeight: 800,
+                color: '#64748B',
+                fontSize: 12,
+                fontWeight: 700,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 4,
-                boxShadow: '0 1px 3px rgba(26,22,18,0.05)',
+                gap: 6,
+                whiteSpace: 'nowrap',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                 transition: 'all 0.15s ease',
               }}
             >
-              <span>✕</span>
+              <span style={{ fontSize: 13, lineHeight: 1 }}>✕</span>
               <span>{t('shop.closeMenu') || 'Fermer le menu'}</span>
             </button>
           </div>
@@ -4420,8 +4430,8 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             {tab === 'produits'    && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
             {tab === 'commandes'   && <Commandes boutiqueId={boutique.id} />}
             {tab === 'carnet'      && <CarnetDettes boutique={boutique} planActif={planActif} />}
-            {tab === 'express'     && <Comptabilite boutiqueId={boutique.id} boutiqueNom={boutique.nom} initialTab="express" />}
-            {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} boutiqueNom={boutique.nom} initialTab={subTabCompta === 'express' ? 'bilan' : (subTabCompta as any)} />}
+            {tab === 'express'     && <SaisieExpressView boutiqueId={boutique.id} />}
+            {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} boutiqueNom={boutique.nom} initialTab={subTabCompta as any} />}
             {tab === 'analytics'   && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
             {tab === 'infos'       && (
               <div style={{ maxWidth: 580 }}>

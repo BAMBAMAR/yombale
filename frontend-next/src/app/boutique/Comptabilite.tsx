@@ -2735,7 +2735,7 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
 
 // ── Saisie Express ───────────────────────────────────────────────────────────
 
-function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
+export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
   const { t } = useTranslation()
   const [mode, setMode] = useState<'vente' | 'depense'>('vente')
   const [produits, setProduits] = useState<Produit[]>([])
@@ -3848,8 +3848,8 @@ export default function Comptabilite({
         {tabBtn('ventes',     `💰 Journal des Ventes`)}
         {tabBtn('depenses',   `📉 Dépenses`)}
         {tabBtn('sessions',   `🧾 Clôtures Caisse (Rapport Z)`)}
-        {(tab === 'inventaire' || tab === 'caissiers' || tab === 'express' || tab === 'zones') && (
-          tabBtn(tab, tab === 'inventaire' ? '📦 Inventaire' : tab === 'caissiers' ? '👤 Caissiers' : tab === 'express' ? '⚡ Saisie Express' : '🚚 Zones de Livraison')
+        {(tab === 'inventaire' || tab === 'caissiers' || tab === 'zones') && (
+          tabBtn(tab, tab === 'inventaire' ? '📦 Inventaire' : tab === 'caissiers' ? '👤 Caissiers' : '🚚 Zones de Livraison')
         )}
       </div>
 

@@ -10062,6 +10062,21 @@ button:focus-visible,
   box-shadow: 0 6px 18px rgba(199, 91, 0, 0.12) !important;
 }
 
+.bq-back-btn:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08) !important;
+  transform: translateY(-1px);
+}
+
+.bq-sidebar-close-btn:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08) !important;
+  transform: translateY(-1px);
+}
+
 @media (max-width: 1024px) {
   .bq-kpi-grid {
     grid-template-columns: repeat(2, 1fr);

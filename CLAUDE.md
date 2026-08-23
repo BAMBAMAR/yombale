@@ -1,3 +1,25 @@
+- **Mise à Jour Forfaits & Fonctionnalités (`/compte?tab=fonctionnalites`), Refonte Design & Redirection « Mon compte » (`BoutiqueClient.tsx`, `FonctionnalitesClient.tsx`, `fonctionnalites-data.ts`, `globals.css`) (`main` - 23 août 2026)** 🎨💳⚡🏠🚀 :
+  * **📖 Refonte Intégrale de la Page Forfaits & Fonctionnalités (`/compte?tab=fonctionnalites`)** :
+    - **Tarifs Actualisés en Direct** : Intégration complète des 4 formules officielles (Gratuit à vie, Boutique Taf Taf à 2 500 FCFA/mois, Boutique Pro à 5 000 FCFA/mois, Business VIP à 10 000 FCFA/mois).
+    - **Sélecteur de Durée Interactif avec Remises** : Calcul dynamique des tarifs avec options 1 mois, 3 mois (-10%), 6 mois (-15%) et 12 mois (-25% / 3 mois offerts) avec affichage du montant équivalent par mois et du total facturé.
+    - **Cartes Forfaits Haute Conversion** : Badges valorisants (`🎁 1er mois OFFERT`, `🔥 Populaire`, `⭐️ Recommandé Pro`, `👑 VIP Business`), liste complète des avantages avec checkmarks nets et boutons de souscription/changement de formule.
+    - **Suite Complète des Fonctionnalités Nopalou** : Grille de 10 cartes illustrées présentant le comparateur de prix, la vente express avec scan EAN/OCR, le carnet de dettes client & relances WhatsApp, la caisse POS tactile, l'immobilier, les forfaits télécoms, l'assistant WhatsApp, la facturation OHADA et le programme d'apporteur d'affaires.
+  * **🧭 Rétablissement de la Destination du Bouton « Mon compte » (`BoutiqueClient.tsx`)** :
+    - Le bouton `[ ← Mon compte ]` renvoie désormais **directement au menu du compte (`/compte`)** via `window.location.href = '/compte'` au lieu de basculer sur la vue liste interne des boutiques.
+  * **✨ Refonte Graphique des Boutons « Mon compte » et « Fermer le menu » (`BoutiqueClient.tsx`, `globals.css`)** :
+    - Éradication de la cassure de texte sur 2 lignes grâce à `white-space: nowrap !important;`.
+    - Design moderne et premium : fond blanc immaculé `#ffffff`, bordure subtile `#E2E8F0`, ombrage doux, flèche orange brand `#C75B00` pour Mon compte et icône épurée pour Fermer le menu.
+    - Effets de survol dynamiques au hover (`:hover { background: #f8fafc; border-color: #cbd5e1; transform: translateY(-1px); }`).
+
+- **Correction Routage Vente Express & Séparation Visuelle de la Comptabilité (`BoutiqueClient.tsx`, `Comptabilite.tsx`) (`main` - 23 août 2026)** ⚡💰🛒🔧 :
+  * **⚡ Rétablissement du Routage du Raccourci « Vente Express » (`BoutiqueClient.tsx`)** :
+    - Correction du gestionnaire de clic du raccourci rapide sur le tableau de bord : `onClick={() => onNavigate('express')}` (qui appelait auparavant `onNavigate('compta', 'express')` et redirigeait par erreur vers le bilan comptable).
+    - Ajustement de `handleNavigateFromDashboard` pour que la navigation vers `'compta'` ouvre par défaut le bilan (`subTab || 'bilan'`) sans interférer avec l'onglet `'express'`.
+  * **🎯 Découplage Complet et Affichage Standalone de la Vente Express (`Comptabilite.tsx`, `BoutiqueClient.tsx`)** :
+    - Exportation de `SaisieExpressView` en composant autonome pour un rendu direct et dédié sans l'enveloppe ni la barre d'onglets de la Comptabilité (`📈 Bilan & Rentabilité`, `💰 Journal des Ventes`, `📉 Dépenses`, `🧾 Clôtures Caisse`).
+    - L'onglet Vente Express offre désormais une vue claire, ultra-rapide et dédiée (encaissement vente express avec catalogue/saisie libre/scan EAN/OCR + sortie dépenses rapide).
+    - L'onglet Comptabilité conserve ses sous-onglets comptables propres (`Bilan & Rentabilité`, `Journal des Ventes`, `Dépenses`, `Clôtures Caisse`, `Inventaire`, `Caissiers`, `Zones de Livraison`).
+
 - **Correctifs Immédiats UX/UI : Rétablissement des Tableaux (Zéro Troncature Verticale), Filtres en Défilement Horizontal Swipeable & Pied de Page 2 Colonnes Compact Mobile (`main` - 23 août 2026)** 🔧📱📊⚡ :
   * **📊 Rétablissement et Sécurisation Intégrale des Tableaux (`globals.css`, `GestionDocuments.tsx`)** :
     - Élimination immédiate du `word-break: break-word` / `overflow-wrap: anywhere` global qui provoquait l'empilement vertical lettre par lettre des en-têtes de tableau (*R-é-f-é-r-e-n-c-e*, *C-l-i-e-n-t...*).
