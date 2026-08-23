@@ -224,21 +224,29 @@ export default async function ImmoPage({
             active: false,
             reset: true,
           }] : []),
+          ...(ville ? [
+            {
+              key: `ville-${ville}`,
+              label: `📍 ${ville}`,
+              href: buildLink({ ville, quartier: '', page: '1' }),
+              active: true,
+            },
+            {
+              key: 'reset-ville',
+              label: '✕ Ville',
+              href: buildLink({ ville: '', quartier: '', page: '1' }),
+              active: false,
+              reset: true,
+            }
+          ] : []),
+        ]}
+        secondaires={[
           ...VILLES_SN.map(v => ({
             key: `ville-${v}`,
-            label: v,
+            label: `📍 ${v}`,
             href: buildLink({ ville: ville === v ? '' : v, quartier: '', page: '1' }),
             active: ville === v,
           })),
-          ...(ville ? [{
-            key: 'reset-ville',
-            label: '✕ Ville',
-            href: buildLink({ ville: '', quartier: '', page: '1' }),
-            active: false,
-            reset: true,
-          }] : []),
-        ]}
-        secondaires={[
           ...SURFACE_MIN.map(s => ({
             key: `surface-${s.val}`,
             label: `${s.label}+`,

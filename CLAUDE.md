@@ -1,3 +1,16 @@
+- **Correctifs Immédiats UX/UI : Rétablissement des Tableaux (Zéro Troncature Verticale), Filtres en Défilement Horizontal Swipeable & Pied de Page 2 Colonnes Compact Mobile (`main` - 23 août 2026)** 🔧📱📊⚡ :
+  * **📊 Rétablissement et Sécurisation Intégrale des Tableaux (`globals.css`, `GestionDocuments.tsx`)** :
+    - Élimination immédiate du `word-break: break-word` / `overflow-wrap: anywhere` global qui provoquait l'empilement vertical lettre par lettre des en-têtes de tableau (*R-é-f-é-r-e-n-c-e*, *C-l-i-e-n-t...*).
+    - Verrouillage strict : `table, th, td { word-break: normal !important; overflow-wrap: normal !important; }` et `th { white-space: nowrap; }`.
+    - Ajout de `minWidth: 720px` et `whiteSpace: nowrap` sur la table de `GestionDocuments.tsx` avec scroll horizontal fluide `WebkitOverflowScrolling: touch`.
+  * **🏷️ Filtres Mobiles en Défilement Horizontal Fluide (`globals.css`, `immo/page.tsx`)** :
+    - Transformation du nuage de 30 boutons empilés en 1 seule rangée tactile horizontale (`.filtres-row { flex-wrap: nowrap !important; overflow-x: auto !important; }` avec scrollbar masquée).
+    - Restructuration des filtres immobiliers : essentiels (Location/Vente, types, budgets, ville active) sur la barre principale et liste exhaustive des villes/surfaces/pièces dans `⚙ Plus de filtres`.
+    - Correction du champ Quartier : bouton `[ OK ]` protégé contre tout écrasement ou passage à la ligne (`white-space: nowrap !important; flex-shrink: 0 !important;`).
+  * **🦶 Pied de Page Mobile Compact 2 Colonnes Équilibrées (`globals.css`)** :
+    - Élimination du passage en 1 seule colonne géante sur mobile (<400px) : verrouillage en grille 2 colonnes (`grid-template-columns: 1fr 1fr !important;`).
+    - Réduction drastique de la hauteur totale du footer mobile (gaps condensés à 4px, typographie 12px, masquage des 11 liens de maillage SEO uniquement desktop sur mobile).
+
 - **Audit Complet UX/UI & Perfectionnement Mobile-First — 16 Corrections Critiques, Overflow, Accessibilité, PWA & Design System (`main` - 23 août 2026)** 🎨📱🔧♿⚡ :
   * **🔴 Phase 1 — Corrections CRITIQUES (Overflow Mobile & PWA)** :
     - **Protection Globale Overflow Mobile** : Ajout de `max-width: 100%`, `overflow-wrap: anywhere`, `word-break: break-word` sur tous les conteneurs principaux (`main`, `.fiche`, `.page-container`, `.fiche-main`, `.fiche-sidebar`, `.sidebar-card`) éliminant le scroll horizontal parasite sur toutes les pages.

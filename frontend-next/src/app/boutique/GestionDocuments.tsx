@@ -630,18 +630,18 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
           📂 {t('common.noData')}
         </div>
       ) : (
-        <div style={{ overflowX: 'auto', background: '#ffffff', borderRadius: 12, border: '1px solid #e5e7eb' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div style={{ overflowX: 'auto', background: '#ffffff', borderRadius: 12, border: '1px solid #e5e7eb', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', minWidth: 720, borderCollapse: 'collapse', fontSize: 13, whiteSpace: 'nowrap' }}>
             <thead>
               <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.orderReference')}</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.documentType')}</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.documentClient')}</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.subtotalHt')}</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.vatAmount')}</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.totalTtc')}</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('shop.orderStatus')}</th>
-                <th style={{ padding: 12, color: '#374151', fontWeight: 700 }}>{t('common.actions')}</th>
+                <th style={{ padding: '12px 14px', color: '#374151', fontWeight: 700, whiteSpace: 'nowrap' }}>{t('shop.orderReference')}</th>
+                <th style={{ padding: '12px 14px', color: '#374151', fontWeight: 700, whiteSpace: 'nowrap' }}>{t('shop.documentType')}</th>
+                <th style={{ padding: '12px 14px', color: '#374151', fontWeight: 700, whiteSpace: 'nowrap' }}>{t('shop.documentClient')}</th>
+                <th style={{ padding: '12px 14px', color: '#374151', fontWeight: 700, whiteSpace: 'nowrap' }}>{t('shop.subtotalHt')}</th>
+                <th style={{ padding: '12px 14px', color: '#374151', fontWeight: 700, whiteSpace: 'nowrap' }}>{t('shop.vatAmount')}</th>
+                <th style={{ padding: '12px 14px', color: '#374151', fontWeight: 700, whiteSpace: 'nowrap' }}>{t('shop.totalTtc')}</th>
+                <th style={{ padding: '12px 14px', color: '#374151', fontWeight: 700, whiteSpace: 'nowrap' }}>{t('shop.orderStatus')}</th>
+                <th style={{ padding: '12px 14px', color: '#374151', fontWeight: 700, whiteSpace: 'nowrap' }}>{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>

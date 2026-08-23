@@ -10439,11 +10439,11 @@ button:focus-visible,
   margin-bottom: 16px;
 }
 
-/* 4. Footer mobile : 1 colonne sur écran très étroit (<400px) */
-@media (max-width: 400px) {
+/* 4. Footer mobile : 2 colonnes équilibrées et compactes sur tous mobiles */
+@media (max-width: 480px) {
   .footer-links {
-    grid-template-columns: 1fr !important;
-    gap: 20px;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px 12px !important;
   }
 }
 
@@ -12489,95 +12489,97 @@ html[dir="rtl"] .auth-eye-btn {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   AUDIT UX/UI — CORRECTIONS GLOBALES (23 août 2026)
-   Phase 1 CRITIQUES + Phase 2 IMPORTANTS + Phase 3 AMÉLIORATIONS
+   AUDIT UX/UI — CORRECTIONS GLOBALES SÉCURISÉES (23 août 2026)
    ══════════════════════════════════════════════════════════════════ */
 
-/* ── 1. Protection Globale Overflow Mobile ────────────────────────
-   Empêche tout débordement horizontal parasite sur toutes les pages.
-   La cause racine des scrolls horizontaux intempestifs est l'absence
-   de contraintes max-width sur certains conteneurs enfants.          */
-main,
-.fiche,
-.page-container,
-.fiche-main,
-.fiche-sidebar,
-.sidebar-card {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+/* ── 1. Protection Tables & Conteneurs (Zéro Régression) ────────── */
+table,
+th,
+td {
+  word-break: normal !important;
+  overflow-wrap: normal !important;
 }
 
-/* ── 2. Sidebar RÉSUMÉ (Page Produit) — Overflow Fix ─────────────
-   La carte RÉSUMÉ navy et son bouton CTA débordaient à droite sur
-   mobile car le texte du marchand (long) n'avait pas de contrainte. */
+th {
+  white-space: nowrap;
+}
+
+/* ── 2. Filtres Mobile : Défilement Horizontal Fluide ─────────────
+   Élimine le nuage de 30 boutons empilés en vrac sur mobile.
+   Transforme la barre de filtres en 1 seule ligne tactile swipeable. */
+.filtres-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 4px 0 8px;
+  width: 100%;
+}
+
+.filtres-row::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .filtres-row {
+    flex-wrap: nowrap !important;
+  }
+}
+
+.filter-pill,
+.filtres-more-btn {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* ── 3. Champ Quartier Immobilier — Bouton OK Intact ───────────── */
+.immo-quartier-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.immo-quartier-btn {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  padding: 0 16px !important;
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+  font-weight: 700;
+}
+
+/* ── 4. Sidebar RÉSUMÉ Fiche Produit — Overflow Fix Sécurisé ───── */
+.fiche-sidebar {
+  max-width: 100%;
+}
+
 .sidebar-card {
   overflow: hidden;
+  max-width: 100%;
 }
 
 .sidebar-produit {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   word-break: break-word;
 }
 
 .sidebar-cta {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: break-word;
   word-break: break-word;
-  overflow-wrap: anywhere;
 }
 
 .sidebar-best-label {
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
-/* ── 3. Comparaison Table — Mobile Responsive Amélioré ───────────
-   Le tableau de comparaison côte à côte débordait sur mobile.
-   On enveloppe dans un scroll horizontal contrôlé avec indicateur
-   et on réduit les paddings internes.                               */
-@media (max-width: 640px) {
-  .similaires-section {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    padding-bottom: 8px;
-  }
-  .similaires-table {
-    min-width: 400px;
-  }
-  .similaires-table th,
-  .similaires-table td {
-    padding: 8px 8px;
-    font-size: 11px;
-  }
-  .simil-produit-cell {
-    gap: 6px;
-  }
-  .simil-img-wrap {
-    width: 30px;
-    height: 30px;
-  }
-  .simil-nom {
-    font-size: 11px;
-  }
-  .simil-ecart {
-    font-size: 10px;
-    padding: 2px 5px;
-  }
-  .simil-voir-btn {
-    font-size: 10px;
-    padding: 3px 8px;
-  }
-  .comparaison-cta-btn {
-    font-size: 13px;
-    padding: 10px 20px;
-  }
-}
-
-/* ── 4. Navbar Mobile — Hauteur Réduite ──────────────────────────
-   Le header prenait 62px sur mobile, occupant un espace vertical
-   précieux. Réduit à 52px sur mobile et 48px sur très petit écran. */
+/* ── 5. Navbar Mobile — Hauteur Réduite Ergonomique ─────────────── */
 @media (max-width: 768px) {
   .navbar {
     height: 52px;
@@ -12588,11 +12590,8 @@ main,
     width: 24px;
     height: 24px;
   }
-  /* Masquer le bouton d'aide "?" trop proéminent sur mobile — accessible via drawer */
-  .navbar-search-desktop {
-    display: none !important;
-  }
 }
+
 @media (max-width: 480px) {
   .navbar {
     height: 48px;
@@ -12600,78 +12599,81 @@ main,
   }
 }
 
-/* ── 5. Footer Mobile — Colonnes Condensées ──────────────────────
-   Le footer avec 5 colonnes + recherches populaires créait un scroll
-   excessif de ~400px sur mobile. Réduction de l'espacement et
-   masquage des recherches populaires sur mobile (SEO only desktop). */
-@media (max-width: 640px) {
+/* ── 6. Footer Mobile — Compact & 2 Colonnes Équilibrées ──────── */
+@media (max-width: 768px) {
   .site-footer {
-    margin-top: 40px;
+    margin-top: 32px !important;
   }
   .footer-inner {
-    padding: 32px 4% 20px;
-    gap: 20px;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 24px 4% 16px !important;
   }
   .footer-brand {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .footer-tagline {
-    font-size: 12px;
+    font-size: 11.5px;
+    max-width: 320px;
+    margin: 4px auto 0;
+    line-height: 1.4;
+  }
+  .footer-social {
+    justify-content: center !important;
+    margin-top: 8px !important;
   }
   .footer-links {
-    gap: 16px !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 14px 10px !important;
   }
   .footer-col {
-    gap: 6px;
-  }
-  .footer-col a {
-    font-size: 12.5px;
+    gap: 4px !important;
   }
   .footer-col-titre {
-    font-size: 10px;
-    margin-bottom: 0;
+    font-size: 10.5px !important;
+    color: rgba(255,255,255,.65) !important;
+    margin-bottom: 2px !important;
+  }
+  .footer-col a {
+    font-size: 12px !important;
+    padding: 2px 0;
+    line-height: 1.3;
+  }
+  /* Masquer "Recherches populaires" sur mobile pour éliminer 300px de scroll vertical */
+  .site-footer > div:nth-child(2) {
+    display: none !important;
   }
   .footer-trust {
-    gap: 16px;
-    padding: 12px 4%;
-    font-size: 12px;
+    gap: 10px 16px !important;
+    padding: 10px 4% !important;
+    font-size: 11px !important;
   }
   .footer-trust-item {
-    font-size: 11px;
+    font-size: 10.5px !important;
   }
   .footer-bottom {
-    font-size: 10px;
-    padding: 10px 4%;
-  }
-  /* Masquer les recherches populaires sur mobile (SEO uniquement desktop) */
-  .site-footer > div:nth-child(2) {
-    display: none;
+    font-size: 10px !important;
+    padding: 10px 4% !important;
   }
 }
 
-/* ── 6. Accessibilité — Contraste Labels WCAG AA ─────────────────
-   Les labels gris clairs (#9ca3af, #64748b) ne passent pas le ratio
-   de contraste 4.5:1 sur fond blanc. On relève vers --text2 minimum. */
+/* ── 7. Accessibilité — Contraste Labels WCAG AA ───────────────── */
 label,
 .auth-label,
 .field-label {
   color: var(--text2, #6B5E52);
 }
 
-/* Section titles in BoutiqueClient */
-.bq-form-grid-2 label {
-  color: var(--text2, #6B5E52);
-}
-
-/* Placeholder text slightly lighter but readable */
 ::placeholder {
   color: var(--text3, #9C8E84);
   opacity: 1;
 }
 
-/* ── 7. Compare Bar — Simplification Mobile ──────────────────────
-   La barre en bas "Sélection / Tablette / Comparer (2) / Vider"
-   tronquait les textes sur petit écran. On simplifie l'affichage.  */
+/* ── 8. Compare Bar Mobile ─────────────────────────────────────── */
 @media (max-width: 480px) {
   .compare-bar {
     flex-wrap: wrap;
@@ -12695,19 +12697,7 @@ label,
   }
 }
 
-/* ── 8. Filtre "AFFINER LA RECHERCHE" — Empilement Mobile ────────
-   Sur la page produit, le filtre en ligne (input + select + bouton)
-   déborde sur petit écran. On empile en colonne.                    */
-@media (max-width: 640px) {
-  .fiche-filtres-inline,
-  .fiche [style*="display: flex"][style*="gap"] {
-    flex-wrap: wrap !important;
-  }
-}
-
-/* ── 9. ShowcaseTabs — Frise Chaîne de Valeur Masquée Mobile ─────
-   La frise horizontale avec 8 étapes est illisible sur smartphone.
-   On la masque sous 768px pour réduire le bruit visuel.            */
+/* ── 9. ShowcaseTabs — Chaîne de Valeur Masquée Mobile ─────────── */
 @media (max-width: 768px) {
   .showcase-section [style*="Chaîne de Valeur"],
   .showcase-value-chain {
@@ -12715,21 +12705,7 @@ label,
   }
 }
 
-/* ── 10. Color Harmonization — Éradication Bleus Purs Résiduels ──
-   Certains composants utilisaient #1d4ed8, #3b82f6, #2563eb au lieu
-   des variables de marque Nopalou. Harmonisation via overrides.     */
-
-/* Boutons de la page comparaison — de bleu pur à accent orange */
-.budget-pill.active,
-.btn-primary,
-[style*="background: #1d4ed8"],
-[style*="background:#1d4ed8"] {
-  background: var(--accent, #C75B00) !important;
-}
-
-/* ── 11. Modal → Bottom Sheet sur Mobile ─────────────────────────
-   Garantit que les modales deviennent des bottom-sheets ergonomiques
-   sur smartphone pour une validation facile au pouce.              */
+/* ── 10. Modales → Bottom Sheet Tactile Mobile ──────────────────── */
 @media (max-width: 640px) {
   .modal-overlay {
     align-items: flex-end !important;
@@ -12748,8 +12724,7 @@ label,
   }
 }
 
-/* ── 12. prefers-reduced-motion — Complétude ─────────────────────
-   Certaines animations n'avaient pas de garde reduced-motion.      */
+/* ── 11. prefers-reduced-motion ────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -12761,60 +12736,7 @@ label,
   }
 }
 
-/* ── 13. Fiche Produit — CTA et Section responsive ───────────────
-   Le bouton "Acheter au meilleur prix" et les trust badges doivent
-   rester contenus dans le viewport sans débordement.               */
-@media (max-width: 480px) {
-  .cta-acheter {
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    white-space: normal;
-  }
-  .prix-box {
-    padding: 14px 12px;
-  }
-  .prix-box-label {
-    font-size: 11px;
-  }
-  .economie {
-    font-size: 12px;
-    word-break: break-word;
-  }
-}
-
-/* ── 14. Cartes Boutique & Actions — Espacement Mobile ───────────
-   Les cartes de boutique avec trop de boutons alignés débordent
-   sur petit écran. On force le wrap.                               */
-@media (max-width: 640px) {
-  .bq-card-actions,
-  .bq-toolbar {
-    flex-wrap: wrap !important;
-    gap: 6px !important;
-  }
-  .bq-card-actions > button,
-  .bq-card-actions > a,
-  .bq-toolbar > button,
-  .bq-toolbar > a {
-    flex: 1 1 auto;
-    min-width: 0;
-    text-align: center;
-  }
-}
-
-/* ── 15. Masquer sous-titre redondant des onglets boutique ────────
-   Le sous-titre de l'onglet actif dans l'en-tête de la boutique
-   répète l'information déjà visible dans le sélecteur. Masqué
-   sur mobile pour libérer 70px d'espace vertical.                  */
-@media (max-width: 768px) {
-  .bq-main-tab-header {
-    display: none !important;
-  }
-}
-
-/* ── 16. Comparaison Table (comp-table) — Mobile Responsive ──────
-   La page /comparaison utilise un tableau côte à côte qui déborde
-   sur mobile. Réduction des paddings, tailles de police, et images
-   pour garder le tableau lisible dans le scroll horizontal.        */
+/* ── 12. Tableau Comparaison (/comparaison) Mobile ─────────────── */
 @media (max-width: 640px) {
   .comp-table {
     min-width: 380px;
@@ -12834,13 +12756,7 @@ label,
   .comp-prod-nom {
     font-size: 11px;
   }
-  .comp-prod-marque {
-    font-size: 10px;
-  }
-  .comp-td-label {
-    padding: 8px;
-    font-size: 10px;
-  }
+  .comp-td-label,
   .comp-td {
     padding: 8px;
     font-size: 11px;
@@ -12848,22 +12764,8 @@ label,
   .comp-prix {
     font-size: 14px;
   }
-  .comp-mini-offre {
-    gap: 4px;
-    font-size: 10px;
-  }
-  .comp-mini-prix {
-    font-size: 11px;
-  }
   .comp-fiche-btn {
     font-size: 11px;
     padding: 6px 10px;
   }
-  .comp-titre {
-    font-size: 20px;
-  }
-  .comp-sous-titre {
-    font-size: 12px;
-  }
 }
-
