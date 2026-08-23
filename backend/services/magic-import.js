@@ -99,9 +99,12 @@ function convertCurrencyToFcfa(priceAmount, currencyCode) {
  * Détection automatique de la catégorie Nopalou à partir des mots-clés
  */
 function detectCategory(text) {
-  if (!text || typeof text !== 'string') return 'divers';
+  if (!text || typeof text !== 'string') return 'autre';
   const norm = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+  if (/\b(perceuse|visseuse|tournevis|marteau|scie|bricolage|outillage|drill|screwdriver|wrench|pliers|dewalt|bosch|makita|stanley|milwaukee|tool|tools|cordless|quincaillerie|cle a molette)\b/i.test(norm)) {
+    return 'quincaillerie';
+  }
   if (/\b(robe|chemise|pantalon|t-shirt|tshirt|veste|manteau|chaussure|basket|sneaker|sac|sacoche|montre|bijou|boucle|collier|bague|lunette|perruque|lingerie|boxer|ceinture|talon|sandale|abaya|boubou|wax|costume|jean|jogging|sweat|hoodie|polo|dress|shirt|pants|shoes|hoodie|jacket|jewelry)\b/i.test(norm)) {
     return 'mode';
   }
@@ -114,30 +117,33 @@ function detectCategory(text) {
   if (/\b(television|tv|frigo|refrigerateur|congelateur|climatiseur|split|ventilateur|lave-linge|machine a laver|micro-onde|four|air fryer|friteuse|blender|mixeur|fer a repasser|aspirateur|gaziniere|plaque induction)\b/i.test(norm)) {
     return 'tv-electro';
   }
-  if (/\b(canape|salon|lit|matelas|armoire|table|chaise|meuble|rideau|tapis|lampe|coussin|couette|drap|casserole|poele|vaisselle|ustensile|rangement|decoration|miroir|perceuse|visseuse|tournevis|marteau|scie|bricolage|outillage|drill|screwdriver|wrench|pliers|dewalt|bosch|makita|stanley|milwaukee|tool|tools|cordless)\b/i.test(norm)) {
+  if (/\b(canape|salon|lit|matelas|armoire|table|chaise|meuble|rideau|tapis|lampe|coussin|couette|drap|casserole|poele|vaisselle|ustensile|rangement|decoration|miroir)\b/i.test(norm)) {
     return 'maison';
   }
   if (/\b(creme|serum|savon|lotion|shampoing|masque|maquillage|rouge a levres|parfum|eau de toilette|rasoir|tondeuse|lisseur|epilateur|soin visage|brosse|beauty|hair|skin|perfume)\b/i.test(norm)) {
-    return 'beaute-sante';
+    return 'beaute';
   }
   if (/\b(voiture|moto|scooter|casque|pneu|jante|alarme auto|support telephone voiture|camera de recul|housse de siege|gps|car|motorcycle|helmet)\b/i.test(norm)) {
     return 'auto-moto';
   }
   if (/\b(bebe|enfant|poussette|biberon|couche|jouet|doudou|peluche|lego|trottinette enfant|bavoir|baby|kids|toy)\b/i.test(norm)) {
-    return 'enfants-bebes';
+    return 'bebe-enfants';
   }
   if (/\b(sport|fitness|velo|musculation|ballon|haltere|gourde|tapis de course|tente|camping|yoga|gym|cycling)\b/i.test(norm)) {
-    return 'sports-loisirs';
+    return 'sport';
   }
 
-  return 'divers';
+  return 'autre';
 }
+
+const GENERIC_SLUGS = new Set(['item', 'items', 'product', 'products', 'goods', 'detail', 'dp', 'p', 'articles', 'article', 'catalog', 'shop', 'en', 'fr', 'es', 'pt', 'de', 'it', 'us', 'id']);
 
 /**
  * Nettoie le titre pour retirer le bourrage de mots-clés SEO et les mentions de plateformes
  */
 function cleanTitle(rawTitle) {
-  if (!rawTitle) return '';
+  if (!rawTitle || typeof rawTitle !== 'string') return '';
+  if (/^(404 page|page not found|maintaining|aliexpress\.com)$/i.test(rawTitle.trim())) return '';
   return rawTitle
     .replace(/\s*[-–|•]\s*(AliExpress|SHEIN|Amazon|Alibaba|Temu|Jumia|eBay|Wish|Taobao|1688|\d+).*$/i, '')
     .replace(/\b(202[4-9]|Newest|Hot Sale|High Quality|Free Shipping|Livraison Gratuite|Wholesale|Gros|Nouveau|Tendance 202[4-9])\b/gi, '')
@@ -171,7 +177,7 @@ function cleanImageUrls(imageArray) {
       .replace(/_thumbnail_[0-9]+x[0-9]+\.webp/i, '.webp');
 
     // Ne pas inclure d'icônes ou de logos génériques
-    if (url.includes('avatar') || url.includes('icon') || url.includes('logo') || url.includes('HTB18eCBQXXXXXXfXXXX760XFXXXa')) {
+    if (url.includes('avatar') || url.includes('icon') || url.includes('logo') || url.includes('HTB18eCBQXXXXXXfXXXX760XFXXXa') || url.includes('19538f0e235f47a48da5d2a00d03045dn')) {
       continue;
     }
 
@@ -220,6 +226,7 @@ async function scrapeProductFromUrl(rawUrl) {
   const urlsToTry = [safeUrl];
   if (aliItemId && host.includes('aliexpress')) {
     urlsToTry.push(`https://fr.aliexpress.com/item/${aliItemId}.html`);
+    urlsToTry.push(`https://www.aliexpress.com/item/${aliItemId}.html`);
     urlsToTry.push(`https://m.aliexpress.com/item/${aliItemId}.html`);
   }
 
@@ -228,22 +235,32 @@ async function scrapeProductFromUrl(rawUrl) {
   for (const targetUrl of urlsToTry) {
     for (const ua of userAgents) {
       try {
+        const headers = {
+          'User-Agent': ua,
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Upgrade-Insecure-Requests': '1',
+        };
+
+        if (host.includes('aliexpress')) {
+          headers['Cookie'] = 'aep_usuc_f=site=glo&c_tp=USD&region=FR&b_locale=fr_FR; intl_locale=fr_FR; xman_us_f=x_locale=fr_FR;';
+          headers['Referer'] = 'https://www.aliexpress.com/';
+        } else if (host.includes('shein')) {
+          headers['Cookie'] = 'sessionLanguage=fr; sessionCurrency=USD; localCountry=FR;';
+          headers['Referer'] = 'https://www.shein.com/';
+        }
+
         const response = await axios.get(targetUrl, {
           timeout: 6000,
-          headers: {
-            'User-Agent': ua,
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Upgrade-Insecure-Requests': '1',
-          },
+          headers,
           maxRedirects: 5,
         });
 
-        if (response.data && typeof response.data === 'string' && response.data.length > 2500) {
+        if (response.data && typeof response.data === 'string' && response.data.length > 2500 && !response.data.includes('<title>404 page</title>')) {
           html = response.data;
           break;
         }
@@ -394,7 +411,10 @@ async function scrapeProductFromUrl(rawUrl) {
   // ── Extraction intelligente depuis le slug URL si le titre est encore vide ──
   if (!extracted.titre || extracted.titre.length < 3) {
     const pathname = parsedUrl.pathname;
-    const slugSegments = pathname.split('/').filter(s => s && !s.endsWith('.html') && isNaN(Number(s)));
+    const slugSegments = pathname.split('/').filter(s => {
+      const clean = s.replace(/\.html?$/i, '').toLowerCase().trim();
+      return clean && !GENERIC_SLUGS.has(clean) && isNaN(Number(clean)) && clean.length > 2;
+    });
     if (slugSegments.length > 0) {
       const candidate = slugSegments[slugSegments.length - 1].replace(/[-_]+/g, ' ').trim();
       if (candidate.length > 3) {
