@@ -333,8 +333,9 @@ async function envoyerMenuMarchand(phone, boutique) {
   await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
 }
 
-// ── Consultation et suivi des commandes par le marchand ───────────────────────
-async function envoyerCommandesMarchand(phone, boutique) {
+// ── Consultation et suivi des commandes par le marchand (avec pagination) ─────
+async function envoyerCommandesMarchand(phone, boutique, offset = 0) {
+  const safeOffset = Math.max(0, parseInt(offset || 0, 10));
   const { rows: commandes } = await pool.query(
     `SELECT 
        id, reference, nom_produit, quantite, prix_unitaire, montant_total,
@@ -342,78 +343,191 @@ async function envoyerCommandesMarchand(phone, boutique) {
      FROM commandes_boutique
      WHERE boutique_id = $1
      ORDER BY created_at DESC
-     LIMIT 5`,
-    [boutique.id]
+     LIMIT 5 OFFSET $2`,
+    [boutique.id, safeOffset]
   );
 
+  const { rows: totalRows } = await pool.query(
+    `SELECT COUNT(*) AS total FROM commandes_boutique WHERE boutique_id = $1`,
+    [boutique.id]
+  );
+  const totalCommandes = parseInt(totalRows[0]?.total || 0, 10);
+
   if (!commandes.length) {
+    if (safeOffset > 0) {
+      await sendWhatsAppText(phone, 'Vous avez atteint la fin de la liste des commandes.');
+      await envoyerCommandesMarchand(phone, boutique, Math.max(0, safeOffset - 5));
+      return;
+    }
     await sendWhatsAppText(
       phone,
       `📋 *Commandes — ${boutique.nom}*\n\n` +
       `Vous n'avez pas encore reçu de commande en ligne.\n\n` +
       `👉 Partagez votre vitrine sur vos Statuts WhatsApp pour recevoir vos premières commandes : ${SITE}/boutiques/${boutique.slug}`
     );
-  } else {
-    const STATUT_LABELS = {
-      'en_attente': '🟡 En attente',
-      'payee': '🟢 Payée',
-      'confirmee': '🔵 Confirmée',
-      'en_livraison': '🚚 En cours de livraison',
-      'livree': '🎉 Livrée',
-      'annulee': '❌ Annulée',
-    };
-
-    const METHODES = {
-      'wave': '🌊 Wave',
-      'orange_money': '🟠 Orange Money',
-      'cash': '💵 Espèces à la livraison',
-      'especes': '💵 Espèces',
-    };
-
-    const fiches = commandes.map((c, i) => {
-      const dateFmt = new Date(c.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-      const statutTxt = STATUT_LABELS[c.statut] || `🔹 ${c.statut}`;
-      const methodeTxt = METHODES[c.methode_paiement] || c.methode_paiement;
-      const telClientNorm = normalisePhone(c.client_telephone);
-      const waClientLink = `https://wa.me/${telClientNorm}?text=${encodeURIComponent(`Bonjour ${c.client_nom}, c'est ${boutique.nom} concernant votre commande ${c.reference} (${c.nom_produit}).`)}`;
-
-      return (
-        `*${i + 1}. Réf : ${c.reference}* (${statutTxt})\n` +
-        `🛍️ *${c.nom_produit}* × ${c.quantite} — *${prixFmt(c.montant_total)}*\n` +
-        `👤 Client : *${c.client_nom}* (📞 +${telClientNorm})\n` +
-        `📍 Lieu : ${c.client_adresse || 'Non précisé'}\n` +
-        `💳 Paiement : ${methodeTxt}\n` +
-        `📅 Date : ${dateFmt}\n` +
-        `💬 Contact Client : ${waClientLink}`
-      );
-    });
-
-    await sendWhatsAppText(
-      phone,
-      `📋 *Dernières Commandes — ${boutique.nom} :*\n\n` +
-      `${fiches.join('\n\n─────────────────────\n\n')}\n\n` +
-      `👉 *Gérer en direct sur le web :* ${SITE}/boutique?tab=commandes`
-    );
-
-    // Si la commande la plus récente est en attente ou confirmée, proposer des boutons d'action rapide
-    const derniere = commandes[0];
-    if (derniere && (derniere.statut === 'en_attente' || derniere.statut === 'payee' || derniere.statut === 'confirmee')) {
-      const buttons = [];
-      if (derniere.statut === 'en_attente' || derniere.statut === 'payee') {
-        buttons.push({ id: `cmd_statut_${derniere.id}_confirmee`, title: '✅ Confirmer' });
-      }
-      buttons.push({ id: `cmd_statut_${derniere.id}_en_livraison`, title: '🚚 En livraison' });
-      buttons.push({ id: `cmd_statut_${derniere.id}_livree`, title: '🎉 Livrée' });
-
-      await sendWhatsAppButtons3(
-        phone,
-        `Action rapide pour la commande *${derniere.reference}* (${derniere.client_nom}) :`,
-        buttons.slice(0, 3)
-      ).catch(() => {});
-    }
+    await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
+    return;
   }
 
-  await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
+  const STATUT_LABELS = {
+    'en_attente': '🟡 En attente',
+    'payee': '🟢 Payée',
+    'confirmee': '🔵 Confirmée',
+    'en_livraison': '🚚 En cours de livraison',
+    'livree': '🎉 Livrée',
+    'annulee': '❌ Annulée',
+  };
+
+  const METHODES = {
+    'wave': '🌊 Wave',
+    'orange_money': '🟠 Orange Money',
+    'cash': '💵 Espèces à la livraison',
+    'especes': '💵 Espèces',
+  };
+
+  const fiches = commandes.map((c, i) => {
+    const numIdx = safeOffset + i + 1;
+    const dateFmt = new Date(c.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const statutTxt = STATUT_LABELS[c.statut] || `🔹 ${c.statut}`;
+    const methodeTxt = METHODES[c.methode_paiement] || c.methode_paiement;
+    const telClientNorm = normalisePhone(c.client_telephone);
+    const waClientLink = `https://wa.me/${telClientNorm}?text=${encodeURIComponent(`Bonjour ${c.client_nom}, c'est ${boutique.nom} concernant votre commande ${c.reference} (${c.nom_produit}).`)}`;
+
+    return (
+      `*${numIdx}. Réf : ${c.reference}* (${statutTxt})\n` +
+      `🛍️ *${c.nom_produit}* × ${c.quantite} — *${prixFmt(c.montant_total)}*\n` +
+      `👤 Client : *${c.client_nom}* (📞 +${telClientNorm})\n` +
+      `📍 Lieu : ${c.client_adresse || 'Non précisé'}\n` +
+      `💳 Paiement : ${methodeTxt}\n` +
+      `📅 Date : ${dateFmt}\n` +
+      `💬 Contact Client : ${waClientLink}`
+    );
+  });
+
+  const pageInfo = totalCommandes > 5 ? ` (${safeOffset + 1}-${Math.min(safeOffset + commandes.length, totalCommandes)} sur ${totalCommandes})` : '';
+
+  await sendWhatsAppText(
+    phone,
+    `📋 *Commandes — ${boutique.nom}${pageInfo} :*\n\n` +
+    `${fiches.join('\n\n─────────────────────\n\n')}\n\n` +
+    `👉 *Pour changer le statut d'une commande :*\n` +
+    `Tapez son numéro (*1*, *2*, *3*...) ou sélectionnez-la dans la liste ci-dessous :`
+  );
+
+  // Menu interactif pour sélectionner quelle commande gérer
+  const rows = commandes.map((c, i) => {
+    const numIdx = safeOffset + i + 1;
+    const statutTxt = STATUT_LABELS[c.statut] || c.statut;
+    return {
+      id: `cmd_sel_${c.id}`,
+      title: `${numIdx}. ${c.reference}`.slice(0, 24),
+      description: `${c.client_nom} — ${statutTxt}`.slice(0, 72),
+    };
+  });
+
+  if (safeOffset + 5 < totalCommandes) {
+    rows.push({
+      id: `cmd_page_${safeOffset + 5}`,
+      title: '⏩ Suivantes (+5)',
+      description: 'Voir les 5 commandes plus anciennes',
+    });
+  }
+  if (safeOffset > 0) {
+    rows.push({
+      id: `cmd_page_${Math.max(0, safeOffset - 5)}`,
+      title: '⏪ Précédentes (-5)',
+      description: 'Revenir aux commandes plus récentes',
+    });
+  }
+
+  await sendWhatsAppInteractive(
+    phone,
+    'Gérer une commande',
+    'Sélectionnez la commande à mettre à jour :',
+    [
+      {
+        title: 'Commandes',
+        rows: rows.slice(0, 10),
+      },
+    ]
+  ).catch(() => {});
+
+  await setSession(phone, 'MARCHAND_COMMANDES_LISTE', {
+    boutique,
+    isMarchandAuth: true,
+    commandes,
+    offset: safeOffset,
+  });
+}
+
+// ── Fiche d'action pour une commande précise (Changement de statut en 1 clic) ─
+async function envoyerFicheActionCommande(phone, boutique, commande) {
+  if (!commande) return;
+
+  const STATUT_LABELS = {
+    'en_attente': '🟡 En attente',
+    'payee': '🟢 Payée',
+    'confirmee': '🔵 Confirmée',
+    'en_livraison': '🚚 En cours de livraison',
+    'livree': '🎉 Livrée',
+    'annulee': '❌ Annulée',
+  };
+
+  const METHODES = {
+    'wave': '🌊 Wave',
+    'orange_money': '🟠 Orange Money',
+    'cash': '💵 Espèces à la livraison',
+    'especes': '💵 Espèces',
+  };
+
+  const statutTxt = STATUT_LABELS[commande.statut] || `🔹 ${commande.statut}`;
+  const methodeTxt = METHODES[commande.methode_paiement] || commande.methode_paiement;
+  const telClientNorm = normalisePhone(commande.client_telephone);
+  const waClientLink = `https://wa.me/${telClientNorm}?text=${encodeURIComponent(`Bonjour ${commande.client_nom}, c'est ${boutique.nom} concernant votre commande ${commande.reference} (${commande.nom_produit}).`)}`;
+  const dateFmt = new Date(commande.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+  const msgFiche =
+    `📦 *Commande ${commande.reference}* (${statutTxt})\n\n` +
+    `🛍️ Article : *${commande.nom_produit}* (× ${commande.quantite})\n` +
+    `💰 Montant : *${prixFmt(commande.montant_total)}*\n` +
+    `👤 Client : *${commande.client_nom}* (📞 +${telClientNorm})\n` +
+    `📍 Adresse : ${commande.client_adresse || 'Non précisée'}\n` +
+    `💳 Mode Paiement : ${methodeTxt}\n` +
+    `📅 Date : ${dateFmt}\n\n` +
+    `💬 *Discuter sur WhatsApp avec le client :*\n${waClientLink}`;
+
+  await sendWhatsAppText(phone, msgFiche);
+
+  // Proposer les boutons d'action adaptés au statut actuel
+  const buttons = [];
+  if (commande.statut === 'en_attente' || commande.statut === 'payee') {
+    buttons.push({ id: `cmd_statut_${commande.id}_confirmee`, title: '✅ Confirmer' });
+    buttons.push({ id: `cmd_statut_${commande.id}_en_livraison`, title: '🚚 En livraison' });
+    buttons.push({ id: `cmd_statut_${commande.id}_livree`, title: '🎉 Livrée' });
+  } else if (commande.statut === 'confirmee') {
+    buttons.push({ id: `cmd_statut_${commande.id}_en_livraison`, title: '🚚 En livraison' });
+    buttons.push({ id: `cmd_statut_${commande.id}_livree`, title: '🎉 Livrée' });
+    buttons.push({ id: `cmd_statut_${commande.id}_annulee`, title: '❌ Annuler' });
+  } else if (commande.statut === 'en_livraison') {
+    buttons.push({ id: `cmd_statut_${commande.id}_livree`, title: '🎉 Marquer Livrée' });
+    buttons.push({ id: `cmd_statut_${commande.id}_confirmee`, title: '🔵 Remettre Confirmée' });
+    buttons.push({ id: `cmd_statut_${commande.id}_annulee`, title: '❌ Annuler' });
+  } else {
+    buttons.push({ id: `cmd_statut_${commande.id}_confirmee`, title: '🔄 Rouvrir commande' });
+    buttons.push({ id: 'marchand_commandes', title: '📋 Liste commandes' });
+    buttons.push({ id: 'menu_marchand', title: '🏪 Menu Marchand' });
+  }
+
+  await sendWhatsAppButtons3(
+    phone,
+    `Changer le statut de *${commande.reference}* (${commande.client_nom}) :`,
+    buttons.slice(0, 3)
+  ).catch(() => {});
+
+  await sendWhatsAppText(
+    phone,
+    `💡 *Astuce :* Tapez un autre numéro (*1*, *2*, *3*...) pour gérer une autre commande, ou tapez *commandes* pour réafficher toute la liste.`
+  );
 }
 
 // ── Consultation des produits & état de stock par le marchand ─────────────────
@@ -1545,12 +1659,59 @@ async function handleIncoming(msg) {
             sendWhatsAppText(telClientNorm, msgClient).catch(() => {});
           }
 
-          await envoyerCommandesMarchand(phone, bqMarchand);
+          // Ré-afficher la fiche de cette commande avec les nouvelles options d'action
+          await envoyerFicheActionCommande(phone, bqMarchand, cmd);
+          await setSession(phone, 'MARCHAND_COMMANDE_DETAIL', {
+            boutique: bqMarchand,
+            isMarchandAuth: true,
+            commande: cmd,
+            commandes: context?.commandes,
+            offset: context?.offset || 0,
+          });
           return;
         }
       } catch (errUpCmd) {
         console.error('[UPDATE STATUT COMMANDE WA ERR]:', errUpCmd);
       }
+    }
+  }
+
+  // ── SÉLECTION D'UNE COMMANDE PRÉCISE (Fiche détaillée + Actions 1-clic) ─────
+  const matchSelCmd = interactiveId.match(/^cmd_sel_([a-f0-9\-]+)$/i);
+  if (matchSelCmd) {
+    const cmdId = matchSelCmd[1];
+    const bqMarchand = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    if (bqMarchand) {
+      try {
+        const { rows } = await pool.query(
+          `SELECT * FROM commandes_boutique WHERE id = $1 AND boutique_id = $2`,
+          [cmdId, bqMarchand.id]
+        );
+        if (rows.length > 0) {
+          await envoyerFicheActionCommande(phone, bqMarchand, rows[0]);
+          await setSession(phone, 'MARCHAND_COMMANDE_DETAIL', {
+            boutique: bqMarchand,
+            isMarchandAuth: true,
+            commande: rows[0],
+            commandes: context?.commandes,
+            offset: context?.offset || 0,
+          });
+          return;
+        }
+      } catch (errSelCmd) {
+        console.error('[SELECT COMMANDE WA ERR]:', errSelCmd);
+      }
+    }
+  }
+
+  // ── PAGINATION DES COMMANDES (Suivantes / Précédentes) ──────────────────────
+  const matchPageCmd = interactiveId.match(/^cmd_page_(\d+)$/i);
+  if (matchPageCmd) {
+    const targetOffset = parseInt(matchPageCmd[1], 10);
+    const bqMarchand = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    if (bqMarchand) {
+      await envoyerCommandesMarchand(phone, bqMarchand, targetOffset);
+      return;
     }
   }
 
@@ -1714,6 +1875,7 @@ async function handleIncoming(msg) {
       const prodNom = caption.replace(matchPrix[0], '').replace(/[-:–—]/g, ' ').trim();
 
       if (prodNom.length >= 2 && prixNum > 0) {
+        const normPh = normalisePhone(phone);
         const short9 = phone.replace(/\D/g, '').slice(-9);
         const rBq = await pool.query(
           `SELECT b.id, b.nom, b.slug
@@ -1808,13 +1970,59 @@ async function handleIncoming(msg) {
     return;
   }
 
-  // Bouton "Menu" explicite : si le client est encore dans une boutique (context.boutique
-  // présent), y retourner plutôt que de sortir vers le menu général — évite de perdre le
-  // contexte boutique sur une simple relance de "Envie de continuer ?". Sortir de la
-  // boutique reste possible via "⬅️ Changer de boutique" (bouton dédié du menu boutique).
-  if (interactiveId === 'menu' && context?.boutique) {
-    await envoyerMenuBoutique(phone, context.boutique);
+  // ── Actions directes de sélection de menu (Menu Marchand / Menu Boutique / Menu Général) ─
+  if (interactiveId === 'menu_marchand' || normTxtLower === 'menu marchand') {
+    const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    if (bq) {
+      await envoyerMenuMarchand(phone, bq);
+      return;
+    }
+  }
+
+  if (interactiveId === 'menu_boutique_retour' || normTxtLower === 'menu boutique') {
+    if (context?.boutique) {
+      await envoyerMenuBoutique(phone, context.boutique);
+      return;
+    }
+  }
+
+  if (interactiveId === 'menu_general' || normTxtLower === 'menu general' || normTxtLower === 'menu général' || normTxtLower === 'menu principal') {
+    await setSession(phone, 'MENU', {});
+    await sendMenu(phone);
     return;
+  }
+
+  // ── Demande de "Menu" quand l'utilisateur est déjà dans une boutique ────────
+  const isMenuReq = interactiveId === 'menu' || text.toLowerCase() === 'menu' || text.trim() === '0';
+  if (isMenuReq && context?.boutique) {
+    const bq = context.boutique;
+    const isMarchand = context?.isMarchandAuth;
+
+    if (isMarchand) {
+      // Pour le commerçant authentifié : choix entre son Espace Marchand et le Menu Général
+      const buttons = [
+        { id: 'menu_marchand', title: '🏪 Menu Marchand' },
+        { id: 'menu_general', title: '🌐 Menu Principal' },
+      ];
+      await sendWhatsAppButtons3(
+        phone,
+        `📍 Vous êtes actuellement dans l'espace de gestion de votre boutique *${bq.nom}*.\n\nQuel menu souhaitez-vous afficher ?`,
+        buttons
+      ).catch(() => {});
+      return;
+    } else {
+      // Pour le client/acheteur : choix entre le Menu de cette boutique et le Menu Général
+      const buttons = [
+        { id: 'menu_boutique_retour', title: `🏪 ${bq.nom.slice(0, 16)}` },
+        { id: 'menu_general', title: '🌐 Menu Principal' },
+      ];
+      await sendWhatsAppButtons3(
+        phone,
+        `📍 Vous êtes actuellement dans la boutique *${bq.nom}*.\n\nQuel menu souhaitez-vous afficher ?`,
+        buttons
+      ).catch(() => {});
+      return;
+    }
   }
 
   // Mots-clés globaux : "menu", "aide" ou une salutation depuis n'importe quel état actif
@@ -2266,7 +2474,7 @@ async function handleIncoming(msg) {
       await setSession(phone, 'BOUTIQUE_MENU', { boutique });
       return;
     }
-    if (interactiveId === 'boutique_quitter' || cleanMenuNum === 5 || normText === 'quitter' || normText === 'retour' || normText === 'changer de boutique' || normText === 'menu') {
+    if (interactiveId === 'boutique_quitter' || cleanMenuNum === 5 || normText === 'quitter' || normText === 'changer de boutique') {
       await setSession(phone, 'MENU', {});
       await sendMenu(phone);
       return;
@@ -2924,6 +3132,79 @@ async function handleIncoming(msg) {
     }
   }
 
+  // ── MARCHAND_COMMANDES_LISTE & DETAIL → Navigation & Gestion des Commandes ───
+  if (state === 'MARCHAND_COMMANDES_LISTE' || state === 'MARCHAND_COMMANDE_DETAIL') {
+    const boutique = context?.boutique;
+    if (!boutique) {
+      await setSession(phone, 'IDLE', {});
+      await sendMenu(phone);
+      return;
+    }
+
+    const txtClean = (text || '').trim();
+    const numSaisi = parseInt(txtClean, 10);
+    const offset = context?.offset || 0;
+    const commandesAffichees = Array.isArray(context?.commandes) ? context.commandes : [];
+
+    // 1. Si l'utilisateur tape un numéro (ex: 1, 2, 3, 4, 5...)
+    if (!isNaN(numSaisi) && numSaisi >= 1) {
+      // Déterminer la commande choisie selon l'index relatif ou absolu
+      const relativeIdx = numSaisi - offset - 1;
+      const cmdChoisie = (relativeIdx >= 0 && relativeIdx < commandesAffichees.length)
+        ? commandesAffichees[relativeIdx]
+        : (numSaisi <= commandesAffichees.length ? commandesAffichees[numSaisi - 1] : null);
+
+      if (cmdChoisie) {
+        await envoyerFicheActionCommande(phone, boutique, cmdChoisie);
+        await setSession(phone, 'MARCHAND_COMMANDE_DETAIL', {
+          boutique,
+          isMarchandAuth: true,
+          commande: cmdChoisie,
+          commandes: commandesAffichees,
+          offset,
+        });
+        return;
+      }
+    }
+
+    // 2. Si l'utilisateur tape une référence ou le nom du client (ex: C-MSRYSRE3, CMD-2026-5417)
+    if (txtClean.length >= 3 && !['menu', 'plus', 'retour', 'commandes', 'liste'].includes(txtClean.toLowerCase())) {
+      const { rows } = await pool.query(
+        `SELECT * FROM commandes_boutique 
+         WHERE boutique_id = $1 
+           AND (reference ILIKE $2 OR client_nom ILIKE $2)
+         ORDER BY created_at DESC LIMIT 1`,
+        [boutique.id, `%${txtClean}%`]
+      );
+      if (rows.length > 0) {
+        await envoyerFicheActionCommande(phone, boutique, rows[0]);
+        await setSession(phone, 'MARCHAND_COMMANDE_DETAIL', {
+          boutique,
+          isMarchandAuth: true,
+          commande: rows[0],
+          commandes: commandesAffichees,
+          offset,
+        });
+        return;
+      }
+    }
+
+    if (txtClean.toLowerCase() === 'plus' || txtClean.toLowerCase() === 'suivant' || txtClean.toLowerCase() === 'suite') {
+      await envoyerCommandesMarchand(phone, boutique, offset + 5);
+      return;
+    }
+
+    if (txtClean.toLowerCase() === 'commandes' || txtClean.toLowerCase() === 'liste' || txtClean.toLowerCase() === 'retour') {
+      await envoyerCommandesMarchand(phone, boutique, offset);
+      return;
+    }
+
+    if (txtClean.toLowerCase() === 'menu' || txtClean.toLowerCase() === 'marchand') {
+      await envoyerMenuMarchand(phone, boutique);
+      return;
+    }
+  }
+
   // ── MARCHAND_MENU → Actions du Menu Marchand ─────────────────────────────────
   if (state === 'MARCHAND_MENU') {
     const boutique = context?.boutique;
@@ -2982,7 +3263,20 @@ async function handleIncoming(msg) {
       return;
     }
 
-    if (action === 'menu' || action === 'retour' || action === 'boutique_quitter') {
+    if (action === 'menu') {
+      const buttons = [
+        { id: 'menu_marchand', title: '🏪 Menu Marchand' },
+        { id: 'menu_general', title: '🌐 Menu Principal' },
+      ];
+      await sendWhatsAppButtons3(
+        phone,
+        `📍 Vous êtes dans votre espace de gestion *${boutique.nom}*.\n\nQuel menu souhaitez-vous ouvrir ?`,
+        buttons
+      ).catch(() => {});
+      return;
+    }
+
+    if (action === 'boutique_quitter' || action === 'quitter') {
       await setSession(phone, 'MENU', {});
       await sendMenu(phone);
       return;
@@ -3135,15 +3429,90 @@ async function handleIncoming(msg) {
     }
   }
 
-  // ── AJOUT_PRODUIT_NOM → Nom du produit ──────────────────────────────────────
+  // ── AJOUT_PRODUIT_NOM → Nom du produit (avec support image & détection automatique du prix) ─
   if (state === 'AJOUT_PRODUIT_NOM') {
-    if (!text || text.trim().length < 2) {
+    const boutique = context?.boutique;
+    let initialPhotos = Array.isArray(context?.photos) ? [...context.photos] : [];
+
+    // Si l'utilisateur envoie une image directement dans cet état
+    if (mediaId) {
+      const imageUrl = await telechargerMediaWhatsApp(mediaId);
+      if (imageUrl) initialPhotos.push(imageUrl);
+    }
+
+    const rawText = (text || '').trim();
+
+    // Vérifier si le texte contient à la fois le nom et le prix (ex: "CHAUSSURE 15000" ou "Robe Bazin 20000 FCFA")
+    const matchPrix = rawText.match(/(\d{3,9})\s*(?:fcfa|cfa|f)?\s*$/i) || rawText.match(/(\d{3,9})/);
+    if (matchPrix) {
+      const prixNum = parseInt(matchPrix[1], 10);
+      const prodNom = rawText.replace(matchPrix[0], '').replace(/[-:–—]/g, ' ').trim();
+
+      if (prodNom.length >= 2 && prixNum > 0) {
+        if (initialPhotos.length > 0) {
+          // L'utilisateur a envoyé à la fois la photo, le nom et le prix ! On publie immédiatement
+          try {
+            const resProd = await pool.query(
+              `INSERT INTO boutique_produits (boutique_id, nom, prix, images, en_stock)
+               VALUES ($1, $2, $3, $4, true)
+               RETURNING id, nom, prix`,
+              [boutique.id, prodNom, prixNum, initialPhotos]
+            );
+            const prodCree = resProd.rows[0];
+            const normPh = normalisePhone(phone);
+            _recentsProduitsCrees.set(normPh, {
+              produitId: prodCree.id,
+              boutiqueId: boutique.id,
+              nom: prodCree.nom,
+              totalPhotos: initialPhotos.length,
+              timestamp: Date.now(),
+            });
+
+            await sendWhatsAppText(
+              phone,
+              `✅ *Article publié avec succès !* 🎉\n\n` +
+              `🛍️ *${prodCree.nom}*\n` +
+              `💰 Prix : *${prixFmt(prodCree.prix)}*\n` +
+              `📸 Photos : *${initialPhotos.length} photo(s)*\n` +
+              `🏪 Boutique : *${boutique.nom}*\n\n` +
+              `👉 *Astuce :* Vous pouvez envoyer d'autres photos pour cet article dans les 30s, elles seront automatiquement ajoutées !`
+            );
+            await envoyerMenuMarchand(phone, boutique);
+            return;
+          } catch (eQuick) {
+            console.error('[QUICK ADD PROD ERR]:', eQuick);
+          }
+        }
+
+        // Pas encore de photo : on passe à l'étape photo avec le nom et prix déjà enregistrés
+        await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix: prixNum, photos: initialPhotos });
+        await sendWhatsAppText(
+          phone,
+          `✅ Article : *${prodNom}* — Prix : *${prixFmt(prixNum)}*\n\n` +
+          `📸 Envoyez maintenant la ou les photos de votre article *${prodNom}*.\n` +
+          `Tapez *OK* quand vous avez fini ou *passer* pour publier sans photo.`
+        );
+        return;
+      }
+    }
+
+    // Si l'utilisateur a envoyé une image sans texte
+    if (mediaId && initialPhotos.length > 0 && (!rawText || rawText.length < 2)) {
+      await setSession(phone, 'AJOUT_PRODUIT_NOM', { boutique, photos: initialPhotos });
+      await sendWhatsAppText(
+        phone,
+        `📸 *Photo bien reçue !*\n\nQuel est le *nom ou titre de ce produit* ? (ex: Chaussure Sport, Robe Soirée...)`
+      );
+      return;
+    }
+
+    if (!rawText || rawText.length < 2) {
       await sendWhatsAppText(phone, '⚠️ Veuillez entrer un nom de produit valide (au moins 2 caractères).');
       return;
     }
-    const prodNom = text.trim();
-    const boutique = context?.boutique;
-    await setSession(phone, 'AJOUT_PRODUIT_PRIX', { boutique, produit_nom: prodNom });
+
+    const prodNom = rawText;
+    await setSession(phone, 'AJOUT_PRODUIT_PRIX', { boutique, produit_nom: prodNom, photos: initialPhotos });
     await sendWhatsAppText(
       phone,
       `💰 Quel est le *prix de vente en FCFA* pour *${prodNom}* ? (ex: 15000, 25000, 5000...)`
@@ -3153,6 +3522,12 @@ async function handleIncoming(msg) {
 
   // ── AJOUT_PRODUIT_PRIX → Prix du produit ────────────────────────────────────
   if (state === 'AJOUT_PRODUIT_PRIX') {
+    let photos = Array.isArray(context?.photos) ? [...context.photos] : [];
+    if (mediaId) {
+      const imageUrl = await telechargerMediaWhatsApp(mediaId);
+      if (imageUrl) photos.push(imageUrl);
+    }
+
     const rawPrix = text.replace(/[^\d]/g, '');
     const prixNum = parseInt(rawPrix, 10);
     if (isNaN(prixNum) || prixNum <= 0) {
@@ -3162,14 +3537,22 @@ async function handleIncoming(msg) {
 
     const boutique = context?.boutique;
     const prodNom = context?.produit_nom;
-    await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix: prixNum, photos: [] });
+    await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix: prixNum, photos });
 
-    await sendWhatsAppText(
-      phone,
-      `📸 *Photos du produit :*\n\n` +
-      `Envoyez 1 ou plusieurs photos de votre article *${prodNom}*.\n` +
-      `Tapez *OK* quand vous avez fini ou *passer* pour publier sans photo.`
-    );
+    if (photos.length > 0) {
+      await sendWhatsAppText(
+        phone,
+        `📸 *Photos du produit (${photos.length} photo(s) reçue(s)) :*\n\n` +
+        `Vous pouvez envoyer d'autres photos pour *${prodNom}*, ou taper *OK* (ou *terminer*) pour publier l'article !`
+      );
+    } else {
+      await sendWhatsAppText(
+        phone,
+        `📸 *Photos du produit :*\n\n` +
+        `Envoyez 1 ou plusieurs photos de votre article *${prodNom}*.\n` +
+        `Tapez *OK* quand vous avez fini ou *passer* pour publier sans photo.`
+      );
+    }
     return;
   }
 
@@ -3364,6 +3747,7 @@ module.exports = {
   verifierCodePin,
   envoyerMenuMarchand,
   envoyerCommandesMarchand,
+  envoyerFicheActionCommande,
   envoyerStockMarchand,
   envoyerBilanCaisseMarchand,
   envoyerCarnetDettesMarchand,

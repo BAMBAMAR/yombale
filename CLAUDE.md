@@ -14,15 +14,22 @@
     - **Ajout Express Multi-Photos** : Quand un commerçant sélectionne plusieurs photos d'un article et met une légende sur la première photo (ex: *Robe Bazin 15000*), le produit est créé et les photos suivantes envoyées par WhatsApp sans légende sont **automatiquement rattachées au même article** via un tampon d'association en mémoire (30 secondes).
     - **Ajout Guidé** : Possibilité d'envoyer 1 ou plusieurs photos d'affilée pour un produit puis de taper *OK / Terminer* ou *Passer*.
   * **🏪 Menu Marchand Dédié sur WhatsApp (`MARCHAND_MENU`)** :
-    - 📋 **Gestion des Commandes Clients** : Consultation des dernières commandes avec détails (articles, client, téléphone avec lien WhatsApp direct, adresse de livraison, mode de paiement Wave/OM/Cash) et boutons d'action rapide 1-clic (*Confirmer*, *En cours de livraison*, *Livrée*) avec notification WhatsApp automatique au client.
+    - 📋 **Gestion, Navigation & Défilement des Commandes Clients** :
+      - Affichage paginé des commandes par lot de 5 avec résumé clair, client, articles, montants, paiement Wave/OM/Cash et lien WhatsApp client.
+      - **Sélection et Défilement 1-Clic** : Menu interactif listant chaque commande individuellement (`1. CMD-XXX...`, `2. CMD-YYY...`) + boutons de pagination `⏩ Suivantes (+5)` et `⏪ Précédentes (-5)`.
+      - **Sélection par saisie directe** : Le commerçant peut simplement taper le numéro de la commande (`1`, `2`, `3`, `4`, `5`...) ou sa référence (`C-MSRYSRE3`) pour ouvrir instantanément sa fiche détaillée.
+      - **Boutons d'action adaptés en direct** : *✅ Confirmer*, *🚚 En livraison*, *🎉 Marquer Livrée*, *❌ Annuler*, *🔄 Rouvrir* avec notification WhatsApp automatique au client.
     - ➕ **Ajout de Produit** : Envoi express photo+légende ou formulaire guidé en 2 questions.
     - 📦 **Mes Produits & Stock** : Affichage des 6 derniers produits avec statut du stock (`✅ En stock` ou `❌ Rupture`).
     - 💰 **Bilan Caisse & Ventes du jour** : Chiffre d'affaires en direct, nombre de commandes, répartition Wave, Orange Money et Espèces (Cash) avec lien vers la caisse tactile POS.
     - 📒 **Carnet de Dettes ("Bor")** : Suivi des débiteurs et lien direct WhatsApp pour relancer chaque client en 1 clic avec un message poli pré-rempli.
     - 🔗 **Vitrine & Statut WhatsApp** : Message promotionnel prêt à l'emploi à transférer en Statut WhatsApp.
-    - ⚙️ **Gestion du Code PIN** : Modification et sécurisation du code d'accès.
+    - 🔄 **Gestion Intelligente du Mot-Clé "Menu" (Double Choix Contextuel)** :
+      - Lorsqu'un utilisateur tape `menu` (ou `0`) alors qu'il est dans une boutique :
+        * **Pour le Commerçant** : Propose 2 boutons d'action instantanés : `[🏪 Menu Marchand]` (revenir aux outils de gestion) et `[🌐 Menu Principal]` (sortir vers le comparateur général Nopalou).
+        * **Pour le Client/Acheteur** : Propose 2 boutons : `[🏪 Boutique {Nom}]` (revenir au catalogue de la boutique) et `[🌐 Menu Principal]` (menu général Nopalou).
   * **Validation & Contrôle Qualité** :
-    - Tests unitaires complets chatbot WhatsApp (`scripts/test-chatbot-boutique.js`) : **100% validés (15/15 tests passés avec succès)**.
+    - Tests unitaires complets chatbot WhatsApp (`scripts/test-chatbot-boutique.js`) : **100% validés (17/17 tests passés avec succès)**.
     - Vérification syntaxique Node.js (`backend/services/whatsapp-chatbot.js`, `backend/migrate-inline.js`) : **0 erreur**.
     - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
 

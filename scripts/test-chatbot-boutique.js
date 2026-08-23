@@ -214,7 +214,7 @@ async function runAsyncTests() {
   // Test 9: Suivi des Commandes Marchand
   console.log('\n📦 8. Consultation et Suivi des Commandes Marchand');
   mockWhatsAppCalls.text = [];
-  mockWhatsAppCalls.buttons3 = [];
+  mockWhatsAppCalls.interactive = [];
   mockQueryResult = {
     rows: [{
       id: 'cmd-999',
@@ -232,16 +232,16 @@ async function runAsyncTests() {
     }]
   };
   await chatbot.envoyerCommandesMarchand('221770000000', { id: 'bq-1', nom: 'Dakar Couture', slug: 'dakar-couture' });
-  it('envoyerCommandesMarchand: affiche la liste des commandes avec détails et boutons d action 1-clic', () => {
+  it('envoyerCommandesMarchand: affiche la liste des commandes avec menu interactif de sélection', () => {
     assert.equal(mockWhatsAppCalls.text.length, 1);
     const msg = mockWhatsAppCalls.text[0].text;
     assert.ok(msg.includes('CMD-12345'));
     assert.ok(msg.includes('Fatou Ndiaye'));
     assert.ok(msg.includes('Robe Bazin'));
     assert.ok(msg.includes('30\u202F000 FCFA') || msg.includes('30 000 FCFA'));
-    assert.equal(mockWhatsAppCalls.buttons3.length, 1);
-    const btns = mockWhatsAppCalls.buttons3[0].buttons;
-    assert.ok(btns.some(b => b.id.includes('confirmee')));
+    assert.equal(mockWhatsAppCalls.interactive.length, 1);
+    const rows = mockWhatsAppCalls.interactive[0].sections[0].rows;
+    assert.ok(rows.some(r => r.id === 'cmd_sel_cmd-999'));
   });
 
   // Test 10: Recherche de Boutique par Numéro de Téléphone
@@ -262,6 +262,60 @@ async function runAsyncTests() {
   await chatbot.rechercherBoutiquesParNom('221770000000', '777202086');
   it('rechercherBoutiquesParNom: trouve directement la boutique lors de la saisie d un numéro de téléphone', () => {
     assert.ok(mockWhatsAppCalls.text.some(t => t.text.includes('Amar Store')));
+  });
+
+  // Test 11: Fiche d'Action Commande & Changement de Statut
+  console.log('\n📦 10. Fiche d Action Commande & Boutons de Statut');
+  mockWhatsAppCalls.text = [];
+  mockWhatsAppCalls.buttons3 = [];
+  const fakeCmd = {
+    id: 'cmd-888',
+    reference: 'C-MSRYSRE3',
+    nom_produit: 'Culotte',
+    quantite: 1,
+    prix_unitaire: 300,
+    montant_total: 300,
+    client_nom: 'AMAR',
+    client_telephone: '221777202086',
+    client_adresse: 'Ouest',
+    methode_paiement: 'cash',
+    statut: 'en_attente',
+    created_at: new Date().toISOString()
+  };
+  await chatbot.envoyerFicheActionCommande('221770000000', { id: 'bq-1', nom: 'Rama Shop' }, fakeCmd);
+  it('envoyerFicheActionCommande: affiche la fiche détaillée de la commande avec boutons Confirmer, En livraison, Livrée', () => {
+    assert.ok(mockWhatsAppCalls.text.some(t => t.text.includes('C-MSRYSRE3')));
+    assert.ok(mockWhatsAppCalls.text.some(t => t.text.includes('Culotte')));
+    assert.equal(mockWhatsAppCalls.buttons3.length, 1);
+    const btns = mockWhatsAppCalls.buttons3[0].buttons;
+    assert.ok(btns.some(b => b.id === 'cmd_statut_cmd-888_confirmee'));
+    assert.ok(btns.some(b => b.id === 'cmd_statut_cmd-888_en_livraison'));
+    assert.ok(btns.some(b => b.id === 'cmd_statut_cmd-888_livree'));
+  });
+
+  // Test 12: Gestion Intelligente du Menu en Contexte Boutique (Double Choix)
+  console.log('\n📦 11. Gestion Intelligente du Menu en Contexte Boutique (Double Choix)');
+  mockWhatsAppCalls.buttons3 = [];
+  mockQueryResult = {
+    rows: [{
+      state: 'MARCHAND_MENU',
+      context: {
+        boutique: { id: 'bq-1', nom: 'Rama Shop' },
+        isMarchandAuth: true
+      }
+    }]
+  };
+  await chatbot.handleIncoming({
+    id: `msg-menu-${Date.now()}`,
+    from: '221770000000',
+    type: 'text',
+    text: { body: 'menu' }
+  });
+  it('handleIncoming: propose le double choix (Menu Boutique / Menu Principal) quand l utilisateur est dans une boutique', () => {
+    assert.ok(mockWhatsAppCalls.buttons3.length >= 1);
+    const btns = mockWhatsAppCalls.buttons3[mockWhatsAppCalls.buttons3.length - 1].buttons;
+    assert.ok(btns.some(b => b.id === 'menu_marchand' || b.id === 'menu_boutique_retour'));
+    assert.ok(btns.some(b => b.id === 'menu_general'));
   });
 
   console.log('\n──────────────────────────────────────────────────────────');
