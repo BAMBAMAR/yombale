@@ -158,7 +158,7 @@ function cleanTitle(rawTitle) {
     .trim();
 }
 
-const BAD_IMAGE_PATTERNS = /(images[23]_ccc|images[23]_acp|images[23]_ach|_ccc\/|_acp\/|_ach\/|inpost|posteitaliane|paypal|klarna|gift|wallet|avatar|icon|logo|badge|banner|HTB18eCBQ|19538f0e235f47a48da5d2a00d03045dn)/i;
+const BAD_IMAGE_PATTERNS = /(images[23]_ccc|images[23]_acp|images[23]_ach|_ccc\/|_acp\/|_ach\/|inpost|posteitaliane|paypal|klarna|gift|wallet|avatar|icon|logo|badge|banner|visa|mastercard|amex|unionpay|maestro|discover|interac|cartesbancaires|google_pay|applepay|apple_pay|diners|jcb|payment|checkout|HTB18eCBQ|19538f0e235f47a48da5d2a00d03045dn|1528273|1615283|1629269|1725432007)/i;
 
 /**
  * Nettoie et déduplique les URLs d'images (transforme les vignettes en images HD)
@@ -173,7 +173,7 @@ function cleanImageUrls(imageArray) {
     if (url.startsWith('//')) url = 'https:' + url;
     if (!url.startsWith('http://') && !url.startsWith('https://')) continue;
 
-    // Suppression des images parasites, logos de livraison et partenaires
+    // Suppression des images parasites, logos de cartes bancaires, livraison et partenaires
     if (BAD_IMAGE_PATTERNS.test(url)) {
       continue;
     }
@@ -193,10 +193,10 @@ function cleanImageUrls(imageArray) {
     }
   }
 
-  // Prioriser les images contenant _pi/ (SHEIN Product Image) ou images réelles
-  const piImages = cleanList.filter(u => u.includes('_pi/') || u.includes('aliexpress-media.com') || u.includes('media-amazon.com'));
-  if (piImages.length > 0) {
-    return piImages.slice(0, 5);
+  // Prioriser les images de CDN produits réels
+  const productImgs = cleanList.filter(u => u.includes('aliexpress-media.com') || u.includes('alicdn.com') || u.includes('media-amazon.com') || u.includes('images_pi/') || u.includes('/products/'));
+  if (productImgs.length > 0) {
+    return productImgs.slice(0, 5);
   }
 
   return cleanList.slice(0, 5);
