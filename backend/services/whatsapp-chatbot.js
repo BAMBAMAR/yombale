@@ -195,9 +195,13 @@ async function estProprietaireBoutique(phone, boutique) {
       `SELECT b.id FROM boutiques b
        LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
        WHERE b.id = $1
-         AND (b.telephone = $2 OR b.whatsapp = $2 OR u.telephone = $2 OR u.telephone LIKE '%' || $3)
+         AND (
+           REGEXP_REPLACE(COALESCE(b.telephone, ''), '\\D', '', 'g') LIKE '%' || $2
+           OR REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $2
+           OR REGEXP_REPLACE(COALESCE(u.telephone, ''), '\\D', '', 'g') LIKE '%' || $2
+         )
        LIMIT 1`,
-      [boutique.id, normPh, shortPh]
+      [boutique.id, shortPh]
     );
     return res.rows.length > 0;
   } catch {
@@ -242,7 +246,6 @@ async function trouverBoutiqueParTelephone(phoneStr) {
          REGEXP_REPLACE(COALESCE(b.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
          OR REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
          OR REGEXP_REPLACE(COALESCE(u.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
-         OR REGEXP_REPLACE(COALESCE(u.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
        )
      ORDER BY b.created_at DESC
      LIMIT 1`,
@@ -267,7 +270,6 @@ async function trouverBoutiqueMarchand(phone) {
          REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
          OR REGEXP_REPLACE(COALESCE(b.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
          OR REGEXP_REPLACE(COALESCE(u.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
-         OR REGEXP_REPLACE(COALESCE(u.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
        )
      ORDER BY b.created_at DESC
      LIMIT 1`,
@@ -506,10 +508,10 @@ async function envoyerCarnetDettesMarchand(phone, boutique) {
   let clientsDettes = [];
   try {
     const r = await pool.query(
-      `SELECT nom, telephone, solde_dette
+      `SELECT nom, telephone, COALESCE(solde, 0) AS solde_dette
        FROM caisse_clients_credits
-       WHERE boutique_id = $1 AND solde_dette > 0
-       ORDER BY solde_dette DESC
+       WHERE boutique_id = $1 AND COALESCE(solde, 0) > 0
+       ORDER BY solde DESC
        LIMIT 5`,
       [boutique.id]
     );
@@ -1647,16 +1649,22 @@ async function handleIncoming(msg) {
       : null;
 
     let rBq;
+    const short9 = phone.replace(/\D/g, '').slice(-9);
+
     if (targetBqId) {
       rBq = await pool.query(
         `SELECT b.id, b.nom, b.slug
          FROM boutiques b
          LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
          WHERE b.id = $1
-           AND (b.telephone = $2 OR b.whatsapp = $2 OR u.telephone = $2 OR u.telephone LIKE '%' || $3)
-           AND b.actif = true
+           AND (
+             REGEXP_REPLACE(COALESCE(b.telephone, ''), '\\D', '', 'g') LIKE '%' || $2
+             OR REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $2
+             OR REGEXP_REPLACE(COALESCE(u.telephone, ''), '\\D', '', 'g') LIKE '%' || $2
+           )
+           AND (b.actif IS NULL OR b.actif = true)
          LIMIT 1`,
-        [targetBqId, normPh, phone.replace(/\D/g, '').slice(-9)]
+        [targetBqId, short9]
       );
     }
 
@@ -1665,10 +1673,14 @@ async function handleIncoming(msg) {
         `SELECT b.id, b.nom, b.slug
          FROM boutiques b
          LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
-         WHERE (b.telephone = $1 OR b.whatsapp = $1 OR u.telephone = $1 OR u.telephone LIKE '%' || $2)
-           AND b.actif = true
+         WHERE (
+           REGEXP_REPLACE(COALESCE(b.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+           OR REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
+           OR REGEXP_REPLACE(COALESCE(u.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+         )
+           AND (b.actif IS NULL OR b.actif = true)
          ORDER BY b.created_at DESC LIMIT 1`,
-        [normPh, phone.replace(/\D/g, '').slice(-9)]
+        [short9]
       );
     }
 
@@ -1702,15 +1714,19 @@ async function handleIncoming(msg) {
       const prodNom = caption.replace(matchPrix[0], '').replace(/[-:–—]/g, ' ').trim();
 
       if (prodNom.length >= 2 && prixNum > 0) {
-        const normPh = normalisePhone(phone);
+        const short9 = phone.replace(/\D/g, '').slice(-9);
         const rBq = await pool.query(
           `SELECT b.id, b.nom, b.slug
            FROM boutiques b
            LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
-           WHERE (b.telephone = $1 OR b.whatsapp = $1 OR u.telephone = $1 OR u.telephone LIKE '%' || $2)
-             AND b.actif = true
+           WHERE (
+             REGEXP_REPLACE(COALESCE(b.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+             OR REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
+             OR REGEXP_REPLACE(COALESCE(u.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+           )
+             AND (b.actif IS NULL OR b.actif = true)
            ORDER BY b.created_at DESC LIMIT 1`,
-          [normPh, phone.replace(/\D/g, '').slice(-9)]
+          [short9]
         );
 
         if (rBq.rows.length > 0) {
