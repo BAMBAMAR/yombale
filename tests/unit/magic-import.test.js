@@ -80,6 +80,7 @@ describe('🌟 Baguette Magique (Import Rapide) — Tests Unitaires', () => {
       expect(detectCategory('Robe de soirée élégante en satin')).toBe('mode');
       expect(detectCategory('Sneakers de sport respirantes pour homme')).toBe('mode');
       expect(detectCategory('Montre connectée étanche quartz')).toBe('mode');
+      expect(detectCategory('Plain Casual Elegant Asymmetric Short Sleeve Top And Casual Wide Leg Pants')).toBe('mode');
     });
 
     test('détecte les smartphones et accessoires mobiles', () => {
@@ -98,12 +99,12 @@ describe('🌟 Baguette Magique (Import Rapide) — Tests Unitaires', () => {
     });
 
     test('détecte la beauté et soins', () => {
-      expect(detectCategory('Sérum visage acide hyaluronique hydratant')).toBe('beaute-sante');
-      expect(detectCategory('Tondeuse à barbe professionnelle rechargeable')).toBe('beaute-sante');
+      expect(detectCategory('Sérum visage acide hyaluronique hydratant')).toBe('beaute');
+      expect(detectCategory('Tondeuse à barbe professionnelle rechargeable')).toBe('beaute');
     });
 
-    test('fallback sur divers pour les produits non catégorisés', () => {
-      expect(detectCategory('Produit sans mot-clé spécifique')).toBe('divers');
+    test('fallback sur autre pour les produits non catégorisés', () => {
+      expect(detectCategory('Produit sans mot-clé spécifique')).toBe('autre');
     });
   });
 
@@ -120,12 +121,12 @@ describe('🌟 Baguette Magique (Import Rapide) — Tests Unitaires', () => {
   });
 
   describe('5. Nettoyage & Galerie Multi-Photos (cleanImageUrls)', () => {
-    test('transforme les vignettes AliExpress et Amazon en images HD et limite à 5 photos', () => {
+    test('transforme les vignettes AliExpress, SHEIN et Amazon en images HD et limite à 5 photos', () => {
       const rawImages = [
         'https://ae01.alicdn.com/kf/S123456_50x50.jpg',
         '//ae01.alicdn.com/kf/S654321_120x120.jpg',
         'https://m.media-amazon.com/images/I/71abc._AC_US40_.jpg',
-        'https://ae01.alicdn.com/kf/S789012.jpg',
+        'https://img.ltwebstatic.com/images3_pi/2024/01/10/1704876543_thumbnail_600x.webp',
         'https://ae01.alicdn.com/kf/S999999.jpg',
         'https://ae01.alicdn.com/kf/S000000.jpg', // 6e image, doit être ignorée
       ];
@@ -135,6 +136,7 @@ describe('🌟 Baguette Magique (Import Rapide) — Tests Unitaires', () => {
       expect(cleaned[0]).toBe('https://ae01.alicdn.com/kf/S123456.jpg');
       expect(cleaned[1]).toBe('https://ae01.alicdn.com/kf/S654321.jpg');
       expect(cleaned[2]).toBe('https://m.media-amazon.com/images/I/71abc._AC_SL1500_.jpg');
+      expect(cleaned[3]).toBe('https://img.ltwebstatic.com/images3_pi/2024/01/10/1704876543.webp');
     });
   });
 
@@ -167,7 +169,7 @@ describe('🌟 Baguette Magique (Import Rapide) — Tests Unitaires', () => {
         </html>
       `;
 
-      axios.get.mockResolvedValueOnce({ data: mockHtml });
+      axios.get.mockResolvedValue({ data: mockHtml });
 
       const result = await scrapeProductFromUrl('https://fr.aliexpress.com/item/100500123456789.html');
       expect(result.titre).toBe('Montre Homme Luxe Quartz Chronographe');
@@ -179,6 +181,59 @@ describe('🌟 Baguette Magique (Import Rapide) — Tests Unitaires', () => {
       expect(result.images.length).toBe(2);
       expect(result.images[0]).toBe('https://ae01.alicdn.com/kf/S111.jpg');
       expect(result.categorie).toBe('mode');
+    });
+
+    test('extrait les données et photos d\'une fiche SHEIN avec JSON échappé', async () => {
+      const mockSheinHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>SHEIN Ensemble Haut Asymétrique et Pantalon Fluide</title>
+            <script>
+              var gbCommonConfig = {
+                "goods_name": "Ensemble Haut Asymétrique et Pantalon Fluide",
+                "retailPrice": { "amountWithSymbol": "18.99€" }
+              };
+              var productImages = [
+                "https:\\/\\/img.ltwebstatic.com\\/images3_pi\\/2024\\/02\\/01\\/pic1_thumbnail_900x.webp",
+                "https:\\/\\/img.ltwebstatic.com\\/images3_pi\\/2024\\/02\\/01\\/pic2_thumbnail_900x.webp"
+              ];
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+
+      axios.get.mockResolvedValue({ data: mockSheinHtml });
+
+      const result = await scrapeProductFromUrl('https://fr.shein.com/goods-p-541261665.html');
+      expect(result.titre).toBe('Ensemble Haut Asymétrique et Pantalon Fluide');
+      expect(result.prix_achat).toBeGreaterThan(10000);
+      expect(result.images.length).toBe(2);
+      expect(result.images[0]).toBe('https://img.ltwebstatic.com/images3_pi/2024/02/01/pic1.webp');
+      expect(result.categorie).toBe('mode');
+    });
+
+    test('extrait les données d\'une fiche Amazon avec data-a-dynamic-image', async () => {
+      const mockAmazonHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <span id="productTitle">Casque Audio Sans Fil Réduction Bruit</span>
+            <span class="a-price"><span class="a-offscreen">49.99€</span></span>
+            <img id="landingImage" data-a-dynamic-image='{"https://m.media-amazon.com/images/I/81XYZ._AC_SX679_.jpg":[679,679],"https://m.media-amazon.com/images/I/91ABC._AC_SX679_.jpg":[679,679]}' />
+          </head>
+          <body></body>
+        </html>
+      `;
+
+      axios.get.mockResolvedValue({ data: mockAmazonHtml });
+
+      const result = await scrapeProductFromUrl('https://www.amazon.fr/dp/B08N5WRWNW');
+      expect(result.titre).toBe('Casque Audio Sans Fil Réduction Bruit');
+      expect(result.prix_achat).toBeGreaterThan(30000);
+      expect(result.images.length).toBeGreaterThanOrEqual(2);
+      expect(result.images[0]).toBe('https://m.media-amazon.com/images/I/81XYZ._AC_SL1500_.jpg');
     });
 
     test('gère le fallback intelligemment si la requête échoue', async () => {

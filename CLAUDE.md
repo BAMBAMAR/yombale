@@ -1,3 +1,20 @@
+- **Optimisation & Dé-échappement Multi-Plateformes de la Baguette Magique (SHEIN, Amazon, AliExpress) (`main` - 23 août 2026)** 🌟🪄📸👗⚡ :
+  * **👗 Dé-échappement JSON & CDN Photos SHEIN (`backend/services/magic-import.js`)** :
+    - Traitement automatique des URLs de photos encodées en JSON (`\/` ➔ `/`) permettant d'extraire toutes les images réelles du CDN SHEIN (`img.ltwebstatic.com`, `shein.com`, `images2_pi`, `images3_pi`, `images3_sp`).
+    - Élimination des suffixes miniatures (`_thumbnail_900x.webp`, `_thumbnail_600x.jpg`) pour convertir les images en HD plein format.
+    - Nettoyage automatique du préfixe de marque (`SHEIN-` / `SHEIN `) dans les titres pour obtenir des noms marchands propres.
+  * **📦 Extraction Haute Définition Amazon (`backend/services/magic-import.js`)** :
+    - Support du parsing des attributs `data-a-dynamic-image` et des objets JavaScript `colorImages` / `imageGalleryData`.
+    - Conversion automatique de toutes les miniatures Amazon (`._AC_US..._.`, `._AC_SR..._.`, `._AC_SX..._.`, `._AC_SY..._.`) vers la haute résolution `._AC_SL1500_.jpg`.
+    - Détection de l'ASIN depuis tout type d'URL (`/dp/`, `/gp/product/`, `/d/`, `amzn.to`, `amzn.eu`).
+  * **🟢 Normalisation AliExpress & Priorisation CDN** :
+    - Ajout automatique de l'extension `.jpg` sur les URLs d'images CDN AliExpress `/kf/S...` sans extension.
+    - Priorisation des CDN produits légitimes (`ltwebstatic`, `media-amazon`, `alicdn`, `kwcdn`, `shopify`, `jumia`) et filtrage renforcé des icônes/logos.
+  * **✨ Feedback Utilisateur Transparent & Mode Guidé (`frontend-next/src/app/boutique/BoutiqueClient.tsx`)** :
+    - Message contextuel clair indiquant lorsque la fiche est importée avec succès même en cas de protection d'images par la plateforme source (*« ✨ Fiche importée avec succès ! (Titre, Prix & Description remplis — ajoutez vos photos ci-dessous). »*).
+  * **🧪 Tests Unitaires Automatisés (`tests/unit/magic-import.test.js`)** :
+    - 20/20 tests unitaires Jest validés avec succès (100% de réussite) couvrant la sécurité SSRF, conversions de prix/devises, catégorisation mode/outillage/maison, nettoyage de titre, galeries multi-photos HD et scraping AliExpress, SHEIN et Amazon.
+
 - **Support Multi-Photos Intégral & Gestion du Stock pour l'Ajout de Produits par WhatsApp (`main` - 23 août 2026)** 📸📦⚡💬✨ :
   * **📸 Fiabilisation Multi-Photos & Élimination des Race Conditions (`backend/services/whatsapp-chatbot.js`, `backend/routes/whatsapp.js`)** :
     - **Itération Complète du Webhook** : Itération sur l'ensemble du tableau `entry.messages` dans `backend/routes/whatsapp.js` pour traiter tous les messages arrivant dans le même payload Meta sans perte.

@@ -786,10 +786,13 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         if (data.images && Array.isArray(data.images) && data.images.length > 0) {
           setImagesExistantes(data.images);
         }
+        const nbImgs = data.images?.length || 0;
         setMagicResult(data);
         setMagicFeedback({
           type: 'success',
-          text: `✨ Produit importé avec succès ! ${data.images?.length || 0} photo(s) ajoutée(s).`
+          text: nbImgs > 0
+            ? `✨ Produit importé avec succès ! ${nbImgs} photo(s) ajoutée(s).`
+            : `✨ Fiche importée avec succès ! (Titre, Prix & Description remplis — ajoutez vos photos ci-dessous).`
         });
         setModeRapide(false); // Basculer pour afficher description et photos
       } else {
