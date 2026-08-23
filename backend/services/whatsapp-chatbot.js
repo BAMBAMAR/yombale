@@ -209,10 +209,71 @@ async function estProprietaireBoutique(phone, boutique) {
   }
 }
 
-// Tampon en mémoire pour l'association automatique des photos multiples (batch d'images WhatsApp)
+// File d'attente séquentielle par numéro de téléphone (FIFO Queue / Mutex) pour éliminer les race conditions
+const _userQueues = new Map();
+// Tampon en mémoire pour l'association automatique des photos multiples (batch d'images WhatsApp) - 5 minutes
 const _recentsProduitsCrees = new Map();
+const DUREE_TAMPON_PHOTOS_MS = 5 * 60 * 1000;
 // Cache des codes OTP pour la réinitialisation de Code PIN marchand (valable 10 min)
 const _otpCodesMarchand = new Map();
+
+// ── Extraction et détection de texte produit (Nom, Prix, Stock) ────────────────
+function extraireInfosProduitTexte(texte) {
+  if (!texte || typeof texte !== 'string') return null;
+  const raw = texte.trim();
+  if (raw.length < 2) return null;
+
+  let clean = raw;
+  let stock = null;
+
+  // 1. Détection du stock explicite avec mots-clés (ex: "stock 10", "qte: 5", "quantite 20", "qté 12", "x 10", "* 10")
+  const explicitStockMatch = clean.match(/(?:stock|qte|quantite|qté|quantité)\s*[:=]?\s*(\d{1,5})/i) ||
+                             clean.match(/(?:^|\s)[x*]\s*(\d{1,5})(?:\s|$)/i);
+  if (explicitStockMatch) {
+    stock = parseInt(explicitStockMatch[1], 10);
+    clean = clean.replace(explicitStockMatch[0], ' ').trim();
+  }
+
+  // 2. Détection du format direct "[Nom] [Prix] [Stock]" à la fin du texte (ex: "Sac cuir 5000 10" ou "Robe 15000 FCFA 5")
+  if (stock === null) {
+    const directEndMatch = clean.match(/(\d{3,9})\s*(?:fcfa|cfa|f)?\s+(\d{1,5})\s*$/i);
+    if (directEndMatch) {
+      const prix = parseInt(directEndMatch[1], 10);
+      stock = parseInt(directEndMatch[2], 10);
+      const nom = clean.slice(0, clean.lastIndexOf(directEndMatch[0])).replace(/[-:–—]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (nom.length >= 2 && prix > 0 && stock >= 0) {
+        return { nom, prix, stock };
+      }
+    }
+  }
+
+  // 3. Détection du stock entre parenthèses à la fin (ex: "Sac cuir 5000 (10)" ou "Sac cuir (10) 5000")
+  if (stock === null) {
+    const parenMatch = clean.match(/\((\d{1,5})\)/);
+    if (parenMatch) {
+      stock = parseInt(parenMatch[1], 10);
+      clean = clean.replace(parenMatch[0], ' ').trim();
+    }
+  }
+
+  // 4. Détection du prix standard (ex: "5000 FCFA", "5000f", "5000")
+  const prixMatch = clean.match(/(\d{3,9})\s*(?:fcfa|cfa|f)?\s*$/i) ||
+                    clean.match(/(?:^|\s)(\d{3,9})\s*(?:fcfa|cfa|f)?(?:\s|$)/i);
+  if (!prixMatch) return null;
+
+  const prix = parseInt(prixMatch[1], 10);
+  if (isNaN(prix) || prix <= 0) return null;
+
+  // Retirer le prix pour extraire le nom
+  let nom = clean.replace(prixMatch[0], ' ')
+                 .replace(/[-:–—]/g, ' ')
+                 .replace(/\s+/g, ' ')
+                 .trim();
+
+  if (nom.length < 2) return null;
+
+  return { nom, prix, stock };
+}
 
 // ── Extraction et détection de numéro de téléphone sénégalais ─────────────────
 function extraireNumeroTelephone(texte) {
@@ -1403,8 +1464,31 @@ async function notifierVendeurPanierGroupe(boutique, commandesCreees, groupeComm
   ]).catch(() => {});
 }
 
-// ── Dispatcher principal ──────────────────────────────────────────────────────
+// ── Dispatcher principal avec file d'attente séquentielle par numéro ────────────
 async function handleIncoming(msg) {
+  if (!msg || !msg.from) return;
+  const phone = normalisePhone(msg.from);
+
+  const prevPromise = _userQueues.get(phone) || Promise.resolve();
+  const currentPromise = (async () => {
+    try {
+      await prevPromise;
+    } catch (_) {}
+    return handleIncomingInternal(msg);
+  })();
+
+  _userQueues.set(phone, currentPromise);
+
+  try {
+    return await currentPromise;
+  } finally {
+    if (_userQueues.get(phone) === currentPromise) {
+      _userQueues.delete(phone);
+    }
+  }
+}
+
+async function handleIncomingInternal(msg) {
   const phone = normalisePhone(msg.from);
 
   // Déduplication
@@ -1542,8 +1626,8 @@ async function handleIncoming(msg) {
     const recentProd = _recentsProduitsCrees.get(normPh);
     const caption = (msg.image?.caption || '').trim();
 
-    // Si c'est une image additionnelle sans légende envoyée dans les 30s après la création d'un article
-    if (recentProd && !caption && (Date.now() - recentProd.timestamp < 30000) && state !== 'AJOUT_PRODUIT_PHOTO') {
+    // Si c'est une image additionnelle sans légende envoyée dans les 5 min après la création d'un article
+    if (recentProd && !caption && (Date.now() - recentProd.timestamp < DUREE_TAMPON_PHOTOS_MS) && state !== 'AJOUT_PRODUIT_PHOTO') {
       if (msg.image?.id) {
         const imageUrl = await telechargerMediaWhatsApp(msg.image.id);
         if (imageUrl) {
@@ -1566,7 +1650,7 @@ async function handleIncoming(msg) {
   // ── DÉTECTION D'UN NUMÉRO DE TÉLÉPHONE DANS LE MESSAGE (Accès Direct Boutique) ─
   const etatsExclusNum = [
     'COMMANDE_NOM', 'COMMANDE_TELEPHONE', 'COMMANDE_ADRESSE', 'COMMANDE_ZONE', 'COMMANDE_QUANTITE',
-    'AJOUT_PRODUIT_NOM', 'AJOUT_PRODUIT_PRIX', 'AJOUT_PRODUIT_PHOTO', 'CREER_BOUTIQUE_NOM', 'CREER_BOUTIQUE_QUARTIER',
+    'AJOUT_PRODUIT_NOM', 'AJOUT_PRODUIT_PRIX', 'AJOUT_PRODUIT_STOCK', 'AJOUT_PRODUIT_PHOTO', 'CREER_BOUTIQUE_NOM', 'CREER_BOUTIQUE_QUARTIER',
     'MARCHAND_CHANGE_PIN_ACTUEL', 'MARCHAND_CHANGE_PIN_NOUVEAU', 'MARCHAND_RESET_OTP', 'MARCHAND_RESET_NOUVEAU_PIN',
     'MARCHAND_PIN'
   ];
@@ -1865,72 +1949,114 @@ async function handleIncoming(msg) {
     return;
   }
 
-  // ── DÉCLENCHEUR AJOUT EXPRESS (Photo avec nom et prix dans la légende) ──────
+  // ── DÉCLENCHEUR AJOUT EXPRESS (Photo avec nom, prix et stock dans la légende) ─
   if (msg.type === 'image' && msg.image?.caption && state !== 'AJOUT_PRODUIT_PHOTO') {
     const caption = msg.image.caption.trim();
-    // Ex: "Sac à main 2000" ou "Robe Bazin 15000 FCFA"
-    const matchPrix = caption.match(/(\d{3,9})\s*(fcfa|f|cfa)?\s*$/i) || caption.match(/(\d{3,9})/);
-    if (matchPrix) {
-      const prixNum = parseInt(matchPrix[1], 10);
-      const prodNom = caption.replace(matchPrix[0], '').replace(/[-:–—]/g, ' ').trim();
+    const infosProd = extraireInfosProduitTexte(caption);
 
-      if (prodNom.length >= 2 && prixNum > 0) {
-        const normPh = normalisePhone(phone);
-        const short9 = phone.replace(/\D/g, '').slice(-9);
-        const rBq = await pool.query(
-          `SELECT b.id, b.nom, b.slug
-           FROM boutiques b
-           LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
-           WHERE (
-             REGEXP_REPLACE(COALESCE(b.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
-             OR REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
-             OR REGEXP_REPLACE(COALESCE(u.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
-           )
-             AND (b.actif IS NULL OR b.actif = true)
-           ORDER BY b.created_at DESC LIMIT 1`,
-          [short9]
+    if (infosProd) {
+      const { nom: prodNom, prix: prixNum, stock: stockNum } = infosProd;
+      const normPh = normalisePhone(phone);
+      const short9 = phone.replace(/\D/g, '').slice(-9);
+      const rBq = await pool.query(
+        `SELECT b.id, b.nom, b.slug
+         FROM boutiques b
+         LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+         WHERE (
+           REGEXP_REPLACE(COALESCE(b.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+           OR REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
+           OR REGEXP_REPLACE(COALESCE(u.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+         )
+           AND (b.actif IS NULL OR b.actif = true)
+         ORDER BY b.created_at DESC LIMIT 1`,
+        [short9]
+      );
+
+      if (rBq.rows.length > 0) {
+        const maBoutique = rBq.rows[0];
+        let imageUrl = null;
+        if (msg.image?.id) {
+          imageUrl = await telechargerMediaWhatsApp(msg.image.id);
+        }
+        const imagesArray = imageUrl ? [imageUrl] : [];
+
+        const resProd = await pool.query(
+          `INSERT INTO boutique_produits (boutique_id, nom, prix, stock_quantite, images, en_stock)
+           VALUES ($1, $2, $3, $4, $5, true)
+           RETURNING id, nom, prix, stock_quantite`,
+          [maBoutique.id, prodNom, prixNum, stockNum, imagesArray]
         );
 
-        if (rBq.rows.length > 0) {
-          const maBoutique = rBq.rows[0];
-          let imageUrl = null;
-          if (msg.image?.id) {
-            imageUrl = await telechargerMediaWhatsApp(msg.image.id);
-          }
-          const imagesArray = imageUrl ? [imageUrl] : [];
+        const prodCree = resProd.rows[0];
 
-          const resProd = await pool.query(
-            `INSERT INTO boutique_produits (boutique_id, nom, prix, images, en_stock)
-             VALUES ($1, $2, $3, $4, true)
-             RETURNING id, nom, prix`,
-            [maBoutique.id, prodNom, prixNum, imagesArray]
-          );
+        // Enregistrer dans le tampon pour recevoir d'éventuelles photos supplémentaires du lot
+        _recentsProduitsCrees.set(normPh, {
+          produitId: prodCree.id,
+          boutiqueId: maBoutique.id,
+          nom: prodCree.nom,
+          totalPhotos: imageUrl ? 1 : 0,
+          timestamp: Date.now(),
+        });
 
-          const prodCree = resProd.rows[0];
+        // Synchronisation asynchrone avec le catalogue Meta / WhatsApp si configuré
+        try {
+          const { syncProduit } = require('./whatsapp-catalog');
+          syncProduit(prodCree.id).catch(() => {});
+        } catch (_) {}
 
-          // Enregistrer dans le tampon pour recevoir d'éventuelles photos supplémentaires du batch
-          _recentsProduitsCrees.set(normPh, {
-            produitId: prodCree.id,
-            boutiqueId: maBoutique.id,
-            nom: prodCree.nom,
-            totalPhotos: imageUrl ? 1 : 0,
-            timestamp: Date.now(),
-          });
+        const stockLabel = (prodCree.stock_quantite !== null && prodCree.stock_quantite !== undefined)
+          ? `*${prodCree.stock_quantite} unité(s)*`
+          : '*Illimité*';
 
-          await sendWhatsAppText(
-            phone,
-            `⚡ *Ajout Express Réussi en 1 Clic !* ⚡\n\n` +
-            `🛍️ *${prodCree.nom}*\n` +
-            `💰 Prix : *${prixFmt(prodCree.prix)}*\n` +
-            `📸 Photo : *${imageUrl ? 'Photo enregistrée avec succès' : 'Sans photo'}*\n` +
-            `🏪 Boutique : *${maBoutique.nom}*\n\n` +
-            `🔗 *Fiche produit en ligne :*\n${SITE}/boutiques/${maBoutique.slug}\n\n` +
-            `👉 *Astuce multi-photos :* Vous pouvez envoyer les photos suivantes directement !`
-          );
-          await setSession(phone, 'IDLE', {});
-          return;
-        }
+        await sendWhatsAppText(
+          phone,
+          `⚡ *Ajout Express Réussi en 1 Clic !* ⚡\n\n` +
+          `🛍️ Article : *${prodCree.nom}*\n` +
+          `💰 Prix : *${prixFmt(prodCree.prix)}*\n` +
+          `📦 Stock : ${stockLabel}\n` +
+          `📸 Photo : *${imageUrl ? 'Photo enregistrée avec succès' : 'Sans photo'}*\n` +
+          `🏪 Boutique : *${maBoutique.nom}*\n\n` +
+          `🔗 *Fiche produit en ligne :*\n${SITE}/boutiques/${maBoutique.slug}\n\n` +
+          `👉 *Astuce multi-photos :* Vous pouvez envoyer d'autres photos directement pour cet article !`
+        );
+        await setSession(phone, 'IDLE', {});
+        return;
       }
+    }
+  }
+
+  // ── PHOTO SEULE SANS LÉGENDE REÇUE PAR UN MARCHAND (Assistance création rapide) ─
+  if (msg.type === 'image' && !msg.image?.caption && (state === 'IDLE' || state === 'MARCHAND_MENU')) {
+    const short9 = phone.replace(/\D/g, '').slice(-9);
+    const rBq = await pool.query(
+      `SELECT b.id, b.nom, b.slug
+       FROM boutiques b
+       LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+       WHERE (
+         REGEXP_REPLACE(COALESCE(b.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+         OR REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
+         OR REGEXP_REPLACE(COALESCE(u.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+       )
+         AND (b.actif IS NULL OR b.actif = true)
+       ORDER BY b.created_at DESC LIMIT 1`,
+      [short9]
+    );
+
+    if (rBq.rows.length > 0) {
+      const maBoutique = rBq.rows[0];
+      let imageUrl = null;
+      if (msg.image?.id) {
+        imageUrl = await telechargerMediaWhatsApp(msg.image.id);
+      }
+      const initialPhotos = imageUrl ? [imageUrl] : [];
+      await setSession(phone, 'AJOUT_PRODUIT_NOM', { boutique: maBoutique, photos: initialPhotos });
+      await sendWhatsAppText(
+        phone,
+        `📸 *Photo bien reçue pour « ${maBoutique.nom} » !*\n\n` +
+        `Quel est le *nom, prix et stock* de cet article ?\n` +
+        `👉 *(ex: Sac cuir 5000 10 ou Robe Soirée 15000)*`
+      );
+      return;
     }
   }
 
@@ -3429,7 +3555,7 @@ async function handleIncoming(msg) {
     }
   }
 
-  // ── AJOUT_PRODUIT_NOM → Nom du produit (avec support image & détection automatique du prix) ─
+  // ── AJOUT_PRODUIT_NOM → Nom du produit (avec support image & détection automatique nom/prix/stock) ─
   if (state === 'AJOUT_PRODUIT_NOM') {
     const boutique = context?.boutique;
     let initialPhotos = Array.isArray(context?.photos) ? [...context.photos] : [];
@@ -3442,58 +3568,78 @@ async function handleIncoming(msg) {
 
     const rawText = (text || '').trim();
 
-    // Vérifier si le texte contient à la fois le nom et le prix (ex: "CHAUSSURE 15000" ou "Robe Bazin 20000 FCFA")
-    const matchPrix = rawText.match(/(\d{3,9})\s*(?:fcfa|cfa|f)?\s*$/i) || rawText.match(/(\d{3,9})/);
-    if (matchPrix) {
-      const prixNum = parseInt(matchPrix[1], 10);
-      const prodNom = rawText.replace(matchPrix[0], '').replace(/[-:–—]/g, ' ').trim();
+    // Vérifier si le texte contient à la fois le nom, le prix et éventuellement le stock
+    const infosProd = extraireInfosProduitTexte(rawText);
+    if (infosProd) {
+      const { nom: prodNom, prix: prixNum, stock: stockNum } = infosProd;
 
-      if (prodNom.length >= 2 && prixNum > 0) {
-        if (initialPhotos.length > 0) {
-          // L'utilisateur a envoyé à la fois la photo, le nom et le prix ! On publie immédiatement
+      if (initialPhotos.length > 0) {
+        // L'utilisateur a envoyé à la fois la photo, le nom et le prix ! On publie immédiatement
+        try {
+          const resProd = await pool.query(
+            `INSERT INTO boutique_produits (boutique_id, nom, prix, stock_quantite, images, en_stock)
+             VALUES ($1, $2, $3, $4, $5, true)
+             RETURNING id, nom, prix, stock_quantite`,
+            [boutique.id, prodNom, prixNum, stockNum, initialPhotos]
+          );
+          const prodCree = resProd.rows[0];
+          const normPh = normalisePhone(phone);
+          _recentsProduitsCrees.set(normPh, {
+            produitId: prodCree.id,
+            boutiqueId: boutique.id,
+            nom: prodCree.nom,
+            totalPhotos: initialPhotos.length,
+            timestamp: Date.now(),
+          });
+
+          // Sync catalog background
           try {
-            const resProd = await pool.query(
-              `INSERT INTO boutique_produits (boutique_id, nom, prix, images, en_stock)
-               VALUES ($1, $2, $3, $4, true)
-               RETURNING id, nom, prix`,
-              [boutique.id, prodNom, prixNum, initialPhotos]
-            );
-            const prodCree = resProd.rows[0];
-            const normPh = normalisePhone(phone);
-            _recentsProduitsCrees.set(normPh, {
-              produitId: prodCree.id,
-              boutiqueId: boutique.id,
-              nom: prodCree.nom,
-              totalPhotos: initialPhotos.length,
-              timestamp: Date.now(),
-            });
+            const { syncProduit } = require('./whatsapp-catalog');
+            syncProduit(prodCree.id).catch(() => {});
+          } catch (_) {}
 
-            await sendWhatsAppText(
-              phone,
-              `✅ *Article publié avec succès !* 🎉\n\n` +
-              `🛍️ *${prodCree.nom}*\n` +
-              `💰 Prix : *${prixFmt(prodCree.prix)}*\n` +
-              `📸 Photos : *${initialPhotos.length} photo(s)*\n` +
-              `🏪 Boutique : *${boutique.nom}*\n\n` +
-              `👉 *Astuce :* Vous pouvez envoyer d'autres photos pour cet article dans les 30s, elles seront automatiquement ajoutées !`
-            );
-            await envoyerMenuMarchand(phone, boutique);
-            return;
-          } catch (eQuick) {
-            console.error('[QUICK ADD PROD ERR]:', eQuick);
-          }
+          const stockLabel = (prodCree.stock_quantite !== null && prodCree.stock_quantite !== undefined)
+            ? `*${prodCree.stock_quantite} unité(s)*`
+            : '*Illimité*';
+
+          await sendWhatsAppText(
+            phone,
+            `✅ *Article publié avec succès !* 🎉\n\n` +
+            `🛍️ Article : *${prodCree.nom}*\n` +
+            `💰 Prix : *${prixFmt(prodCree.prix)}*\n` +
+            `📦 Stock : ${stockLabel}\n` +
+            `📸 Photos : *${initialPhotos.length} photo(s)*\n` +
+            `🏪 Boutique : *${boutique.nom}*\n\n` +
+            `👉 *Astuce multi-photos :* Vous pouvez envoyer d'autres photos pour cet article, elles seront automatiquement ajoutées !`
+          );
+          await envoyerMenuMarchand(phone, boutique);
+          return;
+        } catch (eQuick) {
+          console.error('[QUICK ADD PROD ERR]:', eQuick);
         }
+      }
 
-        // Pas encore de photo : on passe à l'étape photo avec le nom et prix déjà enregistrés
-        await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix: prixNum, photos: initialPhotos });
+      // Si le stock a déjà été saisi dans le texte (ex: "Sac cuir 5000 10" ou "Sac 5000 stock 10")
+      if (stockNum !== null) {
+        await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix: prixNum, stock: stockNum, photos: initialPhotos });
         await sendWhatsAppText(
           phone,
-          `✅ Article : *${prodNom}* — Prix : *${prixFmt(prixNum)}*\n\n` +
+          `✅ Article : *${prodNom}* — Prix : *${prixFmt(prixNum)}* — Stock : *${stockNum} unité(s)*\n\n` +
           `📸 Envoyez maintenant la ou les photos de votre article *${prodNom}*.\n` +
           `Tapez *OK* quand vous avez fini ou *passer* pour publier sans photo.`
         );
         return;
       }
+
+      // Si le prix est renseigné mais pas le stock : demander le stock
+      await setSession(phone, 'AJOUT_PRODUIT_STOCK', { boutique, produit_nom: prodNom, prix: prixNum, photos: initialPhotos });
+      await sendWhatsAppText(
+        phone,
+        `✅ Article : *${prodNom}* — Prix : *${prixFmt(prixNum)}*\n\n` +
+        `📦 Quelle est la *quantité disponible en stock* ? (ex: *10*, *25*, *5*...)\n` +
+        `👉 Tapez un chiffre ou tapez *passer* pour un stock illimité.`
+      );
+      return;
     }
 
     // Si l'utilisateur a envoyé une image sans texte
@@ -3520,7 +3666,7 @@ async function handleIncoming(msg) {
     return;
   }
 
-  // ── AJOUT_PRODUIT_PRIX → Prix du produit ────────────────────────────────────
+  // ── AJOUT_PRODUIT_PRIX → Prix du produit (avec support éventuel du stock en 1 fois) ─
   if (state === 'AJOUT_PRODUIT_PRIX') {
     let photos = Array.isArray(context?.photos) ? [...context.photos] : [];
     if (mediaId) {
@@ -3528,27 +3674,86 @@ async function handleIncoming(msg) {
       if (imageUrl) photos.push(imageUrl);
     }
 
-    const rawPrix = text.replace(/[^\d]/g, '');
-    const prixNum = parseInt(rawPrix, 10);
+    const boutique = context?.boutique;
+    const prodNom = context?.produit_nom;
+    const rawPrixTxt = (text || '').trim();
+
+    // Vérifier si le prix + stock ont été saisis ensemble (ex: "15000 stock 10" ou "15000 10")
+    const infosP = extraireInfosProduitTexte(`Article ${rawPrixTxt}`);
+    let prixNum = null;
+    let stockNum = null;
+
+    if (infosP) {
+      prixNum = infosP.prix;
+      stockNum = infosP.stock;
+    } else {
+      const rawPrix = rawPrixTxt.replace(/[^\d]/g, '');
+      prixNum = parseInt(rawPrix, 10);
+    }
+
     if (isNaN(prixNum) || prixNum <= 0) {
       await sendWhatsAppText(phone, '⚠️ Veuillez entrer un montant numérique valide en FCFA (ex: 15000).');
       return;
     }
 
+    if (stockNum !== null) {
+      await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix: prixNum, stock: stockNum, photos });
+      await sendWhatsAppText(
+        phone,
+        `✅ Prix : *${prixFmt(prixNum)}* — Stock : *${stockNum} unité(s)*\n\n` +
+        `📸 Envoyez la ou les photos de votre article *${prodNom}*.\n` +
+        `Tapez *OK* quand vous avez fini ou *passer* pour publier sans photo.`
+      );
+      return;
+    }
+
+    await setSession(phone, 'AJOUT_PRODUIT_STOCK', { boutique, produit_nom: prodNom, prix: prixNum, photos });
+    await sendWhatsAppText(
+      phone,
+      `💰 Prix enregistré : *${prixFmt(prixNum)}*\n\n` +
+      `📦 Quelle est la *quantité disponible en stock* pour *${prodNom}* ? (ex: *10*, *25*, *5*...)\n` +
+      `👉 Tapez un chiffre ou tapez *passer* pour un stock illimité.`
+    );
+    return;
+  }
+
+  // ── AJOUT_PRODUIT_STOCK → Quantité en stock ─────────────────────────────────
+  if (state === 'AJOUT_PRODUIT_STOCK') {
+    let photos = Array.isArray(context?.photos) ? [...context.photos] : [];
+    if (mediaId) {
+      const imageUrl = await telechargerMediaWhatsApp(mediaId);
+      if (imageUrl) photos.push(imageUrl);
+    }
+
     const boutique = context?.boutique;
     const prodNom = context?.produit_nom;
-    await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix: prixNum, photos });
+    const prix = context?.prix || 0;
+    const rawStock = (text || '').toLowerCase().trim();
+
+    let stockNum = null;
+    if (rawStock !== 'passer' && rawStock !== 'skip' && rawStock !== 'illimite' && rawStock !== 'aucun' && rawStock !== '-') {
+      const parsedStock = parseInt(rawStock.replace(/[^\d]/g, ''), 10);
+      if (!isNaN(parsedStock) && parsedStock >= 0) {
+        stockNum = parsedStock;
+      }
+    }
+
+    await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix, stock: stockNum, photos });
+
+    const stockLabel = stockNum !== null ? `*${stockNum} unité(s)*` : '*Illimité*';
 
     if (photos.length > 0) {
       await sendWhatsAppText(
         phone,
-        `📸 *Photos du produit (${photos.length} photo(s) reçue(s)) :*\n\n` +
-        `Vous pouvez envoyer d'autres photos pour *${prodNom}*, ou taper *OK* (ou *terminer*) pour publier l'article !`
+        `📦 Stock enregistré : ${stockLabel}\n\n` +
+        `📸 *Photos du produit (${photos.length} reçue(s)) :*\n` +
+        `Vous pouvez envoyer d'autres photos pour *${prodNom}*, ou taper *OK* pour publier l'article !`
       );
     } else {
       await sendWhatsAppText(
         phone,
-        `📸 *Photos du produit :*\n\n` +
+        `📦 Stock enregistré : ${stockLabel}\n\n` +
+        `📸 *Photos du produit :*\n` +
         `Envoyez 1 ou plusieurs photos de votre article *${prodNom}*.\n` +
         `Tapez *OK* quand vous avez fini ou *passer* pour publier sans photo.`
       );
@@ -3561,6 +3766,7 @@ async function handleIncoming(msg) {
     const boutique = context?.boutique;
     const prodNom = context?.produit_nom;
     const prix = context?.prix || 0;
+    const stock = (context?.stock !== undefined && context?.stock !== null) ? context.stock : null;
     let photos = Array.isArray(context?.photos) ? [...context.photos] : [];
 
     if (!boutique || !prodNom) {
@@ -3574,7 +3780,7 @@ async function handleIncoming(msg) {
       const imageUrl = await telechargerMediaWhatsApp(mediaId);
       if (imageUrl) {
         photos.push(imageUrl);
-        await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix, photos });
+        await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix, stock, photos });
         await sendWhatsAppText(
           phone,
           `📸 *Photo ${photos.length} enregistrée !*\n\n` +
@@ -3593,10 +3799,10 @@ async function handleIncoming(msg) {
 
       try {
         const resProd = await pool.query(
-          `INSERT INTO boutique_produits (boutique_id, nom, prix, images, en_stock)
-           VALUES ($1, $2, $3, $4, true)
-           RETURNING id, nom, prix`,
-          [boutique.id, prodNom, prix, photos]
+          `INSERT INTO boutique_produits (boutique_id, nom, prix, stock_quantite, images, en_stock)
+           VALUES ($1, $2, $3, $4, $5, true)
+           RETURNING id, nom, prix, stock_quantite`,
+          [boutique.id, prodNom, prix, stock, photos]
         );
 
         const prodCree = resProd.rows[0];
@@ -3611,14 +3817,25 @@ async function handleIncoming(msg) {
           timestamp: Date.now(),
         });
 
+        // Sync catalog background
+        try {
+          const { syncProduit } = require('./whatsapp-catalog');
+          syncProduit(prodCree.id).catch(() => {});
+        } catch (_) {}
+
+        const stockLabel = (prodCree.stock_quantite !== null && prodCree.stock_quantite !== undefined)
+          ? `*${prodCree.stock_quantite} unité(s)*`
+          : '*Illimité*';
+
         const msgProdSucces =
           `✅ *Article publié avec succès sur votre boutique !* 🎉\n\n` +
-          `🛍️ *${prodCree.nom}*\n` +
+          `🛍️ Article : *${prodCree.nom}*\n` +
           `💰 Prix : *${prixFmt(prodCree.prix)}*\n` +
+          `📦 Stock : ${stockLabel}\n` +
           `📸 Photos : *${photos.length} photo(s) enregistrée(s)*\n` +
           `🏪 Boutique : *${boutique.nom}*\n\n` +
           `🔗 *Fiche produit en ligne :*\n${SITE}/boutiques/${boutique.slug}\n\n` +
-          `👉 *Pour ajouter le prochain article :*\nEnvoyez simplement la photo avec le nom et le prix en légende (ex: *Sac cuir 5000*) !`;
+          `👉 *Pour ajouter le prochain article :*\nEnvoyez simplement la photo avec le nom, prix et stock en légende (ex: *Sac cuir 5000 10*) !`;
 
         await sendWhatsAppText(phone, msgProdSucces);
         await envoyerMenuMarchand(phone, boutique);
@@ -3662,7 +3879,7 @@ async function handleSearchQuery(phone, query, excludeIds = []) {
     );
     if (rBoutique.rows.length > 0) {
       const b = rBoutique.rows[0];
-      if (b.nom.toLowerCase().includes(cleanQ.toLowerCase())) {
+      if (b && b.nom && b.nom.toLowerCase().includes(cleanQ.toLowerCase())) {
         await sendWhatsAppText(phone, `🏪 J'ai trouvé la boutique *${b.nom}* (${b.categorie || 'commerce'}${b.ville ? ` — ${b.ville}` : ''}) !`);
         await envoyerMenuBoutique(phone, b);
         return;
@@ -3734,6 +3951,7 @@ async function handleSearchQuery(phone, query, excludeIds = []) {
 
 module.exports = {
   handleIncoming,
+  extraireInfosProduitTexte,
   cleanupOldMessages,
   resetInactiveSessions,
   handleSearchQuery,

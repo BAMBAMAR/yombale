@@ -16,11 +16,90 @@ jest.mock('../../backend/services/whatsapp', () => ({
   normalisePhone:          jest.fn(p => p),
 }));
 
-const { cleanupOldMessages, resetInactiveSessions } = require('../../backend/services/whatsapp-chatbot');
+const { cleanupOldMessages, resetInactiveSessions, extraireInfosProduitTexte } = require('../../backend/services/whatsapp-chatbot');
 
 beforeEach(() => {
   mockQuery.mockReset();
   mockQuery.mockResolvedValue({ rows: [] });
+});
+
+describe('extraireInfosProduitTexte', () => {
+  test('extrait correctement le format compact direct [Nom] [Prix] [Stock] : "Sac cuir 5000 10"', () => {
+    const res = extraireInfosProduitTexte('Sac cuir 5000 10');
+    expect(res).toEqual({
+      nom: 'Sac cuir',
+      prix: 5000,
+      stock: 10,
+    });
+  });
+
+  test('extrait correctement le format avec devise et stock direct : "Robe Bazin 15000 FCFA 5"', () => {
+    const res = extraireInfosProduitTexte('Robe Bazin 15000 FCFA 5');
+    expect(res).toEqual({
+      nom: 'Robe Bazin',
+      prix: 15000,
+      stock: 5,
+    });
+  });
+
+  test('extrait sans stock quand aucun stock n\'est fourni : "Sac cuir 5000"', () => {
+    const res = extraireInfosProduitTexte('Sac cuir 5000');
+    expect(res).toEqual({
+      nom: 'Sac cuir',
+      prix: 5000,
+      stock: null,
+    });
+  });
+
+  test('extrait avec mot-clé stock : "Sac cuir 5000 stock 10"', () => {
+    const res = extraireInfosProduitTexte('Sac cuir 5000 stock 10');
+    expect(res).toEqual({
+      nom: 'Sac cuir',
+      prix: 5000,
+      stock: 10,
+    });
+  });
+
+  test('extrait avec mot-clé qte : "Robe Soirée 20000 CFA qte: 12"', () => {
+    const res = extraireInfosProduitTexte('Robe Soirée 20000 CFA qte: 12');
+    expect(res).toEqual({
+      nom: 'Robe Soirée',
+      prix: 20000,
+      stock: 12,
+    });
+  });
+
+  test('extrait avec multiplicateur x : "Chaussures Nike 25000 x 8"', () => {
+    const res = extraireInfosProduitTexte('Chaussures Nike 25000 x 8');
+    expect(res).toEqual({
+      nom: 'Chaussures Nike',
+      prix: 25000,
+      stock: 8,
+    });
+  });
+
+  test('extrait avec parenthèses pour stock : "Montre Rolex 75000 (3)"', () => {
+    const res = extraireInfosProduitTexte('Montre Rolex 75000 (3)');
+    expect(res).toEqual({
+      nom: 'Montre Rolex',
+      prix: 75000,
+      stock: 3,
+    });
+  });
+
+  test('gère les noms avec des chiffres : "iPhone 13 128Go 350000 3"', () => {
+    const res = extraireInfosProduitTexte('iPhone 13 128Go 350000 3');
+    expect(res).toEqual({
+      nom: 'iPhone 13 128Go',
+      prix: 350000,
+      stock: 3,
+    });
+  });
+
+  test('retourne null si le texte est vide ou ne contient pas de prix', () => {
+    expect(extraireInfosProduitTexte('')).toBeNull();
+    expect(extraireInfosProduitTexte('Juste un nom')).toBeNull();
+  });
 });
 
 describe('cleanupOldMessages', () => {

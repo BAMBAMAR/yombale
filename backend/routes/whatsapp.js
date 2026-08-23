@@ -44,8 +44,7 @@ router.post('/webhook', verifyHmac, async (req, res) => {
   const entry = req.body?.entry?.[0]?.changes?.[0]?.value;
   if (!entry) return;
 
-  if (entry.messages) {
-    const msg = entry.messages[0];
+  if (entry.messages && Array.isArray(entry.messages)) {
     // Vérifier que WhatsApp et le chatbot sont activés dans les settings
     const [waEnabled, botEnabled] = await Promise.all([
       cfg.getBool('whatsapp_enabled').catch(() => true),
@@ -53,9 +52,11 @@ router.post('/webhook', verifyHmac, async (req, res) => {
     ]);
     if (!waEnabled || !botEnabled) return;
 
-    require('../services/whatsapp-chatbot').handleIncoming(msg).catch(err =>
-      console.error('[WHATSAPP CHATBOT]', err.message)
-    );
+    for (const msg of entry.messages) {
+      require('../services/whatsapp-chatbot').handleIncoming(msg).catch(err =>
+        console.error('[WHATSAPP CHATBOT]', err.message)
+      );
+    }
   }
 
   if (entry.statuses) {

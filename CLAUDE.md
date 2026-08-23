@@ -1,3 +1,22 @@
+- **Support Multi-Photos Intégral & Gestion du Stock pour l'Ajout de Produits par WhatsApp (`main` - 23 août 2026)** 📸📦⚡💬✨ :
+  * **📸 Fiabilisation Multi-Photos & Élimination des Race Conditions (`backend/services/whatsapp-chatbot.js`, `backend/routes/whatsapp.js`)** :
+    - **Itération Complète du Webhook** : Itération sur l'ensemble du tableau `entry.messages` dans `backend/routes/whatsapp.js` pour traiter tous les messages arrivant dans le même payload Meta sans perte.
+    - **File d'Attente Séquentielle par Numéro (`_userQueues`)** : Traitement strict séquentiel FIFO par numéro de téléphone éliminant les courses critiques quand Meta envoie plusieurs requêtes webhook quasi-simultanément pour un lot/album de photos.
+    - **Tampon d'Association Intelligent Étendu (5 min)** : Toutes les photos supplémentaires sans légende envoyées dans un intervalle de 5 minutes après la création d'un article sont automatiquement rattachées au produit en base de données Postgres (`UPDATE boutique_produits SET images = array_append(images, $1)`).
+    - **Support Photo Seule en IDLE** : Lorsqu'un commerçant envoie directement une photo sans légende au chatbot, l'image est capturée et le bot lui demande immédiatement le nom, prix et stock.
+    - **Mode Guidé Sécurisé (`AJOUT_PRODUIT_PHOTO`)** : Accumulation sans écrasement des photos multiples envoyées à la suite ou en lot avant la validation.
+  * **📦 Gestion Complète du Stock lors de l'Ajout Produit WhatsApp** :
+    - **Extraction Intelligente du Stock (`extraireInfosProduitTexte`)** : Prise en charge des formats directs et compacts :
+      * Format direct compact : `Sac cuir 5000 10` ➔ Nom : *Sac cuir*, Prix : *5 000 FCFA*, Stock : *10 unités*.
+      * Format avec devise et stock : `Robe Bazin 15000 FCFA 5`
+      * Format avec mots-clés : `Sac cuir 5000 stock 10`, `Robe 15000 qte 12`, `Montre 25000 x 8`, `Chaussures 20000 (15)`.
+      * Format sans stock : `Sac cuir 5000` ➔ Stock par défaut : *Illimité*.
+    - **Étape dédiée dans le flux guidé (`AJOUT_PRODUIT_STOCK`)** : Demande de la quantité en stock avec saisie numérique ou `passer` pour stock illimité.
+    - **Persistance en DB (`boutique_produits.stock_quantite`)** : Enregistrement direct et synchronisation en arrière-plan avec le catalogue Meta (`syncProduit`).
+    - **Récapitulatif Détaillé** : Confirmation enrichie affichant le nom, le prix, la quantité en stock, le nombre de photos et le lien vitrine en direct.
+  * **🧪 Validation & Contrôle Qualité** :
+    - Suite de tests unitaires [`tests/unit/whatsapp-chatbot.test.js`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/tests/unit/whatsapp-chatbot.test.js), [`tests/unit/whatsapp-catalog.test.js`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/tests/unit/whatsapp-catalog.test.js), [`tests/unit/whatsapp-chatbot-search.test.js`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/tests/unit/whatsapp-chatbot-search.test.js) : **100% validés avec succès**.
+
 - **Vérification Préalable de l'Existence du Compte sur l'OTP WhatsApp (Connexion & Inscription) (`main` - 23 août 2026)** 💬🛡️⚡✨ :
   * **🛡️ Vérification Amont & Économie d'OTP (`backend/routes/auth.js`)** :
     - Mise à jour de l'endpoint `POST /api/auth/whatsapp-otp-send` avec prise en charge du paramètre de flux `type` (`login` vs `register`).
