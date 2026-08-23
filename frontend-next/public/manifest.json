@@ -2,7 +2,7 @@
   "id": "https://nopalou.com/",
   "name": "Nopalou — Super-Comparateur & Caisse POS Sénégal",
   "short_name": "Nopalou",
-  "version": "6",
+  "version": "7",
   "description": "Comparez les prix de milliers de produits au Sénégal. Caisse POS tactile, gestion des dettes et commandes WhatsApp directes.",
   "start_url": "/",
   "scope": "/",
@@ -20,25 +20,25 @@
   },
   "icons": [
     {
-      "src": "/icons/icon-192.png?v=2",
+      "src": "/icons/icon-192.png?v=3",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png?v=2",
+      "src": "/icons/icon-512.png?v=3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-maskable-512.png?v=2",
+      "src": "/icons/icon-maskable-512.png?v=3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/icon-512.svg?v=2",
+      "src": "/icons/icon-512.svg?v=3",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
@@ -66,28 +66,28 @@
       "short_name": "Caisse POS",
       "url": "/boutique/caisse",
       "description": "Accéder directement à la caisse tactile du magasin",
-      "icons": [{ "src": "/icons/icon-192.png?v=2", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192.png?v=3", "sizes": "192x192" }]
     },
     {
       "name": "Déposer une annonce",
       "short_name": "Déposer",
       "url": "/deposer-annonce",
       "description": "Publier une nouvelle offre de vente",
-      "icons": [{ "src": "/icons/icon-192.png?v=2", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192.png?v=3", "sizes": "192x192" }]
     },
     {
       "name": "Mes favoris",
       "short_name": "Favoris",
       "url": "/favoris",
       "description": "Consulter les articles et prix sauvegardés",
-      "icons": [{ "src": "/icons/icon-192.png?v=2", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192.png?v=3", "sizes": "192x192" }]
     },
     {
       "name": "Assistant WhatsApp",
       "short_name": "WhatsApp",
       "url": "/assistant-whatsapp",
       "description": "Ouvrir le chatbot comparateur WhatsApp",
-      "icons": [{ "src": "/icons/icon-192.png?v=2", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192.png?v=3", "sizes": "192x192" }]
     }
   ],
   "share_target": {

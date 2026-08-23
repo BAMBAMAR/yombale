@@ -1,3 +1,29 @@
+- **Audit Complet UX/UI & Perfectionnement Mobile-First — 16 Corrections Critiques, Overflow, Accessibilité, PWA & Design System (`main` - 23 août 2026)** 🎨📱🔧♿⚡ :
+  * **🔴 Phase 1 — Corrections CRITIQUES (Overflow Mobile & PWA)** :
+    - **Protection Globale Overflow Mobile** : Ajout de `max-width: 100%`, `overflow-wrap: anywhere`, `word-break: break-word` sur tous les conteneurs principaux (`main`, `.fiche`, `.page-container`, `.fiche-main`, `.fiche-sidebar`, `.sidebar-card`) éliminant le scroll horizontal parasite sur toutes les pages.
+    - **Sidebar RÉSUMÉ (Page Produit)** : Correction du débordement de la carte RÉSUMÉ navy et du bouton CTA "Meilleur prix chez..." sur mobile. Ajout de contraintes d'overflow et word-break sur `.sidebar-produit`, `.sidebar-cta`, `.sidebar-best-label`.
+    - **Tableau Comparaison (similaires-table)** : Réduction des paddings (8px), tailles de police (11px), images (30×30px) et écarts sur mobile ≤640px. Scroll horizontal contrôlé avec `scrollbar-width: thin`.
+    - **Icône PWA SVG** : Remplacement de l'icône SVG obsolète (loupe bleue sur fond noir) par un design cohérent avec le branding Nopalou (fond navy #1C2B4A, loupe blanche, accent orange #C75B00 avec symbole ₣).
+    - **Cache PWA** : Incrémentation `CACHE_VERSION` v7→v8 dans `sw.ts`, version manifest 6→7, cache-bust icons v=2→v=3.
+  * **🟠 Phase 2 — Corrections IMPORTANTES (Accessibilité & Ergonomie)** :
+    - **Harmonisation Chromatique** : Éradication des bleus purs résiduels (#1d4ed8, #3b82f6) via overrides CSS au profit de `var(--accent)` / `var(--navy)`.
+    - **Accessibilité WCAG AA** : Relèvement du contraste des labels de #9ca3af/#64748b vers `var(--text2, #6B5E52)` (ratio ≥4.5:1). Standardisation des placeholders à `var(--text3, #9C8E84)`.
+    - **Compare Bar Mobile** : Simplification de la barre de comparaison sur ≤480px (masquage des items texte, réduction des tailles).
+    - **Navbar Mobile** : Réduction de hauteur 62px→52px (≤768px) et 48px (≤480px), économisant 14px d'espace vertical.
+    - **Filtre "AFFINER LA RECHERCHE"** : Ajout de `flex-wrap: wrap` pour empiler les éléments sur mobile au lieu de tronquer.
+    - **Comparaison Table (comp-table)** : 16 règles CSS mobile ajoutées pour la page /comparaison (min-width réduit 480→380px, paddings, polices, images réduites).
+  * **🟡 Phase 3 — AMÉLIORATIONS (Ergonomie & Densité)** :
+    - **Footer Mobile Condensé** : Réduction des espacements footer (gap 16px), tailles de police (12.5px), masquage des recherches populaires sur ≤640px (SEO-only desktop).
+    - **ShowcaseTabs Frise** : Masquage de la chaîne de valeur 8 étapes sous 768px pour réduire le bruit visuel.
+    - **Modales → Bottom Sheet** : Transformation des `.modal-content` en bottom-sheets glissants sur mobile ≤640px (`border-radius: 20px 20px 0 0`, animation `audit-slide-up`).
+    - **Cartes Boutique Mobile** : `flex-wrap` forcé sur `.bq-card-actions` et `.bq-toolbar` pour éviter les débordements de boutons.
+  * **🟢 Phase 4 — POLISH** :
+    - **prefers-reduced-motion Complétude** : Garde globale `*` réduisant `animation-duration`, `transition-duration` et `scroll-behavior` pour les utilisateurs sensibles aux animations.
+    - **CTA Produit Mobile** : Word-break et overflow-wrap sur `.cta-acheter` et `.economie` pour ≤480px.
+  * **🧪 Validation** :
+    - TypeScript (`npx tsc --noEmit --incremental`) : 0 erreur (EXIT 0).
+    - Build production : validé.
+
 - **Refonte UX/UI Globale OpenSpec : Dé-duplication Mobile, Éradication du Double Burger, Carnet de Dettes & Hiérarchisation 3 Niveaux (`main` - 23 août 2026)** 🎨📱✨⚡🚀 :
   * **🍔 Élimination du Double Menu Burger sur Mobile & Sélecteur Pill Unifié (`BoutiqueClient.tsx`, `AccountNavLinks.tsx`, `globals.css`)** :
     - **Suppression du Burger Conflictuel** : Élimination du bouton burger carré navy `[ ☰ ]` qui entrait en conflit avec le burger supérieur du header global sur les écrans smartphones (< 768px).
