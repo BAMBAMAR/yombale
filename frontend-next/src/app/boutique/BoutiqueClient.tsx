@@ -1506,9 +1506,11 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       )}
 
       {/* Prix de Vente, Prix d'Achat (Coût) & Prix Barré */}
-      <div className={modeRapide ? '' : 'bq-form-grid-2'} style={{ display: 'grid', gridTemplateColumns: modeRapide ? '1fr 1fr' : 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
-        <div>
-          <label style={labelStyle}>{t('shop.productPrice')} (FCFA) <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></label>
+      <div className={modeRapide ? '' : 'bq-form-grid-2'} style={{ display: 'grid', gridTemplateColumns: modeRapide ? '1fr 1fr' : 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, alignItems: 'end' }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <label style={{ ...labelStyle, minHeight: 34, display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
+            <span>{t('shop.productPrice')} (FCFA) <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></span>
+          </label>
           <input
             name="prix"
             type="number"
@@ -1519,8 +1521,10 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
             placeholder="Ex: 15 000 (Vente)"
           />
         </div>
-        <div>
-          <label style={labelStyle}>Prix d&apos;achat / Coût (FCFA) <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></label>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <label style={{ ...labelStyle, minHeight: 34, display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
+            <span>Prix d&apos;achat / Coût (FCFA) <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></span>
+          </label>
           <input
             name="prix_achat"
             type="number"
@@ -1533,8 +1537,10 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
           />
         </div>
         {!modeRapide && (
-          <div>
-            <label style={labelStyle}>{t('shop.productPriceStrikethrough')}</label>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <label style={{ ...labelStyle, minHeight: 34, display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
+              <span>{t('shop.productPriceStrikethrough')}</span>
+            </label>
             <input
               name="prix_barre"
               type="number"

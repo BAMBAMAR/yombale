@@ -158,6 +158,8 @@ function cleanTitle(rawTitle) {
     .trim();
 }
 
+const BAD_IMAGE_PATTERNS = /(images[23]_ccc|images[23]_acp|images[23]_ach|_ccc\/|_acp\/|_ach\/|inpost|posteitaliane|paypal|klarna|gift|wallet|avatar|icon|logo|badge|banner|HTB18eCBQ|19538f0e235f47a48da5d2a00d03045dn)/i;
+
 /**
  * Nettoie et déduplique les URLs d'images (transforme les vignettes en images HD)
  */
@@ -171,6 +173,11 @@ function cleanImageUrls(imageArray) {
     if (url.startsWith('//')) url = 'https:' + url;
     if (!url.startsWith('http://') && !url.startsWith('https://')) continue;
 
+    // Suppression des images parasites, logos de livraison et partenaires
+    if (BAD_IMAGE_PATTERNS.test(url)) {
+      continue;
+    }
+
     // Suppression des paramètres de réduction de taille (AliExpress / Shein / Amazon / Temu)
     url = url
       .replace(/_[0-9]+x[0-9]+(\.[a-zA-Z0-9]+)$/i, '$1') // AliExpress: S1_50x50.jpg -> S1.jpg
@@ -178,19 +185,21 @@ function cleanImageUrls(imageArray) {
       .replace(/\.jpg_[0-9]+x[0-9]+[a-zA-Z0-9._-]*$/i, '.jpg')
       .replace(/\._AC_US[0-9]+_\./i, '._AC_SL1500_.') // Amazon thumbnail to HD
       .replace(/\._AC_SR[0-9]+,[0-9]+_\./i, '._AC_SL1500_.')
+      .replace(/_thumbnail_[0-9]+x[a-zA-Z0-9._-]*\.webp/i, '.webp')
       .replace(/_thumbnail_[0-9]+x[0-9]+\.webp/i, '.webp');
 
-    // Ne pas inclure d'icônes ou de logos génériques
-    if (url.includes('avatar') || url.includes('icon') || url.includes('logo') || url.includes('HTB18eCBQXXXXXXfXXXX760XFXXXa') || url.includes('19538f0e235f47a48da5d2a00d03045dn')) {
-      continue;
-    }
-
-    if (!cleanList.includes(url) && cleanList.length < 5) {
+    if (!cleanList.includes(url)) {
       cleanList.push(url);
     }
   }
 
-  return cleanList;
+  // Prioriser les images contenant _pi/ (SHEIN Product Image) ou images réelles
+  const piImages = cleanList.filter(u => u.includes('_pi/') || u.includes('aliexpress-media.com') || u.includes('media-amazon.com'));
+  if (piImages.length > 0) {
+    return piImages.slice(0, 5);
+  }
+
+  return cleanList.slice(0, 5);
 }
 
 /**
@@ -215,10 +224,14 @@ async function scrapeProductFromUrl(rawUrl) {
     original_url: safeUrl
   };
 
-  // Extraire l'ID du produit si AliExpress
+  // Extraire l'ID du produit si AliExpress ou SHEIN
   let aliItemId = null;
   if (host.includes('aliexpress')) {
     aliItemId = safeUrl.match(/item\/(\d+)/)?.[1] || safeUrl.match(/\/(\d+)\.html/)?.[1];
+  }
+  let sheinGoodsId = null;
+  if (host.includes('shein')) {
+    sheinGoodsId = safeUrl.match(/-p-(\d+)\.html/i)?.[1] || safeUrl.match(/goods-p-(\d+)/i)?.[1];
   }
 
   const userAgents = [
@@ -232,6 +245,10 @@ async function scrapeProductFromUrl(rawUrl) {
     urlsToTry.push(`https://fr.aliexpress.com/item/${aliItemId}.html`);
     urlsToTry.push(`https://www.aliexpress.com/item/${aliItemId}.html`);
     urlsToTry.push(`https://m.aliexpress.com/item/${aliItemId}.html`);
+  }
+  if (sheinGoodsId && host.includes('shein')) {
+    urlsToTry.push(`https://m.shein.com/fr/goods-p-${sheinGoodsId}.html`);
+    urlsToTry.push(`https://www.shein.com/fr/goods-p-${sheinGoodsId}.html`);
   }
 
   let html = '';
